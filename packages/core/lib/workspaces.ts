@@ -56,7 +56,7 @@ export async function readWorkspaceDirectories(
 			if (!(await isWorkspaceDirectory(repoRoot, entry))) {
 				if (options.tolerateMissing) continue
 
-				throw new Error(`workspace ${entry} has no package.json under ${String(repoRoot)}`)
+				throw new Error(`workspace ${entry} has no package.json under ${repoRoot}`)
 			}
 
 			directories.push(entry)

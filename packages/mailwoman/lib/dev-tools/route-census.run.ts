@@ -244,7 +244,7 @@ interface Disagreement {
 	scripts: string
 }
 
-const casesRoot = String(repoRootPath("packages", "mailwoman", "lib", "eval-harness", "gauntlet", "cases"))
+const casesRoot = repoRootPath("packages", "mailwoman", "lib", "eval-harness", "gauntlet", "cases")
 
 /**
  * A case directory the board loads from: a two-letter country code, non-recursively.

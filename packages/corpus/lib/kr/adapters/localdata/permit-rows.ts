@@ -104,7 +104,8 @@ export async function* readPermitFile(
 	options: ReadPermitOptions = {}
 ): AsyncGenerator<PermitRow> {
 	const wanted = new Set(options.statuses ?? [OPEN_STATUS])
-	const category = basename(String(path), extname(String(path)))
+	const file = path.toString()
+	const category = basename(file, extname(file))
 	const bytes = openReadStream(path)
 
 	for await (const row of CSVSpliterator.fromAsync<Record<string, string>>(decodeByteStream(bytes, ENCODING))) {

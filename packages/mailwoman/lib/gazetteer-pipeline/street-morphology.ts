@@ -73,7 +73,7 @@ export async function buildStreetMorphologyArtifact(
 ): Promise<BuiltStreetMorphologyArtifact> {
 	const progress = opts.onProgress ?? (() => {})
 	const dictionariesDir = opts.dictionariesDir ?? resourceDictionaryPath("libpostal")
-	const outPath = resolvePath(opts.output ?? String(dataRootPath("db", "wof", STREET_MORPHOLOGY_ARTIFACT_FILENAME)))
+	const outPath = resolvePath(opts.output ?? dataRootPath("db", "wof", STREET_MORPHOLOGY_ARTIFACT_FILENAME))
 
 	progress(`building street-morphology FST from ${dictionariesDir}`)
 

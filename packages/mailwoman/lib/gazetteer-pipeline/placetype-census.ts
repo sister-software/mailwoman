@@ -29,6 +29,7 @@ import type { WhosOnFirstPlacetype } from "@mailwoman/core/resources/whosonfirst
 import type { PlacetypeCensusNode } from "@mailwoman/neural/placetype"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
+import type { PathBuilderLike } from "path-ts"
 
 /**
  * The complete Who's on First placetype vocabulary (35 as of 2026-08-02). {@link PLACETYPE_PROJECTION}
@@ -197,7 +198,7 @@ export interface PlacetypeCensusBuildResult {
  * A cross-border ancestor link (WOF carries some) would attribute a child's
  * evidence to the wrong locale's artifact.
  */
-export function buildPlacetypeCensus(adminDBPath: string, country: string): PlacetypeCensusBuildResult {
+export function buildPlacetypeCensus(adminDBPath: PathBuilderLike, country: string): PlacetypeCensusBuildResult {
 	using db = new DatabaseClient<WOFDatabase>(adminDBPath, { readOnly: true })
 
 	const parentList = PARENT_PLACETYPES.map((placetype) => `'${placetype}'`).join(", ")

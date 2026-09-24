@@ -33,9 +33,12 @@ import { formatPercent } from "@mailwoman/core/stats"
 
 import { openMixture, readMixtureFiles } from "#dev-tools/corpus/mixture"
 
-const DEFAULT_CORPUS = String(
-	dataRootPath("corpus", "versioned", "v0.31.0-region-code-and-unit", "corpus-v0.31.0-region-code-and-unit")
-)
+const DEFAULT_CORPUS = dataRootPath(
+	"corpus",
+	"versioned",
+	"v0.31.0-region-code-and-unit",
+	"corpus-v0.31.0-region-code-and-unit"
+).toString()
 
 const { values } = parseArguments({
 	options: {

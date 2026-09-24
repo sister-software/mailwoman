@@ -28,7 +28,7 @@ let root: TemporaryDirectory
  * the data root's database group, and the reader would then report the planted extracts absent.
  */
 function extract(name: string): string {
-	return String(databaseRootPath(root.path, "wof", name))
+	return databaseRootPath(root.path)("wof", name).toString()
 }
 
 /**

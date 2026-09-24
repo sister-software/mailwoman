@@ -44,6 +44,7 @@ import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { parseJSONStrict, prettyJSON } from "@mailwoman/core/json"
 import type { ScorerOverrides } from "@mailwoman/neural/scorer"
+import type { PathBuilderLike } from "path-ts"
 
 import {
 	loadPerTagEvalRows,
@@ -139,10 +140,10 @@ interface TagCapability {
 type Capabilities = Record<string, Record<string, Record<string, TagCapability>>>
 
 interface ResolvedPaths {
-	model: string
-	tokenizer: string
+	model: PathBuilderLike
+	tokenizer: PathBuilderLike
 	modelCard: string
-	anchorLookup: string
+	anchorLookup: PathBuilderLike
 	gazetteerLexicon: string
 }
 
@@ -221,10 +222,10 @@ async function buildManifest(paths: ResolvedPaths): Promise<Capabilities> {
  */
 export async function generateCapabilityManifest(options: CapabilityManifestOptions = {}): Promise<void> {
 	const paths: ResolvedPaths = {
-		model: options.model || String(dataRootPath("models", "quantized", "model-v150-step-40000-int8.onnx")),
-		tokenizer: options.tokenizer || String(dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model")),
+		model: options.model || dataRootPath("models", "quantized", "model-v150-step-40000-int8.onnx"),
+		tokenizer: options.tokenizer || dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model"),
 		modelCard: options.modelCard || "packages/neural-weights-en-us/model-card.json",
-		anchorLookup: options.anchorLookup || String(dataRootPath("anchor", "pilot-anchor-lookup.json")),
+		anchorLookup: options.anchorLookup || dataRootPath("anchor", "pilot-anchor-lookup.json"),
 		gazetteerLexicon: options.gazetteerLexicon || "data/gazetteer/anchor-lexicon-v1.json",
 	}
 

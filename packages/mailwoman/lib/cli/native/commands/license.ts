@@ -129,9 +129,7 @@ export const spec = {
 const SIGNING_KEY_FILE = "signing-key.pem"
 const PUBLIC_KEY_FILE = "signing-key.pub.pem"
 
-function licenseConfigPath(...segments: string[]): string {
-	return String(configRootPath("license", ...segments))
-}
+const licenseConfigPath = configRootPath("license")
 
 async function thisMajorVersion(): Promise<number> {
 	const manifest = await readMailwomanManifest()

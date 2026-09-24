@@ -25,7 +25,7 @@ async function cardWith(card: object): Promise<{ path: string; dispose: () => Pr
 
 	await writeLocalJSONFile({ name: "fixture", version: "1.0.0", ...card }, path)
 
-	return { path: String(path), dispose: async () => void (await directory[Symbol.asyncDispose]()) }
+	return { path, dispose: async () => void (await directory[Symbol.asyncDispose]()) }
 }
 
 describe("verifyTrainingProvenance", () => {
@@ -88,12 +88,12 @@ describe("verifyTrainingProvenance", () => {
 	it("admits the card this repository would publish today", async () => {
 		const card = resolvePath(repoRootPath(), "packages/neural-weights-en-us/model-card.json")
 
-		await expect(verifyTrainingProvenance(String(card))).resolves.toBeUndefined()
+		await expect(verifyTrainingProvenance(card)).resolves.toBeUndefined()
 	})
 
 	it("admits the character-path card, whose six entries sit under the other spelling", async () => {
 		const card = resolvePath(repoRootPath(), "packages/neural-weights-cjk/model-card.json")
 
-		await expect(verifyTrainingProvenance(String(card))).resolves.toBeUndefined()
+		await expect(verifyTrainingProvenance(card)).resolves.toBeUndefined()
 	})
 })

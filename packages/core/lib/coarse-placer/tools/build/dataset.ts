@@ -121,8 +121,8 @@ export async function buildDataset(
 		test: DatasetRow[] = []
 
 	const CORPUS_SOURCES: ReadonlyArray<[string, string]> = [
-		...COUNTRIES.map((c): [string, string] => [c, String(TRAIN_GLOB)]),
-		["AU", String(AU_GLOB)],
+		...COUNTRIES.map((c): [string, string] => [c, TRAIN_GLOB.toString()]),
+		["AU", AU_GLOB.toString()],
 	]
 
 	for (const [country, glob] of CORPUS_SOURCES) {

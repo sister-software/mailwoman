@@ -117,8 +117,8 @@ export async function buildBody(
 
 	report(`${features.length.toLocaleString()} features`)
 
-	const ndjson = String(resolvePath(directory, `${body}.ndjson`))
-	const nomenclatureOut = String(resolvePath(directory, names.nomenclature))
+	const ndjson = resolvePath(directory, `${body}.ndjson`)
+	const nomenclatureOut = resolvePath(directory, names.nomenclature)
 
 	await writeNomenclatureNDJSON(features, ndjson)
 
@@ -128,7 +128,7 @@ export async function buildBody(
 	await applyPMTilesMetadata(nomenclatureOut, nomenclatureMetadata(body, buildVersion))
 	report(`wrote ${names.nomenclature}`)
 
-	const hillshadeOut = String(resolvePath(directory, names.hillshade))
+	const hillshadeOut = resolvePath(directory, names.hillshade)
 
 	const { commands } = await buildHillshadePMTiles({
 		body,
@@ -141,7 +141,7 @@ export async function buildBody(
 	await applyPMTilesMetadata(hillshadeOut, hillshadeMetadata(body, buildVersion, dem.entry.url))
 	report(`wrote ${names.hillshade}`)
 
-	const searchOut = String(resolvePath(directory, names.search))
+	const searchOut = resolvePath(directory, names.search)
 	const searchEntries = await buildSearchIndex(features, searchOut)
 
 	report(`wrote ${names.search} (${searchEntries.toLocaleString()} entries)`)
@@ -157,7 +157,7 @@ export async function buildBody(
 			],
 			transformations,
 		},
-		String(resolvePath(directory, names.manifest))
+		resolvePath(directory, names.manifest)
 	)
 
 	report(`wrote ${names.manifest}`)

@@ -32,8 +32,13 @@ const scratchDirectories = new AsyncDisposableStack()
 
 afterAll(() => scratchDirectories.disposeAsync())
 
-const EXAMPLE_SUITE = String(
-	repoRootPath("packages", "mailwoman", "lib", "test-fixtures", "conformance", "interface-example.jsonl")
+const EXAMPLE_SUITE = repoRootPath(
+	"packages",
+	"mailwoman",
+	"lib",
+	"test-fixtures",
+	"conformance",
+	"interface-example.jsonl"
 )
 
 function record(over: Record<string, unknown> = {}): Record<string, unknown> {

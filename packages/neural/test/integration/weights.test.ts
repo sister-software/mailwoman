@@ -68,8 +68,7 @@ afterAll(() => fixtures.disposeAsync())
 const TOKENIZER_PATH = workspacePath("neural", "test", "fixtures", "tokenizer-v0.1.0.model")
 
 const MODEL_PATH =
-	$public.MAILWOMAN_TEST_ONNX_MODEL ??
-	String(dataRootPath("models", "quantized", "model-stage1-coarse-step-050000-int8.onnx"))
+	$public.MAILWOMAN_TEST_ONNX_MODEL ?? dataRootPath("models", "quantized", "model-stage1-coarse-step-050000-int8.onnx")
 
 const haveModel = await pathExists(MODEL_PATH)
 
@@ -125,13 +124,13 @@ const haveCLI = await pathExists(CLI_PATH)
 // to build pair-index-gb.bin from the PPD tuples CSV (see that script's header) —
 // needs the source CSV on disk same as the postcode-binary build needs the WOF extract above.
 const PPD_SOURCE_CSV_PATH = dataRootPath("ppd", "2026-07-22", "gb-tuples.csv")
-const havePPDSource = await pathExists(String(PPD_SOURCE_CSV_PATH))
+const havePPDSource = await pathExists(PPD_SOURCE_CSV_PATH)
 
 // The en-nz auto-resolve test's link-dev-weights run shells out to `gazetteer pair-index`
 // to build pair-index-nz.bin from the linz-derived OpenAddresses NZ countrywide CSV
 // (see that script's header) — same on-disk precondition shape as the GB PPD source above.
 const NZ_SOURCE_CSV_PATH = dataRootPath("openaddresses", "extracted", "nz", "countrywide.csv")
-const haveNZSource = await pathExists(String(NZ_SOURCE_CSV_PATH))
+const haveNZSource = await pathExists(NZ_SOURCE_CSV_PATH)
 
 // Every test that shells out to a link-dev-weights.ts needs this, for two different cold-start costs.
 // En-gb builds pair-index-gb.bin from the ~25.6M-row PPD tuples CSV — several minutes.
@@ -213,7 +212,7 @@ const NO_MATCH_PAIR_INDEX: PairIndexLike = { probe: () => undefined }
 describe("resolveWeights — explicit-path mode", () => {
 	test.skipIf(!haveModel)("returns the explicit paths verbatim when both are valid", async () => {
 		const r = await resolveWeights({ modelPath: MODEL_PATH, tokenizerPath: TOKENIZER_PATH })
-		expect(r.modelPath).toBe(MODEL_PATH)
+		expect(r.modelPath).toBe(MODEL_PATH.toString())
 		expect(r.tokenizerPath).toBe(TOKENIZER_PATH)
 		expect(r.source).toBe("explicit")
 	})

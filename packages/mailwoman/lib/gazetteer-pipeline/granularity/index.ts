@@ -28,6 +28,7 @@ import type { ComponentTag } from "@mailwoman/codex/component"
 import { GEONAMES_ID_BASE, OVERTURE_ID_BASE } from "@mailwoman/core/resolver/synthetic-id-ranges"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
+import type { PathBuilderLike } from "path-ts"
 
 import { DEFAULT_COVERAGE_FLOOR } from "#gazetteer-pipeline/defaults"
 import { PLACETYPE_PROJECTION } from "#gazetteer-pipeline/placetype-census"
@@ -167,7 +168,7 @@ function ladderPlacetypes(): string[] {
  * and a neighbourhood child must count once toward `dependent_locality` —
  * counting distinct parents per placetype and summing in JS would double it.
  */
-export function buildGranularityLadder(adminDBPath: string): CountryGranularity[] {
+export function buildGranularityLadder(adminDBPath: PathBuilderLike): CountryGranularity[] {
 	using db = new DatabaseClient<WOFDatabase>(adminDBPath, { readOnly: true })
 
 	const placetypeList = ladderPlacetypes()

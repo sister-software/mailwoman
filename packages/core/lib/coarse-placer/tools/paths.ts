@@ -45,7 +45,7 @@ export async function readLatinOffmapRows<T>(dataDir: PathBuilderLike): Promise<
 
 	if (!present.length) {
 		throw new Error(
-			`No Latin off-map test set in ${String(dataDir)}: expected ${LATIN_OFFMAP_TEST_FILES.join(" or ")}. Run build-outlier-latin or build-outlier-oa first.`
+			`No Latin off-map test set in ${dataDir}: expected ${LATIN_OFFMAP_TEST_FILES.join(" or ")}. Run build-outlier-latin or build-outlier-oa first.`
 		)
 	}
 

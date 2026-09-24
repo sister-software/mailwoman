@@ -34,7 +34,7 @@ import { readCapitalPoints } from "@mailwoman/resolver-wof-sqlite/capital-schema
 import { CapitalIndex, type CapitalPoint } from "@mailwoman/resolver-wof-sqlite/capitals"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import type { PathBuilderLike } from "path-ts"
+import type { PathBuilder, PathBuilderLike } from "path-ts"
 
 import { $public } from "#env"
 
@@ -45,7 +45,7 @@ import { $public } from "#env"
  * when nothing points somewhere else.
  */
 export function conventionCandidateDBPath(dataRoot: PathBuilderLike = mailwomanDataRoot()): string {
-	return String(databaseRootPath(dataRoot, "wof", "candidate.db"))
+	return databaseRootPath(dataRoot)("wof", "candidate.db").toString()
 }
 
 /**
@@ -220,8 +220,8 @@ export async function createResolverBackend(
  * it is small, committed, and versioned with the ranking code that interprets it.
  * Baking it into `candidate.db` at the next gazetteer rebuild is the follow-up recorded on #1880.
  */
-export function conventionCapitalsPath(): string {
-	return String(repoRootPathBuilder("data", "gazetteer", "capitals-v1.json"))
+export function conventionCapitalsPath(): PathBuilder {
+	return repoRootPathBuilder("data", "gazetteer", "capitals-v1.json")
 }
 
 /**

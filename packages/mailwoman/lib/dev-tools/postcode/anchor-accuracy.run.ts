@@ -46,24 +46,20 @@ function parseArgs(): Args {
 		resolvePath(dataRootPath("db", "wof", "postalcode-intl.db")),
 	]
 
-	// node:util parseArgs (strict:false = old scan parity: unknown flags tolerated)
 	const { values } = parseArguments({
 		options: { country: { type: "string" }, eval: { type: "string" }, extract: { type: "string", multiple: true } },
-		strict: false,
 		allowPositionals: true,
 	})
 
-	if (values["eval"] != null) {
-		evalPath = values["eval"] as string
+	if (values.eval !== undefined) {
+		evalPath = values.eval
 	}
 
-	if (values["country"] != null) {
-		country = values["country"] as string
+	if (values.country !== undefined) {
+		country = values.country
 	}
 
-	for (const v of (values["extract"] as string[] | undefined) ?? []) {
-		databases.push(v)
-	}
+	databases.push(...(values.extract ?? []))
 
 	return { evalPath, country, databases }
 }

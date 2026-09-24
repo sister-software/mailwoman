@@ -182,7 +182,7 @@ export async function migrateOverlayParquet(
 	sink.end()
 	await once(sink, "finish")
 
-	await jsonlToParquet({ input: String(stagePath), output: String(output) })
+	await jsonlToParquet({ input: stagePath, output })
 
 	return summary
 }

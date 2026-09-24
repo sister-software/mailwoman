@@ -125,7 +125,7 @@ const GazetteerBuildPOICoverage: CommandComponent<typeof spec> = ({ options }) =
 
 		const referencePath = options.reference ?? dataRootPath("db", "poi", "poi.db")
 		const out = options.out ?? dataRootPath("db", "poi", `poi-coverage-${options.category}-${slugify(region)}.db`)
-		const buildSHA = resolveBuildSHA(String(repoRootPath()))
+		const buildSHA = resolveBuildSHA(repoRootPath())
 
 		// dynamic import, required: @mailwoman/osm is unpublished (ODbL counsel sign-off pending —
 		// see osm/readme.md), so a top-level import breaks the published CLI on a clean install.

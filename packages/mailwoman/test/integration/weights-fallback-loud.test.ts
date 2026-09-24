@@ -205,8 +205,8 @@ describe("#1108 — the interactive/declined degraded banner is unchanged (regre
 // Runs only where a WOF DB is on disk.
 // Proves the warning + degraded output + exit 0 combination the audit's test
 // (1) calls for on the full --resolve path.
-const DEFAULT_WOF_PATH = String(dataRootPath("db", "wof", "whosonfirst-data-admin-us-latest.db"))
-const wofPath = $public.MAILWOMAN_WOF_DB || DEFAULT_WOF_PATH
+const DEFAULT_WOF_PATH = dataRootPath("db", "wof", "whosonfirst-data-admin-us-latest.db")
+const wofPath = $public.MAILWOMAN_WOF_DB || DEFAULT_WOF_PATH.toString()
 const hasWOFDB = await pathExists(wofPath)
 
 describe.skipIf(!hasWOFDB)("#1108 loud weights fallback — --resolve degraded end-to-end (WOF DB present)", () => {

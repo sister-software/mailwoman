@@ -23,7 +23,7 @@ import { join } from "path-ts"
  * This is a staged release path rather than a data-root artifact.
  */
 export function wofHotStageDir(): string {
-	return String(tempRootPath("v440-stage", "en-us", "v4.4.0"))
+	return tempRootPath("v440-stage", "en-us", "v4.4.0")
 }
 
 /**

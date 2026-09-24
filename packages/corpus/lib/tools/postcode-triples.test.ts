@@ -333,8 +333,8 @@ describe("localityWrittenForm", () => {
  * preferred form of a Castilian province names the whole community.
  */
 async function writeFixtureGazetteers(): Promise<{ adminDB: string; postcodeDB: string }> {
-	const adminDB = String(root.resolve("admin.db"))
-	const postcodeDB = String(root.resolve("postalcode-intl.db"))
+	const adminDB = root.resolve("admin.db")
+	const postcodeDB = root.resolve("postalcode-intl.db")
 
 	{
 		using admin = new DatabaseClient<WOFDatabase>(adminDB)
@@ -403,7 +403,7 @@ describe("readTriplesFromParentJoin", () => {
 
 describe("readPairsFromAdmin", () => {
 	it("answers the pair for a country no postcode source reaches, and splits the bilingual joined region name", async () => {
-		const adminDB = String(root.resolve("admin-ca.db"))
+		const adminDB = root.resolve("admin-ca.db")
 
 		{
 			using admin = new DatabaseClient<WOFDatabase>(adminDB)
@@ -447,7 +447,7 @@ describe("readPairsFromAdmin", () => {
 	})
 
 	it("stamps `und` when the caller names no locale, rather than guessing one from the country", async () => {
-		const pairs = await readPairsFromAdmin(["CA"], { adminDB: String(root.resolve("admin-ca.db")) })
+		const pairs = await readPairsFromAdmin(["CA"], { adminDB: root.resolve("admin-ca.db") })
 
 		expect(pairs.every((p) => p.locale === "und")).toBe(true)
 	})

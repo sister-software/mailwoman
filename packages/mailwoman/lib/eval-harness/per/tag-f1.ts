@@ -13,6 +13,7 @@ import { NeuralAddressClassifier, parseAnchorLookup, parseGazetteerLexicon } fro
 import { ONNXRunner } from "@mailwoman/neural/onnx-runner"
 import { createScorer, type ScorerOverrides } from "@mailwoman/neural/scorer"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
+import type { PathBuilderLike } from "path-ts"
 import { JSONSpliterator } from "spliterator"
 
 export interface PerTagEvalRow {
@@ -278,11 +279,11 @@ export const MASK_EVAL_LOCALES: LocaleEvalSpec[] = [
  * The artifacts a mask battery's scorers are built from — the keys `createScorer` reads.
  */
 export interface MaskScorerArtifactPaths {
-	modelPath: string
-	tokenizerPath: string
-	modelCardPath: string
-	anchorLookupPath: string
-	gazetteerLexiconPath: string
+	modelPath: PathBuilderLike
+	tokenizerPath: PathBuilderLike
+	modelCardPath: PathBuilderLike
+	anchorLookupPath: PathBuilderLike
+	gazetteerLexiconPath: PathBuilderLike
 }
 
 export interface MaskOffOnOptions {

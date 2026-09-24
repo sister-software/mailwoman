@@ -117,7 +117,7 @@ describe("every declared activity is an activity the compiled model carries", ()
 			const concept = model.concepts.find((candidate) => String(candidate.id) === entry.activity)
 
 			expect(concept).toBeDefined()
-			expect(String(concept!.kind)).toBe("activity")
+			expect(concept!.kind).toBe("activity")
 		})
 	}
 })

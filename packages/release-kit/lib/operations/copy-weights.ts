@@ -26,7 +26,7 @@ export const copyWeightsOperation = defineOperation({
 	run: (input, context) =>
 		copyWeights({
 			repoRoot: context.repoRoot,
-			destRoot: input.into ? String(resolvePath(context.repoRoot, input.into)) : context.repoRoot,
+			destRoot: input.into ? resolvePath(context.repoRoot, input.into) : context.repoRoot,
 			log: context.log,
 		}),
 })

@@ -79,6 +79,10 @@ const ALLOWED: Record<string, string> = {
 	// Spelling it out here is what makes the cache rung's test independent of the helper it is exercising.
 	"packages/neural/test/integration/weights/overlay.test.ts":
 		"builds a fixture cache in the npm-prefix layout, independently",
+	// Plants a fake `@vvago/vale` install under a scratch root.
+	// `valeCommand` is tested on how it resolves the launcher and binary from an installed layout.
+	// The directory does not exist until the fixture writes it.
+	"packages/core/test/unit/vale.test.ts": "builds a fake @vvago/vale install for the resolver under test",
 	// links the checkout's node_modules into the staging tree rather than reading a package's layout.
 	// `yarn pack` needs the project context there, and the link target is the checkout
 	// root's own directory rather than another package's install dir.

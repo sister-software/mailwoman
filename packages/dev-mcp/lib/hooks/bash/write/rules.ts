@@ -398,7 +398,7 @@ function workingDirectory(stripped: string, cwd: string): string {
 
 	if (!target || target.includes("$")) return cwd
 
-	return isAbsolute(target) ? target : String(resolvePath(cwd, target))
+	return isAbsolute(target) ? target : resolvePath(cwd, target)
 }
 
 /**
@@ -429,7 +429,7 @@ function resolveTarget(raw: string, cwd: string): string | null {
 
 	const expanded = expandHome(raw)
 
-	return isAbsolute(expanded) ? expanded : String(resolvePath(cwd, expanded))
+	return isAbsolute(expanded) ? expanded : resolvePath(cwd, expanded)
 }
 
 /**

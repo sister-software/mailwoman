@@ -47,7 +47,7 @@ async function plant(options: {
 	weights?: ReadonlyArray<readonly [string, string]>
 	extra?: Record<string, string>
 }) {
-	const repoRoot = String(fixtures.use(await temporaryDirectory("locale-tables-")).path)
+	const repoRoot = fixtures.use(await temporaryDirectory("locale-tables-")).path.toString()
 
 	const files: Record<string, string> = {
 		"release.config.json": stringifyJSON(options.config),

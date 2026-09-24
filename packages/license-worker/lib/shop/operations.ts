@@ -73,7 +73,7 @@ async function recordShopIDs(mode: ShopMode, report: ProvisionReport): Promise<s
 
 	await writeLocalJSONFile(next, idsPath)
 
-	return String(idsPath)
+	return idsPath
 }
 
 function entryOf(code: string, value: string | undefined): [string, string][] {

@@ -52,10 +52,10 @@ function bundleOver(localPaths: readonly string[], census: DataBundle["sourceCen
  */
 async function plant(rowsBySource: Record<string, number>, localPath = "points.db") {
 	const scratch = fixtures.use(await temporaryDirectory("mw-data-sources-"))
-	const dataRoot = String(scratch.path)
+	const dataRoot = scratch.path
 	// Plant through the same builder the census resolves with, so a change to the data
 	// root's database group moves the fixture and the reader together.
-	const path = String(databaseRootPath(dataRoot, localPath))
+	const path = databaseRootPath(dataRoot)(localPath)
 
 	await makeDirectories(dirname(path))
 
@@ -101,7 +101,7 @@ describe("censusBundleSources", () => {
 
 	it("reports nothing downloaded rather than zero rows", async () => {
 		const empty = fixtures.use(await temporaryDirectory("mw-data-sources-empty-"))
-		const dataRoot = String(empty.path)
+		const dataRoot = empty.path
 		const result = await censusBundleSources(bundleOver(["points.db"], perRow), dataRoot)
 
 		expect(result.status).toBe("nothing-on-disk")

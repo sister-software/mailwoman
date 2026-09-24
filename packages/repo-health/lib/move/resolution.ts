@@ -61,7 +61,7 @@ export function createMoveResolver(
 	moves: readonly ModuleMove[] = [],
 	contents: ReadonlyMap<string, string> = new Map()
 ): MoveResolver {
-	const absolute = (path: string): string => String(resolvePath(repoRoot, path))
+	const absolute = (path: string): string => resolvePath(repoRoot, path)
 	const origins = new Map(moves.map((move) => [absolute(move.to), absolute(move.from)]))
 	const removed = new Set(moves.map((move) => absolute(move.from)))
 	const directories = new Set<string>()

@@ -162,7 +162,7 @@ describe("resolveWeights cache fallback", () => {
 	})
 
 	test("helpers: cache dir + package-name builder", () => {
-		expect(String(weightsCacheDir())).toBe(cacheRootPath("weights"))
+		expect(weightsCacheDir().toString()).toBe(cacheRootPath("weights"))
 		expect(weightsPackageName("en-US")).toBe("@mailwoman/neural-weights-en-us")
 		expect(weightsPackageName()).toBe("@mailwoman/neural-weights-en-us")
 	})
@@ -172,10 +172,12 @@ describe("resolveWeights cache fallback", () => {
 	// if it and the hand-spelled path ever disagree, they disagree here and not in
 	// an eval run that silently graded the wrong bundle.
 	test("weightsCachePackageDir builds exactly the layout this file pins", () => {
-		expect(String(weightsCachePackageDir(cacheRoot.path, LOCALE))).toBe(cacheRoot.resolve("node_modules", PACKAGE_NAME))
+		expect(weightsCachePackageDir(cacheRoot.path, LOCALE).toString()).toBe(
+			cacheRoot.resolve("node_modules", PACKAGE_NAME)
+		)
 
 		// Locale casing is normalized the same way the package name is.
-		expect(String(weightsCachePackageDir(cacheRoot.path))).toBe(
+		expect(weightsCachePackageDir(cacheRoot.path).toString()).toBe(
 			cacheRoot.resolve("node_modules", "@mailwoman/neural-weights-en-us")
 		)
 	})

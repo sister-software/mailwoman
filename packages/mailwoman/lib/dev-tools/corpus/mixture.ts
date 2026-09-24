@@ -6,11 +6,11 @@
  *   measure a training mixture.
  */
 
-import { mailwomanDataRoot } from "@mailwoman/core/data-root"
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { connectDuckDB, escapeSQLString } from "@mailwoman/corpus/parquet/duckdb"
 import type { ParquetManifest } from "@mailwoman/corpus/parquet/writers"
-import { join } from "path-ts"
+import { join, type PathBuilderLike } from "path-ts"
 
 /**
  * The manifest records the path the builder wrote under, which is the Modal volume mount
@@ -20,10 +20,8 @@ import { join } from "path-ts"
  */
 const MANIFEST_ROOT = "/data/"
 
-function localPath(manifestPath: string): string {
-	return manifestPath.startsWith(MANIFEST_ROOT)
-		? String(join(mailwomanDataRoot(), manifestPath.slice(MANIFEST_ROOT.length)))
-		: manifestPath
+function localPath(manifestPath: string): PathBuilderLike {
+	return manifestPath.startsWith(MANIFEST_ROOT) ? dataRootPath(manifestPath.slice(MANIFEST_ROOT.length)) : manifestPath
 }
 
 /**
@@ -34,7 +32,7 @@ export interface MixtureFiles {
 	/**
 	 * Absolute paths, in manifest order, of the files this run reads.
 	 */
-	files: string[]
+	files: PathBuilderLike[]
 	/**
 	 * Files the manifest holds for this split, which `files` may be a prefix of when the caller capped it.
 	 */
@@ -63,7 +61,7 @@ export async function readMixtureFiles(corpusDirectory: string, split: string, l
 	}
 
 	const requested = limit ? entries.slice(0, limit) : entries
-	const files: string[] = []
+	const files: PathBuilderLike[] = []
 
 	for (const entry of requested) {
 		const path = localPath(entry.path)
@@ -88,7 +86,7 @@ export async function readMixtureFiles(corpusDirectory: string, split: string, l
  * plus the file list spelled for `read_parquet`.
  */
 export async function openMixture(
-	files: readonly string[],
+	files: readonly PathBuilderLike[],
 	options: { memoryLimit: string; threads: number }
 ): Promise<{ db: Awaited<ReturnType<typeof connectDuckDB>>; fileList: string }> {
 	const db = await connectDuckDB()
@@ -96,5 +94,5 @@ export async function openMixture(
 	await db.run(`SET memory_limit='${escapeSQLString(options.memoryLimit)}'`)
 	await db.run(`SET threads=${options.threads}`)
 
-	return { db, fileList: files.map((path) => `'${escapeSQLString(path)}'`).join(", ") }
+	return { db, fileList: files.map((path) => `'${escapeSQLString(path.toString())}'`).join(", ") }
 }

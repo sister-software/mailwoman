@@ -25,11 +25,11 @@ import {
 } from "@mailwoman/core/fs/writers"
 import { md5File } from "@mailwoman/core/hash"
 import { parseJSONStrict } from "@mailwoman/core/json"
-import { repoRootPath, workspacePath } from "@mailwoman/core/paths"
+import { repoRootPath, repoRootPathBuilder, workspacePathBuilder } from "@mailwoman/core/paths"
 import { spawnProcessSync } from "@mailwoman/core/process"
 import { readReleaseConfig, repoCommittedSoftFeedSources } from "@mailwoman/core/release-config"
 import { weightsOverlayPath } from "@mailwoman/core/utils"
-import { resolvePath } from "path-ts"
+import type { PathBuilder, PathBuilderLike } from "path-ts"
 
 import { $public } from "#env"
 import { fstFreshnessWarning } from "#fst/freshness"
@@ -40,8 +40,8 @@ import { fstFreshnessWarning } from "#fst/freshness"
  * A plain unlink-then-symlink leaves a no-file window that concurrent vitest workers can
  * hit mid-suite — bit CI on 2026-07-24. rename(2) replaces the destination atomically.
  */
-export async function linkForce(src: string, dest: string): Promise<void> {
-	const tmp = `${dest}.tmp-link`
+export async function linkForce(src: PathBuilderLike, dest: PathBuilderLike): Promise<void> {
+	const tmp = `${dest.toString()}.tmp-link`
 
 	if (await pathExists(tmp)) {
 		await removePath(tmp)
@@ -54,7 +54,7 @@ export async function linkForce(src: string, dest: string): Promise<void> {
 /**
  * Remove a leftover local file/symlink so the #1179 base-weights fallback engages.
  */
-export async function removeIfPresent(dest: string): Promise<void> {
+export async function removeIfPresent(dest: PathBuilder): Promise<void> {
 	try {
 		await statLink(dest)
 	} catch {
@@ -76,8 +76,8 @@ export async function removeIfPresent(dest: string): Promise<void> {
  * which channel just resolved off rather than to have the link step abort.
  */
 export async function linkSoftFeedSibling(
-	source: string,
-	destination: string,
+	source: PathBuilderLike,
+	destination: PathBuilder,
 	consequenceIfMissing: string
 ): Promise<boolean> {
 	if (!(await pathExists(source))) {
@@ -160,7 +160,7 @@ export interface PairIndexOverlay {
 	 *
 	 * Default: the WOF admin DB.
 	 */
-	sources?: string[]
+	sources?: PathBuilder[]
 	/**
 	 * Inputs that must exist before a build is attempted.
 	 *
@@ -169,13 +169,13 @@ export interface PairIndexOverlay {
 	 *
 	 * Default: `sources`.
 	 */
-	inputs?: string[]
+	inputs?: PathBuilder[]
 	/**
 	 * Extra CLI args naming the build's sources (`--source`, `--borough-db`, `--pairs-jsonl`, `--ban-dir`).
 	 *
 	 * Default: `--borough-db <admin db>`.
 	 */
-	extraArgs?: string[]
+	extraArgs?: PathBuilderLike[]
 	/**
 	 * Refuse to trust an existing artifact smaller than this.
 	 *
@@ -212,7 +212,7 @@ export interface PairIndexHeaderFields {
  * which each carried their own near-copy before 2026-08-04.
  * The ×5 clone the taste audit named, and the reason three of them were schema-blind while this one was not.
  */
-export async function peekPairIndexHeaderFields(path: string): Promise<PairIndexHeaderFields> {
+export async function peekPairIndexHeaderFields(path: PathBuilderLike): Promise<PairIndexHeaderFields> {
 	const bytes = await readLocalBuffer(path)
 	const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength)
 	// "PIX1" little-endian.
@@ -257,8 +257,8 @@ const MD5_HEX_LENGTH = 32
  * each carry — new callers import this one.
  */
 // repo-health-ignore export-name-affix -- the sidecar cache is the added behaviour; `md5File` hashes every time.
-export async function md5FileWithSidecar(path: string): Promise<string> {
-	const sidecarPath = `${path}.md5`
+export async function md5FileWithSidecar(path: PathBuilderLike): Promise<string> {
+	const sidecarPath = `${path.toString()}.md5`
 	const sourceStats = await statPath(path)
 
 	if (await pathExists(sidecarPath)) {
@@ -364,10 +364,10 @@ export const REQUIRED_PAIR_INDEX_SCHEMA = 3
  * All three FST-linking base packages build against the same one, so they share this
  * rather than each pinning it.
  */
-export async function warnIfFSTStale(fstPath: string, locale: string): Promise<void> {
+export async function warnIfFSTStale(fstPath: PathBuilder, locale: string): Promise<void> {
 	const warning = await fstFreshnessWarning({
 		fstPath,
-		sourceDBPath: resolvePath(dataRootPath("db", "wof", "admin-global-priority.db")),
+		sourceDBPath: dataRootPath("db", "wof", "admin-global-priority.db"),
 		rebuildCommand: `node packages/mailwoman/out/cli/index.js gazetteer build fst --locales ${locale}  (writes to a staging dir; swap is operator-conditional)`,
 	})
 
@@ -384,12 +384,12 @@ export async function warnIfFSTStale(fstPath: string, locale: string): Promise<v
  *
  * The publish flow stages the real binary (release-sequenced).
  */
-export async function linkLocaleFST(destDir: string, locale: string): Promise<void> {
-	const source = resolvePath(dataRootPath("db", "wof", "fst-per-locale", `fst-${locale}.bin`))
+export async function linkLocaleFST(destDir: PathBuilder, locale: string): Promise<void> {
+	const source = dataRootPath("db", "wof", "fst-per-locale", `fst-${locale}.bin`)
 
 	const linked = await linkSoftFeedSibling(
 		source,
-		resolvePath(destDir, `fst-${locale}.bin`),
+		destDir(`fst-${locale}.bin`),
 		"the FST gazetteer default will resolve OFF for this locale."
 	)
 
@@ -407,10 +407,10 @@ export async function linkLocaleFST(destDir: string, locale: string): Promise<vo
  *
  * Missing is non-fatal — the runtime loader's dictionary-build fallback covers it.
  */
-export async function linkStreetMorphologyFST(destDir: string): Promise<void> {
+export async function linkStreetMorphologyFST(destDir: PathBuilder): Promise<void> {
 	await linkSoftFeedSibling(
-		resolvePath(dataRootPath("db", "wof", "fst-street-morphology.bin")),
-		resolvePath(destDir, "fst-street-morphology.bin"),
+		dataRootPath("db", "wof", "fst-street-morphology.bin"),
+		destDir("fst-street-morphology.bin"),
 		"the street-context check falls back to the per-process dictionary build."
 	)
 }
@@ -428,10 +428,10 @@ export async function linkStreetMorphologyFST(destDir: string): Promise<void> {
  * (the "missing source, can't build" branch below would fire anyway if a rebuild were needed).
  */
 async function pairIndexIsFresh(
-	dest: string,
+	dest: PathBuilder,
 	artifact: string,
 	expected: PairIndexCalibration,
-	sources: string[],
+	sources: PathBuilder[],
 	minimumPlausibleBytes: number | undefined
 ): Promise<boolean> {
 	try {
@@ -518,13 +518,13 @@ async function pairIndexIsFresh(
  */
 export async function buildPairIndexOverlay(overlay: PairIndexOverlay): Promise<void> {
 	const { packageDir, country, delta, transitionBeta, parentDelta } = overlay
-	const CLI = String(workspacePath("mailwoman", "out", "cli", "index.js"))
+	const CLI = workspacePathBuilder("mailwoman", "out", "cli", "index.js")
 	const ARTIFACT = `pair-index-${country}.bin`
 	// Built into the data-root overlay rather than into the tracked package.
 	// The locale is recovered from the workspace name (`neural-weights-en-gb` → `en-gb`)
 	// so callers keep passing the one identifier they already had.
-	const PKG_DIR = String(weightsOverlayPath(packageDir.replace(/^neural-weights-/, "")))
-	const DEST = resolvePath(PKG_DIR, ARTIFACT)
+	const PKG_DIR = weightsOverlayPath(packageDir.replace(/^neural-weights-/, ""))
+	const DEST = PKG_DIR(ARTIFACT)
 
 	await makeDirectories(PKG_DIR)
 
@@ -532,7 +532,7 @@ export async function buildPairIndexOverlay(overlay: PairIndexOverlay): Promise<
 	 * Checked-in WOF-derived admin pairs — the default source, and the whole
 	 * source list for the small overlays.
 	 */
-	const WOF_ADMIN_DB = resolvePath(dataRootPath("db", "wof", "admin-global-priority.db"))
+	const WOF_ADMIN_DB = dataRootPath("db", "wof", "admin-global-priority.db")
 	const sources = overlay.sources ?? [WOF_ADMIN_DB]
 	const inputs = overlay.inputs ?? sources
 	const extraArgs = overlay.extraArgs ?? ["--borough-db", WOF_ADMIN_DB]
@@ -703,7 +703,7 @@ export interface DevOverlayManifest {
 	 * compiled `gazetteer postcode-binary` CLI, skipped when already present
 	 * (it rebuilds in seconds, and the extract is versionless on disk).
 	 */
-	postcodeBinary?: { country: string; database: string }
+	postcodeBinary?: { country: string; database: PathBuilder }
 	/**
 	 * The placetype-pair index build, minus `packageDir`, which follows from `locale`.
 	 */
@@ -723,8 +723,8 @@ export interface DevOverlayManifest {
  * express (en-gb's card-conditional postcode binary is the one that exists).
  */
 export interface DevOverlay {
-	destDir: string
-	cli: string
+	destDir: PathBuilder
+	cli: PathBuilder
 	card: WeightsCard | undefined
 }
 
@@ -733,17 +733,17 @@ export interface DevOverlay {
  */
 const EVIDENCE_LEXICON_SOURCES: ReadonlyArray<{
 	channel: "street_type" | "locality_surface"
-	source: (name: string) => string
+	source: (name: string) => PathBuilder
 }> = [
-	{ channel: "street_type", source: (name) => resolvePath(repoRootPath("data", "gazetteer", name)) },
-	{ channel: "locality_surface", source: (name) => resolvePath(dataRootPath("gazetteer", name)) },
+	{ channel: "street_type", source: (name) => repoRootPathBuilder("data", "gazetteer", name) },
+	{ channel: "locality_surface", source: (name) => dataRootPath("gazetteer", name) },
 ]
 
 /**
  * Read a weights workspace's committed card, or `undefined` when the workspace carries none.
  */
 async function readWeightsCard(workspace: string): Promise<WeightsCard | undefined> {
-	const path = resolvePath(workspacePath(workspace), "model-card.json")
+	const path = workspacePathBuilder(workspace, "model-card.json")
 
 	if (!(await pathExists(path))) return undefined
 
@@ -764,7 +764,7 @@ async function readWeightsCard(workspace: string): Promise<WeightsCard | undefin
  *
  * The dev overlay carries both so `resolveWeights` finds the package whole.
  */
-async function linkCharModel(destDir: string, family: string): Promise<void> {
+async function linkCharModel(destDir: PathBuilder, family: string): Promise<void> {
 	const recipe = (await readReleaseConfig()).charWeights?.[family]
 
 	if (!recipe) {
@@ -777,27 +777,27 @@ async function linkCharModel(destDir: string, family: string): Promise<void> {
 		["model.onnx", recipe.model],
 		["char-vocab.json", recipe.charVocab],
 	] as const) {
-		const source = resolvePath(dataRoot, relative)
+		const source = dataRoot(relative)
 
 		if (!(await pathExists(source))) {
 			throw new Error(`missing char-path source ${name} for ${family}: ${source}`)
 		}
 
-		await linkForce(source, resolvePath(destDir, name))
+		await linkForce(source, destDir(name))
 
-		console.log(`linked ${resolvePath(destDir, name)} ← ${source}`)
+		console.log(`linked ${destDir(name)} ← ${source}`)
 	}
 
 	// The card is what tells `resolveWeights` this package owes a vocabulary
 	// rather than a tokenizer (its `encoder` block), so the overlay carries the
 	// workspace's committed card beside the two binaries.
-	const card = resolvePath(workspacePath(`neural-weights-${family}`), "model-card.json")
+	const card = workspacePathBuilder(`neural-weights-${family}`, "model-card.json")
 
-	await linkForce(card, resolvePath(destDir, "model-card.json"))
-	await removeIfPresent(resolvePath(destDir, "tokenizer.model"))
+	await linkForce(card, destDir("model-card.json"))
+	await removeIfPresent(destDir("tokenizer.model"))
 }
 
-async function linkBaseModelPair(destDir: string, digestCard: string | undefined): Promise<void> {
+async function linkBaseModelPair(destDir: PathBuilder, digestCard: string | undefined): Promise<void> {
 	const recipe = await readReleaseConfig()
 
 	const dataRoot = dataRootPath()
@@ -814,13 +814,13 @@ async function linkBaseModelPair(destDir: string, digestCard: string | undefined
 	]
 
 	for (const { label, name, override, recipe: recipePath } of pair) {
-		const source = override || resolvePath(dataRoot, recipePath)
+		const source = override || dataRoot(recipePath)
 
 		if (!(await pathExists(source))) {
 			throw new Error(`missing source ${label}: ${source} — set MAILWOMAN_DEV_${label.toUpperCase()} to override`)
 		}
 
-		const dest = resolvePath(destDir, name)
+		const dest = destDir(name)
 
 		await linkForce(source, dest)
 
@@ -863,12 +863,12 @@ async function linkBaseModelPair(destDir: string, digestCard: string | undefined
  * a build that runs and fails is an error.
  */
 async function buildPostcodeBinary(
-	destDir: string,
-	cli: string,
-	{ country, database }: { country: string; database: string }
+	destDir: PathBuilder,
+	cli: PathBuilder,
+	{ country, database }: { country: string; database: PathBuilder }
 ): Promise<void> {
 	const artifact = `postcode-${country.toLowerCase()}.bin`
-	const dest = resolvePath(destDir, artifact)
+	const dest = destDir(artifact)
 
 	if (await pathExists(dest)) {
 		console.log(`skipped ${artifact} build — ${dest} already present`)
@@ -894,7 +894,15 @@ async function buildPostcodeBinary(
 
 	const result = spawnProcessSync(
 		process.execPath,
-		[cli, "gazetteer", "postcode-binary", "--out", destDir, "--locale", `${country.toUpperCase()}:${database}`],
+		[
+			cli,
+			"gazetteer",
+			"postcode-binary",
+			"--out",
+			destDir,
+			"--locale",
+			`${country.toUpperCase()}:${database.toString()}`,
+		],
 		{ stdio: "inherit" }
 	)
 
@@ -912,15 +920,15 @@ async function buildPostcodeBinary(
  * and the result includes what a locale-specific step needs afterwards.
  */
 export async function materializeDevOverlay(manifest: DevOverlayManifest): Promise<DevOverlay> {
-	const destDir = String(weightsOverlayPath(manifest.locale))
-	const cli = String(workspacePath("mailwoman", "out", "cli", "index.js"))
+	const destDir = weightsOverlayPath(manifest.locale)
+	const cli = workspacePathBuilder("mailwoman", "out", "cli", "index.js")
 	const card = await readWeightsCard(`neural-weights-${manifest.locale}`)
 
 	await makeDirectories(destDir)
 
 	if (manifest.model?.kind === "inherit") {
-		await removeIfPresent(resolvePath(destDir, "model.onnx"))
-		await removeIfPresent(resolvePath(destDir, "tokenizer.model"))
+		await removeIfPresent(destDir("model.onnx"))
+		await removeIfPresent(destDir("tokenizer.model"))
 	} else if (manifest.model?.kind === "link") {
 		await linkBaseModelPair(destDir, manifest.model.digestCard)
 	} else if (manifest.model?.kind === "char") {
@@ -928,7 +936,7 @@ export async function materializeDevOverlay(manifest: DevOverlayManifest): Promi
 	}
 
 	for (const { source, name, consequenceIfMissing } of manifest.softFeed ?? []) {
-		await linkSoftFeedSibling(source, resolvePath(destDir, name), consequenceIfMissing)
+		await linkSoftFeedSibling(source, destDir(name), consequenceIfMissing)
 	}
 
 	if (manifest.evidenceLexiconsFromCard) {
@@ -943,7 +951,7 @@ export async function materializeDevOverlay(manifest: DevOverlayManifest): Promi
 
 			await linkSoftFeedSibling(
 				source(declared),
-				resolvePath(destDir, declared),
+				destDir(declared),
 				`the ${channel} channel will resolve OFF in this worktree.`
 			)
 		}

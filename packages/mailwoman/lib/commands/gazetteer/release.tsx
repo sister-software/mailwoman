@@ -116,8 +116,8 @@ const GazetteerRelease: CommandComponent<typeof spec> = ({ options }) => {
 			const p = await publishGazetteer({
 				candidateDB: out,
 				version,
-				uploadScript: String(repoRootPathBuilder("docs", "scripts", "publish-demo-assets-to-r2.py")),
-				resourcesFile: String(repoRootPathBuilder("docs", "src", "shared", "resources.tsx")),
+				uploadScript: repoRootPathBuilder("docs", "scripts", "publish-demo-assets-to-r2.py"),
+				resourcesFile: repoRootPathBuilder("docs", "src", "shared", "resources.tsx"),
 				stageDir: stage.path,
 				prefix: "mailwoman",
 				dryRun: options.dryRun,

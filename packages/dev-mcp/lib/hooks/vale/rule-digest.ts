@@ -26,7 +26,7 @@
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { trackedFiles } from "@mailwoman/core/git"
 import { repoRootPath } from "@mailwoman/core/paths"
-import { join } from "path-ts"
+import { join, type PathBuilderLike } from "path-ts"
 import { TextSpliterator } from "spliterator"
 
 /**
@@ -129,7 +129,7 @@ function disabledRules(config: string): Set<string> {
  * An untracked rule file is therefore absent from the digest, which is correct.
  * The rule set is committed.
  */
-function ruleFiles(repoRoot: string): Promise<string[]> {
+function ruleFiles(repoRoot: PathBuilderLike): Promise<string[]> {
 	// One `*` and not `**`: git's pathspec wildcard crosses `/`, so this reaches `Grammar/` too,
 	// where `**/*.yml` would require a subdirectory and return the three nested rules alone.
 	return trackedFiles(repoRoot, ["config/vale/styles/*.yml"])
@@ -145,7 +145,7 @@ function ruleName(path: string): string {
 		.replaceAll("/", ".")
 }
 
-export async function readChatRules(repoRoot = String(repoRootPath())): Promise<ValeRule[]> {
+export async function readChatRules(repoRoot: PathBuilderLike = repoRootPath()): Promise<ValeRule[]> {
 	const config = await readLocalTextFile(join(repoRoot, "config", "vale", ".vale-chat.ini"))
 	const off = disabledRules(config)
 	const rules: ValeRule[] = []

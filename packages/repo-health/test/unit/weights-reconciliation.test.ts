@@ -50,7 +50,7 @@ async function treeWith(packages: readonly Weights[]): Promise<{ root: string; d
 		await writeLocalJSONFile(weights.card ?? { version: "1.0.0" }, join(workspace, "model-card.json"))
 	}
 
-	return { root: String(directory.path), dispose: async () => void (await directory[Symbol.asyncDispose]()) }
+	return { root: directory.path.toString(), dispose: async () => void (await directory[Symbol.asyncDispose]()) }
 }
 
 const run = async (root: string) => weightsReconciliationCheck.run({ repoRoot: root, trackedFiles: [] })

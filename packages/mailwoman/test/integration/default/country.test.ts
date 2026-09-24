@@ -52,7 +52,7 @@ const CLI_TEST_TIMEOUT_MS = 120_000
 vi.setConfig({ testTimeout: CLI_TEST_TIMEOUT_MS })
 
 const cliBin = await mailwomanCLIPath()
-const GLOBAL_WOF = $public.MAILWOMAN_WOF_GLOBAL_DB ?? String(dataRootPath("db", "wof", "admin-global-priority.db"))
+const GLOBAL_WOF = $public.MAILWOMAN_WOF_GLOBAL_DB ?? dataRootPath("db", "wof", "admin-global-priority.db")
 
 describe("localeToCountry", () => {
 	test("infers the ISO country from a BCP-47 region subtag", () => {

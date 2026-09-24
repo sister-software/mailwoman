@@ -8,7 +8,7 @@
  */
 
 import { tryParsingJSON, stringifyJSON } from "@mailwoman/core/json"
-import { repoRootPath } from "@mailwoman/core/paths"
+import { repoRootPathBuilder } from "@mailwoman/core/paths"
 import { runFileSync } from "@mailwoman/core/process"
 
 /**
@@ -32,7 +32,7 @@ export interface HookOutput {
  */
 export function runHook(hookPath: string, payload: unknown): HookOutput {
 	const stdout = runFileSync("node", [hookPath], {
-		cwd: String(repoRootPath()),
+		cwd: repoRootPathBuilder(),
 		input: typeof payload === "string" ? payload : stringifyJSON(payload),
 		encoding: "utf8",
 	})

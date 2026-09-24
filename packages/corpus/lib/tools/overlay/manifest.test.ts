@@ -59,7 +59,7 @@ describe("assembleOverlayManifest, on who chose a held-out split", () => {
 	 * A base manifest on disk with one file, which is all the guard runs after.
 	 */
 	async function writeBase(): Promise<string> {
-		const path = String(join(scratch.path, "MANIFEST.json"))
+		const path = join(scratch.path, "MANIFEST.json")
 
 		await writeLocalJSONFile(
 			{
@@ -79,7 +79,7 @@ describe("assembleOverlayManifest, on who chose a held-out split", () => {
 
 	const overlay = (parquet: string, split: "train" | "val" | "test") => ({
 		base: "",
-		newDir: String(scratch.path),
+		newDir: scratch.path,
 		modalRoot: "/data/corpus/versioned/v0.2.0/corpus-v0.2.0",
 		version: "0.2.0",
 		files: [{ parquet, source: "syn-de", split }],

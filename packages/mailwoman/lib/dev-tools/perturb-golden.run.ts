@@ -36,7 +36,6 @@ import { OVERLAY_LOCALE_BY_COUNTRY } from "#eval-harness/gauntlet/routing"
 // Loose scan parity with the retired local argv helpers: unknown flags tolerated.
 const { values: rawValues } = parseArguments({
 	options: { golden: { type: "string" }, out: { type: "string" }, "per-file": { type: "string" } },
-	strict: false,
 	allowPositionals: true,
 })
 

@@ -17,7 +17,7 @@
 import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { tryResolvePackageSpecifier } from "@mailwoman/core/module/resolve-from"
 import { syncArtifact } from "@mailwoman/resolver-wof-wasm/host-assets"
-import { basename, dirname, resolvePath } from "path-ts"
+import { basename, dirname, type PathBuilderLike, resolvePath } from "path-ts"
 
 //#region Model artifact staging
 
@@ -59,7 +59,7 @@ export function relativeImportSpecifiers(source: string): string[] {
  *
  * @param destDir - E.g. static/mailwoman/maplibre
  */
-export async function stageMapLibreWorker(destDir: string): Promise<string[]> {
+export async function stageMapLibreWorker(destDir: PathBuilderLike): Promise<string[]> {
 	const workerPath = tryResolvePackageSpecifier(import.meta.url, "maplibre-gl", "dist/maplibre-gl-worker.mjs")
 
 	if (!workerPath) {

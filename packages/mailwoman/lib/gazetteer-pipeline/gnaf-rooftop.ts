@@ -168,9 +168,9 @@ export async function buildGNAFRooftopDatabase(options: GNAFRooftopOptions): Pro
 	const release = options.release ?? "may26-gda2020"
 
 	const standardDir =
-		options.standardDir ?? String(dataRootPath("gnaf", "may26", "extracted", "G-NAF", "G-NAF MAY 2026", "Standard"))
+		options.standardDir ?? dataRootPath("gnaf", "may26", "extracted", "G-NAF", "G-NAF MAY 2026", "Standard")
 
-	const out = options.out ?? String(dataRootPath("db", "osm", "address-points-au-au.db"))
+	const out = options.out ?? dataRootPath("db", "osm", "address-points-au-au.db")
 	const log = options.log ?? (() => {})
 
 	if (!new Date(options.createdAt).toISOString() || new Date(options.createdAt).toISOString() !== options.createdAt) {
@@ -195,7 +195,15 @@ export async function buildGNAFRooftopDatabase(options: GNAFRooftopOptions): Pro
 		await removePath(tmp)
 	}
 
-	const counts: GNAFRooftopResult = { out, written: 0, retired: 0, alias: 0, noNumber: 0, noGeocode: 0, noStreet: 0 }
+	const counts: GNAFRooftopResult = {
+		out: out.toString(),
+		written: 0,
+		retired: 0,
+		alias: 0,
+		noNumber: 0,
+		noGeocode: 0,
+		noStreet: 0,
+	}
 
 	{
 		using kdb = new DatabaseClient<OSMAddressPointDatabase>(tmp)

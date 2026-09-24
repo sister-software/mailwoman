@@ -36,8 +36,8 @@ const GazetteerCapitals: CommandComponent<typeof spec> = ({ options }) => {
 		const { dataRootPath, repoRootPathBuilder } = await import("@mailwoman/core/utils")
 
 		const result = await buildCapitalsReference({
-			geonamesDir: options.geonames ?? String(dataRootPath("geonames")),
-			outPath: options.out ?? String(repoRootPathBuilder("data", "gazetteer", "capitals-v1.json")),
+			geonamesDir: options.geonames ?? dataRootPath("geonames"),
+			outPath: options.out ?? repoRootPathBuilder("data", "gazetteer", "capitals-v1.json"),
 		})
 
 		const c = result.coverage

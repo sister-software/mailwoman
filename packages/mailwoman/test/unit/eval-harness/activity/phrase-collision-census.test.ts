@@ -23,14 +23,13 @@ import {
 	type PhraseCollisionCensus,
 	runPhraseCollisionCensus,
 } from "mailwoman/eval-harness/activity-lexicon/phrase-collision-census"
-import { resolvePath } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 
 const COMMITTED_CENSUS = "packages/mailwoman/lib/eval-harness/activity-lexicon/collision-census.json"
 
 const lexicon = await readActivityLexicon()
 
-const committedCensusPath = resolvePath(String(repoRootPath()), COMMITTED_CENSUS)
+const committedCensusPath = repoRootPath(COMMITTED_CENSUS)
 const committed = await readLocalJSONFile<PhraseCollisionCensus>(committedCensusPath)
 
 /**

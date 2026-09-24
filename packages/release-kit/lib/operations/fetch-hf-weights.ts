@@ -32,7 +32,7 @@ export const fetchHFWeightsOperation = defineOperation({
 		checksumUndeclared: z.array(z.string()),
 	}),
 	async run(input, context) {
-		const destRoot = input.into ? String(resolvePath(context.repoRoot, input.into)) : context.repoRoot
+		const destRoot = input.into ? resolvePath(context.repoRoot, input.into) : context.repoRoot
 
 		const report = await fetchHFWeights(destRoot, {
 			repoRoot: context.repoRoot,

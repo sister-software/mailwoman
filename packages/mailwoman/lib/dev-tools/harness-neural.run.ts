@@ -93,9 +93,6 @@ function parseArgs(): Args {
 		assembled: false,
 	}
 
-	// node:util parseArgs (strict:false = old scan parity: unknown flags tolerated —
-	// including the retired `--symmetric-match` (only ever governed the deleted v0 arm's scoring)
-	// and the retired `--arbitrate` (#478 inc 3. The `arbitrate` PipelineOpt no longer exists)).
 	const { values } = parseArguments({
 		options: {
 			"admin-fst": { type: "string" },
@@ -115,7 +112,6 @@ function parseArgs(): Args {
 			tokenizer: { type: "string" },
 			"unit-repair": { type: "boolean" },
 		},
-		strict: false,
 		allowPositionals: true,
 	})
 

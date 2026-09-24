@@ -169,7 +169,7 @@ export function readCSVRecords(source: AsyncDataResource | AsyncChunkIterator): 
  */
 export function readZippedCSVRecords(archivePath: PathBuilderLike, entryName: string): AsyncSequence<CSVRecord> {
 	return AsyncSequence.from<CSVRecord>(async () => {
-		if (!(await pathExists(String(archivePath)))) {
+		if (!(await pathExists(archivePath))) {
 			console.error(`  WARN: ${archivePath} is not cached — skipping ${entryName}`)
 
 			return []

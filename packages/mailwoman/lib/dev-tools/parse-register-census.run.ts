@@ -98,7 +98,7 @@ for (const locale of ["us", "fr", "adversarial"]) {
  * census exists to size is only visible here.
  */
 for (const panel of ["us", "us-shape-stratified"]) {
-	const path = String(dataRootPath("eval", "coord", `${panel}.jsonl`))
+	const path = dataRootPath("eval", "coord", `${panel}.jsonl`)
 
 	if (!(await pathExists(path))) continue
 

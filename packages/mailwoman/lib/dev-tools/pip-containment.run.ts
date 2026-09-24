@@ -19,7 +19,7 @@
  *   name] [--json OUT]
  */
 
-import { wofReposRoot } from "@mailwoman/core/data-root"
+import { wofReposPath } from "@mailwoman/core/data-root"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { pyFixed } from "@mailwoman/core/numeric"
@@ -34,13 +34,11 @@ import { Globerator } from "spliterator/node/fs"
  */
 const MAX_LISTED_ARTIFACTS = 12
 
-const WOF_REPOS = wofReposRoot()
-
 async function adminRoots(): Promise<string[]> {
-	const pattern = WOF_REPOS("whosonfirst-data/whosonfirst-data-admin-*/data")
+	const pattern = wofReposPath("whosonfirst-data/whosonfirst-data-admin-*/data")
 	const matched = await Globerator.from(pattern, { absolute: true }).toSorted()
 
-	return [...matched, `${WOF_REPOS}/whosonfirst-data-admin-us/data`]
+	return [...matched, wofReposPath("whosonfirst-data-admin-us/data").toString()]
 }
 
 const ADMIN_ROOTS = await adminRoots()
@@ -121,7 +119,6 @@ interface ResolvedRow {
 async function main(): Promise<number> {
 	const { values, positionals } = parseArguments({
 		options: { label: { type: "string" }, json: { type: "string" } },
-		strict: false,
 		allowPositionals: true,
 	})
 

@@ -172,10 +172,10 @@ export function selectPostcodes(codes: Iterable<string>, limit: number, seed: nu
 /**
  * Return every required input path that is absent, preserving declaration order for diagnostics.
  */
-export async function findMissingPostcodeSources(
-	paths: readonly string[],
-	exists: (path: string) => Promise<boolean> = pathExists
-): Promise<string[]> {
+export async function findMissingPostcodeSources<P extends PathBuilderLike>(
+	paths: readonly P[],
+	exists: (path: P) => Promise<boolean> = pathExists
+): Promise<P[]> {
 	const results = await Promise.all(paths.map(async (path) => ({ path, exists: await exists(path) })))
 
 	return results.filter((result) => !result.exists).map(({ path }) => path)
@@ -235,7 +235,7 @@ export const barePostcodeRecipe: CorpusRecipe = {
 		// Check the complete input set before writing the first row.
 		// A missing municipality otherwise produces a plausible non-empty artifact with
 		// less Swedish coverage than the recipe declares.
-		const missing = await findMissingPostcodeSources(SOURCES.map(({ csv }) => String(csv)))
+		const missing = await findMissingPostcodeSources(SOURCES.map(({ csv }) => csv))
 
 		if (missing.length) {
 			throw new Error(

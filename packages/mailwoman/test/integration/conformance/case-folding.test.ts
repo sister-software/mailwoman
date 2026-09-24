@@ -42,8 +42,8 @@ async function weightsPresent(): Promise<boolean> {
 }
 
 const gazetteerPresent = async (): Promise<boolean> =>
-	(await pathExists(String(dataRootPath("db", "wof", "admin-global-priority.db")))) &&
-	(await pathExists(String(dataRootPath("db", "wof", "postcode-locality-intl.db"))))
+	(await pathExists(dataRootPath("db", "wof", "admin-global-priority.db"))) &&
+	(await pathExists(dataRootPath("db", "wof", "postcode-locality-intl.db")))
 
 describe.skipIf(!(await weightsPresent()) || !(await gazetteerPresent()))(
 	"case-folding invariance — live pipeline",

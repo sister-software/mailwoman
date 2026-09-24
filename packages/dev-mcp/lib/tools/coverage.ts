@@ -115,7 +115,7 @@ export const coverageTool = async (_deps: DevToolDeps): Promise<DevTool> => ({
 		const report = await censusCoverage({
 			configPath,
 			manifestPath,
-			casesRoot: `${String(repoRootPath())}/packages/mailwoman/lib/eval-harness/gauntlet/cases`,
+			casesRoot: repoRootPath("packages", "mailwoman", "lib", "eval-harness", "gauntlet", "cases"),
 			refresh: args["refresh"] === true,
 		})
 

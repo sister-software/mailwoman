@@ -165,7 +165,7 @@ async function runKind(kind: Kind, options: Options): Promise<string> {
 					yield* stream(records, {
 						mapping: opts.mapping,
 						geocode: {
-							wofDBPath: options.wof || String(dataRootPath("db", "wof", "admin-global-priority.db")),
+							wofDBPath: options.wof || dataRootPath("db", "wof", "admin-global-priority.db").toString(),
 							dataRoot: options.dataRoot || mailwomanDataRoot(),
 							locale: "en-US",
 							country: "US",

@@ -19,7 +19,7 @@
  *   and by path.
  */
 
-import { basename, join, relative, sep } from "path-ts"
+import { basename, join, type PathBuilderLike, relative, sep } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
 import { statPath } from "#fs/readers"
@@ -128,7 +128,7 @@ export interface CompiledFreshness {
  * with the caller that knows what it loads.
  */
 export async function checkCompiledFreshness(
-	repoRoot: string,
+	repoRoot: PathBuilderLike,
 	workspaces: readonly string[]
 ): Promise<CompiledFreshness> {
 	let newestSource: TimestampedFile | null = null

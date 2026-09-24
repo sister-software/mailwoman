@@ -7,7 +7,7 @@
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories, setTimestamps, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { checkCompiledFreshness } from "@mailwoman/core/module/compiled-freshness"
-import { join } from "path-ts"
+import { join, type PathBuilder } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 
 const fixtures = new AsyncDisposableStack()
@@ -22,8 +22,8 @@ afterAll(() => fixtures.disposeAsync())
  */
 const WORKSPACE = "packages/probe"
 
-async function checkout(): Promise<{ root: string; workspace: string }> {
-	const root = String(fixtures.use(await temporaryDirectory("mw-compiled-")).path)
+async function checkout(): Promise<{ root: PathBuilder; workspace: string }> {
+	const root = fixtures.use(await temporaryDirectory("mw-compiled-")).path
 	const workspace = join(root, WORKSPACE)
 
 	await makeDirectories(join(workspace, "out"))
@@ -169,7 +169,7 @@ describe("checkCompiledFreshness", () => {
 
 	it("takes the newest source and emit ACROSS the named workspaces", async () => {
 		// A caller that names too few workspaces buys a `fresh` it has not earned, so the walk must span the set.
-		const root = String(fixtures.use(await temporaryDirectory("mw-compiled-multi-")).path)
+		const root = fixtures.use(await temporaryDirectory("mw-compiled-multi-")).path
 		const first = join(root, "packages/one")
 		const second = join(root, "packages/two")
 

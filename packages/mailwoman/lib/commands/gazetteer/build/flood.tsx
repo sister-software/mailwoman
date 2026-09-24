@@ -182,7 +182,7 @@ const GazetteerBuildFlood: CommandComponent<typeof spec> = ({ options }) => {
 		const identity = await readFloodSourceIdentity({ geodatabasePath })
 
 		const out = options.out ?? dataRootPath("db", "flood", "flood.db").toString()
-		const buildSHA = resolveBuildSHA(repoRootPath().toString())
+		const buildSHA = resolveBuildSHA(repoRootPath())
 
 		const result = await buildFloodDatabase({
 			// A `--limit` run is the smoke rung and reads a prefix in one process.

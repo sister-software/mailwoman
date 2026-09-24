@@ -142,11 +142,11 @@ const GazetteerBuildPostcodePrefix: CommandComponent<typeof spec, [DatabaseName]
 
 		const database = args[0] as DatabaseName
 		const recipe: DatabaseRecipe = DATABASE_RECIPES[database]
-		const sourcePath = options.source ?? String(dataRootPath("db", "wof", recipe.sourceFile))
-		const adminPath = options.admin ?? String(dataRootPath("db", "wof", "admin-global-priority.db"))
+		const sourcePath = options.source ?? dataRootPath("db", "wof", recipe.sourceFile)
+		const adminPath = options.admin ?? dataRootPath("db", "wof", "admin-global-priority.db")
 
 		const polygonPath = recipe.polygonFile
-			? (options.polygons ?? String(dataRootPath("db", "wof", recipe.polygonFile)))
+			? (options.polygons ?? dataRootPath("db", "wof", recipe.polygonFile))
 			: undefined
 
 		for (const [label, path] of [
@@ -168,7 +168,7 @@ const GazetteerBuildPostcodePrefix: CommandComponent<typeof spec, [DatabaseName]
 		const buildDate = new Date().toISOString()
 		const day = buildDate.slice(0, 10)
 
-		const outPath = options.out ?? String(dataRootPath("postcode-prefix", `postcode-prefix-${recipe.scope}-${day}.bin`))
+		const outPath = options.out ?? dataRootPath("postcode-prefix", `postcode-prefix-${recipe.scope}-${day}.bin`)
 
 		// The database's own meta is the authority on where it came from and what it does not cover —
 		// re-deriving that prose here would let the two drift, and the database is the one that knows.

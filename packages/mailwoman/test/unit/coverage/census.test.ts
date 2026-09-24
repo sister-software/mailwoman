@@ -176,14 +176,12 @@ describe("readBoardCoverage", () => {
 /**
  * The corpus is a build artifact rather than a fixture, so this leg runs only where one exists.
  */
-const CORPUS = String(
-	dataRootPath(
-		"corpus",
-		"versioned",
-		"v0.26.0-trailing-region-leftcontext",
-		"corpus-v0.26.0-trailing-region-leftcontext",
-		"MANIFEST.json"
-	)
+const CORPUS = dataRootPath(
+	"corpus",
+	"versioned",
+	"v0.26.0-trailing-region-leftcontext",
+	"corpus-v0.26.0-trailing-region-leftcontext",
+	"MANIFEST.json"
 )
 
 describe.skipIf(!(await pathExists(CORPUS)))("buildCorpusCensus against a real database", () => {
@@ -253,10 +251,10 @@ describe("buildCorpusCensus refuses an empty count", () => {
 		const paths: string[] = []
 
 		for (const version of ["v0.9.9-one", "v0.26.0-two"]) {
-			const manifest = join(String(versionedRoot), version, `corpus-${version}`, "MANIFEST.json")
+			const manifest = join(versionedRoot, version, `corpus-${version}`, "MANIFEST.json")
 
 			await writeLocalJSONFile({ corpus_version: version, slices: [] }, manifest)
-			paths.push(String(manifest))
+			paths.push(manifest)
 		}
 
 		const shared = new Date("2026-09-20T12:00:00Z")
@@ -265,7 +263,7 @@ describe("buildCorpusCensus refuses an empty count", () => {
 			await utimes(path, shared, shared)
 		}
 
-		vi.stubEnv("MAILWOMAN_DATA_ROOT", String(directory.path))
+		vi.stubEnv("MAILWOMAN_DATA_ROOT", directory.path.toString())
 
 		try {
 			await expect(newestManifest()).rejects.toThrow(/share the newest modification time/)
@@ -431,7 +429,7 @@ describe("scope.config.json's registered training configs", () => {
 		expect(registered.length).toBeGreaterThan(0)
 
 		for (const entry of registered) {
-			const path = String(repoRootPath(...entry.config.split("/")))
+			const path = repoRootPath(...entry.config.split("/"))
 
 			expect(await pathExists(path)).toBe(true)
 		}

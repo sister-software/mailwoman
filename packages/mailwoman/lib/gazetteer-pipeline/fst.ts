@@ -187,7 +187,7 @@ export interface FSTFreshnessRow {
  */
 export async function checkAdminDerivedFSTFreshness(dbPath: string): Promise<FSTFreshnessRow[]> {
 	const source = await readWOFSourceIdentity(dbPath)
-	const wofRoot = String(dataRootPath("db", "wof"))
+	const wofRoot = dataRootPath("db", "wof")
 
 	const rows: FSTFreshnessRow[] = []
 

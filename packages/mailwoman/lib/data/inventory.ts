@@ -11,7 +11,7 @@ import type { layerschemadatabase } from "@mailwoman/core/layers/schema"
 import { getRow } from "@mailwoman/core/utils"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { tableExists } from "@mailwoman/sqlite/introspection"
-import { basename, join, relative } from "path-ts"
+import { basename, join, type PathBuilderLike, relative } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
 /**
@@ -123,7 +123,7 @@ export interface InventoryReport {
  * Opened read-only and closed immediately: every built database in this repo is sealed `0444`,
  * and a reader that opened one read-write would fail on exactly the artifacts it most needs to describe.
  */
-export function probeManifest(path: string): { manifest?: LayerManifest; error?: string } {
+export function probeManifest(path: PathBuilderLike): { manifest?: LayerManifest; error?: string } {
 	let db: DatabaseClient<layerschemadatabase> | undefined
 
 	try {
@@ -203,7 +203,8 @@ async function findDatabases(dataRoot: string, maxDepth: number): Promise<{ path
 async function inventoryEntry(dataRoot: string, path: string): Promise<InventoryEntry> {
 	const rel = relative(dataRoot, path)
 	const segment = rel.split("/")[0] ?? ""
-	const link = (await isSymbolicLink(path)) ? await readLink(path) : undefined
+
+	const link = (await isSymbolicLink(path)) ? await readLink(path) : null
 	const bytes = (await pathExists(path)) ? (await statPath(path)).size : 0
 
 	const base: InventoryEntry = {

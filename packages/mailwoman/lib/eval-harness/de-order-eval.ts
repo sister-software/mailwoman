@@ -31,7 +31,7 @@
 import { dataRootPath, tempRootPath } from "@mailwoman/core/data-root"
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { writeLocalTextFile, makeDirectories } from "@mailwoman/core/fs/writers"
-import { join } from "path-ts"
+import { join, PathBuilder, type PathBuilderLike } from "path-ts"
 import { TextSpliterator } from "spliterator"
 
 import { oaResolverEval } from "#eval-harness/oa/resolver/eval"
@@ -113,13 +113,13 @@ export interface DeOrderEvalOptions {
 	 *
 	 * Default: the v0.6.0-a0 tokenizer under `$MAILWOMAN_DATA_ROOT`.
 	 */
-	tokenizer?: string
+	tokenizer?: PathBuilderLike
 	/**
 	 * Anchor lookup JSON.
 	 *
 	 * Default: the pilot lookup under `$MAILWOMAN_DATA_ROOT`.
 	 */
-	anchorLookup?: string
+	anchorLookup?: PathBuilderLike
 	/**
 	 * Where the six per-run `.md`/`.log` pairs land.
 	 *
@@ -188,8 +188,8 @@ export async function deOrderEval(
 ): Promise<DeOrderEvalResult> {
 	const model = options.model ?? ""
 	const card = options.card ?? ""
-	const tok = options.tokenizer ?? String(dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model"))
-	const lookup = options.anchorLookup ?? String(dataRootPath("anchor", "pilot-anchor-lookup.json"))
+	const tok = PathBuilder.from(options.tokenizer ?? dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model"))
+	const lookup = PathBuilder.from(options.anchorLookup ?? dataRootPath("anchor", "pilot-anchor-lookup.json"))
 	const out = options.out ?? tempRootPath("order-eval")
 
 	if (!model || !card) {
@@ -235,7 +235,7 @@ export async function deOrderEval(
 					defaultCountry: country,
 					...(options.limit ? { limit: options.limit } : {}),
 					...(options.lookupMemo ? { lookupMemo: true } : {}),
-					...(profileDirectory ? { profileJSON: String(join(profileDirectory, `${outName}.json`)) } : {}),
+					...(profileDirectory ? { profileJSON: join(profileDirectory, `${outName}.json`) } : {}),
 				},
 				(line) => outLines.push(line),
 				(line) => errLines.push(line)

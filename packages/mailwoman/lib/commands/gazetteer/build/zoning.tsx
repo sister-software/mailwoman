@@ -182,7 +182,7 @@ const GazetteerBuildZoning: CommandComponent<typeof spec> = ({ options }) => {
 		const coverageResolution = Number(options.coverageResolution)
 		const indexResolution = Number(options.indexResolution)
 		const out = options.out ?? dataRootPath("db", "zoning", "zoning-ireland.db").toString()
-		const buildSHA = resolveBuildSHA(repoRootPath().toString())
+		const buildSHA = resolveBuildSHA(repoRootPath())
 
 		// A narrowed run reads a subset on purpose, so its declared count is the subset's own
 		// and the build asserts the sum against that rather than against the whole product.

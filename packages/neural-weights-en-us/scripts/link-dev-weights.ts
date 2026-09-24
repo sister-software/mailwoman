@@ -39,7 +39,7 @@ await materializeDevOverlay({
 	model: { kind: "link", digestCard: "neural-weights-en-us" },
 	softFeed: [softFeed.anchor, softFeed.country],
 	evidenceLexiconsFromCard: true,
-	postcodeBinary: { country: "us", database: String(dataRootPath("db", "wof", "postalcode-us.db")) },
+	postcodeBinary: { country: "us", database: dataRootPath("db", "wof", "postalcode-us.db") },
 	pairIndex: {
 		country: "us",
 		delta: PAIR_INDEX_DELTA,

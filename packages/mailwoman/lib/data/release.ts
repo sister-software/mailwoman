@@ -17,7 +17,7 @@
 
 import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { tryParsingJSON } from "@mailwoman/core/json"
-import { join } from "path-ts"
+import { join, type PathBuilderLike } from "path-ts"
 
 import type { BundleArtifact } from "#data/bundles"
 
@@ -31,9 +31,9 @@ export type DataReleaseManifest = Record<string, string>
  *
  * @returns Null (legacy mode) when absent or malformed.
  */
-export async function readReleaseManifest(dataRoot: string): Promise<DataReleaseManifest | null> {
+export async function readReleaseManifest(dataRoot: PathBuilderLike): Promise<DataReleaseManifest | null> {
 	try {
-		const raw = tryParsingJSON(await readLocalTextFile(join(dataRoot, "releases.json")))
+		const raw = tryParsingJSON(await readLocalTextFile(dataRoot, "releases.json"))
 
 		if (!raw || typeof raw !== "object") return null
 		const out: DataReleaseManifest = {}

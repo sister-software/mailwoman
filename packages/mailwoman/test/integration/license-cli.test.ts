@@ -58,7 +58,7 @@ describe("mailwoman license", () => {
 
 	test("keygen mints a pair under the config root and issue refuses a key the register does not carry", async () => {
 		await using scratch = await temporaryDirectory("license-cli-")
-		const env = { MAILWOMAN_CONFIG_ROOT: String(scratch.path) }
+		const env = { MAILWOMAN_CONFIG_ROOT: scratch.path.toString() }
 
 		const keygen = await cli(["keygen", "--major", "9", "--json"], env)
 		const minted = parseJSONStrict<{ kid: string; publicKeyPEM: string }>(keygen.stdout)
@@ -153,7 +153,7 @@ describe("mailwoman license", () => {
 	test("adopt refuses a token this build does not trust and writes nothing", async () => {
 		await using scratch = await temporaryDirectory("license-cli-adopt-")
 		const { kid, token } = await selfServiceToken()
-		const result = await cli(["adopt", token, "--secret", SECRET], { MAILWOMAN_CONFIG_ROOT: String(scratch.path) })
+		const result = await cli(["adopt", token, "--secret", SECRET], { MAILWOMAN_CONFIG_ROOT: scratch.path.toString() })
 
 		expect(result.exitCode).toBe(1)
 		expect(result.stderr).toContain(`does not trust key id ${kid}`)
@@ -165,7 +165,7 @@ describe("mailwoman license", () => {
 		await using scratch = await temporaryDirectory("license-cli-refresh-")
 		const { kid, token } = await selfServiceToken()
 		await using worker = await stubWorker(token)
-		const env = { MAILWOMAN_CONFIG_ROOT: String(scratch.path), MAILWOMAN_LICENSE_URL: worker.url }
+		const env = { MAILWOMAN_CONFIG_ROOT: scratch.path.toString(), MAILWOMAN_LICENSE_URL: worker.url }
 
 		await writePrivateTextFile(
 			stringifyJSON({ lid: LID, secret: SECRET }),

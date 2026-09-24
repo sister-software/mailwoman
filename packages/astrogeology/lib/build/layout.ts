@@ -43,5 +43,5 @@ export function buildOutputs(body: BuildableBodyID): BuildOutputNames {
  * The output directory a body builds into, unless `--out` names another.
  */
 export function buildDirectory(body: BuildableBodyID, out: string | undefined): string {
-	return out ?? String(dataRootPath("astrogeology", body, "build"))
+	return out ?? dataRootPath("astrogeology", body, "build").toString()
 }

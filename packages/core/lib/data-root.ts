@@ -6,41 +6,15 @@
  *   Path builders for Mailwoman's platform-native application directories.
  */
 
-import {
-	createPathBuilderResolver,
-	type PathBuilder,
-	type PathBuilderLike,
-	type PathBuilderResolver,
-	resolvePath,
-	resolvePathBuilder,
-} from "path-ts"
+import { PathBuilder, type PathBuilderLike, createPathBuilderResolver, resolvePath } from "path-ts"
 
 import { $public } from "#env/index"
-
-/**
- * The Mailwoman data root from the typed public environment.
- */
-export function mailwomanDataRoot(): string {
-	return $public.MAILWOMAN_DATA_ROOT
-}
 
 /**
  * The per-user configuration root (`$MAILWOMAN_CONFIG_ROOT`, defaulting to the platform config directory):
  * where the license signing key lives, and anything else that is the operator's rather than the data's.
  */
-export function mailwomanConfigRoot(): string {
-	return $public.MAILWOMAN_CONFIG_ROOT
-}
-
-/**
- * A path under the config root — the sibling of {@link dataRootPath},
- * so no caller composes `$MAILWOMAN_CONFIG_ROOT` by hand.
- */
-export const configRootPath: PathBuilderResolver = ((...segments: PathBuilderLike[]) => {
-	const resolver = createPathBuilderResolver(mailwomanConfigRoot())
-
-	return segments.length ? resolver(...(segments as [PathBuilderLike, ...string[]])) : resolver()
-}) as PathBuilderResolver
+export const configRootPath = createPathBuilderResolver<"~env/config-root">(() => $public.MAILWOMAN_CONFIG_ROOT)
 
 /**
  * Build a path under the data root, e.g. `dataRootPath("db", "wof", "admin-global-priority.db")`.
@@ -49,14 +23,15 @@ export const configRootPath: PathBuilderResolver = ((...segments: PathBuilderLik
  * A resolver bound once at module evaluation would freeze the root to whatever
  * the first importer's environment held.
  *
- * The result is a {@link PathBuilder}: call it to descend, `resolvePath(...)`
- * or `.toString()` it at a string boundary.
  */
-export const dataRootPath: PathBuilderResolver = ((...segments: PathBuilderLike[]) => {
-	const resolver = createPathBuilderResolver(mailwomanDataRoot())
+export const dataRootPath = createPathBuilderResolver<"~env/data-root">(() => $public.MAILWOMAN_DATA_ROOT)
 
-	return segments.length ? resolver(...(segments as [PathBuilderLike, ...string[]])) : resolver()
-}) as PathBuilderResolver
+/**
+ * The Mailwoman data root as a primitive string.
+ */
+export function mailwomanDataRoot(): string {
+	return dataRootPath().toString()
+}
 
 /**
  * A path under the data root's database group, `$MAILWOMAN_DATA_ROOT/db/`.
@@ -74,48 +49,33 @@ export const dataRootPath: PathBuilderResolver = ((...segments: PathBuilderLike[
  *
  * Compose a database path through this function so one edit moves all of them.
  */
-export function databaseRootPath(dataRoot: PathBuilderLike = mailwomanDataRoot(), ...segments: string[]): PathBuilder {
-	return resolvePathBuilder(dataRoot, "db", ...segments)
+export function databaseRootPath<T extends PathBuilderLike>(source: T) {
+	return PathBuilder.from(source)("db")
 }
 
 /**
- * The Who's On First git checkouts: `$MAILWOMAN_DATA_ROOT/src/wof-repos/`.
+ * Path builder for the Who's On First git checkouts: `$MAILWOMAN_DATA_ROOT/src/wof-repos/`.
  *
  * These are cloned sources rather than built artifacts, so they sit under `src/`
- * and not under the `db/` group {@link databaseRootPath} names.
+ * rather than under the `db/` group {@link databaseRootPath} names.
  * `mailwoman gazetteer repos-sync` writes them and the admin, postcode and polygon builds read them.
- *
- * It takes no root override, unlike {@link databaseRootPath}: each of the five callers
- * either uses the configured data root or replaces the whole path with a `--repos` argument.
  */
-export function wofReposRoot(...segments: string[]): PathBuilder {
-	return dataRootPath("src", "wof-repos", ...segments)
-}
+export const wofReposPath = dataRootPath("src", "wof-repos")
 
 /**
  * The dev-weights overlay for a locale: `$MAILWOMAN_DATA_ROOT/weights/<locale>/`.
  *
- * One definition of the convention, because it is written by ten `link-dev-weights.ts`
- * scripts and read by `@mailwoman/neural`'s `resolveWeights`, and a reader that
- * disagreed with the writers about the directory would report the artifacts absent
- * rather than misplaced — every sibling degrades `existsSync → undefined`.
+ * Keep this location centralized: multiple `link-dev-weights.ts` scripts write here,
+ * and `@mailwoman/neural` (`resolveWeights`) reads from here.
  *
- * It lives outside git deliberately.
- * The binaries are not committed, so materializing them into the tracked package directory
- * is what made a fresh worktree unable to geocode, made `yarn test` mutate tracked
- * directories as a side effect, and put a symlink in a publish tarball (`YN0035`).
+ * This lives outside git on purpose.
+ * Weight binaries are not committed, and writing them into tracked package directories
+ * caused worktree churn and publish issues (`YN0035`).
  *
- * The data root is shared across every checkout on the machine and is not packed by anything.
+ * The data root is shared across local checkouts and is never packaged.
  */
-export function weightsOverlayPath(locale: string, ...segments: string[]): PathBuilder {
+export function weightsOverlayPath(locale: string, ...segments: string[]) {
 	return dataRootPath("weights", locale.toLowerCase(), ...segments)
-}
-
-/**
- * The Mailwoman temporary-file root from the typed public environment.
- */
-export function mailwomanTempRoot(): PathBuilder {
-	return resolvePathBuilder($public.MAILWOMAN_TEMP_ROOT)
 }
 
 /**
@@ -123,8 +83,13 @@ export function mailwomanTempRoot(): PathBuilder {
  *
  * Reads the env on each call, so a late environment change (or a test stub) is honored.
  */
-export function tempRootPathBuilder(...segments: string[]): PathBuilder {
-	return resolvePathBuilder($public.MAILWOMAN_TEMP_ROOT, ...segments)
+export const tempRootPathBuilder = createPathBuilderResolver<"~env/temp-root">(() => $public.MAILWOMAN_TEMP_ROOT)
+
+/**
+ * The Mailwoman temporary-file root.
+ */
+export function mailwomanTempRoot(): PathBuilder {
+	return tempRootPathBuilder()
 }
 
 /**
@@ -139,60 +104,45 @@ export function tempRootPath(...segments: string[]): string {
 /**
  * The Mailwoman cache root from the typed public environment.
  */
-export function mailwomanCacheRoot(): PathBuilder {
-	return resolvePathBuilder($public.MAILWOMAN_CACHE_ROOT)
-}
+export const cacheRootPathBuilder = createPathBuilderResolver<"~env/cache-root">(() => $public.MAILWOMAN_CACHE_ROOT)
 
 /**
- * Path builder under Mailwoman's application cache directory.
+ * The Mailwoman cache root.
  */
-export function cacheRootPathBuilder(...segments: string[]): PathBuilder {
-	return resolvePathBuilder($public.MAILWOMAN_CACHE_ROOT, ...segments)
+export function mailwomanCacheRoot(): PathBuilder {
+	return cacheRootPathBuilder()
 }
 
 /**
- * Absolute-path-string resolver under the cache directory — the string-returning
- * sibling of {@link cacheRootPathBuilder}.
+ * Absolute path string under the Mailwoman cache root.
  */
 export function cacheRootPath(...segments: string[]): string {
-	return resolvePath($public.MAILWOMAN_CACHE_ROOT, ...segments)
+	return cacheRootPathBuilder(...segments).toString()
 }
 
 /**
- * The default WOF extract list the FTS backend probes when no single `--wof-db` is given:
- * the global admin-priority extract plus the postcode extracts, with country-aware routing in
- * `pickExtractForPlacetype` sending each postcode query to the extract that claims its country (#920).
+ * Default WOF extracts for FTS when `--wof-db` is not provided.
  *
- * All under `dataRoot` (defaults to the configured {@link mailwomanDataRoot}.
- * Callers thread a `--data-root` option through).
- * A fresh array each call.
+ * Includes the global admin-priority extract plus postcode extracts.
+ * Routing in `pickExtractForPlacetype` sends each postcode query to the extract
+ * that claims that country (#920).
  *
- * Callers filter with `existsSync`, so a deployment missing any of them degrades to whatever is present.
+ * All paths are under `dataRoot` (default: {@link mailwomanDataRoot}; callers may pass `--data-root`).
+ * Returns a fresh array each call.
  *
- * This list is deliberately smaller than `DEFAULT_POSTCODE_EXTRACTS`
- * (`mailwoman/gazetteer-pipeline/index.ts`), which is the set the candidate gazetteer is
- * built from — twenty-odd extracts including the 876 MB Code-Point Open GB one.
- * These are attached live per query, so the cost of a member is paid at every boot
- * rather than once at build time.
+ * Callers usually filter with `existsSync`, so missing files are skipped.
  *
- * Membership here is earned by a extract the runtime cannot resolve its locales without.
+ * This runtime list is intentionally smaller than `DEFAULT_POSTCODE_EXTRACTS`
+ * (`mailwoman/gazetteer-pipeline/index.ts`), because these databases are attached live at boot.
  *
- * Two notes on specific members, because both look like mistakes and are not:
- *
- * - The tail extract's own contents moved on 2026-08-05.
- *   It carried GB (1,839,678 of 1,895,753 rows, ~946 MB) until Code-Point Open
- *   replaced those rows under a clean licence.
- *   It is now the nine-country namesake set FI/CZ/SK/SI/DK/no/HR/PL/SE at 26 MB.
- *   Rebuild: `mailwoman gazetteer build postcode-geonames`.
- * - `postalcode-ni-osm.db` is **build-local**: OSM `addr:postcode` under ODbL,
- *   never published, so on any machine that did not build it the `existsSync` filter
- *   simply drops it and GB postcode queries behave as they did before.
- *   It is listed rather than special-cased because that filter is the tier's enforcement.
- *   It is also the only GB-claiming extract in this list.
- *   The Code-Point Open extract is not here — so nothing competes with it for `BT` routing.
+ * Notes:
+ * - `postalcode-geonames-tail.db` now contains FI/CZ/SK/SI/DK/no/HR/PL/SE.
+ * - `postalcode-ni-osm.db` is build-local (ODbL, OSM `addr:postcode`) and may be absent.
+ *   A missing file is filtered out.
+ *   It is the only GB-claiming extract here, and Code-Point Open is not in this list.
  */
-export function wofExtractPaths(dataRoot: PathBuilderLike = mailwomanDataRoot()): string[] {
-	return Object.values(wofExtractPathsByName(dataRoot))
+export function wofExtractPaths(source: PathBuilderLike = mailwomanDataRoot()): string[] {
+	return Object.values(wofExtractPathsByName(source))
 }
 
 /**
@@ -237,8 +187,8 @@ export interface WOFExtractPaths {
 /**
  * {@link wofExtractPaths} as a named record, in the same order the runtime attaches them.
  */
-export function wofExtractPathsByName(dataRoot: PathBuilderLike = mailwomanDataRoot()): WOFExtractPaths {
-	const wof = databaseRootPath(dataRoot, "wof")
+export function wofExtractPathsByName(source: PathBuilderLike = mailwomanDataRoot()): WOFExtractPaths {
+	const wof = databaseRootPath(source)("wof")
 
 	return {
 		adminGlobalPriority: wof("admin-global-priority.db").toString(),

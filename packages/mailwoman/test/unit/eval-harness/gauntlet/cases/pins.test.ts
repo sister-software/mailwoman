@@ -18,7 +18,7 @@ import {
 import { resolvePath } from "path-ts"
 import { describe, expect, it } from "vitest"
 
-const realTestText = await readLocalTextFile(resolvePath(String(repoRootPath()), PIN_TEST_PATH))
+const realTestText = await readLocalTextFile(resolvePath(repoRootPath(), PIN_TEST_PATH))
 
 describe("the committed-pin read/write interface", () => {
 	it("reads the three constants out of the real pin test", () => {

@@ -45,10 +45,10 @@ const GazetteerPublish: CommandComponent<typeof spec> = ({ options, args }) => {
 		const root = mailwomanDataRoot()
 		const candidateDB = args[0] ?? join(wofDir(root), DEFAULT_CANDIDATE_OUT)
 		const version = options.gazetteerVersion ?? defaultGazetteerVersion(new Date())
-		const uploadScript = String(repoRootPathBuilder("docs", "scripts", "publish-demo-assets-to-r2.py"))
+		const uploadScript = repoRootPathBuilder("docs", "scripts", "publish-demo-assets-to-r2.py")
 
 		const resourcesFile = options.bumpDemo
-			? String(repoRootPathBuilder("docs", "src", "shared", "resources", "index.ts"))
+			? repoRootPathBuilder("docs", "src", "shared", "resources", "index.ts")
 			: undefined
 
 		await using stage = await temporaryDirectory("mailwoman-gazetteer-")

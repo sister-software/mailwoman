@@ -33,7 +33,7 @@ afterAll(() => fixtures.disposeAsync())
 
 describe("checkReleaseListIdentity", () => {
 	it("holds on the current tree: 60 published, every absence sanctioned by name", async () => {
-		const identity = await checkReleaseListIdentity(String(repoRootPath()))
+		const identity = await checkReleaseListIdentity(repoRootPath())
 
 		expect(identity.publishCount).toBe(60)
 		expect(identity.unexpectedAbsences).toEqual([])
@@ -173,13 +173,13 @@ describe("the tarball audit refuses the two v9.2.0 manifest-promise classes", ()
 })
 
 describe("the Hugging Face materialization plan", () => {
-	const repoRoot = String(repoRootPath())
+	const repoRoot = repoRootPath()
 
 	/**
 	 * The release's weights workspaces, read the way the recipe reads them.
 	 */
 	async function weightsWorkspaces(): Promise<string[]> {
-		const config = await readLocalJSONFile<{ locales: string[] }>(join(repoRoot, "release.config.json"))
+		const config = await readLocalJSONFile<{ locales: string[] }>(repoRootPath("release.config.json"))
 
 		return config.locales.map((locale) => `packages/neural-weights-${locale}`)
 	}
@@ -213,7 +213,7 @@ describe("the Hugging Face materialization plan", () => {
 		const unaccounted: string[] = []
 
 		for (const workspace of await weightsWorkspaces()) {
-			const manifest = await readPackageJSON(join(repoRoot, workspace, "package.json"))
+			const manifest = await readPackageJSON(repoRootPath(workspace, "package.json"))
 
 			for (const entry of literalFilesEntries(manifest.files)) {
 				const path = `${workspace}/${entry}`
@@ -248,9 +248,9 @@ describe("the pair-index parity selector", () => {
 		// The workflow now calls a package script whose filter is the test's name,
 		// and this asserts the filter is not empty-handed.
 		// The same answer a dispatch would return several minutes in.
-		const repoRoot = String(repoRootPath())
+		const repoRoot = repoRootPath()
 
-		const manifest = await readPackageJSON(join(repoRoot, "package.json"))
+		const manifest = await readPackageJSON(repoRootPath("package.json"))
 
 		const script = manifest.scripts?.["ci:test:pair-index-parity"]
 

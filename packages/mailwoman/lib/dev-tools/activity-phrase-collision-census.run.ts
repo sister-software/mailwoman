@@ -37,7 +37,7 @@ import { createPOINameLookup } from "#poi/intent"
 
 const { values } = parseArguments({ options: { db: { type: "string" }, out: { type: "string" } } })
 
-const databasePath = values.db ?? String(dataRootPath("db", "poi", "poi.db"))
+const databasePath = values.db ?? dataRootPath("db", "poi", "poi.db")
 using database = new DatabaseClient<POIDatabase>(databasePath, { readOnly: true })
 using lookup = new POILookup({ database })
 const shippedRung = createPOINameLookup(lookup)

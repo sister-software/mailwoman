@@ -229,7 +229,7 @@ const GazetteerPairIndex: CommandComponent<typeof spec> = ({ options }) => {
 		// A country whose pairs come entirely from the WOF/secondary sources below runs
 		// with no CSV rather than being handed an empty one.
 		const sourcePath =
-			options.source ?? (country === "gb" ? String(dataRootPath("ppd", "2026-07-22", "gb-tuples.csv")) : undefined)
+			options.source ?? (country === "gb" ? dataRootPath("ppd", "2026-07-22", "gb-tuples.csv") : undefined)
 
 		if (sourcePath && !(await pathExists(sourcePath))) {
 			throw new Error(`pair-index: source CSV not found: ${sourcePath}`)

@@ -18,7 +18,7 @@ import { $public } from "mailwoman/env"
 import { createGeocodeCommandOptions, createGeocodeSession } from "mailwoman/geocode"
 import { describe, expect, test } from "vitest"
 
-const DEFAULT_WOF_PATH = String(dataRootPath("db", "wof", "admin-global-priority.db"))
+const DEFAULT_WOF_PATH = dataRootPath("db", "wof", "admin-global-priority.db")
 const wofPath = $public.MAILWOMAN_WOF_DB ?? DEFAULT_WOF_PATH
 const hasWOFDB = await pathExists(wofPath)
 

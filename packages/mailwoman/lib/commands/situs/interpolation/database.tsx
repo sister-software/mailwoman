@@ -312,7 +312,7 @@ const SitusInterpolationDatabase: CommandComponent<typeof spec> = ({ options }) 
 							streetRaw,
 							polyline,
 							"tiger:edges",
-							String(options.release)
+							options.release
 						)
 
 						sides++
@@ -337,7 +337,7 @@ const SitusInterpolationDatabase: CommandComponent<typeof spec> = ({ options }) 
 		// becomes the live one, and a manifest written after it would be a write to a published file.
 		await stampLayerManifest(tmpOut, {
 			name: `interpolation-us-${STATE.toLowerCase()}`,
-			version: String(options.release),
+			version: options.release,
 			schemaVersion: 1,
 			// US Census tiger/Line is public domain, so unlike the ODbL layers this one could ship.
 			// It is build-local because nothing publishes it today rather than because the licence forbids it.
@@ -345,9 +345,9 @@ const SitusInterpolationDatabase: CommandComponent<typeof spec> = ({ options }) 
 			license: "public-domain",
 			attribution: "US Census Bureau TIGER/Line",
 			source: "tiger",
-			sourceVintage: String(options.release),
+			sourceVintage: options.release,
 			buildCmd: "mailwoman situs interpolation-database",
-			buildSHA: buildSHA(String(repoRootPath())),
+			buildSHA: buildSHA(repoRootPath()),
 			freshnessPolicy: LayerFreshnessPolicy.Sealed,
 			// No H3, no WOF id, no address-id — see `SpineKeys.street`.
 			// Every probe joins on `street_norm`.

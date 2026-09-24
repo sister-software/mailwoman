@@ -8,7 +8,7 @@ import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { getRun, listRuns, pruneRuns, putRun, RETENTION_DAYS } from "@mailwoman/dev-mcp/run-store"
 import type { StoredRun } from "@mailwoman/dev-mcp/run-store"
-import { join } from "path-ts"
+import { join, type PathBuilder } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 import { afterAll, describe, expect, it } from "vitest"
 
@@ -16,8 +16,8 @@ const fixtures = new AsyncDisposableStack()
 
 afterAll(() => fixtures.disposeAsync())
 
-async function store(): Promise<string> {
-	const dir = String(fixtures.use(await temporaryDirectory("mwdev-runs-")).path)
+async function store(): Promise<PathBuilder> {
+	const dir = fixtures.use(await temporaryDirectory("mwdev-runs-")).path
 
 	return dir
 }

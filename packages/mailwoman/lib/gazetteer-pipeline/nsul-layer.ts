@@ -402,7 +402,7 @@ export async function openNSULArchive(sourceDir: string): Promise<{
  *
  * Vintage directories are `yyyy-MM`, so lexical order is chronological order.
  */
-export async function resolveLatestNSULSourceDir(root = String(dataRootPath("db", "nsul"))): Promise<string> {
+export async function resolveLatestNSULSourceDir(root = dataRootPath("db", "nsul")): Promise<string> {
 	const candidates = await Globerator.from("*", {
 		cwd: root,
 		absolute: false,
@@ -750,8 +750,8 @@ export async function buildNSULLayer(options: BuildNSULLayerOptions): Promise<Bu
 	const started = Date.now()
 	const now = options.now ?? new Date()
 	const sourceDir = options.sourceDir ? resolvePath(options.sourceDir) : await resolveLatestNSULSourceDir()
-	const out = options.out ?? String(dataRootPath("db", "nsul", "nsul.db"))
-	const uprnDatabasePath = options.uprnDatabasePath ?? String(dataRootPath("db", "uprn", "uprn.db"))
+	const out = options.out ?? dataRootPath("db", "nsul", "nsul.db")
+	const uprnDatabasePath = options.uprnDatabasePath ?? dataRootPath("db", "uprn", "uprn.db")
 	const minimumPlausibleRows = options.minimumPlausibleRows ?? NSUL_MINIMUM_PLAUSIBLE_ROWS
 
 	// Acquire and verify the archive against its sidecar, recording a missing sidecar explicitly.
@@ -785,7 +785,7 @@ export async function buildNSULLayer(options: BuildNSULLayerOptions): Promise<Bu
 		}
 	}
 
-	const itemRaw = await readLocalTextFile(String(join(sourceDir, "item.json"))).catch(() => null)
+	const itemRaw = await readLocalTextFile(join(sourceDir, "item.json")).catch(() => null)
 	const item = itemRaw ? tryParsingJSON<NSULItemRecord>(itemRaw) : null
 
 	// resolver-wof-sqlite is an optional peer — lazy import (the gazetteer-pipeline convention).
@@ -967,12 +967,12 @@ export async function buildNSULLayer(options: BuildNSULLayerOptions): Promise<Bu
 	kdb.exec("ANALYZE")
 	await kdb.destroy()
 
-	phase("seal", out)
+	phase("seal", out.toString())
 	await sealDatabase(ingestPath)
 	await swapDatabaseIntoPlace(ingestPath, out)
 
 	return {
-		out,
+		out: out.toString(),
 		sourceDir,
 		read,
 		inserted,

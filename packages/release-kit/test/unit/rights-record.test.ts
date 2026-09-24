@@ -23,7 +23,7 @@ import {
 	VersionSeries,
 } from "@mailwoman/release-kit/weights/rights/record"
 import { weightsRightsRecords } from "@mailwoman/release-kit/weights/rights/write"
-import { join } from "path-ts"
+import { join, type PathBuilderLike } from "path-ts"
 import { describe, expect, it } from "vitest"
 
 interface Fixture {
@@ -32,7 +32,9 @@ interface Fixture {
 	card?: object
 }
 
-async function treeWith(fixtures: readonly Fixture[]): Promise<{ root: string; dispose: () => Promise<void> }> {
+async function treeWith(
+	fixtures: readonly Fixture[]
+): Promise<{ root: PathBuilderLike; dispose: () => Promise<void> }> {
 	const directory = await temporaryDirectory("mw-rights-record-")
 
 	for (const fixture of fixtures) {
@@ -44,7 +46,7 @@ async function treeWith(fixtures: readonly Fixture[]): Promise<{ root: string; d
 		}
 	}
 
-	return { root: String(directory.path), dispose: async () => void (await directory[Symbol.asyncDispose]()) }
+	return { root: directory.path, dispose: async () => void (await directory[Symbol.asyncDispose]()) }
 }
 
 describe("licenseNamedIn", () => {
@@ -392,7 +394,7 @@ describe("readWeightsRightsRecords", () => {
 
 describe("the records this repository holds today", () => {
 	it("covers twelve published weights packages, each attributing the artifacts it ships", async () => {
-		const records = await weightsRightsRecords(String(repoRootPath()))
+		const records = await weightsRightsRecords(repoRootPath())
 
 		expect(records).toHaveLength(12)
 
@@ -406,7 +408,7 @@ describe("the records this repository holds today", () => {
 	})
 
 	it("reports no artifact whose attribution sits in another package's card", async () => {
-		const records = await weightsRightsRecords(String(repoRootPath()))
+		const records = await weightsRightsRecords(repoRootPath())
 
 		const foreign = records.flatMap((record) =>
 			record.foreignAttribution.map((entry) => `${entry.artifact} ships in ${record.packageName}`)

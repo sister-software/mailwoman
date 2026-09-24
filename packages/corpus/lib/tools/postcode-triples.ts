@@ -371,14 +371,14 @@ export async function readTriplesFromParentJoin(
 	countries: readonly string[],
 	options: { postcodeDB?: string; adminDB?: string } = {}
 ): Promise<PostcodeTriple[]> {
-	const postcodeDB = options.postcodeDB ?? String(dataRootPath("db", "wof", "postalcode-intl.db"))
-	const adminDB = options.adminDB ?? String(dataRootPath("db", "wof", "admin-global-priority-importance.db"))
+	const postcodeDB = options.postcodeDB ?? dataRootPath("db", "wof", "postalcode-intl.db")
+	const adminDB = options.adminDB ?? dataRootPath("db", "wof", "admin-global-priority-importance.db")
 
 	if (!(await pathExists(postcodeDB)) || !(await pathExists(adminDB))) return []
 
 	using db = new DatabaseClient<WOFDatabase>(adminDB, { readOnly: true })
 
-	db.exec(`ATTACH DATABASE '${escapeSQLString(postcodeDB)}' AS pc`)
+	db.exec(`ATTACH DATABASE '${escapeSQLString(postcodeDB.toString())}' AS pc`)
 
 	const statement = db.prepare(`
 		SELECT p.name AS postcode, a.id AS locality_id, a.name AS locality, r.id AS region_id, r.name AS region,
@@ -539,7 +539,7 @@ export async function readPairsFromAdmin(
 	countries: readonly string[],
 	options: { adminDB?: string; locale?: (cc: string) => string } = {}
 ): Promise<AdminPair[]> {
-	const adminDB = options.adminDB ?? String(dataRootPath("db", "wof", "admin-global-priority-importance.db"))
+	const adminDB = options.adminDB ?? dataRootPath("db", "wof", "admin-global-priority-importance.db")
 
 	if (!(await pathExists(adminDB))) return []
 
@@ -606,7 +606,7 @@ export async function readPairsFromAdmin(
  * so a checkout without it builds the same rows it did before rather than silently emitting none.
  */
 export async function createKnownLocalityCheck(country: string, adminDB?: string): Promise<(name: string) => boolean> {
-	const path = adminDB ?? String(dataRootPath("db", "wof", "admin-global-priority-importance.db"))
+	const path = adminDB ?? dataRootPath("db", "wof", "admin-global-priority-importance.db")
 
 	if (!(await pathExists(path))) return () => true
 
@@ -742,7 +742,7 @@ export async function readTriplesFromGeonames(
  * Resolve a GeoNames export path under the standard fetch out-root.
  */
 export function geonamesPostalPath(country: string, sourcesRoot?: string): string {
-	const root = sourcesRoot ?? String(dataRootPath("corpus", "sources"))
+	const root = sourcesRoot ?? dataRootPath("corpus", "sources")
 
 	return join(root, "geonames-postal", `${country.toUpperCase()}.txt`)
 }

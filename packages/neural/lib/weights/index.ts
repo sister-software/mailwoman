@@ -30,9 +30,7 @@ import { resolveEvidenceLexicon } from "#weights/lexicon"
 /**
  * User-level cache root used by `mailwoman parse --download-weights`.
  */
-export function weightsCacheDir(): PathBuilder {
-	return cacheRootPathBuilder("weights")
-}
+export const weightsCacheDir = cacheRootPathBuilder("weights")
 
 /**
  * Data-root overlay root: `$MAILWOMAN_DATA_ROOT/weights`.
@@ -75,20 +73,20 @@ export interface ResolveWeightsOpts {
 	/**
 	 * Explicit `model.onnx` path.
 	 */
-	modelPath?: string
+	modelPath?: PathBuilderLike
 	/**
 	 * Explicit `tokenizer.model` path.
 	 */
-	tokenizerPath?: string
+	tokenizerPath?: PathBuilderLike
 	/**
 	 * Explicit `char-vocab.json` for char-encoder models.
 	 */
-	charVocabPath?: string
+	charVocabPath?: PathBuilderLike
 	/**
 	 * Explicit `model-card.json` path for explicit model/tokenizer runs.
 	 * Falls back to a card beside `modelPath`.
 	 */
-	modelCardPath?: string
+	modelCardPath?: PathBuilderLike
 	/**
 	 * Base package `model-card.json` when using `mailwoman.baseWeights`.
 	 */
@@ -252,7 +250,25 @@ function buildArtifactReport(
 	return entries.map(([name, path]) => ({ name, path: path ?? null, origin: originOf(path, dirs) }))
 }
 
-export async function resolveWeights(opts: ResolveWeightsOpts): Promise<ResolvedWeights> {
+/**
+ * {@link ResolveWeightsOpts} with the explicit paths in the string form {@link ResolvedWeights} reports.
+ */
+type ExplicitPathOpts = Omit<ResolveWeightsOpts, "modelPath" | "tokenizerPath" | "charVocabPath" | "modelCardPath"> & {
+	modelPath?: string
+	tokenizerPath?: string
+	charVocabPath?: string
+	modelCardPath?: string
+}
+
+export async function resolveWeights(input: ResolveWeightsOpts): Promise<ResolvedWeights> {
+	const opts: ExplicitPathOpts = {
+		...input,
+		modelPath: input.modelPath?.toString(),
+		tokenizerPath: input.tokenizerPath?.toString(),
+		charVocabPath: input.charVocabPath?.toString(),
+		modelCardPath: input.modelCardPath?.toString(),
+	}
+
 	const tried: PathBuilder[] = []
 
 	if (opts.modelPath && (opts.tokenizerPath || opts.charVocabPath)) {
@@ -393,7 +409,7 @@ export async function resolveWeights(opts: ResolveWeightsOpts): Promise<Resolved
 async function resolveFromPackageDir(
 	packageDir: PathBuilder,
 	locale: Intl.UnicodeBCP47LocaleIdentifier,
-	opts: ResolveWeightsOpts,
+	opts: ExplicitPathOpts,
 	source: string,
 	tried: PathBuilderLike[]
 ): Promise<ResolvedWeights> {

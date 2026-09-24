@@ -51,7 +51,6 @@ const MIN_COLLISION_REDUCTION = 5
 
 const { values: rawValues } = parseArguments({
 	options: { db: { type: "string" }, n: { type: "string" }, out: { type: "string" } },
-	strict: false,
 	allowPositionals: true,
 })
 

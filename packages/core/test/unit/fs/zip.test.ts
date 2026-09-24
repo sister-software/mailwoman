@@ -49,7 +49,7 @@ beforeAll(async () => {
 
 	zip.addFile("big.bin", BIG)
 	zip.addFile("small.txt", Buffer.from("hello"))
-	archivePath = String(directory.resolve("probe.zip"))
+	archivePath = directory.resolve("probe.zip")
 	zip.writeZip(archivePath)
 })
 

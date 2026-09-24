@@ -64,7 +64,7 @@ const { values } = parseArguments({
 		// the postcode changes the model's evidence".
 		// The two the removal arm could not tell apart.
 		"force-kind": { type: "string" },
-		eval: { type: "string", default: String(dataRootPath("eval", "coord", "us.jsonl")) },
+		eval: { type: "string", default: dataRootPath("eval", "coord", "us.jsonl").toString() },
 		// Which codex layout the three well-formed arms are written through.
 		// The default matches the default panel.
 		// A different panel needs its own country, because a layout is what makes the surface

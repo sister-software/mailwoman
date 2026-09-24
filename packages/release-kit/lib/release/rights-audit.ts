@@ -29,7 +29,7 @@ import {
 	readAddressSourceRegister,
 	type TrainingManifest,
 } from "@mailwoman/corpus/source-register"
-import { resolvePath } from "path-ts"
+import { type PathBuilderLike, resolvePath } from "path-ts"
 
 import { LICENSE_FILE, PROVENANCE_FILE } from "#weights/rights/files"
 import { SourceUse, type WeightsRightsRecord } from "#weights/rights/record"
@@ -219,8 +219,8 @@ async function auditRegister(): Promise<SourceRegisterAudit> {
 /**
  * Whether a workspace's `files` array lists both generated rights filenames.
  */
-async function shipsRightsFiles(repoRoot: string, workspace: string): Promise<boolean> {
-	const manifest = await readPackageJSON(String(resolvePath(repoRoot, workspace, "package.json")))
+async function shipsRightsFiles(repoRoot: PathBuilderLike, workspace: string): Promise<boolean> {
+	const manifest = await readPackageJSON(resolvePath(repoRoot, workspace, "package.json"))
 	const files = Array.isArray(manifest.files) ? manifest.files : []
 
 	return [LICENSE_FILE, PROVENANCE_FILE].every((name) => files.includes(name))
@@ -229,7 +229,7 @@ async function shipsRightsFiles(repoRoot: string, workspace: string): Promise<bo
 /**
  * One package's row.
  */
-async function auditPackage(repoRoot: string, record: WeightsRightsRecord): Promise<PackageRightsAudit> {
+async function auditPackage(repoRoot: PathBuilderLike, record: WeightsRightsRecord): Promise<PackageRightsAudit> {
 	const provenance = await readLocalJSONFile<{ unresolved?: unknown }>(
 		resolvePath(repoRoot, record.workspace, PROVENANCE_FILE)
 	)
@@ -261,7 +261,7 @@ async function auditPackage(repoRoot: string, record: WeightsRightsRecord): Prom
  * A read that fails for any reason returns `null` and the caller records the corpus as unestablished.
  * It never reports zero sources, which would read as a corpus built from nothing.
  */
-async function readFrozenManifest(repoRoot: string, corpusVersion: string): Promise<TrainingManifest | null> {
+async function readFrozenManifest(repoRoot: PathBuilderLike, corpusVersion: string): Promise<TrainingManifest | null> {
 	try {
 		return await readLocalJSONFile<TrainingManifest>(
 			resolvePath(repoRoot, FROZEN_MANIFESTS_DIRECTORY, `${corpusVersion}.json`)
@@ -275,7 +275,7 @@ async function readFrozenManifest(repoRoot: string, corpusVersion: string): Prom
  * What each package records about the records that trained it.
  */
 async function auditTraining(
-	repoRoot: string,
+	repoRoot: PathBuilderLike,
 	records: readonly WeightsRightsRecord[]
 ): Promise<TrainingRecordAudit[]> {
 	const rows: TrainingRecordAudit[] = []
@@ -333,7 +333,7 @@ async function auditTraining(
  *
  * Reads the checkout and changes nothing.
  */
-export async function auditRights(repoRoot: string): Promise<RightsAudit> {
+export async function auditRights(repoRoot: PathBuilderLike): Promise<RightsAudit> {
 	const records = await weightsRightsRecords(repoRoot)
 	const register = await auditRegister()
 	const packages: PackageRightsAudit[] = []

@@ -84,7 +84,7 @@ interface Row {
 }
 
 async function boardRows(): Promise<Row[]> {
-	const root = String(repoRootPath("packages", "mailwoman", "lib", "eval-harness", "gauntlet", "cases"))
+	const root = repoRootPath("packages", "mailwoman", "lib", "eval-harness", "gauntlet", "cases")
 	const rows: Row[] = []
 
 	for await (const entry of Globerator.from("*", { cwd: root, absolute: false, onlyFiles: false })) {

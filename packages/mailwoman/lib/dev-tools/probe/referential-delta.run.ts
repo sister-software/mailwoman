@@ -48,7 +48,7 @@ const { values } = parseArguments({ options: { board: { type: "string" } } })
 
 //#region 1 — Gazetteer census of the saturated tail
 
-const adminPath = String(dataRootPath("db", "wof", "admin-global-priority.db"))
+const adminPath = dataRootPath("db", "wof", "admin-global-priority.db")
 
 console.log(`## Referential/population ordering — D-rule measurement\n`)
 console.log(`Saturation population: ${REFERENTIAL_SATURATION_POPULATION.toLocaleString()}\n`)

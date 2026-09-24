@@ -145,7 +145,7 @@ const GazetteerBuildBDC: CommandComponent<typeof spec> = ({ options }) => {
 		console.error(`▸ ${formatBDCThrottleStats(client.throttleStats())}`)
 
 		const out = resolvePath(options.out ?? dataRootPath("bdc", "bdc.db"))
-		const buildSHA = resolveBuildSHA(String(repoRootPath()))
+		const buildSHA = resolveBuildSHA(repoRootPath())
 		const tigerDBPath = resolvePath(dataRootPath("tiger", "tiger.db"))
 
 		console.error(`▸ build: ${out}`)

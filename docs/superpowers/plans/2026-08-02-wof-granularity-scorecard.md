@@ -791,7 +791,7 @@ Run:
 node --input-type=module -e '
 import { buildGranularityLadder } from "./mailwoman/gazetteer-pipeline/granularity.ts"
 import { dataRootPath } from "@mailwoman/core/utils"
-const rows = buildGranularityLadder(String(dataRootPath("wof", "admin-global-priority.db")))
+const rows = buildGranularityLadder((dataRootPath("wof", "admin-global-priority.db")))
 console.log("countries:", rows.length)
 for (const cc of ["GB", "IE", "JP", "DE"]) {
   const r = rows.find((row) => row.country === cc)
@@ -1343,7 +1343,7 @@ export { OptionsSchema as options }
 
 const GazetteerGranularity: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const sourcePath = options.source ?? String(dataRootPath("wof", "admin-global-priority.db"))
+		const sourcePath = options.source ?? dataRootPath("wof", "admin-global-priority.db")
 		const rows = buildGranularityLadder(sourcePath)
 
 		if (!rows.length) {

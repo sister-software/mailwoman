@@ -170,7 +170,7 @@ const GazetteerBuildCoastal: CommandComponent<typeof spec> = ({ options }) => {
 		const coverageResolution = Number(options.coverageResolution)
 		const indexResolution = Number(options.indexResolution)
 		const out = options.out ?? dataRootPath("db", "coastal", "coastal-england.db").toString()
-		const buildSHA = resolveBuildSHA(repoRootPath().toString())
+		const buildSHA = resolveBuildSHA(repoRootPath())
 
 		// The declared count comes from the source's own per-layer totals, so a short
 		// read throws rather than building a shorter coastline.

@@ -219,7 +219,7 @@ export function rerootBaseFilePath(path: string, baseManifestPath: string): stri
  * A path outside `/data/` is returned unchanged.
  */
 export function localManifestFilePath(path: string): string {
-	return path.startsWith("/data/") ? String(dataRootPath(path.slice("/data/".length))) : path
+	return path.startsWith("/data/") ? dataRootPath(path.slice("/data/".length)).toString() : path
 }
 
 /**

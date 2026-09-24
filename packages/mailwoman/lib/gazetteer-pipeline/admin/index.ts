@@ -154,7 +154,7 @@ export async function buildAdmin(opts: BuildAdminOptions = {}): Promise<BuildAdm
 			concurrency: opts.concurrency,
 			batchCommitSize: opts.batchCommitSize,
 			// #1905: GeoNames-anchored label-point adjudication. Reads the same per-country extracts fold-geonames consumes. A data root without them degrades to the plain label preference.
-			anchorLookup: await createGeoNamesAnchorLookup(String(dataRootPath("geonames"))),
+			anchorLookup: await createGeoNamesAnchorLookup(dataRootPath("geonames")),
 			onProgress: (processed, skipped, total) =>
 				phase(
 					"ingest-wof",
@@ -238,7 +238,7 @@ export async function buildAdmin(opts: BuildAdminOptions = {}): Promise<BuildAdm
 
 	// Before the seal — see `stampLayerManifest`, which owns that ordering and its reason.
 	phase("manifest")
-	const sha = buildSHA(String(repoRootPath()))
+	const sha = buildSHA(repoRootPath())
 
 	await stampLayerManifest(
 		out,

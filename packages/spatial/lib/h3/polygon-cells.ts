@@ -310,9 +310,8 @@ export function classifyFeatureCells(
 		} catch (error) {
 			if (resolution <= MIN_INDEX_RESOLUTION) {
 				throw new Error(
-					`${layerLabel}: feature ${featureID} could not be indexed at any resolution down to ${MIN_INDEX_RESOLUTION} — ${String(
-						(error as Error).message
-					)}`
+					`${layerLabel}: feature ${featureID} could not be indexed at any resolution down to ${MIN_INDEX_RESOLUTION}`,
+					{ cause: error }
 				)
 			}
 

@@ -19,7 +19,7 @@ let file: string
 
 beforeAll(async () => {
 	dir = await temporaryDirectory("delimited-")
-	file = String(dir.resolve("TM.txt"))
+	file = dir.resolve("TM.txt")
 	await writeLocalTextFile(DUMP, file)
 })
 
@@ -80,7 +80,7 @@ describe("the checked read", () => {
 	it("recovers the full count on an input where the default answers short", async () => {
 		// An unterminated quote is the worst case: the default reader runs to the end of the
 		// file holding one open region and answers fewer records than the file has lines.
-		const truncating = String(dir.resolve("open-quote.txt"))
+		const truncating = dir.resolve("open-quote.txt")
 
 		await writeLocalTextFile(`1\tAshgabat\t37.95\t58.38\n2\tOvrag "on\t38.23\t55.11\n3\tMary\t37.6\t61.8`, truncating)
 
@@ -106,7 +106,7 @@ describe("the checked read", () => {
 	 * rather than inventing content that cannot produce it.
 	 */
 	it("raises rather than answering short, naming both counts", async () => {
-		const missing = String(dir.resolve("gone.txt"))
+		const missing = dir.resolve("gone.txt")
 
 		// A read that cannot happen at all must also not answer an empty array,
 		// which is the same failure wearing a different mask.

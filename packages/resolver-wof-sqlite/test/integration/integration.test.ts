@@ -25,7 +25,7 @@ import { $public } from "@mailwoman/resolver-wof-sqlite/env"
 import { WOFSQLitePlaceLookup } from "@mailwoman/resolver-wof-sqlite/lookup"
 import { afterAll, beforeAll, describe, expect, test } from "vitest"
 
-const DEFAULT_WOF_PATH = String(dataRootPath("db", "wof", "whosonfirst-data-admin-us-latest.db"))
+const DEFAULT_WOF_PATH = dataRootPath("db", "wof", "whosonfirst-data-admin-us-latest.db")
 const wofPath = $public.MAILWOMAN_WOF_DB ?? DEFAULT_WOF_PATH
 const hasWOFDB = await pathExists(wofPath)
 

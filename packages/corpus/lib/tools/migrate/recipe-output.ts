@@ -128,7 +128,7 @@ export async function migrateRecipeOutput(input: PathBuilderLike, output: PathBu
 	const summary: MigrationSummary = { rows: 0, bySource: {}, alreadyMigrated: 0 }
 	const sink = openWriteStream(output, { encoding: "utf8" })
 
-	for await (const rawLine of TextSpliterator.fromAsync(String(input))) {
+	for await (const rawLine of TextSpliterator.fromAsync(input)) {
 		const line = rawLine.trim()
 
 		if (!line) continue

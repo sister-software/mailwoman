@@ -115,15 +115,7 @@ const GazetteerPostalAlias: CommandComponent<typeof spec> = ({ options }) => {
 			const isDivergent = r.postal_city !== r.geo_locality ? 1 : 0
 			divergent += isDivergent
 
-			insert.run(
-				r.postcode,
-				r.postal_city,
-				r.geo_locality,
-				Number(r.n),
-				isDivergent,
-				"overture:US",
-				String(options.release)
-			)
+			insert.run(r.postcode, r.postal_city, r.geo_locality, Number(r.n), isDivergent, "overture:US", options.release)
 		}
 
 		kdb.exec("COMMIT")

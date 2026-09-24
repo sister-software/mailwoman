@@ -82,7 +82,6 @@ const { values: rawValues } = parseArguments({
 		tokenizer: { type: "string" },
 		wof: { type: "string" },
 	},
-	strict: false,
 	allowPositionals: true,
 })
 

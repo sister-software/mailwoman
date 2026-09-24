@@ -34,6 +34,7 @@ import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
 import type { OSMAddressPointDatabase } from "@mailwoman/osm/sdk/address-point-schema"
 import { normalizeStreetForKeyLocale } from "@mailwoman/resolver-wof-sqlite/street"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
+import type { PathBuilderLike } from "path-ts"
 import { TextSpliterator } from "spliterator"
 
 const STREET_TAGS = new Set(["street", "street_prefix", "street_suffix"])
@@ -82,11 +83,11 @@ const MAX_REPORTED_FAILURES = 12
  * A missing anchor lexicon changes the parse, so a silent fallback here would
  * produce a well-formed wrong floor reading.
  */
-async function resolveWeightsSibling(fileName: string, weightsCache?: string): Promise<string> {
+async function resolveWeightsSibling(fileName: string, weightsCache?: string): Promise<PathBuilderLike> {
 	const candidates = [
 		...(weightsCache ? [`${weightsCache}/node_modules/@mailwoman/neural-weights-en-us/${fileName}`] : []),
-		String(dataRootPath("weights", "en-us", fileName)),
-		`${String(workspacePath("neural-weights-en-us"))}/${fileName}`,
+		dataRootPath("weights", "en-us", fileName),
+		workspacePath("neural-weights-en-us", fileName),
 	]
 
 	const existing = await Promise.all(candidates.map(async (path) => ({ path, exists: await pathExists(path) })))
@@ -119,7 +120,7 @@ export interface FRParseRecallOptions {
 	 * and an unfed arm vs a fed arm is not a comparison.
 	 */
 	model?: string
-	tokenizer?: string
+	tokenizer?: PathBuilderLike
 	/**
 	 * Default `neural-weights-en-us/model-card.json`.
 	 */

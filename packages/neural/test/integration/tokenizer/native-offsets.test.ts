@@ -30,7 +30,7 @@ import { describe, expect, test } from "vitest"
 
 // The dev tokenizer, same source link-dev-weights pins (v0.9.0-multisplice) — resolved via the data root.
 // Skip cleanly on hosts without it.
-const TOKENIZER_PATH = String(dataRootPath("models", "tokenizer", "v0.9.0-multisplice", "tokenizer.model"))
+const TOKENIZER_PATH = dataRootPath("models", "tokenizer", "v0.9.0-multisplice", "tokenizer.model")
 const haveTokenizer = await pathExists(TOKENIZER_PATH)
 
 describe("MailwomanTokenizer — native offsets (SP 0.2.2)", () => {

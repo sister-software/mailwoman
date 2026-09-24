@@ -34,7 +34,7 @@ test("wofExtractPaths: builds the admin + postcode + tail + intl + NL-PC6 + NI-O
 	//
 	// The layout is stated once here and composed with the same path builder the rest of the tree uses,
 	// so a future regrouping fails this assertion in one place instead of drifting from it in six.
-	const extract = (name: string): string => String(join("/data", "db", "wof", name))
+	const extract = (name: string): string => join("/data", "db", "wof", name)
 
 	expect(wofExtractPaths("/data")).toEqual([
 		extract("admin-global-priority.db"),
@@ -53,7 +53,7 @@ test("mailwomanDataRoot: honors MAILWOMAN_DATA_ROOT and threads it into wofExtra
 	setEnv("MAILWOMAN_DATA_ROOT", "/custom/root")
 	expect(mailwomanDataRoot()).toBe("/custom/root")
 	// The default argument reads the env, which is the property under test here rather than the layout.
-	expect(wofExtractPaths()[0]).toBe(String(join("/custom/root", "db", "wof", "admin-global-priority.db")))
+	expect(wofExtractPaths()[0]).toBe(join("/custom/root", "db", "wof", "admin-global-priority.db"))
 
 	setEnv("MAILWOMAN_DATA_ROOT", DefaultMailwomanPaths.data)
 	expect(mailwomanDataRoot()).toBe(DefaultMailwomanPaths.data)

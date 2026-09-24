@@ -273,7 +273,7 @@ export function WeightsGuard({
 					</Text>
 					<Text>
 						Download <Text bold>{weightsPackageName(locale)}</Text> to{" "}
-						<Text dimColor>{String(cacheRoot ?? weightsCacheDir())}</Text>? <Text bold>[Y/n]</Text>
+						<Text dimColor>{(cacheRoot ?? weightsCacheDir()).toString()}</Text>? <Text bold>[Y/n]</Text>
 					</Text>
 				</Box>
 			)

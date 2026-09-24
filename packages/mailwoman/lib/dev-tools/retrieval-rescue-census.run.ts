@@ -25,7 +25,7 @@ const { values } = parseArguments({ options: { "out-json": { type: "string" } } 
 
 const cases = await loadRegressionCases()
 const deps = await buildGauntletDeps()
-const probe = await loadForkEntityDeps({ dataRoot: String(mailwomanDataRoot()), forkEntity: true })
+const probe = await loadForkEntityDeps({ dataRoot: mailwomanDataRoot(), forkEntity: true })
 
 if (!probe.deps.poiLookup) {
 	// The census's entity half is the point.

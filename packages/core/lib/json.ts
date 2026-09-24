@@ -8,13 +8,12 @@
  *   global `JSON` are all it reaches — so the license key module, which a Cloudflare Worker bundles, can depend on it.
  */
 
-import type { PathBuilderLike } from "path-ts"
-import type { Tagged } from "type-fest"
+import type { GetTagMetadata, Tagged } from "type-fest"
 
 /**
  * A branded type representing a string that is known to be valid JSON.
  */
-export type StringifiedJSON = Tagged<"StringifiedJSON", string>
+export type StringifiedJSON<T = unknown> = Tagged<string, "JSON", T>
 
 /**
  * Pretty-print an object as JSON with tabs for indentation.
@@ -34,8 +33,8 @@ export type StringifiedJSON = Tagged<"StringifiedJSON", string>
  * @returns A string containing the pretty-printed JSON representation of the input object.
  * @see {@linkcode stringifyJSON} for a jsonl-compatible version that returns a branded type.
  */
-export function prettyJSON(input: unknown, newline = true, space: string | number = "\t"): StringifiedJSON {
-	return (JSON.stringify(input, null, space) + (newline ? "\n" : "")) as StringifiedJSON
+export function prettyJSON<T = unknown>(input: T, newline = true, space: string | number = "\t"): StringifiedJSON<T> {
+	return (JSON.stringify(input, null, space) + (newline ? "\n" : "")) as StringifiedJSON<T>
 }
 
 /**
@@ -54,8 +53,8 @@ export function prettyJSON(input: unknown, newline = true, space: string | numbe
  * @returns A string containing the JSON representation of the input object.
  * @see {@linkcode prettyJSON} for human-friendly JSON output.
  */
-export function stringifyJSON<T>(input: T, keys?: readonly string[]): StringifiedJSON {
-	return JSON.stringify(input, keys as string[] | undefined) as StringifiedJSON
+export function stringifyJSON<T>(input: T, keys?: readonly string[]): StringifiedJSON<T> {
+	return JSON.stringify(input, keys as string[] | undefined) as StringifiedJSON<T>
 }
 
 /**
@@ -66,6 +65,7 @@ export function stringifyJSON<T>(input: T, keys?: readonly string[]): Stringifie
  * Callers that need a throw on corrupt input, or `JSON.parse`'s reviver parameter,
  * use `JSON.parse` directly behind a scoped lint disable.
  */
+export function tryParsingJSON<T extends StringifiedJSON<unknown>>(input: unknown): GetTagMetadata<T, "JSON">
 export function tryParsingJSON<T = unknown>(input: unknown): T | null
 export function tryParsingJSON<T = unknown, F = T>(input: unknown, fallback: F): T | F
 
@@ -94,14 +94,14 @@ export class JSONParseError extends Error {
  *
  * @returns The parsed object.
  */
-export function parseJSONStrict<T = unknown>(input: PathBuilderLike): T {
+export function parseJSONStrict<T = unknown>(input: string): T {
 	if (!input) {
 		throw new JSONParseError(`Expected JSON input, got ${input}`)
 	}
 
 	try {
 		// oxlint-disable-next-line no-restricted-properties -- The wrapper the rule recommends.
-		return JSON.parse(String(input)) as T
+		return JSON.parse(input) as T
 	} catch (error: unknown) {
 		throw new JSONParseError(`Failed to parse JSON`, { cause: error })
 	}

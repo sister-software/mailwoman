@@ -22,7 +22,7 @@ import { ensureRoot, isRoot } from "@mailwoman/storage-kit/sudo"
 
 import { dispatch } from "#dispatch"
 
-const repoRoot = String(repoRootPath())
+const repoRoot = repoRootPath()
 const args = [...cliArguments()]
 
 /**

@@ -41,7 +41,7 @@
 import { tempRootPath } from "@mailwoman/core/data-root"
 import { writeLocalFile, copyFileTo, makeDirectories } from "@mailwoman/core/fs/writers"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
-import { join } from "path-ts"
+import { join, type PathBuilderLike } from "path-ts"
 import { TextSpliterator } from "spliterator"
 import { $ } from "zx"
 
@@ -71,14 +71,14 @@ export interface ExternalArenasOptions {
 	 * {@linkcode ExternalArenasOptions.modelCard} become required.
 	 */
 	model?: string
-	tokenizer?: string
+	tokenizer?: PathBuilderLike
 	modelCard?: string
 	/**
 	 * Gaz-trained models (v4.2.0+): feed the ship config — zero-filled clues depress
 	 * country recall and fake an affix crash.
 	 */
 	gazetteerLexicon?: string
-	anchorLookup?: string
+	anchorLookup?: PathBuilderLike
 	/**
 	 * Conventions mask (#511 Tier A): `auto` for v4.3.0+ ship config.
 	 */
@@ -119,14 +119,14 @@ export async function externalArenas(
 		const modelCard = options.modelCard
 
 		if (!tokenizer || !modelCard) throw new Error("model is set → tokenizer and modelCard are required")
-		modelArgs.push("--model", model, "--tokenizer", tokenizer, "--model-card", modelCard)
+		modelArgs.push("--model", model, "--tokenizer", tokenizer.toString(), "--model-card", modelCard)
 
 		if (options.gazetteerLexicon) {
 			modelArgs.push("--gazetteer-lexicon", options.gazetteerLexicon)
 		}
 
 		if (options.anchorLookup) {
-			modelArgs.push("--anchor-lookup", options.anchorLookup)
+			modelArgs.push("--anchor-lookup", options.anchorLookup.toString())
 		}
 
 		if (options.conventions) {

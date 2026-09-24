@@ -395,7 +395,7 @@ export async function loadAuthorityDesignationRoute(
 	try {
 		const { createAuthorityDesignationRoute } = await import("#observations/flood-route")
 
-		return createAuthorityDesignationRoute({ databasePath: String(floodDBPath) })
+		return createAuthorityDesignationRoute({ databasePath: floodDBPath })
 	} catch {
 		return undefined
 	}
@@ -425,7 +425,7 @@ export async function loadSoilCapabilityRoute(
 	try {
 		const { createSoilCapabilityRoute } = await import("#observations/soil-route")
 
-		return createSoilCapabilityRoute({ databasePath: String(soilDBPath) })
+		return createSoilCapabilityRoute({ databasePath: soilDBPath })
 	} catch {
 		return undefined
 	}
@@ -461,7 +461,7 @@ export async function loadCoastalErosionRoute(
 	try {
 		const { createCoastalErosionRoute } = await import("#observations/coastal-route")
 
-		return createCoastalErosionRoute({ databasePath: String(coastalDBPath) })
+		return createCoastalErosionRoute({ databasePath: coastalDBPath })
 	} catch {
 		return undefined
 	}
@@ -499,7 +499,7 @@ export async function loadZoningDesignationRoute(
 	try {
 		const { createZoningDesignationRoute } = await import("#observations/zoning-route")
 
-		return createZoningDesignationRoute({ databasePath: String(zoningDBPath) })
+		return createZoningDesignationRoute({ databasePath: zoningDBPath })
 	} catch {
 		return undefined
 	}

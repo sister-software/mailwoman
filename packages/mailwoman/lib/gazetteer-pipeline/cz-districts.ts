@@ -56,8 +56,8 @@ export async function buildCZDistrictsDatabase(
 ): Promise<{ out: string; inserted: number; sourceMD5: string }> {
 	const { createUnifiedIndexes, createUnifiedSchema } = await import("@mailwoman/resolver-wof-sqlite/unified-schema")
 	const { buildPlaceSearchFTS } = await import("@mailwoman/resolver-wof-sqlite")
-	const sourcePath = opts.sourcePath ?? String(dataRootPath("geonames", "CZ.txt"))
-	const outPath = opts.out ?? String(dataRootPath("db", "wof", "localities-cz-districts.db"))
+	const sourcePath = opts.sourcePath ?? dataRootPath("geonames", "CZ.txt")
+	const outPath = opts.out ?? dataRootPath("db", "wof", "localities-cz-districts.db")
 	const tmpPath = `${outPath}.tmp`
 
 	const raw = await readLocalTextFile(sourcePath)
@@ -129,5 +129,5 @@ export async function buildCZDistrictsDatabase(
 	await swapDatabaseIntoPlace(tmpPath, outPath)
 	await sealDatabase(outPath)
 
-	return { out: outPath, inserted, sourceMD5 }
+	return { out: outPath.toString(), inserted, sourceMD5 }
 }

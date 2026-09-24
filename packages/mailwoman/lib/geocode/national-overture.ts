@@ -18,6 +18,7 @@ import { databaseRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { AddressPointSqliteLookup } from "@mailwoman/resolver-wof-sqlite"
 import { createStreetLocaleRegistry, type StreetLocale } from "@mailwoman/resolver-wof-sqlite/street"
+import type { PathBuilderLike } from "path-ts"
 
 import type { RegionDatabases } from "#geocode/regions"
 
@@ -80,8 +81,8 @@ export function supportedOvertureCountries(): string[] {
  * not exist, and the caller below treats an absent file as a country without a rooftop tier:
  * Taiwan's 3.1 GB `address-points-tw.db` is on disk and read as absent.
  */
-export function nationalAddressPointsPath(dataRoot: string, countryCode: string): string {
-	return String(databaseRootPath(dataRoot, "address-points", `address-points-${countryCode.toLowerCase()}.db`))
+export function nationalAddressPointsPath(dataRoot: PathBuilderLike, countryCode: string): string {
+	return databaseRootPath(dataRoot)("address-points", `address-points-${countryCode.toLowerCase()}.db`).toString()
 }
 
 /**
@@ -91,16 +92,16 @@ export function nationalAddressPointsPath(dataRoot: string, countryCode: string)
  * Prefer {@link OvertureNationalDatabaseProvider.create}, which warms before answering.
  */
 export class OvertureNationalDatabaseProvider implements Disposable {
-	readonly #dataRoot: string
+	readonly #dataRoot: PathBuilderLike
 	readonly #cache = new Map<string, RegionDatabases>()
 	readonly #onDisk = new Set<string>()
 	#warmPromise?: Promise<void>
 
-	constructor(dataRoot: string) {
+	constructor(dataRoot: PathBuilderLike) {
 		this.#dataRoot = dataRoot
 	}
 
-	static async create(dataRoot: string): Promise<OvertureNationalDatabaseProvider> {
+	static async create(dataRoot: PathBuilderLike): Promise<OvertureNationalDatabaseProvider> {
 		const provider = new OvertureNationalDatabaseProvider(dataRoot)
 
 		await provider.warm()

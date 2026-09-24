@@ -1007,7 +1007,7 @@ export function resolveTilesPath(flagValue?: string): string | null {
 	if (flagValue) return flagValue
 	if ($public.MAILWOMAN_TILES) return $public.MAILWOMAN_TILES
 
-	const fallback = String(dataRootPath("tiles", "planet.pmtiles"))
+	const fallback = dataRootPath("tiles", "planet.pmtiles")
 
 	return existsSync(fallback) ? fallback : null
 }

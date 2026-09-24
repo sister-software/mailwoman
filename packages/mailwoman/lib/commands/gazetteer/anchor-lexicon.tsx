@@ -89,7 +89,7 @@ const GazetteerAnchorLexicon: CommandComponent<typeof spec> = ({ options }) => {
 
 		const { repoRootPathBuilder } = await import("@mailwoman/core/utils")
 
-		const output = options.out ?? String(repoRootPathBuilder("data", "gazetteer", "anchor-lexicon-v1.json"))
+		const output = options.out ?? repoRootPathBuilder("data", "gazetteer", "anchor-lexicon-v1.json")
 
 		// surface → bits, split across the two match-rule maps.
 		const entries = new Map<string, number>() // lowercase key

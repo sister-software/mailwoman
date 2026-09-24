@@ -332,7 +332,7 @@ async function measure(
 	}
 
 	if (needed.has("committed_collision_census")) {
-		const censusPath = options.collisionCensusPath ?? String(repoRootPath(COLLISION_CENSUS_PATH))
+		const censusPath = options.collisionCensusPath ?? repoRootPath(COLLISION_CENSUS_PATH)
 		const census = await readLocalJSONFile<CollisionCensus>(censusPath)
 
 		const censusHolds =
@@ -678,7 +678,7 @@ export async function runPhase2Decision(options: Phase2RunOptions = {}): Promise
 		definitionVersion: definition.version,
 		definitionSHA256: phase2DefinitionHash(definition),
 		generatedAt: new Date().toISOString(),
-		gitCommit: options.gitCommit ?? buildSHA(String(repoRootPath())),
+		gitCommit: options.gitCommit ?? buildSHA(repoRootPath()),
 		artifact,
 		artifactPins: definition.artifactPins,
 		artifactPinDeviations: deviations,

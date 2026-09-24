@@ -191,7 +191,7 @@ export async function derivedWeightsKey(): Promise<string> {
  * Where the derived binaries for `key` live.
  */
 export function derivedWeightsDir(key: string): string {
-	return String(dataRootPath("derived", "weights", key))
+	return dataRootPath("derived", "weights", key).toString()
 }
 
 /**

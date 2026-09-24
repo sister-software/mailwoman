@@ -465,7 +465,7 @@ export function derivedWeightsKey(): string {
  * runners are self-hosted, so this filesystem survives.
  */
 export function derivedWeightsDir(key: string): string {
-	return String(dataRootPath("derived", "weights", key))
+	return dataRootPath("derived", "weights", key)
 }
 ```
 
@@ -1246,7 +1246,7 @@ import { tmpdir } from "node:os"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { describe, expect, it } from "vitest"
 
-const ADMIN_DB = String(dataRootPath("wof", "admin-global-priority.db"))
+const ADMIN_DB = dataRootPath("wof", "admin-global-priority.db")
 ```
 
 Then delete lines 195–261 from `evidence-lexicons.test.ts` (the `const ADMIN_DB` line and the whole `describe.skipIf` block), and drop the now-unused `existsSync` / `dataRootPath` imports from it.

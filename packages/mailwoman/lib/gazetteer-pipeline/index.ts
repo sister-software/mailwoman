@@ -148,7 +148,7 @@ export const DEFAULT_ADMIN_DB = "admin-global-priority.db"
  * which it produced a cwd-relative path that the sealed-artifact swap then resolved somewhere else.
  */
 export function wofDir(dataRoot: string = mailwomanDataRoot()): string {
-	return String(databaseRootPath(dataRoot, "wof"))
+	return databaseRootPath(dataRoot)("wof").toString()
 }
 
 /**
@@ -452,8 +452,8 @@ export async function buildCandidate(opts: BuildOptions): Promise<BuildCandidate
 	// #1880's distribution home: carry the committed capitals reference in-artifact so `capital_tier` works for npm consumers who pulled candidate.db (published packages do not ship the repo file). A dev checkout that predates the reference simply builds without the table — the session loader says which source it used.
 	const capitalsPath = repoRootPathBuilder("data", "gazetteer", "capitals-v1.json")
 
-	const capitals = (await pathExists(String(capitalsPath)))
-		? (await readLocalJSONFile<{ entries?: CapitalPoint[] }>(String(capitalsPath))).entries
+	const capitals = (await pathExists(capitalsPath))
+		? (await readLocalJSONFile<{ entries?: CapitalPoint[] }>(capitalsPath)).entries
 		: undefined
 
 	const result = await buildCandidateTable({
@@ -479,7 +479,7 @@ export async function buildCandidate(opts: BuildOptions): Promise<BuildCandidate
 	// It names its ancestor rather than restating the ancestor's sources.
 	// See candidate-manifest.ts for why a derived layer's provenance has to be a chain.
 	opts.onProgress?.("layer-manifest", "stamping provenance")
-	const sha = buildSHA(String(repoRootPath()))
+	const sha = buildSHA(repoRootPath())
 
 	await stampLayerManifest(
 		opts.out,
@@ -539,7 +539,7 @@ export interface PublishOptions {
 	/**
 	 * Path to `docs/scripts/publish-demo-assets-to-r2.py`.
 	 */
-	uploadScript: string
+	uploadScript: PathBuilderLike
 	/**
 	 * A staging dir.
 	 *
@@ -550,7 +550,7 @@ export interface PublishOptions {
 	 * `packages/mailwoman/lib/browser-runtime/resources.ts` to bump `ADMIN_GAZETTEER_VERSION`;
 	 * omit to skip the pin bump.
 	 */
-	resourcesFile?: string
+	resourcesFile?: PathBuilderLike
 	bucket?: string
 	prefix?: string
 	dryRun?: boolean
@@ -595,7 +595,7 @@ export async function publishGazetteer(opts: PublishOptions): Promise<PublishRes
 
 	const key = `${prefix}/gazetteer/${opts.version}/candidate.db`
 	opts.onPhase?.("upload", `R2 ${key}${opts.dryRun ? " (dry-run)" : ""}`)
-	const args = [opts.uploadScript, "--src", resolvePath(opts.stageDir), "--prefix", prefix]
+	const args: PathBuilderLike[] = [opts.uploadScript, "--src", resolvePath(opts.stageDir), "--prefix", prefix]
 
 	if (opts.bucket) {
 		args.push("--bucket", opts.bucket)

@@ -60,7 +60,7 @@ export const x = 1
 `
 
 async function plant(files: Record<string, string>) {
-	const repoRoot = String(fixtures.use(await temporaryDirectory("third-party-notices-")).path)
+	const repoRoot = fixtures.use(await temporaryDirectory("third-party-notices-")).path.toString()
 
 	for (const [file, text] of Object.entries(files)) {
 		await makeDirectories(join(repoRoot, file.slice(0, file.lastIndexOf("/"))))

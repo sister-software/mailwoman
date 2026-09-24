@@ -33,7 +33,7 @@ const { values } = parseArguments({
 	},
 })
 
-const ADMIN_DB = values["admin-db"] ?? String(dataRootPath("db", "wof", "admin-global-priority-importance.db"))
+const ADMIN_DB = values["admin-db"] ?? dataRootPath("db", "wof", "admin-global-priority-importance.db")
 const SOURCE = `family-board:${isoDate()}`
 const ADDED_AT = isoDate()
 
@@ -150,7 +150,7 @@ const byFile = new Map<string, SeedCase[]>()
 
 for (const row of FAMILY_ROWS) {
 	const seed = cases.find((c) => c.id === row.id)!
-	const path = String(join(CASES_DIR, row.country.toLowerCase(), `family-${FAMILY_SLUG[row.family]}.jsonl`))
+	const path = join(CASES_DIR, row.country.toLowerCase(), `family-${FAMILY_SLUG[row.family]}.jsonl`)
 	const list = byFile.get(path) ?? []
 
 	list.push(seed)

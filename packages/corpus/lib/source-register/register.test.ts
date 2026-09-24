@@ -129,7 +129,7 @@ describe("the committed address-source register", () => {
 
 		await writeLocalJSONFile(edited, path)
 
-		await expect(readAddressSourceRegister(String(path))).rejects.toThrow(/Something edited the file/u)
+		await expect(readAddressSourceRegister(path)).rejects.toThrow(/Something edited the file/u)
 	})
 })
 

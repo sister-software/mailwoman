@@ -13,7 +13,7 @@ import {
 	FINGERPRINTED_WORKSPACES,
 	staleEngineMessage,
 } from "@mailwoman/dev-mcp/tree-fingerprint"
-import { join } from "path-ts"
+import { join, type PathBuilder } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 
 const fixtures = new AsyncDisposableStack()
@@ -24,8 +24,8 @@ afterAll(() => fixtures.disposeAsync())
  * A fake checkout carrying one source file in the first fingerprinted workspace —
  * enough to exercise the walk without touching the real tree.
  */
-async function fakeCheckout(): Promise<string> {
-	const root = String(fixtures.use(await temporaryDirectory("mwdev-fingerprint-")).path)
+async function fakeCheckout(): Promise<PathBuilder> {
+	const root = fixtures.use(await temporaryDirectory("mwdev-fingerprint-")).path
 
 	const workspace = join(root, FINGERPRINTED_WORKSPACES[0])
 
@@ -77,7 +77,7 @@ describe("computeTreeFingerprint", () => {
 	})
 
 	it("walks the real repository and finds source", async () => {
-		const fingerprint = await computeTreeFingerprint(String(repoRootPath()))
+		const fingerprint = await computeTreeFingerprint(repoRootPath())
 
 		expect(fingerprint.filesWalked).toBeGreaterThan(100)
 		expect(fingerprint.digest).toMatch(/^[0-9a-f]{16}$/)

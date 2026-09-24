@@ -10,7 +10,7 @@
 
 import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
 import { readWorkspaceDirectories } from "@mailwoman/core/workspaces"
-import { join, resolvePath } from "path-ts"
+import { join, type PathBuilderLike, resolvePath } from "path-ts"
 
 import { packWorkspaceForPublish } from "#pack/pack-workspace"
 
@@ -22,7 +22,7 @@ const DEPENDENCY_FIELDS = ["dependencies", "optionalDependencies", "peerDependen
  */
 // repo-health-ignore export-name-affix -- keys the shared reader's answer by package name.
 // It adds the manifest read.
-export async function workspaceDirectories(repoRoot: string): Promise<Map<string, string>> {
+export async function workspaceDirectories(repoRoot: PathBuilderLike): Promise<Map<string, string>> {
 	const byName = new Map<string, string>()
 
 	for (const dir of await readWorkspaceDirectories(repoRoot)) {
@@ -44,7 +44,10 @@ export async function workspaceDirectories(repoRoot: string): Promise<Map<string
  * @throws When a seed or a reached dependency names no workspace: a `workspace:`
  * specifier that resolves nowhere is a broken manifest rather than an absence.
  */
-export async function walkWorkspaceClosure(repoRoot: string, seeds: readonly string[]): Promise<Map<string, string>> {
+export async function walkWorkspaceClosure(
+	repoRoot: PathBuilderLike,
+	seeds: readonly string[]
+): Promise<Map<string, string>> {
 	const byName = await workspaceDirectories(repoRoot)
 	const closure = new Map<string, string>()
 	const queue = [...seeds]
@@ -83,7 +86,7 @@ export async function walkWorkspaceClosure(repoRoot: string, seeds: readonly str
  * Sequential on purpose: each pack rewrites its own manifest while yarn reads its siblings.
  */
 export async function packWorkspaces(
-	repoRoot: string,
+	repoRoot: PathBuilderLike,
 	workspaces: ReadonlyMap<string, string>,
 	tarDir: string
 ): Promise<Record<string, string>> {

@@ -134,9 +134,9 @@ export function regionSlugFromTree(tree: AddressTree): string | null {
  */
 export async function selectAddressPointsDB(dataRoot: string, stateSlug: string | null): Promise<string | null> {
 	if (!stateSlug) return null
-	const candidate = String(databaseRootPath(dataRoot, "address-points", `address-points-us-${stateSlug}.db`))
+	const candidate = databaseRootPath(dataRoot)("address-points", `address-points-us-${stateSlug}.db`)
 
-	return (await pathExists(candidate)) ? candidate : null
+	return (await pathExists(candidate)) ? candidate.toString() : null
 }
 
 /**
@@ -144,9 +144,9 @@ export async function selectAddressPointsDB(dataRoot: string, stateSlug: string 
  */
 export async function selectInterpolationDB(dataRoot: string, stateSlug: string | null): Promise<string | null> {
 	if (!stateSlug) return null
-	const candidate = String(databaseRootPath(dataRoot, "interpolation", `interpolation-us-${stateSlug}.db`))
+	const candidate = databaseRootPath(dataRoot)("interpolation", `interpolation-us-${stateSlug}.db`)
 
-	return (await pathExists(candidate)) ? candidate : null
+	return (await pathExists(candidate)) ? candidate.toString() : null
 }
 
 /**

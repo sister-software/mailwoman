@@ -36,8 +36,7 @@ function makeSection(body: string, start = 0): Section {
 const TOKENIZER_PATH = workspacePath("neural", "test", "fixtures", "tokenizer-v0.1.0.model")
 
 const MODEL_PATH =
-	$public.MAILWOMAN_TEST_ONNX_MODEL ??
-	String(dataRootPath("models", "quantized", "model-stage1-coarse-step-050000-int8.onnx"))
+	$public.MAILWOMAN_TEST_ONNX_MODEL ?? dataRootPath("models", "quantized", "model-stage1-coarse-step-050000-int8.onnx")
 
 const haveModel = await pathExists(MODEL_PATH)
 

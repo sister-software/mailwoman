@@ -47,7 +47,7 @@ function declaration(tiers: Record<string, string[]> = TIER_ROWS): string {
 }
 
 async function plant(options: { scope: Record<string, unknown>; locales?: string[]; markdown?: string }) {
-	const repoRoot = String(fixtures.use(await temporaryDirectory("locale-scope-")).path)
+	const repoRoot = fixtures.use(await temporaryDirectory("locale-scope-")).path.toString()
 
 	const files: Record<string, string> = {
 		"release.config.json": stringifyJSON({ locales: options.locales ?? ["en-us", "fr-fr"] }),

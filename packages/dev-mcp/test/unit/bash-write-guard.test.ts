@@ -16,7 +16,7 @@ import { describe, expect, it } from "vitest"
 import { runHook } from "../hook-harness.ts"
 
 const HOOK = resolvePackagePath("@mailwoman/dev-mcp", "lib", "hooks", "bash", "write", "guard.ts")
-const REPO_ROOT = String(repoRootPath()).replace(/\/$/u, "")
+const REPO_ROOT = repoRootPath().replace(/\/$/u, "")
 
 function refusalFor(command: string): string | null {
 	return judgeCommand(command, REPO_ROOT, REPO_ROOT)?.reason ?? null

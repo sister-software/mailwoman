@@ -18,7 +18,7 @@ import { resolvePath } from "path-ts"
 import { beforeAll, describe, expect, it } from "vitest"
 
 describe("release.config.json under the prepare bump", () => {
-	const path = resolvePath(String(repoRootPath()), "release.config.json")
+	const path = resolvePath(repoRootPath(), "release.config.json")
 	let original: string
 	let currentVersion: string
 
@@ -47,7 +47,7 @@ describe("release.config.json under the prepare bump", () => {
 	})
 
 	it("carries the current release number, not a lagged one", async () => {
-		const rootManifestPath = resolvePath(String(repoRootPath()), "package.json")
+		const rootManifestPath = resolvePath(repoRootPath(), "package.json")
 		const root = await readPackageJSON(rootManifestPath)
 
 		// The v9.2.0 incident: the root moved and this file did not.

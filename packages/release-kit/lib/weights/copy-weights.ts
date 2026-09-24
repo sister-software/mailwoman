@@ -33,7 +33,7 @@
  *   Idempotent. Used by .release-it.json's before:init hook through `mwops release copy-weights`.
  */
 
-import { mailwomanDataRoot } from "@mailwoman/core/data-root"
+import { databaseRootPath, mailwomanDataRoot } from "@mailwoman/core/data-root"
 import { pathExists, tryStat } from "@mailwoman/core/fs/readers"
 import { copyFileTo, makeDirectories, removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { spawnProcessSync } from "@mailwoman/core/process"
@@ -196,7 +196,7 @@ export async function copyWeights({
 	}
 
 	const config = await readReleaseConfig(repoRoot)
-	const dataRoot = String(mailwomanDataRoot())
+	const dataRoot = mailwomanDataRoot().toString()
 	const softFeed: SoftFeedRecipe = config.softFeed ?? {}
 
 	const context: MaterializationContext = {
@@ -399,7 +399,9 @@ async function materializeSoftFeed(context: MaterializationContext, workspace: s
 		return
 	}
 
-	const db = dbRel.startsWith("/") ? dbRel : resolvePath(context.dataRoot, "wof", dbRel)
+	// `db/wof`, through the one home, because `dbRel` is a bare filename from the soft-feed config
+	// and composing the directory here is what left this call site on the pre-grouping path.
+	const db = dbRel.startsWith("/") ? dbRel : databaseRootPath(context.dataRoot)("wof", dbRel)
 
 	if (!(await pathExists(db))) {
 		throw new Error(

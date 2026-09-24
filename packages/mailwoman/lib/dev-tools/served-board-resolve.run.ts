@@ -84,8 +84,7 @@ async function main(): Promise<void> {
 		},
 	})
 
-	const boardPath =
-		values.board ?? String(dataRootPath("corpus", "versioned", "v8-jp-full-2026-08-04", "jp-board.jsonl"))
+	const boardPath = values.board ?? dataRootPath("corpus", "versioned", "v8-jp-full-2026-08-04", "jp-board.jsonl")
 
 	const wanted = Number(values.rows)
 	const toleranceKm = Number(values["tolerance-km"])
@@ -178,7 +177,7 @@ async function main(): Promise<void> {
 	}
 
 	if (values.json) {
-		await writeLocalJSONFile({ locale, country, board: String(boardPath), toleranceKm, rows: graded }, values.json)
+		await writeLocalJSONFile({ locale, country, board: boardPath.toString(), toleranceKm, rows: graded }, values.json)
 	}
 }
 

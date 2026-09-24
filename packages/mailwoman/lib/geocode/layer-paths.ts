@@ -39,7 +39,7 @@ export interface LayerDatabaseRef {
  * The absolute path of one layer database under `dataRoot`.
  */
 export function layerDatabasePath(dataRoot: PathBuilderLike, id: LayerID): string {
-	return String(databaseRootPath(dataRoot, ...LAYER_DATABASES[id].segments))
+	return databaseRootPath(dataRoot)(...LAYER_DATABASES[id].segments).toString()
 }
 
 /**
@@ -69,7 +69,7 @@ export async function layerDatabaseAlternates(dataRoot: PathBuilderLike, id: Lay
 	try {
 		return (
 			await Globerator.files("db", {
-				cwd: String(databaseRootPath(dataRoot, directory)),
+				cwd: databaseRootPath(dataRoot)(directory),
 				absolute: false,
 				recursive: false,
 			}).toSorted()

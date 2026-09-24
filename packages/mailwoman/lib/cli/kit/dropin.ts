@@ -3,26 +3,14 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The shared skeleton behind the drop-in CLIs — `mailwoman-libpostal`, `mailwoman-nominatim`,
- *   `mailwoman-photon`. All three are the same program with a different engine bolted in: dispatch
- *   `serve` / `openapi` off the first positional, boot the neural classifier with a friendly
- *   failure, (for the two geocoding drop-ins) locate a gazetteer with a friendly failure, then print
- *   a banner. Those pieces were copied between the three files, and the copies were being kept in
- *   sync BY hand — nominatim/cli.ts said so in a comment ("same message shape as
- *   @mailwoman/photon's pre-flight (kept in lockstep)"). This module is the lockstep.
+ *   Shared helpers for the `mailwoman-libpostal`, `mailwoman-nominatim`, and
+ *   `mailwoman-photon` CLIs. They handle command dispatch, classifier and gazetteer
+ *   setup, and startup output.
  *
- *   why IT lives here and not in `@mailwoman/api-kit`, which already owns `printOpenAPIDocument` and
- *   `serveNode` and would otherwise be the obvious home: the preflights need `@mailwoman/neural` and
- *   this package's `resolver-backend`, and api-kit is engine-agnostic by charter. Splitting the
- *   skeleton across two packages to preserve that charter costs more than the duplication did. All
- *   three drop-ins already declare `mailwoman` as a dependency, so landing the whole thing here adds
- *   no dependency to anyone.
- *
- *   why IT is not IN `cli-kit/index.ts`: that barrel is the Ink toolkit for
- *   `mailwoman/commands/*` and imports `ink` + `react`. The drop-ins are plain `parseArgs` scripts
- *   that render no UI, and `npx @mailwoman/libpostal serve` should not pay for a TUI runtime to
- *   start an http server. Hence a standalone module with its own `mailwoman/cli-kit/dropin`
- *   subpath, deliberately not re-exported through the barrel.
+ *   This module is in `mailwoman` because it uses the neural classifier and resolver
+ *   backend. It is separate from `cli-kit/index.ts`, which loads Ink and React for
+ *   interactive commands. The drop-in CLIs need no UI, so they use this module's
+ *   standalone subpath instead.
  */
 
 import { printOpenAPIDocument } from "@mailwoman/api-kit"
@@ -36,29 +24,19 @@ import { printLicenseNotice, resolveEngineStamp, type ResolvedEngineStamp } from
 import { type FreshnessArtifact, type FreshnessReport, readFreshness } from "#freshness"
 import { buildNoGazetteerMessage, existingWOFDatabasePaths, resolveCandidateDBPath } from "#resolver-backend"
 /**
- * The docs page every drop-in's missing-gazetteer message points a stranger at (#1009).
- *
- * One constant so the three messages cannot drift onto different pages when the docs move.
+ * The documentation page linked by missing-gazetteer messages.
  */
 const GAZETTEER_DOCS_PATH = "/docs/developers/get-started/ten-minute-trial"
 
 /**
- * Print an error and exit non-zero.
- *
- * Typed `never` so callers get definite-assignment narrowing after the call.
+ * Print an error and exit with a non-zero status.
  */
 function fail(message: string): never {
 	return failScript(message)
 }
 
 /**
- * Parse the `openapi` subcommand's flags, validating `--flavor`.
- *
- * Exits 1 with the binary's usage line on a bad flavor.
- *
- * @returns The shape `printOpenAPIDocument` takes, so a drop-in's `openapi` command is
- * this call plus building its app around a stub engine — which is what keeps the command
- * pure route-table introspection that never boots a classifier or opens a gazetteer.
+ * Parse OpenAPI flags and validate the requested document flavor.
  */
 export function parseOpenAPIFlags(binaryName: string): { flavor?: string; out?: string } {
 	const { values } = parseArguments({
@@ -79,11 +57,7 @@ export function parseOpenAPIFlags(binaryName: string): { flavor?: string; out?: 
 }
 
 /**
- * A drop-in's `openapi` subcommand: print (or `--out`-write) the OpenAPI document for its surface.
- *
- * `createApp` receives a stub engine, so the command is pure route-table introspection that
- * never boots a classifier or opens a gazetteer and stays fast whatever the data-root holds.
- * `--flavor 3.0` prints the 3.0.3 diet instead of the default 3.1.0.
+ * Create a command that prints or writes the drop-in's OpenAPI document.
  */
 export function openAPICommand<Engine>(
 	binaryName: string,
@@ -97,12 +71,7 @@ export function openAPICommand<Engine>(
 }
 
 /**
- * Load the en-US neural classifier, failing friendly (#1009).
- *
- * `resolveWeights` (`neural/weights.ts`) already names the exact fix command.
- * This guard only keeps that message from being buried under an unhandled-rejection stack trace.
- *
- * Eager, so a missing-weights boot fails at startup rather than on the first request.
+ * Load the en-US classifier, or exit with a clear error.
  */
 export async function loadClassifierOrExit(): Promise<NeuralAddressClassifier> {
 	try {
@@ -113,7 +82,7 @@ export async function loadClassifierOrExit(): Promise<NeuralAddressClassifier> {
 }
 
 /**
- * Where a geocoding drop-in reads its places from.
+ * Database paths used by a geocoding drop-in.
  */
 export interface GazetteerPaths {
 	/**
@@ -133,14 +102,7 @@ export interface GazetteerPaths {
 }
 
 /**
- * Locate the gazetteer for a geocoding drop-in, with both of the #1009 friendly failures:
- *
- * - An explicit `--candidate-db` that does not exist errors loudly.
- *   It must never silently fall back to whatever ambient data-root file happens to be present.
- *   A typo'd path would otherwise serve the wrong gazetteer without a word.
- * - No candidate DB and no databases prints the named-artifact message with the
- *   one command that fixes it, instead of letting the resolver throw its internal
- *   "resolveExtracts: at least one database is required".
+ * Find gazetteer databases, or exit with a clear error if they are unavailable.
  */
 export async function resolveGazetteerOrExit(candidateDBFlag: string | undefined): Promise<GazetteerPaths> {
 	if (candidateDBFlag && !(await pathExists(candidateDBFlag))) {
@@ -163,15 +125,14 @@ export async function resolveGazetteerOrExit(candidateDBFlag: string | undefined
 }
 
 /**
- * The `cors:` line of a drop-in's startup banner.
+ * Format the CORS line in the startup banner.
  */
 export function corsBannerLine(cors: boolean): string {
 	return `  cors: ${cors ? "enabled (Access-Control-Allow-Origin: *)" : "disabled (--no-cors)"}`
 }
 
 /**
- * The `wof:` + `resolver:` lines of a geocoding drop-in's startup banner, which gazetteer the
- * process actually opened, and (when it fell back to admin-only) the flag that widens it.
+ * Format the gazetteer and resolver lines in the startup banner.
  */
 export function gazetteerBannerLines({ adminDBPath, candidateDB }: GazetteerPaths): string[] {
 	return [
@@ -183,19 +144,9 @@ export function gazetteerBannerLines({ adminDBPath, candidateDB }: GazetteerPath
 }
 
 /**
- * The provenance of the gazetteer artifacts a drop-in actually opened, for its `/status` surface (#997).
+ * Read freshness data for the databases this process uses.
  *
- * The set is derived from the same {@link GazetteerPaths} the banner prints, and it
- * follows the backend selection rather than the search order: `createResolverBackend`
- * opens the candidate gazetteer alone when one is resolved, so listing the admin
- * databases beside it would name databases this process never read.
- * The reverse geocoder is the exception — it opens the first admin database whatever the forward path chose.
- *
- * It can be a different build.
- * Therefore, it is reported separately unless it is already in the list.
- *
- * Call once at boot: a server holds its handles for its whole life, so the artifact it
- * serves from is the one it opened at start, whatever a later symlink swap points at.
+ * Call at startup so the report describes the files opened by the server, even if paths change later.
  */
 export async function gazetteerFreshness({
 	adminDBPath,
@@ -220,7 +171,7 @@ export async function gazetteerFreshness({
 }
 
 /**
- * A drop-in CLI's two subcommands.
+ * Configuration for a drop-in CLI.
  */
 export interface DropInCLI {
 	/**
@@ -242,16 +193,14 @@ export interface DropInCLI {
 }
 
 /**
- * Dispatch a drop-in CLI's subcommand off the first positional.
- *
- * `strict: false` because the per-command parsers own their own flags.
- * This pass only reads the positional.
- *
- * An unknown command exits 1.
- * A bare invocation prints usage and exits 0.
+ * Run the requested command, or print usage if none was given.
  */
 export async function runDropInCLI({ binaryName, openapi, serve, usage }: DropInCLI): Promise<void> {
-	const command = parseArguments({ strict: false, allowPositionals: true }).positionals[0]
+	const command = parseArguments({
+		// The subcommand is the first positional, and the rest are parsed by the subcommand's own spec.
+		strict: false,
+		allowPositionals: true,
+	}).positionals[0]
 
 	switch (command) {
 		case "serve": {

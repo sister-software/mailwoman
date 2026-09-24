@@ -98,7 +98,7 @@ async function publishBody(body: BuildableBodyID, out: string | undefined, dryRu
 
 		lines.push(
 			await publishTiles({
-				file: String(resolvePath(directory, file)),
+				file: resolvePath(directory, file),
 				tileset,
 				bucket: TILES_BUCKET,
 				prefix: TILES_PREFIX,
@@ -112,7 +112,7 @@ async function publishBody(body: BuildableBodyID, out: string | undefined, dryRu
 
 	lines.push(
 		await uploadToBucket({
-			file: String(resolvePath(directory, names.search)),
+			file: resolvePath(directory, names.search),
 			bucket: PUBLIC_BUCKET,
 			key: `${prefix}/search.ancestrie`,
 			dryRun,
@@ -122,7 +122,7 @@ async function publishBody(body: BuildableBodyID, out: string | undefined, dryRu
 
 	lines.push(
 		await uploadToBucket({
-			file: String(resolvePath(directory, names.manifest)),
+			file: resolvePath(directory, names.manifest),
 			bucket: PUBLIC_BUCKET,
 			key: `${prefix}/manifest.json`,
 			dryRun,

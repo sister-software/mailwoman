@@ -54,7 +54,7 @@ const GazetteerBuildNSUL: CommandComponent<typeof spec> = ({ options }) => {
 			sourceDir: options.sourceDir,
 			out: options.out,
 			uprnDatabasePath: options.uprnDB,
-			buildSHA: buildSHA(String(repoRootPath())),
+			buildSHA: buildSHA(repoRootPath()),
 			onPhase: phaseReporter(),
 		})
 

@@ -83,7 +83,7 @@ export async function* openParquetRowStream<T>(
 	const db = await connectDuckDB()
 	const projection = columns?.length ? columns.map(escapeSQLIdentifier).join(", ") : "*"
 	const limitClause = limit === undefined ? "" : ` LIMIT ${validateRowLimit(limit)}`
-	const sql = `SELECT ${projection} FROM read_parquet('${escapeSQLString(String(path))}')${limitClause}`
+	const sql = `SELECT ${projection} FROM read_parquet('${escapeSQLString(path.toString())}')${limitClause}`
 
 	try {
 		const stream = await db.stream(sql)

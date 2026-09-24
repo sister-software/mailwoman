@@ -196,7 +196,7 @@ export async function runSemanticUtilityProbe(options: SemanticProbeOptions = {}
 		definitionSHA256: probeDefinitionHash(definition),
 		arm: options.arm ?? "baseline",
 		generatedAt: new Date().toISOString(),
-		gitCommit: options.gitCommit ?? buildSHA(String(repoRootPath())),
+		gitCommit: options.gitCommit ?? buildSHA(repoRootPath()),
 		artifact: await readArtifactIdentity(db, backend, options),
 		semanticRoute: route ? { enabled: true, ...route.identity } : { enabled: false },
 		rows,

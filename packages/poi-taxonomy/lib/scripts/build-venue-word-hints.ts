@@ -142,7 +142,7 @@ function round4(n: number): number {
 }
 
 async function main(): Promise<void> {
-	const sourcePath = String(dataRootPath("derived", "venue-word-lexicon-f6.json"))
+	const sourcePath = dataRootPath("derived", "venue-word-lexicon-f6.json")
 	const raw = await readLocalTextFile(sourcePath)
 	const source = parseJSONStrict<SourceLexicon>(raw)
 	const sourceMD5 = md5Hex(raw)

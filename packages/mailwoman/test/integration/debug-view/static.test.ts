@@ -34,7 +34,7 @@ import { describe, expect, test } from "vitest"
 // MARK: Environment guard
 
 // Same predicate as commands/geocode.test.ts's `hasWOFDB`.
-const DEFAULT_WOF_PATH = String(dataRootPath("db", "wof", "admin-global-priority.db"))
+const DEFAULT_WOF_PATH = dataRootPath("db", "wof", "admin-global-priority.db")
 const wofPath = $public.MAILWOMAN_WOF_DB ?? DEFAULT_WOF_PATH
 const hasWOFDB = await pathExists(wofPath)
 
@@ -48,7 +48,7 @@ const hasWeights = await (async () => {
 	}
 })()
 
-const TILES_PATH = String(workspacePath("map-tui", "test", "fixtures", "portland.pmtiles"))
+const TILES_PATH = workspacePath("map-tui", "test", "fixtures", "portland.pmtiles")
 const hasTiles = await pathExists(TILES_PATH)
 
 const canRun = hasWOFDB && hasWeights && hasTiles

@@ -28,6 +28,7 @@ import {
 	createGoogleGeocoderClient,
 	type OracleGeocodeResult,
 } from "@mailwoman/geocode-oracle"
+import type { PathBuilderLike } from "path-ts"
 
 import type { ExternalAnswer } from "#external-arm"
 
@@ -57,7 +58,7 @@ export type OracleProviderName = (typeof OracleProviderName)[keyof typeof Oracle
  * Under the data root rather than the repo: it names an operator's billing posture on one
  * machine, which is not a fact about the source tree and must never be committed.
  */
-const ORACLE_CONFIG_PATH = String(dataRootPath("dev-mcp", "oracle-config.json"))
+const ORACLE_CONFIG_PATH = dataRootPath("dev-mcp", "oracle-config.json")
 
 /**
  * The shape of that file.
@@ -81,7 +82,7 @@ export interface OracleConfig {
  */
 export const DEFAULT_GOOGLE_CALL_CAP = 500
 
-export async function readOracleConfig(path: string = ORACLE_CONFIG_PATH): Promise<OracleConfig> {
+export async function readOracleConfig(path: PathBuilderLike = ORACLE_CONFIG_PATH): Promise<OracleConfig> {
 	if (!(await pathExists(path))) return {}
 
 	try {

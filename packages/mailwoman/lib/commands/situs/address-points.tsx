@@ -142,7 +142,7 @@ const SitusAddressPoints: CommandComponent<typeof spec> = ({ options }) => {
 		const finalOut = resolvePath(
 			options.out ??
 				(COUNTRY
-					? nationalAddressPointsPath(String(dataRootPath()), COUNTRY)
+					? nationalAddressPointsPath(dataRootPath(), COUNTRY)
 					: dataRootPath("db", "address-points", `address-points-us-${STATE.toLowerCase()}.db`))
 		)
 
@@ -339,7 +339,7 @@ const SitusAddressPoints: CommandComponent<typeof spec> = ({ options }) => {
 					lat,
 					lon,
 					OA_MODE ? "openaddresses" : `overture:${r.dataset}`,
-					OA_MODE ? "openaddresses-latest" : String(options.release),
+					OA_MODE ? "openaddresses-latest" : options.release,
 					// The US and OA sources state no commune key.
 					// A national build carries the third admin level (the Taiwanese 村里) here,
 					// the finest place the register names below the scope pair.
@@ -424,7 +424,7 @@ const SitusAddressPoints: CommandComponent<typeof spec> = ({ options }) => {
 			source: "overture-addresses",
 			sourceVintage: options.release,
 			buildCmd: "mailwoman situs address-points",
-			buildSHA: buildSHA(String(repoRootPath())),
+			buildSHA: buildSHA(repoRootPath()),
 			freshnessPolicy: LayerFreshnessPolicy.Sealed,
 			spineKeys: { street: { column: "street_norm" } },
 			createdAt: new Date().toISOString(),

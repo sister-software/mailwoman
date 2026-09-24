@@ -119,7 +119,7 @@ export const UNKNOWN_PROVENANCE = "unknown (offline rebuild, no acquisition.json
  * Absent is not fatal — the caller substitutes {@link UNKNOWN_PROVENANCE} and says so in the database.
  */
 export async function readAcquisitionSidecar<Sidecar>(sourceDir: string): Promise<Sidecar | null> {
-	const raw = await readLocalTextFile(String(join(sourceDir, "acquisition.json"))).catch(() => null)
+	const raw = await readLocalTextFile(join(sourceDir, "acquisition.json")).catch(() => null)
 
 	return raw ? tryParsingJSON<Sidecar>(raw) : null
 }

@@ -25,7 +25,7 @@ import { MailwomanTokenizer, SPACE_SENTINEL } from "@mailwoman/neural/tokenizer"
 import { describe, expect, test } from "vitest"
 
 const MODEL_PATH = workspacePath("neural", "test", "fixtures", "tokenizer-v0.1.0.model")
-const LARGE_FIXTURE_PATH = String(workspacePath("neural", "test", "fixtures", "tokenizer-parity-large-v0.1.0.json"))
+const LARGE_FIXTURE_PATH = workspacePath("neural", "test", "fixtures", "tokenizer-parity-large-v0.1.0.json")
 
 const haveLargeFixture = await pathExists(LARGE_FIXTURE_PATH)
 

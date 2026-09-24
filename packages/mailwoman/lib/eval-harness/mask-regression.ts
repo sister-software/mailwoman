@@ -49,6 +49,7 @@ import type { SystemCode } from "@mailwoman/codex"
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
+import type { PathBuilderLike } from "path-ts"
 
 import {
 	loadPerTagEvalRows,
@@ -73,7 +74,7 @@ export interface MaskRegressionOptions {
 	 *
 	 * Default: the v0.6.0-a0 tokenizer under `$MAILWOMAN_DATA_ROOT`.
 	 */
-	tokenizer?: string
+	tokenizer?: PathBuilderLike
 	/**
 	 * Model card JSON.
 	 *
@@ -85,7 +86,7 @@ export interface MaskRegressionOptions {
 	 *
 	 * Default: the pilot lookup under `$MAILWOMAN_DATA_ROOT`.
 	 */
-	anchorLookup?: string
+	anchorLookup?: PathBuilderLike
 	/**
 	 * Gazetteer lexicon JSON.
 	 *
@@ -147,10 +148,10 @@ export async function maskRegressionCheck(
 	options: MaskRegressionOptions = {},
 	report: (line: string) => void = console.error
 ): Promise<{ pass: boolean; violations: Delta[] }> {
-	const MODEL = options.model || String(dataRootPath("models", "quantized", "model-v150-step-40000-int8.onnx"))
-	const TOKENIZER = options.tokenizer || String(dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model"))
+	const MODEL = options.model || dataRootPath("models", "quantized", "model-v150-step-40000-int8.onnx")
+	const TOKENIZER = options.tokenizer || dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model")
 	const MODEL_CARD = options.modelCard || "packages/neural-weights-en-us/model-card.json"
-	const ANCHOR_LOOKUP = options.anchorLookup || String(dataRootPath("anchor", "pilot-anchor-lookup.json"))
+	const ANCHOR_LOOKUP = options.anchorLookup || dataRootPath("anchor", "pilot-anchor-lookup.json")
 	const GAZETTEER_LEXICON = options.gazetteerLexicon || "data/gazetteer/anchor-lexicon-v1.json"
 	const JSON_OUT = options.json || ""
 	const THRESHOLD = options.threshold ?? 0.02

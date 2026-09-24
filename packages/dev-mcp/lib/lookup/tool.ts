@@ -101,7 +101,7 @@ export async function runLookup(
 ): Promise<LookupResult | CandidateCompareResult> {
 	const { source, queries } = args
 	const config = args.config ?? {}
-	const dataRoot = config.data_root ?? String(mailwomanDataRoot())
+	const dataRoot = config.data_root ?? mailwomanDataRoot()
 
 	switch (source) {
 		case LookupSource.Normalize: {
@@ -131,7 +131,7 @@ export async function runLookup(
 				// The score source's split channels ride along whenever the conventional
 				// importance DB exists beside the artifacts.
 				// The join every fame-contest diagnosis needs, attached rather than scripted.
-				const importancePath = String(databaseRootPath(dataRoot, "wof", "admin-global-priority-importance.db"))
+				const importancePath = databaseRootPath(dataRoot)("wof", "admin-global-priority-importance.db").toString()
 
 				const importanceDB = (await pathExists(importancePath))
 					? new DatabaseClient<PlaceImportanceDatabase>(importancePath, { readOnly: true })
@@ -223,7 +223,7 @@ export async function runLookup(
 		}
 
 		case LookupSource.POI: {
-			return await withArtifact(source, String(databaseRootPath(dataRoot, "poi", "poi.db")), (db, path) => ({
+			return await withArtifact(source, databaseRootPath(dataRoot)("poi", "poi.db").toString(), (db, path) => ({
 				source,
 				provenance: { artifact: path },
 				rows: lookupPOI(db, queries, {

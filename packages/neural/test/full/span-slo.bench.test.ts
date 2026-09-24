@@ -29,7 +29,7 @@ import { describe, expect, it } from "vitest"
  * a missing artifact as "absent" rather than "looked in the wrong place".
  */
 function stagedModel(cacheName: string): string {
-	return join(weightsCachePackageDir(String(tempRootPath(cacheName)), "en-us"), "model.onnx")
+	return join(weightsCachePackageDir(tempRootPath(cacheName), "en-us"), "model.onnx")
 }
 
 const V264 = stagedModel("v264-cache")

@@ -28,7 +28,6 @@ const { values: rawValues } = parseArguments({
 		golden: { type: "string" },
 		n: { type: "string" },
 	},
-	strict: false,
 	allowPositionals: true,
 })
 

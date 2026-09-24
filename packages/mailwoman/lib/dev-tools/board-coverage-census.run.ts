@@ -28,6 +28,7 @@ import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { renderMarkdownTable } from "@mailwoman/core/strings/markdown-table"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
+import { PathBuilder } from "path-ts"
 
 import { loadRegressionCases } from "#eval-harness/gauntlet/cases/load"
 
@@ -37,7 +38,6 @@ const { values: args } = parseArguments({
 		floor: { type: "string" },
 		json: { type: "string" },
 	},
-	strict: false,
 })
 
 /**
@@ -86,7 +86,7 @@ for (const c of cases) {
  * A missing artifact leaves the column unmeasured rather than zero.
  * A zero would read as "this country has no places", which is a finding and not what a missing file says.
  */
-const gazetteerPath = String(args.gazetteer ?? dataRootPath("db", "wof", "admin-global-priority.db"))
+const gazetteerPath = PathBuilder.from(args.gazetteer ?? dataRootPath("db", "wof", "admin-global-priority.db"))
 
 if (await pathExists(gazetteerPath)) {
 	using db = new DatabaseClient<WOFDatabase>(gazetteerPath, { readOnly: true })
@@ -163,7 +163,7 @@ console.log(
 )
 
 if (args.json) {
-	await writeLocalTextFile(prettyJSON({ totals, floor: FLOOR, countries: all }), String(args.json))
+	await writeLocalTextFile(prettyJSON({ totals, floor: FLOOR, countries: all }), args.json)
 
 	console.log(`\njson → ${args.json}`)
 }

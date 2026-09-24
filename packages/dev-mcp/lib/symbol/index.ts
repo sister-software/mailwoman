@@ -1,4 +1,5 @@
 import { runFileSync } from "@mailwoman/core/process"
+import type { PathBuilderLike } from "path-ts"
 /**
  * @copyright Sister Software
  * @license AGPL-3.0
@@ -66,7 +67,7 @@ export interface DeclarationSite {
 }
 
 export interface FindDeclarationsOptions {
-	cwd: string
+	cwd: PathBuilderLike
 	/**
 	 * The ripgrep executable.
 	 *
@@ -286,7 +287,7 @@ export function searchDeclarations(
 
 function runRipgrep(
 	patterns: readonly string[],
-	cwd: string,
+	cwd: PathBuilderLike,
 	searchPaths: readonly string[],
 	{ ignoreCase = false, binary = "rg" }: { ignoreCase?: boolean; binary?: string } = {}
 ): string {

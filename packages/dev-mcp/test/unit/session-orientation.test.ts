@@ -8,14 +8,14 @@
  */
 
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
-import { repoRootPath } from "@mailwoman/core/paths"
+import { repoRootPathBuilder } from "@mailwoman/core/paths"
 import { orientationListing } from "@mailwoman/dev-mcp/hooks/session-orientation"
 import { beforeAll, describe, expect, it } from "vitest"
 
 import { runHook } from "../hook-harness.ts"
 
 const HOOK = resolvePackagePath("@mailwoman/dev-mcp", "lib", "hooks", "session-orientation.ts")
-const REPO_ROOT = String(repoRootPath())
+const REPO_ROOT = repoRootPathBuilder()
 
 /**
  * Roughly 2,500 tokens at four bytes each.

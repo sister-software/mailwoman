@@ -17,12 +17,12 @@ import { afterEach, describe, expect, it } from "vitest"
 let fixtures = new AsyncDisposableStack()
 
 async function fixture(): Promise<{ cwd: string; dir: string; lock: string; payload: string }> {
-	const cwd = String(fixtures.use(await temporaryDirectory("mw-todo-sync-")).path)
+	const cwd = fixtures.use(await temporaryDirectory("mw-todo-sync-")).path
 	const dir = join(cwd, ".claude", "state", "todo-sync")
 
 	await makeDirectories(dir)
 
-	return { cwd, dir, lock: join(dir, "lock"), payload: join(dir, "payload.json") }
+	return { cwd: cwd.toString(), dir, lock: join(dir, "lock"), payload: join(dir, "payload.json") }
 }
 
 afterEach(async () => {

@@ -270,7 +270,7 @@ export interface CensusPOIReader {
 }
 
 export interface PhraseCollisionCensusOptions {
-	databasePath: string
+	databasePath: PathBuilderLike
 	reader: CensusPOIReader
 	lexicon?: ActivityPhraseLexicon
 	/**
@@ -395,7 +395,7 @@ async function committedInputs(repositoryRoot: PathBuilderLike): Promise<{ input
  */
 export async function runPhraseCollisionCensus(options: PhraseCollisionCensusOptions): Promise<PhraseCollisionCensus> {
 	const lexicon = options.lexicon ?? (await readActivityLexicon())
-	const repositoryRoot = options.repositoryRoot ?? String(repoRootPath())
+	const repositoryRoot = options.repositoryRoot ?? repoRootPath()
 	const declared = lexicon.phrases.map((entry) => normalizeActivityPhrase(entry.phrase))
 
 	const claims = (subject: string): boolean => {
@@ -520,7 +520,7 @@ export async function runPhraseCollisionCensus(options: PhraseCollisionCensusOpt
 			declaredPhrases: lexicon.phrases.length,
 		},
 		poiDatabase: {
-			path: options.databasePath,
+			path: options.databasePath.toString(),
 			...(manifest ? { layerManifest: manifest } : {}),
 			...(manifest ? {} : { layerManifestNote: error ?? "no layer_manifest row" }),
 		},

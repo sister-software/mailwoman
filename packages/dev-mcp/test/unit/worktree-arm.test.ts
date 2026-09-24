@@ -36,7 +36,7 @@ afterAll(() => fixtures.disposeAsync())
  * for real by the tools that call this.
  */
 async function fakeRepo(marker: string): Promise<string> {
-	const root = String(fixtures.use(await temporaryDirectory("mwdev-wt-test-")).path)
+	const root = fixtures.use(await temporaryDirectory("mwdev-wt-test-")).path
 
 	await makeDirectories(join(root, "packages", "mailwoman"))
 	await writeLocalJSONFile({ name: "root", workspaces: ["packages/mailwoman"] }, join(root, "package.json"))
@@ -77,7 +77,7 @@ async function fakeRepo(marker: string): Promise<string> {
 	runFileSync("git", ["add", "-A"], { cwd: root })
 	runFileSync("git", ["commit", "-qm", "initial"], { cwd: root })
 
-	return root
+	return root.toString()
 }
 
 const OPTIONS = {}

@@ -18,7 +18,7 @@ import { haversineKm } from "@mailwoman/spatial"
 import { createGeocodeCommandOptions, createGeocodeSession } from "mailwoman/geocode"
 import { afterAll, describe, expect, it } from "vitest"
 
-const CANDIDATE_DB = String(dataRootPath("db", "wof", "candidate.db"))
+const CANDIDATE_DB = dataRootPath("db", "wof", "candidate.db")
 
 const haveArtifacts =
 	(await pathExists(CANDIDATE_DB)) && (await pathExists(dataRootPath("weights", "cjk", "model.onnx")))
@@ -29,7 +29,7 @@ const KAMIICHI = { lat: 36.658101, lon: 137.384089 }
 
 describe.skipIf(!haveArtifacts)("createGeocodeSession — a bare kanji line under --locale en-US (#2164 routing)", () => {
 	const sessionPromise = haveArtifacts
-		? createGeocodeSession(createGeocodeCommandOptions({ locale: "en-US", candidateDB: CANDIDATE_DB }))
+		? createGeocodeSession(createGeocodeCommandOptions({ locale: "en-US", candidateDB: CANDIDATE_DB.toString() }))
 		: undefined
 
 	afterAll(async () => {

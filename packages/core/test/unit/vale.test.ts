@@ -14,6 +14,7 @@ import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories, writeLocalTextFile, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { pathToFileURL } from "@mailwoman/core/module/file-url"
 import { valeCommand } from "@mailwoman/core/vale"
+import type { PathBuilder } from "path-ts"
 import { describe, expect, it } from "vitest"
 
 /**
@@ -24,34 +25,34 @@ import { describe, expect, it } from "vitest"
  * `withBinary: false` reproduces an install whose postinstall download failed.
  */
 async function fixtureInstall(
-	root: string,
+	root: PathBuilder,
 	{ withBinary }: { withBinary: boolean }
 ): Promise<{ base: string; packageRoot: string }> {
-	const packageRoot = `${root}/node_modules/@vvago/vale`
+	const packageRoot = root("node_modules", "@vvago", "vale")
 
-	await makeDirectories(`${packageRoot}/bin`)
+	await makeDirectories(packageRoot("bin"))
 
 	await writeLocalJSONFile(
 		{ name: "@vvago/vale", version: "3.20.0", bin: { vale: "./bin/vale.cjs" } },
-		`${packageRoot}/package.json`
+		packageRoot("package.json")
 	)
 
-	await writeLocalTextFile("// launcher\n", `${packageRoot}/bin/vale.cjs`)
+	await writeLocalTextFile("// launcher\n", packageRoot("bin", "vale.cjs"))
 
 	if (withBinary) {
-		await makeDirectories(`${packageRoot}/native`)
-		await writeLocalTextFile("#!/bin/sh\n", `${packageRoot}/native/vale`)
+		await makeDirectories(packageRoot("native"))
+		await writeLocalTextFile("#!/bin/sh\n", packageRoot("native", "vale"))
 	}
 
-	await writeLocalTextFile("export {}\n", `${root}/caller.ts`)
+	await writeLocalTextFile("export {}\n", root("caller.ts"))
 
-	return { base: pathToFileURL(`${root}/caller.ts`).href, packageRoot }
+	return { base: pathToFileURL(root("caller.ts").toString()).href, packageRoot: packageRoot.toString() }
 }
 
 describe("valeCommand", () => {
 	it("spawns this Node with the launcher when the binary is in place", async () => {
 		await using scratch = await temporaryDirectory("mw-vale-ok-")
-		const { base, packageRoot } = await fixtureInstall(String(scratch.path), { withBinary: true })
+		const { base, packageRoot } = await fixtureInstall(scratch.path, { withBinary: true })
 
 		const command = await valeCommand(base)
 
@@ -61,7 +62,7 @@ describe("valeCommand", () => {
 
 	it("raises before spawning when the launcher has no binary to launch", async () => {
 		await using scratch = await temporaryDirectory("mw-vale-missing-")
-		const { base } = await fixtureInstall(String(scratch.path), { withBinary: false })
+		const { base } = await fixtureInstall(scratch.path, { withBinary: false })
 
 		// The launcher would exit 1 with a message on stderr, which a caller reading
 		// the exit status alone reports as a prose failure.

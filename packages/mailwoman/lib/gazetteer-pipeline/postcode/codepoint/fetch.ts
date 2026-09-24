@@ -399,7 +399,7 @@ export async function downloadCodePointOpen(options: DownloadCodePointOptions): 
 	}
 
 	await makeDirectories(destDir)
-	const archivePath = String(join(destDir, download.fileName))
+	const archivePath = join(destDir, download.fileName)
 
 	// Reuse-by-md5, near-verbatim in `uprn-layer.ts`'s `downloadOpenUPRN`.
 	// Kept separate because that one (re)writes the acquisition sidecars on the
@@ -450,7 +450,7 @@ export async function downloadCodePointOpen(options: DownloadCodePointOptions): 
 
 	await writeLocalTextFile(
 		prettyJSON({ product, download, bytes, md5, acquiredAt: new Date().toISOString() }),
-		String(join(destDir, "acquisition.json"))
+		join(destDir, "acquisition.json")
 	)
 
 	return { archivePath, bytes, md5, version: product.version, download, reused: false }

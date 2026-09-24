@@ -16,6 +16,7 @@ import { allRows } from "@mailwoman/core/utils"
 import { haversineKm } from "@mailwoman/spatial"
 import type { SQLInputValue } from "@mailwoman/sqlite/client"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
+import type { PathBuilderLike } from "path-ts"
 
 import { ancestorLineage } from "#ancestry/index"
 import { candidateFromSearchRow, rankCandidates } from "#candidate/scoring"
@@ -76,7 +77,7 @@ export interface WOFSQLitePlaceLookupOpts {
 	 *
 	 * Cross-extract union is not done — BM25 isn't comparable across separately-indexed corpora.
 	 */
-	databasePath?: string | ReadonlyArray<string | ExtractConfig>
+	databasePath?: PathBuilderLike | ReadonlyArray<PathBuilderLike | ExtractConfig>
 	/**
 	 * Pre-opened connection — primarily for tests against an inline fixture DB.
 	 *

@@ -157,7 +157,7 @@ const STATE_FIPS: Record<string, string> = {
  * Repo-relative anchor for the cached county-population ranking
  * (resolves cleanly in both source + compiled trees via the core repo-root builder).
  */
-const RANKED_FILE = String(repoRootPathBuilder("mailwoman", "data", "county-population-ranked.json"))
+const RANKED_FILE = repoRootPathBuilder("mailwoman", "data", "county-population-ranked.json")
 
 /**
  * The per-state street-segment builder is now the sibling `situs interpolation-database`

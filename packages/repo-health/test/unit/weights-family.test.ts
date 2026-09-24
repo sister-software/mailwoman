@@ -35,7 +35,7 @@ async function fixtureContext(manifests: Record<string, unknown>): Promise<RepoC
 		trackedFiles.push(`packages/neural-weights-${locale}/package.json`)
 	}
 
-	return { repoRoot: String(temporary.path), trackedFiles }
+	return { repoRoot: temporary.path.toString(), trackedFiles }
 }
 
 /**

@@ -16,6 +16,7 @@
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { resolveWeights } from "@mailwoman/neural"
 import { haversineKm } from "@mailwoman/spatial"
+import type { PathBuilder } from "path-ts"
 import { TextSpliterator } from "spliterator"
 
 import { buildGauntletDeps, type GauntletDeps, type GauntletResolverPins } from "#eval-harness/gauntlet/harness"
@@ -109,7 +110,7 @@ export interface Sample {
  * Add a source by dropping a staging file + a parser here.
  */
 export interface SourceDef {
-	file: string
+	file: PathBuilder
 	label: string
 	parse(cols: string[]): Sample | null
 }
@@ -117,7 +118,7 @@ export interface SourceDef {
 export function holdoutSources(): Record<string, SourceDef> {
 	return {
 		fr: {
-			file: String(dataRootPath("corpus", "staging", "ban-france.csv")),
+			file: dataRootPath("corpus", "staging", "ban-france.csv"),
 			label: "FR/BAN",
 			// BAN columns: numero(2) nom_voie(4) nom_commune(7) lon(12) lat(13)
 			parse(c) {
@@ -134,7 +135,7 @@ export function holdoutSources(): Record<string, SourceDef> {
 			},
 		},
 		us: {
-			file: String(dataRootPath("corpus", "staging", "fdic-us.csv")),
+			file: dataRootPath("corpus", "staging", "fdic-us.csv"),
 			label: "US/FDIC",
 			// fdic-us.csv columns: address(0) city(1) state(2) zip(3) lat(4) lon(5)
 			parse(c) {

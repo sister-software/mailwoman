@@ -46,7 +46,7 @@ const GazetteerBuildUPRN: CommandComponent<typeof spec> = ({ options }) => {
 			sourceDir: options.sourceDir,
 			out: options.out,
 			offline: options.offline,
-			buildSHA: buildSHA(String(repoRootPath())),
+			buildSHA: buildSHA(repoRootPath()),
 			onPhase: phaseReporter(),
 		})
 

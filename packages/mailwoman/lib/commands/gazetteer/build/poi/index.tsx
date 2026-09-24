@@ -89,7 +89,7 @@ const GazetteerBuildPOI: CommandComponent<typeof spec> = ({ options }) => {
 
 		const { bboxCoverageCells, buildPOIDatabase, ingestPlaces } = await import("#gazetteer-pipeline/poi/build/poi")
 
-		const buildSHA = resolveBuildSHA(String(repoRootPath()))
+		const buildSHA = resolveBuildSHA(repoRootPath())
 
 		if (options.source === "osm") {
 			const { pbf, country: rawCountry, release, bbox: bboxFlag } = options

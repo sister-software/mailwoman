@@ -72,7 +72,7 @@ import {
 import { ONNXRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
 import { computeQueryShape } from "@mailwoman/query-shape"
-import { basename, resolvePath } from "path-ts"
+import { basename, type PathBuilderLike, resolvePath } from "path-ts"
 import { JSONSpliterator } from "spliterator"
 
 import { $public } from "#env"
@@ -127,9 +127,9 @@ export interface PerLocaleF1Options {
 	files?: string[]
 	weightsCache?: string
 	modelPath?: string
-	tokenizerPath?: string
+	tokenizerPath?: PathBuilderLike
 	modelCardPath?: string
-	modelAnchorLookupPath?: string
+	modelAnchorLookupPath?: PathBuilderLike
 	gazetteerLexiconPath?: string
 	noAnchor?: boolean
 	suppressGazNearPostcode?: boolean

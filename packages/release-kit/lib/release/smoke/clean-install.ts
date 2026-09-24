@@ -473,7 +473,7 @@ export async function smokeCleanInstall({ repoRoot, log }: SmokeCleanInstallOpti
 
 		log(`[smoke] packing ${Object.keys(WORKSPACES).length} workspaces…`)
 
-		const deps = await packWorkspaces(repoRoot, new Map(Object.entries(WORKSPACES)), String(tarDir))
+		const deps = await packWorkspaces(repoRoot, new Map(Object.entries(WORKSPACES)), tarDir)
 
 		await writeLocalJSONFile({ name: "mw-smoke", private: true, dependencies: deps }, join(proj, "package.json"))
 

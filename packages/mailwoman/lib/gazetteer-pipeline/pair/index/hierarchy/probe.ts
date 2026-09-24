@@ -78,7 +78,7 @@ export function resolveHierarchyRunInputs(values: { countries?: string; db?: str
 } {
 	return {
 		countries: (values.countries ?? "us,fr").split(",").map((c) => c.trim().toLowerCase()),
-		dbPath: String(resolvePath(values.db ?? dataRootPath("db", "wof", "admin-global-priority.db"))),
+		dbPath: resolvePath(values.db ?? dataRootPath("db", "wof", "admin-global-priority.db")),
 	}
 }
 

@@ -89,7 +89,7 @@ export function isProcessError(error: unknown): error is ProcessError {
  * Output is always decoded as UTF-8.
  * An `encoding` here is accepted for the callers that spell it and changes nothing.
  */
-export type RunFileOptions = ExecFileOptions & { cwd?: PathBuilderLike }
+export type RunFileOptions = Omit<ExecFileOptions, "cwd"> & { cwd?: PathBuilderLike }
 
 /**
  * Run a command to completion and answer what it wrote.
@@ -103,11 +103,15 @@ export async function runFile(
 	args: readonly PathBuilderLike[] = [],
 	options: RunFileOptions = {}
 ): Promise<ProcessOutput> {
-	const { stdout, stderr } = await execFileAsync(file.toString(), args.map(String), {
-		...options,
-		cwd: options.cwd?.toString(),
-		encoding: "utf8",
-	})
+	const { stdout, stderr } = await execFileAsync(
+		file.toString(),
+		args.map((arg) => arg.toString()),
+		{
+			...options,
+			cwd: options.cwd?.toString(),
+			encoding: "utf8",
+		}
+	)
 
 	return { stdout, stderr }
 }
@@ -135,11 +139,15 @@ export function runFileSync(
 	args: readonly PathBuilderLike[] = [],
 	options: RunFileSyncOptions = {}
 ): string {
-	const output = execFileSync(file.toString(), args.map(String), {
-		...options,
-		cwd: options.cwd?.toString(),
-		encoding: "utf8",
-	})
+	const output = execFileSync(
+		file.toString(),
+		args.map((arg) => arg.toString()),
+		{
+			...options,
+			cwd: options.cwd?.toString(),
+			encoding: "utf8",
+		}
+	)
 
 	return output ?? ""
 }
@@ -157,7 +165,7 @@ export function runShellSync(command: string, options: ExecSyncOptions & { cwd?:
 /**
  * Options for {@linkcode spawnProcess}.
  */
-export type SpawnProcessOptions = SpawnOptions & { cwd?: PathBuilderLike }
+export type SpawnProcessOptions = Omit<SpawnOptions, "cwd"> & { cwd?: PathBuilderLike }
 
 /**
  * Start a command and hand its {@linkcode ChildProcess} to the caller,
@@ -199,7 +207,11 @@ export function spawnProcess(
 	args: readonly PathBuilderLike[] = [],
 	options: SpawnProcessOptions = {}
 ): ChildProcess {
-	return spawn(file.toString(), args.map(String), { ...options, cwd: options.cwd?.toString() })
+	return spawn(
+		file.toString(),
+		args.map((arg) => arg.toString()),
+		{ ...options, cwd: options.cwd?.toString() }
+	)
 }
 
 /**
@@ -207,7 +219,7 @@ export function spawnProcess(
  *
  * Streams are always decoded as UTF-8.
  */
-export type SpawnProcessSyncOptions = SpawnSyncOptions & { cwd?: PathBuilderLike }
+export type SpawnProcessSyncOptions = Omit<SpawnSyncOptions, "cwd"> & { cwd?: PathBuilderLike }
 
 /**
  * {@linkcode spawnProcess} run to completion in a synchronous slot.
@@ -220,13 +232,17 @@ export function spawnProcessSync(
 	args: readonly PathBuilderLike[] = [],
 	options: SpawnProcessSyncOptions = {}
 ): SpawnSyncReturns<string> {
-	return spawnSync(file.toString(), args.map(String), { ...options, cwd: options.cwd?.toString(), encoding: "utf8" })
+	return spawnSync(
+		file.toString(),
+		args.map((arg) => arg.toString()),
+		{ ...options, cwd: options.cwd?.toString(), encoding: "utf8" }
+	)
 }
 
 /**
  * Options for {@linkcode forkProcess}.
  */
-export type ForkProcessOptions = ForkOptions & { cwd?: PathBuilderLike }
+export type ForkProcessOptions = Omit<ForkOptions, "cwd"> & { cwd?: PathBuilderLike }
 
 /**
  * Start a Node module as a child with an IPC channel — the worker-host shape.
@@ -236,5 +252,9 @@ export function forkProcess(
 	args: readonly PathBuilderLike[] = [],
 	options: ForkProcessOptions = {}
 ): ChildProcess {
-	return fork(modulePath.toString(), args.map(String), { ...options, cwd: options.cwd?.toString() })
+	return fork(
+		modulePath.toString(),
+		args.map((arg) => arg.toString()),
+		{ ...options, cwd: options.cwd?.toString() }
+	)
 }

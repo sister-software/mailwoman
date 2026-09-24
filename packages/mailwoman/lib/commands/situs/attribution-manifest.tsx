@@ -101,7 +101,7 @@ const SitusAttributionManifest: CommandComponent<typeof spec> = ({ options }) =>
 				let points = 0
 
 				for (const { source, n } of rows) {
-					const ds = String(source).replace(/^overture:/, "")
+					const ds = source.replace(/^overture:/, "")
 					datasets[ds] = Number(n)
 					manifest.datasetTotals[ds] = (manifest.datasetTotals[ds] ?? 0) + Number(n)
 					points += Number(n)

@@ -52,7 +52,7 @@ const releasesPage = (version: string) =>
 	].join("\n")
 
 async function plant(options: { status: string; statusVersion?: string }) {
-	const repoRoot = String(fixtures.use(await temporaryDirectory("verify-metadata-")).path)
+	const repoRoot = fixtures.use(await temporaryDirectory("verify-metadata-")).path
 
 	const files: Record<string, string> = {
 		"packages/neural-weights-en-us/model-card.json": stringifyJSON({ version: MODEL }),

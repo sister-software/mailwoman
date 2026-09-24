@@ -133,10 +133,10 @@ export async function smokeGetStarted(options: SmokeGetStartedOptions): Promise<
 	const legs: string[] = []
 
 	await using tmp = await temporaryDirectory("mw-get-started-")
-	const tarDir = String(tmp.resolve("tarballs"))
-	const project = String(tmp.resolve("project"))
+	const tarDir = tmp.resolve("tarballs")
+	const project = tmp.resolve("project")
 	// doctor's own "data root does not exist" branch needs the directory to be missing rather than empty.
-	const doctorRoot = String(tmp.resolve("doctor-root-absent"))
+	const doctorRoot = tmp.resolve("doctor-root-absent")
 
 	await makeDirectories(tarDir, project)
 
@@ -199,7 +199,7 @@ export async function smokeGetStarted(options: SmokeGetStartedOptions): Promise<
 		return { packed: closure.size, legs }
 	}
 
-	const dataRoot = options.dataRoot ?? String(tmp.resolve("data-root"))
+	const dataRoot = options.dataRoot ?? tmp.resolve("data-root")
 
 	await makeDirectories(dataRoot)
 

@@ -402,7 +402,7 @@ export function sweepSource(source: string, fileName = "file.ts"): string {
 }
 
 process.exitCode = await runCLICommand(async () => {
-	const paths = [...cliArguments()]
+	const paths = cliArguments()
 
 	if (!paths.length) {
 		process.stderr.write("usage: yarn comments:sweep <file> [file …]\n")

@@ -26,7 +26,7 @@ async function plant(files: Record<string, string>): Promise<{ repoRoot: string;
 		await writeLocalTextFile(text, resolvePath(root, file))
 	}
 
-	return { repoRoot: String(root), trackedFiles: Object.keys(files) }
+	return { repoRoot: root.toString(), trackedFiles: Object.keys(files) }
 }
 
 describe("findAffixPairs", () => {

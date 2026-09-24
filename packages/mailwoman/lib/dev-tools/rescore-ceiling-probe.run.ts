@@ -29,7 +29,6 @@ import { JSONSpliterator } from "spliterator"
 // Loose scan parity with the retired scripts/lib/cli-args helpers: unknown flags tolerated.
 const { values: rawValues } = parseArguments({
 	options: { model: { type: "string" }, n: { type: "string" } },
-	strict: false,
 	allowPositionals: true,
 })
 

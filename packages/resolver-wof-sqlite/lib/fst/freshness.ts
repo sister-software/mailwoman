@@ -128,7 +128,7 @@ export interface FSTExpectation {
  * @returns `undefined` for a file that is absent, too small, or not an FST at all —
  * none of which is this function's business to diagnose.
  */
-export async function peekFSTStampFields(path: string): Promise<FSTStampFields | undefined> {
+export async function peekFSTStampFields(path: PathBuilderLike): Promise<FSTStampFields | undefined> {
 	if (!(await pathExists(path))) return undefined
 	const size = (await statPath(path)).size
 
@@ -288,8 +288,8 @@ export async function fstFreshnessWarning({
 	exclusionPolicy,
 	rebuildCommand,
 }: {
-	fstPath: string
-	sourceDBPath: string
+	fstPath: PathBuilderLike
+	sourceDBPath: PathBuilderLike
 	formatVersion?: number
 	exclusionPolicy?: string
 	rebuildCommand: string
@@ -313,9 +313,9 @@ export function formatFSTStaleWarning({
 	reason,
 	rebuildCommand,
 }: {
-	fstPath: string
+	fstPath: PathBuilderLike
 	reason: string
 	rebuildCommand: string
 }): string {
-	return `WARNING: FST STALE — ${fstPath}: ${reason}. Rebuild with: ${rebuildCommand}`
+	return `WARNING: FST STALE — ${fstPath.toString()}: ${reason}. Rebuild with: ${rebuildCommand}`
 }

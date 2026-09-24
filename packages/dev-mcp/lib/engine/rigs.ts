@@ -106,7 +106,7 @@ const HTTP_OK_MAX = 300
  * that exists on their machine rather than one relative to a repository that never held it.
  */
 function rigScriptPath(...segments: string[]): string {
-	return String(tempRootPath(...segments))
+	return tempRootPath(...segments)
 }
 
 /**

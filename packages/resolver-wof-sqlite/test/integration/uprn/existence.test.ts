@@ -50,7 +50,7 @@ beforeAll(async () => {
 })
 
 async function fixture(name: string, basis: CoverageBasis): Promise<string> {
-	const path = String(join(dir, name))
+	const path = join(dir, name)
 	using kdb = new DatabaseClient<UPRNDatabase>(path)
 
 	await createUPRNTable(kdb)

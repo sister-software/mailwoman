@@ -86,7 +86,7 @@ function rollup(entries: readonly InventoryEntry[]): string[] {
 
 const InventoryCommand: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const dataRoot = options.dataRoot ?? String(mailwomanDataRoot())
+		const dataRoot = options.dataRoot ?? mailwomanDataRoot()
 
 		const report = await takeInventory({
 			dataRoot,
@@ -112,7 +112,7 @@ const InventoryCommand: CommandComponent<typeof spec> = ({ options }) => {
 		// failing that were found on the shipped artifacts: a path the workspace regroup moved,
 		// and a path under gitignored `scratchpad/` that exists only on the machine that built it.
 		// Reported separately from the count, because these artifacts pass every "has a manifest" check.
-		const repoRoot = String(repoRootPath())
+		const repoRoot = repoRootPath()
 
 		const manifested = report.entries.filter((e) => e.provenance === Provenance.Manifested)
 

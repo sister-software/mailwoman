@@ -6224,7 +6224,6 @@ __metadata:
     "@mailwoman/core": "workspace:*"
     "@mailwoman/neural-weights-en-us": "workspace:*"
     "@mailwoman/resolver-wof-sqlite": "workspace:*"
-    path-ts: "npm:^2.4.1"
   languageName: unknown
   linkType: soft
 
@@ -22249,12 +22248,11 @@ __metadata:
   languageName: node
   linkType: hard
 
-"path-ts@npm:^2.4.1":
-  version: 2.4.1
-  resolution: "path-ts@npm:2.4.1"
-  checksum: 10/281c31af1489f4e775c0bf694e0712203dd77d608a6f2d467eae144ce29583786aeecb3384718cf0eb41c19752746b361ddb9ae87ec6723e362b3149da26e2b7
+"path-ts@portal:../path-ts::locator=%40mailwoman%2Funiverse%40workspace%3A.":
+  version: 0.0.0-use.local
+  resolution: "path-ts@portal:../path-ts::locator=%40mailwoman%2Funiverse%40workspace%3A."
   languageName: node
-  linkType: hard
+  linkType: soft
 
 "path-type@npm:^3.0.0":
   version: 3.0.0

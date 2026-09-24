@@ -330,14 +330,13 @@ export async function verifyTrainingProvenance(cardPath: string): Promise<void> 
 	// An entry without one is reported with its text, so the operator sees which source is
 	// unaccounted for at the moment of publication rather than in a later audit.
 	for (const entry of entries) {
-		const text = String(entry)
-		const parenthetical = /\(([^()]{1,120})\)/u.exec(text)
+		const parenthetical = /\(([^()]{1,120})\)/u.exec(entry)
 		const inner = parenthetical?.[1]?.trim() ?? ""
 		const namesLicense = /\d/u.test(inner) || /\b(?:CC0|CC-BY|CC|ODbL|OGL|MIT|Apache|Licence|License)\b/iu.test(inner)
 
 		if (namesLicense) continue
 
-		console.error(`  ! names no license: ${text}`)
+		console.error(`  ! names no license: ${entry}`)
 	}
 }
 

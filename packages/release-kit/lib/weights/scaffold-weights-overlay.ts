@@ -352,5 +352,5 @@ await materializeDevOverlay({
 	log(`  - the docstring's "what this index is inert without", written for ${slug} specifically`)
 	log(`  - delta / transitionBeta, which are every other overlay's magnitudes until measured`)
 
-	return { packageDir: String(pkgDir), packageName, version: rootVersion, artifact, registered }
+	return { packageDir: pkgDir, packageName, version: rootVersion, artifact, registered }
 }

@@ -184,7 +184,7 @@ export interface BuildCapitalsOptions {
 	 * Directory holding `countryInfo.txt` + the `<CC>.txt` dumps (`mailwoman corpus fetch geonames-dump`).
 	 */
 	geonamesDir: PathBuilderLike
-	outPath: string
+	outPath: PathBuilderLike
 }
 
 export interface BuildCapitalsResult {
@@ -289,5 +289,5 @@ export async function buildCapitalsReference(options: BuildCapitalsOptions): Pro
 	await makeDirectories(dirname(options.outPath))
 	await writeLocalTextFile(`${head}\t"entries": [\n${body}\n\t]\n}\n`, options.outPath)
 
-	return { outPath: options.outPath, coverage: reference.coverage }
+	return { outPath: options.outPath.toString(), coverage: reference.coverage }
 }

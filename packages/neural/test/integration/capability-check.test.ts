@@ -29,8 +29,7 @@ import { createScorer } from "@mailwoman/neural/scorer"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
 
 const MODEL =
-	$public.MAILWOMAN_CAPABILITY_ONNX_MODEL ??
-	String(dataRootPath("models", "quantized", "model-v150-step-40000-int8.onnx"))
+	$public.MAILWOMAN_CAPABILITY_ONNX_MODEL ?? dataRootPath("models", "quantized", "model-v150-step-40000-int8.onnx")
 
 const TOKENIZER = dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model")
 const ANCHOR = dataRootPath("anchor", "pilot-anchor-lookup.json")

@@ -311,8 +311,8 @@ export async function acquireNIPostcodes(options: AcquireNIPostcodesOptions): Pr
 	const { destDir, reuseExisting = true, endpoint = OVERPASS_ENDPOINT } = options
 	const phase = options.onPhase ?? (() => {})
 	const now = options.now ?? new Date()
-	const responsePath = String(join(destDir, "response.json"))
-	const acquisitionPath = String(join(destDir, "acquisition.json"))
+	const responsePath = join(destDir, "response.json")
+	const acquisitionPath = join(destDir, "acquisition.json")
 	const queryMD5 = niPostcodeQueryMD5()
 
 	await makeDirectories(destDir)

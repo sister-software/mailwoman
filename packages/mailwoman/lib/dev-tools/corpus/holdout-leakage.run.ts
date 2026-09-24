@@ -45,7 +45,7 @@ const corpus = values.corpus
 
 if (!corpus) throw new Error("--corpus <corpus dir> is required")
 
-const pattern = String(join(corpus, values.split!, "*.parquet"))
+const pattern = join(corpus, values.split!, "*.parquet")
 
 const holdouts = defaultHoldouts()
 const clauses: string[] = []

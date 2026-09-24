@@ -34,7 +34,7 @@ import { describe, expect, test, vi } from "vitest"
 
 const CLI_PATH = await mailwomanCLIPath()
 
-const DEFAULT_WOF_PATH = String(dataRootPath("db", "wof", "admin-global-priority.db"))
+const DEFAULT_WOF_PATH = dataRootPath("db", "wof", "admin-global-priority.db")
 const wofPath = $public.MAILWOMAN_WOF_DB ?? DEFAULT_WOF_PATH
 
 // Per-state TX databases (the demo address is Round Rock, TX).

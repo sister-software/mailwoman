@@ -92,7 +92,7 @@ async function fetchPage(offset: number): Promise<Loc[]> {
  * Fetch the fdic BankFind branch pool and swap it into the staging path (build-on-copy).
  */
 export async function buildFDICHoldout(): Promise<void> {
-	const OUT = String(dataRootPath("corpus", "staging", "fdic-us.csv"))
+	const OUT = dataRootPath("corpus", "staging", "fdic-us.csv")
 	const tmp = `${OUT}.tmp-${process.pid}`
 
 	if (await pathExists(tmp)) {

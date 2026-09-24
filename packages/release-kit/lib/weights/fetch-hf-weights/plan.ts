@@ -24,9 +24,10 @@
 
 import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { trackedFiles } from "@mailwoman/core/git"
+import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
 import { isPresent } from "@mailwoman/core/objects"
 import { readReleaseConfig, repoCommittedSoftFeedSources } from "@mailwoman/core/release-config"
-import { resolvePath } from "path-ts"
+import { type PathBuilderLike, resolvePath } from "path-ts"
 
 import { $private } from "#env/index"
 import { literalFilesEntries } from "#pack/verify-tarball"
@@ -120,10 +121,8 @@ export interface HFMaterializationReport {
 /**
  * Read a workspace's `package.json`.
  */
-async function readWorkspaceManifest(repoRoot: string, workspace: string): Promise<{ files?: unknown }> {
-	const manifestPath = resolvePath(repoRoot, workspace, "package.json")
-
-	return readLocalJSONFile<{ files?: unknown }>(manifestPath)
+async function readWorkspaceManifest(repoRoot: PathBuilderLike, workspace: string): Promise<{ files?: unknown }> {
+	return readPackageJSON<{ files?: unknown }>(resolvePath(repoRoot, workspace, "package.json"))
 }
 
 /**
@@ -140,7 +139,7 @@ function weightsWorkspace(locale: string): string {
  * Which of these workspaces' files git already tracks — i.e. what `stageReleaseTree`'s `git archive`
  * puts in the staging tree for free (`model-card.json`, `calibration.json`, `readme.md`, the sources).
  */
-async function trackedWorkspaceFiles(repoRoot: string, workspaces: readonly string[]): Promise<Set<string>> {
+async function trackedWorkspaceFiles(repoRoot: PathBuilderLike, workspaces: readonly string[]): Promise<Set<string>> {
 	return new Set(await trackedFiles(repoRoot, [...workspaces]))
 }
 
@@ -154,7 +153,10 @@ async function trackedWorkspaceFiles(repoRoot: string, workspaces: readonly stri
  *
  * One bucket object cannot satisfy both, and a fetch has no basis to choose.
  */
-async function declaredChecksums(repoRoot: string, workspaces: readonly string[]): Promise<Map<string, string>> {
+async function declaredChecksums(
+	repoRoot: PathBuilderLike,
+	workspaces: readonly string[]
+): Promise<Map<string, string>> {
 	const declared = new Map<string, string>()
 
 	for (const workspace of workspaces) {
@@ -188,7 +190,7 @@ async function declaredChecksums(repoRoot: string, workspaces: readonly string[]
  * The locale whose package ships the model itself.
  * The base, and the directory every artifact is staged under.
  */
-export async function resolveBaseLocale(repoRoot: string, locales: readonly string[]): Promise<string> {
+export async function resolveBaseLocale(repoRoot: PathBuilderLike, locales: readonly string[]): Promise<string> {
 	const carriers: string[] = []
 
 	for (const locale of locales) {
@@ -214,7 +216,7 @@ export async function resolveBaseLocale(repoRoot: string, locales: readonly stri
  * The model version a release publishes: the base package's model-card `version`,
  * which is exactly what the publish workflow read out of that card before this script existed.
  */
-export async function readBaseModelVersion(repoRoot: string): Promise<string> {
+export async function readBaseModelVersion(repoRoot: PathBuilderLike): Promise<string> {
 	const config = await readReleaseConfig(repoRoot)
 	const baseLocale = await resolveBaseLocale(repoRoot, config.locales)
 	const cardPath = resolvePath(repoRoot, weightsWorkspace(baseLocale), "model-card.json")
@@ -240,7 +242,7 @@ export async function readBaseModelVersion(repoRoot: string): Promise<string> {
  * Both halves are probed: the YAML this replaces checked only `file`,
  * and a declared sidecar that never uploaded would have passed.
  */
-export async function distributionOnlyRemoteNames(repoRoot: string, baseLocale: string): Promise<string[]> {
+export async function distributionOnlyRemoteNames(repoRoot: PathBuilderLike, baseLocale: string): Promise<string[]> {
 	const cardPath = resolvePath(repoRoot, weightsWorkspace(baseLocale), "model-card.json")
 
 	const card = await readLocalJSONFile<{ fisher_artifact?: { file?: string; sidecar?: string } }>(cardPath)
@@ -260,7 +262,7 @@ export async function distributionOnlyRemoteNames(repoRoot: string, baseLocale: 
  * Nothing about either path needs a token.
  * The bucket is public, and a credential here would only hide the day it stops being public.
  */
-export async function hfVersionBase(repoRoot: string, version: string): Promise<string> {
+export async function hfVersionBase(repoRoot: PathBuilderLike, version: string): Promise<string> {
 	const config = await readReleaseConfig(repoRoot)
 	const baseLocale = await resolveBaseLocale(repoRoot, config.locales)
 
@@ -271,14 +273,14 @@ export async function hfVersionBase(repoRoot: string, version: string): Promise<
  * The versioned bucket directory of a character-path family: `<root>/<family>/v<version>`,
  * the family's own card version, beside the Latin base's directory rather than inside it.
  */
-export async function hfFamilyBase(repoRoot: string, family: string, version: string): Promise<string> {
+export async function hfFamilyBase(repoRoot: PathBuilderLike, family: string, version: string): Promise<string> {
 	return `${await hfResolveRoot(repoRoot)}/${family}/v${version}`
 }
 
 /**
  * The `<host>/<bucket>/resolve` prefix every versioned directory hangs off.
  */
-async function hfResolveRoot(repoRoot: string): Promise<string> {
+async function hfResolveRoot(repoRoot: PathBuilderLike): Promise<string> {
 	const config = await readReleaseConfig(repoRoot)
 	const bucket = config.assets?.hfBucket
 
@@ -304,7 +306,7 @@ async function hfResolveRoot(repoRoot: string): Promise<string> {
  * each package's `files` array names its artifacts, and `git ls-files` says which are already here.
  */
 export async function planWeightsMaterialization(
-	repoRoot: string,
+	repoRoot: PathBuilderLike,
 	options: { version?: string } = {}
 ): Promise<WeightsArtifactPlan[]> {
 	const config = await readReleaseConfig(repoRoot)
@@ -399,7 +401,7 @@ function untrackedDeclaredArtifacts(
  * A family's `model.onnx` is a different graph under the same name.
  */
 export async function planCharFamilyArtifacts(
-	repoRoot: string,
+	repoRoot: PathBuilderLike,
 	family: string,
 	workspace: string
 ): Promise<WeightsArtifactPlan[]> {

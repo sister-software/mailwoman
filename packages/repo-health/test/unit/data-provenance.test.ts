@@ -27,7 +27,7 @@ afterAll(() => fixtures.disposeAsync())
  * An untracked artifact is a local build output and not a committed claim.
  */
 async function plant(files: Record<string, string>) {
-	const repoRoot = String(fixtures.use(await temporaryDirectory("data-provenance-")).path)
+	const repoRoot = fixtures.use(await temporaryDirectory("data-provenance-")).path.toString()
 
 	for (const [file, text] of Object.entries(files)) {
 		await makeDirectories(join(repoRoot, file.slice(0, file.lastIndexOf("/"))))
@@ -103,7 +103,7 @@ describe("dataProvenanceCheck", () => {
 
 	it("leaves an untracked subdirectory out, so a build's scratch output is not reported", async () => {
 		// The directory list is derived from git's tracked files rather than from a filesystem walk.
-		const repoRoot = String(fixtures.use(await temporaryDirectory("data-provenance-")).path)
+		const repoRoot = fixtures.use(await temporaryDirectory("data-provenance-")).path.toString()
 
 		await makeDirectories(join(repoRoot, "packages/example/data/scratch"))
 		await writeLocalTextFile("{}\n", resolvePath(repoRoot, "packages/example/data/scratch/out.json"))

@@ -45,7 +45,7 @@ const GazetteerGranularity: CommandComponent<typeof spec> = ({ options }) => {
 		const { bottomsOutAt, buildGranularityLadder } = await import("#gazetteer-pipeline/granularity/index")
 		const { renderGranularityReport } = await import("#gazetteer-pipeline/granularity/report")
 
-		const sourcePath = options.source ?? String(dataRootPath("db", "wof", "admin-global-priority.db"))
+		const sourcePath = options.source ?? dataRootPath("db", "wof", "admin-global-priority.db")
 		const rows = buildGranularityLadder(sourcePath)
 
 		if (!rows.length) {

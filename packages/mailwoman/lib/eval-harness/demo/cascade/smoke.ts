@@ -51,7 +51,7 @@ import { groupPhrases } from "@mailwoman/phrase-grouper"
 import { computeQueryShape } from "@mailwoman/query-shape"
 import { WOFSQLitePlaceLookup } from "@mailwoman/resolver-wof-sqlite"
 import { deserializeFST } from "@mailwoman/resolver-wof-sqlite/fst"
-import { join } from "path-ts"
+import { join, type PathBuilderLike } from "path-ts"
 
 import { parseSmokeRows, type SmokeRow } from "#eval-harness/demo/cascade/rows"
 import { resolveWOFHotDB, wofHotStageDir } from "#eval-harness/wof-hot-db"
@@ -73,7 +73,7 @@ export interface DemoCascadeSmokeOptions {
 	 */
 	db?: string
 	model?: string
-	tokenizer?: string
+	tokenizer?: PathBuilderLike
 	card?: string
 	fst?: string
 	/**
@@ -147,7 +147,7 @@ export async function demoCascadeSmoke(
 	// In a clean install without the package the leg fails here, loudly, naming the import.
 	const { runCascade } = await import("@mailwoman/resolver-wof-wasm/browser-cascade")
 	const STAGE = options.stageDir || wofHotStageDir()
-	const DB = options.db || resolveWOFHotDB(String(STAGE))
+	const DB = options.db || resolveWOFHotDB(STAGE)
 	const MODEL = options.model || join(STAGE, "model.onnx")
 	const TOK = options.tokenizer || join(STAGE, "tokenizer.model")
 	const CARD = options.card || join(STAGE, "model-card.json")

@@ -144,8 +144,8 @@ export async function stageWeightsCache(options: StageWeightsCacheOptions): Prom
 	}
 
 	return {
-		cacheRoot: String(cacheRoot),
-		packageDir: String(packageDir),
+		cacheRoot,
+		packageDir: packageDir.toString(),
 		linked,
 		staged: stagedNames,
 		omitted: [...omit],

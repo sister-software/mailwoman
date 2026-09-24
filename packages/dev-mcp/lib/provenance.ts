@@ -24,6 +24,7 @@
  */
 
 import { pathExists, readLink, readLocalJSONFile, statLink, statPath } from "@mailwoman/core/fs/readers"
+import type { PathBuilderLike } from "path-ts"
 
 interface ArtifactState {
 	name: string
@@ -83,9 +84,9 @@ export interface ProvenanceReport {
 	notes: string[]
 }
 
-async function artifactState(name: string, path: string): Promise<ArtifactState> {
+async function artifactState(name: string, path: PathBuilderLike): Promise<ArtifactState> {
 	if (!(await pathExists(path))) {
-		return { name, path, exists: false, bytes: null, modified: null, linkTarget: null, sealed: null }
+		return { name, path: path.toString(), exists: false, bytes: null, modified: null, linkTarget: null, sealed: null }
 	}
 
 	const link = await statLink(path)
@@ -93,7 +94,7 @@ async function artifactState(name: string, path: string): Promise<ArtifactState>
 
 	return {
 		name,
-		path,
+		path: path.toString(),
 		exists: true,
 		bytes: stat.size,
 		modified: stat.mtime.toISOString(),
@@ -122,18 +123,18 @@ export interface ProvenanceOptions {
 export async function runProvenance(options: ProvenanceOptions = {}): Promise<ProvenanceReport> {
 	const { dataRootPath, mailwomanDataRoot, repoRootPath } = await import("@mailwoman/core/utils")
 
-	const dataRoot = String(mailwomanDataRoot())
+	const dataRoot = mailwomanDataRoot()
 
 	// wof-hot.db belongs to the staged demo rather than the data root.
 	// Use `promotion-eval.ts`'s lookup order so this report states the path that
 	// the demo-cascade test checks (#524).
 	const { resolveWOFHotDB } = await import("mailwoman/eval-harness/wof-hot-db")
 
-	const standard: Array<readonly [string, string]> = [
-		["admin", String(dataRootPath("db", "wof", "admin-global-priority.db"))],
-		["candidate", String(dataRootPath("db", "wof", "candidate.db"))],
-		["importance", String(dataRootPath("db", "wof", "admin-global-priority-importance.db"))],
-		["poi", String(dataRootPath("db", "poi", "poi.db"))],
+	const standard: Array<readonly [string, PathBuilderLike]> = [
+		["admin", dataRootPath("db", "wof", "admin-global-priority.db")],
+		["candidate", dataRootPath("db", "wof", "candidate.db")],
+		["importance", dataRootPath("db", "wof", "admin-global-priority-importance.db")],
+		["poi", dataRootPath("db", "poi", "poi.db")],
 		["wof-hot", resolveWOFHotDB()],
 	]
 
@@ -142,7 +143,7 @@ export async function runProvenance(options: ProvenanceOptions = {}): Promise<Pr
 		...(await Promise.all((options.extra ?? []).map(async (path) => artifactState("extra", path)))),
 	]
 
-	const reposStampPath = String(dataRootPath("db", "wof", "repos-vintage.json"))
+	const reposStampPath = dataRootPath("db", "wof", "repos-vintage.json")
 	let repos: RepoVintage[] | null = null
 	let reposStampAge: string | null = null
 
@@ -159,7 +160,7 @@ export async function runProvenance(options: ProvenanceOptions = {}): Promise<Pr
 		}
 	}
 
-	const buildLogPath = String(repoRootPath("data", "gazetteer", "wof-build-manifest.json"))
+	const buildLogPath = repoRootPath("data", "gazetteer", "wof-build-manifest.json")
 	let buildLog: string[] = []
 
 	if (await pathExists(buildLogPath)) {
@@ -213,5 +214,5 @@ export async function runProvenance(options: ProvenanceOptions = {}): Promise<Pr
 		)
 	}
 
-	return { dataRoot, artifacts, repos, reposStampPath, reposStampAge, buildLog, notes }
+	return { dataRoot, artifacts, repos, reposStampPath: reposStampPath.toString(), reposStampAge, buildLog, notes }
 }

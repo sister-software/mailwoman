@@ -196,8 +196,10 @@ export async function runConstraintCensus(
 	// Both are forced on regardless of what the caller passed.
 	// Neither can change an answer, so neither is a change.
 	const engine = await registry.acquire({ ...args.config, trace: true, diagnose_unreachable: true })
-	const dataRoot = String(engine.effective.dataRoot ?? "")
-	const opened = await (dependencies.openArtifact ?? openSealedArtifact)(conventionCandidateDBPath(dataRoot))
+
+	const opened = await (dependencies.openArtifact ?? openSealedArtifact)(
+		conventionCandidateDBPath(engine.effective.dataRoot)
+	)
 
 	if (!("db" in opened)) {
 		throw new Error(
