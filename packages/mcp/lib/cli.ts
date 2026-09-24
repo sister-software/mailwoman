@@ -50,7 +50,7 @@
 
 import { filingLandscape, plausibilityCheck, type BDCDatabase } from "@mailwoman/bdc"
 import type { PipelineResult } from "@mailwoman/core"
-import { dataRootPath, wofExtractPaths } from "@mailwoman/core/data-root"
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { readLayerManifest, type layerschemadatabase } from "@mailwoman/core/layers"
 import type { Resolver } from "@mailwoman/core/resolver"
@@ -62,6 +62,7 @@ import { NeuralAddressClassifier, type ScriptRoutedClassifier } from "@mailwoman
 import { getPOICategory } from "@mailwoman/poi-taxonomy"
 import { emitOverpassQL } from "@mailwoman/poi-taxonomy/overpass"
 import { createWOFResolver } from "@mailwoman/resolver"
+import { wofExtractPaths } from "@mailwoman/resolver-wof-sqlite/paths"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { createRuntimePipeline } from "mailwoman"
 import { geocodeAddress, RegionDatabaseProvider } from "mailwoman/geocode"

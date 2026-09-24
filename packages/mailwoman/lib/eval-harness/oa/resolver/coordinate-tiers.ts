@@ -8,6 +8,7 @@
 
 import { dataRootPath } from "@mailwoman/core/data-root"
 import type { AddressPointLookup, InterpolationLookup } from "@mailwoman/core/resolver"
+import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 
 import type { OAResolverEvalOptions } from "#eval-harness/oa/resolver/options"
 import type { RegionDatabaseProvider } from "#geocode/regions"
@@ -107,8 +108,7 @@ export async function buildCoordinateTiers(options: OAResolverEvalOptions) {
 
 	if (useAnchor || anchorRerank) {
 		const databases = (
-			options.postcodeDatabases ||
-			`${dataRootPath("db", "wof", "postalcode-us.db")},${dataRootPath("db", "wof", "postalcode-intl.db")}`
+			options.postcodeDatabases || `${wofDatabasePath("postalcode-us.db")},${wofDatabasePath("postalcode-intl.db")}`
 		)
 			.split(",")
 			.map((s) => s.trim())

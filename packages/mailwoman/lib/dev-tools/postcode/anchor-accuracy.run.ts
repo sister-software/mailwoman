@@ -18,10 +18,10 @@
  *   --eval data/eval/external/openaddresses-de-sample.jsonl --country DE
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { percentile } from "@mailwoman/core/stats"
 import { WOFPostcodeLookup } from "@mailwoman/resolver-wof-sqlite"
+import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import { haversineKm } from "@mailwoman/spatial"
 import { resolvePath } from "path-ts"
 import { JSONSpliterator } from "spliterator"
@@ -42,8 +42,8 @@ function parseArgs(): Args {
 	let country = "DE"
 
 	const databases: string[] = [
-		resolvePath(dataRootPath("db", "wof", "postalcode-us.db")),
-		resolvePath(dataRootPath("db", "wof", "postalcode-intl.db")),
+		resolvePath(wofDatabasePath("postalcode-us.db")),
+		resolvePath(wofDatabasePath("postalcode-intl.db")),
 	]
 
 	const { values } = parseArguments({

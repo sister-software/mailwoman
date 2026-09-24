@@ -19,7 +19,7 @@
  *   (or `--candidate-db none`) pins the FTS backend.
  */
 
-import { databaseRootPath, dataRootPath, wofExtractPaths } from "@mailwoman/core/data-root"
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { repoRootPathBuilder } from "@mailwoman/core/paths"
 import { extractDelimited } from "@mailwoman/core/scripting/arguments"
@@ -31,6 +31,7 @@ import type {
 } from "@mailwoman/resolver-wof-sqlite"
 import { readCapitalPoints } from "@mailwoman/resolver-wof-sqlite/capital-schema"
 import { CapitalIndex, type CapitalPoint } from "@mailwoman/resolver-wof-sqlite/capitals"
+import { wofDatabaseRoot, wofExtractPaths } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { PathBuilder, PathBuilderLike } from "path-ts"
@@ -44,7 +45,7 @@ import { $public } from "#env"
  * when nothing points somewhere else.
  */
 export function conventionCandidateDBPath(dataRoot: PathBuilderLike = dataRootPath()): string {
-	return databaseRootPath(dataRoot)("wof", "candidate.db").toString()
+	return wofDatabaseRoot(dataRoot)("candidate.db").toString()
 }
 
 /**

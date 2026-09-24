@@ -21,7 +21,6 @@
  *   `fst-deserialize-web.ts` (see the docs demo loader).
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists, readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { resourceDictionaryPath } from "@mailwoman/core/paths"
 import type { PathBuilder, PathBuilderLike } from "path-ts"
@@ -29,6 +28,7 @@ import type { PathBuilder, PathBuilderLike } from "path-ts"
 import type { FSTMatcher } from "#fst/matcher"
 import { deserializeFST, readFSTProvenance } from "#fst/serialize"
 import type { FSTProvenance } from "#fst/types"
+import { wofDatabasePath } from "#paths"
 import { buildStreetMorphologyFST } from "#street/morphology/fst/builder"
 
 /**
@@ -41,7 +41,7 @@ export const STREET_MORPHOLOGY_ARTIFACT_FILENAME = "fst-street-morphology.bin"
  * The staged artifact's default location: `$MAILWOMAN_DATA_ROOT/db/wof/fst-street-morphology.bin`.
  */
 export function defaultStreetMorphologyArtifactPath(): PathBuilder {
-	return dataRootPath("db", "wof", STREET_MORPHOLOGY_ARTIFACT_FILENAME)
+	return wofDatabasePath(STREET_MORPHOLOGY_ARTIFACT_FILENAME)
 }
 
 export interface LoadStreetMorphologyFSTOpts {

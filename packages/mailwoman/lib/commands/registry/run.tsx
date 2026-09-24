@@ -30,6 +30,7 @@ import { CommandError } from "@mailwoman/core/scripting/command"
 import type { NeuralAddressClassifier } from "@mailwoman/neural"
 import type { ColumnMapping, EntityGeoData, GeocodeAddress, SourceRecord } from "@mailwoman/registry"
 import type { EvalGeocoder, EvalGeocoderFactory } from "@mailwoman/registry/tools"
+import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { GeoFeatureCollection, PointLiteral } from "@mailwoman/spatial"
 import { Text } from "ink"
 
@@ -262,7 +263,7 @@ export function evalGeocoderFactory(flags: EvalGeocoderFlags): EvalGeocoderFacto
 			import("#geocode/regions"),
 		])
 
-		const wof = flags.wof || dataRootPath("db", "wof", "admin-global-priority.db")
+		const wof = flags.wof || wofDatabasePath("admin-global-priority.db")
 		const dataRoot = flags.dataRoot || dataRootPath()
 
 		const classifier = await NeuralAddressClassifier.loadFromWeights({

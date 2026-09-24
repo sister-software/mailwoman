@@ -52,9 +52,16 @@ The tokenizer in `@mailwoman/neural` is the one documented exception. It dynamic
 
 ## Data, package, and repository roots
 
-Use `dataRootPath` and `dataRootPath` from `@mailwoman/core/data-root` for data artifacts. Use
-`configRootPath` for configuration artifacts. Shipped code and documentation refer to
-`$MAILWOMAN_DATA_ROOT`; they do not contain a lab-specific path.
+Use `dataRootPath` from `@mailwoman/core/data-root` for data artifacts. Use `configRootPath` for
+configuration artifacts. Shipped code and documentation refer to `$MAILWOMAN_DATA_ROOT`; they do not
+contain a lab-specific path.
+
+A database under the data root's `db/` group is located by the package that owns it, through that
+package's `paths` export: `wofDatabasePath("admin-global-priority.db")` from
+`@mailwoman/resolver-wof-sqlite/paths`, `banDatabasePath` from `@mailwoman/ban/paths`, and the same
+pattern in `soil`, `flood`, `coastal`, `zoning`, `osm` and `timezone-lookup`. Each constant reads the
+data root when a path is requested. The matching `…DatabaseRoot(dataRoot)` function takes an explicit
+root. Core keeps only `databaseRootPath`, for a package that cannot depend on the owner.
 
 Never construct another package's location through a `node_modules` segment. Use one of these
 interfaces:

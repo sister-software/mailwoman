@@ -57,7 +57,8 @@ const ACTION_MARK: Record<string, string> = {
 const GazetteerReposSync: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { join } = await import("path-ts")
-		const { dataRootPath, wofReposPath } = await import("@mailwoman/core/data-root")
+		const { wofReposPath } = await import("@mailwoman/core/data-root")
+		const { wofDatabasePath } = await import("@mailwoman/resolver-wof-sqlite/paths")
 		const { auditReposRoot } = await import("#gazetteer-pipeline/repos/audit")
 		const { planReposSync, SyncAction, syncSentence } = await import("#gazetteer-pipeline/repos/sync")
 		const { githubForkProbe, UPSTREAM_ORG } = await import("#gazetteer-pipeline/wof/repo-origin")
@@ -138,7 +139,7 @@ const GazetteerReposSync: CommandComponent<typeof spec> = ({ options }) => {
 
 		// The vintage stamp lives outside the repos root: `ingestWOF` globs the root
 		// and a stray file inside it is one more thing for that glob to consider.
-		const vintagePath = dataRootPath("db", "wof", "repos-vintage.json")
+		const vintagePath = wofDatabasePath("repos-vintage.json")
 
 		await makeDirectories(dirname(vintagePath))
 

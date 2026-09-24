@@ -64,6 +64,7 @@ import {
 } from "@mailwoman/core/layers"
 import { isoDate } from "@mailwoman/core/utils"
 import { CoverageBasis } from "@mailwoman/evidence"
+import { uprnDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { UPRNDatabase } from "@mailwoman/resolver-wof-sqlite/uprn"
 import {
 	LATITUDE_MAX,
@@ -593,7 +594,7 @@ export async function buildUPRNLayer(options: BuildUPRNLayerOptions): Promise<Bu
 	const now = options.now ?? new Date()
 	const stamp = isoDate(now)
 	const sourceDir = resolvePath(options.sourceDir ?? dataRootPath("os-uprn", stamp))
-	const out = options.out ?? dataRootPath("db", "uprn", "uprn.db")
+	const out = options.out ?? uprnDatabasePath("uprn.db")
 	const minimumPlausibleRows = options.minimumPlausibleRows ?? OPEN_UPRN_MINIMUM_PLAUSIBLE_ROWS
 
 	// Acquire the source.

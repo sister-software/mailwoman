@@ -11,14 +11,14 @@
  *   same reasons, so the two suites run and skip together.
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { resolveWeights } from "@mailwoman/neural/weights"
+import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import { $public } from "mailwoman/env"
 import { createGeocodeCommandOptions, createGeocodeSession } from "mailwoman/geocode"
 import { describe, expect, test } from "vitest"
 
-const DEFAULT_WOF_PATH = dataRootPath("db", "wof", "admin-global-priority.db")
+const DEFAULT_WOF_PATH = wofDatabasePath("admin-global-priority.db")
 const wofPath = $public.MAILWOMAN_WOF_DB ?? DEFAULT_WOF_PATH
 const hasWOFDB = await pathExists(wofPath)
 

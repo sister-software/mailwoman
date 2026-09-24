@@ -44,15 +44,16 @@ const GazetteerTriage: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { isoDate } = await import("@mailwoman/core/utils")
 		const { dataRootPath } = await import("@mailwoman/core/data-root")
+		const { wofDatabasePath } = await import("@mailwoman/resolver-wof-sqlite/paths")
 		const { CoverageVerdict, triageWOFCurrency } = await import("#gazetteer-pipeline/wof/triage")
 
-		const adminDB = options.admin ?? dataRootPath("db", "wof", "admin-global-priority.db")
+		const adminDB = options.admin ?? wofDatabasePath("admin-global-priority.db")
 		const geonamesDir = options.geonames ?? dataRootPath("geonames")
 
 		const countries = extractDelimited(options.countries)
 
 		const stamp = isoDate()
-		const outPath = PathBuilder.from(options.out ?? dataRootPath("db", "wof", "triage", `currency-${stamp}.jsonl`))
+		const outPath = PathBuilder.from(options.out ?? wofDatabasePath("triage", `currency-${stamp}.jsonl`))
 
 		const { rows, summary } = await triageWOFCurrency({
 			adminDB,

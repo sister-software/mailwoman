@@ -50,7 +50,7 @@
 
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http"
 
-import { dataRootPath } from "@mailwoman/core/data-root"
+import { databaseRootPath, dataRootPath } from "@mailwoman/core/data-root"
 import { gzipSync } from "@mailwoman/core/fs/compression"
 import { statPath, realPath, pathExists, readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { openReadStream } from "@mailwoman/core/fs/streams"
@@ -299,7 +299,7 @@ const haveBrowser = (await tryChromiumExecutable()) !== null
 const ORT_DIST_LOCATOR = await tryResolveFile("onnxruntime-web/ort-wasm-simd-threaded.jsep.wasm")
 
 const SQLJS_ENTRY_FILE = await tryResolveFile("sql.js-httpvfs/dist/index.js")
-const CANDIDATE_DB_PATH = dataRootPath("db", "wof", "candidate.db")
+const CANDIDATE_DB_PATH = databaseRootPath(dataRootPath())("wof", "candidate.db")
 
 const haveGazetteer = SQLJS_ENTRY_FILE !== null && (await pathExists(CANDIDATE_DB_PATH))
 const canRun = haveModel && haveBrowser && ORT_DIST_LOCATOR !== null

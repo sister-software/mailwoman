@@ -86,7 +86,7 @@ export const spec = {
 const GazetteerBuildZoning: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const [
-			{ dataRootPath },
+			{ zoningDatabasePath },
 			{
 				assertAttributionUnchanged,
 				buildZoningDatabase,
@@ -101,7 +101,7 @@ const GazetteerBuildZoning: CommandComponent<typeof spec> = ({ options }) => {
 			},
 			{ GZT_LICENSE_CONTRADICTION },
 		] = await Promise.all([
-			import("@mailwoman/core/data-root"),
+			import("@mailwoman/zoning/paths"),
 			import("@mailwoman/zoning/sdk"),
 			import("@mailwoman/zoning/vocabulary"),
 		])
@@ -149,7 +149,7 @@ const GazetteerBuildZoning: CommandComponent<typeof spec> = ({ options }) => {
 			exportPath = await downloadZoningExport({
 				url: await client.readExportURL(),
 				vintage,
-				cacheRoot: dataRootPath("db", "zoning", "cache").toString(),
+				cacheRoot: zoningDatabasePath("cache").toString(),
 				onProgress: (message) => console.error(`  [download] ${message}`),
 			})
 		}
@@ -181,7 +181,7 @@ const GazetteerBuildZoning: CommandComponent<typeof spec> = ({ options }) => {
 		const sourceVintage = vintage
 		const coverageResolution = Number(options.coverageResolution)
 		const indexResolution = Number(options.indexResolution)
-		const out = options.out ?? dataRootPath("db", "zoning", "zoning-ireland.db").toString()
+		const out = options.out ?? zoningDatabasePath("zoning-ireland.db").toString()
 		const buildSHA = resolveBuildSHA(repoRootPath())
 
 		// A narrowed run reads a subset on purpose, so its declared count is the subset's own

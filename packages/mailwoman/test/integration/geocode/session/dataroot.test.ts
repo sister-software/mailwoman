@@ -18,10 +18,11 @@
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import { createGeocodeCommandOptions, createGeocodeSession } from "mailwoman/geocode"
 import { afterAll, describe, expect, it } from "vitest"
 
-const REAL_CANDIDATE_DB = dataRootPath("db", "wof", "candidate.db")
+const REAL_CANDIDATE_DB = wofDatabasePath("candidate.db")
 const haveArtifacts = await pathExists(REAL_CANDIDATE_DB)
 
 const BOGUS_ROOT = await temporaryDirectory("mw-bogus-root-")

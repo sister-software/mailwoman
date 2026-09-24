@@ -33,6 +33,7 @@
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
+import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import {
 	committedSoftFeedLinks,
 	materializeDevOverlay,
@@ -55,7 +56,7 @@ await materializeDevOverlay({
 	model: { kind: "inherit" },
 	softFeed: [softFeed.anchor, softFeed.country],
 	evidenceLexiconsFromCard: true,
-	postcodeBinary: { country: "fr", database: dataRootPath("db", "wof", "postalcode-intl.db") },
+	postcodeBinary: { country: "fr", database: wofDatabasePath("postalcode-intl.db") },
 	pairIndex: {
 		country: "fr",
 		delta: PAIR_INDEX_DELTA,

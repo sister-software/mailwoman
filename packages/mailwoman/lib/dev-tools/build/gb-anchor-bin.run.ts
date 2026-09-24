@@ -35,11 +35,11 @@
  *   Usage: node packages/mailwoman/lib/dev-tools/build/gb-anchor-bin.run.ts --out <dir>
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { serializePostcodeBinary } from "@mailwoman/neural/postcode"
+import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { join } from "path-ts"
@@ -55,7 +55,7 @@ const { values } = parseArguments({
 
 if (!values.out) throw new Error("--out <dir> is required")
 
-const databasePath = values.database!.startsWith("/") ? values.database! : dataRootPath("db", "wof", values.database!)
+const databasePath = values.database!.startsWith("/") ? values.database! : wofDatabasePath(values.database!)
 
 using con = new DatabaseClient<WOFDatabase>(databasePath, { readOnly: true })
 

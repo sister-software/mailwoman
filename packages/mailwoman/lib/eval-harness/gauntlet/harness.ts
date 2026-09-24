@@ -9,7 +9,7 @@
  *   paid for once (#566 / reconcile-retirement).
  */
 
-import { dataRootPath, wofExtractPaths } from "@mailwoman/core/data-root"
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists, readLocalBuffer, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { md5Hex } from "@mailwoman/core/hash"
 import { tryParsingJSON } from "@mailwoman/core/json"
@@ -21,6 +21,7 @@ import type { FSTMatcherLike } from "@mailwoman/neural/fst-prior"
 import { resolveWeights, weightsCachePackageDir } from "@mailwoman/neural/weights"
 import { readDeclaredArtifactFile } from "@mailwoman/neural/weights-channels"
 import { createWOFResolver } from "@mailwoman/resolver"
+import { poiDatabasePath, wofExtractPaths } from "@mailwoman/resolver-wof-sqlite/paths"
 import { resolvePath, type PathBuilder, type PathBuilderLike } from "path-ts"
 
 import type { AdminCoherenceReport } from "#admin-coherence"
@@ -734,7 +735,7 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 	// The fork-entity board rows are improvement_target until it is present).
 	// Mirrors the CLI's wiring exactly, so the board grades what production runs.
 	let forkEntityDeps: Pick<GeocodeDeps, "poiLookup" | "isStreetGeneric"> = {}
-	const poiDBPath = dataRootPath("db", "poi", "poi.db")
+	const poiDBPath = poiDatabasePath("poi.db")
 
 	if (await pathExists(poiDBPath)) {
 		const [{ POILookup }, { loadStreetMorphologyFST }] = await Promise.all([

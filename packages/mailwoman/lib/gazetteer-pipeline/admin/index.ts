@@ -14,12 +14,13 @@
  *   a recipe. the recipe is `../defaults.ts`).
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
+import { dataRootPath, wofReposPath } from "@mailwoman/core/data-root"
 import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { removePath, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { md5File } from "@mailwoman/core/hash"
 import { repoRootPath } from "@mailwoman/core/paths"
 import { isoDate } from "@mailwoman/core/utils"
+import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase } from "@mailwoman/sqlite/sealed-db"
@@ -38,7 +39,6 @@ import {
 	DEFAULT_OVERTURE_COUNTRIES,
 	DEFAULT_OVERTURE_RELEASE,
 	geonamesAdminGapCountries,
-	wofDir,
 } from "#gazetteer-pipeline/defaults"
 import { buildFTS, type BuildFTSResult } from "#gazetteer-pipeline/fts"
 import { checkOvertureRelease } from "#gazetteer-pipeline/overture-release"
@@ -102,8 +102,8 @@ export interface BuildAdminResult {
 export async function buildAdmin(opts: BuildAdminOptions = {}): Promise<BuildAdminResult> {
 	const t0 = performance.now()
 	const phase = opts.onPhase ?? (() => {})
-	const dataDir = PathBuilder.from(opts.dataDir ?? wofDir("repos"))
-	const out = PathBuilder.from(opts.out ?? wofDir(`admin-global-priority${DEFAULT_ADMIN_STAGING_SUFFIX}`))
+	const dataDir = PathBuilder.from(opts.dataDir ?? wofReposPath)
+	const out = PathBuilder.from(opts.out ?? wofDatabasePath(`admin-global-priority${DEFAULT_ADMIN_STAGING_SUFFIX}`))
 	const overtureCountries = opts.overtureCountries ?? DEFAULT_OVERTURE_COUNTRIES
 	const geonamesCountries = opts.geonamesCountries ?? DEFAULT_GEONAMES_COUNTRIES
 	const overtureRelease = opts.overtureRelease ?? DEFAULT_OVERTURE_RELEASE

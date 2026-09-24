@@ -55,9 +55,9 @@ interface StateLedger {
 
 const SitusAttributionManifest: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { dataRootPath } = await import("@mailwoman/core/data-root")
+		const { addressPointDatabasePath } = await import("@mailwoman/resolver-wof-sqlite/paths")
 
-		const outDir = options.outDir ?? dataRootPath("db", "address-points")
+		const outDir = options.outDir ?? addressPointDatabasePath
 
 		// Canonical per-state databases only: address-points-us-<2-letter-slug>.db.
 		// Excludes county-scoped dev artifacts (e.g. Address-points-us-il-cook.db) that

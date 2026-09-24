@@ -19,6 +19,7 @@
 
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { OVERTURE_ADDRESSES_RELEASE } from "@mailwoman/core/overture-pins"
+import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { PathBuilder } from "path-ts"
@@ -74,7 +75,7 @@ export async function buildESPostcodeCentroids(options: ESPostcodeCentroidsOptio
 		options.parquet || dataRootPath("overture", OVERTURE_ADDRESSES_RELEASE, `addresses-${CC.toLowerCase()}.parquet`)
 	)
 
-	const OUT_DB = options.out || dataRootPath("db", "wof", `postalcode-${CC.toLowerCase()}-overture.db`)
+	const OUT_DB = options.out || wofDatabasePath(`postalcode-${CC.toLowerCase()}-overture.db`)
 	// The `source` stamp names the Overture release the rows came from, read off the
 	// parquet's release directory rather than typed: a build over a newer parquet
 	// used to stamp the pinned default's release on every row.

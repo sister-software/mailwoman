@@ -17,6 +17,7 @@ import { pathExists } from "@mailwoman/core/fs/readers"
 import { AddressPointSqliteLookup, StreetCentroidSqliteLookup } from "@mailwoman/resolver-wof-sqlite"
 import type { PathBuilder } from "path-ts"
 
+import { banDatabaseRoot } from "#paths"
 import { streetLocaleForBANCountry, supportedBANCountries } from "#sdk/street-locale"
 
 /**
@@ -74,11 +75,11 @@ export class BANRegionDatabaseProvider implements Disposable {
 	}
 
 	#addressPointsPath(countryCode: string): PathBuilder {
-		return this.#dataRoot("ban", `address-points-${countryCode}.db`)
+		return banDatabaseRoot(this.#dataRoot)(`address-points-${countryCode}.db`)
 	}
 
 	#streetCentroidPath(countryCode: string): PathBuilder {
-		return this.#dataRoot("ban", `street-centroids-${countryCode}.db`)
+		return banDatabaseRoot(this.#dataRoot)(`street-centroids-${countryCode}.db`)
 	}
 
 	/**

@@ -16,7 +16,7 @@
  *   server spends its resident memory, and it spends it on sessions.
  */
 
-import { databaseRootPath, dataRootPath } from "@mailwoman/core/data-root"
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists, readLocalBuffer, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { parseAnchorLookup } from "@mailwoman/neural/anchor-inference"
@@ -24,6 +24,7 @@ import { PostcodeBinaryResolver } from "@mailwoman/neural/postcode"
 import { resolveWeights } from "@mailwoman/neural/weights"
 import { readRequiredChannels } from "@mailwoman/neural/weights-channels"
 import { normalizeTokens, deserializeFST } from "@mailwoman/resolver-wof-sqlite/fst"
+import { poiDatabaseRoot, wofDatabaseRoot } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { PlaceImportanceDatabase } from "@mailwoman/resolver-wof-sqlite/place-importance-schema"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
@@ -131,7 +132,7 @@ export async function runLookup(
 				// The score source's split channels ride along whenever the conventional
 				// importance DB exists beside the artifacts.
 				// The join every fame-contest diagnosis needs, attached rather than scripted.
-				const importancePath = databaseRootPath(dataRoot)("wof", "admin-global-priority-importance.db").toString()
+				const importancePath = wofDatabaseRoot(dataRoot)("admin-global-priority-importance.db").toString()
 
 				const importanceDB = (await pathExists(importancePath))
 					? new DatabaseClient<PlaceImportanceDatabase>(importancePath, { readOnly: true })
@@ -223,7 +224,7 @@ export async function runLookup(
 		}
 
 		case LookupSource.POI: {
-			return await withArtifact(source, databaseRootPath(dataRoot)("poi", "poi.db").toString(), (db, path) => ({
+			return await withArtifact(source, poiDatabaseRoot(dataRoot)("poi.db").toString(), (db, path) => ({
 				source,
 				provenance: { artifact: path },
 				rows: lookupPOI(db, queries, {

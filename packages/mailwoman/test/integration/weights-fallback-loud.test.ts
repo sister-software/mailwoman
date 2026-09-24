@@ -22,13 +22,13 @@
  *   covered below.
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { parseJSONStrict } from "@mailwoman/core/json"
 import { runFile } from "@mailwoman/core/process"
 import { childEnv } from "@mailwoman/core/scripting/utils"
+import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import { mailwomanCLIPath } from "mailwoman/cli-kit/metadata"
 import { $public } from "mailwoman/env"
 import { afterAll, beforeAll, describe, expect, test } from "vitest"
@@ -205,7 +205,7 @@ describe("#1108 — the interactive/declined degraded banner is unchanged (regre
 // Runs only where a WOF DB is on disk.
 // Proves the warning + degraded output + exit 0 combination the audit's test
 // (1) calls for on the full --resolve path.
-const DEFAULT_WOF_PATH = dataRootPath("db", "wof", "whosonfirst-data-admin-us-latest.db")
+const DEFAULT_WOF_PATH = wofDatabasePath("whosonfirst-data-admin-us-latest.db")
 const wofPath = $public.MAILWOMAN_WOF_DB || DEFAULT_WOF_PATH.toString()
 const hasWOFDB = await pathExists(wofPath)
 

@@ -138,7 +138,7 @@ export interface ReadOvertureSubVenuesOptions {
 	/**
 	 * Path to `poi.db`.
 	 *
-	 * Typically `dataRootPath("db", "poi", "poi.db")`.
+	 * Typically `poiDatabasePath("poi.db")` from `@mailwoman/resolver-wof-sqlite/paths`.
 	 */
 	databasePath: string
 	/**

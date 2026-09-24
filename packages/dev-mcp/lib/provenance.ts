@@ -123,6 +123,7 @@ export interface ProvenanceOptions {
 export async function runProvenance(options: ProvenanceOptions = {}): Promise<ProvenanceReport> {
 	const { dataRootPath } = await import("@mailwoman/core/data-root")
 	const { repoRootPath } = await import("@mailwoman/core/paths")
+	const { poiDatabasePath, wofDatabasePath } = await import("@mailwoman/resolver-wof-sqlite/paths")
 
 	const dataRoot = dataRootPath()
 
@@ -132,10 +133,10 @@ export async function runProvenance(options: ProvenanceOptions = {}): Promise<Pr
 	const { resolveWOFHotDB } = await import("mailwoman/eval-harness/wof-hot-db")
 
 	const standard: Array<readonly [string, PathBuilderLike]> = [
-		["admin", dataRootPath("db", "wof", "admin-global-priority.db")],
-		["candidate", dataRootPath("db", "wof", "candidate.db")],
-		["importance", dataRootPath("db", "wof", "admin-global-priority-importance.db")],
-		["poi", dataRootPath("db", "poi", "poi.db")],
+		["admin", wofDatabasePath("admin-global-priority.db")],
+		["candidate", wofDatabasePath("candidate.db")],
+		["importance", wofDatabasePath("admin-global-priority-importance.db")],
+		["poi", poiDatabasePath("poi.db")],
 		["wof-hot", resolveWOFHotDB()],
 	]
 
@@ -144,7 +145,7 @@ export async function runProvenance(options: ProvenanceOptions = {}): Promise<Pr
 		...(await Promise.all((options.extra ?? []).map(async (path) => artifactState("extra", path)))),
 	]
 
-	const reposStampPath = dataRootPath("db", "wof", "repos-vintage.json")
+	const reposStampPath = wofDatabasePath("repos-vintage.json")
 	let repos: RepoVintage[] | null = null
 	let reposStampAge: string | null = null
 

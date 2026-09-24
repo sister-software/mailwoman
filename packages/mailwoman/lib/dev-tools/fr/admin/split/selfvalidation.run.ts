@@ -30,12 +30,12 @@
  */
 
 import type { ClassificationRecord } from "@mailwoman/core"
-import { dataRootPath } from "@mailwoman/core/data-root"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { percentile } from "@mailwoman/core/stats"
 import { allRows, mean } from "@mailwoman/core/utils"
 import { createWOFResolver } from "@mailwoman/resolver"
+import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { haversineKm } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
@@ -68,7 +68,7 @@ const values = rawValues as { db?: string; n?: string; out?: string }
 /**
  * --- args ----------------------------------------------------------------------------------------.
  */
-const DB = resolvePath(values["db"] || dataRootPath("db", "wof", "admin-global-priority.db"))
+const DB = resolvePath(values["db"] || wofDatabasePath("admin-global-priority.db"))
 /**
  * Per stratum.
  */

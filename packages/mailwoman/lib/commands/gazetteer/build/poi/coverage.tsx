@@ -99,7 +99,7 @@ const GazetteerBuildPOICoverage: CommandComponent<typeof spec> = ({ options }) =
 		}
 
 		const { LayerTier } = await import("@mailwoman/core/layers")
-		const { dataRootPath } = await import("@mailwoman/core/data-root")
+		const { poiDatabasePath } = await import("@mailwoman/resolver-wof-sqlite/paths")
 		const { getPOICategory } = await import("@mailwoman/poi-taxonomy/lookup")
 
 		const { buildPOIDatabase } = await import("#gazetteer-pipeline/poi/build/poi")
@@ -123,8 +123,8 @@ const GazetteerBuildPOICoverage: CommandComponent<typeof spec> = ({ options }) =
 			throw new Error(`--resolution must be an H3 resolution in [0, 15], got ${stringifyJSON(options.resolution)}`)
 		}
 
-		const referencePath = options.reference ?? dataRootPath("db", "poi", "poi.db")
-		const out = options.out ?? dataRootPath("db", "poi", `poi-coverage-${options.category}-${slugify(region)}.db`)
+		const referencePath = options.reference ?? poiDatabasePath("poi.db")
+		const out = options.out ?? poiDatabasePath(`poi-coverage-${options.category}-${slugify(region)}.db`)
 		const buildSHA = resolveBuildSHA(repoRootPath())
 
 		// dynamic import, required: @mailwoman/osm is unpublished (ODbL counsel sign-off pending —

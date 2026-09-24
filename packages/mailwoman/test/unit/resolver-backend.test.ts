@@ -4,15 +4,13 @@
  * @author Teffen Ellis, et al.
  */
 
-import { dataRootPath, wofExtractPaths } from "@mailwoman/core/data-root"
-import { DefaultMailwomanPaths } from "@mailwoman/core/env"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import type { CandidateDatabase } from "@mailwoman/resolver-wof-sqlite/candidate-schema"
+import { wofDatabaseRoot } from "@mailwoman/resolver-wof-sqlite/paths"
 import { conventionCandidateDBPath, resolveCandidateDBPath } from "mailwoman/resolver-backend"
-import { join } from "path-ts"
 import { afterEach, expect, test, vi } from "vitest"
 
 // This source file is a guaranteed-existing absolute path for the existsSync checks.
@@ -24,39 +22,6 @@ function setEnv(key: string, value: string | undefined): void {
 
 afterEach(() => {
 	vi.unstubAllEnvs()
-})
-
-test("wofExtractPaths: builds the admin + postcode + tail + intl + NL-PC6 + NI-OSM database paths under a data root (#920/#977)", () => {
-	// The 2026-09-15 regrouping moved every database artifact under `db/`,
-	// and this test pinned the old prefix as six absolute string literals.
-	// It therefore passed while `wofExtractPaths` named a directory holding nothing,
-	// and `mailwoman geocode` found no resolver database on a data root carrying all six extracts.
-	//
-	// The layout is stated once here and composed with the same path builder the rest of the tree uses,
-	// so a future regrouping fails this assertion in one place instead of drifting from it in six.
-	const extract = (name: string): string => join("/data", "db", "wof", name)
-
-	expect(wofExtractPaths("/data")).toEqual([
-		extract("admin-global-priority.db"),
-		extract("postalcode-us.db"),
-		extract("postalcode-geonames-tail.db"),
-		extract("postalcode-intl.db"),
-		extract("postalcode-nl-pc6.db"),
-		// Build-local (ODbL): present only on the machine that built it, which is
-		// exactly why it can be listed unconditionally.
-		// Every caller filters with `existsSync`, and that filter is the tier.
-		extract("postalcode-ni-osm.db"),
-	])
-})
-
-test("dataRootPath: honors MAILWOMAN_DATA_ROOT and threads it into wofExtractPaths", () => {
-	setEnv("MAILWOMAN_DATA_ROOT", "/custom/root")
-	expect(dataRootPath().toString()).toBe("/custom/root")
-	// The default argument reads the env, which is the property under test here rather than the layout.
-	expect(wofExtractPaths()[0]).toBe(join("/custom/root", "db", "wof", "admin-global-priority.db"))
-
-	setEnv("MAILWOMAN_DATA_ROOT", DefaultMailwomanPaths.data)
-	expect(dataRootPath().toString()).toBe(DefaultMailwomanPaths.data)
 })
 
 test("resolveCandidateDBPath: returns an explicit/env path only when it exists on disk", async () => {
@@ -82,7 +47,7 @@ test("resolveCandidateDBPath: falls back to the convention path under the data r
 	// `resolveCandidateDBPath()` answered undefined on a host holding the file,
 	// and the resolver fell back to FTS without saying so.
 	const root = resolvePackagePath("mailwoman", "lib", "test-fixtures", "candidate-root")
-	const conventionPath = join(root, "db", "wof", "candidate.db")
+	const conventionPath = wofDatabaseRoot(root)("candidate.db").toString()
 
 	setEnv("MAILWOMAN_DATA_ROOT", root)
 	setEnv("MAILWOMAN_CANDIDATE_DB", undefined)
@@ -105,7 +70,7 @@ test("resolveCandidateDBPath: an explicit data root does not depend on MAILWOMAN
 	setEnv("MAILWOMAN_DATA_ROOT", "/no/such/root")
 	setEnv("MAILWOMAN_CANDIDATE_DB", undefined)
 
-	expect(await resolveCandidateDBPath(undefined, root)).toBe(join(root, "db", "wof", "candidate.db"))
+	expect(await resolveCandidateDBPath(undefined, root)).toBe(wofDatabaseRoot(root)("candidate.db").toString())
 })
 
 test("loadCapitalIndex prefers the artifact's capital table, falls back to the repo file, and throws with neither (#1880)", async () => {

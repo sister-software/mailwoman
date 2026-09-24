@@ -151,9 +151,9 @@ interface StateManifestEntry {
 const SitusBuild: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { scriptEntryPath } = await import("@mailwoman/core/scripting/utils")
-		const { dataRootPath } = await import("@mailwoman/core/data-root")
+		const { addressPointDatabasePath } = await import("@mailwoman/resolver-wof-sqlite/paths")
 
-		const outDir = options.outDir ?? dataRootPath("db", "address-points")
+		const outDir = options.outDir ?? addressPointDatabasePath
 
 		const states = options.states ? splitUSStateCodes(options.states) : [...STATES_BY_COVERAGE]
 

@@ -59,12 +59,13 @@ const GazetteerRelease: CommandComponent<typeof spec> = ({ options }) => {
 			promoteCandidate,
 			publishGazetteer,
 			resolvePostcodeDatabases,
-			wofDir,
 		} = await import("#gazetteer-pipeline")
 
+		const { wofDatabasePath } = await import("@mailwoman/resolver-wof-sqlite/paths")
+
 		const root = dataRootPath()
-		const adminIn = options.admin ?? wofDir(DEFAULT_ADMIN_DB)
-		const out = options.out ?? wofDir(DEFAULT_CANDIDATE_OUT)
+		const adminIn = options.admin ?? wofDatabasePath(DEFAULT_ADMIN_DB)
+		const out = options.out ?? wofDatabasePath(DEFAULT_CANDIDATE_OUT)
 
 		const countries = options.countries ? splitCountryCodes(options.countries) : DEFAULT_FOLD_COUNTRIES
 

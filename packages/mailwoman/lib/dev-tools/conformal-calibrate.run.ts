@@ -47,7 +47,7 @@
  *   Do not change the resolver or parser. This script only reads stamped metadata.
  */
 
-import { dataRootPath, tempRootPath } from "@mailwoman/core/data-root"
+import { tempRootPath } from "@mailwoman/core/data-root"
 import { walkNodes, type AddressTree } from "@mailwoman/core/decoder"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { makeGlibcLcgFloat64, shuffleBy } from "@mailwoman/core/random"
@@ -55,6 +55,7 @@ import { runIfScript } from "@mailwoman/core/scripting"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { median } from "@mailwoman/core/stats"
 import { createWOFResolver } from "@mailwoman/resolver"
+import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import { haversine } from "@mailwoman/spatial"
 import { JSONSpliterator } from "spliterator"
 
@@ -259,8 +260,7 @@ async function main(): Promise<void> {
 	const modelCardPath = values["model-card"] || "packages/neural-weights-en-us/model-card.json"
 
 	const wofPaths = (
-		values["wof"] ||
-		`${dataRootPath("db", "wof", "admin-global-priority.db")},${dataRootPath("db", "wof", "postcode-locality-intl.db")}`
+		values["wof"] || `${wofDatabasePath("admin-global-priority.db")},${wofDatabasePath("postcode-locality-intl.db")}`
 	)
 		.split(",")
 		.map((s) => s.trim())

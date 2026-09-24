@@ -11,17 +11,17 @@
  *   read-only from the moment it exists.
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
+import { dataRootPath, wofReposPath } from "@mailwoman/core/data-root"
 import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { removePath } from "@mailwoman/core/fs/writers"
 import { resolveWOFRepo, wofRepoName } from "@mailwoman/core/resources/whosonfirst"
+import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase } from "@mailwoman/sqlite/sealed-db"
 import { PathBuilder, type PathBuilderLike, resolvePathBuilder } from "path-ts"
 
 import { ingestWOF, type IngestWOFResult } from "#gazetteer-pipeline/admin/ingest-wof"
-import { wofDir } from "#gazetteer-pipeline/defaults"
 import { buildFTS } from "#gazetteer-pipeline/fts"
 import { type CentroidFillResult, fillPostcodeCentroids } from "#gazetteer-pipeline/postcode/centroid-fills"
 import {
@@ -86,10 +86,10 @@ export interface BuildPostcodeDatabaseResult {
 export async function buildPostcodeDatabase(opts: BuildPostcodeDatabaseOptions): Promise<BuildPostcodeDatabaseResult> {
 	const phase = opts.onPhase ?? (() => {})
 	const cc = opts.country.toLowerCase()
-	const reposDir = opts.reposDir ?? wofDir("repos")
+	const reposDir = opts.reposDir ?? wofReposPath
 	const repoName = wofRepoName("postalcode", cc)
 	const repoDir = await resolveWOFRepo(reposDir, repoName)
-	const out = PathBuilder.from(opts.out ?? wofDir(`postalcode-${cc}.REBUILD.db`))
+	const out = PathBuilder.from(opts.out ?? wofDatabasePath(`postalcode-${cc}.REBUILD.db`))
 
 	if (!repoDir) {
 		throw new Error(
@@ -167,7 +167,7 @@ export async function buildPostcodeDatabase(opts: BuildPostcodeDatabaseOptions):
 		// The general ladder (GeoNames postal → parent-borrow → ancestor fallback).
 		fills = await fillPostcodeCentroids(db, {
 			geonamesDir: opts.geonamesPostalDir ?? dataRootPath("geonames-postal"),
-			adminPath: opts.adminPath ?? wofDir("admin-global-priority.db"),
+			adminPath: opts.adminPath ?? wofDatabasePath("admin-global-priority.db"),
 			reposDir,
 			onPhase: phase,
 		})

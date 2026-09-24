@@ -17,10 +17,11 @@
  *   tall as the viewport emits `\x1b[3J`, which wipes the scrollback.
  */
 
-import { wofExtractPathsByName, wofReposPath } from "@mailwoman/core/data-root"
+import { wofReposPath } from "@mailwoman/core/data-root"
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
 import { repoRootPath } from "@mailwoman/core/paths"
+import { wofExtractPathsByName } from "@mailwoman/resolver-wof-sqlite/paths"
 
 import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask, writeRawStdout } from "#cli-kit"
 import {

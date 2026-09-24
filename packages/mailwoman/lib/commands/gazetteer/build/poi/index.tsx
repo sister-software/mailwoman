@@ -86,6 +86,7 @@ const GazetteerBuildPOI: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { LayerTier } = await import("@mailwoman/core/layers")
 		const { dataRootPath } = await import("@mailwoman/core/data-root")
+		const { poiDatabasePath } = await import("@mailwoman/resolver-wof-sqlite/paths")
 
 		const { bboxCoverageCells, buildPOIDatabase, ingestPlaces } = await import("#gazetteer-pipeline/poi/build/poi")
 
@@ -103,7 +104,7 @@ const GazetteerBuildPOI: CommandComponent<typeof spec> = ({ options }) => {
 
 			const country = rawCountry.trim().toUpperCase()
 			const bbox = parseBBoxFlag(bboxFlag)
-			const out = options.out ?? dataRootPath("db", "poi", `poi-osm-${country.toLowerCase()}.db`)
+			const out = options.out ?? poiDatabasePath(`poi-osm-${country.toLowerCase()}.db`)
 
 			console.error(`▸ extract: OSM telecom-infrastructure POIs from ${pbf} (country=${country})`)
 
@@ -153,7 +154,7 @@ const GazetteerBuildPOI: CommandComponent<typeof spec> = ({ options }) => {
 		const release = options.release ?? DEFAULT_RELEASE
 		const countries = splitCountryCodes(options.countries ?? DEFAULT_COUNTRIES)
 		const limit = options.limit ? Number.parseInt(options.limit, 10) : undefined
-		const out = options.out ?? dataRootPath("db", "poi", "poi.db")
+		const out = options.out ?? poiDatabasePath("poi.db")
 
 		let parquetPaths: string[]
 

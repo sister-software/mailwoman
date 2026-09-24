@@ -10,10 +10,10 @@
  *   never an exception that takes the whole census down with it.
  */
 
-import { databaseRootPath } from "@mailwoman/core/data-root"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalTextFile, makeDirectories } from "@mailwoman/core/fs/writers"
 import { censusArtifact, gazetteerArtifacts } from "@mailwoman/dev-mcp/source-census"
+import { wofDatabaseRoot } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { dirname } from "path-ts"
@@ -28,7 +28,7 @@ let root: TemporaryDirectory
  * the data root's database group, and the reader would then report the planted extracts absent.
  */
 function extract(name: string): string {
-	return databaseRootPath(root.path)("wof", name).toString()
+	return wofDatabaseRoot(root.path)(name).toString()
 }
 
 /**

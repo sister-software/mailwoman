@@ -87,6 +87,7 @@ const SitusAddressPoints: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { DatabaseClient } = await import("@mailwoman/sqlite/client")
 		const { dataRootPath } = await import("@mailwoman/core/data-root")
+		const { addressPointDatabasePath } = await import("@mailwoman/resolver-wof-sqlite/paths")
 		const { swapDatabaseIntoPlace } = await import("@mailwoman/sqlite/sealed-db")
 
 		// OA mode: build from OpenAddresses CSV(s) rather than the Overture parquet.
@@ -143,7 +144,7 @@ const SitusAddressPoints: CommandComponent<typeof spec> = ({ options }) => {
 			options.out ??
 				(COUNTRY
 					? nationalAddressPointsPath(dataRootPath(), COUNTRY)
-					: dataRootPath("db", "address-points", `address-points-us-${STATE.toLowerCase()}.db`))
+					: addressPointDatabasePath(`address-points-us-${STATE.toLowerCase()}.db`))
 		)
 
 		// Optional maintainer deps: the shared schema/normalizer (resolver-wof-sqlite, an optional peer)

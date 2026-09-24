@@ -29,7 +29,7 @@
  *   0-geocode failure).
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
+import { databaseRootPath, dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { removePath } from "@mailwoman/core/fs/writers"
 import { LayerFreshnessPolicy, LayerTier, writeLayerManifest } from "@mailwoman/core/layers"
@@ -170,7 +170,7 @@ export async function buildGNAFRooftopDatabase(options: GNAFRooftopOptions): Pro
 	const standardDir =
 		options.standardDir ?? dataRootPath("gnaf", "may26", "extracted", "G-NAF", "G-NAF MAY 2026", "Standard")
 
-	const out = options.out ?? dataRootPath("db", "osm", "address-points-au-au.db")
+	const out = options.out ?? databaseRootPath(dataRootPath())("osm", "address-points-au-au.db")
 	const log = options.log ?? (() => {})
 
 	if (!new Date(options.createdAt).toISOString() || new Date(options.createdAt).toISOString() !== options.createdAt) {

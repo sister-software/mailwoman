@@ -14,11 +14,12 @@
 
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers"
+import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import { haversineKm } from "@mailwoman/spatial"
 import { createGeocodeCommandOptions, createGeocodeSession } from "mailwoman/geocode"
 import { afterAll, describe, expect, it } from "vitest"
 
-const CANDIDATE_DB = dataRootPath("db", "wof", "candidate.db")
+const CANDIDATE_DB = wofDatabasePath("candidate.db")
 
 const haveArtifacts =
 	(await pathExists(CANDIDATE_DB)) && (await pathExists(dataRootPath("weights", "cjk", "model.onnx")))

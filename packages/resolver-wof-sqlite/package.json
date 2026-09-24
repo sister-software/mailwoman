@@ -120,6 +120,11 @@
 			"node": "./lib/env.ts",
 			"default": "./out/env.js"
 		},
+		"./paths": {
+			"types": "./out/paths.d.ts",
+			"node": "./lib/paths.ts",
+			"default": "./out/paths.js"
+		},
 		"./ranking-weights": {
 			"types": "./out/ranking-weights.d.ts",
 			"node": "./lib/ranking-weights.ts",

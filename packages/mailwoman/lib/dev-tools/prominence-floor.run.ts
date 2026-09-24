@@ -35,6 +35,7 @@ import type { ResolveOpts } from "@mailwoman/core/resolver"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { renderMarkdownTable } from "@mailwoman/core/strings/markdown-table"
 import { isoSeconds } from "@mailwoman/core/utils"
+import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import { JSONSpliterator } from "spliterator"
 
 import { readWeightsIdentity } from "#eval-harness/preregistration"
@@ -71,13 +72,13 @@ const GEONAMES = values.geonames || dataRootPath("geonames")
  * The candidate backend below carries no concordance table, which is why the
  * two are separate flags rather than one.
  */
-const GAZETTEER = values.gazetteer || dataRootPath("db", "wof", "admin-global-priority.db")
+const GAZETTEER = values.gazetteer || wofDatabasePath("admin-global-priority.db")
 /**
  * The backend the recording drives.
  *
  * Defaults to the promoted candidate table, which is what the shipped geocoder reads.
  */
-const BACKEND = values.backend || dataRootPath("db", "wof", "candidate.db").toString()
+const BACKEND = values.backend || wofDatabasePath("candidate.db").toString()
 const OUT = values.out || repoRootPath("docs", "static", "benchmarks").toString()
 
 const PANEL_PATH = `${OUT}/prominence-floor-panel.jsonl`

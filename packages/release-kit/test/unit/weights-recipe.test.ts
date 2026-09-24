@@ -106,7 +106,7 @@ describe("readWeightsRecipe — buildable is not linkable", () => {
 
 		const postcode = recipe.buildableFor("en-us").find((a) => a.shippedName === "postcode-us.bin")
 
-		expect(postcode?.inputPath).toBe(dataRoot("wof", "postalcode-us.db").toString())
+		expect(postcode?.inputPath).toBe(dataRoot("db", "wof", "postalcode-us.db").toString())
 	})
 
 	it("reports a pair index for every country the config names, whatever the entry's shape", async () => {

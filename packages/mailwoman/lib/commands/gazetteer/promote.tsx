@@ -31,10 +31,11 @@ export const spec = {
 const GazetteerPromote: ParsedCommandComponent<Record<string, never>> = ({ args }) => {
 	const state = useCommandTask(async () => {
 		const { dataRootPath } = await import("@mailwoman/core/data-root")
-		const { promoteCandidate, wofDir } = await import("#gazetteer-pipeline")
+		const { promoteCandidate } = await import("#gazetteer-pipeline")
+		const { wofDatabasePath } = await import("@mailwoman/resolver-wof-sqlite/paths")
 
 		const root = dataRootPath()
-		const candidateDB = args[0] ?? wofDir(DEFAULT_CANDIDATE_OUT)
+		const candidateDB = args[0] ?? wofDatabasePath(DEFAULT_CANDIDATE_OUT)
 		const linkPath = await promoteCandidate(candidateDB, root)
 
 		return { from: linkPath, to: candidateDB }

@@ -5798,6 +5798,7 @@ __metadata:
     "@mailwoman/sqlite": "workspace:*"
     h3-js: "npm:^4.5.0"
     kysely: "npm:^0.29.5"
+    path-ts: "npm:^2.4.1"
   languageName: unknown
   linkType: soft
 
@@ -6038,6 +6039,7 @@ __metadata:
     "@mailwoman/sqlite": "workspace:*"
     h3-js: "npm:^4.5.0"
     kysely: "npm:^0.29.5"
+    path-ts: "npm:^2.4.1"
   languageName: unknown
   linkType: soft
 
@@ -6250,7 +6252,6 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@mailwoman/neural-weights-en-us@workspace:packages/neural-weights-en-us"
   dependencies:
-    "@mailwoman/core": "workspace:*"
     "@mailwoman/resolver-wof-sqlite": "workspace:*"
   languageName: unknown
   linkType: soft
@@ -6763,6 +6764,7 @@ __metadata:
     "@mailwoman/core": "workspace:*"
     "@mailwoman/spatial": "workspace:*"
     "@mailwoman/sqlite": "workspace:*"
+    path-ts: "npm:^2.4.1"
   bin:
     timezone-lookup: ./out/cli.js
   languageName: unknown

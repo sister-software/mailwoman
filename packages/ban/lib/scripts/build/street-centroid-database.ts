@@ -25,7 +25,6 @@
  *     node ban/out/scripts/build-street-centroid-extract.js --country fr --out /tmp/sc-fr.db
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists, readLocalTextFile, statPath } from "@mailwoman/core/fs/readers"
 import { writeLocalTextFile, removePathIfPresent, makeDirectories } from "@mailwoman/core/fs/writers"
 import { gitHead } from "@mailwoman/core/git"
@@ -58,6 +57,7 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed-db"
 import { dirname, resolvePath } from "path-ts"
 
+import { banDatabasePath } from "#paths"
 import {
 	certifiedCoverageCells,
 	type CoveragePoint,
@@ -87,13 +87,13 @@ async function parse(): Promise<BuildArgs> {
 	const country = (values.country ?? "fr").toLowerCase()
 	// Throws for an unsupported country — fail loud, never derive a tier keyed with the wrong locale rules.
 	streetLocaleForBANCountry(country)
-	const source = resolvePath(values.source ?? dataRootPath("db", "ban", `address-points-${country}.db`))
+	const source = resolvePath(values.source ?? banDatabasePath(`address-points-${country}.db`))
 
 	if (!(await pathExists(source)))
 		throw new Error(`sealed BAN rooftop extract not found: ${source} (build it via #1012 first)`)
 
 	const release = values.release ?? "2026-05-18"
-	const output = resolvePath(values.out ?? dataRootPath("db", "ban", `street-centroids-${country}.db`))
+	const output = resolvePath(values.out ?? banDatabasePath(`street-centroids-${country}.db`))
 
 	return { country, source, release, output }
 }
@@ -104,7 +104,7 @@ async function parse(): Promise<BuildArgs> {
 async function sourceMD5(country: string): Promise<string | null> {
 	try {
 		const rec = tryParsingJSON<{ artifact?: string; md5?: string }>(
-			await readLocalTextFile(dataRootPath("db", "ban", "ATTRIBUTION.json")),
+			await readLocalTextFile(banDatabasePath("ATTRIBUTION.json")),
 			{}
 		)
 
@@ -297,7 +297,7 @@ async function main(): Promise<void> {
 	// Provenance manifest — additive, written at creation (house discipline).
 	// Records the derivation chain: this artifact is derived from the sealed #1012
 	// rooftop extract, itself derived from the BAN release.
-	const attributionPath = dataRootPath("db", "ban", `street-centroids-${args.country}.ATTRIBUTION.json`)
+	const attributionPath = banDatabasePath(`street-centroids-${args.country}.ATTRIBUTION.json`)
 
 	await writeLocalTextFile(
 		prettyJSON({

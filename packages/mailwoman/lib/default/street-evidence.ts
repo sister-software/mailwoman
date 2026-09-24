@@ -32,8 +32,8 @@ export function loadDefaultStreetEvidence(): Promise<StreetLocalityEvidence | nu
 	if (!cached) {
 		cached = (async (): Promise<StreetLocalityEvidence | null> => {
 			try {
-				const { dataRootPath } = await import("@mailwoman/core/data-root")
-				const dbPath = dataRootPath("db", "ban", "street-centroids-fr.db")
+				const { banDatabasePath } = await import("@mailwoman/ban/paths")
+				const dbPath = banDatabasePath("street-centroids-fr.db")
 
 				if (!(await pathExists(dbPath))) return null
 				const { SQLiteStreetNameLookup } = await import("@mailwoman/resolver-wof-sqlite")

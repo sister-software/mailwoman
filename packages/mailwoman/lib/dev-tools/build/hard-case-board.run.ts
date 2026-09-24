@@ -22,7 +22,6 @@
  *   Run: node packages/mailwoman/lib/dev-tools/build/hard-case-board.run.ts [--out <path>]
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -30,6 +29,7 @@ import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { getRow } from "@mailwoman/core/utils"
 import { collapseFSTBias } from "@mailwoman/neural/fst-prior"
 import { normalizeTokens, deserializeFST } from "@mailwoman/resolver-wof-sqlite/fst"
+import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { JSONSpliterator } from "spliterator"
@@ -43,9 +43,9 @@ const { values } = parseArguments({ options: { out: { type: "string" } } })
 const OUT = values.out ?? HARD_CASE_BOARD_PATH
 
 const ADDED_AT = "2026-08-06"
-const WOF_DB = dataRootPath("db", "wof", "fst-staging-2026-08-05", "admin-global-priority-importance.db")
-const POP_FST_DIR = dataRootPath("db", "wof", "fst-per-locale")
-const IMP_FST_DIR = dataRootPath("db", "wof", "fst-staging-2026-08-05-importance-fanoutfix")
+const WOF_DB = wofDatabasePath("fst-staging-2026-08-05", "admin-global-priority-importance.db")
+const POP_FST_DIR = wofDatabasePath("fst-per-locale")
+const IMP_FST_DIR = wofDatabasePath("fst-staging-2026-08-05-importance-fanoutfix")
 
 using db = new DatabaseClient<WOFDatabase>(WOF_DB, { readOnly: true })
 const pointStmt = db.prepare("SELECT name, latitude, longitude FROM spr WHERE id = ?")

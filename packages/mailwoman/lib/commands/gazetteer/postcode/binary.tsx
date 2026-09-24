@@ -81,7 +81,7 @@ export const spec = {
 
 const GazetteerPostcodeBinary: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { wofDir } = await import("#gazetteer-pipeline")
+		const { wofDatabasePath } = await import("@mailwoman/resolver-wof-sqlite/paths")
 		// `@mailwoman/neural/postcode-binary-resolver` is a self-contained serializer
 		// whose only imports are type-only, so this load costs a file read
 		// rather than the ONNX runtime the package name suggests.
@@ -100,12 +100,14 @@ const GazetteerPostcodeBinary: CommandComponent<typeof spec> = ({ options }) => 
 			if (country && db) {
 				// An absolute `db` replaces the WOF directory.
 				// A relative one resolves under it.
-				locales.push({ country, db: wofDir(db) })
+				locales.push({ country, db: wofDatabasePath(db) })
 			}
 		}
 
 		if (!locales.length) {
-			locales.push(...POSTCODE_BINARY_SOURCES.map(({ country, database }) => ({ country, db: wofDir(database) })))
+			locales.push(
+				...POSTCODE_BINARY_SOURCES.map(({ country, database }) => ({ country, db: wofDatabasePath(database) }))
+			)
 		}
 
 		const granularity: GBGranularity = options.gbGranularity

@@ -55,17 +55,16 @@
  *   JSON file written directly to `--output` (no DB, no temp-then-move. matches the Python). The
  *   serializer reproduces Python's `json.dumps(..., ensure_ascii=False)` formatting (", " / ": "
  *   separators, integer-valued floats rendered with a trailing `.0`) so the emitted file matches
- *   the original. The WOF data root is resolved through `dataRootPath` (the one home for the
- *   `$MAILWOMAN_DATA_ROOT` default) instead of the Python's hardcoded literal — identical default path, now
- *   also `$MAILWOMAN_DATA_ROOT` overridable.
+ *   the original. The WOF databases resolve through `wofDatabasePath`, which reads
+ *   `$MAILWOMAN_DATA_ROOT`, instead of the Python's hardcoded literal.
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
 import { readUnquotedTSVText } from "@mailwoman/core/fs/delimited"
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { finished, openWriteStream } from "@mailwoman/core/fs/streams"
 import { pyFloat, pyRound } from "@mailwoman/core/numeric"
 import { once } from "@mailwoman/core/utils/events"
+import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
@@ -106,7 +105,7 @@ function placed(lat: number, lon: number): boolean {
  */
 function loadIntl(country: string): Map<string, Centroid> {
 	const out = new Map<string, Centroid>()
-	using con = new DatabaseClient<WOFDatabase>(dataRootPath("db", "wof", "postalcode-intl.db"))
+	using con = new DatabaseClient<WOFDatabase>(wofDatabasePath("postalcode-intl.db"))
 
 	const rows = con
 		.prepare("SELECT name, latitude, longitude FROM spr WHERE placetype='postalcode' AND country=?")
@@ -131,7 +130,7 @@ function loadIntl(country: string): Map<string, Centroid> {
  */
 function loadUs(): Map<string, Centroid> {
 	const out = new Map<string, Centroid>()
-	using con = new DatabaseClient<WOFDatabase>(dataRootPath("db", "wof", "postalcode-us.db"))
+	using con = new DatabaseClient<WOFDatabase>(wofDatabasePath("postalcode-us.db"))
 	const hasSources = con.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='centroid_source'").get()
 	const srcJoin = hasSources ? "LEFT JOIN centroid_source cs ON cs.id=spr.id" : ""
 	const srcCol = hasSources ? "cs.source" : "NULL"
@@ -214,7 +213,7 @@ const NL_SOURCE = "cbs-pc6"
  */
 function loadGBCodePoint(): Map<string, Centroid> {
 	const out = new Map<string, Centroid>()
-	using con = new DatabaseClient<WOFDatabase>(dataRootPath("db", "wof", "postalcode-gb-codepoint.db"))
+	using con = new DatabaseClient<WOFDatabase>(wofDatabasePath("postalcode-gb-codepoint.db"))
 
 	const rows = con
 		.prepare("SELECT name, latitude, longitude FROM spr WHERE placetype='postalcode' AND is_current!=0")
@@ -283,7 +282,7 @@ function addGBOutwardKeys(units: Map<string, Centroid>): number {
  */
 function loadNLPC6(): Map<string, Centroid> {
 	const out = new Map<string, Centroid>()
-	using con = new DatabaseClient<WOFDatabase>(dataRootPath("db", "wof", "postalcode-nl-pc6.db"))
+	using con = new DatabaseClient<WOFDatabase>(wofDatabasePath("postalcode-nl-pc6.db"))
 
 	const rows = con
 		.prepare("SELECT name, latitude, longitude FROM spr WHERE placetype='postalcode' AND is_current!=0")

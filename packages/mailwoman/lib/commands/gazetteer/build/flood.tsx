@@ -75,7 +75,7 @@ export const spec = {
 
 const GazetteerBuildFlood: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { dataRootPath } = await import("@mailwoman/core/data-root")
+		const { floodDatabasePath } = await import("@mailwoman/flood/paths")
 
 		const {
 			buildFloodDatabase,
@@ -134,7 +134,7 @@ const GazetteerBuildFlood: CommandComponent<typeof spec> = ({ options }) => {
 			geodatabasePath = await downloadFloodGeodatabase({
 				url,
 				revisionDate: sourceVintage,
-				cacheRoot: dataRootPath("db", "flood", "cache").toString(),
+				cacheRoot: floodDatabasePath("cache").toString(),
 				onProgress: (message) => console.error(`  [download] ${message}`),
 			})
 		}
@@ -181,7 +181,7 @@ const GazetteerBuildFlood: CommandComponent<typeof spec> = ({ options }) => {
 		// The authority's ids run 1..featureCount contiguously, and the batched build walks that range.
 		const identity = await readFloodSourceIdentity({ geodatabasePath })
 
-		const out = options.out ?? dataRootPath("db", "flood", "flood.db").toString()
+		const out = options.out ?? floodDatabasePath("flood.db").toString()
 		const buildSHA = resolveBuildSHA(repoRootPath())
 
 		const result = await buildFloodDatabase({

@@ -34,6 +34,7 @@ import { CommandError } from "@mailwoman/core/scripting/command"
 import { scriptEntryPath } from "@mailwoman/core/scripting/utils"
 import { streamToDisk } from "@mailwoman/core/utils"
 import { sleep } from "@mailwoman/core/utils/sleep"
+import { interpolationDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import { Box, Text } from "ink"
 import { basename, dirname, join, resolvePath, type PathBuilderLike } from "path-ts"
 import { TextSpliterator } from "spliterator"
@@ -481,7 +482,7 @@ interface StateResult {
 const SitusInterpolation: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const EDGES_DIR = options.edgesDir
-		const OUT_DIR = options.outDir ?? dataRootPath("db", "interpolation")
+		const OUT_DIR = options.outDir ?? interpolationDatabasePath
 		const RELEASE = options.release
 		const CONCURRENCY = options.concurrency
 		const FORCE = options.force

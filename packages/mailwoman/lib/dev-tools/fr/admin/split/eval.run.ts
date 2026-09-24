@@ -30,6 +30,7 @@ import { percentile } from "@mailwoman/core/stats"
 import { mean } from "@mailwoman/core/utils"
 import { parseWordConsistencyEnv } from "@mailwoman/neural"
 import { stripCombiningMarks } from "@mailwoman/normalize"
+import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import { haversineKm } from "@mailwoman/spatial"
 import { PathBuilder } from "path-ts"
 import { JSONSpliterator } from "spliterator"
@@ -159,7 +160,7 @@ async function main() {
 	const label = args["label"] || "model"
 	// Comma-separated multi-extract support (night-31): postcodeConsistency needs a resolvable
 	// postcode node, which needs a postalcode extract attached alongside the admin DB.
-	const wofDBArg = PathBuilder.from(args["wof-db"] || dataRootPath("db", "wof", "admin-global-priority.db"))
+	const wofDBArg = PathBuilder.from(args["wof-db"] || wofDatabasePath("admin-global-priority.db"))
 	const wofDB = wofDBArg.includes(",") ? wofDBArg.split(",") : wofDBArg
 
 	const [{ WOFSQLitePlaceLookup }, { createScorer }, { createWOFResolver }, { loadDefaultPlaceCountry }] =

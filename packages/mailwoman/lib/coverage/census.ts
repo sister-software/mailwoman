@@ -47,6 +47,7 @@ import {
 	shippedTrainingConfigs,
 } from "@mailwoman/core/scope-config"
 import { dataRootPath } from "@mailwoman/core/data-root"
+import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import { openParquetRowStream } from "@mailwoman/corpus/parquet/streams"
 import { baseManifestFiles, localManifestFilePath } from "@mailwoman/corpus/tools"
 import { allRows } from "@mailwoman/core/utils"
@@ -719,7 +720,7 @@ export async function censusCoverage(options: CensusCoverageOptions): Promise<Co
 
 	const admitted = await readAdmittedCountries(options.configPath)
 	const board = await readBoardCoverage(options.casesRoot)
-	const gazetteerPath = options.gazetteerPath ?? dataRootPath("db", "wof", "candidate.db")
+	const gazetteerPath = options.gazetteerPath ?? wofDatabasePath("candidate.db")
 	const gazetteer = await readGazetteerCoverage(gazetteerPath)
 	// derived from `release.config.json` rather than restated here.
 	// This was a hand-written eleven-entry table, and `repo-health`'s `locale-tables`

@@ -16,6 +16,7 @@ import { pathExists } from "@mailwoman/core/fs/readers"
 import { AddressPointSqliteLookup } from "@mailwoman/resolver-wof-sqlite"
 import type { PathBuilder } from "path-ts"
 
+import { osmDatabaseRoot } from "#paths"
 import { streetLocaleForCountry, supportedOSMCountries } from "#sdk/street/locale"
 
 /**
@@ -67,7 +68,7 @@ export class OSMRegionDatabaseProvider implements Disposable {
 	}
 
 	#addressPointsPath(countryCode: string): PathBuilder {
-		return this.#dataRoot("osm", `address-points-${countryCode}-${countryCode}.db`)
+		return osmDatabaseRoot(this.#dataRoot)(`address-points-${countryCode}-${countryCode}.db`)
 	}
 
 	/**

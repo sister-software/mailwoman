@@ -33,10 +33,10 @@
 
 import { APIClient, type APIClientConfig, type ClockLike, assertNoOGCServiceException } from "@mailwoman/core/api"
 import { buildDiskStorage } from "@mailwoman/core/api/disk-storage"
-import { dataRootPath } from "@mailwoman/core/data-root"
 import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
 import type { PathBuilderLike } from "path-ts"
 
+import { soilDatabasePath } from "#paths"
 import { saverestToISODate } from "#sdk/tabular"
 
 // Re-exported so a caller branching on this client's failures needs exactly one import.
@@ -188,7 +188,7 @@ export function createSoilDataAccessClient(options: CreateSoilDataAccessClientOp
 		caching: {
 			ttl: SDA_CACHE_TTL_MS,
 			storage: buildDiskStorage({
-				directory: (options.cacheDirectory ?? dataRootPath("db", "soil", "cache", "http")).toString(),
+				directory: (options.cacheDirectory ?? soilDatabasePath("cache", "http")).toString(),
 			}),
 		},
 	})

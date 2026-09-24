@@ -18,10 +18,10 @@
  */
 
 import { US_STATE_BY_ABBREVIATION, type USStateAbbreviation } from "@mailwoman/codex/us/state"
-import { dataRootPath } from "@mailwoman/core/data-root"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { runIfScript } from "@mailwoman/core/scripting"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
+import { interpolationDatabasePath, wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { join, type PathBuilderLike } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
@@ -107,8 +107,8 @@ async function main(): Promise<void> {
 		},
 	})
 
-	const candidatePath = values.candidate ?? dataRootPath("db", "wof", "candidate.db")
-	const interpolationDir = values.interpolation ?? dataRootPath("db", "interpolation")
+	const candidatePath = values.candidate ?? wofDatabasePath("candidate.db")
+	const interpolationDir = values.interpolation ?? interpolationDatabasePath
 	const report = await countyKeyParity(candidatePath, interpolationDir)
 	const mismatches = report.filter((row) => row.match === false)
 

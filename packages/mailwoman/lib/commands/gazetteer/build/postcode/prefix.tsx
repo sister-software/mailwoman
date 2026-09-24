@@ -135,6 +135,7 @@ export const spec = {
 const GazetteerBuildPostcodePrefix: CommandComponent<typeof spec, [DatabaseName]> = ({ args, options }) => {
 	const state = useCommandTask(async () => {
 		const { dataRootPath } = await import("@mailwoman/core/data-root")
+		const { wofDatabasePath } = await import("@mailwoman/resolver-wof-sqlite/paths")
 		const { md5File, median } = await import("@mailwoman/core/utils")
 
 		const { PostcodePrefixIndexResolver, serializePostcodePrefixIndex } = await import("@mailwoman/neural/postcode")
@@ -143,12 +144,10 @@ const GazetteerBuildPostcodePrefix: CommandComponent<typeof spec, [DatabaseName]
 
 		const database = args[0] as DatabaseName
 		const recipe: DatabaseRecipe = DATABASE_RECIPES[database]
-		const sourcePath = options.source ?? dataRootPath("db", "wof", recipe.sourceFile)
-		const adminPath = options.admin ?? dataRootPath("db", "wof", "admin-global-priority.db")
+		const sourcePath = options.source ?? wofDatabasePath(recipe.sourceFile)
+		const adminPath = options.admin ?? wofDatabasePath("admin-global-priority.db")
 
-		const polygonPath = recipe.polygonFile
-			? (options.polygons ?? dataRootPath("db", "wof", recipe.polygonFile))
-			: undefined
+		const polygonPath = recipe.polygonFile ? (options.polygons ?? wofDatabasePath(recipe.polygonFile)) : undefined
 
 		for (const [label, path] of [
 			["database", sourcePath],

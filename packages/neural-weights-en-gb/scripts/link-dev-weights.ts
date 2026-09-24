@@ -28,6 +28,7 @@ import { pathExists } from "@mailwoman/core/fs/readers"
 import { removePath } from "@mailwoman/core/fs/writers"
 import { repoRootPathBuilder } from "@mailwoman/core/paths"
 import { spawnProcessSync } from "@mailwoman/core/process"
+import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import {
 	committedSoftFeedLinks,
 	materializeDevOverlay,
@@ -43,7 +44,7 @@ import {
  * the build reads — when those two lists drift apart the guard silently blesses a stale artifact.
  */
 const PPD_SOURCE_CSV = dataRootPath("ppd", "2026-07-22", "gb-tuples.csv")
-const BOROUGH_DB = dataRootPath("db", "wof", "admin-global-priority.db")
+const BOROUGH_DB = wofDatabasePath("admin-global-priority.db")
 const LONDON_PAIRS_JSONL = repoRootPathBuilder("data", "gazetteer", "london-pairs-v2.jsonl")
 /**
  * Northern Ireland neighbourhood pairs (campaign R7).

@@ -115,7 +115,7 @@ async function runVerification(
 
 const GazetteerBuildSoil: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { dataRootPath } = await import("@mailwoman/core/data-root")
+		const { soilDatabasePath } = await import("@mailwoman/soil/paths")
 
 		const {
 			acquireRegion,
@@ -144,7 +144,7 @@ const GazetteerBuildSoil: CommandComponent<typeof spec> = ({ options }) => {
 		// every time the check itself was worth re-running.
 		if (options.verifyOnly) {
 			return runVerification(
-				PathBuilder.from(options.out ?? dataRootPath("db", "soil", "soil.db")),
+				PathBuilder.from(options.out ?? soilDatabasePath("soil.db")),
 				client,
 				options.verifyPoints ? Number(options.verifyPoints) : undefined
 			)
@@ -153,7 +153,7 @@ const GazetteerBuildSoil: CommandComponent<typeof spec> = ({ options }) => {
 		const acquired = await acquireRegion({
 			client,
 			prefix,
-			cacheRoot: dataRootPath("db", "soil", "cache", "archives").toString(),
+			cacheRoot: soilDatabasePath("cache", "archives").toString(),
 			onProgress: (message) => console.error(`  [acquire] ${message}`),
 		})
 
@@ -187,7 +187,7 @@ const GazetteerBuildSoil: CommandComponent<typeof spec> = ({ options }) => {
 
 		const coverageResolution = Number(options.coverageResolution)
 		const indexResolution = Number(options.indexResolution)
-		const out = PathBuilder.from(options.out ?? dataRootPath("db", "soil", "soil.db"))
+		const out = PathBuilder.from(options.out ?? soilDatabasePath("soil.db"))
 		const buildSHA = resolveBuildSHA(repoRootPath())
 
 		const buildCmd =

@@ -30,6 +30,7 @@ import { stringifyJSON } from "@mailwoman/core/json"
 import { LayerFreshnessPolicy, LayerTier } from "@mailwoman/core/layers"
 import { repoRootPath } from "@mailwoman/core/paths"
 import { CommandError } from "@mailwoman/core/scripting/command"
+import { interpolationDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { StreetSegmentDatabase } from "@mailwoman/resolver-wof-sqlite/street"
 import { swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed-db"
 import { Box, Text } from "ink"
@@ -160,9 +161,7 @@ const SitusInterpolationDatabase: CommandComponent<typeof spec> = ({ options }) 
 
 		const STATE = options.state.toUpperCase()
 
-		const finalOut = resolvePath(
-			options.out ?? dataRootPath("db", "interpolation", `interpolation-us-${STATE.toLowerCase()}.db`)
-		)
+		const finalOut = resolvePath(options.out ?? interpolationDatabasePath(`interpolation-us-${STATE.toLowerCase()}.db`))
 
 		// Optional maintainer deps: the shared schema/normalizer (resolver-wof-sqlite, an optional peer)
 		// and the DuckDB spatial reader (@duckdb/node-api, a dev dep).

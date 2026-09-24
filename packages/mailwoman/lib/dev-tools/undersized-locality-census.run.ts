@@ -21,11 +21,11 @@
  *     node packages/mailwoman/lib/dev-tools/undersized-locality-census.run.ts --ratio 10 --json <path>
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { prettyJSON } from "@mailwoman/core/json"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { renderMarkdownTable } from "@mailwoman/core/strings/markdown-table"
+import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
@@ -66,7 +66,7 @@ const PARENT_PLACETYPES = ["county", "localadmin", "borough"]
  */
 const AURANGABAD_MAHARASHTRA = 102_030_887
 
-using db = new DatabaseClient<WOFDatabase>(args.admin ?? dataRootPath("db", "wof", "admin-global-priority.db"), {
+using db = new DatabaseClient<WOFDatabase>(args.admin ?? wofDatabasePath("admin-global-priority.db"), {
 	readOnly: true,
 })
 

@@ -188,7 +188,8 @@ rows before registering the threshold.
 ## Repository mechanics
 
 Executable repository code accesses the filesystem through `@mailwoman/core/fs`; paths use `path-ts`.
-Data-root artifacts use `@mailwoman/core/data-root`. Package and repository files use the resolvers
+Data-root artifacts use `@mailwoman/core/data-root`, and a layer database uses its owning package's
+`paths` export (`wofDatabasePath`, `banDatabasePath`, …). Package and repository files use the resolvers
 documented in `packages/core/AGENTS.md`. The lint and repository-health checks identify violations and
 name the owning interface.
 

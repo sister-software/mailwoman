@@ -160,11 +160,12 @@ async function runKind(kind: Kind, options: Options): Promise<string> {
 				(async function* () {
 					const { geocodeStream: stream } = await import("#geocode/stream")
 					const { dataRootPath } = await import("@mailwoman/core/data-root")
+					const { wofDatabasePath } = await import("@mailwoman/resolver-wof-sqlite/paths")
 
 					yield* stream(records, {
 						mapping: opts.mapping,
 						geocode: {
-							wofDBPath: options.wof || dataRootPath("db", "wof", "admin-global-priority.db").toString(),
+							wofDBPath: options.wof || wofDatabasePath("admin-global-priority.db").toString(),
 							dataRoot: options.dataRoot || dataRootPath().toString(),
 							locale: "en-US",
 							country: "US",

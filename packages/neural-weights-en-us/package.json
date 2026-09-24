@@ -50,7 +50,6 @@
 		"access": "public"
 	},
 	"devDependencies": {
-		"@mailwoman/core": "workspace:*",
 		"@mailwoman/resolver-wof-sqlite": "workspace:*"
 	}
 }

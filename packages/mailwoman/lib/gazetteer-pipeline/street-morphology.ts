@@ -27,10 +27,10 @@
  *   in-place), then seal read-only.
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
 import { changeMode, makeDirectories, movePath, writeLocalFile } from "@mailwoman/core/fs/writers"
 import { resourceDictionaryPath } from "@mailwoman/core/paths"
 import { serializeFST } from "@mailwoman/resolver-wof-sqlite/fst"
+import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import { buildStreetMorphologyFST, STREET_MORPHOLOGY_ARTIFACT_FILENAME } from "@mailwoman/resolver-wof-sqlite/street"
 import { dirname, resolvePath } from "path-ts"
 
@@ -73,7 +73,7 @@ export async function buildStreetMorphologyArtifact(
 ): Promise<BuiltStreetMorphologyArtifact> {
 	const progress = opts.onProgress ?? (() => {})
 	const dictionariesDir = opts.dictionariesDir ?? resourceDictionaryPath("libpostal")
-	const outPath = resolvePath(opts.output ?? dataRootPath("db", "wof", STREET_MORPHOLOGY_ARTIFACT_FILENAME))
+	const outPath = resolvePath(opts.output ?? wofDatabasePath(STREET_MORPHOLOGY_ARTIFACT_FILENAME))
 
 	progress(`building street-morphology FST from ${dictionariesDir}`)
 

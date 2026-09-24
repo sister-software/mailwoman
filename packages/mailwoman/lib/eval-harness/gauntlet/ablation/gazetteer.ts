@@ -22,9 +22,9 @@
  *   a read-only artifact, called once per rung and once per component per variant.
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { allRows, getRow } from "@mailwoman/core/utils"
+import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street"
 import { haversineKm } from "@mailwoman/spatial"
@@ -176,8 +176,8 @@ export class AblationGazetteer implements AblationGazetteerProbe {
 	static async create(
 		opts: { ancestryPath?: PathBuilderLike; candidatePath?: PathBuilderLike } = {}
 	): Promise<AblationGazetteer> {
-		const ancestryPath = opts.ancestryPath ?? dataRootPath("db", "wof", "admin-global-priority.db")
-		const candidatePath = opts.candidatePath ?? dataRootPath("db", "wof", "candidate.db")
+		const ancestryPath = opts.ancestryPath ?? wofDatabasePath("admin-global-priority.db")
+		const candidatePath = opts.candidatePath ?? wofDatabasePath("candidate.db")
 		const missing: string[] = []
 
 		if (!(await pathExists(ancestryPath))) {
@@ -209,8 +209,8 @@ export class AblationGazetteer implements AblationGazetteerProbe {
 	constructor(
 		opts: { ancestryPath?: PathBuilderLike; candidatePath?: PathBuilderLike; missingPaths?: readonly string[] } = {}
 	) {
-		const ancestryPath = opts.ancestryPath ?? dataRootPath("db", "wof", "admin-global-priority.db")
-		const candidatePath = opts.candidatePath ?? dataRootPath("db", "wof", "candidate.db")
+		const ancestryPath = opts.ancestryPath ?? wofDatabasePath("admin-global-priority.db")
+		const candidatePath = opts.candidatePath ?? wofDatabasePath("candidate.db")
 		const missing = opts.missingPaths ?? []
 
 		if (missing.length) {

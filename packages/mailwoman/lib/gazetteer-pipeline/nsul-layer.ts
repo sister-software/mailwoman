@@ -52,7 +52,6 @@
  *   claims nothing there.
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { makeDirectories, removePath } from "@mailwoman/core/fs/writers"
 import { listZipEntries, readZipEntry } from "@mailwoman/core/fs/zip"
@@ -69,6 +68,7 @@ import {
 } from "@mailwoman/core/layers"
 import { CoverageBasis } from "@mailwoman/evidence"
 import type { NSULDatabase } from "@mailwoman/resolver-wof-sqlite/nsul"
+import { nsulDatabasePath, uprnDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { UPRNDatabase } from "@mailwoman/resolver-wof-sqlite/uprn"
 import { expandShortCellInt, shortCellToInt, type H3Cell } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
@@ -402,7 +402,7 @@ export async function openNSULArchive(sourceDir: PathBuilderLike): Promise<{
  *
  * Vintage directories are `yyyy-MM`, so lexical order is chronological order.
  */
-export async function resolveLatestNSULSourceDir(root = dataRootPath("db", "nsul")): Promise<PathBuilder> {
+export async function resolveLatestNSULSourceDir(root = nsulDatabasePath): Promise<PathBuilder> {
 	const candidates = await Globerator.from("*", {
 		cwd: root,
 		absolute: false,
@@ -750,8 +750,8 @@ export async function buildNSULLayer(options: BuildNSULLayerOptions): Promise<Bu
 	const started = Date.now()
 	const now = options.now ?? new Date()
 	const sourceDir = options.sourceDir ? resolvePathBuilder(options.sourceDir) : await resolveLatestNSULSourceDir()
-	const out = options.out ?? dataRootPath("db", "nsul", "nsul.db")
-	const uprnDatabasePath = options.uprnDatabasePath ?? dataRootPath("db", "uprn", "uprn.db")
+	const out = options.out ?? nsulDatabasePath("nsul.db")
+	const uprnPath = options.uprnDatabasePath ?? uprnDatabasePath("uprn.db")
 	const minimumPlausibleRows = options.minimumPlausibleRows ?? NSUL_MINIMUM_PLAUSIBLE_ROWS
 
 	// Acquire and verify the archive against its sidecar, recording a missing sidecar explicitly.
@@ -801,7 +801,7 @@ export async function buildNSULLayer(options: BuildNSULLayerOptions): Promise<Bu
 
 	// Read the coordinate source and record its manifest version in metadata.
 	// Open uprn release each coordinate is from.
-	using uprnDB = new DatabaseClient<UPRNDatabase>(uprnDatabasePath, { readOnly: true })
+	using uprnDB = new DatabaseClient<UPRNDatabase>(uprnPath, { readOnly: true })
 	const uprnLayerVersion = (await readLayerManifest(uprnDB)).version
 	const coordinateProbe = uprnDB.prepare("SELECT lat, lon, h3_cell FROM uprn WHERE uprn = ?")
 

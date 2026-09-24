@@ -25,8 +25,9 @@
 //
 //   node fr-ban-panel.mjs --resample --data-root <DATA_ROOT> # regenerate fr-ban-sample.json
 //
-// `--data-root` defaults to $MAILWOMAN_DATA_ROOT. The candidate gazetteer is read from <DATA_ROOT>/wof/candidate.db and the BAN extract from <DATA_ROOT>/ban/address-points-fr.db.
+// `--data-root` defaults to $MAILWOMAN_DATA_ROOT. The candidate gazetteer is read from <DATA_ROOT>/db/wof/candidate.db and the BAN extract from <DATA_ROOT>/db/ban/address-points-fr.db.
 
+import { banDatabaseRoot } from "@mailwoman/ban/paths"
 import { BANRegionDatabaseProvider } from "@mailwoman/ban/sdk"
 import { readLocalJSONFile, realPath } from "@mailwoman/core/fs/readers"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
@@ -40,6 +41,7 @@ import { resolveWeights } from "@mailwoman/neural/weights"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { WOFCandidateTableLookup } from "@mailwoman/resolver-wof-sqlite"
 import type { AddressPointDatabase } from "@mailwoman/resolver-wof-sqlite/address"
+import { wofDatabaseRoot } from "@mailwoman/resolver-wof-sqlite/paths"
 import { haversineKm } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { geocodeAddress } from "mailwoman/geocode"
@@ -134,8 +136,8 @@ if (!dataRoot) {
  */
 const DATA_ROOT = PathBuilder.from(dataRoot)
 
-const banPath = DATA_ROOT("ban", "address-points-fr.db")
-const candidatePath = DATA_ROOT("wof", "candidate.db")
+const banPath = banDatabaseRoot(DATA_ROOT)("address-points-fr.db")
+const candidatePath = wofDatabaseRoot(DATA_ROOT)("candidate.db")
 
 /**
  * The committed sample file: the draw's provenance plus the rows it produced.

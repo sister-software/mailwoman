@@ -54,8 +54,9 @@ const GazetteerPostalAlias: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { DatabaseClient } = await import("@mailwoman/sqlite/client")
 		const { dataRootPath } = await import("@mailwoman/core/data-root")
+		const { wofDatabasePath } = await import("@mailwoman/resolver-wof-sqlite/paths")
 
-		const out = options.out ?? dataRootPath("db", "wof", "postal-city-alias-us.db")
+		const out = options.out ?? wofDatabasePath("postal-city-alias-us.db")
 		const parquet = dataRootPath("overture", options.release, "addresses-us.parquet")
 		const minCount = options.minCount
 

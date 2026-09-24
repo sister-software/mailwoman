@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Versioned data-artifact addressing + atomic switchover (#485 piece 4). Database DBs are addressed as
- *   `<family>/<family>-us-<slug>-<version>.db`, with a `releases.json` manifest at the data root
+ *   `db/<family>/<family>-us-<slug>-<version>.db`, with a `releases.json` manifest at the data root
  *   pinning each family to its current version. So a new build publishes alongside the old,
  *   flipping the manifest (one atomic file write) switches traffic over, and the build provenance (the
  *   version) travels in the filename — "what data is deployed" is a read of one JSON.
@@ -17,7 +17,8 @@
 
 import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { tryParsingJSON } from "@mailwoman/core/json"
-import { type PathBuilderLike, resolvePath } from "path-ts"
+import { addressPointDatabaseRoot, interpolationDatabaseRoot } from "@mailwoman/resolver-wof-sqlite/paths"
+import type { PathBuilder, PathBuilderLike } from "path-ts"
 
 import type { BundleArtifact } from "#data/bundles"
 
@@ -51,26 +52,40 @@ export async function readReleaseManifest(dataRoot: PathBuilderLike): Promise<Da
 }
 
 /**
+ * A database family the release manifest pins.
+ */
+export type DatabaseFamily = NonNullable<BundleArtifact["family"]>
+
+/**
+ * The directory each family's databases live in, from the package that owns the family.
+ */
+const FAMILY_DIRECTORIES = {
+	"address-points": addressPointDatabaseRoot,
+	interpolation: interpolationDatabaseRoot,
+} as const satisfies Record<DatabaseFamily, (dataRoot: PathBuilderLike) => PathBuilder>
+
+/**
  * Resolve a database's on-disk path: the manifest-pinned `<family>-us-<slug>-<version>.db`
  * when present, else the legacy unversioned `<family>-us-<slug>.db`, else null if neither exists.
  */
 export async function resolveDatabasePath(
 	dataRoot: PathBuilderLike,
-	family: string,
+	family: DatabaseFamily,
 	slug: string,
 	manifest: DataReleaseManifest | null
 ): Promise<string | null> {
+	const directory = FAMILY_DIRECTORIES[family](dataRoot)
 	const version = manifest?.[family]
 
 	if (version) {
-		const versioned = resolvePath(dataRoot, family, `${family}-us-${slug}-${version}.db`)
+		const versioned = directory(`${family}-us-${slug}-${version}.db`)
 
-		if (await pathExists(versioned)) return versioned
+		if (await pathExists(versioned)) return versioned.toString()
 	}
 
-	const legacy = resolvePath(dataRoot, family, `${family}-us-${slug}.db`)
+	const legacy = directory(`${family}-us-${slug}.db`)
 
-	return (await pathExists(legacy)) ? legacy : null
+	return (await pathExists(legacy)) ? legacy.toString() : null
 }
 
 /**

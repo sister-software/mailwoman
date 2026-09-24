@@ -17,7 +17,7 @@ import { $public } from "#env/index"
 export const configRootPath = createPathBuilderResolver<"~env/config-root">(() => $public.MAILWOMAN_CONFIG_ROOT)
 
 /**
- * Build a path under the data root, e.g. `dataRootPath("db", "wof", "admin-global-priority.db")`.
+ * Build a path under the data root, e.g. `dataRootPath("geonames", "US.txt")`.
  *
  * Reads the env on each call, so a late environment change (or a test stub) is honored.
  * A resolver bound once at module evaluation would freeze the root to whatever
@@ -41,6 +41,8 @@ export const dataRootPath = createPathBuilderResolver<"~env/data-root">(() => $p
  * a layer database treats an absent file as an absent layer.
  *
  * Compose a database path through this function so one edit moves all of them.
+ * The package that owns a layer exports its directory from its `paths` subpath,
+ * for example `wofDatabasePath` from `@mailwoman/resolver-wof-sqlite/paths`.
  */
 export function databaseRootPath<T extends PathBuilderLike>(source: T) {
 	return PathBuilder.from(source)("db")
@@ -111,84 +113,4 @@ export function mailwomanCacheRoot(): PathBuilder {
  */
 export function cacheRootPath(...segments: string[]): string {
 	return cacheRootPathBuilder(...segments).toString()
-}
-
-/**
- * Default WOF extracts for FTS when `--wof-db` is not provided.
- *
- * Includes the global admin-priority extract plus postcode extracts.
- * Routing in `pickExtractForPlacetype` sends each postcode query to the extract
- * that claims that country (#920).
- *
- * All paths are under `dataRoot` (default: {@link dataRootPath}; callers may pass `--data-root`).
- * Returns a fresh array each call.
- *
- * Callers usually filter with `existsSync`, so missing files are skipped.
- *
- * This runtime list is intentionally smaller than `DEFAULT_POSTCODE_EXTRACTS`
- * (`mailwoman/gazetteer-pipeline/index.ts`), because these databases are attached live at boot.
- *
- * Notes:
- * - `postalcode-geonames-tail.db` now contains FI/CZ/SK/SI/DK/no/HR/PL/SE.
- * - `postalcode-ni-osm.db` is build-local (ODbL, OSM `addr:postcode`) and may be absent.
- *   A missing file is filtered out.
- *   It is the only GB-claiming extract here, and Code-Point Open is not in this list.
- */
-export function wofExtractPaths(source: PathBuilderLike = dataRootPath()): string[] {
-	return Object.values(wofExtractPathsByName(source))
-}
-
-/**
- * The extract set {@link wofExtractPaths} lists, keyed by role so a caller can
- * name one without indexing a tuple.
- */
-export interface WOFExtractPaths {
-	/**
-	 * The global admin-priority extract — every admin lookup starts here.
-	 */
-	adminGlobalPriority: string
-	/**
-	 * US ZIP codes.
-	 */
-	postalcodeUS: string
-	/**
-	 * The nine-country namesake set FI/CZ/SK/SI/DK/no/HR/PL/SE (see {@link wofExtractPaths}).
-	 */
-	postalcodeGeonamesTail: string
-	/**
-	 * The international postcode extract (FR/DE/ES/IT/NL, and the others `pickExtractForPlacetype` routes here).
-	 */
-	postalcodeIntl: string
-	/**
-	 * The NL PC6 full-postcode extract (CBS via pdok; `scripts/build-postalcode-nl-pc6.ts`) — the data
-	 * the lookup's NL PC6 ladder ("1012 LG" → joined "1012LG" → 4-digit stem) resolves against (#977).
-	 */
-	postalcodeNLPC6: string
-	/**
-	 * Northern Ireland (BT) from OpenStreetMap — 4,757 of 50,032 live NI postcodes (9.5 %),
-	 * the only coverage that exists for the hole Code-Point Open leaves.
-	 *
-	 * ODbL, build-local, 2.5 MB.
-	 * A miss on a BT code means not attested IN OSM.
-	 *
-	 * An unknown postcode abstains (#1480), so the extract is strictly additive.
-	 * Rebuild: `mailwoman gazetteer build postcode-ni-osm`.
-	 */
-	postalcodeNIOSM: string
-}
-
-/**
- * {@link wofExtractPaths} as a named record, in the same order the runtime attaches them.
- */
-export function wofExtractPathsByName(source: PathBuilderLike = dataRootPath()): WOFExtractPaths {
-	const wof = databaseRootPath(source)("wof")
-
-	return {
-		adminGlobalPriority: wof("admin-global-priority.db").toString(),
-		postalcodeUS: wof("postalcode-us.db").toString(),
-		postalcodeGeonamesTail: wof("postalcode-geonames-tail.db").toString(),
-		postalcodeIntl: wof("postalcode-intl.db").toString(),
-		postalcodeNLPC6: wof("postalcode-nl-pc6.db").toString(),
-		postalcodeNIOSM: wof("postalcode-ni-osm.db").toString(),
-	}
 }

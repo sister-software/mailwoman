@@ -24,6 +24,7 @@ import { makeNUTSAnnotator, NUTSLookup } from "@mailwoman/nuts-lookup"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { coordinateFormatAnnotator } from "@mailwoman/spatial"
 import { makeTimezoneAnnotator, TimezoneLookup } from "@mailwoman/timezone-lookup"
+import { timezoneDatabasePath } from "@mailwoman/timezone-lookup/paths"
 import { makeUNLocodeAnnotator, UNLocodeLookup } from "@mailwoman/un-locode-lookup"
 import {
 	corsBannerLine,
@@ -123,7 +124,7 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 	const annotationCountryFallback = candidateDB ? undefined : "US"
 	const reverseGeo = adminDBPath ? new resolverMod.WOFReverseGeocoder({ adminDBPath }) : undefined
 	const annotators = [coordinateFormatAnnotator, countryReferenceAnnotator]
-	const tzDBPath = dataRootPath("db", "timezone", "timezone.db")
+	const tzDBPath = timezoneDatabasePath("timezone.db")
 
 	if (await pathExists(tzDBPath)) {
 		annotators.push(makeTimezoneAnnotator(new TimezoneLookup({ databasePath: resolvePath(tzDBPath) })))

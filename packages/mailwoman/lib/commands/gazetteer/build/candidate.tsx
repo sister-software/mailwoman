@@ -56,18 +56,14 @@ const GazetteerBuildCandidate: CommandComponent<typeof spec> = ({ options }) => 
 	const state = useCommandTask(async () => {
 		const { dataRootPath } = await import("@mailwoman/core/data-root")
 
-		const {
-			buildCandidate,
-			DEFAULT_ADMIN_DB,
-			foldGeonamesIntoAdmin,
-			resolveImportanceDB,
-			resolvePostcodeDatabases,
-			wofDir,
-		} = await import("#gazetteer-pipeline")
+		const { buildCandidate, DEFAULT_ADMIN_DB, foldGeonamesIntoAdmin, resolveImportanceDB, resolvePostcodeDatabases } =
+			await import("#gazetteer-pipeline")
+
+		const { wofDatabasePath } = await import("@mailwoman/resolver-wof-sqlite/paths")
 
 		const root = dataRootPath()
-		const adminIn = options.admin ?? wofDir(DEFAULT_ADMIN_DB)
-		const out = options.out ?? wofDir(DEFAULT_CANDIDATE_OUT)
+		const adminIn = options.admin ?? wofDatabasePath(DEFAULT_ADMIN_DB)
+		const out = options.out ?? wofDatabasePath(DEFAULT_CANDIDATE_OUT)
 
 		const countries = options.countries ? splitCountryCodes(options.countries) : DEFAULT_FOLD_COUNTRIES
 
@@ -126,7 +122,7 @@ const GazetteerBuildCandidate: CommandComponent<typeof spec> = ({ options }) => 
 			console.error(
 				options.skipImportance
 					? "  importance: SKIPPED by --skip-importance — the column will be empty"
-					: `  importance: no ${DEFAULT_IMPORTANCE_DB} under ${wofDir} — the column will be empty`
+					: `  importance: no ${DEFAULT_IMPORTANCE_DB} under ${wofDatabasePath} — the column will be empty`
 			)
 		}
 

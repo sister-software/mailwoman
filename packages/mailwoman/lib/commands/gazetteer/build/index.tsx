@@ -29,8 +29,10 @@ export const spec = {
 
 const GazetteerBuild: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { buildAdmin, buildCandidate, DEFAULT_CANDIDATE_OUT, resolvePostcodeDatabases, wofDir } =
+		const { buildAdmin, buildCandidate, DEFAULT_CANDIDATE_OUT, resolvePostcodeDatabases } =
 			await import("#gazetteer-pipeline")
+
+		const { wofDatabasePath } = await import("@mailwoman/resolver-wof-sqlite/paths")
 
 		console.error("▸ build admin (staging)")
 
@@ -40,7 +42,7 @@ const GazetteerBuild: CommandComponent<typeof spec> = ({ options }) => {
 			onPhase: phaseReporter(),
 		})
 
-		const candidateOut = wofDir(DEFAULT_CANDIDATE_OUT)
+		const candidateOut = wofDatabasePath(DEFAULT_CANDIDATE_OUT)
 
 		console.error(`▸ build candidate ← ${admin.out}`)
 

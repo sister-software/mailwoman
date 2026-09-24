@@ -17,7 +17,7 @@
  *   passed in.
  */
 
-import { databaseRootPath, dataRootPath } from "@mailwoman/core/data-root"
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists, readLocalJSONFile, readLocalTextFile, statLink } from "@mailwoman/core/fs/readers"
 import {
 	changeMode,
@@ -40,6 +40,7 @@ import { isoDate } from "@mailwoman/core/utils"
 import type { GeonamesIngestProgress } from "@mailwoman/resolver-wof-sqlite"
 import type { BuildCandidateResult } from "@mailwoman/resolver-wof-sqlite/build-candidate"
 import type { CapitalPoint } from "@mailwoman/resolver-wof-sqlite/capitals"
+import { wofDatabaseRoot } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase } from "@mailwoman/sqlite/sealed-db"
@@ -156,7 +157,7 @@ export async function resolvePostcodeDatabases(
 	const paths: string[] = []
 
 	for (const database of databases) {
-		const path = databaseRootPath(dataRoot)("wof", database)
+		const path = wofDatabaseRoot(dataRoot)(database)
 
 		if (await pathExists(path)) {
 			paths.push(path.toString())
@@ -196,7 +197,7 @@ export async function resolveLocalityDatabases(
 	const paths: string[] = []
 
 	for (const database of databases) {
-		const path = databaseRootPath(dataRoot)("wof", database)
+		const path = wofDatabaseRoot(dataRoot)(database)
 
 		if (await pathExists(path)) {
 			paths.push(path.toString())
@@ -218,7 +219,7 @@ export async function resolveImportanceDB(
 	filename: string = DEFAULT_IMPORTANCE_DB,
 	dataRoot: PathBuilderLike = dataRootPath()
 ): Promise<string | undefined> {
-	const path = databaseRootPath(dataRoot)("wof", filename)
+	const path = wofDatabaseRoot(dataRoot)(filename)
 
 	return (await pathExists(path)) ? path.toString() : undefined
 }
@@ -495,7 +496,7 @@ export async function promoteCandidate(
 	dataRoot: PathBuilderLike = dataRootPath()
 ): Promise<string> {
 	if (!(await pathExists(candidateDB))) throw new Error(`candidate DB not found: ${candidateDB}`)
-	const linkPath = databaseRootPath(dataRoot)("wof", "candidate.db")
+	const linkPath = wofDatabaseRoot(dataRoot)("candidate.db")
 
 	// Replace any existing pointer (symlink or stray file), never the build it points at.
 	try {

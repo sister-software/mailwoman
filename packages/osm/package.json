@@ -54,6 +54,11 @@
 			"node": "./lib/overpass/*.ts",
 			"default": "./out/overpass/*.js"
 		},
+		"./paths": {
+			"types": "./out/paths.d.ts",
+			"node": "./lib/paths.ts",
+			"default": "./out/paths.js"
+		},
 		".": {
 			"types": "./out/index.d.ts",
 			"node": "./lib/index.ts",

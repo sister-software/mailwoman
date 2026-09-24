@@ -39,9 +39,10 @@ export const spec = {
 const GazetteerVerify: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(
 		async () => {
-			const { loadDefaultBaseline, verifyAdmin, verifyReversePanel, wofDir } = await import("#gazetteer-pipeline")
+			const { loadDefaultBaseline, verifyAdmin, verifyReversePanel } = await import("#gazetteer-pipeline")
+			const { wofDatabasePath } = await import("@mailwoman/resolver-wof-sqlite/paths")
 
-			const dbPath = options.db ?? wofDir("admin-global-priority.db")
+			const dbPath = options.db ?? wofDatabasePath("admin-global-priority.db")
 
 			console.error(`Verifying ${dbPath}...`)
 

@@ -14,9 +14,9 @@
  *   Run: node packages/mailwoman/lib/dev-tools/family/board.run.ts [--admin-db <path>] [--skip-grade]
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { allRows, isoDate } from "@mailwoman/core/utils"
+import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { join } from "path-ts"
@@ -33,7 +33,7 @@ const { values } = parseArguments({
 	},
 })
 
-const ADMIN_DB = values["admin-db"] ?? dataRootPath("db", "wof", "admin-global-priority-importance.db")
+const ADMIN_DB = values["admin-db"] ?? wofDatabasePath("admin-global-priority-importance.db")
 const SOURCE = `family-board:${isoDate()}`
 const ADDED_AT = isoDate()
 

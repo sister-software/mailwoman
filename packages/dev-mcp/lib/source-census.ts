@@ -25,8 +25,9 @@
  *   returned nothing" and "we never looked there" are the two facts this file exists to keep apart.
  */
 
-import { databaseRootPath, dataRootPath } from "@mailwoman/core/data-root"
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists, statPath } from "@mailwoman/core/fs/readers"
+import { wofDatabaseRoot } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { PathBuilderLike } from "path-ts"
@@ -168,7 +169,7 @@ export async function censusArtifact(path: string, countries?: readonly string[]
  * and censusing them reports the same country twice under names nobody can act on.
  */
 export async function gazetteerArtifacts(source: PathBuilderLike = dataRootPath()): Promise<string[]> {
-	const wof = databaseRootPath(source)("wof")
+	const wof = wofDatabaseRoot(source)
 
 	if (!(await pathExists(wof))) return []
 

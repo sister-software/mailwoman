@@ -39,6 +39,7 @@ import { stringifyJSON } from "@mailwoman/core/json"
 import { isoDate } from "@mailwoman/core/utils"
 import { EpistemicStatus } from "@mailwoman/evidence"
 import type { GeonamesPostalIngestResult } from "@mailwoman/resolver-wof-sqlite/geonames"
+import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { ExtractMetaTable, WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase } from "@mailwoman/sqlite/sealed-db"
@@ -189,7 +190,7 @@ export async function buildPostcodeGeonamesTail(
 	const now = opts.now ?? new Date()
 	const countries = [...(opts.countries ?? DEFAULT_GEONAMES_TAIL_COUNTRIES)].map((c) => c.toUpperCase())
 	const postalDir = (opts.postalDir ?? dataRootPath("geonames-postal")).toString()
-	const out = (opts.out ?? dataRootPath("db", "wof", `postalcode-geonames-tail-${isoDate(now)}.db`)).toString()
+	const out = (opts.out ?? wofDatabasePath(`postalcode-geonames-tail-${isoDate(now)}.db`)).toString()
 
 	if (!(await pathExists(postalDir))) {
 		throw new Error(

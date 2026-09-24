@@ -61,6 +61,11 @@
 			"node": "./lib/sdk/index.ts",
 			"default": "./out/sdk/index.js"
 		},
+		"./paths": {
+			"types": "./out/paths.d.ts",
+			"node": "./lib/paths.ts",
+			"default": "./out/paths.js"
+		},
 		".": {
 			"types": "./out/index.d.ts",
 			"node": "./lib/index.ts",

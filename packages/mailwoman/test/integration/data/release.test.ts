@@ -10,6 +10,7 @@
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories, writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { addressPointDatabaseRoot } from "@mailwoman/resolver-wof-sqlite/paths"
 import { readReleaseManifest, resolveDatabasePath } from "mailwoman/data"
 import { RegionDatabaseProvider } from "mailwoman/geocode"
 import { join } from "path-ts"
@@ -92,7 +93,7 @@ describe("readReleaseManifest", () => {
 describe("resolveDatabasePath", () => {
 	test("prefers the versioned name; falls back to legacy; null if neither", async () => {
 		const root = tmp()
-		const apDir = await dirEnsure(join(await root, "address-points"))
+		const apDir = await dirEnsure(addressPointDatabaseRoot(await root).toString())
 		// legacy only
 		await writeLocalTextFile("", join(apDir, "address-points-us-tx.db"))
 
@@ -120,7 +121,7 @@ describe("resolveDatabasePath", () => {
 describe("RegionDatabaseProvider atomic switchover", () => {
 	test("reload() flips to the new version + retires the old handle with one-gen grace", async () => {
 		const root = tmp()
-		const apDir = await dirEnsure(join(await root, "address-points"))
+		const apDir = await dirEnsure(addressPointDatabaseRoot(await root).toString())
 		await writeLocalTextFile("", join(apDir, "address-points-us-tx-v1.db"))
 		await writeLocalJSONFile({ "address-points": "v1" }, join(await root, "releases.json"))
 
@@ -149,7 +150,7 @@ describe("RegionDatabaseProvider atomic switchover", () => {
 
 	test("unchanged version keeps the same open handle (no churn)", async () => {
 		const root = tmp()
-		const apDir = await dirEnsure(join(await root, "address-points"))
+		const apDir = await dirEnsure(addressPointDatabaseRoot(await root).toString())
 
 		await writeLocalTextFile("", join(apDir, "address-points-us-tx-v1.db"))
 		await writeLocalJSONFile({ "address-points": "v1" }, join(await root, "releases.json"))

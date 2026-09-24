@@ -26,9 +26,9 @@
  */
 
 import { CA_PROVINCES } from "@mailwoman/codex/ca"
-import { dataRootPath } from "@mailwoman/core/data-root"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
+import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { haversineKm } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
@@ -40,7 +40,7 @@ const { values } = parseArguments({
 	options: {
 		"out-json": { type: "string" },
 		"weights-cache": { type: "string" },
-		"postcode-db": { type: "string", default: dataRootPath("db", "wof", "postalcode-ca-overture.db").toString() },
+		"postcode-db": { type: "string", default: wofDatabasePath("postalcode-ca-overture.db").toString() },
 	},
 })
 

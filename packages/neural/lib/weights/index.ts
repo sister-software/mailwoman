@@ -10,7 +10,7 @@
  * or link local binaries into the weights package.
  */
 
-import { cacheRootPathBuilder, dataRootPath, weightsOverlayPath } from "@mailwoman/core/data-root"
+import { cacheRootPathBuilder, databaseRootPath, dataRootPath, weightsOverlayPath } from "@mailwoman/core/data-root"
 import { pathExists, readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
 import { resolvePackageDirectory, tryResolvePackageDirectory } from "@mailwoman/core/module/resolvers"
@@ -608,7 +608,7 @@ async function resolvePairIndexSibling(packageDir: PathBuilder, country: string)
 export async function resolvePlacetypeCensusPath(country: string): Promise<PathBuilder | null> {
 	if (!country) return null
 
-	const candidate = dataRootPath("db", "wof", `placetype-census-${country.toLowerCase()}.bin`)
+	const candidate = databaseRootPath(dataRootPath())("wof", `placetype-census-${country.toLowerCase()}.bin`)
 
 	return (await pathExists(candidate)) ? candidate : null
 }

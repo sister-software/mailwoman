@@ -44,6 +44,7 @@ import { dataRootPath } from "@mailwoman/core/data-root"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { CODEPOINT_ID_BASE } from "@mailwoman/core/resolver/synthetic-id-ranges"
 import { isoDate } from "@mailwoman/core/utils"
+import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase } from "@mailwoman/sqlite/sealed-db"
@@ -162,7 +163,7 @@ export async function buildPostcodeCodePoint(
 	const now = options.now ?? new Date()
 	const stamp = isoDate(now)
 	const sourceDir = (options.sourceDir ?? dataRootPath("codepoint", stamp)).toString()
-	const out = (options.out ?? dataRootPath("db", "wof", `postalcode-gb-codepoint-${stamp}.db`)).toString()
+	const out = (options.out ?? wofDatabasePath(`postalcode-gb-codepoint-${stamp}.db`)).toString()
 
 	// Acquire the Code-Point source archive.
 	//

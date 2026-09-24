@@ -68,6 +68,11 @@
 			"node": "./lib/schema.ts",
 			"default": "./out/schema.js"
 		},
+		"./paths": {
+			"types": "./out/paths.d.ts",
+			"node": "./lib/paths.ts",
+			"default": "./out/paths.js"
+		},
 		"./vocabulary": {
 			"types": "./out/vocabulary.d.ts",
 			"node": "./lib/vocabulary.ts",

@@ -27,6 +27,7 @@
  */
 
 import { readReleaseConfig, repoCommittedSoftFeedSources, type SoftFeedRecipe } from "@mailwoman/core/release-config"
+import { wofDatabaseRoot } from "@mailwoman/resolver-wof-sqlite/paths"
 import { resolvePath, type PathBuilder, type PathBuilderLike } from "path-ts"
 
 /**
@@ -114,8 +115,8 @@ export async function readWeightsRecipe(
 
 	// `copy-weights.ts` lets an absolute config entry pass through.
 	// Matching that here keeps the two readers from disagreeing about what a leading slash means.
-	const underDataRoot = (rel: string, ...segments: string[]): string =>
-		rel.startsWith("/") ? rel : resolvePath(dataRoot, ...segments, rel)
+	const underDataRoot = (rel: string, base: PathBuilder = dataRoot): string =>
+		rel.startsWith("/") ? rel : resolvePath(base, rel)
 
 	const linkableFor = (locale: string): LinkableArtifact[] => {
 		const out: LinkableArtifact[] = [
@@ -147,11 +148,11 @@ export async function readWeightsRecipe(
 		out.push(
 			{
 				shippedName: `fst-${locale}.bin`,
-				sourcePath: dataRoot("wof", "fst-per-locale", `fst-${locale}.bin`),
+				sourcePath: wofDatabaseRoot(dataRoot)("fst-per-locale", `fst-${locale}.bin`),
 			},
 			{
 				shippedName: "fst-street-morphology.bin",
-				sourcePath: dataRoot("wof", "fst-street-morphology.bin"),
+				sourcePath: wofDatabaseRoot(dataRoot)("fst-street-morphology.bin"),
 			}
 		)
 
@@ -169,7 +170,7 @@ export async function readWeightsRecipe(
 		if (postcodeDB) {
 			out.push({
 				shippedName: `postcode-${country}.bin`,
-				inputPath: underDataRoot(postcodeDB, "wof"),
+				inputPath: underDataRoot(postcodeDB, wofDatabaseRoot(dataRoot)),
 				buildCommand: "mailwoman gazetteer postcode-binary",
 			})
 		}

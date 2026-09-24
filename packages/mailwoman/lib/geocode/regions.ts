@@ -8,11 +8,11 @@
  */
 
 import { US_STATE_BY_ABBREVIATION } from "@mailwoman/codex/us"
-import { databaseRootPath } from "@mailwoman/core/data-root"
 import type { AddressTree } from "@mailwoman/core/decoder"
 import { walkNodes } from "@mailwoman/core/decoder"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import type { AddressPointLookup, InterpolationLookup, StreetCentroidLookup } from "@mailwoman/core/resolver"
+import { addressPointDatabaseRoot, interpolationDatabaseRoot } from "@mailwoman/resolver-wof-sqlite/paths"
 import { resolvePath, type PathBuilderLike } from "path-ts"
 
 import { readReleaseManifest, resolveDatabasePath, type DataReleaseManifest } from "#data/release"
@@ -134,7 +134,7 @@ export function regionSlugFromTree(tree: AddressTree): string | null {
  */
 export async function selectAddressPointsDB(dataRoot: string, stateSlug: string | null): Promise<string | null> {
 	if (!stateSlug) return null
-	const candidate = databaseRootPath(dataRoot)("address-points", `address-points-us-${stateSlug}.db`)
+	const candidate = addressPointDatabaseRoot(dataRoot)(`address-points-us-${stateSlug}.db`)
 
 	return (await pathExists(candidate)) ? candidate.toString() : null
 }
@@ -144,7 +144,7 @@ export async function selectAddressPointsDB(dataRoot: string, stateSlug: string 
  */
 export async function selectInterpolationDB(dataRoot: string, stateSlug: string | null): Promise<string | null> {
 	if (!stateSlug) return null
-	const candidate = databaseRootPath(dataRoot)("interpolation", `interpolation-us-${stateSlug}.db`)
+	const candidate = interpolationDatabaseRoot(dataRoot)(`interpolation-us-${stateSlug}.db`)
 
 	return (await pathExists(candidate)) ? candidate.toString() : null
 }

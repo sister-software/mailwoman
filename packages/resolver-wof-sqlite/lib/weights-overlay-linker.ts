@@ -32,6 +32,7 @@ import type { PathBuilder, PathBuilderLike } from "path-ts"
 
 import { $public } from "#env"
 import { fstFreshnessWarning } from "#fst/freshness"
+import { wofDatabasePath } from "#paths"
 
 /**
  * Replicate `ln -sf SRC dest` atomically: symlink under a temp name, then rename over the destination.
@@ -366,7 +367,7 @@ export const REQUIRED_PAIR_INDEX_SCHEMA = 3
 export async function warnIfFSTStale(fstPath: PathBuilder, locale: string): Promise<void> {
 	const warning = await fstFreshnessWarning({
 		fstPath,
-		sourceDBPath: dataRootPath("db", "wof", "admin-global-priority.db"),
+		sourceDBPath: wofDatabasePath("admin-global-priority.db"),
 		rebuildCommand: `node packages/mailwoman/out/cli/index.js gazetteer build fst --locales ${locale}  (writes to a staging dir; swap is operator-conditional)`,
 	})
 
@@ -384,7 +385,7 @@ export async function warnIfFSTStale(fstPath: PathBuilder, locale: string): Prom
  * The publish flow stages the real binary (release-sequenced).
  */
 export async function linkLocaleFST(destDir: PathBuilder, locale: string): Promise<void> {
-	const source = dataRootPath("db", "wof", "fst-per-locale", `fst-${locale}.bin`)
+	const source = wofDatabasePath("fst-per-locale", `fst-${locale}.bin`)
 
 	const linked = await linkSoftFeedSibling(
 		source,
@@ -408,7 +409,7 @@ export async function linkLocaleFST(destDir: PathBuilder, locale: string): Promi
  */
 export async function linkStreetMorphologyFST(destDir: PathBuilder): Promise<void> {
 	await linkSoftFeedSibling(
-		dataRootPath("db", "wof", "fst-street-morphology.bin"),
+		wofDatabasePath("fst-street-morphology.bin"),
 		destDir("fst-street-morphology.bin"),
 		"the street-context check falls back to the per-process dictionary build."
 	)
@@ -531,7 +532,7 @@ export async function buildPairIndexOverlay(overlay: PairIndexOverlay): Promise<
 	 * Checked-in WOF-derived admin pairs — the default source, and the whole
 	 * source list for the small overlays.
 	 */
-	const WOF_ADMIN_DB = dataRootPath("db", "wof", "admin-global-priority.db")
+	const WOF_ADMIN_DB = wofDatabasePath("admin-global-priority.db")
 	const sources = overlay.sources ?? [WOF_ADMIN_DB]
 	const inputs = overlay.inputs ?? sources
 	const extraArgs = overlay.extraArgs ?? ["--borough-db", WOF_ADMIN_DB]

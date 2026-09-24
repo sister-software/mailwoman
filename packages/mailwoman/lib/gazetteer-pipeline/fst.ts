@@ -40,12 +40,13 @@ import {
 	normalizeTokens,
 	serializeFST,
 } from "@mailwoman/resolver-wof-sqlite/fst"
+import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { resolvePath, resolvePathBuilder, type PathBuilderLike } from "path-ts"
 import { TextSpliterator } from "spliterator"
 
-import { DEFAULT_ADMIN_DB, wofDir } from "#gazetteer-pipeline/defaults"
+import { DEFAULT_ADMIN_DB } from "#gazetteer-pipeline/defaults"
 
 /**
  * The served Latin-script language tiers (see scope.mdx) — uniform curation set for every locale FST.
@@ -192,7 +193,7 @@ export async function checkAdminDerivedFSTFreshness(dbPath: PathBuilderLike): Pr
 	const rows: FSTFreshnessRow[] = []
 
 	for (const relative of ADMIN_DERIVED_FST_ARTIFACTS) {
-		const path = wofDir(relative)
+		const path = wofDatabasePath(relative)
 		const locale = /fst-per-locale\/fst-(?<locale>[a-z]{2}-[a-z]{2})\.bin$/.exec(relative)?.groups?.locale
 		const buildable = locale !== undefined && FST_LOCALES.has(locale)
 
@@ -466,8 +467,8 @@ export interface BuiltLocaleFST {
 
 export async function buildLocaleFSTs(opts: BuildLocaleFSTsOpts = {}): Promise<BuiltLocaleFST[]> {
 	const locales = opts.locales ?? [...FST_LOCALES.keys()]
-	const dbPath = opts.dbPath ?? wofDir(DEFAULT_ADMIN_DB)
-	const outputDir = resolvePathBuilder(opts.outputDir ?? wofDir("fst-per-locale-curated"))
+	const dbPath = opts.dbPath ?? wofDatabasePath(DEFAULT_ADMIN_DB)
+	const outputDir = resolvePathBuilder(opts.outputDir ?? wofDatabasePath("fst-per-locale-curated"))
 	const progress = opts.onProgress ?? (() => {})
 
 	const exclusion = opts.uncurated ? undefined : await loadDegenerateSurfaces()

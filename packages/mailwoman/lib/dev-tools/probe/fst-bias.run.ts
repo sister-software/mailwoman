@@ -23,11 +23,11 @@
  *   Usage: node packages/mailwoman/lib/dev-tools/probe/fst-bias.run.ts [--locale en-us] [--raw] <surface>...
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists, readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { collapseFSTBias } from "@mailwoman/neural/fst-prior"
 import { normalizeTokens, deserializeFST } from "@mailwoman/resolver-wof-sqlite/fst"
+import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { PathBuilder } from "path-ts"
 
 const { values, positionals } = parseArguments({
@@ -50,8 +50,8 @@ const { values, positionals } = parseArguments({
  * Both stamps are readable in the binaries' provenance tails.
  */
 const ARMS: Record<string, PathBuilder> = {
-	pop: dataRootPath("db", "wof", "fst-per-locale"),
-	imp: dataRootPath("db", "wof", "fst-staging-2026-08-05-importance-fanoutfix"),
+	pop: wofDatabasePath("fst-per-locale"),
+	imp: wofDatabasePath("fst-staging-2026-08-05-importance-fanoutfix"),
 }
 
 const matchers = new Map<string, unknown>()

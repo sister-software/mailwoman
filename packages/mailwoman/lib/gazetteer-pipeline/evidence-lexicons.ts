@@ -58,6 +58,7 @@ import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { makeDirectories, writeLocalJSONFile, writeLocalJSONLFile } from "@mailwoman/core/fs/writers"
 import { resourceDictionaryPath, repoRootPathBuilder } from "@mailwoman/core/paths"
 import { normalizeTokens } from "@mailwoman/resolver-wof-sqlite/fst"
+import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { dirname, join, resolvePath, type PathBuilderLike } from "path-ts"
@@ -378,7 +379,7 @@ export interface BuiltLexicon {
 export async function buildLocalitySurfaceLexicon(opts: BuildLocalitySurfaceLexiconOpts = {}): Promise<BuiltLexicon> {
 	const countries = opts.countries ?? ["US", "FR"]
 	const placetypes = opts.placetypes ?? ["locality", "localadmin", "neighbourhood"]
-	const dbPath = opts.dbPath ?? dataRootPath("db", "wof", "admin-global-priority.db")
+	const dbPath = opts.dbPath ?? wofDatabasePath("admin-global-priority.db")
 	const output = resolvePath(opts.output ?? dataRootPath("gazetteer", "locality-surface-lexicon-v6.json"))
 	const progress = opts.onProgress ?? (() => {})
 

@@ -47,6 +47,7 @@ import { officialLanguagesAlpha3, regionLanguagesAlpha3 } from "@mailwoman/codex
 import { foldName } from "@mailwoman/codex/normalize"
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers"
+import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { join } from "path-ts"
@@ -371,8 +372,8 @@ export async function readTriplesFromParentJoin(
 	countries: readonly string[],
 	options: { postcodeDB?: string; adminDB?: string } = {}
 ): Promise<PostcodeTriple[]> {
-	const postcodeDB = options.postcodeDB ?? dataRootPath("db", "wof", "postalcode-intl.db")
-	const adminDB = options.adminDB ?? dataRootPath("db", "wof", "admin-global-priority-importance.db")
+	const postcodeDB = options.postcodeDB ?? wofDatabasePath("postalcode-intl.db")
+	const adminDB = options.adminDB ?? wofDatabasePath("admin-global-priority-importance.db")
 
 	if (!(await pathExists(postcodeDB)) || !(await pathExists(adminDB))) return []
 
@@ -539,7 +540,7 @@ export async function readPairsFromAdmin(
 	countries: readonly string[],
 	options: { adminDB?: string; locale?: (cc: string) => string } = {}
 ): Promise<AdminPair[]> {
-	const adminDB = options.adminDB ?? dataRootPath("db", "wof", "admin-global-priority-importance.db")
+	const adminDB = options.adminDB ?? wofDatabasePath("admin-global-priority-importance.db")
 
 	if (!(await pathExists(adminDB))) return []
 
@@ -606,7 +607,7 @@ export async function readPairsFromAdmin(
  * so a checkout without it builds the same rows it did before rather than silently emitting none.
  */
 export async function createKnownLocalityCheck(country: string, adminDB?: string): Promise<(name: string) => boolean> {
-	const path = adminDB ?? dataRootPath("db", "wof", "admin-global-priority-importance.db")
+	const path = adminDB ?? wofDatabasePath("admin-global-priority-importance.db")
 
 	if (!(await pathExists(path))) return () => true
 
