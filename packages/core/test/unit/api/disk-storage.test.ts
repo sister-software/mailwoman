@@ -139,7 +139,7 @@ describe("buildDiskStorage: round trip", () => {
 
 		const [fileName] = await directoryNames(directory.path)
 
-		await writeLocalTextFile("{ not json", directory.resolve(fileName!))
+		await writeLocalTextFile("{ not json", directory.path(fileName!))
 
 		expect((await storage.get("corrupt")).state).toBe("empty")
 		expect(await directoryNames(directory.path)).toHaveLength(0)
@@ -234,7 +234,7 @@ describe("buildDiskStorage: atomic write with a per-write-unique temp name", () 
 			// left behind alongside the final one — the old bug's enoent path did exactly that).
 			expect(added).toHaveLength(1)
 
-			const entry = await readLocalJSONFile<CachedStorageValue>(directory.resolve(added[0]!))
+			const entry = await readLocalJSONFile<CachedStorageValue>(directory.path(added[0]!))
 
 			expect(entry.data.data).toEqual(body)
 		}
@@ -260,8 +260,8 @@ describe("buildDiskStorage: a failed cache write is a cache miss, not a request 
 		await changeMode(directory.path, 0o500)
 
 		try {
-			await writeLocalTextFile("x", directory.resolve("probe"))
-			await removePathIfPresent(directory.resolve("probe"))
+			await writeLocalTextFile("x", directory.path("probe"))
+			await removePathIfPresent(directory.path("probe"))
 
 			return false
 		} catch {

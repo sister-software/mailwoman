@@ -64,7 +64,7 @@ async function census(
 
 	await writeLocalTextFile(
 		[geonamesRow("Gillingham", 51.39, 0.55, 104_157), geonamesRow("Ashford", 51.15, 0.87, 74_204)],
-		scratch.resolve("GB.txt")
+		scratch.path("GB.txt")
 	)
 
 	using src = sourceDatabase()

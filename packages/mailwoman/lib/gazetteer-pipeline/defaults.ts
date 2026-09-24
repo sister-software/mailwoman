@@ -353,6 +353,12 @@ export const DEFAULT_FOLD_COUNTRIES = DEFAULT_GEONAMES_COUNTRIES
  * The conventional candidate-build output.
  */
 export const DEFAULT_CANDIDATE_OUT = "candidate-global.db"
+
+/**
+ * The conventional admin source the fold copies from.
+ */
+export const DEFAULT_ADMIN_DB = "admin-global-priority.db"
+
 /**
  * The conventional source of the `importance` column (#28) — a WOF admin database
  * carrying `place_importance`, built by `mailwoman gazetteer importance`.

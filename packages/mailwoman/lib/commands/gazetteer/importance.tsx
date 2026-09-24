@@ -32,11 +32,12 @@
  *   which is what they had before Wikipedia importance existed.
  */
 
+import { cacheRootPath } from "@mailwoman/core/data-root"
 import { gunzipChunks } from "@mailwoman/core/fs/compression"
 import { tryStat } from "@mailwoman/core/fs/readers"
 import { makeDirectories } from "@mailwoman/core/fs/writers"
 import { CommandError } from "@mailwoman/core/scripting/command"
-import { allRows, cacheRootPath, streamToDisk } from "@mailwoman/core/utils"
+import { allRows, streamToDisk } from "@mailwoman/core/utils"
 import type { PlaceImportanceDatabase } from "@mailwoman/resolver-wof-sqlite/place-importance-schema"
 import { countRows } from "@mailwoman/sqlite/introspection"
 import { Box, Text } from "ink"

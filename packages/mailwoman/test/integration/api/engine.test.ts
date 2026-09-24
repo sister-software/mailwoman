@@ -28,18 +28,18 @@
 
 import { createMailwomanAPI } from "@mailwoman/api"
 import { metricsSnapshot, resetMetricsForTest, serveNode } from "@mailwoman/api-kit"
-import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { resolveModulePath } from "@mailwoman/core/module/resolvers"
 import { workspacePath } from "@mailwoman/core/paths"
 import { resolveWeights } from "@mailwoman/neural/weights"
+import { addressPointDatabasePath, wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import { createServeEngine } from "mailwoman/api-engine"
 import { $public } from "mailwoman/env"
 import { beforeAll, beforeEach, describe, expect, test } from "vitest"
 
-const wofPath = $public.MAILWOMAN_WOF_DB ?? String(dataRootPath("db", "wof", "admin-global-priority.db"))
-const txSitus = String(dataRootPath("db", "address-points", "address-points-us-tx.db"))
+const wofPath = $public.MAILWOMAN_WOF_DB ?? wofDatabasePath("admin-global-priority.db")
+const txSitus = addressPointDatabasePath("address-points-us-tx.db")
 const hasStack = (await pathExists(wofPath)) && (await pathExists(txSitus))
 // oxlint-disable-next-line vitest/valid-title, vitest/valid-describe-callback -- an aliased describe. the title and callback arrive where it is invoked
 const describeIfStack = describe.skipIf(!hasStack)

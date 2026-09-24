@@ -11,7 +11,7 @@
  *   | --weights-cache <fp32-pkg-root> [--int8-weights-cache <int8-pkg-root>]\
  *   --spec packages/mailwoman/lib/eval-harness/specs/<spec>.json\
  *   [--tokenizer <tokenizer.model>] [--card <model-card.json>]\
- *   [--gazetteer-lexicon <lexicon.json>] [--out-dir /tmp/eval-<label>]
+ *   [--gazetteer-lexicon <lexicon.json>] [--out-dir <temp-root>/eval-<label>]
  *
  *   --model compares raw artifacts: delta checks are valid, absolute floors are not.
  *   --weights-cache is the in-distribution path, and a paired cache run (#47) checks
@@ -48,7 +48,7 @@
  *   - Grade affix floors from score-affix (not folded per-locale output).
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
+import { dataRootPath, tempRootPathBuilder } from "@mailwoman/core/data-root"
 import { pathExists, readLocalBuffer, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { makeDirectories, toLinesText, writeLocalFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { md5File } from "@mailwoman/core/hash"
@@ -57,7 +57,7 @@ import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { repoRootPath } from "@mailwoman/core/paths"
 import { isoSeconds } from "@mailwoman/core/utils"
 import { weightsCachePackageDir } from "@mailwoman/neural/weights"
-import { basename, dirname, resolvePath, type PathBuilderLike } from "path-ts"
+import { basename, dirname, PathBuilder, resolvePath, type PathBuilderLike } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
 import { deOrderEval } from "#eval-harness/de-order-eval"
@@ -162,7 +162,7 @@ export interface PromotionEvalOptions {
 	/**
 	 * Battery output dir.
 	 *
-	 * Default `/tmp/eval-<label>-<hhmm>`.
+	 * Default `<temp-root>/eval-<label>-<hhmm>`, under `$MAILWOMAN_TEMP_ROOT`.
 	 */
 	outDir?: PathBuilderLike
 	/**
@@ -251,7 +251,7 @@ async function runLoreGuards(env: {
 	WC8_MODEL: string
 	MODEL: string
 	INT8: string
-	TOK: string
+	TOK: PathBuilderLike
 	OUT_DIR: PathBuilderLike
 	card: ModelCard
 }): Promise<number | null> {
@@ -270,7 +270,7 @@ async function runLoreGuards(env: {
 	}
 
 	// Warn when compiled output is stale versus source.
-	const freshness = await checkCompiledFreshness(String(repoRootPath()), EVAL_HARNESS_WORKSPACES)
+	const freshness = await checkCompiledFreshness(repoRootPath(), EVAL_HARNESS_WORKSPACES)
 
 	if (!freshness.fresh && freshness.reason) {
 		console.error(`⚠ ${freshness.reason}`)
@@ -400,7 +400,7 @@ async function runLoreGuards(env: {
 async function runDemoCascadeLeg(env: {
 	outDir: PathBuilderLike
 	shipModel: string
-	tokenizer: string
+	tokenizer: PathBuilderLike
 	card: string
 	gazetteerLexicon: string
 }): Promise<void> {
@@ -462,7 +462,7 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 	const INT8 = options.int8 ?? ""
 	const CHECK = options.check ? await resolveThresholdSpecPath(options.check) : ""
 	let OUT_DIR = options.outDir ?? ""
-	const TOK = options.tokenizer ?? String(dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model"))
+	const TOK = PathBuilder.from(options.tokenizer ?? dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model"))
 	const CARD = options.card ?? "packages/neural-weights-en-us/model-card.json"
 	const GAZ = options.gazetteerLexicon ?? "data/gazetteer/anchor-lexicon-v1.json"
 	const LK = dataRootPath("anchor", "pilot-anchor-lookup.json")
@@ -507,7 +507,7 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 	const hhmm = String(new Date().getUTCHours()).padStart(2, "0") + String(new Date().getUTCMinutes()).padStart(2, "0")
 
 	if (!OUT_DIR) {
-		OUT_DIR = `/tmp/eval-${LABEL}-${hhmm}`
+		OUT_DIR = tempRootPathBuilder(`eval-${LABEL}-${hhmm}`)
 	}
 
 	await makeDirectories(OUT_DIR)
@@ -561,7 +561,7 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 		// Package-shaped probes load all channels from the selected arm cache.
 		const plOptions = wc
 			? { weightsCache: wc }
-			: { modelPath: m, tokenizerPath: TOK, modelCardPath: CARD, modelAnchorLookupPath: String(LK) }
+			: { modelPath: m, tokenizerPath: TOK, modelCardPath: CARD, modelAnchorLookupPath: LK }
 
 		const probeOptions = wc ? { weightsCache: wc } : { model: m }
 
@@ -655,7 +655,7 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 						model: m,
 						card: armCard,
 						tokenizer: armTok,
-						anchorLookup: String(LK),
+						anchorLookup: LK,
 						out: `${OUT_DIR}/${tag}-deorder`,
 						// Memoize repeated gazetteer lookups for this run.
 						lookupMemo: true,
@@ -731,7 +731,7 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 						tokenizer: EFF_TOK,
 						modelCard: EFF_CARD,
 						gazetteerLexicon: GAZ,
-						anchorLookup: String(LK),
+						anchorLookup: LK,
 						outDir: `${OUT_DIR}/arenas`,
 						...(CONV_MODE ? { conventions: CONV_MODE } : {}),
 						...(BRIDGE_MODE ? { bridgeGaps: true } : {}),
@@ -816,7 +816,7 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 						model: shipModel,
 						tokenizer: EFF_TOK,
 						modelCard: EFF_CARD,
-						anchorLookup: String(LK),
+						anchorLookup: LK,
 						gazetteerLexicon: GAZ,
 						json: `${OUT_DIR}/mask-regression.json`,
 					},

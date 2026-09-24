@@ -13,13 +13,7 @@
  */
 
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
-import {
-	makeDirectories,
-	removePath,
-	writeLocalBuffer,
-	writeLocalFile,
-	writeLocalTextFile,
-} from "@mailwoman/core/fs/writers"
+import { removePath, writeLocalBuffer, writeLocalFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import {
 	DERIVED_WEIGHTS_INPUTS,
 	type DerivedWeightsInput,
@@ -28,7 +22,7 @@ import {
 	derivedWeightsKey,
 	derivedWeightsKeyFrom,
 } from "@mailwoman/release-kit/weights/derived-weights-key"
-import { join, type PathBuilder } from "path-ts"
+import { basename, type PathBuilder } from "path-ts"
 import { afterAll, afterEach, beforeEach, describe, expect, it } from "vitest"
 
 const fixtures = new AsyncDisposableStack()
@@ -40,8 +34,8 @@ afterAll(() => fixtures.disposeAsync())
  *
  * The shape production uses (repo-relative name, absolute read path).
  */
-function at(path: string, name?: string): DerivedWeightsInput {
-	return { name: name ?? path.slice(path.lastIndexOf("/") + 1), path }
+function at(path: PathBuilder, name?: string): DerivedWeightsInput {
+	return { name: name ?? basename(path), path }
 }
 
 let scratch: TemporaryDirectory
@@ -54,14 +48,14 @@ afterEach(() => scratch[Symbol.asyncDispose]())
 
 describe("derivedWeightsKeyFrom", () => {
 	it("is stable for identical inputs", async () => {
-		const a = scratch.resolve("a.json")
+		const a = scratch.path("a.json")
 		await writeLocalTextFile('{"x":1}', a)
 
 		expect(await derivedWeightsKeyFrom([at(a)])).toBe(await derivedWeightsKeyFrom([at(a)]))
 	})
 
 	it("changes when a hashed input's CONTENT changes", async () => {
-		const a = scratch.resolve("a.json")
+		const a = scratch.path("a.json")
 		await writeLocalTextFile('{"x":1}', a)
 		const before = await derivedWeightsKeyFrom([at(a)])
 
@@ -71,8 +65,8 @@ describe("derivedWeightsKeyFrom", () => {
 	})
 
 	it("changes when a GENERATING MODULE changes — the currency-filter regression", async () => {
-		const config = scratch.resolve("release.config.json")
-		const generator = scratch.resolve("pair-index.tsx")
+		const config = scratch.path("release.config.json")
+		const generator = scratch.path("pair-index.tsx")
 		await writeLocalTextFile('{"weights":{"model":"m.onnx"}}', config)
 		await writeLocalTextFile("export const delta = 1", generator)
 		const before = await derivedWeightsKeyFrom([at(config), at(generator)])
@@ -85,8 +79,8 @@ describe("derivedWeightsKeyFrom", () => {
 	})
 
 	it("is order-independent across the input list", async () => {
-		const a = scratch.resolve("a.json")
-		const b = scratch.resolve("b.json")
+		const a = scratch.path("a.json")
+		const b = scratch.path("b.json")
 		await writeLocalTextFile("1", a)
 		await writeLocalTextFile("2", b)
 
@@ -94,14 +88,14 @@ describe("derivedWeightsKeyFrom", () => {
 	})
 
 	it("treats a MISSING input as a distinct state, not as empty", async () => {
-		const a = scratch.resolve("a.json")
+		const a = scratch.path("a.json")
 		await writeLocalTextFile("1", a)
 		const present = await derivedWeightsKeyFrom([at(a)])
 
 		await removePath(a)
 		const absent = await derivedWeightsKeyFrom([at(a)])
 
-		const empty = scratch.resolve("empty.json")
+		const empty = scratch.path("empty.json")
 		await writeLocalTextFile("", empty)
 
 		// Absence is not zero: a file that is gone must not hash like a file that is empty.
@@ -110,8 +104,8 @@ describe("derivedWeightsKeyFrom", () => {
 	})
 
 	it("distinguishes inputs by NAME", async () => {
-		const a = scratch.resolve("a.json")
-		const b = scratch.resolve("b.json")
+		const a = scratch.path("a.json")
+		const b = scratch.path("b.json")
 		await writeLocalTextFile("same", a)
 		await writeLocalTextFile("same", b)
 
@@ -125,18 +119,17 @@ describe("derivedWeightsKeyFrom", () => {
 		// and a local worktree each computed a different key over byte-identical inputs and none
 		// ever saw another's work: four store directories holding the same eleven artifacts,
 		// and a 41s pair-index-nz.bin rebuild on a runner that already had the file.
-		const checkoutA = scratch.resolve("runner-1", "_work", "mailwoman")
-		const checkoutB = scratch.resolve("runner-2", "_work", "mailwoman")
+		const checkoutA = scratch.path("runner-1", "_work", "mailwoman")
+		const checkoutB = scratch.path("runner-2", "_work", "mailwoman")
 
 		for (const root of [checkoutA, checkoutB]) {
-			await makeDirectories(root)
-			await writeLocalTextFile('{"weights":{"model":"m.onnx"}}', join(root, "release.config.json"))
-			await writeLocalTextFile("export const delta = 10", join(root, "pair-index.tsx"))
+			await writeLocalTextFile('{"weights":{"model":"m.onnx"}}', root("release.config.json"))
+			await writeLocalTextFile("export const delta = 10", root("pair-index.tsx"))
 		}
 
-		const inputsFor = (root: string) => [
-			at(join(root, "release.config.json"), "release.config.json"),
-			at(join(root, "pair-index.tsx"), "packages/mailwoman/lib/commands/gazetteer/pair-index.tsx"),
+		const inputsFor = (root: PathBuilder) => [
+			at(root("release.config.json"), "release.config.json"),
+			at(root("pair-index.tsx"), "packages/mailwoman/lib/commands/gazetteer/pair-index.tsx"),
 		]
 
 		expect(await derivedWeightsKeyFrom(inputsFor(checkoutA))).toBe(await derivedWeightsKeyFrom(inputsFor(checkoutB)))
@@ -184,35 +177,35 @@ describe("derivedStoreServeViolation — the serve-time floor (#1528)", () => {
 	})
 
 	it("refuses the #1528 reproduction: an empty GB binary is never a valid entry", async () => {
-		const path = join(dir, "postcode-gb.bin")
+		const path = dir("postcode-gb.bin")
 		await writeLocalFile(pcb1(0), path)
 
 		expect(await derivedStoreServeViolation("postcode-gb.bin", path)).toMatch(/below the GB floor/)
 	})
 
 	it("refuses a collapsed FR binary below its calibrated floor", async () => {
-		const path = join(dir, "postcode-fr.bin")
+		const path = dir("postcode-fr.bin")
 		await writeLocalFile(pcb1(500), path)
 
 		expect(await derivedStoreServeViolation("postcode-fr.bin", path)).toMatch(/below the FR floor of 13,000/)
 	})
 
 	it("serves a GB binary at outward granularity — the LOWEST GB floor is the serve check", async () => {
-		const path = join(dir, "postcode-gb.bin")
+		const path = dir("postcode-gb.bin")
 		await writeLocalFile(pcb1(1500), path)
 
 		expect(await derivedStoreServeViolation("postcode-gb.bin", path)).toBeNull()
 	})
 
 	it("refuses bytes that are not a PCB1 at all", async () => {
-		const path = join(dir, "postcode-de.bin")
+		const path = dir("postcode-de.bin")
 		await writeLocalBuffer(Buffer.from("not a binary"), path)
 
 		expect(await derivedStoreServeViolation("postcode-de.bin", path)).toMatch(/not a PCB1/)
 	})
 
 	it("passes non-postcode entries untouched — pair indexes validate their own header on load", async () => {
-		const path = join(dir, "pair-index-gb.bin")
+		const path = dir("pair-index-gb.bin")
 		await writeLocalBuffer(Buffer.from("anything"), path)
 
 		expect(await derivedStoreServeViolation("pair-index-gb.bin", path)).toBeNull()

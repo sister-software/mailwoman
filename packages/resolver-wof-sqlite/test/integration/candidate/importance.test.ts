@@ -22,10 +22,11 @@ import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/
 import { IMPORTANCE_JOIN_RADIUS_KM, loadImportanceIndex } from "@mailwoman/resolver-wof-sqlite/candidate-importance"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
+import type { PathBuilder, PathBuilderLike } from "path-ts"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
 
 let scratch: TemporaryDirectory
-let sourcePath: string
+let sourcePath: PathBuilder
 
 /**
  * A score source in the shape `admin-global-priority-importance.db` has: `spr` + `place_importance`.
@@ -33,7 +34,7 @@ let sourcePath: string
  * Ids here are deliberately nothing like the ids a candidate build would carry.
  * The join must not depend on them.
  */
-function buildFixtureSource(path: string): void {
+function buildFixtureSource(path: PathBuilderLike): void {
 	using db = new DatabaseClient<WOFDatabase>(path)
 
 	db.exec(`
@@ -78,7 +79,7 @@ function buildFixtureSource(path: string): void {
 
 beforeEach(async () => {
 	scratch = await temporaryDirectory("mailwoman-candidate-importance-")
-	sourcePath = scratch.resolve("importance.db")
+	sourcePath = scratch.path("importance.db")
 	buildFixtureSource(sourcePath)
 })
 

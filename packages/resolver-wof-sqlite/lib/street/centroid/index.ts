@@ -22,6 +22,7 @@
 import type { StreetCentroidHit, StreetCentroidLookup } from "@mailwoman/core/resolver"
 import { haversineKm } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
+import type { PathBuilderLike } from "path-ts"
 
 import { hasTable, prepareGet, type PreparedGet } from "#sqlite-utils"
 import type { StreetCentroidDatabase } from "#street/centroid/schema"
@@ -81,7 +82,7 @@ export class StreetCentroidSqliteLookup implements StreetCentroidLookup {
 	 * built with — must match, or every key misses.
 	 * Defaults to `"fr"` (BAN is the French national register. the tier is FR-only today).
 	 */
-	constructor(dbPath: string, opts: { streetLocale?: StreetLocale } = {}) {
+	constructor(dbPath: PathBuilderLike, opts: { streetLocale?: StreetLocale } = {}) {
 		this.#db = new DatabaseClient<StreetCentroidDatabase>(dbPath, { readOnly: true })
 		this.#locale = opts.streetLocale ?? "fr"
 

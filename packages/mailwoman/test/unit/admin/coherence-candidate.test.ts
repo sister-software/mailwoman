@@ -20,6 +20,7 @@ import { buildCandidateTable } from "@mailwoman/resolver-wof-sqlite/build-candid
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { adminCoherenceField, type AdminCoherenceSourceNode } from "mailwoman/admin-coherence"
+import type { PathBuilderLike } from "path-ts"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
 
 const GERMANY = 100
@@ -33,7 +34,7 @@ const WEIMAR_US = 202
  * The Weimar defect in miniature: the DE original and a more-populous US namesake,
  * each chained to its own region + country, so a bare population-first "Weimar" answers Texas.
  */
-function buildFixtureAdmin(path: string): void {
+function buildFixtureAdmin(path: PathBuilderLike): void {
 	using db = new DatabaseClient<WOFDatabase>(path)
 
 	db.exec(`
@@ -95,8 +96,8 @@ function flatten(roots: readonly AddressNode[]): AddressNode[] {
 
 beforeEach(async () => {
 	scratch = await temporaryDirectory("mailwoman-coherence-candidate-")
-	const input = scratch.resolve("admin.db")
-	const candidatePath = scratch.resolve("candidate.db")
+	const input = scratch.path("admin.db")
+	const candidatePath = scratch.path("candidate.db")
 	buildFixtureAdmin(input)
 	await buildCandidateTable({ input, output: candidatePath })
 	lookup = new WOFCandidateTableLookup({ databasePath: candidatePath })

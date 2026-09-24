@@ -51,7 +51,6 @@
  *   Run: `node mailwoman/gazetteer-pipeline/pair-index-hierarchy-probe.ts [--countries us,fr] [--db <path>] [--out <dir>] [--skip-source-md5]`
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { movePath, writeLocalFile, makeDirectories } from "@mailwoman/core/fs/writers"
 import { md5File } from "@mailwoman/core/hash"
@@ -65,9 +64,10 @@ import {
 	type PairIndexEntry,
 	type PairIndexHeaderInput,
 } from "@mailwoman/neural/pair"
+import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import { basename, join, resolvePath } from "path-ts"
+import { basename, PathBuilder, resolvePath } from "path-ts"
 
 /**
  * The argument tail both hierarchy runners share: the country list, lower-cased, and the admin DB they read.
@@ -78,7 +78,7 @@ export function resolveHierarchyRunInputs(values: { countries?: string; db?: str
 } {
 	return {
 		countries: (values.countries ?? "us,fr").split(",").map((c) => c.trim().toLowerCase()),
-		dbPath: String(resolvePath(values.db ?? dataRootPath("db", "wof", "admin-global-priority.db"))),
+		dbPath: resolvePath(values.db ?? wofDatabasePath("admin-global-priority.db")),
 	}
 }
 
@@ -203,7 +203,7 @@ async function main(): Promise<void> {
 	})
 
 	const { countries, dbPath } = resolveHierarchyRunInputs(values)
-	const outDir = resolvePath(values.out ?? dataRootPath("db", "wof", "pair-index-hierarchy-probe"))
+	const outDir = PathBuilder.from(values.out ?? wofDatabasePath("pair-index-hierarchy-probe"))
 
 	if (!(await pathExists(dbPath))) {
 		throw new Error(`pair-index-hierarchy-probe: WOF admin DB not found: ${dbPath}`)
@@ -317,8 +317,8 @@ async function main(): Promise<void> {
 
 		const bytes = serializePairIndex(header, entries)
 		const outName = `pair-index-locality-region-${country}.bin`
-		const outPath = join(outDir, outName)
-		const tmpPath = join(outDir, `.tmp-${outName}`)
+		const outPath = outDir(outName)
+		const tmpPath = outDir(`.tmp-${outName}`)
 
 		// Temp-write + rename: the artifact is never observable half-written
 		// (agents.md sealed-artifact discipline, applied to a flat binary).

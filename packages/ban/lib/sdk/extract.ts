@@ -21,6 +21,7 @@
  */
 
 import { gunzipChunks } from "@mailwoman/core/fs/compression"
+import type { PathBuilderLike } from "path-ts"
 import { CSVSpliterator } from "spliterator"
 import { createReadStream } from "spliterator/node/fs"
 
@@ -159,10 +160,13 @@ function assertRequiredColumns(row: Record<string, unknown>): void {
 /**
  * An asynchronous byte source over `csvPath`, transparently gunzipping a `.csv.gz` input.
  */
-async function openCSV(csvPath: string): Promise<AsyncIterable<Uint8Array | string>> {
-	const raw = await createReadStream(csvPath, CSV_READ_HIGH_WATER_MARK)
+async function openCSV(csvPath: PathBuilderLike): Promise<AsyncIterable<Uint8Array | string>> {
+	// spliterator's `createReadStream` opens only a primitive string.
+	// It reads stdin for any other value, including a PathBuilder.
+	const path = csvPath.toString()
+	const raw = await createReadStream(path, CSV_READ_HIGH_WATER_MARK)
 
-	return csvPath.endsWith(".gz") ? gunzipChunks(raw) : raw
+	return path.endsWith(".gz") ? gunzipChunks(raw) : raw
 }
 
 /**
@@ -173,7 +177,7 @@ async function openCSV(csvPath: string): Promise<AsyncIterable<Uint8Array | stri
  * (yield-side filtering is the caller's job for anything finer).
  * The `rep` suffix is normalised to lower-case or null.
  */
-export async function* extractBANAddrPoints(csvPath: string): AsyncGenerator<BANAddrRecord> {
+export async function* extractBANAddrPoints(csvPath: PathBuilderLike): AsyncGenerator<BANAddrRecord> {
 	// CSVSpliterator handles quoted fields and embedded delimiters.
 	// `split(";")` that leaked CSV quotes into lieu-dit street keys (#1044): quoted fields unwrap,
 	// doubled inner quotes fold, and a quoted `;` no longer mis-splits the row.

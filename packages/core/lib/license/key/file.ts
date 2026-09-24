@@ -19,13 +19,15 @@ import { prettyJSON } from "#json"
 const LICENSE_KEY_FILE = "key"
 const LICENSE_REFRESH_FILE = "refresh.json"
 
-export function licenseKeyFilePath(): string {
-	return String(configRootPath("license", LICENSE_KEY_FILE))
-}
+/**
+ * The path to the license key file under the config root.
+ */
+export const licenseKeyFilePath = configRootPath("license", LICENSE_KEY_FILE)
 
-export function licenseRefreshFilePath(): string {
-	return String(configRootPath("license", LICENSE_REFRESH_FILE))
-}
+/**
+ * The path to the refresh credentials file under the config root.
+ */
+export const licenseRefreshFilePath = configRootPath("license", LICENSE_REFRESH_FILE)
 
 export interface ConfiguredLicenseToken {
 	token: string
@@ -35,29 +37,29 @@ export interface ConfiguredLicenseToken {
 /**
  * The token this installation has configured: the environment variable first, the key file second.
  *
- * `undefined` when neither is set.
+ * `null` when neither is set.
  * A blank file reads as absent.
  */
-export async function readConfiguredLicenseToken(): Promise<ConfiguredLicenseToken | undefined> {
+export async function readConfiguredLicenseToken(): Promise<ConfiguredLicenseToken | null> {
 	const fromEnvironment = $public.MAILWOMAN_LICENSE_KEY
 
 	if (fromEnvironment) return { token: fromEnvironment, source: "environment" }
 
 	const path = licenseKeyFilePath()
 
-	if (!(await pathExists(path))) return undefined
+	if (!(await pathExists(path))) return null
 
 	const token = (await readLocalTextFile(path)).trim()
 
-	return token ? { token, source: "file" } : undefined
+	return token ? { token, source: "file" } : null
 }
 
 /**
  * Write the key file.
  * Answers its path.
  */
-export async function writeLicenseKeyFile(token: string): Promise<string> {
-	const path = licenseKeyFilePath()
+export async function writeLicenseKeyFile(token: string, destination = licenseKeyFilePath()): Promise<string> {
+	const path = destination.toString()
 
 	await writeLocalTextFile(`${token.trim()}\n`, path)
 
@@ -69,10 +71,16 @@ export interface RefreshCredentials {
 	secret: string
 }
 
-export async function readRefreshCredentials(): Promise<RefreshCredentials | undefined> {
+/**
+ * Read the refresh credentials, created 0600.
+ *
+ * @returns The credentials, or `null` when the file is absent.
+ * @throws when the file is present but does not carry a lid and a secret.
+ */
+export async function readRefreshCredentials(): Promise<RefreshCredentials | null> {
 	const path = licenseRefreshFilePath()
 
-	if (!(await pathExists(path))) return undefined
+	if (!(await pathExists(path))) return null
 
 	const parsed = await readLocalJSONFile<Partial<RefreshCredentials>>(path)
 
@@ -84,11 +92,12 @@ export async function readRefreshCredentials(): Promise<RefreshCredentials | und
 }
 
 /**
- * Write the refresh credentials, created 0600.
- * Answers the path.
+ * Write the refresh credentials, mode 0600.
+ *
+ * @returns The path to the file.
  */
 export async function writeRefreshCredentials(credentials: RefreshCredentials): Promise<string> {
-	const path = licenseRefreshFilePath()
+	const path = licenseRefreshFilePath().toString()
 
 	await writePrivateTextFile(prettyJSON(credentials), path)
 

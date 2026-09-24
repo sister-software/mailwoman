@@ -85,6 +85,7 @@ import type { PostcodePrefixAncestor, PostcodePrefixNode } from "@mailwoman/neur
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { haversineKm } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
+import type { PathBuilderLike } from "path-ts"
 
 import { AdminLocator } from "#gazetteer-pipeline/admin/locator"
 
@@ -109,11 +110,11 @@ export interface BuildPostcodePrefixOptions {
 	/**
 	 * Postcode database to read — one row per unit postcode in `spr` with `placetype = 'postalcode'`.
 	 */
-	sourcePath: string
+	sourcePath: PathBuilderLike
 	/**
 	 * WOF admin DB the ancestry IDs are resolved from.
 	 */
-	adminPath: string
+	adminPath: PathBuilderLike
 	/**
 	 * ISO country code (lowercase) the prefixes belong to.
 	 */
@@ -125,7 +126,7 @@ export interface BuildPostcodePrefixOptions {
 	 * Required for `country: "us"`, unused elsewhere.
 	 * GB ancestry comes from a documented area table rather than from geometry.
 	 */
-	polygonPath?: string
+	polygonPath?: PathBuilderLike
 }
 
 export interface BuildPostcodePrefixResult {
@@ -238,7 +239,7 @@ const UK_COUNTRY_WOF_NAME: Record<UkCountryCode, string> = {
  * A build that silently dropped an ancestor would ship nodes asserting less than the source supports,
  * and nothing downstream could tell that from a prefix that genuinely asserts nothing.
  */
-function resolveGBAncestry(adminPath: string): {
+function resolveGBAncestry(adminPath: PathBuilderLike): {
 	country: PostcodePrefixAncestor
 	constituent: Record<UkCountryCode, PostcodePrefixAncestor>
 } {
@@ -640,7 +641,7 @@ function buildUSPostcodePrefixIndex(options: BuildPostcodePrefixOptions): BuildP
  * The assertion is about postal jurisdiction, and nothing finer is claimed for them
  * because their units land in no US region polygon.
  */
-function resolveUSCountry(adminPath: string): PostcodePrefixAncestor {
+function resolveUSCountry(adminPath: PathBuilderLike): PostcodePrefixAncestor {
 	using db = new DatabaseClient<WOFDatabase>(adminPath, { readOnly: true })
 
 	const row = db.prepare(`select id, name from spr where country = 'US' and placetype = 'country' limit 1`).get() as

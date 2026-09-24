@@ -76,7 +76,7 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed-db"
 import { cellToParent, latLngToCell } from "h3-js"
 import type { Insertable, Kysely } from "kysely"
-import { basename, dirname, join } from "path-ts"
+import { PathBuilder, type PathBuilderLike } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
 import {
@@ -131,7 +131,7 @@ export interface BuildBDCOptions {
 	 *
 	 * Built at `${out}.building` and moved into place last — see the module docstring.
 	 */
-	out: string
+	out: PathBuilderLike
 	/**
 	 * The FCC filing's `as_of_date` (e.g. From `resolveLatestVintage`) — becomes the
 	 * manifest's `sourceVintage` and `version` (BDC has no independent layer versioning
@@ -524,20 +524,23 @@ export async function buildBDCDatabase(options: BuildBDCOptions): Promise<BuildB
 		await removePath(buildingPath)
 	}
 
-	await makeDirectories(dirname(options.out))
+	const outPath = PathBuilder.from(options.out)
+	const outDir = outPath.dirname()
+
+	await makeDirectories(outDir)
 
 	// A crash inside a prior run's swap can leave the slot empty while the previous version sits parked
 	// aside — restore it before building, so a failure in this run still leaves an artifact serving.
 	// Both aside spellings: this builder's old `.prev` and swapDatabaseIntoPlace's `.old-<pid>`.
 	if (!(await pathExists(options.out))) {
-		const base = basename(options.out)
+		const base = outPath.basename()
 
-		const parked = await Globerator.from("*", { cwd: dirname(options.out), absolute: false }).find(
+		const parked = await Globerator.from("*", { cwd: outDir, absolute: false }).find(
 			(name) => name === `${base}.prev` || name.startsWith(`${base}.old-`)
 		)
 
 		if (parked) {
-			await movePath(join(dirname(options.out), parked), options.out)
+			await movePath(outDir(parked), options.out)
 			progress(`restored ${parked} into place (a prior run crashed mid-swap)`)
 		}
 	}
@@ -781,7 +784,7 @@ export async function buildBDCDatabase(options: BuildBDCOptions): Promise<BuildB
 		await db.destroy()
 
 		result = {
-			out: options.out,
+			out: outPath.toString(),
 			rows: inserted,
 			deduped,
 			providers: providers.size,

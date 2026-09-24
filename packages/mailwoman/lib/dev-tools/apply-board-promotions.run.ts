@@ -32,7 +32,6 @@
 
 import { stringifyJSON } from "@mailwoman/core/json"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
-import { join } from "path-ts"
 import { JSONSpliterator, TextSpliterator } from "spliterator"
 import { Globerator } from "spliterator/node/fs"
 
@@ -88,12 +87,13 @@ const byPath = new Map<string, SeedCase[]>()
 const found = new Map<string, string>()
 
 for (const cc of countryDirectories) {
-	const directory = join(CASES_DIR, cc)
+	const directory = CASES_DIR(cc)
 
 	const files = await Globerator.files("jsonl", { cwd: directory, absolute: false, recursive: false }).toSorted()
 
 	for (const name of files) {
-		const path = join(directory, name)
+		// A string, because it keys `byPath` and `found`.
+		const path = directory(name).toString()
 
 		const rows = await JSONSpliterator.fromAsync<unknown>(path)
 			.map((row) => SeedCaseSchema.parse(row) as SeedCase)

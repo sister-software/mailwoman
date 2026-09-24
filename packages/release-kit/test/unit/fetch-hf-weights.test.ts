@@ -17,7 +17,7 @@ import {
 import { resolvePath } from "path-ts"
 import { describe, expect, it } from "vitest"
 
-const repoRoot = String(repoRootPath())
+const repoRoot = repoRootPath()
 const CJK = "packages/neural-weights-cjk"
 
 /**

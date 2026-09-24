@@ -19,14 +19,15 @@
  *   Run: `mailwoman placer probe-frontier [--model <dir>] [--n 2000] [--out <md>]`
  */
 
-import { join } from "path-ts"
+import { PathBuilder } from "path-ts"
 import { TSVSpliterator } from "spliterator"
 
 import { CoarsePlacer, type CoarsePlacerMeta } from "#coarse-placer/coarse-placer"
 import { shippedModelDir } from "#coarse-placer/tools/paths"
+import { dataRootPath } from "#data-root"
 import { readLocalJSONFile } from "#fs/readers"
 import { writeLocalTextFile } from "#fs/writers"
-import { dataRootPath, formatPercent, median } from "#utils"
+import { formatPercent, median } from "#utils"
 
 /**
  * False-positive rate above which the in-class frontier is judged to have degraded.
@@ -130,13 +131,13 @@ export async function probeFrontier(
 	report?: (line: string) => void
 ): Promise<ProbeFrontierResult> {
 	// Deliberately the shipped bundle rather than defaultModelDir(): the probe grades what the runtime loads.
-	const modelDir = (options.model ?? shippedModelDir()).toString()
+	const modelDir = PathBuilder.from(options.model ?? shippedModelDir())
 	const maxN = options.n ?? 2000
 
 	// `@mailwoman/codex` is a devDependency of core (operator tooling) — lazy-imported inside the fn.
 	const { ISO2_TO_NAME } = await import("@mailwoman/codex/country")
 
-	const meta = await readLocalJSONFile<CoarsePlacerMeta>(join(modelDir, "meta.json"))
+	const meta = await readLocalJSONFile<CoarsePlacerMeta>(modelDir("meta.json"))
 	// The deployed bundle is int8-per-row quantized — fromArtifactDir dequantizes via meta.scales.
 	const placer = await CoarsePlacer.fromArtifactDir(modelDir, { abstainBelow: 0 })
 	const classSet = new Set(meta.classes)

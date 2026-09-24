@@ -30,6 +30,7 @@
 import { parseJSONStrict } from "@mailwoman/core/json"
 import { isPresent } from "@mailwoman/core/objects"
 import { spawnProcessSync } from "@mailwoman/core/process"
+import type { PathBuilderLike } from "path-ts"
 import { TextSpliterator } from "spliterator"
 
 import { collectExportTargets } from "#pack/publish/exports"
@@ -162,7 +163,7 @@ export function collectMissingBinTargets(bin: unknown, shipped: Set<string>): st
  * @throws With the tar exit status rather than a parse error on a truncated
  * or non-tarball input, so a pack failure upstream reads as a pack failure here.
  */
-function readTarball(tarballPath: string): TarballContents {
+function readTarball(tarballPath: PathBuilderLike): TarballContents {
 	const listing = spawnProcessSync("tar", ["-tzf", tarballPath], { encoding: "utf8" })
 
 	if (listing.status !== 0) {
@@ -213,9 +214,9 @@ export interface TarballAudit {
  * It is deliberately a throw rather than a boolean: there is no partial pass,
  * and a published version cannot be taken back.
  */
-export function verifyTarball(tarballPath: string): TarballAudit {
+export function verifyTarball(tarballPath: PathBuilderLike): TarballAudit {
 	const { manifest, shipped } = readTarball(tarballPath)
-	const name = manifest.name ?? tarballPath
+	const name = manifest.name ?? tarballPath.toString()
 	const missingFiles = collectMissingFileEntries(manifest.files, shipped)
 	const missingExports = collectMissingExportTargets(manifest.exports, shipped)
 	const missingImports = collectMissingImportTargets(manifest.imports, shipped)

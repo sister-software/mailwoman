@@ -87,7 +87,7 @@ beforeAll(async () => {
 			8: "BW",
 			14: "208411",
 		}),
-		dir.resolve("BW.txt")
+		dir.path("BW.txt")
 	)
 
 	// AT carries two places so a second, shorter run cannot cover the whole range fold A wrote.
@@ -96,7 +96,7 @@ beforeAll(async () => {
 			row({ 0: "2761369", 1: "Wien", 2: "Wien", 3: "Vienna", 4: "48.2", 5: "16.37", 6: "P", 7: "PPLC", 8: "AT" }),
 			row({ 0: "2761370", 1: "Aichegg", 2: "Aichegg", 4: "47.05", 5: "15.2", 6: "P", 7: "PPL", 8: "AT" }),
 		].join("\n"),
-		dir.resolve("AT.txt")
+		dir.path("AT.txt")
 	)
 })
 

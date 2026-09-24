@@ -47,7 +47,7 @@ async function typecheck(workspace: string, repoRoot: string): Promise<Diagnosti
 
 		return []
 	} catch (error) {
-		const output = String((error as { stdout?: string }).stdout ?? "")
+		const output = (error as { stdout?: string }).stdout ?? ""
 
 		return [...TextSpliterator.from(output)]
 			.filter((line) => line.includes("error TS"))

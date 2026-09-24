@@ -10,7 +10,6 @@ import type { AddressInfo } from "node:net"
 import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { fetchStateHISchools } from "@mailwoman/corpus/tools"
-import { join } from "path-ts"
 import { afterAll, beforeAll, expect, test } from "vitest"
 import writeXlsxFile, { type SheetData } from "write-excel-file/node"
 
@@ -59,12 +58,12 @@ test("fetchStateHISchools retains and validates the source workbook, then skips 
 		failedCodes: [],
 	})
 
-	const sourceDir = join(scratch.path, "state-hi-schools")
-	const workbookPath = join(sourceDir, "HI_Public_Schools_List.xlsx")
-	const manifest = await readLocalJSONFile<Record<string, unknown>>(join(sourceDir, "MANIFEST.json"))
+	const sourceDir = scratch.path("state-hi-schools")
+	const workbookPath = sourceDir("HI_Public_Schools_List.xlsx")
+	const manifest = await readLocalJSONFile<Record<string, unknown>>(sourceDir("MANIFEST.json"))
 
 	expect(await pathExists(workbookPath)).toBe(true)
-	expect(await pathExists(join(sourceDir, "HI_Public_Schools_List.csv"))).toBe(false)
+	expect(await pathExists(sourceDir("HI_Public_Schools_List.csv"))).toBe(false)
 	expect(manifest.filename).toBe("HI_Public_Schools_List.xlsx")
 	expect(manifest.source_url).toBe(sourceURL)
 	expect(reports.some((line) => line.includes("HIDOE + PCS validated"))).toBe(true)

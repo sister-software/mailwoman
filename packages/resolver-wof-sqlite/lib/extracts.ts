@@ -1,5 +1,5 @@
 import { stringifyJSON } from "@mailwoman/core/json"
-import { basename } from "path-ts"
+import { basename, PathBuilder, type PathBuilderLike } from "path-ts"
 
 /**
  * @copyright Sister Software
@@ -44,8 +44,8 @@ import { basename } from "path-ts"
  * Callers can override the derived name explicitly via `ExtractConfig.schemaName`
  * when the filename doesn't follow WOF convention.
  */
-export function deriveSchemaName(path: string): string {
-	const stem = basename(path)
+export function deriveSchemaName(path: PathBuilderLike): string {
+	const stem = basename(path.toString())
 		.replace(/^whosonfirst-data-/u, "")
 		.replace(/-latest\.db$/u, "")
 		.replace(/\.db$/u, "")
@@ -68,7 +68,7 @@ export function deriveSchemaName(path: string): string {
  * doesn't follow WOF convention) or attach an extra hint about which placetypes route here.
  */
 export interface ExtractConfig {
-	path: string
+	path: PathBuilderLike
 	/**
 	 * Override the auto-derived schema name.
 	 *
@@ -110,8 +110,19 @@ const SQLITE_IDENT_RE = /^[A-Za-z_][A-Za-z0-9_]*$/u
  * The first extract becomes `main` regardless of its derived schema name — that's the SQLite convention.
  * Subsequent extracts keep their derived (or override) schema name.
  */
-export function resolveExtracts(input: string | ReadonlyArray<string | ExtractConfig>): ResolvedExtract[] {
-	const list = typeof input === "string" ? [input] : input
+/**
+ * Whether a `databasePath` entry is a path rather than an {@link ExtractConfig}.
+ *
+ * A builder is a `String` object, so `typeof` alone reads it as an object.
+ */
+function isPathBuilderLike(value: unknown): value is PathBuilderLike {
+	return typeof value === "string" || value instanceof PathBuilder
+}
+
+export function resolveExtracts(
+	input: PathBuilderLike | ReadonlyArray<PathBuilderLike | ExtractConfig>
+): ResolvedExtract[] {
+	const list = isPathBuilderLike(input) ? [input] : input
 
 	if (!list.length) throw new Error("resolveExtracts: at least one extract is required")
 
@@ -120,7 +131,7 @@ export function resolveExtracts(input: string | ReadonlyArray<string | ExtractCo
 
 	for (let i = 0; i < list.length; i++) {
 		const entry = list[i]!
-		const cfg: ExtractConfig = typeof entry === "string" ? { path: entry } : entry
+		const cfg: ExtractConfig = isPathBuilderLike(entry) ? { path: entry } : entry
 		const derived = cfg.schemaName ?? deriveSchemaName(cfg.path)
 
 		if (!SQLITE_IDENT_RE.test(derived)) {
@@ -146,7 +157,7 @@ export function resolveExtracts(input: string | ReadonlyArray<string | ExtractCo
 		seen.add(schemaName)
 
 		out.push({
-			path: cfg.path,
+			path: cfg.path.toString(),
 			schemaName,
 			placetypes: cfg.placetypes ?? [],
 		})

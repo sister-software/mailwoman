@@ -86,7 +86,8 @@ const BBOX_FIELDS = 4
 const SitusAddressPoints: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { DatabaseClient } = await import("@mailwoman/sqlite/client")
-		const { dataRootPath } = await import("@mailwoman/core/utils")
+		const { dataRootPath } = await import("@mailwoman/core/data-root")
+		const { addressPointDatabasePath } = await import("@mailwoman/resolver-wof-sqlite/paths")
 		const { swapDatabaseIntoPlace } = await import("@mailwoman/sqlite/sealed-db")
 
 		// OA mode: build from OpenAddresses CSV(s) rather than the Overture parquet.
@@ -142,8 +143,8 @@ const SitusAddressPoints: CommandComponent<typeof spec> = ({ options }) => {
 		const finalOut = resolvePath(
 			options.out ??
 				(COUNTRY
-					? nationalAddressPointsPath(String(dataRootPath()), COUNTRY)
-					: dataRootPath("db", "address-points", `address-points-us-${STATE.toLowerCase()}.db`))
+					? nationalAddressPointsPath(dataRootPath(), COUNTRY)
+					: addressPointDatabasePath(`address-points-us-${STATE.toLowerCase()}.db`))
 		)
 
 		// Optional maintainer deps: the shared schema/normalizer (resolver-wof-sqlite, an optional peer)
@@ -339,7 +340,7 @@ const SitusAddressPoints: CommandComponent<typeof spec> = ({ options }) => {
 					lat,
 					lon,
 					OA_MODE ? "openaddresses" : `overture:${r.dataset}`,
-					OA_MODE ? "openaddresses-latest" : String(options.release),
+					OA_MODE ? "openaddresses-latest" : options.release,
 					// The US and OA sources state no commune key.
 					// A national build carries the third admin level (the Taiwanese 村里) here,
 					// the finest place the register names below the scope pair.
@@ -407,7 +408,7 @@ const SitusAddressPoints: CommandComponent<typeof spec> = ({ options }) => {
 		// database is: the swap is the moment the artifact becomes live.
 		const { buildSHA, stampLayerManifest } = await import("#gazetteer-pipeline/stamp-manifest")
 		const { LayerFreshnessPolicy, LayerTier } = await import("@mailwoman/core/layers")
-		const { repoRootPath } = await import("@mailwoman/core/utils")
+		const { repoRootPath } = await import("@mailwoman/core/paths")
 
 		await stampLayerManifest(tmpOut, {
 			name: COUNTRY ? `address-points-${COUNTRY.toLowerCase()}` : `address-points-us-${STATE.toLowerCase()}`,
@@ -424,7 +425,7 @@ const SitusAddressPoints: CommandComponent<typeof spec> = ({ options }) => {
 			source: "overture-addresses",
 			sourceVintage: options.release,
 			buildCmd: "mailwoman situs address-points",
-			buildSHA: buildSHA(String(repoRootPath())),
+			buildSHA: buildSHA(repoRootPath()),
 			freshnessPolicy: LayerFreshnessPolicy.Sealed,
 			spineKeys: { street: { column: "street_norm" } },
 			createdAt: new Date().toISOString(),

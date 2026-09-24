@@ -94,7 +94,7 @@ async function removeEmptiedDirectories(repoRoot: string, directories: readonly 
 			if (await Globerator.from("*", { cwd: path, absolute: false, onlyFiles: false }).some(() => true)) break
 
 			await removePath(path)
-			current = String(dirname(current))
+			current = dirname(current)
 		}
 	}
 }
@@ -156,13 +156,13 @@ export async function applyModuleMoves(
 	}
 
 	for (const move of plan.moves) {
-		await makeDirectories(resolvePath(context.repoRoot, String(dirname(move.to))))
+		await makeDirectories(resolvePath(context.repoRoot, dirname(move.to)))
 		await runFile("git", ["mv", move.from, move.to], { cwd: context.repoRoot, encoding: "utf8" })
 	}
 
 	await removeEmptiedDirectories(
 		context.repoRoot,
-		plan.moves.map((move) => String(dirname(move.from)))
+		plan.moves.map((move) => dirname(move.from))
 	)
 
 	await removeOrphanedOutput(context.repoRoot, plan.moves)

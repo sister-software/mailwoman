@@ -4,19 +4,19 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `astrogeology` — the pipeline's bin: `fetch`, `build`, `verify`, `publish`, each a command module in the shape
- *   mailwoman's filesystem router runs (`spec` + a default Ink component). The first positional selects the module.
- *   the rest of the arguments are parsed against its spec, with `--help` answered before anything runs.
+ *   `astrogeology` runs the `fetch`, `build`, `verify`, and `publish` commands.
+ *   The first positional argument selects a command.
+ *   The rest are parsed using that command's spec.
+ *   `--help` is handled before the command runs.
  */
 
-import { parseArguments, passThroughCLIArguments } from "@mailwoman/core/scripting/arguments"
+import { cliArguments, parseArguments } from "@mailwoman/core/scripting/arguments"
 import { optionPropertyName } from "@mailwoman/core/scripting/utils"
 import { type CommandSpec, renderInkCommand, runNativeCommand } from "mailwoman/cli-kit"
 import { type ComponentType, createElement } from "react"
 
 /**
- * What a command module exports, in the shape mailwoman's filesystem router reads:
- * the interface and the component.
+ * The spec and component exported by a command module.
  */
 interface CommandModule {
 	spec: CommandSpec
@@ -24,13 +24,9 @@ interface CommandModule {
 }
 
 /**
- * The compiled command modules.
+ * Commands are TSX, so Node cannot load them from source.
  *
- * The commands are TSX.
- * It Node cannot load from source.
- *
- * Therefore, the bin reads `out/commands/` even when it runs from `lib/`; `lib/`
- * and `out/` are siblings, so one spelling serves both trees.
+ * Load compiled files from `out/commands/`; this path works from both `lib/` and `out/`.
  */
 const COMMANDS_ROOT = new URL("../out/commands/", import.meta.url)
 
@@ -67,8 +63,8 @@ async function main(): Promise<number> {
 		return command === undefined ? 0 : 2
 	}
 
-	const raw = passThroughCLIArguments().map(String)
-	const args = raw.slice(raw.indexOf(command) + 1)
+	const raw = cliArguments()
+	const args = raw.slice(raw.findIndex((arg) => arg === command) + 1)
 	const module = await loadCommand(command)
 
 	return runNativeCommand(module.spec, args, (parsed) => {

@@ -25,10 +25,11 @@
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { NL_PC6_ID_BASE } from "@mailwoman/core/resolver/synthetic-id-ranges"
+import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed-db"
-import type { PathBuilderLike } from "path-ts"
+import { PathBuilder, type PathBuilderLike } from "path-ts"
 import { CSVSpliterator } from "spliterator"
 
 export interface BuildNLPC6Options {
@@ -54,12 +55,12 @@ export interface BuildNLPC6Options {
 export async function buildNLPC6Database(
 	opts: BuildNLPC6Options = {}
 ): Promise<{ out: string; inserted: number; skipped: number }> {
-	// resolver-wof-sqlite is an optional peer — lazy import (the gazetteer-pipeline convention).
+	// Imported here so loading this module does not evaluate resolver-wof-sqlite (the gazetteer-pipeline convention).
 	const { buildPlaceSearchFTS } = await import("@mailwoman/resolver-wof-sqlite")
 	const { normalizePostcodeName } = await import("@mailwoman/resolver-wof-sqlite/geonames")
 	const { createUnifiedIndexes, createUnifiedSchema } = await import("@mailwoman/resolver-wof-sqlite/unified-schema")
-	const csvPath = (opts.csvPath ?? dataRootPath("cbs", "pc6-centroids.csv")).toString()
-	const outPath = (opts.out ?? dataRootPath("db", "wof", "postalcode-nl-pc6.db")).toString()
+	const csvPath = PathBuilder.from(opts.csvPath ?? dataRootPath("cbs", "pc6-centroids.csv"))
+	const outPath = (opts.out ?? wofDatabasePath("postalcode-nl-pc6.db")).toString()
 	const tmpPath = `${outPath}.tmp`
 
 	await removePathIfPresent(tmpPath)

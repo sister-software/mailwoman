@@ -30,7 +30,7 @@ import { tryStat, pathExists } from "@mailwoman/core/fs/readers"
 import { makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import type { SQLInputValue } from "@mailwoman/sqlite/client"
 import type { Database } from "@mailwoman/sqlite/database-schema"
-import { basename, dirname, extname, join } from "path-ts"
+import { basename, dirname, extname, PathBuilder } from "path-ts"
 import { CSVSpliterator } from "spliterator"
 
 //#region Column name normalization
@@ -367,7 +367,7 @@ export async function ingestCSV(options: IngestCSVOptions): Promise<void> {
 	await runIngest({
 		inputPath: options.input,
 		tableName: options.table ?? csvName.replaceAll(/[^a-zA-Z0-9_]/g, "_"),
-		outputPath: options.output ?? join(dirname(options.input), csvName + ".db"),
+		outputPath: options.output ?? PathBuilder.from(options.input).dirname()(`${csvName}.db`).toString(),
 		sampleSize: options.sample ?? 100,
 		separator: options.separator ?? ",",
 		skipLines: options.skip ?? 0,

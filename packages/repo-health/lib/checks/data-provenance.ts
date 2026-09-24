@@ -95,37 +95,37 @@ export const dataProvenanceCheck: RepoCheck = {
 			const recorded = await readLocalTextFile(resolvePath(repoRoot, provenanceFile))
 
 			const artifacts = trackedFiles.filter((file) => {
-				if (dirname(file) !== String(directory)) return false
+				if (dirname(file) !== directory) return false
 
 				const name = basename(file)
 
-				if (DOCUMENTATION_FILES.has(String(name))) return false
+				if (DOCUMENTATION_FILES.has(name)) return false
 
-				return ARTIFACT_EXTENSIONS.has(String(name).slice(String(name).lastIndexOf(".")))
+				return ARTIFACT_EXTENSIONS.has(name.slice(name.lastIndexOf(".")))
 			})
 
 			for (const artifact of artifacts) {
-				const name = String(basename(artifact))
+				const name = basename(artifact)
 
 				if (recorded.includes(name)) continue
 
 				diagnostics.push({
 					severity: DiagnosticSeverity.Error,
 					message:
-						`\`${name}\` is committed in \`${String(directory)}\` and \`${provenanceFile}\` does not name it. ` +
+						`\`${name}\` is committed in \`${directory}\` and \`${provenanceFile}\` does not name it. ` +
 						"Record what writes it and how a reader checks it, so the next person to open the file knows " +
 						"whether editing it by hand is a repair or a corruption.",
 					file: provenanceFile,
 				})
 			}
 
-			for (const child of immediateSubdirectories(trackedFiles, String(directory))) {
+			for (const child of immediateSubdirectories(trackedFiles, directory)) {
 				if (recorded.includes(child)) continue
 
 				diagnostics.push({
 					severity: DiagnosticSeverity.Error,
 					message:
-						`\`${child}/\` is committed in \`${String(directory)}\` and \`${provenanceFile}\` does not name it. ` +
+						`\`${child}/\` is committed in \`${directory}\` and \`${provenanceFile}\` does not name it. ` +
 						"Say what the directory holds and what wrote it. Naming it is enough — this check does not ask " +
 						"for the files inside, and a subdirectory with its own `PROVENANCE.md` is checked separately.",
 					file: provenanceFile,

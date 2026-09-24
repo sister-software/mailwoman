@@ -8,7 +8,7 @@ import { buildAddressTree } from "@mailwoman/core/decoder/build-tree"
 import { createCalibrator, type CalibrationTable } from "@mailwoman/core/decoder/calibration"
 import type { DecoderToken } from "@mailwoman/core/decoder/types"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
-import { repoRootPath } from "@mailwoman/core/utils"
+import { repoRootPath } from "@mailwoman/core/paths"
 import { describe, expect, test } from "vitest"
 
 import { findByTag, tok } from "./fixtures.ts"

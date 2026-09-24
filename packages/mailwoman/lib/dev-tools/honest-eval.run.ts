@@ -30,12 +30,13 @@
  *   the report [--out docs/articles/evals/experiments/2026-06-08-honest-eval.md] [--tmp /tmp/honest]
  */
 
-import { dataRootPath, tempRootPath } from "@mailwoman/core/data-root"
+import { tempRootPath } from "@mailwoman/core/data-root"
 import { readLocalTextFile, pathExists } from "@mailwoman/core/fs/readers"
 import { writeLocalFile, appendLocalTextFile, writeLocalTextFile, makeDirectories } from "@mailwoman/core/fs/writers"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { runIfScript } from "@mailwoman/core/scripting"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
+import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import { $ } from "zx"
 
 import { oaResolverEval } from "#eval-harness/oa/resolver/eval"
@@ -52,7 +53,7 @@ async function main() {
 	let MODEL = "packages/neural-weights-en-us/model.onnx"
 	let CARD = "packages/neural-weights-en-us/model-card.json"
 	let TOK = "packages/neural-weights-en-us/tokenizer.model"
-	const WOF_DEFAULT = `${dataRootPath("db", "wof", "admin-global-priority.db")},${dataRootPath("db", "wof", "postcode-locality-intl.db")}`
+	const WOF_DEFAULT = `${wofDatabasePath("admin-global-priority.db")},${wofDatabasePath("postcode-locality-intl.db")}`
 	let WOF = WOF_DEFAULT
 	let LABEL = "run"
 	let OUT = ""

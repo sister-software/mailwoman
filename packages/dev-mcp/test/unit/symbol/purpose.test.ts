@@ -9,12 +9,12 @@
  *   or new file.
  */
 
-import { repoRootPath } from "@mailwoman/core/paths"
+import { repoRootPathBuilder } from "@mailwoman/core/paths"
 import { firstSentence, loadPurposeIndex, searchPurpose } from "@mailwoman/dev-mcp/symbol/purpose"
 import type { PurposeEntry } from "@mailwoman/dev-mcp/symbol/purpose"
 import { beforeAll, describe, expect, it } from "vitest"
 
-const REPO_ROOT = String(repoRootPath())
+const REPO_ROOT = repoRootPathBuilder()
 
 let entries: PurposeEntry[]
 

@@ -17,7 +17,7 @@ import { createNominatimApp, type NominatimStatus, nominatimStatus } from "@mail
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { readFreshness } from "mailwoman/freshness"
 import { stampLayerManifest } from "mailwoman/gazetteer-pipeline/stamp-manifest"
-import { join, type PathBuilderLike } from "path-ts"
+import type { PathBuilder } from "path-ts"
 import { afterAll, expect, test } from "vitest"
 
 const fixtures = new AsyncDisposableStack()
@@ -31,7 +31,7 @@ interface FreshnessFixtureDatabase {
 	rows: { id: number }
 }
 
-async function scratch(): Promise<PathBuilderLike> {
+async function scratch(): Promise<PathBuilder> {
 	const root = fixtures.use(await temporaryDirectory("mw-nominatim-status-")).path
 
 	return root
@@ -40,7 +40,7 @@ async function scratch(): Promise<PathBuilderLike> {
 /**
  * A stamped artifact, written through the same `stampLayerManifest` every builder calls.
  */
-async function stamped(path: string, createdAt: string): Promise<string> {
+async function stamped(path: PathBuilder, createdAt: string): Promise<PathBuilder> {
 	await stampLayerManifest(path, {
 		name: "candidate",
 		version: "2026-08-17",
@@ -62,7 +62,7 @@ async function stamped(path: string, createdAt: string): Promise<string> {
 /**
  * A built database with no manifest — every gazetteer built before the layer interface.
  */
-function bare(path: string): string {
+function bare(path: PathBuilder): PathBuilder {
 	using db = new DatabaseClient<FreshnessFixtureDatabase>(path)
 
 	db.exec("CREATE TABLE rows (id INTEGER PRIMARY KEY)")
@@ -70,7 +70,7 @@ function bare(path: string): string {
 	return path
 }
 
-async function statusBody(paths: Array<{ name: string; path: string }>): Promise<NominatimStatus> {
+async function statusBody(paths: Array<{ name: string; path: PathBuilder }>): Promise<NominatimStatus> {
 	const status = nominatimStatus(await readFreshness(paths))
 	const app = createNominatimApp({ status: async () => status })
 	const res = await app.request("/status")
@@ -81,7 +81,7 @@ async function statusBody(paths: Array<{ name: string; path: string }>): Promise
 }
 
 test("/status carries data_updated + the mailwoman block when the artifact carries a manifest", async () => {
-	const path = await stamped(join(await scratch(), "candidate.db"), "2026-08-17T19:21:17.000Z")
+	const path = await stamped((await scratch())("candidate.db"), "2026-08-17T19:21:17.000Z")
 	const body = await statusBody([{ name: "gazetteer", path }])
 
 	expect(body.status).toBe(0)
@@ -100,8 +100,8 @@ test("/status omits data_updated when nothing is stamped, and still names the ar
 	const root = scratch()
 
 	const body = await statusBody([
-		{ name: "gazetteer", path: bare(join(await root, "candidate.db")) },
-		{ name: "reverse-admin", path: join(await root, "never-built.db") },
+		{ name: "gazetteer", path: bare((await root)("candidate.db")) },
+		{ name: "reverse-admin", path: (await root)("never-built.db") },
 	])
 
 	// Absent, never fabricated: a client reading this one cannot tell a guessed epoch from a measured one.
@@ -116,13 +116,13 @@ test("/status omits data_updated when nothing is stamped, and still names the ar
 
 test("/status dates itself from the newest artifact and still reports the unstamped one", async () => {
 	const root = scratch()
-	const older = await stamped(join(await root, "admin.db"), "2026-08-10T00:00:00.000Z")
-	const newer = await stamped(join(await root, "candidate.db"), "2026-08-17T19:21:17.000Z")
+	const older = await stamped((await root)("admin.db"), "2026-08-10T00:00:00.000Z")
+	const newer = await stamped((await root)("candidate.db"), "2026-08-17T19:21:17.000Z")
 
 	const body = await statusBody([
 		{ name: "gazetteer", path: newer },
 		{ name: "reverse-admin", path: older },
-		{ name: "poi", path: bare(join(await root, "poi.db")) },
+		{ name: "poi", path: bare((await root)("poi.db")) },
 	])
 
 	expect(body.data_updated).toBe("2026-08-17T19:21:17.000Z")

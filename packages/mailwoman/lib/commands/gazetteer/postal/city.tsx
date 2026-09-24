@@ -42,12 +42,12 @@ export const spec = {
 const GazetteerPostalCity: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { DatabaseClient } = await import("@mailwoman/sqlite/client")
-		const { dataRootPath } = await import("@mailwoman/core/utils")
+		const { wofDatabasePath } = await import("@mailwoman/resolver-wof-sqlite/paths")
 
 		const candidateDB = options.candidateDB
 
-		const aliasDB = options.aliasDB ?? dataRootPath("db", "wof", "postal-city-alias-us.db")
-		const postcodeLocalityDB = options.postcodeLocalityDB ?? dataRootPath("db", "wof", "postcode-locality-us.db")
+		const aliasDB = options.aliasDB ?? wofDatabasePath("postal-city-alias-us.db")
+		const postcodeLocalityDB = options.postcodeLocalityDB ?? wofDatabasePath("postcode-locality-us.db")
 
 		const { createPostalCityCandidateTable, POSTAL_CITY_CANDIDATE_COLUMNS, POSTAL_CITY_CANDIDATE_TABLE } =
 			await import("@mailwoman/resolver-wof-sqlite")

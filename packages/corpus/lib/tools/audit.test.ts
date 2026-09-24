@@ -15,7 +15,6 @@ import { audit } from "@mailwoman/corpus/tools/audit"
 // Lightweight integration smoke against the actual corpus on this host.
 // Skipped when the data isn't present (CI / fresh clones); only the
 // file-format-parsing tests run unconditionally.
-import { join } from "path-ts"
 import { describe, expect, it } from "vitest"
 
 const CORPUS_PATH = dataRootPath("corpus", "versioned", "v0.3.0", "corpus-v0.3.0")
@@ -28,7 +27,7 @@ describe.skipIf(!hasCorpus)("audit — integration", () => {
 		// A successful run is the interface.
 		await using tmpDirectory = await temporaryDirectory("audit-test-")
 		const tmp = tmpDirectory.path
-		const configPath = join(tmp, "v0_4_0.yaml")
+		const configPath = tmp("v0_4_0.yaml")
 
 		await writeLocalTextFile(
 			[
@@ -61,8 +60,8 @@ describe("audit — config parser", () => {
 		const tmp = tmpDirectory.path
 		// Empty train/ subdir so the printer enters the per-source report block + emits the "weighted
 		// in config but no parquet files" warning where we can inspect what the parser saw.
-		await makeDirectoryExclusive(join(tmp, "train"))
-		const configPath = join(tmp, "test.yaml")
+		await makeDirectoryExclusive(tmp("train"))
+		const configPath = tmp("test.yaml")
 
 		await writeLocalTextFile(
 			[

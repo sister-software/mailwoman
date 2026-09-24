@@ -77,7 +77,7 @@ export const spec = {
 
 const GazetteerBuildCoastal: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { dataRootPath } = await import("@mailwoman/core/utils")
+		const { coastalDatabasePath } = await import("@mailwoman/coastal/paths")
 
 		const {
 			assertAttributionUnchanged,
@@ -145,7 +145,7 @@ const GazetteerBuildCoastal: CommandComponent<typeof spec> = ({ options }) => {
 			geodatabasePath = await downloadCoastalGeodatabase({
 				url,
 				revisionDate: sourceVintage,
-				cacheRoot: dataRootPath("db", "coastal", "cache").toString(),
+				cacheRoot: coastalDatabasePath("cache"),
 				onProgress: (message) => console.error(`  [download] ${message}`),
 			})
 		}
@@ -169,8 +169,8 @@ const GazetteerBuildCoastal: CommandComponent<typeof spec> = ({ options }) => {
 
 		const coverageResolution = Number(options.coverageResolution)
 		const indexResolution = Number(options.indexResolution)
-		const out = options.out ?? dataRootPath("db", "coastal", "coastal-england.db").toString()
-		const buildSHA = resolveBuildSHA(repoRootPath().toString())
+		const out = options.out ?? coastalDatabasePath("coastal-england.db").toString()
+		const buildSHA = resolveBuildSHA(repoRootPath())
 
 		// The declared count comes from the source's own per-layer totals, so a short
 		// read throws rather than building a shorter coastline.

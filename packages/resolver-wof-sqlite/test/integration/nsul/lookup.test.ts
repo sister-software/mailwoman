@@ -30,7 +30,7 @@ import {
 } from "@mailwoman/resolver-wof-sqlite/nsul"
 import { uprnH3Cell } from "@mailwoman/resolver-wof-sqlite/uprn"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import { join } from "path-ts"
+import type { PathBuilder } from "path-ts"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 const fixtures = new AsyncDisposableStack()
@@ -47,13 +47,13 @@ const ROWS = [
 	{ uprn: 100_062_353_961, pcds: "PO21 1HR", lat: 50.7876, lon: -0.6717 },
 ]
 
-let databasePath: string
+let databasePath: PathBuilder
 let lookup: NSULLookup
 
 beforeAll(async () => {
 	const dir = fixtures.use(await temporaryDirectory("nsul-lookup-")).path
 
-	databasePath = join(dir, "nsul.db")
+	databasePath = dir("nsul.db")
 
 	using kdb = new DatabaseClient<NSULDatabase>(databasePath)
 

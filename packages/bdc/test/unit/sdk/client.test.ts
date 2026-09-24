@@ -34,7 +34,7 @@ import { crc32 } from "@mailwoman/core/fs/compression"
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectoryExclusive } from "@mailwoman/core/fs/writers"
-import { join } from "path-ts"
+import type { PathBuilder } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
@@ -103,12 +103,12 @@ function bdcTransport(outcomes: StubOutcome[], clock?: { now(): number }): StubT
 	return stubTransport(outcomes, { clock, defaultBody: BDC_EMPTY_ENVELOPE })
 }
 
-let cacheDir: string
+let cacheDir: PathBuilder
 let dataRoot: TemporaryDirectory
 
 beforeEach(async () => {
 	dataRoot = await temporaryDirectory("bdc-client-test-")
-	cacheDir = dataRoot.resolve("http-cache")
+	cacheDir = dataRoot.path("http-cache")
 
 	// Created up front so "the cache is empty" is a readable directory rather than an enoent.
 	// The distinction the never-cached assertions below depend on.
@@ -598,11 +598,11 @@ describe("downloadBDCFile: end to end over the migrated client", () => {
 		const client = clientFor(transport)
 
 		const file = { fileID: 42, fileName: "bdc_06_Cable_D24_31dec2024" } as BDCFile
-		const destination = dataRoot.resolve("availability")
+		const destination = dataRoot.path("availability")
 
 		const written = await downloadBDCFile(client, file, destination)
 
-		expect(written).toBe(join(destination, "bdc_06_Cable_D24_31dec2024.csv"))
+		expect(written).toBe(destination("bdc_06_Cable_D24_31dec2024.csv").toString())
 		expect(await readLocalTextFile(written)).toBe(csv)
 		expect(transport.calls).toEqual([`${BDC_API_BASE_URL}/map/downloads/downloadFile/availability/42`])
 	})
@@ -612,7 +612,7 @@ describe("downloadBDCFile: end to end over the migrated client", () => {
 		const client = clientFor(transport)
 
 		const file = { fileID: 7, fileName: "already-here" } as BDCFile
-		const destination = dataRoot.resolve("availability")
+		const destination = dataRoot.path("availability")
 
 		await downloadBDCFile(client, file, destination)
 		expect(transport.calls).toHaveLength(1)

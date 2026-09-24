@@ -9,7 +9,7 @@
 import { openWriteStream, pipeline, Readable } from "@mailwoman/core/fs/streams"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
 import { sleep } from "@mailwoman/core/utils/sleep"
-import type { PathBuilderLike } from "path-ts"
+import type { PathBuilder, PathBuilderLike } from "path-ts"
 
 /**
  * Rate limited — retryable, the server is asking us to back off.
@@ -42,7 +42,7 @@ export interface BaseFetchOptions {
 	 *
 	 * Each source writes its own subdirectory.
 	 */
-	outRoot: PathBuilderLike
+	outRoot: PathBuilder
 	/**
 	 * Pause between transfer retries, in milliseconds.
 	 *
@@ -111,7 +111,7 @@ export function isTransientStatus(status: number): boolean {
 
 export interface DownloadOptions {
 	url: string
-	dest: string
+	dest: PathBuilderLike
 	/**
 	 * Per-attempt timeout.
 	 *
@@ -213,7 +213,7 @@ export interface StreamDownloadOptions {
  * disk (the buffered helper reads via `arrayBuffer()`) and returns the http status instead
  * of throwing, which the per-file result collectors and two-URL fallback ladders consume.
  */
-export async function streamDownload(url: string, dest: string, opts: StreamDownloadOptions): Promise<number> {
+export async function streamDownload(url: string, dest: PathBuilderLike, opts: StreamDownloadOptions): Promise<number> {
 	for (let attempt = 0; attempt <= opts.retries; attempt++) {
 		try {
 			const res = await fetch(url, {

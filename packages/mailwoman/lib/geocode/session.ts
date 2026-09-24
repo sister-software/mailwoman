@@ -44,7 +44,7 @@ import { createKindClassifier } from "@mailwoman/kind-classifier"
 import { NeuralAddressClassifier, type ScriptRoutedClassifier, type NeuralParseTrace } from "@mailwoman/neural"
 import type { QueryShape } from "@mailwoman/query-shape"
 import { createWOFResolver } from "@mailwoman/resolver"
-import { resolvePath, type PathBuilderLike } from "path-ts"
+import { resolvePath, resolvePathBuilder, type PathBuilderLike } from "path-ts"
 
 import { resolverDefaultCountry } from "#country-scope"
 import { geocodeAddress, geocodeParseInputs, parseForGeocode, type GeocodeDeps } from "#geocode/core"
@@ -395,7 +395,7 @@ export async function loadAuthorityDesignationRoute(
 	try {
 		const { createAuthorityDesignationRoute } = await import("#observations/flood-route")
 
-		return createAuthorityDesignationRoute({ databasePath: String(floodDBPath) })
+		return createAuthorityDesignationRoute({ databasePath: floodDBPath })
 	} catch {
 		return undefined
 	}
@@ -425,7 +425,7 @@ export async function loadSoilCapabilityRoute(
 	try {
 		const { createSoilCapabilityRoute } = await import("#observations/soil-route")
 
-		return createSoilCapabilityRoute({ databasePath: String(soilDBPath) })
+		return createSoilCapabilityRoute({ databasePath: soilDBPath })
 	} catch {
 		return undefined
 	}
@@ -461,7 +461,7 @@ export async function loadCoastalErosionRoute(
 	try {
 		const { createCoastalErosionRoute } = await import("#observations/coastal-route")
 
-		return createCoastalErosionRoute({ databasePath: String(coastalDBPath) })
+		return createCoastalErosionRoute({ databasePath: coastalDBPath })
 	} catch {
 		return undefined
 	}
@@ -499,7 +499,7 @@ export async function loadZoningDesignationRoute(
 	try {
 		const { createZoningDesignationRoute } = await import("#observations/zoning-route")
 
-		return createZoningDesignationRoute({ databasePath: String(zoningDBPath) })
+		return createZoningDesignationRoute({ databasePath: zoningDBPath })
 	} catch {
 		return undefined
 	}
@@ -696,7 +696,7 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 
 	try {
 		const { BANRegionDatabaseProvider } = await import("@mailwoman/ban/sdk")
-		nationalDatabases = (await BANRegionDatabaseProvider.create(resolvePath(options.dataRoot))).for
+		nationalDatabases = (await BANRegionDatabaseProvider.create(resolvePathBuilder(options.dataRoot))).for
 	} catch {
 		nationalDatabases = undefined
 	}
@@ -722,7 +722,7 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 
 	try {
 		const { OSMRegionDatabaseProvider } = await import("@mailwoman/osm/sdk")
-		osmProvider = await OSMRegionDatabaseProvider.create(resolvePath(options.dataRoot))
+		osmProvider = await OSMRegionDatabaseProvider.create(resolvePathBuilder(options.dataRoot))
 	} catch {
 		osmProvider = undefined
 	}

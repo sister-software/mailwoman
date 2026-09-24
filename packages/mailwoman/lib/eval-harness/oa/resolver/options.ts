@@ -6,6 +6,7 @@
  */
 
 import type { WeakResolutionReading } from "@mailwoman/core/resolver"
+import type { PathBuilderLike } from "path-ts"
 
 /**
  * Options for {@linkcode oaResolverEval}.
@@ -108,7 +109,7 @@ export interface OAResolverEvalOptions {
 	/**
 	 * Pin the anchor lookup source.
 	 */
-	modelAnchorLookup?: string
+	modelAnchorLookup?: PathBuilderLike
 	/**
 	 * Candidate model-card.
 	 */
@@ -230,7 +231,7 @@ export interface OAResolverEvalOptions {
 	/**
 	 * Candidate tokenizer.
 	 */
-	tokenizer?: string
+	tokenizer?: PathBuilderLike
 	/**
 	 * WOF database list (comma-separated).
 	 *

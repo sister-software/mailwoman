@@ -10,7 +10,7 @@ import { pathExists } from "@mailwoman/core/fs/readers"
 import { isStrictlyFiner } from "@mailwoman/core/resources/whosonfirst"
 import { haversineKm } from "@mailwoman/spatial"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
-import { resolvePath } from "path-ts"
+import { type PathBuilderLike, resolvePath } from "path-ts"
 import { TSVSpliterator } from "spliterator"
 
 import type { loadImportanceIndex } from "#candidate/importance"
@@ -81,7 +81,7 @@ export async function resurrectCurrencyHoles(ctx: {
 	 * Required unless `dryRun` — a dry run judges every row and stages nothing.
 	 */
 	tx?: DatabaseClient<CandidateDatabase>
-	geonamesDir: string
+	geonamesDir: PathBuilderLike
 	countries: readonly string[]
 	attrs: Map<number, PlaceAttrs>
 	ccID: (code: string | null) => number

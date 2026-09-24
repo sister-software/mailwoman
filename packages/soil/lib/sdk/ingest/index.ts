@@ -31,7 +31,7 @@ import { declaredFeatureCount } from "@mailwoman/core/layers"
 import { assertRingsInsideExtent, requireArealPolygons, type MultiPolygonRings } from "@mailwoman/spatial"
 import { readOGRLayerIdentity } from "@mailwoman/spatial/tools/ogr"
 import { ogr2ogrGeoJSONSeq } from "@mailwoman/spatial/tools/ogr-stream"
-import { basename, join } from "path-ts"
+import { basename, PathBuilder, type PathBuilderLike } from "path-ts"
 
 import { SSURGO_SOURCE_EPSG } from "#vocabulary"
 
@@ -56,8 +56,9 @@ const BBOX_MARGIN_DEGREES = 0.1
 /**
  * The shapefile holding a survey area's map-unit polygons — the delineations this layer stores.
  */
-export function mapUnitShapefile(spatialDirectory: string, areaSymbol: string): string {
-	return join(spatialDirectory, `soilmu_a_${areaSymbol.toLowerCase()}.shp`)
+export function mapUnitShapefile(spatialDirectory: PathBuilderLike, areaSymbol: string): string {
+	// A string, because the path travels to the ingest-chunk worker as an argument.
+	return PathBuilder.from(spatialDirectory)(`soilmu_a_${areaSymbol.toLowerCase()}.shp`).toString()
 }
 
 /**
@@ -68,8 +69,8 @@ export function mapUnitShapefile(spatialDirectory: string, areaSymbol: string): 
  * so a footprint derived from the rated set would report them as unmapped
  * when the authority has declared exactly what they are.
  */
-export function surveyAreaShapefile(spatialDirectory: string, areaSymbol: string): string {
-	return join(spatialDirectory, `soilsa_a_${areaSymbol.toLowerCase()}.shp`)
+export function surveyAreaShapefile(spatialDirectory: PathBuilderLike, areaSymbol: string): PathBuilder {
+	return PathBuilder.from(spatialDirectory)(`soilsa_a_${areaSymbol.toLowerCase()}.shp`)
 }
 
 /**

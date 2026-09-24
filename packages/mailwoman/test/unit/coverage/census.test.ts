@@ -28,7 +28,7 @@ import {
 	sameCorpusVersion,
 } from "mailwoman/coverage"
 import { utimes } from "node:fs/promises"
-import { join } from "path-ts"
+import type { PathBuilder } from "path-ts"
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest"
 import { stringifyJSON } from "@mailwoman/core/json";
 
@@ -36,10 +36,10 @@ const fixtures = new AsyncDisposableStack()
 
 afterAll(() => fixtures.disposeAsync())
 
-let root: string
+let root: PathBuilder
 
 beforeAll(async () => {
-	root = fixtures.use(await temporaryDirectory("mw-coverage-")).path.toString()
+	root = fixtures.use(await temporaryDirectory("mw-coverage-")).path
 })
 
 describe("normalizeArrowListColumn", () => {
@@ -64,7 +64,7 @@ describe("readAdmittedCountries", () => {
 		// YAML 1.1 resolves bare `no` to boolean false.
 		// A YAML parser here would report Norway as un-admitted while the config lists it —
 		// reproducing, inside the tool meant to surface that bug, the bug itself.
-		const path = join(root, "norway.yaml")
+		const path = root("norway.yaml")
 
 		await writeLocalTextFile(
 			"data:\n  country_weights:\n    US: 1.0\n    NO: 1.0\n    FR: 1.0\n  source_weights:\n    x: 1.0\n",
@@ -78,7 +78,7 @@ describe("readAdmittedCountries", () => {
 	})
 
 	it("reads a QUOTED code the same as a bare one", async () => {
-		const path = join(root, "quoted.yaml")
+		const path = root("quoted.yaml")
 
 		await writeLocalTextFile(
 			'data:\n  country_weights:\n    "NO": 1.0\n    US: 1.0\n  source_weights:\n    x: 1.0\n',
@@ -90,7 +90,7 @@ describe("readAdmittedCountries", () => {
 
 	it("treats a zero weight as NOT admitted", async () => {
 		// The loader drops on `weight is None or weight <= 0`, so a zero is a drop and must not read as coverage.
-		const path = join(root, "zero.yaml")
+		const path = root("zero.yaml")
 
 		await writeLocalTextFile("data:\n  country_weights:\n    US: 1.0\n    GB: 0\n  source_weights:\n    x: 1.0\n", path)
 
@@ -101,7 +101,7 @@ describe("readAdmittedCountries", () => {
 	})
 
 	it("stops at the end of the block rather than swallowing the next section", async () => {
-		const path = join(root, "bounded.yaml")
+		const path = root("bounded.yaml")
 
 		await writeLocalTextFile(
 			"data:\n  country_weights:\n    US: 1.0\n  source_weights:\n    gb: 4.0\n    fr: 2.0\n",
@@ -118,16 +118,16 @@ describe("readAdmittedCountries", () => {
 		// A config can admit nothing.
 		// Returning it for a file nobody could open gives the caller one value for two
 		// different facts, and the caller reports whichever it assumes.
-		await expect(readAdmittedCountries(join(root, "nope.yaml"))).rejects.toThrow(/no training config at/)
+		await expect(readAdmittedCountries(root("nope.yaml"))).rejects.toThrow(/no training config at/)
 	})
 })
 
 describe("readBoardCoverage", () => {
 	beforeAll(async () => {
-		const cases = join(root, "cases")
+		const cases = root("cases")
 
-		await makeDirectories(join(cases, "gb"))
-		await makeDirectories(join(cases, "generalization"))
+		await makeDirectories(cases("gb"))
+		await makeDirectories(cases("generalization"))
 
 		await writeLocalTextFile(
 			[
@@ -135,55 +135,53 @@ describe("readBoardCoverage", () => {
 				stringifyJSON({ id: "b", country: "GB", status: "improvement_target" }),
 				stringifyJSON({ id: "c", country: "IE", status: "pass" }),
 			],
-			join(cases, "gb", "regression.jsonl")
+			cases("gb", "regression.jsonl")
 		)
 
-		await makeDirectories(join(cases, "gb", "archived"))
-		await writeLocalJSONFile({ id: "archived", country: "GB", status: "pass" }, cases, "gb", "archived", "old.jsonl")
+		await makeDirectories(cases("gb", "archived"))
+		await writeLocalJSONFile({ id: "archived", country: "GB", status: "pass" }, cases("gb", "archived", "old.jsonl"))
 
 		// The loader's /^[a-z]{2}$/ filter excludes this directory.
 		// A glob would include it and overstate the board.
-		await writeLocalJSONFile({ id: "z", country: "ZZ", status: "pass" }, cases, "generalization", "passes.jsonl")
+		await writeLocalJSONFile({ id: "z", country: "ZZ", status: "pass" }, cases("generalization", "passes.jsonl"))
 	})
 
 	it("counts PASSING rows apart from tracked ones", async () => {
 		// A country whose rows are all `improvement_target` has nothing verified, and reporting
 		// its row count as coverage is the mistake this separation exists to prevent.
-		const board = await readBoardCoverage(join(root, "cases"))
+		const board = await readBoardCoverage(root("cases"))
 
 		expect(board.get("GB")).toEqual({ rows: 2, passed: 1 })
 	})
 
 	it("ignores nested country files the board loader does not read", async () => {
-		expect((await readBoardCoverage(join(root, "cases"))).get("GB")).toEqual({ rows: 2, passed: 1 })
+		expect((await readBoardCoverage(root("cases"))).get("GB")).toEqual({ rows: 2, passed: 1 })
 	})
 
 	it("attributes a row by its own country field, not its directory", async () => {
 		// Board rows live in a directory by convention and carry their country explicitly.
 		// The two disagree in practice.
-		expect((await readBoardCoverage(join(root, "cases"))).get("IE")).toEqual({ rows: 1, passed: 1 })
+		expect((await readBoardCoverage(root("cases"))).get("IE")).toEqual({ rows: 1, passed: 1 })
 	})
 
 	it("skips the generalization directory the loader itself skips", async () => {
-		expect((await readBoardCoverage(join(root, "cases"))).has("ZZ")).toBe(false)
+		expect((await readBoardCoverage(root("cases"))).has("ZZ")).toBe(false)
 	})
 
 	it("returns nothing rather than throwing when the cases tree is absent", async () => {
-		expect((await readBoardCoverage(join(root, "no-cases"))).size).toBe(0)
+		expect((await readBoardCoverage(root("no-cases"))).size).toBe(0)
 	})
 })
 
 /**
  * The corpus is a build artifact rather than a fixture, so this leg runs only where one exists.
  */
-const CORPUS = String(
-	dataRootPath(
-		"corpus",
-		"versioned",
-		"v0.26.0-trailing-region-leftcontext",
-		"corpus-v0.26.0-trailing-region-leftcontext",
-		"MANIFEST.json"
-	)
+const CORPUS = dataRootPath(
+	"corpus",
+	"versioned",
+	"v0.26.0-trailing-region-leftcontext",
+	"corpus-v0.26.0-trailing-region-leftcontext",
+	"MANIFEST.json"
 )
 
 describe.skipIf(!(await pathExists(CORPUS)))("buildCorpusCensus against a real database", () => {
@@ -211,7 +209,7 @@ describe.skipIf(!(await pathExists(CORPUS)))("buildCorpusCensus against a real d
 		expect(one).toHaveLength(1)
 
 		await using directory = await temporaryDirectory("mw-census-real-")
-		const scratch = directory.resolve("MANIFEST.json")
+		const scratch = directory.path("MANIFEST.json")
 
 		// Only the one file, under the current key: spreading the manifest would leave
 		// its full list in place and the census would read all of it.
@@ -231,7 +229,7 @@ describe("buildCorpusCensus refuses an empty count", () => {
 		// A manifest naming train files and a total of zero cannot both be true,
 		// so the zero is the instrument failing rather than a measurement.
 		await using directory = await temporaryDirectory("mw-census-empty-")
-		const scratch = directory.resolve("MANIFEST.json")
+		const scratch = directory.path("MANIFEST.json")
 
 		await writeLocalJSONFile(
 			{
@@ -249,14 +247,14 @@ describe("buildCorpusCensus refuses an empty count", () => {
 		// The sibling `newestConfig` broke this way over 225 configs and reported one arm's
 		// numbers under another arm's name (#2349), so this returns neither.
 		await using directory = await temporaryDirectory("mw-census-tie-")
-		const versionedRoot = directory.resolve("corpus", "versioned")
+		const versionedRoot = directory.path("corpus", "versioned")
 		const paths: string[] = []
 
 		for (const version of ["v0.9.9-one", "v0.26.0-two"]) {
-			const manifest = join(String(versionedRoot), version, `corpus-${version}`, "MANIFEST.json")
+			const manifest = versionedRoot(version, `corpus-${version}`, "MANIFEST.json").toString()
 
 			await writeLocalJSONFile({ corpus_version: version, slices: [] }, manifest)
-			paths.push(String(manifest))
+			paths.push(manifest)
 		}
 
 		const shared = new Date("2026-09-20T12:00:00Z")
@@ -265,7 +263,7 @@ describe("buildCorpusCensus refuses an empty count", () => {
 			await utimes(path, shared, shared)
 		}
 
-		vi.stubEnv("MAILWOMAN_DATA_ROOT", String(directory.path))
+		vi.stubEnv("MAILWOMAN_DATA_ROOT", directory.path.toString())
 
 		try {
 			await expect(newestManifest()).rejects.toThrow(/share the newest modification time/)
@@ -278,7 +276,7 @@ describe("buildCorpusCensus refuses an empty count", () => {
 		// The counterpart reading, and it is a real one: a corpus whose manifest names no train
 		// file holds no train rows, so zero is the measurement rather than a failure to read.
 		await using directory = await temporaryDirectory("mw-census-none-")
-		const scratch = directory.resolve("MANIFEST.json")
+		const scratch = directory.path("MANIFEST.json")
 
 		await writeLocalJSONFile({ corpus_version: "v0.0.0-empty", slices: [] }, scratch)
 
@@ -311,9 +309,9 @@ describe("readConfiguredCorpusVersion", () => {
 	 * A config file the caller owns: the reader below opens it by path,
 	 * so the directory has to outlive this helper.
 	 */
-	async function config(body: string): Promise<TemporaryDirectory & { configPath: string }> {
+	async function config(body: string): Promise<TemporaryDirectory & { configPath: PathBuilder }> {
 		const scratch = await temporaryDirectory("mw-cfg-")
-		const configPath = scratch.resolve("c.yaml")
+		const configPath = scratch.path("c.yaml")
 
 		await writeLocalFile(body, configPath)
 
@@ -354,7 +352,7 @@ describe("readAdmittedCountries — the Norway shape", () => {
 		// A quoted "no" must still be counted.
 		// A regex requiring a bare key silently drops Norway and reports it as never admitted.
 		await using scratch = await temporaryDirectory("mw-cfg-no-")
-		const path = scratch.resolve("c.yaml")
+		const path = scratch.path("c.yaml")
 
 		await writeLocalTextFile('data:\n  country_weights:\n    US: 1.0\n    "NO": 1.0\n    FR: 1.0\n', path)
 
@@ -366,7 +364,7 @@ describe("readAdmittedCountries — the Norway shape", () => {
 
 	it("does not admit a country at weight zero — that is a hard drop, not a low weight", async () => {
 		await using scratch = await temporaryDirectory("mw-cfg-zero-")
-		const path = scratch.resolve("c.yaml")
+		const path = scratch.path("c.yaml")
 
 		await writeLocalTextFile("data:\n  country_weights:\n    US: 1.0\n    PE: 0\n", path)
 
@@ -431,7 +429,7 @@ describe("scope.config.json's registered training configs", () => {
 		expect(registered.length).toBeGreaterThan(0)
 
 		for (const entry of registered) {
-			const path = String(repoRootPath(...entry.config.split("/")))
+			const path = repoRootPath(...entry.config.split("/"))
 
 			expect(await pathExists(path)).toBe(true)
 		}

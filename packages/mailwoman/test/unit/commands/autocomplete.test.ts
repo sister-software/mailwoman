@@ -10,10 +10,11 @@
  *   symmetry interface from issue #190.
  */
 
-import { dataRootPath, tempRootPath } from "@mailwoman/core/data-root"
+import { tempRootPath } from "@mailwoman/core/data-root"
 import { writeLocalBuffer, writeLocalFile } from "@mailwoman/core/fs/writers"
 import { autocomplete, FSTMatcher, normalizeTokens, serializeFST } from "@mailwoman/resolver-wof-sqlite/fst"
 import type { PlacetypeID } from "@mailwoman/resolver-wof-sqlite/fst"
+import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import { resolveFSTPath, runAutocomplete } from "mailwoman/autocomplete-core"
 import { beforeAll, describe, expect, it, vi } from "vitest"
 
@@ -251,7 +252,7 @@ describe("resolveFSTPath", () => {
 			// The name `gazetteer-pipeline/fst.ts` actually writes.
 			// This assertion previously restated the resolver's own spelling,
 			// so it agreed with the code and with no artifact.
-			expect(String(resolveFSTPath())).toBe(String(dataRootPath("db", "wof", "fst-per-locale", "fst-en-us.bin")))
+			expect(resolveFSTPath().toString()).toBe(wofDatabasePath("fst-per-locale", "fst-en-us.bin").toString())
 		} finally {
 			vi.unstubAllEnvs()
 		}

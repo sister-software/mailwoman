@@ -15,14 +15,14 @@
  *   Before the fix this test's expectation fails: weights resolve from the env root and the session comes up.
  */
 
-import { dataRootPath, mailwomanDataRoot } from "@mailwoman/core/data-root"
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import { createGeocodeCommandOptions, createGeocodeSession } from "mailwoman/geocode"
-import { join } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 
-const REAL_CANDIDATE_DB = String(dataRootPath("db", "wof", "candidate.db"))
+const REAL_CANDIDATE_DB = wofDatabasePath("candidate.db")
 const haveArtifacts = await pathExists(REAL_CANDIDATE_DB)
 
 const BOGUS_ROOT = await temporaryDirectory("mw-bogus-root-")
@@ -49,7 +49,7 @@ describe.skipIf(!haveArtifacts)("createGeocodeSession — dataRoot reaches weigh
 				// A real candidate.db keeps the gazetteer check (resolved first, by interface)
 				// from masking the weights step.
 				// The whole point is to reach weights resolution with the bogus root still in force.
-				candidateDB: REAL_CANDIDATE_DB,
+				candidateDB: REAL_CANDIDATE_DB.toString(),
 			})
 		).then(
 			(session) => ({ session }),
@@ -66,9 +66,9 @@ describe.skipIf(!haveArtifacts)("createGeocodeSession — dataRoot reaches weigh
 			const fstPath = outcome.session.artifacts.fstPath
 
 			if (fstPath !== undefined) {
-				const envOverlay = join(String(mailwomanDataRoot()), "weights")
+				const envOverlay = dataRootPath("weights")
 
-				expect(fstPath.startsWith(envOverlay)).toBe(false)
+				expect(fstPath.startsWith(envOverlay.toString())).toBe(false)
 			}
 		} finally {
 			outcome.session[Symbol.dispose]()

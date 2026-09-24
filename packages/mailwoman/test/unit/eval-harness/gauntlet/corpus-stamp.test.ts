@@ -19,7 +19,7 @@ import { buildRegressionDB } from "mailwoman/eval-harness/gauntlet/build/regress
 import { loadRegressionCases } from "mailwoman/eval-harness/gauntlet/cases/load"
 import { assertCorpusStampFresh, readCorpusStamp } from "mailwoman/eval-harness/gauntlet/corpus-stamp"
 import { createGauntletTable, type GauntletDatabase } from "mailwoman/eval-harness/gauntlet/schema"
-import { join } from "path-ts"
+import type { PathBuilder } from "path-ts"
 import { afterAll, afterEach, describe, expect, it } from "vitest"
 
 const fixtures = new AsyncDisposableStack()
@@ -49,20 +49,20 @@ function row(id: string, input: string): string {
 /**
  * Write a throwaway corpus tree (one `xx/regression.jsonl`) and return its root.
  */
-async function scratchCorpus(...rows: string[]): Promise<string> {
-	const root = fixtures.use(await temporaryDirectory("gauntlet-stamp-")).path.toString()
+async function scratchCorpus(...rows: string[]): Promise<PathBuilder> {
+	const root = fixtures.use(await temporaryDirectory("gauntlet-stamp-")).path
 
-	await makeDirectories(join(root, "xx"))
-	await writeLocalTextFile(rows, join(root, "xx", "regression.jsonl"))
+	await makeDirectories(root("xx"))
+	await writeLocalTextFile(rows, root("xx", "regression.jsonl"))
 
 	return root
 }
 
-async function scratchDB(): Promise<string> {
-	return join(fixtures.use(await temporaryDirectory("gauntlet-db-")).path, "regression.db")
+async function scratchDB(): Promise<PathBuilder> {
+	return fixtures.use(await temporaryDirectory("gauntlet-db-")).path("regression.db")
 }
 
-function open(path: string): DatabaseClient<GauntletDatabase> {
+function open(path: PathBuilder): DatabaseClient<GauntletDatabase> {
 	const kdb = new DatabaseClient<GauntletDatabase>(path, { readOnly: true })
 
 	opened.push(kdb)

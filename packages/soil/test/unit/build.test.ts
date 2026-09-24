@@ -26,6 +26,7 @@ import {
 } from "@mailwoman/soil/test-kit"
 import { decodeRings } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
+import type { PathBuilder } from "path-ts"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 const INDEX_RESOLUTION = 9
@@ -42,13 +43,13 @@ function squareCentre(index: number): { latitude: number; longitude: number } {
 }
 
 let scratch: TemporaryDirectory
-let databasePath: string
+let databasePath: PathBuilder
 let result: BuildSoilResult
 let lookup: SoilCapabilityLookup
 
 beforeAll(async () => {
 	scratch = await temporaryDirectory("mw-soil-build-")
-	databasePath = scratch.resolve("soil.db")
+	databasePath = scratch.path("soil.db")
 
 	const delineations = fixtureDelineations()
 

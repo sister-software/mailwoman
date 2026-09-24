@@ -180,7 +180,7 @@ type Format = "json" | "text" | "jsonld"
 type GeocodeOptions = GeocodeCommandOptions
 
 async function optionsOf(values: Record<string, unknown>): Promise<GeocodeOptions> {
-	const dataRoot = stringValue(values, "data-root") ?? (await import("@mailwoman/core/utils")).mailwomanDataRoot()
+	const dataRoot = stringValue(values, "data-root") ?? (await import("@mailwoman/core/data-root")).dataRootPath()
 	const capitalTier = triStateValue(values, "capital-tier")
 	const variantAliasExemption = triStateValue(values, "variant-alias-exemption")
 

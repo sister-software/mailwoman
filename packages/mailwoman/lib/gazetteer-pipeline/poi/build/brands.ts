@@ -25,13 +25,13 @@
  *        (`POISourceRow`) and `chooseCategoryColumn`'s pure-function-over-decoded-rows pattern.
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
 import { makeDirectories, writeLocalFile } from "@mailwoman/core/fs/writers"
 import { prettyJSON } from "@mailwoman/core/json"
 import { readLayerManifest, type layerschemadatabase } from "@mailwoman/core/layers"
 import { workspacePathBuilder } from "@mailwoman/core/paths"
 import { allRows } from "@mailwoman/core/utils"
 import type { BrandRecord, POIBrandSourceLayer, POIBrandTable } from "@mailwoman/poi-taxonomy"
+import { poiDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { POIDatabase } from "@mailwoman/resolver-wof-sqlite/poi"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { dirname, type PathBuilder, type PathBuilderLike } from "path-ts"
@@ -54,7 +54,7 @@ export const BRAND_TABLE_VERSION = "0.2.0"
  * Same default `build/poi.tsx`'s command uses for its `--out`.
  */
 export function defaultPOIDatabasePath(): PathBuilder {
-	return dataRootPath("db", "poi", "poi.db")
+	return poiDatabasePath("poi.db")
 }
 
 /**

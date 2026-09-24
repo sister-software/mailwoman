@@ -35,7 +35,7 @@ async function main(): Promise<void> {
 
 	// The repository this hook ships in, located from the hook's own file rather than from an environment
 	// variable the harness sets: a session started in a subdirectory still guards the same tree.
-	const repoRoot = String(repoRootPath()).replace(/\/$/u, "")
+	const repoRoot = repoRootPath().replace(/\/$/u, "")
 	const cwd = typeof payload["cwd"] === "string" ? payload["cwd"] : repoRoot
 	const refusal = judgeCommand(command, repoRoot, cwd)
 

@@ -64,6 +64,7 @@ import {
 } from "@mailwoman/core/layers"
 import { isoDate } from "@mailwoman/core/utils"
 import { CoverageBasis } from "@mailwoman/evidence"
+import { uprnDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { UPRNDatabase } from "@mailwoman/resolver-wof-sqlite/uprn"
 import {
 	LATITUDE_MAX,
@@ -76,7 +77,7 @@ import {
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed-db"
 import { cellToParent } from "h3-js"
-import { dirname, join, resolvePath, type PathBuilderLike } from "path-ts"
+import { dirname, PathBuilder, resolvePathBuilder, type PathBuilderLike } from "path-ts"
 import { TextSpliterator } from "spliterator"
 import { Globerator } from "spliterator/node/fs"
 
@@ -255,7 +256,7 @@ export interface DownloadOpenUPRNOptions {
 	 * Directory the archive lands in — a new dated directory per
 	 * acquisition (`$MAILWOMAN_DATA_ROOT/os-uprn/<date>/`).
 	 */
-	destDir: string
+	destDir: PathBuilderLike
 	/**
 	 * Reuse an existing archive when it already matches OS's published md5 (the default).
 	 *
@@ -268,7 +269,7 @@ export interface DownloadOpenUPRNOptions {
 }
 
 export interface DownloadOpenUPRNResult {
-	archivePath: string
+	archivePath: PathBuilder
 	bytes: number
 	md5: string
 	/**
@@ -287,7 +288,8 @@ export interface DownloadOpenUPRNResult {
  * same as `downloadCodePointOpen` and `osm/sdk/fetch.ts`.
  */
 export async function downloadOpenUPRN(options: DownloadOpenUPRNOptions): Promise<DownloadOpenUPRNResult> {
-	const { destDir, reuseExisting = true } = options
+	const { reuseExisting = true } = options
+	const destDir = PathBuilder.from(options.destDir)
 	const phase = options.onPhase ?? (() => {})
 	const client = options.client ?? createOSDownloadsClient()
 
@@ -309,14 +311,14 @@ export async function downloadOpenUPRN(options: DownloadOpenUPRNOptions): Promis
 	}
 
 	await makeDirectories(destDir)
-	const archivePath = join(destDir, download.fileName)
+	const archivePath = destDir(download.fileName)
 
 	const writeSidecars = async (md5: string, bytes: number): Promise<void> => {
-		await writeLocalTextFile(`${md5}  ${download.fileName}\n`, `${archivePath}.md5`)
+		await writeLocalTextFile(`${md5}  ${download.fileName}\n`, destDir(`${download.fileName}.md5`))
 
 		await writeLocalTextFile(
 			prettyJSON({ product, download, bytes, md5, acquiredAt: new Date().toISOString() }),
-			join(destDir, "acquisition.json")
+			destDir("acquisition.json")
 		)
 	}
 
@@ -367,7 +369,7 @@ export async function downloadOpenUPRN(options: DownloadOpenUPRNOptions): Promis
 }
 
 export interface ExtractOpenUPRNResult {
-	csvPath: string
+	csvPath: PathBuilderLike
 	csvBytes: number
 	/**
 	 * `licence.txt` verbatim — the words a redistributor is legally required to carry, decoded
@@ -409,17 +411,17 @@ export async function extractOpenUPRN(options: {
 	onPhase?: (phase: string, detail?: string) => void
 }): Promise<ExtractOpenUPRNResult> {
 	const phase = options.onPhase ?? (() => {})
-	const extractedDir = join(options.destDir, "extracted")
+	const extractedDir = resolvePathBuilder(options.destDir, "extracted")
 
 	await makeDirectories(extractedDir)
 
-	let csvPath: string | null = null
+	let csvPath: PathBuilder | null = null
 	let csvBytes = 0
 	const entries = await listZipEntries(options.archivePath)
 	const csvEntry = entries.find((entry) => /^osopenuprn_.*\.csv$/i.test(entry.name))
 
 	if (csvEntry) {
-		csvPath = join(extractedDir, csvEntry.name.slice(csvEntry.name.lastIndexOf("/") + 1))
+		csvPath = extractedDir(csvEntry.name.slice(csvEntry.name.lastIndexOf("/") + 1))
 		csvBytes = csvEntry.uncompressedSize
 		const existing = await tryStat(csvPath)
 
@@ -437,16 +439,12 @@ export async function extractOpenUPRN(options: {
 		skipExisting: true,
 	})
 
-	const licensePath = join(extractedDir, "licence.txt")
-	const versionsPath = join(extractedDir, "versions.txt")
+	const licensePath = extractedDir("licence.txt")
+	const versionsPath = extractedDir("versions.txt")
 
-	const licenseText = await readLocalBuffer(licensePath)
-		.then(decodeProvenanceText)
-		.catch(() => "")
-
-	const versionsText = await readLocalBuffer(versionsPath)
-		.then(decodeProvenanceText)
-		.catch(() => "")
+	// A missing file throws: the database quotes the license text and records the extraction date.
+	const licenseText = decodeProvenanceText(await readLocalBuffer(licensePath))
+	const versionsText = decodeProvenanceText(await readLocalBuffer(versionsPath))
 
 	if (licenseText) {
 		await writeLocalFile(licenseText, licensePath)
@@ -570,7 +568,7 @@ interface UPRNAcquisitionSidecar {
 /**
  * Locate the acquired archive in an offline `sourceDir`.
  */
-async function resolveOfflineArchive(sourceDir: string): Promise<string> {
+async function resolveOfflineArchive(sourceDir: PathBuilder): Promise<PathBuilder> {
 	const archive = await Globerator.from("*", { cwd: sourceDir, absolute: false, throwIfDirectoryMissing: false }).find(
 		(name) => /^osopenuprn_.*\.zip$/i.test(name)
 	)
@@ -579,7 +577,7 @@ async function resolveOfflineArchive(sourceDir: string): Promise<string> {
 		throw new Error(`buildUPRNLayer: offline build found no osopenuprn_*.zip in ${sourceDir}`)
 	}
 
-	return join(sourceDir, archive)
+	return sourceDir(archive)
 }
 
 /**
@@ -592,8 +590,8 @@ export async function buildUPRNLayer(options: BuildUPRNLayerOptions): Promise<Bu
 	const started = Date.now()
 	const now = options.now ?? new Date()
 	const stamp = isoDate(now)
-	const sourceDir = resolvePath(options.sourceDir ?? dataRootPath("os-uprn", stamp))
-	const out = options.out ?? dataRootPath("db", "uprn", "uprn.db")
+	const sourceDir = PathBuilder.from(options.sourceDir ?? dataRootPath("os-uprn", stamp))
+	const out = options.out ?? uprnDatabasePath("uprn.db")
 	const minimumPlausibleRows = options.minimumPlausibleRows ?? OPEN_UPRN_MINIMUM_PLAUSIBLE_ROWS
 
 	// Acquire the source.
@@ -614,7 +612,7 @@ export async function buildUPRNLayer(options: BuildUPRNLayerOptions): Promise<Bu
 		osVersion = sidecar?.product?.version ?? UNKNOWN_PROVENANCE
 		extracted = options.extracted
 
-		phase("fixture", extracted.csvPath)
+		phase("fixture", extracted.csvPath.toString())
 	} else if (options.offline) {
 		const archivePath = await resolveOfflineArchive(sourceDir)
 		const sidecar = await readSidecarProvenance()
@@ -636,7 +634,7 @@ export async function buildUPRNLayer(options: BuildUPRNLayerOptions): Promise<Bu
 		extracted = await extractOpenUPRN({ archivePath: download.archivePath, destDir: sourceDir, onPhase: phase })
 	}
 
-	// resolver-wof-sqlite is an optional peer — lazy import (the gazetteer-pipeline convention).
+	// Imported here so loading this module does not evaluate resolver-wof-sqlite (the gazetteer-pipeline convention).
 	const { createUPRNTable, createUPRNMetaTable, createUPRNIndexes, uprnFullCell, UPRN_COVERAGE_H3_RESOLUTION } =
 		await import("@mailwoman/resolver-wof-sqlite/uprn")
 
@@ -680,7 +678,7 @@ export async function buildUPRNLayer(options: BuildUPRNLayerOptions): Promise<Bu
 	let skippedDuplicate = 0
 	let headerSeen = false
 
-	phase("ingest", extracted.csvPath)
+	phase("ingest", extracted.csvPath.toString())
 	kdb.exec("BEGIN")
 
 	for await (const rawLine of TextSpliterator.fromAsync(extracted.csvPath)) {
@@ -846,7 +844,7 @@ export async function buildUPRNLayer(options: BuildUPRNLayerOptions): Promise<Bu
 
 	return {
 		out: out.toString(),
-		sourceDir,
+		sourceDir: sourceDir.toString(),
 		read,
 		inserted,
 		skippedMalformed,

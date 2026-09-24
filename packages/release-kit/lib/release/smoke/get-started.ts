@@ -24,8 +24,10 @@ import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories, writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { runFileSync } from "@mailwoman/core/process"
-import { join } from "path-ts"
+import { wofDatabaseRoot } from "@mailwoman/resolver-wof-sqlite/paths"
+import type { PathBuilderLike } from "path-ts"
 
+import { installedMailwomanBin } from "#release/smoke/installed-bin"
 import { packWorkspaces, walkWorkspaceClosure } from "#release/workspace-closure"
 
 /**
@@ -103,7 +105,7 @@ export interface SmokeGetStartedReport {
 	legs: string[]
 }
 
-function run(cmd: string, args: string[], cwd: string, env: Record<string, string> = {}): string {
+function run(cmd: string, args: PathBuilderLike[], cwd: PathBuilderLike, env: Record<string, string> = {}): string {
 	return runFileSync(cmd, args, {
 		cwd,
 		stdio: ["ignore", "pipe", "pipe"],
@@ -133,10 +135,10 @@ export async function smokeGetStarted(options: SmokeGetStartedOptions): Promise<
 	const legs: string[] = []
 
 	await using tmp = await temporaryDirectory("mw-get-started-")
-	const tarDir = String(tmp.resolve("tarballs"))
-	const project = String(tmp.resolve("project"))
+	const tarDir = tmp.path("tarballs")
+	const project = tmp.path("project")
 	// doctor's own "data root does not exist" branch needs the directory to be missing rather than empty.
-	const doctorRoot = String(tmp.resolve("doctor-root-absent"))
+	const doctorRoot = tmp.path("doctor-root-absent").toString()
 
 	await makeDirectories(tarDir, project)
 
@@ -148,16 +150,16 @@ export async function smokeGetStarted(options: SmokeGetStartedOptions): Promise<
 
 	await writeLocalJSONFile(
 		{ name: "mw-get-started-trial", private: true, type: "module", dependencies },
-		join(project, "package.json")
+		project("package.json")
 	)
 
 	log("[get-started] npm install (tarballs only — no hoisting)…")
 	run("npm", ["install", "--no-audit", "--no-fund", "--no-package-lock"], project)
 
-	const cli = join(project, "node_modules", "mailwoman", "out", "cli.js")
+	const cli = await installedMailwomanBin(project)
 
 	log("[get-started] install-and-first-parse.mdx: the parse script…")
-	await writeLocalTextFile(FIRST_PARSE_SCRIPT, join(project, "parse.mjs"))
+	await writeLocalTextFile(FIRST_PARSE_SCRIPT, project("parse.mjs"))
 	assertNeedles(run("node", ["parse.mjs"], project), FIRST_PARSE_NEEDLES, "install-and-first-parse.mdx")
 	legs.push("first-parse")
 
@@ -199,11 +201,12 @@ export async function smokeGetStarted(options: SmokeGetStartedOptions): Promise<
 		return { packed: closure.size, legs }
 	}
 
-	const dataRoot = options.dataRoot ?? String(tmp.resolve("data-root"))
+	// A string, because the child processes receive it as an environment variable.
+	const dataRoot = (options.dataRoot ?? tmp.path("data-root")).toString()
 
 	await makeDirectories(dataRoot)
 
-	const candidateDB = join(dataRoot, "wof", "candidate.db")
+	const candidateDB = wofDatabaseRoot(dataRoot)("candidate.db")
 
 	if (await pathExists(candidateDB)) {
 		log(`[get-started] candidate.db already at ${candidateDB} — skipping the pull`)

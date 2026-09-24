@@ -15,7 +15,6 @@ import { GEONAMES_POSTAL_ID_BASE } from "@mailwoman/core/resolver/synthetic-id-r
 import { ingestGeonamesPostal, normalizePostcodeName } from "@mailwoman/resolver-wof-sqlite/geonames"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import { join } from "path-ts"
 import { describe, expect, it } from "vitest"
 
 describe("normalizePostcodeName (the #920 name law)", () => {
@@ -67,7 +66,7 @@ describe("ingestGeonamesPostal", () => {
 				"CZ\t110 00\tOutlier\tPraha\t10\t\t\t\t\t50.30\t14.60\t4",
 				"CZ\t500 02\tHradec\tKralovehradecky\t\t\t\t\t\t50.21\t15.83\t4",
 			].join("\n"),
-			join(dir, "CZ.txt")
+			dir("CZ.txt")
 		)
 
 		const db = await fixtureDB()
@@ -111,7 +110,7 @@ describe("ingestGeonamesPostal", () => {
 				"TH\t10230\tKhanna Yao\tBangkok\t10\t\t\t\t\t14.3333\t99.9167\t1",
 				"TH\t10120\tYan Nawa\tBangkok\t10\t\t\t\t\t13.6969\t100.5407\t4",
 			].join("\n"),
-			join(dir, "TH.txt")
+			dir("TH.txt")
 		)
 
 		const db = await fixtureDB()

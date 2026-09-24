@@ -57,13 +57,13 @@ const { values } = parseArguments({
 // which is precisely the drift a counted walk invites.
 // `repoRootPath()` owns this arithmetic in one place.
 // Not `cwd`, because an MCP client spawns the server from wherever it happens to be.
-const repoRoot = values["repo-root"] ? resolvePath(values["repo-root"]) : String(repoRootPath())
+const repoRoot = values["repo-root"] ? resolvePath(values["repo-root"]) : repoRootPath()
 
 const host = new WorkerHost({
 	// Anchored at the package rather than at this file's directory: `shimDir` is
 	// a statement about where the shim sits, and moving the shim one level down
 	// silently pointed it at a worker that was never there.
-	workerPath: String(resolvePackagePath("@mailwoman/dev-mcp", "lib", "worker", "index.ts")),
+	workerPath: resolvePackagePath("@mailwoman/dev-mcp", "lib", "worker", "index.ts"),
 	workerArgs: ["--repo-root", repoRoot, ...(values["max-resident"] ? ["--max-resident", values["max-resident"]] : [])],
 })
 

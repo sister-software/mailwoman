@@ -17,7 +17,7 @@
 
 import { createRequire, findPackageJSON } from "node:module"
 
-import { dirname, join, resolvePath } from "path-ts"
+import { dirname, join, type PathBuilderLike, resolvePath } from "path-ts"
 import type { PackageJson } from "type-fest"
 
 import { readLocalJSONFile } from "#fs/readers"
@@ -65,7 +65,7 @@ export type PackageJSONLike<D extends object = MailwomanManifestFields> = Packag
  * Read and parse a package's `package.json`, given its path from {@link resolvePackageJSON}.
  */
 export async function readPackageJSON<D extends object = MailwomanManifestFields>(
-	manifestPath: string
+	manifestPath: PathBuilderLike
 ): Promise<PackageJSONLike<D>>
 
 /**
@@ -77,10 +77,10 @@ export async function readPackageJSON<D extends object = MailwomanManifestFields
 ): Promise<PackageJSONLike<D>>
 
 export async function readPackageJSON<D extends object = MailwomanManifestFields>(
-	first: string,
+	first: PathBuilderLike,
 	packageName?: string
 ): Promise<PackageJSONLike<D>> {
-	const manifestPath = packageName === undefined ? first : resolvePackageJSON(first, packageName)
+	const manifestPath = packageName === undefined ? first : resolvePackageJSON(first.toString(), packageName)
 
 	return readLocalJSONFile<PackageJSONLike<D>>(manifestPath)
 }

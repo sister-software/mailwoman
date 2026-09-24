@@ -28,10 +28,10 @@ import { type PathBuilderLike, resolvePath } from "path-ts"
 import { hashFNV1a } from "#coarse-placer/fnv-hash"
 import { assembleOutlierRow, collectOutlierRows, otherRowsJSONL } from "#coarse-placer/tools/outlier-rows"
 import { defaultDataDir } from "#coarse-placer/tools/paths"
+import { dataRootPath } from "#data-root"
 import { errorMessage } from "#errors/schema"
 import { appendLocalTextFile, writeLocalJSONLFile } from "#fs/writers"
 import { OVERTURE_ADDRESSES_RELEASE } from "#overture-pins"
-import { dataRootPath } from "#utils"
 
 interface LatinTestRow {
 	raw: string

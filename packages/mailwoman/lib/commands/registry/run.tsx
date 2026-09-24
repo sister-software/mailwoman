@@ -20,7 +20,7 @@
  */
 
 import { Spinner } from "@inkjs/ui"
-import { mailwomanDataRoot } from "@mailwoman/core/data-root"
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { errorMessage } from "@mailwoman/core/errors/schema"
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { writeLocalFile, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
@@ -30,6 +30,7 @@ import { CommandError } from "@mailwoman/core/scripting/command"
 import type { NeuralAddressClassifier } from "@mailwoman/neural"
 import type { ColumnMapping, EntityGeoData, GeocodeAddress, SourceRecord } from "@mailwoman/registry"
 import type { EvalGeocoder, EvalGeocoderFactory } from "@mailwoman/registry/tools"
+import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { GeoFeatureCollection, PointLiteral } from "@mailwoman/spatial"
 import { Text } from "ink"
 
@@ -76,7 +77,7 @@ export const spec = {
 		"default-country": { type: "string", description: "Resolver country scope" },
 		"place-country": { type: "boolean", default: true, description: "Enable coarse country prior" },
 		"resolve-db": { type: "string", description: "WOF admin database" },
-		"data-root": { type: "string", default: mailwomanDataRoot(), description: "Per-state database root" },
+		"data-root": { type: "string", default: dataRootPath().toString(), description: "Per-state database root" },
 	},
 } as const satisfies CommandSpec
 
@@ -252,7 +253,6 @@ export interface EvalGeocoderFlags {
  */
 export function evalGeocoderFactory(flags: EvalGeocoderFlags): EvalGeocoderFactory {
 	return async (init): Promise<EvalGeocoder> => {
-		const { dataRootPath } = await import("@mailwoman/core/utils")
 		const { decodeAsJSON } = await import("@mailwoman/core/decoder")
 		const { NeuralAddressClassifier } = await import("@mailwoman/neural")
 		const { geocodeAddressVia } = await import("@mailwoman/registry")
@@ -263,8 +263,8 @@ export function evalGeocoderFactory(flags: EvalGeocoderFlags): EvalGeocoderFacto
 			import("#geocode/regions"),
 		])
 
-		const wof = flags.wof || String(dataRootPath("db", "wof", "admin-global-priority.db"))
-		const dataRoot = flags.dataRoot || mailwomanDataRoot()
+		const wof = flags.wof || wofDatabasePath("admin-global-priority.db")
+		const dataRoot = flags.dataRoot || dataRootPath()
 
 		const classifier = await NeuralAddressClassifier.loadFromWeights({
 			locale: flags.locale || "en-US",

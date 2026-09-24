@@ -22,7 +22,7 @@ import { cacheRootPath } from "@mailwoman/core/data-root"
 import { readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { gitHead, trackedFiles, workingTreeStatus } from "@mailwoman/core/git"
-import { resolvePath } from "path-ts"
+import type { PathBuilder } from "path-ts"
 import ts from "typescript"
 
 /**
@@ -179,7 +179,7 @@ function terms(phrase: string): string[] {
 /**
  * Every documented export in a workspace's `lib/`, read from the working tree.
  */
-async function readEntries(repoRoot: string): Promise<PurposeEntry[]> {
+async function readEntries(repoRoot: PathBuilder): Promise<PurposeEntry[]> {
 	// The pathspec names a directory and the shape is filtered here.
 	// A pathspec with a globstar inside it silently drops every file sitting directly in `lib/`,
 	// because git's wildmatch requires a separator after one, which is how `packages/core/lib/stats.ts`
@@ -190,7 +190,7 @@ async function readEntries(repoRoot: string): Promise<PurposeEntry[]> {
 	for (const file of files) {
 		if (!file.includes("/lib/") || !file.endsWith(".ts") || file.endsWith(".test.ts")) continue
 
-		const text = await readLocalTextFile(resolvePath(repoRoot, file))
+		const text = await readLocalTextFile(repoRoot(file))
 		const source = ts.createSourceFile(file, text, ts.ScriptTarget.Latest, false, ts.ScriptKind.TS)
 
 		for (const statement of source.statements) {
@@ -243,7 +243,7 @@ function cachePath(): string {
  * A stale index is worse than a slow one here: it answers "nothing like that exists" for
  * a helper written an hour ago, which is the reading this tool exists to prevent.
  */
-export async function loadPurposeIndex(repoRoot: string): Promise<PurposeEntry[]> {
+export async function loadPurposeIndex(repoRoot: PathBuilder): Promise<PurposeEntry[]> {
 	const head = await gitHead(repoRoot)
 	const status = (await workingTreeStatus(repoRoot, ["packages"])).toSorted()
 	const cached = await readLocalJSONFile<Partial<PurposeCache>>(cachePath()).catch(() => null)

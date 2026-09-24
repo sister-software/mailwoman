@@ -19,6 +19,7 @@ import {
 	DEFAULT_DEAD_PLACETYPES,
 	resurrectCurrencyHoles,
 } from "@mailwoman/resolver-wof-sqlite/currency-backfill"
+import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
@@ -37,8 +38,8 @@ async function main(): Promise<void> {
 		},
 	})
 
-	const adminPath = values.admin ?? String(dataRootPath("db", "wof", "admin-global-priority.db"))
-	const geonamesDir = values.geonames ?? String(dataRootPath("geonames"))
+	const adminPath = values.admin ?? wofDatabasePath("admin-global-priority.db")
+	const geonamesDir = values.geonames ?? dataRootPath("geonames")
 	const countries = values.countries!.split(",").map((code) => code.trim().toUpperCase())
 	using src = new DatabaseClient<WOFDatabase>(adminPath, { readOnly: true })
 	const reports: Array<CurrencyBackfillCountryReport & { arm: string }> = []

@@ -90,10 +90,10 @@ async function* readAll(inputs: readonly PathBuilderLike[]): AsyncGenerator<Parq
  * names a single source and a reader would then attribute rows to a source that did not produce them.
  */
 export async function mergeSourceFiles(options: MergeSourceOptions): Promise<MergeSourceResult> {
-	const inputs = options.inputs.map(String)
+	const inputs = options.inputs.map((input) => input.toString())
 	const random = mulberry32(options.seed ?? DEFAULT_SHUFFLE_SEED)
 	const rowsPerFile = options.rowsPerFile ?? ROWS_PER_FILE
-	const stem = String(options.output).replace(/\.parquet$/u, "")
+	const stem = options.output.toString().replace(/\.parquet$/u, "")
 
 	const byCountry: Record<string, number> = {}
 	const bySource: Record<string, number> = {}

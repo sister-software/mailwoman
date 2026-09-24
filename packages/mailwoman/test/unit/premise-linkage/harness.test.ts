@@ -48,7 +48,6 @@ import {
 	type PremiseLinkageRates,
 	type PremiseLinkageReport,
 } from "mailwoman/eval-harness/premise-linkage/schema"
-import { join } from "path-ts"
 import { describe, expect, it } from "vitest"
 
 const SALT = "0123456789abcdef0123456789abcdef"
@@ -391,7 +390,7 @@ describe("#1902: the public-report writer refuses an injected disclosure", () =>
 		const run = await syntheticRun()
 		await using directoryDirectory = await temporaryDirectory("premise-linkage-")
 		const directory = directoryDirectory.path
-		const target = join(directory, "report.json")
+		const target = directory("report.json")
 		const injected = structuredClone(run.report)
 
 		injected.arms[0]!.providerName = "12 Downing Terrace"
@@ -404,7 +403,7 @@ describe("#1902: the public-report writer refuses an injected disclosure", () =>
 		const run = await syntheticRun()
 		await using directoryDirectory = await temporaryDirectory("premise-linkage-")
 		const directory = directoryDirectory.path
-		const target = join(directory, "report.json")
+		const target = directory("report.json")
 		const written = await writePremiseLinkageReport(target, run)
 		const roundTripped = await readLocalJSONFile<PremiseLinkageReport>(target)
 

@@ -21,7 +21,6 @@
  *       --pbf $MAILWOMAN_DATA_ROOT/db/osm/geofabrik/ile-de-france-260627.osm.pbf
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { removePath, makeDirectories } from "@mailwoman/core/fs/writers"
 import { LayerFreshnessPolicy, LayerTier, writeLayerManifest } from "@mailwoman/core/layers"
@@ -39,6 +38,7 @@ import { sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed-db
 import { latLngToCell } from "h3-js"
 import { dirname, resolvePath } from "path-ts"
 
+import { osmDatabasePath } from "#paths"
 import {
 	createOSMAddressPointIndexes,
 	createOSMAddressPointTables,
@@ -103,7 +103,7 @@ async function parse(): Promise<BuildArgs> {
 	}
 
 	if (!buildSHA) throw new Error("required: --build-sha <git-sha>")
-	const output = resolvePath(values.out || dataRootPath("db", "osm", `address-points-${country}-${slug}.db`))
+	const output = resolvePath(values.out || osmDatabasePath(`address-points-${country}-${slug}.db`))
 	const recover = Boolean(values.recover)
 	const recoverRadiusKm = Number(values["recover-radius-m"] ?? "30") / 1000
 

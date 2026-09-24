@@ -28,7 +28,6 @@
  *   Run: `node mailwoman/gazetteer-pipeline/pair-index-hierarchy-verify.ts [--countries us,fr] [--db <path>] [--dir <dir>]`
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { runIfScript } from "@mailwoman/core/scripting"
@@ -41,9 +40,10 @@ import {
 	PairIndexResolver,
 	peekPairIndexHeader,
 } from "@mailwoman/neural/pair"
+import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import { join } from "path-ts"
+import { PathBuilder } from "path-ts"
 
 import { resolveHierarchyRunInputs } from "#gazetteer-pipeline/pair/index/hierarchy/probe"
 
@@ -176,7 +176,7 @@ async function main(): Promise<void> {
 	})
 
 	const { countries, dbPath } = resolveHierarchyRunInputs(values)
-	const dir = values.dir ?? dataRootPath("db", "wof", "pair-index-hierarchy-probe")
+	const dir = PathBuilder.from(values.dir ?? wofDatabasePath("pair-index-hierarchy-probe"))
 
 	using db = new DatabaseClient<WOFDatabase>(dbPath, { readOnly: true })
 	let failures = 0
@@ -188,7 +188,7 @@ async function main(): Promise<void> {
 	}
 
 	for (const country of countries) {
-		const artifactPath = join(dir, `pair-index-locality-region-${country}.bin`)
+		const artifactPath = dir(`pair-index-locality-region-${country}.bin`)
 		const bytes = new Uint8Array(await readLocalBuffer(artifactPath))
 		const header = peekPairIndexHeader(bytes)
 		const parentPlacetypes = PARENT_PLACETYPES_BY_COUNTRY[country]

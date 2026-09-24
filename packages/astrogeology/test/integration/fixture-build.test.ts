@@ -65,22 +65,22 @@ test("the Moon fixture builds a nomenclature archive whose tiles carry the five 
 	expect(features[0]?.bbox?.minLon).toBeCloseTo(-0.8023, 4)
 	expect(features[0]?.bbox?.maxLon).toBeCloseTo(0.1643, 4)
 
-	expect(await writeNomenclatureNDJSON(features, String(ndjson))).toBe(5)
+	expect(await writeNomenclatureNDJSON(features, ndjson)).toBe(5)
 
-	const { command } = await buildNomenclaturePMTiles({ body: "moon", ndjsonPath: String(ndjson), outPath: String(out) })
+	const { command } = await buildNomenclaturePMTiles({ body: "moon", ndjsonPath: ndjson, outPath: out })
 
 	expect(command[0]).toBe("tippecanoe")
 
-	await applyPMTilesMetadata(String(out), nomenclatureMetadata("moon", "test"))
+	await applyPMTilesMetadata(out, nomenclatureMetadata("moon", "test"))
 
-	const metadata = await readMailwomanMetadata(String(out))
+	const metadata = await readMailwomanMetadata(out)
 
 	expect(metadata["mailwoman:body"]).toBe("moon")
 	expect(metadata["mailwoman:schema"]).toBe("planetary-v1")
 	expect(metadata["mailwoman:build_version"]).toBe("test")
 
 	// Tycho at z4: the XYZ tile holding lon −11.2153, lat −43.2958 is x = 7, y = 10.
-	const tile = await runFile("pmtiles", ["tile", String(out), "4", "7", "10"])
+	const tile = await runFile("pmtiles", ["tile", out, "4", "7", "10"])
 
 	expect(tile.stdout.length).toBeGreaterThan(0)
 
@@ -88,7 +88,7 @@ test("the Moon fixture builds a nomenclature archive whose tiles carry the five 
 	// (Provides-Ballot H → Provides Ballot H).
 	const index = resolvePath(scratch.path, "moon-search.ancestrie")
 
-	expect(await buildSearchIndex(features, String(index))).toBe(6)
+	expect(await buildSearchIndex(features, index)).toBe(6)
 
 	const trie = Ancestrie.from(await readLocalBuffer(index))
 	const { suggestions } = autocomplete(trie, nomenclatureTokens("tych"))
@@ -112,12 +112,12 @@ test("the Moon fixture builds a nomenclature archive whose tiles carry the five 
 				},
 			],
 			outputs: [
-				{ tileset: "moon", path: String(out) },
-				{ tileset: "moon-search", path: String(index) },
+				{ tileset: "moon", path: out },
+				{ tileset: "moon-search", path: index },
 			],
 			transformations: [command],
 		},
-		String(manifestPath)
+		manifestPath
 	)
 
 	expect(manifest.outputs).toHaveLength(2)
@@ -141,7 +141,7 @@ test("the fixture DEM builds a hillshade archive of PNG tiles with relief", asyn
 	const { commands } = await buildHillshadePMTiles({
 		body: "moon",
 		demPath: fixturePath("dem-fixture.tif"),
-		outPath: String(out),
+		outPath: out,
 		maxZoom: 2,
 	})
 
@@ -167,16 +167,16 @@ test("the fixture DEM builds a hillshade archive of PNG tiles with relief", asyn
 	expect(overviews).toContain("nearest")
 	expect(overviews).not.toContain("average")
 
-	await applyPMTilesMetadata(String(out), hillshadeMetadata("moon", "test", "dem-fixture.tif"))
-	expect((await readMailwomanMetadata(String(out)))["mailwoman:kind"]).toBe("planetary-hillshade")
+	await applyPMTilesMetadata(out, hillshadeMetadata("moon", "test", "dem-fixture.tif"))
+	expect((await readMailwomanMetadata(out))["mailwoman:kind"]).toBe("planetary-hillshade")
 
-	const root = await runFile("pmtiles", ["tile", String(out), "0", "0", "0"])
+	const root = await runFile("pmtiles", ["tile", out, "0", "0", "0"])
 
 	expect(root.stdout.startsWith(PNG_SIGNATURE_AS_UTF8)).toBe(true)
 
 	// The fixture's slope grows from north to south, so the two northern z1 tiles shade differently from the southern.
-	const north = await runFile("pmtiles", ["tile", String(out), "1", "0", "0"])
-	const south = await runFile("pmtiles", ["tile", String(out), "1", "0", "1"])
+	const north = await runFile("pmtiles", ["tile", out, "1", "0", "0"])
+	const south = await runFile("pmtiles", ["tile", out, "1", "0", "1"])
 
 	expect(north.stdout.startsWith(PNG_SIGNATURE_AS_UTF8)).toBe(true)
 	expect(north.stdout).not.toBe(south.stdout)

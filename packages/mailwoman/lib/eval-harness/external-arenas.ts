@@ -38,10 +38,10 @@
  *   therefore survives here while it is gone from `promotion-eval.ts`.
  */
 
-import { tempRootPath } from "@mailwoman/core/data-root"
+import { tempRootPathBuilder } from "@mailwoman/core/data-root"
 import { writeLocalFile, copyFileTo, makeDirectories } from "@mailwoman/core/fs/writers"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
-import { join } from "path-ts"
+import { PathBuilder, type PathBuilderLike } from "path-ts"
 import { TextSpliterator } from "spliterator"
 import { $ } from "zx"
 
@@ -62,7 +62,7 @@ export interface ExternalArenasOptions {
 	 *
 	 * Default `/tmp/external-arenas`.
 	 */
-	outDir?: string
+	outDir?: PathBuilderLike
 	/**
 	 * Candidate ONNX.
 	 *
@@ -71,14 +71,14 @@ export interface ExternalArenasOptions {
 	 * {@linkcode ExternalArenasOptions.modelCard} become required.
 	 */
 	model?: string
-	tokenizer?: string
+	tokenizer?: PathBuilderLike
 	modelCard?: string
 	/**
 	 * Gaz-trained models (v4.2.0+): feed the ship config — zero-filled clues depress
 	 * country recall and fake an affix crash.
 	 */
 	gazetteerLexicon?: string
-	anchorLookup?: string
+	anchorLookup?: PathBuilderLike
 	/**
 	 * Conventions mask (#511 Tier A): `auto` for v4.3.0+ ship config.
 	 */
@@ -105,9 +105,10 @@ export async function externalArenas(
 	// zx: capture output ourselves (don't echo the full stream) and trim the way the bash `| tail` did.
 	$.verbose = false
 
-	const outDir = options.outDir ?? tempRootPath("external-arenas")
+	const outDir = PathBuilder.from(options.outDir ?? tempRootPathBuilder("external-arenas"))
 	await makeDirectories(outDir)
-	const emptyTests = join(outDir, "empty-tests")
+	// Strings, because zx interpolates only strings into a command line.
+	const emptyTests = outDir("empty-tests").toString()
 	await makeDirectories(emptyTests)
 
 	// Model args: pass through if a model is set, else the harness uses its loadFromWeights() default.
@@ -119,14 +120,14 @@ export async function externalArenas(
 		const modelCard = options.modelCard
 
 		if (!tokenizer || !modelCard) throw new Error("model is set → tokenizer and modelCard are required")
-		modelArgs.push("--model", model, "--tokenizer", tokenizer, "--model-card", modelCard)
+		modelArgs.push("--model", model, "--tokenizer", tokenizer.toString(), "--model-card", modelCard)
 
 		if (options.gazetteerLexicon) {
 			modelArgs.push("--gazetteer-lexicon", options.gazetteerLexicon)
 		}
 
 		if (options.anchorLookup) {
-			modelArgs.push("--anchor-lookup", options.anchorLookup)
+			modelArgs.push("--anchor-lookup", options.anchorLookup.toString())
 		}
 
 		if (options.conventions) {
@@ -146,7 +147,7 @@ export async function externalArenas(
 	report("== regenerating perturbation arena ==")
 
 	const perturbed =
-		await $`node ${PERTURB_GOLDEN_PATH} --golden data/eval/golden/v0.1.2 --out ${join(outDir, "perturb", "perturbed.jsonl")} --per-file 60`
+		await $`node ${PERTURB_GOLDEN_PATH} --golden data/eval/golden/v0.1.2 --out ${outDir("perturb", "perturbed.jsonl").toString()} --per-file 60`
 
 	if (perturbed.stdout.trim()) {
 		report(perturbed.stdout.trimEnd())
@@ -157,32 +158,32 @@ export async function externalArenas(
 	}
 
 	// Stage each arena in its own dir (harness loads all .jsonl in a --falsehoods dir).
-	await makeDirectories(join(outDir, "libpostal"))
-	await makeDirectories(join(outDir, "postal"))
-	await copyFileTo("data/eval/external/libpostal-cases.jsonl", join(outDir, "libpostal", "libpostal-cases.jsonl"))
-	await copyFileTo("data/eval/external/postal-cases.jsonl", join(outDir, "postal", "postal-cases.jsonl"))
+	await makeDirectories(outDir("libpostal"))
+	await makeDirectories(outDir("postal"))
+	await copyFileTo("data/eval/external/libpostal-cases.jsonl", outDir("libpostal", "libpostal-cases.jsonl"))
+	await copyFileTo("data/eval/external/postal-cases.jsonl", outDir("postal", "postal-cases.jsonl"))
 
 	// Harness writes its progress to <name>.stderr.
 	// We tail the last 40 summary lines off stdout.
-	const runArena = async (name: string, dir: string): Promise<void> => {
+	const runArena = async (name: string): Promise<void> => {
 		report(`== arena: ${name} ==`)
 
 		const r =
-			await $`node ${HARNESS_NEURAL_PATH} --tests ${emptyTests} --falsehoods ${dir} ${modelArgs} --postcode-repair --out-json ${join(outDir, `${name}.results.json`)}`
+			await $`node ${HARNESS_NEURAL_PATH} --tests ${emptyTests} --falsehoods ${outDir(name).toString()} ${modelArgs} --postcode-repair --out-json ${outDir(`${name}.results.json`).toString()}`
 
-		await writeLocalFile(r.stderr, join(outDir, `${name}.stderr`))
+		await writeLocalFile(r.stderr, outDir(`${name}.stderr`))
 
 		report([...TextSpliterator.from(r.stdout)].slice(-40).join("\n"))
 	}
 
-	await runArena("libpostal", join(outDir, "libpostal"))
-	await runArena("perturb", join(outDir, "perturb"))
-	await runArena("postal", join(outDir, "postal"))
+	await runArena("libpostal")
+	await runArena("perturb")
+	await runArena("postal")
 
 	report("")
 	report("== arena summary + postal edge-class breakdown ==")
 
-	const summary = await $`node ${SUMMARIZE_ARENAS_PATH} ${outDir} data/eval/external/postal-cases.jsonl`
+	const summary = await $`node ${SUMMARIZE_ARENAS_PATH} ${outDir.toString()} data/eval/external/postal-cases.jsonl`
 
 	report(summary.stdout.trimEnd())
 

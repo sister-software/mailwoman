@@ -50,6 +50,7 @@ import {
 	type SoilLayerIdentity,
 	type SoilSurveyAreaRecord,
 } from "@mailwoman/soil"
+import type { PathBuilderLike } from "path-ts"
 
 import {
 	createDesignationRoute,
@@ -160,7 +161,7 @@ export interface SoilCapabilityRouteOptions {
 	 * Required: there is no default layer, and a route that guessed one would report
 	 * a survey from a region nobody asked about.
 	 */
-	databasePath: string
+	databasePath: PathBuilderLike
 }
 
 /**
@@ -180,7 +181,7 @@ export function createSoilCapabilityRoute(options: SoilCapabilityRouteOptions): 
 		refusalFor: (reading) =>
 			reading.kind === SoilReadingKind.Unknown || !reading.distribution ? "outside_surveyed_area" : undefined,
 		toObservation: (reading, latitude, longitude) =>
-			toObservation(reading, lookup.identity, latitude, longitude, options.databasePath),
+			toObservation(reading, lookup.identity, latitude, longitude, options.databasePath.toString()),
 	})
 }
 

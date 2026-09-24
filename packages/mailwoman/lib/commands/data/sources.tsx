@@ -35,8 +35,8 @@ export const spec = {
 
 const DataSources: CommandComponent<typeof spec> = ({ options, args }) => {
 	const state = useCommandTask(async () => {
-		const { mailwomanDataRoot } = await import("@mailwoman/core/utils")
-		const dataRoot = options.dataRoot ?? mailwomanDataRoot()
+		const { dataRootPath } = await import("@mailwoman/core/data-root")
+		const dataRoot = options.dataRoot ?? dataRootPath()
 		const names = args.length ? args : Object.keys(BUNDLES)
 
 		const lines: string[] = [

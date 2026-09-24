@@ -20,6 +20,7 @@ import type { APIClient } from "@mailwoman/core/api"
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { statPath } from "@mailwoman/core/fs/readers"
 import { Text } from "ink"
+import type { PathBuilderLike } from "path-ts"
 
 import {
 	type Check,
@@ -72,7 +73,7 @@ async function headContentLength(client: APIClient, artifact: BundleArtifact): P
 
 async function statusForBundles(
 	bundleNames: string[],
-	dataRoot: string,
+	dataRoot: PathBuilderLike,
 	checkRemote: boolean
 ): Promise<{ ok: boolean; checks: Check[] }> {
 	const manifest = await readReleaseManifest(dataRoot)
@@ -149,9 +150,9 @@ async function statusForBundles(
 const DataStatus: CommandComponent<typeof spec> = ({ options, args }) => {
 	const state = useCommandTask(
 		async () => {
-			const { mailwomanDataRoot } = await import("@mailwoman/core/utils")
+			const { dataRootPath } = await import("@mailwoman/core/data-root")
 
-			const dataRoot = options.dataRoot ?? mailwomanDataRoot()
+			const dataRoot = options.dataRoot ?? dataRootPath()
 			const names = args.length ? args : Object.keys(BUNDLES)
 
 			return await statusForBundles(names, dataRoot, options.checkRemote)

@@ -18,7 +18,8 @@ import { CoarsePlacer, type CoarsePlacerMeta, isOffMapHandled } from "#coarse-pl
 import { defaultDataDir, defaultModelDir } from "#coarse-placer/tools/paths"
 import { errorMessage } from "#errors/schema"
 import { readLocalJSONFile } from "#fs/readers"
-import { formatPercent, repoRootPath } from "#utils"
+import { repoRootPath } from "#paths"
+import { formatPercent } from "#utils"
 
 /**
  * Confusions below this count are individually uninteresting and are summarised instead.

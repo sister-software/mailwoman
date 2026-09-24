@@ -15,7 +15,7 @@ import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 // The package declares no `./cli` export, so this reads the bin the manifest actually publishes.
-const CLI_PATH = String(resolvePackagePath("@mailwoman/dev-mcp", "lib", "cli", "index.ts"))
+const CLI_PATH = resolvePackagePath("@mailwoman/dev-mcp", "lib", "cli", "index.ts")
 
 /**
  * Worker boot imports the whole mailwoman graph.
@@ -129,7 +129,7 @@ describe("the never-stale shim", () => {
 			const result = await client.callTool({ name: "mwdev_nonexistent", arguments: {} })
 
 			expect(result.isError).toBe(true)
-			expect(String((result.content as Array<{ text: string }>)[0]?.text)).toContain("Unknown tool")
+			expect((result.content as Array<{ text: string }>)[0]?.text).toContain("Unknown tool")
 		},
 		BOOT_TIMEOUT_MS
 	)
@@ -148,7 +148,7 @@ describe("the never-stale shim", () => {
 			})
 
 			expect(result.isError).toBe(true)
-			expect(String((result.content as Array<{ text: string }>)[0]?.text)).toContain("invalid arguments")
+			expect((result.content as Array<{ text: string }>)[0]?.text).toContain("invalid arguments")
 		},
 		BOOT_TIMEOUT_MS
 	)

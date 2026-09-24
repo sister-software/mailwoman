@@ -61,7 +61,7 @@ export function createPacedCachedClient<Client extends APIClient>(
 		caching: {
 			ttl: product.cacheTTLMs,
 			storage: buildDiskStorage({
-				directory: options.cacheDirectory ?? String(dataRootPath(...product.cacheDirectory)),
+				directory: options.cacheDirectory ?? dataRootPath(...product.cacheDirectory),
 			}),
 		},
 	})

@@ -10,11 +10,10 @@
  * or link local binaries into the weights package.
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
+import { cacheRootPathBuilder, databaseRootPath, dataRootPath, weightsOverlayPath } from "@mailwoman/core/data-root"
 import { pathExists, readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
 import { resolvePackageDirectory, tryResolvePackageDirectory } from "@mailwoman/core/module/resolvers"
-import { cacheRootPathBuilder, weightsOverlayPath } from "@mailwoman/core/utils"
 import { basename, dirname, PathBuilder, type PathBuilderLike, resolvePath, resolvePathBuilder } from "path-ts"
 
 import { scriptFamilyBase } from "#char-encoder"
@@ -30,9 +29,7 @@ import { resolveEvidenceLexicon } from "#weights/lexicon"
 /**
  * User-level cache root used by `mailwoman parse --download-weights`.
  */
-export function weightsCacheDir(): PathBuilder {
-	return cacheRootPathBuilder("weights")
-}
+export const weightsCacheDir = cacheRootPathBuilder("weights")
 
 /**
  * Data-root overlay root: `$MAILWOMAN_DATA_ROOT/weights`.
@@ -75,20 +72,20 @@ export interface ResolveWeightsOpts {
 	/**
 	 * Explicit `model.onnx` path.
 	 */
-	modelPath?: string
+	modelPath?: PathBuilderLike
 	/**
 	 * Explicit `tokenizer.model` path.
 	 */
-	tokenizerPath?: string
+	tokenizerPath?: PathBuilderLike
 	/**
 	 * Explicit `char-vocab.json` for char-encoder models.
 	 */
-	charVocabPath?: string
+	charVocabPath?: PathBuilderLike
 	/**
 	 * Explicit `model-card.json` path for explicit model/tokenizer runs.
 	 * Falls back to a card beside `modelPath`.
 	 */
-	modelCardPath?: string
+	modelCardPath?: PathBuilderLike
 	/**
 	 * Base package `model-card.json` when using `mailwoman.baseWeights`.
 	 */
@@ -104,7 +101,7 @@ export interface ResolveWeightsOpts {
 	/**
 	 * Optional override for the probed data-root overlay root.
 	 */
-	overlayRoot?: string
+	overlayRoot?: PathBuilderLike
 }
 
 /**
@@ -252,7 +249,25 @@ function buildArtifactReport(
 	return entries.map(([name, path]) => ({ name, path: path ?? null, origin: originOf(path, dirs) }))
 }
 
-export async function resolveWeights(opts: ResolveWeightsOpts): Promise<ResolvedWeights> {
+/**
+ * {@link ResolveWeightsOpts} with the explicit paths in the string form {@link ResolvedWeights} reports.
+ */
+type ExplicitPathOpts = Omit<ResolveWeightsOpts, "modelPath" | "tokenizerPath" | "charVocabPath" | "modelCardPath"> & {
+	modelPath?: string
+	tokenizerPath?: string
+	charVocabPath?: string
+	modelCardPath?: string
+}
+
+export async function resolveWeights(input: ResolveWeightsOpts): Promise<ResolvedWeights> {
+	const opts: ExplicitPathOpts = {
+		...input,
+		modelPath: input.modelPath?.toString(),
+		tokenizerPath: input.tokenizerPath?.toString(),
+		charVocabPath: input.charVocabPath?.toString(),
+		modelCardPath: input.modelCardPath?.toString(),
+	}
+
 	const tried: PathBuilder[] = []
 
 	if (opts.modelPath && (opts.tokenizerPath || opts.charVocabPath)) {
@@ -345,9 +360,7 @@ export async function resolveWeights(opts: ResolveWeightsOpts): Promise<Resolved
 	}
 
 	// 2. Data-root overlay.
-	const overlayDir = opts.overlayRoot
-		? PathBuilder.from(resolvePath(opts.overlayRoot, locale))
-		: weightsOverlayDir(locale)
+	const overlayDir = opts.overlayRoot ? resolvePathBuilder(opts.overlayRoot, locale) : weightsOverlayDir(locale)
 
 	// Probe overlays by directory existence.
 	// The base fallback is handled downstream.
@@ -393,7 +406,7 @@ export async function resolveWeights(opts: ResolveWeightsOpts): Promise<Resolved
 async function resolveFromPackageDir(
 	packageDir: PathBuilder,
 	locale: Intl.UnicodeBCP47LocaleIdentifier,
-	opts: ResolveWeightsOpts,
+	opts: ExplicitPathOpts,
 	source: string,
 	tried: PathBuilderLike[]
 ): Promise<ResolvedWeights> {
@@ -593,7 +606,7 @@ async function resolvePairIndexSibling(packageDir: PathBuilder, country: string)
 export async function resolvePlacetypeCensusPath(country: string): Promise<PathBuilder | null> {
 	if (!country) return null
 
-	const candidate = dataRootPath("db", "wof", `placetype-census-${country.toLowerCase()}.bin`)
+	const candidate = databaseRootPath(dataRootPath())("wof", `placetype-census-${country.toLowerCase()}.bin`)
 
 	return (await pathExists(candidate)) ? candidate : null
 }
@@ -604,7 +617,7 @@ export async function resolvePlacetypeCensusPath(country: string): Promise<PathB
  */
 export async function loadPlacetypeCensus(
 	country: string,
-	explicitPath?: string
+	explicitPath?: PathBuilderLike
 ): Promise<PlacetypeCensusResolver | null> {
 	const path = explicitPath ?? (await resolvePlacetypeCensusPath(country))
 

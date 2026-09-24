@@ -25,7 +25,7 @@
 import { pathExists, readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { repoRootPath } from "@mailwoman/core/paths"
 import { readReleaseConfig } from "@mailwoman/core/release-config"
-import { resolvePath } from "path-ts"
+import { type PathBuilderLike, resolvePath } from "path-ts"
 
 import {
 	distributionOnlyRemoteNames,
@@ -43,7 +43,7 @@ export interface FetchHFWeightsOptions {
 	 *
 	 * Never written to unless it is also the destination.
 	 */
-	repoRoot?: string
+	repoRoot?: PathBuilderLike
 	/**
 	 * The model-card version naming the bucket directory.
 	 *
@@ -72,7 +72,7 @@ function writeStderr(line: string): void {
  */
 export async function fetchHFWeights(
 	destRoot: string,
-	{ repoRoot = String(repoRootPath()), version, log = writeStderr }: FetchHFWeightsOptions = {}
+	{ repoRoot = repoRootPath(), version, log = writeStderr }: FetchHFWeightsOptions = {}
 ): Promise<HFMaterializationReport> {
 	const config = await readReleaseConfig(repoRoot)
 	const baseLocale = await resolveBaseLocale(repoRoot, config.locales)

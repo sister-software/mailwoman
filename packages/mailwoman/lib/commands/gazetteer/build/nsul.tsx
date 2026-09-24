@@ -46,7 +46,7 @@ export const spec = {
 
 const GazetteerBuildNSUL: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { repoRootPath } = await import("@mailwoman/core/utils")
+		const { repoRootPath } = await import("@mailwoman/core/paths")
 		const { buildSHA } = await import("#gazetteer/stamp-manifest")
 		const { buildNSULLayer, NSUL_COVERAGE_NOTE, nsulVintageLabel } = await import("#gazetteer/nsul-layer")
 
@@ -54,7 +54,7 @@ const GazetteerBuildNSUL: CommandComponent<typeof spec> = ({ options }) => {
 			sourceDir: options.sourceDir,
 			out: options.out,
 			uprnDatabasePath: options.uprnDB,
-			buildSHA: buildSHA(String(repoRootPath())),
+			buildSHA: buildSHA(repoRootPath()),
 			onPhase: phaseReporter(),
 		})
 

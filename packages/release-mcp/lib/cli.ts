@@ -24,7 +24,7 @@ const { values } = parseArguments({
 })
 
 const server = createReleaseMCPServer({
-	repoRoot: values["repo-root"] ? String(resolvePath(values["repo-root"])) : String(repoRootPath()),
+	repoRoot: values["repo-root"] ? resolvePath(values["repo-root"]) : repoRootPath().toString(),
 	allowExternalWrite: values["allow-external-write"] === true,
 })
 

@@ -16,7 +16,7 @@
 
 import { pathExists, readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { weightsCachePackageDir } from "@mailwoman/neural/weights"
-import { join, resolvePath, type PathBuilderLike } from "path-ts"
+import { resolvePath, type PathBuilderLike } from "path-ts"
 
 /**
  * One floor and what the run read against it.
@@ -116,10 +116,10 @@ export const LEDGER_NOTE =
 /**
  * Assemble a report from a finished eval run's out-dir plus its log.
  */
-export async function readEvalReport(outDir: string, stdout: string, stderr: string): Promise<EvalReport> {
+export async function readEvalReport(outDir: PathBuilderLike, stdout: string, stderr: string): Promise<EvalReport> {
 	const notes: string[] = []
-	const verdictPath = join(outDir, "verdict.json")
-	const provenancePath = join(outDir, "provenance.txt")
+	const verdictPath = resolvePath(outDir, "verdict.json")
+	const provenancePath = resolvePath(outDir, "provenance.txt")
 
 	let raw: RawVerdict | null = null
 
@@ -194,7 +194,7 @@ export async function readEvalReport(outDir: string, stdout: string, stderr: str
 		graded_artifact: raw?.graded_artifact ?? null,
 		floors,
 		int8_vs_fp32_deltas: raw?.int8_vs_fp32_deltas ?? {},
-		out_dir: outDir,
+		out_dir: outDir.toString(),
 		provenance: (await pathExists(provenancePath)) ? await readLocalTextFile(provenancePath) : null,
 		ledger_command: ledgerCommand,
 		ledger_note: LEDGER_NOTE,

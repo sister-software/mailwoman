@@ -29,6 +29,7 @@ import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
+import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { PathBuilderLike } from "path-ts"
@@ -126,7 +127,7 @@ export function ortsteilSurface(sprName: string, deuNames: readonly string[], lo
  * Empty when the admin database is not readable.
  * The recipe then emits no Ortsteil rows and says so, rather than failing a build over an optional register.
  */
-async function readOrtsteilPool(adminDB: string): Promise<Map<string, string[]>> {
+async function readOrtsteilPool(adminDB: PathBuilderLike): Promise<Map<string, string[]>> {
 	const pool = new Map<string, string[]>()
 
 	if (!(await pathExists(adminDB))) return pool
@@ -248,7 +249,7 @@ export const germanRecipe: CorpusRecipe = {
 			}
 		}
 
-		const adminDB = opts.adminDB ?? String(dataRootPath("db", "wof", "admin-global-priority-importance.db"))
+		const adminDB = opts.adminDB ?? wofDatabasePath("admin-global-priority-importance.db")
 		const ortsteile = ortsteilFraction > 0 ? await readOrtsteilPool(adminDB) : new Map<string, string[]>()
 
 		if (ortsteilFraction > 0) {

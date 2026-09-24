@@ -179,7 +179,7 @@ export interface TriageOptions {
 	/**
 	 * The admin gazetteer to triage (`admin-global-priority.db`).
 	 */
-	adminDB: string
+	adminDB: PathBuilderLike
 	/**
 	 * Per-country GeoNames dump directory.
 	 *

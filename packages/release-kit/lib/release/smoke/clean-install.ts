@@ -16,8 +16,9 @@ import { makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { tryParsingJSON, stringifyJSON } from "@mailwoman/core/json"
 import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
 import { runFileSync, spawnProcess } from "@mailwoman/core/process"
-import { join, resolvePath as resolve } from "path-ts"
+import { type PathBuilder, type PathBuilderLike, resolvePath as resolve } from "path-ts"
 
+import { installedMailwomanBin } from "#release/smoke/installed-bin"
 import { packWorkspaces } from "#release/workspace-closure"
 
 /**
@@ -251,8 +252,8 @@ const MCP_EXPECTED_TOOLS = [
  * A missing dep, a non-zero exit, a wrong tool count, or a hung process all
  * fail the smoke here, before publish.
  */
-async function checkMCPBin(projDir: string, timeoutMs = 30_000): Promise<number> {
-	const binPath = join(projDir, "node_modules", ".bin", "mailwoman-mcp")
+async function checkMCPBin(projDir: PathBuilder, timeoutMs = 30_000): Promise<number> {
+	const binPath = projDir("node_modules", ".bin", "mailwoman-mcp")
 	const child = spawnProcess(binPath, [], { cwd: projDir, stdio: ["pipe", "pipe", "pipe"] })
 
 	let stderr = ""
@@ -409,7 +410,7 @@ async function checkMCPBin(projDir: string, timeoutMs = 30_000): Promise<number>
  *
  * @throws The builtin's error (which carries stdout and stderr) on a non-zero exit.
  */
-function run(cmd: string, args: string[], cwd: string): string {
+function run(cmd: string, args: PathBuilderLike[], cwd: PathBuilderLike): string {
 	return runFileSync(cmd, args, { cwd, stdio: ["ignore", "pipe", "pipe"], encoding: "utf8" })
 }
 
@@ -464,8 +465,8 @@ export interface SmokeCleanInstallReport {
  */
 export async function smokeCleanInstall({ repoRoot, log }: SmokeCleanInstallOptions): Promise<SmokeCleanInstallReport> {
 	await using tmp = await temporaryDirectory("mw-smoke-")
-	const tarDir = tmp.resolve("tarballs")
-	const proj = tmp.resolve("proj")
+	const tarDir = tmp.path("tarballs")
+	const proj = tmp.path("proj")
 	await makeDirectories(tarDir, proj)
 
 	try {
@@ -473,31 +474,15 @@ export async function smokeCleanInstall({ repoRoot, log }: SmokeCleanInstallOpti
 
 		log(`[smoke] packing ${Object.keys(WORKSPACES).length} workspaces…`)
 
-		const deps = await packWorkspaces(repoRoot, new Map(Object.entries(WORKSPACES)), String(tarDir))
+		const deps = await packWorkspaces(repoRoot, new Map(Object.entries(WORKSPACES)), tarDir)
 
-		await writeLocalJSONFile({ name: "mw-smoke", private: true, dependencies: deps }, join(proj, "package.json"))
+		await writeLocalJSONFile({ name: "mw-smoke", private: true, dependencies: deps }, proj("package.json"))
 
 		log("[smoke] npm install (tarballs only — no hoisting)…")
 
 		run("npm", ["install", "--no-audit", "--no-fund", "--no-package-lock"], proj)
 
-		// Read the entry from the installed manifest's `bin` rather than spelling the compiled path here.
-		// Spelling it encodes a layout the published package is free to change: the entry moved
-		// from `out/cli.js` to `out/cli/index.js` and this probe kept invoking a file that no
-		// longer ships, so the smoke reported a missing module instead of a working CLI.
-		// The manifest is the consumer's own interface, which is what this probe exists to exercise,
-		// and reading it consults the installed tree rather than the monorepo's graph.
-		const installedRoot = join(proj, "node_modules", "mailwoman")
-
-		const { bin } = await readPackageJSON<{ bin?: string | Record<string, string> }>(
-			join(installedRoot, "package.json")
-		)
-
-		const binEntry = typeof bin === "string" ? bin : bin?.mailwoman
-
-		if (!binEntry) throw new Error("[smoke] the installed mailwoman manifest declares no `mailwoman` bin")
-
-		const cli = join(installedRoot, binEntry)
+		const cli = await installedMailwomanBin(proj)
 
 		log("[smoke] mailwoman --help (loads every command module)…")
 
@@ -543,7 +528,7 @@ export async function smokeCleanInstall({ repoRoot, log }: SmokeCleanInstallOpti
 				`[smoke] standalone-leaf import: ${leaf} alone (no umbrella, no hoisting; closure ${firstPartyDependencies.join(", ") || "none"})…`
 			)
 
-			const solo = tmp.resolve(`solo-${leafDir}`)
+			const solo = tmp.path(`solo-${leafDir}`)
 			await makeDirectories(solo)
 
 			await writeLocalJSONFile(
@@ -555,11 +540,11 @@ export async function smokeCleanInstall({ repoRoot, log }: SmokeCleanInstallOpti
 						[leaf, ...firstPartyDependencies].map((name) => {
 							const workspaceDir = WORKSPACES[name]!
 
-							return [name, `file:${join(tarDir, `${workspaceDir}.tgz`)}`]
+							return [name, `file:${tarDir(`${workspaceDir}.tgz`).toString()}`]
 						})
 					),
 				},
-				join(solo, "package.json")
+				solo("package.json")
 			)
 
 			run("npm", ["install", "--no-audit", "--no-fund", "--no-package-lock"], solo)

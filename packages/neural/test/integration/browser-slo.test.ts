@@ -50,7 +50,7 @@
 
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http"
 
-import { dataRootPath } from "@mailwoman/core/data-root"
+import { databaseRootPath, dataRootPath } from "@mailwoman/core/data-root"
 import { gzipSync } from "@mailwoman/core/fs/compression"
 import { statPath, realPath, pathExists, readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { openReadStream } from "@mailwoman/core/fs/streams"
@@ -60,7 +60,7 @@ import { median, percentile } from "@mailwoman/core/stats"
 import { architecture, cpuCount, cpuModel, platformName, totalMemoryBytes } from "@mailwoman/core/utils/system"
 import { resolveWeights, type ResolvedWeights } from "@mailwoman/neural"
 import { build } from "esbuild"
-import { basename, dirname, extname, normalize, resolvePath as resolveFilePath, sep } from "path-ts"
+import { basename, dirname, extname, normalize, type PathBuilder, resolvePath as resolveFilePath, sep } from "path-ts"
 import { type Browser, chromium } from "playwright"
 import { afterAll, beforeAll, describe, expect, test } from "vitest"
 
@@ -299,7 +299,7 @@ const haveBrowser = (await tryChromiumExecutable()) !== null
 const ORT_DIST_LOCATOR = await tryResolveFile("onnxruntime-web/ort-wasm-simd-threaded.jsep.wasm")
 
 const SQLJS_ENTRY_FILE = await tryResolveFile("sql.js-httpvfs/dist/index.js")
-const CANDIDATE_DB_PATH = String(dataRootPath("db", "wof", "candidate.db"))
+const CANDIDATE_DB_PATH = databaseRootPath(dataRootPath())("wof", "candidate.db")
 
 const haveGazetteer = SQLJS_ENTRY_FILE !== null && (await pathExists(CANDIDATE_DB_PATH))
 const canRun = haveModel && haveBrowser && ORT_DIST_LOCATOR !== null
@@ -308,7 +308,7 @@ const canRun = haveModel && haveBrowser && ORT_DIST_LOCATOR !== null
  * Directory the browser entry is resolved from — the repo root, so `@mailwoman/neural/*`
  * and `onnxruntime-web` both resolve through the workspace's own module graph.
  */
-const BUNDLE_RESOLVE_DIR = String(repoRootPath())
+const BUNDLE_RESOLVE_DIR = repoRootPath()
 
 // MARK: Static asset server
 
@@ -352,7 +352,7 @@ interface InlineRoute {
 
 interface RangeMount {
 	readonly path: string
-	readonly file: string
+	readonly file: PathBuilder
 	readonly assetClass: AssetClass
 }
 

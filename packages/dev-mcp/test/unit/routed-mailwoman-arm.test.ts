@@ -70,7 +70,7 @@ function fakeDeps(overrides: Partial<RoutedMailwomanArmDeps> = {}): RoutedMailwo
 	return {
 		buildDeps: vi.fn(async () => gauntlet),
 		resolveWeights: vi.fn(async ({ locale }) => resolved(locale)),
-		realpath: async (path) => String(path),
+		realpath: async (path) => path.toString(),
 		runOne: vi.fn(async () => EMPTY_RESULT),
 		...overrides,
 	}

@@ -18,11 +18,11 @@ import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { DEFAULT_GEONAMES_TAIL_COUNTRIES } from "mailwoman/gazetteer-pipeline/defaults"
 import { buildPostcodeGeonamesTail } from "mailwoman/gazetteer-pipeline/postcode/geonames/tail"
-import { join } from "path-ts"
+import type { PathBuilder } from "path-ts"
 import { afterAll, beforeAll, expect, test } from "vitest"
 
 let root: TemporaryDirectory
-let postalDir: string
+let postalDir: PathBuilder
 
 /**
  * A GeoNames postal row: country, postcode, place, admin1, code1, admin2, code2,
@@ -34,7 +34,7 @@ function row(cc: string, postcode: string, place: string, lat: number, lon: numb
 
 beforeAll(async () => {
 	root = await temporaryDirectory("geonames-tail-")
-	postalDir = root.resolve("geonames-postal")
+	postalDir = root.path("geonames-postal")
 	await makeDirectories(postalDir)
 
 	// CZ: one code written in the spaced display form, across three settlements — exercises both #920
@@ -46,17 +46,17 @@ beforeAll(async () => {
 			row("CZ", "110 00", "Josefov", 50.4, 14.4),
 			row("CZ", "120 00", "Vinohrady", 50.07, 14.44),
 		],
-		join(postalDir, "CZ.txt")
+		postalDir("CZ.txt")
 	)
 
 	// PL: the dashed display form.
-	await writeLocalFile(row("PL", "11-041", "Olsztyn", 53.8, 20.4) + "\n", join(postalDir, "PL.txt"))
+	await writeLocalFile(row("PL", "11-041", "Olsztyn", 53.8, 20.4) + "\n", postalDir("PL.txt"))
 })
 
 afterAll(() => root[Symbol.asyncDispose]())
 
 test("buildPostcodeGeonamesTail: #920 laws survive a rebuild, and a missing dump is reported", async () => {
-	const out = root.resolve("tail.db")
+	const out = root.path("tail.db")
 
 	const result = await buildPostcodeGeonamesTail({
 		countries: ["CZ", "PL", "ZZ"],

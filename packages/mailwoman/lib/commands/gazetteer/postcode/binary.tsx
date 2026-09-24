@@ -42,14 +42,14 @@ import { allRows } from "@mailwoman/core/utils"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { Box, Text } from "ink"
-import { join } from "path-ts"
+import { type PathBuilder, resolvePathBuilder } from "path-ts"
 
 import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 import type { GBGranularity, PostcodeDatabaseRow } from "#gazetteer-pipeline/postcode/binary"
 
 interface LocaleSource {
 	country: string
-	db: string
+	db: PathBuilder
 }
 
 /**
@@ -81,7 +81,7 @@ export const spec = {
 
 const GazetteerPostcodeBinary: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { dataRootPath } = await import("@mailwoman/core/utils")
+		const { wofDatabasePath } = await import("@mailwoman/resolver-wof-sqlite/paths")
 		// `@mailwoman/neural/postcode-binary-resolver` is a self-contained serializer
 		// whose only imports are type-only, so this load costs a file read
 		// rather than the ONNX runtime the package name suggests.
@@ -90,8 +90,7 @@ const GazetteerPostcodeBinary: CommandComponent<typeof spec> = ({ options }) => 
 		const { browserGranularityFor, buildPostcodeBinaryEntries, keyFloorViolation, POSTCODE_BINARY_SOURCES } =
 			await import("#gazetteer-pipeline/postcode/binary")
 
-		const wof = dataRootPath("db", "wof")
-		const outDir = options.out
+		const outDir = resolvePathBuilder(options.out)
 
 		const locales: LocaleSource[] = []
 
@@ -99,12 +98,16 @@ const GazetteerPostcodeBinary: CommandComponent<typeof spec> = ({ options }) => 
 			const [country, db] = localeSpec.split(":")
 
 			if (country && db) {
-				locales.push({ country, db: db.startsWith("/") ? db : join(wof, db) })
+				// An absolute `db` replaces the WOF directory.
+				// A relative one resolves under it.
+				locales.push({ country, db: wofDatabasePath(db) })
 			}
 		}
 
 		if (!locales.length) {
-			locales.push(...POSTCODE_BINARY_SOURCES.map(({ country, database }) => ({ country, db: join(wof, database) })))
+			locales.push(
+				...POSTCODE_BINARY_SOURCES.map(({ country, database }) => ({ country, db: wofDatabasePath(database) }))
+			)
 		}
 
 		const granularity: GBGranularity = options.gbGranularity
@@ -144,7 +147,7 @@ const GazetteerPostcodeBinary: CommandComponent<typeof spec> = ({ options }) => 
 			}
 
 			const bytes = serializePostcodeBinary(entries)
-			const outPath = join(outDir, `postcode-${country.toLowerCase()}.bin`)
+			const outPath = outDir(`postcode-${country.toLowerCase()}.bin`)
 			await writeLocalFile(bytes, outPath)
 
 			written++

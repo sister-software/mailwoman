@@ -748,7 +748,7 @@ export async function buildSourceRegister(options: BuildSourceRegisterOptions): 
 	await writeLocalFile(prettyJSON(register), options.outPath)
 
 	return {
-		outPath: String(options.outPath),
+		outPath: options.outPath.toString(),
 		jurisdictions: jurisdictions.length,
 		sources: sources.length,
 		licenses: licenses.length,

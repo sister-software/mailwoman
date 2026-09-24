@@ -43,6 +43,7 @@ import {
 } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { cellToParent, latLngToCell } from "h3-js"
+import type { PathBuilderLike } from "path-ts"
 
 import { SoilCapabilityLookup, SoilReadingKind } from "#index"
 import type { SoilDatabase } from "#schema"
@@ -138,7 +139,7 @@ export const OUTSIDE_PILOT_POINTS: ReadonlyArray<{ label: string; latitude: numb
 const BOUNDARY_TOLERANCE_METRES = 1
 
 export interface VerifySoilOptions {
-	databasePath: string
+	databasePath: PathBuilderLike
 	client: Pick<SoilDataAccessClient, "mukeyAtPoint">
 	/**
 	 * Points to re-ask the service about.
@@ -351,7 +352,7 @@ function nearestEdgeDistance(blob: Uint8Array, lon: number, lat: number): number
  * and fetches exactly the row it lands on.
  */
 export function sampleAgreementPoints(
-	databasePath: string,
+	databasePath: PathBuilderLike,
 	options: { count?: number } = {}
 ): Array<{ label: string; latitude: number; longitude: number }> {
 	const count = options.count ?? 60

@@ -22,6 +22,7 @@ import {
 } from "@mailwoman/corpus/tools/overture-subvenue"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sql } from "kysely"
+import type { PathBuilder } from "path-ts"
 import { afterAll, beforeAll, expect, test } from "vitest"
 
 interface FixtureRow {
@@ -91,9 +92,9 @@ const ROWS: FixtureRow[] = [
 ]
 
 let scratch: TemporaryDirectory
-let databasePath: string
+let databasePath: PathBuilder
 
-async function buildFixture(path: string): Promise<void> {
+async function buildFixture(path: PathBuilder): Promise<void> {
 	using kdb = new DatabaseClient<FixtureDatabase>(path)
 
 	await kdb.schema
@@ -157,7 +158,7 @@ async function buildFixture(path: string): Promise<void> {
 
 beforeAll(async () => {
 	scratch = await temporaryDirectory("overture-subvenue-")
-	databasePath = scratch.resolve("poi.db")
+	databasePath = scratch.path("poi.db")
 
 	await buildFixture(databasePath)
 })

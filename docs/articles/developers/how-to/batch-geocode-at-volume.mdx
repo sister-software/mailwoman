@@ -40,7 +40,7 @@ import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { AddressPointSqliteLookup, StreetInterpolator, WOFCandidateTableLookup } from "@mailwoman/resolver-wof-sqlite"
 import { geocodeAddress, RegionDatabaseProvider } from "mailwoman/geocode-core"
-import { mailwomanDataRoot, resolveCandidateDBPath } from "mailwoman/resolver-backend"
+import { dataRootPath, resolveCandidateDBPath } from "mailwoman/resolver-backend"
 import { CSVSpliterator } from "spliterator"
 
 const repeats = Number(process.argv[2] ?? 250)
@@ -56,7 +56,7 @@ const t0 = performance.now()
 const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
 using lookup = new WOFCandidateTableLookup({ databasePath: resolveCandidateDBPath() })
 const resolver = createWOFResolver(lookup)
-using extracts = new RegionDatabaseProvider({ AddressPointSqliteLookup, StreetInterpolator }, mailwomanDataRoot())
+using extracts = new RegionDatabaseProvider({ AddressPointSqliteLookup, StreetInterpolator }, dataRootPath())
 const startupMs = performance.now() - t0
 
 // Warm the session: the first few inferences pay one-time allocation the steady-state rate should not carry.
@@ -166,7 +166,7 @@ And this as `pool.mjs`:
 import { createWriteStream } from "node:fs"
 import { Worker } from "node:worker_threads"
 
-import { mailwomanDataRoot, resolveCandidateDBPath } from "mailwoman/resolver-backend"
+import { dataRootPath, resolveCandidateDBPath } from "mailwoman/resolver-backend"
 import { CSVSpliterator } from "spliterator"
 
 const workerCount = Number(process.argv[2] ?? 4)
@@ -190,7 +190,7 @@ const workerData = {
 	locale: "en-US",
 	country: "US",
 	candidateDB: resolveCandidateDBPath(),
-	dataRoot: mailwomanDataRoot(),
+	dataRoot: dataRootPath(),
 }
 
 const out = createWriteStream("customers.pooled.jsonl")

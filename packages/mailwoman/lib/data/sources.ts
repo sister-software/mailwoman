@@ -22,6 +22,7 @@
 
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
+import type { PathBuilderLike } from "path-ts"
 
 import { bundleArtifactPath, type BundleSourceCensus, type DataBundle, resolveBundleArtifacts } from "#data/bundles"
 import { readReleaseManifest } from "#data/release"
@@ -120,7 +121,10 @@ async function tallyArtifact(
  * applied, so a versioned per-state database is read where `resolveDatabasePath`
  * would find it rather than at its unversioned fallback.
  */
-export async function censusBundleSources(bundle: DataBundle, dataRoot: string): Promise<BundleSourceCensusResult> {
+export async function censusBundleSources(
+	bundle: DataBundle,
+	dataRoot: PathBuilderLike
+): Promise<BundleSourceCensusResult> {
 	const census = bundle.sourceCensus
 
 	if (!census) {

@@ -39,7 +39,7 @@ import { openWriteStream, pipeline, Readable } from "@mailwoman/core/fs/streams"
 import { makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { md5File } from "@mailwoman/core/hash"
 import { prettyJSON } from "@mailwoman/core/json"
-import { join } from "path-ts"
+import { PathBuilder, type PathBuilderLike } from "path-ts"
 
 /**
  * The OS Downloads API root.
@@ -315,7 +315,7 @@ export interface DownloadCodePointOptions {
 	 * The caller owns it — the convention is a new dated directory per acquisition
 	 * (`$MAILWOMAN_DATA_ROOT/codepoint/<yyyy-MM-DD>/`) so an acquisition never overwrites an earlier one.
 	 */
-	destDir: string
+	destDir: PathBuilderLike
 	/**
 	 * Which archive to take.
 	 *
@@ -341,7 +341,7 @@ export interface DownloadCodePointResult {
 	/**
 	 * Absolute path of the downloaded archive.
 	 */
-	archivePath: string
+	archivePath: PathBuilder
 	/**
 	 * Bytes on disk.
 	 */
@@ -383,7 +383,8 @@ export interface DownloadCodePointResult {
  * The kind of defect that reads as a data change rather than a transfer error.
  */
 export async function downloadCodePointOpen(options: DownloadCodePointOptions): Promise<DownloadCodePointResult> {
-	const { destDir, format = "CSV", reuseExisting = true } = options
+	const { format = "CSV", reuseExisting = true } = options
+	const destDir = PathBuilder.from(options.destDir)
 	const phase = options.onPhase ?? (() => {})
 	const client = options.client ?? createOSDownloadsClient()
 
@@ -399,7 +400,7 @@ export async function downloadCodePointOpen(options: DownloadCodePointOptions): 
 	}
 
 	await makeDirectories(destDir)
-	const archivePath = String(join(destDir, download.fileName))
+	const archivePath = destDir(download.fileName)
 
 	// Reuse-by-md5, near-verbatim in `uprn-layer.ts`'s `downloadOpenUPRN`.
 	// Kept separate because that one (re)writes the acquisition sidecars on the
@@ -446,11 +447,11 @@ export async function downloadCodePointOpen(options: DownloadCodePointOptions): 
 
 	// The sidecar makes the archive self-describing on disk: a later reader can tell which
 	// OS release these bytes are without re-querying an API whose answer will have moved on.
-	await writeLocalTextFile(`${md5}  ${download.fileName}\n`, `${archivePath}.md5`)
+	await writeLocalTextFile(`${md5}  ${download.fileName}\n`, destDir(`${download.fileName}.md5`))
 
 	await writeLocalTextFile(
 		prettyJSON({ product, download, bytes, md5, acquiredAt: new Date().toISOString() }),
-		String(join(destDir, "acquisition.json"))
+		destDir("acquisition.json")
 	)
 
 	return { archivePath, bytes, md5, version: product.version, download, reused: false }

@@ -43,6 +43,7 @@
 
 import { haversineKm } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
+import type { PathBuilderLike } from "path-ts"
 
 import type { CandidateDatabase } from "#candidate/schema"
 import { normalizeLocalityForKey } from "#street/normalize"
@@ -202,7 +203,7 @@ export class ImportanceIndex {
  *
  * Measured end to end, loading the index plus probing all 4.48 M locality-tier places takes 25 s.
  */
-export function loadImportanceIndex(databasePath: string): ImportanceIndex {
+export function loadImportanceIndex(databasePath: PathBuilderLike): ImportanceIndex {
 	using db = new DatabaseClient<CandidateDatabase>(databasePath, { readOnly: true })
 
 	const groups = new Map<string, ScoredPlace[]>()

@@ -23,11 +23,12 @@
  *   Usage: node packages/mailwoman/lib/dev-tools/probe/fst-bias.run.ts [--locale en-us] [--raw] <surface>...
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists, readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { collapseFSTBias } from "@mailwoman/neural/fst-prior"
 import { normalizeTokens, deserializeFST } from "@mailwoman/resolver-wof-sqlite/fst"
+import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
+import type { PathBuilder } from "path-ts"
 
 const { values, positionals } = parseArguments({
 	allowPositionals: true,
@@ -48,15 +49,15 @@ const { values, positionals } = parseArguments({
  * `imp` carries the real Wikipedia join.
  * Both stamps are readable in the binaries' provenance tails.
  */
-const ARMS: Record<string, string> = {
-	pop: String(dataRootPath("db", "wof", "fst-per-locale")),
-	imp: String(dataRootPath("db", "wof", "fst-staging-2026-08-05-importance-fanoutfix")),
+const ARMS: Record<string, PathBuilder> = {
+	pop: wofDatabasePath("fst-per-locale"),
+	imp: wofDatabasePath("fst-staging-2026-08-05-importance-fanoutfix"),
 }
 
 const matchers = new Map<string, unknown>()
 
 for (const [arm, dir] of Object.entries(ARMS)) {
-	const path = `${dir}/fst-${values.locale}.bin`
+	const path = dir(`fst-${values.locale}.bin`)
 
 	if (!(await pathExists(path))) {
 		console.error(`[${arm}] no fst-${values.locale}.bin in ${dir} — skipping this arm`)

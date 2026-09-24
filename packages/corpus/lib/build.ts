@@ -53,7 +53,7 @@ import { openWriteStream, type WriteStream } from "@mailwoman/core/fs/streams"
 import { writeLocalJSONFile, makeDirectories } from "@mailwoman/core/fs/writers"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
-import { join } from "path-ts"
+import { PathBuilder, type PathBuilderLike } from "path-ts"
 import { JSONSpliterator } from "spliterator"
 
 import { defaultAdapterRegistry } from "#adapters/utils"
@@ -95,7 +95,7 @@ export interface BuildCorpusOptions {
 	 *
 	 * All build artifacts land beneath it.
 	 */
-	outputDir: string
+	outputDir: PathBuilderLike
 
 	/**
 	 * Corpus version (e.g. `"0.1.0"`).
@@ -314,8 +314,9 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 	const shuffleSeed = opts.shuffleSeed ?? DEFAULT_SHUFFLE_SEED
 	const built_at = new Date().toISOString()
 
-	await makeDirectories(opts.outputDir)
-	const intermediateDir = join(opts.outputDir, "intermediate")
+	const outputDir = PathBuilder.from(opts.outputDir)
+	await makeDirectories(outputDir)
+	const intermediateDir = outputDir("intermediate")
 	await makeDirectories(intermediateDir)
 
 	// 1. Adapter runs.
@@ -340,13 +341,13 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 		// Recovers an align-phase crash without redoing the (expensive) emit phase.
 		// Default (unset) re-emits, preserving correctness.
 		// (2026-06-12.)
-		const adapterDir = join(intermediateDir, adapter.id)
-		const cachedManifest = join(adapterDir, "MANIFEST.json")
+		const adapterDir = intermediateDir(adapter.id)
+		const cachedManifest = adapterDir("MANIFEST.json")
 
 		if (
 			$public.MAILWOMAN_RESUME === "1" &&
 			(await pathExists(cachedManifest)) &&
-			(await pathExists(join(adapterDir, "canonical.jsonl")))
+			(await pathExists(adapterDir("canonical.jsonl")))
 		) {
 			const cached = await readLocalJSONFile<AdapterRunManifest>(cachedManifest)
 			opts.onProgress?.("adapter-run", `resumed ${adapter.id} (reused ${cached.yielded} canonical rows)`)
@@ -374,10 +375,10 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 	// + `SplitManifest.{train,val,test}` arrays are gone.
 	//   Per-row split is decided inline via
 	// `splitForRow` (a pure function of source_id + region + holdout policy).
-	const labeledPaths: Record<SplitName, string> = {
-		train: join(intermediateDir, "labeled-train.jsonl"),
-		val: join(intermediateDir, "labeled-val.jsonl"),
-		test: join(intermediateDir, "labeled-test.jsonl"),
+	const labeledPaths: Record<SplitName, PathBuilder> = {
+		train: intermediateDir("labeled-train.jsonl"),
+		val: intermediateDir("labeled-val.jsonl"),
+		test: intermediateDir("labeled-test.jsonl"),
 	}
 
 	const labeledStreams: Record<SplitName, WriteStream> = {
@@ -386,7 +387,7 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 		test: openWriteStream(labeledPaths.test, { encoding: "utf8" }),
 	}
 
-	const quarantinePath = join(intermediateDir, "quarantine.jsonl")
+	const quarantinePath = intermediateDir("quarantine.jsonl")
 	const quarantineStream = openWriteStream(quarantinePath, { encoding: "utf8" })
 
 	let aligned = 0
@@ -532,7 +533,7 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 	// `sort(1)` from coreutils produces the deterministic per-split .txt manifests
 	// with disk spill for splits that exceed in-memory thresholds.
 	opts.onProgress?.("split", `splitting ${aligned} aligned rows`)
-	const splitsDir = join(opts.outputDir, "splits")
+	const splitsDir = outputDir("splits")
 
 	const splitCounts = await writeSplitManifestsFromLabeledFiles({
 		labeledPaths,
@@ -549,7 +550,7 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 
 	// Each split gets its own generator seeded from one base, so a split's row order does
 	// not depend on how many rows the splits before it happened to carry.
-	const shuffled = (path: string, salt: number) =>
+	const shuffled = (path: PathBuilderLike, salt: number) =>
 		shuffleWithinWindow(streamJSONL<LabeledRow>(path), makeMulberry32(shuffleSeed + salt), shuffleWindow)
 
 	opts.onProgress?.(
@@ -566,7 +567,7 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 			test: shuffled(labeledPaths.test, 2),
 		},
 		{
-			outputDir: opts.outputDir,
+			outputDir,
 			corpusVersion: opts.corpusVersion,
 			rowsPerFile,
 		}
@@ -599,7 +600,7 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 		refused: ineligibleSources,
 	})
 
-	await writeLocalJSONFile(trainingManifest, opts.outputDir, TRAINING_MANIFEST_FILE)
+	await writeLocalJSONFile(trainingManifest, outputDir(TRAINING_MANIFEST_FILE))
 
 	const manifest: BuildCorpusManifest = {
 		corpus_version: opts.corpusVersion,
@@ -623,12 +624,12 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 		training_manifest_digest: trainingManifest.contentDigest,
 	}
 
-	await writeLocalJSONFile(manifest, opts.outputDir, "MANIFEST.json")
+	await writeLocalJSONFile(manifest, outputDir("MANIFEST.json"))
 
 	return manifest
 }
 
-async function* streamJSONL<T>(path: string): AsyncIterable<T> {
+async function* streamJSONL<T>(path: PathBuilderLike): AsyncIterable<T> {
 	// JSONSpliterator yields already-parsed rows (skipEmpty is on by default, so blank
 	// lines are dropped at the row level) and throws SyntaxError on a malformed row.
 	// Same fail-loud behavior as the prior readline + bare `JSON.parse`.

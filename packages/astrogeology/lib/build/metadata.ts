@@ -50,14 +50,14 @@ export async function applyPMTilesMetadata(archivePath: string, block: PMTilesMe
 	const file = resolvePath(scratch.path, "metadata.json")
 
 	await writeLocalJSONFile(merged, file)
-	await runFile("pmtiles", ["edit", archivePath, `--metadata=${String(file)}`])
+	await runFile("pmtiles", ["edit", archivePath, `--metadata=${file}`])
 
 	const written = await readMailwomanMetadata(archivePath)
 
 	for (const [key, value] of Object.entries(validated)) {
 		if (written[key as keyof PMTilesMetadata] !== value) {
 			throw new Error(
-				`${archivePath}: metadata ${key} did not round-trip: wrote ${String(value)}, read ${String(written[key as keyof PMTilesMetadata])}`
+				`${archivePath}: metadata ${key} did not round-trip: wrote ${value}, read ${String(written[key as keyof PMTilesMetadata])}`
 			)
 		}
 	}

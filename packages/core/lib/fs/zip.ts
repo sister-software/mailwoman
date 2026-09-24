@@ -44,7 +44,7 @@ async function openStreamingArchive(
 	// `decodeStrings: false` hands back the central directory's raw name bytes,
 	// which is the only way to read a name the archive never said the encoding of.
 	// See {@link ZipNameOptions}.
-	const archive = await openArchive(String(archivePath), options?.filenameEncoding ? { decodeStrings: false } : {})
+	const archive = await openArchive(archivePath.toString(), options?.filenameEncoding ? { decodeStrings: false } : {})
 
 	return Object.assign(archive, { [Symbol.asyncDispose]: () => archive.close() })
 }

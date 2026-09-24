@@ -9,7 +9,6 @@ import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { collectRepoContext } from "@mailwoman/repo-health"
 import { findPrivateNameShadows, privateNameShadowsCheck } from "@mailwoman/repo-health/checks/private-name-shadows"
-import { join, resolvePath } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 
 const fixtures = new AsyncDisposableStack()
@@ -20,11 +19,11 @@ async function plant(files: Record<string, string>): Promise<{ repoRoot: string;
 	const root = fixtures.use(await temporaryDirectory("shadows-")).path
 
 	for (const [file, text] of Object.entries(files)) {
-		await makeDirectories(join(root, file.slice(0, file.lastIndexOf("/"))))
-		await writeLocalTextFile(text, resolvePath(root, file))
+		await makeDirectories(root(file.slice(0, file.lastIndexOf("/"))))
+		await writeLocalTextFile(text, root(file))
 	}
 
-	return { repoRoot: String(root), trackedFiles: Object.keys(files) }
+	return { repoRoot: root.toString(), trackedFiles: Object.keys(files) }
 }
 
 describe("findPrivateNameShadows", () => {

@@ -14,10 +14,11 @@
  *   is a no-op for a country with no registered locale or no database on disk.
  */
 
-import { databaseRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { AddressPointSqliteLookup } from "@mailwoman/resolver-wof-sqlite"
+import { addressPointDatabaseRoot } from "@mailwoman/resolver-wof-sqlite/paths"
 import { createStreetLocaleRegistry, type StreetLocale } from "@mailwoman/resolver-wof-sqlite/street"
+import type { PathBuilderLike } from "path-ts"
 
 import type { RegionDatabases } from "#geocode/regions"
 
@@ -74,14 +75,12 @@ export function supportedOvertureCountries(): string[] {
  * Where a country's national address-point database lives: beside the US per-state databases,
  * since both are Overture addresses keyed by the shared schema.
  *
- * It resolves under the data root's `db/` group through {@link databaseRootPath},
- * which is where `selectAddressPointsDB` reads the per-state databases from.
- * Composing `address-points` against the data root directly answered a directory that does
- * not exist, and the caller below treats an absent file as a country without a rooftop tier:
- * Taiwan's 3.1 GB `address-points-tw.db` is on disk and read as absent.
+ * It resolves through `addressPointDatabaseRoot`, the same directory `selectAddressPointsDB` reads.
+ * The caller below treats an absent file as a country without a rooftop tier,
+ * so a path outside that directory reads an existing database as absent.
  */
-export function nationalAddressPointsPath(dataRoot: string, countryCode: string): string {
-	return String(databaseRootPath(dataRoot, "address-points", `address-points-${countryCode.toLowerCase()}.db`))
+export function nationalAddressPointsPath(dataRoot: PathBuilderLike, countryCode: string): string {
+	return addressPointDatabaseRoot(dataRoot)(`address-points-${countryCode.toLowerCase()}.db`).toString()
 }
 
 /**
@@ -91,16 +90,16 @@ export function nationalAddressPointsPath(dataRoot: string, countryCode: string)
  * Prefer {@link OvertureNationalDatabaseProvider.create}, which warms before answering.
  */
 export class OvertureNationalDatabaseProvider implements Disposable {
-	readonly #dataRoot: string
+	readonly #dataRoot: PathBuilderLike
 	readonly #cache = new Map<string, RegionDatabases>()
 	readonly #onDisk = new Set<string>()
 	#warmPromise?: Promise<void>
 
-	constructor(dataRoot: string) {
+	constructor(dataRoot: PathBuilderLike) {
 		this.#dataRoot = dataRoot
 	}
 
-	static async create(dataRoot: string): Promise<OvertureNationalDatabaseProvider> {
+	static async create(dataRoot: PathBuilderLike): Promise<OvertureNationalDatabaseProvider> {
 		const provider = new OvertureNationalDatabaseProvider(dataRoot)
 
 		await provider.warm()

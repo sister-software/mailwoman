@@ -28,12 +28,13 @@
  */
 
 import type { CountryBBoxFact, CountryCoverageFact } from "@mailwoman/core/resolver"
-// resolver-wof-sqlite is an optional peer of mailwoman (the geocode.tsx convention) —
-// runtime imports are dynamic inside the functions.
-// Type-only imports are erased and safe at module level.
+// resolver-wof-sqlite's runtime modules are imported inside the functions,
+// so loading this module does not evaluate them.
+// Type-only imports are erased.
 import type { GazetteerCoverageDatabase } from "@mailwoman/resolver-wof-sqlite/coverage-manifest-schema"
 import { COUNTRY_BBOX } from "@mailwoman/resolver/plausibility"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
+import type { PathBuilderLike } from "path-ts"
 
 /**
  * Shared source string for the #743 promote measurements.
@@ -130,7 +131,7 @@ export interface EmitCoverageManifestOptions {
 	/**
 	 * The candidate DB under construction — must be pre-seal (a shipped DB is never patched, rebuild instead).
 	 */
-	dbPath: string
+	dbPath: PathBuilderLike
 	/**
 	 * Coverage rows to bake (default {@link MEASURED_COUNTRY_COVERAGE}).
 	 */

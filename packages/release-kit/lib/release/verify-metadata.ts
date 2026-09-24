@@ -56,7 +56,7 @@
 
 import { readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { escapeRegExp } from "@mailwoman/core/strings/regexp"
-import { resolvePath } from "path-ts"
+import { type PathBuilderLike, resolvePath } from "path-ts"
 import { TextSpliterator } from "spliterator"
 
 /**
@@ -86,7 +86,7 @@ interface MatrixRow {
 }
 
 export interface VerifyReleaseMetadataOptions {
-	repoRoot: string
+	repoRoot: PathBuilderLike
 	/**
 	 * Repo-relative (or absolute) overrides for each surface.
 	 * The defaults are the real repo files.

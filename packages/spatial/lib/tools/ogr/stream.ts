@@ -7,6 +7,7 @@
 
 import { tryParsingJSON } from "@mailwoman/core/json"
 import { spawnProcess } from "@mailwoman/core/process"
+import type { PathBuilderLike } from "path-ts"
 import { TextSpliterator } from "spliterator"
 
 const RECORD_SEPARATOR = 0x1e
@@ -35,7 +36,7 @@ export interface OGRProcess {
  * The caller owns the stdout format (GeoJSONSeq, CSV, …) and its parsing;
  * {@link ogr2ogrGeoJSONSeq} is the GeoJSONSeq reading over this.
  */
-export function spawnOGR2OGR(args: readonly string[], context: string): OGRProcess {
+export function spawnOGR2OGR(args: readonly PathBuilderLike[], context: string): OGRProcess {
 	const child = spawnProcess("ogr2ogr", [...args], { stdio: ["ignore", "pipe", "pipe"] })
 	let stderr = ""
 
@@ -85,7 +86,7 @@ export function spawnOGR2OGR(args: readonly string[], context: string): OGRProce
  * A malformed record is tolerated (skipped) rather than thrown.
  * A non-zero exit throws after the stream drains.
  */
-export async function* ogr2ogrGeoJSONSeq<T>(args: readonly string[], context: string): AsyncGenerator<T> {
+export async function* ogr2ogrGeoJSONSeq<T>(args: readonly PathBuilderLike[], context: string): AsyncGenerator<T> {
 	const proc = spawnOGR2OGR(args, context)
 
 	try {

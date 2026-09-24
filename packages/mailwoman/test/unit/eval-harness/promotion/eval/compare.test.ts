@@ -7,14 +7,14 @@
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories, writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { comparePromotionOutputs } from "mailwoman/eval-harness/promotion/eval/compare"
-import { join } from "path-ts"
+import type { PathBuilder } from "path-ts"
 import { afterAll, describe, expect, test } from "vitest"
 
 const fixtures = new AsyncDisposableStack()
 
 afterAll(() => fixtures.disposeAsync())
 
-async function outputDirectory(name: string, includePerLocale = true): Promise<string> {
+async function outputDirectory(name: string, includePerLocale = true): Promise<PathBuilder> {
 	const directory = fixtures.use(await temporaryDirectory(name)).path
 
 	await makeDirectories(directory)
@@ -26,16 +26,16 @@ async function outputDirectory(name: string, includePerLocale = true): Promise<s
 			results: { "us.city": { actual: 98.2, floor: 98, pass: true } },
 			generated_at_dir: directory.toString(),
 		},
-		join(directory, "verdict.json")
+		directory("verdict.json")
 	)
 
 	if (includePerLocale) {
-		await writeLocalJSONFile({ reports: [{ exactRate: 98.2 }] }, join(directory, "fp32-per-locale.json"))
+		await writeLocalJSONFile({ reports: [{ exactRate: 98.2 }] }, directory("fp32-per-locale.json"))
 	}
 
-	await writeLocalTextFile("model.onnx md5: abc", join(directory, "provenance.txt"))
+	await writeLocalTextFile("model.onnx md5: abc", directory("provenance.txt"))
 
-	return directory.toString()
+	return directory
 }
 
 describe("comparePromotionOutputs", () => {
@@ -49,8 +49,8 @@ describe("comparePromotionOutputs", () => {
 	test("ignores the provenance receipt timestamp", async () => {
 		const baseline = await outputDirectory("promotion-compare-provenance-time-baseline-")
 		const candidate = await outputDirectory("promotion-compare-provenance-time-candidate-")
-		await writeLocalTextFile("graded at 2026-09-12T02:00:00Z\nmodel.onnx md5: abc", join(baseline, "provenance.txt"))
-		await writeLocalTextFile("graded at 2026-09-12T03:00:00Z\nmodel.onnx md5: abc", join(candidate, "provenance.txt"))
+		await writeLocalTextFile("graded at 2026-09-12T02:00:00Z\nmodel.onnx md5: abc", baseline("provenance.txt"))
+		await writeLocalTextFile("graded at 2026-09-12T03:00:00Z\nmodel.onnx md5: abc", candidate("provenance.txt"))
 
 		await expect(comparePromotionOutputs(baseline, candidate)).resolves.toEqual({ equal: true, differences: [] })
 	})
@@ -60,11 +60,11 @@ describe("comparePromotionOutputs", () => {
 		const candidate = await outputDirectory("promotion-compare-arena-candidate-")
 
 		for (const [directory, seconds] of [[baseline, "0.7"] as const, [candidate, "1.2"] as const]) {
-			await makeDirectories(join(directory, "arenas"))
+			await makeDirectories(directory("arenas"))
 
 			await writeLocalTextFile(
 				`Running harness...\n  50/69 (${seconds}s)\nDone in ${seconds}s\nWrote 69 results to ${directory}/arenas/libpostal.results.json`,
-				join(directory, "arenas", "libpostal.stderr")
+				directory("arenas", "libpostal.stderr")
 			)
 		}
 
@@ -74,7 +74,7 @@ describe("comparePromotionOutputs", () => {
 	test("names a changed score field", async () => {
 		const baseline = await outputDirectory("promotion-compare-score-baseline-")
 		const candidate = await outputDirectory("promotion-compare-score-candidate-")
-		await writeLocalJSONFile({ reports: [{ exactRate: 98.1 }] }, join(candidate, "fp32-per-locale.json"))
+		await writeLocalJSONFile({ reports: [{ exactRate: 98.1 }] }, candidate("fp32-per-locale.json"))
 
 		const comparison = await comparePromotionOutputs(baseline, candidate)
 
@@ -103,7 +103,7 @@ describe("comparePromotionOutputs", () => {
 	test("rejects a changed artifact provenance value", async () => {
 		const baseline = await outputDirectory("promotion-compare-provenance-baseline-")
 		const candidate = await outputDirectory("promotion-compare-provenance-candidate-")
-		await writeLocalTextFile("model.onnx md5: def", join(candidate, "provenance.txt"))
+		await writeLocalTextFile("model.onnx md5: def", candidate("provenance.txt"))
 
 		const comparison = await comparePromotionOutputs(baseline, candidate)
 

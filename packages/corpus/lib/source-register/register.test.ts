@@ -123,13 +123,13 @@ describe("the committed address-source register", () => {
 		// One character is enough to move the digest.
 		await using scratch = await temporaryDirectory("mw-register-edited-")
 		const edited = { ...register, sources: register.sources.map((source) => ({ ...source })) }
-		const path = scratch.resolve("address-source-register.json")
+		const path = scratch.path("address-source-register.json")
 
 		edited.sources[0] = { ...edited.sources[0]!, publisher: `${edited.sources[0]!.publisher} ` }
 
 		await writeLocalJSONFile(edited, path)
 
-		await expect(readAddressSourceRegister(String(path))).rejects.toThrow(/Something edited the file/u)
+		await expect(readAddressSourceRegister(path)).rejects.toThrow(/Something edited the file/u)
 	})
 })
 

@@ -19,7 +19,7 @@
 
 import { ProgressBar } from "@inkjs/ui"
 import type { RepositorySource, SynchronizeAction } from "@mailwoman/core"
-import { wofReposRoot } from "@mailwoman/core/data-root"
+import { wofReposPath } from "@mailwoman/core/data-root"
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { formatQuantity } from "@mailwoman/core/resources/locale"
 import { CommandError } from "@mailwoman/core/scripting/command"
@@ -118,7 +118,7 @@ const WOFSync: CommandComponent<typeof spec, [string?]> = ({ options, args }) =>
 				assertDestinationNotARepoName(requested)
 			}
 
-			const destination = PathBuilder.from(requested ?? wofReposRoot())
+			const destination = PathBuilder.from(requested ?? wofReposPath())
 
 			const { Placetype, PLACETYPES_REPO_SOURCE, synchronizeRepo } = await import("@mailwoman/core")
 			const { parallelMap } = await import("spliterator")

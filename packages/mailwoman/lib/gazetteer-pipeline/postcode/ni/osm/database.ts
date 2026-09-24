@@ -48,10 +48,11 @@ import { md5File } from "@mailwoman/core/hash"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { NI_OSM_ID_BASE } from "@mailwoman/core/resolver/synthetic-id-ranges"
 import { isoDate } from "@mailwoman/core/utils"
+import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase } from "@mailwoman/sqlite/sealed-db"
-import { join, type PathBuilderLike } from "path-ts"
+import { PathBuilder, type PathBuilderLike } from "path-ts"
 
 import {
 	applyStagingPragmas,
@@ -192,9 +193,9 @@ export async function buildPostcodeNIOSM(options: BuildPostcodeNIOSMOptions = {}
 	const phase = options.onPhase ?? (() => {})
 	const now = options.now ?? new Date()
 	const stamp = isoDate(now)
-	const sourceDir = (options.sourceDir ?? dataRootPath("osm-ni-postcodes", stamp)).toString()
-	const out = (options.out ?? dataRootPath("db", "wof", `postalcode-ni-osm-${stamp}.db`)).toString()
-	const responsePath = join(sourceDir, "response.json")
+	const sourceDir = PathBuilder.from(options.sourceDir ?? dataRootPath("osm-ni-postcodes", stamp))
+	const out = (options.out ?? wofDatabasePath(`postalcode-ni-osm-${stamp}.db`)).toString()
+	const responsePath = sourceDir("response.json")
 
 	// Acquire the source.
 	// Offline operation is the normal path described by the option.
@@ -246,7 +247,7 @@ export async function buildPostcodeNIOSM(options: BuildPostcodeNIOSMOptions = {}
 	const sectors = new Set(records.map((r) => r.sector))
 	const reconciliationFailures = reconcile(stats, records, districts.size, sectors.size)
 
-	// resolver-wof-sqlite is an optional peer — lazy import (the gazetteer-pipeline convention).
+	// Imported here so loading this module does not evaluate resolver-wof-sqlite (the gazetteer-pipeline convention).
 	const { createUnifiedSchema, createUnifiedIndexes, populateAncestors } =
 		await import("@mailwoman/resolver-wof-sqlite/unified-schema")
 
@@ -351,7 +352,7 @@ export async function buildPostcodeNIOSM(options: BuildPostcodeNIOSMOptions = {}
 
 	return {
 		out,
-		sourceDir,
+		sourceDir: sourceDir.toString(),
 		inserted,
 		stats,
 		districts: districts.size,

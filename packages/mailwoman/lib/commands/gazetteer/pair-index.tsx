@@ -38,7 +38,7 @@ import { writeLocalFile } from "@mailwoman/core/fs/writers"
 import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 import type { PairIndexHeaderInput } from "@mailwoman/neural/pair"
 import { Box, Text } from "ink"
-import { join } from "path-ts"
+import { PathBuilder } from "path-ts"
 
 import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 
@@ -211,7 +211,8 @@ export const spec = {
 
 const GazetteerPairIndex: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { dataRootPath, md5File } = await import("@mailwoman/core/utils")
+		const { dataRootPath } = await import("@mailwoman/core/data-root")
+		const { md5File } = await import("@mailwoman/core/utils")
 		// Both `@mailwoman/neural` subpaths are self-contained — `fst-prior` type-imports from a sibling
 		// and `pair-index-resolver` reaches only `core/types` — so neither load pulls the ONNX runtime.
 		const { normalizeFSTToken } = await import("@mailwoman/neural/fst-prior")
@@ -229,7 +230,7 @@ const GazetteerPairIndex: CommandComponent<typeof spec> = ({ options }) => {
 		// A country whose pairs come entirely from the WOF/secondary sources below runs
 		// with no CSV rather than being handed an empty one.
 		const sourcePath =
-			options.source ?? (country === "gb" ? String(dataRootPath("ppd", "2026-07-22", "gb-tuples.csv")) : undefined)
+			options.source ?? (country === "gb" ? dataRootPath("ppd", "2026-07-22", "gb-tuples.csv") : undefined)
 
 		if (sourcePath && !(await pathExists(sourcePath))) {
 			throw new Error(`pair-index: source CSV not found: ${sourcePath}`)
@@ -375,7 +376,7 @@ const GazetteerPairIndex: CommandComponent<typeof spec> = ({ options }) => {
 		}
 
 		const bytes = serializePairIndex(pairIndexHeader, entries)
-		const outPath = join(options.out, `pair-index-${country}.bin`)
+		const outPath = PathBuilder.from(options.out)(`pair-index-${country}.bin`)
 
 		await writeLocalFile(bytes, outPath)
 

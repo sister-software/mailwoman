@@ -12,7 +12,7 @@
  */
 
 import { decodeByteStream, openReadStream } from "@mailwoman/core/fs/streams"
-import { basename, extname, join, type PathBuilderLike } from "path-ts"
+import { basename, extname, type PathBuilderLike, resolvePathBuilder } from "path-ts"
 import { CSVSpliterator } from "spliterator"
 import { Globerator } from "spliterator/node/fs"
 
@@ -104,7 +104,8 @@ export async function* readPermitFile(
 	options: ReadPermitOptions = {}
 ): AsyncGenerator<PermitRow> {
 	const wanted = new Set(options.statuses ?? [OPEN_STATUS])
-	const category = basename(String(path), extname(String(path)))
+	const file = path.toString()
+	const category = basename(file, extname(file))
 	const bytes = openReadStream(path)
 
 	for await (const row of CSVSpliterator.fromAsync<Record<string, string>>(decodeByteStream(bytes, ENCODING))) {
@@ -141,7 +142,7 @@ export async function* readPermitDirectory(
 	const files = await Globerator.files("csv", { cwd: directory, absolute: false, recursive: false }).toSorted()
 
 	for (const name of files) {
-		yield* readPermitFile(join(directory, name), options)
+		yield* readPermitFile(resolvePathBuilder(directory, name), options)
 	}
 }
 

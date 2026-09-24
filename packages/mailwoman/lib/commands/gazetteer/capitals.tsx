@@ -33,11 +33,12 @@ export const spec = {
 const GazetteerCapitals: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { buildCapitalsReference } = await import("#gazetteer/capitals")
-		const { dataRootPath, repoRootPathBuilder } = await import("@mailwoman/core/utils")
+		const { dataRootPath } = await import("@mailwoman/core/data-root")
+		const { repoRootPathBuilder } = await import("@mailwoman/core/paths")
 
 		const result = await buildCapitalsReference({
-			geonamesDir: options.geonames ?? String(dataRootPath("geonames")),
-			outPath: options.out ?? String(repoRootPathBuilder("data", "gazetteer", "capitals-v1.json")),
+			geonamesDir: options.geonames ?? dataRootPath("geonames"),
+			outPath: options.out ?? repoRootPathBuilder("data", "gazetteer", "capitals-v1.json"),
 		})
 
 		const c = result.coverage

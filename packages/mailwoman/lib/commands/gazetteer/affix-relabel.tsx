@@ -38,9 +38,9 @@ const GazetteerAffixRelabel: CommandComponent<typeof spec> = ({ options }) => {
 		const { AbbreviationToDirectional, DirectionalToAbbreviationMap, NAME_PRONE_US_SUFFIXES, US_STREET_SUFFIX_LOOKUP } =
 			await import("@mailwoman/codex/us")
 
-		const { repoRootPathBuilder } = await import("@mailwoman/core/utils")
+		const { repoRootPathBuilder } = await import("@mailwoman/core/paths")
 
-		const output = options.out ?? String(repoRootPathBuilder("data", "gazetteer", "affix-relabel-lexicon-v2.json"))
+		const output = options.out ?? repoRootPathBuilder("data", "gazetteer", "affix-relabel-lexicon-v2.json")
 
 		// Directionals: every single-token surface variant → canonical abbreviation.
 		// The codex maps are Maps keyed by the Pub-28 spaced names ("north west");

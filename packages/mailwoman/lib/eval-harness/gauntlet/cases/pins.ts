@@ -112,7 +112,7 @@ export interface PinCheck {
  */
 export async function checkBoardPins(): Promise<PinCheck> {
 	const measured = await measureBoardPins()
-	const testPath = resolvePath(String(repoRootPath()), PIN_TEST_PATH)
+	const testPath = resolvePath(repoRootPath(), PIN_TEST_PATH)
 	const committed = readCommittedPins(await readLocalTextFile(testPath))
 	const stale = (Object.keys(measured) as Array<keyof BoardPins>).filter((key) => measured[key] !== committed[key])
 
@@ -126,7 +126,7 @@ export async function checkBoardPins(): Promise<PinCheck> {
  * A non-empty result after an update means the file reshaped under us.
  */
 export async function updateBoardPins(): Promise<PinCheck> {
-	const path = resolvePath(String(repoRootPath()), PIN_TEST_PATH)
+	const path = resolvePath(repoRootPath(), PIN_TEST_PATH)
 	const measured = await measureBoardPins()
 
 	await writeLocalFile(writeCommittedPins(await readLocalTextFile(path), measured), path)

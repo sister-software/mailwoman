@@ -25,6 +25,7 @@ import {
 } from "@mailwoman/flood/test-kit"
 import { EA_COVERAGE_STATEMENT, EA_COVERAGE_STATEMENT_URL } from "@mailwoman/flood/vocabulary"
 import { rectangleRing } from "@mailwoman/spatial"
+import type { PathBuilder } from "path-ts"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 /**
@@ -65,11 +66,11 @@ const INSIDE_FZ3 = {
 }
 
 let scratch: TemporaryDirectory
-let databasePath: string
+let databasePath: PathBuilder
 
 beforeAll(async () => {
 	scratch = await temporaryDirectory("mw-flood-verify-")
-	databasePath = scratch.resolve("flood.db")
+	databasePath = scratch.path("flood.db")
 
 	await buildFloodDatabase({
 		source: fixtureSource(fixtureFeatures()),

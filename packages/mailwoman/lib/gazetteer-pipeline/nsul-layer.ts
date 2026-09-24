@@ -52,7 +52,6 @@
  *   claims nothing there.
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { makeDirectories, removePath } from "@mailwoman/core/fs/writers"
 import { listZipEntries, readZipEntry } from "@mailwoman/core/fs/zip"
@@ -69,12 +68,13 @@ import {
 } from "@mailwoman/core/layers"
 import { CoverageBasis } from "@mailwoman/evidence"
 import type { NSULDatabase } from "@mailwoman/resolver-wof-sqlite/nsul"
+import { nsulDatabasePath, uprnDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { UPRNDatabase } from "@mailwoman/resolver-wof-sqlite/uprn"
 import { expandShortCellInt, shortCellToInt, type H3Cell } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed-db"
 import { cellToParent } from "h3-js"
-import { dirname, join, resolvePath, type PathBuilderLike } from "path-ts"
+import { dirname, type PathBuilder, resolvePath, resolvePathBuilder, type PathBuilderLike } from "path-ts"
 import { TextSpliterator } from "spliterator"
 import { Globerator } from "spliterator/node/fs"
 
@@ -339,7 +339,7 @@ interface NSULItemRecord {
  * Locate the archive in `sourceDir` and turn its eleven region members into streaming sources,
  * refusing a region set that is not exactly {@link NSUL_REGIONS}.
  */
-export async function openNSULArchive(sourceDir: string): Promise<{
+export async function openNSULArchive(sourceDir: PathBuilderLike): Promise<{
 	archivePath: string
 	archiveName: string
 	vintage: NSULVintage
@@ -361,7 +361,7 @@ export async function openNSULArchive(sourceDir: string): Promise<{
 		throw new Error(`buildNSULLayer: cannot read a vintage out of ${archiveName}`)
 	}
 
-	const archivePath = join(sourceDir, archiveName)
+	const archivePath = resolvePath(sourceDir, archiveName)
 	const members = await listZipEntries(archivePath)
 	const found = new Map<string, string>()
 
@@ -402,7 +402,7 @@ export async function openNSULArchive(sourceDir: string): Promise<{
  *
  * Vintage directories are `yyyy-MM`, so lexical order is chronological order.
  */
-export async function resolveLatestNSULSourceDir(root = String(dataRootPath("db", "nsul"))): Promise<string> {
+export async function resolveLatestNSULSourceDir(root = nsulDatabasePath): Promise<PathBuilder> {
 	const candidates = await Globerator.from("*", {
 		cwd: root,
 		absolute: false,
@@ -413,7 +413,7 @@ export async function resolveLatestNSULSourceDir(root = String(dataRootPath("db"
 		.toArray()
 
 	for (const name of candidates.toSorted().toReversed()) {
-		const dir = join(root, name)
+		const dir = root(name)
 
 		const hasArchive = await Globerator.from("*", {
 			cwd: dir,
@@ -441,13 +441,13 @@ export interface BuildNSULLayerOptions {
 	 * Default `<data-root>/db/nsul/nsul.db`.
 	 * Built to a staging path and atomically swapped into place.
 	 */
-	out?: string
+	out?: PathBuilderLike
 	/**
 	 * The `uprn.db` whose coordinates are joined in.
 	 *
 	 * Default `<data-root>/db/uprn/uprn.db`.
 	 */
-	uprnDatabasePath?: string
+	uprnDatabasePath?: PathBuilderLike
 	/**
 	 * Build clock — the `created_at` fallback.
 	 *
@@ -749,9 +749,9 @@ export async function buildNSULLayer(options: BuildNSULLayerOptions): Promise<Bu
 	const phase = options.onPhase ?? (() => {})
 	const started = Date.now()
 	const now = options.now ?? new Date()
-	const sourceDir = options.sourceDir ? resolvePath(options.sourceDir) : await resolveLatestNSULSourceDir()
-	const out = options.out ?? String(dataRootPath("db", "nsul", "nsul.db"))
-	const uprnDatabasePath = options.uprnDatabasePath ?? String(dataRootPath("db", "uprn", "uprn.db"))
+	const sourceDir = options.sourceDir ? resolvePathBuilder(options.sourceDir) : await resolveLatestNSULSourceDir()
+	const out = options.out ?? nsulDatabasePath("nsul.db")
+	const uprnPath = options.uprnDatabasePath ?? uprnDatabasePath("uprn.db")
 	const minimumPlausibleRows = options.minimumPlausibleRows ?? NSUL_MINIMUM_PLAUSIBLE_ROWS
 
 	// Acquire and verify the archive against its sidecar, recording a missing sidecar explicitly.
@@ -785,10 +785,10 @@ export async function buildNSULLayer(options: BuildNSULLayerOptions): Promise<Bu
 		}
 	}
 
-	const itemRaw = await readLocalTextFile(String(join(sourceDir, "item.json"))).catch(() => null)
+	const itemRaw = await readLocalTextFile(sourceDir("item.json")).catch(() => null)
 	const item = itemRaw ? tryParsingJSON<NSULItemRecord>(itemRaw) : null
 
-	// resolver-wof-sqlite is an optional peer — lazy import (the gazetteer-pipeline convention).
+	// Imported here so loading this module does not evaluate resolver-wof-sqlite (the gazetteer-pipeline convention).
 	const {
 		createUPRNPostcodeTable,
 		createNSULMetaTable,
@@ -801,7 +801,7 @@ export async function buildNSULLayer(options: BuildNSULLayerOptions): Promise<Bu
 
 	// Read the coordinate source and record its manifest version in metadata.
 	// Open uprn release each coordinate is from.
-	using uprnDB = new DatabaseClient<UPRNDatabase>(uprnDatabasePath, { readOnly: true })
+	using uprnDB = new DatabaseClient<UPRNDatabase>(uprnPath, { readOnly: true })
 	const uprnLayerVersion = (await readLayerManifest(uprnDB)).version
 	const coordinateProbe = uprnDB.prepare("SELECT lat, lon, h3_cell FROM uprn WHERE uprn = ?")
 
@@ -967,13 +967,13 @@ export async function buildNSULLayer(options: BuildNSULLayerOptions): Promise<Bu
 	kdb.exec("ANALYZE")
 	await kdb.destroy()
 
-	phase("seal", out)
+	phase("seal", out.toString())
 	await sealDatabase(ingestPath)
 	await swapDatabaseIntoPlace(ingestPath, out)
 
 	return {
-		out,
-		sourceDir,
+		out: out.toString(),
+		sourceDir: sourceDir.toString(),
 		read,
 		inserted,
 		skippedMalformed,

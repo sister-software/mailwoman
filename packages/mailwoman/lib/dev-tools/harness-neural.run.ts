@@ -47,7 +47,7 @@ import { ONNXRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
 import { deserializeFST } from "@mailwoman/resolver-wof-sqlite/fst"
 import { loadStreetMorphologyFST } from "@mailwoman/resolver-wof-sqlite/street"
-import { basename, join } from "path-ts"
+import { basename, PathBuilder, type PathBuilderLike } from "path-ts"
 import { TextSpliterator } from "spliterator"
 import { Globerator } from "spliterator/node/fs"
 import ts from "typescript"
@@ -93,9 +93,6 @@ function parseArgs(): Args {
 		assembled: false,
 	}
 
-	// node:util parseArgs (strict:false = old scan parity: unknown flags tolerated —
-	// including the retired `--symmetric-match` (only ever governed the deleted v0 arm's scoring)
-	// and the retired `--arbitrate` (#478 inc 3. The `arbitrate` PipelineOpt no longer exists)).
 	const { values } = parseArguments({
 		options: {
 			"admin-fst": { type: "string" },
@@ -115,7 +112,6 @@ function parseArgs(): Args {
 			tokenizer: { type: "string" },
 			"unit-repair": { type: "boolean" },
 		},
-		strict: false,
 		allowPositionals: true,
 	})
 
@@ -305,10 +301,11 @@ async function extractAssertions(file: string): Promise<ExtractedAssertion[]> {
 	return out
 }
 
-async function discoverAssertions(testsDir: string): Promise<ExtractedAssertion[]> {
+async function discoverAssertions(testsDir: PathBuilderLike): Promise<ExtractedAssertion[]> {
+	const root = PathBuilder.from(testsDir)
 	const all: ExtractedAssertion[] = []
 
-	for await (const entry of Globerator.from("*.test.ts", { cwd: testsDir, absolute: false })) {
+	for await (const entry of Globerator.from("*.test.ts", { cwd: root, absolute: false })) {
 		// Only the address.*.test.ts / addressit.*.test.ts / venue.*.test.ts / intersection.test.ts
 		// / compound_street.test.ts / place.*.test.ts / transit.test.ts / libpostal.test.ts
 		// / functional.test.ts use the `assert(input, ...expected)` shape.
@@ -316,7 +313,8 @@ async function discoverAssertions(testsDir: string): Promise<ExtractedAssertion[
 		// use vitest's `test()` directly.
 		// We extract from all .test.ts files and skip the ones with zero matching calls —
 		// the extractor is a no-op on those.
-		const filePath = join(testsDir, entry)
+		// A string, because the TypeScript parser and the locale lookup both read it as a file name.
+		const filePath = root(entry).toString()
 
 		try {
 			const assertions = await extractAssertions(filePath)
@@ -546,13 +544,14 @@ interface FalsehoodRow {
 	expected_failure?: boolean
 }
 
-async function loadFalsehoods(dir: string): Promise<ExtractedAssertion[]> {
+async function loadFalsehoods(dir: PathBuilderLike): Promise<ExtractedAssertion[]> {
+	const root = PathBuilder.from(dir)
 	const out: ExtractedAssertion[] = []
 
-	for await (const entry of Globerator.files("jsonl", { cwd: dir, absolute: false, recursive: false })) {
+	for await (const entry of Globerator.files("jsonl", { cwd: root, absolute: false, recursive: false })) {
 		const file = basename(entry, ".jsonl")
 
-		for await (const line of TextSpliterator.fromAsync(join(dir, entry))) {
+		for await (const line of TextSpliterator.fromAsync(root(entry))) {
 			if (!line.trim()) continue
 
 			const row = tryParsingJSON<FalsehoodRow>(line)

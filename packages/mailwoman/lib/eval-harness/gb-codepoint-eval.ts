@@ -35,7 +35,7 @@ import { writeLocalJSONLFile } from "@mailwoman/core/fs/writers"
 import { mulberry32 } from "@mailwoman/core/random"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { haversineKm, osgb36ToWGS84 } from "@mailwoman/spatial"
-import { basename, join } from "path-ts"
+import { basename, type PathBuilder } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
 import { createGeocodeCommandOptions } from "#geocode/command-options"
@@ -74,12 +74,12 @@ const PQ_NO_COORDINATE = 90
  * Reasoning "the mutant almost never exists" was measured wrong on the first run
  * (346/600 resolved), which is why this set exists.
  */
-async function allPostcodes(csvDir: string): Promise<Set<string>> {
+async function allPostcodes(csvDir: PathBuilder): Promise<Set<string>> {
 	const out = new Set<string>()
 
 	for await (const file of Globerator.files("csv", { cwd: csvDir, absolute: false, recursive: false })) {
 		// oxlint-disable-next-line mailwoman/prefer-spliterator -- bounded input, one pass
-		for (const line of (await readLocalTextFile(join(csvDir, file))).split("\n")) {
+		for (const line of (await readLocalTextFile(csvDir(file))).split("\n")) {
 			const pc = line.split(",")[0]?.replaceAll('"', "").trim()
 
 			if (pc) {
@@ -91,7 +91,7 @@ async function allPostcodes(csvDir: string): Promise<Set<string>> {
 	return out
 }
 
-async function samplePostcodes(csvDir: string, perArea: number, seed: number): Promise<SampledPostcode[]> {
+async function samplePostcodes(csvDir: PathBuilder, perArea: number, seed: number): Promise<SampledPostcode[]> {
 	const random = mulberry32(seed)
 	const out: SampledPostcode[] = []
 
@@ -100,7 +100,7 @@ async function samplePostcodes(csvDir: string, perArea: number, seed: number): P
 
 		// Code-Point area files are small (the largest ~90k rows); whole-file split is bounded here.
 		// oxlint-disable-next-line mailwoman/prefer-spliterator -- bounded input, one pass
-		for (const line of (await readLocalTextFile(join(csvDir, file))).split("\n")) {
+		for (const line of (await readLocalTextFile(csvDir(file))).split("\n")) {
 			if (!line) continue
 			// Columns: PC,PQ,EA,no,… — quoted postcode, then numerics.
 			// Code-Point carries no embedded commas inside quotes, so a plain split is faithful to this source.
@@ -165,7 +165,7 @@ const { values } = parseArguments({
 	},
 })
 
-const csvDir = String(dataRootPath("codepoint", values.stamp!, "Data", "CSV"))
+const csvDir = dataRootPath("codepoint", values.stamp!, "Data", "CSV")
 const perArea = Number.parseInt(values["per-area"]!, 10)
 const seed = Number.parseInt(values.seed!, 10)
 const sample = await samplePostcodes(csvDir, perArea, seed)
@@ -203,7 +203,7 @@ for (const locale of ["en-US", "en-GB"]) {
 	console.log(`[gb-codepoint] ${locale}: ${sample.length * 3} runs complete`)
 }
 
-const outPath = values.out ?? String(dataRootPath("eval", `gb-codepoint-${values.stamp}-seed${seed}.jsonl`))
+const outPath = values.out ?? dataRootPath("eval", `gb-codepoint-${values.stamp}-seed${seed}.jsonl`)
 
 await writeLocalJSONLFile(results, outPath)
 

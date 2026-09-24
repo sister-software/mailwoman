@@ -21,7 +21,6 @@ import { pathExists, readFileHead, readLocalBuffer, readLocalTextFile } from "@m
 import { makeDirectories, removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { extractZipEntry } from "@mailwoman/core/fs/zip"
 import { sha256File } from "@mailwoman/core/hash"
-import { join } from "path-ts"
 
 import type { BaseFetchOptions, FetchSummary } from "#tools/fetch/download/index"
 import { downloadToFile, HTTPStatusError, writeManifest } from "#tools/fetch/download/index"
@@ -179,7 +178,7 @@ export async function fetchGeonamesDumps(
 	await makeDirectories(options.outRoot)
 
 	const baseURL = options.baseURL ?? BASE_URL
-	const countryInfoDest = join(options.outRoot, "countryInfo.txt")
+	const countryInfoDest = options.outRoot("countryInfo.txt")
 
 	await downloadToFile({
 		url: `${baseURL}/countryInfo.txt`,
@@ -200,7 +199,7 @@ export async function fetchGeonamesDumps(
 	let fetched = 0
 
 	for (const country of countries) {
-		const txtDest = join(options.outRoot, `${country}.txt`)
+		const txtDest = options.outRoot(`${country}.txt`)
 
 		if (!options.force && (await pathExists(txtDest))) {
 			if (looksLikeGazetteerDump(await readFileHead(txtDest, FORMAT_SNIFF_BYTES))) {
@@ -215,7 +214,7 @@ export async function fetchGeonamesDumps(
 
 		const filename = `${country}.zip`
 		const url = `${baseURL}/${filename}`
-		const zipDest = join(options.outRoot, filename)
+		const zipDest = options.outRoot(filename)
 
 		report?.(`=== ${SLUG} / ${country}`)
 
@@ -263,7 +262,7 @@ export async function fetchGeonamesDumps(
 		wrong_format_present: wrongFormatPresent.toSorted(),
 	}
 
-	await writeManifest(join(options.outRoot, "MANIFEST.json"), manifest)
+	await writeManifest(options.outRoot("MANIFEST.json"), manifest)
 
 	return { fetched, skipped: skippedPresent.length, failed: failedCodes.length, failedCodes, skippedPresent }
 }

@@ -19,7 +19,7 @@
  *   and by path.
  */
 
-import { basename, join, relative, sep } from "path-ts"
+import { basename, PathBuilder, type PathBuilderLike, relative, sep } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
 import { statPath } from "#fs/readers"
@@ -44,7 +44,7 @@ export interface TimestampedFile {
  * `test` as non-emitting: production modules such as `debug-view/test/input-probe.ts`
  * compile and must still make the check stale.
  */
-function isEmittingSource(workspaceRoot: string, path: string): boolean {
+function isEmittingSource(workspaceRoot: PathBuilder, path: string): boolean {
 	const name = basename(path)
 
 	if (/\.test\.tsx?$/.test(name)) return false
@@ -61,7 +61,7 @@ function isEmittingSource(workspaceRoot: string, path: string): boolean {
  * A missing `out/` means never compiled rather than stale.
  */
 async function newestMtime(
-	root: string,
+	root: PathBuilder,
 	matches: (name: string) => boolean,
 	pathAllowed: (path: string) => boolean = () => true
 ): Promise<TimestampedFile | null> {
@@ -81,7 +81,7 @@ async function newestMtime(
 		for (const entry of entries) {
 			if (entry.isDirectory()) {
 				if (!SKIP_DIRECTORIES.has(entry.name)) {
-					stack.push(join(directory, entry.name))
+					stack.push(directory(entry.name))
 				}
 
 				continue
@@ -89,7 +89,7 @@ async function newestMtime(
 
 			if (!matches(entry.name)) continue
 
-			const full = join(directory, entry.name)
+			const full = directory(entry.name).toString()
 
 			if (!pathAllowed(full)) continue
 
@@ -128,14 +128,16 @@ export interface CompiledFreshness {
  * with the caller that knows what it loads.
  */
 export async function checkCompiledFreshness(
-	repoRoot: string,
+	repoRoot: PathBuilderLike,
 	workspaces: readonly string[]
 ): Promise<CompiledFreshness> {
 	let newestSource: TimestampedFile | null = null
 	let newestCompiled: TimestampedFile | null = null
 
+	const root = PathBuilder.from(repoRoot)
+
 	for (const workspace of workspaces) {
-		const workspaceRoot = join(repoRoot, workspace)
+		const workspaceRoot = root(workspace)
 
 		const [source, compiled] = await Promise.all([
 			newestMtime(
@@ -143,7 +145,7 @@ export async function checkCompiledFreshness(
 				(name) => /\.tsx?$/.test(name) && !name.endsWith(".d.ts"),
 				(path) => !path.includes(`${workspace}/out/`) && isEmittingSource(workspaceRoot, path)
 			),
-			newestMtime(join(workspaceRoot, "out"), (name) => name.endsWith(".js")),
+			newestMtime(workspaceRoot("out"), (name) => name.endsWith(".js")),
 		])
 
 		if (source && (!newestSource || source.mtimeMs > newestSource.mtimeMs)) {

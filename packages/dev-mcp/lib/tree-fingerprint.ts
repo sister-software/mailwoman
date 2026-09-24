@@ -19,7 +19,7 @@
 import { statPath } from "@mailwoman/core/fs/readers"
 import { sha256Hex } from "@mailwoman/core/hash"
 import { runFileSync } from "@mailwoman/core/process"
-import { join, resolvePath, type PathBuilderLike } from "path-ts"
+import { type PathBuilder, resolvePath, resolvePathBuilder, type PathBuilderLike } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
 /**
@@ -89,7 +89,7 @@ export interface TreeFingerprint {
 	filesWalked: number
 }
 
-async function newestSourceMtime(root: string): Promise<{ mtimeMs: number; path: string | null; count: number }> {
+async function newestSourceMtime(root: PathBuilder): Promise<{ mtimeMs: number; path: string | null; count: number }> {
 	let newest = 0
 	let newestPath: string | null = null
 	let count = 0
@@ -110,7 +110,7 @@ async function newestSourceMtime(root: string): Promise<{ mtimeMs: number; path:
 		for (const entry of entries) {
 			if (entry.isDirectory()) {
 				if (!SKIP_DIRECTORIES.has(entry.name)) {
-					stack.push(join(dir, entry.name))
+					stack.push(dir(entry.name))
 				}
 
 				continue
@@ -120,12 +120,12 @@ async function newestSourceMtime(root: string): Promise<{ mtimeMs: number; path:
 
 			count++
 
-			const full = join(dir, entry.name)
+			const full = dir(entry.name)
 			const { mtimeMs } = await statPath(full)
 
 			if (mtimeMs > newest) {
 				newest = mtimeMs
-				newestPath = full
+				newestPath = full.toString()
 			}
 		}
 	}
@@ -161,7 +161,7 @@ export async function computeTreeFingerprint(repoRoot: PathBuilderLike): Promise
 	let filesWalked = 0
 
 	for (const workspace of FINGERPRINTED_WORKSPACES) {
-		const result = await newestSourceMtime(join(repoRoot, workspace))
+		const result = await newestSourceMtime(resolvePathBuilder(repoRoot, workspace))
 
 		filesWalked += result.count
 

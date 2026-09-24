@@ -15,13 +15,13 @@ import { md5Hex } from "@mailwoman/core/hash"
 import { tryParsingJSON } from "@mailwoman/core/json"
 import { deriveInputMode, type QueryKind } from "@mailwoman/core/pipeline"
 import type { ResolveNodeTrace, WeakResolutionReading } from "@mailwoman/core/resolver"
-import { mailwomanDataRoot, wofExtractPaths } from "@mailwoman/core/utils"
 import { createKindClassifier } from "@mailwoman/kind-classifier"
 import { createScorer, NeuralAddressClassifier, type NeuralParseTrace } from "@mailwoman/neural"
 import type { FSTMatcherLike } from "@mailwoman/neural/fst-prior"
 import { resolveWeights, weightsCachePackageDir } from "@mailwoman/neural/weights"
 import { readDeclaredArtifactFile } from "@mailwoman/neural/weights-channels"
 import { createWOFResolver } from "@mailwoman/resolver"
+import { poiDatabasePath, wofExtractPaths } from "@mailwoman/resolver-wof-sqlite/paths"
 import { resolvePath, type PathBuilder, type PathBuilderLike } from "path-ts"
 
 import type { AdminCoherenceReport } from "#admin-coherence"
@@ -644,19 +644,19 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 				capitalIndex.levelOfPlace(place.name, place.country, place.lat, place.lon)
 		: undefined
 
-	const regionDatabaseProvider = await RegionDatabaseProvider.create(resolverMod, mailwomanDataRoot())
+	const regionDatabaseProvider = await RegionDatabaseProvider.create(resolverMod, dataRootPath())
 	// Lazy like the resolver module above: `@mailwoman/osm` is an in-repo (unpublished)
 	// workspace, and A static import here would break the published `mailwoman` CLI outright
 	// rather than only this maintainer-run check.
 	const { OSMRegionDatabaseProvider } = await import("@mailwoman/osm/sdk")
-	const osmProvider = await OSMRegionDatabaseProvider.create(mailwomanDataRoot())
+	const osmProvider = await OSMRegionDatabaseProvider.create(dataRootPath)
 	// The BAN national-register tier (#1012) sits ahead of OSM in production
 	// (geocode.tsx wires it the same way).
 	// Without it here the gauntlet graded an OSM-first cascade production never runs, and the
 	// fr-chevaleret-bare pin silently guarded the wrong tier (caught 2026-07-10 when the BAN tier's
 	// missing bbox fall-through regressed the bare form in production while this check stayed green).
 	const { BANRegionDatabaseProvider } = await import("@mailwoman/ban/sdk")
-	const banProvider = await BANRegionDatabaseProvider.create(mailwomanDataRoot())
+	const banProvider = await BANRegionDatabaseProvider.create(dataRootPath)
 
 	const pinDeps = resolverPinDeps(opts.pins)
 
@@ -684,7 +684,8 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 		// Default-on since 2026-08-16: only an explicit `false` withholds the prior.
 		if (opts.pins?.gazetteerPrior === false) return {}
 
-		const fstPath = (forClassifier as { fstPath?: string }).fstPath
+		// A string, because it keys `priorDepsByPath`; a builder would key by object identity.
+		const fstPath = (forClassifier as { fstPath?: PathBuilderLike }).fstPath?.toString()
 
 		if (!fstPath) {
 			// Loud, once per locale.
@@ -735,7 +736,7 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 	// The fork-entity board rows are improvement_target until it is present).
 	// Mirrors the CLI's wiring exactly, so the board grades what production runs.
 	let forkEntityDeps: Pick<GeocodeDeps, "poiLookup" | "isStreetGeneric"> = {}
-	const poiDBPath = String(dataRootPath("db", "poi", "poi.db"))
+	const poiDBPath = poiDatabasePath("poi.db")
 
 	if (await pathExists(poiDBPath)) {
 		const [{ POILookup }, { loadStreetMorphologyFST }] = await Promise.all([

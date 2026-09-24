@@ -18,7 +18,7 @@ import { removePath } from "@mailwoman/core/fs/writers"
 import { tryParsingJSON } from "@mailwoman/core/json"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 import { assertDatabaseIntegrity } from "@mailwoman/sqlite/sealed-db"
-import { join } from "path-ts"
+import { PathBuilder, type PathBuilderLike } from "path-ts"
 
 import { buildFTS, type BuildFTSResult } from "#gazetteer-pipeline/fts"
 
@@ -118,8 +118,8 @@ export const UNKNOWN_PROVENANCE = "unknown (offline rebuild, no acquisition.json
  *
  * Absent is not fatal — the caller substitutes {@link UNKNOWN_PROVENANCE} and says so in the database.
  */
-export async function readAcquisitionSidecar<Sidecar>(sourceDir: string): Promise<Sidecar | null> {
-	const raw = await readLocalTextFile(String(join(sourceDir, "acquisition.json"))).catch(() => null)
+export async function readAcquisitionSidecar<Sidecar>(sourceDir: PathBuilderLike): Promise<Sidecar | null> {
+	const raw = await readLocalTextFile(PathBuilder.from(sourceDir)("acquisition.json")).catch(() => null)
 
 	return raw ? tryParsingJSON<Sidecar>(raw) : null
 }

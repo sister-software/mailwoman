@@ -33,7 +33,7 @@ import { delimitedSource } from "@mailwoman/core/fs/delimited"
 import { openWriteStream } from "@mailwoman/core/fs/streams"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
-import { join } from "path-ts"
+import type { PathBuilderLike } from "path-ts"
 import { TextSpliterator } from "spliterator"
 
 import { connectDuckDB, escapeSQLString } from "#parquet/duckdb"
@@ -66,11 +66,11 @@ export interface JSONLToParquetOptions {
 	/**
 	 * The labeled-row jsonl to convert.
 	 */
-	input: string
+	input: PathBuilderLike
 	/**
 	 * The parquet file to write.
 	 */
-	output: string
+	output: PathBuilderLike
 	/**
 	 * Parquet row-group size.
 	 *
@@ -134,7 +134,7 @@ export async function jsonlToParquet(
 	// The staging directory owns the write stream, so it is closed before the directory
 	// is removed, and a mid-stream span-triple failure leaves no orphan.
 	await using staging = await temporaryDirectory("mw-jsonl-to-parquet-")
-	const stagePath = join(staging.path, "rows.ndjson")
+	const stagePath = staging.path("rows.ndjson")
 	const stage = staging.use(openWriteStream(stagePath, { encoding: "utf8" }))
 
 	let rows = 0
@@ -169,20 +169,21 @@ export async function jsonlToParquet(
 	const columnsLiteral = "{" + REQUIRED_COLUMNS.map((c) => `'${c}': '${COLUMN_TYPES[c]}'`).join(", ") + "}"
 	const selectList = REQUIRED_COLUMNS.join(", ")
 
+	const output = options.output.toString()
 	const db = await connectDuckDB()
 	// Row order is required: the overlay-manifest assembler records first/last source_id from file order.
 	// `preserve_insertion_order` (DuckDB default) keeps output order = input order.
 	await db.run("SET preserve_insertion_order=true")
 
 	await db.run(
-		`COPY (SELECT ${selectList} FROM read_json('${escapeSQLString(stagePath)}', ` +
+		`COPY (SELECT ${selectList} FROM read_json('${escapeSQLString(stagePath.toString())}', ` +
 			`columns = ${columnsLiteral}, format = 'newline_delimited')) ` +
-			`TO '${escapeSQLString(options.output)}' (FORMAT PARQUET, COMPRESSION SNAPPY, ROW_GROUP_SIZE ${rowGroupSize})`
+			`TO '${escapeSQLString(output)}' (FORMAT PARQUET, COMPRESSION SNAPPY, ROW_GROUP_SIZE ${rowGroupSize})`
 	)
 
-	const counted = await db.runAndReadAll(`SELECT count(*) AS n FROM read_parquet('${escapeSQLString(options.output)}')`)
+	const counted = await db.runAndReadAll(`SELECT count(*) AS n FROM read_parquet('${escapeSQLString(output)}')`)
 	const written = Number(counted.getRowObjects()[0]!.n)
-	report?.(`Wrote ${written} rows to ${options.output}`)
+	report?.(`Wrote ${written} rows to ${output}`)
 
-	return { read: rows, written, outPath: options.output }
+	return { read: rows, written, outPath: output }
 }

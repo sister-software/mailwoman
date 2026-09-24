@@ -7,7 +7,7 @@
  *   `universal-service.ts`:164-176).
  */
 
-import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
+import { resolvePackageDirectory } from "@mailwoman/core/module/resolvers"
 import {
 	classifyFiler,
 	FilerClassification,
@@ -15,14 +15,14 @@ import {
 	parseForm499,
 	type Form499Row,
 } from "@mailwoman/filer/sdk/form499"
-import { join } from "path-ts"
+import type { PathBuilder } from "path-ts"
 import { describe, expect, it } from "vitest"
 
-const FIXTURES_DIR = resolvePackagePath("@mailwoman/filer", "test-fixtures")
-const SAMPLE_TSV = join(FIXTURES_DIR, "form499-sample.tsv")
-const MALFORMED_TSV = join(FIXTURES_DIR, "form499-malformed.tsv")
+const FIXTURES_DIR = resolvePackageDirectory("@mailwoman/filer")("test-fixtures")
+const SAMPLE_TSV = FIXTURES_DIR("form499-sample.tsv")
+const MALFORMED_TSV = FIXTURES_DIR("form499-malformed.tsv")
 
-async function collect(tsvPath: string): Promise<Form499Row[]> {
+async function collect(tsvPath: PathBuilder): Promise<Form499Row[]> {
 	const rows: Form499Row[] = []
 
 	for await (const row of parseForm499(tsvPath)) {

@@ -12,7 +12,6 @@ import { extractDelimited, parseArguments } from "@mailwoman/core/scripting/argu
 import { perLocaleF1 } from "#eval-harness/per/locale-f1"
 
 async function main(): Promise<void> {
-	// node:util parseArgs (strict:false = old scan parity: unknown flags tolerated)
 	const { values } = parseArguments({
 		options: {
 			"bridge-gaps": { type: "boolean" },
@@ -30,7 +29,6 @@ async function main(): Promise<void> {
 			tokenizer: { type: "string" },
 			"weights-cache": { type: "string" },
 		},
-		strict: false,
 		allowPositionals: true,
 	})
 
@@ -40,26 +38,20 @@ async function main(): Promise<void> {
 	// Spreading conditionally here reproduces both behaviors exactly: an absent flag
 	// must not arrive as `undefined` where that would override a default.
 	await perLocaleF1({
-		...(values["golden-dir"] != null ? { goldenDir: values["golden-dir"] as string } : {}),
-		...(values["files"] != null
-			? {
-					files: extractDelimited(values["files"]),
-				}
-			: {}),
-		...(values["weights-cache"] != null ? { weightsCache: values["weights-cache"] as string } : {}),
-		...(values["model"] != null ? { modelPath: values["model"] as string } : {}),
-		...(values["tokenizer"] != null ? { tokenizerPath: values["tokenizer"] as string } : {}),
-		...(values["model-card"] != null ? { modelCardPath: values["model-card"] as string } : {}),
-		...(values["model-anchor-lookup"] != null
-			? { modelAnchorLookupPath: values["model-anchor-lookup"] as string }
-			: {}),
-		...(values["gazetteer-lexicon"] != null ? { gazetteerLexiconPath: values["gazetteer-lexicon"] as string } : {}),
-		...(values["no-anchor"] != null ? { noAnchor: true } : {}),
-		...(values["suppress-gaz-near-postcode"] != null ? { suppressGazNearPostcode: true } : {}),
-		...(values["conventions"] != null ? { conventions: values["conventions"] as string } : {}),
-		...(values["bridge-gaps"] != null ? { bridgeGaps: true } : {}),
-		...(values["raw-case"] != null ? { rawCase: true } : {}),
-		...(values["out-json"] != null ? { outJSON: values["out-json"] as string } : {}),
+		...(values["golden-dir"] !== undefined ? { goldenDir: values["golden-dir"] } : {}),
+		...(values.files !== undefined ? { files: extractDelimited(values.files) } : {}),
+		...(values["weights-cache"] !== undefined ? { weightsCache: values["weights-cache"] } : {}),
+		...(values.model !== undefined ? { modelPath: values.model } : {}),
+		...(values.tokenizer !== undefined ? { tokenizerPath: values.tokenizer } : {}),
+		...(values["model-card"] !== undefined ? { modelCardPath: values["model-card"] } : {}),
+		...(values["model-anchor-lookup"] !== undefined ? { modelAnchorLookupPath: values["model-anchor-lookup"] } : {}),
+		...(values["gazetteer-lexicon"] !== undefined ? { gazetteerLexiconPath: values["gazetteer-lexicon"] } : {}),
+		...(values["no-anchor"] !== undefined ? { noAnchor: true } : {}),
+		...(values["suppress-gaz-near-postcode"] !== undefined ? { suppressGazNearPostcode: true } : {}),
+		...(values.conventions !== undefined ? { conventions: values.conventions } : {}),
+		...(values["bridge-gaps"] !== undefined ? { bridgeGaps: true } : {}),
+		...(values["raw-case"] !== undefined ? { rawCase: true } : {}),
+		...(values["out-json"] !== undefined ? { outJSON: values["out-json"] } : {}),
 	})
 }
 

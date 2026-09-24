@@ -365,10 +365,11 @@ async function foldIntoCandidate(
 
 const GazetteerPostcodeIntl: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { dataRootPath } = await import("@mailwoman/core/utils")
+		const { dataRootPath } = await import("@mailwoman/core/data-root")
+		const { wofDatabasePath } = await import("@mailwoman/resolver-wof-sqlite/paths")
 
 		const geonames = options.geonames ?? dataRootPath("geonames", "allCountries-postal.txt")
-		const out = options.out ?? dataRootPath("db", "wof", "postalcode-geonames-intl.db")
+		const out = options.out ?? wofDatabasePath("postalcode-geonames-intl.db")
 
 		const countries = options.countries ? splitCountryCodes(options.countries) : ["PL", "CZ"]
 

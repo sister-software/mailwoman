@@ -29,6 +29,7 @@ import { allRows } from "@mailwoman/core/utils"
 import { haversineKm, shortCellToInt, type H3Cell } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { gridDisk, latLngToCell } from "h3-js"
+import type { PathBuilderLike } from "path-ts"
 
 import type { POICategoryCodeTable, POIDatabase, POITable } from "#poi/schema"
 /**
@@ -134,7 +135,7 @@ export interface POILookupOpts<DB extends POIDatabase = POIDatabase> {
 	 *
 	 * Opened read-only.
 	 */
-	databasePath?: string
+	databasePath?: PathBuilderLike
 	/**
 	 * Pre-opened handle (tests / shared connections).
 	 *

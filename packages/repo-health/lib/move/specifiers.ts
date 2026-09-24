@@ -168,7 +168,7 @@ export function packageSpecifiersFor(manifest: PackageManifest, file: string): P
  * explicit `.ts`; a rewrite that dropped it would break the running form and typecheck anyway.
  */
 export function relativeSpecifier(containingFile: string, target: string, keepExtension: boolean): string {
-	const path = String(relative(String(dirname(containingFile)), target))
+	const path: string = relative(dirname(containingFile), target)
 	const bare = keepExtension ? path : path.replace(SOURCE_EXTENSION, "")
 
 	return bare.startsWith(".") ? bare : `./${bare}`

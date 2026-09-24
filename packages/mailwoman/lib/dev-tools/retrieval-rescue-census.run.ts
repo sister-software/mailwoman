@@ -9,7 +9,7 @@
  * classified against the row's coordinate truth by `retrieval-rescue-census.ts`.
  */
 
-import { mailwomanDataRoot } from "@mailwoman/core/data-root"
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { prettyJSON } from "@mailwoman/core/json"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
@@ -25,7 +25,7 @@ const { values } = parseArguments({ options: { "out-json": { type: "string" } } 
 
 const cases = await loadRegressionCases()
 const deps = await buildGauntletDeps()
-const probe = await loadForkEntityDeps({ dataRoot: String(mailwomanDataRoot()), forkEntity: true })
+const probe = await loadForkEntityDeps({ dataRoot: dataRootPath(), forkEntity: true })
 
 if (!probe.deps.poiLookup) {
 	// The census's entity half is the point.

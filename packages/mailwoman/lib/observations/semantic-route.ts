@@ -280,7 +280,7 @@ function reachKinds(model: CompiledGeographicModel, activity: string): ReachedKi
 	const mappings = new Map<string, ExternalMappingRecord>()
 
 	for (const mapping of model.mappings) {
-		if (String(mapping.vocabulary) !== POI_TAXONOMY_VOCABULARY) continue
+		if (mapping.vocabulary !== POI_TAXONOMY_VOCABULARY) continue
 
 		mappings.set(String(mapping.concept), mapping)
 	}
@@ -341,9 +341,9 @@ function auditRoute(
 			continue
 		}
 
-		if (String(concept.kind) !== "activity") {
+		if (concept.kind !== "activity") {
 			problems.push(
-				`phrase ${stringifyJSON(entry.phrase)} names ${stringifyJSON(entry.activity)}, whose concept kind is ${stringifyJSON(String(concept.kind))} rather than \`activity\``
+				`phrase ${stringifyJSON(entry.phrase)} names ${stringifyJSON(entry.activity)}, whose concept kind is ${stringifyJSON(concept.kind)} rather than \`activity\``
 			)
 
 			continue
@@ -447,13 +447,13 @@ export async function createSemanticObservationRoute(
 				assertion: {
 					id: String(assertion.id),
 					relation: String(assertion.relation),
-					modality: String(assertion.modality),
+					modality: assertion.modality,
 					countries: assertion.countries?.length ? [...assertion.countries] : null,
 					provenance: assertion.provenance,
 				},
 				mapping: {
 					id: String(mapping.id),
-					vocabulary: String(mapping.vocabulary),
+					vocabulary: mapping.vocabulary,
 					externalID: String(mapping.externalID),
 					provenance: mapping.provenance,
 				},

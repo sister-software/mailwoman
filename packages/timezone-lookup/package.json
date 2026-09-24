@@ -50,6 +50,11 @@
 			"types": "./out/schema.d.ts",
 			"node": "./lib/schema.ts",
 			"default": "./out/schema.js"
+		},
+		"./paths": {
+			"types": "./out/paths.d.ts",
+			"node": "./lib/paths.ts",
+			"default": "./out/paths.js"
 		}
 	},
 	"publishConfig": {
@@ -58,7 +63,8 @@
 	"dependencies": {
 		"@mailwoman/annotations": "workspace:*",
 		"@mailwoman/core": "workspace:*",
-		"@mailwoman/sqlite": "workspace:*"
+		"@mailwoman/sqlite": "workspace:*",
+		"path-ts": "^2.5.0"
 	},
 	"devDependencies": {
 		"@mailwoman/spatial": "workspace:*"

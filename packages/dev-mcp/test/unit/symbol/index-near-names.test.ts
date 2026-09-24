@@ -16,7 +16,7 @@ import { describe, expect, it } from "vitest"
 import { runHook } from "../../hook-harness.ts"
 
 const HOOK = resolvePackagePath("@mailwoman/dev-mcp", "lib", "hooks", "symbol-precheck.ts")
-const REPO_ROOT = String(repoRootPath())
+const REPO_ROOT = repoRootPath()
 
 describe("containedNameCandidates", () => {
 	it("yields the shorter name an affix was added to", () => {

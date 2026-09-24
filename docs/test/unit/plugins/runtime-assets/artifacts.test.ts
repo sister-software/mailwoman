@@ -20,12 +20,12 @@ describe("runtime-assets MapLibre worker staging", () => {
 
 	test("stages the worker the demo names, with every module it imports beside it", async () => {
 		await using scratch = await temporaryDirectory("maplibre-worker-")
-		const staged = await stageMapLibreWorker(String(scratch.path))
+		const staged = await stageMapLibreWorker(scratch.path)
 
 		expect(staged, "the worker the client points MapLibre at must be staged").toContain(basename(MAPLIBRE_WORKER_URL))
 
 		for (const file of staged) {
-			const stagedPath = scratch.resolve(file)
+			const stagedPath = scratch.path(file)
 
 			expect(await pathExists(stagedPath), `${file} was reported staged but is absent`).toBe(true)
 

@@ -39,10 +39,11 @@ import { stringifyJSON } from "@mailwoman/core/json"
 import { isoDate } from "@mailwoman/core/utils"
 import { EpistemicStatus } from "@mailwoman/evidence"
 import type { GeonamesPostalIngestResult } from "@mailwoman/resolver-wof-sqlite/geonames"
+import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { ExtractMetaTable, WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase } from "@mailwoman/sqlite/sealed-db"
-import { join, type PathBuilderLike } from "path-ts"
+import { PathBuilder, type PathBuilderLike } from "path-ts"
 
 import {
 	applyStagingPragmas,
@@ -188,8 +189,8 @@ export async function buildPostcodeGeonamesTail(
 	const phase = opts.onPhase ?? (() => {})
 	const now = opts.now ?? new Date()
 	const countries = [...(opts.countries ?? DEFAULT_GEONAMES_TAIL_COUNTRIES)].map((c) => c.toUpperCase())
-	const postalDir = (opts.postalDir ?? dataRootPath("geonames-postal")).toString()
-	const out = (opts.out ?? dataRootPath("db", "wof", `postalcode-geonames-tail-${isoDate(now)}.db`)).toString()
+	const postalDir = PathBuilder.from(opts.postalDir ?? dataRootPath("geonames-postal"))
+	const out = (opts.out ?? wofDatabasePath(`postalcode-geonames-tail-${isoDate(now)}.db`)).toString()
 
 	if (!(await pathExists(postalDir))) {
 		throw new Error(
@@ -197,7 +198,7 @@ export async function buildPostcodeGeonamesTail(
 		)
 	}
 
-	// resolver-wof-sqlite is an optional peer — lazy import (the gazetteer-pipeline convention).
+	// Imported here so loading this module does not evaluate resolver-wof-sqlite (the gazetteer-pipeline convention).
 	const { createUnifiedSchema, createUnifiedIndexes, populateAncestors } =
 		await import("@mailwoman/resolver-wof-sqlite/unified-schema")
 
@@ -285,14 +286,14 @@ export async function buildPostcodeGeonamesTail(
  */
 async function collectSourceFacts(
 	countries: readonly string[],
-	postalDir: string,
+	postalDir: PathBuilder,
 	byCountry: Record<string, number>,
 	singlePointByCountry: Record<string, number>
 ): Promise<GeonamesPostalSourceFact[]> {
 	const facts: GeonamesPostalSourceFact[] = []
 
 	for (const country of countries) {
-		const file = join(postalDir, `${country}.txt`)
+		const file = postalDir(`${country}.txt`)
 
 		if (!(await pathExists(file))) continue
 

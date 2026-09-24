@@ -4,7 +4,6 @@
  * @author Teffen Ellis, et al.
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import {
 	buildFSTFromWOF,
@@ -13,6 +12,7 @@ import {
 	deserializeFST,
 	serializeFST,
 } from "@mailwoman/resolver-wof-sqlite/fst"
+import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import { beforeAll, describe, expect, it } from "vitest"
 
 // Synthetic-trie cases exercise the binary format without external artifacts.
@@ -130,7 +130,7 @@ describe("FST binary serialization — unit (synthetic)", () => {
 
 // Real-WOF cases exercise the format against production-scale source data.
 
-const WOF_DB = dataRootPath("db", "wof", "whosonfirst-data-admin-us-latest.db")
+const WOF_DB = wofDatabasePath("whosonfirst-data-admin-us-latest.db")
 const HAS_WOF = await pathExists(WOF_DB)
 
 describe.skipIf(!HAS_WOF)("FST binary serialization — integration (WOF)", () => {

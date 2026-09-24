@@ -36,13 +36,16 @@ import { componentAtIndexSQL } from "@mailwoman/corpus/parquet/span-sql"
 
 import { openMixture, readMixtureFiles } from "#dev-tools/corpus/mixture"
 
-const DEFAULT_CORPUS = String(
-	dataRootPath("corpus", "versioned", "v0.31.0-region-code-and-unit", "corpus-v0.31.0-region-code-and-unit")
+const DEFAULT_CORPUS = dataRootPath(
+	"corpus",
+	"versioned",
+	"v0.31.0-region-code-and-unit",
+	"corpus-v0.31.0-region-code-and-unit"
 )
 
 const { values } = parseArguments({
 	options: {
-		corpus: { type: "string", default: DEFAULT_CORPUS },
+		corpus: { type: "string", default: DEFAULT_CORPUS.toString() },
 		split: { type: "string", default: "train" },
 		"out-json": { type: "string" },
 		/**

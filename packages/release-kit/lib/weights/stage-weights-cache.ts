@@ -30,7 +30,7 @@
 import { isFile, pathExists } from "@mailwoman/core/fs/readers"
 import { createSymbolicLink, makeDirectories, removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { weightsCachePackageDir } from "@mailwoman/neural/weights"
-import { basename, isAbsolute, join, resolvePath } from "path-ts"
+import { basename, type PathBuilder, resolvePath, resolvePathBuilder } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
 export interface StageWeightsCacheOptions {
@@ -91,13 +91,13 @@ export async function stageWeightsCache(options: StageWeightsCacheOptions): Prom
 	 * Seeded from `from`, then overridden.
 	 * Last writer wins, which is what makes `file` a divergence rather than a conflict.
 	 */
-	const staged = new Map<string, string>()
+	const staged = new Map<string, PathBuilder>()
 
 	if (options.from) {
-		const fromDir = resolvePath(repoRoot, options.from)
+		const fromDir = resolvePathBuilder(repoRoot, options.from)
 
 		for await (const entry of Globerator.from("*", { cwd: fromDir, absolute: false })) {
-			const source = join(fromDir, entry)
+			const source = fromDir(entry)
 
 			// Files only: `scripts/` and any other directory in a workspace package is not part of the
 			// artifact set a loader reads, and symlinking a directory into the layout invites a stale walk.
@@ -111,7 +111,7 @@ export async function stageWeightsCache(options: StageWeightsCacheOptions): Prom
 		const eq = spec.indexOf("=")
 		const [name, source] = eq === -1 ? [basename(spec), spec] : [spec.slice(0, eq), spec.slice(eq + 1)]
 
-		staged.set(name, isAbsolute(source) ? source : resolvePath(repoRoot, source))
+		staged.set(name, resolvePathBuilder(repoRoot, source))
 	}
 
 	let linked = 0
@@ -125,7 +125,7 @@ export async function stageWeightsCache(options: StageWeightsCacheOptions): Prom
 			continue
 		}
 
-		await createSymbolicLink(source, join(packageDir, name))
+		await createSymbolicLink(source, packageDir(name))
 
 		linked++
 	}
@@ -144,8 +144,8 @@ export async function stageWeightsCache(options: StageWeightsCacheOptions): Prom
 	}
 
 	return {
-		cacheRoot: String(cacheRoot),
-		packageDir: String(packageDir),
+		cacheRoot,
+		packageDir: packageDir.toString(),
 		linked,
 		staged: stagedNames,
 		omitted: [...omit],

@@ -16,6 +16,7 @@ import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/
 import { listZipEntries, readZipEntry } from "@mailwoman/core/fs/zip"
 import { mulberry32 } from "@mailwoman/core/random"
 import ADMZip from "adm-zip"
+import type { PathBuilder } from "path-ts"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 /**
@@ -40,7 +41,7 @@ function incompressibleBytes(size: number): Buffer {
 }
 
 let directory: TemporaryDirectory
-let archivePath: string
+let archivePath: PathBuilder
 
 beforeAll(async () => {
 	directory = await temporaryDirectory("zip-reader-")
@@ -49,8 +50,9 @@ beforeAll(async () => {
 
 	zip.addFile("big.bin", BIG)
 	zip.addFile("small.txt", Buffer.from("hello"))
-	archivePath = String(directory.resolve("probe.zip"))
-	zip.writeZip(archivePath)
+	archivePath = directory.path("probe.zip")
+	// adm-zip writes to a string path.
+	zip.writeZip(archivePath.toString())
 })
 
 afterAll(async () => {

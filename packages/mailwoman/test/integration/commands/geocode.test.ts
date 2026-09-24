@@ -19,12 +19,16 @@
  *   database overrides, expecting a street-level coordinate near 30.5, -97.6.
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { parseJSONStrict } from "@mailwoman/core/json"
 import { runFile } from "@mailwoman/core/process"
 import { childEnv } from "@mailwoman/core/scripting/utils"
+import {
+	addressPointDatabasePath,
+	interpolationDatabasePath,
+	wofDatabasePath,
+} from "@mailwoman/resolver-wof-sqlite/paths"
 import { mailwomanCLIPath } from "mailwoman/cli-kit/metadata"
 import { $public } from "mailwoman/env"
 import { withCLISpawnLockAsync } from "mailwoman/test-kit/cli-spawn-lock"
@@ -34,12 +38,12 @@ import { describe, expect, test, vi } from "vitest"
 
 const CLI_PATH = await mailwomanCLIPath()
 
-const DEFAULT_WOF_PATH = String(dataRootPath("db", "wof", "admin-global-priority.db"))
+const DEFAULT_WOF_PATH = wofDatabasePath("admin-global-priority.db")
 const wofPath = $public.MAILWOMAN_WOF_DB ?? DEFAULT_WOF_PATH
 
 // Per-state TX databases (the demo address is Round Rock, TX).
-const TX_ADDRESS_POINTS_DB = dataRootPath("db", "address-points", "address-points-us-tx.db")
-const TX_INTERPOLATION_DB = dataRootPath("db", "interpolation", "interpolation-us-tx.db")
+const TX_ADDRESS_POINTS_DB = addressPointDatabasePath("address-points-us-tx.db")
+const TX_INTERPOLATION_DB = interpolationDatabasePath("interpolation-us-tx.db")
 
 /**
  * Wall-clock budget for a CLI spawn.

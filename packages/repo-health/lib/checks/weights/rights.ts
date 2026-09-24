@@ -83,7 +83,7 @@ export const weightsRightsCheck: RepoCheck = {
 				})
 			}
 
-			const manifest = await readPackageJSON(String(resolvePath(context.repoRoot, record.workspace, "package.json")))
+			const manifest = await readPackageJSON(resolvePath(context.repoRoot, record.workspace, "package.json"))
 			const declared = new Set(Array.isArray(manifest.files) ? manifest.files : [])
 
 			for (const generated of [LICENSE_FILE, PROVENANCE_FILE]) {

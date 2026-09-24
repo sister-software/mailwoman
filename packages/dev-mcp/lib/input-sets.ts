@@ -26,6 +26,7 @@ import { loadRegressionCases, regressionCorpusHash } from "mailwoman/eval-harnes
 import type { SeedCase } from "mailwoman/eval-harness/gauntlet/cases/seed-case"
 import { drawHoldoutSample, holdoutSources } from "mailwoman/eval-harness/gauntlet/holdout"
 import { routeCountry } from "mailwoman/eval-harness/gauntlet/routing"
+import type { PathBuilderLike } from "path-ts"
 
 import type { Selection } from "#power"
 
@@ -601,7 +602,7 @@ interface CorpusRow {
  * A corpus that cannot be read must not resolve to an empty set: a measurement over zero
  * rows reports zero differences, which reads as "no effect" rather than "nothing ran".
  */
-async function readCorpus(path: string, what: string): Promise<CorpusRow[]> {
+async function readCorpus(path: PathBuilderLike, what: string): Promise<CorpusRow[]> {
 	if (!(await pathExists(path))) {
 		throw new Error(
 			`${what} not found at ${path}. Refusing rather than resolving to an empty set — a run over zero rows reports ` +
@@ -657,7 +658,7 @@ function coordinateTruthCounts(rows: ResolvedInput[]): ResolvedInputSet["hasTrut
  */
 async function resolvePanel(ref: Extract<InputSetRef, { kind: "panel" }>): Promise<ResolvedInputSet> {
 	const version = ref.version ?? "v2"
-	const path = String(dataRootPath("pelias-rig", "panel", `panel-${version}.jsonl`))
+	const path = dataRootPath("pelias-rig", "panel", `panel-${version}.jsonl`)
 	const all = await readCorpus(path, `panel ${version}`)
 
 	const filtered = all.filter((row) => {
@@ -718,7 +719,7 @@ async function resolvePanel(ref: Extract<InputSetRef, { kind: "panel" }>): Promi
 async function resolveGolden(ref: Extract<InputSetRef, { kind: "golden" }>): Promise<ResolvedInputSet> {
 	const version = ref.version ?? "v0.1.3"
 	const split = ref.split ?? "dev"
-	const base = String(dataRootPath("eval", "golden", version))
+	const base = dataRootPath("eval", "golden", version)
 	const dir = split === "dev" ? `${base}/dev` : base
 
 	const inputs: ResolvedInput[] = []
@@ -765,7 +766,7 @@ async function resolveGolden(ref: Extract<InputSetRef, { kind: "golden" }>): Pro
  * The triaged parse-parity fixtures — component expectations, no coordinates.
  */
 async function resolveParity(ref: Extract<InputSetRef, { kind: "parity" }>): Promise<ResolvedInputSet> {
-	const path = String(repoRootPath(PARITY_FIXTURES_RELATIVE_PATH))
+	const path = repoRootPath(PARITY_FIXTURES_RELATIVE_PATH)
 	const raw = await readCorpus(path, "parity corpus")
 
 	// The same live filter `parity-corpus.ts` applies: 22 rules-era no-solution assertions

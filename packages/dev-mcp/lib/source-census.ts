@@ -25,11 +25,12 @@
  *   returned nothing" and "we never looked there" are the two facts this file exists to keep apart.
  */
 
-import { databaseRootPath, mailwomanDataRoot } from "@mailwoman/core/data-root"
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists, statPath } from "@mailwoman/core/fs/readers"
+import { wofDatabaseRoot } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import { join, type PathBuilderLike } from "path-ts"
+import type { PathBuilderLike } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
 /**
@@ -167,13 +168,13 @@ export async function censusArtifact(path: string, countries?: readonly string[]
  * `.prev`, `.bak` and journal siblings are excluded: they are on disk on purpose
  * and censusing them reports the same country twice under names nobody can act on.
  */
-export async function gazetteerArtifacts(dataRoot?: PathBuilderLike): Promise<string[]> {
-	const wof = String(databaseRootPath(dataRoot ?? mailwomanDataRoot(), "wof"))
+export async function gazetteerArtifacts(source: PathBuilderLike = dataRootPath()): Promise<string[]> {
+	const wof = wofDatabaseRoot(source)
 
 	if (!(await pathExists(wof))) return []
 
 	return (await Globerator.files("db", { cwd: wof, absolute: false, recursive: false }).toArray())
 		.filter((name) => !/\.(?:prev\d*|bak)\b/.test(name))
 		.toSorted()
-		.map((name) => join(wof, name))
+		.map((name) => wof(name).toString())
 }

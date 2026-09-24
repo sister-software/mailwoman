@@ -35,7 +35,7 @@ import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
 import { repoRootPath } from "@mailwoman/core/paths"
 import { matchPOISubject, type POIPhraseMatch } from "@mailwoman/kind-classifier"
-import { join, type PathBuilderLike } from "path-ts"
+import { type PathBuilderLike, resolvePathBuilder } from "path-ts"
 import { TextSpliterator } from "spliterator"
 import { Globerator } from "spliterator/node/fs"
 
@@ -270,7 +270,7 @@ export interface CensusPOIReader {
 }
 
 export interface PhraseCollisionCensusOptions {
-	databasePath: string
+	databasePath: PathBuilderLike
 	reader: CensusPOIReader
 	lexicon?: ActivityPhraseLexicon
 	/**
@@ -362,7 +362,7 @@ async function committedInputs(repositoryRoot: PathBuilderLike): Promise<{ input
 	let files = 0
 
 	for (const relative of COMMITTED_INPUT_ROOTS) {
-		const root = join(repositoryRoot, relative)
+		const root = resolvePathBuilder(repositoryRoot, relative)
 
 		if (!(await pathExists(root))) continue
 
@@ -395,7 +395,7 @@ async function committedInputs(repositoryRoot: PathBuilderLike): Promise<{ input
  */
 export async function runPhraseCollisionCensus(options: PhraseCollisionCensusOptions): Promise<PhraseCollisionCensus> {
 	const lexicon = options.lexicon ?? (await readActivityLexicon())
-	const repositoryRoot = options.repositoryRoot ?? String(repoRootPath())
+	const repositoryRoot = options.repositoryRoot ?? repoRootPath()
 	const declared = lexicon.phrases.map((entry) => normalizeActivityPhrase(entry.phrase))
 
 	const claims = (subject: string): boolean => {
@@ -520,7 +520,7 @@ export async function runPhraseCollisionCensus(options: PhraseCollisionCensusOpt
 			declaredPhrases: lexicon.phrases.length,
 		},
 		poiDatabase: {
-			path: options.databasePath,
+			path: options.databasePath.toString(),
 			...(manifest ? { layerManifest: manifest } : {}),
 			...(manifest ? {} : { layerManifestNote: error ?? "no layer_manifest row" }),
 		},

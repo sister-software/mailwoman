@@ -16,7 +16,7 @@ import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalTextFile, writeLocalFile } from "@mailwoman/core/fs/writers"
 import { fetchGeonamesDumps, looksLikeGazetteerDump, parseCountryInfo } from "@mailwoman/corpus/tools"
 import ADMZip from "adm-zip"
-import { join, type PathBuilderLike } from "path-ts"
+import type { PathBuilder } from "path-ts"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 let server: Server
@@ -98,8 +98,8 @@ interface DumpManifest {
 	[key: string]: unknown
 }
 
-async function readManifest(outRoot: PathBuilderLike): Promise<DumpManifest> {
-	return await readLocalJSONFile(join(outRoot, "MANIFEST.json"))
+async function readManifest(outRoot: PathBuilder): Promise<DumpManifest> {
+	return await readLocalJSONFile(outRoot("MANIFEST.json"))
 }
 
 describe("fetchGeonamesDumps", () => {
@@ -115,7 +115,7 @@ describe("fetchGeonamesDumps", () => {
 
 		// The zip is extracted and removed.
 		// The directory holds the txt rather than the archive.
-		const aa = await readLocalTextFile(join(outRoot, "AA.txt"))
+		const aa = await readLocalTextFile(outRoot("AA.txt"))
 
 		expect(aa).toContain("Aa City")
 		expect(looksLikeGazetteerDump(aa)).toBe(true)
@@ -134,11 +134,11 @@ describe("fetchGeonamesDumps", () => {
 
 		// AA is already a real dump.
 		// BB is a 12-column postal export squatting on the dump filename.
-		await writeLocalFile(dumpRow(1, "Aa City", "PPLC", "AA"), join(outRoot, "AA.txt"))
+		await writeLocalFile(dumpRow(1, "Aa City", "PPLC", "AA"), outRoot("AA.txt"))
 
 		await writeLocalTextFile(
 			["BB", "1000", "Be City", "", "", "", "", "", "", "1.0", "2.0", "6"].join("\t"),
-			join(outRoot, "BB.txt")
+			outRoot("BB.txt")
 		)
 
 		const summary = await fetchGeonamesDumps({ outRoot, baseURL, countries: ["AA", "BB"] })
@@ -153,7 +153,7 @@ describe("fetchGeonamesDumps", () => {
 
 		// The wrong-format file is reported, never clobbered.
 		// This tool does not overwrite data it did not fetch.
-		expect(await readLocalTextFile(join(outRoot, "BB.txt"))).toContain("Be City")
+		expect(await readLocalTextFile(outRoot("BB.txt"))).toContain("Be City")
 	})
 })
 

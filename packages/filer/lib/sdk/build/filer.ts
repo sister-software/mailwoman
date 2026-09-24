@@ -188,7 +188,7 @@ import { stringifyJSON } from "@mailwoman/core/json"
 import { countRows } from "@mailwoman/sqlite"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase } from "@mailwoman/sqlite/sealed-db"
-import { dirname } from "path-ts"
+import { dirname, type PathBuilderLike } from "path-ts"
 
 import {
 	createFilerAttributeNodeIndex,
@@ -277,7 +277,7 @@ export interface BuildFilerOptions {
 	 *
 	 * Built at `${out}.building` and moved into place last — see the module docstring.
 	 */
-	out: string
+	out: PathBuilderLike
 	/**
 	 * The build's overall vintage — becomes the manifest's `version` and `source_vintage`
 	 * (filer.db has no independent versioning yet, same deferral `build-bdc.ts` makes for `bdc.db`'s `release`),
@@ -757,7 +757,7 @@ export async function buildFilerDatabase(options: BuildFilerOptions): Promise<Bu
 	}
 
 	return {
-		out: options.out,
+		out: options.out.toString(),
 		nodes: materialized.nodes,
 		edges: materialized.edges,
 		attributes: materialized.attributes,

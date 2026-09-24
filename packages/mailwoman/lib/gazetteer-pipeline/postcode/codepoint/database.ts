@@ -44,10 +44,11 @@ import { dataRootPath } from "@mailwoman/core/data-root"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { CODEPOINT_ID_BASE } from "@mailwoman/core/resolver/synthetic-id-ranges"
 import { isoDate } from "@mailwoman/core/utils"
+import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase } from "@mailwoman/sqlite/sealed-db"
-import { join, type PathBuilderLike } from "path-ts"
+import { PathBuilder, type PathBuilderLike } from "path-ts"
 
 import {
 	applyStagingPragmas,
@@ -161,8 +162,8 @@ export async function buildPostcodeCodePoint(
 	const phase = options.onPhase ?? (() => {})
 	const now = options.now ?? new Date()
 	const stamp = isoDate(now)
-	const sourceDir = (options.sourceDir ?? dataRootPath("codepoint", stamp)).toString()
-	const out = (options.out ?? dataRootPath("db", "wof", `postalcode-gb-codepoint-${stamp}.db`)).toString()
+	const sourceDir = PathBuilder.from(options.sourceDir ?? dataRootPath("codepoint", stamp))
+	const out = (options.out ?? wofDatabasePath(`postalcode-gb-codepoint-${stamp}.db`)).toString()
 
 	// Acquire the Code-Point source archive.
 	//
@@ -191,7 +192,7 @@ export async function buildPostcodeCodePoint(
 		osVersion = download.version
 	}
 
-	const archivePath = join(sourceDir, "codepo_gb.zip")
+	const archivePath = sourceDir("codepo_gb.zip")
 	const extracted = await extractCodePointOpen({ archivePath, destDir: sourceDir, onPhase: phase })
 
 	phase(
@@ -199,7 +200,7 @@ export async function buildPostcodeCodePoint(
 		`${extracted.metadata.totalRows.toLocaleString()} rows claimed across ${extracted.csvPaths.length} areas`
 	)
 
-	// resolver-wof-sqlite is an optional peer — lazy import (the gazetteer-pipeline convention).
+	// Imported here so loading this module does not evaluate resolver-wof-sqlite (the gazetteer-pipeline convention).
 	const { createUnifiedSchema, createUnifiedIndexes, populateAncestors } =
 		await import("@mailwoman/resolver-wof-sqlite/unified-schema")
 
@@ -309,7 +310,7 @@ export async function buildPostcodeCodePoint(
 
 	return {
 		out,
-		sourceDir,
+		sourceDir: sourceDir.toString(),
 		inserted,
 		stats,
 		metadata: extracted.metadata,

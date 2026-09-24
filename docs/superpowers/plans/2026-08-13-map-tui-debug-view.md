@@ -1001,13 +1001,13 @@ describe("resolveTilesPath", () => {
 ```ts
 import { existsSync } from "node:fs"
 import { $public } from "@mailwoman/core/env"
-import { dataRootPath } from "@mailwoman/core/utils"
+import { dataRootPath } from "@mailwoman/core/data-root"
 
 export function resolveTilesPath(flagValue?: string): string | null {
 	if (flagValue) return flagValue
 	if ($public.MAILWOMAN_TILES) return $public.MAILWOMAN_TILES
 
-	const fallback = String(dataRootPath("tiles", "planet.pmtiles"))
+	const fallback = dataRootPath("tiles", "planet.pmtiles")
 
 	return existsSync(fallback) ? fallback : null
 }

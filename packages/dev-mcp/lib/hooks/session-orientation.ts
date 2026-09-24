@@ -21,7 +21,7 @@ import { stringifyJSON } from "@mailwoman/core/json"
 import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
 import { repoRootPath } from "@mailwoman/core/paths"
 import { readWorkspaceDirectories } from "@mailwoman/core/workspaces"
-import { resolvePath } from "path-ts"
+import { type PathBuilderLike, resolvePath } from "path-ts"
 
 /**
  * How many subpaths a workspace contributes before the rest are counted instead.
@@ -47,7 +47,7 @@ function exportedSubpaths(exports: unknown): string[] {
 /**
  * One line per workspace: its package name, then the subpaths a consumer may import.
  */
-export async function orientationListing(repoRoot: string): Promise<string> {
+export async function orientationListing(repoRoot: PathBuilderLike): Promise<string> {
 	const lines: string[] = []
 
 	for (const directory of await readWorkspaceDirectories(repoRoot)) {
@@ -75,7 +75,7 @@ export async function orientationListing(repoRoot: string): Promise<string> {
 }
 
 async function main(): Promise<void> {
-	const additionalContext = await orientationListing(String(repoRootPath()))
+	const additionalContext = await orientationListing(repoRootPath())
 
 	if (!additionalContext) return
 

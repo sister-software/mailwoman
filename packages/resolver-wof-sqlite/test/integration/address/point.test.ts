@@ -22,7 +22,6 @@ import {
 	normalizeStreetForKeyLocale,
 } from "@mailwoman/resolver-wof-sqlite/street"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import { join } from "path-ts"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 const fixtures = new AsyncDisposableStack()
@@ -38,7 +37,7 @@ let fullKeys: AddressPointSqliteLookup
 
 beforeAll(async () => {
 	const dir = fixtures.use(await temporaryDirectory("ap-lookup-")).path
-	const path = join(dir, "fixture.db")
+	const path = dir("fixture.db")
 	using kdb = new DatabaseClient<AddressPointDatabase>(path)
 
 	await createAddressPointTable(kdb)
@@ -284,7 +283,7 @@ describe("a zh extract — the Taiwanese register keyed by 縣市 + 鄉鎮市區
 
 	beforeAll(async () => {
 		const dir = fixtures.use(await temporaryDirectory("ap-lookup-zh-")).path
-		const path = join(dir, "tw.db")
+		const path = dir("tw.db")
 		using kdb = new DatabaseClient<AddressPointDatabase>(path)
 
 		await createAddressPointTable(kdb)

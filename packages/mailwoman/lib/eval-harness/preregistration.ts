@@ -19,6 +19,7 @@ import { stringifyJSON } from "@mailwoman/core/json"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { compareByCodePoint } from "@mailwoman/core/strings/compare"
 import { resolveWeights } from "@mailwoman/neural/weights"
+import type { PathBuilderLike } from "path-ts"
 
 import { type LayerManifest, probeManifest } from "#data/inventory"
 import type { POIBoardResolverBackend } from "#eval-harness/poi/board"
@@ -73,8 +74,8 @@ export interface FrozenDefinitionFreezeRecord {
 }
 
 export interface LoadFrozenDefinitionOptions<T> {
-	definitionPath: string
-	freezePath: string
+	definitionPath: PathBuilderLike
+	freezePath: PathBuilderLike
 	/**
 	 * The prefix on every refusal — `"phase-2 decision"`, `"semantic-utility probe"`, `"absence probe"`.
 	 */

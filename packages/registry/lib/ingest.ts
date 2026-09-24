@@ -25,6 +25,7 @@
 import { isPresent } from "@mailwoman/core/objects"
 import type { AddressGeocode, PostalAddress } from "@mailwoman/record"
 import { canonicalizeOrganizationName, parsePersonName, toPostalAddress, withGeocode } from "@mailwoman/record"
+import type { PathBuilderLike } from "path-ts"
 import { type AsyncSequence, CSVSpliterator, Delimiters } from "spliterator"
 
 import type { SourceRecord } from "#types"
@@ -69,11 +70,13 @@ export function delimiterFor(path: string): Delimiter {
  * Wrapping this in an `async function*` would cost an async frame per row and take those operators away.
  */
 export function streamRows(
-	source: string,
+	source: PathBuilderLike,
 	opts: { delimiter?: Delimiter } = {}
 ): AsyncSequence<Record<string, string>> {
-	return CSVSpliterator.fromAsync<Record<string, string>>(source, {
-		columnDelimiter: COLUMN_DELIMITERS[opts.delimiter ?? delimiterFor(source)],
+	const path = source.toString()
+
+	return CSVSpliterator.fromAsync<Record<string, string>>(path, {
+		columnDelimiter: COLUMN_DELIMITERS[opts.delimiter ?? delimiterFor(path)],
 		// A {@linkcode ColumnMapping} names columns in the publisher's spelling — `Facility Name`,
 		// not `facility_name` — so the keys must arrive as the file writes them.
 		// The reader's default normalizes.
@@ -304,7 +307,7 @@ export async function ingestRows(
  * and its counter is the row's index — the id a row without a mapped `id` column falls back to.
  */
 export function normalizeCSV(
-	source: string,
+	source: PathBuilderLike,
 	opts: { mapping: ColumnMapping; delimiter?: Delimiter }
 ): AsyncSequence<SourceRecord> {
 	return streamRows(source, { delimiter: opts.delimiter }).map((row, index) => ingestRow(row, opts.mapping, index))

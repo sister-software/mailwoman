@@ -10,7 +10,6 @@
  */
 
 import { Box, Text } from "ink"
-import { join } from "path-ts"
 
 import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
 import { DEFAULT_CANDIDATE_OUT } from "#gazetteer-pipeline/defaults"
@@ -31,11 +30,12 @@ export const spec = {
 
 const GazetteerPromote: ParsedCommandComponent<Record<string, never>> = ({ args }) => {
 	const state = useCommandTask(async () => {
-		const { mailwomanDataRoot } = await import("@mailwoman/core/utils")
-		const { promoteCandidate, wofDir } = await import("#gazetteer-pipeline")
+		const { dataRootPath } = await import("@mailwoman/core/data-root")
+		const { promoteCandidate } = await import("#gazetteer-pipeline")
+		const { wofDatabasePath } = await import("@mailwoman/resolver-wof-sqlite/paths")
 
-		const root = mailwomanDataRoot()
-		const candidateDB = args[0] ?? join(wofDir(root), DEFAULT_CANDIDATE_OUT)
+		const root = dataRootPath()
+		const candidateDB = args[0] ?? wofDatabasePath(DEFAULT_CANDIDATE_OUT)
 		const linkPath = await promoteCandidate(candidateDB, root)
 
 		return { from: linkPath, to: candidateDB }

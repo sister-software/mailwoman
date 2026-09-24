@@ -21,6 +21,7 @@
 
 import { foldStreetSurface, type StreetEvidenceScope, type StreetLocalityEvidence } from "@mailwoman/resolver"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
+import type { PathBuilderLike } from "path-ts"
 
 import type { WOFDatabase } from "#schema"
 import { hasColumn, hasTable } from "#sqlite-utils"
@@ -53,7 +54,7 @@ export class SQLiteStreetNameLookup implements StreetLocalityEvidence, Disposabl
 	readonly #byNameLocality: ReturnType<DatabaseClient["prepare"]> | undefined
 	readonly #byNamePostcode: ReturnType<DatabaseClient["prepare"]> | undefined
 
-	constructor(dbPath: string, opts: SQLiteStreetNameLookupOpts = {}) {
+	constructor(dbPath: PathBuilderLike, opts: SQLiteStreetNameLookupOpts = {}) {
 		this.countries = new Set([...(opts.countries ?? ["FR"])].map((c) => c.toUpperCase()))
 		this.#db = new DatabaseClient<WOFDatabase>(dbPath, { readOnly: true })
 		const table = opts.table ?? "street_centroid"

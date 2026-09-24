@@ -95,7 +95,7 @@ export async function releasePreflight(options: ReleasePreflightOptions): Promis
 			resources.use(scratch)
 		}
 
-		stagingRoot = String(scratch.path)
+		stagingRoot = scratch.path.toString()
 	}
 
 	// 1. The named-absence identity.

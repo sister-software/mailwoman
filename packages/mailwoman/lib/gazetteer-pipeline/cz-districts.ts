@@ -26,6 +26,7 @@ import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { md5Hex } from "@mailwoman/core/hash"
 import { CZ_DISTRICT_ID_BASE } from "@mailwoman/core/resolver/synthetic-id-ranges"
+import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed-db"
@@ -56,8 +57,8 @@ export async function buildCZDistrictsDatabase(
 ): Promise<{ out: string; inserted: number; sourceMD5: string }> {
 	const { createUnifiedIndexes, createUnifiedSchema } = await import("@mailwoman/resolver-wof-sqlite/unified-schema")
 	const { buildPlaceSearchFTS } = await import("@mailwoman/resolver-wof-sqlite")
-	const sourcePath = opts.sourcePath ?? String(dataRootPath("geonames", "CZ.txt"))
-	const outPath = opts.out ?? String(dataRootPath("db", "wof", "localities-cz-districts.db"))
+	const sourcePath = opts.sourcePath ?? dataRootPath("geonames", "CZ.txt")
+	const outPath = opts.out ?? wofDatabasePath("localities-cz-districts.db")
 	const tmpPath = `${outPath}.tmp`
 
 	const raw = await readLocalTextFile(sourcePath)
@@ -129,5 +130,5 @@ export async function buildCZDistrictsDatabase(
 	await swapDatabaseIntoPlace(tmpPath, outPath)
 	await sealDatabase(outPath)
 
-	return { out: outPath, inserted, sourceMD5 }
+	return { out: outPath.toString(), inserted, sourceMD5 }
 }

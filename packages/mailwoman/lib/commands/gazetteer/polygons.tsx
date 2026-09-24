@@ -27,7 +27,7 @@
  *   actually live (VT: 255/255 localadmin have real polygons, 0 reached the demo sidecar).
  */
 
-import { wofReposRoot } from "@mailwoman/core/data-root"
+import { wofReposPath } from "@mailwoman/core/data-root"
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { readLocalTextFile, pathExists } from "@mailwoman/core/fs/readers"
 import { removePath } from "@mailwoman/core/fs/writers"
@@ -68,7 +68,7 @@ export const spec = {
 		tol: { type: "number", default: 0.004, description: "Simplification tolerance in degrees" },
 		repos: {
 			type: "string",
-			default: resolvePath(wofReposRoot("whosonfirst-data")),
+			default: wofReposPath("whosonfirst-data").toString(),
 			description: "WOF GeoJSON repository root",
 		},
 	},

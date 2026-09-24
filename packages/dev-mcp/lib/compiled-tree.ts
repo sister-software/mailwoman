@@ -22,20 +22,21 @@
  */
 
 import { checkCompiledFreshness, type CompiledFreshness } from "@mailwoman/core/module/compiled-freshness"
+import type { PathBuilderLike } from "path-ts"
 
 import { FINGERPRINTED_WORKSPACES } from "#tree-fingerprint"
 
 /**
  * Whether the compiled tree a spawned CLI will load is newer than the source it was emitted from.
  */
-export async function checkSpawnedTreeFreshness(repoRoot: string): Promise<CompiledFreshness> {
+export async function checkSpawnedTreeFreshness(repoRoot: PathBuilderLike): Promise<CompiledFreshness> {
 	return await checkCompiledFreshness(repoRoot, FINGERPRINTED_WORKSPACES)
 }
 
 /**
  * @throws When the compiled tree predates its source.
  */
-export async function assertCompiledFresh(repoRoot: string): Promise<CompiledFreshness> {
+export async function assertCompiledFresh(repoRoot: PathBuilderLike): Promise<CompiledFreshness> {
 	const freshness = await checkSpawnedTreeFreshness(repoRoot)
 
 	if (!freshness.fresh) {

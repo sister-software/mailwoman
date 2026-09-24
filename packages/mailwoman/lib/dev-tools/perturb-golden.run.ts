@@ -23,12 +23,12 @@
  * Then run it through harness-neural (formerly harness-v0-neural with --symmetric-match).
  */
 
-import { tempRootPath } from "@mailwoman/core/data-root"
+import { tempRootPathBuilder } from "@mailwoman/core/data-root"
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { tryParsingJSON, stringifyJSON } from "@mailwoman/core/json"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
-import { dirname, join } from "path-ts"
+import { PathBuilder } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
 import { OVERLAY_LOCALE_BY_COUNTRY } from "#eval-harness/gauntlet/routing"
@@ -36,14 +36,13 @@ import { OVERLAY_LOCALE_BY_COUNTRY } from "#eval-harness/gauntlet/routing"
 // Loose scan parity with the retired local argv helpers: unknown flags tolerated.
 const { values: rawValues } = parseArguments({
 	options: { golden: { type: "string" }, out: { type: "string" }, "per-file": { type: "string" } },
-	strict: false,
 	allowPositionals: true,
 })
 
 // Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
 const values = rawValues as { golden?: string; out?: string; "per-file"?: string }
-const GOLDEN = values["golden"] || "data/eval/golden/v0.1.2"
-const OUT = values["out"] || tempRootPath("perturb-eval", "perturbed.jsonl")
+const GOLDEN = PathBuilder.from(values["golden"] || "data/eval/golden/v0.1.2")
+const OUT = PathBuilder.from(values["out"] || tempRootPathBuilder("perturb-eval", "perturbed.jsonl"))
 const PER_FILE = Number(values["per-file"] || "60")
 
 interface GoldenRow {
@@ -81,7 +80,7 @@ const PERTURBATIONS: Array<{ name: string; apply: (raw: string, components: Reco
 ]
 
 async function main(): Promise<void> {
-	await makeDirectories(dirname(OUT))
+	await makeDirectories(OUT.dirname())
 	const out: string[] = []
 
 	/**
@@ -99,7 +98,7 @@ async function main(): Promise<void> {
 		// The stride below needs the row count before it can pick a row, then indexes them, so the whole
 		// set has to be resident either way — streaming would only move the materialization.
 		// oxlint-disable-next-line mailwoman/prefer-spliterator -- see above
-		const lines = (await readLocalTextFile(join(GOLDEN, file))).split("\n").filter((l) => l.trim())
+		const lines = (await readLocalTextFile(GOLDEN(file))).split("\n").filter((l) => l.trim())
 
 		// Deterministic spread: every Nth row up to PER_FILE.
 		const step = Math.max(1, Math.floor(lines.length / PER_FILE))

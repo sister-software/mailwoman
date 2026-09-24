@@ -2,10 +2,10 @@
 
 Mailwoman is a postal-address parser. The unscoped `mailwoman` package provides the CLI and library.
 The repository also contains 74 scoped `@mailwoman/*` packages. The root `workspaces` field expands to
-75 workspaces, including `docs`; `readWorkspaceDirectories` in `@mailwoman/core/workspaces` is the
+76 workspaces, including `docs`; `readWorkspaceDirectories` in `@mailwoman/core/workspaces` is the
 authoritative reader. The root package, `@mailwoman/universe`, is private.
 
-Sixty workspaces publish to npm. `.release-it.json` defines that set. Fourteen workspaces are private,
+Sixty workspaces publish to npm. `.release-it.json` defines that set. Fifteen workspaces are private,
 and `packages/osm` remains unpublished pending ODbL counsel sign-off. Run the workspace check described
 in `packages/release-kit/AGENTS.md` after adding or moving a workspace.
 
@@ -188,7 +188,8 @@ rows before registering the threshold.
 ## Repository mechanics
 
 Executable repository code accesses the filesystem through `@mailwoman/core/fs`; paths use `path-ts`.
-Data-root artifacts use `@mailwoman/core/data-root`. Package and repository files use the resolvers
+Data-root artifacts use `@mailwoman/core/data-root`, and a layer database uses its owning package's
+`paths` export (`wofDatabasePath`, `banDatabasePath`, …). Package and repository files use the resolvers
 documented in `packages/core/AGENTS.md`. The lint and repository-health checks identify violations and
 name the owning interface.
 

@@ -16,11 +16,11 @@
  *   is the ordinary board grade for that row, and a difference there is a harness defect rather than a finding.
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists, readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { percentile } from "@mailwoman/core/stats"
 import { autocomplete, deserializeFST, type FSTMatcher } from "@mailwoman/resolver-wof-sqlite/fst"
+import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { haversineKm } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
@@ -327,8 +327,8 @@ export async function runAutocompleteLadder(
 	})
 
 	const selected = options.limit ? eligible.slice(0, options.limit) : eligible
-	const fstDir = options.fstDir ?? String(dataRootPath("db", "wof", "fst-per-locale"))
-	const adminDB = options.adminDB ?? String(dataRootPath("db", "wof", "admin-global-priority.db"))
+	const fstDir = options.fstDir ?? wofDatabasePath("fst-per-locale")
+	const adminDB = options.adminDB ?? wofDatabasePath("admin-global-priority.db")
 
 	using deps = await buildGauntletDeps(options)
 	using admin = new DatabaseClient<WOFDatabase>(adminDB, { readOnly: true })

@@ -251,7 +251,7 @@ export async function runMinimalPairs(
 					components: componentsOf(run.result),
 					lat: run.result.lat,
 					lon: run.result.lon,
-					tier: String(run.result.resolution_tier),
+					tier: run.result.resolution_tier,
 					delta: null,
 					...(markers?.length ? { refused: markers.map((m) => m.kind).join(", ") } : {}),
 				})

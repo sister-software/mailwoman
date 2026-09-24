@@ -47,7 +47,7 @@ const { values } = parseArguments({
 		country: { type: "string", default: "US" },
 		"country-name": { type: "string", default: "United States" },
 		"per-region": { type: "string", default: "120" },
-		out: { type: "string", default: String(dataRootPath("eval", "coord", "us-stratified.jsonl")) },
+		out: { type: "string", default: dataRootPath("eval", "coord", "us-stratified.jsonl").toString() },
 		/**
 		 * The GeoNames postal export to draw from.
 		 *

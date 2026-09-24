@@ -61,7 +61,6 @@ const { values: rawValues } = parseArguments({
 		set: { type: "string" },
 		tokenizer: { type: "string" },
 	},
-	strict: false,
 	allowPositionals: true,
 })
 

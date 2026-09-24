@@ -38,8 +38,8 @@ describe("surfaceForSource", () => {
 describe("migrateRecipeOutput", () => {
 	it("renames the two columns and states what is known about the register", async () => {
 		await using scratch = await temporaryDirectory("mw-migrate-")
-		const input = scratch.resolve("old.jsonl")
-		const output = scratch.resolve("new.jsonl")
+		const input = scratch.path("old.jsonl")
+		const output = scratch.path("new.jsonl")
 		await writeLocalTextFile(`${stringifyJSON(OLD_ROW)}\n`, input)
 
 		const summary = await migrateRecipeOutput(input, output)
@@ -59,8 +59,8 @@ describe("migrateRecipeOutput", () => {
 
 	it("passes a row that already carries a surface through untouched", async () => {
 		await using scratch = await temporaryDirectory("mw-migrate-done-")
-		const input = scratch.resolve("new-in.jsonl")
-		const output = scratch.resolve("new-out.jsonl")
+		const input = scratch.path("new-in.jsonl")
+		const output = scratch.path("new-out.jsonl")
 		const current = { ...OLD_ROW, register: "openaddresses", surface: "composed", recipe: "german" }
 		await writeLocalTextFile(`${stringifyJSON(current)}\n`, input)
 

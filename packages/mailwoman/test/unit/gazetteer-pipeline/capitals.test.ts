@@ -11,7 +11,6 @@ import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { buildCapitalsReference, type CapitalsReference, parseCapitalRows } from "mailwoman/gazetteer-pipeline/capitals"
-import { join } from "path-ts"
 import { describe, expect, it } from "vitest"
 
 function dumpRow(id: number, name: string, fclass: string, fcode: string, country: string, alternates = ""): string {
@@ -66,7 +65,7 @@ describe("parseCapitalRows", () => {
 describe("buildCapitalsReference", () => {
 	it("grades coverage against the catalog: wrong-format files are named, never counted as scanned", async () => {
 		await using dirDirectory = await temporaryDirectory("mw-capitals-")
-		const dir = dirDirectory.path.toString()
+		const dir = dirDirectory.path
 
 		await writeLocalTextFile(
 			[
@@ -75,20 +74,20 @@ describe("buildCapitalsReference", () => {
 				"BB\tBBB\t008\tAL\tBebland\tBe City\t1\t1\tEU\t.bb",
 				"CC\tCCC\t012\tDZ\tCeland\tCe City\t1\t1\tAF\t.cc",
 			].join("\n"),
-			join(dir, "countryInfo.txt")
+			dir("countryInfo.txt")
 		)
 
 		// AA: a real dump whose pplc name disagrees with the catalog.
 		// BB: a postal export on the dump filename.
 		// CC: no file at all.
-		await writeLocalFile(dumpRow(1, "Other Name", "P", "PPLC", "AA"), join(dir, "AA.txt"))
+		await writeLocalFile(dumpRow(1, "Other Name", "P", "PPLC", "AA"), dir("AA.txt"))
 
 		await writeLocalTextFile(
 			["BB", "1000", "Be City", "", "", "", "", "", "", "1.0", "2.0", "6"].join("\t"),
-			join(dir, "BB.txt")
+			dir("BB.txt")
 		)
 
-		const outPath = join(dir, "capitals.json")
+		const outPath = dir("capitals.json")
 		const { coverage } = await buildCapitalsReference({ geonamesDir: dir, outPath })
 
 		expect(coverage.countries_scanned).toBe(1)
@@ -115,10 +114,8 @@ describe("buildCapitalsReference", () => {
 
 	it("throws without countryInfo.txt — no catalog, no coverage denominator", async () => {
 		await using dirDirectory = await temporaryDirectory("mw-capitals-")
-		const dir = dirDirectory.path.toString()
+		const dir = dirDirectory.path
 
-		await expect(buildCapitalsReference({ geonamesDir: dir, outPath: join(dir, "out.json") })).rejects.toThrow(
-			/countryInfo/
-		)
+		await expect(buildCapitalsReference({ geonamesDir: dir, outPath: dir("out.json") })).rejects.toThrow(/countryInfo/)
 	})
 })

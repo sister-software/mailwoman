@@ -18,10 +18,10 @@
  *   --eval data/eval/external/openaddresses-de-sample.jsonl --country DE
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { percentile } from "@mailwoman/core/stats"
 import { WOFPostcodeLookup } from "@mailwoman/resolver-wof-sqlite"
+import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import { haversineKm } from "@mailwoman/spatial"
 import { resolvePath } from "path-ts"
 import { JSONSpliterator } from "spliterator"
@@ -42,28 +42,24 @@ function parseArgs(): Args {
 	let country = "DE"
 
 	const databases: string[] = [
-		resolvePath(dataRootPath("db", "wof", "postalcode-us.db")),
-		resolvePath(dataRootPath("db", "wof", "postalcode-intl.db")),
+		resolvePath(wofDatabasePath("postalcode-us.db")),
+		resolvePath(wofDatabasePath("postalcode-intl.db")),
 	]
 
-	// node:util parseArgs (strict:false = old scan parity: unknown flags tolerated)
 	const { values } = parseArguments({
 		options: { country: { type: "string" }, eval: { type: "string" }, extract: { type: "string", multiple: true } },
-		strict: false,
 		allowPositionals: true,
 	})
 
-	if (values["eval"] != null) {
-		evalPath = values["eval"] as string
+	if (values.eval !== undefined) {
+		evalPath = values.eval
 	}
 
-	if (values["country"] != null) {
-		country = values["country"] as string
+	if (values.country !== undefined) {
+		country = values.country
 	}
 
-	for (const v of (values["extract"] as string[] | undefined) ?? []) {
-		databases.push(v)
-	}
+	databases.push(...(values.extract ?? []))
 
 	return { evalPath, country, databases }
 }

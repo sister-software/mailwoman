@@ -24,10 +24,11 @@
  *   read it says so in place rather than omitting the field.
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
 import { repoRootPath } from "@mailwoman/core/paths"
 import type { PipelineOpts, PipelineResult } from "@mailwoman/core/pipeline"
 import { compareByCodePoint } from "@mailwoman/core/strings/compare"
+import { poiDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
+import type { PathBuilderLike } from "path-ts"
 
 import {
 	type AbsenceCounts,
@@ -100,7 +101,7 @@ export interface AbsenceProbeOptions extends POIBoardOptions {
 	 *
 	 * Absent resolves the definition's own `coverageLayerFile` under `$MAILWOMAN_DATA_ROOT/db/poi/`.
 	 */
-	coverageDatabasePath?: string
+	coverageDatabasePath?: PathBuilderLike
 	/**
 	 * Commit sha recorded in the receipt.
 	 *
@@ -120,8 +121,7 @@ export interface AbsenceProbeOptions extends POIBoardOptions {
 export async function runAbsenceObservationProbe(options: AbsenceProbeOptions = {}): Promise<AbsenceProbeReceipt> {
 	const definition = await loadAbsenceProbeDefinition(options.definitionPath, options.freezePath)
 
-	const coverageDatabasePath =
-		options.coverageDatabasePath ?? String(dataRootPath("db", "poi", definition.coverageLayerFile))
+	const coverageDatabasePath = options.coverageDatabasePath ?? poiDatabasePath(definition.coverageLayerFile)
 
 	const needsSemanticRoute = definition.rows.some((row) => row.requiresSemanticRoute)
 	const semanticRoute = needsSemanticRoute ? await createSemanticObservationRoute() : undefined
@@ -160,7 +160,7 @@ export async function runAbsenceObservationProbe(options: AbsenceProbeOptions = 
 		definitionVersion: definition.version,
 		definitionSHA256: absenceProbeDefinitionHash(definition),
 		generatedAt: new Date().toISOString(),
-		gitCommit: options.gitCommit ?? buildSHA(String(repoRootPath())),
+		gitCommit: options.gitCommit ?? buildSHA(repoRootPath()),
 		artifact: await readArtifactIdentity(db, backend, options),
 		absenceRoute: absenceRoute.identity,
 		semanticRouteInjected: Boolean(semanticRoute),

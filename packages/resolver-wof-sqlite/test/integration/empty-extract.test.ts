@@ -14,7 +14,7 @@ import type { AddressPointDatabase } from "@mailwoman/resolver-wof-sqlite/addres
 import { StreetInterpolator } from "@mailwoman/resolver-wof-sqlite/interpolation"
 import type { StreetSegmentDatabase } from "@mailwoman/resolver-wof-sqlite/street"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import { join } from "path-ts"
+import type { PathBuilder } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 
 const fixtures = new AsyncDisposableStack()
@@ -23,9 +23,9 @@ afterAll(() => fixtures.disposeAsync())
 
 const query = { street: "Main St", number: "100", postcode: "03301" }
 
-async function tablelessDBFile(): Promise<string> {
+async function tablelessDBFile(): Promise<PathBuilder> {
 	const dir = fixtures.use(await temporaryDirectory("mw-empty-extract-")).path
-	const path = join(dir, "empty.db")
+	const path = dir("empty.db")
 	using seed = new DatabaseClient<AddressPointDatabase>(path)
 	seed.exec("CREATE TABLE unrelated (x)")
 

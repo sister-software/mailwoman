@@ -25,8 +25,9 @@
 //
 //   node fr-ban-panel.mjs --resample --data-root <DATA_ROOT> # regenerate fr-ban-sample.json
 //
-// `--data-root` defaults to $MAILWOMAN_DATA_ROOT. The candidate gazetteer is read from <DATA_ROOT>/wof/candidate.db and the BAN extract from <DATA_ROOT>/ban/address-points-fr.db.
+// `--data-root` defaults to $MAILWOMAN_DATA_ROOT. The candidate gazetteer is read from <DATA_ROOT>/db/wof/candidate.db and the BAN extract from <DATA_ROOT>/db/ban/address-points-fr.db.
 
+import { banDatabaseRoot } from "@mailwoman/ban/paths"
 import { BANRegionDatabaseProvider } from "@mailwoman/ban/sdk"
 import { readLocalJSONFile, realPath } from "@mailwoman/core/fs/readers"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
@@ -40,12 +41,13 @@ import { resolveWeights } from "@mailwoman/neural/weights"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { WOFCandidateTableLookup } from "@mailwoman/resolver-wof-sqlite"
 import type { AddressPointDatabase } from "@mailwoman/resolver-wof-sqlite/address"
+import { wofDatabaseRoot } from "@mailwoman/resolver-wof-sqlite/paths"
 import { haversineKm } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { geocodeAddress } from "mailwoman/geocode"
-import { basename, join, resolvePath } from "path-ts"
+import { basename, PathBuilder, resolvePath } from "path-ts"
 
-const HERE = import.meta.dirname
+const HERE = PathBuilder.from(import.meta.dirname)
 
 /**
  * The weights locale.
@@ -103,8 +105,9 @@ const ROUTING_KM = 15
 const { values: flags } = parseArguments({
 	options: {
 		"data-root": { type: "string" },
-		out: { type: "string", default: join(HERE, "fr-ban-results.json") },
-		sample: { type: "string", default: join(HERE, "fr-ban-sample.json") },
+		// Strings, because an option default has the option's type.
+		out: { type: "string", default: HERE("fr-ban-results.json").toString() },
+		sample: { type: "string", default: HERE("fr-ban-sample.json").toString() },
 		resample: { type: "boolean", default: false },
 		limit: { type: "string" },
 	},
@@ -132,10 +135,10 @@ if (!dataRoot) {
  * Module-level narrowing does not reach into a function body, so the guard's result
  * is bound once here rather than re-asserted at every use.
  */
-const DATA_ROOT: string = dataRoot
+const DATA_ROOT = PathBuilder.from(dataRoot)
 
-const banPath = join(DATA_ROOT, "ban", "address-points-fr.db")
-const candidatePath = join(DATA_ROOT, "wof", "candidate.db")
+const banPath = banDatabaseRoot(DATA_ROOT)("address-points-fr.db")
+const candidatePath = wofDatabaseRoot(DATA_ROOT)("candidate.db")
 
 /**
  * The committed sample file: the draw's provenance plus the rows it produced.

@@ -27,7 +27,7 @@
 
 import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
-import { resolvePath } from "path-ts"
+import { type PathBuilderLike, resolvePath } from "path-ts"
 
 import { literalFilesEntries } from "#pack/verify-tarball"
 
@@ -392,8 +392,11 @@ function stringOrNull(value: unknown): string | null {
  * @throws When the manifest is unreadable rather than returning an empty record: a rights
  * record nobody can read must not resolve to a package that ships nothing and owes nothing.
  */
-export async function readWeightsRightsRecord(repoRoot: string, workspace: string): Promise<WeightsRightsRecord> {
-	const manifest = await readPackageJSON(String(resolvePath(repoRoot, workspace, "package.json")))
+export async function readWeightsRightsRecord(
+	repoRoot: PathBuilderLike,
+	workspace: string
+): Promise<WeightsRightsRecord> {
+	const manifest = await readPackageJSON(resolvePath(repoRoot, workspace, "package.json"))
 	const cardPath = resolvePath(repoRoot, workspace, "model-card.json")
 	const card = (await pathExists(cardPath)) ? await readLocalJSONFile<ModelCard>(cardPath) : null
 
@@ -448,7 +451,7 @@ export async function readWeightsRightsRecord(repoRoot: string, workspace: strin
  * other packages that could have carried it, and reading one package cannot establish that.
  */
 export async function readWeightsRightsRecords(
-	repoRoot: string,
+	repoRoot: PathBuilderLike,
 	workspaces: readonly string[]
 ): Promise<WeightsRightsRecord[]> {
 	const records: WeightsRightsRecord[] = []

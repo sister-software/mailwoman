@@ -33,6 +33,7 @@ import { allRows } from "@mailwoman/core/utils"
 import { bboxAround, geometryContains, haversineKm, type ParsedGeometry } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { tableExists } from "@mailwoman/sqlite/introspection"
+import type { PathBuilderLike } from "path-ts"
 
 import { ancestorLineage, placetypeDepth } from "#ancestry/index"
 import { PLACE_BBOX_TABLE } from "#fts/index"
@@ -80,7 +81,7 @@ export interface WOFReverseGeocoderOpts {
 	 *
 	 * Mutually exclusive with `adminDatabase`.
 	 */
-	adminDBPath?: string
+	adminDBPath?: PathBuilderLike
 	/**
 	 * Pre-opened admin DB — primarily for tests against an inline fixture.
 	 */
@@ -92,7 +93,7 @@ export interface WOFReverseGeocoderOpts {
 	 *
 	 * Mutually exclusive with `polygonDatabase`.
 	 */
-	polygonDBPath?: string
+	polygonDBPath?: PathBuilderLike
 	/**
 	 * Pre-opened polygon DB — primarily for tests.
 	 */

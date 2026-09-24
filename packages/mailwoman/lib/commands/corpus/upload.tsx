@@ -26,6 +26,7 @@ import { pathExists } from "@mailwoman/core/fs/readers"
 import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 import { childEnv } from "@mailwoman/core/scripting/utils"
 import { Box, Text } from "ink"
+import { PathBuilder, type PathBuilderLike } from "path-ts"
 import { useState } from "react"
 import { Globerator } from "spliterator/node/fs"
 
@@ -73,9 +74,7 @@ const CorpusUpload: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { $ } = await import("zx")
 
-		const { join } = await import("path-ts")
-
-		const corpusRoot = options.corpusDir ?? String(dataRootPath("corpus", "versioned"))
+		const corpusRoot = PathBuilder.from(options.corpusDir ?? dataRootPath("corpus", "versioned"))
 
 		const versions = extractDelimited(options.corpusVersion)
 
@@ -113,7 +112,7 @@ const CorpusUpload: CommandComponent<typeof spec> = ({ options }) => {
 
 		interface Job {
 			label: string
-			source: string
+			source: PathBuilderLike
 			dest: string
 			extra: string[]
 		}
@@ -122,8 +121,8 @@ const CorpusUpload: CommandComponent<typeof spec> = ({ options }) => {
 
 		for (const version of versions) {
 			// The on-disk layout nests the corpus under its own name: <root>/<version>/corpus-<version>/.
-			const nested = join(corpusRoot, version, `corpus-${version}`)
-			const source = (await pathExists(nested)) ? nested : join(corpusRoot, version)
+			const nested = corpusRoot(version, `corpus-${version}`)
+			const source = (await pathExists(nested)) ? nested : corpusRoot(version)
 
 			jobs.push({
 				label: `corpus ${version}`,
@@ -136,7 +135,7 @@ const CorpusUpload: CommandComponent<typeof spec> = ({ options }) => {
 		if (options.tokenizer) {
 			jobs.push({
 				label: "tokenizer",
-				source: String(dataRootPath("models", "tokenizer")),
+				source: dataRootPath("models", "tokenizer"),
 				dest: `${base}/models/tokenizer/`,
 				extra: ["--transfers", "4"],
 			})
@@ -170,7 +169,7 @@ const CorpusUpload: CommandComponent<typeof spec> = ({ options }) => {
 			update(index, { status: "running" })
 
 			try {
-				await $({ env })`rclone sync ${job.source} ${job.dest} ${job.extra} ${dry} --stats-one-line`.quiet()
+				await $({ env })`rclone sync ${job.source.toString()} ${job.dest} ${job.extra} ${dry} --stats-one-line`.quiet()
 				update(index, { status: "done", detail: options.dryRun ? "would sync" : "synced" })
 			} catch (error: unknown) {
 				const e = error as Record<string, unknown>

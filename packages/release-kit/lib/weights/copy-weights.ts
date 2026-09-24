@@ -10,7 +10,7 @@
  *
  *   The source model + tokenizer filenames come from `release.config.json` (`weights.model` /
  *   `weights.tokenizer`) so the versioned names live in one place rather than hardcoded here.
- *   They resolve against `mailwomanDataRoot()`, which is the one home for the root itself. Override
+ *   They resolve against `dataRootPath()`, which is the one home for the root itself. Override
  *   at release time via env vars:
  *
  *   - MAILWOMAN_DATA_ROOT: the machine's data dir
@@ -33,7 +33,7 @@
  *   Idempotent. Used by .release-it.json's before:init hook through `mwops release copy-weights`.
  */
 
-import { mailwomanDataRoot } from "@mailwoman/core/data-root"
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists, tryStat } from "@mailwoman/core/fs/readers"
 import { copyFileTo, makeDirectories, removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { spawnProcessSync } from "@mailwoman/core/process"
@@ -43,6 +43,7 @@ import {
 	repoCommittedSoftFeedSources,
 	type SoftFeedRecipe,
 } from "@mailwoman/core/release-config"
+import { wofDatabaseRoot } from "@mailwoman/resolver-wof-sqlite/paths"
 import { resolvePath } from "path-ts"
 
 import { $public } from "#env/index"
@@ -196,7 +197,7 @@ export async function copyWeights({
 	}
 
 	const config = await readReleaseConfig(repoRoot)
-	const dataRoot = String(mailwomanDataRoot())
+	const dataRoot = dataRootPath().toString()
 	const softFeed: SoftFeedRecipe = config.softFeed ?? {}
 
 	const context: MaterializationContext = {
@@ -399,7 +400,9 @@ async function materializeSoftFeed(context: MaterializationContext, workspace: s
 		return
 	}
 
-	const db = dbRel.startsWith("/") ? dbRel : resolvePath(context.dataRoot, "wof", dbRel)
+	// `db/wof`, through the one home, because `dbRel` is a bare filename from the soft-feed config
+	// and composing the directory here is what left this call site on the pre-grouping path.
+	const db = dbRel.startsWith("/") ? dbRel : wofDatabaseRoot(context.dataRoot)(dbRel)
 
 	if (!(await pathExists(db))) {
 		throw new Error(
@@ -448,13 +451,14 @@ async function materializePairIndex(context: MaterializationContext, workspace: 
 		return
 	}
 
-	// Inputs resolve against different roots, and conflating them is a real failure
-	// mode (it broke CI once): `source` and `boroughDB` are large acquired datasets
-	// under the data root, while `pairsJsonl` is a curated file checked into the
-	// repository (`data/gazetteer/london-pairs-v2.jsonl`).
-	// `resolvePath` lets an absolute entry pass through untouched either way.
+	// Each input resolves against its own root.
+	// `source` is relative to the data root.
+	// `boroughDB` is a filename under the data root's `db/wof/`.
+	// `pairsJsonl` is relative to the repository.
+	// An absolute entry is used as given.
 	const source = entry.source ? resolvePath(context.dataRoot, entry.source) : undefined
-	const boroughDB = entry.boroughDB ? resolvePath(context.dataRoot, entry.boroughDB) : undefined
+
+	const boroughDB = entry.boroughDB ? resolvePath(wofDatabaseRoot(context.dataRoot), entry.boroughDB) : undefined
 
 	// A comma-separated list since R7 (London + NI): resolve each entry, then rejoin.
 	const pairsJsonl = entry.pairsJsonl

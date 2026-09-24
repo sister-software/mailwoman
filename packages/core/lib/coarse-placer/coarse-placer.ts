@@ -10,6 +10,8 @@
  *   browser.
  */
 
+import type { PathBuilderLike } from "path-ts"
+
 import { featurize } from "#coarse-placer/featurize"
 import { $public } from "#env/index"
 import { readLocalBuffer, readLocalJSONFile } from "#fs/readers"
@@ -102,9 +104,9 @@ export function dequantizeInt8Weights(
  * files out of a shared 8 KiB pool, so a typed-array view over `.buffer` alone would start
  * at the pool's origin and run its full length — the wrong floats, and 2048 of them.
  */
-export async function readWeightsBin(dir: string): Promise<ArrayBufferLike> {
-	const { join } = await import("path-ts")
-	const buf = await readLocalBuffer(join(dir, "weights.bin"))
+export async function readWeightsBin(dir: PathBuilderLike): Promise<ArrayBufferLike> {
+	const { PathBuilder } = await import("path-ts")
+	const buf = await readLocalBuffer(PathBuilder.from(dir)("weights.bin"))
 
 	return buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength)
 }
@@ -196,9 +198,9 @@ export class CoarsePlacer {
 	 * (`meta.quantization === "int8-per-row"`, `weights.bin` is an `Int8Array` dequantized via `meta.scales`).
 	 * Node-only — the `node:` imports are dynamic so bundling the class for the browser doesn't pull them in.
 	 */
-	static async fromArtifactDir(dir: string, opts?: CoarsePlacerOpts): Promise<CoarsePlacer> {
-		const { join } = await import("path-ts")
-		const meta = await readLocalJSONFile<CoarsePlacerMeta>(join(dir, "meta.json"))
+	static async fromArtifactDir(dir: PathBuilderLike, opts?: CoarsePlacerOpts): Promise<CoarsePlacer> {
+		const { PathBuilder } = await import("path-ts")
+		const meta = await readLocalJSONFile<CoarsePlacerMeta>(PathBuilder.from(dir)("meta.json"))
 		const bytes = await readWeightsBin(dir)
 		let weights: Float32Array
 

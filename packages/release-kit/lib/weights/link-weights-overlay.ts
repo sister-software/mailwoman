@@ -106,7 +106,7 @@ export async function linkWeightsOverlay(options: LinkWeightsOverlayOptions): Pr
 			await makeDirectories(dir)
 		}
 
-		log(`\n${locale}  →  ${relative(String(dataRoot), dir)}`)
+		log(`\n${locale}  →  ${relative(dataRoot, dir)}`)
 
 		// The model card is the one artifact that comes from the checkout rather than the data root:
 		// it is committed, and `resolveFromPackageDir` reads it from whichever directory answered.
@@ -155,7 +155,7 @@ export async function linkWeightsOverlay(options: LinkWeightsOverlayOptions): Pr
 			}
 
 			if (!plan) {
-				await linkForce(String(sourcePath), String(resolvePath(dir, shippedName)))
+				await linkForce(sourcePath, resolvePath(dir, shippedName))
 			}
 
 			linked++

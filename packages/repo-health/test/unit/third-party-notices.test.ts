@@ -13,9 +13,8 @@
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
-import { makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { thirdPartyNoticesCheck } from "@mailwoman/repo-health/checks/third-party-notices"
-import { join, resolvePath } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 
 const fixtures = new AsyncDisposableStack()
@@ -60,14 +59,13 @@ export const x = 1
 `
 
 async function plant(files: Record<string, string>) {
-	const repoRoot = String(fixtures.use(await temporaryDirectory("third-party-notices-")).path)
+	const root = fixtures.use(await temporaryDirectory("third-party-notices-")).path
 
 	for (const [file, text] of Object.entries(files)) {
-		await makeDirectories(join(repoRoot, file.slice(0, file.lastIndexOf("/"))))
-		await writeLocalTextFile(text, resolvePath(repoRoot, file))
+		await writeLocalTextFile(text, root(file))
 	}
 
-	return { repoRoot, trackedFiles: Object.keys(files) }
+	return { repoRoot: root.toString(), trackedFiles: Object.keys(files) }
 }
 
 /**

@@ -32,7 +32,7 @@ import {
 } from "@mailwoman/soil/test-kit"
 import { rectangleRing } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import { join } from "path-ts"
+import type { PathBuilder } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 
 const fixtures = new AsyncDisposableStack()
@@ -114,10 +114,10 @@ function eastCounty(): SurveyAreaInput {
 	])
 }
 
-async function build(areas: SurveyAreaInput[]): Promise<string> {
+async function build(areas: SurveyAreaInput[]): Promise<PathBuilder> {
 	const scratch = fixtures.use(await temporaryDirectory("mw-soil-coverage-")).path
 
-	const databasePath = join(scratch, "soil.db")
+	const databasePath = scratch("soil.db")
 
 	await buildSoilDatabase({
 		areas,
@@ -135,7 +135,7 @@ async function build(areas: SurveyAreaInput[]): Promise<string> {
 	return databasePath
 }
 
-function coverageCellCount(databasePath: string): number {
+function coverageCellCount(databasePath: PathBuilder): number {
 	using database = new DatabaseClient<layerschemadatabase>(databasePath, { readOnly: true })
 
 	return (database.prepare("SELECT count(*) AS n FROM layer_coverage").get() as { n: number }).n

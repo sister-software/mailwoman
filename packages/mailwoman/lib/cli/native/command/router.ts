@@ -27,7 +27,7 @@ interface CommandModule {
  * module gets to know: moving it one directory deeper turned `../../out/commands/` into
  * `lib/cli/out/commands/`, and every command became `Unknown command` at once.
  */
-const COMMANDS_ROOT = pathToFileURL(`${String(resolvePackagePath("mailwoman", "out", "commands"))}/`)
+const COMMANDS_ROOT = pathToFileURL(`${resolvePackagePath("mailwoman", "out", "commands")}/`)
 
 const commandURL = (parts: readonly string[], index = false): URL =>
 	new URL(`${parts.join("/")}${index ? "/index" : ""}.js`, COMMANDS_ROOT)

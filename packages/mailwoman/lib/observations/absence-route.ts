@@ -71,6 +71,7 @@ import type { POIDatabase } from "@mailwoman/resolver-wof-sqlite/poi"
 import { recoverShortCellResolution, type H3Cell } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { latLngToCell } from "h3-js"
+import type { PathBuilderLike } from "path-ts"
 
 import { readCommittedModel } from "#observations/committed-model"
 import { resolvePOISearchCenter } from "#poi/executor"
@@ -298,7 +299,7 @@ export interface AbsenceObservationRouteOptions {
 	 * Required: there is no default coverage layer, and a route that guessed one would
 	 * qualify an absence against a survey nobody asked for.
 	 */
-	coverageDatabasePath: string
+	coverageDatabasePath: PathBuilderLike
 	/**
 	 * Override the compiled artifact, for a test that wants a synthetic model.
 	 *
@@ -329,7 +330,7 @@ interface AffordingCategory {
 function indexAffordingCategories(model: CompiledGeographicModel): Map<string, AffordingCategory> {
 	const byExternalID = new Map<string, AffordingCategory>()
 
-	const mappings = model.mappings.filter((mapping) => String(mapping.vocabulary) === POI_TAXONOMY_VOCABULARY)
+	const mappings = model.mappings.filter((mapping) => mapping.vocabulary === POI_TAXONOMY_VOCABULARY)
 
 	for (const concept of model.concepts.toSorted((left, right) =>
 		compareByCodePoint(String(left.id), String(right.id))
@@ -439,7 +440,7 @@ export async function createAbsenceObservationRoute(
 		const identity: AbsenceRouteIdentity = {
 			modelVersion: model.modelVersion,
 			affordingCategoryIDs: [...affording.keys()].toSorted(compareByCodePoint),
-			coverageDatabasePath: options.coverageDatabasePath,
+			coverageDatabasePath: options.coverageDatabasePath.toString(),
 			coverageLayer,
 			surveyedCategoryID,
 			coverageResolution,
@@ -538,12 +539,12 @@ async function decide(outcome: POIIntentOutcome | undefined, context: DecisionCo
 			assertion: {
 				id: String(assertion.id),
 				relation: String(assertion.relation),
-				modality: String(assertion.modality),
+				modality: assertion.modality,
 				provenance: assertion.provenance,
 			},
 			mapping: {
 				id: String(mapping.id),
-				vocabulary: String(mapping.vocabulary),
+				vocabulary: mapping.vocabulary,
 				externalID: String(mapping.externalID),
 				provenance: mapping.provenance,
 			},

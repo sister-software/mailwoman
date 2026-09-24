@@ -74,7 +74,6 @@
  *   Skips when the neural weights or the WOF gazetteer are absent (CI).
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
 import { walkNodes, type AddressTree } from "@mailwoman/core/decoder"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { classifyKindSync } from "@mailwoman/kind-classifier"
@@ -84,6 +83,7 @@ import { normalize } from "@mailwoman/normalize"
 import { computeQueryShape } from "@mailwoman/query-shape"
 import { createWOFResolver, finestResolvedCoordinate, isImplausibleResolution } from "@mailwoman/resolver"
 import { WOFSQLitePlaceLookup } from "@mailwoman/resolver-wof-sqlite"
+import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import { haversineKm } from "@mailwoman/spatial"
 import { v0RecordToTree } from "mailwoman/eval-harness/v0-tree-adapter"
 import { resolvePath } from "path-ts"
@@ -138,8 +138,8 @@ const STREET_TAGS = ["street_prefix", "street", "street_prefix_particle", "stree
 /**
  * WOF databases the receipt harness resolved against (`admin-global-priority.db` + `postcode-locality-intl.db`).
  */
-const ADMIN_DB = dataRootPath("db", "wof", "admin-global-priority.db")
-const POSTCODE_DB = dataRootPath("db", "wof", "postcode-locality-intl.db")
+const ADMIN_DB = wofDatabasePath("admin-global-priority.db")
+const POSTCODE_DB = wofDatabasePath("postcode-locality-intl.db")
 
 const fold = (s: string) => s.toLowerCase().replaceAll(/\s+/g, " ").trim()
 

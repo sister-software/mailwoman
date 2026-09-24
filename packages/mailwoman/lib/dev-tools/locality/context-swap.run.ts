@@ -40,7 +40,7 @@ import { buildGauntletDeps } from "#eval-harness/gauntlet/harness"
 const { values } = parseArguments({
 	options: {
 		"weights-cache": { type: "string" },
-		eval: { type: "string", default: String(dataRootPath("eval", "coord", "us.jsonl")) },
+		eval: { type: "string", default: dataRootPath("eval", "coord", "us.jsonl").toString() },
 		mode: { type: "string", default: "swap", choices: ["swap", "grid"] },
 		/**
 		 * Regions whose localities are the subjects.

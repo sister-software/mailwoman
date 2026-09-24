@@ -37,13 +37,14 @@ import { md5File } from "@mailwoman/core/hash"
 import { OVERTURE_ADDRESSES_RELEASE } from "@mailwoman/core/overture-pins"
 import { TW_DISTRICT_ID_BASE } from "@mailwoman/core/resolver/synthetic-id-ranges"
 import { getRow } from "@mailwoman/core/utils"
+import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { normalizeLocalityForKeyLocale } from "@mailwoman/resolver-wof-sqlite/street"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed-db"
-import { resolvePath } from "path-ts"
+import type { PathBuilderLike } from "path-ts"
 
-import { DEFAULT_ADMIN_DB, wofDir } from "#gazetteer-pipeline"
+import { DEFAULT_ADMIN_DB } from "#gazetteer-pipeline/defaults"
 
 /**
  * The license expression the artifact carries — Overture's theme license and the
@@ -208,7 +209,10 @@ function readTaiwanRegions(admin: DatabaseClient<WOFDatabase>): TaiwanRegionName
  * DuckDB's `quantile_cont` gives the median and the p5/p95 envelope in one scan.
  * BigInt counts are narrowed at the boundary.
  */
-async function readDistrictGroups(parquetPath: string, threads: number | undefined): Promise<TaiwanDistrictGroup[]> {
+async function readDistrictGroups(
+	parquetPath: PathBuilderLike,
+	threads: number | undefined
+): Promise<TaiwanDistrictGroup[]> {
 	let DuckDBInstance: typeof import("@duckdb/node-api").DuckDBInstance
 
 	try {
@@ -226,7 +230,7 @@ async function readDistrictGroups(parquetPath: string, threads: number | undefin
 		await duck.run(`SET threads TO ${Math.trunc(threads)}`)
 	}
 
-	const escaped = parquetPath.replaceAll("'", "''")
+	const escaped = parquetPath.toString().replaceAll("'", "''")
 
 	const reader = await duck.runAndReadAll(
 		`SELECT address_levels[1].value AS region, address_levels[2].value AS district, count(*) AS points,
@@ -262,9 +266,9 @@ export async function buildTWDistrictsDatabase(opts: BuildTWDistrictsOptions = {
 	const { createUnifiedIndexes, createUnifiedSchema } = await import("@mailwoman/resolver-wof-sqlite/unified-schema")
 	const { buildPlaceSearchFTS } = await import("@mailwoman/resolver-wof-sqlite")
 	const release = opts.release ?? OVERTURE_ADDRESSES_RELEASE
-	const parquetPath = opts.parquetPath ?? String(dataRootPath("overture", release, "addresses-tw.parquet"))
-	const adminPath = opts.adminPath ?? resolvePath(wofDir(), DEFAULT_ADMIN_DB)
-	const outPath = opts.out ?? String(dataRootPath("db", "wof", "localities-tw-districts.db"))
+	const parquetPath = opts.parquetPath ?? dataRootPath("overture", release, "addresses-tw.parquet")
+	const adminPath = opts.adminPath ?? wofDatabasePath(DEFAULT_ADMIN_DB)
+	const outPath = opts.out ?? wofDatabasePath("localities-tw-districts.db")
 	const tmpPath = `${outPath}.tmp`
 
 	const sourceMD5 = await md5File(parquetPath)
@@ -366,7 +370,7 @@ export async function buildTWDistrictsDatabase(opts: BuildTWDistrictsOptions = {
 	await sealDatabase(outPath)
 
 	return {
-		out: outPath,
+		out: outPath.toString(),
 		inserted,
 		scoped,
 		unmatchedRegions: [...unmatched].map(([region, count]) => ({ region, groups: count })),

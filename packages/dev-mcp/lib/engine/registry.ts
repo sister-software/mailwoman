@@ -35,6 +35,7 @@ import {
 	type GeocodeSession,
 	type GeocodeSessionOptions,
 } from "mailwoman/geocode"
+import type { PathBuilderLike } from "path-ts"
 
 import { missingWeightsCacheArtifacts } from "#eval-report"
 import { computeTreeFingerprint, staleEngineMessage, type TreeFingerprint } from "#tree-fingerprint"
@@ -204,7 +205,7 @@ export function resolveConfig(config: EngineConfig): GeocodeSessionOptions {
 	return {
 		locale: config.locale ?? production.locale,
 		countryScope: config.country_scope ?? production.countryScope,
-		dataRoot: config.data_root ?? String(production.dataRoot),
+		dataRoot: config.data_root ?? production.dataRoot,
 		localeCountryPrior: config.locale_country_prior ?? production.localeCountryPrior,
 		placeCountry: config.place_country ?? production.placeCountry,
 		postcodeCountryCoherence: config.postcode_country_coherence ?? production.postcodeCountryCoherence,
@@ -245,7 +246,7 @@ export function resolveConfig(config: EngineConfig): GeocodeSessionOptions {
  * (binaries present, but siblings its own card declares are missing — the #1516 shape,
  * which degrades a channel silently and reads as a model regression).
  */
-export async function assertWeightsCacheStaged(cacheRoot: string, locale = "en-us"): Promise<void> {
+export async function assertWeightsCacheStaged(cacheRoot: PathBuilderLike, locale = "en-us"): Promise<void> {
 	const { kind, paths } = await missingWeightsCacheArtifacts(cacheRoot, locale)
 
 	if (kind === "ok") return

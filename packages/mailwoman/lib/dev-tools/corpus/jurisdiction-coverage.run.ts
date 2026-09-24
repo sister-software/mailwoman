@@ -35,7 +35,7 @@ import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { repoRootPath } from "@mailwoman/core/paths"
 import { readScopeConfig } from "@mailwoman/core/scope-config"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
-import { join, relative } from "path-ts"
+import { type PathBuilderLike, relative } from "path-ts"
 
 import {
 	admittedByShippedGraphs,
@@ -62,7 +62,7 @@ const { values } = parseArguments({
 /**
  * A repo-relative path, so a generated page carries no reader's home directory.
  */
-const relativeToRepo = (path: string): string => relative(String(repoRootPath()), path)
+const relativeToRepo = (path: PathBuilderLike): string => relative(repoRootPath(), path)
 
 const scope = await readScopeConfig()
 const configPath = resolveTrainingConfig(scope, { requested: values.config }).path
@@ -81,7 +81,7 @@ const report = await censusCoverage({
 	configPath,
 	manifestPath,
 	refresh: values.refresh,
-	casesRoot: String(join(repoRootPath(), "packages/mailwoman/lib/eval-harness/gauntlet/cases")),
+	casesRoot: repoRootPath("packages", "mailwoman", "lib", "eval-harness", "gauntlet", "cases"),
 })
 
 /**
@@ -308,7 +308,7 @@ Each row states what the repository models rather than what the regime is.
 ${regimeRows.join("\n")}
 `
 
-const out = values.out ?? String(join(repoRootPath(), "docs/engineering/reference/jurisdiction-coverage.mdx"))
+const out = values.out ?? repoRootPath("docs", "engineering", "reference", "jurisdiction-coverage.mdx")
 
 await writeLocalTextFile(page, out)
 

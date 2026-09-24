@@ -42,7 +42,7 @@ import {
 /**
  * The linz-derived OpenAddresses NZ countrywide CSV — the build's one source, md5-recorded in the header.
  */
-const NZ_SOURCE_CSV = String(dataRootPath("openaddresses", "extracted", "nz", "countrywide.csv"))
+const NZ_SOURCE_CSV = dataRootPath("openaddresses", "extracted", "nz", "countrywide.csv")
 
 const softFeed = await committedSoftFeedLinks()
 

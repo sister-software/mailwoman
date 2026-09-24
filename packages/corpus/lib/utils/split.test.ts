@@ -319,9 +319,9 @@ describe("writeSplitManifests", () => {
 		const m = splitRows([row("us-1", "US", "Vermont"), row("us-2", "US", "Oregon"), row("fr-1", "FR", "Corse")])
 		await writeSplitManifests(m, scratch.path)
 
-		const train = await readLocalTextFile(scratch.resolve("train.txt"))
+		const train = await readLocalTextFile(scratch.path("train.txt"))
 
-		const summary = await readLocalJSONFile<SplitManifestOnDisk>(scratch.resolve("SPLIT_MANIFEST.json"))
+		const summary = await readLocalJSONFile<SplitManifestOnDisk>(scratch.path("SPLIT_MANIFEST.json"))
 		expect(train.trim()).toBe("us-2")
 		expect(summary.counts.total).toBe(3)
 		expect(summary.corpus_version).toBe("0.1.0")
@@ -332,11 +332,11 @@ describe("writeSplitManifests", () => {
 		const rows: MinRow[] = [row("a", "US", "Oregon"), row("c", "US", "Oregon"), row("b", "US", "Oregon")]
 		await writeSplitManifests(splitRows(rows), scratch.path)
 
-		const first = await readLocalTextFile(scratch.resolve("train.txt"))
+		const first = await readLocalTextFile(scratch.path("train.txt"))
 
 		await writeSplitManifests(splitRows(rows), scratch.path)
 
-		const second = await readLocalTextFile(scratch.resolve("train.txt"))
+		const second = await readLocalTextFile(scratch.path("train.txt"))
 
 		expect(first).toBe(second)
 		expect(splitTextIntoArray(first)).toEqual(["a", "b", "c"])
@@ -381,9 +381,9 @@ describe("splitForRow (pure per-row decision)", () => {
 describe("writeSplitManifestsFromLabeledFiles (streaming)", () => {
 	it("writes sorted train/val/test.txt + SPLIT_MANIFEST.json from per-split labeled JSONL", async () => {
 		const labeledPaths = {
-			train: scratch.resolve("labeled-train.jsonl"),
-			val: scratch.resolve("labeled-val.jsonl"),
-			test: scratch.resolve("labeled-test.jsonl"),
+			train: scratch.path("labeled-train.jsonl"),
+			val: scratch.path("labeled-val.jsonl"),
+			test: scratch.path("labeled-test.jsonl"),
 		}
 
 		// Write per-split labeled files in non-sorted order to exercise the external sort.
@@ -406,19 +406,19 @@ describe("writeSplitManifestsFromLabeledFiles (streaming)", () => {
 
 		expect(result).toEqual({ train: 3, val: 2, test: 1, total: 6 })
 
-		const train = await readLocalTextFile(scratch.resolve("train.txt"))
+		const train = await readLocalTextFile(scratch.path("train.txt"))
 
 		expect(splitTextIntoArray(train)).toEqual(["us-a", "us-b", "us-c"])
 
-		const val = await readLocalTextFile(scratch.resolve("val.txt"))
+		const val = await readLocalTextFile(scratch.path("val.txt"))
 
 		expect(splitTextIntoArray(val)).toEqual(["vt-1", "vt-2"])
 
-		const test = await readLocalTextFile(scratch.resolve("test.txt"))
+		const test = await readLocalTextFile(scratch.path("test.txt"))
 
 		expect(test.trim()).toBe("wy-1")
 
-		const summary = await readLocalJSONFile<SplitManifestOnDisk>(scratch.resolve("SPLIT_MANIFEST.json"))
+		const summary = await readLocalJSONFile<SplitManifestOnDisk>(scratch.path("SPLIT_MANIFEST.json"))
 
 		expect(summary).toMatchObject({
 			corpus_version: "0.1.1",
@@ -430,9 +430,9 @@ describe("writeSplitManifestsFromLabeledFiles (streaming)", () => {
 
 	it("handles an empty per-split file (no source_ids → empty .txt)", async () => {
 		const labeledPaths = {
-			train: scratch.resolve("labeled-train.jsonl"),
-			val: scratch.resolve("labeled-val.jsonl"),
-			test: scratch.resolve("labeled-test.jsonl"),
+			train: scratch.path("labeled-train.jsonl"),
+			val: scratch.path("labeled-val.jsonl"),
+			test: scratch.path("labeled-test.jsonl"),
 		}
 
 		await writeLocalTextFile('{"source_id":"only-train"}\n', labeledPaths.train)
@@ -446,8 +446,8 @@ describe("writeSplitManifestsFromLabeledFiles (streaming)", () => {
 			counts: { train: 1, val: 0, test: 0 },
 		})
 
-		expect((await readLocalTextFile(scratch.resolve("val.txt"))).trim()).toBe("")
-		expect((await readLocalTextFile(scratch.resolve("test.txt"))).trim()).toBe("")
-		expect((await readLocalTextFile(scratch.resolve("train.txt"))).trim()).toBe("only-train")
+		expect((await readLocalTextFile(scratch.path("val.txt"))).trim()).toBe("")
+		expect((await readLocalTextFile(scratch.path("test.txt"))).trim()).toBe("")
+		expect((await readLocalTextFile(scratch.path("train.txt"))).trim()).toBe("only-train")
 	})
 })

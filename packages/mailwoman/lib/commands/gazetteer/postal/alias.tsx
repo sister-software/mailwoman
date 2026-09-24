@@ -53,9 +53,10 @@ export const spec = {
 const GazetteerPostalAlias: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { DatabaseClient } = await import("@mailwoman/sqlite/client")
-		const { dataRootPath } = await import("@mailwoman/core/utils")
+		const { dataRootPath } = await import("@mailwoman/core/data-root")
+		const { wofDatabasePath } = await import("@mailwoman/resolver-wof-sqlite/paths")
 
-		const out = options.out ?? dataRootPath("db", "wof", "postal-city-alias-us.db")
+		const out = options.out ?? wofDatabasePath("postal-city-alias-us.db")
 		const parquet = dataRootPath("overture", options.release, "addresses-us.parquet")
 		const minCount = options.minCount
 
@@ -115,15 +116,7 @@ const GazetteerPostalAlias: CommandComponent<typeof spec> = ({ options }) => {
 			const isDivergent = r.postal_city !== r.geo_locality ? 1 : 0
 			divergent += isDivergent
 
-			insert.run(
-				r.postcode,
-				r.postal_city,
-				r.geo_locality,
-				Number(r.n),
-				isDivergent,
-				"overture:US",
-				String(options.release)
-			)
+			insert.run(r.postcode, r.postal_city, r.geo_locality, Number(r.n), isDivergent, "overture:US", options.release)
 		}
 
 		kdb.exec("COMMIT")

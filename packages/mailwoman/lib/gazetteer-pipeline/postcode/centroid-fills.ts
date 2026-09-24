@@ -48,13 +48,13 @@ export interface CentroidFillOptions {
 	 *
 	 * Omit to skip passes 3–4.
 	 */
-	adminPath?: string
+	adminPath?: PathBuilderLike
 	/**
 	 * WOF repos root for the pass-4 `wof:hierarchy` read.
 	 *
 	 * Omit to skip pass 4.
 	 */
-	reposDir?: string
+	reposDir?: PathBuilderLike
 	onPhase?: (phase: string, detail?: string) => void
 }
 
@@ -318,7 +318,7 @@ async function geonamesFill(
  *
  * County is preferred over region for tighter placement.
  */
-async function ancestorFallback(db: DatabaseClient<WOFDatabase>, reposDir: string): Promise<number> {
+async function ancestorFallback(db: DatabaseClient<WOFDatabase>, reposDir: PathBuilderLike): Promise<number> {
 	// Resolved once per country rather than composed per row: the answer depends on which layout
 	// the repository was cloned in, and a row-rate stat over an unplaced set is wasted work.
 	const dataDirByCountry = new Map<string, string | null>()
@@ -427,7 +427,7 @@ export async function fillPostcodeCentroids(
 	}
 
 	if (opts.adminPath && (await pathExists(opts.adminPath))) {
-		db.exec(`ATTACH '${opts.adminPath.replaceAll("'", "''")}' AS adm`)
+		db.exec(`ATTACH '${opts.adminPath.toString().replaceAll("'", "''")}' AS adm`)
 
 		try {
 			// Pass 3: borrow the parent locality's centroid.

@@ -13,8 +13,8 @@
  *   everywhere and the consumer simply doesn't decorate.
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers"
+import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { PostcodeLocalityDatabase } from "mailwoman/gazetteer-pipeline/postcode/locality/schema"
 
@@ -29,7 +29,7 @@ export async function createLocalityPostcodeLookup(): Promise<LocalityPostcodeLo
 	const statements = new Map<string, ReturnType<DatabaseClient["prepare"]>>()
 
 	for (const suffix of POSTCODE_LOCALITY_SUFFIXES) {
-		const path = dataRootPath("db", "wof", `postcode-locality-${suffix}.db`)
+		const path = wofDatabasePath(`postcode-locality-${suffix}.db`)
 
 		if (!(await pathExists(path))) continue
 

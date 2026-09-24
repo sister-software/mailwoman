@@ -14,6 +14,11 @@ import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { dataRootPath } from "@mailwoman/core/data-root"
+import {
+	addressPointDatabasePath,
+	interpolationDatabasePath,
+	wofDatabasePath,
+} from "@mailwoman/resolver-wof-sqlite/paths"
 import { Box, Text } from "ink"
 import { resolvePath } from "path-ts"
 import { useState } from "react"
@@ -74,13 +79,13 @@ export const spec = {
 		"exclude-states": { type: "string", default: "AK", description: "Excluded states" },
 		"data-root": {
 			type: "string",
-			default: resolvePath(dataRootPath("db", "address-points")),
+			default: addressPointDatabasePath.toString(),
 			description: "Address-point root",
 		},
 		interp: { type: "boolean", default: true, description: "Blend interpolation" },
 		"interp-root": {
 			type: "string",
-			default: resolvePath(dataRootPath("db", "interpolation")),
+			default: interpolationDatabasePath.toString(),
 			description: "Interpolation root",
 		},
 		"fine-res": h3("fine resolution", 9),
@@ -98,7 +103,7 @@ export const spec = {
 		},
 		"wof-db": {
 			type: "string",
-			default: resolvePath(dataRootPath("db", "wof", "admin-global-priority-importance.db")),
+			default: wofDatabasePath("admin-global-priority-importance.db").toString(),
 			description: "WOF database",
 		},
 		"postcode-ceiling": unit("postcode ceiling", 0.85),

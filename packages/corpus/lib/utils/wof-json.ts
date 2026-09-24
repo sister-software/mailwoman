@@ -31,6 +31,7 @@
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { tryParsingJSON } from "@mailwoman/core/json"
+import type { PathBuilderLike } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
 /**
@@ -207,7 +208,10 @@ function recordFromFeature(feature: WOFFeature): WOFRecord | null {
  * so one bad file doesn't poison a 3 GB walk.
  * Adapters can add stricter validation downstream if they need it.
  */
-export async function* walkFeatures(repoDir: string, opts: { signal?: AbortSignal } = {}): AsyncIterable<WOFRecord> {
+export async function* walkFeatures(
+	repoDir: PathBuilderLike,
+	opts: { signal?: AbortSignal } = {}
+): AsyncIterable<WOFRecord> {
 	for await (const filePath of Globerator.from("**/*.geojson", {
 		cwd: repoDir,
 		absolute: true,

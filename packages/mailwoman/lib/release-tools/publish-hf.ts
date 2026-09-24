@@ -39,7 +39,7 @@ import { pathExists, readLocalJSONFile, statPath } from "@mailwoman/core/fs/read
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 import { CommandError } from "@mailwoman/core/scripting/command"
-import { basename } from "path-ts"
+import { basename, type PathBuilderLike } from "path-ts"
 
 import { runProcessOrFail } from "#cli/kit/shared"
 
@@ -304,7 +304,7 @@ async function verifyRequiredFiles(args: PublishHFOptions): Promise<void> {
  *
  * A release that records nothing at all is the one this refuses.
  */
-export async function verifyTrainingProvenance(cardPath: string): Promise<void> {
+export async function verifyTrainingProvenance(cardPath: PathBuilderLike): Promise<void> {
 	const card = await readLocalJSONFile<{ attribution?: unknown; training?: { data_attribution?: unknown } }>(cardPath)
 
 	// Both spellings the two graph packages use.
@@ -330,14 +330,13 @@ export async function verifyTrainingProvenance(cardPath: string): Promise<void> 
 	// An entry without one is reported with its text, so the operator sees which source is
 	// unaccounted for at the moment of publication rather than in a later audit.
 	for (const entry of entries) {
-		const text = String(entry)
-		const parenthetical = /\(([^()]{1,120})\)/u.exec(text)
+		const parenthetical = /\(([^()]{1,120})\)/u.exec(entry)
 		const inner = parenthetical?.[1]?.trim() ?? ""
 		const namesLicense = /\d/u.test(inner) || /\b(?:CC0|CC-BY|CC|ODbL|OGL|MIT|Apache|Licence|License)\b/iu.test(inner)
 
 		if (namesLicense) continue
 
-		console.error(`  ! names no license: ${text}`)
+		console.error(`  ! names no license: ${entry}`)
 	}
 }
 

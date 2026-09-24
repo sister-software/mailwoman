@@ -323,9 +323,12 @@ export function parseCommand(spec: CommandSpec, args: readonly string[]): Parsed
 				values[name] = parseNumber(String(raw), name, option)
 			}
 		} else if (option.type === "string" && raw !== undefined) {
-			const candidates = Array.isArray(raw) ? raw.map(String) : [String(raw)]
+			for (const value of Array.isArray(raw) ? raw : [raw]) {
+				// parseArgs yields strings for a string option, so a non-string here came from the spec's default.
+				if (typeof value !== "string") {
+					throw new TypeError(`--${name} is a string option, and its value is a ${typeof value}.`)
+				}
 
-			for (const value of candidates) {
 				if (option.choices && !option.choices.includes(value)) {
 					throw new CLIUsageError(`--${name} must be one of: ${option.choices.join(", ")}.`)
 				}

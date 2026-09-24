@@ -147,7 +147,7 @@ export interface GauntletRunOptions {
 	/**
 	 * Ablation: where the map artifacts land.
 	 *
-	 * Defaults to `/tmp/ablation-<yyyymmdd-HHmm>`.
+	 * Defaults to `<temp-root>/ablation-<yyyymmdd-HHmm>`, under `$MAILWOMAN_TEMP_ROOT`.
 	 */
 	out?: string
 	/**

@@ -21,9 +21,9 @@
  * it wrong — see `CensusPOIReader`.
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
+import { poiDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import { POILookup } from "@mailwoman/resolver-wof-sqlite/poi"
 import type { POIDatabase } from "@mailwoman/resolver-wof-sqlite/poi"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
@@ -37,7 +37,7 @@ import { createPOINameLookup } from "#poi/intent"
 
 const { values } = parseArguments({ options: { db: { type: "string" }, out: { type: "string" } } })
 
-const databasePath = values.db ?? String(dataRootPath("db", "poi", "poi.db"))
+const databasePath = values.db ?? poiDatabasePath("poi.db")
 using database = new DatabaseClient<POIDatabase>(databasePath, { readOnly: true })
 using lookup = new POILookup({ database })
 const shippedRung = createPOINameLookup(lookup)

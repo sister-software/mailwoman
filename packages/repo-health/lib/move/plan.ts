@@ -63,7 +63,7 @@ export async function readPackageManifests(context: RepoContext): Promise<Packag
 			if (!manifest.name) return null
 
 			return {
-				dir: String(dirname(file)),
+				dir: dirname(file),
 				name: manifest.name,
 				imports: manifest.imports,
 				exports: manifest.exports,
@@ -96,8 +96,8 @@ function owningManifest(manifests: readonly PackageManifest[], file: string): Pa
  * Text a file must contain before it is worth parsing for references to `move.from`.
  */
 function referenceProbes(move: ModuleMove, manifests: readonly PackageManifest[]): string[] {
-	const stem = String(basename(move.from)).replace(SOURCE_STEM, "")
-	const probes = [stem === "index" ? String(basename(String(dirname(move.from)))) : stem]
+	const stem = basename(move.from).replace(SOURCE_STEM, "")
+	const probes = [stem === "index" ? basename(dirname(move.from)) : stem]
 	const owner = owningManifest(manifests, move.from)
 
 	if (owner) {

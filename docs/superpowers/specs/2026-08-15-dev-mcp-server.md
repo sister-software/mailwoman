@@ -870,7 +870,7 @@ attestation waits on the repo becoming public is stale). Everything committed is
 constrains this package specifically because it is a _lab_ tool:
 
 - **No literal lab paths anywhere in committed code, docstrings, defaults or fixtures.** Use
-  `dataRootPath` / `mailwomanDataRoot` (`packages/core/lib/utils/data-root.ts`) and write
+  `dataRootPath` / `dataRootPath` (`packages/core/lib/utils/data-root.ts`) and write
   `$MAILWOMAN_DATA_ROOT` in prose, per AGENTS.md. The benchmark panels and the Pelias rig's scorer live
   outside the repo today; the tool references them by data-root-relative path and never by absolute
   path.

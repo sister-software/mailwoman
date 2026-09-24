@@ -24,6 +24,7 @@ import {
 } from "@mailwoman/core/layers"
 import { runFileSync } from "@mailwoman/core/process"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
+import type { PathBuilderLike } from "path-ts"
 
 /**
  * Open `path`, write `manifest`, and close.
@@ -35,7 +36,7 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
  * @throws When the database is already sealed, which is the ordering mistake
  * this function exists to make loud.
  */
-export async function stampLayerManifest(path: string, manifest: LayerManifest): Promise<void> {
+export async function stampLayerManifest(path: PathBuilderLike, manifest: LayerManifest): Promise<void> {
 	using kdb = new DatabaseClient<layerschemadatabase>(path)
 
 	await createLayerManifestTable(kdb)
@@ -50,7 +51,7 @@ export async function stampLayerManifest(path: string, manifest: LayerManifest):
  * and refusing to stamp a manifest over a missing git binary would leave the artifact
  * with no provenance at all, which is the state this phase exists to reduce.
  */
-export function buildSHA(repoRoot: string): string {
+export function buildSHA(repoRoot: PathBuilderLike): string {
 	try {
 		return runFileSync("git", ["rev-parse", "--short", "HEAD"], {
 			cwd: repoRoot,

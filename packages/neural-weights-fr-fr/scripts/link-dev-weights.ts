@@ -33,6 +33,7 @@
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
+import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import {
 	committedSoftFeedLinks,
 	materializeDevOverlay,
@@ -46,7 +47,7 @@ import {
  *
  * A directory, so it rides `inputs` (existence only), not `sources` (md5).
  */
-const BAN_DIR = String(dataRootPath("corpus", "sources", "ban"))
+const BAN_DIR = dataRootPath("corpus", "sources", "ban")
 
 const softFeed = await committedSoftFeedLinks()
 
@@ -55,7 +56,7 @@ await materializeDevOverlay({
 	model: { kind: "inherit" },
 	softFeed: [softFeed.anchor, softFeed.country],
 	evidenceLexiconsFromCard: true,
-	postcodeBinary: { country: "fr", database: String(dataRootPath("db", "wof", "postalcode-intl.db")) },
+	postcodeBinary: { country: "fr", database: wofDatabasePath("postalcode-intl.db") },
 	pairIndex: {
 		country: "fr",
 		delta: PAIR_INDEX_DELTA,

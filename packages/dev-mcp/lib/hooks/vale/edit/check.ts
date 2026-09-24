@@ -23,7 +23,7 @@
 
 import { readStandardInputJSON } from "@mailwoman/core/fs/readers"
 import { stringifyJSON } from "@mailwoman/core/json"
-import { repoRootPath } from "@mailwoman/core/paths"
+import { repoRootPath, repoRootPathBuilder } from "@mailwoman/core/paths"
 import { isProcessError, runFile } from "@mailwoman/core/process"
 import { relative, resolvePath } from "path-ts"
 
@@ -59,7 +59,7 @@ function editedPath(payload: Record<string, unknown> | null): string | null {
 
 	if (typeof filePath !== "string" || !filePath) return null
 
-	const repoRelative = relative(String(repoRootPath()), String(resolvePath(filePath)))
+	const repoRelative = relative(repoRootPath(), resolvePath(filePath))
 
 	// A scratch file outside the checkout is not a prose surface, and `..` is how that reads after resolution.
 	return repoRelative.startsWith("..") ? null : repoRelative
@@ -75,12 +75,12 @@ async function main(): Promise<void> {
 
 	if (!surface) return
 
-	const linter = resolvePath(repoRootPath("config", "vale", "lint-prose.ts"))
+	const linter = repoRootPathBuilder("config", "vale", "lint-prose.ts")
 
 	// Vale exits non-zero when it has error-severity findings, so the REPORT is on
 	// stdout in both cases and the exit code carries no separate signal.
-	const report = await runFile(process.execPath, [String(linter), surface, filePath], {
-		cwd: String(repoRootPath()),
+	const report = await runFile(process.execPath, [linter, surface, filePath], {
+		cwd: repoRootPathBuilder(),
 		maxBuffer: 8 * 1024 * 1024,
 	}).catch((error: unknown) => (isProcessError(error) ? error : null))
 

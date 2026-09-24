@@ -27,7 +27,7 @@ import { makeDirectories, removePathIfPresent } from "@mailwoman/core/fs/writers
 import { sha256File } from "@mailwoman/core/hash"
 import { isoSeconds } from "@mailwoman/core/utils"
 import { sleep } from "@mailwoman/core/utils/sleep"
-import { basename, join } from "path-ts"
+import type { PathBuilder } from "path-ts"
 
 import type { BaseFetchOptions, FetchSummary } from "#tools/fetch/download/index"
 import { readManifest, streamDownload, writeManifest } from "#tools/fetch/download/index"
@@ -87,7 +87,7 @@ interface CountyEntry {
 /**
  * Read a per-state manifest.json into a filename → entry map.
  */
-async function readCountyManifest(manifestPath: string): Promise<Map<string, CountyEntry>> {
+async function readCountyManifest(manifestPath: PathBuilder): Promise<Map<string, CountyEntry>> {
 	const map = new Map<string, CountyEntry>()
 	const parsed = await readManifest<{ counties?: CountyEntry[] }>(manifestPath)
 
@@ -103,7 +103,7 @@ async function readCountyManifest(manifestPath: string): Promise<Map<string, Cou
 /**
  * Check whether a file already matches a recorded sha256 and byte count.
  */
-async function fileMatchesSha(path: string, expectedSha: string, expectedBytes: number): Promise<boolean> {
+async function fileMatchesSha(path: PathBuilder, expectedSha: string, expectedBytes: number): Promise<boolean> {
 	if (!(await pathExists(path))) return false
 
 	if ((await statPath(path)).size !== expectedBytes) return false
@@ -118,8 +118,8 @@ type CountyResult =
 /**
  * Download one county ZIP (size sanity check + sha256).
  */
-async function downloadCounty(url: string, dest: string): Promise<CountyResult> {
-	const filename = basename(dest)
+async function downloadCounty(url: string, dest: PathBuilder): Promise<CountyResult> {
+	const filename = dest.basename()
 	const status = await streamDownload(url, dest, { timeoutMs: 600_000, retries: 3, retryDelayMs: 5000 })
 
 	if (status < HTTP_OK || status >= HTTP_REDIRECT) {
@@ -148,7 +148,7 @@ export async function fetchTigerFull(
 	const maxParallel = options.maxParallel ?? 4
 	const dryRun = options.dryRun ?? false
 
-	const addrfeatDir = join(options.outRoot, "tiger", "addrfeat")
+	const addrfeatDir = options.outRoot("tiger", "addrfeat")
 	await makeDirectories(addrfeatDir)
 
 	// MARK: Step 1 — discover the county file list
@@ -206,9 +206,9 @@ export async function fetchTigerFull(
 			continue
 		}
 
-		const stateDir = join(addrfeatDir, `state-${stateFips}`)
+		const stateDir = addrfeatDir(`state-${stateFips}`)
 		await makeDirectories(stateDir)
-		const manifestPath = join(stateDir, "MANIFEST.json")
+		const manifestPath = stateDir("MANIFEST.json")
 
 		// Load existing manifest for O(1) verified-skip lookup.
 		const manifest = await readCountyManifest(manifestPath)
@@ -216,10 +216,10 @@ export async function fetchTigerFull(
 		report?.(`--- State ${stateFips} — ${countyFiles.length} counties`)
 
 		// Build a list of URLs+dests that need fetching.
-		const pending: Array<{ url: string; dest: string }> = []
+		const pending: Array<{ url: string; dest: PathBuilder }> = []
 
 		for (const fname of countyFiles) {
-			const dest = join(stateDir, fname)
+			const dest = stateDir(fname)
 			const url = `${TIGER_BASE_URL}/${fname}`
 			const known = manifest.get(fname)
 

@@ -24,11 +24,11 @@ import { NI_OSM_ID_BASE } from "@mailwoman/core/resolver/synthetic-id-ranges"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { buildPostcodeNIOSM, NI_LIVE_POSTCODES } from "mailwoman/gazetteer-pipeline/postcode/ni/osm/database"
-import { join } from "path-ts"
+import type { PathBuilder } from "path-ts"
 import { afterAll, beforeAll, expect, test } from "vitest"
 
 let root: TemporaryDirectory
-let sourceDir: string
+let sourceDir: PathBuilder
 
 /**
  * A node element — carries its coordinate directly.
@@ -47,7 +47,7 @@ function way(id: number, postcode: string, lat: number, lon: number): Record<str
 
 beforeAll(async () => {
 	root = await temporaryDirectory("ni-osm-")
-	sourceDir = root.resolve("acquisition")
+	sourceDir = root.path("acquisition")
 	await makeDirectories(sourceDir)
 
 	const response = {
@@ -77,13 +77,13 @@ beforeAll(async () => {
 		],
 	}
 
-	await writeLocalTextFile(`${stringifyJSON(response)}\n`, join(sourceDir, "response.json"))
+	await writeLocalTextFile(`${stringifyJSON(response)}\n`, sourceDir("response.json"))
 })
 
 afterAll(() => root[Symbol.asyncDispose]())
 
 test("buildPostcodeNIOSM: #920 laws, the malformed drop, and the ODbL/meaning-of-zero provenance", async () => {
-	const out = root.resolve("ni.db")
+	const out = root.path("ni.db")
 
 	const result = await buildPostcodeNIOSM({
 		sourceDir,
@@ -195,22 +195,19 @@ test("buildPostcodeNIOSM: #920 laws, the malformed drop, and the ODbL/meaning-of
 })
 
 test("buildPostcodeNIOSM: a response modified since acquisition is refused, not built from", async () => {
-	const dir = root.resolve("tampered")
+	const dir = root.path("tampered")
 	await makeDirectories(dir)
 
-	await writeLocalTextFile(
-		`${stringifyJSON({ elements: [node(1, "BT1 5GS", 54.6, -5.93)] })}\n`,
-		join(dir, "response.json")
-	)
+	await writeLocalTextFile(`${stringifyJSON({ elements: [node(1, "BT1 5GS", 54.6, -5.93)] })}\n`, dir("response.json"))
 
 	// A sidecar recording a different md5.
 	// The shape a half-edited acquisition dir takes.
 	await writeLocalJSONFile(
 		{ endpoint: "x", query: "y", queryMD5: "z", retrievedAt: "t", bytes: 1, md5: "0".repeat(32) },
-		join(dir, "acquisition.json")
+		dir("acquisition.json")
 	)
 
-	await expect(buildPostcodeNIOSM({ sourceDir: dir, out: root.resolve("tampered.db"), offline: true })).rejects.toThrow(
+	await expect(buildPostcodeNIOSM({ sourceDir: dir, out: root.path("tampered.db"), offline: true })).rejects.toThrow(
 		/has been modified since acquisition/
 	)
 })

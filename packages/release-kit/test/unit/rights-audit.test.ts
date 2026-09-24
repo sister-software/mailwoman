@@ -20,7 +20,7 @@ import { beforeAll, describe, expect, it } from "vitest"
 let audit: Awaited<ReturnType<typeof auditRights>>
 
 beforeAll(async () => {
-	audit = await auditRights(repoRootPath().toString())
+	audit = await auditRights(repoRootPath())
 })
 
 describe("auditRights", () => {

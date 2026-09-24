@@ -12,7 +12,7 @@
  *   Requires RCLONE_S3_* env vars (Cloudflare R2 credentials).
  */
 
-import { mailwomanDataRoot } from "@mailwoman/core/data-root"
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { Box, Text } from "ink"
 import { useState } from "react"
 
@@ -28,7 +28,7 @@ export const spec = {
 	description: "Download corpus artifacts from R2.",
 	options: {
 		bucket: { type: "string", default: DEFAULT_BUCKET, description: "R2 bucket" },
-		"out-dir": { type: "string", default: mailwomanDataRoot(), description: "Local output root" },
+		"out-dir": { type: "string", default: dataRootPath().toString(), description: "Local output root" },
 		"dry-run": { type: "boolean", default: false, description: "Show without downloading" },
 	},
 } as const satisfies CommandSpec

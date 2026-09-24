@@ -17,11 +17,12 @@ import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/
 import { buildSlimWOFDatabase } from "@mailwoman/resolver-wof-sqlite/build-slim"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
+import type { PathBuilderLike } from "path-ts"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
 
 let scratch: TemporaryDirectory
 
-function buildFixtureWOF(path: string): void {
+function buildFixtureWOF(path: PathBuilderLike): void {
 	using db = new DatabaseClient<WOFDatabase>(path)
 
 	db.exec(`
@@ -82,8 +83,8 @@ afterEach(async () => {
 
 describe("buildSlimWOFDatabase", () => {
 	test("keeps ancestors, top-K localities by population, and all postcodes", async () => {
-		const source = scratch.resolve("src.db")
-		const output = scratch.resolve("slim.db")
+		const source = scratch.path("src.db")
+		const output = scratch.path("slim.db")
 		buildFixtureWOF(source)
 
 		const result = await buildSlimWOFDatabase({
@@ -112,8 +113,8 @@ describe("buildSlimWOFDatabase", () => {
 	})
 
 	test("preserves names + place_population only for selected IDs", async () => {
-		const source = scratch.resolve("src.db")
-		const output = scratch.resolve("slim.db")
+		const source = scratch.path("src.db")
+		const output = scratch.path("slim.db")
 		buildFixtureWOF(source)
 
 		await buildSlimWOFDatabase({ inputs: [source], output, topLocalitiesPerCountry: 1 })
@@ -152,8 +153,8 @@ describe("buildSlimWOFDatabase", () => {
 	})
 
 	test("carries place_population for the trimmed row set, ranked by population", async () => {
-		const source = scratch.resolve("src.db")
-		const output = scratch.resolve("slim.db")
+		const source = scratch.path("src.db")
+		const output = scratch.path("slim.db")
 		buildFixtureWOF(source)
 
 		await buildSlimWOFDatabase({ inputs: [source], output, topLocalitiesPerCountry: 2 })
@@ -169,9 +170,9 @@ describe("buildSlimWOFDatabase", () => {
 	})
 
 	test("merges rows across multiple input extracts without duplicating", async () => {
-		const adminSource = scratch.resolve("admin.db")
-		const postcodeSource = scratch.resolve("postcode.db")
-		const output = scratch.resolve("slim.db")
+		const adminSource = scratch.path("admin.db")
+		const postcodeSource = scratch.path("postcode.db")
+		const output = scratch.path("slim.db")
 		buildFixtureWOF(adminSource)
 		// Postcode extract: same schema, only contributes postcodes (here, re-use the admin
 		// fixture's postcode rows to verify insert or ignore actually de-dupes on id).
@@ -188,8 +189,8 @@ describe("buildSlimWOFDatabase", () => {
 	})
 
 	test("dropNames removes the names table but keeps a working FTS index", async () => {
-		const source = scratch.resolve("src.db")
-		const output = scratch.resolve("slim.db")
+		const source = scratch.path("src.db")
+		const output = scratch.path("slim.db")
 		buildFixtureWOF(source)
 
 		const result = await buildSlimWOFDatabase({ inputs: [source], output, topLocalitiesPerCountry: 2, dropNames: true })
@@ -211,8 +212,8 @@ describe("buildSlimWOFDatabase", () => {
 	})
 
 	test('skips empty input paths (callers pass "" for an unbuilt extract)', async () => {
-		const source = scratch.resolve("src.db")
-		const output = scratch.resolve("slim.db")
+		const source = scratch.path("src.db")
+		const output = scratch.path("slim.db")
 		buildFixtureWOF(source)
 
 		// Both the demo plugin and build-demo-assets.ts pass `--in ""` when the
@@ -223,8 +224,8 @@ describe("buildSlimWOFDatabase", () => {
 	})
 
 	test("carries the coincident_roles relation, filtered to surviving spr ids (#402)", async () => {
-		const source = scratch.resolve("src.db")
-		const output = scratch.resolve("slim.db")
+		const source = scratch.path("src.db")
+		const output = scratch.path("slim.db")
 		buildFixtureWOF(source)
 		// A dual-role relation: Illinois(101) ⊃ Springfield(201) [survives top-2] and ⊃ Mascoutah(202) [trimmed].
 		using s = new DatabaseClient<WOFDatabase>(source)
@@ -248,8 +249,8 @@ describe("buildSlimWOFDatabase", () => {
 	})
 
 	test("materializes place_abbr from language='abbr' names, filtered to surviving ids, surviving dropNames (#189)", async () => {
-		const source = scratch.resolve("src.db")
-		const output = scratch.resolve("slim.db")
+		const source = scratch.path("src.db")
+		const output = scratch.path("slim.db")
 		buildFixtureWOF(source)
 		using s = new DatabaseClient<WOFDatabase>(source)
 		s.exec(`INSERT INTO names (id, language, name) VALUES (101, 'abbr', 'IL')`) // Illinois (region) — survives

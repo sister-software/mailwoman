@@ -470,11 +470,9 @@ export class GeoBoundingBox {
 //#region Equirectangular bbox around a point
 
 /**
- * A flat latitude/longitude range, as a query filter rather than a model.
+ * Plain latitude/longitude bounds used as a query filter.
  *
- * Distinct from {@linkcode GeoBoundingBox} on purpose: that is a class carrying a
- * projection and private state, which an SQL row cannot be.
- * This is the plain shape a spatial-index query is built from — four numbers, no behaviour.
+ * Unlike {@linkcode GeoBoundingBox}, this is just four numbers with no state or behavior.
  */
 export interface LatLonBounds {
 	minLat: number

@@ -20,8 +20,7 @@
  */
 
 import type { ComponentTag } from "@mailwoman/codex/component"
-import { basename } from "path-ts"
-import type { PathBuilderLike } from "path-ts"
+import { basename, type PathBuilderLike, resolvePath } from "path-ts"
 
 import type { ParquetRow } from "#parquet/schema"
 import { openParquetRowStream } from "#parquet/streams"
@@ -125,7 +124,7 @@ export interface SplitSliceResult {
  * The input is left in place.
  */
 export async function splitOverlaySlice(options: SplitSliceOptions): Promise<SplitSliceResult> {
-	const input = String(options.input)
+	const input = options.input.toString()
 	const holdouts = options.holdouts ?? defaultHoldouts()
 	const stem = basename(input).replace(/\.parquet$/u, "")
 
@@ -146,7 +145,7 @@ export async function splitOverlaySlice(options: SplitSliceOptions): Promise<Spl
 	for (const split of ["train", "val", "test"] as const) {
 		if (!buckets[split].length) continue
 
-		const output = `${String(options.outputDir)}/${stem}.${split}.parquet`
+		const output = resolvePath(options.outputDir, `${stem}.${split}.parquet`)
 
 		await writeParquetFile(buckets[split], output)
 		outputs[split] = output

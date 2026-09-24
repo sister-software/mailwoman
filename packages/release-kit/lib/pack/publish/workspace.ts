@@ -106,7 +106,7 @@ export async function publishWorkspace(options: PublishWorkspaceOptions): Promis
 	await dereferenceWorkspaceSymlinks(cwd)
 
 	await using tmpDir = await temporaryDirectory("mailwoman-publish-")
-	const tarballPath = tmpDir.resolve("package.tgz")
+	const tarballPath = tmpDir.path("package.tgz")
 
 	// Step 1: pack with the derived publish map injected
 	// (shared helper — same path the CI smoke test uses, so what we test is what we ship).

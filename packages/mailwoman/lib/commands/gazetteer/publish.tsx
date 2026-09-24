@@ -14,7 +14,6 @@
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { Box, Text } from "ink"
-import { join } from "path-ts"
 
 import { type CommandSpec, CommandTaskResult, type CommandComponent, phaseReporter, useCommandTask } from "#cli-kit"
 import { DEFAULT_CANDIDATE_OUT } from "#gazetteer-pipeline/defaults"
@@ -39,16 +38,16 @@ export const spec = {
 
 const GazetteerPublish: CommandComponent<typeof spec> = ({ options, args }) => {
 	const state = useCommandTask(async () => {
-		const { mailwomanDataRoot, repoRootPathBuilder } = await import("@mailwoman/core/utils")
-		const { defaultGazetteerVersion, publishGazetteer, wofDir } = await import("#gazetteer-pipeline")
+		const { repoRootPathBuilder } = await import("@mailwoman/core/paths")
+		const { defaultGazetteerVersion, publishGazetteer } = await import("#gazetteer-pipeline")
+		const { wofDatabasePath } = await import("@mailwoman/resolver-wof-sqlite/paths")
 
-		const root = mailwomanDataRoot()
-		const candidateDB = args[0] ?? join(wofDir(root), DEFAULT_CANDIDATE_OUT)
+		const candidateDB = args[0] ?? wofDatabasePath(DEFAULT_CANDIDATE_OUT)
 		const version = options.gazetteerVersion ?? defaultGazetteerVersion(new Date())
-		const uploadScript = String(repoRootPathBuilder("docs", "scripts", "publish-demo-assets-to-r2.py"))
+		const uploadScript = repoRootPathBuilder("docs", "scripts", "publish-demo-assets-to-r2.py")
 
 		const resourcesFile = options.bumpDemo
-			? String(repoRootPathBuilder("docs", "src", "shared", "resources", "index.ts"))
+			? repoRootPathBuilder("docs", "src", "shared", "resources", "index.ts")
 			: undefined
 
 		await using stage = await temporaryDirectory("mailwoman-gazetteer-")

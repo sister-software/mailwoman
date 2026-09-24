@@ -51,7 +51,7 @@ const PACKAGES = [
 const BIN_EXISTS = new Map<string, boolean>()
 
 for (const { pkg, country } of PACKAGES) {
-	BIN_EXISTS.set(pkg, await pathExists(String(repoRootPath(pkg, `pair-index-${country}.bin`))))
+	BIN_EXISTS.set(pkg, await pathExists(repoRootPath(pkg, `pair-index-${country}.bin`)))
 }
 
 interface PairIndexFacts {
@@ -95,8 +95,8 @@ async function readPairIndexFacts(path: string): Promise<PairIndexFacts> {
 
 describe("pair-index ↔ model-card parity", () => {
 	for (const { pkg, country, cardKeys } of PACKAGES) {
-		const binPath = String(repoRootPath(pkg, `pair-index-${country}.bin`))
-		const cardPath = String(repoRootPath(pkg, "model-card.json"))
+		const binPath = repoRootPath(pkg, `pair-index-${country}.bin`)
+		const cardPath = repoRootPath(pkg, "model-card.json")
 
 		test.skipIf(!BIN_EXISTS.get(pkg))(`${pkg}: the card describes the artifact on disk`, async () => {
 			const card = await readLocalJSONFile<Record<string, unknown>>(cardPath)

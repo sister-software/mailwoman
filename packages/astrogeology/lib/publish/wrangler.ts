@@ -33,7 +33,7 @@ export const uploadWithWrangler: UploadTransport = async ({ file, bucket, key })
 		)
 	}
 
-	const bin = String(resolvePath(resolvePackageDirectory("wrangler"), "bin", "wrangler.js"))
+	const bin = resolvePath(resolvePackageDirectory("wrangler"), "bin", "wrangler.js")
 
 	await runFile("node", [bin, "r2", "object", "put", `${bucket}/${key}`, "--file", file, "--remote"])
 }

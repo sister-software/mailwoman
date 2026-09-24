@@ -87,7 +87,7 @@ let overlayLocaleCache: Map<string, string> | null = null
 async function overlayLocaleByCountry(): Promise<Map<string, string>> {
 	if (overlayLocaleCache) return overlayLocaleCache
 
-	const manifest = await readLocalJSONFile<ReleaseLocales>(String(repoRootPath(RELEASE_CONFIG_RELATIVE_PATH)))
+	const manifest = await readLocalJSONFile<ReleaseLocales>(repoRootPath(RELEASE_CONFIG_RELATIVE_PATH))
 
 	const byCountry = new Map<string, string>()
 

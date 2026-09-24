@@ -21,7 +21,7 @@ import { openWriteStream } from "@mailwoman/core/fs/streams"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { once } from "@mailwoman/core/utils/events"
-import { join, type PathBuilderLike } from "path-ts"
+import type { PathBuilderLike } from "path-ts"
 
 import { openParquetRowStream } from "#parquet/streams"
 import { SourceRegister } from "#registers"
@@ -156,7 +156,7 @@ export async function migrateOverlayParquet(
 	const summary: OverlayMigrationSummary = { rows: 0, bySource: {} }
 
 	await using staging = await temporaryDirectory("mw-migrate-overlay-")
-	const stagePath = join(staging.path, "rows.jsonl")
+	const stagePath = staging.path("rows.jsonl")
 	const sink = staging.use(openWriteStream(stagePath, { encoding: "utf8" }))
 
 	for await (const row of openParquetRowStream<Record<string, unknown>>(input)) {
@@ -182,7 +182,7 @@ export async function migrateOverlayParquet(
 	sink.end()
 	await once(sink, "finish")
 
-	await jsonlToParquet({ input: String(stagePath), output: String(output) })
+	await jsonlToParquet({ input: stagePath, output })
 
 	return summary
 }

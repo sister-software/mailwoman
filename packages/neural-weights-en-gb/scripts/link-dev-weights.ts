@@ -26,8 +26,9 @@
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { removePath } from "@mailwoman/core/fs/writers"
-import { repoRootPath } from "@mailwoman/core/paths"
+import { repoRootPathBuilder } from "@mailwoman/core/paths"
 import { spawnProcessSync } from "@mailwoman/core/process"
+import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import {
 	committedSoftFeedLinks,
 	materializeDevOverlay,
@@ -35,7 +36,6 @@ import {
 	PAIR_INDEX_PARENT_DELTA,
 	PAIR_INDEX_TRANSITION_BETA,
 } from "@mailwoman/resolver-wof-sqlite/weights-overlay-linker"
-import { resolvePath } from "path-ts"
 
 /**
  * Secondary pair sources (campaign R2/R3/R4b).
@@ -43,21 +43,21 @@ import { resolvePath } from "path-ts"
  * Named here rather than inline at the call site because the freshness guard has to md5 the same files
  * the build reads — when those two lists drift apart the guard silently blesses a stale artifact.
  */
-const PPD_SOURCE_CSV = String(dataRootPath("ppd", "2026-07-22", "gb-tuples.csv"))
-const BOROUGH_DB = String(dataRootPath("db", "wof", "admin-global-priority.db"))
-const LONDON_PAIRS_JSONL = String(repoRootPath("data", "gazetteer", "london-pairs-v2.jsonl"))
+const PPD_SOURCE_CSV = dataRootPath("ppd", "2026-07-22", "gb-tuples.csv")
+const BOROUGH_DB = wofDatabasePath("admin-global-priority.db")
+const LONDON_PAIRS_JSONL = repoRootPathBuilder("data", "gazetteer", "london-pairs-v2.jsonl")
 /**
  * Northern Ireland neighbourhood pairs (campaign R7).
  *
  * A separate file rather than merged into the London one, so each source keeps its own
  * provenance md5 in the header and the freshness guard can tell which of them moved.
  */
-const NI_PAIRS_JSONL = String(repoRootPath("data", "gazetteer", "ni-pairs-v1.jsonl"))
+const NI_PAIRS_JSONL = repoRootPathBuilder("data", "gazetteer", "ni-pairs-v1.jsonl")
 /**
  * Scotland + Wales + England neighbourhood pairs (campaign R8) — the rest of Great Britain,
  * after London (R3/R4b) and Northern Ireland (R7).
  */
-const GB_REGIONS_JSONL = String(repoRootPath("data", "gazetteer", "gb-regions-v1.jsonl"))
+const GB_REGIONS_JSONL = repoRootPathBuilder("data", "gazetteer", "gb-regions-v1.jsonl")
 
 // Hierarchy campaign R2+R3: the WOF borough pairs + the checked-in onspd London ward pairs join the build.
 // Without these flags a dev rebuild would silently drop them.
@@ -83,7 +83,7 @@ const overlay = await materializeDevOverlay({
 			"--borough-db",
 			BOROUGH_DB,
 			"--pairs-jsonl",
-			[LONDON_PAIRS_JSONL, NI_PAIRS_JSONL, GB_REGIONS_JSONL].join(","),
+			[LONDON_PAIRS_JSONL, NI_PAIRS_JSONL, GB_REGIONS_JSONL].map((path) => path.toString()).join(","),
 		],
 	},
 	localeFST: true,
@@ -105,7 +105,7 @@ const overlay = await materializeDevOverlay({
 /**
  * Where the GB anchor binary lives when the card warrants it.
  */
-const POSTCODE_BIN_DEST = resolvePath(overlay.destDir, "postcode-gb.bin")
+const POSTCODE_BIN_DEST = overlay.destDir("postcode-gb.bin")
 
 /**
  * The licence-clean GB postcode source: Ordnance Survey Code-Point Open (OGL v3.0),

@@ -24,7 +24,6 @@ async function main(): Promise<void> {
 			"suppress-gaz-near-postcode": { type: "boolean" },
 			"weights-cache": { type: "string" },
 		},
-		strict: false,
 		allowPositionals: true,
 	})
 

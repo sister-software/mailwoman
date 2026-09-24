@@ -31,7 +31,6 @@ import { pathExists } from "@mailwoman/core/fs/readers"
 import { makeDirectories } from "@mailwoman/core/fs/writers"
 import { sha256File } from "@mailwoman/core/hash"
 import { sleep } from "@mailwoman/core/utils/sleep"
-import { join } from "path-ts"
 
 import type {
 	BaseFetchOptions,
@@ -123,9 +122,9 @@ export async function fetchLocaldataKR(
 	options: FetchLocaldataKROptions,
 	report?: (line: string) => void
 ): Promise<FetchSummary> {
-	const destDir = join(options.outRoot, SLUG)
+	const destDir = options.outRoot(SLUG)
 	await makeDirectories(destDir)
-	const manifestPath = join(destDir, "MANIFEST.json")
+	const manifestPath = destDir("MANIFEST.json")
 
 	const session = await openSession()
 
@@ -145,7 +144,7 @@ export async function fetchLocaldataKR(
 
 	for (const category of wanted) {
 		const filename = `${category.slug}.csv`
-		const dest = join(destDir, filename)
+		const dest = destDir(filename)
 		const url = `${PORTAL}/file/download/${category.slug}/info`
 		const before = previous.get(filename)
 

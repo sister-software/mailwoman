@@ -8,8 +8,6 @@
  *   optional continuations).
  */
 
-import { join } from "path-ts"
-
 import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 
 /**
@@ -28,9 +26,9 @@ export const spec = {
 
 const GazetteerInspectFST: CommandComponent<typeof spec> = ({ args, options }) => {
 	const state = useCommandTask(async () => {
-		const { wofDir } = await import("#gazetteer-pipeline")
+		const { wofDatabasePath } = await import("@mailwoman/resolver-wof-sqlite/paths")
 
-		const dbPath = options.db ?? join(wofDir(), "admin-global-priority.db")
+		const dbPath = options.db ?? wofDatabasePath("admin-global-priority.db")
 		const maxResults = options.max
 		const { buildFSTFromWOF } = await import("@mailwoman/resolver-wof-sqlite/fst")
 

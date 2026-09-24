@@ -41,7 +41,7 @@ import { statPath, pathExists } from "@mailwoman/core/fs/readers"
 import { makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { sha256File } from "@mailwoman/core/hash"
 import { stringifyJSON } from "@mailwoman/core/json"
-import { join } from "path-ts"
+import type { PathBuilderLike } from "path-ts"
 
 import type { BaseFetchOptions, FetchSummary } from "#tools/fetch/download/index"
 import { downloadToFile, readManifest, writeManifest } from "#tools/fetch/download/index"
@@ -163,7 +163,7 @@ async function discoverTotalCount(): Promise<number> {
  * the shared `downloadToFile` doesn't apply here.
  */
 async function fetchChunk(
-	chunkPath: string,
+	chunkPath: PathBuilderLike,
 	chunkStart: number,
 	chunkEnd: number,
 	pageSize: number,
@@ -230,7 +230,7 @@ async function featureserverMode(options: FetchNADOptions, report?: (line: strin
 	const concurrency = options.concurrency ?? 4
 	const startOID = options.startOID ?? 1
 
-	const chunkDir = join(options.outRoot, SLUG, "featureserver")
+	const chunkDir = options.outRoot(SLUG, "featureserver")
 	await makeDirectories(chunkDir)
 
 	report?.(`=== ${SLUG} / featureserver`)
@@ -250,8 +250,8 @@ async function featureserverMode(options: FetchNADOptions, report?: (line: strin
 	for (let cursor = startOID; cursor <= endOID; cursor += chunkSize) {
 		const chunkEnd = Math.min(cursor + chunkSize - 1, endOID)
 		const chunkName = `oids_${cursor}-${chunkEnd}`
-		const chunkPath = join(chunkDir, `${chunkName}.ndjson`)
-		const manifestPath = join(chunkDir, `${chunkName}.manifest.json`)
+		const chunkPath = chunkDir(`${chunkName}.ndjson`)
+		const manifestPath = chunkDir(`${chunkName}.manifest.json`)
 
 		// Idempotency: skip a chunk only if it's marked complete (the bash version's bug was
 		// marking complete on partial-failure runs. We now only set complete after a clean fetch).
@@ -320,10 +320,10 @@ async function bulkMode(options: FetchNADOptions, report?: (line: string) => voi
 		)
 	}
 
-	const destDir = join(options.outRoot, SLUG)
+	const destDir = options.outRoot(SLUG)
 	await makeDirectories(destDir)
 	const filename = new URL(options.nadURL).pathname.split("/").pop() ?? "NAD.zip"
-	const destPath = join(destDir, filename)
+	const destPath = destDir(filename)
 
 	report?.(`=== ${SLUG} / ${filename}`)
 	report?.(`  URL: ${options.nadURL.slice(0, 100)}${options.nadURL.length > 100 ? "…" : ""}`)
@@ -332,7 +332,7 @@ async function bulkMode(options: FetchNADOptions, report?: (line: string) => voi
 
 	const sha = await sha256File(destPath)
 
-	await writeManifest(join(destDir, "MANIFEST.json"), {
+	await writeManifest(destDir("MANIFEST.json"), {
 		source_url: options.nadURL,
 		downloaded_at: new Date().toISOString(),
 		filename,

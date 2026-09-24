@@ -28,7 +28,6 @@
  *       stale-format file.
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
 import { readLocalBuffer, pathExists } from "@mailwoman/core/fs/readers"
 import { stringifyJSON } from "@mailwoman/core/json"
 import type {
@@ -46,6 +45,7 @@ import {
 	deserializeFST,
 	serializeFST,
 } from "@mailwoman/resolver-wof-sqlite/fst"
+import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import { describe, expect, it } from "vitest"
 
 // MARK: The frozen pre-migration implementation, verbatim
@@ -326,7 +326,7 @@ const CURATED_QUERIES: Record<string, readonly string[]> = {
 }
 
 for (const locale of ["en-gb", "es-es", "it-it"]) {
-	const artifactPath = String(dataRootPath("db", "wof", "fst-per-locale", `fst-${locale}.bin`))
+	const artifactPath = wofDatabasePath("fst-per-locale", `fst-${locale}.bin`)
 	const present = await pathExists(artifactPath)
 
 	describe.skipIf(!present)(`fst-autocomplete ↔ ancestrie parity — shipped ${locale}`, () => {

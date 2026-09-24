@@ -49,7 +49,7 @@ import { mailwomanCLIPath } from "mailwoman/cli-kit/metadata"
 import { $public } from "mailwoman/env"
 import { conventionCandidateDBPath } from "mailwoman/resolver-backend"
 import { withCLISpawnLockAsync } from "mailwoman/test-kit/cli-spawn-lock"
-import { join } from "path-ts"
+import { PathBuilder } from "path-ts"
 import { afterAll, afterEach, describe, expect, test } from "vitest"
 
 const fixtures = new AsyncDisposableStack()
@@ -385,14 +385,14 @@ describe.skipIf(!hasLibpostalCLI)("mailwoman-libpostal serve — cold start, zer
 				return
 			}
 
-			const overlay = join(dataRoot, "weights", "en-us")
+			const overlay = PathBuilder.from(dataRoot)("weights", "en-us")
 
 			await makeDirectories(overlay)
-			await createSymbolicLink(seed.modelPath, join(overlay, "model.onnx"))
-			await createSymbolicLink(seed.tokenizerPath, join(overlay, "tokenizer.model"))
+			await createSymbolicLink(seed.modelPath, overlay("model.onnx"))
+			await createSymbolicLink(seed.tokenizerPath, overlay("tokenizer.model"))
 
 			if (seed.modelCardPath) {
-				await createSymbolicLink(seed.modelCardPath, join(overlay, "model-card.json"))
+				await createSymbolicLink(seed.modelCardPath, overlay("model-card.json"))
 			}
 
 			await withCLISpawnLockAsync(async () => {

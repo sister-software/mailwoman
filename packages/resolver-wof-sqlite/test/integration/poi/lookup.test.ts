@@ -28,6 +28,7 @@ import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street"
 import { haversineKm, shortCellToInt, type H3Cell } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { cellToLatLng, gridRingUnsafe, latLngToCell } from "h3-js"
+import type { PathBuilder, PathBuilderLike } from "path-ts"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
 
 const SPRINGFIELD = { latitude: 39.7817, longitude: -89.6501 }
@@ -176,7 +177,7 @@ const ALL_ROWS = [
 	PIER_39,
 ]
 
-async function buildFixture(path: string): Promise<void> {
+async function buildFixture(path: PathBuilderLike): Promise<void> {
 	using kdb = new DatabaseClient<POIDatabase>(path)
 
 	await createPOITable(kdb)
@@ -224,11 +225,11 @@ async function buildFixture(path: string): Promise<void> {
 }
 
 let scratch: TemporaryDirectory
-let dbPath: string
+let dbPath: PathBuilder
 
 beforeEach(async () => {
 	scratch = await temporaryDirectory("mailwoman-poi-lookup-")
-	dbPath = scratch.resolve("poi.db")
+	dbPath = scratch.path("poi.db")
 	await buildFixture(dbPath)
 })
 

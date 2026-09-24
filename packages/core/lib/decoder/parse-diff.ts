@@ -113,7 +113,7 @@ interface Flat {
 
 function toFlat(tree: AddressTree | null | undefined): Flat[] {
 	return flattenTreeNodes(tree).map((node) => ({
-		tag: String(node.tag),
+		tag: node.tag,
 		value: node.value,
 		start: node.start,
 		end: node.end,

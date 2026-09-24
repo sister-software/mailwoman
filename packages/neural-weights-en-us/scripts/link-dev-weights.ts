@@ -23,7 +23,7 @@
  *   `docs/records/evals/2026-08-04-pix1-whole-edge-verdict.md`.
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
+import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import {
 	committedSoftFeedLinks,
 	materializeDevOverlay,
@@ -39,7 +39,7 @@ await materializeDevOverlay({
 	model: { kind: "link", digestCard: "neural-weights-en-us" },
 	softFeed: [softFeed.anchor, softFeed.country],
 	evidenceLexiconsFromCard: true,
-	postcodeBinary: { country: "us", database: String(dataRootPath("db", "wof", "postalcode-us.db")) },
+	postcodeBinary: { country: "us", database: wofDatabasePath("postalcode-us.db") },
 	pairIndex: {
 		country: "us",
 		delta: PAIR_INDEX_DELTA,

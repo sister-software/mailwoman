@@ -17,7 +17,7 @@
 import { makeDirectories, writeLocalJSONLFile } from "@mailwoman/core/fs/writers"
 import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 import { Box, Text } from "ink"
-import { dirname } from "path-ts"
+import { PathBuilder, dirname } from "path-ts"
 
 import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 import type { TriageRow, TriageSummary } from "#gazetteer-pipeline/wof/triage"
@@ -42,16 +42,18 @@ export const spec = {
 
 const GazetteerTriage: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { dataRootPath, isoDate } = await import("@mailwoman/core/utils")
+		const { isoDate } = await import("@mailwoman/core/utils")
+		const { dataRootPath } = await import("@mailwoman/core/data-root")
+		const { wofDatabasePath } = await import("@mailwoman/resolver-wof-sqlite/paths")
 		const { CoverageVerdict, triageWOFCurrency } = await import("#gazetteer-pipeline/wof/triage")
 
-		const adminDB = options.admin ?? String(dataRootPath("db", "wof", "admin-global-priority.db"))
-		const geonamesDir = options.geonames ?? String(dataRootPath("geonames"))
+		const adminDB = options.admin ?? wofDatabasePath("admin-global-priority.db")
+		const geonamesDir = options.geonames ?? dataRootPath("geonames")
 
 		const countries = extractDelimited(options.countries)
 
 		const stamp = isoDate()
-		const outPath = options.out ?? String(dataRootPath("db", "wof", "triage", `currency-${stamp}.jsonl`))
+		const outPath = PathBuilder.from(options.out ?? wofDatabasePath("triage", `currency-${stamp}.jsonl`))
 
 		const { rows, summary } = await triageWOFCurrency({
 			adminDB,

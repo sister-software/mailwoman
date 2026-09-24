@@ -32,7 +32,7 @@ import { pathExists } from "@mailwoman/core/fs/readers"
 import { SeededRandom } from "@mailwoman/core/utils"
 import { computeQueryShape } from "@mailwoman/query-shape"
 import { isPostcodeFormat } from "@mailwoman/query-shape/known-formats"
-import { join, type PathBuilderLike } from "path-ts"
+import type { PathBuilderLike } from "path-ts"
 
 import { isReservedBarePostcode } from "#recipes/bare/postcode/eval"
 import { alignAndWrite, type CorpusRecipe, readCSVRecords, recipeSourceID } from "#recipes/scaffold"
@@ -100,11 +100,11 @@ const SWEDISH_MUNICIPALITIES = [
  * they teach until a Greek source with postcodes exists, but no row here claims to be Greek.
  */
 const SOURCES: PostcodeSource[] = [
-	{ csv: join(EXTRACTED, "cz", "countrywide.csv"), country: "CZ" },
-	{ csv: join(EXTRACTED, "sk", "countrywide.csv"), country: "SK" },
-	{ csv: join(EXTRACTED, "nl", "countrywide.csv"), country: "NL" },
+	{ csv: EXTRACTED("cz", "countrywide.csv"), country: "CZ" },
+	{ csv: EXTRACTED("sk", "countrywide.csv"), country: "SK" },
+	{ csv: EXTRACTED("nl", "countrywide.csv"), country: "NL" },
 	...SWEDISH_MUNICIPALITIES.map((name) => ({
-		csv: join(EXTRACTED, "se", `municipality_of_${name}.csv`),
+		csv: EXTRACTED("se", `municipality_of_${name}.csv`),
 		country: "SE",
 	})),
 ]
@@ -172,10 +172,10 @@ export function selectPostcodes(codes: Iterable<string>, limit: number, seed: nu
 /**
  * Return every required input path that is absent, preserving declaration order for diagnostics.
  */
-export async function findMissingPostcodeSources(
-	paths: readonly string[],
-	exists: (path: string) => Promise<boolean> = pathExists
-): Promise<string[]> {
+export async function findMissingPostcodeSources<P extends PathBuilderLike>(
+	paths: readonly P[],
+	exists: (path: P) => Promise<boolean> = pathExists
+): Promise<P[]> {
 	const results = await Promise.all(paths.map(async (path) => ({ path, exists: await exists(path) })))
 
 	return results.filter((result) => !result.exists).map(({ path }) => path)
@@ -235,7 +235,7 @@ export const barePostcodeRecipe: CorpusRecipe = {
 		// Check the complete input set before writing the first row.
 		// A missing municipality otherwise produces a plausible non-empty artifact with
 		// less Swedish coverage than the recipe declares.
-		const missing = await findMissingPostcodeSources(SOURCES.map(({ csv }) => String(csv)))
+		const missing = await findMissingPostcodeSources(SOURCES.map(({ csv }) => csv))
 
 		if (missing.length) {
 			throw new Error(

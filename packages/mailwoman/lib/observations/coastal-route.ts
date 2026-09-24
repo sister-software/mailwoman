@@ -48,6 +48,7 @@ import {
 	type CoastalErosionReading,
 	type CoastalLayerIdentity,
 } from "@mailwoman/coastal"
+import type { PathBuilderLike } from "path-ts"
 
 import {
 	createDesignationRoute,
@@ -165,7 +166,7 @@ export interface CoastalErosionRouteOptions {
 	 * Required: there is no default layer, and a route that guessed one would report
 	 * a designation from an authority nobody asked about.
 	 */
-	databasePath: string
+	databasePath: PathBuilderLike
 	/**
 	 * The scenario to answer under.
 	 *
@@ -194,7 +195,7 @@ export function createCoastalErosionRoute(options: CoastalErosionRouteOptions): 
 			read: (latitude, longitude) => lookup.lookup(latitude, longitude, scenarioKey),
 			refusalFor: (reading) => (reading.kind !== CoastalReadingKind.Designated ? "no_designation_here" : undefined),
 			toObservation: (reading, latitude, longitude) =>
-				toObservation(reading, lookup.identity, latitude, longitude, options.databasePath),
+				toObservation(reading, lookup.identity, latitude, longitude, options.databasePath.toString()),
 		}),
 		scenarioKey,
 	}

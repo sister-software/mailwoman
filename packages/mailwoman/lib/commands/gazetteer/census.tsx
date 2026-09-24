@@ -27,7 +27,7 @@ import { pathExists } from "@mailwoman/core/fs/readers"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
 import type { PlacetypeCensusHeader, PlacetypeCensusNode } from "@mailwoman/neural/placetype"
 import { Box, Text } from "ink"
-import { join } from "path-ts"
+import { PathBuilder } from "path-ts"
 
 import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 
@@ -58,13 +58,14 @@ export const spec = {
 
 const GazetteerCensus: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { dataRootPath, md5File } = await import("@mailwoman/core/utils")
+		const { wofDatabasePath } = await import("@mailwoman/resolver-wof-sqlite/paths")
+		const { md5File } = await import("@mailwoman/core/utils")
 		const { normalizeFSTToken } = await import("@mailwoman/neural/fst-prior")
 		const { PlacetypeCensusResolver, serializePlacetypeCensus } = await import("@mailwoman/neural/placetype")
 		const { buildPlacetypeCensus, toBaseRates } = await import("#gazetteer-pipeline/placetype-census")
 
 		const country = options.country.toLowerCase()
-		const sourcePath = options.source ?? String(dataRootPath("db", "wof", "admin-global-priority.db"))
+		const sourcePath = options.source ?? wofDatabasePath("admin-global-priority.db")
 
 		if (!(await pathExists(sourcePath))) {
 			throw new Error(`census: source WOF admin DB not found: ${sourcePath}`)
@@ -121,7 +122,7 @@ const GazetteerCensus: CommandComponent<typeof spec> = ({ options }) => {
 		}
 
 		const bytes = serializePlacetypeCensus(header, nodes)
-		const outPath = join(options.out, `placetype-census-${country}.bin`)
+		const outPath = PathBuilder.from(options.out)(`placetype-census-${country}.bin`)
 
 		await writeLocalFile(bytes, outPath)
 

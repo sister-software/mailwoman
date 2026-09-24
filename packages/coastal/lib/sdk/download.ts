@@ -17,6 +17,7 @@
  */
 
 import { downloadZippedGeodatabase } from "@mailwoman/core/utils"
+import type { PathBuilderLike } from "path-ts"
 
 /**
  * The resource name the catalogue entry uses for the file geodatabase.
@@ -44,7 +45,7 @@ export interface DownloadGeodatabaseOptions {
 	/**
 	 * Where vintages are kept.
 	 */
-	cacheRoot: string
+	cacheRoot: PathBuilderLike
 	onProgress?: (message: string) => void
 }
 

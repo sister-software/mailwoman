@@ -60,7 +60,7 @@ import { movePath, removePathIfPresent, makeDirectories } from "@mailwoman/core/
 import { sha256File } from "@mailwoman/core/hash"
 import { runFile, spawnProcess } from "@mailwoman/core/process"
 import { isoSeconds } from "@mailwoman/core/utils"
-import { join } from "path-ts"
+import type { PathBuilderLike } from "path-ts"
 import { AsyncSpliterator } from "spliterator"
 
 import { $private } from "#env"
@@ -125,7 +125,7 @@ interface OaCollection {
  *
  * TODO: Move to our own zip utils.
  */
-async function gunzipToFile(src: string, dest: string): Promise<void> {
+async function gunzipToFile(src: PathBuilderLike, dest: PathBuilderLike): Promise<void> {
 	const child = spawnProcess("nice", ["-n", "15", "ionice", "-c", "3", "gunzip", "-c", src], {
 		stdio: ["ignore", "pipe", "inherit"],
 	})
@@ -145,9 +145,9 @@ export async function fetchOpenAddresses(
 	const country = options.country ?? "ca"
 	const token = $private.OA_BATCH_TOKEN
 
-	const destDir = join(options.outRoot, "openaddresses", country)
-	const manifestPath = join(destDir, "MANIFEST.json")
-	const outputFile = join(destDir, "collection.geojsonl")
+	const destDir = options.outRoot("openaddresses", country)
+	const manifestPath = destDir("MANIFEST.json")
+	const outputFile = destDir("collection.geojsonl")
 
 	const fail = (code: string): FetchSummary => ({ fetched: 0, skipped: 0, failed: 1, failedCodes: [code] })
 
@@ -234,8 +234,8 @@ The Canada collection (ca) is ~2 GiB compressed / ~7 GiB uncompressed
 	report?.(`  Resolving download URL for collection id=${collectionID}...`)
 	report?.(`  Attempting authenticated download...`)
 
-	const tmpGz = join(destDir, "collection.geojsonl.gz.tmp")
-	const tmpRaw = join(destDir, "collection.geojsonl.tmp")
+	const tmpGz = destDir("collection.geojsonl.gz.tmp")
+	const tmpRaw = destDir("collection.geojsonl.tmp")
 	const sourceURL = `${OA_BASE}/api/collections/${collectionID}/download`
 
 	let httpStatus = await streamDownload(sourceURL, tmpGz, {

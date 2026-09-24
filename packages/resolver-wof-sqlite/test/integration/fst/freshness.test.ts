@@ -26,6 +26,7 @@ import {
 	serializeFST,
 } from "@mailwoman/resolver-wof-sqlite/fst"
 import type { FSTProvenance } from "@mailwoman/resolver-wof-sqlite/fst"
+import type { PathBuilder } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 
 const TMP = await temporaryDirectory("fst-freshness-")
@@ -58,8 +59,8 @@ function fixtureMatcher(): FSTMatcher {
 	])
 }
 
-async function writeFST(name: string, provenance?: FSTProvenance): Promise<string> {
-	const path = TMP.resolve(name)
+async function writeFST(name: string, provenance?: FSTProvenance): Promise<PathBuilder> {
+	const path = TMP.path(name)
 	await writeLocalFile(serializeFST(fixtureMatcher(), provenance), path)
 
 	return path
@@ -78,7 +79,7 @@ function provenanceOf(overrides: Partial<FSTProvenance> = {}): FSTProvenance {
 	}
 }
 
-const SOURCE = TMP.resolve("source.db")
+const SOURCE = TMP.path("source.db")
 await writeLocalTextFile("source bytes", SOURCE)
 const SOURCE_IDENTITY = { md5: await md5File(SOURCE), bytes: (await statPath(SOURCE)).size }
 
@@ -92,7 +93,7 @@ describe("md5File", () => {
 		// one 8 MiB read, so an off-by-one in the chunk loop is invisible until a real 5 GB
 		// source arrives. 20 MiB runs the loop three times, with the last read short.
 		const bytes = Buffer.alloc(20 * 1024 * 1024 + 7, 0xab)
-		const big = TMP.resolve("big.bin")
+		const big = TMP.path("big.bin")
 		await writeLocalFile(bytes, big)
 
 		expect(await md5File(big)).toBe(md5Hex(bytes))
@@ -101,7 +102,7 @@ describe("md5File", () => {
 
 describe("readWOFSourceIdentity", () => {
 	it("computes and caches the digest in an md5sum-format sidecar", async () => {
-		const path = TMP.resolve("sidecar-source.db")
+		const path = TMP.path("sidecar-source.db")
 		await writeLocalTextFile("abc", path)
 		const identity = await readWOFSourceIdentity(path)
 
@@ -112,7 +113,7 @@ describe("readWOFSourceIdentity", () => {
 	})
 
 	it("recomputes when the sidecar is OLDER than the source", async () => {
-		const path = TMP.resolve("stale-sidecar.db")
+		const path = TMP.path("stale-sidecar.db")
 		await writeLocalTextFile("one", path)
 		await writeLocalTextFile("00000000000000000000000000000000  stale-sidecar.db\n", `${path}.md5`)
 		// Sidecar predates the source: the guard must not trust it.
@@ -122,7 +123,7 @@ describe("readWOFSourceIdentity", () => {
 	})
 
 	it("trusts a sidecar at or after the source's mtime without reading the source", async () => {
-		const path = TMP.resolve("trusted-sidecar.db")
+		const path = TMP.path("trusted-sidecar.db")
 		await writeLocalTextFile("two", path)
 		const lie = "11111111111111111111111111111111"
 		await writeLocalTextFile(`${lie}  trusted-sidecar.db\n`, `${path}.md5`)
@@ -151,15 +152,15 @@ describe("peekFSTStampFields", () => {
 	})
 
 	it("returns undefined for a non-FST file, a stub, and an absent path", async () => {
-		const notFST = TMP.resolve("not-an-fst.bin")
+		const notFST = TMP.path("not-an-fst.bin")
 		await writeLocalBuffer(Buffer.alloc(64, 0x7f), notFST)
 		expect(await peekFSTStampFields(notFST)).toBeUndefined()
 
-		const tooSmall = TMP.resolve("tiny.bin")
+		const tooSmall = TMP.path("tiny.bin")
 		await writeLocalBuffer(Buffer.from("FST\0"), tooSmall)
 		expect(await peekFSTStampFields(tooSmall)).toBeUndefined()
 
-		expect(await peekFSTStampFields(TMP.resolve("nope.bin"))).toBeUndefined()
+		expect(await peekFSTStampFields(TMP.path("nope.bin"))).toBeUndefined()
 	})
 
 	it("survives a truncated trailer instead of throwing", async () => {
@@ -280,13 +281,13 @@ describe("fstFreshnessWarning", () => {
 
 	it("is silent when either side is absent — a missing file is a different report", async () => {
 		expect(
-			await fstFreshnessWarning({ fstPath: TMP.resolve("gone.bin"), sourceDBPath: SOURCE, rebuildCommand: "x" })
+			await fstFreshnessWarning({ fstPath: TMP.path("gone.bin"), sourceDBPath: SOURCE, rebuildCommand: "x" })
 		).toBeUndefined()
 
 		expect(
 			await fstFreshnessWarning({
 				fstPath: await writeFST("orphan.bin", provenanceOf()),
-				sourceDBPath: TMP.resolve("gone.db"),
+				sourceDBPath: TMP.path("gone.db"),
 				rebuildCommand: "x",
 			})
 		).toBeUndefined()

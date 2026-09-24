@@ -60,10 +60,10 @@ export const spec = {
 const CoverageCommand: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { censusCoverage, newestManifest, resolveTrainingConfig } = await import("#coverage/census")
-		const { repoRootPath } = await import("@mailwoman/core/utils")
+		const { repoRootPath } = await import("@mailwoman/core/paths")
 		const { readScopeConfig } = await import("@mailwoman/core/scope-config")
 
-		const repoRoot = String(repoRootPath())
+		const repoRoot = repoRootPath()
 
 		// The config is named by `scope.config.json` rather than discovered.
 		// Both discovery orders are wrong here: the mtime sort sorts a total tie after a checkout,

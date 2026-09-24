@@ -25,7 +25,7 @@ import { PlanetaryBuildManifestSchema } from "#schema/manifest"
  */
 export async function verifyBody(body: BuildableBodyID, out: string | undefined): Promise<string[]> {
 	const directory = buildDirectory(body, out)
-	const manifestPath = String(resolvePath(directory, buildOutputs(body).manifest))
+	const manifestPath = resolvePath(directory, buildOutputs(body).manifest)
 	const manifest = PlanetaryBuildManifestSchema.parse(await readLocalJSONFile(manifestPath))
 
 	if (manifest.body !== body) throw new CommandError(`${manifestPath} describes ${manifest.body}, not ${body}`)

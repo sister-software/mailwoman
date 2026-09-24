@@ -17,10 +17,11 @@
  *   tall as the viewport emits `\x1b[3J`, which wipes the scrollback.
  */
 
-import { wofExtractPathsByName, wofReposRoot } from "@mailwoman/core/data-root"
+import { wofReposPath } from "@mailwoman/core/data-root"
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
 import { repoRootPath } from "@mailwoman/core/paths"
+import { wofExtractPathsByName } from "@mailwoman/resolver-wof-sqlite/paths"
 
 import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask, writeRawStdout } from "#cli-kit"
 import {
@@ -88,7 +89,7 @@ const CountryPlanCommand: CommandComponent<typeof spec, [string?]> = ({ options,
 			// The WOF leg is presence-driven, so a clone nobody declared becomes coverage
 			// on the next build and a declaration nobody cloned silently does not,
 			// and only comparing the two can tell those apart.
-			const reposRoot = String(wofReposRoot())
+			const reposRoot = wofReposPath()
 			const audit = await auditReposRoot(reposRoot)
 			const cloned = clonedCountries(audit)
 
@@ -230,7 +231,7 @@ const CountryPlanCommand: CommandComponent<typeof spec, [string?]> = ({ options,
 			// a move are written or neither, and a diff a person reads is what keeps that reviewable.
 			// A commit would move the review to after the fact.
 			if (options.write && plan.edits.length && !plan.blockers.length) {
-				const defaultsPath = String(repoRootPath("packages", "mailwoman", "lib", "gazetteer-pipeline", "defaults.ts"))
+				const defaultsPath = repoRootPath("packages", "mailwoman", "lib", "gazetteer-pipeline", "defaults.ts")
 				let source = await readLocalTextFile(defaultsPath)
 				const applied: string[] = []
 

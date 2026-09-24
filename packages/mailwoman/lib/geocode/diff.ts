@@ -113,8 +113,8 @@ function resolutions(tree: AddressTree | null | undefined): Map<string, SpanReso
 	const out = new Map<string, SpanResolution>()
 
 	for (const node of flattenTreeNodes(tree)) {
-		out.set(`${node.start}:${node.end}:${String(node.tag)}`, {
-			tag: String(node.tag),
+		out.set(`${node.start}:${node.end}:${node.tag}`, {
+			tag: node.tag,
 			value: node.value,
 			...(node.placeID === undefined ? {} : { placeID: node.placeID }),
 			...(node.lat === undefined ? {} : { lat: node.lat }),

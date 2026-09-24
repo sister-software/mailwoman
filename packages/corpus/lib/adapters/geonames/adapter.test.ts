@@ -12,14 +12,14 @@ import {
 	GEONAMES_DEFAULT_LICENSE,
 } from "@mailwoman/corpus/adapters/geonames/adapter"
 import type { CanonicalRow } from "@mailwoman/corpus/types"
-import { join, type PathBuilderLike } from "path-ts"
+import type { PathBuilder } from "path-ts"
 import { afterAll, beforeEach, describe, expect, it } from "vitest"
 
 const fixtures = new AsyncDisposableStack()
 
 afterAll(() => fixtures.disposeAsync())
 
-let scratch: PathBuilderLike
+let scratch: PathBuilder
 
 beforeEach(async () => {
 	scratch = fixtures.use(await temporaryDirectory("mailwoman-geonames-")).path
@@ -52,28 +52,28 @@ function gnRow(o: {
 	return cols.join("\t")
 }
 
-async function writeFixture(rows: string[], opts?: { admin1?: boolean; countries?: boolean }): Promise<string> {
-	const country = join(scratch, "US.txt")
+async function writeFixture(rows: string[], opts?: { admin1?: boolean; countries?: boolean }): Promise<PathBuilder> {
+	const country = scratch("US.txt")
 	await writeLocalTextFile(rows, country)
 
 	if (opts?.admin1 !== false) {
 		await writeLocalTextFile(
 			["US.VT\tVermont\tVermont\t5242283", "US.CA\tCalifornia\tCalifornia\t5332921"],
-			join(scratch, "admin1CodesASCII.txt")
+			scratch("admin1CodesASCII.txt")
 		)
 	}
 
 	if (opts?.countries !== false) {
 		await writeLocalTextFile(
 			["# ISO\tISO3\tnum\tfips\tCountry\trest", "US\tUSA\t840\tUS\tUnited States\t"],
-			join(scratch, "countryInfo.txt")
+			scratch("countryInfo.txt")
 		)
 	}
 
 	return country
 }
 
-async function collect(inputPath: string, extra?: Record<string, unknown>): Promise<CanonicalRow[]> {
+async function collect(inputPath: PathBuilder, extra?: Record<string, unknown>): Promise<CanonicalRow[]> {
 	const out: CanonicalRow[] = []
 
 	for await (const r of createGeonamesAdapter().rows({ inputPath, ...extra })) {

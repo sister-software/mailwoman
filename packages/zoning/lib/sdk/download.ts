@@ -28,7 +28,7 @@
 import { tryStat } from "@mailwoman/core/fs/readers"
 import { makeDirectories } from "@mailwoman/core/fs/writers"
 import { streamToDisk } from "@mailwoman/core/utils"
-import { join } from "path-ts"
+import { PathBuilder, type PathBuilderLike } from "path-ts"
 
 /**
  * The file name one vintage's export is kept under.
@@ -47,7 +47,7 @@ export interface DownloadZoningExportOptions {
 	 * The product vintage the cache is keyed on.
 	 */
 	vintage: string
-	cacheRoot: string
+	cacheRoot: PathBuilderLike
 	onProgress?: (message: string) => void
 }
 
@@ -59,8 +59,9 @@ export interface DownloadZoningExportOptions {
  * The same discipline the database build uses, for the same reason.
  */
 export async function downloadZoningExport(options: DownloadZoningExportOptions): Promise<string> {
-	const vintageDir = join(options.cacheRoot, options.vintage)
-	const exportPath = join(vintageDir, GZT_EXPORT_FILE)
+	const vintageDir = PathBuilder.from(options.cacheRoot)(options.vintage)
+	// A string, because the build records the export path it read.
+	const exportPath = vintageDir(GZT_EXPORT_FILE).toString()
 
 	if (await tryStat(exportPath)) {
 		options.onProgress?.(`export for ${options.vintage} already downloaded`)

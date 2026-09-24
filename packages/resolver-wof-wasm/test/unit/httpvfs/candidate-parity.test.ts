@@ -13,17 +13,17 @@
  *   staging receipt records the run against the exact artifact md5 it graded.
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { WOFCandidateTableLookup as NodeCandidateLookup } from "@mailwoman/resolver-wof-sqlite"
 import type { CandidateDatabase } from "@mailwoman/resolver-wof-sqlite/candidate-schema"
+import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import { WOFCandidateTableLookup as BrowserCandidateLookup } from "@mailwoman/resolver-wof-wasm/httpvfs/resolver"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterAll, describe, expect, test } from "vitest"
 
 import { stubWorker } from "./stub-worker.ts"
 
-const CANDIDATE_DB = dataRootPath("db", "wof", "candidate.db")
+const CANDIDATE_DB = wofDatabasePath("candidate.db")
 const present = await pathExists(CANDIDATE_DB)
 
 /**

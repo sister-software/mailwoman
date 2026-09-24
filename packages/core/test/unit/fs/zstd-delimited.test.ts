@@ -34,7 +34,7 @@ let compressed = ""
 
 beforeAll(async () => {
 	scratch = await temporaryDirectory("zstd-delimited-")
-	plain = String(resolvePath(scratch.path, "part-0000.jsonl"))
+	plain = resolvePath(scratch.path, "part-0000.jsonl")
 	compressed = `${plain}${ZSTD_EXTENSION}`
 
 	const text = ROWS.map((row) => stringifyJSON(row)).join("\n") + "\n"
@@ -144,17 +144,17 @@ describe("the count-then-read shape", () => {
 
 describe("preferCompressed", () => {
 	it("answers with the .zst sibling when one exists", async () => {
-		expect(String(await preferCompressed(plain))).toBe(compressed)
+		expect((await preferCompressed(plain)).toString()).toBe(compressed)
 	})
 
 	it("answers with the plain path when no sibling exists", async () => {
-		const absent = String(resolvePath(scratch.path, "no-such-part.jsonl"))
+		const absent = resolvePath(scratch.path, "no-such-part.jsonl")
 
-		expect(String(await preferCompressed(absent))).toBe(absent)
+		expect((await preferCompressed(absent)).toString()).toBe(absent)
 	})
 
 	it("is idempotent on a path that is already compressed", async () => {
-		expect(String(await preferCompressed(compressed))).toBe(compressed)
+		expect((await preferCompressed(compressed)).toString()).toBe(compressed)
 	})
 
 	it("closes the loop: ask for the plain name, read the compressed rows", async () => {

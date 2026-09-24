@@ -23,7 +23,6 @@ import { pathExists } from "@mailwoman/core/fs/readers"
 import { makeDirectories } from "@mailwoman/core/fs/writers"
 import { sha256File } from "@mailwoman/core/hash"
 import { sleep } from "@mailwoman/core/utils/sleep"
-import { join } from "path-ts"
 
 import type {
 	BaseFetchOptions,
@@ -90,9 +89,9 @@ function filenameFor(name: string, datasetID: string): string {
 }
 
 export async function fetchACRASG(options: FetchACRASGOptions, report?: (line: string) => void): Promise<FetchSummary> {
-	const destDir = join(options.outRoot, SLUG)
+	const destDir = options.outRoot(SLUG)
 	await makeDirectories(destDir)
-	const manifestPath = join(destDir, "MANIFEST.json")
+	const manifestPath = destDir("MANIFEST.json")
 
 	const collection = await readJSON<CollectionMetadata>(COLLECTION_URL)
 	const datasetIDs = collection.data?.collectionMetadata?.childDatasets ?? []
@@ -108,7 +107,7 @@ export async function fetchACRASG(options: FetchACRASGOptions, report?: (line: s
 		const metadata = await readJSON<DatasetMetadata>(`${DATASET_API}/${datasetID}/metadata`)
 		const name = metadata.data?.name ?? datasetID
 		const filename = filenameFor(name, datasetID)
-		const dest = join(destDir, filename)
+		const dest = destDir(filename)
 		const before = previous.get(filename)
 
 		if (before && (await pathExists(dest))) {

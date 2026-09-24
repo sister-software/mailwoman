@@ -19,7 +19,7 @@ import {
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories, writeLocalBuffer, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { makeLcg } from "@mailwoman/core/random"
-import { join } from "path-ts"
+import type { PathBuilder } from "path-ts"
 import { afterAll, describe, expect, test } from "vitest"
 
 const tmpRoot = await temporaryDirectory("coarse-placer-test-")
@@ -75,23 +75,20 @@ async function writeArtifacts(
 	weights: Float32Array,
 	bias: number[],
 	temperature = 1
-): Promise<{ fp32Dir: string; int8Dir: string }> {
-	const fp32Dir = tmpRoot.resolve(`fp32-${classes.join("")}-${dim}`)
-	const int8Dir = tmpRoot.resolve(`int8-${classes.join("")}-${dim}`)
+): Promise<{ fp32Dir: PathBuilder; int8Dir: PathBuilder }> {
+	const fp32Dir = tmpRoot.path(`fp32-${classes.join("")}-${dim}`)
+	const int8Dir = tmpRoot.path(`int8-${classes.join("")}-${dim}`)
 	await makeDirectories(fp32Dir)
 	await makeDirectories(int8Dir)
 
 	const baseMeta = { classes, featureDim: dim, temperature, bias }
-	await writeLocalJSONFile(baseMeta, join(fp32Dir, "meta.json"))
+	await writeLocalJSONFile(baseMeta, fp32Dir("meta.json"))
 
-	await writeLocalBuffer(
-		Buffer.from(weights.buffer, weights.byteOffset, weights.byteLength),
-		join(fp32Dir, "weights.bin")
-	)
+	await writeLocalBuffer(Buffer.from(weights.buffer, weights.byteOffset, weights.byteLength), fp32Dir("weights.bin"))
 
 	const { int8, scales } = quantize(weights, classes.length, dim)
-	await writeLocalJSONFile({ ...baseMeta, quantization: "int8-per-row", scales }, join(int8Dir, "meta.json"))
-	await writeLocalBuffer(Buffer.from(int8.buffer), join(int8Dir, "weights.bin"))
+	await writeLocalJSONFile({ ...baseMeta, quantization: "int8-per-row", scales }, int8Dir("meta.json"))
+	await writeLocalBuffer(Buffer.from(int8.buffer), int8Dir("weights.bin"))
 
 	return { fp32Dir, int8Dir }
 }
@@ -179,15 +176,15 @@ describe("CoarsePlacer.fromArtifactDir", () => {
 	})
 
 	test("int8 artifact missing scales is rejected", async () => {
-		const badDir = tmpRoot.resolve("int8-noscales")
+		const badDir = tmpRoot.path("int8-noscales")
 		await makeDirectories(badDir)
 
 		await writeLocalJSONFile(
 			{ classes, featureDim: FEATURE_DIM, temperature: 1, bias, quantization: "int8-per-row" },
-			join(badDir, "meta.json")
+			badDir("meta.json")
 		)
 
-		await writeLocalBuffer(Buffer.from(new Int8Array(classes.length * FEATURE_DIM).buffer), join(badDir, "weights.bin"))
+		await writeLocalBuffer(Buffer.from(new Int8Array(classes.length * FEATURE_DIM).buffer), badDir("weights.bin"))
 		await expect(CoarsePlacer.fromArtifactDir(badDir)).rejects.toThrow(/scales/)
 	})
 })

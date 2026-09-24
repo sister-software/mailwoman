@@ -6,9 +6,9 @@
  * Framework-free FST autocomplete shared by CLI and library-facing adapters.
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
 import { readLocalBuffer, pathExists } from "@mailwoman/core/fs/readers"
 import { CommandError } from "@mailwoman/core/scripting/command"
+import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { PathBuilderLike } from "path-ts"
 
 import { $public } from "#env"
@@ -22,7 +22,7 @@ import { $public } from "#env"
  * reports it as a missing artifact rather than as a name it got wrong.
  */
 export function resolveFSTPath(explicitPath?: string): PathBuilderLike {
-	return explicitPath ?? $public.MAILWOMAN_FST_BIN ?? dataRootPath("db", "wof", "fst-per-locale", "fst-en-us.bin")
+	return explicitPath ?? $public.MAILWOMAN_FST_BIN ?? wofDatabasePath("fst-per-locale", "fst-en-us.bin")
 }
 
 /**

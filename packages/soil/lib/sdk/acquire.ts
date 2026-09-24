@@ -19,6 +19,8 @@
  *   field-survey date, which is the number a currency claim actually turns on.
  */
 
+import type { PathBuilderLike } from "path-ts"
+
 import type { SurveyAreaInput } from "#sdk/build-soil"
 import type { SoilDataAccessClient, SurveyAreaCatalogEntry } from "#sdk/client"
 import { downloadSurveyArea, type SurveyAreaArchive } from "#sdk/download"
@@ -35,7 +37,7 @@ export interface AcquireRegionOptions {
 	/**
 	 * Where vintages are kept.
 	 */
-	cacheRoot: string
+	cacheRoot: PathBuilderLike
 	/**
 	 * Build only these symbols out of the ones the catalogue returns.
 	 *

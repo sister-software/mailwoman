@@ -35,6 +35,7 @@ import type {
 } from "@mailwoman/api"
 import { recordTimed } from "@mailwoman/api-kit"
 import { decodeAsTuples, decodeAsXML } from "@mailwoman/core"
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { walkNodes, type AddressTree } from "@mailwoman/core/decoder"
 import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { tryParsingJSON } from "@mailwoman/core/json"
@@ -42,7 +43,6 @@ import { resolveModulePath } from "@mailwoman/core/module/resolvers"
 import { deriveInputMode } from "@mailwoman/core/pipeline"
 import type { Resolver, ResolveOpts } from "@mailwoman/core/resolver"
 import { extractDelimited } from "@mailwoman/core/scripting/arguments"
-import { mailwomanDataRoot } from "@mailwoman/core/utils"
 import { classifyKindSync } from "@mailwoman/kind-classifier"
 import { computeQueryShape } from "@mailwoman/query-shape"
 import { createWOFResolver } from "@mailwoman/resolver"
@@ -63,7 +63,7 @@ import {
  * Default per-state database root + interp calibration — mirrors the express
  * server's defaults (`GeocodeRouter.ts`).
  */
-const DATA_ROOT = mailwomanDataRoot()
+const DATA_ROOT = dataRootPath()
 
 /**
  * The classifier/resolver/database bundle `geocode`/`batch`/`resolveTree`/`reload` close over.

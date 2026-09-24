@@ -22,6 +22,7 @@ import { CommandError, formatCommandError } from "@mailwoman/core/scripting/comm
 import { childEnv } from "@mailwoman/core/scripting/utils"
 import type { NeuralAddressClassifier, ScriptRoutedClassifier } from "@mailwoman/neural"
 import { Box, Text } from "ink"
+import type { PathBuilderLike } from "path-ts"
 import { createElement as h, Fragment, useEffect, useState } from "react"
 import type * as React from "react"
 
@@ -457,7 +458,7 @@ export function formatLayerVerification<Row extends { outcome: string; label: st
 export function runProcessOrFail(
 	cmd: string,
 	args: readonly string[],
-	options: { cwd?: string; echo?: boolean } = {}
+	options: { cwd?: PathBuilderLike; echo?: boolean } = {}
 ): void {
 	if (options.echo) {
 		console.error(`  $ ${cmd} ${args.join(" ")}${options.cwd ? `  (in ${options.cwd})` : ""}`)

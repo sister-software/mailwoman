@@ -18,6 +18,7 @@ import { tryParsingJSON } from "@mailwoman/core/json"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { pointInMultiPolygon, pointInPolygon } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
+import type { PathBuilderLike } from "path-ts"
 
 type Ring = Array<[number, number]>
 
@@ -50,14 +51,14 @@ export interface AdminLocatorOptions {
 	/**
 	 * WOF admin DB — supplies the id/name/placetype of each candidate place.
 	 */
-	adminPath: string
+	adminPath: PathBuilderLike
 	/**
 	 * WOF polygon DB — supplies the geometry.
 	 *
 	 * A place present in the admin DB with no row here cannot be located, and the locator
 	 * counts that rather than treating it as a miss at probe time.
 	 */
-	polygonPath: string
+	polygonPath: PathBuilderLike
 	placetype: string
 	/**
 	 * ISO country code as the admin DB spells it (upper-case).

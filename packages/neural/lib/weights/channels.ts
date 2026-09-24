@@ -294,7 +294,7 @@ export async function unfedAnchorDetail(packageDir: PathBuilderLike | undefined)
 export type { EncoderDescriptor } from "#char-encoder"
 
 export async function readEncoderFromModelCard(modelCardPath: PathBuilderLike | undefined): Promise<EncoderDescriptor> {
-	return encoderDescriptorFromCard(await readModelCardObject(modelCardPath), String(modelCardPath))
+	return encoderDescriptorFromCard(await readModelCardObject(modelCardPath), modelCardPath?.toString() ?? "model card")
 }
 
 export async function readRequiredChannels(

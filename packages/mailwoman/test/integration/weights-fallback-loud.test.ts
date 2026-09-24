@@ -22,15 +22,16 @@
  *   covered below.
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { parseJSONStrict } from "@mailwoman/core/json"
 import { runFile } from "@mailwoman/core/process"
 import { childEnv } from "@mailwoman/core/scripting/utils"
+import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import { mailwomanCLIPath } from "mailwoman/cli-kit/metadata"
 import { $public } from "mailwoman/env"
+import type { PathBuilderLike } from "path-ts"
 import { afterAll, beforeAll, describe, expect, test } from "vitest"
 
 const cliBin = await mailwomanCLIPath()
@@ -64,7 +65,7 @@ beforeAll(async () => {
 	// A present-but-not-a-model file so `resolveWeights`'s existsSync(modelPath) passes
 	// and the failure lands on the (deliberately absent) tokenizer path —
 	// a deterministic load error, no onnx runtime needed.
-	await writeLocalTextFile("not a real onnx graph", stubDir.resolve("model.onnx"))
+	await writeLocalTextFile("not a real onnx graph", stubDir.path("model.onnx"))
 })
 
 afterAll(() => {
@@ -83,7 +84,7 @@ function absentEnv(extra: Record<string, string | undefined> = {}): NodeJS.Proce
  * Run the CLI, capturing stdout/stderr/exit whether it exits 0 or non-zero (execFile rejects on non-zero).
  */
 async function runCLI(
-	args: readonly string[],
+	args: readonly PathBuilderLike[],
 	env: NodeJS.ProcessEnv
 ): Promise<{ stdout: string; stderr: string; code: number }> {
 	try {
@@ -168,8 +169,8 @@ describe("#1108 loud weights fallback — weights ABSENT (non-interactive / pipe
 
 describe("#1108 loud weights fallback — weights LOAD error surfaced, not swallowed", () => {
 	test("bad explicit --model/--tokenizer: the underlying load error is surfaced (distinct from 'not found'), exit 0", async () => {
-		const modelPath = stubDir.resolve("model.onnx")
-		const tokenizerPath = stubDir.resolve("does-not-exist-tokenizer.model")
+		const modelPath = stubDir.path("model.onnx")
+		const tokenizerPath = stubDir.path("does-not-exist-tokenizer.model")
 
 		const { stdout, stderr, code } = await runCLI(
 			["parse", "--model", modelPath, "--tokenizer", tokenizerPath, ADDRESS],
@@ -205,8 +206,8 @@ describe("#1108 — the interactive/declined degraded banner is unchanged (regre
 // Runs only where a WOF DB is on disk.
 // Proves the warning + degraded output + exit 0 combination the audit's test
 // (1) calls for on the full --resolve path.
-const DEFAULT_WOF_PATH = String(dataRootPath("db", "wof", "whosonfirst-data-admin-us-latest.db"))
-const wofPath = $public.MAILWOMAN_WOF_DB || DEFAULT_WOF_PATH
+const DEFAULT_WOF_PATH = wofDatabasePath("whosonfirst-data-admin-us-latest.db")
+const wofPath = $public.MAILWOMAN_WOF_DB || DEFAULT_WOF_PATH.toString()
 const hasWOFDB = await pathExists(wofPath)
 
 describe.skipIf(!hasWOFDB)("#1108 loud weights fallback — --resolve degraded end-to-end (WOF DB present)", () => {

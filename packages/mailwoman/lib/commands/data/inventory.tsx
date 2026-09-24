@@ -14,9 +14,9 @@
  *   scrollback. A full listing is 200+ lines, so on any terminal it would.
  */
 
-import { mailwomanDataRoot } from "@mailwoman/core/data-root"
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
-import { repoRootPath } from "@mailwoman/core/paths"
+import { repoRootPathBuilder } from "@mailwoman/core/paths"
 
 import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask, writeRawStdout } from "#cli-kit"
 import {
@@ -86,7 +86,7 @@ function rollup(entries: readonly InventoryEntry[]): string[] {
 
 const InventoryCommand: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const dataRoot = options.dataRoot ?? String(mailwomanDataRoot())
+		const dataRoot = options.dataRoot ?? dataRootPath()
 
 		const report = await takeInventory({
 			dataRoot,
@@ -112,7 +112,7 @@ const InventoryCommand: CommandComponent<typeof spec> = ({ options }) => {
 		// failing that were found on the shipped artifacts: a path the workspace regroup moved,
 		// and a path under gitignored `scratchpad/` that exists only on the machine that built it.
 		// Reported separately from the count, because these artifacts pass every "has a manifest" check.
-		const repoRoot = String(repoRootPath())
+		const repoRoot = repoRootPathBuilder()
 
 		const manifested = report.entries.filter((e) => e.provenance === Provenance.Manifested)
 

@@ -1,6 +1,7 @@
 import { readUnquotedTSV, readUnquotedTSVChecked, readUnquotedTSVText } from "@mailwoman/core/fs/delimited"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import type { PathBuilder } from "path-ts"
 import { TSVSpliterator } from "spliterator"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
@@ -15,11 +16,11 @@ const DUMP = ["1\tAshgabat\t37.95\t58.38", `2\tOvrag Kyzylak"on\t38.23\t55.11`, 
 )
 
 let dir: TemporaryDirectory
-let file: string
+let file: PathBuilder
 
 beforeAll(async () => {
 	dir = await temporaryDirectory("delimited-")
-	file = String(dir.resolve("TM.txt"))
+	file = dir.path("TM.txt")
 	await writeLocalTextFile(DUMP, file)
 })
 
@@ -80,7 +81,7 @@ describe("the checked read", () => {
 	it("recovers the full count on an input where the default answers short", async () => {
 		// An unterminated quote is the worst case: the default reader runs to the end of the
 		// file holding one open region and answers fewer records than the file has lines.
-		const truncating = String(dir.resolve("open-quote.txt"))
+		const truncating = dir.path("open-quote.txt")
 
 		await writeLocalTextFile(`1\tAshgabat\t37.95\t58.38\n2\tOvrag "on\t38.23\t55.11\n3\tMary\t37.6\t61.8`, truncating)
 
@@ -106,7 +107,7 @@ describe("the checked read", () => {
 	 * rather than inventing content that cannot produce it.
 	 */
 	it("raises rather than answering short, naming both counts", async () => {
-		const missing = String(dir.resolve("gone.txt"))
+		const missing = dir.path("gone.txt")
 
 		// A read that cannot happen at all must also not answer an empty array,
 		// which is the same failure wearing a different mask.

@@ -69,7 +69,7 @@ export async function prepareReleaseVersion(
 	const rootManifest = await readPackageJSON(rootManifestPath)
 
 	if (typeof rootManifest.version !== "string" || !semver.valid(rootManifest.version)) {
-		fail(`root package.json version is not a valid semver: ${String(rootManifest.version)}`)
+		fail(`root package.json version is not a valid semver: ${rootManifest.version}`)
 	}
 
 	let targetVersion: string
@@ -133,7 +133,7 @@ export async function prepareReleaseVersion(
 
 	if (releaseConfig.version !== rootManifest.version) {
 		fail(
-			`release.config.json is at ${String(releaseConfig.version)} but the root is at ${rootManifest.version} — ` +
+			`release.config.json is at ${releaseConfig.version} but the root is at ${rootManifest.version} — ` +
 				`the tree is not version-synced; refusing to bump on top of drift`
 		)
 	}

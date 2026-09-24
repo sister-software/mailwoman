@@ -32,6 +32,7 @@
 
 import { stringifyJSON } from "@mailwoman/core/json"
 import { isPlainObject } from "@mailwoman/core/objects"
+import type { PathBuilderLike } from "path-ts"
 import { JSONSpliterator } from "spliterator"
 
 import type { GauntletGeocodeOpts } from "#eval-harness/gauntlet/harness"
@@ -439,7 +440,8 @@ export function parseConformanceFixture(raw: unknown, origin: string): Conforman
  * suite reports fewer violations than it has rows, and a smaller violation count
  * is indistinguishable from a law that holds.
  */
-export async function loadConformanceFixtures(path: string): Promise<ConformanceFixture[]> {
+export async function loadConformanceFixtures(source: PathBuilderLike): Promise<ConformanceFixture[]> {
+	const path = source.toString()
 	const fixtures: ConformanceFixture[] = []
 	const seen = new Set<string>()
 	let index = 0

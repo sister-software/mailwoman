@@ -12,7 +12,6 @@
 
 import { formatFileSize } from "@mailwoman/core/fs/readers"
 import { Box, Text } from "ink"
-import { join } from "path-ts"
 
 import { type CommandSpec, CommandTaskResult, type CommandComponent, phaseReporter, useCommandTask } from "#cli-kit"
 
@@ -30,8 +29,10 @@ export const spec = {
 
 const GazetteerBuild: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { buildAdmin, buildCandidate, DEFAULT_CANDIDATE_OUT, resolvePostcodeDatabases, wofDir } =
+		const { buildAdmin, buildCandidate, DEFAULT_CANDIDATE_OUT, resolvePostcodeDatabases } =
 			await import("#gazetteer-pipeline")
+
+		const { wofDatabasePath } = await import("@mailwoman/resolver-wof-sqlite/paths")
 
 		console.error("▸ build admin (staging)")
 
@@ -41,7 +42,7 @@ const GazetteerBuild: CommandComponent<typeof spec> = ({ options }) => {
 			onPhase: phaseReporter(),
 		})
 
-		const candidateOut = join(wofDir(), DEFAULT_CANDIDATE_OUT)
+		const candidateOut = wofDatabasePath(DEFAULT_CANDIDATE_OUT)
 
 		console.error(`▸ build candidate ← ${admin.out}`)
 

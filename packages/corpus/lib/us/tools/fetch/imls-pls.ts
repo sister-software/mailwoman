@@ -28,7 +28,7 @@ import { statPath, pathExists } from "@mailwoman/core/fs/readers"
 import { makeDirectories, removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { extractZipEntry, listZipEntries } from "@mailwoman/core/fs/zip"
 import { sha256File } from "@mailwoman/core/hash"
-import { basename, join } from "path-ts"
+import { basename } from "path-ts"
 
 import type { BaseFetchOptions, FetchSummary, SourceManifest } from "#tools/fetch/download/index"
 import { downloadToFile, readManifest, writeManifest } from "#tools/fetch/download/index"
@@ -52,11 +52,11 @@ export async function fetchIMLSPLS(
 	options: FetchIMLSPLSOptions,
 	report?: (line: string) => void
 ): Promise<FetchSummary> {
-	const destDir = join(options.outRoot, SLUG)
+	const destDir = options.outRoot(SLUG)
 	await makeDirectories(destDir)
 
-	const zipDest = join(destDir, basename(ZIP_URL))
-	const manifestPath = join(destDir, "MANIFEST.json")
+	const zipDest = destDir(basename(ZIP_URL))
+	const manifestPath = destDir("MANIFEST.json")
 
 	report?.(`=== ${SLUG}`)
 
@@ -65,7 +65,7 @@ export async function fetchIMLSPLS(
 	const recorded = await readManifest<Partial<SourceManifest>>(manifestPath)
 
 	if (recorded?.sha256 && recorded.filename) {
-		const recordedPath = join(destDir, recorded.filename)
+		const recordedPath = destDir(recorded.filename)
 
 		if ((await pathExists(recordedPath)) && (await sha256File(recordedPath)) === recorded.sha256) {
 			report?.("  ✓ Already current (sha256 matches MANIFEST) — skipping download.")
@@ -121,7 +121,7 @@ export async function fetchIMLSPLS(
 
 	report?.(`  Extracting outlet CSV: ${csvName}`)
 
-	const csvDest = join(destDir, basename(csvName))
+	const csvDest = destDir(basename(csvName))
 
 	await extractZipEntry(zipDest, csvName, csvDest)
 	const csvSize = (await statPath(csvDest)).size

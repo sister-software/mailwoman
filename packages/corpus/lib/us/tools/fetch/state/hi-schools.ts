@@ -20,7 +20,7 @@ import { BYTES_PER_KIB, ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { statPath, pathExists } from "@mailwoman/core/fs/readers"
 import { makeDirectories, removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { sha256File } from "@mailwoman/core/hash"
-import { join } from "path-ts"
+import type { PathBuilderLike } from "path-ts"
 import { XLSXSpliterator, type XLSXCellValue } from "spliterator"
 
 import type { BaseFetchOptions, FetchSummary } from "#tools/fetch/download/index"
@@ -50,9 +50,11 @@ interface Manifest {
 	notes: string
 }
 
-async function validateWorkbook(path: string): Promise<void> {
+async function validateWorkbook(path: PathBuilderLike): Promise<void> {
 	for (const sheet of STATE_HI_SCHOOL_SHEETS) {
-		const rows = await XLSXSpliterator.fromAsync<XLSXCellValue[]>(path, {
+		// XLSXSpliterator opens a string, URL, or byte source.
+		// A PathBuilder is none of those.
+		const rows = await XLSXSpliterator.fromAsync<XLSXCellValue[]>(path.toString(), {
 			sheet,
 			header: false,
 			take: 2,
@@ -81,11 +83,11 @@ export async function fetchStateHISchools(
 	options: FetchStateHISchoolsOptions,
 	report?: (line: string) => void
 ): Promise<FetchSummary> {
-	const destDir = join(options.outRoot, SLUG)
+	const destDir = options.outRoot(SLUG)
 	await makeDirectories(destDir)
 
-	const xlsxDest = join(destDir, XLSX_FILENAME)
-	const manifestPath = join(destDir, "MANIFEST.json")
+	const xlsxDest = destDir(XLSX_FILENAME)
+	const manifestPath = destDir("MANIFEST.json")
 	const sourceURL = options.sourceURL ?? SOURCE_URL
 
 	report?.(`=== ${SLUG}`)

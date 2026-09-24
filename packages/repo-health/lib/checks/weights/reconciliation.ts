@@ -107,7 +107,7 @@ export const weightsReconciliationCheck: RepoCheck = {
 				})
 			}
 
-			const manifest = await readPackageJSON(String(resolvePath(context.repoRoot, record.workspace, "package.json")))
+			const manifest = await readPackageJSON(resolvePath(context.repoRoot, record.workspace, "package.json"))
 
 			// A package declaring a base and shipping its own graph is two claims about
 			// where its rows are decoded, and `resolveWeights` reads one of them.

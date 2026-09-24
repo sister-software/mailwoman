@@ -16,6 +16,7 @@ import { OVERTURE_ID_BASE } from "@mailwoman/core/resolver/synthetic-id-ranges"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 import { assertDatabaseIntegrity } from "@mailwoman/sqlite/sealed-db"
+import type { PathBuilderLike } from "path-ts"
 
 export interface FreezeAdminOptions {
 	/**
@@ -24,7 +25,7 @@ export interface FreezeAdminOptions {
 	 * Omit only in fixture tests.
 	 * A real build without it leaves those metros unreachable by the region-descendant filter.
 	 */
-	dataDir?: string
+	dataDir?: PathBuilderLike
 	onPhase?: (phase: string, detail?: string) => void
 }
 
@@ -41,8 +42,7 @@ export async function freezeAdmin(
 	db: DatabaseClient<WOFDatabase>,
 	opts: FreezeAdminOptions = {}
 ): Promise<FreezeAdminResult> {
-	// resolver-wof-sqlite is an optional peer of mailwoman — import it lazily
-	// (the gazetteer-pipeline convention) so importing this module never faults without it.
+	// Imported here so loading this module does not evaluate resolver-wof-sqlite (the gazetteer-pipeline convention).
 	const { backfillAncestorsFromHierarchy, discoverAdminDataRoots } =
 		await import("@mailwoman/resolver-wof-sqlite/ancestry")
 

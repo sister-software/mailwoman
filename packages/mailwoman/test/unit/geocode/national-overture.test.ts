@@ -43,7 +43,7 @@ describe("OvertureNationalDatabaseProvider", () => {
 
 	it("answers {} for a registered country whose database is not on disk, and for an unregistered one", async () => {
 		const root = fixtures.use(await temporaryDirectory("overture-national-")).path
-		const provider = fixtures.use(await OvertureNationalDatabaseProvider.create(String(root)))
+		const provider = fixtures.use(await OvertureNationalDatabaseProvider.create(root))
 
 		expect(provider.for("tw")).toEqual({})
 		expect(provider.for("TW")).toEqual({})
@@ -52,7 +52,7 @@ describe("OvertureNationalDatabaseProvider", () => {
 
 	it("opens the on-disk database with the country's street locale, so a 台/臺 query reaches the register's row", async () => {
 		const root = fixtures.use(await temporaryDirectory("overture-national-")).path
-		const path = nationalAddressPointsPath(String(root), "tw")
+		const path = nationalAddressPointsPath(root, "tw")
 
 		await makeDirectories(dirname(path))
 
@@ -82,7 +82,7 @@ describe("OvertureNationalDatabaseProvider", () => {
 				)
 		}
 
-		const provider = fixtures.use(await OvertureNationalDatabaseProvider.create(String(root)))
+		const provider = fixtures.use(await OvertureNationalDatabaseProvider.create(root))
 		const lookup = provider.for("tw").addressPoints
 
 		expect(lookup).toBeDefined()

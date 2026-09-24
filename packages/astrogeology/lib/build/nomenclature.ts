@@ -50,12 +50,12 @@ export async function* readNomenclatureRows(
 		"EPSG:4326",
 		"-t_srs",
 		"EPSG:4326",
-		String(seq),
+		seq,
 		`/vsizip/${archivePath}`,
 		layer,
 	])
 
-	for await (const feature of JSONSpliterator.fromAsync<{ properties: NomenclatureSourceRow }>(String(seq))) {
+	for await (const feature of JSONSpliterator.fromAsync<{ properties: NomenclatureSourceRow }>(seq)) {
 		yield feature.properties
 	}
 }

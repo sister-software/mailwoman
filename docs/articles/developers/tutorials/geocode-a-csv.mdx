@@ -65,7 +65,7 @@ import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { AddressPointSqliteLookup, StreetInterpolator, WOFCandidateTableLookup } from "@mailwoman/resolver-wof-sqlite"
 import { geocodeAddress, RegionDatabaseProvider } from "mailwoman/geocode-core"
-import { mailwomanDataRoot, resolveCandidateDBPath } from "mailwoman/resolver-backend"
+import { dataRootPath, resolveCandidateDBPath } from "mailwoman/resolver-backend"
 import { CSVSpliterator } from "spliterator"
 
 const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
@@ -73,7 +73,7 @@ const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-U
 using lookup = new WOFCandidateTableLookup({ databasePath: resolveCandidateDBPath() })
 const resolver = createWOFResolver(lookup)
 // Street extracts, when any are on disk under $MAILWOMAN_DATA_ROOT. Absent ones degrade to admin.
-using extracts = new RegionDatabaseProvider({ AddressPointSqliteLookup, StreetInterpolator }, mailwomanDataRoot())
+using extracts = new RegionDatabaseProvider({ AddressPointSqliteLookup, StreetInterpolator }, dataRootPath())
 
 const out = createWriteStream("customers.geocoded.jsonl")
 const counts = { matched: 0, mismatched: 0, skipped: 0 }

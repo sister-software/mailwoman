@@ -12,7 +12,6 @@ import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { changeMode, writeLocalFile } from "@mailwoman/core/fs/writers"
 import { isoDate } from "@mailwoman/core/utils"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import { join } from "path-ts"
 
 import { familyRollup } from "#family-rollup"
 import type { FRN } from "#frn"
@@ -411,7 +410,7 @@ export async function runLinkagePass(options: LinkageEvalPassOptions): Promise<L
 	const { inputs, registrants, truthGroupOf, label, holdingCompanyWithheld, injectEvidence } = options
 
 	await using scratch = await temporaryDirectory(`filer-linkage-eval-${label}-`)
-	const out = join(scratch.path, "filer.db")
+	const out = scratch.path("filer.db")
 
 	await buildFilerDatabase({
 		form499Rows: inputs.form499Rows,

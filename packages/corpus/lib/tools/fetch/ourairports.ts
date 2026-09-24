@@ -39,7 +39,6 @@
 import { APIClient } from "@mailwoman/core/api"
 import { makeDirectories } from "@mailwoman/core/fs/writers"
 import { sha256File } from "@mailwoman/core/hash"
-import { join } from "path-ts"
 
 import type { BaseFetchOptions, FetchSummary } from "#tools/fetch/download/index"
 import { downloadToFile, writeManifest } from "#tools/fetch/download/index"
@@ -119,7 +118,7 @@ export async function fetchOurAirports(
 	options: FetchOurAirportsOptions,
 	report?: (line: string) => void
 ): Promise<FetchSummary> {
-	const destDir = join(options.outRoot, SLUG)
+	const destDir = options.outRoot(SLUG)
 	await makeDirectories(destDir)
 
 	const entries: OurAirportsFileEntry[] = []
@@ -129,7 +128,7 @@ export async function fetchOurAirports(
 
 	for (const filename of FILES) {
 		const url = `${BASE_URL}/${filename}`
-		const dest = join(destDir, filename)
+		const dest = destDir(filename)
 
 		report?.(`=== ${SLUG} / ${filename}`)
 
@@ -171,7 +170,7 @@ export async function fetchOurAirports(
 		files: entries,
 	}
 
-	await writeManifest(join(destDir, "MANIFEST.json"), manifest)
+	await writeManifest(destDir("MANIFEST.json"), manifest)
 
 	return { fetched, skipped: 0, failed, failedCodes }
 }

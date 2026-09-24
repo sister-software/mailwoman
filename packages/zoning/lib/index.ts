@@ -68,6 +68,7 @@ import {
 import { readCoverageAt } from "@mailwoman/spatial/h3/coverage"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { latLngToCell } from "h3-js"
+import type { PathBuilderLike } from "path-ts"
 
 import type { ZoningDatabase } from "#schema"
 import { ZoningCellContainment } from "#schema"
@@ -287,7 +288,7 @@ export interface ZoningLayerIdentity {
 }
 
 export interface ZoningLookupOptions {
-	databasePath: string
+	databasePath: PathBuilderLike
 }
 
 interface AreaRow {
@@ -341,7 +342,7 @@ export class ZoningLookup implements Disposable {
 		this.#database = new DatabaseClient<ZoningDatabase>(options.databasePath, { readOnly: true })
 
 		try {
-			this.identity = readIdentity(this.#database, options.databasePath)
+			this.identity = readIdentity(this.#database, options.databasePath.toString())
 			this.#crosswalkTerms = readCrosswalkTerms(this.#database)
 		} catch (error) {
 			this.#database.destroy()

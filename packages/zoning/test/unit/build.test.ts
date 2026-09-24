@@ -48,13 +48,14 @@ import {
 	holeRing,
 } from "@mailwoman/zoning/test-kit"
 import { GZT_LAYER_NAME, GZT_LICENSE, GZT_UNZONED_LOCAL_CODE } from "@mailwoman/zoning/vocabulary"
+import type { PathBuilder } from "path-ts"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 const INDEX_RESOLUTION = 10
 const COVERAGE_RESOLUTION = 6
 
 let scratch: TemporaryDirectory
-let databasePath: string
+let databasePath: PathBuilder
 let result: BuildZoningResult
 let lookup: ZoningLookup
 
@@ -81,8 +82,8 @@ const OUTSIDE_EVERY_ZONE = {
 async function build(
 	features: ZoningSourceFeature[] = fixtureFeatures(),
 	out = "zoning-ireland.db"
-): Promise<{ path: string; result: BuildZoningResult }> {
-	const path = scratch.resolve(out)
+): Promise<{ path: PathBuilder; result: BuildZoningResult }> {
+	const path = scratch.path(out)
 
 	const built = await buildZoningDatabase({
 		source: fixtureSource(features),
@@ -399,7 +400,7 @@ describe("the meaning-of-zero rule", () => {
 	})
 
 	it("refuses to OPEN an artifact whose coverage would license a negative claim", () => {
-		const path = scratch.resolve("tampered.db")
+		const path = scratch.path("tampered.db")
 
 		// The sealed artifact is copied and one coverage row is promoted to `designated`,
 		// which is exactly what a builder generalizing the flood layer's rule would have produced.
@@ -434,7 +435,7 @@ describe("the provenance grade", () => {
 
 		// The check is what makes the grade a constraint rather than a convention.
 		// `not NULL` alone accepts `''`, and a blank matches neither half of every read that splits on grade.
-		const path = scratch.resolve("grade-check.db")
+		const path = scratch.path("grade-check.db")
 		using source = new DatabaseClient<ZoningDatabase>(databasePath, { readOnly: true })
 
 		source.exec(`VACUUM INTO '${path}'`)
@@ -456,7 +457,7 @@ describe("the provenance grade", () => {
 	})
 
 	it("rejects a blank local code at the storage layer too, because the local code is the claim", () => {
-		const path = scratch.resolve("code-check.db")
+		const path = scratch.path("code-check.db")
 		using source = new DatabaseClient<ZoningDatabase>(databasePath, { readOnly: true })
 
 		source.exec(`VACUUM INTO '${path}'`)
@@ -496,7 +497,7 @@ describe("the area cross-check", () => {
 		await expect(
 			buildZoningDatabase({
 				source: fixtureSource([one]),
-				out: scratch.resolve("bad-area.db"),
+				out: scratch.path("bad-area.db"),
 				sourceVintage: "2026-05-13",
 				buildCmd: "vitest",
 				buildSHA: "fixture",
@@ -525,7 +526,7 @@ describe("the area cross-check", () => {
 
 		const built = await buildZoningDatabase({
 			source: fixtureSource([holed]),
-			out: scratch.resolve("good-area.db"),
+			out: scratch.path("good-area.db"),
 			sourceVintage: "2026-05-13",
 			buildCmd: "vitest",
 			buildSHA: "fixture",
@@ -549,7 +550,7 @@ describe("the build-local posture", () => {
 		await expect(
 			buildZoningDatabase({
 				source: fixtureSource(fixtureFeatures()),
-				out: scratch.resolve("shipped.db"),
+				out: scratch.path("shipped.db"),
 				sourceVintage: "2026-05-13",
 				buildCmd: "vitest",
 				buildSHA: "fixture",
@@ -565,7 +566,7 @@ describe("the build-local posture", () => {
 		await expect(
 			buildZoningDatabase({
 				source: fixtureSource(fixtureFeatures()),
-				out: scratch.resolve("bad-resolutions.db"),
+				out: scratch.path("bad-resolutions.db"),
 				sourceVintage: "2026-05-13",
 				buildCmd: "vitest",
 				buildSHA: "fixture",
@@ -583,7 +584,7 @@ describe("the build-local posture", () => {
 		await expect(
 			buildZoningDatabase({
 				source: { ...source, declaredFeatureCount: features.length + 1 },
-				out: scratch.resolve("short-read.db"),
+				out: scratch.path("short-read.db"),
 				sourceVintage: "2026-05-13",
 				buildCmd: "vitest",
 				buildSHA: "fixture",

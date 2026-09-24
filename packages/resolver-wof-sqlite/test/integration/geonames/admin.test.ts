@@ -13,7 +13,6 @@ import { writeLocalTextFile, writeLocalFile } from "@mailwoman/core/fs/writers"
 import { ingestGeonamesAliases } from "@mailwoman/resolver-wof-sqlite/geonames"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import { join } from "path-ts"
 import { afterAll, beforeAll, expect, test } from "vitest"
 
 /**
@@ -59,7 +58,7 @@ beforeAll(async () => {
 		}),
 	].join("\n")
 
-	await writeLocalFile(lines, dir.resolve("GE.txt"))
+	await writeLocalFile(lines, dir.path("GE.txt"))
 
 	db = DatabaseClient.temp<WOFDatabase>()
 
@@ -169,7 +168,7 @@ test("recognizes a PCLS special-administrative-region as the country (HK/MO/PS)"
 				14: "7012738",
 			}),
 		].join("\n"),
-		join(d, "HK.txt")
+		d("HK.txt")
 	)
 
 	using hk = DatabaseClient.temp<WOFDatabase>()

@@ -48,7 +48,6 @@
  *   Usage: node packages/mailwoman/lib/dev-tools/score/hard-case-board.run.ts [--arms none,pop,imp] [--out-json <p>]
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists, readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -57,7 +56,9 @@ import { formatPercent } from "@mailwoman/core/stats"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { deserializeFST } from "@mailwoman/resolver-wof-sqlite/fst"
+import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import { haversineKm } from "@mailwoman/spatial"
+import type { PathBuilder } from "path-ts"
 
 import { type HardCase, loadHardCaseBoard } from "#eval-harness/hard-case-board"
 import { collectResolved, mostSpecific, type Resolved } from "#eval-harness/oa/resolver/tree-hits"
@@ -76,11 +77,11 @@ const { values } = parseArguments({
 	},
 })
 
-const ARM_DIRS: Record<string, string | null> = {
+const ARM_DIRS: Record<string, PathBuilder | null> = {
 	none: null,
-	pop: String(dataRootPath("db", "wof", "fst-per-locale")),
-	imp: String(dataRootPath("db", "wof", "fst-staging-2026-08-05-importance-fanoutfix")),
-	ref: String(dataRootPath("db", "wof", "fst-staging-2026-08-06-two-score-split")),
+	pop: wofDatabasePath("fst-per-locale"),
+	imp: wofDatabasePath("fst-staging-2026-08-05-importance-fanoutfix"),
+	ref: wofDatabasePath("fst-staging-2026-08-06-two-score-split"),
 }
 
 const arms = values.arms!.split(",").map((a) => a.trim())
@@ -125,7 +126,7 @@ for (const arm of arms) {
 	const dir = ARM_DIRS[arm]
 
 	for (const locale of locales) {
-		const binPath = dir ? `${dir}/fst-${locale}.bin` : undefined
+		const binPath = dir ? dir(`fst-${locale}.bin`) : undefined
 		const fst = binPath && (await pathExists(binPath)) ? deserializeFST(await readLocalBuffer(binPath)) : false
 
 		if (dir && !fst) {

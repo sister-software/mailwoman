@@ -11,6 +11,7 @@
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { resolveModulePath } from "@mailwoman/core/module/resolvers"
 import { stripCombiningMarks } from "@mailwoman/normalize/fold"
+import type { PathBuilderLike } from "path-ts"
 
 import { alignAndWrite, type CorpusRecipe, recipeSourceID } from "#recipes/scaffold"
 import { SourceRegister } from "#registers"
@@ -74,7 +75,7 @@ export function defaultReviewedPostcodeTuplePath(): string {
 }
 
 export async function readReviewedPostcodeTuples(
-	path = defaultReviewedPostcodeTuplePath()
+	path: PathBuilderLike = defaultReviewedPostcodeTuplePath()
 ): Promise<ReviewedPostcodeTuple[]> {
 	const document = await readLocalJSONFile<ReviewedPostcodeTupleFile>(path)
 

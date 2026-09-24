@@ -92,6 +92,7 @@ for await (const parityCase of JSONSpliterator.fromAsync<ParityCase>(IN_PATH)) {
 
 	const expect: Record<string, string[]> = {}
 	const unmapped: string[] = []
+	const nonString: string[] = []
 
 	for (const [legacyTag, values] of Object.entries(gold as Record<string, unknown>)) {
 		const componentTag = legacyClassificationToComponentTag(legacyTag as Classification)
@@ -103,7 +104,20 @@ for await (const parityCase of JSONSpliterator.fromAsync<ParityCase>(IN_PATH)) {
 			continue
 		}
 
-		expect[componentTag] = Array.isArray(values) ? values.map(String) : [String(values)]
+		if (!Array.isArray(values) || !values.every((value) => typeof value === "string")) {
+			nonString.push(legacyTag)
+
+			continue
+		}
+
+		expect[componentTag] = values
+	}
+
+	// A literal the extractor read as a number or boolean would change type if coerced to a string.
+	if (nonString.length) {
+		fixtures.push({ ...fixture, dropped: `non-string-array gold for: ${nonString.join(", ")}` })
+
+		continue
 	}
 
 	// A case whose gold is entirely unmappable tombstones.

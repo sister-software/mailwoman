@@ -47,12 +47,13 @@ import {
 	shippedTrainingConfigs,
 } from "@mailwoman/core/scope-config"
 import { dataRootPath } from "@mailwoman/core/data-root"
+import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import { openParquetRowStream } from "@mailwoman/corpus/parquet/streams"
 import { baseManifestFiles, localManifestFilePath } from "@mailwoman/corpus/tools"
 import { allRows } from "@mailwoman/core/utils"
 import type { CandidateDatabase } from "@mailwoman/resolver-wof-sqlite/candidate-schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import { join } from "path-ts"
+import { type PathBuilder, type PathBuilderLike, resolvePathBuilder } from "path-ts"
 import { TextSpliterator } from "spliterator"
 import { Globerator } from "spliterator/node/fs"
 
@@ -176,8 +177,8 @@ export interface CoverageReport {
  * Under the data root rather than the repo: it describes a build artifact
  * rather than source, and it is regenerated rather than edited.
  */
-export function corpusCensusPath(): string {
-	return String(dataRootPath("corpus", "coverage-census.json"))
+export function corpusCensusPath(): PathBuilder {
+	return dataRootPath("corpus", "coverage-census.json")
 }
 
 interface CorpusCensus {
@@ -271,7 +272,7 @@ async function* streamCorpusCensusRows(path: string): AsyncGenerator<Record<stri
  * reads a handful of families and reports their countries as the corpus's.
  * Column projection keeps the full read affordable.
  */
-export async function buildCorpusCensus(manifestPath: string): Promise<CorpusCensus> {
+export async function buildCorpusCensus(manifestPath: PathBuilderLike): Promise<CorpusCensus> {
 	// `slices` is named here so `baseManifestFiles` accepts the parsed object.
 	// It reads the pre-rename key off the same object at runtime, and that key's spelling
 	// stays in the corpus package because the word is banned in this tree.
@@ -325,7 +326,7 @@ export async function buildCorpusCensus(manifestPath: string): Promise<CorpusCen
 	return {
 		takenAt: new Date().toISOString(),
 		corpusVersion: manifest.corpus_version ?? "unknown",
-		manifest: manifestPath,
+		manifest: manifestPath.toString(),
 		total,
 		rows,
 		streetRows,
@@ -364,7 +365,7 @@ export function sameCorpusVersion(a: string, b: string): boolean {
  * @returns undefined when the config states no corpus_dir.
  * That is "cannot check", not "they match".
  */
-export async function readConfiguredCorpusVersion(configPath: string): Promise<string | undefined> {
+export async function readConfiguredCorpusVersion(configPath: PathBuilderLike): Promise<string | undefined> {
 	if (!(await pathExists(configPath))) return undefined
 
 	// oxlint-disable-next-line mailwoman/prefer-spliterator -- a training config is a few hundred lines, read sync
@@ -397,7 +398,7 @@ export async function readConfiguredCorpusVersion(configPath: string): Promise<s
  * An empty set means the config admits no country, and a caller cannot tell that apart
  * from a config nobody could open once both answer the same value.
  */
-export async function readAdmittedCountries(configPath: string): Promise<Set<string>> {
+export async function readAdmittedCountries(configPath: PathBuilderLike): Promise<Set<string>> {
 	if (!(await pathExists(configPath))) {
 		throw new Error(
 			`no training config at ${configPath}. Admission is read from that file's \`country_weights\`, so an ` +
@@ -441,7 +442,9 @@ export async function readAdmittedCountries(configPath: string): Promise<Set<str
  * `generalization/` is excluded by that same filter and holds 279 rows,
  * so a glob over `*\u200B/*.jsonl` overstates the board by 43%.
  */
-export async function readBoardCoverage(casesRoot: string): Promise<Map<string, { rows: number; passed: number }>> {
+export async function readBoardCoverage(
+	casesRoot: PathBuilderLike
+): Promise<Map<string, { rows: number; passed: number }>> {
 	const out = new Map<string, { rows: number; passed: number }>()
 
 	if (!(await pathExists(casesRoot))) return out
@@ -449,7 +452,7 @@ export async function readBoardCoverage(casesRoot: string): Promise<Map<string, 
 	for await (const dir of Globerator.from("*", { cwd: casesRoot, onlyFiles: false })) {
 		if (!/^[a-z]{2}$/.test(dir)) continue
 
-		const dirPath = join(casesRoot, dir)
+		const dirPath = resolvePathBuilder(casesRoot, dir)
 
 		if (!(await isDirectory(dirPath))) continue
 
@@ -457,7 +460,7 @@ export async function readBoardCoverage(casesRoot: string): Promise<Map<string, 
 
 			// A line that does not parse is skipped rather than failing the census,
 			// so a hand-edited fixture never hides the rest of its file.
-			for await (const line of TextSpliterator.fromAsync(join(dirPath, file))) {
+			for await (const line of TextSpliterator.fromAsync(dirPath(file))) {
 				if (!line.trim()) continue
 
 				const row = tryParsingJSON<{ country?: string; status?: string }>(line)
@@ -484,7 +487,7 @@ export async function readBoardCoverage(casesRoot: string): Promise<Map<string, 
 /**
  * Admin places per country in the serving gazetteer.
  */
-export async function readGazetteerCoverage(dbPath: string): Promise<Map<string, number>> {
+export async function readGazetteerCoverage(dbPath: PathBuilderLike): Promise<Map<string, number>> {
 	const out = new Map<string, number>()
 
 	if (!(await pathExists(dbPath))) return out
@@ -586,7 +589,7 @@ export function resolveTrainingConfig(
 	const registered = shippedTrainingConfig(scope, family)
 
 	return {
-		path: String(repoRootPath(...registered.config.split("/"))),
+		path: repoRootPath(...registered.config.split("/")),
 		provenance: ConfigProvenance.Registered,
 		family,
 	}
@@ -612,7 +615,7 @@ export async function admittedByShippedGraphs(scope: ScopeConfig): Promise<Map<s
 	const byCountry = new Map<string, string[]>()
 
 	for (const entry of shippedTrainingConfigs(scope)) {
-		const admitted = await readAdmittedCountries(String(repoRootPath(...entry.config.split("/"))))
+		const admitted = await readAdmittedCountries(repoRootPath(...entry.config.split("/")))
 
 		for (const country of admitted) {
 			byCountry.set(country, [...(byCountry.get(country) ?? []), entry.family])
@@ -640,7 +643,7 @@ export async function admittedByShippedGraphs(scope: ScopeConfig): Promise<Map<s
  * The caller that hits this passes the manifest it means.
  */
 export async function newestManifest(): Promise<string> {
-	const root = String(dataRootPath("corpus", "versioned"))
+	const root = dataRootPath("corpus", "versioned")
 
 	if (!(await pathExists(root))) return ""
 
@@ -683,7 +686,7 @@ export interface CensusCoverageOptions {
 	/**
 	 * The gauntlet cases tree.
 	 */
-	casesRoot: string
+	casesRoot: PathBuilderLike
 	/**
 	 * Serving gazetteer.
 	 *
@@ -717,7 +720,7 @@ export async function censusCoverage(options: CensusCoverageOptions): Promise<Co
 
 	const admitted = await readAdmittedCountries(options.configPath)
 	const board = await readBoardCoverage(options.casesRoot)
-	const gazetteerPath = options.gazetteerPath ?? String(dataRootPath("db", "wof", "candidate.db"))
+	const gazetteerPath = options.gazetteerPath ?? wofDatabasePath("candidate.db")
 	const gazetteer = await readGazetteerCoverage(gazetteerPath)
 	// derived from `release.config.json` rather than restated here.
 	// This was a hand-written eleven-entry table, and `repo-health`'s `locale-tables`
@@ -786,7 +789,7 @@ export async function censusCoverage(options: CensusCoverageOptions): Promise<Co
 		corpusRowsTotal: census.total,
 		corpusCensusTakenAt: takenAt,
 		configPath: options.configPath,
-		gazetteerPath,
+		gazetteerPath: gazetteerPath.toString(),
 		notes: [
 			"A weights package is not training. Only `en-us` ships a model.onnx; the other eight locale packages are " +
 				"data-only overlays over it, and every locale resolves the identical weights file.",

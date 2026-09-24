@@ -8,9 +8,9 @@
  *   Supports optional markdown/json outputs and coordinate-tier variants.
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
 import type { AddressTree } from "@mailwoman/core/decoder"
 import { writeLocalJSONFile, writeLocalFile } from "@mailwoman/core/fs/writers"
+import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import { haversineKm } from "@mailwoman/spatial"
 
 import { $public } from "#env"
@@ -58,8 +58,7 @@ export async function oaResolverEval(
 
 	// Default WOF DBs.
 	const wofPaths = (
-		options.wof ||
-		`${dataRootPath("db", "wof", "admin-global-priority.db")},${dataRootPath("db", "wof", "postcode-locality-intl.db")}`
+		options.wof || `${wofDatabasePath("admin-global-priority.db")},${wofDatabasePath("postcode-locality-intl.db")}`
 	)
 		.split(",")
 		.map((s) => s.trim())

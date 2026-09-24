@@ -20,7 +20,7 @@ import { wofAdminAdapter } from "@mailwoman/corpus/adapters/wof/admin/json/adapt
 import { buildCorpus, BuildProfile, type BuildStage } from "@mailwoman/corpus/build"
 import type { ParquetRow } from "@mailwoman/corpus/parquet/schema"
 import { openParquetRowStream } from "@mailwoman/corpus/parquet/streams"
-import { join } from "path-ts"
+import type { PathBuilder } from "path-ts"
 import { JSONSpliterator, TextSpliterator } from "spliterator"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
@@ -38,7 +38,7 @@ afterEach(async () => {
 
 describe("buildCorpus end-to-end against wof-admin JSON-bundle fixture", () => {
 	it("produces top-level MANIFEST.json + parquet files + splits + quarantine pile", async () => {
-		const outDir = scratch.resolve("build")
+		const outDir = scratch.path("build")
 		const stages: BuildStage[] = []
 
 		const manifest = await buildCorpus({
@@ -61,20 +61,20 @@ describe("buildCorpus end-to-end against wof-admin JSON-bundle fixture", () => {
 		expect(manifest.splits.counts.train).toBeGreaterThan(0)
 
 		// Top-level manifest written
-		const onDisk = await readLocalJSONFile<{ corpus_version: string }>(join(outDir, "MANIFEST.json"))
+		const onDisk = await readLocalJSONFile<{ corpus_version: string }>(outDir("MANIFEST.json"))
 		expect(onDisk.corpus_version).toBe("0.1.0")
 
 		// Per-stage artifacts exist
 		const corpusManifest = await readLocalJSONFile<{
 			total_rows: number
 			slices: Array<{ split: string; format: string; path: string }>
-		}>(join(outDir, "corpus-v0.1.0", "MANIFEST.json"))
+		}>(outDir("corpus-v0.1.0", "MANIFEST.json"))
 
 		expect(corpusManifest.total_rows).toBe(manifest.total_aligned_rows)
 		expect(corpusManifest.slices.length).toBeGreaterThanOrEqual(1)
 
 		const splitManifest = await readLocalJSONFile<{ corpus_version: string; holdouts: Record<string, string[]> }>(
-			join(outDir, "splits", "SPLIT_MANIFEST.json")
+			outDir("splits", "SPLIT_MANIFEST.json")
 		)
 
 		expect(splitManifest.corpus_version).toBe("0.1.0")
@@ -93,7 +93,7 @@ describe("buildCorpus end-to-end against wof-admin JSON-bundle fixture", () => {
 	})
 
 	it("routes rows whose components.region is held out to val/test", async () => {
-		const outDir = scratch.resolve("build")
+		const outDir = scratch.path("build")
 
 		await buildCorpus({
 			outputDir: outDir,
@@ -103,15 +103,15 @@ describe("buildCorpus end-to-end against wof-admin JSON-bundle fixture", () => {
 			synthesize: false,
 		})
 
-		const readVermontRows = (path: string) =>
+		const readVermontRows = (path: PathBuilder) =>
 			JSONSpliterator.fromAsync<{ source_id: string; components: { region?: string } }>(path)
 				.filter((row) => row.components.region === "Vermont")
 				.toArray()
 
 		const [trainVermont, valVermont, testVermont] = await Promise.all([
-			readVermontRows(join(outDir, "intermediate", "labeled-train.jsonl")),
-			readVermontRows(join(outDir, "intermediate", "labeled-val.jsonl")),
-			readVermontRows(join(outDir, "intermediate", "labeled-test.jsonl")),
+			readVermontRows(outDir("intermediate", "labeled-train.jsonl")),
+			readVermontRows(outDir("intermediate", "labeled-val.jsonl")),
+			readVermontRows(outDir("intermediate", "labeled-test.jsonl")),
 		])
 
 		const vermontHeldOut = [...valVermont, ...testVermont]
@@ -119,7 +119,7 @@ describe("buildCorpus end-to-end against wof-admin JSON-bundle fixture", () => {
 		expect(trainVermont).toEqual([])
 
 		// The .txt manifests stay in lockstep with the per-split jsonl.
-		const trainIDs = new Set(await TextSpliterator.fromAsync(join(outDir, "splits", "train.txt")).toArray())
+		const trainIDs = new Set(await TextSpliterator.fromAsync(outDir("splits", "train.txt")).toArray())
 
 		for (const r of vermontHeldOut) {
 			expect(trainIDs.has(r.source_id)).toBe(false)
@@ -128,7 +128,7 @@ describe("buildCorpus end-to-end against wof-admin JSON-bundle fixture", () => {
 
 	it("synthesis fan-out increases row count over the non-synth path", async () => {
 		const noSynth = await buildCorpus({
-			outputDir: scratch.resolve("no-synth"),
+			outputDir: scratch.path("no-synth"),
 			corpusVersion: "0.1.0",
 			adapters: [wofAdminAdapter],
 			adapterInputs: { "wof-admin": { inputPath: fixtureRoot } },
@@ -136,7 +136,7 @@ describe("buildCorpus end-to-end against wof-admin JSON-bundle fixture", () => {
 		})
 
 		const withSynth = await buildCorpus({
-			outputDir: scratch.resolve("with-synth"),
+			outputDir: scratch.path("with-synth"),
 			corpusVersion: "0.1.0",
 			adapters: [wofAdminAdapter],
 			adapterInputs: { "wof-admin": { inputPath: fixtureRoot } },
@@ -148,7 +148,7 @@ describe("buildCorpus end-to-end against wof-admin JSON-bundle fixture", () => {
 
 	it("admits every row under the exploratory profile, which asks the register nothing", async () => {
 		const manifest = await buildCorpus({
-			outputDir: scratch.resolve("exploratory"),
+			outputDir: scratch.path("exploratory"),
 			corpusVersion: "0.1.0",
 			adapters: [wofAdminAdapter],
 			adapterInputs: { "wof-admin": { inputPath: fixtureRoot } },
@@ -167,7 +167,7 @@ describe("buildCorpus end-to-end against wof-admin JSON-bundle fixture", () => {
 		// Both refusals land in the same place: a source nobody reviewed contributes
 		// nothing to a corpus that reaches a published model.
 		const manifest = await buildCorpus({
-			outputDir: scratch.resolve("release-eligible"),
+			outputDir: scratch.path("release-eligible"),
 			corpusVersion: "0.1.0",
 			adapters: [wofAdminAdapter],
 			adapterInputs: { "wof-admin": { inputPath: fixtureRoot } },
@@ -189,7 +189,7 @@ describe("buildCorpus end-to-end against wof-admin JSON-bundle fixture", () => {
 		// The eligibility check runs before `synthesizeRow`, so the ancestor's
 		// refusal covers everything derived from it.
 		const withSynth = await buildCorpus({
-			outputDir: scratch.resolve("release-eligible-synth"),
+			outputDir: scratch.path("release-eligible-synth"),
 			corpusVersion: "0.1.0",
 			adapters: [wofAdminAdapter],
 			adapterInputs: { "wof-admin": { inputPath: fixtureRoot } },
@@ -198,7 +198,7 @@ describe("buildCorpus end-to-end against wof-admin JSON-bundle fixture", () => {
 		})
 
 		const withoutSynth = await buildCorpus({
-			outputDir: scratch.resolve("release-eligible-nosynth"),
+			outputDir: scratch.path("release-eligible-nosynth"),
 			corpusVersion: "0.1.0",
 			adapters: [wofAdminAdapter],
 			adapterInputs: { "wof-admin": { inputPath: fixtureRoot } },
@@ -214,7 +214,7 @@ describe("buildCorpus end-to-end against wof-admin JSON-bundle fixture", () => {
 
 	it("notes skipped adapters when no inputs configured", async () => {
 		const manifest = await buildCorpus({
-			outputDir: scratch.resolve("build"),
+			outputDir: scratch.path("build"),
 			corpusVersion: "0.1.0",
 			adapters: [wofAdminAdapter],
 			adapterInputs: {}, // no input for wof-admin

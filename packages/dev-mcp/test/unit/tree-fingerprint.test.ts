@@ -13,7 +13,7 @@ import {
 	FINGERPRINTED_WORKSPACES,
 	staleEngineMessage,
 } from "@mailwoman/dev-mcp/tree-fingerprint"
-import { join } from "path-ts"
+import { join, type PathBuilder } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 
 const fixtures = new AsyncDisposableStack()
@@ -24,13 +24,13 @@ afterAll(() => fixtures.disposeAsync())
  * A fake checkout carrying one source file in the first fingerprinted workspace —
  * enough to exercise the walk without touching the real tree.
  */
-async function fakeCheckout(): Promise<string> {
-	const root = String(fixtures.use(await temporaryDirectory("mwdev-fingerprint-")).path)
+async function fakeCheckout(): Promise<PathBuilder> {
+	const root = fixtures.use(await temporaryDirectory("mwdev-fingerprint-")).path
 
-	const workspace = join(root, FINGERPRINTED_WORKSPACES[0])
+	const workspace = root(FINGERPRINTED_WORKSPACES[0])
 
 	await makeDirectories(workspace)
-	await writeLocalTextFile("export const x = 1\n", join(workspace, "thing.ts"))
+	await writeLocalTextFile("export const x = 1\n", workspace("thing.ts"))
 
 	return root
 }
@@ -45,7 +45,7 @@ describe("computeTreeFingerprint", () => {
 	it("moves when a source file is touched", async () => {
 		const root = await fakeCheckout()
 		const before = await computeTreeFingerprint(root)
-		const file = join(root, FINGERPRINTED_WORKSPACES[0], "thing.ts")
+		const file = root(FINGERPRINTED_WORKSPACES[0], "thing.ts")
 		const future = new Date(Date.now() + 60_000)
 
 		await setTimestamps(file, future, future)
@@ -56,12 +56,12 @@ describe("computeTreeFingerprint", () => {
 	it("ignores out/, so a recompile does not read as a source edit", async () => {
 		const root = await fakeCheckout()
 		const before = await computeTreeFingerprint(root)
-		const compiled = join(root, FINGERPRINTED_WORKSPACES[0], "out")
+		const compiled = root(FINGERPRINTED_WORKSPACES[0], "out")
 
 		await makeDirectories(compiled)
-		await writeLocalTextFile("export const x = 1\n", join(compiled, "thing.js"))
+		await writeLocalTextFile("export const x = 1\n", compiled("thing.js"))
 		// A .ts inside out/ must be ignored too — declaration output lands there.
-		await writeLocalTextFile("export declare const x: number\n", join(compiled, "thing.d.ts"))
+		await writeLocalTextFile("export declare const x: number\n", compiled("thing.d.ts"))
 
 		expect((await computeTreeFingerprint(root)).digest).toBe(before.digest)
 	})
@@ -77,7 +77,7 @@ describe("computeTreeFingerprint", () => {
 	})
 
 	it("walks the real repository and finds source", async () => {
-		const fingerprint = await computeTreeFingerprint(String(repoRootPath()))
+		const fingerprint = await computeTreeFingerprint(repoRootPath())
 
 		expect(fingerprint.filesWalked).toBeGreaterThan(100)
 		expect(fingerprint.digest).toMatch(/^[0-9a-f]{16}$/)
@@ -88,7 +88,7 @@ describe("staleEngineMessage", () => {
 	it("names both fingerprints and prescribes a restart, not a reload", async () => {
 		const root = await fakeCheckout()
 		const before = await computeTreeFingerprint(root)
-		const file = join(root, FINGERPRINTED_WORKSPACES[0], "thing.ts")
+		const file = root(FINGERPRINTED_WORKSPACES[0], "thing.ts")
 		const future = new Date(Date.now() + 120_000)
 
 		await setTimestamps(file, future, future)
@@ -126,7 +126,7 @@ describe("computeTreeFingerprint — dirty files", () => {
 			cwd: root,
 		})
 
-		await writeLocalTextFile("export const x = 2\n", join(root, relative))
+		await writeLocalTextFile("export const x = 2\n", root(relative))
 
 		expect((await computeTreeFingerprint(root)).dirtyFiles).toEqual([relative])
 	})

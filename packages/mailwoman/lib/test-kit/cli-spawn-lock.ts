@@ -20,14 +20,13 @@
  *   blocking a thread.
  */
 
-import { tempRootPath } from "@mailwoman/core/data-root"
+import { tempRootPathBuilder } from "@mailwoman/core/data-root"
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { makeDirectoryExclusive, removePathIfPresent, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { sleep } from "@mailwoman/core/utils/sleep"
-import { join } from "path-ts"
 
-const LOCK_DIR = tempRootPath("mailwoman-cli-spawn.lock")
-const PID_FILE = join(LOCK_DIR, "pid")
+const LOCK_DIR = tempRootPathBuilder("mailwoman-cli-spawn.lock")
+const PID_FILE = LOCK_DIR("pid")
 
 /**
  * How long to wait for the lock before giving up and running anyway.

@@ -17,7 +17,7 @@ import {
 	createFccBdcAdapter,
 } from "@mailwoman/corpus/us/adapters/fcc-bdc/adapter"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import { join } from "path-ts"
+import type { PathBuilder } from "path-ts"
 import { beforeEach, describe, expect, it } from "vitest"
 
 const scratch = useScratchDir("fcc-bdc")
@@ -26,11 +26,11 @@ const loadRows = () => readCanonicalRows(scratch.path, FCC_BDC_ADAPTER_ID)
 
 const fixtureSQLPath = workspacePath("corpus", "fixtures", "fcc-bdc", "fixture.sql")
 
-let dbPath: string
+let dbPath: PathBuilder
 
-async function buildFixtureDB(): Promise<string> {
+async function buildFixtureDB(): Promise<PathBuilder> {
 	const sql = await readLocalTextFile(fixtureSQLPath)
-	const path = join(scratch.path, "fcc-bdc-fixture.db")
+	const path = scratch.path("fcc-bdc-fixture.db")
 	await using db = new DatabaseClient<BDCDatabase>(path)
 	db.exec(sql)
 
@@ -225,7 +225,7 @@ describe("fcc-bdc adapter against fixture.sql", () => {
 			corpusVersion: "0.1.0",
 		})
 
-		await removePathIfPresent(join(scratch.path, FCC_BDC_ADAPTER_ID))
+		await removePathIfPresent(scratch.path(FCC_BDC_ADAPTER_ID))
 
 		const b = await runAdapter({
 			adapter: createFccBdcAdapter(),

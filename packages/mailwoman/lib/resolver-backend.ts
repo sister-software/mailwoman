@@ -19,11 +19,10 @@
  *   (or `--candidate-db none`) pins the FTS backend.
  */
 
-import { databaseRootPath, mailwomanDataRoot } from "@mailwoman/core/data-root"
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { repoRootPathBuilder } from "@mailwoman/core/paths"
 import { extractDelimited } from "@mailwoman/core/scripting/arguments"
-import { wofExtractPaths } from "@mailwoman/core/utils"
 import type {
 	PlaceLookup,
 	WOFCandidateTableLookup,
@@ -32,9 +31,10 @@ import type {
 } from "@mailwoman/resolver-wof-sqlite"
 import { readCapitalPoints } from "@mailwoman/resolver-wof-sqlite/capital-schema"
 import { CapitalIndex, type CapitalPoint } from "@mailwoman/resolver-wof-sqlite/capitals"
+import { wofDatabaseRoot, wofExtractPaths } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import type { PathBuilderLike } from "path-ts"
+import type { PathBuilder, PathBuilderLike } from "path-ts"
 
 import { $public } from "#env"
 
@@ -44,8 +44,8 @@ import { $public } from "#env"
  * Where `mailwoman data pull candidate` writes it, and where every caller looks
  * when nothing points somewhere else.
  */
-export function conventionCandidateDBPath(dataRoot: PathBuilderLike = mailwomanDataRoot()): string {
-	return String(databaseRootPath(dataRoot, "wof", "candidate.db"))
+export function conventionCandidateDBPath(dataRoot: PathBuilderLike = dataRootPath()): string {
+	return wofDatabaseRoot(dataRoot)("candidate.db").toString()
 }
 
 /**
@@ -61,7 +61,7 @@ export function conventionCandidateDBPath(dataRoot: PathBuilderLike = mailwomanD
  */
 export async function resolveCandidateDBPath(
 	explicit?: string,
-	dataRoot: PathBuilderLike = mailwomanDataRoot()
+	dataRoot: PathBuilderLike = dataRootPath()
 ): Promise<string | undefined> {
 	const pinned = explicit ?? $public.MAILWOMAN_CANDIDATE_DB
 
@@ -89,7 +89,7 @@ export async function resolveCandidateDBPath(
  * silently probes different databases than the runtime on any box where the env is set,
  * which is the exact class of wrong answer a data-source probe exists to rule out.
  */
-export function resolveWOFDatabasePaths(explicit?: string, dataRoot: PathBuilderLike = mailwomanDataRoot()): string[] {
+export function resolveWOFDatabasePaths(explicit?: string, dataRoot: PathBuilderLike = dataRootPath()): string[] {
 	const raw = explicit ?? $public.MAILWOMAN_WOF_DB
 
 	if (raw) {
@@ -128,7 +128,7 @@ export async function resolvePostalCityAliasDBPath(explicit?: string): Promise<s
  * A bare `data pull candidate` is the whole fix everywhere: {@link resolveCandidateDBPath}
  * reaches the convention path this message names, so no export follows the download.
  */
-export function buildNoGazetteerMessage(opts: { dataRoot: string; docsPath: string }): string {
+export function buildNoGazetteerMessage(opts: { dataRoot: PathBuilder; docsPath: string }): string {
 	// The path this message names has to be the one `resolveCandidateDBPath` reaches,
 	// or the guidance sends a reader to a directory the resolver does not read.
 	const conventionCandidate = conventionCandidateDBPath(opts.dataRoot)
@@ -220,8 +220,8 @@ export async function createResolverBackend(
  * it is small, committed, and versioned with the ranking code that interprets it.
  * Baking it into `candidate.db` at the next gazetteer rebuild is the follow-up recorded on #1880.
  */
-export function conventionCapitalsPath(): string {
-	return String(repoRootPathBuilder("data", "gazetteer", "capitals-v1.json"))
+export function conventionCapitalsPath(): PathBuilder {
+	return repoRootPathBuilder("data", "gazetteer", "capitals-v1.json")
 }
 
 /**
@@ -243,8 +243,8 @@ export function conventionCapitalsPath(): string {
  * A corrupt file is a defect, never an absence.
  */
 export async function loadCapitalIndex(opts: {
-	candidateDB?: string
-	path?: string
+	candidateDB?: PathBuilderLike
+	path?: PathBuilderLike
 	missing?: "throw" | "degrade"
 }): Promise<CapitalIndex | undefined> {
 	if (opts.candidateDB && (await pathExists(opts.candidateDB))) {

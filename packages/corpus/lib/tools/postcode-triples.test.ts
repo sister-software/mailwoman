@@ -25,6 +25,7 @@ import {
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { createUnifiedSchema } from "@mailwoman/resolver-wof-sqlite/unified-schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
+import type { PathBuilder } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 
 const TAB = String.fromCharCode(9)
@@ -45,8 +46,8 @@ afterAll(() => root[Symbol.asyncDispose]())
 async function writeExport(
 	name: string,
 	rows: ReadonlyArray<readonly [string, string, string, string, string]>
-): Promise<string> {
-	const path = root.resolve(name)
+): Promise<PathBuilder> {
+	const path = root.path(name)
 
 	const line = ([country, postcode, place, admin1, admin2]: readonly string[]): string =>
 		[country, postcode, place, admin1, "code", admin2].join(TAB)
@@ -332,9 +333,9 @@ describe("localityWrittenForm", () => {
  * or the stripped Castilian, the `spa` preferred form is accented, and the `cat`
  * preferred form of a Castilian province names the whole community.
  */
-async function writeFixtureGazetteers(): Promise<{ adminDB: string; postcodeDB: string }> {
-	const adminDB = String(root.resolve("admin.db"))
-	const postcodeDB = String(root.resolve("postalcode-intl.db"))
+async function writeFixtureGazetteers(): Promise<{ adminDB: PathBuilder; postcodeDB: PathBuilder }> {
+	const adminDB = root.path("admin.db")
+	const postcodeDB = root.path("postalcode-intl.db")
 
 	{
 		using admin = new DatabaseClient<WOFDatabase>(adminDB)
@@ -403,7 +404,7 @@ describe("readTriplesFromParentJoin", () => {
 
 describe("readPairsFromAdmin", () => {
 	it("answers the pair for a country no postcode source reaches, and splits the bilingual joined region name", async () => {
-		const adminDB = String(root.resolve("admin-ca.db"))
+		const adminDB = root.path("admin-ca.db")
 
 		{
 			using admin = new DatabaseClient<WOFDatabase>(adminDB)
@@ -447,7 +448,7 @@ describe("readPairsFromAdmin", () => {
 	})
 
 	it("stamps `und` when the caller names no locale, rather than guessing one from the country", async () => {
-		const pairs = await readPairsFromAdmin(["CA"], { adminDB: String(root.resolve("admin-ca.db")) })
+		const pairs = await readPairsFromAdmin(["CA"], { adminDB: root.path("admin-ca.db") })
 
 		expect(pairs.every((p) => p.locale === "und")).toBe(true)
 	})

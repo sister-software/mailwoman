@@ -11,7 +11,6 @@
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { weightsReconciliationCheck } from "@mailwoman/repo-health/checks/weights/reconciliation"
-import { join } from "path-ts"
 import { describe, expect, it } from "vitest"
 
 interface Weights {
@@ -29,10 +28,10 @@ async function treeWith(packages: readonly Weights[]): Promise<{ root: string; d
 	const directory = await temporaryDirectory("mw-reconciliation-")
 	const workspaces = packages.map((weights) => `packages/neural-weights-${weights.locale}`)
 
-	await writeLocalJSONFile({ workspaces }, join(directory.path, "package.json"))
+	await writeLocalJSONFile({ workspaces }, directory.path("package.json"))
 
 	for (const weights of packages) {
-		const workspace = join(directory.path, `packages/neural-weights-${weights.locale}`)
+		const workspace = directory.path(`packages/neural-weights-${weights.locale}`)
 
 		await makeDirectories(workspace)
 
@@ -44,13 +43,13 @@ async function treeWith(packages: readonly Weights[]): Promise<{ root: string; d
 				files: weights.files ?? ["model-card.json", "LICENSE.md", "PROVENANCE.json"],
 				...(weights.baseWeights ? { mailwoman: { baseWeights: weights.baseWeights } } : {}),
 			},
-			join(workspace, "package.json")
+			workspace("package.json")
 		)
 
-		await writeLocalJSONFile(weights.card ?? { version: "1.0.0" }, join(workspace, "model-card.json"))
+		await writeLocalJSONFile(weights.card ?? { version: "1.0.0" }, workspace("model-card.json"))
 	}
 
-	return { root: String(directory.path), dispose: async () => void (await directory[Symbol.asyncDispose]()) }
+	return { root: directory.path.toString(), dispose: async () => void (await directory[Symbol.asyncDispose]()) }
 }
 
 const run = async (root: string) => weightsReconciliationCheck.run({ repoRoot: root, trackedFiles: [] })

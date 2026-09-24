@@ -90,13 +90,13 @@ describe("runAdapter", () => {
 		expect(manifest.corpus_version).toBe("0.1.0")
 		expect(manifest.sha256).toMatch(/^[0-9a-f]{64}$/)
 
-		const lines = await JSONSpliterator.fromAsync<CanonicalRow>(scratch.resolve("syn", "canonical.jsonl")).toArray()
+		const lines = await JSONSpliterator.fromAsync<CanonicalRow>(scratch.path("syn", "canonical.jsonl")).toArray()
 
 		expect(lines).toHaveLength(2)
 		expect(lines[0]!.corpus_version).toBe("0.1.0")
 		expect(lines[0]!.source).toBe("syn")
 
-		const manifestOnDisk = await readLocalJSONFile<{ sha256: string }>(scratch.resolve("syn", "MANIFEST.json"))
+		const manifestOnDisk = await readLocalJSONFile<{ sha256: string }>(scratch.path("syn", "MANIFEST.json"))
 
 		expect(manifestOnDisk.sha256).toBe(manifest.sha256)
 	})
@@ -118,7 +118,7 @@ describe("runAdapter", () => {
 			corpusVersion: "0.1.0",
 		})
 
-		const lines = await JSONSpliterator.fromAsync<CanonicalRow>(scratch.resolve("syn", "canonical.jsonl")).toArray()
+		const lines = await JSONSpliterator.fromAsync<CanonicalRow>(scratch.path("syn", "canonical.jsonl")).toArray()
 
 		expect(lines.map((line) => line.addressRole)).toEqual(["registered-office", "facility"])
 	})
@@ -139,7 +139,7 @@ describe("runAdapter", () => {
 
 		// The jsonl still lands under the adapter's own directory: the rename is the
 		// row's `source`, not the adapter's identity.
-		const lines = await JSONSpliterator.fromAsync<CanonicalRow>(scratch.resolve("syn", "canonical.jsonl")).toArray()
+		const lines = await JSONSpliterator.fromAsync<CanonicalRow>(scratch.path("syn", "canonical.jsonl")).toArray()
 
 		expect(lines.map((line) => line.source)).toEqual(["syn-latam"])
 	})
@@ -154,7 +154,7 @@ describe("runAdapter", () => {
 			corpusVersion: "0.1.0",
 		})
 
-		const lines = await JSONSpliterator.fromAsync<CanonicalRow>(scratch.resolve("syn", "canonical.jsonl")).toArray()
+		const lines = await JSONSpliterator.fromAsync<CanonicalRow>(scratch.path("syn", "canonical.jsonl")).toArray()
 
 		expect(lines.map((line) => line.source)).toEqual(["syn"])
 	})
@@ -331,8 +331,8 @@ describe("runAdapter", () => {
 			corpusVersion: "0.1.0",
 		})
 
-		const firstJsonl = await readLocalTextFile(scratch.resolve("syn", "canonical.jsonl"))
-		await removePathIfPresent(scratch.resolve("syn"))
+		const firstJsonl = await readLocalTextFile(scratch.path("syn", "canonical.jsonl"))
+		await removePathIfPresent(scratch.path("syn"))
 
 		const second = await runAdapter({
 			adapter: make(),
@@ -341,7 +341,7 @@ describe("runAdapter", () => {
 			corpusVersion: "0.1.0",
 		})
 
-		const secondJsonl = await readLocalTextFile(scratch.resolve("syn", "canonical.jsonl"))
+		const secondJsonl = await readLocalTextFile(scratch.path("syn", "canonical.jsonl"))
 
 		expect(firstJsonl).toBe(secondJsonl)
 		expect(first.sha256).toBe(second.sha256)

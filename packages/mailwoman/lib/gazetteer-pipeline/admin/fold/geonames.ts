@@ -21,6 +21,7 @@
 import { dataRootPath } from "@mailwoman/core/data-root"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
+import type { PathBuilderLike } from "path-ts"
 
 export interface FoldGeonamesOptions {
 	/**
@@ -32,13 +33,13 @@ export interface FoldGeonamesOptions {
 	 *
 	 * Default `<data-root>/geonames`.
 	 */
-	geonamesDir?: string
+	geonamesDir?: PathBuilderLike
 	/**
 	 * AlternateNamesV2 dir (…/export/dump/alternatenames).
 	 *
 	 * Default `<data-root>/geonames-alternate`.
 	 */
-	alternateDir?: string
+	alternateDir?: PathBuilderLike
 	/**
 	 * #267/#1026: countries for which to also fold the GeoNames A-class admin (pcli country + ADM1 regions) and link
 	 * locality ancestry.
@@ -61,10 +62,10 @@ export async function foldGeonames(
 	db: DatabaseClient<WOFDatabase>,
 	opts: FoldGeonamesOptions
 ): Promise<FoldGeonamesResult> {
-	// resolver-wof-sqlite is an optional peer of mailwoman — lazy import (the gazetteer-pipeline convention).
+	// Imported here so loading this module does not evaluate resolver-wof-sqlite (the gazetteer-pipeline convention).
 	const { ingestGeonamesAliases } = await import("@mailwoman/resolver-wof-sqlite/geonames")
-	const geonamesDir = opts.geonamesDir ?? String(dataRootPath("geonames"))
-	const alternateDir = opts.alternateDir ?? String(dataRootPath("geonames-alternate"))
+	const geonamesDir = opts.geonamesDir ?? dataRootPath("geonames")
+	const alternateDir = opts.alternateDir ?? dataRootPath("geonames-alternate")
 
 	const placesIngested = opts.countries.length
 		? await ingestGeonamesAliases(db, [...opts.countries], geonamesDir, undefined, {

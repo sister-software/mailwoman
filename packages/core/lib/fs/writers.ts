@@ -20,7 +20,7 @@ import { createNewlineWriter } from "spliterator"
 
 import type { Stats } from "#fs/readers"
 import { statPath } from "#fs/readers/stat"
-import { prettyJSON, stringifyJSON } from "#json"
+import { prettyJSON, stringifyJSON, type StringifiedJSON } from "#json"
 
 // #region Directories
 
@@ -77,9 +77,15 @@ export type BufferLike =
  * An empty iterable writes an empty file rather than a lone newline, because "no lines"
  * and "one blank line" are different files and a bare `join` produces the second.
  *
+ * @see {@linkcode writeLocalJSONFile} for a JSON-specific writer that pretty-prints and adds a trailing newline.
  * @category Files
  * @runtime node
  */
+export async function writeLocalTextFile<T extends string>(
+	content: T extends StringifiedJSON ? never : T | Promise<T>,
+	...pathSegments: never[]
+): Promise<void>
+
 export async function writeLocalTextFile<S extends PathBuilderLike[]>(
 	content: string | Promise<string>,
 	...pathSegments: S

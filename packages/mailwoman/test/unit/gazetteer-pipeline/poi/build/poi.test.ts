@@ -30,6 +30,7 @@ import {
 	type BBox,
 	type POISourceRow,
 } from "mailwoman/gazetteer-pipeline/poi/build/poi"
+import type { PathBuilder } from "path-ts"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
 const SPRINGFIELD = { latitude: 39.7817, longitude: -89.6501, country: "US" as const }
@@ -88,11 +89,11 @@ function* fixtureRows(): Iterable<POISourceRow> {
 }
 
 let scratch: TemporaryDirectory
-let out: string
+let out: PathBuilder
 
 beforeEach(async () => {
 	scratch = await temporaryDirectory("poi-build-")
-	out = scratch.resolve("poi.db")
+	out = scratch.path("poi.db")
 })
 
 afterEach(() => scratch[Symbol.asyncDispose]())
@@ -197,7 +198,7 @@ describe("buildPOIDatabase", () => {
 	})
 
 	it("bootstraps missing intermediate output directories", async () => {
-		const nestedOut = scratch.resolve("nested", "deeper", "poi.db")
+		const nestedOut = scratch.path("nested", "deeper", "poi.db")
 
 		const result = await buildPOIDatabase({
 			rows: fixtureRows(),

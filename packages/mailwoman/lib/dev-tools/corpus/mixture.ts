@@ -6,11 +6,11 @@
  *   measure a training mixture.
  */
 
-import { mailwomanDataRoot } from "@mailwoman/core/data-root"
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { connectDuckDB, escapeSQLString } from "@mailwoman/corpus/parquet/duckdb"
 import type { ParquetManifest } from "@mailwoman/corpus/parquet/writers"
-import { join } from "path-ts"
+import { PathBuilder, type PathBuilderLike } from "path-ts"
 
 /**
  * The manifest records the path the builder wrote under, which is the Modal volume mount
@@ -20,10 +20,8 @@ import { join } from "path-ts"
  */
 const MANIFEST_ROOT = "/data/"
 
-function localPath(manifestPath: string): string {
-	return manifestPath.startsWith(MANIFEST_ROOT)
-		? String(join(mailwomanDataRoot(), manifestPath.slice(MANIFEST_ROOT.length)))
-		: manifestPath
+function localPath(manifestPath: string): PathBuilderLike {
+	return manifestPath.startsWith(MANIFEST_ROOT) ? dataRootPath(manifestPath.slice(MANIFEST_ROOT.length)) : manifestPath
 }
 
 /**
@@ -34,7 +32,7 @@ export interface MixtureFiles {
 	/**
 	 * Absolute paths, in manifest order, of the files this run reads.
 	 */
-	files: string[]
+	files: PathBuilderLike[]
 	/**
 	 * Files the manifest holds for this split, which `files` may be a prefix of when the caller capped it.
 	 */
@@ -51,19 +49,24 @@ export interface MixtureFiles {
  * A missing file read as an empty result would report a composition for a corpus that is
  * only partly materialized, and nothing downstream can tell that from a real absence.
  */
-export async function readMixtureFiles(corpusDirectory: string, split: string, limit?: number): Promise<MixtureFiles> {
-	const manifest = await readLocalJSONFile<ParquetManifest>(join(corpusDirectory, "MANIFEST.json"))
+export async function readMixtureFiles(
+	corpusDirectory: PathBuilderLike,
+	split: string,
+	limit?: number
+): Promise<MixtureFiles> {
+	const manifestPath = PathBuilder.from(corpusDirectory)("MANIFEST.json")
+	const manifest = await readLocalJSONFile<ParquetManifest>(manifestPath)
 	const entries = manifest.slices.filter((entry) => entry.split === split)
 
 	if (!entries.length) {
 		throw new Error(
-			`${corpusDirectory}/MANIFEST.json records no ${split} split — it carries ` +
+			`${manifestPath} records no ${split} split — it carries ` +
 				`${[...new Set(manifest.slices.map((entry) => entry.split))].toSorted().join(", ")}.`
 		)
 	}
 
 	const requested = limit ? entries.slice(0, limit) : entries
-	const files: string[] = []
+	const files: PathBuilderLike[] = []
 
 	for (const entry of requested) {
 		const path = localPath(entry.path)
@@ -88,7 +91,7 @@ export async function readMixtureFiles(corpusDirectory: string, split: string, l
  * plus the file list spelled for `read_parquet`.
  */
 export async function openMixture(
-	files: readonly string[],
+	files: readonly PathBuilderLike[],
 	options: { memoryLimit: string; threads: number }
 ): Promise<{ db: Awaited<ReturnType<typeof connectDuckDB>>; fileList: string }> {
 	const db = await connectDuckDB()
@@ -96,5 +99,5 @@ export async function openMixture(
 	await db.run(`SET memory_limit='${escapeSQLString(options.memoryLimit)}'`)
 	await db.run(`SET threads=${options.threads}`)
 
-	return { db, fileList: files.map((path) => `'${escapeSQLString(path)}'`).join(", ") }
+	return { db, fileList: files.map((path) => `'${escapeSQLString(path.toString())}'`).join(", ") }
 }

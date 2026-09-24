@@ -68,6 +68,11 @@
 			"node": "./lib/schema.ts",
 			"default": "./out/schema.js"
 		},
+		"./paths": {
+			"types": "./out/paths.d.ts",
+			"node": "./lib/paths.ts",
+			"default": "./out/paths.js"
+		},
 		"./vocabulary": {
 			"types": "./out/vocabulary.d.ts",
 			"node": "./lib/vocabulary.ts",
@@ -161,7 +166,7 @@
 		"@mailwoman/sqlite": "workspace:*",
 		"h3-js": "^4.5.0",
 		"kysely": "^0.29.5",
-		"path-ts": "^2.4.1",
+		"path-ts": "^2.5.0",
 		"spliterator": "^7.11.0"
 	},
 	"engines": {

@@ -7,10 +7,10 @@
 import { pathExists } from "@mailwoman/core/fs/readers"
 import type { PipelineOpts, PipelineResult } from "@mailwoman/core/pipeline"
 import type { Resolver } from "@mailwoman/core/resolver"
-import { dataRootPath, wofExtractPaths } from "@mailwoman/core/utils"
 import type { POIPhraseLookup } from "@mailwoman/kind-classifier"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createWOFResolver } from "@mailwoman/resolver"
+import { poiDatabasePath, wofExtractPaths } from "@mailwoman/resolver-wof-sqlite/paths"
 import { resolvePath, type PathBuilderLike } from "path-ts"
 
 import { createRuntimePipeline } from "#index"
@@ -148,7 +148,7 @@ export interface POIBoardPipelineHandle extends Disposable {
  * while the grader stayed identical, and the difference would read as a pipeline result.
  */
 export async function createPOIBoardPipeline(options: POIBoardOptions = {}): Promise<POIBoardPipelineHandle> {
-	const db = resolvePath(options.db ?? dataRootPath("db", "poi", "poi.db"))
+	const db = resolvePath(options.db ?? poiDatabasePath("poi.db"))
 
 	const classifier = await NeuralAddressClassifier.loadFromWeights({
 		locale: options.locale ?? "en-US",

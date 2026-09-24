@@ -120,6 +120,11 @@
 			"node": "./lib/env.ts",
 			"default": "./out/env.js"
 		},
+		"./paths": {
+			"types": "./out/paths.d.ts",
+			"node": "./lib/paths.ts",
+			"default": "./out/paths.js"
+		},
 		"./ranking-weights": {
 			"types": "./out/ranking-weights.d.ts",
 			"node": "./lib/ranking-weights.ts",
@@ -385,7 +390,7 @@
 		"@mailwoman/sqlite": "workspace:*",
 		"h3-js": "^4.5.0",
 		"kysely": "^0.29.5",
-		"path-ts": "^2.4.1",
+		"path-ts": "^2.5.0",
 		"spliterator": "^7.11.0",
 		"type-fest": "^5.9.0",
 		"zod": "^4.5.4"

@@ -80,9 +80,9 @@ const PLACETYPE_TO_TAG: Record<string, string> = {
 const GazetteerPlacetypeStats: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { COMPONENT_TAGS } = await import("@mailwoman/codex/component")
-		const { dataRootPath } = await import("@mailwoman/core/utils")
+		const { wofDatabasePath } = await import("@mailwoman/resolver-wof-sqlite/paths")
 
-		const dbPath = options.db ?? dataRootPath("db", "wof", "admin-global-priority.db").toString()
+		const dbPath = options.db ?? wofDatabasePath("admin-global-priority.db").toString()
 		const country = options.country
 
 		let db: DatabaseClient<WOFDatabase>

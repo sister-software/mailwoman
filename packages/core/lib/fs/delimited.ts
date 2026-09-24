@@ -78,7 +78,7 @@ export async function readUnquotedTSVChecked(path: PathBuilderLike): Promise<str
 
 	if (rows.length !== expected) {
 		throw new Error(
-			`${String(path)}: read ${rows.length} records from ${expected} lines. A delimited reader that answers short has ` +
+			`${path}: read ${rows.length} records from ${expected} lines. A delimited reader that answers short has ` +
 				`swallowed rows into a quoted region or a stray delimiter, and the shortfall is indistinguishable from a ` +
 				`smaller file at every later boundary.`
 		)
@@ -122,9 +122,9 @@ export const ZSTD_EXTENSION = ".zst"
  * The part files this exists for are tens of gigabytes decompressed.
  */
 export function delimitedSource(path: PathBuilderLike): AsyncDataResource {
-	if (!String(path).endsWith(ZSTD_EXTENSION)) return path
+	if (!path.toString().endsWith(ZSTD_EXTENSION)) return path
 
-	return createReadStream(String(path)).pipe(zstdDecompressor())
+	return createReadStream(path.toString()).pipe(zstdDecompressor())
 }
 
 /**
@@ -134,7 +134,7 @@ export function delimitedSource(path: PathBuilderLike): AsyncDataResource {
  * and gets the compressed copy if the conversion has reached it, the plain one if it has not.
  */
 export async function preferCompressed(path: PathBuilderLike): Promise<PathBuilderLike> {
-	const plain = String(path)
+	const plain = path.toString()
 
 	if (plain.endsWith(ZSTD_EXTENSION)) return path
 

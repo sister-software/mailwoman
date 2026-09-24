@@ -50,11 +50,11 @@
 
 import { filingLandscape, plausibilityCheck, type BDCDatabase } from "@mailwoman/bdc"
 import type { PipelineResult } from "@mailwoman/core"
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { readLayerManifest, type layerschemadatabase } from "@mailwoman/core/layers"
 import type { Resolver } from "@mailwoman/core/resolver"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
-import { mailwomanDataRoot, wofExtractPaths } from "@mailwoman/core/utils"
 import { familyRollup } from "@mailwoman/filer/family-rollup"
 import { filerLookup } from "@mailwoman/filer/filer-lookup"
 import { toFRN, type FRN } from "@mailwoman/filer/frn"
@@ -62,6 +62,7 @@ import { NeuralAddressClassifier, type ScriptRoutedClassifier } from "@mailwoman
 import { getPOICategory } from "@mailwoman/poi-taxonomy"
 import { emitOverpassQL } from "@mailwoman/poi-taxonomy/overpass"
 import { createWOFResolver } from "@mailwoman/resolver"
+import { wofExtractPaths } from "@mailwoman/resolver-wof-sqlite/paths"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { createRuntimePipeline } from "mailwoman"
 import { geocodeAddress, RegionDatabaseProvider } from "mailwoman/geocode"
@@ -152,7 +153,7 @@ function loadCore(): Promise<{
 		if (!candidateDB && !wofPaths.length) {
 			throw new Error(
 				`${buildNoGazetteerMessage({
-					dataRoot: mailwomanDataRoot(),
+					dataRoot: dataRootPath(),
 					docsPath: "/docs/developers/how-to/use-the-mcp-server",
 				})}\n\n  Needs it: ${CORE_BACKED_TOOLS}\n  Works without it: ${CORE_FREE_TOOLS}`
 			)
@@ -178,7 +179,7 @@ function loadCore(): Promise<{
 			)
 		}
 
-		const databases = await RegionDatabaseProvider.create(resolverMod, mailwomanDataRoot())
+		const databases = await RegionDatabaseProvider.create(resolverMod, dataRootPath())
 
 		return { classifier, resolver, databases }
 	})()

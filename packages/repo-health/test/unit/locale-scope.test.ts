@@ -13,10 +13,9 @@
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
-import { makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { declaredTiers, localeScopeCheck } from "@mailwoman/repo-health/checks/locale/scope"
-import { join, resolvePath } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 
 const fixtures = new AsyncDisposableStack()
@@ -47,7 +46,7 @@ function declaration(tiers: Record<string, string[]> = TIER_ROWS): string {
 }
 
 async function plant(options: { scope: Record<string, unknown>; locales?: string[]; markdown?: string }) {
-	const repoRoot = String(fixtures.use(await temporaryDirectory("locale-scope-")).path)
+	const root = fixtures.use(await temporaryDirectory("locale-scope-")).path
 
 	const files: Record<string, string> = {
 		"release.config.json": stringifyJSON({ locales: options.locales ?? ["en-us", "fr-fr"] }),
@@ -56,11 +55,10 @@ async function plant(options: { scope: Record<string, unknown>; locales?: string
 	}
 
 	for (const [file, text] of Object.entries(files)) {
-		await makeDirectories(join(repoRoot, file.slice(0, file.lastIndexOf("/"))))
-		await writeLocalTextFile(text, resolvePath(repoRoot, file))
+		await writeLocalTextFile(text, root(file))
 	}
 
-	return { repoRoot, trackedFiles: Object.keys(files) }
+	return { repoRoot: root.toString(), trackedFiles: Object.keys(files) }
 }
 
 const REGISTER_MATCHING_THE_ROWS = {

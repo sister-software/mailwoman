@@ -15,8 +15,9 @@
 
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { AddressPointSqliteLookup, StreetCentroidSqliteLookup } from "@mailwoman/resolver-wof-sqlite"
-import { join } from "path-ts"
+import type { PathBuilder } from "path-ts"
 
+import { banDatabaseRoot } from "#paths"
 import { streetLocaleForBANCountry, supportedBANCountries } from "#sdk/street-locale"
 
 /**
@@ -47,7 +48,7 @@ export interface BANExtracts {
  * or it answers `{}` for every country.
  */
 export class BANRegionDatabaseProvider implements Disposable {
-	readonly #dataRoot: string
+	readonly #dataRoot: PathBuilder
 	readonly #cache = new Map<string, BANExtracts>()
 	/**
 	 * Extract paths {@linkcode warm} observed on disk — the synchronous existence source `for` consults.
@@ -55,7 +56,7 @@ export class BANRegionDatabaseProvider implements Disposable {
 	readonly #onDisk = new Set<string>()
 	#warmPromise?: Promise<void>
 
-	constructor(dataRoot: string) {
+	constructor(dataRoot: PathBuilder) {
 		this.#dataRoot = dataRoot
 	}
 
@@ -65,7 +66,7 @@ export class BANRegionDatabaseProvider implements Disposable {
 	 * The constructor cannot await the probe, so this static factory does.
 	 * A caller that constructs directly must {@linkcode warm} before the first `for`.
 	 */
-	static async create(dataRoot: string): Promise<BANRegionDatabaseProvider> {
+	static async create(dataRoot: PathBuilder): Promise<BANRegionDatabaseProvider> {
 		const provider = new BANRegionDatabaseProvider(dataRoot)
 
 		await provider.warm()
@@ -73,12 +74,12 @@ export class BANRegionDatabaseProvider implements Disposable {
 		return provider
 	}
 
-	#addressPointsPath(countryCode: string): string {
-		return join(this.#dataRoot, "ban", `address-points-${countryCode}.db`)
+	#addressPointsPath(countryCode: string): PathBuilder {
+		return banDatabaseRoot(this.#dataRoot)(`address-points-${countryCode}.db`)
 	}
 
-	#streetCentroidPath(countryCode: string): string {
-		return join(this.#dataRoot, "ban", `street-centroids-${countryCode}.db`)
+	#streetCentroidPath(countryCode: string): PathBuilder {
+		return banDatabaseRoot(this.#dataRoot)(`street-centroids-${countryCode}.db`)
 	}
 
 	/**
@@ -95,7 +96,7 @@ export class BANRegionDatabaseProvider implements Disposable {
 		for (const cc of supportedBANCountries()) {
 			for (const path of [this.#addressPointsPath(cc), this.#streetCentroidPath(cc)]) {
 				if (await pathExists(path)) {
-					this.#onDisk.add(path)
+					this.#onDisk.add(path.toString())
 				}
 			}
 		}
@@ -118,14 +119,14 @@ export class BANRegionDatabaseProvider implements Disposable {
 		// Only countries with a registered street locale and an on-disk extract, never key with the wrong rules.
 		if (supportedBANCountries().includes(cc)) {
 			const locale = streetLocaleForBANCountry(cc)
-			const path = this.#addressPointsPath(cc)
+			const path = this.#addressPointsPath(cc).toString()
 
 			if (this.#onDisk.has(path)) {
 				entry.addressPoints = new AddressPointSqliteLookup(path, { streetLocale: locale })
 			}
 
 			// The #1042 derived street tier — purely additive, opened only when its artifact is on disk.
-			const streetPath = this.#streetCentroidPath(cc)
+			const streetPath = this.#streetCentroidPath(cc).toString()
 
 			if (this.#onDisk.has(streetPath)) {
 				entry.streetCentroids = new StreetCentroidSqliteLookup(streetPath, { streetLocale: locale })
@@ -135,9 +136,9 @@ export class BANRegionDatabaseProvider implements Disposable {
 		this.#cache.set(cc, entry)
 
 		return entry
-	};
+	}
 
-	[Symbol.dispose](): void {
+	public [Symbol.dispose](): void {
 		for (const entry of this.#cache.values()) {
 			entry.addressPoints?.[Symbol.dispose]()
 			entry.streetCentroids?.[Symbol.dispose]()

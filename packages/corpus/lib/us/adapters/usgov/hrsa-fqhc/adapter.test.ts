@@ -14,7 +14,6 @@ import {
 	createUSGovHRSAFQHCAdapter,
 } from "@mailwoman/corpus/us/adapters/usgov/hrsa-fqhc/adapter"
 import { alignRow } from "@mailwoman/corpus/utils"
-import { join } from "path-ts"
 import { describe, expect, it } from "vitest"
 
 const scratch = useScratchDir("usgov-hrsa")
@@ -195,7 +194,7 @@ describe("usgov-hrsa-fqhc adapter against fixture sample.csv", () => {
 			corpusVersion: "0.1.0",
 		})
 
-		await removePathIfPresent(join(scratch.path, USGOV_HRSA_FQHC_ADAPTER_ID))
+		await removePathIfPresent(scratch.path(USGOV_HRSA_FQHC_ADAPTER_ID))
 
 		const b = await runAdapter({
 			adapter: createUSGovHRSAFQHCAdapter(),

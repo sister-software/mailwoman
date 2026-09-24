@@ -13,7 +13,6 @@
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { formatGeonamesIngestProgress } from "@mailwoman/resolver-wof-sqlite/geonames"
 import { Box, Text } from "ink"
-import { join } from "path-ts"
 
 import {
 	type CommandSpec,
@@ -48,7 +47,8 @@ export const spec = {
 
 const GazetteerRelease: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { mailwomanDataRoot, repoRootPathBuilder } = await import("@mailwoman/core/utils")
+		const { dataRootPath } = await import("@mailwoman/core/data-root")
+		const { repoRootPathBuilder } = await import("@mailwoman/core/paths")
 
 		const {
 			buildCandidate,
@@ -59,12 +59,13 @@ const GazetteerRelease: CommandComponent<typeof spec> = ({ options }) => {
 			promoteCandidate,
 			publishGazetteer,
 			resolvePostcodeDatabases,
-			wofDir,
 		} = await import("#gazetteer-pipeline")
 
-		const root = mailwomanDataRoot()
-		const adminIn = options.admin ?? join(wofDir(root), DEFAULT_ADMIN_DB)
-		const out = options.out ?? join(wofDir(root), DEFAULT_CANDIDATE_OUT)
+		const { wofDatabasePath } = await import("@mailwoman/resolver-wof-sqlite/paths")
+
+		const root = dataRootPath()
+		const adminIn = options.admin ?? wofDatabasePath(DEFAULT_ADMIN_DB)
+		const out = options.out ?? wofDatabasePath(DEFAULT_CANDIDATE_OUT)
 
 		const countries = options.countries ? splitCountryCodes(options.countries) : DEFAULT_FOLD_COUNTRIES
 
@@ -116,8 +117,8 @@ const GazetteerRelease: CommandComponent<typeof spec> = ({ options }) => {
 			const p = await publishGazetteer({
 				candidateDB: out,
 				version,
-				uploadScript: String(repoRootPathBuilder("docs", "scripts", "publish-demo-assets-to-r2.py")),
-				resourcesFile: String(repoRootPathBuilder("docs", "src", "shared", "resources.tsx")),
+				uploadScript: repoRootPathBuilder("docs", "scripts", "publish-demo-assets-to-r2.py"),
+				resourcesFile: repoRootPathBuilder("docs", "src", "shared", "resources.tsx"),
 				stageDir: stage.path,
 				prefix: "mailwoman",
 				dryRun: options.dryRun,

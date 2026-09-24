@@ -30,7 +30,7 @@ import { openParquetRowStream, type ParquetRowStreamOptions } from "#parquet/str
  */
 export async function readParquetRows<T>(path: PathBuilderLike, options: ParquetRowStreamOptions = {}): Promise<T[]> {
 	if (!(await pathExists(path))) {
-		throw new Error(`No parquet file at ${String(path)}`)
+		throw new Error(`No parquet file at ${path}`)
 	}
 
 	return await Array.fromAsync(openParquetRowStream<T>(path, options))
@@ -68,13 +68,16 @@ export async function tryReadParquetRows<T>(
  */
 export async function countParquetRows(path: PathBuilderLike): Promise<number> {
 	if (!(await pathExists(path))) {
-		throw new Error(`No parquet file at ${String(path)}`)
+		throw new Error(`No parquet file at ${path}`)
 	}
 
 	const db = await connectDuckDB()
 
 	try {
-		const result = await db.runAndReadAll(`SELECT count(*) AS n FROM read_parquet('${escapeSQLString(String(path))}')`)
+		const result = await db.runAndReadAll(
+			`SELECT count(*) AS n FROM read_parquet('${escapeSQLString(path.toString())}')`
+		)
+
 		const rows = result.getRowObjects() as Array<{ n: unknown }>
 
 		return Number(rows[0]?.n ?? 0)
@@ -96,13 +99,13 @@ export async function countParquetRows(path: PathBuilderLike): Promise<number> {
  */
 export async function parquetColumnNames(path: PathBuilderLike): Promise<string[]> {
 	if (!(await pathExists(path))) {
-		throw new Error(`No parquet file at ${String(path)}`)
+		throw new Error(`No parquet file at ${path}`)
 	}
 
 	const db = await connectDuckDB()
 
 	try {
-		const result = await db.runAndReadAll(`DESCRIBE SELECT * FROM read_parquet('${escapeSQLString(String(path))}')`)
+		const result = await db.runAndReadAll(`DESCRIBE SELECT * FROM read_parquet('${escapeSQLString(path.toString())}')`)
 
 		return (result.getRowObjects() as Array<{ column_name: unknown }>).map((row) => String(row.column_name))
 	} finally {

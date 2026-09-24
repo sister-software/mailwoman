@@ -15,7 +15,7 @@
 - **Node runs source directly** (type stripping, no flags). Relative imports carry explicit `.ts` extensions.
 - **`erasableSyntaxOnly: true`** repo-wide — no `enum` (use `const X = {…} as const` + `type X = (typeof X)[keyof typeof X]`), no constructor parameter properties, no runtime namespaces.
 - **zero raw `process.env` / `process.argv`** — CI-enforced by oxlint (`sister-software/no-process-globals`). The only blessed accessors are `@mailwoman/core/env` (`$public`) and `@mailwoman/core/utils/scripting`.
-- **Data-root paths go through `@mailwoman/core/utils`** — `dataRootPath(...)` / `mailwomanDataRoot()`. The `$MAILWOMAN_DATA_ROOT` default lives in exactly one place (`core/utils/data-root.ts`). Never re-hardcode it; in docs and help text reference `$MAILWOMAN_DATA_ROOT`.
+- **Data-root paths go through `@mailwoman/core/utils`** — `dataRootPath(...)` / `dataRootPath()`. The `$MAILWOMAN_DATA_ROOT` default lives in exactly one place (`core/utils/data-root.ts`). Never re-hardcode it; in docs and help text reference `$MAILWOMAN_DATA_ROOT`.
 - **Acronym casing:** acronyms capitalize as whole camelCase components — `parseJSON`, `readID`, `modelURL`. Not `parseJson` / `readId`. Does not apply to `snake_case` DB columns or wire keys.
 - **Two pre-commit checks fire on every commit** and both reject silently-looking failures:
   1. `oxfmt --check` on staged files — it reformats **markdown tables** too. Run `yarn oxfmt <paths>` before committing docs.
@@ -465,7 +465,7 @@ export function derivedWeightsKey(): string {
  * runners are self-hosted, so this filesystem survives.
  */
 export function derivedWeightsDir(key: string): string {
-	return String(dataRootPath("derived", "weights", key))
+	return dataRootPath("derived", "weights", key)
 }
 ```
 
@@ -1243,10 +1243,10 @@ Create `mailwoman/gazetteer-pipeline/evidence-lexicons.full.test.ts` containing 
 import { existsSync } from "node:fs"
 import { tmpdir } from "node:os"
 
-import { dataRootPath } from "@mailwoman/core/utils"
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { describe, expect, it } from "vitest"
 
-const ADMIN_DB = String(dataRootPath("wof", "admin-global-priority.db"))
+const ADMIN_DB = dataRootPath("wof", "admin-global-priority.db")
 ```
 
 Then delete lines 195–261 from `evidence-lexicons.test.ts` (the `const ADMIN_DB` line and the whole `describe.skipIf` block), and drop the now-unused `existsSync` / `dataRootPath` imports from it.

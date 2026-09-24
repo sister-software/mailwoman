@@ -22,7 +22,7 @@ import {
 	SANCTIONED_RELEASE_ABSENCES,
 } from "@mailwoman/release-kit/release/stage"
 import { planWeightsMaterialization } from "@mailwoman/release-kit/weights/fetch-hf-weights"
-import { join } from "path-ts"
+import type { PathBuilder } from "path-ts"
 import { TextSpliterator } from "spliterator"
 import { afterAll, describe, expect, it } from "vitest"
 import { $ } from "zx"
@@ -33,36 +33,33 @@ afterAll(() => fixtures.disposeAsync())
 
 describe("checkReleaseListIdentity", () => {
 	it("holds on the current tree: 60 published, every absence sanctioned by name", async () => {
-		const identity = await checkReleaseListIdentity(String(repoRootPath()))
+		const identity = await checkReleaseListIdentity(repoRootPath())
 
 		expect(identity.publishCount).toBe(60)
 		expect(identity.unexpectedAbsences).toEqual([])
 		expect(identity.staleSanctions).toEqual([])
 		expect(identity.danglingReleaseEntries).toEqual([])
-		expect(Object.keys(SANCTIONED_RELEASE_ABSENCES)).toHaveLength(15)
+		expect(Object.keys(SANCTIONED_RELEASE_ABSENCES)).toHaveLength(16)
 	})
 
 	it("names an unsanctioned absence instead of reporting a count mismatch", async () => {
 		await using rootDirectory = await temporaryDirectory("mw-release-identity-")
 		const root = rootDirectory.path
 
-		await writeLocalJSONFile(
-			{ workspaces: ["packages/a", "packages/b", "packages/frozen-one"] },
-			join(root, "package.json")
-		)
+		await writeLocalJSONFile({ workspaces: ["packages/a", "packages/b", "packages/frozen-one"] }, root("package.json"))
 
 		// A workspace the field names must carry a manifest.
 		// The reader refuses a literal that does not.
 		for (const workspace of ["packages/a", "packages/b", "packages/frozen-one"]) {
-			await makeDirectories(join(root, workspace))
-			await writeLocalJSONFile({ name: workspace }, join(root, workspace, "package.json"))
+			await makeDirectories(root(workspace))
+			await writeLocalJSONFile({ name: workspace }, root(workspace, "package.json"))
 		}
 
 		await writeLocalJSONFile(
 			{
 				plugins: { "@release-it-plugins/workspaces": { workspaces: ["packages/a", "packages/b"] } },
 			},
-			join(root, ".release-it.json")
+			root(".release-it.json")
 		)
 
 		const identity = await checkReleaseListIdentity(root)
@@ -104,19 +101,19 @@ describe("the tarball audit refuses the two v9.2.0 manifest-promise classes", ()
 	 * No yarn project needed — the audit reads the archive, and these fixtures pin
 	 * its refusals without packing a real workspace.
 	 */
-	async function tarballWith(manifest: object, payloadFiles: string[]): Promise<string> {
+	async function tarballWith(manifest: object, payloadFiles: string[]): Promise<PathBuilder> {
 		const dir = fixtures.use(await temporaryDirectory("mw-tarball-fixture-")).path
-		const pkgDir = join(dir, "package")
+		const pkgDir = dir("package")
 
 		await makeDirectories(pkgDir)
-		await writeLocalJSONFile(manifest, join(pkgDir, "package.json"))
+		await writeLocalJSONFile(manifest, pkgDir("package.json"))
 
 		for (const file of payloadFiles) {
-			await makeDirectories(join(pkgDir, ...file.split("/").slice(0, -1)))
-			await writeLocalTextFile("payload", join(pkgDir, file))
+			await makeDirectories(pkgDir(...file.split("/").slice(0, -1)))
+			await writeLocalTextFile("payload", pkgDir(file))
 		}
 
-		const tarball = join(dir, "fixture.tgz")
+		const tarball = dir("fixture.tgz")
 
 		const packed = $.sync({ nothrow: true })`tar czf ${tarball} -C ${dir} package`
 
@@ -173,13 +170,13 @@ describe("the tarball audit refuses the two v9.2.0 manifest-promise classes", ()
 })
 
 describe("the Hugging Face materialization plan", () => {
-	const repoRoot = String(repoRootPath())
+	const repoRoot = repoRootPath()
 
 	/**
 	 * The release's weights workspaces, read the way the recipe reads them.
 	 */
 	async function weightsWorkspaces(): Promise<string[]> {
-		const config = await readLocalJSONFile<{ locales: string[] }>(join(repoRoot, "release.config.json"))
+		const config = await readLocalJSONFile<{ locales: string[] }>(repoRootPath("release.config.json"))
 
 		return config.locales.map((locale) => `packages/neural-weights-${locale}`)
 	}
@@ -213,7 +210,7 @@ describe("the Hugging Face materialization plan", () => {
 		const unaccounted: string[] = []
 
 		for (const workspace of await weightsWorkspaces()) {
-			const manifest = await readPackageJSON(join(repoRoot, workspace, "package.json"))
+			const manifest = await readPackageJSON(repoRootPath(workspace, "package.json"))
 
 			for (const entry of literalFilesEntries(manifest.files)) {
 				const path = `${workspace}/${entry}`
@@ -248,9 +245,9 @@ describe("the pair-index parity selector", () => {
 		// The workflow now calls a package script whose filter is the test's name,
 		// and this asserts the filter is not empty-handed.
 		// The same answer a dispatch would return several minutes in.
-		const repoRoot = String(repoRootPath())
+		const repoRoot = repoRootPath()
 
-		const manifest = await readPackageJSON(join(repoRoot, "package.json"))
+		const manifest = await readPackageJSON(repoRootPath("package.json"))
 
 		const script = manifest.scripts?.["ci:test:pair-index-parity"]
 

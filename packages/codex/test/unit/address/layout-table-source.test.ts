@@ -25,8 +25,7 @@ import { ADDRESS_LAYOUTS, layoutForCountry } from "@mailwoman/codex/address-layo
 import { GENERATED_ADDRESS_LAYOUTS } from "@mailwoman/codex/address-layouts-generated"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { stringifyJSON } from "@mailwoman/core/json"
-import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
-import { join } from "path-ts"
+import { resolvePackageDirectory } from "@mailwoman/core/module/resolvers"
 import { Globerator } from "spliterator/node/fs"
 import { describe, expect, it } from "vitest"
 
@@ -97,7 +96,7 @@ function skeletonOfFormat(fmt: string): string[][] {
 		.filter((line) => line.length)
 }
 
-const specsDirectory = resolvePackagePath("@mailwoman/core", "data", "chromium-i18n", "ssl-address")
+const specsDirectory = resolvePackageDirectory("@mailwoman/core")("data", "chromium-i18n", "ssl-address")
 
 const countryFormats = await (async () => {
 	const out = new Map<string, string | null>()
@@ -107,7 +106,7 @@ const countryFormats = await (async () => {
 		absolute: false,
 		recursive: false,
 	}).toSorted()) {
-		const metadata = await readLocalJSONFile<{ fmt?: string }>(join(specsDirectory, file))
+		const metadata = await readLocalJSONFile<{ fmt?: string }>(specsDirectory(file))
 
 		out.set(file.replace(/\.json$/, ""), metadata.fmt ?? null)
 	}

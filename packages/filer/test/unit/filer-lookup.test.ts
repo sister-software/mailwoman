@@ -57,6 +57,7 @@ import type { Form499Row } from "@mailwoman/filer/sdk/form499"
 import type { ProviderListRow } from "@mailwoman/filer/sdk/provider-list"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { Insertable } from "kysely"
+import type { PathBuilderLike } from "path-ts"
 import { describe, expect, it } from "vitest"
 
 function openMemory(): DatabaseClient<FilerDatabase> {
@@ -111,7 +112,7 @@ function authoritativeEdge(
  * (criterion 1's builder-guard sub-tests, and the fixture-blindness-closing criterion 4 test below)
  * rather than the in-memory hand-written fixtures the rest of this suite uses.
  */
-function openFilerDB(path: string): DatabaseClient<FilerDatabase> {
+function openFilerDB(path: PathBuilderLike): DatabaseClient<FilerDatabase> {
 	return new DatabaseClient<FilerDatabase>(path, { readOnly: true })
 }
 
@@ -269,7 +270,7 @@ describe("§7-3a criteria", () => {
 
 		it("guards reject a whitespace-only lastFiledAt (not just empty) via buildFilerDatabase", async () => {
 			await using scratch = await temporaryDirectory("filer-lookup-check1-")
-			const out = scratch.resolve("filer.db")
+			const out = scratch.path("filer.db")
 
 			await expect(
 				buildFilerDatabase({
@@ -285,7 +286,7 @@ describe("§7-3a criteria", () => {
 
 		it("guards reject an empty lastFiledAt via buildFilerDatabase", async () => {
 			await using scratch = await temporaryDirectory("filer-lookup-check1-")
-			const out = scratch.resolve("filer.db")
+			const out = scratch.path("filer.db")
 
 			await expect(
 				buildFilerDatabase({
@@ -301,7 +302,7 @@ describe("§7-3a criteria", () => {
 
 		it("guards reject a whitespace-only form499ID (not just empty) via buildFilerDatabase", async () => {
 			await using scratch = await temporaryDirectory("filer-lookup-check1-")
-			const out = scratch.resolve("filer.db")
+			const out = scratch.path("filer.db")
 
 			await expect(
 				buildFilerDatabase({
@@ -317,7 +318,7 @@ describe("§7-3a criteria", () => {
 
 		it("guards reject a whitespace-only provider-list frn (not just empty) via buildFilerDatabase", async () => {
 			await using scratch = await temporaryDirectory("filer-lookup-check1-")
-			const out = scratch.resolve("filer.db")
+			const out = scratch.path("filer.db")
 
 			const malformedRows: ProviderListRow[] = [
 				{ providerID: 900_010, frn: "   " as ProviderListRow["frn"], holdingCompany: null },
@@ -862,7 +863,7 @@ describe("§7-3a criteria", () => {
 		 */
 		it("REAL builder path: a non-ISO sourceVintage never leaks into valid_from — a provider-list edge built via buildFilerDatabase stays findable asOf a real date", async () => {
 			await using scratch = await temporaryDirectory("filer-lookup-check1-")
-			const out = scratch.resolve("filer.db")
+			const out = scratch.path("filer.db")
 
 			await buildFilerDatabase({
 				providerRows: [{ providerID: 600_001, frn: toFRN("0006000001")!, holdingCompany: "Realbuild Co" }],
@@ -1169,7 +1170,7 @@ describe("§7-3b criteria", () => {
 		 */
 		it("REAL builder + REAL clusterAuthoritativeComponents: 3 FRNs sharing one holding company yield 3 distinct entity clusters and 1 shared family — never merged", async () => {
 			await using scratch = await temporaryDirectory("filer-lookup-check1-")
-			const out = scratch.resolve("filer.db")
+			const out = scratch.path("filer.db")
 
 			const SHARED_HOLDING = "Real Pipeline Holdco Inc"
 
@@ -1294,7 +1295,7 @@ describe("§7-3b criteria", () => {
 		 */
 		it("REAL builder, multi-spelling family: two raw holding-company spellings that canonicalize identically both survive in display_names, sorted — never collapsed to one", async () => {
 			await using scratch = await temporaryDirectory("filer-lookup-check1-")
-			const out = scratch.resolve("filer.db")
+			const out = scratch.path("filer.db")
 
 			const FRN_SPELLING_1 = toFRN("0009300001")!
 			const FRN_SPELLING_2 = toFRN("0009300002")!
@@ -1366,7 +1367,7 @@ describe("§7-3b criteria", () => {
 		 */
 		it("REAL builder, one filer reporting TWO spellings of one family: both survive in display_names, families stays one entry, distinct_member_count stays 1", async () => {
 			await using scratch = await temporaryDirectory("filer-lookup-check1-")
-			const out = scratch.resolve("filer.db")
+			const out = scratch.path("filer.db")
 
 			const FRN_TWO_SPELLINGS = toFRN("0009500001")!
 
@@ -1472,7 +1473,7 @@ describe("§7-3b criteria", () => {
 		 */
 		it("display_names never leaks across a DIFFERENT family: REAL builder, provider-list path — one providerID with two DIFFERENT holding companies under the same source+valid_from never cross-contaminates each family's display_names", async () => {
 			await using scratch = await temporaryDirectory("filer-lookup-check1-")
-			const out = scratch.resolve("filer.db")
+			const out = scratch.path("filer.db")
 
 			const FRN_SHARED = toFRN("0009400001")!
 
@@ -1516,7 +1517,7 @@ describe("§7-3b criteria", () => {
 
 		it("display_names never leaks across a DIFFERENT family: REAL builder, 499 path — one FRN with two DIFFERENT holding companies filed the same day never cross-contaminates each family's display_names", async () => {
 			await using scratch = await temporaryDirectory("filer-lookup-check1-")
-			const out = scratch.resolve("filer.db")
+			const out = scratch.path("filer.db")
 
 			const FRN_SHARED = toFRN("0009400002")!
 
@@ -1833,7 +1834,7 @@ describe("§7-3b criteria", () => {
 	describe("2. EDGAR-sourced families extend checks 1-2", () => {
 		it("an inferred EDGAR subsidiary relationship never leaks into entity clustering or identifiers, but DOES surface as a family via familyRollup/filerLookup.families", async () => {
 			await using scratch = await temporaryDirectory("filer-lookup-check1-")
-			const out = scratch.resolve("filer.db")
+			const out = scratch.path("filer.db")
 
 			const FRN_SUBSIDIARY = toFRN("0009600001")!
 			const CIK_PARENT = "0001234567"

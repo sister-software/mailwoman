@@ -34,7 +34,7 @@
 import { pathExists, statPath } from "@mailwoman/core/fs/readers"
 import { openWriteStream } from "@mailwoman/core/fs/streams"
 import { removePathIfPresent, makeDirectories } from "@mailwoman/core/fs/writers"
-import { dirname, join } from "path-ts"
+import { dirname, PathBuilder } from "path-ts"
 import { $ } from "zx"
 import { Globerator } from "spliterator/node/fs"
 import { stringifyJSON } from "@mailwoman/core/json";
@@ -183,11 +183,12 @@ async function resolveStates(opts: CoverageBuildOptions): Promise<StateDatabase[
 		const file = bySlug.get(slug)
 
 		if (!file) throw new Error(`no address-point database for state '${slug}' under ${opts.dataRoot}`)
-		const interpFile = opts.interpRoot ? join(opts.interpRoot, `interpolation-us-${slug}.db`) : ""
+		// Strings, because the state list records each database path.
+		const interpFile = opts.interpRoot ? PathBuilder.from(opts.interpRoot)(`interpolation-us-${slug}.db`).toString() : ""
 
 		out.push({
 			slug,
-			file: join(opts.dataRoot, file),
+			file: PathBuilder.from(opts.dataRoot)(file).toString(),
 			interp: opts.interpRoot && (await pathExists(interpFile)) ? interpFile : null,
 		})
 	}

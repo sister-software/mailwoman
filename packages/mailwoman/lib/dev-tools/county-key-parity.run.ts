@@ -18,12 +18,12 @@
  */
 
 import { US_STATE_BY_ABBREVIATION, type USStateAbbreviation } from "@mailwoman/codex/us/state"
-import { dataRootPath } from "@mailwoman/core/data-root"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { runIfScript } from "@mailwoman/core/scripting"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
+import { interpolationDatabasePath, wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import { join } from "path-ts"
+import { type PathBuilderLike, resolvePathBuilder } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
 interface StateParity {
@@ -41,7 +41,7 @@ const EXTRACT_NAME = /^interpolation-us-([a-z]{2})\.db$/u
  * WOF county counts per state, from the candidate register's ancestry:
  * a `county` whose `region` ancestor is the state.
  */
-function wofCountiesByState(candidatePath: string): Map<string, number> {
+function wofCountiesByState(candidatePath: PathBuilderLike): Map<string, number> {
 	using cand = new DatabaseClient<never>(candidatePath, { readOnly: true })
 
 	const rows = cand
@@ -60,7 +60,10 @@ function wofCountiesByState(candidatePath: string): Map<string, number> {
 	return new Map(rows.map((row) => [row.state, row.n]))
 }
 
-export async function countyKeyParity(candidatePath: string, interpolationDir: string): Promise<StateParity[]> {
+export async function countyKeyParity(
+	candidatePath: PathBuilderLike,
+	interpolationDir: PathBuilderLike
+): Promise<StateParity[]> {
 	const wof = wofCountiesByState(candidatePath)
 
 	const files = (
@@ -72,7 +75,7 @@ export async function countyKeyParity(candidatePath: string, interpolationDir: s
 	for (const file of files) {
 		const state = EXTRACT_NAME.exec(file)![1]!.toUpperCase() as USStateAbbreviation
 		const name = US_STATE_BY_ABBREVIATION[state] ?? state
-		using db = new DatabaseClient<never>(join(interpolationDir, file), { readOnly: true })
+		using db = new DatabaseClient<never>(resolvePathBuilder(interpolationDir, file), { readOnly: true })
 
 		const tigerKeys = (
 			db.prepare("select distinct county_fips from street_segment order by county_fips").all() as Array<{
@@ -104,8 +107,8 @@ async function main(): Promise<void> {
 		},
 	})
 
-	const candidatePath = values.candidate ?? String(dataRootPath("db", "wof", "candidate.db"))
-	const interpolationDir = values.interpolation ?? String(dataRootPath("db", "interpolation"))
+	const candidatePath = values.candidate ?? wofDatabasePath("candidate.db")
+	const interpolationDir = values.interpolation ?? interpolationDatabasePath
 	const report = await countyKeyParity(candidatePath, interpolationDir)
 	const mismatches = report.filter((row) => row.match === false)
 

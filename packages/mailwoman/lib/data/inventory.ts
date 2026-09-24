@@ -11,7 +11,7 @@ import type { layerschemadatabase } from "@mailwoman/core/layers/schema"
 import { getRow } from "@mailwoman/core/utils"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { tableExists } from "@mailwoman/sqlite/introspection"
-import { basename, join, relative } from "path-ts"
+import { basename, PathBuilder, type PathBuilderLike, relative, resolvePath } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
 /**
@@ -123,7 +123,7 @@ export interface InventoryReport {
  * Opened read-only and closed immediately: every built database in this repo is sealed `0444`,
  * and a reader that opened one read-write would fail on exactly the artifacts it most needs to describe.
  */
-export function probeManifest(path: string): { manifest?: LayerManifest; error?: string } {
+export function probeManifest(path: PathBuilderLike): { manifest?: LayerManifest; error?: string } {
 	let db: DatabaseClient<layerschemadatabase> | undefined
 
 	try {
@@ -150,11 +150,14 @@ export function probeManifest(path: string): { manifest?: LayerManifest; error?:
  *
  * They are counted and named, which is cheaper and states the same fact.
  */
-async function findDatabases(dataRoot: string, maxDepth: number): Promise<{ paths: string[]; skippedForeign: number }> {
+async function findDatabases(
+	dataRoot: PathBuilder,
+	maxDepth: number
+): Promise<{ paths: string[]; skippedForeign: number }> {
 	const paths: string[] = []
 	let skippedForeign = 0
 
-	const walk = async (dir: string, depth: number): Promise<void> => {
+	const walk = async (dir: PathBuilder, depth: number): Promise<void> => {
 		if (depth > maxDepth) return
 
 		let entries: Dirent[]
@@ -168,7 +171,7 @@ async function findDatabases(dataRoot: string, maxDepth: number): Promise<{ path
 		}
 
 		for (const entry of entries) {
-			const full = join(dir, entry.name)
+			const full = dir(entry.name)
 
 			if (entry.isDirectory()) {
 				if (depth === 0 && FOREIGN_ROOTS[entry.name]) {
@@ -183,7 +186,7 @@ async function findDatabases(dataRoot: string, maxDepth: number): Promise<{ path
 			}
 
 			if (entry.name.endsWith(".db")) {
-				paths.push(full)
+				paths.push(full.toString())
 			}
 		}
 	}
@@ -203,14 +206,15 @@ async function findDatabases(dataRoot: string, maxDepth: number): Promise<{ path
 async function inventoryEntry(dataRoot: string, path: string): Promise<InventoryEntry> {
 	const rel = relative(dataRoot, path)
 	const segment = rel.split("/")[0] ?? ""
-	const link = (await isSymbolicLink(path)) ? await readLink(path) : undefined
+
+	const link = (await isSymbolicLink(path)) ? await readLink(path) : null
 	const bytes = (await pathExists(path)) ? (await statPath(path)).size : 0
 
 	const base: InventoryEntry = {
 		path: rel,
 		bytes,
 		provenance: Provenance.Unprovenanced,
-		...(link ? { linkTarget: relative(dataRoot, link.startsWith("/") ? link : join(dataRoot, segment, link)) } : {}),
+		...(link ? { linkTarget: relative(dataRoot, resolvePath(dataRoot, segment, link)) } : {}),
 	}
 
 	if (FOREIGN_ROOTS[segment]) {
@@ -227,13 +231,19 @@ async function inventoryEntry(dataRoot: string, path: string): Promise<Inventory
 /**
  * Walk the data root and classify every database in it.
  */
-export async function takeInventory(options: { dataRoot: string; maxDepth?: number }): Promise<InventoryReport> {
+export async function takeInventory(options: {
+	dataRoot: PathBuilderLike
+	maxDepth?: number
+}): Promise<InventoryReport> {
+	const root = PathBuilder.from(options.dataRoot)
+	// The report records the root and each entry's path as strings.
+	const dataRoot = root.toString()
 	// A database sits three segments down, at `db/<layer>/<file>.db`, since the `db/` group added a level.
 	// A bound of two stops the walk at `db/<layer>/`, and the report then describes
 	// a data root holding zero databases.
 	const maxDepth = options.maxDepth ?? 3
-	const { paths, skippedForeign } = await findDatabases(options.dataRoot, maxDepth)
-	const entries = await Promise.all(paths.map((path) => inventoryEntry(options.dataRoot, path)))
+	const { paths, skippedForeign } = await findDatabases(root, maxDepth)
+	const entries = await Promise.all(paths.map((path) => inventoryEntry(dataRoot, path)))
 
 	const counts: Record<Provenance, number> = {
 		[Provenance.Manifested]: 0,
@@ -246,7 +256,7 @@ export async function takeInventory(options: { dataRoot: string; maxDepth?: numb
 		counts[entry.provenance]++
 	}
 
-	return { dataRoot: options.dataRoot, entries, counts, skippedForeign, maxDepth }
+	return { dataRoot, entries, counts, skippedForeign, maxDepth }
 }
 
 /**
@@ -290,13 +300,14 @@ export function inventorySentence(report: InventoryReport): string {
  * A command with no such token — `mailwoman gazetteer build poi` — is treated as runnable,
  * because verifying a CLI verb means running the CLI.
  */
-export async function buildCommandGaps(buildCmd: string, repoRoot: string): Promise<string[]> {
+export async function buildCommandGaps(buildCmd: string, repoRoot: PathBuilderLike): Promise<string[]> {
+	const root = PathBuilder.from(repoRoot)
 	const gaps: string[] = []
 
 	for (const token of buildCmd
 		.split(/\s+/)
 		.filter((candidate) => candidate.includes("/") && !/[$`|><*]/.test(candidate))) {
-		if (!(await pathExists(join(repoRoot, token)))) {
+		if (!(await pathExists(root(token)))) {
 			gaps.push(token)
 		}
 	}

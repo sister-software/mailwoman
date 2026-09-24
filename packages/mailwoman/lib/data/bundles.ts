@@ -465,7 +465,7 @@ export function resolveBundleArtifacts(bundle: DataBundle, manifest: DataRelease
  * because every probe degrades a missing file to a missing layer.
  */
 export function bundleArtifactPath(dataRoot: PathBuilderLike, artifact: BundleArtifact): string {
-	return String(databaseRootPath(dataRoot, artifact.localPath))
+	return databaseRootPath(dataRoot)(artifact.localPath).toString()
 }
 
 /**

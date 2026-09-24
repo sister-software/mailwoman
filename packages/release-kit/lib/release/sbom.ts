@@ -42,7 +42,7 @@ import { makeDirectories, movePath, writeLocalJSONFile } from "@mailwoman/core/f
 import { parseJSONStrict } from "@mailwoman/core/json"
 import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
 import { runFileSync } from "@mailwoman/core/process"
-import { dirname, join, resolvePath, type PathBuilderLike } from "path-ts"
+import { PathBuilder, type PathBuilderLike, relative, resolvePathBuilder } from "path-ts"
 
 /**
  * Spdx restricts the spdxid charset to letters, numbers, `.` and `-`; npm emits `_` from package names.
@@ -105,13 +105,14 @@ export interface GenerateSBOMReport {
 }
 
 export async function generateSBOM(options: GenerateSBOMOptions): Promise<GenerateSBOMReport> {
-	const { repoRoot, log } = options
+	const { log } = options
+	const repoRoot = PathBuilder.from(options.repoRoot)
 
 	const version =
 		options.version ??
-		(await readPackageJSON<{ version: string }>(join(repoRoot, "packages", "mailwoman", "package.json"))).version
+		(await readPackageJSON<{ version: string }>(repoRoot("packages", "mailwoman", "package.json"))).version
 
-	const outDir = options.out ? resolvePath(repoRoot, options.out) : join(repoRoot, "docs", "static", "sbom")
+	const outDir = options.out ? resolvePathBuilder(repoRoot, options.out) : repoRoot("docs", "static", "sbom")
 
 	const run = (cmd: string, args: string[], cwd: PathBuilderLike): string =>
 		runFileSync(cmd, args, {
@@ -129,11 +130,11 @@ export async function generateSBOM(options: GenerateSBOMOptions): Promise<Genera
 	run("tar", ["xzf", `mailwoman-${version}.tgz`], tmp.path)
 
 	// npm always extracts to `package/`; rename so CycloneDX's basename-derived root name reads `mailwoman`.
-	const pkgDir = tmp.resolve("mailwoman")
-	await movePath(tmp.resolve("package"), pkgDir)
+	const pkgDir = tmp.path("mailwoman")
+	await movePath(tmp.path("package"), pkgDir)
 
 	// Strip devDependencies (the unpublished, dev-only `@mailwoman/osm`), never part of the consumer closure.
-	const manifestPath = join(pkgDir, "package.json")
+	const manifestPath = pkgDir("package.json")
 	const manifest = await readPackageJSON(manifestPath)
 	delete manifest.devDependencies
 
@@ -153,7 +154,7 @@ export async function generateSBOM(options: GenerateSBOMOptions): Promise<Genera
 		)
 	)
 
-	const spdxPath = join(outDir, `mailwoman-${version}.spdx.json`)
+	const spdxPath = outDir(`mailwoman-${version}.spdx.json`)
 	await writeLocalJSONFile(spdx, spdxPath)
 
 	log("[sbom] generating CycloneDX 1.5…")
@@ -162,23 +163,25 @@ export async function generateSBOM(options: GenerateSBOMOptions): Promise<Genera
 		run("npm", ["sbom", "--sbom-format", "cyclonedx", "--omit=dev", "--sbom-type", "application"], pkgDir)
 	)
 
-	const cdxPath = join(outDir, `mailwoman-${version}.cdx.json`)
+	const cdxPath = outDir(`mailwoman-${version}.cdx.json`)
 	await writeLocalJSONFile(cdx, cdxPath)
 
 	// minus the root component
 	const dependencies = (spdx.packages?.length ?? 0) - 1
+	const spdxShown = relative(repoRoot, spdxPath)
+	const cdxShown = relative(repoRoot, cdxPath)
 
 	log(
 		`\n[sbom] ✅ wrote SBOMs for mailwoman@${version} (${dependencies} dependencies)\n` +
-			`         ${spdxPath.replace(`${repoRoot}/`, "")}\n` +
-			`         ${cdxPath.replace(`${repoRoot}/`, "")}`
+			`         ${spdxShown}\n` +
+			`         ${cdxShown}`
 	)
 
 	log(
 		"\n[sbom] validate:\n" +
-			`         uvx --from spdx-tools pyspdxtools -i ${dirname(spdxPath).replace(`${repoRoot}/`, "")}/mailwoman-${version}.spdx.json\n` +
-			`         cyclonedx-cli validate --input-file ${dirname(cdxPath).replace(`${repoRoot}/`, "")}/mailwoman-${version}.cdx.json`
+			`         uvx --from spdx-tools pyspdxtools -i ${spdxShown}\n` +
+			`         cyclonedx-cli validate --input-file ${cdxShown}`
 	)
 
-	return { version, spdxPath, cdxPath, dependencies }
+	return { version, spdxPath: spdxPath.toString(), cdxPath: cdxPath.toString(), dependencies }
 }

@@ -52,10 +52,10 @@ const MSDOMDET = [
 beforeAll(async () => {
 	scratch = await temporaryDirectory("mw-soil-tabular-")
 
-	await writeLocalTextFile(`${MSTAB}\r\n`, scratch.resolve("mstab.txt"))
-	await writeLocalTextFile(`${MSTABCOL}\r\n`, scratch.resolve("mstabcol.txt"))
-	await writeLocalTextFile(`${WIDGETFILE}\r\n`, scratch.resolve("widgetfile.txt"))
-	await writeLocalTextFile(`${MSDOMDET}\r\n`, scratch.resolve("msdomdet.txt"))
+	await writeLocalTextFile(`${MSTAB}\r\n`, scratch.path("mstab.txt"))
+	await writeLocalTextFile(`${MSTABCOL}\r\n`, scratch.path("mstabcol.txt"))
+	await writeLocalTextFile(`${WIDGETFILE}\r\n`, scratch.path("widgetfile.txt"))
+	await writeLocalTextFile(`${MSDOMDET}\r\n`, scratch.path("msdomdet.txt"))
 })
 
 afterAll(() => scratch[Symbol.asyncDispose]())

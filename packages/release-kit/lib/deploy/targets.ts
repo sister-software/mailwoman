@@ -12,6 +12,8 @@
  *   notices a stale deployment.
  */
 
+import type { PathBuilderLike } from "path-ts"
+
 import { walkWorkspaceClosure, workspaceDirectories } from "#release/workspace-closure"
 
 export type DeployTargetID = "tiles" | "license" | "earth" | "moon" | "mars"
@@ -191,7 +193,10 @@ export function allDeployTargets(): DeploySelection[] {
 /**
  * The targets the changed paths reach in this checkout, each target's closure walked from its manifest.
  */
-export async function affectedDeployTargets(repoRoot: string, changed: readonly string[]): Promise<DeploySelection[]> {
+export async function affectedDeployTargets(
+	repoRoot: PathBuilderLike,
+	changed: readonly string[]
+): Promise<DeploySelection[]> {
 	const dirsByName = await workspaceDirectories(repoRoot)
 	const closures = new Map<DeployTargetID, ReadonlySet<string>>()
 

@@ -59,7 +59,7 @@ export async function mailwomanCLIPath(): Promise<string> {
 
 	if (!entry) throw new TypeError("mailwoman's manifest declares no `bin.mailwoman`.")
 
-	return String(resolvePackagePath("mailwoman", entry))
+	return resolvePackagePath("mailwoman", entry)
 }
 
 let manifest: Promise<MailwomanManifest> | undefined

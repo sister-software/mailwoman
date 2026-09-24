@@ -19,6 +19,7 @@ import {
 	stripArrondissement,
 } from "@mailwoman/resolver-wof-sqlite/street"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
+import type { PathBuilder } from "path-ts"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 interface Seed {
@@ -38,14 +39,14 @@ interface Seed {
  * A seeded `street_centroid` extract, owned by the caller: the reader opens it by path,
  * so the directory has to outlive this function.
  */
-type StreetCentroidFixture = TemporaryDirectory & { extractPath: string }
+type StreetCentroidFixture = TemporaryDirectory & { extractPath: PathBuilder }
 
 /**
  * Seed a temp-file `street_centroid` extract and hand its directory to the caller.
  */
 async function seedExtract(rows: Seed[]): Promise<StreetCentroidFixture> {
 	const scratch = await temporaryDirectory("sc-test-")
-	const extractPath = scratch.resolve("street-centroids.db")
+	const extractPath = scratch.path("street-centroids.db")
 	await using kdb = new DatabaseClient<StreetCentroidDatabase>(extractPath)
 	await createStreetCentroidTable(kdb)
 

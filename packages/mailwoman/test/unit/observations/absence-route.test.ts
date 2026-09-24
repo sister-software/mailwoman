@@ -48,6 +48,7 @@ import {
 	recoverCoverageResolution,
 	type AbsenceObservationRoute,
 } from "mailwoman/observations"
+import type { PathBuilder } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 
 const COVERAGE_RESOLUTION = 6
@@ -89,14 +90,14 @@ interface ScratchLayerOptions {
 const scratchRoot = await temporaryDirectory("mw-absence-")
 
 afterAll(() => scratchRoot[Symbol.asyncDispose]())
-const built: string[] = []
+const built: PathBuilder[] = []
 
 /**
  * A sealed-shaped layer carrying exactly the interface tables the route reads, written through
  * the blessed writers so the scratch artifact and a real one differ in scale and nothing else.
  */
-async function scratchLayer(options: ScratchLayerOptions = {}): Promise<string> {
-	const path = scratchRoot.resolve(`layer-${built.length}.db`)
+async function scratchLayer(options: ScratchLayerOptions = {}): Promise<PathBuilder> {
+	const path = scratchRoot.path(`layer-${built.length}.db`)
 
 	built.push(path)
 

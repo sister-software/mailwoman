@@ -116,7 +116,7 @@ if (!manifestPath) {
 const report = await censusCoverage({
 	configPath,
 	manifestPath,
-	casesRoot: String(repoRootPath("packages", "mailwoman", "lib", "eval-harness", "gauntlet", "cases")),
+	casesRoot: repoRootPath("packages", "mailwoman", "lib", "eval-harness", "gauntlet", "cases"),
 })
 
 const byCountry = new Map(report.countries.map((c) => [c.country, c]))

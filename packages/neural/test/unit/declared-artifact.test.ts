@@ -16,24 +16,24 @@ import { writeLocalTextFile, writeLocalFile, makeDirectories } from "@mailwoman/
 import { stringifyJSON } from "@mailwoman/core/json"
 import { workspacePath } from "@mailwoman/core/paths"
 import { readDeclaredArtifactFile, unfedAnchorDetail } from "@mailwoman/neural/weights-channels"
-import { join, resolvePath } from "path-ts"
+import type { PathBuilder } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 
 const fixtures = new AsyncDisposableStack()
 
 afterAll(() => fixtures.disposeAsync())
 
-async function packageDir(card?: unknown, siblings: string[] = []): Promise<string> {
-	const dir = resolvePath(fixtures.use(await temporaryDirectory("weights-card-")).path)
+async function packageDir(card?: unknown, siblings: string[] = []): Promise<PathBuilder> {
+	const dir = fixtures.use(await temporaryDirectory("weights-card-")).path
 
 	await makeDirectories(dir)
 
 	if (card !== undefined) {
-		await writeLocalFile(typeof card === "string" ? card : stringifyJSON(card), join(dir, "model-card.json"))
+		await writeLocalFile(typeof card === "string" ? card : stringifyJSON(card), dir("model-card.json"))
 	}
 
 	for (const sibling of siblings) {
-		await writeLocalTextFile("", join(dir, sibling))
+		await writeLocalTextFile("", dir(sibling))
 	}
 
 	return dir

@@ -44,6 +44,7 @@ import { pathExists } from "@mailwoman/core/fs/readers"
 import { removePath } from "@mailwoman/core/fs/writers"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
+import type { PathBuilderLike } from "path-ts"
 
 import { POPULATION_CORRECTIONS } from "#build/population-corrections"
 import { explodeAliasBags } from "#candidate/alias-bags"
@@ -77,11 +78,11 @@ export interface BuildCandidateOptions {
 	/**
 	 * Source unified admin DB — needs spr, place_population, place_search, place_abbr, ancestors.
 	 */
-	input: string
+	input: PathBuilderLike
 	/**
 	 * Output candidate DB path (overwritten if present).
 	 */
-	output: string
+	output: PathBuilderLike
 	/**
 	 * The capital-status reference entries (#1880) to carry in-artifact.
 	 *
@@ -103,7 +104,7 @@ export interface BuildCandidateOptions {
 	 * That's where the GeoNames delivery-city names live ("Brooklyn" for 11201),
 	 * and they were previously reachable only through FTS.
 	 */
-	postcodes?: string[]
+	postcodes?: readonly PathBuilderLike[]
 	/**
 	 * Optional locality extracts (`spr` rows with `placetype='locality'` + real coords,
 	 * e.g. localities-nz-linz.db — the #1564 NZ suburb tier) — folded through the same
@@ -117,7 +118,7 @@ export interface BuildCandidateOptions {
 	 * scope (`region_id`) plus closure rows for the region and the region's own chain above it.
 	 * An extract without one stays unscoped, as before.
 	 */
-	localities?: string[]
+	localities?: readonly PathBuilderLike[]
 	/**
 	 * Optional WOF admin database carrying a `place_importance` table.
 	 *
@@ -135,7 +136,7 @@ export interface BuildCandidateOptions {
 	 * That is the honest degradation and it is the default: a caller with no score source
 	 * must not get a population-derived stand-in written into a column that means fame.
 	 */
-	importance?: string
+	importance?: PathBuilderLike
 	/**
 	 * Cross-source currency backfill (#1737).
 	 *
@@ -156,7 +157,7 @@ export interface BuildCandidateOptions {
 	 * absent dumps are skipped loudly.
 	 */
 	currencyBackfill?: {
-		geonamesDir: string
+		geonamesDir: PathBuilderLike
 		countries: readonly string[]
 		/**
 		 * The dead placetypes the resurrection judges; `resurrectCurrencyHoles`'s

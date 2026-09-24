@@ -68,6 +68,7 @@ import {
 import { readCoverageAt } from "@mailwoman/spatial/h3/coverage"
 import { DatabaseClient, type StatementSync } from "@mailwoman/sqlite/client"
 import { latLngToCell } from "h3-js"
+import type { PathBuilderLike } from "path-ts"
 
 import type { CoastalDatabase } from "#schema"
 import { CoastalCellContainment } from "#schema"
@@ -257,7 +258,7 @@ export interface CoastalLayerIdentity {
 }
 
 export interface CoastalErosionLookupOptions {
-	databasePath: string
+	databasePath: PathBuilderLike
 }
 
 interface AreaRow {
@@ -303,7 +304,7 @@ export class CoastalErosionLookup implements Disposable {
 		this.#database = new DatabaseClient<CoastalDatabase>(options.databasePath, { readOnly: true })
 
 		try {
-			this.identity = readIdentity(this.#database, options.databasePath)
+			this.identity = readIdentity(this.#database, options.databasePath.toString())
 		} catch (error) {
 			this.#database.destroy()
 

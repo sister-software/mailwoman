@@ -32,12 +32,12 @@
  *   Usage: node packages/mailwoman/lib/dev-tools/probe/referential-delta.run.ts [--board <path>]
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { compareReferential, REFERENTIAL_SATURATION_POPULATION } from "@mailwoman/core/resolver"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { allRows, getRow } from "@mailwoman/core/utils"
 import type { PlaceCandidate } from "@mailwoman/resolver-wof-sqlite"
+import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
@@ -48,7 +48,7 @@ const { values } = parseArguments({ options: { board: { type: "string" } } })
 
 //#region 1 — Gazetteer census of the saturated tail
 
-const adminPath = String(dataRootPath("db", "wof", "admin-global-priority.db"))
+const adminPath = wofDatabasePath("admin-global-priority.db")
 
 console.log(`## Referential/population ordering — D-rule measurement\n`)
 console.log(`Saturation population: ${REFERENTIAL_SATURATION_POPULATION.toLocaleString()}\n`)

@@ -15,6 +15,7 @@ import { dataRootPath } from "@mailwoman/core/data-root"
 import { type AddressTree, decodeAsJSON } from "@mailwoman/core/decoder"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { createWOFResolver } from "@mailwoman/resolver"
+import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import { resolvePath } from "path-ts"
 
 import { loadGoldenRows } from "#dev-tools/two-model-probe"
@@ -28,7 +29,6 @@ const { values: rawValues } = parseArguments({
 		golden: { type: "string" },
 		n: { type: "string" },
 	},
-	strict: false,
 	allowPositionals: true,
 })
 
@@ -37,7 +37,7 @@ const values = rawValues as { base?: string; cand?: string; "default-country"?: 
 const TOK = dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model")
 const CARD = "packages/neural-weights-en-us/model-card.json"
 const ANCHOR = dataRootPath("anchor", "pilot-anchor-lookup.json")
-const WOF = dataRootPath("db", "wof", "admin-global-priority.db")
+const WOF = wofDatabasePath("admin-global-priority.db")
 
 async function main() {
 	const n = Number(values["n"] || "30")

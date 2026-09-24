@@ -16,7 +16,7 @@ import { parseJSONStrict } from "@mailwoman/core/json"
 import { frLieuditRecipe } from "@mailwoman/corpus/fr/recipes/lieudit"
 import type { RecipeOptions } from "@mailwoman/corpus/recipes/scaffold"
 import type { RecipeRow } from "@mailwoman/corpus/test-kit/corpus-recipe"
-import { join, resolvePath } from "path-ts"
+import type { PathBuilder } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 
 const fixtures = new AsyncDisposableStack()
@@ -30,11 +30,11 @@ function row(id: string, numero: string, street: string, postcode: string, commu
 	return `${id};;${numero};;${street};${postcode};48004;${commune};;;766812;6375458;3.840026;44.474983;entrée;;${nomLd};;;;;1;`
 }
 
-async function fixtureBanDir(files: Record<string, string[]>): Promise<string> {
-	const dir = resolvePath(fixtures.use(await temporaryDirectory("mw-fr-lieudit-")).path)
+async function fixtureBanDir(files: Record<string, string[]>): Promise<PathBuilder> {
+	const dir = fixtures.use(await temporaryDirectory("mw-fr-lieudit-")).path
 
 	for (const [dept, rows] of Object.entries(files)) {
-		await writeLocalTextFile([HEADER, ...rows], join(dir, `adresses-${dept}.csv`))
+		await writeLocalTextFile([HEADER, ...rows], dir(`adresses-${dept}.csv`))
 	}
 
 	return dir
@@ -175,7 +175,7 @@ describe("fr-lieudit recipe", () => {
 			row("2", "8", "Route de Pomaret", "48800", "Altier", "Le Village"), // different id/lieu-dit
 		].join("\n")
 
-		await writeLocalFile(await gzip(csvBody + "\n"), join(banDir, "adresses-48.csv.gz"))
+		await writeLocalFile(await gzip(csvBody + "\n"), banDir("adresses-48.csv.gz"))
 
 		const stats = await frLieuditRecipe.run(baseOpts({ banDir }), () => {})
 

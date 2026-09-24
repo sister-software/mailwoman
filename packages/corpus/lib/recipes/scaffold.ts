@@ -169,7 +169,7 @@ export function readCSVRecords(source: AsyncDataResource | AsyncChunkIterator): 
  */
 export function readZippedCSVRecords(archivePath: PathBuilderLike, entryName: string): AsyncSequence<CSVRecord> {
 	return AsyncSequence.from<CSVRecord>(async () => {
-		if (!(await pathExists(String(archivePath)))) {
+		if (!(await pathExists(archivePath))) {
 			console.error(`  WARN: ${archivePath} is not cached — skipping ${entryName}`)
 
 			return []
@@ -432,7 +432,7 @@ export interface RecipeOptions {
 	output: string
 	seed: number
 	variants: number
-	input?: string
+	input?: PathBuilderLike
 	count?: number
 	golden?: boolean
 	sourceName?: string
@@ -502,7 +502,7 @@ export interface RecipeOptions {
 	 *
 	 * Default `$MAILWOMAN_DATA_ROOT/corpus/sources/ban`.
 	 */
-	banDir?: string
+	banDir?: PathBuilderLike
 	multilocaleCount?: number
 	/**
 	 * `fr-fragment` / `no-fragment` / `no-street-led`: the eval board's reserved street-surface list.
@@ -510,7 +510,7 @@ export interface RecipeOptions {
 	 * Required for those recipes — a recipe output that trains on its own eval set measures memorization.
 	 * See their docstrings.
 	 */
-	excludeSurfaces?: string
+	excludeSurfaces?: PathBuilderLike
 	/**
 	 * `no-fragment`: share of rows that are counter-distribution (bare locality or bare postcode).
 	 */

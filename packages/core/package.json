@@ -626,7 +626,7 @@
 		"iconv-lite": "^0.7.3",
 		"isomorphic-dompurify": "^4.1.0",
 		"kysely": "^0.29.5",
-		"path-ts": "^2.4.1",
+		"path-ts": "^2.5.0",
 		"pino": "^10.3.1",
 		"regenerate": "^1.4.2",
 		"spliterator": "^7.11.0",

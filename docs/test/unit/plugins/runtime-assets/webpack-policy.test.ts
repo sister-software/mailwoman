@@ -41,7 +41,7 @@ describe("docs webpack policy", () => {
 	test("the demo enters browser-safe leaves, never a Node-backed barrel", async () => {
 		const offenders: string[] = []
 
-		for await (const file of browserSources(String(resolvePath(docsDir, "src")))) {
+		for await (const file of browserSources(resolvePath(docsDir, "src"))) {
 			const text = await readLocalTextFile(file)
 
 			for (const barrel of NODE_BACKED_BARRELS) {
@@ -63,7 +63,7 @@ describe("docs webpack policy", () => {
 		const offenders: string[] = []
 		const seen = new Set<string>()
 
-		for await (const file of browserSources(String(resolvePath(docsDir, "src")))) {
+		for await (const file of browserSources(resolvePath(docsDir, "src"))) {
 			const text = await readLocalTextFile(file)
 
 			for (const [, packageName, , stylesheet] of text.matchAll(stylesheetImport)) {

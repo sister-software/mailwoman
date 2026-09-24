@@ -26,8 +26,7 @@
 import { ADDRESS_LAYOUTS } from "@mailwoman/codex/address-layouts"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
-import { join } from "path-ts"
+import { resolvePackageDirectory } from "@mailwoman/core/module/resolvers"
 import { Globerator } from "spliterator/node/fs"
 
 import {
@@ -220,7 +219,7 @@ function layoutSource(
 	return lines.join("\n")
 }
 
-const specsDirectory = resolvePackagePath("@mailwoman/core", "data", "chromium-i18n", "ssl-address")
+const specsDirectory = resolvePackageDirectory("@mailwoman/core")("data", "chromium-i18n", "ssl-address")
 const entries: string[] = []
 const latinEntries: string[] = []
 const localEntries: string[] = []
@@ -234,7 +233,7 @@ for (const file of await Globerator.files("json", {
 	recursive: false,
 }).toSorted()) {
 	const code = file.replace(/\.json$/, "")
-	const metadata = await readLocalJSONFile<AddressMetadata>(join(specsDirectory, file))
+	const metadata = await readLocalJSONFile<AddressMetadata>(specsDirectory(file))
 	const order = STREET_ORDERS[code] ?? "number-first"
 
 	// The Latin skeleton is emitted for a hand-authored country too.
@@ -328,7 +327,7 @@ ${localEntries.join("\n\n")}
 }
 `
 
-const outPath = resolvePackagePath("@mailwoman/codex", "lib", "address", "layouts", "generated.ts")
+const outPath = resolvePackageDirectory("@mailwoman/codex")("lib", "address", "layouts", "generated.ts")
 
 await writeLocalTextFile(emitted, outPath)
 

@@ -17,13 +17,14 @@
 import { composeAnnotators, toOpenCage } from "@mailwoman/annotations"
 import { serveNode } from "@mailwoman/api-kit"
 import { countryReferenceAnnotator, matchCountry } from "@mailwoman/codex/country"
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
-import { dataRootPath, mailwomanDataRoot } from "@mailwoman/core/utils"
 import { makeNUTSAnnotator, NUTSLookup } from "@mailwoman/nuts-lookup"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { coordinateFormatAnnotator } from "@mailwoman/spatial"
 import { makeTimezoneAnnotator, TimezoneLookup } from "@mailwoman/timezone-lookup"
+import { timezoneDatabasePath } from "@mailwoman/timezone-lookup/paths"
 import { makeUNLocodeAnnotator, UNLocodeLookup } from "@mailwoman/un-locode-lookup"
 import {
 	corsBannerLine,
@@ -105,12 +106,12 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 
 	const backend = await createResolverBackend(resolverMod, { wofPaths, candidateDB })
 	const resolver = createWOFResolver(backend)
-	const extracts = await RegionDatabaseProvider.create(resolverMod, mailwomanDataRoot())
+	const extracts = await RegionDatabaseProvider.create(resolverMod, dataRootPath())
 	// National open-register rooftop tier (#1012): BAN-FR ahead of the OSM tier for a non-US parse.
 	// A no-op when the extract isn't on disk (conditioned on existsSync inside the provider),
 	// so the endpoint degrades cleanly.
 	const { BANRegionDatabaseProvider } = await import("@mailwoman/ban/sdk")
-	const banExtracts = await BANRegionDatabaseProvider.create(mailwomanDataRoot())
+	const banExtracts = await BANRegionDatabaseProvider.create(dataRootPath())
 	// Not a geocode country constraint.
 	// The default-on #244 placer already routes the query's country (Berlin→DE, Boston→US)
 	// and `defaultCountry` is a hard override that beats it (geocode-core.ts:102),
@@ -123,7 +124,7 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 	const annotationCountryFallback = candidateDB ? undefined : "US"
 	const reverseGeo = adminDBPath ? new resolverMod.WOFReverseGeocoder({ adminDBPath }) : undefined
 	const annotators = [coordinateFormatAnnotator, countryReferenceAnnotator]
-	const tzDBPath = dataRootPath("db", "timezone", "timezone.db")
+	const tzDBPath = timezoneDatabasePath("timezone.db")
 
 	if (await pathExists(tzDBPath)) {
 		annotators.push(makeTimezoneAnnotator(new TimezoneLookup({ databasePath: resolvePath(tzDBPath) })))

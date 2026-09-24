@@ -82,7 +82,7 @@ await writeLocalTextFile(
 		"4140963\tWashington\tWashington\t\t38.89511\t-77.03637\tP\tPPLC\tUS",
 		"999\tElsewhere\tElsewhere\t\t10\t20\tP\tPPL\tUS",
 	].join("\n"),
-	GN_ROOT.resolve("US.txt")
+	GN_ROOT.path("US.txt")
 )
 
 afterAll(() => GN_ROOT[Symbol.asyncDispose]())

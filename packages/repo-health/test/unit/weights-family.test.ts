@@ -30,12 +30,12 @@ async function fixtureContext(manifests: Record<string, unknown>): Promise<RepoC
 	const trackedFiles: string[] = []
 
 	for (const [locale, manifest] of Object.entries(manifests)) {
-		await writeLocalJSONFile(manifest, temporary.resolve("packages", `neural-weights-${locale}`, "package.json"))
+		await writeLocalJSONFile(manifest, temporary.path("packages", `neural-weights-${locale}`, "package.json"))
 
 		trackedFiles.push(`packages/neural-weights-${locale}/package.json`)
 	}
 
-	return { repoRoot: String(temporary.path), trackedFiles }
+	return { repoRoot: temporary.path.toString(), trackedFiles }
 }
 
 /**

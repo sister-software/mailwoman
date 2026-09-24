@@ -35,6 +35,7 @@ import { WOFCandidateTableLookup } from "@mailwoman/resolver-wof-sqlite/candidat
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
+import type { PathBuilder, PathBuilderLike } from "path-ts"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
 
 const GERMANY = 100
@@ -54,7 +55,7 @@ const AMBIVILLE = 300
  * a two-region DAG place, plus the noise the build must exclude — a self row,
  * a continent row, and an edge to a place with no current spr row.
  */
-function buildFixtureAdmin(path: string): void {
+function buildFixtureAdmin(path: PathBuilderLike): void {
 	using db = new DatabaseClient<WOFDatabase>(path)
 
 	db.exec(`
@@ -117,12 +118,12 @@ function buildFixtureAdmin(path: string): void {
 }
 
 let scratch: TemporaryDirectory
-let candidatePath: string
+let candidatePath: PathBuilder
 
 beforeEach(async () => {
 	scratch = await temporaryDirectory("mailwoman-candidate-ancestors-")
-	const input = scratch.resolve("admin.db")
-	candidatePath = scratch.resolve("candidate.db")
+	const input = scratch.path("admin.db")
+	candidatePath = scratch.path("candidate.db")
 	buildFixtureAdmin(input)
 	await buildCandidateTable({ input, output: candidatePath })
 })
@@ -325,8 +326,8 @@ describe("the candidate ancestors sidecar", () => {
 	})
 
 	test("a canonical-parent cycle degrades to unlabeled places — closure rows kept, no hang, no labels", async () => {
-		const input = scratch.resolve("cycle-admin.db")
-		const output = scratch.resolve("cycle-candidate.db")
+		const input = scratch.path("cycle-admin.db")
+		const output = scratch.path("cycle-candidate.db")
 		using db = new DatabaseClient<WOFDatabase>(input)
 
 		// Two localities each naming the other as an ancestor (corrupt source ancestry),

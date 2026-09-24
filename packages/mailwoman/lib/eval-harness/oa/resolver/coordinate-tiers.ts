@@ -6,8 +6,9 @@
  *   admin centroid and the street-level point.
  */
 
-import { dataRootPath, mailwomanDataRoot } from "@mailwoman/core/data-root"
+import { dataRootPath } from "@mailwoman/core/data-root"
 import type { AddressPointLookup, InterpolationLookup } from "@mailwoman/core/resolver"
+import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 
 import type { OAResolverEvalOptions } from "#eval-harness/oa/resolver/options"
 import type { RegionDatabaseProvider } from "#geocode/regions"
@@ -82,7 +83,7 @@ export async function buildCoordinateTiers(options: OAResolverEvalOptions) {
 	// --cascade supersedes them with multi-state per-row selection. --data-root locates
 	// the databases (<root>/address-points/, <root>/interpolation/).
 	const cascadeOn = options.cascade ?? false
-	const dataRoot = options.dataRoot || mailwomanDataRoot()
+	const dataRoot = options.dataRoot || dataRootPath()
 	let cascadeProvider: RegionDatabaseProvider | null = null
 
 	if (cascadeOn) {
@@ -107,8 +108,7 @@ export async function buildCoordinateTiers(options: OAResolverEvalOptions) {
 
 	if (useAnchor || anchorRerank) {
 		const databases = (
-			options.postcodeDatabases ||
-			`${dataRootPath("db", "wof", "postalcode-us.db")},${dataRootPath("db", "wof", "postalcode-intl.db")}`
+			options.postcodeDatabases || `${wofDatabasePath("postalcode-us.db")},${wofDatabasePath("postalcode-intl.db")}`
 		)
 			.split(",")
 			.map((s) => s.trim())

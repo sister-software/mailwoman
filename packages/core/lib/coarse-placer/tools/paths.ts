@@ -10,9 +10,10 @@
 import { type PathBuilder, type PathBuilderLike, resolvePath } from "path-ts"
 import { JSONSpliterator } from "spliterator"
 
+import { dataRootPath } from "#data-root"
 import { delimitedSource } from "#fs/delimited"
 import { pathExists } from "#fs/readers"
-import { corePackagePathBuilder, dataRootPath, repoRootPathBuilder } from "#utils"
+import { corePackagePathBuilder, repoRootPathBuilder } from "#paths"
 
 /**
  * The Latin off-map test sets, one per outlier builder.
@@ -45,7 +46,7 @@ export async function readLatinOffmapRows<T>(dataDir: PathBuilderLike): Promise<
 
 	if (!present.length) {
 		throw new Error(
-			`No Latin off-map test set in ${String(dataDir)}: expected ${LATIN_OFFMAP_TEST_FILES.join(" or ")}. Run build-outlier-latin or build-outlier-oa first.`
+			`No Latin off-map test set in ${dataDir}: expected ${LATIN_OFFMAP_TEST_FILES.join(" or ")}. Run build-outlier-latin or build-outlier-oa first.`
 		)
 	}
 

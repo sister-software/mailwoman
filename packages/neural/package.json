@@ -272,7 +272,7 @@
 		"@mailwoman/locale-hint": "workspace:*",
 		"@mailwoman/query-shape": "workspace:*",
 		"@mailwoman/sentencepiece-wasm": "workspace:*",
-		"path-ts": "^2.4.1",
+		"path-ts": "^2.5.0",
 		"spliterator": "^7.11.0",
 		"zod": "^4.5.4"
 	},

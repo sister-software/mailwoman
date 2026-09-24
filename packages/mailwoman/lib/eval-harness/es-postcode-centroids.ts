@@ -19,8 +19,10 @@
 
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { OVERTURE_ADDRESSES_RELEASE } from "@mailwoman/core/overture-pins"
+import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
+import { PathBuilder } from "path-ts"
 
 /**
  * Options for {@linkcode buildESPostcodeCentroids}.
@@ -69,15 +71,15 @@ export async function buildESPostcodeCentroids(options: ESPostcodeCentroidsOptio
 	const CC = options.country || "ES"
 	const PC_LEN = options.pcLen ?? 5
 
-	const PARQUET =
-		options.parquet ||
-		String(dataRootPath("overture", OVERTURE_ADDRESSES_RELEASE, `addresses-${CC.toLowerCase()}.parquet`))
+	const PARQUET = PathBuilder.from(
+		options.parquet || dataRootPath("overture", OVERTURE_ADDRESSES_RELEASE, `addresses-${CC.toLowerCase()}.parquet`)
+	)
 
-	const OUT_DB = options.out || String(dataRootPath("db", "wof", `postalcode-${CC.toLowerCase()}-overture.db`))
+	const OUT_DB = options.out || wofDatabasePath(`postalcode-${CC.toLowerCase()}-overture.db`)
 	// The `source` stamp names the Overture release the rows came from, read off the
 	// parquet's release directory rather than typed: a build over a newer parquet
 	// used to stamp the pinned default's release on every row.
-	const RELEASE = /\d{4}-\d{2}-\d{2}\.\d+/u.exec(PARQUET)?.[0] ?? "unknown"
+	const RELEASE = /\d{4}-\d{2}-\d{2}\.\d+/u.exec(PARQUET.toString())?.[0] ?? "unknown"
 
 	// @duckdb/node-api is an optional peer dep (this is a maintainer-only data command) — load it
 	// lazily so importing this module never requires it.

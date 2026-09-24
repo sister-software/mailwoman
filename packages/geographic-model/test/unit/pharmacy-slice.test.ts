@@ -201,11 +201,11 @@ describe("the committed artifact", () => {
 		// An empty table here is the truthful answer rather than an unread one —
 		// `compile.test.ts` exercises the derivation itself.
 		const model = await readCompiledGeographicModel()
-		const everyAncestor = new Set(model.inheritanceClosure.flatMap((entry) => entry.ancestors.map(String)))
+		const everyAncestor = new Set(model.inheritanceClosure.flatMap((entry) => entry.ancestors))
 
 		const ancestorsWithAssertions = model.concepts
-			.filter((concept) => concept.assertions.length && everyAncestor.has(String(concept.id)))
-			.map((concept) => String(concept.id))
+			.filter((concept) => concept.assertions.length && everyAncestor.has(concept.id))
+			.map((concept) => concept.id)
 
 		expect(ancestorsWithAssertions).toEqual([])
 		expect(model.derivedFacts).toEqual([])

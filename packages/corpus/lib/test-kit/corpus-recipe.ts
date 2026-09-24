@@ -14,6 +14,7 @@
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalTextFile, writeLocalJSONLFile } from "@mailwoman/core/fs/writers"
 import { parseJSONStrict } from "@mailwoman/core/json"
+import type { PathBuilder } from "path-ts"
 
 import type { RecipeOptions } from "#recipes/scaffold"
 
@@ -52,15 +53,15 @@ export interface CorpusRecipe<TStats> {
  * so the directory has to outlive the call.
  * Bind it with `using` and it goes when the test does.
  */
-export type RecipeInputs = TemporaryDirectory & { input: string; exclude: string }
+export type RecipeInputs = TemporaryDirectory & { input: PathBuilder; exclude: PathBuilder }
 
 /**
  * Write the tuple + reserved-surface inputs a recipe reads, into a fresh temporary directory.
  */
 export async function scratch(prefix: string, tuples: object[], surfaces: string[]): Promise<RecipeInputs> {
 	const dir = await temporaryDirectory(`${prefix}-`)
-	const input = dir.resolve("tuples.jsonl")
-	const exclude = dir.resolve("surfaces.txt")
+	const input = dir.path("tuples.jsonl")
+	const exclude = dir.path("surfaces.txt")
 
 	await writeLocalJSONLFile(tuples, input)
 	await writeLocalTextFile("# reserved\n" + surfaces.join("\n") + "\n", exclude)

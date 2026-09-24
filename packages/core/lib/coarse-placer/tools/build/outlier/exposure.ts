@@ -22,9 +22,9 @@ import { type PathBuilderLike, resolvePath } from "path-ts"
 import { scriptOf } from "#coarse-placer/featurize"
 import { hashFNV1a } from "#coarse-placer/fnv-hash"
 import { defaultDataDir } from "#coarse-placer/tools/paths"
+import { databaseRootPath, dataRootPath } from "#data-root"
 import { appendLocalTextFile } from "#fs/writers"
 import { stringifyJSON } from "#json"
-import { dataRootPath } from "#utils"
 
 /**
  * Share of a bucket that must be off-map before it is treated as an exposure case rather than noise.
@@ -168,7 +168,7 @@ export async function buildOutlierExposure(
 	report?: (line: string) => void
 ): Promise<BuildOutlierExposureResult> {
 	const PER = options.perLang ?? 2500
-	const wofPath = options.wof || dataRootPath("db", "wof", "admin-global-priority.db")
+	const wofPath = options.wof || databaseRootPath(dataRootPath())("wof", "admin-global-priority.db")
 	const dataDir = options.data || defaultDataDir()
 
 	using db = new DatabaseClient<WOFNameRead>(wofPath, { readOnly: true })

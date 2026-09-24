@@ -38,7 +38,7 @@ import { writeLocalJSONFile, writeLocalTextFile, makeDirectories, removePath } f
 import { createHash } from "@mailwoman/core/hash"
 import { spawnProcess } from "@mailwoman/core/process"
 import { childEnv } from "@mailwoman/core/scripting/utils"
-import { join, type PathBuilderLike } from "path-ts"
+import { type PathBuilderLike, resolvePathBuilder } from "path-ts"
 import { JSONSpliterator } from "spliterator"
 
 import type { CanonicalRow, LabeledRow } from "#types"
@@ -362,7 +362,7 @@ export type SplitInputLabeledRow = Pick<LabeledRow, "source_id" | "country" | "c
  * Counts are pre-computed by the align loop and passed in (zero re-scan).
  */
 export async function writeSplitManifestsFromLabeledFiles(opts: {
-	labeledPaths: Record<SplitName, string>
+	labeledPaths: Record<SplitName, PathBuilderLike>
 	outputDir: PathBuilderLike
 	corpusVersion: string
 	counts: Record<SplitName, number>
@@ -373,7 +373,7 @@ export async function writeSplitManifestsFromLabeledFiles(opts: {
 
 	for (const split of ["train", "val", "test"] as const) {
 		const labeledPath = opts.labeledPaths[split]
-		const outPath = join(opts.outputDir, `${split}.txt`)
+		const outPath = resolvePathBuilder(opts.outputDir, `${split}.txt`)
 		await streamSortedSourceIDs(labeledPath, outPath)
 	}
 
@@ -396,7 +396,7 @@ export async function writeSplitManifestsFromLabeledFiles(opts: {
  * Empty input → empty output file (not absent).
  * Uses `sort(1)` for disk-spilling external sort so peak memory stays O(1) regardless of labeled-row count.
  */
-async function streamSortedSourceIDs(labeledJsonlPath: string, outPath: string): Promise<void> {
+async function streamSortedSourceIDs(labeledJsonlPath: PathBuilderLike, outPath: PathBuilderLike): Promise<void> {
 	const unsortedPath = `${outPath}.unsorted`
 	const out = openWriteStream(unsortedPath, { encoding: "utf8" })
 

@@ -22,7 +22,7 @@ async function weightsPackage(files: Record<string, string>, card?: Record<strin
 		await writeLocalJSONFile(card, resolvePath(directory.path, "model-card.json"))
 	}
 
-	return directory.moveWith({ directory: String(directory.path) })
+	return directory.moveWith({ directory: directory.path })
 }
 
 describe("packageHasBinaries", () => {

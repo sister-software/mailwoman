@@ -7,6 +7,7 @@
 
 import { strideSampleInteriorPoints } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
+import type { PathBuilderLike } from "path-ts"
 
 import type { CoastalDatabase } from "#schema"
 
@@ -20,7 +21,7 @@ import type { CoastalDatabase } from "#schema"
  * rather than random — is `strideSampleInteriorPoints`'s.
  */
 export function sampleAgreementPoints(
-	databasePath: string,
+	databasePath: PathBuilderLike,
 	options: { count?: number } = {}
 ): Array<{ label: string; latitude: number; longitude: number; scenarioKey: string }> {
 	const count = options.count ?? 48

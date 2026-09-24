@@ -56,11 +56,12 @@ import { US_STATE_ABBREVIATIONS, US_STATE_NAMES } from "@mailwoman/codex/us"
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { makeDirectories, writeLocalJSONFile, writeLocalJSONLFile } from "@mailwoman/core/fs/writers"
-import { resourceDictionaryPath, repoRootPathBuilder } from "@mailwoman/core/paths"
+import { resourceDictionaryPathBuilder, repoRootPathBuilder } from "@mailwoman/core/paths"
 import { normalizeTokens } from "@mailwoman/resolver-wof-sqlite/fst"
+import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import { dirname, join, resolvePath, type PathBuilderLike } from "path-ts"
+import { dirname, type PathBuilder, type PathBuilderLike, resolvePath } from "path-ts"
 import { TextSpliterator } from "spliterator"
 
 import { computeSurfaceCountryCounts, CURATION_LANGUAGES, loadDegenerateSurfaces } from "#gazetteer-pipeline/fst"
@@ -143,11 +144,11 @@ export async function loadDirectionalSurfaces(fold: (surface: string) => string[
 const directionalSurfacesMemo = new Map<(surface: string) => string[], Set<string>>()
 
 async function scanDirectionalSurfaces(fold: (surface: string) => string[]): Promise<Set<string>> {
-	const dictionariesDir = resourceDictionaryPath("libpostal")
+	const dictionariesDir = resourceDictionaryPathBuilder("libpostal")
 	const surfaces = new Set<string>()
 
 	for (const lang of CURATION_LANGUAGES) {
-		const path = join(dictionariesDir, lang, "directionals.txt")
+		const path = dictionariesDir(lang, "directionals.txt")
 
 		if (!(await pathExists(path))) continue
 
@@ -280,15 +281,12 @@ export async function loadPersonNameSurfaces(): Promise<Set<string>> {
 let personNameSurfacesMemo: Set<string> | undefined
 
 async function scanPersonNameSurfaces(): Promise<Set<string>> {
-	const dictionariesDir = resourceDictionaryPath("libpostal")
+	const dictionariesDir = resourceDictionaryPathBuilder("libpostal")
 
-	const files: string[] = [
-		join(dictionariesDir, "all", "given_names.txt"),
-		join(dictionariesDir, "all", "surnames.txt"),
-	]
+	const files: PathBuilder[] = [dictionariesDir("all", "given_names.txt"), dictionariesDir("all", "surnames.txt")]
 
 	for (const lang of CURATION_LANGUAGES) {
-		files.push(join(dictionariesDir, lang, "personal_titles.txt"))
+		files.push(dictionariesDir(lang, "personal_titles.txt"))
 	}
 
 	const names = new Set<string>()
@@ -378,7 +376,7 @@ export interface BuiltLexicon {
 export async function buildLocalitySurfaceLexicon(opts: BuildLocalitySurfaceLexiconOpts = {}): Promise<BuiltLexicon> {
 	const countries = opts.countries ?? ["US", "FR"]
 	const placetypes = opts.placetypes ?? ["locality", "localadmin", "neighbourhood"]
-	const dbPath = opts.dbPath ?? dataRootPath("db", "wof", "admin-global-priority.db")
+	const dbPath = opts.dbPath ?? wofDatabasePath("admin-global-priority.db")
 	const output = resolvePath(opts.output ?? dataRootPath("gazetteer", "locality-surface-lexicon-v6.json"))
 	const progress = opts.onProgress ?? (() => {})
 

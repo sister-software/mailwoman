@@ -9,7 +9,6 @@ import { workspacePath } from "@mailwoman/core/paths"
 import { BAN_ADAPTER_ID, createBanAdapter } from "@mailwoman/corpus/fr/adapters/ban/adapter"
 import { runAdapter } from "@mailwoman/corpus/runner"
 import { readCanonicalRows, useScratchDir } from "@mailwoman/corpus/test-kit"
-import { join } from "path-ts"
 import { describe, expect, it } from "vitest"
 
 const scratch = useScratchDir("ban")
@@ -106,7 +105,7 @@ describe("ban adapter against fixture sample.csv", () => {
 			corpusVersion: "0.1.0",
 		})
 
-		await removePathIfPresent(join(scratch.path, BAN_ADAPTER_ID))
+		await removePathIfPresent(scratch.path(BAN_ADAPTER_ID))
 
 		const b = await runAdapter({
 			adapter: createBanAdapter(),

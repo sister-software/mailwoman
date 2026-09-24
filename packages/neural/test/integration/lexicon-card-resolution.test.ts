@@ -21,7 +21,7 @@ import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/
 import { makeDirectories, writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { resolveWeights, weightsCachePackageDir } from "@mailwoman/neural/weights"
 import { LexiconVersionMismatchError } from "@mailwoman/neural/weights-lexicon"
-import { join, type PathBuilder } from "path-ts"
+import type { PathBuilder } from "path-ts"
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 
 let cacheRoot: TemporaryDirectory
@@ -32,9 +32,9 @@ let packageDir: PathBuilder
  * finds: `<cacheRoot.path>/node_modules/@mailwoman/neural-weights-en-us`.
  */
 async function stagePackage(card: Record<string, unknown>, lexicons: readonly string[]): Promise<void> {
-	await writeLocalTextFile("", join(packageDir, "model.onnx"))
-	await writeLocalTextFile("", join(packageDir, "tokenizer.model"))
-	await writeLocalJSONFile(card, join(packageDir, "model-card.json"))
+	await writeLocalTextFile("", packageDir("model.onnx"))
+	await writeLocalTextFile("", packageDir("tokenizer.model"))
+	await writeLocalJSONFile(card, packageDir("model-card.json"))
 
 	for (const name of lexicons) {
 		await writeLocalJSONFile({ entries: {} }, packageDir, name)

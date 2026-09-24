@@ -51,7 +51,7 @@ import { groupPhrases } from "@mailwoman/phrase-grouper"
 import { computeQueryShape } from "@mailwoman/query-shape"
 import { WOFSQLitePlaceLookup } from "@mailwoman/resolver-wof-sqlite"
 import { deserializeFST } from "@mailwoman/resolver-wof-sqlite/fst"
-import { join } from "path-ts"
+import { PathBuilder, type PathBuilderLike } from "path-ts"
 
 import { parseSmokeRows, type SmokeRow } from "#eval-harness/demo/cascade/rows"
 import { resolveWOFHotDB, wofHotStageDir } from "#eval-harness/wof-hot-db"
@@ -73,7 +73,7 @@ export interface DemoCascadeSmokeOptions {
 	 */
 	db?: string
 	model?: string
-	tokenizer?: string
+	tokenizer?: PathBuilderLike
 	card?: string
 	fst?: string
 	/**
@@ -146,12 +146,12 @@ export async function demoCascadeSmoke(
 	// loads only when the leg actually runs.
 	// In a clean install without the package the leg fails here, loudly, naming the import.
 	const { runCascade } = await import("@mailwoman/resolver-wof-wasm/browser-cascade")
-	const STAGE = options.stageDir || wofHotStageDir()
-	const DB = options.db || resolveWOFHotDB(String(STAGE))
-	const MODEL = options.model || join(STAGE, "model.onnx")
-	const TOK = options.tokenizer || join(STAGE, "tokenizer.model")
-	const CARD = options.card || join(STAGE, "model-card.json")
-	const FST = options.fst || join(STAGE, "fst-en-US.bin")
+	const STAGE = PathBuilder.from(options.stageDir || wofHotStageDir())
+	const DB = options.db || resolveWOFHotDB(STAGE)
+	const MODEL = options.model || STAGE("model.onnx")
+	const TOK = options.tokenizer || STAGE("tokenizer.model")
+	const CARD = options.card || STAGE("model-card.json")
+	const FST = options.fst || STAGE("fst-en-US.bin")
 	const GAZ = options.gazetteerLexicon || "data/gazetteer/anchor-lexicon-v1.json"
 	const FILE = options.file || "data/eval/external/demo-cascade-smoke.jsonl"
 	const JSON_OUT = options.json || ""
@@ -199,7 +199,7 @@ export async function demoCascadeSmoke(
 	const postcodeBinaries = (
 		await Promise.all(
 			["postcode-us.bin", "postcode-de.bin", "postcode-fr.bin"].map(async (f) => {
-				const p = join(STAGE, f)
+				const p = STAGE(f)
 
 				return { p, exists: await pathExists(p) }
 			})

@@ -14,7 +14,6 @@ import {
 } from "@mailwoman/corpus/adapters/openaddresses/adapter"
 import { runAdapter } from "@mailwoman/corpus/runner"
 import { readCanonicalRows, useScratchDir } from "@mailwoman/corpus/test-kit"
-import { join } from "path-ts"
 import { describe, expect, it } from "vitest"
 
 const scratch = useScratchDir("oa")
@@ -138,7 +137,7 @@ describe("openaddresses adapter against fixture sample-us.geojson", () => {
 
 	it("source_id prefers `hash`; falls back to `id`; then to a content hash", async () => {
 		// Build a tiny fixture with one of each shape inline.
-		const inline = join(scratch.path, "edge.geojsonl")
+		const inline = scratch.path("edge.geojsonl")
 
 		const lines = [
 			stringifyJSON({
@@ -197,7 +196,7 @@ describe("openaddresses adapter against fixture sample-us.geojson", () => {
 	})
 
 	it("skips blank lines, comments, and non-Feature objects without crashing", async () => {
-		const messy = join(scratch.path, "messy.geojsonl")
+		const messy = scratch.path("messy.geojsonl")
 
 		const lines = [
 			"",
@@ -241,7 +240,7 @@ describe("openaddresses adapter against fixture sample-us.geojson", () => {
 			corpusVersion: "0.1.0",
 		})
 
-		await removePathIfPresent(join(scratch.path, OPENADDRESSES_ADAPTER_ID))
+		await removePathIfPresent(scratch.path(OPENADDRESSES_ADAPTER_ID))
 
 		const b = await runAdapter({
 			adapter: createOpenaddressesAdapter(),
@@ -295,7 +294,7 @@ describe("openaddresses adapter against fixture sample-us.geojson", () => {
 	})
 
 	it("accepts UPPERCASE property names (legacy OA dumps)", async () => {
-		const upper = join(scratch.path, "upper.geojsonl")
+		const upper = scratch.path("upper.geojsonl")
 
 		const line = stringifyJSON({
 			type: "Feature",

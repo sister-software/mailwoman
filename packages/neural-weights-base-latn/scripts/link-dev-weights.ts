@@ -27,18 +27,18 @@ await materializeDevOverlay({
 		softFeed.anchor,
 		softFeed.country,
 		{
-			source: String(workspacePath("neural-weights-en-us", "model-card.json")),
+			source: workspacePath("neural-weights-en-us", "model-card.json"),
 			name: "model-card.json",
 			consequenceIfMissing:
 				"the base-latn overlay carries no model card (labels fall back to the compile-time default).",
 		},
 		{
-			source: String(workspacePath("neural-weights-en-us", "calibration.json")),
+			source: workspacePath("neural-weights-en-us", "calibration.json"),
 			name: "calibration.json",
 			consequenceIfMissing: "confidence calibration will resolve OFF for this overlay.",
 		},
 		{
-			source: String(workspacePath("neural-weights-en-us", "calibration-per-locale.json")),
+			source: workspacePath("neural-weights-en-us", "calibration-per-locale.json"),
 			name: "calibration-per-locale.json",
 			consequenceIfMissing: "per-locale confidence calibration will resolve OFF for this overlay.",
 		},

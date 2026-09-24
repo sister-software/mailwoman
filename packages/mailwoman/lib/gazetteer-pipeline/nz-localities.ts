@@ -34,10 +34,11 @@ import { readLocalTextFile, readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { md5Hex } from "@mailwoman/core/hash"
 import { NZ_LOCALITY_ID_BASE } from "@mailwoman/core/resolver/synthetic-id-ranges"
+import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed-db"
-import type { PathBuilderLike } from "path-ts"
+import { PathBuilder, type PathBuilderLike } from "path-ts"
 import { CSVSpliterator } from "spliterator"
 
 /**
@@ -111,8 +112,8 @@ export async function buildNZLocalitiesDatabase(
 ): Promise<{ out: string; inserted: number; skippedGroups: number; sourceMD5: string }> {
 	const { createUnifiedIndexes, createUnifiedSchema } = await import("@mailwoman/resolver-wof-sqlite/unified-schema")
 	const { buildPlaceSearchFTS } = await import("@mailwoman/resolver-wof-sqlite")
-	const csvPath = (opts.csvPath ?? dataRootPath("openaddresses", "extracted", "nz", "countrywide.csv")).toString()
-	const outPath = (opts.out ?? dataRootPath("db", "wof", "localities-nz-linz.db")).toString()
+	const csvPath = PathBuilder.from(opts.csvPath ?? dataRootPath("openaddresses", "extracted", "nz", "countrywide.csv"))
+	const outPath = (opts.out ?? wofDatabasePath("localities-nz-linz.db")).toString()
 	const tmpPath = `${outPath}.tmp`
 
 	// Provenance check: the md5 sidecar must exist and match.

@@ -28,6 +28,7 @@
 import { formatFileSize } from "@mailwoman/core/fs/readers"
 import { repoRootPath } from "@mailwoman/core/paths"
 import { Box, Text } from "ink"
+import { PathBuilder } from "path-ts"
 
 import {
 	type CommandSpec,
@@ -86,11 +87,12 @@ export const spec = {
  * and `--verify-only` against an artifact some earlier run sealed.
  */
 async function runVerification(
-	databasePath: string,
+	database: PathBuilder,
 	client: Parameters<typeof import("@mailwoman/soil/sdk").verifySoilDatabase>[0]["client"],
 	count?: number
 ): Promise<string[]> {
 	const { sampleAgreementPoints, verifySoilDatabase } = await import("@mailwoman/soil/sdk")
+	const databasePath = database.toString()
 
 	const points = sampleAgreementPoints(databasePath, count === undefined ? {} : { count })
 
@@ -113,7 +115,7 @@ async function runVerification(
 
 const GazetteerBuildSoil: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { dataRootPath } = await import("@mailwoman/core/utils")
+		const { soilDatabasePath } = await import("@mailwoman/soil/paths")
 
 		const {
 			acquireRegion,
@@ -142,7 +144,7 @@ const GazetteerBuildSoil: CommandComponent<typeof spec> = ({ options }) => {
 		// every time the check itself was worth re-running.
 		if (options.verifyOnly) {
 			return runVerification(
-				options.out ?? String(dataRootPath("db", "soil", "soil.db")),
+				PathBuilder.from(options.out ?? soilDatabasePath("soil.db")),
 				client,
 				options.verifyPoints ? Number(options.verifyPoints) : undefined
 			)
@@ -151,7 +153,7 @@ const GazetteerBuildSoil: CommandComponent<typeof spec> = ({ options }) => {
 		const acquired = await acquireRegion({
 			client,
 			prefix,
-			cacheRoot: String(dataRootPath("db", "soil", "cache", "archives")),
+			cacheRoot: soilDatabasePath("cache", "archives"),
 			onProgress: (message) => console.error(`  [acquire] ${message}`),
 		})
 
@@ -185,8 +187,8 @@ const GazetteerBuildSoil: CommandComponent<typeof spec> = ({ options }) => {
 
 		const coverageResolution = Number(options.coverageResolution)
 		const indexResolution = Number(options.indexResolution)
-		const out = options.out ?? String(dataRootPath("db", "soil", "soil.db"))
-		const buildSHA = resolveBuildSHA(String(repoRootPath()))
+		const out = PathBuilder.from(options.out ?? soilDatabasePath("soil.db"))
+		const buildSHA = resolveBuildSHA(repoRootPath())
 
 		const buildCmd =
 			`mailwoman gazetteer build soil ${options.area ? `--area ${options.area}` : `--region ${prefix}`} ` +
@@ -195,7 +197,7 @@ const GazetteerBuildSoil: CommandComponent<typeof spec> = ({ options }) => {
 		const result = await buildSoilDatabase({
 			areas: acquired.areas,
 			region,
-			out,
+			out: out.toString(),
 			sourceVintage: acquired.sourceVintage,
 			buildCmd,
 			buildSHA,

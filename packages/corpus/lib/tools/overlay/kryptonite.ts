@@ -19,7 +19,7 @@
 import { delimitedSource } from "@mailwoman/core/fs/delimited"
 import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile, writeLocalTextFile, makeDirectories } from "@mailwoman/core/fs/writers"
-import { join } from "path-ts"
+import { PathBuilder, type PathBuilderLike } from "path-ts"
 import { JSONSpliterator } from "spliterator"
 
 import { PARQUET_COLUMNS, PARQUET_COMPRESSION, ROW_GROUP_SIZE } from "#parquet/schema"
@@ -30,7 +30,7 @@ import { alignRow } from "#utils"
 export interface KryptoniteOverlayOptions {
 	jsonl: string
 	baseManifest: string
-	outDir: string
+	outDir: PathBuilderLike
 	/**
 	 * Default `"0.4.0"`.
 	 */
@@ -85,13 +85,15 @@ export async function buildKryptoniteOverlay(
 
 	if (!(await pathExists(options.baseManifest))) throw new Error(`base-manifest not found: ${options.baseManifest}`)
 
-	await makeDirectories(options.outDir)
+	const outDir = PathBuilder.from(options.outDir)
+	const corpusDir = outDir(`corpus-v${corpusVersion}`)
+	await makeDirectories(outDir)
 
 	const quarantine: string[] = []
 
 	const newManifest = await writeParquetSplits(
 		{ train: labeledRows(options.jsonl, corpusVersion, quarantine) },
-		{ outputDir: options.outDir, corpusVersion }
+		{ outputDir: outDir, corpusVersion }
 	)
 
 	report?.(
@@ -100,7 +102,7 @@ export async function buildKryptoniteOverlay(
 	)
 
 	if (quarantine.length) {
-		const qPath = join(options.outDir, `corpus-v${corpusVersion}`, "quarantine-kryptonite.tsv")
+		const qPath = corpusDir("quarantine-kryptonite.tsv")
 		await writeLocalTextFile(quarantine, qPath)
 		report?.(`quarantine log → ${qPath}`)
 	}
@@ -132,7 +134,7 @@ export async function buildKryptoniteOverlay(
 
 	// The v0.3.0 files carry no `source`: they mix sources, so audit.ts falls back to its
 	// first_source_id-prefix inference for them (it re-derives on its own when `source` is absent).
-	const combinedPath = join(options.outDir, `corpus-v${corpusVersion}`, "MANIFEST.json")
+	const combinedPath = corpusDir("MANIFEST.json")
 	await writeLocalJSONFile(combined, combinedPath)
 	report?.(`wrote combined manifest → ${combinedPath}`)
 	report?.(`  total_rows=${combined.total_rows} (base=${base.total_rows}, added=${newManifest.total_rows})`)

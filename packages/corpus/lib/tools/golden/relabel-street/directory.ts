@@ -16,7 +16,7 @@ import {
 import { sha256File } from "@mailwoman/core/hash"
 import { parseJSONStrict, tryParsingJSON, stringifyJSON } from "@mailwoman/core/json"
 import { isPresent } from "@mailwoman/core/objects"
-import { basename, join } from "path-ts"
+import { basename, PathBuilder, type PathBuilderLike } from "path-ts"
 import { TextSpliterator } from "spliterator"
 import { Globerator } from "spliterator/node/fs"
 
@@ -136,18 +136,20 @@ export async function relabelGoldenDirectory(
 	report: (line: string) => void = console.log
 ): Promise<RelabelGoldenReport> {
 	const { input, output } = options
-	const deckPath = options.deck ?? join(output, "REVIEW-DECK.jsonl")
-	await makeDirectories(output)
+	const outputDir = PathBuilder.from(output)
+	// A string, because the report records it and its markdown sibling is named by suffix replacement.
+	const deckPath = options.deck ?? outputDir("REVIEW-DECK.jsonl").toString()
+	await makeDirectories(outputDir)
 
 	const deck: GoldenRelabelDeckEntry[] = []
 	const files: RelabelGoldenReport["files"] = {}
 
-	const walk = async (dirIn: string, dirOut: string, prefix: string): Promise<void> => {
+	const walk = async (dirIn: PathBuilder, dirOut: PathBuilder, prefix: string): Promise<void> => {
 		await makeDirectories(dirOut)
 
 		for await (const name of Globerator.from("*", { cwd: dirIn, withFileTypes: true, onlyFiles: false })) {
-			const from = join(dirIn, name.name)
-			const to = join(dirOut, name.name)
+			const from = dirIn(name.name)
+			const to = dirOut(name.name)
 
 			if (name.isDirectory()) {
 				await walk(from, to, `${prefix}${name.name}/`)
@@ -220,7 +222,7 @@ export async function relabelGoldenDirectory(
 	}
 
 	report(`relabel ${input} → ${output}`)
-	await walk(input, output, "")
+	await walk(PathBuilder.from(input), outputDir, "")
 
 	await writeLocalJSONLFile(deck, deckPath)
 	await writeLocalFile(renderDeckMarkdown(deck, basename(input), basename(output)), deckPath.replace(/\.jsonl$/, ".md"))
@@ -233,7 +235,7 @@ export async function relabelGoldenDirectory(
 	for (const [name, stats] of Object.entries(files)) {
 		manifestFiles[name] = {
 			entries: stats.entries,
-			sha256: await sha256File(join(output, name)),
+			sha256: await sha256File(outputDir(name)),
 			changed: stats.changed,
 			flagged: stats.flagged,
 			prefix_split: stats.prefixSplit,
@@ -275,7 +277,7 @@ export async function relabelGoldenDirectory(
 		review_deck: basename(deckPath),
 	}
 
-	await writeLocalJSONFile(manifest, join(output, "MANIFEST.json"))
+	await writeLocalJSONFile(manifest, outputDir("MANIFEST.json"))
 	report(`✓ ${totalChanged} rows split, ${totalFlagged} flagged — deck at ${deckPath}`)
 
 	return { files, deckPath, outputDir: output, totalChanged, totalFlagged }
@@ -347,8 +349,10 @@ export function isLeftFolded(rowClass: GoldenRelabelClass): boolean {
  * True when a golden dir declares the US-split convention — i.e. it is safe
  * to grade it with an unfolded scorer.
  */
-export async function goldenDeclaresSplitStreets(dir: string): Promise<boolean> {
-	for (const candidate of [join(dir, "MANIFEST.json"), join(dir, "..", "MANIFEST.json")]) {
+export async function goldenDeclaresSplitStreets(dir: PathBuilderLike): Promise<boolean> {
+	const root = PathBuilder.from(dir)
+
+	for (const candidate of [root("MANIFEST.json"), root.dirname()("MANIFEST.json")]) {
 		if (!(await pathExists(candidate))) continue
 
 		const manifest = tryParsingJSON<{ convention?: { street_convention?: Record<string, string> } }>(

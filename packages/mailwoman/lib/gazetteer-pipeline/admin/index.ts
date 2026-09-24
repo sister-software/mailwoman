@@ -14,15 +14,17 @@
  *   a recipe. the recipe is `../defaults.ts`).
  */
 
+import { dataRootPath, wofReposPath } from "@mailwoman/core/data-root"
 import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { removePath, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { md5File } from "@mailwoman/core/hash"
 import { repoRootPath } from "@mailwoman/core/paths"
-import { isoDate, dataRootPath } from "@mailwoman/core/utils"
+import { isoDate } from "@mailwoman/core/utils"
+import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase } from "@mailwoman/sqlite/sealed-db"
-import { join } from "path-ts"
+import { PathBuilder, type PathBuilderLike } from "path-ts"
 
 import { enrichAdmin } from "#gazetteer-pipeline/admin/enrich"
 import { foldGeonames, type FoldGeonamesResult } from "#gazetteer-pipeline/admin/fold/geonames"
@@ -54,13 +56,13 @@ export interface BuildAdminOptions {
 	 *
 	 * Default `<data-root>/src/wof-repos`.
 	 */
-	dataDir?: string
+	dataDir?: PathBuilderLike
 	/**
 	 * Output artifact path.
 	 *
 	 * Default `<data-root>/db/wof/admin-global-priority.rebuild.db` (staging — swap deliberately).
 	 */
-	out?: string
+	out?: PathBuilderLike
 	overtureCountries?: readonly string[]
 	geonamesCountries?: readonly string[]
 	overtureRelease?: string
@@ -100,14 +102,13 @@ export interface BuildAdminResult {
 export async function buildAdmin(opts: BuildAdminOptions = {}): Promise<BuildAdminResult> {
 	const t0 = performance.now()
 	const phase = opts.onPhase ?? (() => {})
-	const wofDir = dataRootPath("db", "wof")
-	const dataDir = opts.dataDir ?? join(wofDir, "repos")
-	const out = opts.out ?? join(wofDir, `admin-global-priority${DEFAULT_ADMIN_STAGING_SUFFIX}`)
+	const dataDir = PathBuilder.from(opts.dataDir ?? wofReposPath)
+	const out = PathBuilder.from(opts.out ?? wofDatabasePath(`admin-global-priority${DEFAULT_ADMIN_STAGING_SUFFIX}`))
 	const overtureCountries = opts.overtureCountries ?? DEFAULT_OVERTURE_COUNTRIES
 	const geonamesCountries = opts.geonamesCountries ?? DEFAULT_GEONAMES_COUNTRIES
 	const overtureRelease = opts.overtureRelease ?? DEFAULT_OVERTURE_RELEASE
 
-	// resolver-wof-sqlite is an optional peer — lazy import (the gazetteer-pipeline convention).
+	// Imported here so loading this module does not evaluate resolver-wof-sqlite (the gazetteer-pipeline convention).
 	const { createUnifiedSchema } = await import("@mailwoman/resolver-wof-sqlite/unified-schema")
 
 	const ingestPath = out + ".ingest"
@@ -147,14 +148,14 @@ export async function buildAdmin(opts: BuildAdminOptions = {}): Promise<BuildAdm
 
 		await createUnifiedSchema(db)
 
-		phase("ingest-wof", dataDir)
+		phase("ingest-wof", dataDir.toString())
 
 		ingest = await ingestWOF(db, {
 			dataDir,
 			concurrency: opts.concurrency,
 			batchCommitSize: opts.batchCommitSize,
 			// #1905: GeoNames-anchored label-point adjudication. Reads the same per-country extracts fold-geonames consumes. A data root without them degrades to the plain label preference.
-			anchorLookup: await createGeoNamesAnchorLookup(String(dataRootPath("geonames"))),
+			anchorLookup: await createGeoNamesAnchorLookup(dataRootPath("geonames")),
 			onProgress: (processed, skipped, total) =>
 				phase(
 					"ingest-wof",
@@ -184,14 +185,14 @@ export async function buildAdmin(opts: BuildAdminOptions = {}): Promise<BuildAdm
 		const enriched = await enrichAdmin(db)
 		phase("enrich", `${enriched.abbrevNamesAdded} abbrevs / ${enriched.placeAbbrRows} place_abbr rows`)
 
-		phase("vacuum", out)
+		phase("vacuum", out.toString())
 
 		if (await pathExists(out)) {
 			// A prior sealed staging artifact can't be unlinked-through-write — remove it explicitly.
 			await removePath(out)
 		}
 
-		db.prepare("VACUUM INTO ?").run(out)
+		db.prepare("VACUUM INTO ?").run(out.toString())
 	}
 
 	await removePath(ingestPath)
@@ -238,7 +239,7 @@ export async function buildAdmin(opts: BuildAdminOptions = {}): Promise<BuildAdm
 
 	// Before the seal — see `stampLayerManifest`, which owns that ordering and its reason.
 	phase("manifest")
-	const sha = buildSHA(String(repoRootPath()))
+	const sha = buildSHA(repoRootPath())
 
 	await stampLayerManifest(
 		out,
@@ -280,7 +281,7 @@ export async function buildAdmin(opts: BuildAdminOptions = {}): Promise<BuildAdm
 	}
 
 	return {
-		out,
+		out: out.toString(),
 		placesIngested: ingest.placesIngested,
 		overtureIngested,
 		geonamesIngested: folded.placesIngested,

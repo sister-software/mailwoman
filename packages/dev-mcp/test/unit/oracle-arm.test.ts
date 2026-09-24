@@ -13,17 +13,17 @@ import {
 	ORACLE_GRADE_MODE,
 	readOracleConfig,
 } from "@mailwoman/dev-mcp/oracle-arm"
-import { join } from "path-ts"
+import type { PathBuilder } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 
 const fixtures = new AsyncDisposableStack()
 
 afterAll(() => fixtures.disposeAsync())
 
-async function configFile(contents: string): Promise<string> {
+async function configFile(contents: string): Promise<PathBuilder> {
 	const dir = fixtures.use(await temporaryDirectory("mwdev-oracle-")).path
 
-	const path = join(dir, "oracle-config.json")
+	const path = dir("oracle-config.json")
 
 	await writeLocalFile(contents, path)
 

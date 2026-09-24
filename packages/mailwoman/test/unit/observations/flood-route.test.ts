@@ -33,6 +33,7 @@ import {
 import { EA_COVERAGE_STATEMENT, EA_COVERAGE_STATEMENT_URL } from "@mailwoman/flood/vocabulary"
 import { geocodeAddress, type GeocodeClassifier, type GeocodeDeps } from "mailwoman/geocode"
 import { createAuthorityDesignationRoute } from "mailwoman/observations"
+import type { PathBuilder } from "path-ts"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 function node(partial: Partial<AddressNode> & Pick<AddressNode, "tag" | "value">): AddressNode {
@@ -103,11 +104,11 @@ const DESIGNATED_ABSENCE = { latitude: FIXTURE_ORIGIN.lat + 0.2, longitude: FIXT
 const OUTSIDE_FOOTPRINT = { latitude: FIXTURE_ORIGIN.lat + 5, longitude: FIXTURE_ORIGIN.lon + 5 }
 
 let scratch: TemporaryDirectory
-let databasePath: string
+let databasePath: PathBuilder
 
 beforeAll(async () => {
 	scratch = await temporaryDirectory("mw-flood-route-")
-	databasePath = scratch.resolve("flood.db")
+	databasePath = scratch.path("flood.db")
 
 	await buildFloodDatabase({
 		source: fixtureSource(fixtureFeatures()),

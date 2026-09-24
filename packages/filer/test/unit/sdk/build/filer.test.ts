@@ -24,6 +24,7 @@ import { buildFilerDatabase, type BuildFilerResult, type EdgarSubsidiaryRow } fr
 import type { Form499Row } from "@mailwoman/filer/sdk/form499"
 import type { ProviderListRow } from "@mailwoman/filer/sdk/provider-list"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
+import type { PathBuilderLike } from "path-ts"
 import { describe, expect, it } from "vitest"
 
 const FRN_ACME = toFRN("0001753557")!
@@ -100,14 +101,14 @@ function providerFixtureRows(): ProviderListRow[] {
 	]
 }
 
-function openFilerDB(path: string): DatabaseClient<FilerDatabase> {
+function openFilerDB(path: PathBuilderLike): DatabaseClient<FilerDatabase> {
 	return new DatabaseClient<FilerDatabase>(path, { readOnly: true })
 }
 
 describe("buildFilerDatabase", () => {
 	it("builds a sealed file at `out`", async () => {
 		await using scratch = await temporaryDirectory("filer-build-")
-		const out = scratch.resolve("filer.db")
+		const out = scratch.path("filer.db")
 
 		await buildFilerDatabase({
 			form499Rows: form499FixtureRows(),
@@ -125,7 +126,7 @@ describe("buildFilerDatabase", () => {
 
 	it("emits FRN↔form499ID, FRN↔holdingCompanyName, and FRN↔managementCompanyName (both) for a filed 499 row", async () => {
 		await using scratch = await temporaryDirectory("filer-build-")
-		const out = scratch.resolve("filer.db")
+		const out = scratch.path("filer.db")
 
 		await buildFilerDatabase({
 			form499Rows: form499FixtureRows(),
@@ -158,7 +159,7 @@ describe("buildFilerDatabase", () => {
 
 	it("records a 499 row with no FRN as a form499ID node with attributes, never throwing", async () => {
 		await using scratch = await temporaryDirectory("filer-build-")
-		const out = scratch.resolve("filer.db")
+		const out = scratch.path("filer.db")
 
 		await buildFilerDatabase({
 			form499Rows: form499FixtureRows(),
@@ -198,7 +199,7 @@ describe("buildFilerDatabase", () => {
 
 	it("a bdcProviderID with two FRNs yields two distinct bdcProviderID↔FRN edges (decision 6)", async () => {
 		await using scratch = await temporaryDirectory("filer-build-")
-		const out = scratch.resolve("filer.db")
+		const out = scratch.path("filer.db")
 
 		await buildFilerDatabase({
 			providerRows: providerFixtureRows(),
@@ -227,7 +228,7 @@ describe("buildFilerDatabase", () => {
 
 	it("emits bdcProviderID↔holdingCompanyName only when holdingCompany is present, counting the rest as skipped", async () => {
 		await using scratch = await temporaryDirectory("filer-build-")
-		const out = scratch.resolve("filer.db")
+		const out = scratch.path("filer.db")
 
 		const result = await buildFilerDatabase({
 			providerRows: providerFixtureRows(),
@@ -254,7 +255,7 @@ describe("buildFilerDatabase", () => {
 
 	it("every edge carries non-empty provenance (source, source_vintage, assertion, valid_from), and valid_from is always ISO YYYY-MM-DD even when sourceVintage is a non-ISO label", async () => {
 		await using scratch = await temporaryDirectory("filer-build-")
-		const out = scratch.resolve("filer.db")
+		const out = scratch.path("filer.db")
 
 		await buildFilerDatabase({
 			form499Rows: form499FixtureRows(),
@@ -283,7 +284,7 @@ describe("buildFilerDatabase", () => {
 
 	it("never emits an edge derived from a DC-agent field", async () => {
 		await using scratch = await temporaryDirectory("filer-build-")
-		const out = scratch.resolve("filer.db")
+		const out = scratch.path("filer.db")
 
 		await buildFilerDatabase({
 			form499Rows: form499FixtureRows(),
@@ -314,7 +315,7 @@ describe("buildFilerDatabase", () => {
 
 	it("the manifest carries the build's source vintage and the sources actually used", async () => {
 		await using scratch = await temporaryDirectory("filer-build-")
-		const out = scratch.resolve("filer.db")
+		const out = scratch.path("filer.db")
 
 		await buildFilerDatabase({
 			form499Rows: form499FixtureRows(),
@@ -337,7 +338,7 @@ describe("buildFilerDatabase", () => {
 
 	it("the manifest's source lists only the sources actually supplied", async () => {
 		await using scratch = await temporaryDirectory("filer-build-")
-		const out = scratch.resolve("filer.db")
+		const out = scratch.path("filer.db")
 
 		await buildFilerDatabase({
 			providerRows: providerFixtureRows(),
@@ -355,7 +356,7 @@ describe("buildFilerDatabase", () => {
 
 	it("a malformed row (empty form499ID) is loud, and no artifact is left behind", async () => {
 		await using scratch = await temporaryDirectory("filer-build-")
-		const out = scratch.resolve("filer.db")
+		const out = scratch.path("filer.db")
 
 		const malformedRows: Form499Row[] = [
 			{
@@ -378,7 +379,7 @@ describe("buildFilerDatabase", () => {
 
 	it("an empty lastFiledAt is loud — never produces a blank-provenance edge (decision 7 / criterion 1)", async () => {
 		await using scratch = await temporaryDirectory("filer-build-")
-		const out = scratch.resolve("filer.db")
+		const out = scratch.path("filer.db")
 
 		const malformedRows: Form499Row[] = [
 			{
@@ -401,7 +402,7 @@ describe("buildFilerDatabase", () => {
 
 	it("a blank provider-list frn is loud — never mints a shared degenerate FRN node", async () => {
 		await using scratch = await temporaryDirectory("filer-build-")
-		const out = scratch.resolve("filer.db")
+		const out = scratch.path("filer.db")
 
 		const malformedRows: ProviderListRow[] = [
 			// Two different, unrelated providers, both with a blank frn.
@@ -426,7 +427,7 @@ describe("buildFilerDatabase", () => {
 
 	it("throws when neither a 499 nor a provider-list source is supplied", async () => {
 		await using scratch = await temporaryDirectory("filer-build-")
-		const out = scratch.resolve("filer.db")
+		const out = scratch.path("filer.db")
 
 		await expect(
 			buildFilerDatabase({
@@ -468,7 +469,7 @@ describe("buildFilerDatabase", () => {
 
 		it("collapses a same-source/same-vintage duplicate row within one build (filer_attribute has no PK of its own)", async () => {
 			await using scratch = await temporaryDirectory("filer-build-")
-			const out = scratch.resolve("filer.db")
+			const out = scratch.path("filer.db")
 
 			const row = idempotencyFixtureRow()
 
@@ -501,7 +502,7 @@ describe("buildFilerDatabase", () => {
 
 		it("re-running the same build inputs against the same `out` does not grow row counts", async () => {
 			await using scratch = await temporaryDirectory("filer-build-")
-			const out = scratch.resolve("filer.db")
+			const out = scratch.path("filer.db")
 
 			const row = idempotencyFixtureRow()
 
@@ -534,7 +535,7 @@ describe("buildFilerDatabase", () => {
 
 		it("two DIFFERENT classification values under the same key/source/vintage both survive (not collapsed by the stage PK)", async () => {
 			await using scratch = await temporaryDirectory("filer-build-")
-			const out = scratch.resolve("filer.db")
+			const out = scratch.path("filer.db")
 
 			// usfContributor: true + an Incumbent principalCommType -> two
 			// classification values ("usf_contributor", "incumbent_lec") sharing
@@ -569,7 +570,7 @@ describe("buildFilerDatabase", () => {
 	describe("single-vintage snapshot semantics", () => {
 		it("rebuilding at a later sourceVintage REPLACES the artifact — earlier-vintage rows do not survive", async () => {
 			await using scratch = await temporaryDirectory("filer-build-")
-			const out = scratch.resolve("filer.db")
+			const out = scratch.path("filer.db")
 
 			await buildFilerDatabase({
 				providerRows: [{ providerID: 500_001, frn: toFRN("0007777777")!, holdingCompany: "Old Co" }],
@@ -636,7 +637,7 @@ describe("buildFilerDatabase", () => {
 
 		it("types holding/management edges to their named FilerRelationship, keeping identity edges SameEntity", async () => {
 			await using scratch = await temporaryDirectory("filer-build-")
-			const out = scratch.resolve("filer.db")
+			const out = scratch.path("filer.db")
 
 			const row = familyFixtureRow({
 				form499ID: "800001",
@@ -686,7 +687,7 @@ describe("buildFilerDatabase", () => {
 
 		it("three distinct FRNs sharing one holding company become one family with three members", async () => {
 			await using scratch = await temporaryDirectory("filer-build-")
-			const out = scratch.resolve("filer.db")
+			const out = scratch.path("filer.db")
 
 			const rows = [
 				familyFixtureRow({ form499ID: "810001", frn: FRN_DELTA, holdingCompany: "Shared Holdco Inc" }),
@@ -739,7 +740,7 @@ describe("buildFilerDatabase", () => {
 
 		it("a filer whose holding company differs from its management company gets two family memberships under different relationships", async () => {
 			await using scratch = await temporaryDirectory("filer-build-")
-			const out = scratch.resolve("filer.db")
+			const out = scratch.path("filer.db")
 
 			const row = familyFixtureRow({
 				form499ID: "820001",
@@ -773,7 +774,7 @@ describe("buildFilerDatabase", () => {
 
 		it("never emits a filer_family row derived from a DC-agent field", async () => {
 			await using scratch = await temporaryDirectory("filer-build-")
-			const out = scratch.resolve("filer.db")
+			const out = scratch.path("filer.db")
 
 			await buildFilerDatabase({
 				form499Rows: form499FixtureRows(),
@@ -799,7 +800,7 @@ describe("buildFilerDatabase", () => {
 
 		it("collapses a same-source/same-vintage duplicate row's family rows within one build", async () => {
 			await using scratch = await temporaryDirectory("filer-build-")
-			const out = scratch.resolve("filer.db")
+			const out = scratch.path("filer.db")
 
 			const row = familyFixtureRow({
 				form499ID: "830001",
@@ -823,7 +824,7 @@ describe("buildFilerDatabase", () => {
 
 		it("rebuilding the same inputs does not grow filer_family row counts", async () => {
 			await using scratch = await temporaryDirectory("filer-build-")
-			const out = scratch.resolve("filer.db")
+			const out = scratch.path("filer.db")
 
 			const rows = [
 				familyFixtureRow({
@@ -895,7 +896,7 @@ describe("buildFilerDatabase", () => {
 
 		it("always writes the authoritative disclosure edge (cik -> subsidiary name), even with no matching FRN", async () => {
 			await using scratch = await temporaryDirectory("filer-build-")
-			const out = scratch.resolve("filer.db")
+			const out = scratch.path("filer.db")
 
 			await buildFilerDatabase({
 				edgarRows: [edgarFixtureRow({ subsidiaryName: "Unmatched Sub LLC", jurisdiction: "Delaware" })],
@@ -935,7 +936,7 @@ describe("buildFilerDatabase", () => {
 
 		it("edgarRows ALONE satisfies the 'at least one source' guard — it does not require form499/provider data", async () => {
 			await using scratch = await temporaryDirectory("filer-build-")
-			const out = scratch.resolve("filer.db")
+			const out = scratch.path("filer.db")
 
 			await expect(
 				buildFilerDatabase({
@@ -949,7 +950,7 @@ describe("buildFilerDatabase", () => {
 
 		it("the manifest's source includes edgar-exhibit-21 only when edgarRows was actually supplied", async () => {
 			await using scratch = await temporaryDirectory("filer-build-")
-			const out = scratch.resolve("filer.db")
+			const out = scratch.path("filer.db")
 
 			await buildFilerDatabase({
 				edgarRows: [edgarFixtureRow({ subsidiaryName: "Manifest Sub LLC" })],
@@ -965,7 +966,7 @@ describe("buildFilerDatabase", () => {
 
 		it("a subsidiary name matching (canonically) exactly one FRN's legal name writes BOTH an inferred filer_edge AND a filer_family row — the family row is what the rollup reads, so one without the other is invisible", async () => {
 			await using scratch = await temporaryDirectory("filer-build-")
-			const out = scratch.resolve("filer.db")
+			const out = scratch.path("filer.db")
 
 			const frn = toFRN("0009700001")!
 
@@ -1025,7 +1026,7 @@ describe("buildFilerDatabase", () => {
 
 		it("abstains (no inferred edge, no family row) when the subsidiary name matches TWO DIFFERENT FRNs — a genuine name collision, never picked arbitrarily", async () => {
 			await using scratch = await temporaryDirectory("filer-build-")
-			const out = scratch.resolve("filer.db")
+			const out = scratch.path("filer.db")
 
 			const frnA = toFRN("0009700002")!
 			const frnB = toFRN("0009700003")!
@@ -1086,7 +1087,7 @@ describe("buildFilerDatabase", () => {
 		describe("the subsidiary→FRN match score varies with what the match actually knows", () => {
 			async function scoreFor(legalNameOfCarrier: string, subsidiaryName: string): Promise<number | null> {
 				await using scratch = await temporaryDirectory("filer-build-")
-				const out = scratch.resolve("filer.db")
+				const out = scratch.path("filer.db")
 
 				await buildFilerDatabase({
 					form499Rows: [
@@ -1137,7 +1138,7 @@ describe("buildFilerDatabase", () => {
 
 			it("evidence records BOTH raw spellings, so a reader can see what the score is grading", async () => {
 				await using scratch = await temporaryDirectory("filer-build-")
-				const out = scratch.resolve("filer.db")
+				const out = scratch.path("filer.db")
 
 				await buildFilerDatabase({
 					form499Rows: [
@@ -1172,7 +1173,7 @@ describe("buildFilerDatabase", () => {
 
 		it("a malformed CIK (not zero-padded 10 digits) is loud", async () => {
 			await using scratch = await temporaryDirectory("filer-build-")
-			const out = scratch.resolve("filer.db")
+			const out = scratch.path("filer.db")
 
 			await expect(
 				buildFilerDatabase({
@@ -1186,7 +1187,7 @@ describe("buildFilerDatabase", () => {
 
 		it("an empty subsidiaryName is loud", async () => {
 			await using scratch = await temporaryDirectory("filer-build-")
-			const out = scratch.resolve("filer.db")
+			const out = scratch.path("filer.db")
 
 			await expect(
 				buildFilerDatabase({
@@ -1200,7 +1201,7 @@ describe("buildFilerDatabase", () => {
 
 		it("a non-ISO filingDate is loud", async () => {
 			await using scratch = await temporaryDirectory("filer-build-")
-			const out = scratch.resolve("filer.db")
+			const out = scratch.path("filer.db")
 
 			await expect(
 				buildFilerDatabase({

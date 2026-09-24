@@ -21,7 +21,7 @@
  */
 
 import { extractBANAddrPoints } from "@mailwoman/ban/sdk"
-import { join } from "path-ts"
+import { PathBuilder, type PathBuilderLike } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
 /**
@@ -75,10 +75,11 @@ export interface LieuDitExtractResult {
  *
  * The two must agree or the index and the training database would read different populations.
  */
-export async function enumerateBANDeptFiles(banDir: string): Promise<string[]> {
+export async function enumerateBANDeptFiles(banDir: PathBuilderLike): Promise<PathBuilder[]> {
+	const root = PathBuilder.from(banDir)
 	const byDept = new Map<string, string>()
 
-	for await (const name of Globerator.from("*", { cwd: banDir, absolute: false })) {
+	for await (const name of Globerator.from("*", { cwd: root, absolute: false })) {
 		const match = /^adresses-(.+?)\.csv(\.gz)?$/.exec(name)
 
 		if (!match) continue
@@ -95,7 +96,7 @@ export async function enumerateBANDeptFiles(banDir: string): Promise<string[]> {
 		}
 	}
 
-	return [...byDept.values()].toSorted().map((name) => join(banDir, name))
+	return [...byDept.values()].toSorted().map((name) => root(name))
 }
 
 /**
@@ -104,7 +105,7 @@ export async function enumerateBANDeptFiles(banDir: string): Promise<string[]> {
  * Reads the full national dump (~26M rows), so this is minutes rather than seconds.
  * The caller is a build command, never a request path.
  */
-export async function extractLieuDitPairs(banDir: string): Promise<LieuDitExtractResult> {
+export async function extractLieuDitPairs(banDir: PathBuilderLike): Promise<LieuDitExtractResult> {
 	const files = await enumerateBANDeptFiles(banDir)
 
 	if (!files.length) {

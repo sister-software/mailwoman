@@ -58,6 +58,7 @@ import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street"
 import { shortCellToInt, type H3Cell, type PointLiteral } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { cellToChildren, cellToLatLng, cellToParent, latLngToCell } from "h3-js"
+import type { PathBuilder } from "path-ts"
 import { describe, expect, it } from "vitest"
 
 const ASOF_DATE = "2026-07-30"
@@ -133,7 +134,7 @@ type BDCFixture = TemporaryDirectory & { db: DatabaseClient<BDCDatabase> }
 
 async function buildBDCFixture(): Promise<BDCFixture> {
 	await using fixture = await temporaryDirectory("bdc-plausibility-bdc-")
-	const out = fixture.resolve("bdc.db")
+	const out = fixture.path("bdc.db")
 
 	await buildBDCDatabase({
 		rows: fixtureRows(),
@@ -171,13 +172,13 @@ function cellFor(latitude: number, longitude: number): number {
 /**
  * A built `poi.db` and the scratch directory holding it, both removed when the binding leaves scope.
  */
-type POIFixture = TemporaryDirectory & { path: string }
+type POIFixture = TemporaryDirectory & { databasePath: PathBuilder }
 
 async function buildPOILookupFixture(rows: readonly POIFixtureRow[]): Promise<POIFixture> {
 	await using scratch = await temporaryDirectory("bdc-plausibility-poi-")
-	const path = scratch.resolve("poi.db")
+	const databasePath = scratch.path("poi.db")
 
-	await using kdb = new DatabaseClient<POIDatabase>(path)
+	await using kdb = new DatabaseClient<POIDatabase>(databasePath)
 
 	await createPOITable(kdb)
 	await createPOIStagingTables(kdb)
@@ -214,7 +215,7 @@ async function buildPOILookupFixture(rows: readonly POIFixtureRow[]): Promise<PO
 	await createPOINameKeyIndex(kdb)
 	await createPOIBrandIndex(kdb)
 
-	return scratch.moveWith({ path })
+	return scratch.moveWith({ databasePath })
 }
 
 /**
@@ -261,7 +262,7 @@ async function openBoth(): Promise<AsyncDisposableStack & { deps: PlausibilityDe
 	const bdc = stack.use(await buildBDCFixture())
 	const poi = stack.use(await buildPOILookupFixture([TELECOM_EXCHANGE_NEAR]))
 	const poischemadb = stack.use(await openpoischemadb())
-	const poiLookup = stack.use(new POILookup({ databasePath: poi.path }))
+	const poiLookup = stack.use(new POILookup({ databasePath: poi.databasePath }))
 
 	// Coverage for exactly Springfield's own res-6 parent — the query point's cell.
 	await writeLayerCoverage(poischemadb, [{ h3Cell: SPRINGFIELD_RES6_PARENT_SHORT, completeness: 1, observedRows: 1 }])
@@ -454,7 +455,7 @@ describe("plausibilityCheck — filing evidence + corroboration", () => {
 
 	it("corroborates false for a same-tech but LESSER speed filing", async () => {
 		await using scratch = await temporaryDirectory("bdc-plausibility-lesser-")
-		const out = scratch.resolve("bdc.db")
+		const out = scratch.path("bdc.db")
 
 		await buildBDCDatabase({
 			rows: [
@@ -555,7 +556,7 @@ describe("plausibilityCheck — physical evidence + poi layer absence (decision 
 	it("a geoid-only claim (no point/address) skips physical evidence entirely — no abstain, no entry — even with deps.poi present", async () => {
 		await using poi = await buildPOILookupFixture([TELECOM_EXCHANGE_NEAR])
 		using poischemadb = await openpoischemadb()
-		using poiLookup = new POILookup({ databasePath: poi.path })
+		using poiLookup = new POILookup({ databasePath: poi.databasePath })
 
 		const bundle = await plausibilityCheck(
 			{
@@ -649,7 +650,7 @@ describe("plausibilityCheck — full composition (both layers present)", () => {
 		await using bdc = await buildBDCFixture()
 		await using poi = await buildPOILookupFixture([])
 		using poischemadb = await openpoischemadb()
-		using poiLookup = new POILookup({ databasePath: poi.path })
+		using poiLookup = new POILookup({ databasePath: poi.databasePath })
 
 		// Deliberately covering the remote point's own res-6 parent (not Springfield's) — decoupled
 		// from any real poi row, same idiom `nearest-infrastructure.test.ts`'s `openemptyschemadb`
@@ -680,7 +681,7 @@ describe("plausibilityCheck — per-layer coverage-spine resolution assertion", 
 		await using poi = await buildPOILookupFixture([TELECOM_EXCHANGE_NEAR])
 		// Deliberately mismatched: bdc.db records resolution 9 (BDC_H3_RESOLUTION); this poi schemadb records 6.
 		using poischemadb = await openpoischemadb(6)
-		using poiLookup = new POILookup({ databasePath: poi.path })
+		using poiLookup = new POILookup({ databasePath: poi.databasePath })
 
 		await expect(
 			plausibilityCheck(
@@ -701,7 +702,7 @@ describe("plausibilityCheck — per-layer coverage-spine resolution assertion", 
 		// `pointCell` (below) is still derived from BDC_H3_RESOLUTION regardless,
 		// so poi's own resolution must be checked here too.
 		using poischemadb = await openpoischemadb(6)
-		using poiLookup = new POILookup({ databasePath: poi.path })
+		using poiLookup = new POILookup({ databasePath: poi.databasePath })
 
 		await expect(
 			plausibilityCheck(
@@ -733,7 +734,7 @@ describe("plausibilityCheck — per-layer coverage-spine resolution assertion", 
 	it("does not throw when only poi is wired and its own recorded resolution matches BDC_H3_RESOLUTION", async () => {
 		await using poi = await buildPOILookupFixture([TELECOM_EXCHANGE_NEAR])
 		using poischemadb = await openpoischemadb() // default resolution 9, matches BDC_H3_RESOLUTION
-		using poiLookup = new POILookup({ databasePath: poi.path })
+		using poiLookup = new POILookup({ databasePath: poi.databasePath })
 
 		await expect(
 			plausibilityCheck(
@@ -766,7 +767,7 @@ describe("§7-2b criteria", () => {
 			await using bdc = await buildBDCFixture()
 			await using poi = await buildPOILookupFixture([]) // no plant anywhere
 			using poischemadb = await openpoischemadb()
-			using poiLookup = new POILookup({ databasePath: poi.path })
+			using poiLookup = new POILookup({ databasePath: poi.databasePath })
 
 			// SIBLING_POINT: same res-6 parent as Springfield (real bdc.db coverage), zero
 			// bdc_availability rows of its own — filing-landscape.ts's meaning-of-zero positive case

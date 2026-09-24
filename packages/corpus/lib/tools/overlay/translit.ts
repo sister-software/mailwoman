@@ -28,12 +28,12 @@
  *   --out-dir /data/corpus/versioned/v0.4.0`
  */
 
-import { mailwomanDataRoot } from "@mailwoman/core/data-root"
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { delimitedSource } from "@mailwoman/core/fs/delimited"
 import { pathExists, readLocalJSONFile, tryStat } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile, writeLocalTextFile, makeDirectories } from "@mailwoman/core/fs/writers"
 import { sha256File } from "@mailwoman/core/hash"
-import { join } from "path-ts"
+import { PathBuilder, type PathBuilderLike } from "path-ts"
 import { JSONSpliterator } from "spliterator"
 
 import { PARQUET_COLUMNS, PARQUET_COMPRESSION, ROW_GROUP_SIZE, rowToParquet } from "#parquet/schema"
@@ -45,7 +45,7 @@ import { alignRow } from "#utils"
 export interface TranslitOverlayOptions {
 	jsonl: string
 	baseManifest: string
-	outDir: string
+	outDir: PathBuilderLike
 	/**
 	 * Default `"0.4.0"`.
 	 */
@@ -58,7 +58,7 @@ export interface TranslitOverlayOptions {
 	 * Prefix the base manifest's file paths currently carry, to be rewritten
 	 * to {@link TranslitOverlayOptions.canonicalPathPrefix}.
 	 *
-	 * Defaults to `mailwomanDataRoot()` with a trailing slash — the root that wrote those paths.
+	 * Defaults to `dataRootPath()` with a trailing slash — the root that wrote those paths.
 	 * Pass it explicitly when translating a manifest generated under a different
 	 * `$MAILWOMAN_DATA_ROOT` than the one you are running with.
 	 */
@@ -136,14 +136,14 @@ export async function buildTranslitOverlay(
 	const corpusVersion = options.corpusVersion ?? "0.4.0"
 	// This is a portable manifest namespace rather than a host filesystem default.
 	const canonicalPathPrefix = options.canonicalPathPrefix ?? "/data/"
-	const legacyPathPrefix = options.legacyPathPrefix ?? `${mailwomanDataRoot()}/`
+	const legacyPathPrefix = options.legacyPathPrefix ?? `${dataRootPath()}/`
 
 	if (!(await pathExists(options.jsonl))) throw new Error(`jsonl not found: ${options.jsonl}`)
 
 	if (!(await pathExists(options.baseManifest))) throw new Error(`base-manifest not found: ${options.baseManifest}`)
 
-	const corpusDir = join(options.outDir, `corpus-v${corpusVersion}`)
-	const trainDir = join(corpusDir, "train")
+	const corpusDir = PathBuilder.from(options.outDir)(`corpus-v${corpusVersion}`)
+	const trainDir = corpusDir("train")
 	await makeDirectories(trainDir)
 
 	// Bucket canonical rows by source.
@@ -180,14 +180,15 @@ export async function buildTranslitOverlay(
 	for (const source of sortedKeys) {
 		const rows = buckets.get(source)!
 		const slug = source.startsWith("deepseek-translit-") ? source.slice("deepseek-translit-".length) : source
-		const outPath = join(trainDir, `part-translit-${slug}.parquet`)
+		// A string, because the manifest records it.
+		const outPath = trainDir(`part-translit-${slug}.parquet`).toString()
 		const descriptor = await writeOneFile(rows, outPath, source)
 		newFiles.push(descriptor)
 		report?.(`  ${source}: ${descriptor.rows} rows → ${outPath} (${descriptor.bytes} bytes)`)
 	}
 
 	if (quarantine.length) {
-		const qPath = join(corpusDir, "quarantine-transliteration.tsv")
+		const qPath = corpusDir("quarantine-transliteration.tsv")
 		await writeLocalTextFile(quarantine, qPath)
 		report?.(`quarantine log → ${qPath} (${quarantine.length} rows)`)
 	}
@@ -218,7 +219,7 @@ export async function buildTranslitOverlay(
 		total_rows: base.total_rows + newTrainRows,
 	}
 
-	const combinedPath = join(corpusDir, "MANIFEST.json")
+	const combinedPath = corpusDir("MANIFEST.json")
 	await writeLocalJSONFile(combined, combinedPath)
 	report?.(`wrote combined manifest → ${combinedPath}`)
 	report?.(`  total_rows=${combined.total_rows} (base=${base.total_rows}, added=${newTrainRows})`)

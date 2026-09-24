@@ -21,9 +21,9 @@
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists, readLocalBuffer, statPath } from "@mailwoman/core/fs/readers"
 import { createHash } from "@mailwoman/core/hash"
-import { repoRootPath } from "@mailwoman/core/paths"
+import { repoRootPath, repoRootPathBuilder } from "@mailwoman/core/paths"
 import { POSTCODE_BINARY_KEY_FLOORS } from "mailwoman/gazetteer-pipeline/postcode/binary"
-import { join, relative, resolvePath } from "path-ts"
+import { type PathBuilderLike, relative, resolvePath } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
 /**
@@ -67,7 +67,7 @@ export const DERIVED_WEIGHTS_INPUTS: readonly string[] = [
  * The opposite trade from {@link DERIVED_WEIGHTS_INPUTS}, where an explicit list is the point.
  */
 async function gazetteerDataPaths(): Promise<string[]> {
-	const dir = resolvePath(repoRootPath(), "data", "gazetteer")
+	const dir = repoRootPathBuilder("data", "gazetteer")
 
 	if (!(await pathExists(dir))) return []
 
@@ -82,11 +82,11 @@ async function gazetteerDataPaths(): Promise<string[]> {
  * which is how the stale build escaped the key.
  */
 async function postcodePipelinePaths(): Promise<string[]> {
-	const root = repoRootPath()
+	const root = repoRootPathBuilder()
 
 	const dirs = [
-		resolvePath(root, "packages/mailwoman/lib/gazetteer-pipeline/postcode"),
-		resolvePath(root, "packages/mailwoman/out/gazetteer-pipeline/postcode"),
+		root("packages", "mailwoman", "lib", "gazetteer-pipeline", "postcode"),
+		root("packages", "mailwoman", "out", "gazetteer-pipeline", "postcode"),
 	]
 
 	const paths: string[] = []
@@ -96,7 +96,7 @@ async function postcodePipelinePaths(): Promise<string[]> {
 
 		for await (const name of Globerator.from("*", { cwd: dir, absolute: false })) {
 			if ((name.endsWith(".ts") || name.endsWith(".js")) && !name.includes(".test.") && !name.endsWith(".map")) {
-				paths.push(join(dir, name))
+				paths.push(dir(name).toString())
 			}
 		}
 	}
@@ -120,7 +120,7 @@ export interface DerivedWeightsInput {
 	 *
 	 * Not hashed — see {@link derivedWeightsKeyFrom}.
 	 */
-	path: string
+	path: PathBuilderLike
 }
 
 /**
@@ -191,7 +191,7 @@ export async function derivedWeightsKey(): Promise<string> {
  * Where the derived binaries for `key` live.
  */
 export function derivedWeightsDir(key: string): string {
-	return String(dataRootPath("derived", "weights", key))
+	return dataRootPath("derived", "weights", key).toString()
 }
 
 /**
@@ -217,7 +217,7 @@ export function derivedWeightsDir(key: string): string {
  */
 const PCB1_HEADER_BYTES = 9
 
-export async function derivedStoreServeViolation(filename: string, path: string): Promise<string | null> {
+export async function derivedStoreServeViolation(filename: string, path: PathBuilderLike): Promise<string | null> {
 	const match = /^postcode-([a-z]{2})\.bin$/.exec(filename)
 
 	if (!match) return null

@@ -27,6 +27,7 @@ import { buildZoningDatabase } from "@mailwoman/zoning/sdk/build-zoning"
 import { fixtureFeatures, fixtureSource, FIXTURE_ORIGIN, FIXTURE_PLANS, FIXTURE_SIDE } from "@mailwoman/zoning/test-kit"
 import { geocodeAddress, type GeocodeClassifier, type GeocodeDeps } from "mailwoman/geocode"
 import { createZoningDesignationRoute, describeZoningDesignation } from "mailwoman/observations"
+import type { PathBuilder } from "path-ts"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 function node(partial: Partial<AddressNode> & Pick<AddressNode, "tag" | "value">): AddressNode {
@@ -100,11 +101,11 @@ const INSIDE_UNZONED = {
 }
 
 let scratch: TemporaryDirectory
-let databasePath: string
+let databasePath: PathBuilder
 
 beforeAll(async () => {
 	scratch = await temporaryDirectory("mw-zoning-route-")
-	databasePath = scratch.resolve("zoning-ireland.db")
+	databasePath = scratch.path("zoning-ireland.db")
 
 	await buildZoningDatabase({
 		source: fixtureSource(fixtureFeatures()),

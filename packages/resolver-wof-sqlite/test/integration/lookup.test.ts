@@ -17,7 +17,7 @@ import { changeMode } from "@mailwoman/core/fs/writers"
 import { WOFSQLitePlaceLookup } from "@mailwoman/resolver-wof-sqlite/lookup"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import { join } from "path-ts"
+import type { PathBuilderLike } from "path-ts"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
 
 interface FixturePlace {
@@ -224,7 +224,7 @@ const FIXTURE: FixturePlace[] = [
 	},
 ]
 
-function buildFixtureDB(path = ":memory:"): DatabaseClient<WOFDatabase> {
+function buildFixtureDB(path: PathBuilderLike = ":memory:"): DatabaseClient<WOFDatabase> {
 	const db = new DatabaseClient<WOFDatabase>(path)
 
 	// Schema mirrors the real WOF SQLite distribution at data.geocode.earth
@@ -501,7 +501,7 @@ describe("WOFSQLitePlaceLookup ctor", () => {
 		// construction spy in `lookup-readonly-open.test.ts`.
 		await using dirDirectory = await temporaryDirectory("mw-wof-ro-")
 		const dir = dirDirectory.path
-		const dbPath = join(dir, "admin-fixture.db")
+		const dbPath = dir("admin-fixture.db")
 
 		// Build the fixture on disk with its FTS index, then seal the file 0444 to mimic a shipped extract.
 		{

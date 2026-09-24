@@ -30,6 +30,7 @@ import { percentile } from "@mailwoman/core/stats"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { haversineKm } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
+import type { PathBuilderLike } from "path-ts"
 
 /**
  * Metres per kilometre — {@link haversineKm} returns km and every figure here is reported in metres.
@@ -232,13 +233,13 @@ export interface RunCodePointCheckOptions {
 	/**
 	 * The candidate database, e.g. `<data-root>/db/wof/postalcode-gb-codepoint-<date>.db`.
 	 */
-	codepointPath: string
+	codepointPath: PathBuilderLike
 	/**
 	 * The incumbent, e.g. the frozen `<data-root>/db/wof/frozen-backup-2026-08-04/postalcode-geonames-tail.db`.
 	 *
 	 * Opened read-only — this tool never writes to either input.
 	 */
-	incumbentPath: string
+	incumbentPath: PathBuilderLike
 	onPhase?: (phase: string, detail?: string) => void
 }
 

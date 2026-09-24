@@ -42,7 +42,7 @@ import { readLocalJSONFile, statPath } from "@mailwoman/core/fs/readers"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
 import { prettyJSON } from "@mailwoman/core/json"
 import { isoDate } from "@mailwoman/core/utils"
-import { basename, join } from "path-ts"
+import { basename, PathBuilder, type PathBuilderLike } from "path-ts"
 
 import { extractAttestedPhrases, readSubVenueJSONL, type SubVenueHarvestRow } from "#tools/sub/venue/harvest"
 import { deriveHeadNounSurfaces } from "#tools/sub/venue/head-nouns"
@@ -350,7 +350,7 @@ export interface GenerateSubVenueLexiconOptions {
 	 *
 	 * Omit to build the seed-only table.
 	 */
-	wikidataDir?: string
+	wikidataDir?: PathBuilderLike
 	/**
 	 * OSM extract JSONLs, one per region.
 	 */
@@ -387,9 +387,11 @@ export async function generateSubVenueLexicon(options: GenerateSubVenueLexiconOp
 	let wikidata: unknown = null
 
 	if (options.wikidataDir) {
-		wikidata = await readLocalJSONFile<unknown>(join(options.wikidataDir, "designator-labels.json"))
+		const wikidataDir = PathBuilder.from(options.wikidataDir)
 
-		const manifest = await readLocalJSONFile<WikidataFetchManifest>(join(options.wikidataDir, "MANIFEST.json"))
+		wikidata = await readLocalJSONFile<unknown>(wikidataDir("designator-labels.json"))
+
+		const manifest = await readLocalJSONFile<WikidataFetchManifest>(wikidataDir("MANIFEST.json"))
 
 		const labelFile = manifest.files?.find((f) => f.filename === "designator-labels.json")
 

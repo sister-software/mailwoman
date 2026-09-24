@@ -39,7 +39,7 @@ import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
 import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
 import { runFileSync } from "@mailwoman/core/process"
 import { readWorkspaceDirectories } from "@mailwoman/core/workspaces"
-import { join } from "path-ts"
+import { PathBuilder, type PathBuilderLike } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
 import { FINGERPRINTED_WORKSPACES } from "#tree-fingerprint"
@@ -76,14 +76,15 @@ interface WorkspaceLink {
  * that predates a workspace must not have that workspace linked into it.
  * An import that should fail at the older ref has to actually fail.
  */
-async function workspaceLinks(root: string): Promise<WorkspaceLink[]> {
+async function workspaceLinks(root: PathBuilder): Promise<WorkspaceLink[]> {
 	const links: WorkspaceLink[] = []
 
 	// A literal entry the older ref does not carry is "not a workspace at this ref", so it is skipped rather than raised.
 	for (const directory of await readWorkspaceDirectories(root, { tolerateMissing: true })) {
-		const { name } = await readPackageJSON(join(root, directory, "package.json"))
+		const manifestPath = root(directory, "package.json")
+		const { name } = await readPackageJSON(manifestPath)
 
-		if (!name) throw new Error(`${join(root, directory, "package.json")} declares no name`)
+		if (!name) throw new Error(`${manifestPath} declares no name`)
 
 		links.push({ packageName: name, directory })
 	}
@@ -99,9 +100,9 @@ async function workspaceLinks(root: string): Promise<WorkspaceLink[]> {
  * and whole otherwise: `@types` is thousands of identical packages and is linked as
  * one entry, while `@mailwoman` is rebuilt member by member.
  */
-async function linkNodeModules(mainRoot: string, worktree: string): Promise<void> {
-	const source = join(mainRoot, "node_modules")
-	const target = join(worktree, "node_modules")
+async function linkNodeModules(mainRoot: PathBuilder, worktree: PathBuilder): Promise<void> {
+	const source = mainRoot("node_modules")
+	const target = worktree("node_modules")
 	const fingerprinted = new Set<string>(FINGERPRINTED_WORKSPACES)
 	const links = (await workspaceLinks(worktree)).filter((link) => fingerprinted.has(link.directory))
 
@@ -115,22 +116,19 @@ async function linkNodeModules(mainRoot: string, worktree: string): Promise<void
 
 	for await (const entry of Globerator.from("*", { cwd: source, absolute: false, onlyFiles: false })) {
 		if (scopesWithWorkspaces.has(entry)) {
-			const scopeTarget = join(target, entry)
+			const scopeTarget = target(entry)
 
 			await makeDirectories(scopeTarget)
 
 			for await (const member of Globerator.from("*", {
-				cwd: join(source, entry),
+				cwd: source(entry),
 				absolute: false,
 				onlyFiles: false,
 			})) {
 				const full = `${entry}/${member}`
 				const workspace = workspaceByName.get(full)
 
-				await createSymbolicLink(
-					workspace ? join(worktree, workspace) : join(source, entry, member),
-					join(scopeTarget, member)
-				)
+				await createSymbolicLink(workspace ? worktree(workspace) : source(entry, member), scopeTarget(member))
 			}
 
 			continue
@@ -138,7 +136,7 @@ async function linkNodeModules(mainRoot: string, worktree: string): Promise<void
 
 		const workspace = workspaceByName.get(entry)
 
-		await createSymbolicLink(workspace ? join(worktree, workspace) : join(source, entry), join(target, entry))
+		await createSymbolicLink(workspace ? worktree(workspace) : source(entry), target(entry))
 	}
 }
 
@@ -213,13 +211,14 @@ export interface WorktreeArmResult {
  * safe to run mid-edit, and the reason it is a worktree rather than a stash.
  */
 export async function runWorktreeArm(args: {
-	repoRoot: string
+	repoRoot: PathBuilderLike
 	ref: string
 	inputs: readonly string[]
 	options: Record<string, unknown>
 	timeoutMs?: number
 }): Promise<WorktreeArmResult> {
-	const { repoRoot, ref, inputs, options } = args
+	const { ref, inputs, options } = args
+	const repoRoot = PathBuilder.from(args.repoRoot)
 	const setupStartedAt = Date.now()
 
 	// The uncommitted working tree, which no git ref can name and which is the arm a
@@ -245,7 +244,7 @@ export async function runWorktreeArm(args: {
 	}
 
 	const parent = live ? undefined : resources.use(await temporaryDirectory("mwdev-worktree-"))
-	const worktree = parent ? parent.resolve("checkout") : repoRoot
+	const worktree = parent ? parent.path("checkout") : repoRoot
 
 	if (!live) {
 		runFileSync("git", ["worktree", "add", "--detach", worktree, ref], { cwd: repoRoot, stdio: "pipe" })
@@ -277,7 +276,7 @@ export async function runWorktreeArm(args: {
 		await linkNodeModules(repoRoot, worktree)
 	}
 
-	const runnerPath = join(worktree, RUNNER_FILENAME)
+	const runnerPath = worktree(RUNNER_FILENAME)
 
 	await writeLocalFile(RUNNER_SOURCE, runnerPath)
 

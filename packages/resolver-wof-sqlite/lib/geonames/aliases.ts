@@ -29,7 +29,7 @@ import { readUnquotedTSV } from "@mailwoman/core/fs/delimited"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { GEONAMES_ID_BASE, GEONAMES_POSTAL_ID_BASE } from "@mailwoman/core/resolver/synthetic-id-ranges"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
-import { join, type PathBuilderLike } from "path-ts"
+import { type PathBuilderLike, resolvePathBuilder } from "path-ts"
 
 import type { WOFDatabase } from "#schema"
 
@@ -115,7 +115,7 @@ export interface GeonamesIngestProgress {
  * Three call sites reported the same event in three hand-written spellings, so a field
  * added to the event reached whichever of them its author happened to open.
  */
-export function formatGeonamesIngestProgress(event: GeonamesIngestProgress, missingFile?: string): string {
+export function formatGeonamesIngestProgress(event: GeonamesIngestProgress, missingFile?: PathBuilderLike): string {
 	if (event.skipped) {
 		return `${event.country}: ${missingFile ? `${missingFile} missing` : "dump missing"} — download from download.geonames.org/export/dump/${event.country}.zip; skipped`
 	}
@@ -137,7 +137,7 @@ interface V2Alias {
  * restricted to the populated places (`P`) in `wanted`.
  */
 async function parseAlternateNamesV2(
-	v2File: string,
+	v2File: PathBuilderLike,
 	cc: string,
 	wanted: ReadonlySet<number>
 ): Promise<Map<number, Map<string, V2Alias>>> {
@@ -320,7 +320,7 @@ export async function ingestGeonamesAliases(
 		`INSERT INTO ancestors (id, ancestor_id, ancestor_placetype, lastmodified) VALUES (?, ?, ?, 0)`
 	)
 
-	const report = (event: GeonamesIngestProgress, missingFile?: string): void => {
+	const report = (event: GeonamesIngestProgress, missingFile?: PathBuilderLike): void => {
 		if (onProgress) {
 			onProgress(event)
 		} else {
@@ -336,7 +336,7 @@ export async function ingestGeonamesAliases(
 	purgeGeonamesAliasRange(db)
 
 	for (const cc of countries) {
-		const file = join(geonamesDir, `${cc}.txt`)
+		const file = resolvePathBuilder(geonamesDir, `${cc}.txt`)
 
 		if (!(await pathExists(file))) {
 			report({ country: cc, places: 0, skipped: true }, file)
@@ -348,7 +348,7 @@ export async function ingestGeonamesAliases(
 		let refused = 0
 		// #267: add A-class admin + ancestry only for the gap countries this country is in (never the EU set).
 		const addAdmin = opts?.adminForCountries?.has(cc) ?? false
-		const v2File = opts?.alternateDir ? join(opts.alternateDir, `${cc}.txt`) : undefined
+		const v2File = opts?.alternateDir ? resolvePathBuilder(opts.alternateDir, `${cc}.txt`) : undefined
 		const readV2 = Boolean(v2File && (await pathExists(v2File)))
 
 		// Survey pass.

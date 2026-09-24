@@ -40,7 +40,7 @@ import {
  */
 export interface BuildRegressionDBOptions {
 	casesDir?: PathBuilderLike
-	output?: string
+	output?: PathBuilderLike
 }
 
 /**

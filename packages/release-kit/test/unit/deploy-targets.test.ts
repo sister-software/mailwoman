@@ -75,7 +75,7 @@ describe("selectDeployTargets", () => {
 
 describe("the target table against the checkout", () => {
 	it("every target names a workspace in the root array, and its closure reaches core", async () => {
-		const root = String(repoRootPath())
+		const root = repoRootPath()
 
 		const all = await affectedDeployTargets(root, ["packages/core/package.json"])
 
@@ -83,7 +83,7 @@ describe("the target table against the checkout", () => {
 	})
 
 	it("a planetary change deploys the two bodies and nothing else", async () => {
-		const root = String(repoRootPath())
+		const root = repoRootPath()
 
 		const selections = await affectedDeployTargets(root, ["packages/planetary/lib/routes.ts"])
 

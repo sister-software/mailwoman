@@ -10,11 +10,11 @@
  *   `resolver-wof-sqlite/integration.test.ts`.
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { parseJSONStrict } from "@mailwoman/core/json"
 import { runFile } from "@mailwoman/core/process"
 import { childEnv } from "@mailwoman/core/scripting/utils"
+import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import { mailwomanCLIPath } from "mailwoman/cli-kit/metadata"
 import { parseCommand } from "mailwoman/cli-native/spec"
 import { spec as parseSpec } from "mailwoman/commands/parse"
@@ -23,8 +23,8 @@ import { describe, expect, test } from "vitest"
 
 const cliBin = await mailwomanCLIPath()
 
-const DEFAULT_WOF_PATH = String(dataRootPath("db", "wof", "whosonfirst-data-admin-us-latest.db"))
-const wofPath = $public.MAILWOMAN_WOF_DB ?? DEFAULT_WOF_PATH
+const DEFAULT_WOF_PATH = wofDatabasePath("whosonfirst-data-admin-us-latest.db")
+const wofPath = $public.MAILWOMAN_WOF_DB ?? DEFAULT_WOF_PATH.toString()
 const hasWOFDB = await pathExists(wofPath)
 // oxlint-disable-next-line vitest/valid-title, vitest/valid-describe-callback -- an aliased describe. the title and callback arrive where it is invoked
 const describeIfWOF = describe.skipIf(!hasWOFDB)

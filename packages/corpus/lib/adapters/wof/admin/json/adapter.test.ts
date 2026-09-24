@@ -14,7 +14,6 @@ import {
 } from "@mailwoman/corpus/adapters/wof/admin/json/adapter"
 import { runAdapter } from "@mailwoman/corpus/runner"
 import { readCanonicalRows, useScratchDir } from "@mailwoman/corpus/test-kit"
-import { join } from "path-ts"
 import { describe, expect, it } from "vitest"
 
 const scratch = useScratchDir("wof-admin-json")
@@ -263,7 +262,7 @@ describe("wof-admin-json adapter against fixture", () => {
 			corpusVersion: "0.1.0",
 		})
 
-		await removePathIfPresent(join(scratch.path, WOF_ADMIN_ADAPTER_ID))
+		await removePathIfPresent(scratch.path(WOF_ADMIN_ADAPTER_ID))
 
 		const b = await runAdapter({
 			adapter: createWOFAdminAdapter(),

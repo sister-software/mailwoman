@@ -338,7 +338,7 @@ export function registerMailwomanAPIRoutes<T extends Partial<GeocodeOutcome> = G
 			return engine
 				.geocode(trimmed, { inputMode: input_mode })
 				.then((outcome) => {
-					recordTimed(performance.now() - t0, String(outcome.resolution_tier ?? "admin"))
+					recordTimed(performance.now() - t0, outcome.resolution_tier ?? "admin")
 
 					return c.json(withEngineStamp(outcome as GeocodeOutcome, stamp), 200)
 				})

@@ -11,17 +11,15 @@
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { DEFAULT_MAPPING, loadMapping, loadSources } from "mailwoman/commands/registry/run"
-import { join } from "path-ts"
+import type { PathBuilder } from "path-ts"
 import { afterAll, describe, expect, test } from "vitest"
 
 const fixtures = new AsyncDisposableStack()
 
 afterAll(() => fixtures.disposeAsync())
 
-async function tmp(): Promise<string> {
-	const d = fixtures.use(await temporaryDirectory("mw-registry-")).path.toString()
-
-	return d
+async function tmp(): Promise<PathBuilder> {
+	return fixtures.use(await temporaryDirectory("mw-registry-")).path
 }
 
 describe("registry command — loadMapping", () => {
@@ -39,10 +37,10 @@ describe("registry command — loadMapping", () => {
 	})
 
 	test("a file path is read + parsed", async () => {
-		const dir = tmp()
-		const file = join(await dir, "mapping.json")
+		const file = (await tmp())("mapping.json")
 		await writeLocalJSONFile({ id: "npi", organization: "legal_name" }, file)
-		const m = await loadMapping(file, undefined)
+		// The option is a string, because it holds either inline JSON or a file path.
+		const m = await loadMapping(file.toString(), undefined)
 		expect(m.id).toBe("npi")
 		expect(m.organization).toBe("legal_name")
 		expect(m.address).toEqual(DEFAULT_MAPPING.address)
@@ -70,10 +68,9 @@ describe("registry command — loadSources (--sources)", () => {
 	})
 
 	test("a file path is read + parsed", async () => {
-		const dir = tmp()
-		const file = join(await dir, "sources.json")
+		const file = (await tmp())("sources.json")
 		await writeLocalJSONFile([{ path: "x.tsv", mapping: { id: "NPI" }, limit: 100 }], file)
-		const specs = await loadSources(file)
+		const specs = await loadSources(file.toString())
 		expect(specs[0]).toMatchObject({ path: "x.tsv", limit: 100 })
 	})
 

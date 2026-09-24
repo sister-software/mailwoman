@@ -22,9 +22,9 @@
  *   is the whitespace leg. Measured 8.6 s end to end for 64 rows — two geocodes each plus one engine load.
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { resolveWeights } from "@mailwoman/neural/weights"
+import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import { runConformanceCommand } from "mailwoman/eval-harness/conformance/command"
 import { loadConformanceFixtures } from "mailwoman/eval-harness/conformance/fixture"
 import { auditWhitespaceSuite, WHITESPACE_SUITE_PATH } from "mailwoman/eval-harness/conformance/whitespace"
@@ -40,8 +40,8 @@ async function weightsPresent(): Promise<boolean> {
 }
 
 const gazetteerPresent = async (): Promise<boolean> =>
-	(await pathExists(String(dataRootPath("db", "wof", "admin-global-priority.db")))) &&
-	(await pathExists(String(dataRootPath("db", "wof", "postcode-locality-intl.db"))))
+	(await pathExists(wofDatabasePath("admin-global-priority.db"))) &&
+	(await pathExists(wofDatabasePath("postcode-locality-intl.db")))
 
 describe.skipIf(!(await weightsPresent()) || !(await gazetteerPresent()))(
 	"whitespace invariance — live pipeline",

@@ -6,7 +6,7 @@
 
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { makeDirectories } from "@mailwoman/core/fs/writers"
-import { join, resolvePath } from "path-ts"
+import { PathBuilder } from "path-ts"
 
 import { DEFAULT_RELEASE } from "#gazetteer-pipeline/poi/defaults"
 
@@ -132,7 +132,7 @@ export interface IngestPlacesResult {
  */
 export async function ingestPlaces(opts: IngestPlacesOptions): Promise<IngestPlacesResult> {
 	const release = opts.release ?? DEFAULT_RELEASE
-	const outDir = resolvePath(opts.out ?? dataRootPath("overture", release, "places"))
+	const outDir = PathBuilder.from(opts.out ?? dataRootPath("overture", release, "places"))
 	await makeDirectories(outDir)
 	const phase = opts.onPhase ?? (() => {})
 
@@ -174,7 +174,8 @@ export async function ingestPlaces(opts: IngestPlacesOptions): Promise<IngestPla
 	const countryParquet: Record<string, string> = {}
 
 	for (const cc of opts.countries) {
-		const dest = join(outDir, `places-${cc.toLowerCase()}.parquet`)
+		// A string, because DuckDB's COPY statement and the returned map both carry it as text.
+		const dest = outDir(`places-${cc.toLowerCase()}.parquet`).toString()
 		const limitClause = opts.limit ? `LIMIT ${opts.limit}` : ""
 		const started = Date.now()
 
@@ -202,5 +203,5 @@ export async function ingestPlaces(opts: IngestPlacesOptions): Promise<IngestPla
 
 	db.closeSync()
 
-	return { release, outDir, countryParquet, categoryColumn, hasBrand }
+	return { release, outDir: outDir.toString(), countryParquet, categoryColumn, hasBrand }
 }

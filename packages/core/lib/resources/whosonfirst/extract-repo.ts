@@ -11,7 +11,7 @@
  *   parsed record has.
  */
 
-import { resolvePath, type PathBuilderLike } from "path-ts"
+import { resolvePath, resolvePathBuilder, type PathBuilderLike } from "path-ts"
 
 import { isDirectory, pathExists, readLocalJSONFile } from "#fs/readers"
 import type { WOFFeature } from "#resources/whosonfirst/placetypes/admin"
@@ -69,7 +69,7 @@ export async function resolveWOFDataDir(
 ): Promise<string | null> {
 	const repo = await resolveWOFRepo(reposRoot, wofRepoName(theme, country))
 
-	return repo && resolvePath(repo, "data").toString()
+	return repo && resolvePath(repo, "data")
 }
 
 /**
@@ -107,11 +107,11 @@ export function wofIDPathSegments(id: number): string[] {
  * so far treats both as "no evidence for this place" and continues.
  * A caller that needs to tell them apart should read the file itself.
  */
-export async function readWOFFeature(id: number, roots: readonly string[]): Promise<WOFFeature | null> {
+export async function readWOFFeature(id: number, roots: readonly PathBuilderLike[]): Promise<WOFFeature | null> {
 	const segments = wofIDPathSegments(id)
 
 	for (const root of roots) {
-		const path = resolvePath(root, ...segments)
+		const path = resolvePathBuilder(root, ...segments)
 
 		if (!(await pathExists(path))) continue
 

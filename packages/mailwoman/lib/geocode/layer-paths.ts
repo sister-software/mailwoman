@@ -8,21 +8,30 @@
  *   session would attach, and the reverse.
  */
 
-import { databaseRootPath } from "@mailwoman/core/data-root"
-import type { PathBuilderLike } from "path-ts"
+import { coastalDatabaseRoot } from "@mailwoman/coastal/paths"
+import { floodDatabaseRoot } from "@mailwoman/flood/paths"
+import { poiDatabaseRoot } from "@mailwoman/resolver-wof-sqlite/paths"
+import { soilDatabaseRoot } from "@mailwoman/soil/paths"
+import { zoningDatabaseRoot } from "@mailwoman/zoning/paths"
+import type { PathBuilder, PathBuilderLike } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
 /**
- * The layer databases the session attaches when present, keyed by the layer's short id,
- * each as the directory and filename under the data root's `db/` group.
+ * The layer databases the session attaches when present, keyed by the layer's short id.
+ *
+ * Each names its directory through the owning package's `paths` export
+ * and the filename the session opens there.
  */
 const LAYER_DATABASES = {
-	flood: { label: "Flood zones (EA England)", segments: ["flood", "flood.db"] },
-	soil: { label: "Soil capability (NRCS SSURGO)", segments: ["soil", "soil.db"] },
-	coastal: { label: "Coastal erosion (EA NCERM)", segments: ["coastal", "coastal-england.db"] },
-	zoning: { label: "Zoning (Ireland)", segments: ["zoning", "zoning-ireland.db"] },
-	poi: { label: "POI layer", segments: ["poi", "poi.db"] },
-} as const satisfies Record<string, { label: string; segments: readonly [string, string] }>
+	flood: { label: "Flood zones (EA England)", directory: floodDatabaseRoot, filename: "flood.db" },
+	soil: { label: "Soil capability (NRCS SSURGO)", directory: soilDatabaseRoot, filename: "soil.db" },
+	coastal: { label: "Coastal erosion (EA NCERM)", directory: coastalDatabaseRoot, filename: "coastal-england.db" },
+	zoning: { label: "Zoning (Ireland)", directory: zoningDatabaseRoot, filename: "zoning-ireland.db" },
+	poi: { label: "POI layer", directory: poiDatabaseRoot, filename: "poi.db" },
+} as const satisfies Record<
+	string,
+	{ label: string; directory: (dataRoot: PathBuilderLike) => PathBuilder; filename: string }
+>
 
 export type LayerID = keyof typeof LAYER_DATABASES
 
@@ -39,7 +48,9 @@ export interface LayerDatabaseRef {
  * The absolute path of one layer database under `dataRoot`.
  */
 export function layerDatabasePath(dataRoot: PathBuilderLike, id: LayerID): string {
-	return String(databaseRootPath(dataRoot, ...LAYER_DATABASES[id].segments))
+	const { directory, filename } = LAYER_DATABASES[id]
+
+	return directory(dataRoot)(filename).toString()
 }
 
 /**
@@ -64,12 +75,12 @@ export function layerDatabases(dataRoot: PathBuilderLike): LayerDatabaseRef[] {
  * An absent directory answers an empty list.
  */
 export async function layerDatabaseAlternates(dataRoot: PathBuilderLike, id: LayerID): Promise<string[]> {
-	const [directory, canonical] = LAYER_DATABASES[id].segments
+	const { directory, filename: canonical } = LAYER_DATABASES[id]
 
 	try {
 		return (
 			await Globerator.files("db", {
-				cwd: String(databaseRootPath(dataRoot, directory)),
+				cwd: directory(dataRoot),
 				absolute: false,
 				recursive: false,
 			}).toSorted()

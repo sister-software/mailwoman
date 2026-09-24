@@ -21,7 +21,7 @@
 
 import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { resolvePackageDirectory } from "@mailwoman/core/module/resolvers"
-import { resolvePath } from "path-ts"
+import type { PathBuilder } from "path-ts"
 
 /**
  * The `PROVENANCE.json` fields this reads.
@@ -114,15 +114,15 @@ export const KNOWN_WEIGHTS_PACKAGES: readonly string[] = [
  * existed as one with no obligations.
  */
 async function readInstalled(packageName: string): Promise<PackageProvenance | null> {
-	let directory: string
+	let directory: PathBuilder
 
 	try {
-		directory = String(resolvePackageDirectory(packageName))
+		directory = resolvePackageDirectory(packageName)
 	} catch {
 		return null
 	}
 
-	const provenance = resolvePath(directory, "PROVENANCE.json")
+	const provenance = directory("PROVENANCE.json")
 
 	if (!(await pathExists(provenance))) return null
 

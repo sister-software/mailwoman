@@ -3,17 +3,14 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The plumbing every layer's `scripts/ingest-chunk.ts` repeats — spawned by its builder, never run by
- *   hand.
+ *   Shared setup for each layer's `scripts/ingest-chunk.ts`.
  *
- *   the process boundary is the caller'S point. h3's wasm heap cannot be reset from JavaScript and does not
- *   survive an unbounded number of polyfill calls, so each chunk gets a heap that starts empty by getting an
- *   interpreter that starts empty. What lives here is only the plumbing: parse the shared flags, open the
- *   database the parent created with the build pragmas, run the chunk, and report its counts on stdout as
- *   one JSON line.
+ *   Each chunk runs in a new process because h3's WebAssembly heap cannot be reset from JavaScript.
+ *   This helper parses shared flags, opens the database created by the parent, runs the chunk,
+ *   and prints its result as one JSON line.
  *
- *   Stdout contains only the result. Progress goes to stderr, so the parent can parse
- *   the last stdout line without a framing convention.
+ *   Standard output contains only the result.
+ *   Progress goes to standard error.
  */
 
 import { DatabaseClient } from "@mailwoman/sqlite/client"
@@ -22,10 +19,10 @@ import { stringifyJSON } from "#json"
 import { parseArguments, requiredArgument, type ParseArgsConfig } from "#scripting/arguments"
 
 /**
- * The flags every ingest-chunk script shares.
+ * Flags shared by all ingest-chunk scripts.
  *
- * A script spreads these into its own `options`, so the helper can rely on them
- * being parsed while the script's values stay precisely typed.
+ * Each script includes these in its options so this helper can read them
+ * alongside the script's typed values.
  */
 export const INGEST_CHUNK_FLAGS = {
 	database: { type: "string" },
@@ -34,31 +31,30 @@ export const INGEST_CHUNK_FLAGS = {
 } as const satisfies ParseArgsConfig["options"]
 
 /**
- * The shared values the helper resolves for the chunk.
+ * Shared settings passed to a chunk.
  */
 export interface IngestChunkScriptContext {
 	indexResolution: number
 	coverageResolution: number
 	/**
-	 * Reports to stderr, prefixed the way every chunk script did.
+	 * Writes progress to stderr with the shared chunk prefix.
 	 */
 	onProgress: (message: string) => void
 }
 
 /**
- * Run one ingest-chunk script: parse its flags, open the parent's database with the
- * build pragmas, run the chunk, and print its JSON result line.
+ * Parse flags, open the parent's database, run one chunk, and print its JSON result.
  */
 export async function runIngestChunkScript<
 	DB,
 	const Options extends NonNullable<ParseArgsConfig["options"]> & typeof INGEST_CHUNK_FLAGS,
 >(config: {
 	/**
-	 * Names the script in every refusal, e.g. `flood ingest-chunk`.
+	 * Script name used in error messages, e.g. `flood ingest-chunk`.
 	 */
 	context: string
 	/**
-	 * The script's own flags, including a spread of {@link INGEST_CHUNK_FLAGS}.
+	 * The script's flags, including {@link INGEST_CHUNK_FLAGS}.
 	 */
 	options: Options
 	run: (
@@ -69,12 +65,8 @@ export async function runIngestChunkScript<
 }): Promise<void> {
 	const { values } = parseArguments({ options: config.options })
 
-	// A second, lenient parse over only the shared flags: the strict parse above is
-	// typed by the script's own generic config, whose conditional value type does
-	// not resolve inside this generic body, while this one is concretely typed,
-	// and non-strict parsing reads the known flags identically.
-	// Non-strict parsing widens every value to `string | boolean`, so the string-typed
-	// flags are narrowed back before use.
+	// Parse shared flags separately because the generic values above are not concrete inside this function.
+	// Narrow the lenient parse's values to strings.
 	const { values: shared } = parseArguments({ options: INGEST_CHUNK_FLAGS, strict: false })
 
 	const sharedFlag = (name: keyof typeof INGEST_CHUNK_FLAGS): string =>

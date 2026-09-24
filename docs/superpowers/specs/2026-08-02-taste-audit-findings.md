@@ -268,7 +268,7 @@ hand-rolled reader). **Cost of fixing it: low, mechanical.**
 (`data-root.ts`); never re-hardcode it in shipped code or scripts. In docs/comments/help-text
 reference `$MAILWOMAN_DATA_ROOT` rather than the literal."
 
-121 files use `dataRootPath`/`mailwomanDataRoot` — the discipline mostly holds. The leaks:
+121 files use `dataRootPath`/`dataRootPath` — the discipline mostly holds. The leaks:
 
 | kind      | site                                                                                                                                                                                                                          |
 | --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

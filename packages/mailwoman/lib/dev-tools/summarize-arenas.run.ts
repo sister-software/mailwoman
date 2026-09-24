@@ -22,7 +22,7 @@ import { runIfScript } from "@mailwoman/core/scripting"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { JSONSpliterator } from "spliterator"
 
-const { positionals } = parseArguments({ allowPositionals: true, strict: false })
+const { positionals } = parseArguments({ allowPositionals: true })
 
 interface Result {
 	neural_pass: boolean

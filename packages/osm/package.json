@@ -54,6 +54,11 @@
 			"node": "./lib/overpass/*.ts",
 			"default": "./out/overpass/*.js"
 		},
+		"./paths": {
+			"types": "./out/paths.d.ts",
+			"node": "./lib/paths.ts",
+			"default": "./out/paths.js"
+		},
 		".": {
 			"types": "./out/index.d.ts",
 			"node": "./lib/index.ts",
@@ -73,7 +78,7 @@
 		"@mailwoman/sqlite": "workspace:*",
 		"h3-js": "^4.5.0",
 		"kysely": "^0.29.5",
-		"path-ts": "^2.4.1",
+		"path-ts": "^2.5.0",
 		"spliterator": "^7.11.0"
 	},
 	"engines": {

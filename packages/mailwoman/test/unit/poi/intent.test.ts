@@ -14,7 +14,6 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { loadDefaultReverseGeocoder } from "mailwoman/default"
 import { bindCountryScope, createPOIIntentStage, createPOINameLookup, poiTaxonomyLookup } from "mailwoman/poi"
 import { createRuntimePipeline } from "mailwoman/runtime-pipeline"
-import { join } from "path-ts"
 import { describe, expect, it, vi } from "vitest"
 
 const LOCALE: LocaleHint = { locale: "en-US", confidence: 1, alternatives: [], source: "caller" }
@@ -532,7 +531,7 @@ describe("createRuntimePipeline poiQueryKind flag", () => {
 	it("routes an exact poi.db name hit and rejects a longer token-overlap control", async () => {
 		await using directoryDirectory = await temporaryDirectory("mailwoman-poi-name-")
 		const directory = directoryDirectory.path
-		const databasePath = join(directory, "poi.db")
+		const databasePath = directory("poi.db")
 		const db = new DatabaseClient<POIDatabase>(databasePath)
 		vi.stubEnv("MAILWOMAN_DATA_ROOT", "/nonexistent/never/mailwoman-data-root")
 

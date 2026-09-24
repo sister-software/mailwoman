@@ -19,7 +19,6 @@ import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalTextFile, makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { weightsCachePackageDir } from "@mailwoman/neural/weights"
 import { assertDeclaredAnchorBins } from "mailwoman/eval-harness/gauntlet/harness"
-import { join } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 
 const fixtures = new AsyncDisposableStack()
@@ -35,12 +34,12 @@ async function fixtureWeights(locale: string, card: Record<string, unknown>, sib
 	const dir = weightsCachePackageDir(root, locale)
 
 	await makeDirectories(dir)
-	await writeLocalTextFile("", join(dir, "model.onnx"))
-	await writeLocalTextFile("", join(dir, "tokenizer.model"))
-	await writeLocalJSONFile(card, join(dir, "model-card.json"))
+	await writeLocalTextFile("", dir("model.onnx"))
+	await writeLocalTextFile("", dir("tokenizer.model"))
+	await writeLocalJSONFile(card, dir("model-card.json"))
 
 	for (const sibling of siblings) {
-		await writeLocalTextFile("", join(dir, sibling))
+		await writeLocalTextFile("", dir(sibling))
 	}
 
 	return root
@@ -95,8 +94,8 @@ describe("the anchor-artifact presence assertion", () => {
 		const dir = weightsCachePackageDir(root, "zz-zz")
 
 		await makeDirectories(dir)
-		await writeLocalTextFile("", join(dir, "model.onnx"))
-		await writeLocalTextFile("", join(dir, "tokenizer.model"))
+		await writeLocalTextFile("", dir("model.onnx"))
+		await writeLocalTextFile("", dir("tokenizer.model"))
 
 		await expect(assertDeclaredAnchorBins(["zz-zz"], root)).resolves.toBeUndefined()
 	})
