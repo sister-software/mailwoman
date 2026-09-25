@@ -21,6 +21,7 @@
  */
 
 import { extractDelimited } from "@mailwoman/core/scripting/arguments"
+import { escapeRegExp } from "@mailwoman/core/strings/regexp"
 
 /**
  * Licenses that require share-alike / create a copyleft obligation on derived works (Tier C).
@@ -38,7 +39,7 @@ export const SHARE_ALIKE_PATTERN = /^ODbL|^Open Database License|^CC-BY-SA|^CC-S
  * The spec is a literal license prefix rather than a user-supplied regex.
  */
 export function compileLicenseExcludes(spec: string): RegExp[] {
-	return extractDelimited(spec).map((s) => new RegExp("^" + s.replaceAll(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i"))
+	return extractDelimited(spec).map((s) => new RegExp("^" + escapeRegExp(s), "i"))
 }
 
 /**

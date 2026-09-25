@@ -19,6 +19,7 @@
 
 import { au, nz, us, type SystemCode } from "@mailwoman/codex"
 import type { SpanProposerLexicon } from "@mailwoman/core/pipeline"
+import { escapeRegExp } from "@mailwoman/core/strings/regexp"
 
 import {
 	MODIFIER_ELIGIBLE_STRUCTURE_DESIGNATORS,
@@ -79,7 +80,7 @@ function phraseToPattern(phrase: string): string {
 						.split("")
 						.map((ch) => `${ch}\\.?`)
 						.join("\\s*")
-				: word.replaceAll(/[.*+?^${}()|[\]\\]/g, "\\$&")
+				: escapeRegExp(word)
 		)
 		.join("\\s+")
 }

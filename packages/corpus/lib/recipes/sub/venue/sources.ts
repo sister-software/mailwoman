@@ -7,6 +7,7 @@
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { resolveModulePath } from "@mailwoman/core/module/resolvers"
 import { sample } from "@mailwoman/core/random"
+import { escapeRegExp } from "@mailwoman/core/strings/regexp"
 import type { POIDatabase } from "@mailwoman/resolver-wof-sqlite/poi"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { PathBuilderLike } from "path-ts"
@@ -221,7 +222,7 @@ export function hasPromotedShape(
 ): boolean {
 	if (!containsPhrase(lowerName, promoted.phrase)) return false
 
-	const escaped = promoted.phrase.replaceAll(/[.*+?^${}()|[\]\\]/g, String.raw`\$&`)
+	const escaped = escapeRegExp(promoted.phrase)
 	const withFollower = new RegExp(`(?:^|[^\\p{L}\\p{N}])${escaped}\\s+(\\S+)`, "u")
 	const follower = withFollower.exec(lowerName)?.[1]
 

@@ -1,4 +1,5 @@
 import { stringifyJSON } from "@mailwoman/core/json"
+import { escapeRegExp } from "@mailwoman/core/strings/regexp"
 
 /**
  * @copyright Sister Software
@@ -58,7 +59,7 @@ function escapeQL(value: string): string {
  * The `~` operator's value is a regex rather than a literal.
  */
 function escapeQLRegex(value: string): string {
-	return escapeQL(value.replaceAll(/[.*+?^${}()|[\]\\]/g, "\\$&"))
+	return escapeQL(escapeRegExp(value))
 }
 
 export interface EmitOverpassOpts {

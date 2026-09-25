@@ -12,6 +12,7 @@ import { cacheRootPath } from "@mailwoman/core/data-root"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories, writeLocalFile, writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { stringifyJSON } from "@mailwoman/core/json"
+import { escapeRegExp } from "@mailwoman/core/strings/regexp"
 import { resolveWeights, weightsCacheDir, weightsCachePackageDir, weightsPackageName } from "@mailwoman/neural/weights"
 import type { PathBuilder } from "path-ts"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
@@ -75,7 +76,7 @@ describe("resolveWeights cache fallback", () => {
 
 	test("the not-found error names the probed cache path", async () => {
 		await expect(resolveWeights({ locale: LOCALE, cacheRoot: cacheRoot.path })).rejects.toThrow(
-			new RegExp(cacheRoot.path("node_modules", PACKAGE_NAME).replaceAll(/[.*+?^${}()|[\]\\]/g, "\\$&"))
+			new RegExp(escapeRegExp(cacheRoot.path("node_modules", PACKAGE_NAME).toString()))
 		)
 	})
 
