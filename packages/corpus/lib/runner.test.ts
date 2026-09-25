@@ -312,11 +312,8 @@ describe("runAdapter", () => {
 
 	it("refuses to write a manifest when the adapter honored the signal by returning", async () => {
 		// The test above aborts an adapter that ignores `signal` and keeps yielding,
-		// so a row arrives after the abort and the check inside the loop catches it.
-		// Every adapter in the tree honors `signal` the way this one does — it returns —
-		// and that path reached the manifest write with a partial `canonical.jsonl`.
-		// `MAILWOMAN_RESUME=1` treats a manifest beside a jsonl as a finished run,
-		// so the next build would have reused the truncated file.
+		// which the in-loop check catches.
+		// Every adapter in the tree returns instead, the way this one does.
 		const ac = new AbortController()
 
 		const honorsSignal: CorpusAdapter = {

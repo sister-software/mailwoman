@@ -254,13 +254,10 @@ export async function runAdapter(opts: RunAdapterOptions): Promise<AdapterRunMan
 		await once(stream, "close")
 	}
 
-	// The check inside the loop above fires only on a row that arrives once the signal has already aborted.
-	// Every adapter honors `signal` by returning instead, so the loop ends normally
-	// and execution reaches here with however many rows the adapter had emitted.
-	// Writing the manifest at that point records a truncated `canonical.jsonl` as a finished run,
-	// and `MAILWOMAN_RESUME=1` then reuses it: the manifest's presence beside the jsonl is the
-	// whole resume condition in `build.ts`, and neither file records that the run stopped early.
-	// A corpus built from it holds fewer rows than its manifest claims, by an amount nothing reports.
+	// The check inside the loop fires only on a row arriving after the abort,
+	// and every adapter honors `signal` by returning instead.
+	// Without this line the manifest records a truncated `canonical.jsonl` as a finished run,
+	// which is the whole resume condition in `build.ts`.
 	adapterOptions.signal?.throwIfAborted()
 
 	const endedAt = new Date()

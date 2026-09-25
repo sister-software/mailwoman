@@ -203,14 +203,9 @@ const PL_LEADING_TYPE = new Set(["ul", "ulica", "al", "aleja", "aleje", "pl", "p
 /**
  * Italian street types in the abbreviated spellings a person types, mapped to the spelling ANNCSU publishes.
  *
- * The expansion serves the query side rather than the build side.
- * Measured over Overture's `addresses-it.parquet` at the `2026-05-20.0` release,
- * 25,914,431 street rows, the register writes the type out in full: the only
- * abbreviated leading token is `str.`, on 775 rows.
- *
- * Someone typing `V.le Roma` reaches the same key as the stored `VIALE ROMA` only because of this map.
- *
- * `fold` has already removed the full stops by the time these are matched, so the keys carry none.
+ * ANNCSU writes the type out, so this serves the query side: `V.le Roma` reaches
+ * the stored `VIALE ROMA` only through this map.
+ * `fold` has already removed the full stops, so the keys carry none.
  */
 const IT_STREET_TYPE_ABBREV = new Map<string, string>([
 	["v", "via"],
@@ -274,15 +269,13 @@ export function normalizeStreetForKeyLocale(street: string, locale: StreetLocale
 			}
 			break
 		case "it":
-			// The leading type is expanded and KEPT, where `pl` drops its leading type.
-			// Measured over Overture's `addresses-it.parquet`, `2026-05-20.0`: dropping it merges
-			// 44,451 of the 1,015,913 distinct (comune, street) pairs, 4.375%, and the merged
-			// pairs are distinct streets — `via bevegni` with `salita bevegni` in Sant'Olcese,
-			// `vicolo dei pioppi` with `via dei pioppi` in Cologno Monzese.
+			// The type is expanded and kept, where `pl` drops it.
+			// Dropping a recognized type merges 3.941% of Italy's distinct (comune, street) pairs against
+			// 0.131% of Poland's, because ANNCSU writes the type and OSM Poland omits it: `via bevegni`
+			// and `salita bevegni` are two streets, while `osiedle Kasprusie` and `Kasprusie` are one.
 			//
-			// Only the first token is looked up.
-			// An Italian type word states the street's kind and stands at the front, so expanding
-			// a matching word deeper in the name would rewrite part of the name itself.
+			// The first token only, since an Italian type word stands at the front
+			// and a match deeper in the name is part of the name.
 			if (tokens.length > 1) {
 				tokens[0] = IT_STREET_TYPE_ABBREV.get(tokens[0]!) ?? tokens[0]!
 			}

@@ -215,9 +215,9 @@ describe("normalizeStreetForKeyLocale — the pl/vn/id branches (the 2026-08-19 
 
 describe("normalizeStreetForKeyLocale — the it branch (ANNCSU rooftop keying)", () => {
 	it("it: KEEPS the leading type, where pl drops it", () => {
-		// Dropping it merges 44,451 of Italy's 1,015,913 distinct (comune, street) pairs,
-		// 4.375%, measured over Overture's `addresses-it.parquet` at 2026-05-20.0.
-		// The merged pairs are distinct streets: these four are real collisions from that measurement.
+		// Dropping a recognized type merges 3.941% of Italy's distinct (comune, street)
+		// pairs against 0.131% of Poland's.
+		// These are two of Italy's.
 		expect(normalizeStreetForKeyLocale("Via Bevegni", "it")).toBe("via bevegni")
 		expect(normalizeStreetForKeyLocale("Salita Bevegni", "it")).toBe("salita bevegni")
 
@@ -226,8 +226,7 @@ describe("normalizeStreetForKeyLocale — the it branch (ANNCSU rooftop keying)"
 	})
 
 	it("it: expands an abbreviated leading type, so a typed query reaches the stored key", () => {
-		// ANNCSU writes the type out — `str.` on 775 of 25,914,431 rows is the only
-		// abbreviation it uses — so this map is for the query side.
+		// ANNCSU writes the type out, so the map serves the query side.
 		expect(normalizeStreetForKeyLocale("V.le Roma", "it")).toBe("viale roma")
 		expect(normalizeStreetForKeyLocale("VIALE ROMA", "it")).toBe("viale roma")
 
@@ -239,9 +238,9 @@ describe("normalizeStreetForKeyLocale — the it branch (ANNCSU rooftop keying)"
 	})
 
 	it("it: the three spellings of località reach one key", () => {
-		// The register writes all three: `localita'` on 543,854 rows, `località` on 1,694, `localita` on 41.
-		// The shared fold already strips both the accent and the apostrophe, so the branch
-		// adds nothing here and this test is what would catch the fold changing under it.
+		// The register writes all three.
+		// The shared fold strips the accent and the apostrophe, so the `it` branch adds
+		// nothing here and this test is what catches the fold changing under it.
 		expect(normalizeStreetForKeyLocale("LOCALITA' Governatori", "it")).toBe("localita governatori")
 		expect(normalizeStreetForKeyLocale("Località Governatori", "it")).toBe("localita governatori")
 		expect(normalizeStreetForKeyLocale("Localita Governatori", "it")).toBe("localita governatori")
@@ -249,16 +248,15 @@ describe("normalizeStreetForKeyLocale — the it branch (ANNCSU rooftop keying)"
 	})
 
 	it("it: an elision apostrophe inside a name behaves the same on both sides", () => {
-		// `dell'`, `sant'` and `d'` appear in 1,613,571 of the 25,914,431 rows.
-		// The fold drops the apostrophe rather than splitting the token, and it does
-		// so for the stored key and the query alike, so the two still meet.
+		// The fold drops the apostrophe rather than splitting the token, on the stored key
+		// and the query alike, so an elision keeps the two sides meeting.
 		expect(normalizeStreetForKeyLocale("Via dell'Argine", "it")).toBe("via dellargine")
 		expect(normalizeStreetForKeyLocale("VIA DELL ARGINE", "it")).toBe("via dell argine")
 	})
 
 	it("it: a bare name with no type keeps its single token", () => {
-		// The expansion reads the first token only when another follows it, so a one-word name
-		// that happens to match the map is left alone rather than rewritten into a type.
+		// The expansion reads the first token only when another follows it,
+		// so a one-word name matching the map stays a name.
 		expect(normalizeStreetForKeyLocale("Lungarno", "it")).toBe("lungarno")
 		expect(normalizeStreetForKeyLocale("Str", "it")).toBe("str")
 	})
