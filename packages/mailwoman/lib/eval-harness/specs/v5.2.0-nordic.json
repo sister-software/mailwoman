@@ -26,5 +26,5 @@
 	"int8_vs_fp32_max_delta_pp": 1.5,
 	"ledger_path": "evals/scores-by-version.json",
 	"requires_bridge": true,
-	"$revision_us_postcode": "95 -> 94.8 (2026-07-03, operator-approved in chat for the v5.2.0 reduce): MEASUREMENT IDENTITY, not a model dip — the shipped v5.1.0 fp32 reads the identical 94.8 on the same harness, and the candidate's int8 postcode parses are byte-identical to shipped on all 2,660 US check rows (0 diffs). The prior 95 floor was calibrated on the int8-class/earlier harness generation. Evidence: check-v193/RESULTS.md (us.postcode attribution block)."
+	"$revision_us_postcode": "95 -> 94.8 (2026-07-03, operator-approved in chat for the v5.2.0 release): MEASUREMENT IDENTITY, not a model dip — the shipped v5.1.0 fp32 reads the identical 94.8 on the same harness, and the candidate's int8 postcode parses are byte-identical to shipped on all 2,660 US check rows (0 diffs). The prior 95 floor was calibrated on the int8-class/earlier harness generation. Evidence: gate-v193/RESULTS.md (us.postcode attribution block)."
 }

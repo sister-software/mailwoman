@@ -1,16 +1,16 @@
-{"raw": "12 Briggate, Leeds, LS1 6ER", "class": "gb-street-check", "must_not": "unit"}
-{"raw": "45 Kirkgate, Wakefield, WF1 1UY", "class": "gb-street-check", "must_not": "unit"}
-{"raw": "7 Castlegate, York, YO1 9RN", "class": "gb-street-check", "must_not": "unit"}
-{"raw": "3 Micklegate, York, YO1 6JH", "class": "gb-street-check", "must_not": "unit"}
-{"raw": "22 Fishergate, Preston, PR1 2UP", "class": "gb-street-check", "must_not": "unit"}
-{"raw": "18 Gallowgate, Newcastle upon Tyne, NE1 4SG", "class": "gb-street-check", "must_not": "unit"}
-{"raw": "90 Cowgate, Edinburgh, EH1 1JW", "class": "gb-street-check", "must_not": "unit"}
-{"raw": "14 Canongate, Edinburgh, EH8 8BR", "class": "gb-street-check", "must_not": "unit"}
-{"raw": "5 Westgate, Grantham, NG31 6LT", "class": "gb-street-check", "must_not": "unit"}
-{"raw": "31 Northgate, Darlington, DL1 1NB", "class": "gb-street-check", "must_not": "unit"}
-{"raw": "Check House, 1 Farringdon Street, London, EC4M 7LG", "class": "check-house-venue", "must_not": "unit"}
-{"raw": "The Check House, Bridge Street, Chester, CH1 1NN", "class": "check-house-venue", "must_not": "unit"}
-{"raw": "Gatehouse Road, Aylesbury, HP19 8AL", "class": "check-house-venue", "must_not": "unit"}
+{"raw": "12 Briggate, Leeds, LS1 6ER", "class": "gb-street-gate", "must_not": "unit"}
+{"raw": "45 Kirkgate, Wakefield, WF1 1UY", "class": "gb-street-gate", "must_not": "unit"}
+{"raw": "7 Castlegate, York, YO1 9RN", "class": "gb-street-gate", "must_not": "unit"}
+{"raw": "3 Micklegate, York, YO1 6JH", "class": "gb-street-gate", "must_not": "unit"}
+{"raw": "22 Fishergate, Preston, PR1 2UP", "class": "gb-street-gate", "must_not": "unit"}
+{"raw": "18 Gallowgate, Newcastle upon Tyne, NE1 4SG", "class": "gb-street-gate", "must_not": "unit"}
+{"raw": "90 Cowgate, Edinburgh, EH1 1JW", "class": "gb-street-gate", "must_not": "unit"}
+{"raw": "14 Canongate, Edinburgh, EH8 8BR", "class": "gb-street-gate", "must_not": "unit"}
+{"raw": "5 Westgate, Grantham, NG31 6LT", "class": "gb-street-gate", "must_not": "unit"}
+{"raw": "31 Northgate, Darlington, DL1 1NB", "class": "gb-street-gate", "must_not": "unit"}
+{"raw": "Gate House, 1 Farringdon Street, London, EC4M 7LG", "class": "gate-house-venue", "must_not": "unit"}
+{"raw": "The Gate House, Bridge Street, Chester, CH1 1NN", "class": "gate-house-venue", "must_not": "unit"}
+{"raw": "Gatehouse Road, Aylesbury, HP19 8AL", "class": "gate-house-venue", "must_not": "unit"}
 {"raw": "Terminal Industrial Estate, Portsmouth, PO3 5PA", "class": "terminal-estate", "must_not": "unit"}
 {"raw": "Terminal House, Shepperton, TW17 8AS", "class": "terminal-estate", "must_not": "unit"}
 {"raw": "Ocean Terminal, Ocean Drive, Edinburgh, EH6 6JJ", "class": "terminal-estate", "must_not": "unit"}
@@ -23,8 +23,8 @@
 {"raw": "Concourse Village West, Bronx, NY 10451", "class": "designator-as-street", "must_not": "unit"}
 {"raw": "1 Building Society Place, Leeds, LS1 4AR", "class": "designator-as-street", "must_not": "unit"}
 {"raw": "Enclosure Road, Southampton, SO14 0AA", "class": "designator-as-street", "must_not": "unit"}
-{"raw": "12 East Check, Warwick, CV34 4RB", "class": "modifier-designator-street", "must_not": "unit"}
-{"raw": "5 West Check, Mansfield, NG18 1RX", "class": "modifier-designator-street", "must_not": "unit"}
+{"raw": "12 East Gate, Warwick, CV34 4RB", "class": "modifier-designator-street", "must_not": "unit"}
+{"raw": "5 West Gate, Mansfield, NG18 1RX", "class": "modifier-designator-street", "must_not": "unit"}
 {"raw": "West Street, Farnham, GU9 7DR", "class": "modifier-designator-street", "must_not": "unit"}
 {"raw": "North Road, Brighton, BN1 1YR", "class": "modifier-designator-street", "must_not": "unit"}
 {"raw": "West Wickham, Kent, BR4 0LT", "class": "modifier-designator-street", "must_not": "unit"}

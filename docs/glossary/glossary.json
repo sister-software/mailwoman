@@ -464,7 +464,7 @@
 		},
 		{
 			"term": "D-rule",
-			"definition": "Iron rule 6: no default-on mechanism (model or decode-time) ships with a known regression vs the shipped model on any tier-1 locale — fix, per-locale-hint, or opt-in. The check every reduce passes through.",
+			"definition": "Iron rule 6: no default-on mechanism (model or decode-time) ships with a known regression vs the shipped model on any tier-1 locale — fix it, enable it only per locale, or make it opt-in. The check every release passes through.",
 			"tags": ["process", "checks"],
 			"aliases": ["iron rule 6"],
 			"relatedTerms": ["named watch", "conditional promotion"]
@@ -1169,7 +1169,7 @@
 		},
 		{
 			"term": "LLM-as-corpus-generator",
-			"definition": "Using a large language model to synthesize annotated training rows for low-data or multilingual cases, blocked by alignment validation that rejects rows whose components don't substring-match the surface.",
+			"definition": "Using a large language model to synthesize annotated training rows for low-data or multilingual cases, filtered by alignment validation that rejects rows whose components don't substring-match the surface.",
 			"tags": ["corpus"],
 			"relatedTerms": ["synthetic extract", "reject rate", "alignment"]
 		},
@@ -1375,7 +1375,7 @@
 		},
 		{
 			"term": "noise-honest margin",
-			"definition": "The floor-reducing rule: floor = reference reading − max(1.0pp, 2× the metric's 95% binomial half-width at its own support). The noise band varies ~19× across metrics, so a uniform margin either blesses real drift or fails on coin flips. Where support is not exposed the rule falls back to 2.0pp — a trap when the true support is small (the street_prefix lesson).",
+			"definition": "The floor-derivation rule: floor = reference reading − max(1.0pp, 2× the metric's 95% binomial half-width at its own support). The noise band varies ~19× across metrics, so a uniform margin either blesses real drift or fails on coin flips. Where support is not exposed the rule falls back to 2.0pp — a trap when the true support is small (the street_prefix lesson).",
 			"tags": ["evals", "checks"],
 			"aliases": [],
 			"relatedTerms": ["conditional promotion", "named watch", "pre-registration"]
@@ -1518,7 +1518,7 @@
 		},
 		{
 			"term": "parity campaign",
-			"definition": "The systematic effort to close the gap between Mailwoman's neural parser and the legacy rule-based v0 parser on every address component tag. Tracked through per-tag parity tables and blocked by honest-eval probes.",
+			"definition": "The systematic effort to close the gap between Mailwoman's neural parser and the legacy rule-based v0 parser on every address component tag. Tracked through per-tag parity tables and checked by honest-eval probes.",
 			"tags": ["evals"],
 			"relatedTerms": ["honest eval", "boundary instability", "negative space"]
 		},

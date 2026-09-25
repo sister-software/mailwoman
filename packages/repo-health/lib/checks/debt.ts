@@ -392,7 +392,7 @@ const UNCOUNTED = [
  * Regex for retired vocabulary matches.
  */
 const BANNED_VOCABULARY =
-	/(?<!\p{L})(?:[Ss]hard|SHARD)(?:s|ed|ing|S|ED|ING)?(?!\p{L})|(?<!\p{L})[A-Za-z_]*(?:[Ss]hard|SHARD)[A-Za-z_]*(?!\p{L})|(?<!\p{L})[A-Za-z_]*(?:[Ll]ever|LEVER)(?!age|AGE|ano|ANO|ton|TON|ock|OCK|stock|STOCK|dalsveien|DALSVEIEN|kusen|KUSEN|n\b|N\b)[A-Za-z_]*(?!\p{L})|(?<!\p{L})[A-Za-z_]*(?:[Ss]eam|SEAM)(?!er\b|ER\b|an\b|AN\b)[A-Za-z_]*(?!\p{L})|(?<!\p{L})(?:gat(?:e|es|ed|ing)|Gat(?:e|es|ed|ing)|GAT(?:E|ES|ED|ING))(?!\p{L})|(?<![\p{L}])[a-z][A-Za-z]*Gat(?:e|es|ed|ing)[A-Za-z]*(?!\p{L})|(?<!\p{L})[A-Za-z_]*_gat(?:e|es|ed|ing)_[A-Za-z_]*(?!\p{L})|(?<!\p{L})gat(?:e|es|ed|ing)_[A-Za-z_]*(?!\p{L})|(?<!\p{L})[A-Za-z_]*_gat(?:e|es|ed)(?!\p{L})|(?<!\p{L})[A-Z_]*GAT(?:E|ES|ED|ING)_[A-Z_]*(?!\p{L})|(?<!\p{L})[Cc]ut(?:s|ting)?(?!\p{L}|\s-[a-z])|(?<!\p{L})CUT(?:S|TING)?(?!\p{L})/gu
+	/(?<!\p{L})(?:[Ss]hard|SHARD)(?:s|ed|ing|S|ED|ING)?(?!\p{L})|(?<!\p{L})[A-Za-z_]*(?:[Ss]hard|SHARD)[A-Za-z_]*(?!\p{L})|(?<!\p{L})(?:[A-Za-z_]*[a-z0-9_](?=Lever|LEVER)|[A-Za-z_]*_(?=lever))?(?:[Ll]ever|LEVER)(?!ag|AG|ano|ANO|ton|TON|ock|OCK|stock|STOCK|dalsveien|DALSVEIEN|kusen|KUSEN|n\b|N\b)[A-Za-z_]*(?!\p{L})|(?<!\p{L})[A-Za-z_]*(?:[Ss]eam|SEAM)(?!er\b|ER\b|an\b|AN\b)[A-Za-z_]*(?!\p{L})|(?<!\p{L})(?<!Golden )(?:gat(?:e|es|ed|ing)|Gat(?:e|es|ed|ing)|GAT(?:E|ES|ED|ING))(?!\p{L})|(?<![\p{L}])[a-z][A-Za-z]*Gat(?:e|es|ed|ing)[A-Za-z]*(?!\p{L})|(?<!\p{L})[A-Za-z_]*_gat(?:e|es|ed|ing)_[A-Za-z_]*(?!\p{L})|(?<!\p{L})gat(?:e|es|ed|ing)_[A-Za-z_]*(?!\p{L})|(?<!\p{L})[A-Za-z_]*_gat(?:e|es|ed)(?!\p{L})|(?<!\p{L})[A-Z_]*GAT(?:E|ES|ED|ING)_[A-Z_]*(?!\p{L})|(?<!\p{L})[Cc]ut(?:s|ting)?(?!\p{L}|\s-[a-z])|(?<!\p{L})CUT(?:S|TING)?(?!\p{L})/gu
 
 /**
  * Allowed path prefixes for retired-vocabulary matches, with reasons.
@@ -420,6 +420,32 @@ const BANNED_VOCABULARY_ALLOWED: ReadonlyArray<readonly [prefix: string, reason:
 		"board rows are register data and carry real building names verbatim: Kew Gate, Singapore",
 	],
 	["evals/", "the score ledger's rows are dated notes on committed board cases"],
+	// Records that cite receipts by their historical path, which must stay byte-exact.
+	[
+		"packages/mailwoman/lib/eval-harness/baselines.json",
+		"the precision note cites a scratchpad script by its historical path",
+	],
+	[
+		"packages/mailwoman/lib/eval-harness/specs/v2.3.0-nl-postcode.json",
+		"the us.postcode revision cites its evidence receipt by historical path",
+	],
+	[
+		"packages/mailwoman/lib/eval-harness/specs/v5.2.0-nordic.json",
+		"the us.postcode revision cites its evidence receipt by historical path",
+	],
+	[
+		"packages/mailwoman/lib/eval-harness/specs/v5.3.0-family.json",
+		"the us.postcode revision cites its evidence receipt by historical path",
+	],
+	[
+		"packages/mailwoman/lib/eval-harness/specs/v6.0.0-shipped-baseline.json",
+		"the provenance note cites the v264 battery run by its historical path",
+	],
+	[
+		"packages/neural-weights-en-us/model-card.json",
+		"the card's eval history cites receipts and retired spec files by historical path",
+	],
+	["release.config.json", "the weights lineage cites its promotion receipts by historical path"],
 	["packages/corpus/data/", "the sub-venue lexicon: an airport gate is a real sub-venue token"],
 	["packages/corpus/lib/recipes/sub/venue", "sub-venue recipes name the physical gate"],
 	["packages/corpus/lib/tools/sub/venue", "sub-venue tooling names the physical gate"],
@@ -460,6 +486,17 @@ const BANNED_VOCABULARY_ALLOWED: ReadonlyArray<readonly [prefix: string, reason:
 	],
 	["packages/neural/test/fixtures/", "a binary tokenizer model"],
 	["data/gazetteer/", "gazetteer place names"],
+	[
+		"packages/mailwoman/lib/eval-harness/fixtures/",
+		"eval fixtures hold real addresses: Norwegian streets end in gate, and GB venues are named Gate",
+	],
+	[
+		"packages/mailwoman/lib/eval-harness/gauntlet/cases/gb/regression.jsonl",
+		"the Manchester case is a real venue, Gate 12",
+	],
+	["docs/static/benchmarks/", "benchmark panels hold real addresses such as Hobsons Gate"],
+	["packages/mailwoman/data/county-population-ranked.json", "Gates County is a real North Carolina county"],
+	["packages/osm/fixtures/", "OSM fixtures carry tags verbatim, such as aeroway=gate"],
 	[".yarn/", "vendored third-party release"],
 ]
 

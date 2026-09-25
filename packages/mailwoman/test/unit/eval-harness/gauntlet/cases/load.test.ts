@@ -294,7 +294,7 @@ const CORPUS_SIZE = 1029
  * refuse to grade against it until it is rebuilt — also by design, and the reason
  * this is prose-only rather than bundled with a row change.
  */
-const CORPUS_HASH = "7b5d32485dd7f46dd7e2dae9d14beb3584d49740a45ee5d13c7833addbcbaf61"
+const CORPUS_HASH = "73038d2b417d33aa963abd21726c7a55edfbfbb2e66efa7ab777c4020f0df031"
 
 /**
  * `ablationBoardID` of the corpus.
@@ -322,7 +322,7 @@ const CORPUS_HASH = "7b5d32485dd7f46dd7e2dae9d14beb3584d49740a45ee5d13c7833addbc
  * the 11-row lexical-boundary adversarial board (`@580:7ff4bfccaa0e` → `@649:3df68a3c428a`),
  * and for the Brest split plus the Whitby cap-bound row (`@649:3df68a3c428a` → this).
  */
-const BOARD_ID = "gauntlet-regression@1029:5476b9c49eb1"
+const BOARD_ID = "gauntlet-regression@1029:3738dde391ac"
 
 /**
  * A minimal well-formed row, for the error-surface tests to mutate.
