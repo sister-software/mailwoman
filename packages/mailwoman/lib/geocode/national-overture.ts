@@ -15,10 +15,6 @@ import type { RegionDatabases } from "#geocode/regions"
 const COUNTRY_TO_STREET_LOCALE = new Map<string, StreetLocale>([
 	["tw", "zh"],
 	["it", "it"],
-	// The street rule is settled and the license expression is not, so `situs address-points --country
-	// es` reaches `licenseForOvertureCountry`'s refusal. `sources[].dataset` reads
-	// `OpenAddresses/scne.es`, the Sistema Cartográfico Nacional de España, where #2300 records the
-	// publisher as Catastro INSPIRE. Two different bodies, and the file settles neither.
 	["es", "es"],
 ])
 
@@ -37,25 +33,32 @@ export function streetLocaleForOvertureCountry(countryCode: string): StreetLocal
 }
 
 /**
- * The SPDX expression each country's national address-point database is published under:
- * Overture's theme license, and the upstream register's own.
+ * The SPDX expression each country's national address-point database is published under,
+ * which is the upstream register's license alone.
  *
- * The second half rests on research into the publisher's terms rather than on the file,
- * because `sources[].license` reads NULL for every row of every country here.
- * `sources[].dataset` is what identifies the publisher that research has to be about.
+ * Overture declares no identifier for the addresses theme.
+ * Its attribution page gives every other theme one, `CDLA-Permissive-2.0` for places
+ * and `ODbL-1.0` for divisions, and for addresses states only that the sources carry
+ * permissive open licenses before listing the upstream register per country.
  *
- * The first half is `CDLA-Permissive-2.0` because Overture licenses its themes separately
- * and the addresses theme is composed from permissively licensed sources.
- * ODbL reaches the OSM-derived themes, divisions and transportation,
- * so it does not belong on a row from this one.
+ * An expression carrying a second Overture grant would assert a grant Overture does not make.
+ *
+ * `sources[].license` reads NULL on every row of every country here, so the identifier
+ * comes from Overture's entry for the register that `sources[].dataset` records.
  */
 const COUNTRY_TO_LICENSE = new Map<string, string>([
-	// `OpenAddresses/<bureau> Civil Affairs`, the fifteen bureaus.
-	["tw", "CDLA-Permissive-2.0 AND OGDL-Taiwan-1.0"],
-	// `OpenAddresses/Istat e dall'Agenzia delle Entrate`, which is ANNCSU.
-	// CC-BY-4.0 is the term #2300 records, awaiting the per-source terms evidence
-	// the counsel tranche collects.
-	["it", "CDLA-Permissive-2.0 AND CC-BY-4.0"],
+	// `OpenAddresses/<bureau> Civil Affairs`, the county and city bodies Overture lists under Taiwan.
+	// Overture states CC-BY-4.0 for each one.
+	// `docs/superpowers/plans/counsel-dossier.md` reads the same municipal 門牌 rows as
+	// OGDL-Taiwan-1.0, whose attribution failure voids the grant.
+	// This records the stricter of the two readings.
+	["tw", "OGDL-Taiwan-1.0"],
+	// `OpenAddresses/Istat e dall'Agenzia delle Entrate`, which Overture lists as ANNCSU.
+	["it", "CC-BY-4.0"],
+	// `OpenAddresses/scne.es`, which Overture lists as `scne.es`: CartoCiudad,
+	// an IGN/CNIG product within the Sistema Cartográfico Nacional.
+	// Attribution reads `CartoCiudad CC-BY 4.0 scne.es`.
+	["es", "CC-BY-4.0"],
 ])
 
 /**

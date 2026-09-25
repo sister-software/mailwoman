@@ -12,10 +12,11 @@
  *   (WOF 890467835) carries only the Latin `Linkou`. Across the 289 units the training board holds, 102 have no
  *   Han-keyed TW row at all, 15 have one only on a namesake in another 縣市, and 10 only on a parentless row.
  *
- *   source + LICENSE: the pinned Overture Maps addresses parquet for Taiwan (`overture/<release>/addresses-tw.parquet`,
- *   cdla-Permissive-2.0), whose rows come from the 15 civil-affairs bureaus' registers under the Open Government Data
- *   License, Taiwan, v1.0 — the same input and the same license expression as the rooftop tier
- *   (`situs address-points --country TW`). `address_levels[1]` is the 縣市 and `address_levels[2]` the 鄉鎮市區,
+ *   source + LICENSE: the pinned Overture Maps addresses parquet for Taiwan
+ *   (`overture/<release>/addresses-tw.parquet`), whose rows come from the civil-affairs bureaus' registers under the
+ *   Open Government Data License, Taiwan, v1.0 — the same input and the same license expression as the rooftop tier
+ *   (`situs address-points --country TW`). Overture declares no identifier for the addresses theme, so the expression
+ *   is the register's own. `address_levels[1]` is the 縣市 and `address_levels[2]` the 鄉鎮市區,
  *   the register's own administrative pair. there is no free-text grouping here, so no thin-group threshold either.
  *   every pair is a real unit, and the smallest (金門縣烏坵鄉, 3 points) is reported rather than dropped.
  *
@@ -47,10 +48,14 @@ import type { PathBuilderLike } from "path-ts"
 import { DEFAULT_ADMIN_DB } from "#gazetteer-pipeline/defaults"
 
 /**
- * The license expression the artifact carries — Overture's theme license and the
- * register's own, the pair the rooftop tier stamps for the same input.
+ * The license expression the artifact carries, which is the register's own.
+ *
+ * Overture declares no identifier for the addresses theme, so the rooftop tier
+ * stamps the same expression for the same input.
+ * `licenseForOvertureCountry` in `#geocode/national-overture` documents why the earlier
+ * pairing with `CDLA-Permissive-2.0` asserted a grant Overture does not make.
  */
-export const TW_DISTRICTS_LICENSE = "CDLA-Permissive-2.0 AND OGDL-Taiwan-1.0"
+export const TW_DISTRICTS_LICENSE = "OGDL-Taiwan-1.0"
 
 /**
  * One Han name a WOF Taiwan region carries, as the admin `names` table has it.

@@ -22,6 +22,7 @@ import {
 } from "@mailwoman/resolver-wof-sqlite/street"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import {
+	licenseForOvertureCountry,
 	nationalAddressPointsPath,
 	OvertureNationalDatabaseProvider,
 	streetLocaleForOvertureCountry,
@@ -39,6 +40,21 @@ describe("OvertureNationalDatabaseProvider", () => {
 		expect(supportedOvertureCountries()).toContain("tw")
 		expect(streetLocaleForOvertureCountry("TW")).toBe("zh")
 		expect(() => streetLocaleForOvertureCountry("kr")).toThrow(/COUNTRY_TO_STREET_LOCALE/)
+	})
+
+	it("carries the upstream register's license alone, without an Overture addresses-theme grant", () => {
+		// Overture's attribution page declares an identifier for every theme but addresses,
+		// where it states only that the sources carry permissive open licenses and
+		// then lists the register per country.
+		// An expression naming `CDLA-Permissive-2.0` here would assert the places grant.
+		for (const country of supportedOvertureCountries()) {
+			expect(licenseForOvertureCountry(country)).not.toMatch(/CDLA/)
+		}
+
+		expect(licenseForOvertureCountry("es")).toBe("CC-BY-4.0")
+		expect(licenseForOvertureCountry("IT")).toBe("CC-BY-4.0")
+		expect(licenseForOvertureCountry("tw")).toBe("OGDL-Taiwan-1.0")
+		expect(() => licenseForOvertureCountry("kr")).toThrow(/COUNTRY_TO_LICENSE/)
 	})
 
 	it("answers {} for a registered country whose database is not on disk, and for an unregistered one", async () => {
