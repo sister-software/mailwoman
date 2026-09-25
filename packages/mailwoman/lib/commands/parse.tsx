@@ -24,6 +24,7 @@ import type React from "react"
 import {
 	type CommandSpec,
 	CommandTaskResult,
+	isLocaleTag,
 	loadClassifierTolerant,
 	type ParsedCommandComponent,
 	reportToStderr,
@@ -75,7 +76,7 @@ export const spec = {
 		locale: {
 			type: "string",
 			default: "en-US",
-			validate: (v: string) => /^[a-z]{2}(-[A-Z]{2})?$/u.test(v),
+			validate: isLocaleTag,
 			description: "BCP-47 locale",
 		},
 		"default-country": { type: "string", description: "Resolver country scope" },

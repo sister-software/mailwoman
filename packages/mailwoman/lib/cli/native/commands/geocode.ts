@@ -14,6 +14,7 @@ import {
 	booleanValue,
 	CLIUsageError,
 	type CommandSpec,
+	isLocaleTag,
 	numberValue,
 	renderCommandHelp,
 	renderInkCommand,
@@ -24,7 +25,6 @@ import {
 import type { GeocodeCommandOptions } from "#geocode/command-options"
 import type { GeocodeResult } from "#geocode/result"
 
-const localePattern = /^[a-z]{2}(-[A-Z]{2})?$/u
 const debugSizePattern = /^\d+x\d+$/u
 
 /**
@@ -44,7 +44,7 @@ export const spec = {
 			default: "en-US",
 			hint: "locale",
 			description: "Locale tag matching a weights package, such as en-US or fr-FR.",
-			validate: (value) => localePattern.test(value),
+			validate: isLocaleTag,
 			validationMessage: "--locale expects a BCP-47 tag like en-US or fr-FR.",
 		},
 		bias: {

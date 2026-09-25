@@ -8,6 +8,7 @@ import {
 	CLIUsageError,
 	type CommandSpec,
 	isCLIUsageError,
+	isLocaleTag,
 	parseCommand,
 	renderCommandHelp,
 } from "mailwoman/cli-native/spec"
@@ -168,5 +169,33 @@ describe("a renamed option keeps its old spelling working", () => {
 		} as CommandSpec
 
 		expect(() => parseCommand(invalid, [])).toThrow(/old spelling/u)
+	})
+})
+
+describe("isLocaleTag", () => {
+	test("accepts a bare language subtag and a language-region tag in the cased form", () => {
+		expect(isLocaleTag("en-US")).toBe(true)
+		expect(isLocaleTag("fr-FR")).toBe(true)
+		expect(isLocaleTag("ja-JP")).toBe(true)
+		expect(isLocaleTag("en")).toBe(true)
+	})
+
+	test("refuses the other casings of a tag that is otherwise valid", () => {
+		// The tag is interpolated into a weights package specifier and a data-root directory,
+		// both of which are lower-case language and upper-case region.
+		expect(isLocaleTag("en-us")).toBe(false)
+		expect(isLocaleTag("EN-US")).toBe(false)
+		expect(isLocaleTag("En-Us")).toBe(false)
+	})
+
+	test("refuses a weights family name, which `release hf --locale` accepts instead", () => {
+		expect(isLocaleTag("cjk")).toBe(false)
+		expect(isLocaleTag("base-latn")).toBe(false)
+	})
+
+	test("refuses a script or variant subtag and an empty value", () => {
+		expect(isLocaleTag("zh-Hant")).toBe(false)
+		expect(isLocaleTag("en-US-POSIX")).toBe(false)
+		expect(isLocaleTag("")).toBe(false)
 	})
 })

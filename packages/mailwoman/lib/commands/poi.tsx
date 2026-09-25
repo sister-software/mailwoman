@@ -35,6 +35,7 @@ import { Text } from "ink"
 import {
 	type CommandSpec,
 	CommandTaskResult,
+	isLocaleTag,
 	loadClassifierTolerant,
 	type OptionsOf,
 	type ParsedCommandComponent,
@@ -54,7 +55,7 @@ export const spec = {
 		locale: {
 			type: "string",
 			default: "en-US",
-			validate: (value: string) => /^[a-z]{2}(-[A-Z]{2})?$/u.test(value),
+			validate: isLocaleTag,
 			description: "BCP-47 locale",
 		},
 		db: { type: "string", description: "Sealed poi.db layer" },

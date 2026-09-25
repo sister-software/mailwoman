@@ -428,6 +428,20 @@ export async function renderCommandHelp(spec: CommandSpec): Promise<string> {
 export const positiveInteger = (value: number): boolean => Number.isInteger(value) && value > 0
 
 /**
+ * Validator for a `--locale` option: a lower-case language subtag and an optional
+ * upper-case region, as `en` or `en-US`.
+ *
+ * The casing is part of the check, because the tag is interpolated into a weights
+ * package specifier and into a directory path under the data root.
+ * It is a shape rather than a membership test, so it admits a tag that has no
+ * weights package and refuses a weights family name.
+ *
+ * `cjk` and `base-latn` are family names rather than locale tags, which is why
+ * `release hf --locale` does not validate with this.
+ */
+export const isLocaleTag = (value: string): boolean => /^[a-z]{2}(-[A-Z]{2})?$/u.test(value)
+
+/**
  * Option-descriptor shorthand: a plain string option.
  */
 export const stringOption = (description: string) => ({ type: "string", description }) as const

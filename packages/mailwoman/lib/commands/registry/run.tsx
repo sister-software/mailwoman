@@ -37,6 +37,7 @@ import { Text } from "ink"
 import {
 	type CommandSpec,
 	CommandTaskResult,
+	isLocaleTag,
 	type OptionsOf,
 	type ParsedCommandComponent,
 	useCommandTask,
@@ -71,7 +72,7 @@ export const spec = {
 		locale: {
 			type: "string",
 			default: "en-US",
-			validate: (v: string) => /^[a-z]{2}(-[A-Z]{2})?$/u.test(v),
+			validate: isLocaleTag,
 			description: "BCP-47 locale",
 		},
 		"default-country": { type: "string", description: "Resolver country scope" },
