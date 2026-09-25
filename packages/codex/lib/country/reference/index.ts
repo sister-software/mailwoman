@@ -11,6 +11,7 @@
 
 import type { AnnotationSet, Annotator } from "@mailwoman/annotations"
 
+import { isAlpha2CodeShape } from "#country/country"
 import { COUNTRY_REFERENCE } from "#country/reference/data"
 
 const REGIONAL_INDICATOR_BASE = 0x1_f1_e6
@@ -25,7 +26,7 @@ const A_UPPER = "A".charCodeAt(0)
 export function countryFlag(alpha2: string): string {
 	const code = alpha2.toUpperCase()
 
-	if (!/^[A-Z]{2}$/.test(code)) return ""
+	if (!isAlpha2CodeShape(code)) return ""
 
 	return String.fromCodePoint(...[...code].map((c) => REGIONAL_INDICATOR_BASE + c.charCodeAt(0) - A_UPPER))
 }

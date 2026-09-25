@@ -13,6 +13,7 @@
  *   chain. Read-only. The `--json` payload is shaped to feed an "effective placetype" soft-prior later.
  */
 
+import { isAlpha2CodeShape } from "@mailwoman/codex/country"
 import { prettyJSON } from "@mailwoman/core/json"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import { allRows } from "@mailwoman/core/utils"
@@ -37,7 +38,7 @@ export const spec = {
 		db: { type: "string", description: "WOF admin DB" },
 		country: {
 			type: "string",
-			validate: (value: string) => /^[A-Z]{2}$/u.test(value),
+			validate: isAlpha2CodeShape,
 			description: "ISO 3166-1 alpha-2 filter",
 		},
 		json: { type: "boolean", description: "Emit raw JSON" },

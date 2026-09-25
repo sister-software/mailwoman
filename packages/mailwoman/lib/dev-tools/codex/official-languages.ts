@@ -6,6 +6,7 @@
  * Regenerates the committed `codex/country/official-languages.ts` table from Unicode CLDR supplemental data.
  */
 
+import { isAlpha2CodeShape } from "@mailwoman/codex/country"
 import { APIClient, pluckResponseData } from "@mailwoman/core/api"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
@@ -111,7 +112,7 @@ export async function generateOfficialLanguages(
 	const table: Record<string, { official: string[]; regional?: string[] }> = {}
 
 	for (const territory of Object.keys(territoryInfo).toSorted()) {
-		if (!/^[A-Z]{2}$/.test(territory)) continue
+		if (!isAlpha2CodeShape(territory)) continue
 		const pops = territoryInfo[territory]!.languagePopulation
 
 		if (!pops) continue

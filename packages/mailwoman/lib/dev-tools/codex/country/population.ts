@@ -6,6 +6,7 @@
  * Regenerates the committed `codex/country/population.ts` table from GeoNames `countryInfo.txt`.
  */
 
+import { isAlpha2CodeShape } from "@mailwoman/codex/country"
 import { APIClient, pluckResponseData } from "@mailwoman/core/api"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
@@ -86,7 +87,7 @@ export async function generateCountryPopulation(
 		const alpha2 = columns[COLUMN_ISO2]!.trim()
 		const population = Number(columns[COLUMN_POPULATION])
 
-		if (!/^[A-Z]{2}$/.test(alpha2)) continue
+		if (!isAlpha2CodeShape(alpha2)) continue
 
 		if (!Number.isFinite(population) || population <= 0) continue
 

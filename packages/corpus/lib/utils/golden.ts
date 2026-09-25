@@ -8,6 +8,7 @@
 
 import { componentsPresentIn } from "@mailwoman/codex/address-format"
 import { COMPONENT_TAGS, type ComponentTag } from "@mailwoman/codex/component"
+import { isAlpha2CodeShape } from "@mailwoman/codex/country"
 import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 import { TextSpliterator } from "spliterator"
@@ -73,7 +74,7 @@ export function parseGoldenLine(line: string): GoldenEntry {
 		throw new Error("missing/empty raw")
 	}
 
-	if (typeof obj.country !== "string" || !/^[A-Z]{2}$/u.test(obj.country)) {
+	if (!isAlpha2CodeShape(obj.country)) {
 		throw new Error(`country must be ISO 3166-1 alpha-2 (got ${stringifyJSON(obj.country)})`)
 	}
 
