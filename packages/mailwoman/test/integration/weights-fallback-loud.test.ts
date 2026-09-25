@@ -141,6 +141,27 @@ describe("— the interactive/declined degraded banner is unchanged (check)", ()
 		const parsed = parseStdoutJSON(stdout) as Record<string, unknown>
 		expect(parsed["postcode"]).toBe("10118")
 	}, 30_000)
+
+	test("--degraded with an explicit --model skips the encoder load", async () => {
+		const { stdout, stderr, code } = await runCLI(
+			["parse", "--degraded", "--model", stubDir.path("model.onnx"), ADDRESS],
+			absentEnv()
+		)
+
+		expect(code).toBe(0)
+		expect(stderr).toContain("degraded parse: the neural encoder is not loaded")
+		expect(stderr).not.toContain("neural weights failed to load")
+		const parsed = parseStdoutJSON(stdout) as Record<string, unknown>
+		expect(parsed["postcode"]).toBe("10118")
+	}, 30_000)
+
+	test("--degraded with --neural is rejected", async () => {
+		const { stdout, stderr, code } = await runCLI(["parse", "--degraded", "--neural", ADDRESS], absentEnv())
+
+		expect(code).not.toBe(0)
+		// Ink wraps the error to the terminal width, so the check ignores line breaks.
+		expect(`${stdout}${stderr}`.replaceAll(/\s+/g, " ")).toContain("cannot be combined with --policy or --neural")
+	}, 30_000)
 })
 
 const DEFAULT_WOF_PATH = wofDatabasePath("whosonfirst-data-admin-us-latest.db")

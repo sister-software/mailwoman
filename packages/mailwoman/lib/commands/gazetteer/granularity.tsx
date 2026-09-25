@@ -6,7 +6,7 @@
 
 import { writeLocalFile, makeDirectories } from "@mailwoman/core/fs/writers"
 import { Box, Text } from "ink"
-import { dirname } from "path-ts"
+import { dirname, isAbsolute, relative, resolvePath, sep } from "path-ts"
 
 import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 import { DEFAULT_COVERAGE_FLOOR } from "#gazetteer-pipeline/defaults"
@@ -33,6 +33,7 @@ const GazetteerGranularity: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { wofDatabasePath } = await import("@mailwoman/resolver-wof-sqlite/paths")
 		const { md5File } = await import("@mailwoman/core/utils")
+		const { dataRootPath } = await import("@mailwoman/core/data-root")
 		const { bottomsOutAt, buildGranularityLadder } = await import("#gazetteer-pipeline/granularity/index")
 		const { renderGranularityReport } = await import("#gazetteer-pipeline/granularity/report")
 
@@ -43,9 +44,12 @@ const GazetteerGranularity: CommandComponent<typeof spec> = ({ options }) => {
 			throw new Error(`granularity: no countries measured from ${sourcePath} — is this an admin DB?`)
 		}
 
+		// The report is committed, so a source under the data root is recorded relative to it.
+		const fromDataRoot = relative(dataRootPath(), resolvePath(sourcePath))
+		const underDataRoot = !isAbsolute(fromDataRoot) && fromDataRoot !== ".." && !fromDataRoot.startsWith(`..${sep}`)
+
 		const markdown = renderGranularityReport(rows, {
-			// The report is committed, so it records a portable path instead of the resolved local one.
-			sourcePath: "$MAILWOMAN_DATA_ROOT/db/wof/admin-global-priority.db",
+			sourcePath: underDataRoot ? `$MAILWOMAN_DATA_ROOT/${fromDataRoot.split(sep).join("/")}` : String(sourcePath),
 			sourceMD5: await md5File(sourcePath),
 			buildDate: new Date().toISOString(),
 			floor: options.floor,

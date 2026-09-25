@@ -414,6 +414,11 @@ export async function readGazetteerCoverage(dbPath: PathBuilderLike): Promise<Ma
 export const ROOFTOP_PUBLISHED = new Set(["US", "FR"])
 
 /**
+ * Countries whose rooftop address points a user builds locally, such as AU from G-NAF.
+ */
+export const ROOFTOP_BUILD_LOCAL = new Set(["AU"])
+
+/**
  * How the training config was selected.
  */
 export const ConfigProvenance = {
@@ -621,7 +626,13 @@ export async function censusCoverage(options: CensusCoverageOptions): Promise<Co
 			admitted: admitted.has(cc),
 			...(weightsPackages.has(cc) ? { weightsPackage: weightsPackages.get(cc) } : {}),
 			gazetteerPlaces,
-			geocodeTier: ROOFTOP_PUBLISHED.has(cc) ? "rooftop-published" : gazetteerPlaces > 0 ? "locality" : "none",
+			geocodeTier: ROOFTOP_PUBLISHED.has(cc)
+				? "rooftop-published"
+				: ROOFTOP_BUILD_LOCAL.has(cc)
+					? "rooftop-build-local"
+					: gazetteerPlaces > 0
+						? "locality"
+						: "none",
 			boardRows: boardEntry?.rows ?? 0,
 			boardPassedRows: boardEntry?.passed ?? 0,
 		}

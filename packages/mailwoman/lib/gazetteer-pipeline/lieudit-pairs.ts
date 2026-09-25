@@ -63,6 +63,10 @@ export interface LieuDitExtractResult {
 	 * Département files read.
 	 */
 	filesRead: number
+	/**
+	 * The département files read, in name order, so a caller can fingerprint the source.
+	 */
+	files: PathBuilder[]
 }
 
 /**
@@ -134,5 +138,5 @@ export async function extractLieuDitPairs(banDir: PathBuilderLike): Promise<Lieu
 		}
 	}
 
-	return { pairs, rowsWithLieuDit, filesRead: files.length }
+	return { pairs, rowsWithLieuDit, filesRead: files.length, files }
 }

@@ -181,7 +181,7 @@ const ParseCommand: ParsedCommandComponent<ParseOptions> = ({ options, args }) =
 		)
 	}
 
-	return <ParseTask options={options} args={args} weightsOutcome="neural" />
+	return <ParseTask options={options} args={args} weightsOutcome={options.degraded ? "declined" : "neural"} />
 }
 
 /**
@@ -207,6 +207,10 @@ function ParseTask({
 			}
 
 			return await runBenchmark(input, options, options.benchmark)
+		}
+
+		if (options.degraded && ((options.policy && options.policy.length) || options.neural)) {
+			throw new CommandError("--degraded skips the neural encoder, so it cannot be combined with --policy or --neural")
 		}
 
 		if (options.policy && options.policy.length) {

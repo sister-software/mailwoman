@@ -12,7 +12,7 @@ import {
 	useCommandTask,
 	writeRawStdout,
 } from "#cli-kit"
-import { trains, type CoverageReport } from "#coverage/census"
+import { trains, type CoverageReport, type GeocodeTier } from "#coverage/census"
 
 /**
  * Command specification for `data coverage`, which reports parse and geocode coverage for each country.
@@ -99,12 +99,18 @@ function render(report: CoverageReport, wanted?: string[]): string {
 	const withStreet = trained.filter((c) => c.corpusStreetRows > 0)
 	const geocodable = report.countries.filter((c) => c.gazetteerPlaces > 0)
 
+	const rooftopSummary = (tier: GeocodeTier, label: string) => {
+		const codes = report.countries.filter((c) => c.geocodeTier === tier).map((c) => c.country)
+
+		return `${codes.length} ${label}${codes.length ? ` (${codes.join(", ")})` : ""}`
+	}
+
 	lines.push(
 		`corpus ${report.corpusVersion} — ${report.corpusRowsTotal.toLocaleString()} rows` +
 			(report.corpusCensusTakenAt ? ` (counts cached ${report.corpusCensusTakenAt})` : " (recounted)"),
 		`config ${report.configPath}`,
 		"",
-		`${trained.length} countries TRAIN · ${withStreet.length} with street-level rows · ${geocodable.length} geocodable · 2 rooftop (US, FR)`,
+		`${trained.length} countries TRAIN · ${withStreet.length} with street-level rows · ${geocodable.length} geocodable · ${rooftopSummary("rooftop-published", "rooftop")} · ${rooftopSummary("rooftop-build-local", "rooftop build-local")}`,
 		""
 	)
 
@@ -142,9 +148,11 @@ function render(report: CoverageReport, wanted?: string[]): string {
 		const geo =
 			c.geocodeTier === "rooftop-published"
 				? "rooftop"
-				: c.gazetteerPlaces
-					? `locality ${c.gazetteerPlaces.toLocaleString()}`
-					: "—"
+				: c.geocodeTier === "rooftop-build-local"
+					? "rooftop (build-local)"
+					: c.gazetteerPlaces
+						? `locality ${c.gazetteerPlaces.toLocaleString()}`
+						: "—"
 
 		lines.push(
 			`${c.country} | ${parse} | ${geo} | ${c.boardRows ? `${c.boardPassedRows}/${c.boardRows} conditional` : "unmeasured"}`

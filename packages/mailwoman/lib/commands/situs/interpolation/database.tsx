@@ -98,8 +98,7 @@ export const spec = {
 		state: { type: "string", required: true, choices: Object.keys(STATE_FIPS), description: "US state abbreviation" },
 		"edges-dir": {
 			type: "string",
-			default: resolvePath(dataRootPath("census", "tiger2023-edges")),
-			description: "TIGER EDGES directory",
+			description: "TIGER EDGES directory. Defaults to census/tiger<year>-edges under the data root for --release",
 		},
 		release: { type: "string", default: "TIGER2023", description: "TIGER release tag" },
 		out: { type: "string", description: "Output DB path" },
@@ -139,6 +138,9 @@ const SitusInterpolationDatabase: CommandComponent<typeof spec> = ({ options }) 
 		}
 
 		const STATE = options.state.toUpperCase()
+		const { parseTIGERRelease } = await import("@mailwoman/tiger")
+		const vintage = parseTIGERRelease(options.release)
+		const edgesDir = options.edgesDir ?? resolvePath(dataRootPath("census", `tiger${vintage}-edges`))
 
 		const finalOut = resolvePath(options.out ?? interpolationDatabasePath(`interpolation-us-${STATE.toLowerCase()}.db`))
 
@@ -171,14 +173,14 @@ const SitusInterpolationDatabase: CommandComponent<typeof spec> = ({ options }) 
 		const { canonicalizeRouteKey, normalizeStreetForKey } = streetNormalize
 
 		const shapefiles = (
-			await Globerator.from(`${options.edgesDir}/tl_*_${STATE_FIPS[STATE]}???_edges.shp`, {
+			await Globerator.from(`${edgesDir}/tl_${vintage}_${STATE_FIPS[STATE]}???_edges.shp`, {
 				absolute: true,
 			}).toArray()
 		).toSorted()
 
 		if (!shapefiles.length) {
 			throw new CommandError(
-				`no tl_*_${STATE_FIPS[STATE]}???_edges.shp under ${options.edgesDir} — download TIGER EDGES first`
+				`no tl_${vintage}_${STATE_FIPS[STATE]}???_edges.shp under ${edgesDir} — download TIGER EDGES first`
 			)
 		}
 

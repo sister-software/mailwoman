@@ -94,6 +94,21 @@ export const TIGERCurrentVintage = 2023
 
 export type TIGERCurrentVintage = typeof TIGERCurrentVintage
 
+/**
+ * Parses a TIGER release tag such as `TIGER2023` into its vintage year.
+ *
+ * @throws Error when the tag is not `TIGER` followed by a four-digit year.
+ */
+export function parseTIGERRelease(release: string): number {
+	const match = /^TIGER(\d{4})$/.exec(release)
+
+	if (!match) {
+		throw new Error(`A TIGER release tag looks like TIGER${TIGERCurrentVintage}, but got "${release}".`)
+	}
+
+	return Number(match[1])
+}
+
 // #endregion
 
 // #region File Name Generation

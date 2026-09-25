@@ -11,7 +11,7 @@ import { writeLocalFile } from "@mailwoman/core/fs/writers"
 import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 import type { PairIndexHeaderInput } from "@mailwoman/neural/pair"
 import { Box, Text } from "ink"
-import { PathBuilder } from "path-ts"
+import { basename, PathBuilder, type PathBuilderLike } from "path-ts"
 
 import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 
@@ -141,7 +141,7 @@ export const spec = {
 const GazetteerPairIndex: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { dataRootPath } = await import("@mailwoman/core/data-root")
-		const { md5File } = await import("@mailwoman/core/utils")
+		const { md5File, md5Hex } = await import("@mailwoman/core/utils")
 		const { normalizeFSTToken } = await import("@mailwoman/neural/fst-prior")
 		const { PairIndexResolver, serializePairIndex } = await import("@mailwoman/neural/pair")
 		const { PairIndexBuilder, applyPairIndexHoldout } = await import("#gazetteer-pipeline/pair/index/index")
@@ -196,7 +196,8 @@ const GazetteerPairIndex: CommandComponent<typeof spec> = ({ options }) => {
 		}
 
 		// This counts distinct pairs from every source other than the CSV, for the GB cross-check.
-		let boroughsAdded = 0
+		let secondaryPairsAdded = 0
+		let banFiles: readonly PathBuilderLike[] = []
 
 		if (options.boroughDB) {
 			const before = builder.distinctCount
@@ -205,21 +206,23 @@ const GazetteerPairIndex: CommandComponent<typeof spec> = ({ options }) => {
 				builder.addRow(pair.child, pair.parent, pair.parentTag)
 			}
 
-			boroughsAdded = builder.distinctCount - before
+			secondaryPairsAdded = builder.distinctCount - before
 
-			console.error(`pair-index: +${boroughsAdded} distinct borough pairs (WOF admin DB)`)
+			console.error(`pair-index: +${secondaryPairsAdded} distinct borough pairs (WOF admin DB)`)
 		}
 
 		// The BAN source streams about 26 million rows, so it is opt-in.
 		if (options.banDir) {
 			const before = builder.distinctCount
-			const { pairs, rowsWithLieuDit, filesRead } = await extractLieuDitPairs(options.banDir)
+			const { pairs, rowsWithLieuDit, filesRead, files } = await extractLieuDitPairs(options.banDir)
+
+			banFiles = files
 
 			for (const pair of pairs) {
 				builder.addRow(pair.child, pair.parent, pair.parentTag)
 			}
 
-			boroughsAdded += builder.distinctCount - before
+			secondaryPairsAdded += builder.distinctCount - before
 
 			console.error(
 				`pair-index: +${builder.distinctCount - before} distinct lieu-dit pairs ` +
@@ -239,7 +242,7 @@ const GazetteerPairIndex: CommandComponent<typeof spec> = ({ options }) => {
 					builder.addRow(pair.child, pair.parent, pair.parentTag ?? SOURCE_PARENT_TAGS.secondaryPairsJSONL)
 				}
 
-				boroughsAdded += builder.distinctCount - before
+				secondaryPairsAdded += builder.distinctCount - before
 
 				console.error(
 					`pair-index: +${builder.distinctCount - before} distinct secondary pairs (${path.split("/").pop()})`
@@ -257,12 +260,18 @@ const GazetteerPairIndex: CommandComponent<typeof spec> = ({ options }) => {
 			options.holdoutSeed
 		)
 
-		// The header hashes each file source.
-		// It does not hash the BAN directory.
+		// The BAN directory is recorded as one digest over each département file's name and MD5.
+		const banFileDigests: string[] = []
+
+		for (const file of banFiles) {
+			banFileDigests.push(`${basename(file)} ${await md5File(file)}`)
+		}
+
 		const sourceMD5s = [
 			...(sourcePath ? [await md5File(sourcePath)] : []),
 			...(options.boroughDB ? [await md5File(options.boroughDB)] : []),
 			...(await Promise.all(splitPathList(options.pairsJSONL).map((path) => md5File(path)))),
+			...(banFileDigests.length ? [md5Hex(banFileDigests.join("\n"))] : []),
 		]
 
 		// An omitted flag writes no header key.
@@ -319,10 +328,10 @@ const GazetteerPairIndex: CommandComponent<typeof spec> = ({ options }) => {
 		const checkLine =
 			country === "gb"
 				? options.holdoutFraction > 0
-					? `(cross-check skipped under --holdout-fraction; ${preHoldoutCount.toLocaleString()} distinct pairs before holdout, expects ${(EXPECTED_GB_PAIR_COUNT + boroughsAdded).toLocaleString()})${preFoldSuffix}`
-					: preHoldoutCount === EXPECTED_GB_PAIR_COUNT + boroughsAdded
-						? `CROSS-CHECK PASS: ${preHoldoutCount.toLocaleString()} distinct pairs (baseline ${EXPECTED_GB_PAIR_COUNT.toLocaleString()} + ${boroughsAdded} borough)${preFoldSuffix}`
-						: `CROSS-CHECK BLOCKED: ${preHoldoutCount.toLocaleString()} distinct pairs != baseline ${EXPECTED_GB_PAIR_COUNT.toLocaleString()} + ${boroughsAdded} borough — investigate fold divergence before trusting this artifact${preFoldSuffix}`
+					? `(cross-check skipped under --holdout-fraction; ${preHoldoutCount.toLocaleString()} distinct pairs before holdout, expects ${(EXPECTED_GB_PAIR_COUNT + secondaryPairsAdded).toLocaleString()})${preFoldSuffix}`
+					: preHoldoutCount === EXPECTED_GB_PAIR_COUNT + secondaryPairsAdded
+						? `CROSS-CHECK PASS: ${preHoldoutCount.toLocaleString()} distinct pairs (baseline ${EXPECTED_GB_PAIR_COUNT.toLocaleString()} + ${secondaryPairsAdded} from secondary sources)${preFoldSuffix}`
+						: `CROSS-CHECK BLOCKED: ${preHoldoutCount.toLocaleString()} distinct pairs != baseline ${EXPECTED_GB_PAIR_COUNT.toLocaleString()} + ${secondaryPairsAdded} from secondary sources — investigate fold divergence before trusting this artifact${preFoldSuffix}`
 				: country === "us"
 					? options.holdoutFraction > 0
 						? `(cross-check skipped under --holdout-fraction; ${preHoldoutCount.toLocaleString()} distinct pairs before holdout, expects ${EXPECTED_US_PAIR_COUNT.toLocaleString()})`

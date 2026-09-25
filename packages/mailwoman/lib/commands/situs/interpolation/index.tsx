@@ -54,8 +54,7 @@ export const spec = {
 	options: {
 		"edges-dir": {
 			type: "string",
-			default: resolvePath(dataRootPath("census", "tiger2023-edges")),
-			description: "TIGER download directory",
+			description: "TIGER download directory. Defaults to census/tiger<year>-edges under the data root for --release",
 		},
 		"out-dir": { type: "string", description: "Database output directory" },
 		release: { type: "string", default: "TIGER2023", description: "TIGER vintage" },
@@ -258,7 +257,8 @@ interface DownloadTask {
 async function downloadParallel(
 	tasks: DownloadTask[],
 	concurrency: number,
-	edgesDir: PathBuilder
+	edgesDir: PathBuilder,
+	vintage: number
 ): Promise<{ downloaded: number; skipped: number; failed: string[] }> {
 	let downloaded = 0
 	let skipped = 0
@@ -268,7 +268,7 @@ async function downloadParallel(
 	async function worker() {
 		while (idx < tasks.length) {
 			const task = tasks[idx++]!
-			const shpBase = `tl_2023_${task.geoid}_edges.shp`
+			const shpBase = `tl_${vintage}_${task.geoid}_edges.shp`
 			const shpPath = edgesDir(shpBase)
 
 			if (await pathExists(shpPath)) {
@@ -408,9 +408,11 @@ interface StateResult {
 
 const SitusInterpolation: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const EDGES_DIR = PathBuilder.from(options.edgesDir)
-		const OUT_DIR = options.outDir ?? interpolationDatabasePath
+		const { parseTIGERRelease } = await import("@mailwoman/tiger")
 		const RELEASE = options.release
+		const VINTAGE = parseTIGERRelease(RELEASE)
+		const EDGES_DIR = PathBuilder.from(options.edgesDir ?? dataRootPath("census", `tiger${VINTAGE}-edges`))
+		const OUT_DIR = options.outDir ?? interpolationDatabasePath
 		const CONCURRENCY = options.concurrency
 		const FORCE = options.force
 		const DOWNLOAD_ONLY = options.downloadOnly
@@ -461,11 +463,11 @@ const SitusInterpolation: CommandComponent<typeof spec> = ({ options }) => {
 		if (!BUILD_ONLY) {
 			console.error(`Step 2: downloading TIGER EDGES ZIPs (concurrency=${CONCURRENCY})`)
 
-			const BASE = "https://www2.census.gov/geo/tiger/TIGER2023/EDGES"
+			const BASE = `https://www2.census.gov/geo/tiger/TIGER${VINTAGE}/EDGES`
 
 			const tasks: DownloadTask[] = counties.map((c) => {
 				const geoid = c.geoid
-				const zipFile = `tl_2023_${geoid}_edges.zip`
+				const zipFile = `tl_${VINTAGE}_${geoid}_edges.zip`
 
 				return {
 					geoid,
@@ -474,7 +476,7 @@ const SitusInterpolation: CommandComponent<typeof spec> = ({ options }) => {
 				}
 			})
 
-			const { downloaded, skipped, failed } = await downloadParallel(tasks, CONCURRENCY, EDGES_DIR)
+			const { downloaded, skipped, failed } = await downloadParallel(tasks, CONCURRENCY, EDGES_DIR, VINTAGE)
 
 			console.error(`  downloaded: ${downloaded}, skipped (already present): ${skipped}, failed: ${failed.length}`)
 
