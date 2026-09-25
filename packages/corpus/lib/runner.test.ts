@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import { readLocalTextFile, readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { pathExists, readLocalTextFile, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { runAdapter, type RunnerProgress } from "@mailwoman/corpus/runner"
@@ -308,6 +308,48 @@ describe("runAdapter", () => {
 				corpusVersion: "0.1.0",
 			})
 		).rejects.toThrow(/aborted/i)
+	})
+
+	it("refuses to write a manifest when the adapter honored the signal by returning", async () => {
+		// The test above aborts an adapter that ignores `signal` and keeps yielding,
+		// so a row arrives after the abort and the check inside the loop catches it.
+		// Every adapter in the tree honors `signal` the way this one does — it returns —
+		// and that path reached the manifest write with a partial `canonical.jsonl`.
+		// `MAILWOMAN_RESUME=1` treats a manifest beside a jsonl as a finished run,
+		// so the next build would have reused the truncated file.
+		const ac = new AbortController()
+
+		const honorsSignal: CorpusAdapter = {
+			id: "syn",
+			defaultLicense: "CC0-1.0",
+			addressRole: AddressRole.Premise,
+			register: "test-register",
+			surface: SurfaceOrigin.Attested,
+			description: "",
+			async *rows(options) {
+				for (let i = 0; i < 100; i++) {
+					if (options.signal?.aborted) return
+
+					yield baseRow({ source: "syn", source_id: `syn-${i}`, raw: `r${i}`, components: { locality: `L${i}` } })
+
+					if (i === 2) {
+						ac.abort()
+					}
+				}
+			},
+		}
+
+		await expect(
+			runAdapter({
+				adapter: honorsSignal,
+				adapterOptions: { inputPath: "ignored", signal: ac.signal },
+				outputDir: scratch.path,
+				corpusVersion: "0.1.0",
+			})
+		).rejects.toThrow(/abort/i)
+
+		// And it left no manifest for a resume to find.
+		expect(await pathExists(scratch.path("syn", "MANIFEST.json"))).toBe(false)
 	})
 
 	it("two runs over the same fixture produce byte-identical JSONL", async () => {
