@@ -2,30 +2,6 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- *
- *   `mailwoman gazetteer overture-ingest` — Overture Maps addresses-theme ingest + per-country
- *   fill-rate probe (#471, epic #470).
- *
- *   Pulls address rows for a pinned Overture release into per-country local Parquet via DuckDB with
- *   predicate pushdown (megabytes per country — never the planet), and emits the fill-rate report
- *   that checks every downstream Overture issue (#472-#477): per-country row counts, field fill
- *   percentages, observed source datasets, and OpenAddresses-lineage share.
- *
- *   Standing rules encoded here (see epic #470 "pre-registered decision rules"):
- *
- *   - The release is pinned in every artifact path. The addresses theme is alpha. rows churn between
- *       monthly releases. Two releases never mix in one artifact.
- *   - The per-row `sources` array is preserved verbatim. It is what makes leakage-free eval filtering
- *       possible (#472) and satisfies the provenance-per-row rule.
- *   - Overture's `id` (gers) rides along as a nullable passthrough column. Nothing joins on it.
- *
- *   The probe (fill-rates.json + fill-rates.md) runs against the local Parquet after ingest, so it is
- *   exact for what we materialized and costs no second remote scan.
- *
- *   Progress streams to stderr. the final summary is on stdout. The per-country Parquet + the
- *   fill-rates report are written directly under `<out>/<release>/` (Parquet/JSON artifacts rather than a
- *   SQLite DB — no atomic temp-swap applies); this preserves the original
- *   `scripts/ingest-overture-addresses.ts` behavior verbatim.
  */
 
 import { writeLocalTextFile, makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
@@ -34,17 +10,16 @@ import { Box, Text } from "ink"
 import { PathBuilder } from "path-ts"
 
 import { type CommandSpec, CommandTaskResult, type CommandComponent, splitCountryCodes, useCommandTask } from "#cli-kit"
-// Overture prunes old releases from the bucket (the 2026-08-19 listing held exactly one),
-// so a stale pin fails the default ingest outright.
-// Moves together with `gazetteer-pipeline/poi/defaults.ts`'s pin.
-// See its docstring for why the two constants stay independent.
+
+// Overture prunes old releases from its bucket, so a stale pin makes the default ingest fail.
+// Keep this pin in step with `DEFAULT_RELEASE` in `gazetteer-pipeline/poi/defaults.ts`.
 const DEFAULT_RELEASE = "2026-07-22.0"
 
 const S3_GLOB = (release: string) =>
 	`s3://overturemaps-us-west-2/release/${release}/theme=addresses/type=address/*.parquet`
 
 /**
- * Fields whose fill rate the report tracks — the check inputs for #472-#477.
+ * The address fields whose fill rates the report measures.
  */
 const FILL_FIELDS = ["postcode", "street", "number", "unit", "postal_city"] as const
 
@@ -58,7 +33,10 @@ interface CountryProbe {
 }
 
 /**
- * Native command-line interface consumed by the filesystem command router.
+ * Command specification for `gazetteer overture-ingest`, which copies Overture address
+ * rows into per-country Parquet files and writes a fill-rate report.
+ *
+ * Every output lands under `<out>/<release>/`, so rows from two releases never mix in one directory.
  */
 export const spec = {
 	name: "overture-ingest",
@@ -120,37 +98,33 @@ const GazetteerOvertureIngest: CommandComponent<typeof spec> = ({ options }) => 
 		const release = options.release ?? DEFAULT_RELEASE
 		const countries = splitCountryCodes(options.countries)
 		const limit = options.limit ? Number.parseInt(options.limit, 10) : undefined
-		// A reservoir sample is reproducible only when its seed is, so the default is fixed
-		// rather than drawn: two runs of the same release and sample size write the same rows.
+		// The default seed is fixed so that repeated samples of one release write the same rows.
 		const seed = options.seed ? Number.parseInt(options.seed, 10) : 20_260_922
 		const outRoot = PathBuilder.from(options.out ?? dataRootPath("overture"))
 		const outDir = outRoot(release)
 		await makeDirectories(outDir)
 
-		// @duckdb/node-api is an optional peer dep (this is a maintainer-only data command) — load
-		// it dynamically so merely importing this command (e.g. `mailwoman --help`) doesn't fault when the native binding isn't installed.
+		// `@duckdb/node-api` is an optional peer, so it loads here to keep `--help` working without it.
 		const { DuckDBInstance } = await import("@duckdb/node-api")
 		const instance = await DuckDBInstance.create()
 		const db = await instance.connect()
 
-		// Anonymous access to the public Overture bucket — region only, no credentials.
+		// The Overture bucket is public, so DuckDB needs only the region and no credentials.
 		await db.run("INSTALL httpfs; LOAD httpfs;")
 		await db.run("INSTALL spatial; LOAD spatial;")
 		await db.run("SET s3_region='us-west-2';")
-		// Modest thread count + a hard memory ceiling: DuckDB's default (all cores) over the
-		// Overture addresses theme OOM-killed this box once (2026-06-19, naive read_parquet).
-		// Copy streams to disk, so the caps cost little.
-		// They bound scan parallelism + buffers.
+		// DuckDB's defaults can exhaust memory on the addresses theme.
+		// The COPY streams to disk, so these limits cost little.
 		await db.run("SET threads=4;")
 		await db.run("SET memory_limit='8GB';")
 
 		const countryParquet = (cc: string) => outDir(`addresses-${cc.toLowerCase()}.parquet`)
 
 		/**
-		 * Materialize one country into local Parquet.
+		 * Copies one country's rows into local Parquet.
 		 *
-		 * Column set preserves the Overture schema verbatim (nested `sources` + `address_levels` included)
-		 * plus lon/lat decoded from the WKB point via the spatial extension.
+		 * The copy keeps the Overture columns unchanged, including the nested `sources` that
+		 * evaluation filtering relies on, and adds `lon` and `lat` decoded from the point geometry.
 		 */
 		const ingestCountry = async (cc: string): Promise<void> => {
 			const limitClause = limit ? `LIMIT ${limit}` : ""
@@ -184,21 +158,13 @@ const GazetteerOvertureIngest: CommandComponent<typeof spec> = ({ options }) => 
 		}
 
 		/**
-		 * Emit the flattened corpus-input jsonl the `overture` corpus adapter consumes
-		 * (`{ street, number, unit, postcode, locality }`), so `@mailwoman/corpus`
-		 * stays free of the heavy native DuckDB binding.
+		 * Writes the flattened JSONL that the `overture` corpus adapter reads,
+		 * so `@mailwoman/corpus` does not need DuckDB.
 		 *
-		 * `street` is kept whole (keyword included); the downstream affix-relabel splits `street_prefix`.
-		 * `locality` flattens the `address_levels` municipality (the deepest level)
-		 * with a `postal_city` fallback.
+		 * The `locality` field is `postal_city` when present and otherwise the deepest `address_levels` value.
 		 *
-		 * `--sample <n>` draws a reservoir sample rather than writing every row.
-		 * Overture stores a country's rows in spatial order, so the first n rows of Brazil's 89,899,299
-		 * are one corner of it: the first 5,000 rows of `addresses-it.parquet` are all Sardinia.
-		 *
-		 * A recipe or adapter capping its input by taking the head therefore teaches
-		 * one region and reports the country's row count.
-		 * DuckDB's reservoir sample spreads the draw over the whole file for one pass of it.
+		 * Overture stores a country's rows in spatial order, so the first n rows cover one region.
+		 * The `--sample` option therefore draws a reservoir sample across the whole file.
 		 */
 		const emitCorpusJSONL = async (cc: string): Promise<void> => {
 			const src = countryParquet(cc)
@@ -228,7 +194,7 @@ const GazetteerOvertureIngest: CommandComponent<typeof spec> = ({ options }) => 
 		}
 
 		/**
-		 * Probe one country's local Parquet for the fill-rate report.
+		 * Measures one country's local Parquet for the fill-rate report, returning `null` when it has no rows.
 		 */
 		const probeCountry = async (cc: string): Promise<CountryProbe | null> => {
 			const src = countryParquet(cc)
@@ -338,7 +304,7 @@ const GazetteerOvertureIngest: CommandComponent<typeof spec> = ({ options }) => 
 		)
 	}
 
-	return null // progress streams to stderr until the summary lands
+	return null
 }
 
 export default GazetteerOvertureIngest

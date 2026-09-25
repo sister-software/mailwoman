@@ -2,10 +2,6 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- *
- *   Write postcode/locality/region/country tuples for the trailing-region recipe.
- *   Sources are postal-code parent joins, GeoNames exports, or admin-only locality pairs.
- *   Admin pairs require an explicit locale; postcode sources use attested country placement.
  */
 
 import { countryDisplayNames } from "@mailwoman/codex/country"
@@ -18,7 +14,7 @@ import { type CommandSpec, CommandTaskResult, type CommandComponent, splitCountr
 import { suffixTail } from "#dev-tools/coord-panel"
 
 /**
- * Classify locality shapes using the same suffix rule as the evaluation probes.
+ * Classifies a locality name as a suffix tail, a multi-word name or a single-word name.
  */
 function localityShape(triple: { locality: string }): string {
 	if (suffixTail(triple.locality)) return "suffix-tail"
@@ -27,7 +23,8 @@ function localityShape(triple: { locality: string }): string {
 }
 
 /**
- * Native command-line interface consumed by the filesystem command router.
+ * Command specification for `corpus tuples`, which writes postcode, locality, region
+ * and country tuples for the trailing-region recipe.
  */
 export const spec = {
 	name: "tuples",
@@ -40,7 +37,7 @@ export const spec = {
 			default: "parent-join",
 			choices: ["parent-join", "geonames", "admin-pairs"],
 			description:
-				"parent-join (postalcode-intl.db → admin gazetteer), geonames (fetched postal export) or admin-pairs (gazetteer only, no postcode)",
+				"parent-join (postalcode-intl.db → admin gazetteer), geonames (fetched postal export) or admin-pairs (gazetteer only, without postcodes)",
 		},
 		locale: {
 			type: "string",

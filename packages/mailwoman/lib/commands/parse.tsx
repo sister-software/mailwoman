@@ -34,23 +34,23 @@ import { WeightsGuard, type WeightsOutcome } from "#cli-kit/weights-guard"
 import { resolverDefaultCountry } from "#country-scope"
 import type { createRuntimePipeline } from "#index"
 
-export { localeToCountry, resolverDefaultCountry } from "#country-scope"
-export type { CountryScope } from "#country-scope"
-
 /**
- * Bytes per KiB, for human-readable sizes.
+ * Re-exports the country-scope helpers so tests can check the `--locale` to
+ * default-country mapping through the command module.
  */
+export { localeToCountry, resolverDefaultCountry } from "#country-scope"
+/**
+ * Re-exports the country-scope type alongside its helpers.
+ */
+export type { CountryScope } from "#country-scope"
 
 const POLICY_MODES: readonly PolicyMode[] = ["rule_only", "neural_only", "both", "neural_preferred", "rule_preferred"]
 const POLICY_SPEC_RE = /^([a-z_]+)=([a-z_]+)$/u
 
 /**
- * Shown at the top of `mailwoman parse --help`.
+ * The summary at the top of `mailwoman parse --help`.
  *
- * The one thing it has to settle is parse-vs-geocode (#1577): the two commands take the
- * same argument and the difference is invisible until you have run both.
- *
- * Keep this short enough to draw the parse/geocode line without swamping command help.
+ * It distinguishes `parse` from `geocode`, because both commands take the same argument.
  */
 export const description =
 	"Label the parts of an address — house number, street, locality, postcode — without looking anything up: the " +
@@ -63,7 +63,7 @@ const boundedInteger =
 		Number.isInteger(value) && value >= 1 && value <= maximum
 
 /**
- * Native command-line interface consumed by the filesystem command router.
+ * Command specification for `parse`, which labels the components of an address.
  */
 export const spec = {
 	name: "parse",
@@ -164,9 +164,8 @@ function parsePolicySpecs(policySpecs: readonly string[]): PolicyOverride[] {
 }
 
 const ParseCommand: ParsedCommandComponent<ParseOptions> = ({ options, args }) => {
-	// The weights guard wraps the default pipeline path only — explicit --model/--tokenizer paths
-	// and the legacy/benchmark/degraded paths keep their existing loading semantics untouched
-	// (plan 3. Non-interactive absent-weights behavior stays byte-identical to pre-guard until plan 4).
+	// The weights guard covers only the default pipeline path.
+	// The benchmark, policy, neural and explicit model paths load weights themselves.
 	const guardEligible =
 		options.benchmark === undefined &&
 		!(options.policy && options.policy.length) &&
@@ -174,8 +173,6 @@ const ParseCommand: ParsedCommandComponent<ParseOptions> = ({ options, args }) =
 		!options.model &&
 		!options.tokenizer
 
-	// The guard owns the probe now (it is async, so a render-time check is not possible);
-	// it settles to the same "neural" path when weights resolve and nothing else was forced.
 	if (guardEligible) {
 		return (
 			<WeightsGuard locale={options.locale} autoDownload={options.downloadWeights} forceDegraded={options.degraded}>
@@ -188,7 +185,7 @@ const ParseCommand: ParsedCommandComponent<ParseOptions> = ({ options, args }) =
 }
 
 /**
- * The actual parse work, one hook-owning component below the guard so the prompt can render first.
+ * Runs the parse in a component below the weights guard, so that the guard's prompt renders first.
  */
 function ParseTask({
 	options,
@@ -212,33 +209,27 @@ function ParseTask({
 			return await runBenchmark(input, options, options.benchmark)
 		}
 
-		// --policy implies the neural proposal/policy path.
 		if (options.policy && options.policy.length) {
 			const policyOverrides = parsePolicySpecs(options.policy)
 
 			return await runNeural(input, options, policyOverrides)
 		}
 
-		// --neural without --policy: legacy direct-neural path (kept for parity with old behavior).
 		if (options.neural) {
 			return await runNeural(input, options, [])
 		}
 
-		// Guard said degraded (user declined the download, download failed, or --degraded):
-		// the real pipeline minus the encoder.
-		// "unavailable" falls through to runPipeline's legacy chain.
+		// An `unavailable` outcome falls through to `runPipeline`, which attempts the load itself.
 		if (weightsOutcome === "declined") {
 			return runDegraded(input, options)
 		}
 
-		// Default: runtime pipeline.
 		return runPipeline(input, options)
 	})
 
 	if (state.status !== "done") return <CommandTaskResult state={state} running={<Spinner />} />
 
-	// Every parse format (json/tuple/xml) is machine-readable — bypass Ink's word-wrapping <Text>
-	// renderer, which corrupts long JSON lines at 80 cols when piped (see writeRawStdout).
+	// Every output format is machine-readable, so it bypasses Ink's `<Text>`, which wraps long lines.
 	return writeRawStdout(state.result)
 }
 
@@ -270,11 +261,9 @@ async function tryBuildFST(options: ParseOptions): Promise<FSTMatcher | undefine
 }
 
 /**
- * Tree → resolved tree via the WOF backend.
+ * Resolves a parsed tree against the WOF backend.
  *
- * When `options.candidates` is set, asks the resolver for top-(N+1)
- * candidates per node so the runner-ups land on `AddressNode.alternatives`
- * (where N is the requested alternative count; +1 because the top winner is also in the limit).
+ * The lookup limit is `--candidates` plus one, because the winning candidate counts toward it.
  */
 async function resolveWithCandidates(
 	resolver: Resolver,
@@ -295,12 +284,12 @@ async function resolveWithCandidates(
 		opts.candidatesPerLookup = options.candidates + 1
 	}
 
-	// #42: the library default has been on since 2026-08-05. Only the explicit --no-postcode-country-coherence pin needs threading.
+	// The resolver enables postcode-country coherence by default, so only the opt-out is passed.
 	if (options.postcodeCountryCoherence === false) {
 		opts.postcodeCountryCoherence = false
 	}
 
-	// #31 opt-in mechanisms: library defaults are off, so only the explicit opt-in needs threading.
+	// The resolver disables shape and containment coherence by default, so only the opt-in is passed.
 	if (options.postcodeShapeCoherence === true) {
 		opts.postcodeShapeCoherence = true
 	}
@@ -320,7 +309,7 @@ async function resolveWithCandidates(
 		opts.defaultCountry = dc
 	}
 
-	// #895: the library default is on. Only the explicit --no-admin-coherence pin needs threading.
+	// The resolver enables admin coherence by default, so only the opt-out is passed.
 	if (options.adminCoherence === false) {
 		opts.adminCoherence = false
 	}
@@ -332,8 +321,7 @@ async function withResolver<T>(options: ParseOptions, fn: (resolver: Resolver) =
 	const { createWOFResolver } = await import("@mailwoman/resolver")
 	const { createResolverBackend, resolveCandidateDBPath } = await import("#resolver-backend")
 
-	// Dynamic import so `@mailwoman/resolver-wof-sqlite` stays a true optional peer dep —
-	// users who never set --resolve don't pay for kysely + the resolver bundle.
+	// `@mailwoman/resolver-wof-sqlite` is an optional peer, so it loads only when a resolver is needed.
 	let mod: typeof import("@mailwoman/resolver-wof-sqlite")
 
 	try {
@@ -345,14 +333,12 @@ async function withResolver<T>(options: ParseOptions, fn: (resolver: Resolver) =
 		)
 	}
 
-	// $MAILWOMAN_CANDIDATE_DB → the demo-parity candidate backend (no WOF admin path required); else FTS.
+	// A configured candidate database needs no WOF admin path.
 	const lookup = await createResolverBackend(mod, {
 		wofPaths: (await resolveCandidateDBPath()) ? "" : await resolveWOFPath(options),
 	})
 
 	try {
-		// PlaceLookup is structurally compatible with ResolverBackend.
-		// The cast is just to satisfy the type, no runtime conversion.
 		const resolver = createWOFResolver(lookup)
 
 		return await fn(resolver)
@@ -374,22 +360,16 @@ async function serializeTree(
 		case "tuple":
 			return prettyJSON(decodeAsTuples(tree))
 		default:
-			// JSON: when --candidates is requested, dump the full AddressTree
-			// (carries alternatives on each node).
-			// Otherwise stay libpostal-compat (flat tag→value).
+			// With `--candidates`, JSON output is the full tree so that alternatives appear.
+			// Otherwise it is the flat libpostal-style tag-to-value map.
 			return opts.includeAlternatives ? prettyJSON(tree) : prettyJSON(decodeAsJSON(tree))
 	}
 }
 
 /**
- * The generic degraded-mode banner (stderr — stdout stays machine-parseable).
+ * Prints the degraded-mode banner to stderr when the weights guard declines the encoder.
  *
- * Emitted when the guard hands back a `declined` outcome (interactive "n" / `--degraded` / a failed download).
- * The paths that never attempt an encoder load, so `tryLoadNeural`'s precise
- * absent-vs-load-error warning didn't fire.
- *
- * The attempted-and-failed case is announced by `tryLoadNeural` instead (see #1108),
- * so this banner is deliberately not emitted there (it would double up).
+ * A failed encoder load is reported by `tryLoadNeural` instead, so that path does not print this banner.
  */
 function emitDegradedBanner(options: ParseOptions): void {
 	console.error(
@@ -399,12 +379,10 @@ function emitDegradedBanner(options: ParseOptions): void {
 }
 
 /**
- * #40 — announce every stage the coordinator degraded past. `runPipeline` catches a classifier / grouper / resolver
- * throw and keeps going (`PipelineResult.faults`), which used to mean a crashed model
- * produced a tidy-looking parse with nothing on stdout or stderr to say.
+ * Prints a stderr warning for each stage that threw.
  *
- * The same `⚠` register applies to the encoder-load warnings above.
- * Stderr only, so stdout stays the machine-readable parse.
+ * The pipeline continues past a failed stage, so without these warnings the
+ * output would look like a complete parse.
  */
 function emitFaultWarnings(result: { faults: ReadonlyArray<{ stage: string; name: string; message: string }> }): void {
 	for (const fault of result.faults) {
@@ -416,14 +394,11 @@ function emitFaultWarnings(result: { faults: ReadonlyArray<{ stage: string; name
 }
 
 /**
- * Encoder-less structural parse (plan 3), without the banner: the real pipeline stages
- * (normalize → query-shape → locale-hint → kind → grouper fast-paths) with no neural classifier.
+ * Runs the pipeline without a neural classifier.
  *
- * The tree carries what the structural stages can prove (postcode_only / locality_only
- * fast-paths populate it. Free-form addresses may yield an empty tree).
- * The caller owns the degraded notice — either {@link emitDegradedBanner}
- * or the precise absent/load-error warning `tryLoadNeural` already printed —
- * so no path degrades silently, and none double-warns.
+ * Only the structural fast paths, such as postcode-only and locality-only inputs,
+ * populate the tree, so a free-form address may produce an empty tree.
+ * The caller prints the degraded notice.
  */
 async function runStructuralPipeline(input: string, options: ParseOptions): Promise<string> {
 	const { createRuntimePipeline } = await import("#index")
@@ -437,9 +412,7 @@ async function runStructuralPipeline(input: string, options: ParseOptions): Prom
 }
 
 /**
- * Structural parse fronted by the generic degraded banner.
- *
- * The guard's `declined` entry point (the caller here did not attempt an encoder load, so it owns the notice).
+ * Prints the degraded banner and runs the structural pipeline.
  */
 async function runDegraded(input: string, options: ParseOptions): Promise<string> {
 	emitDegradedBanner(options)
@@ -448,29 +421,17 @@ async function runDegraded(input: string, options: ParseOptions): Promise<string
 }
 
 /**
- * Default path: runtime pipeline.
+ * Parses with the runtime pipeline and serializes the tree in the requested format.
  *
- * Lazy-loads the neural classifier + optional resolver.
- * Returns the parsed tree serialized in the requested format.
- *
- * When the encoder is unavailable, degrades to the structural-pipeline stages
- * (normalize → query-shape → kind → grouper fast-paths) rather than any rules parser.
+ * A plain parse falls back to the structural pipeline when the encoder does not load.
  */
 async function runPipeline(input: string, options: ParseOptions): Promise<string> {
-	// `tryLoadNeural` emits its own precise (absent vs. corrupt/load-error) stderr warning
-	// when the load fails, so an attempted-but-failed encoder load is never silent, including on
-	// the --resolve/--debug paths, which don't route through the degraded banner below (#1108).
-	// Every route into this function attempts the load: the deliberate skip is `--degraded`,
-	// which the guard answers with `declined` before we get here (see ParseTask).
+	// `tryLoadNeural` prints its own warning when the load fails, so this path skips the degraded banner.
 	const classifier = await tryLoadNeural(options)
 
-	// When the encoder isn't loaded and there's no resolver/debug work to do,
-	// the full pipeline can only emit QueryShape fast-path structure.
-	// Route to the structural path so the CLI still produces useful output for the
-	// fast-path kinds (postcode_only, locality_only).
-	// `--debug` stays on the pipeline so the operator gets the requested PipelineResult JSON shape.
+	// Without an encoder the full pipeline produces only fast-path structure.
+	// `--resolve` and `--debug` stay on the full pipeline to keep their output shape.
 	if (!classifier && !options.resolve && !options.debug) {
-		// `tryLoadNeural` already emitted the precise warning, so the generic banner would double up.
 		return runStructuralPipeline(input, options)
 	}
 
@@ -488,12 +449,12 @@ async function runPipeline(input: string, options: ParseOptions): Promise<string
 		resolveOpts.candidatesPerLookup = (options.candidates ?? 5) + 1
 	}
 
-	// #42 postcode-country coherence — only meaningful alongside --resolve's default country. Default-on, so only the explicit --no-postcode-country-coherence opt-out needs threading.
+	// The resolver enables postcode-country coherence by default, so only the opt-out is passed.
 	if (options.resolve && options.postcodeCountryCoherence === false) {
 		resolveOpts.postcodeCountryCoherence = false
 	}
 
-	// #31 opt-in mechanisms — default-off, so only the explicit opt-in needs threading.
+	// The resolver disables shape and containment coherence by default, so only the opt-in is passed.
 	if (options.resolve && options.postcodeShapeCoherence === true) {
 		resolveOpts.postcodeShapeCoherence = true
 	}
@@ -502,16 +463,11 @@ async function runPipeline(input: string, options: ParseOptions): Promise<string
 		resolveOpts.postcodeContainmentCoherence = true
 	}
 
-	// Scope the resolver so a bare region abbreviation (`NY`) resolves to the intended
-	// country's place rather than a higher-priority foreign homonym.
-	// Inferred from --locale unless --default-country overrides (or is `none`).
-	// Only meaningful on the --resolve path.
-	// Harmless otherwise.
+	// The default country keeps a bare region abbreviation such as `NY` from resolving to a foreign homonym.
 	if (options.resolve) {
 		const { resolveCandidateDBPath } = await import("#resolver-backend")
-		// A script-routed input (a kanji or Hangul line under --locale en-US) ran on the
-		// family classifier, so the locale's inferred country is withheld.
-		// An explicit --default-country stays.
+		// An input routed to another script family's classifier does not inherit the locale's country.
+		// An explicit `--default-country` still applies.
 		const routedAway = classifier ? (await classifier.forInput(input)) !== classifier.primary : false
 
 		const dc =
@@ -547,7 +503,7 @@ async function runPipeline(input: string, options: ParseOptions): Promise<string
 		pipelineOpts.resolveOpts = resolveOpts
 	}
 
-	// #727 phase-4c: the rerank is default-on — `createRuntimePipeline` lazy-loads the bundled FR index when the model ships a span head (a no-op otherwise). `--no-street-evidence-rerank` passes `false` to disable it.
+	// Passing `undefined` keeps the pipeline's default street-evidence rerank, and `false` disables it.
 	const streetEvidence = options.streetEvidenceRerank ? undefined : (false as const)
 
 	const { createRuntimePipeline } = await import("#index")
@@ -588,16 +544,12 @@ function formatMs(ms: number): string {
 }
 
 /**
- * Run the runtime pipeline N times against a single input and report per-stage
- * timing percentiles + heap delta.
+ * Runs the pipeline repeatedly on one input and reports per-stage timing percentiles and the heap delta.
  *
- * The first 5 iterations are warmup (excluded from stats) so JIT + lazy-imports settle before measurement.
- * Useful for catching regressions when training models or coordinator changes affect inference cost.
+ * Warmup iterations are excluded from the statistics so that JIT compilation and lazy imports settle first.
  */
 async function runBenchmark(input: string, options: ParseOptions, iterations: number): Promise<string> {
-	// `--degraded` is the encoder-less benchmark: the weights guard never runs on
-	// this path (it is conditioned on `benchmark === undefined`), so the flag has
-	// to be read here or it silently does nothing.
+	// The weights guard does not run for benchmarks, so `--degraded` is handled here.
 	const classifier = options.degraded ? undefined : await tryLoadNeural(options)
 
 	const runOne = async (
@@ -705,8 +657,7 @@ async function runBenchmark(input: string, options: ParseOptions, iterations: nu
 	)
 
 	lines.push("")
-	// `formatIEC` carries a minus itself.
-	// A growth needs the plus spelled out or the sign is only legible by absence.
+	// `formatIEC` prints a minus sign but not a plus sign, so growth gets an explicit plus.
 	const heapDelta = collected.heapDelta
 
 	lines.push(`heap delta (post-warmup → post-bench): ${heapDelta > 0 ? "+" : ""}${ByteFormatter.formatIEC(heapDelta)}`)
@@ -715,11 +666,10 @@ async function runBenchmark(input: string, options: ParseOptions, iterations: nu
 }
 
 /**
- * `undefined` so the caller degrades to the structural pipeline (postcode_only /
- * locality_only fast-paths still resolve; `npx mailwoman parse …` always produces output).
+ * Loads the neural classifier, or returns `undefined` so that the caller can
+ * fall back to the structural pipeline.
  *
- * The #1108 absent-vs-corrupt distinction lives in {@link loadClassifierTolerant};
- * the warning goes to stderr, never stdout, so piped stdout parsing is unaffected.
+ * Load warnings go to stderr, so stdout stays parseable.
  */
 async function tryLoadNeural(
 	options: ParseOptions
@@ -732,9 +682,7 @@ async function tryLoadNeural(
 }
 
 /**
- * Serialize the full pipeline result for `--debug`.
- *
- * Shows tree + timing + path + kind so callers can see which stage owned which output.
+ * Serializes the full pipeline result for `--debug`, including the timing, path and kind.
  */
 async function serializeResult(
 	result: Awaited<ReturnType<ReturnType<typeof createRuntimePipeline>>>,
@@ -745,13 +693,15 @@ async function serializeResult(
 	return {
 		input: result.input,
 		normalized: result.normalized,
-		queryShape: { ...result.queryShape, tokenClasses: undefined }, // tokenClasses is verbose
+		// Token classes are omitted because they are verbose.
+		queryShape: { ...result.queryShape, tokenClasses: undefined },
 		locale: result.locale,
 		kind: result.kind,
 		...(result.poiIntent ? { poiIntent: result.poiIntent } : {}),
 		path: result.path,
 		timing: result.timing,
-		// #40: only when non-empty. The key's presence is the signal, and its absence keeps the clean-run shape byte-identical for anything diffing `--debug` output. `cause` is dropped: an Error serializes to `{}`.
+		// The `faults` key appears only when a stage threw, so a clean run keeps its output shape.
+		// The `cause` is dropped because an Error serializes to `{}`.
 		...(result.faults.length
 			? {
 					faults: result.faults.map(({ stage, name, message }) => ({ stage, name, message })),
@@ -770,8 +720,7 @@ async function runNeural(
 	const { proposalsToTree } = await import("@mailwoman/core/decoder")
 	const { createNeuralProposalClassifier, NeuralAddressClassifier } = await import("@mailwoman/neural")
 
-	// One input per invocation, so the script route is taken once, up front: the family
-	// classifier answers a kanji or Hangul line, the primary everything else.
+	// Each invocation parses one input, so the script route is chosen once up front.
 	const routedClassifier = await NeuralAddressClassifier.loadRoutedFromWeights({
 		locale: options.locale,
 		modelPath: options.model,
@@ -779,12 +728,10 @@ async function runNeural(
 	})
 
 	const neural = await routedClassifier.forInput(input)
-	// Routed to another family, the locale says nothing about the address's country:
-	// its inferred resolver scope is withheld (an explicit --default-country stays).
+	// An input routed to another script family does not inherit the locale's country.
 	const routedAway = neural !== routedClassifier.primary
 
-	// Fast path: no policy and no resolve → preserve containment nesting via NeuralAddressClassifier
-	// 's direct projection helpers (returns the serialized string in one call).
+	// Without policy overrides or resolution, the classifier's own projections keep containment nesting.
 	if (!policyOverrides.length && !options.resolve) {
 		switch (options.format) {
 			case "xml":
@@ -796,16 +743,13 @@ async function runNeural(
 		}
 	}
 
-	// Slow paths build the tree explicitly so we can resolve / re-project before serialization.
 	let tree: AddressTree
 
 	if (policyOverrides.length) {
-		// Policy path: containment nesting is lost — see proposals-to-tree.ts for why.
+		// The policy path loses containment nesting, as explained in `proposals-to-tree.ts`.
 		const proposalCls = createNeuralProposalClassifier({ id: `neural-cli-${options.locale}`, classifier: neural })
-		// Without rule classifiers in the CLI loop, the registry's default rule_only
-		// would drop every neural proposal and produce empty output.
-		// Default every component to neural_only when --neural --policy is used,
-		// then layer the user's overrides on top.
+		// The CLI runs no rule classifiers, so the registry's `rule_only` defaults would drop every proposal.
+		// Every component therefore starts at `neural_only`, and the user's overrides apply on top.
 		const policy = InMemoryPolicyRegistry.withDefaults()
 
 		for (const entry of policy.entries()) {
@@ -821,8 +765,7 @@ async function runNeural(
 		const filtered = filterByPolicy(proposals, policy, options.locale)
 		tree = proposalsToTree(input, filtered)
 	} else {
-		// Resolve path without policy.
-		// Keep containment by going through the decoder directly.
+		// Parsing through the decoder keeps containment nesting.
 		tree = await neural.parse(input, { inputMode: options.inputMode })
 	}
 

@@ -2,9 +2,6 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- *
- *   Render search, results, and controls over the map.
- *   On narrow screens, the search panel becomes a draggable bottom sheet.
  */
 
 import type React from "react"
@@ -33,13 +30,16 @@ import { PlaceAutocomplete } from "./PlaceAutocomplete.tsx"
 import { ResultPanel } from "./ResultPanel.tsx"
 import { VersionPicker } from "./VersionPicker.tsx"
 
+/**
+ * Props for {@linkcode GeocoderControls}.
+ */
 export interface GeocoderControlsProps {
 	/**
-	 * The injected geocoder runtime.
+	 * The geocoder runtime supplied by the host.
 	 */
 	runtime: GeocoderRuntime
 	/**
-	 * The parse+resolve state machine.
+	 * The parse and resolve state.
 	 */
 	geocode: UseGeocode
 	/**
@@ -51,70 +51,69 @@ export interface GeocoderControlsProps {
 	 */
 	compare: UseCompareState
 	/**
-	 * Optional URL query to run once the runtime is ready.
+	 * A query from the URL to run once the runtime is ready.
 	 */
 	initialQuery?: string | null
 	/**
-	 * Host-injected panels (about, release blurb, compare, permalink, extras, failure).
+	 * Panels supplied by the host.
 	 */
 	panels: GeocoderPanels
 	/**
-	 * Example chips.
+	 * The example chips.
 	 */
 	presets: ReadonlyArray<Preset>
 	/**
-	 * Input placeholder.
+	 * The input placeholder.
+	 *
+	 * The field also selects its value on focus while it still equals this text.
 	 */
 	placeholder: string
 	/**
-	 * Live map instance used by the compass and host layer controls.
+	 * The map instance used by the compass, label picking, and layer controls.
 	 */
 	map?: MapInstance | null
 	/**
-	 * Fired before parsing; the host may write the query to its URL.
+	 * Called before each user-initiated query, so the host can write the query to its URL.
 	 */
 	onSubmitQuery?: (query: string) => void
 	/**
-	 * Select a model version (the composed geocoder also clears a now-colliding compare selection).
+	 * Called when the user selects a model version.
 	 */
 	onSelectVersion: (version: string) => void
 	/**
-	 * Toggle the forced wasm backend.
+	 * Called when the user toggles the forced WASM backend.
 	 */
 	onForceWASMChange: (forceWASM: boolean) => void
 	/**
-	 * Open the developer panel on mount.
-	 *
-	 * The model version, the backend readout and compare live inside it: they read on the model
-	 * rather than on an address, and above the query field they were the first thing every visitor met.
+	 * Whether the developer panel starts open.
 	 *
 	 * @default false
 	 */
 	developer?: boolean
 }
 
-/**
- * At most one side sheet can be open.
- */
 type SheetName = "about" | "layers" | "developer" | null
 
 /**
- * Breakpoint for the bottom-drawer layout; keep in sync with CSS.
+ * The media query for the bottom-drawer layout.
+ * It must match the breakpoint in `styles.css`.
  */
 const DRAWER_LAYOUT = "(max-width: 600px)"
 
 /**
- * Header movement threshold that distinguishes a drag from a tap.
+ * The pointer travel, in px, that turns a press on the header into a drag instead of a tap.
  */
 const DRAG_TRAVEL_PX = 3
 
 /**
- * Downward movement needed to promote content overscroll into a drawer drag.
+ * The downward travel, in px, that turns a pull at the top of the panel's scroll into a drawer drag.
  */
 const OVERSCROLL_PROMOTE_PX = 8
 
 /**
- * Render the floating map controls and result panel.
+ * Renders the search panel, result panel, map control rail, and side sheets over the map.
+ *
+ * On narrow screens the search panel is a bottom drawer that the user can drag between detents.
  */
 export function GeocoderControls({
 	runtime,
@@ -136,25 +135,19 @@ export function GeocoderControls({
 	const loading = runtime.loading
 	const errorMessage = geocode.parseError ?? runtime.errorMessage ?? null
 
-	// One sheet at a time.
-	// Two open at once stack on the same edge, and on a phone each is the full panel.
+	// Only one side sheet is open at a time, because two would stack on the same edge.
 	const [openSheet, setOpenSheet] = useState<SheetName>(developer ? "developer" : null)
 
-	// The result sheet covers the bottom half of the map and had no way out:
-	// no close, no Escape, no backdrop.
-	// The only way to clear it was to run another query.
-	// `MapSheet` states the rule for the other four sheets ("the close button is not optional");
-	// this one is hand-rolled and never got it.
-	// Reset on every new query, below.
+	// This flag hides the result panel until the next query resets it.
 	const [resultDismissed, setResultDismissed] = useState(false)
 
-	// The result sheet's height, in px, once a visitor has dragged it; `null` means the stylesheet's default detent.
+	// The drawer height is in px.
+	// A `null` height leaves the size to the stylesheet.
 	const sheetRef = useRef<HTMLElement>(null)
 	const [sheetHeight, setSheetHeight] = useState<number | null>(null)
 	const sheetDragRef = useRef<{ startY: number; startHeight: number; moved: boolean } | null>(null)
 
-	// Detents as fractions of the viewport, resolved at interaction time so a rotated phone
-	// or a resized window gets the right numbers without a listener.
+	// The detents are computed on each call, so a rotated or resized viewport needs no resize listener.
 	const sheetDetents = useCallback(() => {
 		const viewport = window.innerHeight
 
@@ -162,24 +155,19 @@ export function GeocoderControls({
 			medium: viewport * 0.52,
 			large: viewport * 0.88,
 			floor: viewport * 0.15,
-			// Released below this, the drag reads as "put it away" rather than "make it small".
+			// A drag released below this height dismisses the result.
 			dismissBelow: viewport * 0.28,
-			// At or under this the drawer is a search field over a map rather than a panel standing on one.
+			// At or below this height the drawer counts as collapsed, and the control rail returns.
 			collapsedBelow: viewport * 0.2,
 		}
 	}, [])
 
-	/*
-	 * A pull that began at the top of the scroll rather than on the header.
-	 *
-	 * Armed on pointer-down and promoted to a real drag once it has travelled far enough
-	 * downward — until then it is still a scroll, and a tap is neither.
-	 */
+	// This ref holds a pull that started at the top of the panel's scroll.
+	// It becomes a drag after `OVERSCROLL_PROMOTE_PX` of downward travel.
 	const overscrollRef = useRef<{ startY: number; pointerId: number } | null>(null)
 
-	// The detents exist only where the panel is a drawer.
-	// The desktop column is sized by its content and has nothing to drag towards,
-	// so every pointer gesture there is a scroll or a click.
+	// Drag gestures apply only in the drawer layout.
+	// The desktop column is sized by its content.
 	const isDrawerLayout = () => globalThis.window !== undefined && globalThis.matchMedia(DRAWER_LAYOUT).matches
 
 	const beginSheetDrag = useCallback((clientY: number, pointerId: number) => {
@@ -191,12 +179,7 @@ export function GeocoderControls({
 		sheetDragRef.current = { startY: clientY, startHeight: sheet.getBoundingClientRect().height, moved: false }
 	}, [])
 
-	/*
-	 * The whole header is the grab target rather than just the pill: that is the part of
-	 * a sheet a thumb lands on, and the pill alone is a 3rem strip to hit.
-	 *
-	 * The field and the close keep their own gestures.
-	 */
+	// The whole header is the grab target, except the search input and the close button.
 	const onHeaderPointerDown = useCallback(
 		(event: React.PointerEvent<HTMLDivElement>) => {
 			if (!isDrawerLayout()) return
@@ -214,7 +197,7 @@ export function GeocoderControls({
 
 			if (!drag) return
 
-			// Up is taller, so the delta is inverted against the pointer's y.
+			// Dragging up makes the drawer taller, so the delta is inverted against the pointer's y.
 			const delta = drag.startY - event.clientY
 
 			if (Math.abs(delta) > DRAG_TRAVEL_PX) {
@@ -228,14 +211,8 @@ export function GeocoderControls({
 		[sheetDetents]
 	)
 
-	/*
-	 * The two-detent toggle, in one place.
-	 *
-	 * A tap on the bar, Enter on the pill, and the `aria-expanded` the pill reports are the
-	 * same question asked three ways, and they were three copies of `(medium + large) / 2` —
-	 * one of them the literal `0.7`, which is that midpoint written out by hand
-	 * and silently wrong the moment a detent moves.
-	 */
+	// A tap, the handle's keyboard activation, and the handle's `aria-expanded` all
+	// use this midpoint to decide which detent the drawer is at.
 	const detentMidpoint = useCallback(() => {
 		const { medium, large } = sheetDetents()
 
@@ -262,7 +239,7 @@ export function GeocoderControls({
 		const midpoint = (medium + large) / 2
 		const current = sheetRef.current?.getBoundingClientRect().height ?? medium
 
-		// A press with no travel is a tap: toggle between the two detents, which is what a keyboard gets too.
+		// A press without travel is a tap, which toggles between the two detents.
 		if (!drag.moved) {
 			toggleDetent()
 
@@ -279,18 +256,9 @@ export function GeocoderControls({
 		setSheetHeight(current > midpoint ? large : medium)
 	}, [sheetDetents, toggleDetent])
 
-	/*
-	 * overscroll is A drag rather than a bounce.
-	 *
-	 * Pull down on a sheet that is already scrolled to its top and the sheet itself should come down.
-	 * That is what the reference sheets do, and it is what makes a drawer dismissable
-	 * without first hunting for the pill.
-	 *
-	 * A rubber band in that position says the gesture was heard and refused.
-	 *
-	 * The pull is only armed here. it becomes a drag after 8px of downward travel,
-	 * so a tap stays a tap and a flick upward stays a scroll.
-	 */
+	// A downward pull on a panel scrolled to its top drags the drawer down.
+	// This handler only arms the pull; `onPanelPointerMove` promotes it, so taps
+	// and upward scrolls are unaffected.
 	const onPanelPointerDown = useCallback((event: React.PointerEvent<HTMLElement>) => {
 		if (!isDrawerLayout()) return
 
@@ -330,7 +298,7 @@ export function GeocoderControls({
 			if (event.clientY - armed.startY < OVERSCROLL_PROMOTE_PX) return
 
 			overscrollRef.current = null
-			// Measured from where the pull started, so the sheet does not jump by the threshold at the moment it takes over.
+			// The drag starts from the pull's origin, so the drawer does not jump by the threshold.
 			sheetDragRef.current = { startY: armed.startY, startHeight: sheet.getBoundingClientRect().height, moved: true }
 			sheet.setPointerCapture(event.pointerId)
 			onGripPointerMove(event)
@@ -348,12 +316,10 @@ export function GeocoderControls({
 	const toggleSheet = (name: Exclude<SheetName, null>) => setOpenSheet((current) => (current === name ? null : name))
 	const closeSheet = useCallback(() => setOpenSheet(null), [])
 
-	// Every path that starts a query goes through here, so the URL is written in exactly one place —
-	// the event that caused it, rather than an effect watching the result after the fact.
+	// Every user-initiated query goes through this function, so `onSubmitQuery` fires from one place.
 	const runQuery = useCallback(
 		(query: string) => {
-			// A new query is a new answer: whatever the visitor dismissed, they want to see this one,
-			// at the size the stylesheet picks rather than whatever the last drag left behind.
+			// A new query shows the result panel again at its default height.
 			setResultDismissed(false)
 			setSheetHeight(null)
 			onSubmitQuery?.(query)
@@ -362,12 +328,9 @@ export function GeocoderControls({
 		[onSubmitQuery, geocode]
 	)
 
-	// A permalink answers on arrival.
-	// `runtime.ready` holds it back.
-	// The parse pipeline drops a submit made before the model is loaded.
-	// It is exactly the window a cold permalink lands in, and the ref makes it once-only.
-	// Therefore, a later re-render (or the visitor clearing the field) cannot
-	// re-run the URL's query over their own work.
+	// The initial query waits for `runtime.ready` because the parse pipeline drops
+	// a submit made before the model loads.
+	// The ref makes it run once, so a later render cannot overwrite the user's own query.
 	const autoRanInitialQuery = useRef(false)
 
 	useEffect(() => {
@@ -376,18 +339,11 @@ export function GeocoderControls({
 		if (!initialQuery || !runtime.ready) return
 
 		autoRanInitialQuery.current = true
-		// `geocode.submit` rather than `runQuery`: the query is already in the URL,
-		// so writing it back is a no-op that would only add a history entry's worth of churn.
+		// This calls `geocode.submit` directly because the query is already in the URL.
 		void geocode.submit(initialQuery)
 	}, [initialQuery, runtime.ready, geocode])
 
-	/*
-	 * A dragged height belongs to the layout it was dragged in.
-	 *
-	 * Carried across the breakpoint it clipped the desktop column at whatever detent a
-	 * phone-width drag had left behind, so the card ended mid-result with no way to say so.
-	 * Crossing the breakpoint in either direction hands the height back to the stylesheet.
-	 */
+	// Crossing the drawer breakpoint clears a dragged height, which would otherwise clip the desktop column.
 	useEffect(() => {
 		const query = globalThis.matchMedia(DRAWER_LAYOUT)
 		const onChange = () => setSheetHeight(null)
@@ -397,19 +353,8 @@ export function GeocoderControls({
 		return () => query.removeEventListener("change", onChange)
 	}, [])
 
-	/*
-	 * touching the MAP puts the drawer down.
-	 *
-	 * A phone shows the map through whatever the drawer leaves, so the first thing a visitor does
-	 * after reading a result is pan to see where it is — and a drawer that stays at its
-	 * detent through that gesture is answering a question nobody asked twice.
-	 *
-	 * It shrinks rather than closes: the result is still there, one pull away.
-	 * Only a gesture counts.
-	 *
-	 * A programmatic camera move carries no `originalEvent`, and the fly-to that answers a query is
-	 * exactly such a move, so reacting to those would put a result away at the moment it arrived.
-	 */
+	// A user pan, zoom, or rotate shrinks the drawer to its floor detent without dismissing the result.
+	// Programmatic camera moves, such as the fly-to after a query, carry no `originalEvent` and are ignored.
 	useEffect(() => {
 		if (!map) return
 
@@ -434,14 +379,8 @@ export function GeocoderControls({
 		}
 	}, [map, sheetDetents])
 
-	/*
-	 * Escape dismisses the result, matching `MapSheet`.
-	 *
-	 * Only while nothing is over it.
-	 * `MapSheet` binds the same key for its own sheet and both listeners are on the document,
-	 * so Escape over an open About or Layers panel closed that panel and threw away the result behind it —
-	 * one keystroke, two dismissals, the second of them invisible until the panel came away.
-	 */
+	// Escape dismisses the result only while no side sheet is open.
+	// `MapSheet` also listens for Escape on the document, so one keystroke would otherwise close both.
 	useEffect(() => {
 		if (openSheet) return
 
@@ -456,7 +395,7 @@ export function GeocoderControls({
 		return () => document.removeEventListener("keydown", onKeyDown)
 	}, [openSheet])
 
-	// A label on the map is a search a visitor already typed by pointing at it.
+	// Clicking a map label searches for its name.
 	const pickLabel = useCallback(
 		(name: string) => {
 			geocode.setText(name)
@@ -469,16 +408,11 @@ export function GeocoderControls({
 	useMapLabelPick(map, pickLabel)
 
 	const chips = presets.map((preset) => ({ label: preset.label, value: preset.value }))
-	// The bundle load no longer opens the result sheet: it reports on the bar at the top of the viewport
-	// and in the footer, so an empty sheet does not sit over the map for the length of a 38 MB download.
+	// The model download does not open the result panel.
+	// The progress bar reports it instead.
 	const showSheet = Boolean(busy || result || errorMessage) && !resultDismissed
 
-	/*
-	 * The drawer stands over the map, as opposed to resting at the bottom of it.
-	 *
-	 * Shrunk to its smallest detent it is a search field with a map behind it, and the map's
-	 * own controls belong back on screen at that point — which is the state a pan leaves it in.
-	 */
+	// The control rail hides while the drawer is raised above its collapsed height.
 	const drawerRaised =
 		showSheet &&
 		(sheetHeight === null || (globalThis.window !== undefined && sheetHeight > sheetDetents().collapsedBelow))
@@ -486,11 +420,9 @@ export function GeocoderControls({
 	const bundleLoading = Boolean(loading && !runtime.ready)
 	const steps = loading?.stepLabels.length ?? 0
 
-	// The model downloads before the first step is entered, so the step fraction
-	// holds at 1/steps for the whole of a 38 MB transfer.
-	// The part of the wait a visitor actually sits through.
-	// While bytes are arriving the bar follows them, scaled into the first step's share
-	// so it never runs backwards when the steps take over.
+	// The model downloads during the first step.
+	// While bytes arrive, the bar follows the byte fraction scaled into the first step's share,
+	// so it does not move backwards when step progress takes over.
 	const stepFraction = steps ? ((loading?.stepIndex ?? 0) + 1) / steps : null
 	const byteFraction = loading?.byteFraction
 
@@ -502,15 +434,10 @@ export function GeocoderControls({
 			<MapProgressBar active={bundleLoading} fraction={fraction} label="Loading the geocoder" />
 
 			{/*
-			 * One surface owns the search, the examples and the result —
-			 * the arrangement the reference map apps use.
+			 * One panel holds the search, the examples, and the result.
 			 *
-			 * They used to be two: a floating pill at the top and a separate bottom sheet, which is what put
-			 * the search field in the same row as the control rail (the rail won, and covered its right end)
-			 * and left a phone with a result sheet it could not get back from.
-			 *
-			 * Desktop: a column down the left, sized to its content, over a full-bleed map.
-			 * Phone: a bottom drawer with detents, the search riding at its top.
+			 * On desktop it is a left column sized to its content.
+			 * On narrow screens it is a bottom drawer.
 			 */}
 			<section
 				className="mw-map-panel"
@@ -522,32 +449,19 @@ export function GeocoderControls({
 				onPointerCancel={onPanelPointerUp}
 				{...(sheetHeight === null ? {} : { style: { maxHeight: `${Math.round(sheetHeight)}px` } })}
 			>
-				{/*
-				 * the header stays.
-				 *
-				 * The grab bar and the search field are one sticky block, so scrolling a long result
-				 * never takes the field with it, which is the thing a visitor reaches for next.
-				 * It is opaque because the panel's own material is glass, and text read through a pinned header.
-				 */}
+				{/* The header holds the grab bar and the search field, and it stays pinned while the result scrolls. */}
 				<div className="mw-map-panel__header" onPointerDown={onHeaderPointerDown}>
 					<div className="mw-map-panel__grip">
-						{/*
-						 * The handle appears only with a result.
-						 *
-						 * With the drawer holding a search field and a row of examples there
-						 * is nothing behind it to pull into view, and a handle offered over
-						 * nothing either expands a band of empty glass or reads as broken —
-						 * the same fault as the decorative handle it replaced.
-						 */}
+						{/* The handle appears only with a result, because there is nothing to expand without one. */}
 						{showSheet ? (
 							<button
 								type="button"
 								className="mw-map-sheet__handle"
 								aria-label="Resize the panel"
 								aria-expanded={atLargeDetent()}
-								// The pointer gesture belongs to the header, which is the whole grab target.
-								// This is the keyboard's way in: `detail === 0` is a click with no pointer
-								// behind it, so a drag that ends on the pill does not also toggle a detent.
+								// The header handles pointer gestures.
+								// A click with `detail === 0` comes from the keyboard,
+								// so only that toggles the detent here.
 								onClick={(event) => {
 									if (event.detail !== 0) return
 
@@ -572,11 +486,7 @@ export function GeocoderControls({
 							runQuery(geocode.text)
 						}}
 					>
-						{/*
-						 * `type="search"` brings its own clear button, so the pill carries no trailing slot:
-						 * a second cross beside the native one is two controls for one job, and the
-						 * spinner that used to live there changed the field's height on every submit.
-						 */}
+						{/* The search bar has no trailing control because `type="search"` provides a native clear button. */}
 						<MapSearchBar label="Search addresses" leading={<SearchGlyph />} busy={busy}>
 							<input
 								id="mw-pipeline-input"
@@ -584,10 +494,7 @@ export function GeocoderControls({
 								aria-label="Address"
 								value={geocode.text}
 								onChange={(event) => geocode.setText(event.target.value)}
-								// The field ships pre-filled with the demo address, so the first click used to drop a
-								// caret in the middle of it and the visitor typed into someone else's address.
-								// Select the seed on focus so one keystroke replaces it, and only
-								// while it is the untouched seed, so this never eats real work.
+								// Focus selects the value only while it equals the placeholder, so typing replaces it.
 								onFocus={(event) => {
 									if (placeholder && event.currentTarget.value === placeholder) {
 										event.currentTarget.select()
@@ -665,17 +572,10 @@ export function GeocoderControls({
 			</section>
 
 			{/*
-			 * Every floating control lives in this one column, so nothing can land on top
-			 * of anything else: the layer control joins the capsule rather than sitting in
-			 * the left column, and the compass takes its own capsule below because it comes
-			 * and goes and would otherwise resize the one above it.
-			 */}
-			{/*
-			 * The rail steps aside for the drawer on a phone.
+			 * Every floating control lives in this one rail so none can overlap.
 			 *
-			 * It is pinned to the corner the drawer's tall detent reaches, and a control
-			 * stranded above an open result is one a thumb cannot get to anyway.
-			 * It comes back with the map, when the result is put away.
+			 * The compass has its own group because it appears and disappears.
+			 * The rail hides while the drawer is raised.
 			 */}
 			<MapControlStack label="Map controls" className={drawerRaised ? "mw-map-control-stack--drawer-open" : undefined}>
 				<MapControlGroup>

@@ -2,10 +2,6 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- *
- *   Unit tests for the demo control units + the place-autocomplete hook — all plain DOM, no maplibre.
- *   VersionPicker / CompareToggle / BackendControl / ResultPanel are driven directly; `usePlaceAutocomplete`
- *   is exercised through a tiny harness (type → suggest → pick).
  */
 
 import { BackendControl } from "@mailwoman/react/map/BackendControl"
@@ -28,8 +24,6 @@ const VERSIONS: VersionOption[] = [
 	{ version: "v7.1.0", label: "v7.1.0" },
 ]
 
-// ── VersionPicker ─────────────────────────────────────────────────────────────
-
 test("VersionPicker renders options and fires onSelect", async () => {
 	const onSelect = vi.fn()
 	const { container } = renderComponent(<VersionPicker versions={VERSIONS} selected="v7.2.0" onSelect={onSelect} />)
@@ -50,8 +44,6 @@ test("VersionPicker renders nothing with fewer than two versions", () => {
 	expect(container.querySelector("#mw-demo-version")).toBeNull()
 })
 
-// ── CompareToggle ─────────────────────────────────────────────────────────────
-
 test("CompareToggle reveals the compare select (primary excluded) when turned on", async () => {
 	function Harness() {
 		const [mode, setMode] = useState(false)
@@ -71,22 +63,17 @@ test("CompareToggle reveals the compare select (primary excluded) when turned on
 
 	const { container } = renderComponent(<Harness />)
 
-	// Off: no compare select yet.
 	expect(container.querySelector("#mw-demo-compare-version")).toBeNull()
 
 	await userEvent.click(container.querySelector('input[type="checkbox"]') as HTMLInputElement)
 
 	const select = container.querySelector("#mw-demo-compare-version") as HTMLSelectElement
 	expect(select).not.toBeNull()
-	// The primary version is filtered out.
-	// The "Select version…" placeholder + the two others remain.
 	const values = Array.from(select.querySelectorAll("option")).map((o) => (o as HTMLOptionElement).value)
 	expect(values).not.toContain("v7.2.0")
 	expect(values).toContain("v7.1.0")
 	expect(values).toContain("v6.4.0")
 })
-
-// ── BackendControl ────────────────────────────────────────────────────────────
 
 test("BackendControl shows the backend and toggles forceWASM", async () => {
 	const onForceWASMChange = vi.fn()
@@ -99,8 +86,6 @@ test("BackendControl shows the backend and toggles forceWASM", async () => {
 	await userEvent.click(container.querySelector('input[type="checkbox"]') as HTMLInputElement)
 	expect(onForceWASMChange).toHaveBeenCalledWith(true)
 })
-
-// ── ResultPanel ───────────────────────────────────────────────────────────────
 
 test("ResultPanel renders components + resolved place, and switches candidate", async () => {
 	function Harness() {
@@ -125,7 +110,7 @@ test("ResultPanel renders components + resolved place, and switches candidate", 
 	expect(container.textContent).toContain("house_number")
 	expect(container.querySelector(".mw-resolved")?.textContent).toContain("locality")
 
-	// Pick the second candidate (the region) → resolved panel updates.
+	// The second fake candidate is a region.
 	await userEvent.click(container.querySelectorAll(".mw-candidates__btn")[1] as HTMLElement)
 	await vi.waitFor(() => expect(container.querySelector(".mw-resolved")?.textContent).toContain("region"))
 })
@@ -146,8 +131,6 @@ test("ResultPanel renders the injected failure slot when nothing resolved", () =
 	expect(container.querySelector(".mw-test-failure")?.textContent).toBe("no resolve")
 	expect(container.querySelector(".mw-resolved")).toBeNull()
 })
-
-// ── usePlaceAutocomplete (via a harness) ───────────────────────────────────────
 
 function AutocompleteHarness({ autocomplete }: { autocomplete: (q: string) => Promise<Suggestion[]> }) {
 	const [text, setText] = useState("")
@@ -183,11 +166,11 @@ test("usePlaceAutocomplete suggests on type and rewrites the input on pick", asy
 	const input = container.querySelector('[data-testid="ac-input"]') as HTMLInputElement
 	await userEvent.type(input, "New")
 
-	// Debounced fetch → the listbox appears with the three "New*" suggestions.
+	// Three fake suggestions start with "New".
 	await vi.waitFor(() => expect(container.querySelectorAll('[role="option"]')).toHaveLength(3))
 	expect(input.getAttribute("aria-expanded")).toBe("true")
 
-	// Pick the first (New York) → input rewritten (no comma → whole value replaced), listbox closes.
+	// The input has no comma, so picking a suggestion replaces the whole value.
 	await userEvent.click(container.querySelectorAll('[role="option"]')[0] as HTMLElement)
 	await vi.waitFor(() => expect(input.value).toBe("New York"))
 	await vi.waitFor(() => expect(container.querySelectorAll('[role="option"]')).toHaveLength(0))
@@ -200,10 +183,8 @@ test("usePlaceAutocomplete stays closed for numeric input (postcode)", async () 
 	const input = container.querySelector('[data-testid="ac-input"]') as HTMLInputElement
 	await userEvent.type(input, "90210")
 
-	// A short wait past the debounce.
-	// A digit-leading query never fires the fetcher.
-	// Held in act() so the debounce's own state update + the abstaining effect
-	// (which do run) settle in-scope rather than unwrapped.
+	// The wait outlasts the debounce and runs inside `act()`, so the hook's state updates settle.
+	// A query that starts with a digit never calls the fetcher.
 	await actDelay(60)
 	expect(autocomplete).not.toHaveBeenCalled()
 	expect(container.querySelectorAll('[role="option"]')).toHaveLength(0)

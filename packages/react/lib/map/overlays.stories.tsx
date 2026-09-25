@@ -2,12 +2,6 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- *
- *   Stories for the declarative resolved-place overlays, over the same offline stub style as `MapCanvas`
- *   (one `background` layer, zero network — never hits `tiles.mailwoman.ai`). Each story feeds a fake
- *   resolved place through `computeMapPlaceRenderSpec` and drops `<ResolvedPlaceLayers>` into `<MapCanvas>`,
- *   covering every branch of the render cascade: bbox circle, crisp polygon, street-radius circle,
- *   anchor-centroid postcode, and the bare point — plus a host `<OverlayLayers>` overlay.
  */
 
 import type { Meta, StoryObj } from "@storybook/react-vite"
@@ -20,6 +14,7 @@ import { MapCanvas, type MapCanvasStyle } from "./MapCanvas.tsx"
 import { OverlayLayers } from "./OverlayLayers.tsx"
 import { ResolvedPlaceLayers } from "./ResolvedPlaceLayers.tsx"
 
+// The stub style has a single background layer, so the stories make no network requests.
 const STUB_STYLE: MapCanvasStyle = {
 	version: 8,
 	name: "overlays-stub",
@@ -27,10 +22,6 @@ const STUB_STYLE: MapCanvasStyle = {
 	layers: [{ id: "background", type: "background", paint: { "background-color": "#dfe7ee" } }],
 }
 
-/**
- * Base place.
- * Each story overrides only the fields its branch needs.
- */
 function place(overrides: Partial<ResolvedMapPlace>): ResolvedMapPlace {
 	return { id: 1, name: "Demo Place", placetype: "locality", lat: 40.7128, lon: -74.006, score: 1, ...overrides }
 }
@@ -41,18 +32,17 @@ interface SceneProps {
 	 */
 	place: ResolvedMapPlace
 	/**
-	 * Optional host overlays to layer beneath the resolved place.
+	 * Host overlays drawn beneath the resolved place.
 	 */
 	overlays?: OverlaySpec[]
 	/**
-	 * Apply the computed camera (fly/fit). @default false in stories so the fixed initial view stays put.
+	 * Whether to move the camera to the place.
+	 *
+	 * @default false
 	 */
 	applyCamera?: boolean
 }
 
-/**
- * A self-contained scene: compute the spec, render the map + overlays.
- */
 function OverlayScene({ place: resolved, overlays, applyCamera = false }: SceneProps): ReactNode {
 	const spec = computeMapPlaceRenderSpec(resolved)
 
@@ -68,6 +58,9 @@ function OverlayScene({ place: resolved, overlays, applyCamera = false }: SceneP
 	)
 }
 
+/**
+ * Stories for the resolved-place overlays, one for each branch of `computeMapPlaceRenderSpec`.
+ */
 const meta: Meta<typeof OverlayScene> = {
 	title: "Map/Overlays",
 	component: OverlayScene,
@@ -79,14 +72,14 @@ export default meta
 type Story = StoryObj<typeof OverlayScene>
 
 /**
- * An admin place with a bbox → marker + a bbox-sized approximate circle.
+ * A place with a bounding box renders a marker and a circle sized to the box.
  */
 export const BboxCircle: Story = {
 	args: { place: place({ bbox: { minLat: 40.6, maxLat: 40.85, minLon: -74.1, maxLon: -73.85 } }) },
 }
 
 /**
- * A pre-fetched crisp admin polygon → marker + the real boundary drawn.
+ * A place with a polygon geometry renders a marker and that boundary.
  */
 export const CrispPolygon: Story = {
 	args: {
@@ -109,28 +102,28 @@ export const CrispPolygon: Story = {
 }
 
 /**
- * A street-level (exact building) hit → marker + a tight uncertainty circle.
+ * A place with a tier and an uncertainty radius renders a marker and a circle of that radius.
  */
 export const StreetRadius: Story = {
 	args: { place: place({ tier: "address_point", uncertaintyM: 10 }) },
 }
 
 /**
- * An anchor-centroid postcode (no bbox) → marker + a ~3 km "around here" circle.
+ * A postcode without a bounding box renders a marker and a default-radius circle.
  */
 export const PostcodeCircle: Story = {
 	args: { place: place({ placetype: "postcode" }) },
 }
 
 /**
- * A bare point (no bbox, no tier, no polygon) → marker only, no outline.
+ * A place without a bounding box, tier, or polygon renders only a marker.
  */
 export const BarePoint: Story = {
 	args: { place: place({}) },
 }
 
 /**
- * The bbox circle layered over a host overlay (a translucent coverage rectangle).
+ * The bounding-box circle drawn over a translucent coverage rectangle supplied as a host overlay.
  */
 export const WithHostOverlay: Story = {
 	args: {

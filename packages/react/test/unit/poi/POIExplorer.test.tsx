@@ -2,9 +2,6 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- *
- *   Composed test: the whole POI explorer (ClientOnly → usePOISearch → presentational units) against a
- *   mock taxonomy runtime + mock live probe — no taxonomy load, no httpvfs.
  */
 
 import { POIExplorer } from "@mailwoman/react/poi/POIExplorer"

@@ -2,26 +2,6 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- *
- *   `mailwoman situs interpolation-database --state VT` — build a per-state street-segment database (#483)
- *   from tiger edges: side-aware house-number ranges + segment polylines, keyed by the one shared
- *   street normalizer (`@mailwoman/resolver-wof-sqlite/street-normalize` — the same function the
- *   interpolation lookup applies at query time. one normalizer, never two). The interpolation
- *   tier's data half. design in `docs/articles/plan/2026-06-11-interpolation-design.md`.
- *
- *   One row PER side per address-carrying road edge (left and right carry independent ranges and ZIPs
- *   in tiger). Parity is derived from the from/to numbers ('odd' | 'even' | 'mixed'); descending
- *   ranges keep their raw from/to (direction matters for the interpolation position) alongside
- *   min/max index columns. Non-numeric ranges (hyphenated, alphanumeric) are skipped and counted.
- *
- *   Inputs: tiger edges shapefiles per county (the same files the intersection eval reads),
- *   downloaded to --edges-dir from:
- *   https://www2.census.gov/geo/tiger/TIGER2023/edges/tl_2023_<countyfips>_edges.zip
- *
- *   Maintainer-only: needs the local shapefiles + the @duckdb/node-api dev dep + the optional
- * @mailwoman/resolver-wof-sqlite peer (the shared schema + normalizer). Progress streams to stderr.
- *   the final summary lands on stdout. The build writes to a temp path, then atomically swaps into
- *   place (scripts/agents.md) — the original script rebuilt in place.
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
@@ -41,25 +21,20 @@ import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandT
 import { buildSHA, stampLayerManifest } from "#gazetteer-pipeline/stamp-manifest"
 
 /**
- * Provenance tag for the baked `interp_calibration` row — the split-conformal
- * multi-region recalibration this build selects its multiplier
- * from (`docs/articles/evals/calibration/2026-06-14-interp-multiregion-recalibration.md`).
+ * The method label written to the `interp_calibration` row.
  *
- * Bump when the calibration source of record (`interp-calibration.ts` /
- * `data/calibration/interp-radius-conformal.json`) is re-measured.
+ * Update it when the multipliers in `interp-calibration.ts` are re-measured.
  */
 const CALIBRATION_METHOD = "split-conformal:2026-06-14"
 
 /**
- * State abbreviation → state FIPS prefix, for picking county files out of --edges-dir.
+ * The state FIPS code for each state abbreviation, used to select county files in `--edges-dir`.
  */
 const STATE_FIPS: Record<string, string> = {
-	// Original entries preserved
 	VT: "50",
 	TX: "48",
 	IL: "17",
 	NJ: "34",
-	// All 50 states + DC (FIPS PUB 5-2 / tiger column statefp)
 	AL: "01",
 	AK: "02",
 	AZ: "04",
@@ -110,7 +85,11 @@ const STATE_FIPS: Record<string, string> = {
 }
 
 /**
- * Native command-line interface consumed by the filesystem command router.
+ * The command specification for `mailwoman situs interpolation-database`.
+ *
+ * The command builds a per-state street-segment database from TIGER EDGES shapefiles.
+ * Each address-carrying road edge yields one row per side, because the left
+ * and right sides carry independent ranges and ZIP codes.
  */
 export const spec = {
 	name: "interpolation-database",
@@ -128,7 +107,7 @@ export const spec = {
 } as const satisfies CommandSpec
 
 /**
- * Strictly-numeric house number → integer, else null (hyphenated/alphanumeric skipped).
+ * Parses an all-digit house number, and returns null for hyphenated or alphanumeric values.
  */
 function parseHn(raw: unknown): number | null {
 	if (raw === null || raw === undefined) return null
@@ -163,9 +142,7 @@ const SitusInterpolationDatabase: CommandComponent<typeof spec> = ({ options }) 
 
 		const finalOut = resolvePath(options.out ?? interpolationDatabasePath(`interpolation-us-${STATE.toLowerCase()}.db`))
 
-		// Optional maintainer deps: the shared schema/normalizer (resolver-wof-sqlite, an optional peer)
-		// and the DuckDB spatial reader (@duckdb/node-api, a dev dep).
-		// Both dynamic + guarded so the published CLI doesn't force them on every consumer.
+		// Both packages load dynamically because the published CLI does not depend on them.
 		let segmentSchema: typeof import("@mailwoman/resolver-wof-sqlite/street")
 		let streetNormalize: typeof import("@mailwoman/resolver-wof-sqlite/street")
 
@@ -208,8 +185,7 @@ const SitusInterpolationDatabase: CommandComponent<typeof spec> = ({ options }) 
 		console.error(`${shapefiles.length} county shapefiles for ${STATE}`)
 
 		await makeDirectories(dirname(finalOut))
-		// Build into a temp path.
-		// Atomically swap on success (scripts/agents.md).
+		// The build writes to a temporary path and swaps it into place on success.
 		const tmpOut = `${finalOut}.building-${process.pid}.db`
 
 		for (const sfx of ["", "-wal", "-shm"]) {
@@ -219,7 +195,8 @@ const SitusInterpolationDatabase: CommandComponent<typeof spec> = ({ options }) 
 		const parityCounts = { odd: 0, even: 0, mixed: 0 }
 		let sides = 0
 		let skippedNonNumeric = 0
-		// #374 doctrine: the conformal radius multiplier is a property of the calibration set, so it ships IN the artifact — bake the state's factor (or the conservative default for unmeasured states) into the database's `interp_calibration` metadata table. `StreetInterpolator` reads it at open time. Callers stop carrying the number.
+		// The database stores the state's radius multiplier, or the default for an unmeasured
+		// state, and `StreetInterpolator` reads it when it opens the file.
 		const measuredMultiplier = INTERP_RADIUS_CALIBRATION.byRegion[STATE]
 
 		const calibration = {
@@ -233,11 +210,7 @@ const SitusInterpolationDatabase: CommandComponent<typeof spec> = ({ options }) 
 		{
 			using kdb = new DatabaseClient<StreetSegmentDatabase>(tmpOut)
 			kdb.exec("PRAGMA journal_mode = WAL;")
-			// DDL via the shared street-segment-schema builder (the table the reader + tests use)
-			// so this producer can't drift.
-			// DuckDB below is the raw spatial reader.
-			// The hot insert stays on `db`.
-
+			// The schema comes from the shared builder so that the reader and this writer agree.
 			await createStreetSegmentTable(kdb)
 			await writeInterpCalibration(kdb, calibration)
 
@@ -255,9 +228,7 @@ const SitusInterpolationDatabase: CommandComponent<typeof spec> = ({ options }) 
 			for (const shp of shapefiles) {
 				const countyFips = basename(shp).match(/tl_\d+_(\d{5})_edges/)?.[1] ?? "unknown"
 
-				// Address-carrying road edges only.
-				// Geometry as GeoJSON text so the JS side stays shapefile-free
-				// (same ST_Read approach as build-intersection-real.ts).
+				// The query keeps only road edges that carry addresses, and returns geometry as GeoJSON text.
 				const result = await duck.runAndReadAll(`
 							SELECT FULLNAME AS name, LFROMADD, LTOADD, RFROMADD, RTOADD, ZIPL, ZIPR,
 								ST_AsGeoJSON(geom) AS geojson
@@ -275,7 +246,7 @@ const SitusInterpolationDatabase: CommandComponent<typeof spec> = ({ options }) 
 
 					if (geom.type !== "LineString" || geom.coordinates.length < 2) continue
 
-					// Round to 1e-6 deg (~0.1 m) — shapefile floats carry noise digits that bloat the JSON.
+					// Rounding to 1e-6 degrees (about 0.1 m) drops noise digits that would bloat the JSON.
 					const polyline = stringifyJSON(
 						geom.coordinates.map(([lon, lat]) => [Math.round(lon! * 1e6) / 1e6, Math.round(lat! * 1e6) / 1e6])
 					)
@@ -332,14 +303,13 @@ const SitusInterpolationDatabase: CommandComponent<typeof spec> = ({ options }) 
 				.get() as Record<string, number>
 		}
 
-		// Stamped on the temp file, before the swap: `swapDatabaseIntoPlace` is the moment the artifact
-		// becomes the live one, and a manifest written after it would be a write to a published file.
+		// The manifest is stamped before the swap so that the published file is never written to.
 		await stampLayerManifest(tmpOut, {
 			name: `interpolation-us-${STATE.toLowerCase()}`,
 			version: options.release,
 			schemaVersion: 1,
-			// US Census tiger/Line is public domain, so unlike the ODbL layers this one could ship.
-			// It is build-local because nothing publishes it today rather than because the licence forbids it.
+			// TIGER/Line is public domain.
+			// The layer is build-local only because nothing publishes it.
 			tier: LayerTier.BuildLocal,
 			license: "public-domain",
 			attribution: "US Census Bureau TIGER/Line",
@@ -348,8 +318,7 @@ const SitusInterpolationDatabase: CommandComponent<typeof spec> = ({ options }) 
 			buildCmd: "mailwoman situs interpolation-database",
 			buildSHA: buildSHA(repoRootPath()),
 			freshnessPolicy: LayerFreshnessPolicy.Sealed,
-			// No H3, no WOF id, no address-id — see `SpineKeys.street`.
-			// Every probe joins on `street_norm`.
+			// The layer joins only on `street_norm`.
 			spineKeys: { street: { column: "street_norm" } },
 			createdAt: new Date().toISOString(),
 		})
@@ -380,7 +349,7 @@ const SitusInterpolationDatabase: CommandComponent<typeof spec> = ({ options }) 
 		)
 	}
 
-	return null // progress streams to stderr until the summary lands
+	return null
 }
 
 export default SitusInterpolationDatabase

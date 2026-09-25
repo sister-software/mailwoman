@@ -2,12 +2,6 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- *
- *   Direct hook test for `useReleaseRuntime` — driven through a tiny harness with a fake injected loader
- *   (no network, no ONNX, no httpvfs). Exercises the state machine: mount → manifest → default version
- *   → assets → ready. a version switch reloads the bundle. `forceWASM` reloads with the flag set. a
- *   rejecting `loadAssets` surfaces `errorMessage` and keeps `ready` false. and the staged
- *   progress/step channel is reported through `ctx`.
  */
 
 import type { AssetsLoadContext, ReleaseBase, ReleaseManifest } from "@mailwoman/react/runtime/useReleaseRuntime"
@@ -35,7 +29,7 @@ const MANIFEST: ReleaseManifest<TestRelease> = {
 	],
 }
 
-// Stable module-level loaders so the harness passes the same closures every render.
+// The loaders are module constants so the harness passes the same references on every render.
 const loadManifest = async (): Promise<ReleaseManifest<TestRelease>> => MANIFEST
 
 const loadAssetsOK = async (release: TestRelease, ctx: AssetsLoadContext): Promise<TestAssets> => {
@@ -96,8 +90,8 @@ test("mount → manifest → default version → assets → ready", async () => 
 	expect(text(container, ".version")).toBe("v2")
 	expect(text(container, ".assets-version")).toBe("v2")
 	expect(text(container, ".backend")).toBe("webgpu")
-	expect(text(container, ".progress")).toBe("") // cleared on success
-	expect(text(container, ".step")).toBe("1") // last reported step
+	expect(text(container, ".progress")).toBe("")
+	expect(text(container, ".step")).toBe("1")
 	expect(text(container, ".steplabels")).toBe("Loading classifier|Loading gazetteer")
 	expect(text(container, ".release-label")).toBe("v2 (default)")
 	expect(text(container, ".error")).toBe("")
@@ -131,15 +125,13 @@ test("a rejecting loadAssets surfaces errorMessage and stays not-ready", async (
 	await vi.waitFor(() => expect(text(container, ".error")).toBe("asset boom"), { timeout: 2000 })
 	expect(text(container, ".ready")).toBe("no")
 	expect(text(container, ".assets-version")).toBe("")
-	expect(text(container, ".progress")).toBe("") // cleared even on failure
+	expect(text(container, ".progress")).toBe("")
 })
 
 test("a null manifest leaves nothing selected and never readies", async () => {
 	const nullManifest = async () => null
 	const { container } = renderComponent(<Harness manifestLoader={nullManifest} />)
 
-	// Give the mount effect a tick.
-	// The version stays unselected and the bundle never loads.
 	await vi.waitFor(() => expect(text(container, ".version")).toBe("none"), { timeout: 2000 })
 	expect(text(container, ".ready")).toBe("no")
 })

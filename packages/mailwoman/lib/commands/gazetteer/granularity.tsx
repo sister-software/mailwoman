@@ -2,17 +2,6 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- *
- *   `mailwoman gazetteer granularity` — the per-country gazetteer depth scorecard.
- *
- *   Answers "where does the admin gazetteer bottom out?" for every country it knows, which nobody
- *   had measured: the shipped artifact stocks 9 of WOF's 34 placetypes and carries a
- *   `dependent_locality` tier in 11 of 244 countries. Read-only, no network, no model — three
- *   grouped queries over `spr`/`ancestors` and a markdown render.
- *
- *   The report is a committed artifact (the `fill-rates.md` precedent), so the source md5 and the
- *   parent-coverage floor are pinned in its header. Re-running against a rebuilt gazetteer and
- *   diffing the report is the intended workflow.
  */
 
 import { writeLocalFile, makeDirectories } from "@mailwoman/core/fs/writers"
@@ -23,7 +12,8 @@ import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandT
 import { DEFAULT_COVERAGE_FLOOR } from "#gazetteer-pipeline/defaults"
 
 /**
- * Native command-line interface consumed by the filesystem command router.
+ * Command specification for `gazetteer granularity`, which reports the deepest
+ * admin placetype the gazetteer covers in each country.
  */
 export const spec = {
 	name: "granularity",
@@ -54,8 +44,7 @@ const GazetteerGranularity: CommandComponent<typeof spec> = ({ options }) => {
 		}
 
 		const markdown = renderGranularityReport(rows, {
-			// Display the portable form.
-			// Never bake the resolved lab path into a committed artifact.
+			// The report is committed, so it records a portable path instead of the resolved local one.
 			sourcePath: "$MAILWOMAN_DATA_ROOT/db/wof/admin-global-priority.db",
 			sourceMD5: await md5File(sourcePath),
 			buildDate: new Date().toISOString(),

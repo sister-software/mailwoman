@@ -2,12 +2,6 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- *
- *   `mailwoman gazetteer release` — the whole gazetteer pipeline, turnkey: durable GeoNames fold →
- *   candidate build (FTS baked in) → promote the convention path → publish to R2 + bump the demo.
- *   The codified 2026-06-27 rebuild, no questions. `--no-publish` stops after promote (build local
- *   only); `--dry-run` previews the R2 upload. Creds: `RCLONE_S3_PUBLIC_*` in the env (source
- *   `.env`) for the publish step.
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
@@ -25,7 +19,10 @@ import {
 import { DEFAULT_FOLD_COUNTRIES } from "#gazetteer-pipeline/defaults"
 
 /**
- * Native command-line interface consumed by the filesystem command router.
+ * Command specification for `gazetteer release`, which folds GeoNames, builds the
+ * candidate database, promotes it and publishes it to R2.
+ *
+ * The publish step reads R2 credentials from the `RCLONE_S3_PUBLIC_*` environment variables.
  */
 export const spec = {
 	name: "release",

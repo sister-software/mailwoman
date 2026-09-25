@@ -2,10 +2,6 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- *
- *   Report parse and geocode coverage separately for each country.
- *   The report compares packages, corpus rows, training admission, and board coverage;
- *   checklist output highlights mismatches before country details.
  */
 
 import {
@@ -19,7 +15,7 @@ import {
 import { trains, type CoverageReport } from "#coverage/census"
 
 /**
- * Native command-line interface consumed by the filesystem command router.
+ * Command specification for `data coverage`, which reports parse and geocode coverage for each country.
  */
 export const spec = {
 	name: "coverage",
@@ -53,10 +49,8 @@ const CoverageCommand: CommandComponent<typeof spec> = ({ options }) => {
 
 		const repoRoot = repoRootPath()
 
-		// The config is named by `scope.config.json` rather than discovered.
-		// Both discovery orders are wrong here: the mtime sort sorts a total tie after a checkout,
-		// and the version scheme sorts neither lexically nor numerically.
-		// The report names the config it read either way.
+		// The default config comes from `scope.config.json` because neither file mtimes
+		// nor version names order the configs reliably.
 		const config = resolveTrainingConfig(await readScopeConfig(), { requested: options.config })
 		const manifestPath = options.manifest ?? (await newestManifest())
 
@@ -88,13 +82,13 @@ const CoverageCommand: CommandComponent<typeof spec> = ({ options }) => {
 export default CoverageCommand
 
 /**
- * Render the checklist, showing coverage mismatches first.
- */
-/**
- * Maximum empty-but-admitted country codes shown before eliding.
+ * The number of admitted-but-empty country codes listed before the rest are elided.
  */
 const EMPTY_CODES_SHOWN = 24
 
+/**
+ * Renders the coverage checklist with mismatches listed before the per-country table.
+ */
 function render(report: CoverageReport, wanted?: string[]): string {
 	const shown = wanted
 		? report.countries.filter((c) => wanted.includes(c.country))
@@ -142,7 +136,7 @@ function render(report: CoverageReport, wanted?: string[]): string {
 				? `DROPPED (${c.corpusRows.toLocaleString()})`
 				: "—"
 			: c.corpusRows === 0
-				? "admitted, no rows"
+				? "admitted without rows"
 				: `${c.corpusRows.toLocaleString()}${c.corpusStreetRows ? ` (${c.corpusStreetRows.toLocaleString()} street)` : ", NO STREET"}`
 
 		const geo =

@@ -2,10 +2,6 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- *
- *   Direct hook test for `usePOISearch` — driven through a tiny harness with a mock taxonomy runtime
- *   and a mock live probe. Exercises the abstain branch (POI kind, no lexicon hit) and the full
- *   subject → live-search path.
  */
 
 import type { POISubject } from "@mailwoman/react/poi/types"
@@ -17,13 +13,10 @@ import { userEvent } from "vitest/browser"
 import { makeBrandPOIRuntime, makePOIRuntime, mockBrandLiveSearchSuccess, mockLiveSearchSuccess } from "../../mocks.tsx"
 import { renderComponent } from "../../render.tsx"
 
-// Stable module-level loader so the Harness passes the same closure every render.
+// The loaders are module constants so the harness passes the same reference on every render.
 const loadRuntime = async () => makePOIRuntime()
 const loadBrandRuntime = async () => makeBrandPOIRuntime()
 
-/**
- * A subject's display label, whichever variant it is — the union-safe accessor the harness renders.
- */
 function subjectLabel(subject: POISubject | undefined): string {
 	if (!subject) return "no-subject"
 
@@ -87,7 +80,7 @@ test("a brand subject stays intent-only when the probe isn't brand-capable (no l
 	)
 
 	await vi.waitFor(() => expect(container.querySelector(".subject")?.textContent).toBe("Chevron"), { timeout: 2000 })
-	// brandLiveSearch defaults off ⇒ the subject resolves but live search is disabled.
+	// `brandLiveSearch` defaults to false, so live search stays disabled.
 	expect((container.querySelector("button") as HTMLButtonElement).disabled).toBe(true)
 })
 
@@ -108,6 +101,6 @@ test("a brand subject with a brand-capable probe threads the QID into the live s
 
 	await userEvent.click(button)
 	await vi.waitFor(() => expect(container.querySelector(".live")?.textContent).toBe("success"))
-	// The probe echoes the QID it received — proves usePOISearch passed `brandWikidata`, not a category shape.
+	// The mock probe echoes the QID it received, which shows that `usePOISearch` passed `brandWikidata`.
 	expect(container.querySelector(".hit")?.textContent).toContain("Q319642")
 })

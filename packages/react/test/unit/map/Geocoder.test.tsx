@@ -2,13 +2,6 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- *
- *   Composed test for the whole geocoder over a fake runtime: render `<Geocoder>`, submit a query, and
- *   assert the geocoder responds — the result panel fills in (hard: it's plain DOM in the control panel,
- *   independent of WebGL) and the map drops a resolved-place marker (best-effort: react-map-gl mounts the
- *   `<Marker>` only once the map instance exists, which needs SwiftShader WebGL, whose absence means no
- *   software GL in this Chromium rather than a component fault, exactly like `MapCanvas.test.tsx`). No network, no
- *   ONNX, no gazetteer, no tiles.
  */
 
 import { makeFakeGeocoderRuntime } from "@mailwoman/react/map/fake-runtime"
@@ -19,10 +12,7 @@ import { userEvent } from "vitest/browser"
 
 import { renderComponent } from "../../render.tsx"
 
-/**
- * Poll `get` inside act() until truthy or timeout.
- * Never throws (returns null on timeout).
- */
+// This helper polls `get` inside `act()` and returns null on timeout instead of throwing.
 async function settle<T>(get: () => T | null, timeout = 8000): Promise<T | null> {
 	const start = Date.now()
 	let found: T | null = null
@@ -43,7 +33,8 @@ async function settle<T>(get: () => T | null, timeout = 8000): Promise<T | null>
 }
 
 test("submit drives the result panel + a map marker over the fake runtime", async () => {
-	// applyResultCamera=false keeps this deterministic: the marker + outline still render, but the animated fly/fit is skipped, exactly as the overlays test uses applyCamera=false. The camera has its own guard with a live map: see `ResultCamera.test.tsx`.
+	// Disabling the result camera keeps the view fixed.
+	// `ResultCamera.test.tsx` covers camera moves.
 	const { container } = renderComponent(
 		<Geocoder
 			runtime={makeFakeGeocoderRuntime()}
@@ -52,22 +43,20 @@ test("submit drives the result panel + a map marker over the fake runtime", asyn
 		/>
 	)
 
-	// ClientOnly mounts asynchronously.
-	// Wait for the reused QueryForm input.
+	// `ClientOnly` mounts its children asynchronously.
 	await vi.waitFor(() => expect(container.querySelector("#mw-pipeline-input")).toBeTruthy())
 
-	// The pill carries no submit button, the way the reference map apps carry none: a search
-	// field submits on Enter, and the leading magnifier is a mark rather than a control.
+	// The search bar has no submit button, so Enter submits the query.
 	await userEvent.click(container.querySelector("#mw-pipeline-input") as HTMLInputElement)
 	await userEvent.keyboard("{Enter}")
 
-	// hard: the result panel is plain DOM in the floating control panel — no WebGL needed.
+	// The result panel is plain DOM, so these assertions do not depend on WebGL.
 	await vi.waitFor(() => expect(container.textContent).toContain("Parsed components"))
 	expect(container.textContent).toContain("house_number")
 	expect(container.textContent).toContain("Resolved place")
 	expect(container.textContent).toContain("New York")
 
-	// best-effort: the resolved-place marker mounts as a react-map-gl child once the map exists (SwiftShader GL).
+	// The marker mounts only after the map initializes, which needs software WebGL, so this check is best-effort.
 	const marker = await settle(() => container.querySelector(".maplibregl-marker"))
 
 	if (marker) {
@@ -79,9 +68,7 @@ test("mounts the map container + floating control panel", async () => {
 	const { container } = renderComponent(<Geocoder runtime={makeFakeGeocoderRuntime()} defaultAddress="90210" />)
 
 	await vi.waitFor(() => expect(container.querySelector(".mw-geocoder-demo")).toBeTruthy())
-	// The chrome + the map wrapper both render synchronously (map canvas is best-effort, tested in MapCanvas).
-	// The chrome is one panel — a left column on a desktop, a bottom drawer on a phone —
-	// holding the search, the examples and the result, plus a control capsule down the right edge.
+	// The controls and the map wrapper render without waiting for WebGL.
 	expect(container.querySelector(".mw-map-panel")).not.toBeNull()
 	expect(container.querySelector(".mw-map-panel__header")).not.toBeNull()
 	expect(container.querySelector(".mw-map-searchbar")).not.toBeNull()

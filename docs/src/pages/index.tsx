@@ -26,12 +26,8 @@ function HomepageHeader(): ReactNode {
 						Try the geocoder
 					</Link>
 				</div>
-				{/* Measured rather than decorative. `mailwoman geocode "1600 Pennsylvania Avenue NW, Washington, DC"`
-				    returns lat 38.89767510742324, lon -77.03654697024702, resolution_tier "address_point",
-				    uncertainty_m 1 — so the 4-dp rounding below is exact and "rooftop" is the house gloss for
-				    an address_point hit at 1 m (mailwoman/geocode-core.ts:56: "`address_point` — rooftop /
-				    parcel centroid. uncertainty_m is a small floor (~1 m)"). Re-run it before changing either
-				    number. */}
+				{/* These values come from `mailwoman geocode "1600 Pennsylvania Avenue NW, Washington, DC"`, rounded
+				    to four decimal places. The "rooftop" label stands for its `address_point` resolution tier. */}
 				<p className={styles.heroTransform}>
 					<span className={styles.heroIn}>"1600 Pennsylvania Ave NW"</span>
 					<span className={styles.heroArrow}>→</span>
@@ -43,13 +39,7 @@ function HomepageHeader(): ReactNode {
 	)
 }
 
-/**
- * The five-way fork.
- *
- * A visitor arrives wanting one of five things — to wire it up, to price it, to see
- * whether it works at all, to make the case for it to someone else, or to check the
- * claims against published numbers — and each card ends in exactly one link.
- */
+// Each card serves one reader goal and ends in exactly one link.
 function Fork(): ReactNode {
 	return (
 		<section className={styles.gallery}>
@@ -224,8 +214,8 @@ function FeatureStrip(): ReactNode {
 						<h3>Gazetteer-backed resolver</h3>
 						<p>
 							Parsed components resolve to <a href="https://whosonfirst.org">Who&apos;s On First</a> place IDs and
-							WGS-84 coordinates over pre-indexed SQLite. Pure <code>node:sqlite</code> — no SpatiaLite, no native build
-							step. The gazetteer is a 1.65 GB download you keep, not a service you call.
+							WGS-84 coordinates over pre-indexed SQLite. It uses only <code>node:sqlite</code>, without SpatiaLite or a
+							native build step. The gazetteer is a 1.65 GB download you keep, not a service you call.
 						</p>
 					</div>
 					<div className="col col--3">
@@ -300,13 +290,16 @@ const result = await parse("apt 4b 350 5th ave new york ny 10118")
 	)
 }
 
+/**
+ * Renders the documentation site's home page.
+ */
 export default function Home(): ReactNode {
 	const { title } = useSiteConfig()
 
 	return (
 		<Layout
 			title={title}
-			description="An address parser and geocoder that runs in your own process. No API key, no server — a neural parser plus an open-data resolver, in Node or entirely in your browser."
+			description="An address parser and geocoder that runs in your own process. It needs no API key or server: a neural parser plus an open-data resolver, in Node or entirely in your browser."
 		>
 			<HomepageHeader />
 			<main>

@@ -2,11 +2,6 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- *
- *   `mailwoman gazetteer build fst` — per-locale decode-bias FST gazetteers (`fst-<locale>.bin`,
- *   #1318) with build-time degenerate-surface curation. Artifacts land in a staging dir beside the
- *   shipped `fst-per-locale/` (never overwriting); the swap is operator-approved after the battery. See
- *   `mailwoman/gazetteer-pipeline/fst.ts` for the curation policy.
  */
 
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
@@ -16,7 +11,10 @@ import { Text } from "ink"
 import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 
 /**
- * Native command-line interface consumed by the filesystem command router.
+ * Command specification for `gazetteer build fst`, which builds curated per-locale FST gazetteers.
+ *
+ * The output directory defaults to a sibling of the shipped `fst-per-locale/` directory,
+ * so a build never overwrites the shipped files.
  */
 export const spec = {
 	name: "fst",
@@ -29,7 +27,11 @@ export const spec = {
 			description: "Output dir (default: $MAILWOMAN_DATA_ROOT/db/wof/fst-per-locale-curated)",
 			deprecatedName: "output",
 		},
-		uncurated: { type: "boolean", default: false, description: "A/B control build: same DB, no curation" },
+		uncurated: {
+			type: "boolean",
+			default: false,
+			description: "Build from the same DB without curation, as an A/B control",
+		},
 	},
 } as const satisfies CommandSpec
 
