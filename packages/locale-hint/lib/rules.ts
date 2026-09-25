@@ -100,7 +100,7 @@ export function scoreByPostcode(shape: QueryShapeFormatsView): LocaleCandidate |
 }
 
 /**
- * Whole-input fallback: when nothing else fires, return en-US at low confidence.
+ * Whole-input fallback: when no other rule fires, return en-US at low confidence.
  *
  * Keeps this stage always-decisive (no `null` to the caller, ever).
  */

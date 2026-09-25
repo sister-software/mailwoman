@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The license worker's Hono app. Every response is `no-store`: nothing this worker answers may be cached by a proxy,
+ *   The license worker's Hono app. Every response is `no-store`: no response this worker answers may be cached by a proxy,
  *   because the claim and refresh routes carry tokens and the status route carries a verdict that revocation changes.
  *   Every `/v1` route sits behind the signing self-test: a worker whose key the shipped register does not trust answers
  *   503 rather than mint tokens no installation accepts, and `/health` stays up to say so. Dependencies arrive as values

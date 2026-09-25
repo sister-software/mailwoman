@@ -137,7 +137,7 @@ function evaluateLine(atoms: readonly AddressAtom[], components: ComponentDict):
 		out.push(...pieces)
 	}
 
-	// Anything still pending trails the last value with nothing after it, so it separates nothing.
+	// Anything still pending trails the last value with no piece after it, so it separates no pair.
 	return out.some((piece) => piece.tag !== null) ? out : []
 }
 

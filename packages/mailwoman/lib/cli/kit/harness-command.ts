@@ -34,7 +34,7 @@ export interface HarnessCommandOptions<Spec extends CommandSpec, T> {
 	 */
 	exitCode?: (result: T) => number
 	/**
-	 * The value to print as JSON, or `undefined` to print nothing.
+	 * The value to print as JSON, or `undefined` to print no value.
 	 *
 	 * The options are passed so the condition is named at the call site
 	 * rather than assumed here: a command that prints under `--json` writes

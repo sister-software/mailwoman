@@ -38,7 +38,7 @@ export type SplitName = "train" | "val" | "test"
  * so a French holdout must also match on postcode.
  *
  * A row is held out when any declared matcher fires.
- * A policy with no matchers holds out nothing.
+ * A policy with no matchers holds out no entry.
  */
 export interface HoldoutPolicy {
 	/**

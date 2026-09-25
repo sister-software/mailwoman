@@ -16,7 +16,7 @@
  *        instance at all. Its types were already drifting from the wire in 2024.
  *     3. The `status` union below is the required part of this file (see {@linkcode
  *        GoogleGeocoderStatus}), and it is small enough to state exactly. Depending on a package for
- *        it adds nothing and hides it.
+ *        it adds no value and hides it.
  *
  *   The runtime dependency on `@googlemaps/google-maps-services-js` is dropped entirely — see
  *   `google-client.ts`'s header for why the library's `Client` was actively harmful under

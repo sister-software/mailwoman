@@ -17,7 +17,7 @@
  *   collapses long uniform interiors. Soil delineations are the opposite: 85.4% of `IA153`'s 17,966 of them
  *   are smaller than one resolution-9 cell, and the median is 24,863 m² against a 105,333 m² cell. Small
  *   polygons against large cells means most cells are crossed by a boundary — so the `partial` share should
- *   be high, `compactCells` should yield close to nothing, and the index alone will rarely answer a point
+ *   be high, `compactCells` should yield nearly no cells, and the index alone will rarely answer a point
  *   probe. That is not an argument against storing the geometry. it is the argument for why this layer
  *   carries the reduced `soil_capability_cell` alongside the index rather than relying on the index the way
  *   the flood layer can.

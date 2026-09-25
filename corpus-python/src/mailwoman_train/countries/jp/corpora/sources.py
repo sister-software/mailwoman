@@ -39,7 +39,7 @@ class KenAllIndex:
     The join needs one correction that is worth the measurement it took: Overture writes the ōaza
     prefix (``字崎枝``, ``大字上田``) and KEN_ALL does not. Exact town match alone hits **17.8%**
     of rows. retrying with a leading ``字``/``大字`` stripped takes it to **89.6%** (200k-row probe corpus,
-    2026-08-04). The remaining 10.4% falls back to the municipality catch-all, and nothing misses.
+    2026-08-04). The remaining 10.4% falls back to the municipality catch-all, and no row misses.
     """
 
     def __init__(self, town: dict[str, str], municipality: dict[str, str]) -> None:

@@ -1,7 +1,7 @@
 """Composing the supervised loss and its auxiliary terms.
 
 None of these terms appears in `logits`, so a term that stops firing changes what the model learns
-and nothing the inference path returns. Every reduction that could divide by an empty count guards
+and no term the inference path returns. Every reduction that could divide by an empty count guards
 its own case, and every structural term runs in fp32 — the v0.6.0 CRF NaN was a bf16 reduction.
 """
 
@@ -36,8 +36,8 @@ class CoarseEncoderLosses(CoarseEncoderState):
         Four terms can contribute, each switched on by its own config flag: token CE (with the optional CRF NLL
         beside it), the affix head's own CE, the locale auxiliary CE, the span-boundary BCE, and the
         semi-Markov span NLL. Every one of them is summed into the same scalar and none of them is
-        visible in `logits`, so a term that stops firing changes what the model learns and nothing
-        the inference path returns.
+        visible in `logits`, so a term that stops firing changes what the model learns and leaves
+        the inference path unchanged.
 
         Answers `None` for the loss when no term fired, which is inference. The span scores come
         back separately because they are an output rather than a loss: the export path reads them.
@@ -138,7 +138,7 @@ class CoarseEncoderLosses(CoarseEncoderState):
         supervises the pooled representation the FiLM conditioning reads, the span-boundary BCE
         pressures span edges, and the semi-Markov NLL scores segmentations. `loss` arrives as the
         supervised term or None, and each addition guards its own empty-batch case — an all-ignored
-        batch contributes nothing rather than dividing by zero.
+        batch contributes no term rather than dividing by zero.
 
         Returns the accumulated loss and the span scores, which are an output rather than a term.
         """
@@ -146,7 +146,7 @@ class CoarseEncoderLosses(CoarseEncoderState):
         # country so the pooled representation (and therefore the FiLM conditioning) actually
         # encodes "which country". fp32 CE over the small locale vocabulary. Rows whose country
         # is unmapped carry IGNORE_INDEX and are skipped. a batch with no mapped row contributes
-        # nothing (guards the all-ignored 0/0 → NaN edge).
+        # no term (guards the all-ignored 0/0 → NaN edge).
         if (
             self.use_locale_conditioning
             and locale_logits is not None
@@ -166,7 +166,7 @@ class CoarseEncoderLosses(CoarseEncoderState):
         # whose successor doesn't continue it), supervised from the BIO labels. Computed in fp32 — the
         # CRF NaN scar (v0.6.0) says any structural/transition-style leg gets fp32 headroom, and BCE
         # over masked positions is cheap. Masked to real, non-ignore tokens. a batch with no valid
-        # position contributes nothing (guards the 0/0 → NaN edge).
+        # position contributes no term (guards the 0/0 → NaN edge).
         if (
             self.use_span_boundary_head
             and labels is not None

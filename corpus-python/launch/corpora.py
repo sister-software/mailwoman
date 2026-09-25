@@ -21,8 +21,7 @@ directory (13 into its own, 1 elsewhere). Those six shapes cover all 137 transfe
 
 `checks` are the paths the sync verifies after copying. They matter because rclone EXITS 0 WHEN THE
 SOURCE PREFIX IS EMPTY: without a check, a version whose R2 prefix was never uploaded syncs
-"successfully" and the training job fails much later on a missing parquet part, with nothing
-pointing back at the sync.
+"successfully" and the training job fails much later on a missing parquet part, with no line pointing back at the sync.
 """
 
 from __future__ import annotations

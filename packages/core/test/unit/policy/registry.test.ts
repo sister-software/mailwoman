@@ -110,7 +110,7 @@ describe("InMemoryPolicyRegistry — apply by mode", () => {
 
 	test("a below-threshold preferred source does NOT trigger dropping the dispreferred one", () => {
 		// Threshold runs before preference: a neural proposal that died at the threshold must not
-		// count as "neural present" — else rule proposals vanish with nothing to replace them.
+		// count as "neural present" — else rule proposals vanish with no replacement for them.
 		const registry = new InMemoryPolicyRegistry()
 		registry.set({ component: "country", mode: "neural_preferred", confidence_threshold: 0.8 })
 

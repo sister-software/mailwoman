@@ -102,7 +102,7 @@ export type BaseConsoleLogger = Record<Level, LogFn>
 export type IRuntimeLogger = BaseConsoleLogger
 
 /**
- * A logger that writes nothing at every level, for a client whose caller owns stdout, such as a
+ * A logger that writes no output at every level, for a client whose caller owns stdout, such as a
  * command emitting JSON, where a "[debug] GET …" line on the same stream corrupts the document.
  */
 export function silentLogger(): BaseConsoleLogger {

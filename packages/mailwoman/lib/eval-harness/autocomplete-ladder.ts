@@ -57,7 +57,7 @@ export const LADDER_LENGTH_BANDS: ReadonlyArray<readonly [label: string, min: nu
 ]
 
 /**
- * A rung this short expects no confident answer: one or two characters name nothing.
+ * A rung this short expects no confident answer: one or two characters name no place.
  */
 export const ABSTAIN_EXPECTED_MAX_CHARS = 2
 
@@ -74,7 +74,7 @@ export const HEADLINE_MAX_TOLERANCE_M = 25_000
  * to en-US for every country without an overlay: an FST is country-scoped by construction,
  * and grading a French row against the US FST would report "never" for `Paris` as
  * a property of the tier rather than of the artifact chosen.
- * A country with no FST here answers nothing on that arm and is counted out of
+ * A country with no FST here answers no query on that arm and is counted out of
  * its denominator, never graded as a miss.
  */
 export const FST_LOCALE_BY_COUNTRY: Readonly<Record<string, string>> = {
@@ -218,7 +218,7 @@ export interface LadderRow {
 	/**
 	 * The FST locale the `fst` arm read, or `null` when the row's country has none.
 	 *
-	 * The arm then answered nothing and the row is outside that arm's denominators.
+	 * The arm then answered no query and the row is outside that arm's denominators.
 	 */
 	fstLocale: string | null
 	arms: Record<LadderArm, RowArmReading>

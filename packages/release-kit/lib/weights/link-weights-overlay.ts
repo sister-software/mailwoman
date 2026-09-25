@@ -10,9 +10,9 @@
  *   directories causes four separate hazards: a git worktree starts empty and cannot geocode, `yarn test`
  *   mutates tracked directories as a side effect of `weights.test.ts`, `fs.copyFile` writes through a
  *   leftover symlink, and a publish tarball is refused for containing one (`YN0035`). Writing outside git
- *   removes the cause of all four. Symlinks are safe here precisely because nothing tars the data root.
+ *   removes the cause of all four. Symlinks are safe here precisely because no operation tars the data root.
  *
- *   Run with `--plan` (or `--dry-run`) to see what it would do and change nothing.
+ *   Run with `--plan` (or `--dry-run`) to see what it would do and make no change.
  *
  *   ```
  *   yarn mwops release link-weights-overlay --plan
@@ -35,7 +35,7 @@ import { type BuildableArtifact, type LinkableArtifact, readWeightsRecipe } from
 export interface LinkWeightsOverlayOptions {
 	repoRoot: string
 	/**
-	 * Report what would be linked and change nothing.
+	 * Report what would be linked and make no change.
 	 */
 	plan: boolean
 	/**

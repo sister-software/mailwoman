@@ -79,7 +79,7 @@ function isAdapterInputMap(input: unknown): input is Record<string, AdapterInput
 
 		// The shape rather than the type.
 		// A lower-case `nl` is a string, and the four adapters that filter per row compare it
-		// against the row's own upper-case code, so it selects zero rows and reports nothing.
+		// against the row's own upper-case code, so it selects zero rows and reports no matches.
 		// `corpus run` rejects it at the flag, and this is the other way in.
 		if ("country" in value && value.country !== undefined && !isAlpha2CodeShape(value.country)) return false
 

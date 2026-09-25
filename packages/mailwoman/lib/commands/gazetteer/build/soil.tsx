@@ -138,7 +138,7 @@ const GazetteerBuildSoil: CommandComponent<typeof spec> = ({ options }) => {
 		const region = options.area ? options.area.toLowerCase() : prefix.toLowerCase()
 		const client = createSoilDataAccessClient()
 
-		// `--verify-only` checks an artifact that already exists and acquires nothing.
+		// `--verify-only` checks an artifact that already exists and acquires no data.
 		// A full-region build takes hours and seals its artifact before the check runs,
 		// so a check that could only run as the build's last step would cost a rebuild
 		// every time the check itself was worth re-running.

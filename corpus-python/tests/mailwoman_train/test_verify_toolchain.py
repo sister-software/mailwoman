@@ -71,7 +71,7 @@ def test_every_ruff_call_site_names_the_pinned_version():
 
     The bump that added this: `pyproject.toml` moved to 0.16.5 and the three call sites in
     `package.json` and `.husky/pre-commit` stayed at 0.15.20, so a developer's ruff and CI's ruff
-    were different minor versions with nothing checking.
+    were different minor versions with no check comparing them.
     """
     vt = _load()
     pin = vt._ruff_dev_pin()

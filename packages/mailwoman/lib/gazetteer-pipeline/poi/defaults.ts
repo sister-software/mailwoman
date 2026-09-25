@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The POI build's tunable defaults, and nothing else — no imports, so the module is free to load.
+ *   The POI build's tunable defaults, and no more — no imports, so the module is free to load.
  *
  *   They live apart from the builders that consume them so command specifications can interpolate the defaults without
  *   importing DuckDB, h3-js, or the resolver schema layer. The builders re-export the names, so callers need not know
@@ -24,7 +24,7 @@
  * If the pins drift, `--release` overrides either independently.
  *
  * Overture prunes old releases from the bucket — the 2026-08-19 listing held exactly one.
- * A stale pin therefore fails every default build outright (the S3 listing finds nothing),
+ * A stale pin therefore fails every default build outright (the S3 listing finds no release),
  * and a sealed artifact built from a pruned release can never be rebuilt.
  *
  * Bump this pin when a build reports the release missing.

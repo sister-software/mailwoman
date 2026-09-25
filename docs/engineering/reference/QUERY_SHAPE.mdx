@@ -19,10 +19,10 @@ The QueryShape sub-system avoids that trap by restricting itself to **universal 
 
 | Primitive                | Adds per new locale                  | Verdict   |
 | ------------------------ | ------------------------------------ | --------- |
-| Character class detector | Nothing                              | universal |
+| Character class detector | No detector                          | universal |
 | Segmentation grammar     | ~5 lines of locale punctuation rules | bounded   |
 | Known-format regex set   | ~1 postcode pattern                  | bounded   |
-| User-location prior      | Nothing                              | universal |
+| User-location prior      | No prior                             | universal |
 
 By comparison, v1's gazetteer-based locality classifier needed ~50K place names per locale. This sub-system is designed to avoid that per-locale growth.
 

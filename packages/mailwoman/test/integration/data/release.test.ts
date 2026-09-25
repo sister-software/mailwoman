@@ -111,7 +111,7 @@ describe("resolveDatabasePath", () => {
 			apDir("address-points-us-tx.db").toString()
 		)
 
-		// nothing for an unknown slug
+		// no path for an unknown slug
 		expect(await resolveDatabasePath(await root, "address-points", "zz", null)).toBeNull()
 	})
 })

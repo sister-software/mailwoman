@@ -33,7 +33,7 @@ import { SqliteDialect } from "#dialect/index"
  * ```
  *
  * Handing that job to callers is what let one database be described by two schemas —
- * the type argument here and a second one on the handle — with nothing to make them agree.
+ * the type argument here and a second one on the handle — with no mechanism to make them agree.
  * It also split ownership: `SqliteDriver.destroy()` closes whatever connection it was given,
  * so a shared handle has two owners and the first `destroy()` closes it under the other.
  *
@@ -110,7 +110,7 @@ export class DatabaseClient<DB = Database> extends Kysely<DB> implements Disposa
 	 * Run a statement Kysely does not model: `pragma`, `vacuum`, `analyze`, `attach`, FTS5 virtual-table DDL.
 	 *
 	 * Not to be confused with Kysely's `execute()`, which runs a compiled query.
-	 * This one takes SQL text and returns nothing.
+	 * This one takes SQL text and returns no value.
 	 */
 	exec(sql: string): void {
 		this.#database.exec(sql)
@@ -160,7 +160,7 @@ export class DatabaseClient<DB = Database> extends Kysely<DB> implements Disposa
 	 * `node:sqlite`'s `close()` is synchronous, so `using` closes the file before the scope ends.
 	 *
 	 * Kysely's own driver state is not unwound here.
-	 * It holds this one connection and nothing else, and a query issued afterwards fails
+	 * It holds this one connection and no others, and a query issued afterwards fails
 	 * on the closed handle rather than on a pool that thinks it is alive.
 	 */
 	[Symbol.dispose](): void {
@@ -171,6 +171,6 @@ export class DatabaseClient<DB = Database> extends Kysely<DB> implements Disposa
 /**
  * The `node:sqlite` types a caller needs when it holds a statement or binds a value.
  *
- * Re-exported so nothing has to reach past this package for them.
+ * Re-exported so no caller has to reach past this package for them.
  */
 export type { DatabaseSyncOptions, SQLInputValue, SQLOutputValue, StatementSync } from "node:sqlite"

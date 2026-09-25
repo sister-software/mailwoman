@@ -8,7 +8,7 @@ All five share one additive form, applied at the input layer before the transfor
     h_i  +=  c_i · (W · features_i + cue)
 
 `c_i` is the per-token confidence, zero where no clue fires. That scaling is what makes a channel a
-continuum rather than a switch: a token with no clue contributes exactly nothing, so an encoder
+continuum rather than a switch: a token with no clue contributes no signal, so an encoder
 given no features computes what an encoder built without the channel computes. There is no discrete
 "no clue" embedding and no regime to switch between.
 

@@ -28,7 +28,7 @@ test("resolveCandidateDBPath: returns an explicit/env path only when it exists o
 	// A data root with no candidate.db under it, so the convention fallback stays out of the way.
 	setEnv("MAILWOMAN_DATA_ROOT", "/no/such/root")
 	setEnv("MAILWOMAN_CANDIDATE_DB", undefined)
-	expect(await resolveCandidateDBPath()).toBeUndefined() // nothing set, nothing at the convention path
+	expect(await resolveCandidateDBPath()).toBeUndefined() // no env var set and no file at the convention path
 	expect(await resolveCandidateDBPath("/no/such/candidate.db")).toBeUndefined() // explicit but missing
 	expect(await resolveCandidateDBPath(THIS_FILE)).toBe(THIS_FILE) // explicit + exists
 

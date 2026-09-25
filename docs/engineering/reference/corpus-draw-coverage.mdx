@@ -61,7 +61,7 @@ after this measurement.
 
 It moves which row-group a draw lands in, from the first file the seed happens to order first, to one
 drawn uniformly across the source. It does not widen the draw, because 17,269 rows still fit inside
-one 50,000-row row-group. Belgium, the case the audit named, still draws nothing in most runs.
+one 50,000-row row-group. Belgium, the case the audit named, still draws no rows in most runs.
 
 It is also not free. `tests/mailwoman_train/data/test_loader_split_parity.py` pins the exact row
 sequence a seeded run produces, and the change moved it — 124 encoded examples against a committed 127. That test exists so a change that reshuffles what every run trains on is a deliberate act. A
@@ -88,7 +88,7 @@ every row of a source once, the epoch ends when every source has finished one, a
 is seen exactly once. Under a stride, a pass emits a fraction of the rows and the epoch shortens by
 the same fraction.
 
-The first is the only one that costs nothing at read time, and it is the only one that needs
+The first is the only one that incurs no read-time cost, and it is the only one that needs
 something this repository cannot do by itself.
 
 ## What the sampler does today

@@ -157,8 +157,8 @@ export interface GeocoderRuntimeOptions {
 /**
  * Give a superseded bundle's native memory back.
  *
- * Module scope rather than a `useCallback`: it closes over nothing, so a stable
- * identity costs nothing and it cannot churn the hook's effect.
+ * Module scope rather than a `useCallback`: it closes over no state, so a stable
+ * identity is free and it cannot churn the hook's effect.
  */
 function disposeAssets(assets: ReleaseAssets): Promise<void> {
 	return assets.release()

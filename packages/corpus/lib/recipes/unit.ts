@@ -155,7 +155,7 @@ const VENUES: readonly string[] = [
  * Share of tails that write a comma before the postcode — `Athens, GA, 30601`.
  *
  * This is the counter-reading of the bare unit below, and it is here
- * because nothing else in the corpus carries it.
+ * because no other corpus entry carries it.
  * Counted over one epoch of the shipped mixture, a bare number standing alone in a later
  * comma segment appears zero times at either level, so the position is unattested in both
  * directions: teaching `…, 101, …` as a unit without this would make the unit reading

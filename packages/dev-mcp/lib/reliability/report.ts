@@ -30,8 +30,9 @@ import { provenanceFor } from "#tool-kit"
 /**
  * The confidence surfaces this tool can grade.
  *
- * Each is a distinct head over distinct features — they share a reliability diagram and nothing
- * else — so adding one means adding a sample function rather than widening an existing one.
+ * Each is a distinct head over distinct features.
+ * They share a reliability diagram and no other feature, so adding one means adding
+ * a sample function rather than widening an existing one.
  */
 export const ReliabilitySurface = {
 	Decode: "decode",
@@ -96,7 +97,7 @@ export async function runReliability(registry: EngineRegistryLike, args: Record<
 
 	// Read at the lowest threshold that admits anything, so the classes describe
 	// an eval someone could actually set.
-	// A threshold admitting nothing has no admitted errors to rank, which reads as a clean confusion matrix.
+	// A threshold admitting no rows has no admitted errors to rank, which reads as a clean confusion matrix.
 	const thresholdForClasses = check.find((row) => row.admitted > 0)?.threshold ?? thresholds[0] ?? 0
 
 	const reading = describeObservedRate({

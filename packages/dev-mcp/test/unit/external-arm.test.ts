@@ -159,7 +159,7 @@ describe("ExternalGeocoderClient.probeIdentity", () => {
 
 describe("ExternalGeocoderClient pacing", () => {
 	it("spaces dispatches at the configured interval, which is the check that actually holds a rate", async () => {
-		// The test measures dispatch times, because a configured rate alone proves nothing about pacing.
+		// The test measures dispatch times, because a configured rate alone makes no statement about pacing.
 		const clock = createFakeClock()
 		const transport = stubTransport([{ body: PELIAS_HIT }], { clock })
 

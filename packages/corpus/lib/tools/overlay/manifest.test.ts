@@ -155,7 +155,7 @@ describe("baseManifestFiles", () => {
 	})
 
 	it("REFUSES a manifest that names no file list under either key", () => {
-		// Neither key holds an array, so the manifest says nothing about how many files there are.
+		// Neither key holds an array, so the manifest makes no statement about how many files there are.
 		// Answering an empty list for that reports a corpus of no files, which is the
 		// false absence `the-meaning-of-zero.mdx` refuses.
 		const neither = { corpus_version: "v0.0.0" } as Parameters<typeof baseManifestFiles>[0]

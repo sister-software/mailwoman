@@ -28,7 +28,7 @@ const HIT_PATTERN = /^(.*?):(\d+):(\d+):Mailwoman\.AmbiguousShorthand(?:Code)?:'
 /**
  * Matches a line that contains an interface-tied name, which keeps its spelling and needs only backticks.
  *
- * The pattern matches nothing because no interface-tied identifier currently contains a banned word.
+ * The pattern matches no line because no interface-tied identifier currently contains a banned word.
  * A new name added here needs its reason recorded in `AmbiguousShorthandCode.yml`.
  */
 const INTERFACE_TOKEN = /(?!)/

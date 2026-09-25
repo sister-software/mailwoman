@@ -16,7 +16,7 @@ import { createRuntimePipeline, loadDefaultPlaceCountry } from "#index"
  * The rig pieces the assembled pipeline shares with the bare neural arm.
  *
  * Sharing them is the whole point: an arm-to-arm delta that also swapped the classifier
- * or the gazetteer would measure nothing.
+ * or the gazetteer would measure no effect.
  */
 type SharedRig = Pick<Awaited<ReturnType<typeof buildParseRig>>, "neural" | "resolver">
 

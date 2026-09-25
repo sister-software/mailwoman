@@ -6,7 +6,7 @@
  *   Does an `fst-*.bin` still match the gazetteer it was built from?
  *
  *   why this exists. Every FST artifact is a projection of one WOF admin database, and the admin
- *   database is a sealed readonly artifact that a rebuild replaces. Nothing mechanically tied the two
+ *   database is a sealed readonly artifact that a rebuild replaces. No mechanism tied the two
  *   together: the 2026-08-04 admin swap (4.87M rows, ancestry repaired, macrohood/microhood ingested)
  *   left `fst-global-priority.bin` at its 2026-05-28 build and the per-locale set at 2026-07-26, and
  *   the only way to notice was to compare mtimes by hand. The artifacts kept loading, kept answering
@@ -275,7 +275,7 @@ export function fstStaleReason(fields: FSTStampFields | undefined, expected: FST
 }
 
 /**
- * The whole check, for a caller that has a path and a source DB and wants a warning string or nothing.
+ * The whole check, for a caller that has a path and a source DB and wants a warning string or no warning.
  *
  * @returns `undefined` when the artifact is current or when it is absent.
  * An absent artifact is a different problem with a different message,

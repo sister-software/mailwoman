@@ -81,7 +81,7 @@ locality               [14, 21)   "Madison" conf 0.793
 ```
 
 The word `madison` appears twice and carries a different tag each time. That is the case a flat record
-handles by luck: two keys happen to differ, so nothing collides. The next section is about the field that
+handles by luck: two keys happen to differ, so no key collides. The next section is about the field that
 makes it work by construction.
 
 ## 2. Read the spans
@@ -111,7 +111,7 @@ calibration fit that closes the gap between the two readings.
 
 What the second parse shows is what the number responds to. Dropping `wi 53703` costs the street two
 tokens of context, and every score in the tree falls: locality 0.934 to 0.793, street 0.920 to 0.778,
-and `street_suffix` 0.681 from 0.924. Nothing about the street changed. The evidence around it did.
+and `street_suffix` 0.681 from 0.924. The street's own text did not change. The evidence around it did.
 
 Read a low score as "this span had less to go on". If you plan to threshold on it, calibrate first, for
 the reason the first-parse page gives.
@@ -215,7 +215,7 @@ Names collide. Drop the state, and `Madison` has to be chosen rather than looked
 tree through the gazetteer and `--candidates` keeps the runners-up on each resolved node.
 
 This is the first step on the page that needs the gazetteer. Run `mailwoman doctor` and check that its
-`Admin gazetteer` line is green; if it is not, its `fix:` line is the download. Nothing to export —
+`Admin gazetteer` line is green; if it is not, its `fix:` line is the download. No export step is needed.
 `--resolve` finds `candidate.db` under your data root. Then:
 
 ```bash
@@ -272,7 +272,7 @@ and treat a same-name collision as something to disambiguate rather than somethi
 
 A reading of the full parse result: spans that locate every component in the input, a confidence you
 know how to interpret and how to threshold, the stage verdicts behind any surprising tag, and the ranked
-alternatives behind any resolved place name. Nothing here needed a second call — it was all in the object
+alternatives behind any resolved place name. No part of this needed a second call. It was all in the object
 the first parse already returned.
 
 ## Next

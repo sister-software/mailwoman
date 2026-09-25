@@ -39,7 +39,7 @@ Two deploys, and the difference is whether a gazetteer is on the instance.
 | Answers                       | components, confidence, a match key                                 | components plus a coordinate                                       |
 
 `node_modules` is the same size for both, which is the first surprise. `@mailwoman/resolver-wof-sqlite`
-adds nothing measurable because the weight is somewhere else entirely.
+adds no measurable size because the weight is somewhere else entirely.
 
 ## 2. Trim `onnxruntime-node`, or do not fit
 
@@ -167,7 +167,7 @@ only writable open is an explicit FTS index build, which is not a serve path.
 
 Set `$MAILWOMAN_DATA_ROOT` to the mount point. If the gazetteer sits at `wof/candidate.db` underneath
 it, that is the whole configuration. The candidate database is resolved from the convention path when
-nothing overrides it:
+no override is present:
 
 ```bash
 MAILWOMAN_DATA_ROOT=/mnt/mailwoman-data
@@ -183,14 +183,14 @@ MAILWOMAN_CANDIDATE_DB=/mnt/gazetteer/candidate-2026-07-07a.db
 Both are read on each call rather than cached at import, so setting them after the module graph loads
 still works. That is why the snippet in step 4 calls `resolveCandidateDBPath()` rather than reading
 either variable itself: the helper applies the full flag-then-variable-then-convention search, it is
-what the CLI and the drop-in servers use, and it returns nothing rather than a path when the file is
+what the CLI and the drop-in servers use, and it returns no path when the file is
 absent — so a cold instance with a broken mount fails at the resolver you can see instead of inside
 SQLite.
 
 Two mount details that bite. If `wof/candidate.db` is a symlink on the host, point
 `$MAILWOMAN_CANDIDATE_DB` at the real file — an absolute-path symlink dangles inside a container.
 Discovery uses `existsSync`, which follows the link. Therefore, a dangling one reads as absent: the convention
-path finds nothing, the instance silently falls back to the FTS backend, and with no WOF distribution
+path finds no file, the instance silently falls back to the FTS backend, and with no WOF distribution
 mounted your geocode route answers 503 instead of failing at boot. And the per-state databases are
 WAL-mode: their `-wal` and `-shm` siblings have to be in the same mount, or that address falls back to
 a coarser tier rather than failing.
@@ -237,7 +237,7 @@ The `onnxruntime` check is the one that catches a trim that went too far.
   serves one geocode at a time no matter how deep the request queue gets. Scale with instances.
   [Geocode a large file at volume](./batch-geocode-at-volume.mdx) measures this.
 - **There is no GPU path in Node.** WebGPU exists only in the browser runtime
-  (`@mailwoman/neural/web-onnx-runner`); removing the CUDA provider above costs nothing because nothing
+  (`@mailwoman/neural/web-onnx-runner`); removing the CUDA provider above has no cost because no code path
   loads it.
 - **Cold start is about 1.1 s and the model load is 70% of it.** If your platform charges for
   initialization time, budget for it rather than trying to shrink it.

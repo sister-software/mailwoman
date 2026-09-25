@@ -173,8 +173,8 @@ export function createSynthPoBoxAdapter(opts: SynthPoBoxAdapterOptions = {}): Co
 					if (options.limit !== undefined && emitted >= options.limit) break
 				}
 
-				// US military/diplomatic PO-box rows (#517): self-contained — draw nothing from
-				// the input tuple — emitted per input line with probability `militaryRatio`
+				// US military/diplomatic PO-box rows (#517): self-contained — draw no component
+				// from the input tuple — emitted per input line with probability `militaryRatio`
 				// (off by default, so the default random stream and output are byte-identical).
 				// Military volume scales with the stream rather than the US-tuple count.
 				// US-only: suppressed under a non-US country filter and counted against `limit` like any other row.

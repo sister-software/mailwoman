@@ -80,7 +80,7 @@ coverage data to sealed artifacts later would mean rebuilding all of them.
   Wikidata CC0, Foursquare labels Apache-2.0). We build these layers and publish them to R2/npm like the gazetteer.
 - `build-local`: ODbL and other share-alike sources, such as OSM POIs and the Overture _base_ theme.
   The base theme is explicitly ODbL, because Overture's license does not replace OSM's. We ship the **builder CLI**, the user
-  builds the layer on their own disk, and we distribute nothing under ODbL. The unpublished
+  builds the layer on their own disk, and we distribute no data under ODbL. The unpublished
   `osm/` workspace follows the same policy.
 - `private`: the user's own data (CRM, survey notes, parcel relationships). It conforms to the
   same schema interface, loads from `$MAILWOMAN_DATA_ROOT`, and never leaves the user's machine. This is

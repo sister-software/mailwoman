@@ -5,11 +5,11 @@
  *
  *   The per-key base directory, pinned.
  *
- *   Nothing in `release.config.json` marks which base an entry resolves against, and getting it wrong fails
+ *   No entry in `release.config.json` marks which base it resolves against, and getting it wrong fails
  *   silently — every sibling degrades `existsSync → undefined`, so a mis-based path reports the artifact
  *   absent rather than wrong. Both mistakes this file guards were made while writing it: resolving the
  *   lexicons against one base, and reading a `db` key from the pair-index entries that no entry has, which
- *   returned nothing for all eight countries.
+ *   returned no path for all eight countries.
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"

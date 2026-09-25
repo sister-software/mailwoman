@@ -19,7 +19,7 @@
  *
  *   Sample: a tractable, variation-rich subset — providers in one state (default TX) that have ≥1
  *   alternate name, so every entity has ≥2 records and the dedup is non-trivial. Streams the 4.8 GB
- *   registry via `streamRows` (#616), so nothing loads whole.
+ *   registry via `streamRows` (#616), so no table loads whole.
  *
  *   The stages live in `./nppes/`: the sample, the scorer, the truth grains, the setting progression,
  *   the adjudication packet, and the report. This file is the orchestration — read it for the order

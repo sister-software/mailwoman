@@ -25,8 +25,8 @@
  *     sits at its middle, so a postcode near the edge is routinely closer to a neighbouring town's centroid than to its
  *     own. Under 50% for four of the five, which is not a join.
  *
- *   The GeoNames export sidesteps both: columns 3 and 4 are the place and admin1 names, so there is nothing to join and
- *   nothing to approximate. `@mailwoman/corpus`'s `geonames-postal` adapter consumes it directly.
+ *   The GeoNames export sidesteps both: columns 3 and 4 are the place and admin1 names, so there is no key to join on and
+ *   no name to approximate. `@mailwoman/corpus`'s `geonames-postal` adapter consumes it directly.
  *
  *   ## Coverage is not universal, and the gap is the point
  *
@@ -45,7 +45,7 @@
  *   ## Why `downloadToFile` and not `APIClient`
  *
  *   Same split `agents.md` draws and the `ourairports` sibling explains: these are static file transfers from a plain
- *   file host, run once per refresh. The pacing, retry and caching `APIClient` exists for have nothing to act on here.
+ *   file host, run once per refresh. The pacing, retry and caching `APIClient` exists for have no request to act on here.
  *
  *   Invoke via `mailwoman corpus fetch geonames-postal --countries pt,au,nz`.
  */

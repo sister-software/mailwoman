@@ -29,7 +29,7 @@
  *   not the resolver configuration, so a resolver pin proposed for default-on had no way through the D-rule's
  *   standard instrument. It could only be argued from bespoke probes. Run the check unpinned and pinned and diff the
  *   verdicts. the layers stamp which configuration they graded, and the regression layer reports how many cases the
- *   pin actually fired on (an unchanged verdict from a mechanism that never ran proves nothing).
+ *   pin actually fired on (an unchanged verdict from a mechanism that never ran is no evidence).
  *
  *   The retired `scripts/eval/gauntlet/run.ts` ran each layer in its own child process. the layers are
  *   in-process modules now. A layer that throws is caught, printed, and counted as a failed layer, preserving the
@@ -176,7 +176,7 @@ export function runAblationOptions(options: GauntletRunOptions): AblationLayerOp
 }
 
 /**
- * The resolver-pin pins a run's options describe, or undefined when nothing
+ * The resolver-pin pins a run's options describe, or undefined when no option
  * is pinned (→ production defaults).
  *
  * Pure and exported: the "a pin reaches every layer" interface is a mapping,
@@ -200,7 +200,7 @@ export function runResolverPins(options: GauntletRunOptions): GauntletResolverPi
 	}
 
 	// Absent rather than empty: `undefined` is what `describeResolverPins` prints as
-	// "production defaults", and an empty object would read as "pinned to nothing".
+	// "production defaults", and an empty object would read as "pinned to no option".
 	return Object.keys(pins).length ? pins : undefined
 }
 

@@ -8,7 +8,7 @@
  *   Python package (openapi-python-client, the salvaged `mailwoman_client` layout from the retired
  *   `feat/api-clients` branch) and a Rust crate (progenitor `generate_api!`, the salvaged Cargo.toml
  *   / lib.rs pattern), then verify both actually build (`uv build` + a wheel import-check, `cargo
- *   check --examples`). Output lands under the gitignored `clients-build/` — nothing generated here
+ *   check --examples`). Output lands under the gitignored `clients-build/` — no generated file here
  *   is committed. This is the local, receipt-verified proof the conditional CI job replays on dispatch.
  *   See `docs/articles/api.mdx` "Client libraries" for install/usage snippets
  *   and the not-yet-published status.

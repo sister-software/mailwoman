@@ -53,7 +53,7 @@ export function detectLocale(shape: QueryShapeFormatsView, opts: DetectLocaleOpt
 	scored.sort((a, b) => b.confidence - a.confidence)
 
 	// Deduplicate by locale — if two scorers picked en-US, the higher-confidence wins.
-	// The other contributes nothing useful as an alternative.
+	// The other contributes no useful alternative.
 	const seen = new Set<string>()
 
 	const deduped = scored.filter((c) => {

@@ -69,7 +69,7 @@ export interface SubVenueDesignator {
 	/**
 	 * Whether the shipped span proposer already recognizes this designator.
 	 *
-	 * `false` means the lexicon proposes it and nothing consumes it yet.
+	 * `false` means the lexicon proposes it and no consumer reads it yet.
 	 */
 	shipped: boolean
 	/**
@@ -105,7 +105,7 @@ export interface SubVenueSurface {
 	 * and `toLowerCase` folds it to `i` plus a combining dot above.
 	 * A Turkish surface therefore round-trips through a form its own locale would not write.
 	 *
-	 * Nothing shipped depends on that today.
+	 * No shipped code depends on that today.
 	 * A Turkish designator would.
 	 */
 	phrase: string

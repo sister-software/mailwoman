@@ -61,7 +61,7 @@ export interface BuildSealedArtifactOptions<DB, Streamed, Result> {
  * Run one sealed-artifact build.
  *
  * Every failure path removes the temp file: a failed build otherwise leaves a partial multi-gigabyte
- * file whose name carries this process's pid, so nothing would ever pick it up again.
+ * file whose name carries this process's pid, so no later run would ever pick it up again.
  * The difference between a retry loop that fails and one that fills a disk.
  */
 export async function buildSealedArtifact<DB, Streamed, Result>(

@@ -95,7 +95,7 @@ type LazyComponentState<P extends object> =
 /**
  * Wraps a component whose module loads on first render.
  *
- * The wrapper renders nothing while loading.
+ * The wrapper renders no output while loading.
  * After an import failure, it shows the error and exits with code 1.
  */
 export function lazyComponent<P extends object>(load: () => Promise<React.FC<P>>): React.FC<P> {
@@ -220,7 +220,7 @@ export interface CommandTaskResultProps<T> {
 	state: CommandTaskState<T>
 	/**
 	 * Content shown while the task runs.
-	 * Nothing renders when it is omitted.
+	 * No content renders when it is omitted.
 	 */
 	running?: React.ReactNode
 	/**

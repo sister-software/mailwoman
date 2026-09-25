@@ -132,7 +132,7 @@ export function isSolidPolygonPath(input: PolygonLiteral<PolygonPath>): boolean 
  * position types (`[number, number, ...number[]]` from the resolver's GeoJSON reader,
  * plain `number[][]` from a `JSON.parse` of a stored geometry column).
  *
- * A tight tuple type here would force a cast at every call site and add nothing the predicate uses.
+ * A tight tuple type here would force a cast at every call site and add no information the predicate uses.
  */
 export type ContainmentRing = readonly (readonly number[])[]
 
@@ -227,7 +227,7 @@ export interface MultiPolygonLiteral<P extends PolygonPath = PolygonPath> extend
 /**
  * A geometry as it arrives from `JSON.parse`, or a typed literal.
  *
- * Nothing has checked the arity of a position and `type` is whatever the source wrote,
+ * No validation has checked the arity of a position and `type` is whatever the source wrote,
  * so a reader narrows on `type` and casts `coordinates` — {@linkcode arealPolygons}
  * is the one place that happens for the areal types.
  */
@@ -302,7 +302,7 @@ export function geometryContains(
  * pairs this with {@link reversedRing} to make a hole.
  *
  * A copy whose hole is wound the same way as its exterior produces a fixture that
- * passes every structural check and tests nothing about hole handling, which is the
+ * passes every structural check and tests no aspect of hole handling, which is the
  * exact failure the area cross-check exists to catch in production data.
  */
 export function rectangleRing(minLon: number, minLat: number, maxLon: number, maxLat: number): number[][] {

@@ -13,7 +13,7 @@ were fixed before it ran.
 
 1. **Negative evidence cannot fire yet** (falsifier 1). Of the 47 panel-v2 rows that the benchmark's
    mailwoman arm missed by >25 km, **35 fall where we hold no street set at all**, so exclusion has
-   nothing to check against. In 7 more, the queried street exists near the wrong answer. Exactly
+   no set to check against. In 7 more, the queried street exists near the wrong answer. Exactly
    one candidate set shrinks (`LOT 373 Clifton Street, Sandstone WA 6639`, where we hold 11 streets and
    none is Clifton). The design doc's kill condition, "the coverage register is not complete enough for
    this to bite yet", is met on its own terms.
@@ -25,7 +25,7 @@ were fixed before it ran.
 3. **The largest benchmark deficit is a coverage gap that looks like a mechanism defect** (#1585). The
    en-nz lane scores 3/60 @1km, while a local nz-only OSM import answers 58/60. The missing admin layer
    is ~7,630 place nodes, including 963 suburbs such as `Stanmore Bay`. The resolver's fuzzy
-   typo-corrector then crosses country scope because nothing tells it "NZ is unsurveyed
+   typo-corrector then crosses country scope because no coverage assertion tells it "NZ is unsurveyed
    here, abstain". The wrong answer (`Stanmore Bay` → "Banmore", IN) is what a missing coverage
    assertion produces at runtime.
 

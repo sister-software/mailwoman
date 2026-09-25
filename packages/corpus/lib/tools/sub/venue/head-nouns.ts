@@ -8,7 +8,7 @@
  *
  *   Wikidata's label for a concept is the encyclopaedic name (`terminal aeroportuaria`, `letištní
  *   terminál`, `havalimanı terminali`), while the addressed form is the bare head (`Terminal`,
- *   `Terminál`, `Terminali`). Nothing can promote the encyclopaedic form, so the head has to be
+ *   `Terminál`, `Terminali`). No rule can promote the encyclopaedic form, so the head has to be
  *   extracted before the curation pass has anything to decide about. That gap is why the first wave of
  *   this table shipped 1,014 uncurated surfaces.
  *
@@ -59,7 +59,7 @@ const NON_LATIN_HEAD_MIN_LENGTH = 2
  *
  * Six — enough to carry `ターミナル`, `ターミナルビル` and `旅客ターミナル` together, capped because the
  * substring lattice of a nine-character label is large and, ranked by attesting-surface
- * count, nothing past the sixth has more than the minimum two.
+ * count: no entry past the sixth has more than the minimum two.
  */
 const NON_LATIN_HEAD_CANDIDATE_CAP = 6
 
@@ -79,7 +79,7 @@ const LATIN_PHRASE = /^[\p{Script=Latin}\d\s\p{P}]+$/u
  * and the only substrings shared inside a group are pieces of one word.
  *
  * Every one of them was unusable, and none could ever be counted: `poi.db` is four countries and this
- * wave's extracts are GB, DE, FR, ES and JP, so nothing in reach attests a Thai or Burmese surface.
+ * wave's extracts are GB, DE, FR, ES and JP, so no extract in reach attests a Thai or Burmese surface.
  * Deriving a candidate no available source can confirm is not a hypothesis, it is table weight.
  */
 const SHARED_SUBSTRING_SCRIPT = /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}]/u
@@ -92,21 +92,21 @@ const SHARED_SUBSTRING_SCRIPT = /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Kat
  * surfaces: Wikidata's label for a concept is the encyclopaedic name
  * (`terminal aeroportuaria`, `letištní terminál`, `havalimanı terminali`), while the
  * addressed form is the bare head (`Terminal`, `Terminál`, `Terminali`).
- * Nothing can promote the encyclopaedic form, so the head has to be extracted
+ * No rule can promote the encyclopaedic form, so the head has to be extracted
  * before the curation pass has anything to decide about.
  *
  * Two derivations, because the table holds two kinds of writing:
  *
  * - **Latin script — the cognate test.** A token is the head when its ascii fold shares
  *   {@link HEAD_NOUN_PREFIX_FLOOR} leading characters with the designator's own canonical id.
- *   Nothing subtler survived contact with the data: an earlier version matched a token
+ *   Contact with the data rejected every subtler rule: an earlier version matched a token
  *   against any single-token surface of the record, and because Dutch `universiteit`
  *   is a one-token surface of `campus`, it derived `universitario`, `universitaire`,
  *   `üniversite` and twenty more as head nouns of `campus`.
  *   Those are the modifier half of the label, and admitting them would have taught
  *   the harvest to read "Ciudad Universitaria" as sub-venue structure.
  * - **Non-Latin script — the shared-substring test.** The cognate test cannot reach a script
- *   the id is not written in, and for Han and Kana a token split finds nothing at all.
+ *   the id is not written in, and for Han and Kana a token split finds no split at all.
  *   So every substring of length ≥ {@link NON_LATIN_HEAD_MIN_LENGTH} occurring in
  *   at least two distinct surfaces of the same record and primary language becomes
  *   a candidate, ranked by how many surfaces carry it.

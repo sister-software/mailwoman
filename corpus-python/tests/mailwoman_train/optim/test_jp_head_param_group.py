@@ -11,7 +11,7 @@ inert. So these tests read ``configs/v8-jp-full.yaml`` off disk and assert on wh
 They also pin the GRANULARITY, because the plan's phrasing ("the cold new label rows") invites a
 wrong assumption. ``classifier`` is one ``nn.Linear(384, 47)``. A PyTorch param group owns whole
 tensors, so the 14 fresh JP rows (ids 33..46) cannot be given a different LR from the 33 stage3 rows
-— they share a tensor. The carve-out is the whole head or nothing, and a gradient hook is not a
+— they share a tensor. The carve-out is all of the head or none of it, and a gradient hook is not a
 substitute (Adam's update is scale-invariant in the gradient). ``test_the_fourteen_fresh_rows_share_
 one_tensor_with_the_other_thirty_three`` states that in code so the next reader does not go looking
 for a row-level setting that does not exist.

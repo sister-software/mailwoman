@@ -265,7 +265,7 @@ function foldToComponents(flat: Partial<Record<ComponentTag, string>>, foldStree
  * subdir (`…/v0.1.3/dev`) while the manifest sits at the version root.
  *
  * A version with no such block — every golden through v0.1.2 — reads as all-folded,
- * so this is a no-op on the old answer keys and nothing about replaying an old out-dir changes.
+ * so this is a no-op on the old answer keys and no aspect of replaying an old out-dir changes.
  */
 async function readStreetConvention(goldenDir: string): Promise<Record<string, string>> {
 	for (const candidate of [resolvePath(goldenDir, "MANIFEST.json"), resolvePath(goldenDir, "..", "MANIFEST.json")]) {

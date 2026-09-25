@@ -163,7 +163,7 @@ function dp(ring: LinearRing, tol: number): LinearRing | null {
  * Simplify a Polygon / MultiPolygon geometry.
  * Drop rings that collapse.
  *
- * @returns Null if nothing left.
+ * @returns Null if no entry is left.
  */
 function simplify(geom: RawGeometry, tol: number): RawGeometry | null {
 	const ringSet = (poly: LinearRing[]): LinearRing[] =>

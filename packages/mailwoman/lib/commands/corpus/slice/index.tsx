@@ -175,7 +175,7 @@ const CorpusRecipeRun: CommandComponent<typeof spec> = ({ options, args }) => {
 
 		// The invocation, beside its output.
 		//
-		// A recipe output's row count records what a recipe emitted and nothing about what it was asked for.
+		// A recipe output's row count records what a recipe emitted and no fact about what it was asked for.
 		// The seed, `--count` and every fraction lived only in the shell that ran it,
 		// so a corpus could not say how a country's share of it was decided.
 		//

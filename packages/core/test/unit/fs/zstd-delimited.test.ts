@@ -105,7 +105,7 @@ describe("zstd round-trip", () => {
 describe("the count-then-read shape", () => {
 	// `readUnquotedTSVChecked` counts a file and then reads it, passing the same path twice.
 	// With a path each pass opens independently.
-	// With one hoisted stream the second pass sees an exhausted iterator and reads nothing,
+	// With one hoisted stream the second pass sees an exhausted iterator and reads no bytes,
 	// which that function reports as swallowed rows.
 	it("survives two sequential passes when the source is built per call", async () => {
 		const count = async (path: string) => {

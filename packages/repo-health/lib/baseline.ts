@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   The one mutation this package performs, and it is not a check: rewriting `baseline.json` after a reviewed
- *   reduction. The registry never lists it; `mwops health baseline debt` calls it by name, and nothing else does.
+ *   reduction. The registry never lists it; `mwops health baseline debt` calls it by name, and no other caller does.
  */
 
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"

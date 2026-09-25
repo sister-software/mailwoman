@@ -1,6 +1,6 @@
 # Zoning and land use as a spatial layer — a per-jurisdiction acquisition survey
 
-This is the design record for #1986. It is a survey, and it builds nothing. The issue asked for a map of a
+This is the design record for #1986. It is a survey, and it builds no artifact. The issue asked for a map of a
 patchwork rather than a forced pilot, and it allowed a negative outcome. **This record delivers a split
 verdict**, in the shape the erosion survey established:
 
@@ -20,7 +20,7 @@ verdict**, in the shape the erosion survey established:
   enumerated public zoning services, **85.0 % carry an empty license field** (§2.6), and the
   false-negative direction was tested.
 
-The consuming implementation already exists, so nothing below proposes new architecture:
+The consuming implementation already exists, so the sections below propose no new architecture:
 
 - [`../../engineering/reference/layer-interface.mdx`](../../engineering/reference/layer-interface.mdx)
   specifies the layer interface (`layer_manifest` / `layer_coverage` on the H3 spine).
@@ -36,7 +36,7 @@ The consuming implementation already exists, so nothing below proposes new archi
 
 **Every external claim below carries its URL and the date it was read.** Measurements taken from this lab
 are labeled as measurements and give the command's answer rather than a summary of it. A fact that could
-not be established from a primary source is listed in §10 as unverified, with what was tried. Nothing in
+not be established from a primary source is listed in §10 as unverified, with what was tried. No entry in
 §10 was filled in with a plausible reading.
 
 ## 1. What this record settles, and what it deliberately does not
@@ -64,7 +64,7 @@ The following are not settled here. They are listed so nobody reads the omission
 
 The issue put three things out of scope, and they stay out: the builder, any promise of national US
 coverage, and **any zoning judgment authored by this project**. The layer records what an authority states, in the authority's
-vocabulary, with the authority's dates. It classifies nothing.
+vocabulary, with the authority's dates. It classifies no land.
 
 ## 2. Source inventory
 
@@ -387,7 +387,7 @@ its adopted subdivision regulations extract to 311,117 characters with **zero oc
 
 1. **Almost nobody grants reuse.** Across 21 jurisdictions, **exactly one open license identifier
    appears** — Seattle's PDDL. Three affirmatively forbid redistribution or commercial use. The rest are
-   liability disclaimers that say nothing about copying, which leaves reuse governed by default copyright.
+   liability disclaimers that make no statement about copying, which leaves reuse governed by default copyright.
 2. **City and county terms contradict each other inside one metropolitan area.** Phoenix grants
    redistribution while Maricopa County forbids commercial use; Seattle dedicates to the public domain
    while King County requires written authorisation. There is no metro-level answer.
@@ -398,7 +398,7 @@ its adopted subdivision regulations extract to 311,117 characters with **zero oc
    The zoning code appears as `ZONE`, `ZONING`, `ZONE_CLASS`, `ZoneID`, `CURRZONE`, `ZoneDes`, `zone_des`,
    `Zone1`, `Zone_Code`, `Code`, `ZONING_CODE`, `Zone_Type`, `orZCode`, `GENZONE`, `ludcode` and
    `source_zone`. **Chicago, Maricopa, King County, Fargo, Bannock, Screven and Sumter ship codes with
-   nothing to expand them** — §4.2's verbatim-code rule is the only thing that can be honoured there.
+   no table to expand them** — §4.2's verbatim-code rule is the only thing that can be honoured there.
 5. **Prose vintage disagrees with data vintage, and the prose is the stale half.** Los Angeles County's
    description says "last updated through 12/16/14" while its own `Date_Updated` column measures
    2024-11-08 to 2026-08-12. Oregon's description claims 229 jurisdictions against 245 measured.
@@ -408,7 +408,7 @@ its adopted subdivision regulations extract to 311,117 characters with **zero oc
 the Census API returns **200 `text/html`** titled "Missing Key"; Minnesota's CKAN API returns 200 with a
 94,488-byte application shell; and Mecklenburg County's own published item URL is **misspelled**
 (`Unicorporated…`), returning a 404 error body inside an HTTP 200. **A harvester checking status codes
-alone records healthy endpoints and ingests nothing.** Layer index `0` is not safe either — Los Angeles
+alone records healthy endpoints and ingests no data.** Layer index `0` is not safe either — Los Angeles
 City's zoning is at `/15`, Vermont's at `/8`, Rhode Island's at `/1` with overlays at `/0`, Hawaii's five
 at 20, 2, 29, 33 and 3 — and a wrong index returns `{"error":{"code":400,"message":"Invalid URL"}}`, which
 reads as a broken service.
@@ -484,7 +484,7 @@ anonymously**; the median reachable layer holds 150 features. And the license fi
 **That 85 % is a real absence rather than a measurement artifact, and the failure direction was tested
 specifically**: re-checking 25 search-reported-empty items against the item endpoint confirmed **25 of 25
 empty, zero false negatives**. So the largest single obstacle to a US zoning layer is measurable, and it
-is not discovery and not format — **it is that five publishers in six say nothing at all about reuse**,
+is not discovery and not format — **it is that five publishers in six make no statement at all about reuse**,
 which leaves reuse governed by default copyright.
 
 **The conclusion this forces is §7.2's.** A jurisdiction-coverage map of the United States cannot be
@@ -551,7 +551,7 @@ HTTP 200, 6,355 bytes): the State is **5,149,139** and Donegal is **167,084**. S
 > this layer.** Denominator: the Republic of Ireland's Census 2022 usual-residence population, CSO table
 > `FY003A`.
 
-**That number is a jurisdiction statement and nothing more, and §3.3 keeps it apart from the other one.**
+**That number is a jurisdiction statement and no more, and §3.3 keeps it apart from the other one.**
 Living in a covered authority is not the same as having a zoning polygon at your address.
 
 **Per-authority, measured** (`ZONE_ORIG` distinct counts and feature counts):
@@ -636,7 +636,7 @@ rings as exteriors answers **"inside `P5` rural zoning"** for locations the plan
 **(c) The published definition of the crosswalk vocabulary is unreachable.** Every one of the 85,330 rows
 carries a `GZT_LINK` under `https://viewer.myplan.ie/` — 36,438 at `gztcoderef.htm#Residential`, 26,344 at
 `#Conservation`, 7,810 at `#Mixed`, and so on. **`viewer.myplan.ie` has no A or AAAA record** (`getent
-hosts` returns nothing; `curl` exits 6). Three candidate replacements on the live host —
+hosts` returns no record and `curl` exits 6). Three candidate replacements on the live host —
 `www.myplan.ie/gztcoderef.htm`, `www.myplan.ie/zoning-map-viewer/gztcoderef.htm`, `myplan.ie/gztcoderef.htm`
 — all return **HTTP 404**. The vocabulary's 54 code-to-name pairs survive in the service's own coded-value
 domain, which is the second path; the **definitions** behind them were not retrieved (§10).
@@ -1060,7 +1060,7 @@ For flood zones, England-wide coverage is stated and Zone 1 is _defined as the a
 defines absence that way for zoning.** A location with no zoning polygon falls into one of at least four
 entirely different cases, and no published product distinguishes them:
 
-1. **Outside any adopted plan area** — most land in most countries. The authority has said nothing.
+1. **Outside any adopted plan area** — most land in most countries. The authority has made no statement.
 2. **Inside a plan area but on land the plan does not zone.** This is a kind of designation, but the
    layer cannot read it.
 3. **In a jurisdiction that has never adopted zoning at all.** This category occurs in practice:
@@ -1222,7 +1222,7 @@ no reader may reach a zoning conclusion by mixing the two.
 `Authoritative` or `Inferred`. Its schema keeps the grade in a separate column from what the assertion
 _means_, and a `CHECK` constraint enforces the direction. The reason, verbatim from
 `packages/filer/lib/schema.ts`: "a score may appear only on an inferred row, since an authoritative
-membership matched nothing and any number there would be a fabricated confidence." The same three
+membership matched no candidate and any number there would be a fabricated confidence." The same three
 mechanics carry over. The grade is a column rather than a convention. A blank grade is rejected, because
 `NOT NULL` alone would accept `''` and a blank matches neither half of every read that splits on
 strength. The two grades never merge in a rollup.
@@ -1431,7 +1431,7 @@ polygons, indexed with `polygonToCells` plus a vertex fallback for sub-cell poly
 | **11**     | 102,761 |                           1.01 / 1 / 6 |                   0.5 % |                     1,005 (18.3 %) |
 
 **The right-hand column is the finding, and it is a defect waiting to happen.** At res 9, `polygonToCells`
-returns **nothing at all** for 86.8 % of the polygons, because no cell center falls inside them. **A
+returns **no cell at all** for 86.8 % of the polygons, because no cell center falls inside them. **A
 builder that indexed only the polyfill output would silently drop five of every six zoning polygons**, and
 every dropped polygon would read downstream as "no zoning here" — a well-formed wrong answer at exactly
 the question this layer exists to answer.
@@ -1442,7 +1442,7 @@ size:
 1. **Index cell-touches-polygon, never cell-center-in-polygon.** The index is the polyfill **union** every
    cell the ring passes through, and a builder must assert that **no feature ends with zero cells**.
 2. **Pick the resolution from candidates-per-cell and the zero-cell count** rather than from the `partial` share.
-3. **Expect `compactCells` to yield almost nothing.** There are no uniform interiors to collapse.
+3. **Expect `compactCells` to yield almost no cells.** There are no uniform interiors to collapse.
 
 The measurement above is a lower bound on cells and candidates, because the fallback added one cell per
 sub-cell polygon rather than every cell its ring touches; a real builder's numbers will be higher. The
@@ -1529,7 +1529,7 @@ acquisition — one publisher, one redistribution grant, one schema — covers a
 named denominator, and the publisher states its own coverage.** The unit is one acquisition, because that
 is the unit each of the three sibling surveys picked and the unit a builder issue carries; and the test is
 a _grant_ rather than availability, because §2.3 found four separate sources that download without
-friction and license nothing.
+friction and grant no license.
 
 **Ireland meets it.** One publisher, 30 of 31 authorities, 96.76 % of the State's population against the
 Census 2022 denominator, one schema, one download — with the grant itself still open, which is why §7.1
@@ -1606,7 +1606,7 @@ named plan it belongs to and that plan's stated validity window, the publishing 
 only where the authority itself publishes one, its generic classification carried as a separate labeled
 value that never replaces the local code. Where the authority publishes no determination, the caller
 receives that fact and receives no permissive one: the coverage basis licenses presence only, so an absent
-polygon is reported as "this product says nothing here" and never as "no restriction applies", because the
+polygon is reported as "this product makes no statement here" and never as "no restriction applies", because the
 source does not distinguish land outside a plan from land inside a plan that the plan does not zone. Where
 an observed land-use layer is also attached, its answer is reported as a separate, separately attributed
 statement carrying the `inferred` grade, and the two are never combined into one claim — a measurement in
@@ -1674,7 +1674,7 @@ share-alike license, and §5 is the reason.
 
 ## 10. What could not be verified
 
-Recorded as gaps rather than filled in. Nothing below was completed with a plausible reading.
+Recorded as gaps rather than filled in. No gap below was completed with a plausible reading.
 
 **The pilot's open questions.**
 
@@ -1782,13 +1782,13 @@ path:
 6. **Reading GeoJSON rings as all-exterior over-reports area by 4.1 % and inverts point-in-polygon inside
    1,210 features.** The signed sum matches the publisher's own figure to the tenth of a square kilometer;
    the absolute sum does not.
-7. **`polygonToCells` returns nothing for 86.8 % of zoning polygons at res 9.** A polyfill-only index
+7. **`polygonToCells` returns no cell for 86.8 % of zoning polygons at res 9.** A polyfill-only index
    would drop them silently, and every dropped polygon reads downstream as an absence of zoning.
 8. **HTTP 200 repeatedly meant failure.** Screven County's layers return 200 carrying
    `{"error":{"code":500}}`; Dawes County's returns 200 carrying "Service may be stopped"; the Census API
    returns 200 `text/html` titled "Missing Key"; Minnesota's CKAN API returns 200 with an application
    shell; and one county's own published item URL is misspelled, returning a 404 body inside a 200. **A
-   harvester checking status codes alone records healthy endpoints and ingests nothing.**
+   harvester checking status codes alone records healthy endpoints and ingests no data.**
 9. **A statewide layer can score 100 % on jurisdictions and hold no zoning at all.** New Jersey's
    "Municipal Zoning" has one row per municipality and the rows are hyperlinks to PDFs.
 10. **An owner name is not an organisation identifier.** Searching the catalogue for `owner:COHGIS`

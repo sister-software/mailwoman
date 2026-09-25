@@ -123,7 +123,7 @@ export interface GeocodeSessionOptions {
 	trace?: boolean
 
 	/**
-	 * Whether a lookup that resolves nothing re-probes the value in the other admin bands.
+	 * Whether a lookup that resolves no candidate re-probes the value in the other admin bands.
 	 *
 	 * The probe leaves the result unchanged and costs one backend call per band per miss.
 	 * It requires {@link trace}.

@@ -5,7 +5,7 @@
  *
  *   The two-arm premise-linkage runner (#1902). Every controlled row goes through the same production
  *   `geocodeAddress` twice: once with the deps the shipped product uses, and once with those deps plus
- *   a configured authoritative provider (#1901). Nothing else differs between the arms, which is what
+ *   a configured authoritative provider (#1901). No other input differs between the arms, which is what
  *   makes the arm-to-arm delta attributable to the provider rather than to the harness.
  *
  *   the open ARM refuses on identity, BY construction. It has no authoritative namespace to answer in,
@@ -393,7 +393,7 @@ export interface PremiseLinkageRunConfig {
 	/**
 	 * The deps the open arm runs on — the production pipeline and artifacts.
 	 *
-	 * The authoritative arm receives these plus the provider and nothing else.
+	 * The authoritative arm receives these plus the provider and no more.
 	 */
 	deps: GeocodeDeps
 	authoritativeProvider: AuthoritativeProvider
@@ -458,7 +458,7 @@ export async function runPremiseLinkage(options: PremiseLinkageRunOptions): Prom
 		policy: options.policy,
 		minCellSize: options.minCellSize,
 		// Set by the report writer, which is what removes cells.
-		// Zero here states "nothing has been removed yet".
+		// Zero here states "no cell has been removed yet".
 		suppressedCells: 0,
 		arms: [
 			aggregateArm(OPEN_ARM_NAME, openRows, options.policy, thresholds),

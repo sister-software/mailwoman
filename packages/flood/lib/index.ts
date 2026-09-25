@@ -11,7 +11,7 @@
  *   2. `designated_absence` — the authority determined here and assigns no zone. Inside England that is
  *      Zone 1 by the Planning Practice Guidance's own definition ("all land outside Zones 2, 3a and 3b"),
  *      which is why an empty answer inside the footprint is a designation rather than a gap.
- *   3. `unknown` — no coverage row for this location. The EA's statement covers England and says nothing
+ *   3. `unknown` — no coverage row for this location. The EA's statement covers England and makes no statement
  *      about Wales, Scotland or Northern Ireland, each of which has a different authority and a different
  *      zone scheme. the England border strip is unknown too, because the footprint's interior test drops
  *      any cell not wholly inside the outline.
@@ -248,7 +248,7 @@ export class FloodZoneLookup implements Disposable {
 		const coverage = this.#readCoverage(indexCell)
 		const zone = this.#resolveZone(indexCell, latitude, longitude)
 
-		// coverage qualifies the absence and nothing else — the same asymmetry `supportsExclusion` carries.
+		// coverage qualifies the absence and no more — the same asymmetry `supportsExclusion` carries.
 		// A polygon containing the point is the authority's determination at that location,
 		// and needs no coverage row to be true.
 		// An empty answer needs one, because without it the emptiness is a statement

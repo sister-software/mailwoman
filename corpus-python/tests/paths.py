@@ -3,9 +3,9 @@
 `Path(__file__).resolve().parents[2]` encodes the DEPTH of the file it is written in. Mirroring the
 test tree onto the source tree moved eight tests one level down and every one of them silently
 repointed — `corpus-python/tests/src/mailwoman_train/configs/...` instead of
-`corpus-python/src/...`. Nothing in the path says which level was meant, so each failed as a missing
+`corpus-python/src/...`. No part of the path says which level was meant, so each failed as a missing
 config file rather than as a wrong root, and a test that reads a directory rather than a file would
-have failed at nothing at all.
+have passed without failing at all.
 
 Each root below walks up until it finds the marker that defines it, so a test may sit at any depth.
 Import these instead of counting. the count is the defect.

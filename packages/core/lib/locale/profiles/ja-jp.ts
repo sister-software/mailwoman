@@ -9,7 +9,7 @@
  *   cleanly, Japan support needs no core refactor.
  *
  *   No rule classifiers are listed because the JP profile is neural-only. The rule pipeline produces
- *   no Japanese-specific tags. The empty list is itself the assertion that nothing in the system
+ *   no Japanese-specific tags. The empty list is itself the assertion that no part of the system
  *   assumes every locale has rule classifiers.
  */
 

@@ -276,7 +276,7 @@ export function describeResolverPins(pins: GauntletResolverPins | undefined): st
 	)
 
 	// Printed only when pinned away from the production default (now on).
-	// An unset pin prints nothing, which is what keeps "no flag" reading as "grade whatever production does".
+	// An unset pin prints no line, which is what keeps "no flag" reading as "grade whatever production does".
 	if (pins?.gazetteerPrior !== undefined) {
 		entries.push(`gazetteerPrior=${pins.gazetteerPrior ? "ON" : "OFF"}`)
 	}
@@ -337,7 +337,7 @@ export interface GauntletGeocodeOpts {
  *
  * The md5 it receives is of the model `resolveWeights` returned rather than of a path
  * spelled out here: the guard must check the artifact the run will actually grade,
- * or it checks nothing the run depends on.
+ * or it checks no artifact the run depends on.
  */
 async function assertShippedModelMatchesCard(materializedMd5: string): Promise<void> {
 	const cardPath = resolvePath("packages/neural-weights-en-us/model-card.json")
@@ -382,7 +382,7 @@ async function assertShippedModelMatchesCard(materializedMd5: string): Promise<v
  * The anchor channel resolves to off, the run scores 3-4 baseline cases lower,
  * and the operator reads a model regression.
  *
- * The classifier's own warning cannot cover this: at load time nothing knows
+ * The classifier's own warning cannot cover this: at load time no component can know
  * whether this run needs GB anchors.
  *
  * Expectations come from each package'S own card (`files.postcode_anchor`), never from a list kept here.
@@ -690,7 +690,7 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 		if (!fstPath) {
 			// Loud, once per locale.
 			// A prior-on run against an overlay with no FST grades the base model for those rows,
-			// and silently: the pin prints `on` in the pins line while doing nothing (#1705).
+			// and silently: the pin prints `on` in the pins line while having no effect (#1705).
 			if (!warnedMissingPriorFST.has(label)) {
 				warnedMissingPriorFST.add(label)
 
@@ -848,7 +848,7 @@ export interface GauntletResult {
 	 */
 	unit: string | null
 	/**
-	 * The country #42's coherence pass scoped this row to, or null when nothing was overridden.
+	 * The country #42's coherence pass scoped this row to, or null when the pass overrode no country.
 	 *
 	 * Not asserted by any case.
 	 * It is the firing count, so a pinned run can say how many rows the mechanism actually spoke on
@@ -877,7 +877,7 @@ export interface GauntletResult {
 	 * what the ablation layer's graceful-degradation ladder is synthesized from
 	 * (the undeleted case's resolved place → its WOF ancestry).
 	 * Only entries the resolver actually decorated appear here, so an empty array means
-	 * the run resolved nothing admin-grade — absence rather than a flat world.
+	 * the run resolved no admin-grade entry — absence rather than a flat world.
 	 */
 	hierarchy: Array<{ tag: string; name: string; placeID?: string; lat?: number; lon?: number }>
 	/**

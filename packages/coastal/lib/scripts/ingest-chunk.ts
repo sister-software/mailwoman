@@ -39,7 +39,7 @@ await runIngestChunkScript({
 				...(values["object-id-from"] === undefined ? {} : { objectIDFrom: Number(values["object-id-from"]) }),
 				...(values["object-id-to"] === undefined ? {} : { objectIDTo: Number(values["object-id-to"]) }),
 				// A range's own count is not knowable up front — `ogrinfo` reports a layer's total
-				// and nothing narrower — so the chunk asserts nothing about its size
+				// and no narrower count — so the chunk makes no claim about its size
 				// and the parent checks the sum against the whole file.
 				declaredFeatureCount: 0,
 			}),

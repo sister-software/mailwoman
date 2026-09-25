@@ -50,7 +50,7 @@ Mailwoman is a **calibrated, retrieval-augmented sequence labeler over a
 microlanguage** — coupled to a gazetteer that resolves its output to
 coordinates. This bundle is the sequence-labeler half: a small transformer
 encoder doing BIO token classification over the address schema. It is not an LLM
-and nothing about it is generative; for a closed label set over short strings,
+and none of it is generative; for a closed label set over short strings,
 boring NER is a feature.
 
 The design splits the problem in two: **the model learns the grammar, the

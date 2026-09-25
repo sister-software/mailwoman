@@ -78,7 +78,7 @@ const NL_PC6 = /^\d{4}\s?[A-Z]{2}$/i
  * Every country a parsed postcode's format is consistent with — the singles table,
  * the NL PC6 shape, and the shared `NNN NN` family.
  *
- * Empty when the shape implies nothing (a bare 5-digit reads US/FR/DE and more. That
+ * Empty when the shape implies no country (a bare 5-digit reads US/FR/DE and more. That
  * family stays with the locale prior on purpose — the `75008` interface).
  *
  * Unlike {@link countryFromPostcodeFormat}, this is not an unforgeable-in-any-context claim:

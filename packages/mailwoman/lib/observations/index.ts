@@ -6,7 +6,7 @@
  *   `mailwoman/observations` — the opt-in observation surface: five routes that state on whose authority
  *   an answer was reached, and the one carrier that takes what they record to a caller.
  *
- *   nothing here is on BY default, and presence is the switch. A caller constructs a route and hands it in;
+ *   no route here is on BY default, and presence is the switch. A caller constructs a route and hands it in;
  *   `createRuntimePipeline` with no `poiSemanticLookup` is the pipeline that shipped, the absence route
  *   reads a finished answer without being wired into a pipeline at all, and the authority-designation route
  *   reads a finished coordinate the same way. There is no boolean, because a boolean would make the caller

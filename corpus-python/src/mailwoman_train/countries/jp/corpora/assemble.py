@@ -76,7 +76,7 @@ class Selection:
 
 
 def survey_source(parquet: Path, args: argparse.Namespace) -> SourceSurvey:
-    """Count eligible rows per prefecture and water-fill the per-prefecture cap. Draws nothing."""
+    """Count eligible rows per prefecture and water-fill the per-prefecture cap. Draws no rows."""
     pool_counts: Counter[str] = Counter()
     dropped: Counter[str] = Counter()
     board_count = 0

@@ -12,7 +12,7 @@
  *   runner must mirror `@mailwoman/neural`'s node `ONNXRunner`:
  *
  *   - Caller-provided anchor/gazetteer features are fed through.
- *   - When the graph declares the inputs but the caller provides nothing, zero-fill them (the
+ *   - When the graph declares the inputs but the caller provides no values, zero-fill them (the
  *       confidence=0 identity) instead of letting ORT throw `input 'gazetteer_features' is missing
  *       in 'feeds'`. Zero-fill is a structural fallback only — the loader warns loudly about the
  *       quality trap — but the session must not crash.

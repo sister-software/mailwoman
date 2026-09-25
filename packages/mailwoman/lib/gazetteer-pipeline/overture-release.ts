@@ -143,7 +143,7 @@ export async function checkOvertureRelease(release: string, client?: OvertureLis
 	}
 
 	// An empty listing is not an empty bucket.
-	// Overture has never held zero releases, so nothing-found means the query was wrong
+	// Overture has never held zero releases, so an empty result means the query was wrong
 	// or the response was not the listing, and the first version of this file proved the
 	// point by dropping its own query parameters and then reporting a live pin as pruned.
 	// Zero is treated as no answer, never as absence.

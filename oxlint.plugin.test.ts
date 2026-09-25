@@ -284,7 +284,7 @@ test("prefer-home names shuffleWith for a re-typed Fisher-Yates, destructured or
 })
 
 test("prefer-home stays silent on loops that are not a shuffle", () => {
-	// A backwards scan that swaps nothing.
+	// A backwards scan that swaps no element.
 	const scan: TestNode = {
 		type: "BlockStatement",
 		range: [0, 0],
@@ -297,7 +297,7 @@ test("prefer-home stays silent on loops that are not a shuffle", () => {
 	// Runs to 0 rather than 1 — a full reverse walk rather than a shuffle's arithmetic.
 	expect(reportsFor("prefer-home", forLoop({ until: -1, body: destructuredSwap("xs") }))).toEqual([])
 
-	// Two different arrays, so nothing is swapped in place.
+	// Two different arrays, so no element is swapped in place.
 	const across: TestNode = {
 		type: "BlockStatement",
 		range: [0, 0],

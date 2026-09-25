@@ -42,7 +42,7 @@ describe("optionPropertyName", () => {
 	})
 
 	// An acronym segment the derivation does not know title-cases instead, and the flag
-	// then fills a property no command declares: it parses, it validates, and it does nothing.
+	// then fills a property no command declares: it parses, it validates, and it has no effect.
 	// Each row below is a flag a command ships.
 	it.each([
 		["out-json", "outJSON"],

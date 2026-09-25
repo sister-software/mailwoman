@@ -1,7 +1,7 @@
 """How often a trained tokenizer falls back to raw bytes, overall and per script.
 
 A byte-fallback piece is one character's byte emitted as its own token because the vocabulary held
-nothing better. It is not an error. It is the reason a model can encode text it never saw — but a
+no better option. It is not an error. It is the reason a model can encode text it never saw — but a
 high rate on a script means the vocabulary is spending the model's sequence budget on bytes. The
 per-script split is what says WHERE, which the headline number cannot.
 """

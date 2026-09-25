@@ -176,7 +176,7 @@ git commit -m "fix(scripting): runScript exits 1 on error and respects process.e
 
 **Interfaces:**
 
-- Consumes: nothing from other tasks.
+- Consumes: no input from other tasks.
 - Produces: local `parseExtractArgs(): Args` in each script (renamed from `parseArgs` to avoid shadowing the node:util import).
 
 - [ ] **Step 1: build-kryptonite-extract.ts**
@@ -345,7 +345,7 @@ Docstring: usage block `npx tsx packages/corpus/scripts/ingest-csv.ts` → `node
 
 Imports: drop `cliArguments`; add `import { parseArgs } from "node:util"`.
 
-Replace the `parseArgs(): Record<string, string>` function (lines 45-66) with nothing — parse inline in `main()`:
+Replace the `parseArgs(): Record<string, string>` function (lines 45-66) with no replacement — parse inline in `main()`:
 
 ```ts
 async function main() {

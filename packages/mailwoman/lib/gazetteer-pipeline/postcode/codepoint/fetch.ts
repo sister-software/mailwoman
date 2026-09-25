@@ -228,7 +228,7 @@ export interface DownloadCodePointResult {
 	download: CodePointDownload
 
 	/**
-	 * True when the existing archive already matched and nothing was downloaded.
+	 * True when the existing archive already matched and no download occurred.
 	 */
 	reused: boolean
 }

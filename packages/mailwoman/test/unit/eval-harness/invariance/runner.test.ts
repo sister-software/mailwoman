@@ -425,7 +425,7 @@ describe("per-row locale + gained-capability class (#1516)", () => {
 		expect(caseFold.verdict).toBe("DEGRADED")
 		expect(caseFold.gainedCapability).toBe(true)
 
-		// The register-flat tail does not touch the check: nothing is new.
+		// The register-flat tail does not touch the check: no row is new.
 		expect(result.newCounts.lost).toBe(0)
 		expect(result.newCounts.degraded).toBe(0)
 		expect(result.pass).toBe(true)

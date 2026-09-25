@@ -7,7 +7,7 @@
  *
  *   A warm engine is warm because Node already evaluated its modules. Node's ESM cache has no invalidation, so a source
  *   edit is invisible to a process that already imported it: the agent edits `geocode-core.ts`, calls a tool, and reads
- *   an answer produced by the code it just replaced. Nothing errors. This is the same shape as the stale-`out/` trap
+ *   an answer produced by the code it just replaced. No error surfaces. This is the same shape as the stale-`out/` trap
  *   (`corpus-stamp.ts` records the 2026-08-06 instance, where a build printed "built", exited 0, and every check
  *   afterwards graded a corpus nobody had) with one difference that matters: that trap already existed, and this one is
  *   manufactured by the decision to hold state at all.
@@ -82,7 +82,7 @@ export interface TreeFingerprint {
 	/**
 	 * Source files walked.
 	 *
-	 * A zero here would mean the walk found nothing and every fingerprint would agree with every other.
+	 * A zero here would mean the walk found no source file and every fingerprint would agree with every other.
 	 * The emptiness failure `corpus-stamp.ts` names ("an empty loader on both sides agrees with itself"),
 	 * so {@link computeTreeFingerprint} throws rather than returning it.
 	 */
@@ -102,7 +102,7 @@ async function newestSourceMtime(root: PathBuilder): Promise<{ mtimeMs: number; 
 		try {
 			entries = await Globerator.from("*", { cwd: dir, withFileTypes: true, onlyFiles: false }).toArray()
 		} catch {
-			// A workspace that does not exist in this checkout contributes nothing rather than throwing.
+			// A workspace that does not exist in this checkout contributes no file rather than throwing.
 			// The caller's emptiness check is what catches a list that is wrong in total.
 			continue
 		}

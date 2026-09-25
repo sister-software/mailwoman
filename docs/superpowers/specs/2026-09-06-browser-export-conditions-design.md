@@ -37,7 +37,7 @@ no bundler plugin in a published package. This extends the platform-split rule, 
 license worker, to the client.
 
 **A moved name gets no compatibility re-export.** If a subpath splits into a node half and a browser
-half, the browser half is a new file under the same subpath, selected by condition. Nothing re-exports
+half, the browser half is a new file under the same subpath, selected by condition. No file re-exports
 the old shape.
 
 **Progress is measured by the entry count.** The work is done when `webpack-policy.ts` carries zero

@@ -12,7 +12,7 @@
  *   into the registry (`BundleArtifact.approxBytes`) — a local size-only integrity check (catches a
  *   truncated/corrupt file), not a live version comparison. `--check-remote` upgrades this to a real
  *   head `Content-Length` probe via `APIClient` (one small paced request per artifact that'S already
- *   present — nothing is fetched for an artifact reported missing, so the flag stays cheap even
+ *   present — no request is made for an artifact reported missing, so the flag stays cheap even
  *   against the `us` bundle's 103 files).
  */
 

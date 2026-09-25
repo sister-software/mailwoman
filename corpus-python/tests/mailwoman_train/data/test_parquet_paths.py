@@ -77,13 +77,13 @@ def test_a_pre_rename_overlay_resolves_its_base_and_not_just_its_own_file(tmp_pa
     """The test that would have failed on 2026-09-01, shaped like the corpus that did.
 
     Every corpus built before that date lists its parquets under the pre-rename key. The reader moved
-    to the new key and this file's fixtures moved with it, so nothing failed while
+    to the new key and this file's fixtures moved with it, so no test failed while
     `v0.28.0-reviewed-postcode-tail` went from 706 declared train parquet files to one resolved.
 
     The fixture is an OVERLAY, because only that shape can tell the two behaviours apart: the base
     file lives in another directory, so reading the manifest finds both files and the glob fallback
     finds only the overlay's own. A fixture whose declared file sits in `corpus/train/` passes either
-    way, which is how a test can watch this defect happen and say nothing.
+    way, which is how a test can watch this defect happen and report no failure.
     """
     base = tmp_path / "base" / "train"
     base.mkdir(parents=True)
@@ -110,7 +110,7 @@ def test_a_pre_rename_overlay_resolves_its_base_and_not_just_its_own_file(tmp_pa
 
 
 def test_a_pre_rename_manifest_gets_the_partial_resolution_guard_too(tmp_path: Path) -> None:
-    """Reading the old key is worth nothing if the guard behind it does not fire.
+    """Reading the old key adds no protection if the guard behind it does not fire.
 
     This is the half that turned the defect from silent into loud: an overlay's base files sit at
     the volume's paths, so on any other host they are unresolvable and the corpus is broken. Before

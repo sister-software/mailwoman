@@ -5,7 +5,7 @@
  *
  *   Reads the EA flood geodatabase as a stream of WGS84 features through ogr2ogr.
  *
- *   GDAL is build tooling only. Nothing downstream of this module depends on it.
+ *   GDAL is build tooling only. No code downstream of this module depends on it.
  *
  *   The source is in British National Grid (EPSG:27700, metres). The ingest asserts the declared EPSG code
  *   before reading any feature, and it checks every reprojected vertex against the collection's declared
@@ -83,7 +83,7 @@ export interface FloodIngestOptions {
 /**
  * Number of coordinate decimals that ogr2ogr writes.
  *
- * Nine decimals is about 0.1 mm, so rounding adds nothing measurable to the area cross-check.
+ * Nine decimals is about 0.1 mm, so rounding adds no measurable error to the area cross-check.
  */
 const COORDINATE_PRECISION = 9
 

@@ -3,8 +3,8 @@
 > **A magnitude never carries its own absence.**
 
 When `0` means both "we don't know" and "we measured zero", no consumer can tell them apart — and
-both readings look like a number, so nothing errors, nothing logs, and the mechanism does
-nothing. This page is the invariant and the audit behind it.
+both readings look like a number, so no error fires and no log line appears while the mechanism
+takes no action. This page is the invariant and the audit behind it.
 
 The operator named this after it bit twice in one day. That is what promotes a coincidence to a bug
 class.
@@ -40,7 +40,7 @@ one thing. The split is the fix; the range is a detail.
 
 Four confirmed sites, in descending order of how much they cost.
 
-### 1. The postcode-anchor channel — the bit exists and nothing reads it
+### 1. The postcode-anchor channel — the bit exists and no code reads it
 
 `neural/postcode-anchor.ts` documents it:
 
@@ -80,7 +80,7 @@ if (impBias > existing) {
 
 `importance: 0` ⇒ `impBias: 0` ⇒ never greater than the initial `0` ⇒ **the tag is never biased**.
 An unknown place and a known-but-unimportant place are both perfectly inert, and 82% of places read
-`0`. The change looks configured and does nothing. Tracked on #1142.
+`0`. The change looks configured and has no effect. Tracked on #1142.
 
 Measured on the Paris fixtures: only 3 of 43 surfaces were inert this way — so on that corpus the
 inertia is not what's protecting us, but the ambiguity is still live everywhere else.

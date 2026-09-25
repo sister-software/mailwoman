@@ -36,7 +36,7 @@ const FILE_SUBPATHS: ReadonlyArray<readonly [packageName: string, subpath: strin
 	// `geo` was here until 2026-09-01 and had been dead for some time:
 	// `@mailwoman/resolver-wof-sqlite` dropped the `./geo` subpath when its geometry
 	// helpers moved to `@mailwoman/spatial`, and `lib/geo.ts` went with them.
-	// Nothing noticed, because a missing target only warned. {@link requireAlias} now refuses instead.
+	// No check noticed, because a missing target only warned. {@link requireAlias} now refuses instead.
 	// A hand-listed entry naming a module that does not exist is a bug by definition,
 	// and this list is the mirror that goes stale every time a subpath moves.
 	// These are the browser-safe leaves: each keeps a per-file subpath so the site bundle
@@ -46,7 +46,7 @@ const FILE_SUBPATHS: ReadonlyArray<readonly [packageName: string, subpath: strin
 	),
 	["@mailwoman/core", "objects"],
 	// Was `["@mailwoman/core", "kysley/dialect"]` — the dialect lives in `@mailwoman/sqlite`
-	// now, and `core` exports nothing kysley-shaped at all.
+	// now, and `core` exports no kysley-shaped symbol at all.
 	// Second dead entry this list was carrying; `requireAlias` found it the moment it was armed.
 	["@mailwoman/sqlite", "dialect"],
 	["@mailwoman/resolver", "span-rescore"],

@@ -55,7 +55,7 @@ describe("licenseNamedIn", () => {
 
 	it("returns null for a parenthetical that describes access rather than a grant", () => {
 		// The OA PL entry.
-		// `public` states that the download costs nothing, which is not a license,
+		// `public` states that the download costs no fee, which is not a license,
 		// and reading it as one would turn the gap this record exists to report into an answer.
 		expect(licenseNamedIn("OpenAddresses PL — GUGiK / PRG (public, BDOT-derived): tokenizer-splice text")).toBeNull()
 	})
@@ -227,7 +227,7 @@ describe("readWeightsRightsRecords", () => {
 			expect(document.inherited_lineage?.attribution).toHaveLength(1)
 			expect(document.inherited_lineage?.note).toContain("contributed none of these rows")
 
-			// A graph package inherits nothing.
+			// A graph package inherits no lineage.
 			expect(records[0]!.inherited).toBeNull()
 		} finally {
 			await tree.dispose()

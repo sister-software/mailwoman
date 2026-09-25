@@ -78,7 +78,7 @@ export async function resurrectCurrencyHoles(ctx: {
 	/**
 	 * The candidate build's transaction.
 	 *
-	 * Required unless `dryRun` — a dry run judges every row and stages nothing.
+	 * Required unless `dryRun` — a dry run judges every row and stages no row.
 	 */
 	tx?: DatabaseClient<CandidateDatabase>
 	geonamesDir: PathBuilderLike
@@ -97,7 +97,7 @@ export async function resurrectCurrencyHoles(ctx: {
 	 */
 	deadPlacetypes?: readonly string[]
 	/**
-	 * Judge and count, stage nothing — the census mode.
+	 * Judge and count, stage no row — the census mode.
 	 *
 	 * No transaction is opened.
 	 */

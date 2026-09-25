@@ -5,7 +5,7 @@ state. Left at step 0 the schedule restarts inside warmup, at a learning rate th
 already passed — the run trains, writes checkpoints and logs a plausible loss curve, and does not
 continue the run it says it continues.
 
-Nothing exercised this. `pretrain()` needs a real SentencePiece model and a corpus to run at all,
+No test exercised this. `pretrain()` needs a real SentencePiece model and a corpus to run at all,
 so its resume path was reachable only from a training run. `restore_pretrain_state` is the part
 that decides the resumed step, and it needs neither.
 """
@@ -80,7 +80,7 @@ def test_a_checkpoint_with_scheduler_state_loads_it(tmp_path: Path) -> None:
 
 
 def test_an_empty_checkpoint_directory_resumes_at_step_zero(tmp_path: Path) -> None:
-    """A directory with nothing in it is a resume that has nothing to restore rather than a failure."""
+    """A directory with no checkpoint in it is a resume that has no state to restore rather than a failure."""
     empty = tmp_path / "empty"
     empty.mkdir()
     optim, scheduler = _optimizer_and_scheduler()

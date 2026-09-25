@@ -122,7 +122,7 @@ export function spaceLayer(palette: PlanetaryPalette): BackgroundLayerSpecificat
  *
  * The tiles carry height and no colour, so every body-specific decision is here: a greyscale
  * image could not be tinted at all, because MapLibre's raster paint properties are brightness,
- * contrast, saturation and hue-rotate, and the last two do nothing without chroma.
+ * contrast, saturation and hue-rotate, and the last two have no effect without chroma.
  */
 export function hillshadeLayer(palette: PlanetaryPalette): HillshadeLayerSpecification {
 	return {

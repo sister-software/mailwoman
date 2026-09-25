@@ -160,7 +160,7 @@ describe("the US arm's ancestry", () => {
 
 	it("asserts the country alone when no unit lands in any region", () => {
 		expect(nodeFor("400")?.ancestors.map((a) => a.name)).toEqual(["United States"])
-		// Not a straddle — nothing was seen, which is a different claim from seeing two.
+		// Not a straddle — no unit was seen, which is a different claim from seeing two.
 		expect(built.borderStraddlingPrefixes).not.toContain("400")
 	})
 

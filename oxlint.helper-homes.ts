@@ -11,7 +11,7 @@
 
 /* oxlint-disable mailwoman/prefer-home -- this file is the table the rule reads. Every constant and subcommand below
    is the signature of a helper, quoted so the rule can recognize a copy. importing the helper here would leave the
-   rule with nothing to match on. */
+   rule with no copy to match on. */
 
 /**
  * A helper shape that already has a home.

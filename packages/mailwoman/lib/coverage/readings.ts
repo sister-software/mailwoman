@@ -22,7 +22,7 @@ import type { CountryCoverage } from "#coverage/census"
  * `Absent` says no layer holds the code at all, while `Declined` says the admission
  * list omits a code the gazetteer or the board does hold.
  *
- * `DeclinedWithRows` is the Norway bug's shape: rows exist and train nothing,
+ * `DeclinedWithRows` is the Norway bug's shape: rows exist and contribute no training signal,
  * so closing it takes a `country_weights` entry rather than data.
  *
  * `AdmittedEmpty` is the mirror: the config admits the jurisdiction and the corpus

@@ -54,7 +54,7 @@ describe("readGauntletInputs", () => {
 	})
 
 	it("answers an empty set for a directory holding no boards", async () => {
-		// Absence is a real answer, and a caller treating it as "nothing is reserved"
+		// Absence is a real answer, and a caller treating it as "no entry is reserved"
 		// is reading the truth about an empty directory rather than a failed read —
 		// `readGauntletInputs` skips what it cannot parse.
 		const empty = await readGauntletInputs("packages/corpus/lib/tools")

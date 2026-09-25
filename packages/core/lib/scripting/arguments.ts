@@ -79,7 +79,7 @@ export function requiredArgument(scope: string, name: string, value: string | un
  * A segment missing here derives a property the command's own `Options` does not declare.
  * The flag still parses and still passes validation.
  *
- * It reaches the component under a name nothing reads, so it does nothing and reports no error.
+ * It reaches the component under a name no code reads, so it has no effect and reports no error.
  *
  * Add the segment here when a flag carries an acronym.
  */
@@ -127,8 +127,8 @@ export type OptionPropertyName<Value extends string> = Value extends `${infer He
  * Convert a kebab-case option name to its TypeScript property name.
  *
  * `@mailwoman/repo-health`'s `cli-flag-properties` check derives every command's
- * property names with this function, so a flag whose property nothing declares
- * fails a check rather than doing nothing at runtime.
+ * property names with this function, so a flag with an undeclared property fails a check
+ * rather than having no effect at runtime.
  */
 export function optionPropertyName(value: string): string {
 	const [head = "", ...tail] = value.split("-")

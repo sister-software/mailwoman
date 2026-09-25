@@ -83,7 +83,7 @@ This is confirmed by measurement: every postcode node the candidate backend reso
 
 ### Who consumes it today
 
-Almost nobody, and nothing blocks on it by default.
+Almost nobody, and no code path blocks on it by default.
 
 - `resolve.ts:1076` — `if (top.score < state.minWinningScore) return null`. This is the one site that can reject a result.
   `minWinningScore` defaults to `0` (`resolve.ts:757`) and **no production caller sets it** (grep: only
@@ -92,7 +92,7 @@ Almost nobody, and nothing blocks on it by default.
   (`b.rank - a.rank || b.hit.score - a.hit.score`). Same backend, same query, so scale-consistent and safe.
 - `core/pipeline/reconcile.ts:565` — `normalizeResolverScore` clamps to `(0, 1]` for a multiplicative beam combiner.
   Because both real backends routinely return scores above 1, this **saturates almost every candidate to exactly 1**,
-  contributing "was there a match at all" and nothing else. It is on the joint-reconcile path, which is
+  contributing "was there a match at all" and no other signal. It is on the joint-reconcile path, which is
   **default-OFF** (`runtime-pipeline.ts:479`, `jointReconcile ?? false`, retired as default 2026-06-14), so this is
   latent rather than live. Anyone who re-promotes that path will inherit the saturation.
 - `mailwoman/geocode-core.ts` reads `primaryNode.alternatives` to build the geocode `candidates` array, and never
@@ -224,7 +224,7 @@ the model is more sure about than any real address it read.
 **Three caveats limit how far the numbers above can be trusted:**
 
 1. The correct-control confidence band is very tight (0.918–0.945 across 149 addresses). A signal that
-   near-constant on clean structured US input will spread on a harder control, and the 0.918 threshold is nothing more than
+   near-constant on clean structured US input will spread on a harder control, and the 0.918 threshold is no more than
    the minimum of that cluster. Any threshold work must re-derive this on a multi-locale, fragment-shaped control
    before it means anything.
 2. Corroboration costs "0 of 149" only because every control row is a full street address. `Springfield` — a bare
@@ -233,7 +233,7 @@ the model is more sure about than any real address it read.
    is aimed at.
 3. n=14 and n=12. These are directional results on a small violation set rather than calibrated numbers.
 
-Fields already on `ResolvedPlace` that nothing currently reads at `resolve.ts:1076`, and that a design could use:
+Fields already on `ResolvedPlace` that no code currently reads at `resolve.ts:1076`, and that a design could use:
 `exactMatch` (match-quality tier — already the primary sort key elsewhere), `prominence` (bounded ~`[0, 8]`, defined
 the same way on both backends, and therefore a far better candidate for a shared threshold than `score`), `mismatch`
 (an explicit postcode/locality conflict flag), `resolutionQuality` (an explicit fallback-tier flag), and the

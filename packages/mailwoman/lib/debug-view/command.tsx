@@ -7,7 +7,7 @@
  *
  *   - A piped/non-TTY invocation renders exactly one {@link DebugFrame} (the input row + the resolved output +
  *     a rendered map pane) through {@link renderInkToString} and writes it out with `writeRawStdout` — the same
- *     #1577 posture as `geocode.tsx`'s one-shot JSON/text/jsonld path: nothing on the success path renders
+ *     #1577 posture as `geocode.tsx`'s one-shot JSON/text/jsonld path: no code on the success path renders
  *     through Ink's live reconciler, so there is no frame for Ink to clear and no frame tall enough to wipe the
  *     scrollback.
  *   - A TTY invocation gets the interactive three-panel session, {@link DebugSessionApp}, rendered through an Ink
@@ -128,7 +128,7 @@ export async function runStaticDebug(input: string, options: GeocodeCommandOptio
  * The non-TTY half of `--debug`: one captured frame, written raw.
  *
  * Same #1577 posture as `geocode.tsx`'s one-shot path — running renders `null`
- * (height 0, nothing for Ink to clear or overflow), and the finished frame bypasses
+ * (height 0, with no frame for Ink to clear or overflow), and the finished frame bypasses
  * `<Text>` entirely so it can't be re-wrapped at the piped 80-column default.
  */
 function GeocodeDebugStatic(props: { input: string; options: GeocodeCommandOptions }): React.ReactElement | null {
@@ -172,7 +172,7 @@ function GeocodeDebugStatic(props: { input: string; options: GeocodeCommandOptio
  * this effect belongs to, and React should not be asked to do that from inside its own commit.
  *
  * The command tree renders `null` throughout — height 0, so the primary buffer is never
- * written to and there is nothing left in the scrollback once the session exits.
+ * written to and the scrollback holds no frame once the session exits.
  */
 /* oxlint-disable react-hooks/exhaustive-deps -- One-shot by interface, like `useCommandTask`: the handoff happens
 	 once at mount, and a fresh `options` object per render must not repeat it. The empty deps array is the point. */
@@ -193,7 +193,7 @@ function DebugSessionHandoff(props: { input: string; options: GeocodeCommandOpti
 				// `signal-exit` subscription reaches on a signal death too.
 				alternateScreen: true,
 				incrementalRendering: true,
-				// Nothing in the session logs through `console`; leaving the native methods alone
+				// No code in the session logs through `console`; leaving the native methods alone
 				// keeps the resolver's own stderr banner out of Ink's re-render path.
 				patchConsole: false,
 			})

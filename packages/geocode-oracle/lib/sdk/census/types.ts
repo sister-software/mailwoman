@@ -10,7 +10,7 @@
  *   response types below are built almost entirely out of `@mailwoman/tiger`'s existing branded types
  *   (`FIPSBlockGeoID`, `TIGERClassCode`, `LegalStatisticalAreaDescription`, …) rather than fresh ones:
  *   the fields are tiger fields, and this package depends on `@mailwoman/tiger` rather than the
- *   reverse so the published package gains nothing from an oracle client.
+ *   reverse so the published package takes no dependency on an oracle client.
  *
  *   It also means {@linkcode CensusAddressMatch} can never be a rooftop geocode. See
  *   `census-parser.ts`'s tier note.
@@ -292,7 +292,7 @@ export interface CensusGeographyMatch extends CensusAddressMatch {
  *
  * `input` is nested inside `result`.
  * The isp-nexus original declared it as a sibling (`{ input, result: { addressMatches } }`),
- * which typechecked only because nothing ever read it.
+ * which typechecked only because no code ever read it.
  */
 export interface CensusGeocodeResponse<Match extends CensusAddressMatch = CensusAddressMatch> {
 	result: {

@@ -13,7 +13,7 @@
  *
  *   The two assertions here guard temporal columns rather than identity: `valid_from` is mandatory on every edge and
  *   every `asOf`-scoped read compares it as a plain string, so a blank value reads as "valid since forever" and a
- *   non-ISO one matches nothing.
+ *   non-ISO one matches no row.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"

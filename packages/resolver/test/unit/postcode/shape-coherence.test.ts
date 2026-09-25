@@ -8,7 +8,7 @@
  *   siblings. The pre-registered bars, per `docs/superpowers/plans/2026-08-05-postcode-structure-arc.md`:
  *
  *   - **B1-1** — byte-stability where it must be inert: a confirmed span (shape ∩ confident siblings
- *     ≠ ∅) adds `postcode_shape_systems` metadata and nothing else. resolution is byte-identical to
+ *     ≠ ∅) adds `postcode_shape_systems` metadata and no other field. resolution is byte-identical to
  *     the flag-off walk.
  *   - **B1-2** — the M-1 exclusion board: ≥90% of the mechanism's "speaks population" (confident
  *     siblings present) is excluded with the correct sibling tag surviving. 4 real Gauntlet spans
@@ -64,7 +64,7 @@ function tagged(roots: readonly AddressNode[], tag: string): AddressNode[] {
 }
 
 // A fake backend whose only job is to be a ResolverBackend for the byte-stability leg.
-// Every query misses, so nothing resolves and the two walks (flag on/off) are trivially comparable.
+// Every query misses, so no node resolves and the two walks (flag on/off) are trivially comparable.
 const silentBackend: ResolverBackend = {
 	findPlace: async () => [],
 }
@@ -103,7 +103,7 @@ describe("applyPostcodeShapeCoherence — CONFIRMED (B1-1)", () => {
 		const offNode = tagged(off.roots, "postcode")[0]!
 		const onNode = tagged(on.roots, "postcode")[0]!
 
-		// Resolution fields identical — no lookup ran either way, nothing resolved.
+		// Resolution fields identical — no lookup ran either way, and no node resolved.
 		expect(onNode.placeID).toBe(offNode.placeID)
 		expect(onNode.lat).toBe(offNode.lat)
 		expect(onNode.source).toBe(offNode.source)

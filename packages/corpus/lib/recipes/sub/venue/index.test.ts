@@ -256,7 +256,7 @@ describe("buildPositiveForms", () => {
 
 			if (/halle/i.test(form.text)) {
 				halleRows++
-				// Every Halle carries an identifier after it, and nothing before it.
+				// Every Halle carries an identifier after it, and no identifier before it.
 				expect(form.text).toMatch(/^Halle\s+\S+$/)
 			}
 		}

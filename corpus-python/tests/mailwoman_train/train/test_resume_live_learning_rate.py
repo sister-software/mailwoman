@@ -3,7 +3,7 @@
 `optim.load_state_dict()` overwrites every param group's `lr` and `initial_lr` with the values the
 CHECKPOINT saved, and `scheduler.load_state_dict()` does it again to the scheduler's base rates. So
 the live rates have to be captured before either load and re-stamped after both — which `setup.py`
-calls its one required ordering, and which nothing exercised end to end:
+calls its one required ordering, and which no test exercised end to end:
 `test_resume_lr_restamp.py` calls `restamp_resume_lrs` with hand-built inputs, so it never sees
 where the live rates come from, and the trace test never resumes.
 
@@ -106,7 +106,7 @@ def _write_checkpoint(root: Path, cfg: Config) -> Path:
 
 
 def test_the_two_configs_differ_where_the_test_reads(tmp_path: Path) -> None:
-    """Sanity: if the checkpoint and the live config agreed, the assertion below would prove nothing."""
+    """Sanity: if the checkpoint and the live config agreed, the assertion below would prove no difference."""
     checkpoint_lrs = _initial_lrs(_fresh_optimization(_config(tmp_path / "old", CHECKPOINT_LR)))
     live_lrs = _initial_lrs(_fresh_optimization(_config(tmp_path / "new", LIVE_LR)))
     assert checkpoint_lrs != live_lrs, "the fixture's two configs build identical optimizers"

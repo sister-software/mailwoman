@@ -80,7 +80,7 @@ export interface UsePOISearch {
 
 	/**
 	 * Starts a live search for the current subject.
-	 * It does nothing when `canSearchLive` is false.
+	 * It starts no search when `canSearchLive` is false.
 	 */
 	searchLive: () => Promise<void>
 }

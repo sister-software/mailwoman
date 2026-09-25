@@ -14,7 +14,7 @@ import { runFileSync } from "@mailwoman/core/process"
 /**
  * The half of a hook's answer every suite here reads.
  *
- * A hook that says nothing answers an empty document.
+ * A hook that makes no statement answers an empty document.
  */
 export interface HookOutput {
 	hookSpecificOutput?: {

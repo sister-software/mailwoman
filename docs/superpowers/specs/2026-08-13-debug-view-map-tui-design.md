@@ -107,7 +107,7 @@ carries offsets end to end; the exact accessor is plan-time verification item 1)
 
 The existing one-shot path becomes create → geocode → close in a try/finally and stays
 byte-identical. `geocode.test.ts` must pass unmodified. The #1577 requirement also stays in
-place: nothing on the non-debug success path renders through Ink, and output goes through
+place: no output on the non-debug success path renders through Ink, and output goes through
 `writeRawStdout`.
 
 ## 3. The debug view (mailwoman workspace)

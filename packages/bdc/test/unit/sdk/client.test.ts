@@ -362,13 +362,13 @@ describe("createBDCClient: the throttle meter", () => {
 	 * because `createBDCClient` and {@link BDCThrottleStats.cooldowns} both describe
 	 * it in prose, and both used to describe it wrongly: they claimed the budget's
 	 * cooldown "computes to <= 0" / is of "near-zero duration" once the interval limit
-	 * has spaced the dispatches, so the budget was said to cost nothing.
+	 * has spaced the dispatches, so the budget was said to cost no time.
 	 * It is a real 6 s wait.
 	 *
 	 * `APIClient` measures the cooldown to the end of the minute the window opened in,
 	 * and after nine 6 s intervals only 54 s of that minute is spent.
 	 *
-	 * Nothing checked either claim, which is how they survived.
+	 * No test checked either claim, which is how they survived.
 	 * This is the check.
 	 */
 	it("both checks composed: 10 requests per 66s, with a real 6s budget cooldown between windows", async () => {

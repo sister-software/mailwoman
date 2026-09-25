@@ -18,8 +18,8 @@
  *   overlay changes the prior. This tool cannot see that, so `--refuse-country` is how the caller states which locales
  *   the read could not speak for.
  *
- *   Every id must match a row. An id that matches nothing is an error rather than a skip: a promote list is transcribed from
- *   a log, and a typo that silently promotes nothing reads exactly like a list that was already applied.
+ *   Every id must match a row. An id that matches no row is an error rather than a skip: a promote list is transcribed from
+ *   a log, and a typo that silently promotes no row reads exactly like a list that was already applied.
  *
  *   Rows are read from the case files rather than through `loadRegressionCases`, which omits the source file for a row
  *   came from. Deriving that from the id would guess — `sg-register-block-…` lives in `register.jsonl` but
@@ -80,7 +80,7 @@ const countryDirectories = (
 	.toSorted()
 
 // Read every case file first and validate the whole list against it.
-// Nothing is written until the list is known to be good: a refusal that fires halfway
+// No file is written until the list is known to be good: a refusal that fires halfway
 // through leaves some files promoted and some not, which is a worse state than either
 // outcome and reads as a partial application nobody asked for.
 const byPath = new Map<string, SeedCase[]>()

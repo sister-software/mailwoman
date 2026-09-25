@@ -48,7 +48,7 @@ The validator is plain deterministic TypeScript with no I/O. It uses no reasoner
 
 `compileGeographicModel(input)` delegates validation and then compiles. **`isA` alone defines semantic inheritance.** The artifact carries every concept's transitive ancestors, and it copies every ancestor's assertions onto descendants as derived facts that record their derivation and inputs. The compiler does **not** compute closures for a relation that declares `transitive` or `inverse`. Those fields describe what the relation means, and general reasoning is excluded from this package for its lifetime.
 
-`serializeCompiledModel(model)` produces canonical bytes. Keys appear in code-point order at every depth, tables are ordered by identifier, and nothing records when compilation ran. Two builds of one document are byte-identical, so regenerating produces a diff only when the records changed.
+`serializeCompiledModel(model)` produces canonical bytes. Keys appear in code-point order at every depth, tables are ordered by identifier, and no field records when compilation ran. Two builds of one document are byte-identical, so regenerating produces a diff only when the records changed.
 
 `createGeographicModelIndex(model)` in the `./lookup` subpath is the read interface: `concept`, `relation`, `ancestorsOf`, `derivedFactsAbout`, `conceptsForExternalID`. It supports lookups only, without walks, cursors, or a query language, because the artifact exists to remove query-time traversal. Two kinds of absence stay distinguishable. A concept that the artifact does not carry answers `undefined`, and a carried concept with no derived facts answers an empty list.
 

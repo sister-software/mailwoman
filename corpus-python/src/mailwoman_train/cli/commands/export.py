@@ -26,7 +26,7 @@ def _staged(out: Path) -> Path:
     """Where the graph is written while it is still unverified.
 
     The parity check reads val rows, and reading them can fail — a manifest naming parts this host cannot resolve is
-    how #2207 surfaced. Exporting straight to ``out`` leaves a graph on disk that nothing has compared against torch,
+    how #2207 surfaced. Exporting straight to ``out`` leaves a graph on disk that no test has compared against torch,
     and the next step picks it up as if it had passed. So the graph is built beside its destination and moved into
     place only after the comparison ran, the same order a sealed database is built in.
     """
@@ -34,7 +34,7 @@ def _staged(out: Path) -> Path:
 
 
 def _require_samples(samples: list[Any]) -> None:
-    """Refuse an empty parity sample, rather than reporting metrics computed over nothing.
+    """Refuse an empty parity sample, rather than reporting metrics computed over an empty sample.
 
     `verify_parity` over zero samples returns a well-formed dict with no violation in it, and printing that says the
     graph was checked. An unreadable val split and a verified export are different outcomes and must not share one.

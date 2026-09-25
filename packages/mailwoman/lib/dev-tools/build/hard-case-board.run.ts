@@ -12,7 +12,7 @@
  *   - **`popBias` / `impBias`** come from walking the two FST binaries themselves and collapsing the
  *       accepting entries exactly as `neural/fst-prior.ts`'s `applyBias` does (max per BIO tag, and only the
  *       four placetypes `PLACETYPE_TO_BIO` maps — `localadmin`/`county`/`borough`/`neighbourhood` reach no
- *       label and contribute nothing). So the recorded delta is the bias the decoder sees rather than a proxy for it
+ *       label and contribute no bias). So the recorded delta is the bias the decoder sees rather than a proxy for it
  *       computed off the database.
  *
  *   The sweep-derived classes (`country_structure`, `fst_out_of_reach`) are lifted verbatim from
@@ -85,9 +85,8 @@ async function matchers(locale: string): Promise<{ pop: unknown; imp: unknown }>
  * `max(importance)` per BIO tag for `surface` — the collapse `applyBias` performs
  * before it touches the emission matrix.
  *
- * A surface the FST does not accept returns an empty map, which is absence
- * (the gazetteer has nothing to say), reported by the caller as a zero bias on
- * a named tag rather than silently as 0.
+ * A surface the FST does not accept returns an empty map, which is absence (the gazetteer has no entry),
+ * reported by the caller as a zero bias on a named tag rather than silently as 0.
  */
 function biasOf(matcher: unknown, surface: string): Map<string, number> {
 	const walk = (matcher as { walk(t: string[]): { stateID: number; accepted: boolean } | null }).walk(
@@ -131,7 +130,7 @@ for (const c of [...FRAGMENT_ROWS, ...TOPONYM_ROWS]) {
 	const impTags = biasOf(imp, c.probeSurface)
 	// Report on the tag the row is about — locality unless the curator named another.
 	// A surface the FST does not accept yields 0 on that named tag, which is a declared
-	// zero (the gazetteer has nothing), not a missing measurement.
+	// zero (the gazetteer has no entry), not a missing measurement.
 	const tag = c.probeTag ?? "locality"
 	const point = c.expectID === undefined ? undefined : pointOf(c.expectID)
 

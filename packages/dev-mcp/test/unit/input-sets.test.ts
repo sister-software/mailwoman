@@ -16,8 +16,8 @@ import { describe, expect, it } from "vitest"
  * The panel and golden sets live under `$MAILWOMAN_DATA_ROOT` and are absent in CI,
  * so their suites are presence-conditional the way `weights.test.ts` checks on the dev model.
  *
- * A skipped suite is not a passing one: these assertions hold only on a machine
- * carrying the artifacts, and CI's green tick says nothing about them.
+ * A skipped suite is not a passing one: these assertions hold only on a machine carrying
+ * the artifacts, and CI's green tick makes no statement about them.
  */
 const havePanel = await pathExists(dataRootPath("pelias-rig", "panel", "panel-v2.jsonl"))
 const havePanel21 = await pathExists(dataRootPath("pelias-rig", "panel", "panel-v2.1.jsonl"))
@@ -169,7 +169,7 @@ describe("resolveInputSet — parity", () => {
 
 describe.skipIf(!haveGolden)("a corpus that cannot be read", () => {
 	it("refuses rather than resolving to an empty set", async () => {
-		// An empty set measures zero differences, which reads as "no effect" rather than "nothing ran".
+		// An empty set measures zero differences, which reads as "no effect" rather than "no run occurred".
 		await expect(resolveInputSet({ kind: "golden", version: "v9.9.9-nonexistent" })).rejects.toThrow(
 			/resolved no rows|not found/
 		)
@@ -186,7 +186,7 @@ describe.skipIf(!haveHoldoutUS)("resolveInputSet — holdout", () => {
 	})
 
 	it("is a random draw, not a declared subset — the two support opposite claims", async () => {
-		// A declared subset is chosen by a predicate and generalizes to nothing beyond it.
+		// A declared subset is chosen by a predicate and generalizes to no population beyond it.
 		// This is the one set in this file whose rate estimates the population's,
 		// and the sentence a caller relays has to say so.
 		const set = await resolveInputSet({ kind: "holdout", source: "us", n: 25, seed: 7 })

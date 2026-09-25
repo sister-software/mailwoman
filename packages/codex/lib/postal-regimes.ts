@@ -58,7 +58,7 @@ export const RegimeKind = {
 	Narrative: "narrative",
 	/**
 	 * A code that appears in real data outside ISO 3166-1.
-	 * Accepting it implies nothing about sovereignty.
+	 * Accepting it makes no claim about sovereignty.
 	 */
 	Operational: "operational",
 } as const

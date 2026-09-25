@@ -325,7 +325,7 @@ describe("createSECClient: on-disk cache", () => {
 		// and is reachable IN production — sec.gov serves `Cache-Control` on these endpoints,
 		// and with header interpretation on, the interceptor derives the TTL from the header
 		// and silently overrides the immutable-archive rule.
-		// Every other cache test's stub omitted the header, so nothing noticed.
+		// Every other cache test's stub omitted the header, so no test noticed.
 		vi.useFakeTimers({ toFake: ["Date"] })
 		vi.setSystemTime(new Date("2026-01-01T00:00:00Z"))
 
@@ -422,7 +422,7 @@ describe("createSECClient: on-disk cache", () => {
 		expect(isTransientResourceError(caught)).toBe(false)
 		expect(await Globerator.from("*", { cwd: cacheDir.path }).toArray()).toHaveLength(0)
 
-		// Nothing was poisoned, so a later attempt against the same (archive!)
+		// No cache entry was poisoned, so a later attempt against the same (archive!)
 		// URL still fetches.
 		const fixed = stubTransport([{ body: { ok: true } }])
 

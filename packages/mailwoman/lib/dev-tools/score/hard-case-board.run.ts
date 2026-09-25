@@ -118,7 +118,7 @@ interface Outcome {
 	 */
 	placeOK: boolean | null
 	/**
-	 * Holds the great-circle error in kilometers, or `null` when nothing resolved
+	 * Holds the great-circle error in kilometers, or `null` when no place resolved
 	 * or no coordinate is asserted.
 	 */
 	errKm: number | null

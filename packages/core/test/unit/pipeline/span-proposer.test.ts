@@ -209,7 +209,7 @@ describe("venue-structure provenance", () => {
 	 * the two provenances downstream is the `source` string.
 	 *
 	 * If that tag stops being emitted, the consuming prior silently falls back to the
-	 * postal scale and the sub-venue fix reverts with nothing failing.
+	 * postal scale and the sub-venue fix reverts with no test failing.
 	 */
 	const withVenueStructure: SpanProposerLexicon = {
 		...LEXICON,

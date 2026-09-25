@@ -80,7 +80,7 @@ describe("sanitizeFTSQuery — trailing-* prefix support", () => {
 
 	test('phrase + prefix in one query (mixed): `Pari* TX` is `Pari* AND "TX"`', async () => {
 		// The fixture has Paris (FR) but no TX.
-		// The `and` of `Pari*` (matches Paris) with `"TX"` (matches nothing in the fixture) returns empty.
+		// The `and` of `Pari*` (matches Paris) with `"TX"` (matches no row in the fixture) returns empty.
 		const r = await lookup.findPlace({ text: "Pari* TX", placetype: "locality" })
 		expect(r).toEqual([])
 		// But bare `Pari*` matches Paris.
@@ -115,7 +115,7 @@ describe("sanitizeFTSQuery — punctuation stripping (existing behavior, regress
 
 describe("sanitizeFTSQuery — intra-token punctuation SPLITS for non-postcode queries (#945)", () => {
 	test("hyphenated locality resolves — `Thiron-Gardais` reaches the FTS as two terms", async () => {
-		// The old fuse produced the single term `ThironGardais`, matching nothing:
+		// The old fuse produced the single term `ThironGardais`, matching no row:
 		// the unicode61 tokenizer indexes the stored name as `thiron` + `gardais`.
 		// This class was masked for years because pre-splice models never emitted
 		// hyphen-preserved span values (#945).

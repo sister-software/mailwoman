@@ -27,7 +27,7 @@ const MISCONFIGURED = stringifyJSON({ error: "worker misconfigured" })
  * How far back each reconciliation pass lists paid invoices by creation time: the bound on recovering
  * a subscription the ledger has never seen (`reconcile.ts` says what is recovered without a bound).
  *
- * A week against a six-hour cron, so one failed pass costs nothing.
+ * A week against a six-hour cron, so one failed pass costs no coverage.
  */
 const RECONCILE_WINDOW_SECONDS = 7 * 24 * 3600
 

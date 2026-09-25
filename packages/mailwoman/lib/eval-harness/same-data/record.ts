@@ -7,7 +7,7 @@
  *   configuration and freezes every answer, so no arm touches a gazetteer afterwards.
  *
  *   The recording runs once per registered option set and unions the keys, because each arm asks different
- *   questions: `parentFallback: false` drops a retry nothing else asks for, and `adminCoherence: false`
+ *   questions: `parentFallback: false` drops a retry no other arm asks for, and `adminCoherence: false`
  *   changes which nodes are probed. A fixture recorded from one arm makes the others miss, which
  *   `replayBackend` raises on.
  *
@@ -155,7 +155,7 @@ export interface RecordInputs {
 	 *
 	 * Turning it on changes what the stratum means, so it belongs to a successor definition
 	 * rather than a version bump of a benchmark whose arms have run.
-	 * `benchmark-freeze.json` states the reason: a rule editable after a result is visible asserts nothing.
+	 * `benchmark-freeze.json` states the reason: a rule editable after a result is visible asserts no fact.
 	 */
 	withholdEveryDenotingRow?: boolean
 }

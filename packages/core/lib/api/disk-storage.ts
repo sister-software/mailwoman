@@ -85,7 +85,7 @@ function isPersistableState(value: NotEmptyStorageValue): boolean {
  * An `Infinity` TTL — the obvious way to spell "cache this immutable document forever" —
  * would therefore round-trip into an entry that is expired the instant it is read.
  *
- * Rejecting it loudly beats silently caching nothing.
+ * Rejecting it loudly beats silently caching an entry that is expired the instant it is read.
  */
 function hasFiniteTiming(value: NotEmptyStorageValue): boolean {
 	if (value.createdAt !== undefined && !Number.isFinite(value.createdAt)) return false

@@ -60,7 +60,7 @@ export interface EarthFooterProps {
 	 *
 	 * The bar across the top of the viewport says how far along it is.
 	 * This says which artifact it is fetching, which is the part a number cannot carry.
-	 * Absent on the canned runtime, which loads nothing.
+	 * Absent on the canned runtime, which loads no artifact.
 	 */
 	status?: ReactNode
 }

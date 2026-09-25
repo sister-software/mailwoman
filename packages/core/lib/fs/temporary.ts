@@ -46,7 +46,7 @@ export interface TemporaryDirectory extends AsyncDisposable {
 	/**
 	 * Hand the directory and everything registered on it to a scope that outlives this one.
 	 *
-	 * This binding disposes nothing afterwards.
+	 * This binding disposes no resource afterwards.
 	 */
 	move(): TemporaryDirectory
 	/**
@@ -72,7 +72,7 @@ function asTemporaryDirectory(_path: PathBuilderLike, resources: AsyncDisposable
  * Create a new temporary directory under `$MAILWOMAN_TEMP_ROOT`, removed when the owning scope ends.
  *
  * The root is created if it does not exist: `mkdtemp` fails on a missing parent, and a
- * configured root that nothing has written to yet is the normal state on a fresh machine.
+ * configured root that no process has written to yet is the normal state on a fresh machine.
  */
 export async function temporaryDirectory(prefix = "mailwoman-"): Promise<TemporaryDirectory> {
 	const root = tempRootPathBuilder()

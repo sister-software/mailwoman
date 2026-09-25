@@ -1,8 +1,8 @@
 """The vocab-pruning probe's two bars, against tokenizers and graphs that disagree on purpose.
 
-Nothing exercised either. Both bars need a SentencePiece pair and an int8 ONNX pair to run, so the
+No test exercised either. Both bars need a SentencePiece pair and an int8 ONNX pair to run, so the
 counting itself — the part that decides `PASS` or `FAIL` — was reachable only from a full probe run,
-where a bar that counts nothing and a bar that finds nothing print the same line.
+where a bar that counts no row and a bar that finds no row print the same line.
 
 Both bars are one-sided in the direction that matters: a bar that under-counts reports a sound
 surgery. So each case here is a KNOWN difference, and the test asserts it was found.
@@ -126,7 +126,7 @@ def test_outputs_differing_in_one_bit_count_as_a_difference() -> None:
 
 
 def test_an_unmapped_id_raises_rather_than_scoring() -> None:
-    """Feeding a graph inputs it cannot represent would score the surgery against nothing."""
+    """Feeding a graph inputs it cannot represent would score the surgery against no reference."""
     orig = StubProcessor({"gone": [1, 3]})
     session = StubSession(METAS, {})
 

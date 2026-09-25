@@ -13,7 +13,7 @@ import { effectiveKeyFor } from "#engine/registry"
  * Enumerates how cleanly a two-arm comparison isolates its declared configuration variables.
  *
  * `clean` means only declared keys moved, `ambiguous` means undeclared keys moved too,
- * `no_variable` means nothing moved, and `cross_engine` means the arms are different
+ * `no_variable` means no key moved, and `cross_engine` means the arms are different
  * systems and no delta can be attributed to a pin.
  */
 export const VariableIsolation = {

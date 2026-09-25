@@ -45,7 +45,7 @@ const ROUTE_PAIR_CONFIDENCE = 0.55
 /**
  * Above `landmark`'s venue ceiling (0.88) and above `poi_query`'s anchored band (0.90),
  * because a deictic tail is a stronger signal than either shape heuristic:
- * nothing else in the vocabulary explains why "me" is at the end of the string.
+ * no other rule in the vocabulary explains why "me" is at the end of the string.
  */
 const NEAR_ME_CONFIDENCE = 0.91
 
@@ -228,7 +228,7 @@ function bareNameWords(input: NormalizedInputLite, shape: QueryShapeLike): strin
 	if (!text || text.length > MAX_LOCALITY_ONLY_LENGTH) return null
 
 	// A recognized postcode/known format is address grammar.
-	// Nothing bare survives this.
+	// No bare toponym survives this.
 	if (shape.knownFormats.length) return null
 
 	// `alpha` excludes every house number and every postcode by construction.
@@ -261,7 +261,7 @@ function bareNameWords(input: NormalizedInputLite, shape: QueryShapeLike): strin
  * `bare_toponym` rule: a single coherent place-name carrying no address grammar.
  *
  * Feeds the declared-ambiguity path.
- * The rule itself asserts nothing about which place.
+ * The rule itself asserts no fact about which place.
  *
  * That is the resolver's question, and `mailwoman/query-intent.ts` is where the answer's
  * dominance margin decides whether the ambiguity gets declared.
@@ -271,7 +271,7 @@ export function scoreBareToponym(input: NormalizedInputLite, shape: QueryShapeLi
 }
 
 /**
- * `route_pair` rule: exactly two toponym-shaped tokens with nothing between them.
+ * `route_pair` rule: exactly two toponym-shaped tokens with no token between them.
  *
  * **The known confound is structural and unfixable here.** "Paris London" and "Moscow
  * Idaho" are the same string shape — two bare capitalized words — and separating them needs

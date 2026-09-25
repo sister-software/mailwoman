@@ -15,7 +15,7 @@
  *   operator they owe attribution to publishers whose rows they do not have.
  *
  *   It reports obligations rather than clearing them. Every unresolved question a package records travels through, and
- *   a commercial key changes nothing here: that grant covers first-party code and model artifacts, and an upstream
+ *   a commercial key changes no obligation here: that grant covers first-party code and model artifacts, and an upstream
  *   attribution or share-alike condition survives it.
  */
 
@@ -88,7 +88,7 @@ export interface AttributionReport {
  *
  * A fixed list rather than a scan of `node_modules`, so a package absent from
  * an installation is reported as absent by name.
- * A scan would report a shorter list and say nothing about what was missing.
+ * A scan would report a shorter list and make no statement about what was missing.
  */
 export const KNOWN_WEIGHTS_PACKAGES: readonly string[] = [
 	"@mailwoman/neural-weights-cjk",
@@ -109,7 +109,7 @@ export const KNOWN_WEIGHTS_PACKAGES: readonly string[] = [
  * Read one installed package's provenance record, or `null` when the package is not installed.
  *
  * A package that resolves but carries no `PROVENANCE.json` is reported as not installed
- * for this purpose rather than as installed with nothing to declare.
+ * for this purpose rather than as installed with no obligation to declare.
  * The second reading would present a package published before these records
  * existed as one with no obligations.
  */

@@ -15,7 +15,7 @@
  *   assertion, and the `poi-taxonomy` mapping that was held back until the POI branch could search a
  *   union rather than narrow to one id (#1980). So `obtain_medication` reaches two mapped kinds, and the
  *   tests below assert that the second one is reachable through the same external-identifier lookup the
- *   first is: a mapping nothing can translate through would state the semantics and reach no rows.
+ *   first is: a mapping that no lookup can translate through would state the semantics and reach no rows.
  *
  *   The freshness check compares parsed values rather than bytes. A committed artifact is the
  *   generator's output run through `oxfmt`. It inlines short arrays. Therefore, a byte comparison against
@@ -119,7 +119,7 @@ describe("the authored pharmacy records", () => {
 
 		// Read the id back through the vocabulary's owner.
 		// A mapping onto an identifier the taxonomy does not carry would be a translation
-		// into nothing, and it would look exactly like a working one from here.
+		// into no category, and it would look exactly like a working one from here.
 		const category = getPOICategory(String(POI_CATEGORY))
 
 		expect(category?.id).toBe(POI_CATEGORY)
@@ -195,9 +195,9 @@ describe("the committed artifact", () => {
 
 	it("derives nothing, because no ancestor asserts anything", async () => {
 		// Both affordances are authored on leaves — `pharmacy` and `drugstore` have no descendants —
-		// and the only ancestor either of them has that could assert (`establishment`) asserts nothing,
+		// and the only ancestor either of them has that could assert (`establishment`) asserts no fact,
 		// deliberately: a claim authored there would be inherited by every later establishment class.
-		// So `isA` inheritance has nothing to materialize.
+		// So `isA` inheritance has no fact to materialize.
 		// An empty table here is the truthful answer rather than an unread one —
 		// `compile.test.ts` exercises the derivation itself.
 		const model = await readCompiledGeographicModel()
@@ -239,7 +239,7 @@ describe("the wave-1 records", () => {
 		expect(assertion?.modality).toBe(Modality.StronglyExpected)
 
 		// The one country a committed record scopes the class to.
-		// FR is a measured zero on the shipped layer, so a claim reaching there would range over nothing.
+		// FR is a measured zero on the shipped layer, so a claim reaching there would range over no rows.
 		expect(assertion?.countries).toEqual(["US"])
 		expect(assertion?.countries).not.toContain("FR")
 		expect(assertion?.provenance.sourceRecord).toContain("curated-overlay.json")
@@ -259,7 +259,7 @@ describe("the wave-1 records", () => {
 
 		// The category the mapping names, read back through the vocabulary's owner.
 		// An identifier that stopped resolving would leave the mapping translating
-		// into nothing, and nothing else would notice.
+		// into no category, and no other check would notice.
 		const category = getPOICategory(String(DRUGSTORE_CATEGORY))
 
 		expect(category?.id).toBe(DRUGSTORE_CATEGORY)
@@ -297,7 +297,7 @@ describe("reading the record set through the runtime lookups", () => {
 	it("distinguishes a concept it carries from one it has never heard of", async () => {
 		const index = createGeographicModelIndex(await readCompiledGeographicModel())
 
-		// The model carries `pharmacy` and has derived nothing about it.
+		// The model carries `pharmacy` and has derived no fact about it.
 		// It does not carry `chemist` at all, which is a different answer and stays a different answer.
 		expect(index.derivedFactsAbout(PHARMACY)).toEqual([])
 		expect(index.derivedFactsAbout(toConceptID("chemist"))).toBeUndefined()
@@ -307,7 +307,7 @@ describe("reading the record set through the runtime lookups", () => {
 	// `derivedFactsAbout` returning `[]` reads like the external lookup returning `[]`
 	// and a reader meeting one alone would take it for the other.
 	// The model carries the concept and states what it affords, its external identifier
-	// does translate into it since W1-3 landed, and nothing has been derived about it,
+	// does translate into it since W1-3 landed, and no fact has been derived about it,
 	// which is an empty derivation rather than an unmapped class.
 	it("carries `drugstore`, translates its external identifier, and has derived nothing about it", async () => {
 		const index = createGeographicModelIndex(await readCompiledGeographicModel())
@@ -320,7 +320,7 @@ describe("reading the record set through the runtime lookups", () => {
 
 	// The two kinds `obtain_medication` reaches, read off the committed artifact rather than off the route.
 	// Each external identifier translates into its own concept and not into the other: the mapping
-	// table states which id names which class, and nothing in it states a preference between the two.
+	// table states which id names which class, and no entry in it states a preference between the two.
 	it("reaches two mapped kinds for one activity, each from its own external identifier", async () => {
 		const index = createGeographicModelIndex(await readCompiledGeographicModel())
 

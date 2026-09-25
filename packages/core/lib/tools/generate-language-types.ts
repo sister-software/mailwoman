@@ -215,7 +215,7 @@ export const Alpha3bToAlpha2: ReadonlyMap<Alpha3bLanguageCode, Alpha2LanguageCod
 `)
 
 	// This direction accepts a code, so it takes both spellings.
-	// The keys are distinct, nothing is overwritten, and `deu` answers `de` exactly as `ger` does.
+	// The keys are distinct, none is overwritten, and `deu` answers `de` exactly as `ger` does.
 	for (const [alpha2, alpha3] of [...entryLines, ...alpha3tPairs]) {
 		await writeLine(`["${alpha3}", "${alpha2}"],`)
 	}

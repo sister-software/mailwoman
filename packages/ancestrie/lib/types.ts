@@ -5,7 +5,7 @@
  *
  *   Public types for the ancestrie — a materialized trie over an ancestry graph. Domain-agnostic on
  *   purpose: entries are token sequences carrying a numeric id, a rank, parent edges, and an opaque
- *   payload. Nothing in this interface knows about placetypes, gazetteers, or geocoding — those live
+ *   payload. No part of this interface knows about placetypes, gazetteers, or geocoding — those live
  *   in the consumer's payload and tokenizer.
  */
 

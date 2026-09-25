@@ -5,7 +5,7 @@
  *
  *   {@linkcode lazyComponent}'s rejection interface. The happy path is covered wherever the deferred component itself
  *   is (`geocode --debug`); this file exists for the branch that only shows up when an import fails, which is the
- *   branch nothing else would notice was missing.
+ *   branch no other test would notice was missing.
  *
  *   It runs the wrapper in a subprocess against real Ink, the same posture as `test/benchmark-flag.test.ts`, for one
  *   reason: the interface includes `process.exit(1)`, and a helper that exits cannot be asserted in-process without
@@ -67,7 +67,7 @@ describe("lazyComponent — a rejected import", () => {
 
 		expect(code).toBe(1)
 		expect(stdout).toMatch(/Cannot find package 'not-installed-peer'/u)
-		// Nothing on stderr: node's unhandled-rejection handler never ran.
+		// No output on stderr: node's unhandled-rejection handler never ran.
 		expect(stderr).toBe("")
 	}, 30_000)
 

@@ -32,7 +32,7 @@ This is the only place the project writes a finish line as a sentence. Verbatim:
 > construction) and decisively better on real-world input; forward geocoding to street level (point
 > lookup + interpolation) in the countries we cover; reverse geocoding; autocomplete; batch + served
 > API with observability; a trustworthy, leakage-free eval story in every shipped locale; reproducible
-> training; a pocket tier that still installs nothing — and documentation a stranger can onboard
+> training; a pocket tier that still requires no install — and documentation a stranger can onboard
 > from. That is the geocoder.
 
 The definition has nine clauses. Seven are shipped and two are not. _"Decisively better on real-world input"_ is measured
@@ -45,7 +45,7 @@ behind its own issue tracker by four rows.
 
 ### 1.2 The scope declaration — locale tiers and five standing invariants
 
-`docs/engineering/SCOPE.mdx`, declared 2026-07-02. Tier 1 is **US and FR** and nothing else; tier 2
+`docs/engineering/SCOPE.mdx`, declared 2026-07-02. Tier 1 is **US and FR** and no other locale; tier 2
 is fourteen locales with coordinate panels; tier 5 is **JP, resolver-route only, "no parser training
 claim."** The invariants that function as checks:
 
@@ -180,7 +180,7 @@ absolute terms, as predicted. Class 3 (country-distinctive addressing structures
 — the highest per-row rate, and the draft ranked it _last_. Class 2 (exonym/renamed/script) 30 of
 137 = 22%, the safest.
 
-**27 rows resolve to nothing.** The batch note's own wording: _"the direct failure, and the one that
+**27 rows resolve to no result.** The batch note's own wording: _"the direct failure, and the one that
 does not violate the meaning-of-zero requirement."_
 
 **29 of the 114 share one root cause, and it is a data defect rather than a model one.** `candidate.db` and
@@ -242,7 +242,7 @@ Named gaps, verified in the code:
 | Surface     | Gap                                                                                                                                     |
 | ----------- | --------------------------------------------------------------------------------------------------------------------------------------- |
 | nominatim   | **`/search` returns at most one result regardless of `limit`** (`cli.ts:246` `[out].slice(0, limit)`)                                   |
-| nominatim   | `viewbox` not accepted at all; `bounded` parsed with nothing to bound to                                                                |
+| nominatim   | `viewbox` not accepted at all; `bounded` parsed with no box to bound to                                                                 |
 | nominatim   | `polygon_geojson` / `_kml` / `_svg` / `_text` / `_threshold`: zero occurrences                                                          |
 | nominatim   | `extratags`, `namedetails`, `dedupe`, `exclude_place_ids`, `featureType`, `layer`, `email`: absent                                      |
 | nominatim   | structured query is faked — fields joined into free text; **`county` parsed then dropped**                                              |
@@ -272,7 +272,7 @@ serves `/` and `/openapi.json`.
 | Parse (FR)           | Check pass. `fr.region` 44.1 → 81.2, `fr.cedex_real` 99.8. Held-out BAN beats production z=2.85                                                                 |
 | Parse (GB)           | The v9 fix landed: gb-golden 318/318 with the anchor fed; dependent_locality 0 → 205/207. **GB is not a declared tier**. It has capability without a tier claim |
 | Parse (JP)           | 0.9928 @15 km on a 20k held-out board, bar was 0.70. **No serving path.** No `neural-weights-ja-jp` workspace exists                                            |
-| Geocode              | 71% on the 393-row oracle sweep; 27 rows resolve to nothing; last competitor measurement had Pelias ahead 88 to 80                                              |
+| Geocode              | 71% on the 393-row oracle sweep; 27 rows resolve to no result; last competitor measurement had Pelias ahead 88 to 80                                            |
 | Drop-in APIs         | Routes ship, zero upstream parity tests, named parameter gaps in all three                                                                                      |
 | Demo                 | Structurally pinned to the shipped weights package (invariant 2 enforced by construction rather than by memory)                                                 |
 | npm                  | Clean. 48 workspaces at 9.0.0, lockstep, Trusted Publishing                                                                                                     |
@@ -293,7 +293,7 @@ Each stands between today and one of the project's own definitions of done.
 | #    | Title (short)                                                | Which definition it blocks                                                                            |
 | ---- | ------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------- |
 | 229  | val-set stratification — fine + non-US eval coverage         | #488 DoD, "eval story in every shipped locale"                                                        |
-| 378  | pocket-budget SLO                                            | #488 DoD, "a pocket tier that still installs nothing". PARKED with check-back                         |
+| 378  | pocket-budget SLO                                            | #488 DoD, "a pocket tier that still requires no install". PARKED with check-back                      |
 | 486  | repair retirement                                            | SCOPE invariant 4 — standing, never closes, but the accounting must be current                        |
 | 493  | lossless decomposition — serializer default decision         | #488 Phase 4, last unfinished item                                                                    |
 | 1039 | lexical country prior for the no-postcode tail               | The country sweep's dominant failure class                                                            |
@@ -390,14 +390,14 @@ Everything in (a), plus:
 | b2  | Precision rather than recall: 26% @1 km against Nominatim 77 / Pelias 71. The gap is address-point coverage rather than parse | multi-lane  | data acquisition, per-country                                            |
 | b3  | AU at 35% against Pelias 78 / Nominatim 97                                                                                    | multi-lane  | data plus an extract                                                     |
 | b4  | #1529 — crossing-point computation. TIGER edges already back the interpolation DB                                             | single-lane | bounded engineering                                                      |
-| b5  | Upstream parity tests for all three drop-ins — nothing today compares them to what they replace                               | single-lane | bounded engineering                                                      |
+| b5  | Upstream parity tests for all three drop-ins — no test today compares them to what they replace                               | single-lane | bounded engineering                                                      |
 | b6  | Nominatim `limit` capped at 1; `viewbox`, `polygon_*`, structured `county`                                                    | single-lane | bounded engineering                                                      |
 | b7  | Photon `bbox` wire path; `osm_tag`/`layer` honored or removed from the schema                                                 | single-lane | bounded engineering                                                      |
 | b8  | libpostal `/expand` language handling                                                                                         | single-lane | bounded engineering                                                      |
-| b9  | Coverage: 27 sweep rows resolve to nothing; 71 of 114 failures are class-1 namesake                                           | multi-lane  | data plus the #1039 country prior                                        |
+| b9  | Coverage: 27 sweep rows resolve to no result; 71 of 114 failures are class-1 namesake                                         | multi-lane  | data plus the #1039 country prior                                        |
 | b10 | The synthetic-id artifact rebuild that closes the 44.5% join disagreement                                                     | single-lane | bounded, but it is a full gazetteer rebuild                              |
 
-b2 and b9 are the substance; the rest is bounded work. **Nothing on this bar is blocked on research.**
+b2 and b9 are the substance; the rest is bounded work. **No item on this bar is blocked on research.**
 It is blocked on measurement (b1), on data (b2, b3, b9), and on finishing surfaces that were built to
 80% (b5–b8).
 
@@ -409,7 +409,7 @@ Everything above, plus:
 | --- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------- | ------------------------------------------------------------------------ |
 | c1  | JP serving path — char-path inference, weights packaging, the `ja-jp` overlay. The 0.9928 model exists and cannot be called                                             | arc-with-preregistration                           | bounded engineering, meaningful volume                                   |
 | c2  | Suggestion layer — **0 of 13 bars met**; no `suggest/` workspace; the C.4 attribution triple (`core` + `resolver-wof-sqlite` + `formatter`) blocks every downstream bar | multi-lane, then arc                               | bounded; §C.6 says explicitly no retrain needed                          |
-| c3  | Postcode-structure arc — **2 of 13 bars met** (B3-1, B1-4). Artifact built, nothing reads it                                                                            | single-lane mostly; B3-4 needs US ZCTA acquisition | bounded plus one acquisition                                             |
+| c3  | Postcode-structure arc — **2 of 13 bars met** (B3-1, B1-4). Artifact built and no code reads it                                                                         | single-lane mostly; B3-4 needs US ZCTA acquisition | bounded plus one acquisition                                             |
 | c4  | Intent §4 — 4 kinds landed; blocked downstream on #1537 and on poi.db debt                                                                                              | single-lane                                        | bounded engineering                                                      |
 | c5  | KR, CN, TW parse                                                                                                                                                        | arc-with-preregistration                           | data acquisition first — KR has no adopted open path                     |
 | c6  | Record matching (#598 family)                                                                                                                                           | multi-lane                                         | **operator decision** — parked pending funding or a pilot                |
@@ -560,7 +560,7 @@ whole life. Only the serving path is missing.
 ## 7. The answer
 
 **Bar (a), tier-1 production geocoder: close.** Ten bounded items and one open research question
-(`us.street` toward 0.90) remain. Nothing on this bar waits on data, a lawyer, or a decision.
+(`us.street` toward 0.90) remain. No item on this bar waits on data, a lawyer, or a decision.
 
 **Bar (b), Pelias replacement: unknown, and the last measurement had mailwoman behind.** The next
 step is the measurement itself. Pelias led 88 to 80 @25 km forty-five days and two model majors ago.

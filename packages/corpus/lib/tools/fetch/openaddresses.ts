@@ -52,7 +52,7 @@ import { APIClient, isSuccessStatus } from "@mailwoman/core/api"
  *   ```
  */
 /* oxlint-disable sister-software/prefer-region-over-marks -- these markers label steps inside one
-   procedure rather than sections of declarations. A region there folds nothing a reader wants folded. */
+   procedure rather than sections of declarations. A region there folds no element a reader wants folded. */
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { statPath, pathExists } from "@mailwoman/core/fs/readers"
 import { openWriteStream, pipeline } from "@mailwoman/core/fs/streams"

@@ -14,14 +14,14 @@
  *   what makes "safe to re-run" true in general rather than just today — `cpSync` alone is a merge copy: it
  *   overwrites a file that exists on both sides but never deletes a destination file that a newer
  *   shipped skill version dropped. That gap is latent right now (the skill is one file, so there's
- *   nothing to leave behind) but would silently strand stale content the day the skill grows a second
+ *   no file to leave behind) but would silently strand stale content the day the skill grows a second
  *   file and a later version renames or removes it upstream. Removing the whole destination first
  *   turns "merge" into "replace," which is what a reinstall should mean.
  *
  *   No destination-side symlink can precede the copy in this pipeline, so the `unlink`-then-`copyFile`
  *   discipline `packages/release-kit/lib/weights/copy-weights.ts` needs (agents.md's "Pitfall: symlinks in the publish
  *   tarball") does not apply here: `rmSync` removes whatever sits at `destDir` — a symlink, a real
- *   directory, or nothing — as an unlink of that path itself, never by following it, so `cpSync`
+ *   directory, or no entry — as an unlink of that path itself, never by following it, so `cpSync`
  *   always writes into a directory it just created fresh. There is no step here that could write
  *   through a stale symlink the way a naive `fs.copyFile` onto an existing destination link would.
  *

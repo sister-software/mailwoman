@@ -23,7 +23,7 @@ each token, and label every token found in the table as a place.
 This approach works on a large fraction of real input, but it fails on common cases. In
 `Park Avenue`, `Park` is a place name somewhere, so the lookup labels the street as a town. In
 `Paris, TX`, the lookup has no reason to prefer the Texas Paris over the French one, because the table
-contains nothing about the `TX` next to it. In `Buffalo Health Clinic, Buffalo`, it finds `Buffalo`
+makes no statement about the `TX` next to it. In `Buffalo Health Clinic, Buffalo`, it finds `Buffalo`
 twice and cannot tell which one is the business and which is the town.
 
 All of these failures have the same cause. The lookup answers "is this string ever a place name", but
@@ -88,7 +88,7 @@ which place, and it produces no coordinate. The resolver does that after the par
 **It covers four component types.** A match becomes a bonus only when its place type has a model
 label: country, region, locality or postcode. The index holds more types than that. Querying `Boston`
 returns neighborhood entries as well as the locality. Entries outside those four types contribute
-nothing, because there is no label to apply the bonus to.
+no bonus, because there is no label to apply the bonus to.
 
 **It contains administrative names only, without streets or venues.** A gazetteer of specific street names
 would add several million entries, and the package does not ship one. A separate, much smaller
@@ -103,7 +103,7 @@ parse is wrong in a way that a place-name lookup would fix, the index will not f
 **It is a prior instead of a stage, so a missing index produces no error.** The runtime pipeline loads the
 index from the weights package on its first call and passes it to every parse. A classifier you
 construct and call directly receives no index. The parse still succeeds, but it is less accurate on
-the inputs the index is meant for, and nothing reports the difference. A bare `Hollywood` comes back
+the inputs the index is meant for, and it breaks silently. A bare `Hollywood` comes back
 as a street without the index and as a locality with it.
 [Library API](../../reference/library-api.mdx#wiring-the-gazetteer-index-on-a-bare-call) has the
 wiring and the measured difference.

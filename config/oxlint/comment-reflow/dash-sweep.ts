@@ -5,7 +5,7 @@
  * @author Teffen Ellis, et al.
  * @file The dash sweep: comment sentences that join two clauses with a dash, rewritten as two sentences.
  *
- *   `CommentSemicolons` closed the semicolon at error level and nothing closed the dash, so a sentence that wanted to
+ *   `CommentSemicolons` closed the semicolon at error level and no rule closed the dash, so a sentence that wanted to
  *   join two independent clauses reached for one instead. The count at the time this landed was 33 semicolons in
  *   comments against roughly 7,400 dashes doing a semicolon's work.
  *
@@ -189,7 +189,7 @@ export function sweepSentence(sentence: string): string {
 /**
  * Capitalise a sentence that opens in lower case.
  *
- * Nothing downstream can tell one of these from a clause.
+ * No downstream reader can tell one of these from a clause.
  * The reflow rule needs the capital to see a sentence, and a reader needs it for the same reason.
  */
 function openSentences(text: string): string {

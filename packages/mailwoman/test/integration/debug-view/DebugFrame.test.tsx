@@ -104,7 +104,7 @@ const BASE_DATA = {
  * Ink's raw write ends with a trailing "\n" (an empty final split element rather than an extra row).
  *
  * The string being split is one already-rendered terminal frame — small, bounded,
- * and never re-split or grown — so a spliterator adds nothing.
+ * and never re-split or grown — so a spliterator offers no benefit.
  */
 function frameLines(text: string): string[] {
 	// oxlint-disable-next-line mailwoman/prefer-spliterator -- one small fixed-size rendered frame rather than a stream
@@ -152,7 +152,7 @@ describe("DebugFrame", () => {
 			expect(text).toContain(label)
 		}
 
-		// ...and each row's value, so a label with nothing behind it fails.
+		// ...and each row's value, so a label with no value behind it fails.
 		expect(text).toContain("us (auto)")
 		expect(text).toContain("mode formatted")
 		expect(text).toContain("US 0.95")
@@ -168,7 +168,7 @@ describe("DebugFrame", () => {
 		)
 
 		// The rows keep their place (the input area's height is fixed) and each says it has
-		// nothing, never a fabricated system, an empty token list, or a zeroed channel.
+		// no evidence, never a fabricated system, an empty token list, or a zeroed channel.
 		expect(text).toContain("locale-head")
 		expect(text).not.toContain("us (auto)")
 		expect(text).not.toContain("not fed")

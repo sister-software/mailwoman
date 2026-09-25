@@ -131,7 +131,7 @@ export interface AblationCell {
 	 * Additive: rows excluded from the displacement percentiles because the row's own anchor never resolved.
 	 *
 	 * Not a failure of the deletion.
-	 * There was nothing to measure against.
+	 * There was no anchor to measure against.
 	 * Named so `gradedCount < support` is attributable.
 	 */
 	anchorUnresolvedCount: number
@@ -174,7 +174,7 @@ export interface AblationCell {
 	 * Additive: how far down the ladder the passing rows landed (0 = held at the base).
 	 *
 	 * `null` when no row in this cell was graded against a ladder, never 0,
-	 * which would read as "nothing degraded".
+	 * which would read as "no rung degraded".
 	 */
 	degradedRungsP50: number | null
 	degradedRungsMax: number | null
@@ -237,8 +237,8 @@ export interface AblationRowOutcome {
 	expectedRungDepth: number | null
 	expectedWhy: string
 	/**
-	 * Where the expectation came from: the derived ladder, a per-case `ablation_expect`
-	 * pin, or nothing (no ladder).
+	 * Where the expectation came from: the derived ladder, a per-case `ablation_expect` pin,
+	 * or no expectation (no ladder).
 	 */
 	expectedSource: "derived" | "override" | "no-ladder"
 	/**

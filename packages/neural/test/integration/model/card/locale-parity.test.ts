@@ -84,7 +84,7 @@ describe("fr-fr ↔ en-us model-card parity (#721 — fr-fr ships en-us's model 
  * The subset case is not a smaller claim, it is a wrong one.
  * A declared block suppresses the graph-inference back-compat path, so a missing channel is not inferred.
  *
- * It is dropped, and `required` defaulting to false means nothing fails closed.
+ * It is dropped, and `required` defaulting to false means no check fails closed.
  *
  * That is how en-gb ran the whole bundle off on a model trained with it (#1511),
  * and the same gap was later found on fr-fr, en-au and en-nz.

@@ -16,7 +16,7 @@
  *   - In-flight tool calls are rejected with a restart error. They were running against the old module graph and
  *     their results would be unattributable.
  *   - Background jobs die with the child (the worker's sigterm handler cancels them); the restart result includes the
- *     aborted-call count so nothing disappears silently.
+ *     aborted-call count so no job disappears silently.
  *   - Engines are rebuilt lazily by the next call, per the registry's own interface.
  *
  *   Crash policy: an unexpected exit rejects all pending calls and respawns once, immediately. Three unexpected exits
@@ -117,7 +117,7 @@ export interface RestartReport {
 	 * Empty when the worker held no running job.
 	 *
 	 * A failure to ask is reported in {@link killed_jobs_note} rather than as an empty list,
-	 * because "nothing was running" and "I could not find out" are different facts
+	 * because "no job was running" and "I could not find out" are different facts
 	 * and only one of them means a relaunch is unnecessary.
 	 */
 	killed_jobs: KilledJob[]
@@ -245,9 +245,9 @@ export class WorkerHost implements AsyncDisposable {
 		// the client needed to drop its stale schema.
 		const previousTools = stringifyJSON(this.tools)
 		// Asked before the kill, while there is still a registry to ask.
-		// A restart is usually run to pick up a source edit, which says nothing about
+		// A restart is usually run to pick up a source edit, which makes no statement about
 		// whether a long job is in flight, and the caller has no other way to find out:
-		// after the kill the id resolves to nothing.
+		// after the kill the id resolves to no job.
 		const { jobs: killedJobs, note: killedJobsNote } = await this.#runningJobs()
 
 		const aborted = this.#rejectPending(

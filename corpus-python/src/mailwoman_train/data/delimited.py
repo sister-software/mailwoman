@@ -2,7 +2,7 @@
 
 The corpus part files are stored as ``.jsonl.zst`` because the rows repeat heavily —
 measured 20.6x on ``br.corpus.jsonl`` and 25.1x on ``overture-jp.corpus.jsonl``. Every consumer
-streams them line by line, which is what makes that safe: nothing here, and nothing
+streams them line by line, which is what makes that safe: no reader here, and no reader
 on the TypeScript side, seeks into one.
 
 The equivalent on the TypeScript side is ``@mailwoman/core/fs/delimited``. Both must

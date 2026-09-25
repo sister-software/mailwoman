@@ -17,7 +17,7 @@ The fix is tokenizer-side and needs no GPU training:
 3. Mean-init the new embedding rows from their old-tokenizer constituents (FVT): E(new) = mean over the old
    tokenization of the new piece's surface. The encoder is left byte-for-byte untouched.
 
-The B-1 ablation (2026-07-01) showed step 3 alone is the fix — a 2k fine-tune added nothing and started to
+The B-1 ablation (2026-07-01) showed step 3 alone is the fix — a 2k fine-tune added no value and started to
 overfit. So the shipped artifact is the mean-init model, and US byte-identity is a guarantee (unchanged
 encoder + unchanged English input_ids -> identical logits), not an observation.
 

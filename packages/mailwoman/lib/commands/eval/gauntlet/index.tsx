@@ -97,7 +97,7 @@ const EvalGauntlet = harnessCommand(
 				weightsCacheRoot: options.weightsCache,
 				// ablation only.
 				// An absent flag must stay absent (→ every ablatable tag), so an empty string never becomes an
-				// empty filter, which would silently measure nothing and print a map of one header row.
+				// empty filter, which would silently measure no rows and print a map of one header row.
 				...(components ? { components: extractDelimited(components) } : {}),
 				// An unset flag must stay unset rather than become an explicit pin either way.
 				// The schema supplies its `false` default for both halves, and forwarding one

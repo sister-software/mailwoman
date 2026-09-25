@@ -55,7 +55,7 @@ export interface CoastalErosionObservation {
 	/**
 	 * The coverage side of the claim.
 	 *
-	 * Its basis is `source_present`, which supports presence and nothing else.
+	 * Its basis is `source_present`, which supports presence and no other claim.
 	 */
 	coverage?: ObservationCoverageRecord
 	/**
@@ -80,14 +80,14 @@ export interface CoastalErosionObservation {
  */
 export const COASTAL_REFUSALS = [
 	/**
-	 * The geocode reached no coordinate, so there is nothing to ask the layer about.
+	 * The geocode reached no coordinate, so there is no coordinate to ask the layer about.
 	 */
 	"no_coordinate",
 	/**
 	 * The authority's mapping assigns no erosion zone here under the scenario asked about.
 	 *
 	 * Not an absence claim: the location may be inland, or on the coast outside the
-	 * mapped risk area, and ncerm publishes nothing that tells those apart.
+	 * mapped risk area, and ncerm publishes no data that tells those apart.
 	 */
 	"no_designation_here",
 ] as const

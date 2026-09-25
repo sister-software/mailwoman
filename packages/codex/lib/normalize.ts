@@ -33,7 +33,7 @@ export function foldName(s: string): string {
 
 /**
  * Strip leading and trailing punctuation from every whitespace-separated word,
- * dropping words that were nothing but punctuation, and rejoin on single spaces.
+ * dropping words that were only punctuation, and rejoin on single spaces.
  *
  * Unlike {@link foldName} this preserves case and non-Latin scripts — it works on Unicode letter
  * and number classes, so `"Кыргызстан,"` and `"日本 。"` survive with their content intact.

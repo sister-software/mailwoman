@@ -8,7 +8,7 @@
  *   The provisioner finds each object by a catalog key, such as a lookup key, a metadata mark or a URL,
  *   and never by a stored Stripe ID. It compares the object with the catalog. When `apply` is true, it
  *   creates missing objects, updates changeable fields and replaces objects whose fields are fixed at
- *   creation. When `apply` is false, it writes nothing and reports the planned changes.
+ *   creation. When `apply` is false, it writes no object and reports the planned changes.
  *
  *   A Payment Link whose agreement version or consent collection differs is replaced, because Stripe
  *   fixes both at creation. A Price amount or a webhook API version that differs is only reported as

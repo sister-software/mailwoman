@@ -4,8 +4,8 @@
  * @author Teffen Ellis, et al.
  * @file Tests for {@linkcode APIClient} — pacing, the cooldown budget, bounded retry, and error mapping.
  *
- *   Every request is served by the shared `stubTransport` adapter, so nothing here touches the network, and every
- *   timing assertion runs against an injected clock, so nothing here sleeps on the wall clock.
+ *   Every request is served by the shared `stubTransport` adapter, so no request here touches the network, and every
+ *   timing assertion runs against an injected clock, so no test here sleeps on the wall clock.
  */
 
 import { APIClient } from "@mailwoman/core/api/APIClient"
@@ -108,7 +108,7 @@ describe("APIClient: requestsPerMinute cooldown (A1 concurrency regression)", ()
 
 		await drainMicrotasks()
 
-		// Nothing has driven the clock, so no cooldown can have lapsed: only the budget may have been spent.
+		// The clock has not advanced, so no cooldown can have lapsed: only the budget may have been spent.
 		expect(calls).toHaveLength(REQUESTS_PER_MINUTE)
 
 		// Drain: one cooldown (60000/2 = 30000ms) per budget's worth of requests.
@@ -518,7 +518,7 @@ describe("APIClient: the pacer and the cooldown compose (I4)", () => {
 		// Taking one and then blocking on a cooldown leaves it stale, and every caller
 		// holding a stale grant spends it the moment the cooldown lifts — measured as four
 		// pairs dispatching 0ms apart against a documented 100ms minimum.
-		// Latent while no client sets both, which is precisely why nothing caught it.
+		// Latent while no client sets both, which is precisely why no test caught it.
 		const INTERVAL_MS = 100
 		const FAN_OUT = 8
 

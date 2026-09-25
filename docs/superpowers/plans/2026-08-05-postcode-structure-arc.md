@@ -104,7 +104,7 @@ that such a table is close to useless as a spatial prior. The FR table is also t
 | Segment postcode strip                      | `neural/placetype-pair-prior.ts:677-684`, `:725-756`, `:773-813`             | `SEGMENT_PARENT_POSTCODE_SHAPES` (6 countries, patterns imported from codex so they cannot drift). Strips ≤2 trailing (and, for the 4 leading countries, leading) postcode words from a segment before it becomes a pair-index key. Whole-edge went 96.3% → 0.0% on `fr-lieudit-golden.jsonl` without it (`:1126-1128`) | ON                                 | 3             |
 | PCB1 anchor channel                         | `neural/postcode-binary-resolver.ts`, `neural/anchor-inference.ts`           | Per-piece feature vector: country posterior over `LOCALE_ORDER` (`anchor-inference.ts:24`) + quantized lat/lon. `ANCHOR_FEATURE_DIM = 11`                                                                                                                                                                               | Model-declared (`weights.ts:693`)  | 1 + 3         |
 | **The GB hole in PCB1**                     | `docs/records/evals/2026-08-05-en-gb-anchor-off.md`                          | Every training config points at one `pilot-anchor-lookup.json` holding 67,708 keys, **zero letter-containing**, covering US/DE/FR only. GB slot 4 never took a gradient. `postcode-gb.bin` fired on 106/120 gb-golden rows and cost exact postcode 318/318 → 294/318. Fixed #1467 by not shipping the artifact          | GB channel now resolves OFF        | —             |
-| PCN1 census                                 | `neural/placetype-census.ts`, wired `neural/placetype-pair-prior.ts:836-859` | Per-parent child-tag distribution with per-tag lift. **Observability only — nothing reads it back**, and the header carries no `delta` until a calibration measures one                                                                                                                                                 | Opt-in, zero-cost when off         | 2             |
+| PCN1 census                                 | `neural/placetype-census.ts`, wired `neural/placetype-pair-prior.ts:836-859` | Per-parent child-tag distribution with per-tag lift. **Observability only: no consumer reads it back**, and the header carries no `delta` until a calibration measures one                                                                                                                                              | Opt-in, zero-cost when off         | 2             |
 | Convention strategy weights                 | `resolver-wof-sqlite/convention.ts:63-67`                                    | Built-in default `["postcode_area_resolution", "fallback_fuzzy_name_match"]` at 0.6/0.3/0.1 (postcode/name/population)                                                                                                                                                                                                  | Effectively on in the FTS backend  | 2             |
 | `coincident-roles`                          | `resolver-wof-sqlite/coincident-roles.ts`                                    | **No postcode relationship at all** — build-time (admin, locality) same-name pairs, REGION tier, ~124 places. Listed here only to record that it is not part of this arc                                                                                                                                                | build-time                         | —             |
 
@@ -115,7 +115,7 @@ own flag is opt-in. `docs/engineering/reference/runtime-flags.mdx:49` also lists
 `postcodeConsistency` as default-off. All three statements are wrong.
 
 **Verified grep pitfall:** `file(1)` classifies `neural/placetype-pair-prior.ts` as `data`, so plain
-`grep` returns nothing on it. Use `grep -a`. An audit of that file without the flag gets a false
+`grep` returns no match on it. Use `grep -a`. An audit of that file without the flag gets a false
 negative.
 
 ### A.4 What the inventory says about the sketch
@@ -127,8 +127,8 @@ negative.
 - **Direction 2 reverse (the postcode confirms an ambiguous name) exists once**, as the #741
   short-circuit, and only for US postal cities through a side-index table.
 - **Direction 3 (partial codes encode ancestry) is not implemented anywhere.** The strip
-  implementation deletes the postcode from the pair key, and nothing reads a prefix as a prior. One
-  corpus recipe consumes the codex prefix tables, and nothing reads them at runtime.
+  implementation deletes the postcode from the pair key, and no mechanism reads a prefix as a prior. One
+  corpus recipe consumes the codex prefix tables, and no runtime consumer reads them.
 
 ## Part B — Measurements
 
@@ -243,7 +243,7 @@ form minus the last three characters, the same rule M-2 uses.
 
 **The file gives 80 districts without coordinates.** The NI tier of any mechanism here is therefore
 an ancestry tier rather than a coordinate tier. A BT district can assert "Northern Ireland" and a
-named district, and it must assert nothing about the location inside that district. Mechanism 3's
+named district, and it must assert no fact about the location inside that district. Mechanism 3's
 bar is written around this constraint.
 
 ### M-3: what the ZIP-prefix table buys
@@ -394,7 +394,7 @@ ranking chooses by population. `applyPostcodeConsistency` makes the same correct
 against `node.alternatives` (`resolve.ts:298-305`). This mechanism moves it earlier, so the
 alternatives list is built correctly in the first place instead of repaired afterward.
 
-**Artifact.** Nothing new. It reuses the postcode gazetteer that is already loaded. It does need the
+**Artifact.** No new artifact. It reuses the postcode gazetteer that is already loaded. It does need the
 postal-city side-index extended beyond the US, since `postal-city-alias-us.db` is the only one that
 exists.
 
@@ -434,7 +434,7 @@ the PIX1 pair index and the PCB1 anchor, and the country-evidence-layer runbook 
 **Where it lives.** It has two consumers, in this order:
 
 1. **The resolver**, as a coordinate/ancestry prior when the full code misses. This answers #1480
-   directly. Today a BT code that misses abstains and contributes nothing. With PFX1 it abstains on
+   directly. Today a BT code that misses abstains and contributes no coordinate. With PFX1 it abstains on
    the unit and still contributes its district.
 2. **The decoder**, later and only if step 1 clears its bars. This would be a soft prior on the
    country/region head keyed by the prefix, feeding the same boundary `neural/postcode-anchor.ts`
@@ -501,14 +501,14 @@ Three properties follow from the measurements above:
 **First three builds, in cost order:**
 
 1. GB outward: 2,863 nodes with coordinates and radius, taken directly from the Code-Point Open DB.
-   It costs nothing because the data is already loaded.
+   It incurs no cost because the data is already loaded.
 2. NI BT district: 80 nodes, ancestry-only, without coordinates.
 3. US 3-digit: 901 nodes. It needs a ZCTA join and is the only build that requires acquiring data.
 
 **D-rule.** The mechanism is opt-in behind `postcodePrefixPrior` and default-off. The first landing
 is data, a loader and an offline probe, with **no decode wiring**. This matches the PCN1 posture in
-`neural/placetype-pair-prior.ts:287-296`, where nothing reads the census back, and the code sets no
-delta and writes nothing to the matrix. The
+`neural/placetype-pair-prior.ts:287-296`, where no consumer reads the census back, and the code sets no
+delta and writes no value to the matrix. The
 header ships without `delta` until a calibration measures one. Promotion is checked per locale. GB
 and US are separate decisions with separate evidence, because their radius profiles differ by 45×.
 
@@ -551,7 +551,7 @@ to `0,0`. In that case, fix the plumbing before the artifact ships.
 ## Part D — Sequencing
 
 **None of this work needs a retrain or depends on a training batch.** Mechanisms 1 and 2 are
-resolver passes, and mechanism 3's first landing is data plus an offline probe. Nothing in Part C
+resolver passes, and mechanism 3's first landing is data plus an offline probe. No step in Part C
 requires a GPU, by design. Every mechanism is a decode-time or resolve-time change. The taxonomy
 reserves retraining for open-vocabulary distributional tags, and postcodes are not one.
 

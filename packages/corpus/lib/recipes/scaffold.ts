@@ -117,7 +117,7 @@ export type CSVRecord = Record<string, string | undefined>
  *
  * This is what a CSV reader here still owns.
  * Quote handling, object rows, and lower-case keys are `CSVSpliterator`'s defaults, so a recipe reads
- * a source with `CSVSpliterator.fromAsync(source).map(withoutLineBreaks)` and needs nothing else.
+ * a source with `CSVSpliterator.fromAsync(source).map(withoutLineBreaks)` and needs no further setup.
  *
  * @category CSV
  */
@@ -156,7 +156,7 @@ export function readCSVRecords(source: AsyncDataResource | AsyncChunkIterator): 
  * {@link readCSVRecords} over one member of a zip archive — what every recipe
  * reading a cached OA source wants.
  *
- * A source a checkout has not cached yields nothing, after saying so.
+ * A source a checkout has not cached yields no rows, after saying so.
  *
  * A lab holds the archives for the countries it has built, so a recipe naming ten
  * sources routinely finds three, and the `unzip -p` subprocesses these replaced behaved

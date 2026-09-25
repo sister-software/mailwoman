@@ -8,7 +8,7 @@
  */
 
 /* oxlint-disable sister-software/prefer-region-over-marks -- these markers label steps inside one
-   procedure rather than sections of declarations. A region there folds nothing a reader wants folded. */
+   procedure rather than sections of declarations. A region there folds no code a reader wants folded. */
 
 import { basename, type PathBuilderLike, resolvePath, resolvePathBuilder } from "path-ts"
 import { JSONSpliterator } from "spliterator"

@@ -61,7 +61,7 @@ function normalized(html: string): string {
 }
 
 /**
- * `alti-global-2025.htm` separates its entries with nothing but a double space,
+ * `alti-global-2025.htm` separates its entries with only a double space,
  * so no name/jurisdiction boundary exists to be found.
  *
  * Abstaining entirely is the required answer for it — see `expected.json`'s comment.

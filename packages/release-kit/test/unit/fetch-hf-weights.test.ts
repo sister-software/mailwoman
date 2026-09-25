@@ -46,7 +46,7 @@ describe("fetch-hf-weights — character-path families", () => {
 		})
 
 		expect(model?.expectedMD5).toBe(card.files_md5["model.onnx"])
-		// The committed vocabulary and card are tracked, so nothing else is planned.
+		// The committed vocabulary and card are tracked, so no other file is planned.
 		expect(plans.map((plan) => plan.filename)).toEqual(["model.onnx"])
 	})
 

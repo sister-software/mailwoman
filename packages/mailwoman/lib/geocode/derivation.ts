@@ -15,7 +15,7 @@ export const TRACE_SOURCE = "gazetteer"
 
 /**
  * Converts one resolve-trace record into a derivation node that says
- * which place was picked, or why nothing was.
+ * which place was picked, or why no place was.
  */
 export function traceToDerivationNode(record: ResolveNodeTrace): DerivationNode {
 	const label = `${record.tag}=${record.value}`
@@ -69,7 +69,7 @@ export interface TraceCollector {
 /**
  * Wraps a caller's trace sink so its records also build the result's `derivation`.
  *
- * Without a caller sink it records nothing and `attach` returns the result unchanged,
+ * Without a caller sink it keeps no records and `attach` returns the result unchanged,
  * so tracing stays opt-in.
  */
 export function traceCollector(callerSink: ResolveOpts["traceSink"]): TraceCollector {

@@ -77,10 +77,10 @@ corpus-python/
 
 **Interfaces:**
 
-- Consumes: nothing.
+- Consumes: no input.
 - Produces: `mailwoman_train.types.PieceSpan`, a frozen-field dataclass with `piece: str`, `piece_id: int`, `char_begin: int`, `char_end: int`. Every later task imports `PieceSpan` from `mailwoman_train.types`, never from `mailwoman_train.tokenizer`.
 
-The five deferred imports carry a comment claiming they keep `tokenizer.py` import-light. Check that behavior before removing them: `gazetteer_anchor.py` imports `json`, `re`, `collections.abc.Sequence`, `dataclasses.dataclass` and `.tokenizer`; `country_lexicon.py` imports `collections.abc.Sequence`, `.gazetteer_anchor` and `.tokenizer`. Neither reaches torch or any heavy dependency, so lifting them to module level costs nothing. Step 1 measures this rather than trusting the comment.
+The five deferred imports carry a comment claiming they keep `tokenizer.py` import-light. Check that behavior before removing them: `gazetteer_anchor.py` imports `json`, `re`, `collections.abc.Sequence`, `dataclasses.dataclass` and `.tokenizer`; `country_lexicon.py` imports `collections.abc.Sequence`, `.gazetteer_anchor` and `.tokenizer`. Neither reaches torch or any heavy dependency, so lifting them to module level adds no import cost. Step 1 measures this rather than trusting the comment.
 
 - [ ] **Step 1: Measure the import weight claim**
 
@@ -277,7 +277,7 @@ git commit -m "refactor(train): move PieceSpan to types.py and remove the deferr
 
 **Interfaces:**
 
-- Consumes: nothing from Task 1.
+- Consumes: no output from Task 1.
 - Produces:
   - `mailwoman_train.text.kana`: `fold_halfwidth_kana(text: str) -> str`, `kanji_to_int(text: str) -> int | None`
   - `mailwoman_train.text.normalize`: `norm_key(text: str) -> str`, `ascii_digits(text: str) -> str`, `normalize_text(text: str) -> str`
@@ -793,7 +793,7 @@ git commit -m "refactor(train): move schedules, noise, metrics and checkpointing
 - Consumes: `mailwoman_train.types.PieceSpan`.
 - Produces: `protocols.CorpusBuilder`, `protocols.CountryModule`, `protocols.TrainCallback`. Task 8 implements `TrainCallback`; Task 9 implements `CountryModule`.
 
-These are `typing.Protocol` declarations with `@runtime_checkable`, so a test can assert an implementation satisfies one without a base class. Nothing inherits from them.
+These are `typing.Protocol` declarations with `@runtime_checkable`, so a test can assert an implementation satisfies one without a base class. No class inherits from them.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -1331,7 +1331,7 @@ git commit -m "refactor(cli): one file per subcommand, absorbing the one-off scr
 
 **Interfaces:**
 
-- Consumes: nothing.
+- Consumes: no input.
 - Produces: `tests/launch/extract_current.py`, holding `extract_sync_functions(source: str) -> dict[str, SyncSpec]` where `SyncSpec` carries `rclone_commands: list[str]`, `check_paths: list[str]` and `pycache_paths: list[str]`.
 
 No test imports `modal/train_remote.py` today. So "the suite still passes" after the collapse would carry no information. This task writes the instrument first.
@@ -1426,7 +1426,7 @@ git commit -m "test(launch): pin the 57 sync functions before collapsing them"
 
 **Interfaces:**
 
-- Consumes: nothing.
+- Consumes: no input.
 - Produces: `launch` as an importable package. `modal run -m launch.train` replaces `modal run corpus-python/modal/train_remote.py`.
 
 The rename is forced rather than stylistic. Step 1 re-measures the reason.
@@ -1467,7 +1467,7 @@ Leave `docs/records/` alone. Those files are dated records and keep the path tha
 
 - [ ] **Step 5: the result still fires**
 
-The guard matches `head: "modal"` at `packages/dev-mcp/lib/hooks/bash/write/rules.ts:196` rather than a filename, so a renamed target changes nothing. Confirm by reading that rule, and update the fixture strings in `bash-write-guard.test.ts` to the new path so the test describes a command someone could type.
+The guard matches `head: "modal"` at `packages/dev-mcp/lib/hooks/bash/write/rules.ts:196` rather than a filename, so a renamed target changes no behavior. Confirm by reading that rule, and update the fixture strings in `bash-write-guard.test.ts` to the new path so the test describes a command someone could type.
 
 - [ ] **Step 6: Commit**
 
@@ -1616,7 +1616,7 @@ grep -rn 'mailwoman_corpus' --include='*.py' --include='*.toml' --include='*.jso
 git rm -r src/mailwoman_corpus
 ```
 
-Expected: the grep prints nothing before the delete. If it prints a hit, stop. The spec measured zero importers on 2026-09-12, so something has changed since.
+Expected: the grep prints no match before the delete. If it prints a hit, stop. The spec measured zero importers on 2026-09-12, so something has changed since.
 
 - [ ] **Step 5: Write the Python prefix check**
 

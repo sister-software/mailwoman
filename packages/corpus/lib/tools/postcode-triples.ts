@@ -17,7 +17,7 @@
  *     `localadmin`, and the region comes from that place's own ancestry. It is the only postcode database with this —
  *     every
  *     `postalcode-geonames-*` and `postalcode-<cc>-overture.db` row reads `parent_id = 0`.
- *   - **GeoNames postal exports** carry the place and admin1 names in columns 3 and 4, so there is nothing to join.
+ *   - **GeoNames postal exports** carry the place and admin1 names in columns 3 and 4, so there is no join to make.
  *     `mailwoman corpus fetch geonames-postal` puts them on disk.
  *
  *   A nearest-locality-centroid join was measured as the general fallback and rejected: scored against the `parent_id`
@@ -112,7 +112,7 @@ export type GeonamesLocalityColumn = "place" | "admin2"
  * AU and ZA are the worked examples of the bar.
  * Both look like obvious additions and neither qualifies: the board's AU rows
  * are bare-city (`Melbourne`, `Sydney, Australia`) and carry no postcode at all,
- * so nothing here says where AU writes it.
+ * so no source here says where AU writes it.
  *
  * And ZA's `14 Long St, Green Point, Cape Town, 8001` carries no region, which this recipe
  * requires — a fact its GeoNames export agrees with, at 100% place and 0% admin1.
@@ -132,7 +132,7 @@ export const POSTCODE_CONVENTIONS: ReadonlyMap<
 	["PT", { placement: "leading", locale: "pt-PT" }],
 	["MX", { placement: "leading", locale: "es-MX" }],
 	// `…, Barcelona 6001, Anzoátegui, Venezuela` — the four `ve_city_postcode_trailing_state` rows.
-	// No postcode source on disk and GeoNames does not publish VE, so this entry currently yields nothing.
+	// No postcode source on disk and GeoNames does not publish VE, so this entry currently yields no row.
 	// It is here because the placement is what makes the absence legible.
 	["VE", { placement: "after_locality", locale: "es-VE" }],
 	// `12 MG Road, Indiranagar, Bengaluru, Karnataka 560038, India`.
@@ -519,7 +519,7 @@ export type AdminPair = Omit<PostcodeTriple, "postcode" | "postcodePlacement">
  * admin gazetteer, with no postcode.
  *
  * The postcode-containing readers each need a source that pairs a code with a place,
- * and for a country that publishes no such source there is nothing they can return.
+ * and for a country that publishes no such source there is no row they can return.
  * Canada is the worked example: GeoNames publishes 1,657 CA rows, every postcode a three-character FSA
  * and column 3 an area label (`Vancouver (North Grandview-Woodlands)`) rather than a locality,
  * while `postalcode-ca-overture.db` carries 843,739 full codes with `parent_id = -1` on every row.
@@ -576,7 +576,7 @@ export async function readPairsFromAdmin(
 			const locality = surfaces.locality(cc, row.locality_id, row.locality)
 
 			for (const region of surfaces.region(cc, row.region_id, row.region)) {
-				// A pair whose region repeats its locality teaches nothing about the boundary
+				// A pair whose region repeats its locality carries no signal about the boundary
 				// the recipe exists for, and the recipe drops it anyway — dropping it here
 				// keeps the country budget from being spent on rows that vanish.
 				if (region === locality) continue
@@ -602,7 +602,7 @@ export async function readPairsFromAdmin(
  * `fovissste 3a Sección` — and a row teaching one of those as `locality` trains the
  * locality/dependent_locality boundary in the wrong direction.
  *
- * Dropping the row instead costs coverage and teaches nothing false, which is the better of the two.
+ * Dropping the row instead costs coverage and teaches no falsehood, which is the better of the two.
  *
  * @throws When the gazetteer is not on disk.
  * A predicate that accepted every name would emit the unfiltered rows as though the filter had run.
@@ -629,7 +629,7 @@ export async function createKnownLocalityCheck(
 
 	// An empty set means the gazetteer has no localities for this country at all,
 	// which is a coverage fact about the gazetteer rather than a verdict on the source .
-	// Therefore, check nothing rather than drop everything.
+	// Therefore, check no entry rather than drop everything.
 	if (!names.size) return () => true
 
 	return (name: string) => names.has(name.toLowerCase())
@@ -678,8 +678,8 @@ export async function createKnownLocalityCheck(
  * Hyphen-format countries publish each code twice (`3750-000` and `3750000`, exactly 2.00× for PT and PL),
  * so the first surface of a code wins and its twin is dropped.
  *
- * Some countries populate the place but not admin1 — ZA is 100% place, 0% region — which yields
- * nothing this recipe can use, so those rows are dropped rather than emitted with a blank region.
+ * Some countries populate the place but not admin1 — ZA is 100% place, 0% region — which yields no
+ * value this recipe can use, so those rows are dropped rather than emitted with a blank region.
  * And the "place name" is often a SUB-locality, which {@link createKnownLocalityCheck} filters.
  */
 export async function readTriplesFromGeonames(

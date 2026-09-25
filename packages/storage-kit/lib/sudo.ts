@@ -6,7 +6,7 @@
  *   Elevation for the one `mwops` verb that needs it.
  *
  *   This is the only module in the package that reads the process, because elevation is a property of the entry point
- *   rather than of an operation: re-exec'ing replaces the process, which nothing further down a call graph should be
+ *   rather than of an operation: re-exec'ing replaces the process, which no code further down a call graph should be
  *   able to do. Operations receive the resulting privilege as a plain boolean on their context.
  *
  *   The re-exec resolves symlinks before handing argv to `sudo`, so the path matches the absolute one pinned in

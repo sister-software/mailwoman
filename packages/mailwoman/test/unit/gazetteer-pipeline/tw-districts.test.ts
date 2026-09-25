@@ -57,7 +57,7 @@ describe("matchTaiwanRegion", () => {
 
 	test("a 縣市 no region answers to is an absence, not a guess", () => {
 		expect(matchTaiwanRegion("宜蘭縣", REGIONS)).toBeUndefined()
-		// The stem `新竹` names two regions, so it answers nothing.
+		// The stem `新竹` names two regions, so it answers no region.
 		expect(matchTaiwanRegion("新竹", REGIONS)).toBeUndefined()
 	})
 })

@@ -21,7 +21,7 @@ Check these before you start. Two of them will stop you partway through if they 
 - **About 750 MB of free disk.** Measured on Linux x64 on 2026-08-03, the three packages below plus
   their dependencies put 746 MB in `node_modules`. Of that, 500 MB is `onnxruntime-node`'s prebuilt
   binaries and 74 MB is the English model package. You pay this cost once per project, and parsing
-  adds nothing to it.
+  adds no further cost.
 - **An ESM project.** The packages are ESM-only. Either put `"type": "module"` in your
   `package.json` or name the script file `.mjs`, as this page does.
 

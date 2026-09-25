@@ -36,7 +36,7 @@ export const dataRootPath = createPathBuilderResolver<"~env/data-root">(() => $p
  * data root's top level and do not pass through here.
  *
  * The group name is a bare string in every path a caller composes, so the compiler
- * reports nothing when a call site keeps a pre-grouping prefix.
+ * reports no error when a call site keeps a pre-grouping prefix.
  * Such a call site resolves to a directory that does not exist, and every reader of
  * a layer database treats an absent file as an absent layer.
  *

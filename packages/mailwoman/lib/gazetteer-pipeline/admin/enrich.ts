@@ -7,7 +7,7 @@
  *   as separate scripts, now unskippable pipeline steps:
  *
  *   1. **Region abbreviations** (ports `scripts/add-region-abbrevs.ts`): WOF region records carry only
- *      the full name ("Illinois"); `findPlace('IL')` returned nothing, killing the parent-constraint
+ *      the full name ("Illinois"); `findPlace('IL')` returned no place, killing the parent-constraint
  *      the whole resolve walk depends on. Source of truth is the packaged chromium-i18n /
  *      libaddressinput dataset (`core/data/chromium-i18n/ssl-address/<CC>.json`): `sub_keys`
  *      (abbreviations) ↔ `sub_names` (full names), tilde-delimited and index-aligned.

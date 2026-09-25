@@ -152,7 +152,7 @@ strategic fork below.
 Ran `scripts/eval/eu-parse-blocker.ts` on the in-repo OA samples (1500 rows/locale, ship-config
 v4.11.0 parse, `normalizeCase` on). The proxy is **conditioned on whether the admin token appears in the
 input**. The first version was not, and it wrongly flagged ES/IT/NL as parser-blocked. OA writes "street,
-postcode locality", and the postcode implies the province without a separate token, so there is nothing to
+postcode locality", and the postcode implies the province without a separate token, so there is no token to
 split. The corrected results:
 
 | locale | region-in-input     | admin-split (when in input) | **loc-emit → loc-correct** | route                           |

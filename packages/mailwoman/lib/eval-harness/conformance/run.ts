@@ -11,12 +11,12 @@
  *   law suite is therefore a Gauntlet layer's worth of implementation plus a fixture file rather than a parallel runner
  *   with its own model loading, its own weights ladder and its own idea of what a result is.
  *
- *   both sides are observed, every time. Nothing here caches by query, because a fixture whose base and
+ *   both sides are observed, every time. No code here caches by query, because a fixture whose base and
  *   variant are the same string is the identity law — two independent runs that must agree — and answering
  *   the second one from a cache would turn the strongest available nondeterminism check into a tautology.
  *
  *   `undecidable` is A violation. A comparator that could not read its axis has not found a law holding. it
- *   has found nothing, and a suite that counted it as a pass would report the same total as a suite that
+ *   has found no violation, and a suite that counted it as a pass would report the same total as a suite that
  *   genuinely held.
  *
  *   `unmeasured` is neither, and leaves the denominator. It is the reading of a comparator that did read its
@@ -24,7 +24,7 @@
  *   report it, when a candidate left a table already sitting at its fetch window. Counting it as a failure
  *   would report the observer's blind spot as the pipeline's defect. counting it as a hold would report a
  *   blind spot as evidence. So {@linkcode summarizeConformanceRun} puts it in its own bucket, removes it from
- *   the row count the verdict is stated over, and a suite that can measure nothing at all reports `pass:
+ *   the row count the verdict is stated over, and a suite that can measure no row at all reports `pass:
  *   false` for the same reason an empty suite does.
  */
 
@@ -83,7 +83,7 @@ export function gauntletObserver(geocode: GauntletDeps["geocode"]): ConformanceO
  * A second observer rather than a flag on the first, because the walk's trace bookkeeping
  * is a real cost the four answer-axis laws have no use for.
  * `command.ts` chooses between them by reading the comparators the loaded rows actually name,
- * so a run that states no candidate law pays nothing.
+ * so a run that states no candidate law pays no cost.
  */
 export function tracedGauntletObserver(geocodeTraced: GauntletDeps["geocodeTraced"]): ConformanceObserver {
 	return async (query, context) => {
@@ -164,7 +164,7 @@ export interface ConformanceSummary {
  *
  * `pass` is false on an empty findings list for the same reason {@linkcode runConformanceFixtures}
  * refuses an empty suite, and false on a suite with no enforcing rows at all:
- * a run whose every row is tracked has measured nothing that could fail, and reporting
+ * a run whose every row is tracked has measured no fact that could fail, and reporting
  * it as a pass is how a suite quietly stops holding anything.
  */
 export function summarizeConformanceRun(findings: readonly ConformanceFinding[]): ConformanceSummary {

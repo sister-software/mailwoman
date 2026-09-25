@@ -251,7 +251,7 @@ _(PR A can be split off at this point if the operator wants the invariant shippe
 
 - Move: `mailwoman/gazetteer-pipeline.ts` → `mailwoman/gazetteer-pipeline/index.ts`
 - Modify: every importer — `git grep -l 'gazetteer-pipeline.js' mailwoman/` (the `commands/gazetteer/*.tsx` files import `../../gazetteer-pipeline.js` → becomes `../../gazetteer-pipeline/index.js`)
-- Modify: `mailwoman/package.json` — if an exports-map entry names `./out/gazetteer-pipeline.js`, update it to `./out/gazetteer-pipeline/index.js` (check first; add nothing new if absent)
+- Modify: `mailwoman/package.json` — if an exports-map entry names `./out/gazetteer-pipeline.js`, update it to `./out/gazetteer-pipeline/index.js` (check first; add no new entry if absent)
 
 **Interfaces:**
 

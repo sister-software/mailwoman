@@ -8,7 +8,7 @@ build the pruned tokenizer.model + pruned int8 model.onnx per the pre-registered
 
 Tokenizer surgery is the #825 `tokenizer_splice.py` idiom inverted: strip pruned pieces from the
 SentencePiece model proto, order-preserving. Unigram invariant: a piece that never won a Viterbi
-path contributes nothing to any other path's score, so segmentation is identical for every input
+path contributes no score to any other path, so segmentation is identical for every input
 whose best path avoided the pruned set — asserted downstream (bar B1), not hoped.
 
 ONNX surgery operates on the INT8 artifact directly: row-gather `token_embeddings.weight_quantized`

@@ -13,7 +13,7 @@
  *
  *   1. **A number never travels without its denominator.** `n_requested`, `n_evaluated`, `n_errored` are mandatory, and
  *      the confidence bound lives inside `summary` — the sentence an agent relays — rather than in a field it can drop.
- *   2. **Absence is reported as absence.** A stage that produced nothing says so and says why. nothing here fills in a
+ *   2. **Absence is reported as absence.** A stage that produced no result says so and says why. no line here fills in a
  *      value the pipeline did not produce.
  */
 

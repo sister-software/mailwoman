@@ -74,8 +74,8 @@ def test_a_met_floor_reports_no_failure() -> None:
 
 
 def test_a_country_the_split_holds_nothing_for_fails_on_both_counts() -> None:
-    # GB is the case the floor exists for. Reading its absence as "nothing to check" would make the
-    # strongest failure the one the check says nothing about.
+    # GB is the case the floor exists for. Reading its absence as "no rows to check" would make the
+    # strongest failure the one the check makes no statement about.
     report = _report({"val": {"US": {"rows": 100, "street_rows": 96}}})
     required = [ValidationCoverageConfig(country="GB", split="val", min_rows=1000, min_street_rows=500)]
 

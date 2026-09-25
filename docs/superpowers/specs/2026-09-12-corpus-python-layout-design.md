@@ -9,7 +9,7 @@ the extension work (declared protocols plus training callbacks) folded into the 
 `corpus-python/` is the one part of this repository that no structural check reads. The TypeScript side has
 `repo-health`, `dependency-cruiser`, `oxlint.plugin.ts` and the `HELPER_HOMES` table. The Python side has ruff, mypy
 and bandit, and none of them checks layout. The result is 48 flat modules, a 5,278-line launcher, and a
-duplicate-helper pattern that `AGENTS.md` describes for TypeScript and that nothing reports for Python.
+duplicate-helper pattern that `AGENTS.md` describes for TypeScript and that no check reports for Python.
 
 Two requirements shape the target. First, a reader can find where a thing lives. Second, the tree can hold every
 country. The per-country Python code today is eight modules for three countries, and the plan covers every country,
@@ -236,7 +236,7 @@ will add clone 58.
 ### 8.4 This part has no test coverage
 
 No test imports `modal/train_remote.py`, and only `test_verify_toolchain.py` reaches `scripts/`. The 983 tests passing
-after the collapse therefore say nothing about whether the collapse is correct.
+after the collapse therefore make no statement about whether the collapse is correct.
 
 Before collapsing, write a test that generates the command set and the check list for all 57 versions and compares
 them against the literal strings extracted from the current file. The collapse lands only when that test passes.
@@ -287,7 +287,7 @@ Each step ends green on the 983 tests, which run in 29.6 s, so every step is ind
 9. Mirror `tests/`, update quoted literals, add the Python prefix check and `py.typed`, widen mypy, and delete
    `mailwoman_corpus`.
 
-Steps 1 through 7 touch nothing a Modal run reads before merge. Step 8 changes every launch command, so it runs last.
+Steps 1 through 7 touch no file a Modal run reads before merge. Step 8 changes every launch command, so it runs last.
 
 ## 11. Acceptance criteria
 
@@ -318,4 +318,4 @@ Steps 1 through 7 touch nothing a Modal run reads before merge. Step 8 changes e
 - `corpus-python/` as a directory name. It appears as a string in `package.json`, `.husky/pre-commit`,
   `.github/workflows/test.yml`, `knip.json`, `oxlint.config.ts`, `.github/dependabot.yml`, `REPRODUCIBILITY.md`, and
   the R2 bucket layout that `launch/sync.py` reads.
-- Any training run. Nothing here launches one.
+- Any training run. No step here launches one.

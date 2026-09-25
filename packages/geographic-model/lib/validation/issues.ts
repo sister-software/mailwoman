@@ -8,7 +8,7 @@
  *   Every reader takes the issue list it appends to and returns `undefined` when it could not read the
  *   field. That shape is deliberate: a reader that threw would end the pass at the first defect, and a
  *   reader that substituted a default would convert "I could not read this" into a value, which at a
- *   validation boundary is the same as inventing one. Returning nothing, having said why, lets the
+ *   validation boundary is the same as inventing one. Returning undefined, having said why, lets the
  *   caller skip the checks that depended on the field and keep running the ones that did not.
  *
  *   `./validate.ts` re-exports {@link ValidationIssueCode} and {@link ValidationIssue}; the readers

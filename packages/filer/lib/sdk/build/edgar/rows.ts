@@ -47,7 +47,7 @@ export interface EdgarSubsidiaryRow {
 	/**
 	 * Jurisdiction of incorporation, when Exhibit 21 gave one ({@linkcode parseExhibit21}'s own
 	 * `unparseable` abstention already dropped any row this couldn't confidently extract — this field is
-	 * carried through for provenance/audit only. Nothing in this builder currently writes it to a column).
+	 * carried through for provenance/audit only. No code in this builder currently writes it to a column).
 	 */
 	jurisdiction?: string
 	/**
@@ -109,7 +109,7 @@ export function processEdgarSubsidiaryRow(
 	const matchedFRNs = canonicalSubsidiaryName ? (frnsByCanonicalLegalName.get(canonicalSubsidiaryName) ?? []) : []
 
 	// Corroboration — inference rather than authority, and only when unambiguous (exactly one match).
-	// Zero matches: nothing more to write, the disclosure edge above is the whole fact.
+	// Zero matches: no further row to write, the disclosure edge above is the whole fact.
 	// Two or more: a genuine name collision across distinct FRNs — abstain rather than guess
 	// which one, same as resolveCIKCandidates never silently narrowing a tie.
 	// Grading the survivors is not a substitute for abstaining on a tie, and the two answer

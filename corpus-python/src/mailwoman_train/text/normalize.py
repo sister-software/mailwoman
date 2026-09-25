@@ -2,7 +2,7 @@
 
 `normalize_text` is the join key the KEN_ALL probe and the TW builder both use. It arrived here as
 two names — `norm_key` in the JP builder and `normalize_text` in the TW one — whose bodies differed
-only by a trailing `.replace("　", "")` that removed nothing: `str.split()` already treats U+3000 as
+only by a trailing `.replace("　", "")` that removed no character: `str.split()` already treats U+3000 as
 whitespace, so both spellings answered identically on every input.
 """
 

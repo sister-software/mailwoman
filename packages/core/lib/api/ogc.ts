@@ -17,7 +17,7 @@ import { stringifyJSON } from "#json"
 /**
  * The error an OGC `ServiceExceptionReport` becomes.
  *
- * The report arrives on an http 200, so nothing upstream maps it: a caller that
+ * The report arrives on an http 200, so no upstream layer maps it: a caller that
  * does not ask reads the exception body as an empty answer.
  */
 export class OGCServiceError extends Error {
@@ -53,7 +53,7 @@ const EXCEPTION_OPEN = "<ServiceException"
  * backtracks polynomially on a body whose opening tag has no closing partner,
  * and this body is whatever a network service returned.
  *
- * Two more things it has to get right, both of which cost nothing here: the tag name
+ * Two more things it has to get right, both of which add no cost here: the tag name
  * must END at the match, because `<ServiceExceptionReport xmlns="…">` shares the prefix
  * and taking it captures the entire report as the message.
  * And an unclosed element reads as unreadable rather than as empty.

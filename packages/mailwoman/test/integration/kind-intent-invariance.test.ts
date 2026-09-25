@@ -267,7 +267,7 @@ describe("ROAD_TO_V9 §4 — zero reclassification over the regression corpus", 
 			}
 		}
 
-		// Both registers of each row, and nothing else.
+		// Both registers of each row, and no other input.
 		// Compared as sets of inputs: the corpus may legitimately carry the same
 		// surface in two boards ('Rua Augusta' is a Lisbon case and a São Paulo case),
 		// and the population claim is about distinct inputs rather than case rows.
@@ -276,7 +276,7 @@ describe("ROAD_TO_V9 §4 — zero reclassification over the regression corpus", 
 		)
 
 		// Every one is a declared fork, and every one kept its incumbent top kind.
-		// The second assertion is the answer-neutrality claim: a marker rode along, nothing was rerouted.
+		// The second assertion is the answer-neutrality claim: a marker rode along and no row was rerouted.
 		expect(new Set(marked.flatMap((m) => m.codes))).toEqual(new Set(["declared_fork"]))
 
 		// `landmark` and `locality_only`, and the split is by register: `scoreVenueLandmark`

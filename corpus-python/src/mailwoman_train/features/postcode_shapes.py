@@ -15,7 +15,7 @@ copy, because ``test_postcode_shapes`` fails on any byte of difference.
 The arrangement replaces two hand-typed tables, one per language, kept in step by a comment reading
 "keep the two in lockstep". That did not hold twice: the IE Eircode row was TypeScript-only for a
 month and the BR CEP row for five weeks, and both times this side painted one fewer shape than
-inference with nothing failing.
+inference with no failure.
 
 WHAT THIS SIDE READS. Every row except those the record marks ``javascriptOnly``. There is one: the
 〒-marked Japanese row, whose ``(?<=〒\\s?)`` is a variable-width lookbehind — legal in JavaScript,

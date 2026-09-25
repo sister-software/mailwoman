@@ -7,7 +7,7 @@
  *   BAN carries `certification_commune` per address: 1 when the commune certified the address, 0 when it did not. A
  *   commune whose every point is certified is one the authority has declared whole, and a miss inside it is evidence of
  *   absence — `designated`, in the vocabulary of `@mailwoman/evidence`. A commune with one uncertified point, or with
- *   no flag at all, is `source_present`: rows exist, and nothing has been said about what is missing. The basis is
+ *   no flag at all, is `source_present`: rows exist, and no statement has been made about what is missing. The basis is
  *   never inferred from a share (71.9% certified is not "mostly designated"); it is the commune's own total, and the
  *   cell inherits the weakest basis of the communes whose points fall in it.
  */

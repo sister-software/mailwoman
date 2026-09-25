@@ -71,9 +71,9 @@ steps to follow.
 
    **The opt-in half: a default-off path must ship with tests that turn it on.** Shipping opt-in is
    one of the three compliant options above, so default-off is where most new mechanisms land. An
-   untested default-off path breaks without anyone noticing. Nothing exercises it, so no test fails
+   untested default-off path breaks without anyone noticing. No test exercises it, so no test fails
    when a refactor breaks it, and the flag's first real use is also its first execution. A mechanism
-   behind a flag is still shipped code. The flag controls who runs it, and it says nothing about
+   behind a flag is still shipped code. The flag controls who runs it, and it makes no statement about
    whether the mechanism works. Every `ResolveOpts` / config flag therefore needs at least one test
    that sets it to true and asserts the mechanism's own behavior. A test that only checks that the
    default path stays byte-stable covers the other half, which is also required.

@@ -421,7 +421,7 @@ export async function buildCoverageTiles(
 	// A salient place we don't cover is a gray hole = work to do.
 	// We model it as fog = salience·(1−cov): • salience ∈ [0,1] — WOF settlement places
 	// weighted by population/importance (a 1-ring halo), so
-	//     a big uncovered city is a dark hole, a hamlet a faint one, the empty steppe nothing.
+	//     a big uncovered city is a dark hole, a hamlet a faint one, the empty steppe a blank.
 	//   • cov ∈ [0,1] — postcode presence (GeoNames) clears the hole (a postcode = we can geocode here).
 	//     US is excluded — the rooftop fine map above already covers it at street level.
 	// Only cells with residual fog (uncovered salient places) are emitted, so the layer

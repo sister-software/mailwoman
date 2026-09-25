@@ -7,7 +7,7 @@
  *   exclusion-grade basis: one class, one named administrative region, completeness measured rather than
  *   asserted (#1964).
  *
- *   Everything else in this pipeline writes `basis: source_present`, which supports presence and nothing
+ *   Everything else in this pipeline writes `basis: source_present`, which supports presence and no other basis
  *   else. This command is the one path to `basis: surveyed`, and what it costs to take it is a second,
  *   independent inventory of the same class in the same region: it extracts the class from a Geofabrik
  *   `.osm.pbf`, reads the same class out of an already-sealed reference layer, matches the two under a

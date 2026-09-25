@@ -2,7 +2,7 @@
 
 `train` takes it as an override and `smoke` defaults it to `constant`, so it lives beside them
 rather than inside either. It is CLI policy rather than config: `constant` overrides whatever schedule the
-recipe named, and `long-tail` changes nothing but warns.
+recipe named, and `long-tail` changes no behavior but warns.
 """
 
 from __future__ import annotations

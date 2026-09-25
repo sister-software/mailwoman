@@ -449,7 +449,7 @@ export class NeuralAddressClassifier {
 		}
 
 		// These lists are null when not tracing, and every recording call below is guarded
-		// so a plain parse allocates nothing for the trace.
+		// so a plain parse allocates no trace arrays.
 		const tracePriors: TracePrior[] | null = trace ? [] : null
 		const traceRepairs: TraceRepair[] | null = trace ? [] : null
 

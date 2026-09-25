@@ -34,10 +34,10 @@
  *
  *   Reading `out` as "no bias applies" is the trap this field exists to prevent, and the builder's first
  *   version fell into it by declaring `popBias: 0` for every `out` row instead of measuring. Both fields are
- *   measured for every row, always. a zero here means the FST accepted nothing for that surface, which is
+ *   measured for every row, always. a zero here means the FST accepted no entry for that surface, which is
  *   a fact about the gazetteer rather than a default.
  *
- *   meaning OF zero, on tolerances. A coordinate assertion is all-or-nothing and never defaulted: a row
+ *   meaning OF zero, on tolerances. A coordinate assertion is all-or-none and never defaulted: a row
  *   either carries `expectLat` + `expectLon` + `expectToleranceM` together, or asserts no coordinate at
  *   all. {@linkcode HardCaseSchema} refuses every partial combination. A silently-defaulted
  *   tolerance is a number nobody chose, and a row with a coordinate but no tolerance would inherit a bar
@@ -201,7 +201,7 @@ const COORDINATE_ASSERTION_FIELDS = 3
 /**
  * The runtime shadow.
  *
- * `strictObject`, and the coordinate triple is refined as all-or-nothing:
+ * `strictObject`, and the coordinate triple is refined as all-or-none:
  * a typo'd `expectLon` that silently read as "coordinate not asserted" is exactly
  * the input-tail defect this board exists to make loud.
  */
@@ -279,7 +279,7 @@ export function canonicalizeHardCase(c: HardCase): HardCase {
 		const value = c[key]
 
 		// `Object.assign` rather than `out[key] = value`: a dynamic key widens the write
-		// target to the intersection of every field type, which nothing satisfies.
+		// target to the intersection of every field type, which no value satisfies.
 		// The accumulator keeps its own type either way.
 		if (value !== undefined) {
 			Object.assign(out, { [key]: value })

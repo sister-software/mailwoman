@@ -72,7 +72,7 @@ Mailwoman would be a mistake.
 
 - **Your queries are not addresses.** Examples include "Starbucks near Union Station", a business name
   without a street, or a half-typed landmark. These are place-search problems over a business graph,
-  and a parser has nothing to label. Mailwoman will still parse the input, and the result will be
+  and a parser has no field to label. Mailwoman will still parse the input, and the result will be
   wrong.
 - **You need uniform global coverage today.** A hosted API covers every country the day you sign up.
   Mailwoman covers the locales where a coordinate-graded evaluation exists, and results elsewhere are
@@ -82,7 +82,7 @@ Mailwoman would be a mistake.
   IDs, a second geocoder gives you two place graphs to reconcile. Consistency within one system is
   worth more than the marginal benefits of another one.
 - **Your volume is low and engineering time is scarce.** Below the volume where per-request pricing
-  becomes a material cost, sourcing and refreshing reference data is ongoing work that gains you nothing.
+  becomes a material cost, sourcing and refreshing reference data is ongoing work that gains you no benefit.
 - **You have no place to put 1.65 GB.** The gazetteer needs a disk. A serverless function with a
   small bundle limit and no attached volume is a poor host for this design.
   [Deploy serverless](../../developers/how-to/deploy-serverless.mdx) describes the shapes that work.

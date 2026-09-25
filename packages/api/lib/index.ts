@@ -6,7 +6,7 @@
  *   `@mailwoman/api` — the native Mailwoman http API: an engine-agnostic `/v1` surface (parse,
  *   geocode, batch, resolve, format) alongside health, metrics, and an emitted OpenAPI document.
  *   Unlike its drop-in siblings (`@mailwoman/nominatim`, `@mailwoman/photon`,
- *   `@mailwoman/libpostal`), nothing here mimics a third-party API — this is Mailwoman's own wire
+ *   `@mailwoman/libpostal`), this surface mimics no third-party API — this is Mailwoman's own wire
  *   interface, so schemas are strict and validator-enforced rather than tolerant of legacy quirks.
  *
  *   Like its siblings, the package is engine-agnostic: routes take a {@link MailwomanAPIEngine}; the

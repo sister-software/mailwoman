@@ -28,7 +28,7 @@ which; and you'll know what `uncertainty_m` is measuring in each one. About twen
 
 One paragraph of recap, because everything below depends on it. The candidate-table gazetteer ranks
 same-named places population-first, is the backend the hosted demo uses, and since `8.7.0` is the
-default: a `candidate.db` at `<data root>/db/wof/candidate.db` is picked up with nothing configured. The
+default: a `candidate.db` at `<data root>/db/wof/candidate.db` is picked up with no configuration. The
 alternative is a full-text-search path over a WOF admin distribution, which ranks by relevance instead
 and answers some queries differently. You reach it by pinning `--candidate-db none`, and it is not a
 comparison you can run here anyway, because `data pull` publishes no bundle for that database and it
@@ -53,13 +53,13 @@ hierarchy:
   region               DC [wof:85688741] (38.9048, -77.0163)
 ```
 
-The house number was parsed — it's in the input line — and then nothing was consulted that knows where
-house numbers are. The coordinate is Washington's, identical to the one every other Washington address
+The house number was parsed, and it is in the input line, yet no source that knows where house numbers
+are was consulted. The coordinate is Washington's, identical to the one every other Washington address
 returns. No `uncertainty_m` line, because the admin tier does not report one.
 
 ## 2. Check what the download costs before you start it
 
-`--dry-run` touches the network only to plan, writes nothing, and prints the exact bytes and
+`--dry-run` touches the network only to plan, writes no file, and prints the exact bytes and
 destinations.
 
 ```bash
@@ -85,7 +85,7 @@ out of the 103. Drop it and you get the whole 41.3 GB tier.
 
 A small download is not a cheap state, and the plan is where you can tell the two apart. New Hampshire's
 rooftop register downloads, verifies and installs at 20,480 bytes — and holds 0 rows. The file exists;
-the tier it should serve does not, and nothing reports an error, because a database with no matching row
+the tier it should serve does not, and no error is reported, because a database with no matching row
 and a database with no rows at all look identical from the lookup. NH addresses fall through to its
 interpolation database, which is a real 57.6 MB. Read the sizes in the dry-run as a coverage signal before
 you plan around a state.
@@ -118,7 +118,7 @@ parse resolved.
 
 ## 4. See the tier you have now
 
-Same command, same shell, nothing else changed:
+Same command and same shell, with no other setting changed:
 
 ```bash
 npx mailwoman geocode "1275 Pennsylvania Ave NW, Washington, DC 20004" --format text
@@ -200,7 +200,7 @@ in a fixed order — locality, then dependent locality, then postcode, then regi
 takes the first with a coordinate. Which is why the DC address in step 1 returned Washington's centroid
 and not its ZIP Code's, even though both resolved.
 
-That ordering matters when the locality is missing. A bare postcode has nothing above it:
+That ordering matters when the locality is missing. A bare postcode has no locality above it:
 
 ```bash
 npx mailwoman geocode "20004" --format text
@@ -214,10 +214,10 @@ postcode:         20004
 ```
 
 That is in Germany. `20004` is a valid postcode in at least Germany, Spain, the United States and
-Poland. This gazetteer holds a row for each — and a bare five-digit string carries nothing that says
+Poland. This gazetteer holds a row for each — and a bare five-digit string carries no signal saying
 which. `--locale en-US` does not rescue it: with the candidate backend active the locale stops implying
 a country filter, which is the same design that lets a French address resolve in France while the locale
-still reads `en-US`. Nothing scoped this query, so the global ranking decided it.
+still reads `en-US`. No filter scoped this query, so the global ranking decided it.
 
 A bare postcode is ambiguous across countries and the result will not warn you — so scope it, either
 with `--default-country` or by sending the city along with it:
@@ -295,7 +295,7 @@ hierarchy:
   locality             Paris [wof:1159322569] (48.8566, 2.3428)
 ```
 
-An FR result is therefore rooftop or city, with nothing between — so branch on `resolution_tier` rather
+An FR result is therefore rooftop or city, with no intermediate tier, so branch on `resolution_tier` rather
 than on `uncertainty_m` being small, and treat an `admin` answer in France as a miss to re-check rather
 than as a coarse hit. Parsing French addresses well is a separate download,
 `@mailwoman/neural-weights-fr-fr`; [What ships today](../status.mdx) has the per-locale picture.

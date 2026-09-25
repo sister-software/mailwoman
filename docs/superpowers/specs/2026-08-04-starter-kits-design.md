@@ -20,7 +20,7 @@ The ten-minute trial still asks a developer to assemble a project by hand. Start
 
 - **`templates/<kit>/`** — a complete minimal project: `package.json` with versions **stamped at publish time** from the workspace release (never `latest`), a first-run script opening with `mailwoman doctor`, the kit's worked example lifted from its tutorial, a `smoke.sh` asserting the first command's output, a generated-header README. Shared scaffolding (data-pull bootstrap, doctor-first) lives once under `templates/_shared/` and is composed at build.
 - **`@mailwoman/create`** — prompts: project name, template (skipped when preselected), offer-not-run for `data pull` (print the command; never download during scaffold). Copy → rename → `npm install` → print next steps. Node floor mirrors the `mailwoman` package's engines.
-- **Shims** — depend on the engine, pass the template name, nothing else.
+- **Shims** — depend on the engine, pass the template name, and no more.
 - **Repo sync** — a release-time CI job renders each template (stamped versions) and force-pushes to its `mailwoman/starter-*` repo; repo settings: template flag on, issues off (or a redirect note), the generated banner in the README.
 - **Docs integration** — trial page gains the one-liner entry; each tutorial links its starter as the skip-the-setup path; Product capabilities links the org's starter repos.
 

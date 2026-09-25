@@ -9,7 +9,7 @@
  *   records no per-slice overlay marker, and the `source` field that `overlay-manifest` writes is absent from overlays
  *   assembled before it existed.
  *
- *   Each migrated file is written beside its original as `<name>.migrated.parquet`. Nothing is swapped: pass the
+ *   Each migrated file is written beside its original as `<name>.migrated.parquet`. No file is swapped: pass the
  *   migrated files to `mailwoman corpus overlay-manifest` to assemble the new corpus, so the existing corpus stays
  *   readable by the code that built it.
  */

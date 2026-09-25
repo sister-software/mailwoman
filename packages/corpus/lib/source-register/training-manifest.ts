@@ -108,7 +108,7 @@ export function trainingManifestDigest(manifest: TrainingManifest): string {
  * `decisionsByLicense` is the register's decision table as the build read it.
  * A license the table does not carry records `decision: null` rather than being omitted:
  * the row count is an observation either way, and dropping the source would make a build
- * that read an unregistered adapter indistinguishable from one that read nothing.
+ * that read an unregistered adapter indistinguishable from one that read no source.
  */
 export function freezeTrainingManifest(input: {
 	corpusVersion: string

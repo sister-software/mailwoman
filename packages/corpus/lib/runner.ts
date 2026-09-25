@@ -341,7 +341,7 @@ function assertEmittedRow(adapter: CorpusAdapter, row: CanonicalRow): void {
 
 	// The shape as well as the presence.
 	// `country_weights` is keyed by this value and every country filter compares it, so a code outside
-	// the shape trains on nothing and matches no filter while every count of those rows reads ordinary.
+	// the shape trains on no rows and matches no filter while every count of those rows reads ordinary.
 	// The shape rather than ISO membership, because `ZZ` and `XK` are both legitimate here
 	// and neither is an ISO member.
 	if (!isAlpha2CodeShape(row.country)) {

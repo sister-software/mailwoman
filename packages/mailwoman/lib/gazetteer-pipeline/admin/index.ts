@@ -245,7 +245,7 @@ export async function buildAdmin(opts: BuildAdminOptions = {}): Promise<BuildAdm
 		out,
 		adminLayerManifest({
 			// The counts the build actually produced rather than the lists it was given.
-			// A fold that ingested nothing must not appear as a source — see manifest.ts.
+			// A fold that ingested no places must not appear as a source — see manifest.ts.
 			counts: { wof: ingest.placesIngested, overture: overtureIngested, geonames: folded.placesIngested },
 			buildSHA: sha,
 			vintages: { overture: overtureRelease },

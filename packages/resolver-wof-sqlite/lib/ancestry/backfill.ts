@@ -42,7 +42,7 @@
  *   `scripts/backfill-ancestors-from-hierarchy.ts` is a thin CLI over the same function for ad-hoc
  *   repair of an already-built DB. Idempotent by the per-pair existence check rather than by the candidate
  *   test: each (id, ancestor_id) is inserted at most once, so a second run over the same DB adds
- *   nothing.
+ *   no row.
  */
 
 import { readWOFFeature } from "@mailwoman/core/resources/whosonfirst"

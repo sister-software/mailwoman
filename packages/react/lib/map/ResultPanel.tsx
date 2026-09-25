@@ -40,7 +40,7 @@ export interface ResultPanelProps {
 	 */
 	extras?: (result: ParseResult) => ReactNode
 	/**
-	 * Host-injected no-resolve diagnostic, rendered when nothing resolved.
+	 * Host-injected no-resolve diagnostic, rendered when no place resolved.
 	 */
 	failure?: (result: ParseResult) => ReactNode
 }

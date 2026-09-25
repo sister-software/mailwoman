@@ -20,7 +20,7 @@
  *   this country", where a missing shipping locale reads to the operator as a country with no weights (`ja-jp` and
  *   `zh-cn` were in exactly that state). That table was a hand-written copy of this config's two lists, which is why
  *   it could disagree at all. It is now derived by `@mailwoman/core/release-config`'s `weightsPackageByCountry`, so
- *   it cannot, and the invariant moved to that derivation's own test. Retired here rather than left binding nothing:
+ *   it cannot, and the invariant moved to that derivation's own test. Retired here rather than left binding no keys:
  *   a completeness check whose one table has been deleted reports a clean run.
  *
  *   agreement binds every one. A country key must equal its locale's region subtag: `GB` takes `en-GB`, never
@@ -28,7 +28,7 @@
  *   weights and reports a plausible score for the wrong artifact.
  *
  *   what is deliberately not checked: a table naming a locale that does not ship. `FST_LOCALE_BY_COUNTRY` carries
- *   `KR: "ko-kr"` ahead of the Korean package, and the ladder resolves an FST by path and answers nothing when the
+ *   `KR: "ko-kr"` ahead of the Korean package, and the ladder resolves an FST by path and returns no answer when the
  *   file is absent, so the forward-looking entry costs a warning line and no wrong reading. An error there would
  *   fire for the length of every arc that names its locale before shipping it.
  */
@@ -158,8 +158,8 @@ export async function findLocaleTables(context: {
 	trackedFiles: readonly string[]
 }): Promise<LocaleTable[]> {
 	// `existingOnly`: the index can name a file the working tree no longer has.
-	// A rename staged and not committed is enough — and this walk opens every path it is given, so the
-	// absent one throws enoent and the check fails for a reason that has nothing to do with the tables.
+	// A rename staged and not committed is enough — and this walk opens every path it is given,
+	// so the absent one throws enoent and the check fails for a reason that is unrelated to the tables.
 	// Every other tracked-file walk in this package passes it.
 	const sources = (await trackedSourcePaths(context, { existingOnly: true }))
 		.map((path) => relative(context.repoRoot, path))

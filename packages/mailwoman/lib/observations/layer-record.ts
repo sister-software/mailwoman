@@ -69,7 +69,7 @@ export function observationLayerRecord(manifest: LayerManifest): ObservationLaye
 }
 
 /**
- * A reader's coverage row as the record a designation carries, or nothing where the reading had none.
+ * A reader's coverage row as the record a designation carries, or no record where the reading had none.
  *
  * Absent rather than zeroed where the layer holds no coverage row for the cell:
  * a missing row means unknown, and a record reading `completeness: 0` would say the opposite.

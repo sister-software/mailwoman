@@ -56,7 +56,7 @@ const ANNEXE_C_OSGB36 = { latitude: dms(52, 39, 27.2531), longitude: dms(1, 43, 
  * Annexe D uses the same Helmert this module does, so agreement here proves the implementation —
  * the parameter signs, the Position-Vector rotation convention, the cartesian round trip.
  *
- * It says nothing about how close the Helmert is to OSTN15 truth.
+ * It makes no statement about how close the Helmert is to OSTN15 truth.
  * That is the separate 40-point test below.
  */
 const ANNEXE_D_GRID = { easting: 422_297.792, northing: 412_878.741 }
@@ -117,9 +117,9 @@ test("the Helmert reproduces OS's Annexe D worked example to the centimetre", ()
 	expect(Math.abs(airy.latitude - ANNEXE_D_OSGB36.latitude) * 3600).toBeLessThan(1e-3)
 	expect(Math.abs(airy.longitude - ANNEXE_D_OSGB36.longitude) * 3600).toBeLessThan(1e-3)
 
-	// And the shift must be a real correction rather than a no-op: OSGB36
-	// and WGS84 differ by ~70-120 m across GB, so a Helmert that silently did nothing
-	// would still look close to the OSGB36 intermediate.
+	// And the shift must be a real correction rather than a no-op: OSGB36 and WGS84
+	// differ by ~70-120 m across GB, so a Helmert that silently left the coordinate
+	// unchanged would still look close to the OSGB36 intermediate.
 	expect(offsetMeters(got, ANNEXE_D_OSGB36)).toBeGreaterThan(50)
 })
 

@@ -58,7 +58,7 @@ export interface GoldenRelabelFlag {
  */
 export interface GoldenRelabelResult {
 	/**
-	 * The row to write, which is the input object itself when nothing changed.
+	 * The row to write, which is the input object itself when no field changed.
 	 */
 	row: GoldenStreetRow
 	changed: boolean
@@ -154,7 +154,7 @@ export interface RelabelStreetRowOptions {
 /**
  * Splits the street span of one US golden row.
  *
- * The function never mutates its argument and returns the input row itself when nothing changes.
+ * The function never mutates its argument and returns the input row itself when no field changes.
  *
  * @throws When the split spans do not rebuild the original street byte for byte.
  */

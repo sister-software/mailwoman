@@ -58,7 +58,7 @@ async function fetchComplete(
 /**
  * How much of a body has arrived.
  *
- * `total` is what the response declares, or `null` when it declares nothing.
+ * `total` is what the response declares, or `null` when it declares no total.
  *
  * A retry restarts the count at zero, which is the truth: the bytes from the lost
  * attempt are gone and the transfer begins again.

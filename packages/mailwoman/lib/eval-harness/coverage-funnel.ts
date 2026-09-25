@@ -218,7 +218,7 @@ export async function readCoverageFunnel(input: CoverageFunnelInput): Promise<Co
 			: { state: StageState.Absent, detail: "absent from the training config's country_weights" }
 
 		// An admitted country missing from the audit drew zero rows and is blocked.
-		// A country that is not admitted is absent because the sampler had nothing to draw.
+		// A country that is not admitted is absent because the sampler had no row to draw.
 		const sampledCount = input.sampledRows?.get(iso2)
 
 		const sampled: StageReading = !input.sampledRows

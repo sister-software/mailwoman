@@ -269,7 +269,7 @@ describe("buildAnchorFeatures — span modes", () => {
 /**
  * #1512 — the shaped keyer and the lowercase register.
  *
- * `POSTCODE_PATTERNS`' alphanumeric shapes require `[A-Z]`, so `collectMatches` finds nothing in raw
+ * `POSTCODE_PATTERNS`' alphanumeric shapes require `[A-Z]`, so `collectMatches` finds no match in raw
  * lowercase and the shaped keyer fired 0/120 on the gb-golden board when case normalization was off.
  *
  * The default parse path never saw it because `normalizeInputCase` restores GB postcode

@@ -57,7 +57,7 @@ auto-run fires.
 One new flake vector worth knowing about if one ever appears: when the auto-run finishes before the
 fixture presses Enter, `submit()`'s wait for "Parsed components" is satisfied by the first run's panel
 while the second is still in flight. Both runs carry the same query and render the same DOM, so there
-is nothing observable to differ. That same timing is the reason a second run happens at all.
+is no observable difference. That same timing is the reason a second run happens at all.
 
 ---
 
@@ -77,7 +77,7 @@ Three leaks, fixed in 86e85929f:
 
 1. `WebONNXRunner` held `modelBytes` for its whole life. `InferenceSession.create` copies the graph into
    the runtime's own heap, so that was a second full copy of a 38 MB model, kept for the page's life,
-   for nothing. Dropped as soon as a session owns it.
+   to no purpose. Dropped as soon as a session owns it.
 2. `WebONNXRunner.release()` did not exist. It does now, and is what hands the session's memory back.
    Safe to call twice, and safe mid-load — an in-flight session is awaited and then released, so an
    aborted load cannot leak the session it was half-way through building.
@@ -96,7 +96,7 @@ holds while that work runs, and it is the more likely explanation of a tab being
 ### 1. A `?q=` permalink never runs
 
 `packages/earth/lib/App.tsx:78` passed the URL's query as `defaultAddress`, which only pre-fills the
-field. Nothing submitted it. A shared link therefore landed on the world view with the address sitting
+field. No code submitted it. A shared link therefore landed on the world view with the address sitting
 in the search box, unrun, and the visitor had to press Enter themselves — so "Copy link" produced a
 link that did not reproduce the result it was copied from. Reproduced on
 `?q=350+5th+Ave+New+York+NY+10118`: 48 s after load, the field was populated but neither a result sheet
@@ -174,7 +174,7 @@ step is a five-minute check in a visible tab rather than a fix:
 resolve, which shows long tasks and main-thread occupancy directly — or
 `performance.setResourceTimingBufferSize(5000)` before the query if request counts are what is wanted.
 The question to answer first is whether the main thread is occupied or idle during those twenty
-seconds. Everything else follows from that, and nothing should be changed until it is known.
+seconds. Everything else follows from that, and no change should be made until it is known.
 
 Not fixed, and it should not be fixed from this workspace. The candidate actions (inference in a
 worker, yielding between pipeline stages) are architecture changes whose whole value is their effect
@@ -185,11 +185,11 @@ above (86e85929f) fixed a separate, established bug and does not fix this one.
 
 `packages/react/lib/map/GeocoderControls.tsx:329` is the only user-visible error sink in the app, and it
 prints a raw `Error.message` in monospace with no `role="alert"` / `aria-live`. Everything below fails
-with nothing on screen:
+with no result on screen:
 
 | Failure                           | Where                                                                                   | What the user sees                                                                                                                                 |
 | --------------------------------- | --------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Geolocation permission denied     | `packages/earth/lib/runtime/use/geo-bias.ts:46` — `() => setActive(false),`             | Chip flips back off. Pressing it again does nothing, forever.                                                                                      |
+| Geolocation permission denied     | `packages/earth/lib/runtime/use/geo-bias.ts:46` — `() => setActive(false),`             | Chip flips back off. Pressing it again performs no work, forever.                                                                                  |
 | IP-geolocate fetch fails          | `packages/earth/lib/runtime/use/browser-geolocation.ts:44` — `.catch(() => fallback())` | Silently centred on the US.                                                                                                                        |
 | Autocomplete throws               | `packages/earth/lib/runtime/use/geocoder-runtime.ts:467` — `} catch { return [] }`      | Indistinguishable from "no matches"; `packages/react/lib/map/PlaceAutocomplete.tsx:63` returns `null` on empty, so there is no empty state at all. |
 | Street tier (rooftop) unavailable | `geocoder-runtime.ts:314` — `console.warn(...)`                                         | Console only. User gets a city centroid with no precision downgrade notice.                                                                        |
@@ -225,7 +225,7 @@ The two halves of the money path never reference each other:
 - `/license` (`docs/src/pages/license.mdx`) holds the actual Stripe checkout (`BuyLicense`), and its two
   plan cards carry **no price** — only "Renews every month; the key follows the paid period plus 14 days."
   A buyer has to hold the $250 figure in their head from another page.
-- Nothing in the navbar or the footer links to `/license`. Its only inbound links are from
+- No link in the navbar or the footer points to `/license`. Its only inbound links are from
   `IssuedLicense.tsx:176` and the terms page — both of which you reach _after_ buying.
 - `docs/src/components/PricingTiers/` — the tier cards with price + CTA — is dead code. Its own docblock
   says so: `index.tsx:11` "UNMOUNTED as of the docs-reorg Task 5 skeleton cutover."
@@ -287,7 +287,7 @@ HTML → `styles.*.css` → parse → discover `@font-face` → cross-origin fet
 
 The reflow is the worse half: the fallback stack is
 `"Iosevka Nexus Web", "Iosevka", system-ui, …` (`docs/src/css/theme-light.css:57`). `system-ui` is
-substantially wider than Iosevka Nexus, so the swap re-wraps every line on the page. Nothing declares
+substantially wider than Iosevka Nexus, so the swap re-wraps every line on the page. No rule declares
 `size-adjust` / `ascent-override` / `descent-override` for a metric-matched fallback.
 
 Four fixes, in order of payoff:
@@ -328,7 +328,7 @@ Minor, same file: the proportional font's bucket path is misspelled — `/fonts/
   reaches `aria-valuenow` (`packages/react/lib/map/MapProgressBar.tsx:50`) — so a screen reader gets a
   percentage that no sighted user can see.
 - Visually it is a **3px hairline at the top of the viewport** (`packages/react/styles.css:2100`), with no
-  numerals, plus a truncated caption in a 1.9rem footer strip. No "12 MB of 38 MB", no ETA, nothing in the
+  numerals, plus a truncated caption in a 1.9rem footer strip. No "12 MB of 38 MB", no ETA, and no indicator in the
   center of the screen where a first-time visitor is looking.
 - `packages/react/lib/map/GeocoderControls.tsx:167` — the `* 1` is a leftover no-op, and the whole 38 MB
   transfer is compressed into the first `1/steps` (≈ the first third) of the bar.
@@ -374,10 +374,10 @@ Minor, same file: the proportional font's bucket path is misspelled — `/fonts/
 - `packages/earth/lib/panels/ResultExtras.tsx:67,85` — `demoStyles.xml` and `demoStyles.hierarchy` are
   **not defined** in `panels.module.css`, so both render `className="undefined"`. The XML dump and the
   hierarchy block are unstyled. Conversely `.examples` / `.examplesLabel` are defined and referenced by
-  nothing.
+  no code.
 - `packages/earth/lib/panels/Controls.tsx:37` — a **139-character `title=`** is the only explanation of
   what "Use my location" does. Invisible on touch, and the button already has a text name so it adds
-  nothing for screen readers either.
+  no information for screen readers either.
 - Map attribution: `packages/earth/lib/styles/app.css:62` hides MapLibre's control with `display: none`,
   and the replacement (`packages/earth/lib/panels/EarthFooter.tsx:22`) is three **plain unlinked strings**
   behind a "Sources" toggle. OSM/ODbL attribution behind a click with no link to
@@ -391,11 +391,11 @@ Minor, same file: the proportional font's bucket path is misspelled — `/fonts/
 
 **Responsive / tokens**
 
-- Six `@media` rules total across both packages, at three unshared breakpoints (600 / 640 / 768). Nothing
+- Six `@media` rules total across both packages, at three unshared breakpoints (600 / 640 / 768). No breakpoint
   between 601px and desktop; no tablet or landscape case.
 - ~~601–615px: the rail covers the right end of the search pill.~~ FIXED, and not by moving the
   breakpoint: `.mw-map-chrome--top` reserves the rail's width at every viewport. Above ~620px
-  `max-width` decides the box and the inset is never reached, so it costs nothing and cannot drift out
+  `max-width` decides the box and the inset is never reached, so it costs no extra work and cannot drift out
   of tune when a control changes size.
 - `packages/earth/lib/panels/VersionCompare/styles.module.css` — 9 hardcoded state colours (`#d8504a`,
   `#1aa84d` and their rgba washes at `:129-169`) where `--color-state-danger` / `-success` / `-warning`
@@ -443,13 +443,13 @@ build` completing with `onBrokenLinks` and `onBrokenAnchors` both `"throw"`.
 Five faults reported against the floating-pill-plus-bottom-sheet arrangement, all of them the same fault
 seen from different widths: two surfaces over one map, neither of which owned the search.
 
-| Reported                                      | Resolution                                                                                                                                              |
-| --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Weird gap at the top                          | FIXED. The grip bar took a 2.5rem minimum whether or not it held anything; on a desktop with no result it held nothing. Its height is now its contents. |
-| Overlap with the pills                        | FIXED. The search and the control rail no longer share a row at any width — the panel is a left column, the rail stays at the right.                    |
-| Magnifying glass too small                    | FIXED. Drawn as a path (`SearchGlyph`) rather than typed as `⌕`, which the glyph face draws at the weight of a punctuation mark.                        |
-| Mobile layout gets stuck with the box open    | FIXED. The drawer detents: drag the grabber down and the result goes, leaving the search field and the examples.                                        |
-| Search box shares its width with the controls | FIXED. The search is inside the panel, so it spans the panel.                                                                                           |
+| Reported                                      | Resolution                                                                                                                                                 |
+| --------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Weird gap at the top                          | FIXED. The grip bar took a 2.5rem minimum whether or not it held anything; on a desktop with no result it held no content. Its height is now its contents. |
+| Overlap with the pills                        | FIXED. The search and the control rail no longer share a row at any width — the panel is a left column, the rail stays at the right.                       |
+| Magnifying glass too small                    | FIXED. Drawn as a path (`SearchGlyph`) rather than typed as `⌕`, which the glyph face draws at the weight of a punctuation mark.                           |
+| Mobile layout gets stuck with the box open    | FIXED. The drawer detents: drag the grabber down and the result goes, leaving the search field and the examples.                                           |
+| Search box shares its width with the controls | FIXED. The search is inside the panel, so it spans the panel.                                                                                              |
 
 Three layout faults found while fixing those, all at the panel's top edge, all worth writing down because
 each looked correct in the stylesheet:
@@ -485,7 +485,7 @@ Dead rules removed: `.mw-map-sheet--bottom` (×2), `.mw-map-sheet__grip`, `.mw-m
 **The finding worth remembering.** `CHROME_SELECTORS` in `packages/site-kit/lib/playwright/chrome-interface.ts`
 still listed `.mw-map-chrome--top` and `.mw-map-sheet--bottom`, and `visibleBoxes` SKIPS a selector whose
 `count() !== 1` — so the overlap interface had stopped testing the surface the restructure was about, and
-said nothing. An interface check that skips what it cannot find reports green for a deleted subject. Two unit and
+made no assertion. An interface check that skips what it cannot find reports green for a deleted subject. Two unit and
 browser assertions were stale the same way and had not been run since.
 
 Left alone deliberately:

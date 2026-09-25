@@ -311,7 +311,7 @@ const SitusInterpolationDatabase: CommandComponent<typeof spec> = ({ options }) 
 			version: options.release,
 			schemaVersion: 1,
 			// TIGER/Line is public domain.
-			// The layer is build-local only because nothing publishes it.
+			// The layer is build-local only because no artifact publishes it.
 			tier: LayerTier.BuildLocal,
 			license: "public-domain",
 			attribution: "US Census Bureau TIGER/Line",

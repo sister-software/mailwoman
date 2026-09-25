@@ -8,7 +8,7 @@
  *
  *   The tree validated is `GeocodeRun.tree`, which is the tree AS the resolver sees IT — after the postcode and
  *   stranded-affix repairs. So this counts what survives the repairs rather than what the raw decode emitted, which is
- *   the number that matters: a violation the repairs already clean up costs a consumer nothing.
+ *   the number that matters: a violation the repairs already clean up has no consumer impact.
  */
 
 import type { EngineConfig, EngineRegistryLike } from "#engine/registry"
@@ -36,8 +36,8 @@ export async function runInterfaceCensus(
 
 			rows.push({ id: item.id, input: item.input, tree: run.tree })
 		} catch {
-			// A row the engine cannot parse contributes nothing to any tally: counting it
-			// as valid would manufacture interface compliance out of a crash.
+			// A row the engine cannot parse contributes to no tally: counting it as valid
+			// would manufacture interface compliance out of a crash.
 			errored.push(item.id)
 		}
 	}

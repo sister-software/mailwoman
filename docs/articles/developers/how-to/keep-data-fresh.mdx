@@ -12,7 +12,7 @@ and switch a long-running process to a new version without restarting it.
 
 One thing to know before the steps: `mailwoman data pull` checks whether a file is _there_ rather than whether
 it is _current_. `mailwoman data status` is the freshness check. Running `data pull` on a stale file
-reports it as already present and downloads nothing.
+reports it as already present and performs no download.
 
 ## Prerequisites
 
@@ -68,7 +68,7 @@ PASS (1/1 checks)
 ```
 
 That transcript was produced against the 900 MB truncated file from step 1. The skip is a filesystem
-`existsSync`, nothing more. `--force` is what makes the download happen:
+`existsSync` and no more. `--force` is what makes the download happen:
 
 ```bash
 mailwoman data pull candidate --dry-run --force
@@ -112,7 +112,7 @@ Only artifacts already on disk are probed, so the flag stays cheap even against 
 missing file is reported from the registry without a request.
 
 Two limits on what this proves. No bundle publishes an md5 sidecar today, so the comparison is byte
-count and nothing stronger; a rebuild that landed at the same size would pass. And the remote path is
+count, with no stronger check; a rebuild that landed at the same size would pass. And the remote path is
 dated and immutable (`gazetteer/2026-07-07a/candidate.db`), so a live `HEAD` confirms your copy of _that_
 artifact rather than that a newer artifact exists. A new build is a new path, which arrives in a new release of
 the `mailwoman` package.
@@ -164,7 +164,7 @@ versions: {"address-points":"2026-05-20.0"}
 dc address points open: true
 ```
 
-**A pinned version whose file is absent falls back to the unversioned name and says nothing.** That is
+**A pinned version whose file is absent falls back to the unversioned name and gives no warning.** That is
 the trap worth knowing. Above, a run against a data root holding both `address-points-us-dc.db` and
 `address-points-us-dc-2026-05-20.0.db`, pinned to a third version that was never published:
 
@@ -174,7 +174,7 @@ dc address points open: true
 ```
 
 The database opened. It is the legacy file rather than the pinned one. Remove the legacy file and the same pin
-resolves to nothing at all:
+resolves to no file at all:
 
 ```
 versions: {"address-points":"2026-06-01.0"}

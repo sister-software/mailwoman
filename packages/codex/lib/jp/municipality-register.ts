@@ -61,7 +61,7 @@ export const JP_INNER_SHI_TOWN_NAMES: readonly string[] = JP_INNER_SHI_TOWNS.fla
  * `following` is the text after the surface.
  * The answer is a prefix of it.
  *
- * A surface that already is a register name answers null: nothing to absorb.
+ * A surface that already is a register name answers null: no text to absorb.
  */
 export function jpMunicipalityCompletion(surface: string, following: string): string | null {
 	return completeFromRegister(JP_INNER_SHI_TOWN_NAMES, surface, following)

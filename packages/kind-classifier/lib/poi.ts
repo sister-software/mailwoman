@@ -71,7 +71,7 @@ export interface POIPhraseMatch {
 	 *
 	 * A scope is a statement about establishments, so it is judged against the country of
 	 * the place being searched rather than the caller's locale: the locale is the lens the
-	 * phrase is read through, and it says nothing about where the condition is true.
+	 * phrase is read through, and it makes no statement about where the condition is true.
 	 * `matchPOISubject` carries the value untouched.
 	 * The POI intent stage binds it once the anchor has resolved.
 	 */
@@ -115,7 +115,7 @@ export interface POISubjectMatch {
 	 * One entry unless the lookup returned a {@link POIPhraseMatch.searchAsSet} set, in
 	 * which case it holds the whole set and the POI branch searches their union.
 	 * The order is the order the lookup returned and states no preference:
-	 * nothing downstream may read position as rank.
+	 * no consumer may read position as rank.
 	 */
 	matches: POIPhraseMatch[]
 	/**
@@ -146,7 +146,7 @@ export interface POISubjectMatch {
  * at a single `\s` immediately before a fixed anchor word.
  *
  * Every remaining quantifier (`,\s*`, `…\s+`) is _trailing_.
- * It runs only after the required literal has already matched and nothing
+ * It runs only after the required literal has already matched and no text
  * follows it, so it never backtracks.
  * Each start offset does O(1) work, making `matchAll` O(n).
  *
@@ -174,7 +174,7 @@ const MAX_SUBJECT_TOKENS = 8
  *
  * The whole array when the first hit declares {@link POIPhraseMatch.searchAsSet} —
  * carried as the lookup returned it, never filtered, so a rung that flagged only some of its
- * members loses nothing here and the inconsistency stays visible to whoever reads the set.
+ * members keeps every member here and the inconsistency stays visible to whoever reads the set.
  * Otherwise the first hit alone, which is the preference-list reading the
  * committed phrase index has always had.
  */

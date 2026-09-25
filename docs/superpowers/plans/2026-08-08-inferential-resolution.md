@@ -2,14 +2,14 @@
 
 Operator design note, 2026-08-08. Captured from a conversation immediately after the first-pass
 Pelias benchmark; the failure-mode analysis in `FIRST_PASS.md` is the evidence that motivates it.
-This is a design record rather than a plan of record. Nothing here is scheduled.
+This is a design record rather than a plan of record. No work here is scheduled.
 
 ## The idea in one paragraph
 
 When a parsed component does not resolve, the miss still carries information. Today we discard it:
 an unmatched street falls back to the locality centroid and the reason is gone. The proposal is to
 treat every unresolved component as a **constraint** rather than a null — narrowing where the thing
-can be, even when nothing can say where it is — and to report the resulting answer with its
+can be, even when no evidence states where it is — and to report the resulting answer with its
 **derivation** attached, so a retrieved coordinate and an inferred region are never confused for
 one another.
 

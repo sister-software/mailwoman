@@ -4,7 +4,7 @@ The encoder's methods live in several modules and each reads attributes the cons
 declaration here gives every part the same view of what exists and what type it holds, so a method
 can sit beside the methods it belongs with rather than beside the assignments it happens to read.
 
-Nothing here assigns. A bare annotation creates no class attribute, so `nn.Module.__setattr__`
+No line here assigns. A bare annotation creates no class attribute, so `nn.Module.__setattr__`
 still sees the constructor's assignment as the first one and registers each parameter, buffer and
 submodule exactly as it would with the whole class in one file.
 """

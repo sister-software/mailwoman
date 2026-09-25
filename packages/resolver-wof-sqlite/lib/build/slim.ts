@@ -22,12 +22,12 @@
  *   repos; `scripts/build-unified-wof.ts` extracts `wof:population` straight into
  *   `place_population` (and the bbox into `spr`) at ingest and never persists a `geojson` table. So
  *   the source admin DB carries population in `place_population`, and this builder consumes it
- *   directly. There is nothing to extract from, and nothing to drop.
+ *   directly. There is no `geojson` table to extract from, and no table to drop.
  *
  *   The output DB has the resolver-facing schema: `spr`, `names`, `place_population`, plus the
  *   `place_search` FTS5 / `place_bbox` R*Tree virtual tables rebuilt against the trimmed row set
  *   (both derive purely from `spr` + `names` — see `fts.ts`). That means `WOFSQLitePlaceLookup`
- *   opens the slim DB without any code change — it sees a smaller universe, nothing more.
+ *   opens the slim DB without any code change — it sees a smaller universe and no more.
  *
  *   Multi-extract inputs (e.g. admin + postcode) are processed in sequence. selected rows accumulate
  *   into the single output DB. The postcode extract contributes only postcodes. admin contributes
@@ -138,7 +138,7 @@ const COPIED_TABLES = ["spr", "names", PLACE_POPULATION_TABLE] as const
 const PLACE_POPULATION_DDL = `CREATE TABLE ${PLACE_POPULATION_TABLE} (id INTEGER PRIMARY KEY, population INTEGER NOT NULL DEFAULT 0)`
 
 /**
- * Minimal row shape for the population aux table — id + population, nothing else.
+ * Minimal row shape for the population aux table — id + population, and no other columns.
  */
 interface PlacePopulationTable {
 	id: number

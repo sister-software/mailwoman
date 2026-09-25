@@ -113,9 +113,9 @@ export interface RerankOpts {
 	 * coarse box is vetoed, which is the cross-country-jump class guard A structurally cannot see.
 	 *
 	 * Omitted → guard B does not run, and only the bare-country-centroid guard applies.
-	 * That is the shipped default and it changes nothing on the served path, because
-	 * nothing on the served path calls this function: the runtime pipeline reranks with
-	 * `rerankByStreetEvidence`, and this one has no in-repo caller outside its own test.
+	 * That is the shipped default and it changes no behavior on the served path,
+	 * because no code on the served path calls this function: the runtime pipeline reranks
+	 * with `rerankByStreetEvidence`, and this one has no in-repo caller outside its own test.
 	 */
 	expectedCountry?: string
 	/**
@@ -134,9 +134,10 @@ export interface RerankOpts {
  * Candidates beyond `maxResolve` are never resolved
  * (and never vetoed — they simply keep their model rank behind the resolved ones).
  *
- * **When every resolved candidate is implausible, the model's rank-1 wins.** A reranker that returns
- * nothing is worse than one that defers: "all my evidence says these are all bad" is not grounds to
- * invent a different answer, only grounds to flag low confidence (the Phase-4b ambiguity check).
+ * **When every resolved candidate is implausible, the model's rank-1 wins.**
+ * A reranker that returns no candidate is worse than one that defers: "all my
+ * evidence says these are all bad" is not grounds to invent a different answer,
+ * only grounds to flag low confidence (the Phase-4b ambiguity check).
  */
 export async function rerankByResolution<T>(
 	candidates: ReadonlyArray<RerankCandidate<T>>,

@@ -18,7 +18,7 @@
  *   inert:
  *
  *   1. `delta: 0` — the soft-prior bias magnitude is zero, so even a loaded probe artifact biases
- *      nothing (the calibration task owns any real value).
+ *      no token (the calibration task owns any real value).
  *   2. The filename (`pair-index-locality-region-<cc>.bin`) does not match the loader's auto-wire
  *      pattern (`pair-index-<cc>.bin` as a weights-package sibling).
  *   3. The output lives under the data root rather than in any `neural-weights-*` workspace.
@@ -99,7 +99,7 @@ export const EDGE_SPEC_BY_COUNTRY: Readonly<
 
 /**
  * Post-write self-check probes, PER country (the pair-index.tsx lesson: probing another country's
- * names against a fresh index prints reassuring `probe miss` lines that verify nothing).
+ * names against a fresh index prints reassuring `probe miss` lines that verify no name).
  *
  * Raw surfaces — folded through `normalizeFSTToken` at probe time, exactly like a decode-time caller would.
  */
@@ -298,7 +298,7 @@ async function main(): Promise<void> {
 
 		const header: HierarchyPairIndexHeader = {
 			country,
-			// Uncalibrated probe — zero on purpose: even an accidentally-wired probe artifact biases nothing.
+			// Uncalibrated probe — zero on purpose: even an accidentally-wired probe artifact biases no token.
 			// The calibration task owns any real value (the pair-index.tsx `--delta` discipline).
 			delta: 0,
 			foldVersion: 1,

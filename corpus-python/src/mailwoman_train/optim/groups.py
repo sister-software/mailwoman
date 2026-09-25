@@ -40,7 +40,7 @@ def build_optimizer(
 
     Frozen parameters are excluded. With no overrides there is one group, identical to what every
     earlier recipe produced. The base group is dropped when a run freezes everything outside a
-    carve-out and nothing is left for it.
+    carve-out and no parameter is left for it.
 
     Returns the optimizer and a list naming each group, in order. The names come back as a return
     value rather than being stored on the groups themselves because loading a checkpoint replaces

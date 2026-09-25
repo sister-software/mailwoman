@@ -5,7 +5,7 @@
  *
  *   The dev-MCP worker — the process that actually imports mailwoman.
  *
- *   The shim (`cli.ts`) speaks MCP stdio to the client and imports nothing from this repo's runtime, so it never goes
+ *   The shim (`cli.ts`) speaks MCP stdio to the client and imports no module from this repo's runtime, so it never goes
  *   stale. this child holds the whole module graph — engines, gazetteers, ONNX sessions — and is the unit of restart.
  *   Killing and re-forking it is the only way a running server picks up edited source: Node cannot evict an imported
  *   ES module, and a fresh process is also the only guarantee that the multi-gigabyte SQLite mmaps and ORT sessions

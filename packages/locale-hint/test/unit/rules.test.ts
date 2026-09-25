@@ -82,7 +82,7 @@ test("scoreByPostcode: confidence boundary — exactly 0.9 counts as unambiguous
 	})
 
 	// Just below the boundary: not unambiguous.
-	// `us_zip4` is not in the ambiguous-5digit fallback set, so nothing fires.
+	// `us_zip4` is not in the ambiguous-5digit fallback set, so no rule fires.
 	expect(scoreByPostcode(shape({ knownFormats: [fmt("us_zip4", 0.89)] }))).toBeNull()
 })
 

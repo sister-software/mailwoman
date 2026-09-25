@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   The output pane's line list: section order, what each section reads from, and which sections disappear when their
- *   source has nothing to say.
+ *   source has no content to report.
  */
 
 import type { AddressTree } from "@mailwoman/core/decoder"

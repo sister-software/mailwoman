@@ -9,7 +9,7 @@
  *   The interface is an async iterable rather than an array because a controlled file is read under terms
  *   that usually forbid holding it whole, and because a run that streams can be stopped without ever
  *   having materialized the licensed rows. A provider's data populates one implementation of this
- *   interface. nothing downstream of it changes.
+ *   interface. no downstream code changes.
  *
  *   The controlled adapter is deliberately not written here. Its file format is the provider's, it is
  *   not known yet, and inventing one now would mean the first real file either fits a guess or forces

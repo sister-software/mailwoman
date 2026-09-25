@@ -76,7 +76,7 @@ def _index_by_source(paths: list[Path]) -> dict[str, list[Path]]:
 
     Why a file carries more than one source at all: `packages/corpus/lib/parquet/writers.ts` closes a part at
     `rowsPerFile` rows (default 1,000,000) and opens the next one, and it does not break a part at a source boundary.
-    A source therefore ends wherever its row count leaves it, and the next source continues in the same part. Nothing
+    A source therefore ends wherever its row count leaves it, and the next source continues in the same part. No code
     asserts one source per file on the writing side, so this function may not assume one on the reading side — that
     assumption is the defect it replaced.
     """
@@ -195,7 +195,7 @@ def _stationary_mixture(
         try:
             row = next(iters[chosen])
         except StopIteration:
-            # A pass that yielded nothing can never yield on a rerun (same rows, same
+            # A pass that yielded no rows can never yield on a rerun (same rows, same
             # filters) — a positive-weight source with zero selectable rows is a recipe/
             # corpus interface violation, the runtime sibling of the unreachable-positive-
             # weight guard in `_raw_row_stream`. Loud, never a silent drop.

@@ -61,7 +61,7 @@ export function collectNodes(roots: readonly AddressNode[], predicate: (node: Ad
  * or a resolution-tier stamp from the street tiers.
  *
  * Grounding is what a result may claim about a span.
- * An ungrounded span is text the parser labeled and nothing more.
+ * An ungrounded span is text the parser labeled and no more.
  */
 export function isGroundedNode(node: AddressNode): boolean {
 	return (
@@ -78,14 +78,14 @@ export function isGroundedNode(node: AddressNode): boolean {
  * Both the flat component map (`decodeAsJSON`) and the named result slots read
  * this order, so they name the same span.
  *
- * The rule is the one a gazetteer-backed geocoder applies by construction: a component is
- * what resolved, and the query's wording only decides among spans nothing resolved.
+ * The rule is the one a gazetteer-backed geocoder applies by construction: a component
+ * is what resolved, and the query's wording only decides among the ungrounded spans.
  * `12 MG Road, Indiranagar, Bengaluru, Karnataka 560038, India` parses two `locality` spans;
  * `Bengaluru` resolves and `Karnataka` does not (it is a region), so the locality is Bengaluru.
  *
  * `Village of Fae, Camino Real, Carmel-By-The-Sea, CA 93921` parses two `venue` spans
  * and grounds neither, so the first in the text is the venue.
- * Before resolution runs, nothing is grounded and the order is the text's.
+ * Before resolution runs the order is the text's and no node is grounded.
  */
 export function slotNodes(roots: readonly AddressNode[]): AddressNode[] {
 	const inDocumentOrder = [...walkNodes(roots)]

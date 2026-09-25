@@ -3,7 +3,7 @@
 Each row grows one checkpoint's embeddings onto a wider tokenizer. The values were seven Modal
 functions differing only in five paths and a vocabulary pair, and two of the defects below were
 live in that shape: one function wrote `nsplice-v2-expanded` while its message said
-`nsplice-expanded`, and every expected vocabulary size sat in a docstring where nothing could read
+`nsplice-expanded`, and every expected vocabulary size sat in a docstring where no test could read
 it. Both become checkable once the values are data.
 """
 

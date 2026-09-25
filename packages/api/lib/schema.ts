@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Zod wire schemas for the native `/v1` surface. Unlike the drop-ins (photon, nominatim,
- *   libpostal), nothing here is a vendor interface. This surface is ours to design, so request
+ *   libpostal), this schema is not a vendor interface. This surface is ours to design, so request
  *   bodies are required and validator-enforced (no legacy tolerance to preserve). A `defaultHook`
  *   on the app maps validation failures through the shared `APIErrorSchema` envelope
  *   (`errorResponse(c, 400, "invalid request body", <zod summary>)`) — the pattern boundary every
@@ -335,14 +335,14 @@ export const GeocodeOutcomeLikeSchema = z.object({
 	variant_alias_exemption: z.literal(true).optional(),
 	// ROAD_TO_V9 §4: query-intent advisories.
 	// Always present.
-	// Empty means the vocabulary looked and had nothing to say.
+	// Empty means the vocabulary looked and reported no marker.
 	// Advisory only — no marker changed which answer won, and a client is free to ignore the array entirely.
 	intent_markers: z.array(QueryIntentMarkerSchema),
 	// #1717 stage 1: flag-only admin-coherence verdicts — did the winning candidate's resolved ancestry confirm,
 	// contradict, or fail to speak to the parsed region/country qualifiers?
-	// Nothing ranks or filters on these.
+	// No code ranks or filters on these.
 	// Present whenever a winner resolved (both members always populated — `unstated` is the
-	// explicit no-qualifier claim), absent when nothing resolved to check against.
+	// explicit no-qualifier claim), absent when no winner resolved to check against.
 	// See mailwoman's `admin-coherence.ts` for the verdict interface.
 	admin_coherence: z
 		.object({
@@ -372,8 +372,8 @@ export const GeocodeOutcomeLikeSchema = z.object({
 	// #1755: spans the flat `components` map could not represent. `components` holds one value per tag, so a second
 	// `locality` span ceases to exist there, and without this line `region: null` means
 	// both "the input named no region" and "it named one and we deleted it".
-	// Absent when nothing was dropped.
-	// Never an empty array on the wire, because the common case is nothing dropped
+	// Absent when no component was dropped.
+	// Never an empty array on the wire, because the common case is no component dropped
 	// and a client should not have to read a field to learn that.
 	dropped_components: z
 		.array(
@@ -387,7 +387,7 @@ export const GeocodeOutcomeLikeSchema = z.object({
 		.optional(),
 	// #2301: a component the parse kept and the answer did not follow. The value is in `components` and reads as if it
 	// were honoured — `Nawāda, 744301` returns both the locality and the postcode,
-	// and nothing else in the result says they name places 1,914 km apart.
+	// and no other field in the result says they name places 1,914 km apart.
 	// Absent when the answer followed everything it parsed.
 	unfollowed_components: z
 		.array(

@@ -68,7 +68,7 @@ describe("canonicalizeOrganizationName — jurisdiction × domain collisions (#6
 		expect(org?.canonical).toBe("maju bersama")
 		expect(org?.designations).toEqual(["pt"])
 
-		// explicit general domain guards nothing — same result.
+		// explicit general domain guards no form — same result.
 		expect(canonicalizeOrganizationName("Maju Bersama PT", { jurisdiction: "ID", domain: "general" })?.canonical).toBe(
 			"maju bersama"
 		)

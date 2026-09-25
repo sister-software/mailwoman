@@ -425,7 +425,7 @@ describe("WOFSQLitePlaceLookup against an inline WOF fixture", () => {
 		// the fuzzy "Brooklyn Park" against a hot/slim DB.
 		const db = buildFixtureDB()
 		const withFTS = new WOFSQLitePlaceLookup({ database: db, buildFTS: true })
-		withFTS[Symbol.dispose]() // releases nothing we need — the FTS table now exists on `db`, which we own
+		withFTS[Symbol.dispose]() // releases no resource we need — the FTS table now exists on `db`, which we own
 		db.exec(`DROP TABLE names`)
 		const lookup2 = new WOFSQLitePlaceLookup({ database: db })
 

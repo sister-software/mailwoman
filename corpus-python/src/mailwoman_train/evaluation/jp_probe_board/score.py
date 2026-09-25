@@ -1,6 +1,6 @@
 """The pre-registered read: one row at a time, folded into the blended totals and two breakdowns.
 
-The check is the blended fraction and nothing else. Every other figure here — the per-register
+The check is the blended fraction and no other figure. Every other figure here — the per-register
 split, the per-municipality macro, the gold-exact count — is a READING beside it, and none of them
 can move it. `predict` is injected so all of this runs without a checkpoint and without torch.
 """

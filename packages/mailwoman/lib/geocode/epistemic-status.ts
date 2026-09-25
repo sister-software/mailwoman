@@ -19,8 +19,8 @@ import type { ResolutionTier } from "#geocode/result"
  * - `interpolated`, `street` and `plus_code` → `derived` (a stated rule computed the point)
  * - Everything else → `observed` (a named source recorded it. No authority is claimed)
  *
- * `inferred` is not producible here: nothing emits a value that is the intersection
- * of constraints rather than a retrieved row.
+ * `inferred` is not producible here: no code path emits a value that is the
+ * intersection of constraints rather than a retrieved row.
  * It stays defined and unused rather than repurposed.
  */
 export function epistemicStatusFor(

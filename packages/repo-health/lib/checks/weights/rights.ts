@@ -9,7 +9,7 @@
  *   repository grants and what the commercial branch does not reach. `PROVENANCE.json` records, per artifact, what the
  *   model card holds about its inputs and which questions it leaves open.
  *
- *   Both are derived, so both go stale in a way nothing else reports. A model card edit that adds an attribution entry
+ *   Both are derived, so both go stale in a way no check reports. A model card edit that adds an attribution entry
  *   or a digest changes what the package owes and what it can show, and the compiler never reads either file. Holding
  *   the committed bytes equal to `mwops release write-rights-files`'s output makes that edit either regenerate them or
  *   fail here.

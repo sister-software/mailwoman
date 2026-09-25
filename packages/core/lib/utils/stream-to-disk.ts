@@ -10,7 +10,7 @@
  *   clients through `@mailwoman/core/api`'s `APIClient`, and the rule draws its line at what that class is
  *   for: pacing, bounded retry, response caching and error mapping over small bodies and repeated calls. None
  *   of it applies to a multi-hundred-megabyte archive. Caching one through a JSON-validating disk cache would
- *   write a second, unreadable copy of a file already on disk. there is nothing to pace, because a transfer
+ *   write a second, unreadable copy of a file already on disk. there is no request to pace, because a transfer
  *   like this runs once per product vintage. and axios buffers any non-stream response type in memory. The
  *   metadata reads around such a transfer do go through `APIClient`, and each caller's client module says so.
  *
@@ -19,8 +19,8 @@
  *   rather than as a failure. The rename is atomic within a filesystem, so a file at the final path is a file
  *   that finished.
  *
- *   shared BY every layer acquisition rather than copied into each, because it is stream plumbing that knows
- *   nothing about any product. What stays with each caller is where the URL came from, what the cache is keyed
+ *   shared BY every layer acquisition rather than copied into each, because it is stream plumbing that is unaware
+ *   of any product. What stays with each caller is where the URL came from, what the cache is keyed
  *   on, and what to do with the bytes afterwards.
  */
 
@@ -68,7 +68,7 @@ export interface StreamToDiskOptions {
 	 * The soil download service answers 400 rather than 404 for a version date it does not hold,
 	 * so the bare status sends a reader looking for a malformed request instead of a stale catalogue date.
 	 *
-	 * Return `undefined` for a status the caller has nothing to add about.
+	 * Return `undefined` for a status the caller cannot describe.
 	 */
 	describeStatus?: (status: number) => string | undefined
 }

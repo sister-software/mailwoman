@@ -9,7 +9,7 @@
  *   shared curve can hide. The decode surface reads the per-token softmax the parser already computes, folded to the
  *   unit a consumer reads (the assembled component); its truth is an input set's component labels. The coarse-placer
  *   surface reads a calibrated classifier's own output probability against a held-out country label. They share a
- *   reliability diagram because a reliability diagram is the same diagram. they share nothing else. A third surface —
+ *   reliability diagram because a reliability diagram is the same diagram. they share no other feature. A third surface —
  *   the locale head, the kind verdict, an evidence channel — should be added the same way rather than by widening
  *   either of these.
  *
@@ -258,7 +258,7 @@ export async function decodeReliabilitySample(
  *
  * A different surface from the decode softmax, needing its own curve before anyone
  * fits a correction to it: the two are separate heads over separate features,
- * and a correction fitted to one does nothing for the other.
+ * and a correction fitted to one has no effect on the other.
  *
  * `abstainBelow: 0` so every row yields a confidence.
  * Production sets that to the threshold under test, which would censor exactly

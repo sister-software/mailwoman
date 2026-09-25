@@ -120,7 +120,7 @@ const UNRECOGNIZED_PATTERNS = [UNKNOWN_CSI_PATTERN, UNKNOWN_SS3_PATTERN, STRING_
  * A chunk that stops inside a sequence.
  *
  * The end-anchors are what make these "incomplete" rather than "unrecognized":
- * each requires the whole remainder of the chunk to be a legal prefix and nothing more.
+ * each requires the whole remainder of the chunk to be a legal prefix and no more.
  * The first covers both a lone trailing ESC and an `ESC O` still waiting for its final byte.
  */
 const PARTIAL_PATTERNS = [/\u001BO?$/y, /\u001B\[[\d;<>?]*[\u0020-\u002F]*$/y, /\u001B[P\]X^_][^\u0007]*$/y] as const
@@ -302,7 +302,7 @@ export function decodeInputChunk(chunk: string, pending = ""): DecodedInput {
 
 			// …unless it has stopped being plausible.
 			// An unterminated string sequence would otherwise grow the held fragment for the life of the process.
-			// Dropping is the safe failure: it emits nothing, where flushing the fragment back
+			// Dropping is the safe failure: it emits no event, where flushing the fragment back
 			// through the decoder would read its body as keys, which is the bug this all exists for.
 			// The cap is generous because an OSC 52 clipboard reply is legitimately large.
 			return { events, pending: fragment.length > MAX_PENDING_LENGTH ? "" : fragment }

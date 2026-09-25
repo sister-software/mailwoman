@@ -44,7 +44,7 @@
 
 **Interfaces:**
 
-- Consumes: `kysely` (`Kysely`, `sql`), nothing else.
+- Consumes: `kysely` (`Kysely`, `sql`), and no other module.
 - Produces: `LayerTier`, `LayerFreshnessPolicy` (const objects + types), `LayerManifestTable`, `LayerCoverageTable`, `layerschemadatabase`, `createLayerManifestTable(db: Kysely<layerschemadatabase>): Promise<void>`, `createLayerCoverageTable(db: Kysely<layerschemadatabase>): Promise<void>`. Tasks 2–3 and Plan 3's poi.db builder rely on these exact names.
 
 - [ ] **Step 1: Write the failing test**
@@ -685,7 +685,7 @@ git commit -m "feat(poi-taxonomy): scaffold the @mailwoman/poi-taxonomy workspac
 git log -1 --oneline
 ```
 
-Expected: new commit hash. (The tsconfig has no source files yet; `yarn compile` may emit nothing for this workspace — that's fine until Task 5.)
+Expected: new commit hash. (The tsconfig has no source files yet; `yarn compile` may emit no output for this workspace — that's fine until Task 5.)
 
 ---
 
@@ -1306,4 +1306,4 @@ Expected: clean status (or one lint-fix commit first), branch pushed.
 
 - Task 4's `yarn install` is the only step that touches the lockfile. If it produces a larger diff than expected, stop and check that you are on the worktree's yarn version (`yarn --version` should match `.yarnrc.yml`).
 - The seed taxonomy's Overture-namespace hierarchies are provisional by design (spec §3.3), and Plan 3's snapshot build corrects them. Reviewers should check synonym→id integrity, which the test also checks, and should not debate category ancestry.
-- Plan 2 (pipeline: `poi_query` kind, intent record, routing) and Plan 3 (poi.db builder, MCP server) are separate documents. Nothing in this plan touches the runtime pipeline, so golden parses stay byte-identical by construction.
+- Plan 2 (pipeline: `poi_query` kind, intent record, routing) and Plan 3 (poi.db builder, MCP server) are separate documents. No task in this plan touches the runtime pipeline, so golden parses stay byte-identical by construction.

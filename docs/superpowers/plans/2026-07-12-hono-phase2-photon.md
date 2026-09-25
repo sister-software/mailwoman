@@ -4,7 +4,7 @@
 
 **Goal:** Land the GeoJSON wire atoms in `@mailwoman/api-kit` (first consumer) and migrate `@mailwoman/photon` from express to Hono + `@hono/zod-openapi` with the OpenAPI document emitted from the route table, retiring `photon/openapi.yaml` through the same parity check as phase 1.
 
-**Architecture:** This phase follows the approved spec (`docs/superpowers/specs/2026-07-12-hono-api-surface-design.md`) and the phase-1 pattern, with one deliberate divergence. Photon is GET-only. Its query params include _contractual_ repeatable params (`osm_tag`, `layer`) and numeric params whose handling of degenerate input is observable wire behavior. For example, `/reverse` returns 400 on a repeated `lat` because express hands `Number()` an array. This phase therefore does not copy phase 1's canonicalize middlewares. Instead, a `legacyQuery(c)` adapter reproduces express's `req.query` shape exactly, the original parsing helpers move verbatim, and the query schemas are unions that always pass validation, with doc-exact `.openapi()` overrides. Validation still cannot fail, and wire decisions still live in handlers, but nothing rewrites the query between the wire and the legacy parsing code. The phase-1 final review drew this line: map the actual boundary rather than copying a pattern that does not fit.
+**Architecture:** This phase follows the approved spec (`docs/superpowers/specs/2026-07-12-hono-api-surface-design.md`) and the phase-1 pattern, with one deliberate divergence. Photon is GET-only. Its query params include _contractual_ repeatable params (`osm_tag`, `layer`) and numeric params whose handling of degenerate input is observable wire behavior. For example, `/reverse` returns 400 on a repeated `lat` because express hands `Number()` an array. This phase therefore does not copy phase 1's canonicalize middlewares. Instead, a `legacyQuery(c)` adapter reproduces express's `req.query` shape exactly, the original parsing helpers move verbatim, and the query schemas are unions that always pass validation, with doc-exact `.openapi()` overrides. Validation still cannot fail, and wire decisions still live in handlers, but no layer rewrites the query between the wire and the legacy parsing code. The phase-1 final review drew this line: map the actual boundary rather than copying a pattern that does not fit.
 
 **Tech Stack:** hono `^4.12.29`, `@hono/zod-openapi` `^1.4.0`, `@mailwoman/api-kit` (phase 1: `serveNode`, `attachOpenAPIDocs`, `emitOpenAPIDocuments`), zod `^4.4.3`, vitest.
 
@@ -423,7 +423,7 @@ test("GET /openapi.json serves the emitted 3.1 document", async () => {
 - [ ] **Step 3: Run tests — new ones fail on missing `createPhotonApp`**
 
 Run: `yarn vitest run --dir ./photon`
-Expected: ported+new tests fail (`createPhotonApp` not exported); nothing else.
+Expected: ported+new tests fail (`createPhotonApp` not exported); no other test fails.
 
 - [ ] **Step 4: Implement `photon/routes.ts`.** Structure (complete file; the handler bodies are the legacy code moved verbatim onto `legacyQuery`):
 

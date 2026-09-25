@@ -123,8 +123,8 @@ describe("diffParse", () => {
 	})
 
 	it("reports a locale-country move even when every span is identical", () => {
-		// A parse that changed nothing else but moved its country confidence across the
-		// scope threshold geocodes somewhere else entirely.
+		// A parse that changed no other component but moved its country confidence across
+		// the scope threshold geocodes somewhere else entirely.
 		const same = tree(["locality", "London", 29, 35, 0.95])
 
 		const diff = diffParse(INPUT, same, same, {

@@ -250,7 +250,7 @@ The three HTTP drop-ins — plus the native `/v1/*` surface `mailwoman serve` sh
 | [`@mailwoman/libpostal`](https://www.npmjs.com/package/@mailwoman/libpostal) | `/parse`, `/expand`                                                                                       | [libpostal.json](pathname:///openapi/libpostal.json) |
 | `mailwoman serve` (native `/v1/*` surface)                                   | `/v1/parse`, `/v1/geocode`, `/v1/batch`, `/v1/resolve`, `/v1/format`, `/v1/reload`, `/health`, `/metrics` | [mailwoman.json](pathname:///openapi/mailwoman.json) |
 
-The authoritative record is the route table rather than a checked-in file. Every surface builds its OpenAPI 3.1 document from the same `@hono/zod-openapi` route definitions that serve the requests. There are two ways to get the document, both derived from that identical route table, and nothing to keep in sync by hand:
+The authoritative record is the route table rather than a checked-in file. Every surface builds its OpenAPI 3.1 document from the same `@hono/zod-openapi` route definitions that serve the requests. There are two ways to get the document, both derived from that identical route table, and no separate copy to keep in sync by hand:
 
 - **At runtime**, from a running server — `GET /openapi.json`.
 - **Ahead of time**, from each surface's own CLI — `mailwoman-photon openapi`, `mailwoman-nominatim openapi`, `mailwoman-libpostal openapi`, `mailwoman openapi` — which prints the document to stdout (or `--out <path>`) without booting the real engine or opening a data root. This is what stamps the four JSON files linked above: the docs site's `prebuild` script runs all four emitters into `static/openapi/` before every build, so those copies are a build product rather than a file to hand-edit.
@@ -280,14 +280,14 @@ drop-ins plus the native `mailwoman serve` API:
 | Rust     | `mailwoman-client` (crates.io) | [`progenitor`](https://github.com/oxidecomputer/progenitor)                            |
 
 Same one-directional discipline as the specs themselves: route tables → emitted OpenAPI documents →
-generated clients, nothing hand-maintained downstream of the spec. `mailwoman clients generate`
+generated clients, with no hand-maintained artifact downstream of the spec. `mailwoman clients generate`
 (`mailwoman/tools/generate-clients.ts`) emits all eight documents (each surface, 3.1 + the
 progenitor-diet 3.0.3 — `openapiv3`, which progenitor depends on, only understands 3.0.x), runs
 `openapi-python-client` once per surface to assemble a Python package
 (`mailwoman_client.{photon,nominatim,libpostal,mailwoman}`), vendors the 3.0 documents into a Rust
 crate whose four modules each expand `progenitor::generate_api!` at compile time, then **verifies**
 both build: `uv build` the Python package + import-check the wheel in an ephemeral
-environment, `cargo check --examples` the crate. Nothing generated is committed — regenerate any time
+environment, `cargo check --examples` the crate. No generated artifact is committed — regenerate any time
 the specs change.
 
 **Not yet published.** Both packages build and verify directly on every `mailwoman clients generate`

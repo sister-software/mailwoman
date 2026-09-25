@@ -24,7 +24,7 @@ This mechanism changes the whole roadmap. Consider what a postcode encodes: a US
 northeast to west by its first digit, a UK postcode plus a house number nearly identifies a single
 building, and German PLZ and French codes are zone-hierarchical. It is the most information-dense token
 in an address, and we were asking a sequence labeler to find it _and_ to know where it stops, in one
-pass, with nothing telling it the postcode is a different kind of thing from the city sitting beside it.
+pass, with no signal telling it the postcode is a different kind of thing from the city sitting beside it.
 That framing caused the bug. If a dedicated high-precision extractor lifts the postcode out, resolves it,
 and feeds it back as a conditioning anchor, the model cannot make the cross-tag mistake. The model also
 gains the strongest available locale signal for everything else.
@@ -157,7 +157,7 @@ estimates.** The same source overestimated the tokenizer limit, and our own
 
 ## Staged plan
 
-1. **Now: ship nothing to production.** v0.7.2 stays, and nothing is urgent. Drop the decoder span-merge and
+1. **Now: ship no change to production.** v0.7.2 stays, and no work is urgent. Drop the decoder span-merge and
    CRF-transition ideas for German, because the diagnostic ruled out both.
 2. **This week: the postcode anchor, which needs no GPU and has the highest ROI.** Build (a) a postcode → country-posterior +
    region + centroid gazetteer for the target locales from OpenAddresses (US already exists:

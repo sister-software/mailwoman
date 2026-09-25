@@ -23,7 +23,7 @@ export const PlanetaryHillshadeSourceID = TileSetSourceID("hillshade")
 
 /**
  * MapLibre resolves a TileJSON `url` itself: tiles, bounds, zoom range and attribution
- * all come from the tile worker's document, so nothing here restates them.
+ * all come from the tile worker's document, so no code here restates them.
  */
 export function nomenclatureSource(tileJSONURL: string): VectorSourceSpecification {
 	return {

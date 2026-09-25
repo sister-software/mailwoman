@@ -38,7 +38,7 @@ export const daemonTool = (deps: DevToolDeps): DevTool => {
 				// and a note admitting it could not re-import.
 				// A success shape carrying its own contradiction, which a caller reading `engines_closed`
 				// and a fresh fingerprint reasonably takes for a completed reload.
-				// It then measures new-tree answers out of old-tree code with nothing left to flag it.
+				// It then measures new-tree answers out of old-tree code with no check left to flag it.
 				if (await registry.sourceMoved()) {
 					throw new Error(staleEngineMessage(registry.bootFingerprint, fingerprint))
 				}

@@ -1,7 +1,7 @@
 """The deterministic halves of the DeepSeek generator: batch ids, prompts, and response parsing.
 
 A batch id is what the checkpoint file stores, so it decides whether a restart SKIPS a batch or
-pays for it again. It is derived from the seeds and the script slug, and nothing else in the suite
+pays for it again. It is derived from the seeds and the script slug, and no other test in the suite
 reads it — a refactor that changes the derivation invalidates every checkpoint on disk, and the
 only symptom is a larger bill.
 
@@ -9,7 +9,7 @@ The response parser and the component validator are the other half worth pinning
 model output, and both are written to be forgiving, which is exactly where a rewrite quietly starts
 accepting rows it should reject.
 
-Nothing here calls the API. `deepseek_call` is the one function that does, and it is not exercised.
+No test here calls the API. `deepseek_call` is the one function that does, and it is not exercised.
 """
 
 from __future__ import annotations
@@ -154,7 +154,7 @@ def test_a_transliterated_row_keeps_the_seed_country_and_names_its_script() -> N
     """#2281, in one assertion: a US address rendered in katakana is a US address.
 
     The generator stamped the target script's country on every row, so this seed was written with
-    ``country: "JP"``, ``locale: "ja-JP"``. Nothing caught it for the length of a corpus generation because
+    ``country: "JP"``, ``locale: "ja-JP"``. No test caught it for the length of a corpus generation because
     the row was validated for its surface-form invariant and never for its metadata.
     """
     row = canonical_translit_row(

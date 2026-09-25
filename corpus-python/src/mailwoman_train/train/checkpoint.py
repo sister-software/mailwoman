@@ -1,7 +1,7 @@
 """Writing a resumable checkpoint, and finding the last complete one.
 
 The write is atomic and the discovery trusts one marker, which are two halves of the same
-guarantee: an interrupted save must leave either the previous complete checkpoint or nothing, never
+guarantee: an interrupted save must leave either the previous complete checkpoint or no checkpoint, never
 a partial directory that `--resume auto` would load and train from.
 
 What resumes exactly: model, optimizer, scheduler, step, RNG. What does not: the data stream. The

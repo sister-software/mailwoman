@@ -6,7 +6,7 @@
  *
  *   `CSVSpliteratorInit.enableQuoteHandling` defaults TO true, and a quote-aware reader over an unquoted source does
  *   not fail — it joins every line between one `"` and the next into a single record, so the caller sees a shorter
- *   file and reads it as a smaller dataset. Nothing downstream can tell that apart from a small file, because every
+ *   file and reads it as a smaller dataset. No downstream consumer can tell that apart from a small file, because every
  *   count downstream is derived from what the reader returned.
  *
  *   Measured on the GeoNames country dumps, which are unquoted TSV and carry `"` in place names (`Ovrag Kyzylak"on`):
@@ -102,7 +102,7 @@ export const ZSTD_EXTENSION = ".zst"
  * about what that means: `count` notes that "a path or URL is opened independently...
  * an arbitrary async iterable is inherently consumed."
  *
- * Reusing one stream across two passes therefore yields the rows once and nothing the second time,
+ * Reusing one stream across two passes therefore yields the rows once and no rows the second time,
  * which a checked reader reports as swallowed data and an unchecked one reports as a smaller file.
  *
  * Each call returns a fresh stream, so the count-then-read shape stays correct
@@ -111,14 +111,14 @@ export const ZSTD_EXTENSION = ".zst"
  * What a compressed source gives up is segmentation: `AsyncSpliterator.asManyWorkers`
  * and `asMany` take "a file path or URL (file handles cannot cross threads)", because
  * delimiter-aligned `[start, end)` ranges need a seekable source and a zstd frame is not one.
- * That costs nothing here — spliterator's own guidance is that for `JSON.parse`-per-row
+ * That carries no cost here — spliterator's own guidance is that for `JSON.parse`-per-row
  * work "threads lose (0.3–0.9x)" and plain sequential `fromAsync` is the right primitive —
- * and nothing in this repository segments a corpus part file.
+ * and no code in this repository segments a corpus part file.
  *
  * It would matter for a scan-dominated pass over an uncompressed file,
  * which is the case to leave uncompressed.
  *
- * Nothing is buffered either way.
+ * No bytes are buffered either way.
  * The part files this exists for are tens of gigabytes decompressed.
  */
 export function delimitedSource(path: PathBuilderLike): AsyncDataResource {

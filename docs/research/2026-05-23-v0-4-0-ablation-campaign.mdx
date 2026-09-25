@@ -113,7 +113,7 @@ These are v0.3.0's documented known-failure modes. The bytefallback tokenizer tr
 
 | Category                           |   Share | Example                                                       |
 | ---------------------------------- | ------: | ------------------------------------------------------------- |
-| Empty prediction                   | **65%** | `Paris 75008` → model emits nothing for postcode              |
+| Empty prediction                   | **65%** | `Paris 75008` → model emits no postcode                       |
 | Non-Latin transliteration          |     18% | Same v0.3.0 failure mode                                      |
 | House number confused for postcode |     11% | `47110 Sainte-Livrade-sur-Lot, 22 Rue Jasmin` → predicts `22` |
 | BIO span boundary slip             |      6% | `LE TRÉPORT, 76470` → predicts `", 7647"`                     |

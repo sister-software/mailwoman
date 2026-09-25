@@ -16,7 +16,7 @@ other country holds zero by construction, and a street row carrying no `region` 
 held out whatever the holdouts name.
 
 WHAT TO DO WITH THE OUTPUT. Read a per-locale validation metric with its denominator beside it. A
-`macro_f1` computed over a split holding no GB row says nothing about GB, and `cross_pollution`'s
+`macro_f1` computed over a split holding no GB row makes no statement about GB, and `cross_pollution`'s
 per-locale readings carry the same limit.
 
 Scans the parquet directly rather than the loader, because the question is which rows the split
@@ -133,8 +133,8 @@ def failing_requirements(
     """Each declared coverage floor the measured splits do not meet, with both numbers beside it.
 
     A country absent from a split is reported as observing zero rather than skipped. Skipping it
-    would make the strongest failure. A locale the split holds nothing for — the one case the
-    check says nothing about.
+    would make the strongest failure. A locale the split holds no rows for is the one case the
+    check makes no statement about.
     """
     failures: list[dict[str, Any]] = []
 

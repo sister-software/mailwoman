@@ -18,7 +18,7 @@
 import { type ReactNode, useSyncExternalStore } from "react"
 
 /**
- * The boundary never changes after mount, so nothing ever notifies.
+ * The boundary never changes after mount, so no notification ever occurs.
  */
 function subscribeNever(): () => void {
 	return () => {}

@@ -40,7 +40,7 @@ export type SystemCode = "us" | "de" | "fr" | "es" | "it" | "ca" | "gb" | "jp" |
 /**
  * Per-system membership test: each entry returns true when the string is accepted by that
  * system's own postcode shape (after that system's normalization — so `D-68161` reaches `de`,
- * `1012 LM` reaches nothing here since NL has no system yet, etc.).
+ * `1012 LM` reaches no system here since NL has no system yet, etc.).
  *
  * Ordered for a stable, alphabetical-ish result.
  */
@@ -123,7 +123,7 @@ export function candidateSystemsForPostcode(postcode: string): SystemCode[] {
  * | postcode-first | 2.08 km   | 4.79 km     | 8.11 km     | 25.4%     |
  *
  * Postcode-first is closer on only 26.3% of them, so the pattern below admits
- * `[1-9]` in that position and nothing else.
+ * `[1-9]` in that position alone.
  * `509 Main Street South-West Falher AB T0H 1M0` is the worked case: 0.29 km from
  * the locality centroid and 43.18 km from its own postal code.
  *

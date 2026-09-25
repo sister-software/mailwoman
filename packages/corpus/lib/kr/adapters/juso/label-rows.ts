@@ -25,7 +25,7 @@
  *   gives 6,424,089 addresses and 8,194,643 lots for the 2026-08-31 edition.
  *
  *   member names are CP949 without the UTF-8 flag, so a zip reader that trusts the format's CP437 default finds
- *   `┴╓╝╥_╝¡┐ïÆ╣▌╗π.txt` and matches nothing; `filenameEncoding` decodes the central directory's real bytes. The
+ *   `┴╓╝╥_╝¡┐ïÆ╣▌╗π.txt` and matches no entry; `filenameEncoding` decodes the central directory's real bytes. The
  *   contents need the same treatment one layer down, which is what `decodeByteStream` does before the line split.
  */
 

@@ -10,7 +10,7 @@ links to the same `/license` page and depends on the release that carries this w
 Mailwoman is dual-licensed, `AGPL-3.0-only OR LicenseRef-Commercial`. Today the only place an
 installation reports which branch applies is `mailwoman doctor`, and only people who already know
 about the doctor run it. Every other output, such as a `geocode --json` record, a Nominatim `/search`
-result, or a Photon FeatureCollection, says nothing about who produced it or under what terms. A team
+result, or a Photon FeatureCollection, makes no statement about who produced it or under what terms. A team
 that deploys the Photon drop-in behind their product gets no indication from the tool itself that the
 AGPL source offer (section 13) applies to that deployment, or that a commercial license exists.
 
@@ -31,7 +31,7 @@ configured key's offline verification). No output re-derives it.
 
 **Responses never include the licensee or the key id.** The doctor prints those locally for the
 operator. A Photon deployment serving the public must not expose its operator's commercial relationship
-in every response. The stamp says which branch applies and nothing about who holds it.
+in every response. The stamp says which branch applies and makes no statement about who holds it.
 
 **The notice prints on every CLI invocation, TTY or not.** A notice that only prints to a terminal
 never reaches the deployment it describes. For a compliant AGPL user, the cost is two stderr lines they
@@ -165,7 +165,7 @@ Link: <https://mailwoman.ai/license>; rel="license"
 `rel="license"` is a registered link relation (RFC 8288). The libpostal drop-in, and every proxy in
 front of the other apps, therefore report the license without a body change. With a valid key the `Server` header
 reads `mailwoman/9.2.0 (LicenseRef-Commercial)` and the `Link` header is unchanged. No app sets a
-`Server` header today, so nothing is displaced.
+`Server` header today, so no existing header is displaced.
 
 ## The `/license` page
 

@@ -16,7 +16,7 @@
  *   the resolver and it finds the base model beside it rather than shipping its own. Every other file is a symlink
  *   into `$MAILWOMAN_DATA_ROOT/weights/<locale>/`, except the base's `model.onnx`, which points at the candidate.
  *
- *   A declared file with nothing behind it is reported rather than silently skipped and not fatal: the data root legitimately
+ *   A declared file with no artifact behind it is reported rather than silently skipped and not fatal: the data root legitimately
  *   lacks some declared siblings (en-us's calibration pair is not materialized there), and the harness has its own
  *   guard, `assertDeclaredAnchorBins`, for the ones whose absence changes a score. A cache that names what it does not
  *   carry is a measurement. one that stays quiet is the defect this tool was written for.
@@ -95,14 +95,14 @@ for (const locale of locales) {
 
 	const manifest = await readPackageJSON(manifestPath)
 	// The npm-prefix layout has one home, and this is a caller of it: the directory
-	// does not exist yet, so there is nothing to resolve, and spelling it out here
+	// does not exist yet, so there is no path to resolve, and spelling it out here
 	// would put a second copy of the layout beside the first.
 	const packageDirectory = weightsCachePackageDir(outRoot, locale)
 
 	// The manifest's `files` mixes concrete siblings with globs, negations
 	// and the source patterns a published tarball needs.
 	// Only the concrete data siblings belong in a cache.
-	// A glob has nothing to link.
+	// A glob has no file to link.
 	const declared = (manifest.files ?? []).filter(
 		(entry) => !entry.startsWith("!") && !entry.includes("*") && entry !== "README.md"
 	)

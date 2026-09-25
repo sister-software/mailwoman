@@ -282,7 +282,7 @@ def audit_mixture(
             "countries_by_source": {
                 src: dict(counts.most_common()) for src, counts in sorted(drawn.countries_by_source.items())
             },
-            # Every admitted country, including the ones that drew nothing.
+            # Every admitted country, including the ones that drew no rows.
             #
             # `by_country` counts what was drawn, so a country admitted at weight 1.0 whose rows the
             # sampler never opened is absent from it rather than present at 0. Absent and zero are

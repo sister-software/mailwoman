@@ -193,7 +193,7 @@ function checkRelation(
  *
  * The direct self-edge is left out of the walk: `checkIsA` already reports that as a
  * self-reference, at the entry that carries it, and a second report saying the same
- * concept cycles through itself tells its author nothing new.
+ * concept cycles through itself tells its author no new information.
  */
 function findIsACycle(start: ConceptView, concepts: ReadonlyMap<string, ConceptView>): string[] | undefined {
 	if (start.id === undefined) return undefined

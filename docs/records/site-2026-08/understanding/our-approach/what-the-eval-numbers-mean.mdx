@@ -26,7 +26,7 @@ These are simplifications of the same [staged pipeline](./the-staged-pipeline.md
 
 **Macro F1** — a softer measure that balances two questions per component type: did you find it when it was there? (recall) and did you make it up when it wasn't? (precision). The score averages the balance across all component types. A parser that's great at postcodes but bad at venues gets partial credit.
 
-**Empty-parse rate** — how frequently does the parser give up entirely and return nothing? Lower is better. A parser that always guesses something (even if wrong) scores 0% here.
+**Empty-parse rate** — how frequently does the parser give up entirely and return no result? Lower is better. A parser that always guesses something (even if wrong) scores 0% here.
 
 **Overconfident-wrong rate** — how frequently does the parser say "I'm very sure" (confidence above 90%) but get the parse wrong? This is the most dangerous failure mode for downstream consumers: a geocoder that's confidently wrong will silently return the wrong coordinates with no signal that something went amiss.
 

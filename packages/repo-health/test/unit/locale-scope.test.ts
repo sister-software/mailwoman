@@ -6,7 +6,7 @@
  *
  *   The case the check was written for is `reports a country the declaration tiers and the register does not`. The
  *   live instance was the other list — `D_RULE_COUNTRIES` read `["FR", "GB", "DE"]` while tier 1 read US and FR, and
- *   nothing reported it for four months because a list that does not name a country answers nothing for it.
+ *   no check reported it for four months because a list that does not name a country produces no answer for it.
  *
  *   The parser case matters for the shape. Every membership assertion here is vacuously true against a table that
  *   parsed as empty, so the check refuses a declaration it read fewer tier rows out of than the register declares.

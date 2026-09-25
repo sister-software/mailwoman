@@ -86,7 +86,7 @@ test("componentTagToLegacyClassification: intersection_a inverts to the bare leg
 })
 
 test("componentTagToLegacyClassification: intersection_b has no legacy source and maps to null", () => {
-	// Nothing in the legacy table produces intersection_b, so the inverse is null.
+	// No entry in the legacy table produces intersection_b, so the inverse is null.
 	expect(componentTagToLegacyClassification("intersection_b")).toBeNull()
 })
 

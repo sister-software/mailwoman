@@ -16,7 +16,7 @@ import type { ResolvedInput } from "#input-sets"
 /**
  * How the row was graded, and against what.
  *
- * `met: null` means the row asserts nothing, never that it passed.
+ * `met: null` means the row asserts no fact, never that it passed.
  */
 export interface ExpectationReading {
 	source: "board_case" | "corpus_row" | "none"
@@ -27,7 +27,7 @@ export interface ExpectationReading {
 // #region Expectations
 
 /**
- * The case table this row is graded against, or `null` when it asserts nothing.
+ * The case table this row is graded against, or `null` when it asserts no fact.
  *
  * A board row carries a `SeedCase` and grades through the board's own `checkCase`.
  * A panel / holdout / golden / parity row carries expectations without a seed,

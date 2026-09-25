@@ -66,8 +66,8 @@ interface ColumnMapping {
  * The narrowest header row that establishes a mapping, counted in the row's own cells
  * before blank columns are dropped.
  *
- * A two-cell header has nothing to map that the generic "first value is the name, second
- * is the jurisdiction" rule does not already read the same way, so requiring three costs
+ * A two-cell header has no further cell to map that the generic "first value is the name,
+ * second is the jurisdiction" rule does not already read the same way, so requiring three costs
  * no fixture a single subsidiary, and it keeps a two-cell header from claiming to describe
  * a wider data row it never mentions, which is `exhibit21-mangled.html`'s shape exactly:
  * a `Name of Subsidiary`/`State` header over a row whose third cell is `"Note: pending name change"`.
@@ -83,7 +83,7 @@ const MINIMUM_HEADER_ROW_CELLS = 3
  *
  * A row qualifies as the header only when every one of its non-blank values
  * is a known label/decoration and exactly one of them is a jurisdiction label
- * (two would be ambiguous, zero leaves nothing to anchor on).
+ * (two would be ambiguous, zero leaves no label to anchor on).
  * The name column is then the first other column not labelled with an "other" label
  * (`% of ownership`, `conducts business under`, `d/b/a`, …).
  *
@@ -247,7 +247,7 @@ function subsidiariesFromTable(
 		// A row made entirely of <th> cells — a header/label row, recognized
 		// and skipped (structural certainty).
 		// Asked of the row as extracted: right-padding adds `<td>` blanks,
-		// which say nothing about the row's markup.
+		// which carry no information about the row's markup.
 		if (present[rowIndex]!.every((cell) => cell.tag === "th")) continue
 
 		const values = row.map((cell) => cell.text)
@@ -434,7 +434,7 @@ function extractPlainTextLines(html: string): string[] {
 }
 
 /**
- * True when `value` is just a corporate legal-entity suffix ("Inc.", "LLC", "Corp.") with nothing else.
+ * True when `value` is just a corporate legal-entity suffix ("Inc.", "LLC", "Corp.") with no other value.
  *
  * `canonicalizeOrganizationName` (`@mailwoman/record`, already used the same way by `edgar-filings.ts`)
  * reduces such a string to an empty canonical name and a non-empty `designations` list.
@@ -568,7 +568,7 @@ const MAX_ENTITY_NAME_WORDS = 12
  * (a plain-text or `<li>` document has no `<th>` markup to lean on, so its boilerplate
  * title/column-header lines need the same content-based recognition), and keep the rest.
  *
- * A line reduced to nothing but whitespace by the marker strip falls through to
+ * A line reduced to whitespace alone by the marker strip falls through to
  * {@linkcode splitCandidateLine} same as any other line.
  * It still ends up counted `unparseable` there (a blank name), the same basis `"----"`-style
  * decorative divider lines were already counted on before this rule existed.

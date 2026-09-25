@@ -12,7 +12,7 @@
  *   both are one `.slice()` call. That is also why this module is pure data rather than elements: `DebugFrame` renders the list and
  *   `DebugSessionApp` clamps its ↑/↓ against the same list, so the two can't disagree about how far down it goes.
  *
- *   Nothing here computes an address fact. Every value is read off the {@link GeocodeResult}, the {@link AddressTree},
+ *   No code here computes an address fact. Every value is read off the {@link GeocodeResult}, the {@link AddressTree},
  *   or the session's own clock. a section with no data is omitted rather than rendered empty, and a field with no value
  *   renders {@link absent}.
  */
@@ -96,7 +96,8 @@ function formatMsFixed(ms: number): string {
 /**
  * Whether the per-span script is worth printing: the tree holds more than one writing system.
  *
- * On a single-script address the script repeats on every line and says nothing, so the pane stays as it was.
+ * On a single-script address the script repeats on every line and makes no statement,
+ * so the pane stays as it was.
  * On a mixed one it is the only place the distinction survives.
  *
  * The input folds to whichever script writes most of it, which for `金龍酒家, 12 Gerrard Street, London WC2H 7JS`

@@ -63,7 +63,7 @@ const { values } = parseArguments({
 		 * Dump the full per-row tag serialization.
 		 *
 		 * The ablation legs of a saturated board are indistinguishable by score — diffing this
-		 * is how you tell "the channel changed nothing" from "the board cannot see it".
+		 * is how you tell "the channel changed no answer" from "the board cannot see it".
 		 */
 		"dump-spans": { type: "string" },
 		/**

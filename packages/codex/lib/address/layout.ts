@@ -6,7 +6,7 @@
  *   Address layouts written as tagged templates in print order. Interpolations are slots, and the literal text
  *   between them is a connector.
  *
- *   A node that renders nothing drops out together with its connector. An interior connector renders only when
+ *   A node that renders no value drops out together with its connector. An interior connector renders only when
  *   both neighbours rendered. An edge connector binds to the one slot it touches, so Japan's 〒 mark drops with an
  *   absent postcode.
  *
@@ -16,7 +16,7 @@
 import { COMPONENT_TAGS, type ComponentTag } from "#component"
 
 /**
- * A slot that renders one component tag's value, or nothing when the value is absent.
+ * A slot that renders one component tag's value, or no text when the value is absent.
  */
 export interface AddressSlot {
 	readonly tag: ComponentTag

@@ -1,6 +1,6 @@
 """Every module that runs as `python -m` imports, and its usage string names its own path.
 
-A corpus builder is run by hand, months apart, and nothing in the suite imports it. So a module of
+A corpus builder is run by hand, months apart, and no test in the suite imports it. So a module of
 this shape can break at IMPORT time and the whole suite stays green — which is what happened when
 the fragment builder moved from the package root to `corpora/fragment/`: it read its country-surface table through
 `Path(__file__).parent / "data"`, the move put one more directory between the two, and the failure
@@ -57,7 +57,7 @@ RUNNABLE = _runnable_modules()
 
 
 def test_the_discovery_found_the_builders() -> None:
-    """A discovery that silently found nothing would make every test below pass over an empty list.
+    """A discovery that silently found no builder would make every test below pass over an empty list.
 
     Compared by INVOCATION name, so a builder that grows into a package and moves its guard into a
     `__main__.py` still answers to the command a person types.

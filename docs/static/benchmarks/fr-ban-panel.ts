@@ -10,7 +10,7 @@
 //
 //   clean "28 Avenue de l'Opéra, 75002 Paris" — the canonical French order. Reordered "75002 Paris, 28 Avenue de l'Opéra" — postcode and commune moved to the front.
 //
-// The second arm is the surface-form robustness test. Nothing about the target changed. Only the order of the same tokens did.
+// The second arm is the surface-form robustness test. No part of the target changed. Only the order of the same tokens did.
 //
 // determinism
 //
@@ -290,7 +290,7 @@ async function resample(): Promise<void> {
  * so this reports the artifact that was loaded rather than the one that was asked for,
  * including the base-package fallback the `fr-FR` overlay takes for its `model.onnx`.
  * Paths are dereferenced because a development checkout symlinks them into the workspace,
- * and the symlink name says nothing about which checkpoint is behind it.
+ * and the symlink name makes no statement about which checkpoint is behind it.
  *
  * The BAN release itself is recorded separately, on the committed panel file,
  * because it is a property of the addresses rather than of the run.
@@ -324,7 +324,7 @@ function summarize(records: GradedRecord[]) {
 	const within = (km: number): number => records.filter((r) => r.km !== null && r.km <= km).length
 	// Bucketed on the tier that answered, which is `none` for a row that returned no coordinate:
 	// `resolution_tier` reports where the cascade ended rather than whether it produced anything.
-	// Therefore, it still reads "admin" on a row that answered nothing.
+	// Therefore, it still reads "admin" on a row that answered no coordinate.
 	// Every row on this panel resolved, so the two bucketings agree here.
 	// The guard is in place so they cannot silently disagree on a future run.
 	const tiers: Record<string, number> = {}

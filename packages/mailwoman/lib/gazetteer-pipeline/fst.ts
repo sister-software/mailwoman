@@ -9,7 +9,7 @@
  *   the curation (the "serialize runtime decisions into static indexes" doctrine): a name whose whole
  *   normalized surface is a bare function word ("la" — the case-folded Los Angeles alias colliding
  *   with the French article), a bare street-type word ("boulevard", "lane" — real US places that are
- *   street vocabulary everywhere else), or a composition of nothing but function words ("de la") is
+ *   street vocabulary everywhere else), or a composition of only function words ("de la") is
  *   never inserted as a bias key. This is the ASR-contextual-biasing "prune the bias list" discipline
  *   and Carmen's index-time token hygiene: the hazard is removed from the artifact rather than
  *   guarded at decode time, so it cannot misfire on lowercase, comma-free, any-locale input. The FST
@@ -125,13 +125,13 @@ export const FST_LOCALES: ReadonlyMap<string, string[]> = new Map([
 /**
  * Every FST artifact that is a projection of the WOF admin DB, relative to the wof data-root dir.
  *
- * `fst-street-morphology.bin` is deliberately absent: it is built from the in-repo
- * libpostal dictionaries, so the admin DB's md5 says nothing about whether it is current
+ * `fst-street-morphology.bin` is deliberately absent: it is built from the in-repo libpostal
+ * dictionaries, so the admin DB's md5 makes no statement about whether it is current
  * and stamping it against one would be a lie the guard then enforces.
  * The CJK three are here despite having no entry in {@link FST_LOCALES}.
  *
- * They were built by the pre-#1318 flow, nothing can rebuild them today, and they stay
- * frozen pending the CJK arc's importance-source and WOF-geometry questions.
+ * They were built by the pre-#1318 flow and no tool can rebuild them today, and they
+ * stay frozen pending the CJK arc's importance-source and WOF-geometry questions.
  * That is a fact the check should surface rather than hide.
  *
  * `fst-global-priority.bin` (317 MB, retired 2026-08-06 — see releasing.md) is
@@ -172,7 +172,7 @@ export interface FSTFreshnessRow {
  * Check every admin-derived FST against `dbPath`, for the `gazetteer verify` freshness section.
  *
  * Why IT reports rather than fails.
- * `gazetteer verify` checks a database, and a stale FST says nothing about
+ * `gazetteer verify` checks a database, and a stale FST makes no statement about
  * whether that database is sound — the arrow runs the other way.
  *
  * The artifacts also cannot be rebuilt as a side effect of a verify: a locale FST build is minutes,
@@ -181,7 +181,7 @@ export interface FSTFreshnessRow {
  * looking at the gazetteer, with the command that starts fixing it.
  *
  * The caller decides what to do with the exit code.
- * Today it does nothing, and that is deliberate.
+ * Today it takes no action, and that is deliberate.
  *
  * The exclusion-policy expectation applies only to locales the current builder can produce.
  * Naming a policy for `fst-ja-jp.bin` would report the true-but-useless "(none) → v1.1"

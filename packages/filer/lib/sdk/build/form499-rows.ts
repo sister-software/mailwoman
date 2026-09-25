@@ -5,7 +5,7 @@
  * @file One Form 499 row's lifecycle, edge and family membership writes.
  *
  *   Form 499 is an annual filing, so a row's administrative `lastFiledAt` and the FCC's operational `ceasedAt` are two
- *   different clocks and nothing orders them. {@linkcode closeableCessationDate} is where that is resolved, and its
+ *   different clocks and no field orders them. {@linkcode closeableCessationDate} is where that is resolved, and its
  *   abstention is why `valid_to` is sometimes left open on a filer known to have ceased.
  */
 
@@ -69,7 +69,7 @@ export interface Form499LifecycleTotals {
  * into the 499 loop, it pushes `buildFilerDatabase` past the linter's `max-statements` ceiling.
  *
  * A row whose `lifecycle` is `undefined` (every row the 17-column TSV parser produces)
- * writes nothing, touches no total and returns `null`.
+ * writes no row, touches no total and returns `null`.
  * The TSV path is byte-identical to what it was before this existed.
  */
 export function processForm499Lifecycle(
@@ -103,8 +103,8 @@ export function processForm499Lifecycle(
 	if (lifecycle?.replacedByForm499ID) {
 		// Directional in time as well as identity: this registration is the older one, always.
 		// The successor's node is minted here rather than waited for.
-		// It is almost always its own row in the same file, but nothing guarantees this
-		// row is processed second, and `insNode` is insert or ignore.
+		// It is almost always its own row in the same file, but no ordering guarantees
+		// this row is processed second, and `insNode` is insert or ignore.
 		const successorNodeID = `${FilerIdentifierType.Form499ID}:${lifecycle.replacedByForm499ID}`
 		insNode.run(successorNodeID, FilerIdentifierType.Form499ID, lifecycle.replacedByForm499ID)
 

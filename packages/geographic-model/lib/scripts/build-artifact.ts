@@ -16,7 +16,7 @@
  *   compile, and byte equality is asserted between two compiles instead. The same convention holds
  *   `taxonomy.json` in `@mailwoman/poi-taxonomy`; its `data/provenance.md` states it for that table.
  *
- *   Nothing here reaches `@mailwoman/core`: the package's build project declares no reference to it in
+ *   No code here reaches `@mailwoman/core`: the package's build project declares no reference to it in
  *   either direction, and a generator is not the reason to reverse that. `import.meta.main` is what
  *   `runIfScript` reads anyway, and reading it directly keeps this file inside the package's own
  *   dependency graph.
@@ -69,7 +69,7 @@ export async function packagedModelPaths(): Promise<{ source: string; artifact: 
  * Load the authored records and compile them.
  *
  * @throws with every violation if they do not load, and with every reason if they load but do not compile.
- * Nothing partial is returned.
+ * No partial result is returned.
  */
 export async function compileAuthoredGeographicModel(): Promise<CompiledGeographicModel> {
 	const { source } = await packagedModelPaths()

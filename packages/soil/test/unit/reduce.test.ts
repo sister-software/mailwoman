@@ -76,7 +76,7 @@ describe("mapUnitProfile", () => {
 	it("treats a map unit whose components carry no weight at all as no mapping rather than as a rating", () => {
 		const profile = mapUnitProfile({ no_mapping: 0 }, [component(0, "Series", "2"), component(0, "Series", "3")])
 
-		// Nothing can be apportioned from an unweighted mixture.
+		// No component can be apportioned from an unweighted mixture.
 		// Answering with an empty distribution would drop the delineation's area out of
 		// every share and violate the sum-to-one relationship silently.
 		expect(profile.noData).toBe(1)

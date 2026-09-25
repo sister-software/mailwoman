@@ -3,9 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The shop provisioner against a scripted Stripe: an empty account reads as all missing and writes nothing without
+ *   The shop provisioner against a scripted Stripe: an empty account reads as all missing and writes no object without
  *   `apply`. with it, every object is created with the catalog's values. a second run finds them all and creates
- *   nothing. an object that differs from the catalog is reported, updated, or replaced by what the difference allows.
+ *   no object. an object that differs from the catalog is reported, updated, or replaced by what the difference allows.
  */
 
 import { readEnv } from "@mailwoman/license-worker/env"

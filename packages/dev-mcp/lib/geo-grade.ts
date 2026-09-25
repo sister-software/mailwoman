@@ -74,7 +74,7 @@ export interface GeoPoint {
  * `null` is not infinity and must not be turned into one.
  * It flows into {@link hitAt} as a miss at every threshold — which is what the
  * protocol says — while staying distinguishable in the row, so a reader can tell an
- * arm that missed by 400 km from an arm that had nothing to say.
+ * arm that missed by 400 km from an arm that had no answer.
  */
 export function distanceKm(answer: GeoPoint, truthLat: number, truthLon: number): number | null {
 	if (answer.lat === null || answer.lon === null) return null
@@ -103,7 +103,7 @@ export function thresholdKey(thresholdKm: number): string {
  *
  * Deliberately a HIT/miss comparison rather than "whichever arm is closer".
  * An arm that moves a result from 40 km to 30 km has not found the address, and a metric
- * that rewards it would report progress on rows where nothing usable changed.
+ * that rewards it would report progress on rows where no usable result changed.
  *
  * The full distances are carried on the row for anyone who wants to read the margin.
  */
@@ -188,7 +188,7 @@ function wilsonHalfWidth(successes: number, n: number): number {
 /**
  * The equivalence verdict as a sentence, which has three readings and not two.
  *
- * Failing an equivalence test does not mean the arms differ, and it does not mean nothing
+ * Failing an equivalence test does not mean the arms differ, and it does not mean no fact
  * was learned, which of those it means depends on where the point estimate fell.
  * A difference already outside the bound is a difference.
  *

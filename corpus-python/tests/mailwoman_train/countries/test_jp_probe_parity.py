@@ -1,6 +1,6 @@
 """One seeded JP probe build, pinned across every artifact it writes.
 
-Nothing exercised this. The builder reads a 19.59M-point Overture-JP parquet and a cp932 KEN_ALL
+No test exercised this. The builder reads a 19.59M-point Overture-JP parquet and a cp932 KEN_ALL
 extract, neither of which the suite has, so the whole path — the per-prefecture reservoirs, the
 round-robin draw, the postcode join, the held-out board and the sealed char vocab — has never run
 under pytest.
@@ -82,7 +82,7 @@ def municipality_names(prefecture: str) -> tuple[list[str], str]:
 
     The split is `muni_bucket`, an md5 of the name — so a name cannot be chosen for a side, only
     searched for. Without the search the board reservoir stays empty and the held-out check pins
-    nothing.
+    no value.
     """
     pool: list[str] = []
     board: str | None = None
@@ -206,7 +206,7 @@ def write_reference() -> None:
     """Capture the current build as the reference the tests above compare against.
 
     Run this only when the current code already passes against the existing reference — otherwise
-    the artifact records whatever the code does now, and the tests assert nothing.
+    the artifact records whatever the code does now, and the tests assert no fact.
     """
     import tempfile
 

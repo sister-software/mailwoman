@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  * @file Every committed data artifact in a `data/` directory is named by that directory's `PROVENANCE.md`.
  *
- *   A `data/` directory holds artifacts a build wrote and a human is expected to leave alone. Nothing in the file says
+ *   A `data/` directory holds artifacts a build wrote and a human is expected to leave alone. No line in the file says
  *   so — a JSON file looks the same whether a generator produced it or somebody typed it — and the prose linter reads
  *   `.ts`, `.tsx`, `.py`, `.yaml`, `.yml`, `.md` and `.mdx`, so no automated pass inspects these at all. What actually
  *   happened is that a hand sweep rewrote `Contracts Finder / Find a Tender` to `Interfaces Finder / Find a Tender`
@@ -19,7 +19,7 @@
  *   the directory has to be named, and so does every immediate subdirectory. The second was added after
  *   `packages/core/data/coarse-placer/` was found shipping a trained classifier in every copy of `@mailwoman/core`
  *   with no record anywhere: each of core's four data directories is one level down, so a file-only rule reports
- *   nothing about any of them.
+ *   no finding about any of them.
  *
  *   A subdirectory is named rather than recursed into. Requiring every file at any depth would ask
  *   `packages/core/data/PROVENANCE.md` to list 1,114 vendored dictionary files, which is a list nobody reads and

@@ -87,7 +87,7 @@ async function main(): Promise<void> {
 	const output = (report?.stdout ?? "").trim()
 	// The COUNT off Vale's summary, never the word: a clean run ends `✔ 0 errors, 0 warnings …`,
 	// so a substring test for "error" blocks on every clean file.
-	// Absent summary means absent output means nothing to report.
+	// Absent summary means absent output means there is no report.
 	const errorCount = Number(/^[✔✖]\s+(\d+)\s+error/mu.exec(output)?.[1] ?? 0)
 
 	if (!errorCount) return

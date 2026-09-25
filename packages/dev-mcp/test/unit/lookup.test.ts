@@ -42,7 +42,7 @@ describe("lookupFST", () => {
 	it("separates a zero-importance hit from a firing one", () => {
 		// `applyBias` computes `importance * biasScale * maxBias * …` and keeps a tag only
 		// when that exceeds the running max, which starts at 0.
-		// So a BIO-mapped entry at importance 0 contributes nothing to the decoder, and a caller
+		// So a BIO-mapped entry at importance 0 contributes no bias to the decoder, and a caller
 		// reading only `hit` and `importance` cannot tell that from a bias the decoder acts on.
 		const [inert] = lookupFST(fst, tokens, ["Juan"])
 

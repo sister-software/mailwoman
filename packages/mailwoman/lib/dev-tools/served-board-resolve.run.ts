@@ -7,7 +7,7 @@
  *
  *   The parse board and this one answer different questions. A parse board decodes spans and looks a predicted
  *   (region, locality) pair up in a centroid table. this runs the pipeline a caller runs and grades the coordinate it
- *   returns. A locale can read well on the first and resolve nothing on the second, so `scope.mdx`'s rule — a locale is
+ *   returns. A locale can read well on the first and resolve no place on the second, so `scope.mdx`'s rule — a locale is
  *   claimed when a coordinate-graded eval exists for it — is answered here.
  *
  *   `--locale` and `--country` are flags rather than constants because every CJK board has the same shape and a tool

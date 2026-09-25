@@ -179,7 +179,7 @@ export interface StreetEvidencePick<T = unknown> {
  * holds more than street type words, and scores within `marginCap` of rank 1.
  *
  * Excluded candidates are checked after all others.
- * When nothing qualifies, the first non-excluded candidate wins.
+ * When no candidate qualifies, the first non-excluded candidate wins.
  *
  * @param candidates Parse candidates sorted by score, rank 1 first.
  * @throws When `candidates` is empty.

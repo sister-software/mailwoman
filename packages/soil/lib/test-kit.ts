@@ -7,7 +7,7 @@
  *   no gdal in the loop.
  *
  *   A fixture rung that could only RUN through ogr2ogr would test the conversion on the machines that have
- *   IT and nothing AT all on the ones that do not. What these fixtures exercise is the whole database half —
+ *   IT and no coverage AT all on the ones that do not. What these fixtures exercise is the whole database half —
  *   the declared-domain check, the cell classification, the area-weighted reduction, the four absence
  *   shares, the coverage rows, the manifest and the seal.
  *

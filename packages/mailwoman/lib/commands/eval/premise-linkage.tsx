@@ -59,7 +59,7 @@ export const spec = {
 } as const satisfies CommandSpec
 
 /**
- * The synthetic self-check publishes nothing, so its cell floor exists only to keep
+ * The synthetic self-check publishes no cell, so its cell floor exists only to keep
  * the writer's suppression path on the same code the controlled run takes.
  */
 const SYNTHETIC_MIN_CELL_SIZE = 1
@@ -172,7 +172,7 @@ const EvalPremiseLinkage: CommandComponent<typeof spec> = ({ options }) => {
  * Import a private run configuration from outside this repository.
  *
  * The specifier is the operator's.
- * Nothing here inspects it beyond handing it to the loader, and `resolve` decides
+ * No code here inspects it beyond handing it to the loader, and `resolve` decides
  * whether what came back is usable.
  */
 async function loadControlledConfig<T>(

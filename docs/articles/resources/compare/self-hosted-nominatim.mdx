@@ -50,14 +50,14 @@ That single difference produces the rest of this table.
 | Store                  | PostgreSQL with spatial extensions         | Sealed SQLite files, read from disk                      |
 | Reference data         | OpenStreetMap                              | Who's On First, plus national registers per country      |
 | Ambiguity              | Surfaced as a ranked result list           | Resolved to one reading, with alternatives attached      |
-| Partial or fuzzy input | A strength — scoring is continuous         | A weakness — a failed parse has nothing to look up       |
+| Partial or fuzzy input | A strength — scoring is continuous         | A weakness — a failed parse has no key to look up        |
 | Non-address queries    | Answers them; place types are searchable   | Not the design                                           |
 | What arrives           | A matched record with an address breakdown | Labeled spans with offsets, plus a coordinate and a tier |
 | Setup                  | An import and an index build               | A package install and a download                         |
 
 **Where Nominatim is stronger, without qualification.** It answers queries that are not addresses.
 It degrades gracefully — a misspelled or half-remembered string still returns a ranked list, where a
-parser that mislabels a span looks up the wrong index and returns nothing at all. Its data is
+parser that mislabels a span looks up the wrong index and returns no result at all. Its data is
 OpenStreetMap, so a place that exists in OSM is reachable the day it is mapped, with no locale tier
 to wait for. And a ranked list is the right shape for a search box, which is what it was built to
 serve.
@@ -70,7 +70,7 @@ record is a step short of it.
 ## When to choose Nominatim
 
 - **Your queries are exploratory.** Search boxes, partial strings, landmarks, place types. This is its
-  home ground, and a parser is the wrong instrument because there is frequently nothing to parse.
+  home ground, and a parser is the wrong instrument because there is frequently no address to parse.
 - **You want OpenStreetMap specifically.** If your workflow depends on OSM identifiers, OSM tags, or
   contributing corrections upstream and seeing them in your own results, that loop is worth more than
   any property of a different engine.
@@ -101,7 +101,7 @@ record is a step short of it.
 ## The two compose
 
 A pipeline can label first, take the constrained lookup when it succeeds, and fall back to a ranked
-search over the raw string when the labeling produces nothing usable. That inherits both sets of
+search over the raw string when the labeling yields no usable span. That inherits both sets of
 costs and is a real design. It is the shape to reach for when your input is mostly postal with a
 tail that is not.
 

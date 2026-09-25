@@ -98,7 +98,7 @@ def detect_channels(model: nn.Module) -> Channels:
         # exposed.
         locale=getattr(model, "locale_head", None) is not None,
         # #727 stage-2: export the span scorer's (B, S, L, T) scores as a named output. Appending is
-        # backward-compatible — a runtime that never asks for `span_scores` pays nothing (ORT prunes
+        # backward-compatible — a runtime that never asks for `span_scores` pays no cost (ORT prunes
         # the unfetched branch). The Phase-3 JS decoder + the semi-crf-transitions.json sidecar
         # (package_weights.export_semi_crf_transitions) consume it.
         spans=bool(getattr(model, "use_span_scorer", False)),

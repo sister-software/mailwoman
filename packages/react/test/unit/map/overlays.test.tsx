@@ -139,7 +139,7 @@ test("a null spec renders no marker and no result layers", async () => {
 	// so reading it directly here narrows it to `never`.
 	const getMap = () => mapRef?.getMap()
 
-	// Give the style a beat to settle, then confirm nothing was drawn.
+	// Give the style a beat to settle, then confirm no overlay was drawn.
 	await settle(() => getMap()?.isStyleLoaded() || null, 4000)
 	expect(container.querySelector(".maplibregl-marker")).toBeNull()
 	expect(getMap()?.getLayer("mw-result-fill")).toBeFalsy()

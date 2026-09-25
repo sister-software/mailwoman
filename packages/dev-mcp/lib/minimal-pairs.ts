@@ -18,7 +18,7 @@
  *   region and a house number then displaces the locality, in two separate stages, with no street involved. The
  *   aggregate score for ES says none of that.
  *
- *   rungs are the caller'S. Nothing here generates them, because generating them means asserting a component order,
+ *   rungs are the caller'S. No code here generates them, because generating them means asserting a component order,
  *   and a generator that is silently wrong about order for one locale would produce a confident table about a ladder
  *   nobody wrote. The caller supplies the minimal pairs. this measures them.
  *
@@ -70,7 +70,7 @@ interface RungReading {
 	 * The #1649 intent check's verdict, when it fired on this rung.
 	 *
 	 * A refused rung has no components and no coordinate, and is otherwise indistinguishable
-	 * from an input the parser could make nothing of.
+	 * from an input the parser could make no sense of.
 	 * It is the opposite: the eval discards a completed tree.
 	 *
 	 * `Cafe at St Mary's, Oxford` parses to `locality=Oxford › dependent_locality=St Mary's › street=Cafe`
@@ -181,7 +181,7 @@ function renderLadder(reading: Omit<LadderReading, "rendered">): string {
 		const cells = tags.map((tag, i) => (rung.components[tag] ?? ABSENT).padEnd(widths[i]!))
 		const mark = reading.first_divergence?.step === rung.step ? " ←" : ""
 		// A refusal is stated on the row itself.
-		// Its cells are all `absent`, which without this reads as a parse that found nothing
+		// Its cells are all `absent`, which without this reads as a parse that found no result
 		// rather than a completed parse that was thrown away.
 		const refusal = rung.refused ? `  REFUSED as ${rung.refused} — parse discarded, not failed` : ""
 

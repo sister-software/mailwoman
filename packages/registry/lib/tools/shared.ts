@@ -152,7 +152,7 @@ export const inTXBBOX = (lat: number, lon: number): boolean =>
  * probe took the previous one's map and appended what it additionally read --
  * so this is the widest of the five, and no consumer loses a column.
  *
- * Reading extra keys costs nothing: they are inert strings, and nothing enumerates this
+ * Reading extra keys costs no work: they are inert strings, and no code enumerates this
  * object (checked: no `Object.keys`/`values`/`entries`/spread over it anywhere in `tools/`),
  * so adding a column can never change a probe's behavior.
  */
@@ -461,7 +461,7 @@ export interface ColocatedPair {
 /**
  * Every unordered pair of distinct NPIs sharing a practice-address key — the over-merge population.
  *
- * Providers are de-duplicated per address by NPI (first record wins); single-NPI addresses yield nothing.
+ * Providers are de-duplicated per address by NPI (first record wins); single-NPI addresses yield no pair.
  */
 export function* colocatedDistinctPairs(
 	byAddr: ReadonlyMap<string, readonly ColocatedProvider[]>

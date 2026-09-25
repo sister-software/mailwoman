@@ -6,7 +6,7 @@
  *
  *   Each case here is a verdict that was actually reached incorrectly on 2026-08-23, encoded so it cannot be reached
  *   incorrectly again. The refusal cases matter most: a tool that reports a confident number when its controls say it
- *   may not is worse than one that reports nothing.
+ *   may not is worse than one that reports no number.
  */
 
 import { dRuleCountries, readScopeConfig } from "@mailwoman/core/scope-config"
@@ -98,7 +98,7 @@ describe("decideArc", () => {
 		expect(arc.verdict).toBe("hold")
 		// Both tier-1 locales are reported.
 		// The list this replaced named FR and not US, so this row read `[{ country: "FR", n: 1 }]`
-		// and the two US regressions beside it raised nothing (#2278).
+		// and the two US regressions beside it raised no flag (#2278).
 		expect(arc.dRuleViolations.map((entry) => `${entry.country}:${entry.n}`)).toEqual(["FR:1", "US:2"])
 	})
 

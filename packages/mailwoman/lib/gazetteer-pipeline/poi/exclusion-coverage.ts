@@ -18,7 +18,7 @@
  *      exclusion-grade coverage exists. A cell left OUT of the table means unknown, and the two must never
  *      collapse into each other.
  *   2. **Cells outside the region are never written.** Not at completeness 0 rather than at all: the region is
- *      what was measured, and the measurement says nothing about its outside.
+ *      what was measured, and the measurement makes no statement about its outside.
  *   3. **One region, one completeness.** The estimate is regional, so it is recorded regionally rather than
  *      dressed up as per-cell precision it does not have. Per-cell variation needs a per-cell denominator.
  *      measured against the pilot's own départements the pooled and stratified populations agreed to within
@@ -55,7 +55,7 @@ export interface ExclusionCoverageInput {
 	 * Resolution of the coverage cells.
 	 *
 	 * Match the layer being written, or a reader keyed to the other resolution
-	 * finds nothing and reads that as unsurveyed.
+	 * finds no cell and reads that as unsurveyed.
 	 */
 	resolution: number
 	/**

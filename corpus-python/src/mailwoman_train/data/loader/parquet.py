@@ -120,7 +120,7 @@ def _file_row_iter(
                 # Empty is the other way a span-schema file lies, and it is the quieter one. A writer
                 # that projects rows without the span triple emits `[]` for all three, which passes the
                 # null check above; `char_label_array_from_spans(raw, [], [], [])` then returns an
-                # all-`O` array and every such row trains as "nothing here is an address component".
+                # all-`O` array and every such row trains as "no address component here".
                 # A row whose BIO labels carry a tag cannot honestly have no spans.
                 if all(not v for v in spans.values()) and any(lbl != "O" for lbl in bio_labels):
                     raise ValueError(

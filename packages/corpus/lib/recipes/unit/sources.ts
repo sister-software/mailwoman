@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  * @file Which cached OpenAddresses extracts the `unit` recipe reads, and the held-out one it never trains on.
  *
- *   Split from the recipe because the two halves read nothing of each other: the sources name a data root and a
+ *   Split from the recipe because the two halves read no data from each other: the sources name a data root and a
  *   cache layout, and the designator synthesis beside them names USPS Pub-28 tables. `module-cohesion` reported the
  *   pair as two declaration communities at modularity 0.54, which is what that reads like from outside.
  *
@@ -44,7 +44,7 @@ export const TRAIN_SOURCES: readonly UnitSource[] = [
 /**
  * Vermont, the corpus holdout.
  *
- * `--golden` reads this and nothing else, so the eval measures designator
+ * `--golden` reads this and no other source, so the eval measures designator
  * recognition on addresses no training row came from.
  */
 export const EVAL_SOURCE: UnitSource = {

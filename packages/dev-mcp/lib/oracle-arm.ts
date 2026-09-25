@@ -5,8 +5,8 @@
  *
  *   Reference geocoders as a comparison arm — metered, and never a grading truth.
  *
- *   `@mailwoman/geocode-oracle`'s own header is unambiguous about what this is for: *"Not truth, and not an eval …
- *   Nothing here should ever decide whether a build ships."* So an oracle arm always reports `grade: "diff-only"` and a
+ *   `@mailwoman/geocode-oracle`'s own header is unambiguous about what this is for: it is not truth and not an eval,
+ *   and no part of it should ever decide whether a build ships. So an oracle arm always reports `grade: "diff-only"` and a
  *   null verdict, and its purpose is flagging rows for a human to read. That is enforced here rather than left to the
  *   caller, because a billed third-party geocoder quietly becoming an answer key is the exact failure the package was
  *   made private to prevent.
@@ -77,7 +77,7 @@ export interface OracleConfig {
 /**
  * Conservative default cap when the config enables Google without naming one.
  *
- * Chosen to cover one 420-row panel with margin and nothing like a sweep.
+ * Chosen to cover one 420-row panel with margin and to come nowhere near a sweep.
  * A cap that silently permits an unbounded run is not a cap.
  */
 export const DEFAULT_GOOGLE_CALL_CAP = 500
@@ -220,7 +220,7 @@ export class OracleMeter {
  *    with these same two geocoders open as a second opinion.
  *    That is the stated purpose of `@mailwoman/geocode-oracle`.
  *    Scoring an oracle against those points is therefore partly scoring it against itself.
- * 2. The package's own header says nothing there should ever decide whether a build ships.
+ * 2. The package's own header states that no part of it should ever decide whether a build ships.
  *    A rule with a list of sets it applies to becomes a rule about which set to pick.
  */
 export const ORACLE_GRADE_MODE = "diff-only"

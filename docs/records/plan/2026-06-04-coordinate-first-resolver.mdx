@@ -63,7 +63,7 @@ Output the canonical WOF name (that's what geocodes), and echo the parsed string
 
 ## Falsehoods: the part Pelias and Airmail skip
 
-`data/eval/falsehoods/postcodes.jsonl` currently tests alphanumeric postcode _parsing_ and says nothing about postcode/city _conflicts_. We extend it with the cases that affect travellers and border-town residents: digit transposition (`75008`→`57008`), wrong-city-for-postcode (`10115 München`), and adjacent-town borrowing. The metric is whether the resolver **catches** the conflict (raises the flag) rather than confidently mislocating. Clean-OA containment measures accuracy; conflict-falsehoods measures the robustness that justifies a parse-then-resolve pipeline over a BM25 box.
+`data/eval/falsehoods/postcodes.jsonl` currently tests alphanumeric postcode _parsing_ and makes no statement about postcode/city _conflicts_. We extend it with the cases that affect travellers and border-town residents: digit transposition (`75008`→`57008`), wrong-city-for-postcode (`10115 München`), and adjacent-town borrowing. The metric is whether the resolver **catches** the conflict (raises the flag) rather than confidently mislocating. Clean-OA containment measures accuracy; conflict-falsehoods measures the robustness that justifies a parse-then-resolve pipeline over a BM25 box.
 
 ## Staged plan (cheapest and most decisive first)
 

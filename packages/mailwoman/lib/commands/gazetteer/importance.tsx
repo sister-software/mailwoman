@@ -9,7 +9,7 @@
  *
  *   the two-score split (ROAD_TO_V9 §2 R1, ratified 2026-08-06). This command used to write one
  *   column, filled by Wikipedia where the join landed and by a population-derived pseudo-score
- *   everywhere else — a conflation nothing downstream could take apart, which is how encyclopedic
+ *   everywhere else — a conflation no downstream step could take apart, which is how encyclopedic
  *   importance became the de-facto ranking signal for a geocoder whose users are asking "which place
  *   do I mean". It now writes `referential` (population-anchored, the ranking backbone) and
  *   `encyclopedic` (the Wikipedia join, NULL when there is no article) in their own columns, plus
@@ -223,7 +223,7 @@ const GazetteerImportance: CommandComponent<typeof spec> = ({ options }) => {
 		//
 		// Before the split this ran as two passes over one column: Wikipedia scores,
 		// then an `insert or ignore` population fallback for whatever Wikipedia missed.
-		// That made the column a conflation nothing downstream could take apart,
+		// That made the column a conflation no downstream step could take apart,
 		// which is how encyclopedic importance became the de-facto ranking signal.
 		// Now each place gets one row carrying both scores in their own columns,
 		// and the legacy `importance` column is written by `blendImportance`.
@@ -282,8 +282,8 @@ const GazetteerImportance: CommandComponent<typeof spec> = ({ options }) => {
 		let referentialOnlyCount = 0
 		// One row per place in the union of the two signals.
 		// A place absent from both is absent from the table entirely.
-		// The pre-split behavior, and the correct one: a row of zeros would assert that
-		// we measured no salience rather than that we measured nothing.
+		// The pre-split behavior, and the correct one: a row of zeros would assert that we
+		// measured no salience rather than that we performed no measurement.
 		const allIDs = new Set<number>([...wofReferential.keys(), ...wofEncyclopedic.keys()])
 
 		kdb.exec("BEGIN TRANSACTION")

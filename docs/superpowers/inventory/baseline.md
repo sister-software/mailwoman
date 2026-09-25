@@ -302,7 +302,7 @@ The paths are short and code-forward, and both entry points lead to the same pag
 
 Good content exists for this (`concepts/staged-pipeline-interface.mdx`,
 `understanding/our-approach/the-staged-pipeline.mdx`, and the whole Concepts and Understanding
-tracks). Nothing on the homepage or in the top navbar links to it directly. A reader reaches it only
+tracks). No link on the homepage or in the top navbar points to it directly. A reader reaches it only
 by landing somewhere in `/docs/` and then using the DocsSubHeader switcher, which is not visible
 before the reader reaches a docs page. From navbar "Docs": `/docs/status` → switch to
 "Understanding Mailwoman" or "Concept deep dives" (2 clicks, plus discovering the switcher).

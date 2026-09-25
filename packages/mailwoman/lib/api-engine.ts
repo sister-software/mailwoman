@@ -339,7 +339,7 @@ export async function createServeEngine(): Promise<ServeEngine> {
 	const deps: GeocodeDepsBundle = { classifier, resolver, databases, defaultCountry: candidateDB ? undefined : "US" }
 
 	// Route records the whole-call metric already (`@mailwoman/api`'s `routes.ts`) —
-	// the engine records nothing extra here.
+	// the engine records no extra metric here.
 	// Ported from `GeocodeRouter`'s `singleHandler`.
 	// The cast mirrors `@mailwoman/api/routes.ts`'s established "documented wire
 	// shape looser than the domain type" idiom.
@@ -354,7 +354,7 @@ export async function createServeEngine(): Promise<ServeEngine> {
 	// The pool was measured at 1.00x.
 	// A geocode cannot overlap another in-process, because `onnxruntime-node`'s `session.run()` blocks
 	// the JS thread rather than releasing to the libuv pool, and `node:sqlite` reads are synchronous.
-	// The pool bought nothing but the appearance of tuning, so it's a plain loop now.
+	// The pool bought only the appearance of tuning, so it's a plain loop now.
 	// To actually parallelize, cross a thread boundary — see `mailwoman/geocode-stream.ts`.
 	// Receipts: `docs/engineering/reference/performance.mdx`.
 	const batch: MailwomanAPIEngine["batch"] = async (addresses, opts) => {
@@ -396,7 +396,7 @@ export async function createServeEngine(): Promise<ServeEngine> {
 				...incomingOpts,
 				defaultCountry: incomingOpts.defaultCountry ?? deps.defaultCountry,
 				...(addressPoints ? { addressPoints } : {}),
-				// #374 calibration ladder: explicit incoming factor (instrument override, survives the spread) → the artifact's own header value (`interpolation.radiusCalibration`, read at database open — the resolver consumes it directly, nothing passed here) → the in-code per-region table for databases predating the `interp_calibration` metadata table.
+				// #374 calibration ladder: explicit incoming factor (instrument override, survives the spread) → the artifact's own header value (`interpolation.radiusCalibration`, read at database open — the resolver consumes it directly and passes no value here) → the in-code per-region table for databases predating the `interp_calibration` metadata table.
 				...(interpolation
 					? {
 							interpolation,

@@ -5,7 +5,7 @@
  *
  *   What the claim route answers, as one schema: the route publishes it in the OpenAPI document and answers by it, the
  *   success page's fetch and the rehearsal read by it, and their TypeScript types are inferred from it. Browser-safe:
- *   zod and nothing else.
+ *   zod alone.
  */
 
 import { z } from "zod"

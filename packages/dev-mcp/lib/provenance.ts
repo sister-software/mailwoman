@@ -117,7 +117,7 @@ export interface ProvenanceOptions {
  * Assemble the provenance report.
  *
  * Every field is read.
- * Nothing is derived from a convention that might not hold, which is why an absent
+ * No field is derived from a convention that might not hold, which is why an absent
  * file is reported as absent rather than defaulted.
  */
 export async function runProvenance(options: ProvenanceOptions = {}): Promise<ProvenanceReport> {
@@ -157,7 +157,7 @@ export async function runProvenance(options: ProvenanceOptions = {}): Promise<Pr
 			reposStampAge = (await statPath(reposStampPath)).mtime.toISOString()
 		} catch {
 			// A corrupt stamp is reported as no stamp.
-			// Guessing at its contents would be worse than saying nothing.
+			// Guessing at its contents would be worse than reporting no value.
 			repos = null
 		}
 	}

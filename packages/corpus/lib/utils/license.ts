@@ -9,7 +9,7 @@
  *   build includes every row an adapter yields (stamping its `license`); a build that needs a clean
  *   license set — e.g. the proprietary `@mailwoman/neural-weights-*` weights, which must not
  *   inherit a share-alike obligation — purposely excludes kinds via `buildCorpus({ excludeLicenses
- *   })` (CLI `--exclude-licenses` / `--exclude-share-alike`). Nothing is dropped on a license
+ *   })` (CLI `--exclude-licenses` / `--exclude-share-alike`). No source is dropped on a license
  *   string unless the operator named it. This avoids the trap of silently dropping allowed data
  *   mis-stamped with a conservative license (e.g. BAN, which is dual-licensed Licence Ouverte or
  *   ODbL — we elect Licence Ouverte. a default-deny on the old `ODbL` stamp would have wrongly

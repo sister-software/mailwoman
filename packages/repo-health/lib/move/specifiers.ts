@@ -92,7 +92,7 @@ function conditionTargets(value: unknown): string[] {
 }
 
 /**
- * The subpath key that names `target`, or nothing when this entry does not match.
+ * The subpath key that names `target`, or no key when this entry does not match.
  *
  * A pattern entry substitutes exactly one `*`, as Node does: the target's text before and
  * after the star must bracket the path, and what is left in the middle is what the key's star becomes.
@@ -124,7 +124,7 @@ function packageRelativeTarget(manifest: PackageManifest, file: string): string 
  * Every specifier that names `file` under `manifest`'s own maps, in map order.
  *
  * `file` is repo-relative and so is `manifest.dir`; a file outside the package answers
- * nothing, which is how a caller learns it asked the wrong package.
+ * an empty list, which is how a caller learns it asked the wrong package.
  */
 export function packageSpecifiersFor(manifest: PackageManifest, file: string): PackageSpecifiers {
 	const packageRelative = packageRelativeTarget(manifest, file)

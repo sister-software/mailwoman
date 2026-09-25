@@ -270,7 +270,7 @@ export async function buildPostcodeCodePoint(
 		// Check the archive's own manifest. codepoint/extract.ts explains this oracle.
 
 		// Every row's parent_id is -1 (Code-Point carries no hierarchy), so this
-		// writes the self row per place and nothing else.
+		// writes the self row per place and no other row.
 		// Not decorative: the resolver's parent-constraint scopes a lookup with
 		// `spr.id IN (select id from ancestors where ancestor_id = ?)`, and a place
 		// absent from `ancestors` can never satisfy it.

@@ -70,7 +70,7 @@ describe("admitting an Overture division name", () => {
 	 * The old rule's character class ended in `\p{P}` — all punctuation — so it admitted every
 	 * bracket, pipe and separator it was documented to refuse, and a bare numeric code besides.
 	 *
-	 * It filtered script and nothing else.
+	 * It filtered script and no other property.
 	 * The replacement is therefore stricter on noise as well as looser on script,
 	 * and the two changes are independent.
 	 */

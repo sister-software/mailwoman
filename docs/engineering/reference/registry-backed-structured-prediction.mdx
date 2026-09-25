@@ -38,7 +38,7 @@ not seen it.
 Phase 4a tried to let the resolver choose between k-best readings. That approach fails for
 a structural reason that tuning cannot fix: **the resolver needs a house number or a
 locality to resolve, so it has no evidence for exactly the bare fragments that need it.**
-`Rue Montmartre` alone gives the resolver nothing to resolve, so it cannot choose a reading
+`Rue Montmartre` alone gives the resolver no candidate to resolve, so it cannot choose a reading
 for the class that motivated this work. This result was measured. See the Phase 4a
 verdict.
 
@@ -245,8 +245,8 @@ fix.
 Apply this check generally. This work hit three measurement failures of this kind: starved
 channels, a resolver without evidence, and a filtered corpus. Before trusting a board, ask
 which rows it drops. A registered baseline does not prevent this. A baseline over a
-filtered corpus stays self-consistent indefinitely. It guarantees reproducibility and says
-nothing about validity.
+filtered corpus stays self-consistent indefinitely. It guarantees reproducibility and makes
+no statement about validity.
 
 ## Why this holds
 

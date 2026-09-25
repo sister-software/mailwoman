@@ -36,10 +36,10 @@ The method is string normalization plus similarity matching, with no structural 
 
 ## What you lose
 
-- **Any address not in your database.** The normalizer can only match against known entries, so it cannot handle a new customer, a new delivery point, or a one-time destination. If the address is not in the database, the normalizer returns nothing.
+- **Any address not in your database.** The normalizer can only match against known entries, so it cannot handle a new customer, a new delivery point, or a one-time destination. If the address is not in the database, the normalizer returns no match.
 - **Ambiguity between similar addresses.** `123 Main St, Springfield, IL` and `123 Main St, Springfield, MA` normalize to nearly identical strings. If both are in your database, the fuzzy matcher picks the one with the higher similarity score, which may be the wrong one.
-- **International addresses.** French `rue de la République` abbreviates nothing like US `Republic St`. UK postcodes (`SW1A 1AA`) don't normalize like US ZIP codes. The abbreviation table is per-country and grows without bound.
-- **New construction.** A building built last month is not in your database. A customer who moved last week is at an address you don't have. The normalizer returns nothing for addresses that didn't exist when the database was built.
+- **International addresses.** French `rue de la République` follows a different abbreviation pattern than US `Republic St`. UK postcodes (`SW1A 1AA`) don't normalize like US ZIP codes. The abbreviation table is per-country and grows without bound.
+- **New construction.** A building built last month is not in your database. A customer who moved last week is at an address you don't have. The normalizer returns no match for addresses that didn't exist when the database was built.
 - **Structural errors.** `123 Main St, Springfield` and `123 Springfield St, Main` normalize to similar strings if "Main" and "Springfield" both appear in both strings. The fuzzy matcher doesn't know that the street and city are different fields. It sees only word overlap.
 - **No confidence signal.** The fuzzy matcher returns a similarity score rather than a confidence. A 0.85 similarity might mean "this is the right address with a typo" or "this is a different address in the same city." The downstream system cannot distinguish.
 

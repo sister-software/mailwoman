@@ -23,7 +23,7 @@ test("the neural view inherits live core settings and owns its own", () => {
 /**
  * A blank environment variable must mean the same as an absent one.
  *
- * Shells, Docker and CI all produce empty strings where an operator believes they set nothing:
+ * Shells, Docker and CI all produce empty strings where an operator believes they set no value:
  * `export FOO=`, an unset `${VAR}` interpolation, a compose key with no value.
  * Any coerced-numeric schema turns that into `0`, and a `.positive()` or `.min()`
  * then rejects it — so the process dies at import, before any application code runs,

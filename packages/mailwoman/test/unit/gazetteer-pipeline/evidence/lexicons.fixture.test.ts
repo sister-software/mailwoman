@@ -234,7 +234,7 @@ describe("locality-surface build — fixture (four laws end to end)", () => {
 
 		// A directional inside a multi-token surface survives.
 		expect(surfaces["east nashville"]).toBeDefined()
-		// …and nothing in the US set is refused on prominence, unlike the FR set.
+		// …and no row in the US set is refused on prominence, unlike the FR set.
 		// The asymmetry is the point: these rows are seeded at their real magnitudes.
 		expect(built.skippedProminence).toBe(0)
 	})

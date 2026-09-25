@@ -96,7 +96,7 @@ def test_an_admitted_country_that_draws_nothing_reads_zero_rather_than_going_abs
     report = _audit(_write_corpus(tmp_path), country_weights={"US": 1.0, "BE": 1.0, "BR": 1.0})
     draw = report["draw_level"]
 
-    # The corpus this fixture writes carries US rows and nothing else.
+    # The corpus this fixture writes carries US rows and no other country.
     assert "BE" not in draw["by_country"]
     assert "BR" not in draw["by_country"]
 
@@ -174,7 +174,7 @@ def _write_reference() -> None:
     """Capture the current audit as the reference the test above compares against.
 
     Run this only when the current code already passes against the existing reference — otherwise
-    the artifact records whatever the code does now, and the test asserts nothing.
+    the artifact records whatever the code does now, and the test asserts no fact.
     """
     import tempfile
 

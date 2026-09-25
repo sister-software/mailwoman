@@ -9,7 +9,7 @@
  *   the moment it becomes other people's problem rather than only in a later audit.
  *
  *   The fixtures pin the boundary in both directions, because a check that only refuses is as wrong as one that only
- *   admits. An entry naming no license is a gap to record and passes. A card recording nothing at all is refused.
+ *   admits. An entry naming no license is a gap to record and passes. A card recording no attribution at all is refused.
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
@@ -41,7 +41,7 @@ describe("verifyTrainingProvenance", () => {
 
 	it("refuses a card whose training section records an empty attribution list", async () => {
 		// The distinction this pins: a card can carry a full training section — corpus,
-		// recipe, hardware — and still state nothing about where the rows came from.
+		// recipe, hardware — and still state no fact about where the rows came from.
 		const card = await cardWith({
 			training: { corpus_version: "v0.32.0-locality-shape", data_attribution: [] },
 		})
@@ -55,7 +55,7 @@ describe("verifyTrainingProvenance", () => {
 
 	it("reads the top-level attribution key, which the character-path card uses", async () => {
 		// Reading `training.data_attribution` alone reported `neural-weights-cjk` as recording
-		// nothing, when its card carries six entries under `attribution`.
+		// no attribution, when its card carries six entries under `attribution`.
 		// A control that answers a false absence refuses a release nobody needed to block,
 		// and the absence it reports is indistinguishable from a real one.
 		const card = await cardWith({

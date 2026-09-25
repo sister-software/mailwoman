@@ -61,7 +61,7 @@ function bandFeature(): ServiceFeature {
 const alwaysBand: ServiceFeatureReader = async () => [bandFeature()]
 
 /**
- * A reader that publishes nothing at all.
+ * A reader that publishes no features at all.
  */
 const alwaysEmpty: ServiceFeatureReader = async () => []
 

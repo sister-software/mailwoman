@@ -94,7 +94,7 @@ gazetteer.
 
 **Parsing works out of the box.** It takes free text and returns tagged components: house number,
 street, unit, locality, region, postcode, and the rest. The model file ships inside
-`@mailwoman/neural-weights-en-us`, so there is nothing more to fetch or configure. French support
+`@mailwoman/neural-weights-en-us`, so there is no package to fetch or setting to configure. French support
 needs one more package (`@mailwoman/neural-weights-fr-fr`) and no other change.
 
 **Geocoding needs the resolver database.** Turning `New York` into a latitude and longitude requires a
@@ -131,7 +131,7 @@ problem.
 
 Ignore the `export` line. The file is saved at `<data-root>/db/wof/candidate.db`, which is the
 default path every entry point checks, so the download completes the setup. The CLI still prints the
-line from a time when the variable was required. Setting it changes nothing here.
+line from a time when the variable was required. Setting it changes no behavior here.
 [Runtime flags](../reference/runtime-flags.mdx#environment-variables) describes what the variable is
 still used for: pointing at a copy stored elsewhere, or `none` to pin the older backend.
 

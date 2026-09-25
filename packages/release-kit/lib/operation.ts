@@ -19,7 +19,7 @@ import type { ZodType } from "zod"
 export const OperationEffect = {
 	/**
 	 * Reads the checkout, the data root, or a registry.
-	 * Changes nothing.
+	 * Makes no change.
 	 */
 	Read: "read",
 	/**
@@ -45,7 +45,7 @@ export interface ReleaseContext {
 	 */
 	repoRoot: string
 	/**
-	 * When true, an operation with a write effect describes what it would do and writes nothing.
+	 * When true, an operation with a write effect describes what it would do and writes no change.
 	 */
 	dryRun: boolean
 	/**

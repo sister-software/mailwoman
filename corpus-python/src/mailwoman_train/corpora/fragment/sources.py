@@ -1,6 +1,6 @@
 """Real address parts, harvested from OpenAddresses CSVs and from an existing corpus's spans.
 
-Nothing here renders. Each collector returns surfaces — street names, city names, (locality,
+No collector here renders. Each collector returns surfaces — street names, city names, (locality,
 region) pairs — and `rows.py` turns them into labeled rows. Every collector seeds its own
 `random.Random` from `SEED` plus a per-collector suffix, so one collector's sampling does not
 shift another's.

@@ -12,7 +12,7 @@ tags:
 
 Some places hold two admin roles. Berlin is a city and a federal state. Milano is a comune and the province named after it. Bristol is a city and a unitary authority. Utrecht is a city and a province. A census of our gazetteer found about **122 of these across nine countries**. Italy has 70 because nearly all of its provinces are named after their capital. Spain has 14, the UK 12, Japan 10, and Korea 7, and France, Germany, the Netherlands, and China each have a few.
 
-These places cause a specific failure. In an international-order address such as `5 Hauptstraße, Berlin, Berlin 10115`, the city and the state are the same word. The parser often labels one `Berlin` as the region and drops the other. The resolved tree then has a region without a locality, and the resolver has no locality to place. On a 1,500-row Berlin eval, 955 rows resolved to nothing.
+These places cause a specific failure. In an international-order address such as `5 Hauptstraße, Berlin, Berlin 10115`, the city and the state are the same word. The parser often labels one `Berlin` as the region and drops the other. The resolved tree then has a region without a locality, and the resolver has no locality to place. On a 1,500-row Berlin eval, 955 rows resolved to no result.
 
 ## Completing the hierarchy
 
@@ -32,7 +32,7 @@ Each completion sets `metadata.relationship_type` to `city-state`, `capital-seat
 
 A few admins map to more than one same-name locality, so completion has to choose one. The rule is [population first](./importance-vs-population.mdx). The principal city is the populous one, and it can sit farther from the admin centroid than a small same-name hamlet. For example, Niigata prefecture's centroid lies out at sea. The real Niigata city is 41 km from it, while a 0-population point is closer. Nearest centroid breaks a population tie. When two candidates tie on both, completion abstains, because a wrong locality is worse than a missing one.
 
-Completion is on by default. A Berlin address that used to resolve to nothing now comes back with its locality. Pass `hierarchyCompletion: false` to opt out, and resolution is byte-for-byte what it was before. Completion fires only for a dual-role region whose locality the parser dropped. It does nothing when the loaded gazetteer has no `coincident_roles` table.
+Completion is on by default. A Berlin address that used to resolve to no result now comes back with its locality. Pass `hierarchyCompletion: false` to opt out, and resolution is byte-for-byte what it was before. Completion fires only for a dual-role region whose locality the parser dropped. It performs no work when the loaded gazetteer has no `coincident_roles` table.
 
 ## Attaching the lineage
 

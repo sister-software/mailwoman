@@ -35,7 +35,7 @@ def load_seeds(paths: list[str], limit: int) -> list[dict[str, Any]]:
     """Every seed row, checked for the fields its transliterations inherit before a request is paid for.
 
     A transliterated row takes the seed's country and locale, so a seed file missing either produces rows
-    that cannot be written. Finding that out at load time costs nothing. finding it out in the worker costs
+    that cannot be written. Finding that out at load time costs no time. finding it out in the worker costs
     the batch that already returned.
     """
     seeds: list[dict[str, Any]] = []

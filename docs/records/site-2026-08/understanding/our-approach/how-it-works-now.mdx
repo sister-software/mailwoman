@@ -41,7 +41,7 @@ flowchart TD
 
 ### Stage 1 — Normalize
 
-Unicode normalization (NFD-decomposed accents → composed), locale-aware case folding, whitespace collapsing. Knows nothing about address structure. Cleans bytes so downstream layers see canonical text.
+Unicode normalization (NFD-decomposed accents → composed), locale-aware case folding, whitespace collapsing. Carries no address-structure knowledge. Cleans bytes so downstream layers see canonical text.
 
 ### Stage 1.5 — Coarse-placer
 
@@ -118,7 +118,7 @@ Joint decode is **opt-in**, off by default. It was briefly the default and then 
 
 Looks up parsed components against the WOF SQLite gazetteer. Returns place IDs, coordinates, parent chains, and alternate names. The resolver surfaces top-K candidates per administrative span (locality, region) so downstream systems can handle ambiguity.
 
-This is where "which Paris?" gets answered — never by the model, which only tagged "Paris" as a place. The resolver walks the parsed tree top-down and narrows each name with everything around it: a resolved parent constrains its children (a locality must sit inside the region that resolved above it), the country constrains the search, an exact-name match outranks a fuzzy one, and the coarse-placer's country guess (Stage 1.5) re-ranks candidates within a tier. Only when all of that still leaves a tie does population break it — "Paris" with nothing else resolves to France because more people mean that one, the same shortcut a person on the street uses. See [the resolver and WOF](../../concepts/resolver-and-wof.mdx) and [importance vs population](../../concepts/importance-vs-population.mdx).
+This is where "which Paris?" gets answered — never by the model, which only tagged "Paris" as a place. The resolver walks the parsed tree top-down and narrows each name with everything around it: a resolved parent constrains its children (a locality must sit inside the region that resolved above it), the country constrains the search, an exact-name match outranks a fuzzy one, and the coarse-placer's country guess (Stage 1.5) re-ranks candidates within a tier. Only when all of that still leaves a tie does population break it — "Paris" with no other signal resolves to France because more people mean that one, the same shortcut a person on the street uses. See [the resolver and WOF](../../concepts/resolver-and-wof.mdx) and [importance vs population](../../concepts/importance-vs-population.mdx).
 
 ## The Ship-of-Theseus dial
 

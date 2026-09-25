@@ -9,7 +9,7 @@
  *   Runs in Node.js only (Docusaurus config / plugin context). Never bundled into the client.
  *
  *   Everything here resolves through `@mailwoman/core/module/resolve-from`, keyed on this file's `import.meta.url`,
- *   and nothing here touches `import.meta.resolve`: this file runs under Docusaurus's config loader, whose CommonJS
+ *   and no code here touches `import.meta.resolve`: this file runs under Docusaurus's config loader, whose CommonJS
  *   transform rewrites `import.meta.url` and cannot parse `import.meta.resolve`, in this file or in anything it
  *   imports. Only a docs build can verify a change to that, never a unit test.
  */

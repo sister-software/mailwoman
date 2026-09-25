@@ -88,7 +88,7 @@ decides every tag. The features are:
   shortcut. It is produced statically by intersecting the country and region gazetteers.
   It is expected to _improve_ `region` precision.
 - **Optional entity-type embedding:** a small learned vector that includes the signal type
-  (is-country / country+region-homograph / cedex / po_box). It costs almost nothing and
+  (is-country / country+region-homograph / cedex / po_box). It adds negligible cost and
   lets the model learn a distinct behavior for each signal.
 
 The codex matcher is reused. It stops overriding the model and instead supplies features to it.

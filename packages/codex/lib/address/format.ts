@@ -43,7 +43,7 @@ export interface FormatAddressOptions {
 	/**
 	 * Join the lines the way the country does, for the single-line form a query or a corpus row takes.
 	 *
-	 * `", "` for most, `" "` for Japan and Korea, and nothing at all for the
+	 * `", "` for most, `" "` for Japan and Korea, and no separator at all for the
 	 * Chinese-script systems, whose admin run is unseparated.
 	 *
 	 * It is an option rather than each caller's literal because the literal is wrong
@@ -191,9 +191,9 @@ function scriptIsFreeToDerive(country: string): boolean {
  * Render a component dict into an idiomatic per-country address string.
  *
  * @returns An empty string when the dict is empty, and when no layout names `country` —
- * 55 of the 252 shipped country records carry no usable skeleton, and answering nothing
- * for one of those reports absence rather than inventing an order.
- * Throws nothing.
+ * 55 of the 252 shipped country records carry no usable skeleton, and returning no
+ * string for one of those reports absence rather than inventing an order.
+ * Throws no error.
  * A partial dict degrades to the parts the layout can print.
  */
 export function formatAddress(components: ComponentDict, country: string, opts: FormatAddressOptions = {}): string {
@@ -235,7 +235,7 @@ export interface AddressRow {
 /**
  * Render `components` for `country` and report what the layout printed, in one pass.
  *
- * Returns null when nothing rendered — an empty dict, a country with no layout,
+ * Returns null when no slot rendered — an empty dict, a country with no layout,
  * or a dict whose every value falls in a slot this country omits.
  * Every corpus adapter asked both questions and paid for two renders to get them,
  * then recovered the alignment by searching the output string for each value.

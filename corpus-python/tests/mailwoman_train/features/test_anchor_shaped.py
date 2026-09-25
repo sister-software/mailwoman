@@ -3,7 +3,7 @@
 The #723 root cause: training painted the postcode anchor only on gold ``postcode`` spans, but
 inference paints on postcode-SHAPED spans — so the model never trained on the anchor firing on a
 house-number-that-looks-like-a-ZIP and faceplanted on "12345 Main St". The shaped path closes that
-train/inference gap. The required assertion here is the CONTRAST: gold paints nothing on such a
+train/inference gap. The required assertion here is the CONTRAST: gold paints no anchor on such a
 house number. shaped paints the anchor on it (the training signal the model needs to learn to override).
 """
 
@@ -75,7 +75,7 @@ def test_shaped_path_paints_anchor_on_leading_house_number():
 
 
 def test_shaped_path_misses_non_lookup_shape():
-    # A postcode-shaped token not in the lookup (99999 is no real ZIP) paints nothing — like inference.
+    # A postcode-shaped token not in the lookup (99999 is no real ZIP) paints no anchor — like inference.
     feats, confs = realign_anchor_to_pieces_shaped("99999 Main St", PIECES_H, {})
     assert confs == [0.0, 0.0, 0.0]
     assert all(f == [0.0] * ANCHOR_FEATURE_DIM for f in feats)

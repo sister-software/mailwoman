@@ -40,7 +40,7 @@ describe("withoutPostcodeSpans", () => {
 	})
 
 	it("returns input carrying no postcode unchanged", () => {
-		// Nothing was removed, so no separator was orphaned and none is collapsed.
+		// No text was removed, so no separator was orphaned and none is collapsed.
 		// Returning the input verbatim also keeps the length `scoreLocalityOnly` measures
 		// identical to the one it measured before this rule existed.
 		const text = "Thomas, WV"

@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   The Earth service worker. `vite-plugin-pwa` injects the precache manifest into this file: the app shell, its
- *   hashed assets, the icons and the manifest. Nothing here precaches a model, a database or a tile.
+ *   hashed assets, the icons and the manifest. No code here precaches a model, a database or a tile.
  *
  *   The worker also carries the range-chunk cache for the byte-range databases the resolver reads from the data
  *   origin. Two jobs:

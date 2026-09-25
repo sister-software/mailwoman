@@ -61,8 +61,8 @@ The repo's Actions cache holds 10.7 GB in 78 entries against a 10 GB limit, so G
 
 **Interfaces:**
 
-- Consumes: nothing.
-- Produces: nothing other tasks import. Task 7 depends on the freed quota existing.
+- Consumes: no upstream artifact.
+- Produces: no artifact other tasks import. Task 7 depends on the freed quota existing.
 
 - [ ] **Step 1: Read the current cache state and record it**
 
@@ -275,7 +275,7 @@ The `weights-*` cache payload is 76.3 MB of real files and takes 48–54s to res
 
 **Interfaces:**
 
-- Consumes: nothing from earlier tasks.
+- Consumes: no artifact from earlier tasks.
 - Produces:
   - `derivedWeightsKey(): string` — a 16-hex-char content key over every input the derived binaries are generated from, **including the CLI modules that generate them**.
   - `derivedWeightsDir(key: string): string` — absolute path to `$MAILWOMAN_DATA_ROOT/derived/weights/<key>`.
@@ -706,7 +706,7 @@ EOF
 
 **Interfaces:**
 
-- Consumes: nothing from earlier tasks.
+- Consumes: no artifact from earlier tasks.
 - Produces: `computeSurfaceCountryCounts(dbPath: string): Map<string, number>` keeps its exact signature and return type; only its caching changes. Same for `loadPersonNameSurfaces(): Set<string>`.
 
 - [ ] **Step 1: Write the failing test**
@@ -955,7 +955,7 @@ The two `describe.skipIf(!existsSync(ADMIN_DB))` tests are 236.9s of the slow le
 **Interfaces:**
 
 - Consumes: `buildLocalitySurfaceLexicon(opts: BuildLocalitySurfaceLexiconOpts): BuiltLexicon` from Task 3's file, unchanged. `opts.dbPath` and `opts.output` already exist. `BuiltLexicon` carries `{ path, entries, homographs, skippedDegenerate, skippedRegionVocabulary, skippedSubPhrase, skippedProminence, maxNgram }`.
-- Produces: nothing other tasks import.
+- Produces: no artifact other tasks import.
 
 - [ ] **Step 1: Write the fixture test**
 
@@ -1565,8 +1565,8 @@ The file takes 96.6s across 14 tests. Five tests in the pair-prior block each ca
 
 **Interfaces:**
 
-- Consumes: nothing from earlier tasks.
-- Produces: nothing other tasks import.
+- Consumes: no artifact from earlier tasks.
+- Produces: no artifact other tasks import.
 
 - [ ] **Step 1: Record the baseline**
 
@@ -1730,7 +1730,7 @@ EOF
 **Interfaces:**
 
 - Consumes: the freed cache quota from Task 1.
-- Produces: nothing other tasks import.
+- Produces: no artifact other tasks import.
 
 - [ ] **Step 1: Confirm `out/` is not tracked**
 
@@ -1826,7 +1826,7 @@ Two small things. The excludes fix a confirmed local flake. The worker cap has t
 **Interfaces:**
 
 - Consumes: Task 4's slow-leg split (the cap measurement is invalid before it).
-- Produces: nothing other tasks import.
+- Produces: no artifact other tasks import.
 
 - [ ] **Step 1: Reproduce the `.venv` collection**
 
@@ -1890,7 +1890,7 @@ If a cap wins, add it to the CI script in `package.json`:
     "ci:test:slow": "vitest --run --maxWorkers=8 mailwoman/test mailwoman/commands/geocode.test.ts resolver-wof-sqlite neural/test",
 ```
 
-If no value beats the default on either axis, **change nothing** and record the measurement in the commit message. A cap that does not help only adds configuration to maintain.
+If no value beats the default on either axis, **change no setting** and record the measurement in the commit message. A cap that does not help only adds configuration to maintain.
 
 - [ ] **Step 6: Commit**
 

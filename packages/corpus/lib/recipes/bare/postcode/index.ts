@@ -19,7 +19,7 @@
  *   `buildEmissionPriors`, caps near 0.95 at the default `biasScale` against a measured 1.67-to-3.78
  *   nat deficit.
  *
- *   So this recipe emits the postcode and nothing else, which is the one thing no sibling does.
+ *   So this recipe emits the postcode and no other component, which is the one thing no sibling does.
  *
  *   verified against the prior rather than merely matched TO IT. Every surface is run through
  *   `detectKnownFormats` and refused unless the detector calls it a postcode. The recipe's rendering
@@ -42,7 +42,7 @@ import { normalizeGauntletSurface, readGauntletInputs } from "#tools/gauntlet-in
 import { SurfaceOrigin } from "#types"
 
 /**
- * A postcode written in the form its country uses, with nothing around it.
+ * A postcode written in the form its country uses, with no surrounding text.
  *
  * The codes come from this repository's postcode-format tables rather than from a national
  * postcode file, so the register is the codex and the surface is the code as that table writes it.
@@ -96,7 +96,7 @@ const SWEDISH_MUNICIPALITIES = [
  * Greece is absent on purpose.
  *
  * `gr/b/municipality_of_kalamaria.csv` is the archive's only Greek member and it
- * declares a `postcode` column carrying nothing: 0 values in 10,877 rows.
+ * declares a `postcode` column carrying no values: 0 values in 10,877 rows.
  * `gr_postcode` shares `NNN NN` with the three below, so a Greek reader is served by what
  * they teach until a Greek source with postcodes exists, but no row here claims to be Greek.
  */
@@ -248,7 +248,7 @@ export const barePostcodeRecipe: CorpusRecipe = {
 		// A PER-country budget, because supply is wildly uneven and the shortage is where the
 		// capability broke: the Netherlands publishes ~460,000 distinct `nnnn LL` codes against
 		// Czechia's 2,669 and Slovakia's 1,059, so an uncapped pass emits 98.9% Dutch rows
-		// and teaches the `NNN NN` countries — the ones reading 0/32 — almost nothing.
+		// and teaches the `NNN NN` countries — the ones reading 0/32 — almost no coverage.
 		// Equal shares, each country keeping whatever it can fill.
 		const countries = [...new Set(SOURCES.map((source) => source.country))]
 		const budget = opts.count ? Math.ceil(opts.count / countries.length) : Number.POSITIVE_INFINITY

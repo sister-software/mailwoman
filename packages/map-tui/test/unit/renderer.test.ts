@@ -95,7 +95,7 @@ describe("MapRenderer", async () => {
 	})
 
 	it("falls back to an ancestor tile where the archive has no native coverage", async () => {
-		// The provider has one z8 tile and nothing deeper — the shape of a spatially
+		// The provider has one z8 tile and no deeper tile — the shape of a spatially
 		// sparse deep band outside its mask.
 		// Without the ancestor walk a z12 viewport here renders blank.
 		// With it, the z8 fill rasterizes at the z12 projection.

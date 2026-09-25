@@ -5,9 +5,9 @@
  *
  *   `useMapPlaceRender` — the thin React memo wrapper over the pure {@link computeMapPlaceRenderSpec}. It
  *   recomputes the render spec only when the resolved place changes, so the declarative overlays render a
- *   stable spec object. The math lives in `place-render.ts` (pure, node-tested); this file adds nothing
- *   but memoization, so it stays trivially correct. A `null` place (no result yet, or a result with no
- *   candidate) yields `null` — the overlays render nothing.
+ *   stable spec object. The math lives in `place-render.ts` (pure, node-tested); this file adds no
+ *   more than memoization, so it stays trivially correct. A `null` place (no result yet, or a result with no
+ *   candidate) yields `null` — the overlays render no geometry.
  */
 
 import { useMemo } from "react"
@@ -16,7 +16,7 @@ import { computeMapPlaceRenderSpec } from "#map/place-render"
 import type { MapPlaceRenderSpec, ResolvedMapPlace } from "#map/place-render"
 
 /**
- * Memoize the render spec for a resolved place; `null` in → `null` out (nothing to draw).
+ * Memoize the render spec for a resolved place; `null` in → `null` out (no geometry to draw).
  */
 export function useMapPlaceRender(place: ResolvedMapPlace | null | undefined): MapPlaceRenderSpec | null {
 	return useMemo(() => (place ? computeMapPlaceRenderSpec(place) : null), [place])

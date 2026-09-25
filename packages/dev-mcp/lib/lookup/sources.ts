@@ -465,7 +465,7 @@ interface WOFEntry extends PlaceIDProvenance {
 	/**
 	 * The value of `place_population.population`, or `null` when the place has no row there.
 	 *
-	 * `null` means the source recorded nothing, and `0` is a recorded zero.
+	 * `null` means the source recorded no value, and `0` is a recorded zero.
 	 * Ranking uses population to compute `neg_rank` and `referential`.
 	 */
 	population: number | null

@@ -29,7 +29,7 @@ export interface FSTMatcherLike {
 		 * The referential likelihood (population-anchored) the decoder bias reads — see ROAD_TO_V9 §2.
 		 *
 		 * Was `importance` through FST format v4, where the same float could be
-		 * either score with nothing to say which.
+		 * either score with no marker to say which.
 		 */
 		referential: number
 		/**
@@ -128,7 +128,7 @@ export interface AssetLoadProgress {
 	setBackend: (backend: string) => void
 	/**
 	 * Bytes received over bytes expected for the artifact downloading right now,
-	 * in [0, 1]; `null` once nothing is in flight.
+	 * in [0, 1]; `null` once no download is in flight.
 	 *
 	 * Optional so a host that predates it still satisfies this interface.
 	 *

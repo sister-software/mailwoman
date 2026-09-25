@@ -5,7 +5,7 @@ masks for the register rows, the shuffle, the per-row register and country draws
 of masks for the registry rows. The passes also feed each other — pass 1's key index is what pass 2
 aligns permits against — so a stage that moves changes what the later ones see.
 
-Nothing exercised this path: the real inputs are the 주소DB archive, the permit registry, and
+No test exercised this path: the real inputs are the 주소DB archive, the permit registry, and
 `gdaltransform`. The fixture supplies the first two at the portal's real CP949 shapes. The third is
 STUBBED rather than skipped, because `gdaltransform` is a projection this builder does not own —
 what the pin is for is the builder's order and its rendering, and a `skipif` on a missing binary
@@ -356,7 +356,7 @@ def write_reference() -> None:
     """Capture the current build as the reference the tests above compare against.
 
     Run this only when the current code already passes against the existing reference — otherwise
-    the artifact records whatever the code does now, and the tests assert nothing.
+    the artifact records whatever the code does now, and the tests assert no fact.
     """
     import tempfile
 

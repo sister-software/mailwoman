@@ -52,7 +52,7 @@ Neither approaches zero. The 1–2% range is the **floor** for DeepSeek-as-corpu
 
 For corpora harvested from real sources (NPPES, NAD, WOF, BAN), alignment problems are bugs in the harvester or in the source — rare, deterministic, fixable by a one-line ETL patch. A 0.01% reject rate is plausible.
 
-For LLM-generated corpora, alignment problems are inherent to the generation process. The model is producing both the surface and the annotation in the same forward pass; nothing forces internal consistency. Even with temperature=0 and `reasoning_effort=low`, the 1–2% rate persists.
+For LLM-generated corpora, alignment problems are inherent to the generation process. The model is producing both the surface and the annotation in the same forward pass; no constraint forces internal consistency. Even with temperature=0 and `reasoning_effort=low`, the 1–2% rate persists.
 
 This shifts the validator from "quality filter" to "trust boundary" — the difference between training on data the LLM only thinks it generated correctly, and training on data that's provably consistent with its own annotation.
 

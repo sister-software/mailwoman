@@ -40,11 +40,11 @@ The two emphasized rows are the layers that v0.4.0's mixed result exposed as mis
 
 ### Normalize — input preprocessing rules
 
-This layer performs Unicode normalization, locale-aware case folding, and whitespace collapsing. It knows nothing about address structure. It cleans bytes so downstream layers see canonical text. It is the right place to handle NFD-decomposed accents and the wrong place to decide whether a string contains an address.
+This layer performs Unicode normalization, locale-aware case folding, and whitespace collapsing. It carries no address-structure knowledge. It cleans bytes so downstream layers see canonical text. It is the right place to handle NFD-decomposed accents and the wrong place to decide whether a string contains an address.
 
 ### Locale check — language / script family
 
-This layer detects whether input is en-US, fr-FR, ja-JP, and so on. It has two sources today. The first is the rule-based scorer at Stage 2, which uses script-class and postcode-format hits with a caller-trust fallback. The second, since v4.3.0, is the classifier's own locale head, exported as the `locale_logits` ONNX output (~98% held-out accuracy, threshold-conditional). The head was trained from PR3 onward, but inference could not read it until the conventions work needed it. It now drives the Stage 4.2 conventions mask. The layer knows enough to bias the kind classifier, resolver weighting, and per-system grammar, but it knows nothing about specific places.
+This layer detects whether input is en-US, fr-FR, ja-JP, and so on. It has two sources today. The first is the rule-based scorer at Stage 2, which uses script-class and postcode-format hits with a caller-trust fallback. The second, since v4.3.0, is the classifier's own locale head, exported as the `locale_logits` ONNX output (~98% held-out accuracy, threshold-conditional). The head was trained from PR3 onward, but inference could not read it until the conventions work needed it. It now drives the Stage 4.2 conventions mask. The layer knows enough to bias the kind classifier, resolver weighting, and per-system grammar, but it carries no knowledge of specific places.
 
 ### Kind classifier — overall query category
 
@@ -171,7 +171,7 @@ Each case is asserted in `core/pipeline/reconcile.test.ts` (grep for `kryptonite
 
 ### Resolve — world hierarchy
 
-This layer is WOF SQLite today (Phase 4.3). It knows place IDs, parent_id chains, placetypes, and lat/lon, and it returns candidates with scores. It knows nothing about input syntax.
+This layer is WOF SQLite today (Phase 4.3). It knows place IDs, parent_id chains, placetypes, and lat/lon, and it returns candidates with scores. It carries no knowledge of input syntax.
 
 ## Why this decomposition is bitter-lesson aligned
 

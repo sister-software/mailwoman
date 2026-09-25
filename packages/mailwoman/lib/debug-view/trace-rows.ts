@@ -10,8 +10,8 @@
  *   instead.
  *
  *   Every function here takes the {@link GeocodeTrace} the session recorded and returns one line. A stage that
- *   produced nothing renders {@link absent} and says why — "not fed" is the #566/#685 diagnostic fact the demo's
- *   channel band already reports, and an absent locale head is a property of the loaded bundle rather than a zero. Nothing in
+ *   produced no output renders {@link absent} and says why — "not fed" is the #566/#685 diagnostic fact the demo's
+ *   channel band already reports, and an absent locale head is a property of the loaded bundle rather than a zero. No code in
  *   this module derives, infers, or fills in a value the trace did not carry.
  *
  *   Pure and Ink-free so the formatting is unit-testable without a render, and so a caller can truncate the result
@@ -29,7 +29,7 @@ import type { GeocodeTrace } from "#geocode/session"
  * What a row shows where the datum genuinely does not exist.
  *
  * One constant, because "the model has no locale head" and "no channel was fed"
- * must not read as two different kinds of nothing.
+ * must not read as two different kinds of absence.
  */
 export const ABSENT = "—"
 
@@ -82,7 +82,7 @@ export function systemRow(trace: GeocodeTrace | undefined): string {
 
 /**
  * The locale head's top classes as probabilities, on the head's own axis (`localeCountries` rides
- * with the logits, so nothing here hardcodes an order — the PLACETYPE_ORDER dual-maintenance class).
+ * with the logits, so no code here hardcodes an order — the PLACETYPE_ORDER dual-maintenance class).
  */
 export function localeHeadRow(trace: GeocodeTrace | undefined): string {
 	if (!trace) return ABSENT
@@ -124,7 +124,7 @@ export function tokensRow(trace: GeocodeTrace | undefined): string {
  *
  * "not fed" and `0/12` are different claims.
  * The first is a channel with no source wired (the demo's band says so too),
- * the second is a wired channel that matched nothing on this input.
+ * the second is a wired channel that matched no entry on this input.
  *
  * Collapsing them is how "why didn't my gazetteer prior fire" becomes unanswerable.
  */

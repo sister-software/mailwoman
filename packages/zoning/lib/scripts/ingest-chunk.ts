@@ -31,8 +31,8 @@ await runIngestChunkScript({
 				...(values["object-id-from"] === undefined ? {} : { objectIDFrom: Number(values["object-id-from"]) }),
 				...(values["object-id-to"] === undefined ? {} : { objectIDTo: Number(values["object-id-to"]) }),
 				// A range's own count is not knowable up front.
-				// The source reports a layer's total and nothing narrower — so the chunk asserts
-				// nothing about its size and the parent checks the sum against the whole file.
+				// The source reports a layer's total and no narrower figure, so the chunk asserts
+				// no fact about its size and the parent checks the sum against the whole file.
 				declaredFeatureCount: 0,
 			}),
 			indexResolution: chunk.indexResolution,

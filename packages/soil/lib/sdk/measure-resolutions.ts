@@ -5,7 +5,7 @@
  *
  *   The index resolution is a measurement this layer takes rather than a number argued to.
  *
- *   one stream, every resolution. Re-reading a survey area's shapefile per candidate adds nothing. The
+ *   one stream, every resolution. Re-reading a survey area's shapefile per candidate adds no information. The
  *   classification is per delineation, so every candidate index folds the same delineation in turn. The cost
  *   is memory: each resolution holds its own cell sets, and the finest candidate dominates.
  *

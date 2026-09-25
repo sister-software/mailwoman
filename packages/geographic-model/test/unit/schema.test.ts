@@ -623,7 +623,7 @@ describe("reporting every violation at once", () => {
 			["$.concepts[0].assertions[0].relation", ValidationIssueCode.UnknownRelation],
 			["$.concepts[0].assertions[0].target", ValidationIssueCode.UnknownConcept],
 			// The duplicate identifier took `obtain_medication` out of the concept table,
-			// so every record that named it now names nothing.
+			// so every record that named it now names no concept.
 			// That cascade is the reason the reference pass runs over whole tables.
 			["$.observations[0].object", ValidationIssueCode.UnknownConcept],
 			["$.derivedFacts[0].object", ValidationIssueCode.UnknownConcept],

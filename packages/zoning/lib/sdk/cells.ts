@@ -23,7 +23,7 @@
  *   the zero-cell count is A measurement OF the alternative rather than OF this index. `classifyFeatureCells` takes
  *   overlapping containment and refuses a feature that reaches no cell, so this index's own zero-cell count is
  *   zero by construction. What the column reports is what `polygonToCells`. The centre-in-polygon polyfill a
- *   builder reaches for first — would have returned nothing for, and every one of those would have read
+ *   builder reaches for first — would have returned no cell for, and every one of those would have read
  *   downstream as an absence of zoning.
  */
 
@@ -37,7 +37,7 @@ import {
 import { polygonToCells } from "h3-js"
 
 /**
- * Would a centre-IN-polygon polyfill return nothing for this feature?
+ * Would a centre-IN-polygon polyfill return no cell for this feature?
  *
  * The measurement that forced this layer's index to take cell-touches-polygon:
  * at resolution 9 `polygonToCells` returns an empty set for the great majority of
@@ -99,7 +99,7 @@ export interface CellIndexMeasurement {
 	multiCandidateCells: number
 	multiCandidateShare: number
 	/**
-	 * Features a centre-in-polygon polyfill would have returned nothing for —
+	 * Features a centre-in-polygon polyfill would have returned no cell for —
 	 * see {@link polyfillFindsNothing}.
 	 *
 	 * `undefined` where the measurement did not run it.
@@ -170,7 +170,7 @@ export class ZoningCellIndex {
 	}
 
 	/**
-	 * Record that a centre-in-polygon polyfill found nothing for one feature.
+	 * Record that a centre-in-polygon polyfill found no cell for one feature.
 	 */
 	addPolyfillProbe(foundNothing: boolean): void {
 		this.#measuredPolyfill = true

@@ -28,7 +28,7 @@
  *     Manchester, Minnesota (53); 547,627 wins.
  *   - **398 (5.6%, 1,009 places) are unresolvable** — no population signal or a tie between distant
  *     candidates. `Q340` (Montréal, Canada) sits on two French communes 182 km apart, neither with a
- *     population row. Nothing here says which, and both are wrong, so the id goes.
+ *     population row. No field here says which, and both are wrong, so the id goes.
  *
  *   So the rule is: **coincident → keep all. else decisive population → keep the winner. else drop.**
  *   Net effect 3,411 places lose a wrong score and fall back to the population proxy, while 10,186

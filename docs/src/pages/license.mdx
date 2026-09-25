@@ -73,7 +73,7 @@ Taking a copy engages that publisher's terms:
 | `fr`        | DINUM and IGN, for Base Adresse Nationale  | Licence Ouverte 2.0, the attribution-only half of a dual grant                 |
 | `us`        | United States Census Bureau; OpenAddresses | TIGER/Line carries no copyright; OpenAddresses is per-source terms that differ |
 
-Nothing downloads a bundle for you. `mailwoman serve` and `mailwoman geocode` with no gazetteer print
+No command downloads a bundle for you. `mailwoman serve` and `mailwoman geocode` with no gazetteer print
 the command to run and stop; the download happens when you run `mailwoman data pull <bundle>`. Both
 `mailwoman data --list` and `mailwoman data pull` print each bundle's publishers, its terms, what it
 obliges you to do, and what nobody has established about it, before any bytes move. Two paths do fetch
@@ -88,7 +88,7 @@ with us, and their attribution and share-alike conditions apply to you whichever
 
 A model's inputs are fixed when it is trained. Installing `@mailwoman/neural-weights-en-us` without
 pulling a single bundle still gives you artifacts built from the sources that package records, and
-skipping a runtime download changes nothing about them. To use different inputs, install a different
+skipping a runtime download leaves them unchanged. To use different inputs, install a different
 package.
 
 Every published weights package carries two generated files in its tarball. `LICENSE.md` states the
@@ -96,8 +96,8 @@ terms above. `PROVENANCE.json` records each artifact it ships with its digest or
 sources its model card attributes with the license each one names, the base package a data-only overlay
 decodes through together with that base's own sources, and the questions the record leaves open. Read
 it as a record of what the model card holds: a package recording no attribution is a package whose card
-records none, which is a different statement from a package with no attributable inputs. Nothing in
-either file says an artifact is cleared for a particular use.
+records none, which is a different statement from a package with no attributable inputs. Neither file
+says an artifact is cleared for a particular use.
 
 For the installation in front of you:
 

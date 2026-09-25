@@ -28,7 +28,7 @@ export interface AddressSystemConventions {
 	 * Component tags that are not grammatical in this address system.
 	 *
 	 * Typed against the union itself, so a tag that no longer exists is a compile error here
-	 * rather than a rule that silently forbids nothing.
+	 * rather than a rule that silently forbids no tag.
 	 */
 	readonly forbiddenTags?: readonly ComponentTag[]
 	/**
@@ -69,7 +69,7 @@ export const ADDRESS_SYSTEM_CONVENTIONS: Partial<Record<SystemCode, AddressSyste
 	 *
 	 * We keep only `street_suffix` forbidden: the current model with the forbid off shows zero FR
 	 * street_suffix leakage (fp=0 on that same eval set) and FR has no trailing street suffix,
-	 * so the constraint costs nothing while still guarding against any future suffix mis-tag.
+	 * so the constraint costs no accuracy while still guarding against any future suffix mis-tag.
 	 *
 	 * Postcode: exactly five digits (NF Z 10-011. See fr/code-postal).
 	 */

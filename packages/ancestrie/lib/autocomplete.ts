@@ -14,7 +14,7 @@
  *   - A partial last token ("new yor") — `walk` fails (there is no "yor" edge, only "york"). So walk
  *       the complete prefix, then complete the partial token by prefix-filtering the continuation
  *       edges (`token.startsWith(partial)`). This is what a char-level typeahead needs. without it
- *       "new yor" returns nothing useful. (#587)
+ *       "new yor" returns no useful result. (#587)
  *
  *   Both interpretations of the last token run, always: it can be a complete edge and a partial of
  *   longer edges at once (an entry literally surfaced as "chic" must not shadow "chicago"), and
@@ -85,7 +85,7 @@ export function autocomplete<TPayload = Uint8Array | JSONValue>(
 	const perBranchLimit = options.perBranchLimit ?? DEFAULT_PER_BRANCH_LIMIT
 	const normalize = options.normalizeToken
 
-	// Tokens that normalize to nothing are dropped, mirroring a whitespace-splitting tokenizer's output.
+	// Tokens that normalize to an empty string are dropped, mirroring a whitespace-splitting tokenizer's output.
 	const normalized = (normalize ? tokens.map(normalize) : [...tokens]).filter((t) => t.length)
 
 	if (!normalized.length) {

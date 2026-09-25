@@ -150,7 +150,7 @@ describe("WOFSQLitePlaceLookup — multi-extract ATTACH", () => {
 		const adminPath = scratch.path("whosonfirst-data-admin-us-latest.db")
 		buildAdminExtract(adminPath)
 		// Only admin extract — no postcode extract.
-		// A postalcode query falls back to main, returns nothing because admin has no postalcodes.
+		// A postalcode query falls back to main, returns no row because admin has no postalcodes.
 		using lookup = new WOFSQLitePlaceLookup({ databasePath: [adminPath] })
 
 		const r = await lookup.findPlace({ text: "62701", placetype: "postalcode" })

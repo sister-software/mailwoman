@@ -104,8 +104,8 @@ describe("the never-stale shim", () => {
 			// (`tree-fingerprint.ts`), so it moves whenever anything writes into the checkout,
 			// and under `yarn test` 866 other files run alongside this one, at least one of
 			// which re-populates the weights overlay by design.
-			// The assertion held only while nothing else touched the tree, which is true
-			// in isolation and false in the suite it runs in.
+			// The assertion held only while no other process touched the tree,
+			// which is true in isolation and false in the suite it runs in.
 			expect(report.tools_changed).toBe(false)
 
 			// The plumbing each fork owns, which is load-independent: a worker reports the

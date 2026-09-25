@@ -15,7 +15,7 @@
  *   sources and admits none of them. No corpus build has written a frozen `TRAINING_SOURCES.json`, so which records
  *   trained a published model is unrecorded rather than recorded-and-unreviewed. Both are reported as what they are.
  *
- *   Nothing here asserts clearance, and a clean report is not one. A section that establishes nothing says so, and the
+ *   No part of this report asserts clearance, and a clean report is not one. A section that establishes no fact says so, and the
  *   report separates what it observed from what it could not read. Reading this as permission is the misreading the
  *   whole rights record was built to refuse.
  */
@@ -259,7 +259,7 @@ async function auditPackage(repoRoot: PathBuilderLike, record: WeightsRightsReco
  * The frozen manifest for a corpus, or `null` when the repository holds none.
  *
  * A read that fails for any reason returns `null` and the caller records the corpus as unestablished.
- * It never reports zero sources, which would read as a corpus built from nothing.
+ * It never reports zero sources, which would read as a corpus built from no source.
  */
 async function readFrozenManifest(repoRoot: PathBuilderLike, corpusVersion: string): Promise<TrainingManifest | null> {
 	try {
@@ -331,7 +331,7 @@ async function auditTraining(
 /**
  * The whole pass.
  *
- * Reads the checkout and changes nothing.
+ * Reads the checkout and makes no change.
  */
 export async function auditRights(repoRoot: PathBuilderLike): Promise<RightsAudit> {
 	const records = await weightsRightsRecords(repoRoot)

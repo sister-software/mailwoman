@@ -16,8 +16,8 @@ import type { CoverageCell } from "#layers/manifest"
  *
  * `observedRows` counts the polygons reaching the cell, which is what the interface's column means.
  * There is no zero-row cell here and there cannot be one: a cell with no polygon
- * gets no row, because a `source_present` layer publishes nothing that would let
- * an empty cell be distinguished from unmapped ground.
+ * gets no row, because a `source_present` layer publishes no evidence that would
+ * let an empty cell be distinguished from unmapped ground.
  *
  * A layer whose absence carries meaning (flood's Zone 1) emits its rows from the
  * designated extent instead, and does not use this.
@@ -182,7 +182,7 @@ const M2_PER_KM2 = 1_000_000
 
 /**
  * An {@link AreaAgreement} whose witness is stated: either the source published a figure
- * and the gap is against it, or it published none and there is nothing TO agree with.
+ * and the gap is against it, or it published none and there is no figure TO agree with.
  *
  * The no-witness case is a type rather than a zero, because a `relativeGap` of 0 is
  * indistinguishable from a pass, and a check that never ran must not read as one.
@@ -219,7 +219,7 @@ export function areaAgreementFrom(streamed: StreamedAreaTotals, sourceM2: number
 /**
  * Refuse an artifact whose rings do not add up to the area the source itself reports.
  *
- * A reading with no witness has nothing to disagree with and passes through.
+ * A reading with no witness has no figure to disagree with and passes through.
  * Its type is what keeps that from reading as a pass.
  *
  * The message carries the hole-blind total beside the nested one, because the gap between them

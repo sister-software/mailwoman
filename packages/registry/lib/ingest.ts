@@ -64,7 +64,7 @@ export function delimiterFor(path: string): Delimiter {
 /**
  * Stream a delimited file's rows lazily as header-keyed objects.
  *
- * @returns The spliterator's own {@linkcode AsyncSequence}: nothing is opened until
+ * @returns The spliterator's own {@linkcode AsyncSequence}: no file is opened until
  * something iterates, a `take` that is satisfied (or a `break` out of `for await`) closes
  * the file handle, and any `map`/`filter` a caller composes fuses into the same pull loop.
  * Wrapping this in an `async function*` would cost an async frame per row and take those operators away.

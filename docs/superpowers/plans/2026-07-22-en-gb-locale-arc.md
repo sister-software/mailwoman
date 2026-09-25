@@ -164,7 +164,7 @@ git commit -m "feat(corpus): GB title-case util — PPD all-caps → natural cas
 - Skip rows missing street or postcode.
 - Emit `CITY` empty when PPD locality equals town (the 1995-era padding) or is empty.
 - Title-case STREET/CITY/DISTRICT/REGION via `titleCaseGB`; postcode passes through verbatim.
-- Count every skip reason in `PPDExtractStats`, so that nothing is dropped silently.
+- Count every skip reason in `PPDExtractStats`, so that no row is dropped silently.
 
 - [ ] **Step 1: Write the failing test**
 

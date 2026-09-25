@@ -369,7 +369,8 @@ export interface ParseOpts {
 	 * Enforcement masks the system's forbidden tags before Viterbi and runs postcode repair
 	 * when the system defines a postcode pattern.
 	 *
-	 * Detection acts only at a probability of 0.8 or higher and does nothing on a model without a locale head.
+	 * Detection acts only at a probability of 0.8 or higher and has no effect
+	 * on a model without a locale head.
 	 */
 	addressSystemConventions?: "auto" | SystemCode
 

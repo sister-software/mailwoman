@@ -6,7 +6,7 @@
  *   never give.
  *
  *   The one it must never give is an empty census presented as a result. A bundle whose artifacts carry no publisher
- *   column, a bundle nobody has downloaded, and a bundle whose every stamp matches the record all print nothing under
+ *   column, a bundle nobody has downloaded, and a bundle whose every stamp matches the record all print no rows under
  *   a naive reader, and only the last is a clean check. Each has its own status here.
  *
  *   The live case this was written for is the `us` bundle, whose record named the Census Bureau and OpenAddresses
@@ -28,7 +28,7 @@ afterAll(() => fixtures.disposeAsync())
 /**
  * A bundle declaring one artifact per given local path, with a census over `address_point.source`.
  *
- * The rights declaration is required to compile, and an empty one states nothing
+ * The rights declaration is required to compile, and an empty one makes no statement
  * rather than describing a bundle with no obligations.
  * The same fixture convention `bundles.test.ts` uses.
  */

@@ -64,7 +64,7 @@ export interface PairIndexLike {
 
 Layout (PCB1 pattern, magic `PIX1`):
 
-- A header block, JSON-encoded and prefixed with a u32 length. Pairs are variable-length strings, and a fixed-width key table would add nothing at 20k entries. Document this departure from PCB1's fixed keys.
+- A header block, JSON-encoded and prefixed with a u32 length. Pairs are variable-length strings, and a fixed-width key table would add no value at 20k entries. Document this departure from PCB1's fixed keys.
 - A u32 pairCount.
 - Per pair: `u16 childLen, child utf8, u16 parentLen, parent utf8, u8 tagIdx`, sorted by (child,parent) bytes.
 

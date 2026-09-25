@@ -84,7 +84,7 @@ export function decorateNode(
 	// which makes a top-1-vs-top-2 margin uncomputable from the tree, and that margin is what
 	// `mailwoman/query-intent.ts` reads to decide whether a bare-toponym answer was a clear win.
 	// Additive metadata only.
-	// Nothing in the resolve reads it back.
+	// No part of the resolve reads it back.
 	if (resolved.prominence !== undefined) {
 		node.metadata["resolver_prominence"] = resolved.prominence
 	}
@@ -99,7 +99,7 @@ export function decorateNode(
 	// The score-channel carries (ROAD_TO_V9 §2 + #28).
 	// Written only when the backend actually has a value: an absent score means "unmeasured"
 	// or "pre-split gazetteer", and a `resolver_*: 0` on the node would assert a measurement nobody made.
-	// Nothing in the resolve path reads these keys back — they exist for annotation / API surfaces downstream.
+	// No part of the resolve path reads these keys back — they exist for annotation / API surfaces downstream.
 	// `resolver_importance` is the blended #28 prior (the value the ranking consulted);
 	// `resolver_encyclopedic` is the strict channel, reserved until a strict-channel source ships.
 	if (resolved.referential !== undefined) {

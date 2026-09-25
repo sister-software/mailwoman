@@ -94,7 +94,7 @@ interface JurisdictionRow {
 	/**
 	 * True when the training config's `country_weights` admits it and the corpus holds rows for it.
 	 *
-	 * Either one alone trains nothing.
+	 * Either one alone trains no model.
 	 */
 	trains: boolean
 	gazetteerPlaces: number
@@ -167,7 +167,7 @@ const DIMENSIONS: ReadonlyArray<{ name: string; held: (r: JurisdictionRow) => bo
 	{ name: "resolves — gazetteer places > 0", held: (r) => r.gazetteerPlaces > 0 },
 	{ name: "parses — trains on corpus rows", held: (r) => r.trains },
 	// Admission is part of the predicate.
-	// Street rows the config does not admit train nothing, and reporting them as
+	// Street rows the config does not admit train no model, and reporting them as
 	// held would put this row above the one it depends on.
 	{ name: "parses streets — street-labeled rows", held: (r) => r.trains && r.corpusStreetRows > 0 },
 	{ name: "measured — board rows > 0", held: (r) => r.boardRows > 0 },

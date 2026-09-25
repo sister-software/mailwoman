@@ -58,7 +58,7 @@ export interface CheckoutCollection {
 	 */
 	allow_promotion_codes: true
 	/**
-	 * No card when nothing is due: a 100%-off first invoice collects none,
+	 * No card when no payment is due: a 100%-off first invoice collects none,
 	 * and Stripe asks for one at the first invoice that charges.
 	 */
 	payment_method_collection: "if_required"

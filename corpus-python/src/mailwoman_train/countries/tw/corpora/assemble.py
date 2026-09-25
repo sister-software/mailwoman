@@ -1,7 +1,7 @@
 """The two passes that turn eligible Overture-TW rows into a corpus.
 
 Pass 1 MEASURES: it counts eligible rows per 縣市, sums each district's coordinates and lists the
-agencies, and it draws nothing. Pass 2 SELECTS under the quotas pass 1 set. Both stream the same
+agencies, and it draws no rows. Pass 2 SELECTS under the quotas pass 1 set. Both stream the same
 parquet in the same order, which is what makes the second pass's exact selectors land on the rows
 the first pass counted.
 
@@ -86,7 +86,7 @@ class Selection:
 def survey_source(parquet: Path, args: argparse.Namespace) -> SourceSurvey:
     """Pass 1: count eligible rows per 縣市, sum each district's coordinates, list the agencies.
 
-    Draws nothing. The agency list is not bookkeeping — the Taiwanese licence voids its grant on a
+    Draws no rows. The agency list is not bookkeeping — the Taiwanese licence voids its grant on a
     missing attribution, so the report carries the datasets the rows actually came from.
     """
     pool_counts: Counter[str] = Counter()

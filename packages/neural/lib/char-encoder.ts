@@ -134,7 +134,7 @@ export function encodeCharUnits(
  *
  * Refuses anything that is not a flat `{ character: integer }` map with the reserved
  * ids in place, because a malformed vocabulary would encode every character as UNK
- * and the model would answer confidently on nothing.
+ * and the model would answer confidently with no input signal.
  * Pure: the file read lives on the node-only loader, so this module stays on the
  * browser graph without a `node:` reach (#2168).
  */
@@ -164,7 +164,7 @@ export function parseCharVocabulary(parsed: unknown, source: string): CharVocabu
  * How a weights package turns text into model input.
  *
  * Absent from a card means SentencePiece — every Latin bundle shipped
- * before the char path existed says nothing here.
+ * before the char path existed makes no statement here.
  */
 export type EncoderDescriptor =
 	| { kind: "sentencepiece" }

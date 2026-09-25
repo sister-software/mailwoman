@@ -5,12 +5,12 @@
  *
  *   CLI integration tests for the `mailwoman data` command group itself (#1577) — the `index.tsx`
  *   landing page rather than `pull`/`status`. Runs the compiled CLI (`out/cli.js`, the standing "use the
- *   compiled CLI" rule) with an isolated empty data root so nothing here depends on which layers this
+ *   compiled CLI" rule) with an isolated empty data root so no test here depends on which layers this
  *   machine happens to have downloaded, and touches no network: both code paths are pure registry
  *   reads.
  *
  *   Also pins the `mw` bin alias, because the failure mode is silent: `bin` is a manifest field
- *   nothing in the build reads, so dropping a name back to the string form (`"bin": "./out/cli.js"`)
+ *   no part of the build reads, so dropping a name back to the string form (`"bin": "./out/cli.js"`)
  *   type-checks, tests, and publishes — and only the consumer who typed `mw` finds out.
  */
 
@@ -27,7 +27,7 @@ import { afterAll, describe, expect, test } from "vitest"
 const cliBin = await mailwomanCLIPath()
 
 /**
- * A directory that exists but holds nothing.
+ * A directory that exists but holds no files.
  *
  * So `data --list` reports destinations under it without any bundle appearing installed.
  */

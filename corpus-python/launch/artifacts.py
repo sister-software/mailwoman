@@ -122,7 +122,7 @@ def quantize_onnx(
     if not fp32.is_file():
         raise RuntimeError(f"no fp32 at {fp32} after vol.reload() — export it first")
 
-    # The input's digest travels with the output. An int8 artifact is otherwise unattributable: nothing
+    # The input's digest travels with the output. An int8 artifact is otherwise unattributable: no field
     # in the file says which checkpoint it came from, and the fp32 it was made from is usually
     # overwritten by the next export.
     fp32_md5 = hashlib.md5(fp32.read_bytes()).hexdigest()

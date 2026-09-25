@@ -133,7 +133,7 @@ The three keystroke shapes behave differently, and the partial first token domin
 - **Partial later token**: a complete first word plus a fragment (`san fr`, `washington d`). The full
   walk fails, so the code walks the complete prefix and filters that state's continuation edges by
   prefix. That state has 100 edges. 6 µs.
-- **Partial first token**: a fragment and nothing else (`sa`, `br`, `brookl`). The same prefix filter
+- **Partial first token**: a fragment and no other token (`sa`, `br`, `brookl`). The same prefix filter
   runs, but on the root state, which has 53,904 continuation edges. The code scans every one of them.
   8.4 ms.
 
@@ -197,7 +197,7 @@ the dropdown on this index instead of on repeated geocodes.
 ## Limits
 
 - **It completes places only.** It does not complete streets, house numbers or points of interest. A
-  user typing `1275 Pennsylv` gets nothing useful from this index.
+  user typing `1275 Pennsylv` gets no useful suggestion from this index.
 - **Each file covers one locale.** `fst-en-us.bin` ships with the en-US weights, and
   `@mailwoman/neural-weights-fr-fr` carries its own file. The library does not merge locales, so a
   search box that serves several markets loads several files and merges the result lists itself.

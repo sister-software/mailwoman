@@ -28,7 +28,7 @@ export interface ReliabilityBin {
 	/**
 	 * `null` on an empty bin.
 	 *
-	 * Zero would be a claim about a mean nothing contributed to.
+	 * Zero would be a claim about a mean that no observation contributed to.
 	 */
 	mean_confidence: number | null
 	accuracy: number | null
@@ -68,8 +68,8 @@ export interface ThresholdRow {
 	/**
 	 * Accuracy among the admitted.
 	 *
-	 * `null` when nothing is admitted.
-	 * An eval that admits nothing has no precision, and reporting 0 there reads
+	 * `null` when no row is admitted.
+	 * An eval that admits no rows has no precision, and reporting 0 there reads
 	 * as an eval that admits only errors.
 	 */
 	precision_above: number | null
@@ -176,7 +176,7 @@ export interface ErrorClass {
  *
  * Requires `expected` and `predicted` strata.
  * A surface without them (the decode path grades a value against a label and has no second class to name)
- * returns nothing, which is absence and not a clean confusion matrix.
+ * returns no classes, which is absence rather than a clean confusion matrix.
  */
 export function errorClasses(sample: readonly Observation[], threshold: number, limit: number): ErrorClass[] {
 	const tally = new Map<string, ErrorClass>()

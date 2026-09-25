@@ -45,8 +45,8 @@ export interface GazetteerLexicon {
 	codeEntries: Map<string, number>
 
 	/**
-	 * Whether a matched span paints nothing when a span word or its nearest
-	 * non-empty neighbor contains a decimal digit.
+	 * Whether a matched span paints no tag when a span word or its nearest non-empty
+	 * neighbor contains a decimal digit.
 	 *
 	 * It is read from the artifact's `rules.digit_guard` so training and inference
 	 * apply the same rule, and it is `false` on older artifacts.

@@ -80,7 +80,7 @@ export interface AdminManifestInput {
  * Compose the admin gazetteer's manifest.
  *
  * @throws When no source contributed.
- * A gazetteer built from nothing is not a layer with an empty manifest.
+ * A gazetteer built from no source is not a layer with an empty manifest.
  * It is a failed build, and recording a manifest for it would make the artifact look describable.
  */
 export function adminLayerManifest(input: AdminManifestInput): LayerManifest {

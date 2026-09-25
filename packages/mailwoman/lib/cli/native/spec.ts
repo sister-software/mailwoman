@@ -123,8 +123,8 @@ type AlwaysPresentFlag<Options> = {
 /**
  * A command's options object, derived from its own `spec`.
  *
- * The router writes each flag's value to the property `optionPropertyName` derives from it, so a
- * property spelled any other way is never written to and the flag parses, validates, and does nothing.
+ * The router writes each flag's value to the property `optionPropertyName` derives from it, so a property
+ * spelled any other way is never written to and the flag parses, validates, and performs no work.
  * A restated `interface Options` can disagree that way silently.
  *
  * A derived one cannot, because the disagreement becomes a compile error at the read site.

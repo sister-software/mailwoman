@@ -22,7 +22,7 @@
  *
  * Only {@link CoverageBasis.Designated} and {@link CoverageBasis.Surveyed} can support an exclusion —
  * "the thing you asked for is not here". {@link CoverageBasis.SourcePresent} supports presence
- * and nothing else: the source looked, which is not the same as the source found everything.
+ * and no more: the source looked, which is not the same as the source found everything.
  */
 export const CoverageBasis = {
 	/**
@@ -42,7 +42,7 @@ export const CoverageBasis = {
 	/**
 	 * The source returned rows in this cell and we recorded that.
 	 *
-	 * Says nothing about what the source missed.
+	 * Makes no statement about what the source missed.
 	 * A miss here is unknown, never absence.
 	 */
 	SourcePresent: "source_present",
@@ -56,7 +56,7 @@ export type CoverageBasis = (typeof CoverageBasis)[keyof typeof CoverageBasis]
  *
  * Presence is supportable from any basis.
  * Absence is not: `source_present` records that the source returned rows,
- * which says nothing about what it missed.
+ * which makes no statement about what it missed.
  *
  * Callers building negative evidence must check on this rather than on `completeness` alone,
  * or an exclusion fires identically on a genuinely empty cell and on one we never surveyed.

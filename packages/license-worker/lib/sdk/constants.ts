@@ -70,7 +70,7 @@ const YEARLY_PLAN = planOrThrow("commercial-yearly-v1")
  * The monthly plan's headline price, e.g. `$250`.
  *
  * The provide cards on `/license` used to carry no figure at all, which left the price on
- * `/docs/pricing` and the button that takes the money with nothing connecting them.
+ * `/docs/pricing` and the button that takes the money with no link connecting them.
  * Deriving both from `SHOP_PLANS` means a price change reaches the card and Stripe together,
  * and a card can never advertise a number the checkout does not charge.
  */

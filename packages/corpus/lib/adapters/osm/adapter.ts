@@ -201,8 +201,8 @@ export function componentsForOSMRow(row: OSMCorpusRow): CanonicalRow["components
 
 	// A street alone is not an address row.
 	// The coarse adapters already teach bare names.
-	// A number and a street is one: 41,000 of Vietnam's 70,069 rows carry nothing above
-	// the street, and `568 Đường Điện Biên Phủ` is the line a person types.
+	// A number and a street is one: 41,000 of Vietnam's 70,069 rows carry no component
+	// above the street, and `568 Đường Điện Biên Phủ` is the line a person types.
 	if (Object.keys(components).length === 1) return null
 
 	return components

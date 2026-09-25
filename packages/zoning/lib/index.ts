@@ -175,7 +175,7 @@ export interface ZoningDesignation {
 	 * Whether the authority explicitly zones this polygon as unzoned.
 	 *
 	 * Only this flag means unzoned.
-	 * A point with no designation says nothing about zoning.
+	 * A point with no designation makes no statement about zoning.
 	 */
 	unzoned: boolean
 	containment: ZoningContainmentPath

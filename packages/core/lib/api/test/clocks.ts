@@ -13,8 +13,8 @@
 import type { ClockLike } from "#api/clock"
 
 /**
- * How much real time {@linkcode VirtualClock.runUntilSettled} tolerates with
- * nothing pending before declaring the work stuck.
+ * How much real time {@linkcode VirtualClock.runUntilSettled} tolerates with no
+ * work pending before declaring the work stuck.
  *
  * Finite, so a genuinely blocked test reports what happened instead of timing out.
  *
@@ -96,8 +96,8 @@ export interface FakeClock extends ClockLike {
 /**
  * A simple, immediately-resolving fake clock.
  *
- * Fine for every sequential assertion (nothing racing the clock), but not sufficient
- * for a concurrency test — see {@linkcode VirtualClock}.
+ * Fine for every sequential assertion (no concurrent work racing the clock),
+ * but not sufficient for a concurrency test — see {@linkcode VirtualClock}.
  */
 export function createFakeClock(startAt = 0): FakeClock {
 	let current = startAt
@@ -120,9 +120,9 @@ export function createFakeClock(startAt = 0): FakeClock {
  * A virtual-time clock that resolves concurrent `sleep()`s one AT A time, strictly in
  * deadline order, only when explicitly driven via {@linkcode VirtualClock.advance}.
  *
- * Unlike {@linkcode createFakeClock}, which bumps `now()` synchronously the instant
- * `sleep()` is called (fine when nothing else races the clock, but not a faithful
- * model of "N callers all waiting on the same deadline").
+ * Unlike {@linkcode createFakeClock}, which bumps `now()` synchronously the
+ * instant `sleep()` is called (fine when no other operation races the clock,
+ * but not a faithful model of "N callers all waiting on the same deadline").
  *
  * This fidelity is exactly what a pacing regression needs: a coarser clock that resolves
  * every same-deadline sleeper "at once" cannot distinguish a fixed pacer from a broken one —
@@ -191,7 +191,7 @@ export class VirtualClock implements ClockLike {
 	 * A paced client whose limit sits downstream of an on-disk cache spends several real
 	 * event-loop turns in `readFile` before it ever registers its `sleep()`.
 	 *
-	 * A caller that drains once and then advances finds nothing pending, jumps the clock
+	 * A caller that drains once and then advances finds no sleep pending, jumps the clock
 	 * past the deadlines that are registered a moment later, and the test hangs.
 	 *
 	 * This polls instead: drain, and if any sleep is pending, advance to the earliest deadline.

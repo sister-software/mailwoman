@@ -112,7 +112,7 @@ A CE-only smoke run should meet these checks before the repair is accepted:
 
 - **Loss stays stable past step 2000.** Every prior dual-loss run diverged by step 2000. The repair works if CE-only loss stays at or below its basin minimum past that step.
 - **val_macro_F1 ≥ 0.35 at step 2000.** v0.4.0-shipped is 0.36, and h256-bisect peaked at 0.40 before diverging. A score of 0.35 means the run is stable and nearly as good as the best dual-loss checkpoint. Stability is the more important result.
-- **Per-tag F1 trajectory.** Total macro_F1 can hide a collapse in one tag. If `venue` F1 drops from 0.39 to 0.05 while `house_number` climbs, CE-only has left a quality redistribution problem. This check costs nothing because eval already computes the confusion matrices for per-tag F1.
+- **Per-tag F1 trajectory.** Total macro_F1 can hide a collapse in one tag. If `venue` F1 drops from 0.39 to 0.05 while `house_number` climbs, CE-only has left a quality redistribution problem. This check costs no extra work because eval already computes the confusion matrices for per-tag F1.
 
 If the smoke run passes those checks, promote it to a full 50K-step CE-only training run. Quality refinements such as class weights, source weights, and longer schedules can then be added. Under dual-loss they were unsafe because they amplified whichever loss already dominated.
 
@@ -157,7 +157,7 @@ Voice B pulled the model away from the basin Voice A was guiding it toward. Voic
 
 **Remove Voice B from training.** Keep it for inference, when the trained model parses addresses. At inference the frozen CRF mask enforces its structural rules, which forbid orphan tags and invalid BIO sequences. During training, Voice A guides the model alone.
 
-The change is one configuration line: `crf_loss_weight = 0.0`. The structural guarantees come from the hand-encoded mask. Training the transition matrix added nothing to those guarantees and was the part that conflicted with Voice A.
+The change is one configuration line: `crf_loss_weight = 0.0`. The structural guarantees come from the hand-encoded mask. Training the transition matrix added no strength to those guarantees and was the part that conflicted with Voice A.
 
 ### Three lessons that generalise
 

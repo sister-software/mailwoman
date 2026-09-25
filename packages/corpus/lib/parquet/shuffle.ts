@@ -26,7 +26,7 @@ import { shuffleWith } from "@mailwoman/core/random"
  * so five row-groups' worth reaches that source's whole 13-country set.
  *
  * Raising it costs memory linearly and buys a wider mix.
- * Lowering it below `ROW_GROUP_SIZE` buys nothing, because the output row-group is
+ * Lowering it below `ROW_GROUP_SIZE` buys no wider mix, because the output row-group is
  * then drawn from fewer rows than it holds.
  */
 export const DEFAULT_SHUFFLE_WINDOW = 250_000

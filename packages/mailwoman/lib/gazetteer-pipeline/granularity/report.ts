@@ -26,7 +26,7 @@ import { LADDER, type CountryGranularity, bottomsOutAt } from "#gazetteer-pipeli
  * The single most important column in this report.
  *
  * A country whose rows are Overture- or GeoNames-sourced had no WOF GeoJSON repo ingested,
- * so its empty sub-locality rung says nothing whatsoever about WOF's depth there.
+ * so its empty sub-locality rung makes no statement whatsoever about WOF's depth there.
  * Only a dozen of the 260 admin repos WOF publishes are in the recipe.
  *
  * The rest of the world arrives via Overture divisions (5 subtypes, none hood-level)

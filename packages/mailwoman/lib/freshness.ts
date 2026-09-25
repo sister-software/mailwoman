@@ -5,8 +5,8 @@
  *
  *   Which data is a running process serving — read out of the artifacts themselves.
  *
- *   A geocode answers from a specific set of sealed databases, and nothing on the wire said which:
- *   `data_updated` was declared in the Nominatim interface and fed by nothing (#997). An operator whose
+ *   A geocode answers from a specific set of sealed databases, and no field on the wire said which:
+ *   `data_updated` was declared in the Nominatim interface and fed by no source (#997). An operator whose
  *   gazetteer predates a source swap had no surface that would tell them.
  *
  *   the stamp lives IN the artifact, never beside it. A record kept next to a database goes stale on the
@@ -105,7 +105,7 @@ export interface FreshnessReport {
 	/**
 	 * The newest `built` epoch across the artifacts that carried one, verbatim.
 	 *
-	 * Absent when nothing was stamped.
+	 * Absent when no artifact was stamped.
 	 * A `/status` that answered with the boot time, the newest mtime, or an epoch
 	 * zero would be answering a question it cannot answer.
 	 *

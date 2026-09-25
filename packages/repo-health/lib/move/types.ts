@@ -75,7 +75,7 @@ export interface UnresolvedSpecifier {
 	file: string
 	specifier: string
 	/**
-	 * What was tried and why nothing was accepted.
+	 * What was tried and why no specifier was accepted.
 	 *
 	 * A plan carrying one of these is refused rather than applied: a specifier nobody
 	 * can prove is a specifier nobody should write.
@@ -97,7 +97,7 @@ export interface ModuleMovePlan {
 	 * Repo-relative paths written as text — a hook command, a lint glob, a `Usage:`
 	 * line — that the moves invalidate.
 	 *
-	 * Nothing checks these, which is why the operation that breaks them is the one that reports them.
+	 * No check reads these, which is why the operation that breaks them is the one that reports them.
 	 */
 	pathLiterals: PathLiteralRewrite[]
 	unresolved: UnresolvedSpecifier[]

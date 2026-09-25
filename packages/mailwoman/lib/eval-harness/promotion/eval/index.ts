@@ -170,7 +170,7 @@ export interface PromotionEvalOptions {
 	 *
 	 * Must be outside {@linkcode PromotionEvalOptions.outDir}.
 	 * Receipt comparison expects stable bytes under outDir.
-	 * Omitted, nothing is written.
+	 * Omitted, the run writes no file.
 	 */
 	profileJSON?: string
 }

@@ -5,7 +5,7 @@
  * @file `po-box` — the two knobs that let one recipe emit an output for one class.
  *
  *   The military rows (#517) are self-contained: they draw no tuple, so `--variants 0` with
- *   `--military-ratio 1` asks for them and nothing else. Both knobs had a defect measured on 2026-09-09 —
+ *   `--military-ratio 1` asks for them and no other variant. Both knobs had a defect measured on 2026-09-09 —
  *   `--variants 0` read as one through the CLI's `Number(x) || 1`, and `--source-name` was ignored — and
  *   together they produced a recipe output of 10,558 rows under the shipped label where 5,279 under its own were
  *   asked for. The tests below pin each.

@@ -14,7 +14,7 @@
 
 - **Zero raw `process.env`/`process.argv`** — CI-enforced oxlint rule. The scripts below need neither (no flags; paths are constants). Do not add argument parsing.
 - **Run scripts from the repo root** — all paths in the capture scripts are repo-root-relative.
-- **Source-under-node:** relative imports use explicit `.ts` extensions. No new package subpaths (nothing here touches `exports` maps).
+- **Source-under-node:** relative imports use explicit `.ts` extensions. No new package subpaths (this task touches no `exports` maps).
 - **License headers:** every new `.ts` file starts with the standard 4-line header (`@copyright Sister Software` / `@license AGPL-3.0` / `@author Teffen Ellis, et al.`).
 - **Tabs for indentation**; oxfmt formats staged files via the pre-commit hook — if the hook rejects, run `yarn format` and re-stage **only your files** (do not commit unrelated `.mdx` churn).
 - **Acronym casing:** whole camelCase components (`readJSONL`, not `readJsonl`).

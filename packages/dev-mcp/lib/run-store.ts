@@ -10,7 +10,7 @@
  *   requests it has already answered. A stored run makes the second comparison free.
  *
  *   **It is a cache rather than a record.** `evals/scores-by-version.json` and `docs/records/evals/` are the record, written by
- *   humans and by `eval ledger-append`. Nothing here is authoritative, nothing here is committed, and a pruned run is
+ *   humans and by `eval ledger-append`. No run here is authoritative. No run here is committed, and a pruned run is
  *   not a lost result. It is a result that has to be re-measured, which is the correct cost for something nobody wrote
  *   down. Storing it under the data root rather than the repo is what keeps that distinction physical.
  *
@@ -98,7 +98,7 @@ export interface StoredRun {
 	/**
 	 * Per-arm replay indices, keyed by the arm's label.
 	 *
-	 * Absent for a run nothing can replay.
+	 * Absent for a run that no arm can replay.
 	 * `mwdev_promotion_eval`, say, which answers about a battery rather than about rows.
 	 */
 	answers?: Record<string, RecordedAnswer[]>
@@ -174,7 +174,7 @@ export async function tryPutRun(run: StoredRun, dir: PathBuilderLike, now: Date)
  *
  * `null` here means pruned, never stored, or unreadable, and those are not distinguishable
  * after the fact, which is why {@link RETENTION_DAYS} is documented rather than silent.
- * A caller that finds nothing has to re-measure.
+ * A caller that finds no run has to re-measure.
  */
 export async function getRun(runID: string, dir: PathBuilderLike = RUN_STORE_DIR): Promise<StoredRun | null> {
 	const path = runPath(runID, dir)

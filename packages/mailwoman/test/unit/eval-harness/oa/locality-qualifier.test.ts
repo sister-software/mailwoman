@@ -6,7 +6,7 @@
  *   The OpenAddresses parenthetical strip, pinned at its edges (#2308).
  *
  *   The cases worth holding are the ones where the strip leaves a name alone: a parenthesis mid-name, and a surface
- *   that is nothing but a parenthetical. Both come back unchanged, which is what keeps the function a fallback the
+ *   that consists of a parenthetical alone. Both come back unchanged, which is what keeps the function a fallback the
  *   grader reaches for after an exact compare rather than a normalization that rewrites every expectation.
  */
 

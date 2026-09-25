@@ -19,7 +19,7 @@ link "11 W 53rd St" to "11 West 53rd Street" without a string rule for every abb
 
 - The library install and a candidate gazetteer, as in
   [Geocode a CSV of customer addresses](../tutorials/geocode-a-csv.mdx), sitting at
-  `<data root>/db/wof/candidate.db`. Every transcript below found it there, with nothing exported.
+  `<data root>/db/wof/candidate.db`. Every transcript below found it there, with no environment variable exported.
 - [customers-messy.csv](/examples/customers-messy.csv) — twenty rows, in which five organizations appear
   two or three times each with different spellings. Thirteen distinct organizations, twenty rows.
 - Per-state rooftop databases, at your data root, for the states in your file. Every transcript below ran
@@ -41,12 +41,12 @@ registry: 20 rows → 20 records (20 geocoded) → 20 entities (38 candidate pai
 wrote 20 features → entities.geojson
 ```
 
-Twenty rows in, twenty entities out. **Nothing linked at the defaults.** That is the real starting point
+Twenty rows in, twenty entities out. **No records linked at the defaults.** That is the real starting point
 for a file this size, and the rest of this page is about why and what to do.
 
 Note `--resolve-db` in that command, and note what it is doing, because it is not what it looks like.
 `mailwoman registry` discovers the candidate gazetteer at the convention path like everything else —
-the banner above says which file it opened, and nothing on the command line named it. What the flag
+the banner above says which file it opened, and no argument on the command line named it. What the flag
 satisfies is a separate boot check: registry refuses to start without a WOF admin path from
 `--resolve-db` or `$MAILWOMAN_WOF_DB`, and then discards it whenever a candidate gazetteer is reachable.
 
@@ -57,7 +57,7 @@ the candidate gazetteer is right there:
 registry needs a WOF admin SQLite path. Set $MAILWOMAN_WOF_DB or pass --resolve-db <path>.
 ```
 
-And a path that does not exist satisfies the check perfectly, because nothing ever opens it:
+And a path that does not exist satisfies the check perfectly, because no code ever opens it:
 
 ```bash
 npx mailwoman registry run customers-messy.csv --infer-mapping --resolve-db /nonexistent/wof.db --out entities.geojson
@@ -74,7 +74,7 @@ get past the boot check.** Passing the gazetteer's own path is the tidiest thing
 page and the tutorial both do it — but it is satisfying a check rather than selecting a backend.
 
 There is one shape where the flag is believed, and it got narrower in `8.7.0`. If no candidate gazetteer
-is reachable at all — nothing at `<data root>/db/wof/candidate.db`, nothing in `$MAILWOMAN_CANDIDATE_DB` —
+is reachable at all — no file at `<data root>/db/wof/candidate.db` and no path in `$MAILWOMAN_CANDIDATE_DB` —
 then `--resolve-db` is the only path there is, registry opens it as an admin database, and `candidate.db`
 has neither table that backend queries:
 
@@ -188,7 +188,7 @@ for (const entity of entities.filter((e) => e.records.length > 1)) {
 ```
 
 Thirteen entities, which is the number of distinct organizations in the file. All five groups merged,
-including the three-way one, and nothing merged that should not have. At `-10` the run gives 14 entities
+including the three-way one, and no incorrect merge occurred. At `-10` the run gives 14 entities
 — `C-2008`, the row that abbreviates both the company and the street, stays separate. Between `-15` and
 `-20` the answer does not move, which is the sign that the threshold sits inside the gap rather than on
 an edge.
@@ -242,7 +242,7 @@ the number of distinct places means it is too loose.
 
 - **The CLI cannot reach the configuration in step 4.** In single-file mode `mailwoman registry run`
   always leaves the learned scorer on and passes `--threshold` straight through, so the flag is in
-  learned-scorer units. Sweeping it on this file goes from 20 entities to 5 with nothing in between,
+  learned-scorer units. Sweeping it on this file goes from 20 entities to 5 with no value in between,
   because the negative thresholds that clear the learned scorer's whole range merge every metro area.
   Use the library for a small file.
 - **The defaults are conservative, and that is the safer direction.** A missed link leaves two entities

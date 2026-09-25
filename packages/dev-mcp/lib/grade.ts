@@ -12,7 +12,7 @@
  *
  *   The distinction the whole module turns on (spec §5.5): **a diff is not a verdict.** The 2026-08-15 FST conclusion
  *   was a diff-only result read as a truth result. The board version happened to carry truth, which is the only reason
- *   "24 changed" could become "22 are clear improvements" — and nothing in the earlier probe marked which kind of
+ *   "24 changed" could become "22 are clear improvements" — and the earlier probe did not mark which kind of
  *   result it was holding.
  */
 
@@ -157,8 +157,8 @@ export function normalCDF(z: number): number {
  *
  * The MDE is the effect size this n would detect with 80% power at α = 0.05 —
  * the conventional pairing, and stated as a convention rather than a measurement.
- * Its job is to turn "we saw nothing" into "we saw nothing, and we could not
- * have seen anything smaller than this".
+ * Its job is to turn "we saw no effect" into "we saw no effect, and we could
+ * not have seen anything smaller than this".
  */
 export function significance(successesA: number, successesB: number, n: number): SignificanceReading {
 	if (n === 0) {

@@ -6,8 +6,8 @@
  *   The worktree arm as a comparison arm — `worktree-arm.ts` runs the child, this projects its answers onto
  *   the shape every other arm answers in.
  *
- *   Separate from both on purpose. `worktree-arm.ts` knows about git and subprocesses and nothing about
- *   comparisons; `compare.ts` knows about scoring and nothing about either. Putting the projection in its own
+ *   Separate from both on purpose. `worktree-arm.ts` knows about git and subprocesses and has no knowledge of
+ *   comparisons; `compare.ts` knows about scoring and has no knowledge of either. Putting the projection in its own
  *   module keeps the dependency one-way, which the alternatives do not: the runner cannot live in `compare.ts`
  *   without pushing that file past its line cap, and it cannot live in `worktree-arm.ts` without closing a
  *   cycle through `arms.ts`.

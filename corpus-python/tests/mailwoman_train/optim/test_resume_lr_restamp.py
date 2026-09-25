@@ -117,7 +117,7 @@ def test_restamp_resume_lrs_recovers_the_live_config_value(tmp_path, capsys):
 
 def test_restamp_resume_lrs_is_silent_when_nothing_changed(tmp_path, capsys):
     """Identical-config resume: state round-trips, param groups end up byte-equal, and
-    `_restamp_resume_lrs` prints nothing (the silent no-op path)."""
+    `_restamp_resume_lrs` prints no line (the silent no-op path)."""
     m1 = TinyModel()
     optim1, _labels1 = build_optimizer(m1, learning_rate=1e-5, weight_decay=0.01, classifier_learning_rate=1e-3)
     sched1 = build_scheduler(optim1, _scheduler_cfg(warmup_steps=2))
@@ -129,7 +129,7 @@ def test_restamp_resume_lrs_is_silent_when_nothing_changed(tmp_path, capsys):
     torch.save(sched1.state_dict(), sched_state_path)
 
     m2 = TinyModel()
-    # Same classifier_learning_rate as phase 1 — nothing should change on restamp.
+    # Same classifier_learning_rate as phase 1 — no rate should change on restamp.
     optim2, labels = build_optimizer(m2, learning_rate=1e-5, weight_decay=0.01, classifier_learning_rate=1e-3)
     live_lrs = [g["lr"] for g in optim2.param_groups]
     sched2 = build_scheduler(optim2, _scheduler_cfg(warmup_steps=2))
@@ -145,7 +145,7 @@ def test_restamp_resume_lrs_is_silent_when_nothing_changed(tmp_path, capsys):
     restamp_resume_lrs(optim2, sched2, live_lrs, labels)
     out = capsys.readouterr().out
 
-    assert out == ""  # byte-identical silent path: nothing changed, nothing printed
+    assert out == ""  # byte-identical silent path: no rate changed and no line printed
     after_lrs = [g["lr"] for g in optim2.param_groups]
     after_initial_lrs = [g.get("initial_lr") for g in optim2.param_groups]
     assert after_lrs == before_lrs
@@ -202,7 +202,7 @@ def test_build_optimizer_three_group_labels_attribute_to_the_right_group(tmp_pat
     # Reorder-proofing: `labels2` is read from build_optimizer's return, never re-derived by
     # this test — the same discipline the fixed call site in train.py now follows. If
     # build_optimizer's internal carve-out order ever changes, this assignment (and the
-    # zip below) tracks it automatically. nothing here hard-codes group index -> label.
+    # zip below) tracks it automatically. no code here hard-codes group index -> label.
     assert labels2 == labels1  # same overrides set => same label order, sourced fresh each time
     live_lrs = [g["lr"] for g in optim2.param_groups]
     sched2 = build_scheduler(optim2, _scheduler_cfg(warmup_steps=2))

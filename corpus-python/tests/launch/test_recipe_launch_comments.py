@@ -67,12 +67,12 @@ def _modal_commands(recipe: Path) -> Iterator[str]:
 
 
 def test_there_are_recipes_to_check() -> None:
-    """Guard against a glob that matches nothing and makes every recipe test pass vacuously."""
+    """Guard against a glob that matches no file and makes every recipe test pass vacuously."""
     assert len(RECIPES) > 100, f"only {len(RECIPES)} recipes found under {CONFIGS}"
 
 
 def test_some_recipe_carries_a_modal_command() -> None:
-    """Guard against a `MODAL_RUN` pattern that matches nothing."""
+    """Guard against a `MODAL_RUN` pattern that matches no recipe."""
     assert any(any(_modal_commands(recipe)) for recipe in RECIPES)
 
 
@@ -93,7 +93,7 @@ def test_the_launcher_is_named_as_a_module(recipe: Path) -> None:
 def test_every_named_recipe_exists(recipe: Path) -> None:
     """Require each `--config` value to be the filename of a recipe under `configs/`.
 
-    The launcher joins `--config` onto its configs directory, so a path finds nothing.
+    The launcher joins `--config` onto its configs directory, so a path finds no file.
     """
     for arguments in _modal_commands(recipe):
         for named in NAMED_CONFIG.findall(arguments):

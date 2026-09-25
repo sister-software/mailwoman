@@ -247,8 +247,8 @@ export async function runCensus(registry: EngineRegistryLike, args: Record<strin
 		if (run.trace?.parse) {
 			traced.push({ id: item.id, input: item.input, parse: run.trace.parse })
 		} else {
-			// A row with no trace contributes nothing to any tally — counting it as "nothing
-			// fired" would manufacture inertness out of a bundle that cannot trace.
+			// A row with no trace contributes no entry to any tally — counting it as "no
+			// mechanism fired" would manufacture inertness out of a bundle that cannot trace.
 			untraced.push(item.id)
 		}
 	}

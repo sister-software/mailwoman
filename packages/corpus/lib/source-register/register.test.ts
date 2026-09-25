@@ -334,7 +334,7 @@ describe("applyLicenseDecisions", () => {
 	})
 
 	it("refuses a decision naming a licence the register does not carry", () => {
-		// Such a decision licenses nothing.
+		// Such a decision grants no license.
 		// Applying it silently would leave the register asserting a grant no source points at,
 		// which is the shape a typo or a removed source takes.
 		expect(() =>
@@ -391,7 +391,7 @@ describe("applyLicenseDecisions", () => {
 	it("fails the audit when the recorded decision is incomplete, so the build refuses it", () => {
 		// `buildSourceRegister` throws when the audit reports a problem, so an incomplete
 		// decision never reaches the committed register.
-		// This is why the merge validates nothing itself.
+		// This is why the merge performs no validation itself.
 		const incomplete = {
 			licenseID: "unchecked-national-terms",
 			state: LicenseReviewState.Elected,
@@ -599,7 +599,7 @@ describe("permission by operation", () => {
 	 * The grant shapes counsel is reading, written as the per-operation record would hold them.
 	 *
 	 * These are fixtures rather than elections.
-	 * No decision is recorded for any source, and nothing here elects one.
+	 * No decision is recorded for any source, and no fixture here elects one.
 	 *
 	 * What they establish is that the model can express each shape a real national
 	 * grant takes, and that the shape decides which acts it admits rather than a
@@ -701,7 +701,7 @@ describe("permission by operation", () => {
 			expect(electedLicenseLabel(elected)).toBe("Licence Ouverte / Open Licence 2.0")
 			expect(elected.electedBecause).toContain("attribution-only half")
 
-			// Electing the permissive half says nothing about publishing a model,
+			// Electing the permissive half makes no statement about publishing a model,
 			// which nobody read these terms against.
 			// It reads unreviewed rather than inheriting either half's answer.
 			expect(permissionFor(elected, SourceOperation.RedistributeModel).permission).toBe(OperationPermission.Unreviewed)

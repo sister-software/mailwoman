@@ -33,8 +33,9 @@ const containers = new Set([
 	"JSXOpeningElement",
 	"JSXEmptyExpression",
 	// A comment on its own line inside a data literal is prose like any other.
-	// Upstream's list stopped at objects, which left every ignore list, pattern table and tuple in this
-	// repository unformatted — and a sweep that joins such a paragraph has nothing to re-break it.
+	// Upstream's list stopped at objects, which left every ignore list, pattern table
+	// and tuple in this repository unformatted — and a sweep that joins such a
+	// paragraph leaves no line for the rule to re-break.
 	"ArrayExpression",
 	"TSTupleType",
 	"CallExpression",
@@ -115,7 +116,7 @@ function protectedComment(source: SourceCode, comment: Comment) {
 /**
  * The lines of a starred block that are missing their `*`, by offset within the block.
  *
- * The opener and the closer are skipped, and so is a line holding nothing but whitespace:
+ * The opener and the closer are skipped, and so is a line holding only whitespace:
  * a blank line in a starred block is written bare as often as it is written with a star.
  */
 function missingStarLines(lines: readonly string[]): { at: number; width: number }[] {

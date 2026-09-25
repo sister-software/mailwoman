@@ -5,7 +5,7 @@
  *
  *   The tools that spawn the compiled CLI, and the one that polls them.
  *
- *   They are together because they share three properties nothing else here has. Each writes its report to stdout.
+ *   They are together because they share three properties that no other tool here has. Each writes its report to stdout.
  *   In this process, stdout is the JSON-RPC channel. Each must run as a child rather than an import. Each therefore
  *   puts the compiled tree back on a path this server otherwise keeps off it, and pays `assertCompiledFresh` for the
  *   privilege. And each pays the full ~1.4 s cold start the warm tools exist to avoid, which is a fact their results

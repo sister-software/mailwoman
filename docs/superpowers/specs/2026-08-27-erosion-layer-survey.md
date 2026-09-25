@@ -7,7 +7,7 @@ negative outcome, and this record reaches a split verdict: **one viable coastal 
 finding that no surveyed source supports a soil-erosion layer.** Both are complete results. The second
 answers the question the issue asked first.
 
-The consuming implementation already exists, so nothing below proposes new architecture. The layer
+The consuming implementation already exists, so no section below proposes new architecture. The layer
 interface (`layer_manifest` / `layer_coverage` on the H3 spine) is specified in
 [`../../engineering/reference/layer-interface.mdx`](../../engineering/reference/layer-interface.mdx).
 The exclusion-grade coverage pilot
@@ -22,7 +22,7 @@ soil path this record reuses. `packages/mailwoman/lib/observations/absence-route
 **Every external claim below carries its URL and the date it was read.** Measurements taken from this
 lab are labeled as measurements and give the command's output rather than a summary of it. Facts that
 could not be established from a primary source are listed in §8 as unverified, with what was tried.
-Nothing in §8 was filled in with a plausible guess.
+No gap in §8 was filled in with a plausible guess.
 
 **The issue's expectation was half right.** Erosion was ordered third because its sources were thought
 to be the weakest. For **soil** erosion that held, and the situation is worse than expected: by statute,
@@ -161,7 +161,7 @@ that USDA never invokes it for the NRI.
 ([usda.gov/policies-and-links](https://www.usda.gov/policies-and-links), HTTP 200): "Most information
 presented on the USDA Web site is considered public domain information… Some materials on the USDA Web
 site are guarded by copyright, trademark, or patent, and/or are provided for personal use only." The
-license does not matter here, because there is nothing to redistribute.
+license does not matter here, because there is no NRI data to redistribute.
 
 ### 2.3 United States, soil — what SSURGO carries, and what it does not
 
@@ -696,7 +696,7 @@ A consumer must account for three findings about it:
 - **Landslide and ground-stability products beyond NCERM's two ground-instability layers.** They cover
   a different hazard with different authorities.
 - **England soil-erosion risk mapping.** This absence was checked, and it is recorded because the
-  obvious candidate exists but ships nothing. Defra's `Soil Erosion and Compaction Risk Groups` (CKAN
+  obvious candidate exists but ships no resources. Defra's `Soil Erosion and Compaction Risk Groups` (CKAN
   `3524b81e-9968-460a-a8aa-8ec2397d9dde`) is **retired with `num_resources: 0`**, and its note reads
   "This dataset has been withdrawn while it is being reviewed and updated." Cranfield's LandIS erosion
   page returns **HTTP 404**, and the LandIS data index carries no erosion link. An organisation-scoped
@@ -708,7 +708,7 @@ A consumer must account for three findings about it:
 | ----------------------- | ---------------------------------------------------------- | ------------------------------------------------------- | --------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- |
 | subject                 | coastal                                                    | coastal                                                 | soil                                                | soil                                                     | both                                                     |
 | what it is              | an authority's **designation** under a named scenario      | an authority's **measurement** of past rates            | a **sample-based statistical estimate**             | soil properties + **conditional** hazard interpretations | **models**, plus one 2004 survey compilation             |
-| license                 | **OGL v3.0**, attribution string published                 | **CC0 1.0**, in the shipped FGDC                        | no product license; nothing to redistribute         | "This is public information" in the shipped FGDC         | ESDAC **forbids third parties**; two CC contradictions   |
+| license                 | **OGL v3.0**, attribution string published                 | **CC0 1.0**, in the shipped FGDC                        | no product license; no data to redistribute         | "This is public information" in the shipped FGDC         | ESDAC **forbids third parties**; two CC contradictions   |
 | extent                  | England coast; data bbox −6.985/49.882 → 2.066/55.810      | 21 contiguous states, **open-ocean sandy shore only**   | non-Federal US; cropland/CRP/pasture only           | 3,380 survey areas                                       | EU-28 for the models; EU-25 coasts for EUROSION          |
 | vocabulary              | 12 scenario layers; distance in meters; SMP policy classes | `LRR` m/yr per transect                                 | tonnes/acre/year with a margin of error             | K 0.02–0.69; T 1–5; hazard Slight→Very severe            | t/ha/yr; EUROSION 11 trend classes                       |
 | resolution              | MultiPolygon zones on coastal frontages                    | **~50 m** transects (median 50.1 m measured)            | **state**; county via LUCID only, to 2017           | map-unit component                                       | 100 m–25 km rasters; 1:100,000 lines; ~142 m / ~288 m    |
@@ -761,18 +761,18 @@ the source's own resolution and its own words permit.
 | **SSURGO national erosion interpretations**   | soil    | A **per-map-unit-component** claim about the hazard **conditional on a disturbance that has not happened** — NRCS assumes "50 to 75 percent of the surface has been exposed". Gully erosion, sediment delivery and streambank erosion are excluded by the rule's own text.                                                                                            |
 | **SSURGO state erosion interpretations**      | soil    | A **per-component claim inside one state** rather than comparable across states — the rule names carry state suffixes and the criteria are state-authored.                                                                                                                                                                                                            |
 | **SSURGO special features** (`GUL`, `ERO`, …) | soil    | A **per-feature** claim that the surveyor mapped an eroded spot, gully or blowout **there**. It supports presence only: 1,210 of 3,380 survey areas define any such symbol, and absence of a symbol is not absence of the feature.                                                                                                                                    |
-| **USGS National Shoreline Change**            | coastal | A **per-transect claim at ~50 m alongshore, on open-ocean sandy shoreline, and nothing off that line.** Long-term rates only, contiguous US only. It is a measurement of the past rather than a designation of risk.                                                                                                                                                  |
+| **USGS National Shoreline Change**            | coastal | A **per-transect claim at ~50 m alongshore, on open-ocean sandy shoreline, and no claim off that line.** Long-term rates only, contiguous US only. It is a measurement of the past rather than a designation of risk.                                                                                                                                                 |
 | **USGS Coastal Vulnerability Index**          | coastal | A **regional screening claim only** — a five-class relative ranking on a 1:2,000,000 base line, nominally 3-minute sampling, measured segment medians 1.26 km (Atlantic) to 5.15 km (Gulf), on 1999–2000 inputs.                                                                                                                                                      |
 | **USGS CoSMoS**                               | coastal | A **per-location projection under a named sea-level-rise scenario**, California only. Never a statement about what has happened.                                                                                                                                                                                                                                      |
 | **NOAA C-CAP**                                | coastal | A **30 m claim about land cover**, which NOAA labels a screening tool. Land-to-water transition across epochs is the reader's inference rather than a published rate.                                                                                                                                                                                                 |
 | **NOAA shoreline vectors**                    | coastal | A claim about **where a shoreline was at one vintage**. The input to a rate, never a rate.                                                                                                                                                                                                                                                                            |
-| **NOAA Sea Level Rise Viewer**                | —       | **Nothing about erosion.** NOAA states the data "do not account for erosion". A 3–10 m inundation claim under a static rise.                                                                                                                                                                                                                                          |
+| **NOAA Sea Level Rise Viewer**                | —       | **No statement about erosion.** NOAA states the data "do not account for erosion". A 3–10 m inundation claim under a static rise.                                                                                                                                                                                                                                     |
 | **EA NCERM National (2024)**                  | coastal | A **per-polygon claim about a coastal frontage under one named management scenario, horizon and climate allowance** — that the EA's mapping places the location inside the area likely to be at erosion risk. The EA forbids a per-property reading in writing.                                                                                                       |
 | **NRW NCERM (Wales)**                         | coastal | The same shape on the **previous generation's vocabulary** (three periods from a 2005 base, percentile bands) rather than interchangeable with England's.                                                                                                                                                                                                             |
 | **Dynamic Coast (Scotland)**                  | coastal | A per-polygon claim under a stated emissions scenario, with an **explicit prohibition on property-level assessment** in its own access constraints.                                                                                                                                                                                                                   |
-| **NI High Level Risk Appraisal**              | coastal | A **per-coastline-segment banding** over 122 features carrying one attribute. A national screening statement, nothing finer.                                                                                                                                                                                                                                          |
+| **NI High Level Risk Appraisal**              | coastal | A **per-coastline-segment banding** over 122 features carrying one attribute. A national screening statement and no finer claim.                                                                                                                                                                                                                                      |
 | **ESDAC RUSLE2015**                           | soil    | A **100 m modelled hillslope claim** rather than a parcel claim — the model's inputs (land cover, a DEM, crop statistics) carry no parcel identity, and two of its five factors are 500 m and one is 1 km.                                                                                                                                                            |
-| **ESDAC NUTS2 indicator**                     | soil    | A **per-NUTS2-region claim** over 271 polygons, and nothing about any location inside a region.                                                                                                                                                                                                                                                                       |
+| **ESDAC NUTS2 indicator**                     | soil    | A **per-NUTS2-region claim** over 271 polygons, and no claim about any location inside a region.                                                                                                                                                                                                                                                                      |
 | **GloSEM (distributed)**                      | soil    | A **25 km claim** — country or large-region scale. The 100 m variant covers croplands only.                                                                                                                                                                                                                                                                           |
 | **PESERA**                                    | soil    | A **1 km modelled claim**, 2004, marked obsolete by the EEA.                                                                                                                                                                                                                                                                                                          |
 | **EUROSION / CLC2000 Coastline**              | coastal | A **per-segment categorical trend claim** on a 1:100,000 line with ~50 m accuracy, from 2002–2004, with 33 % of segments carrying no class. Not convertible into a rate.                                                                                                                                                                                              |
@@ -789,7 +789,7 @@ For flood zones, England-wide coverage is stated, and Zone 1 is _defined as the 
 outside Zones 2, 3a and 3b". A location with no polygon therefore has a designation. **Erosion has no
 such definition.** A location in England with no NCERM polygon is one of two different things:
 
-1. **not on the coast at all.** This is most of England, and NCERM says nothing about it.
+1. **not on the coast at all.** This is most of England, and NCERM makes no statement about it.
 2. **on the coast, and not expected to be reached by erosion within this horizon under this scenario.**
    This is a designation, and it is exactly what a caller wants.
 
@@ -799,8 +799,8 @@ risk". This program exists to prevent that failure, and here it would come from 
 correct for the previous layer.
 
 **The pilot therefore ships `CoverageBasis.SourcePresent` until a mapped-footprint source is
-settled.** That basis supports presence and nothing else: `supportsExclusion` is false, the layer makes no negative
-claim, and the observation either reports the polygon it found or reports nothing.
+settled.** That basis supports presence and no other claim: `supportsExclusion` is false, the layer makes no negative
+claim, and the observation either reports the polygon it found or reports no row.
 
 This record lists two candidate footprint sources, and **neither was verified** (§8):
 
@@ -877,7 +877,7 @@ quantities.
 
 The builder carries each declared domain as a closed set and **throws** on a value outside it. An
 unknown code indicates a source-schema change, which a reader most needs to know about. Coercing it to a
-nearest neighbour or to NULL would turn "the source changed" into "there is nothing here".
+nearest neighbour or to NULL would turn "the source changed" into "there is no value here".
 
 The measurements lead to two source-specific parsing rules:
 
@@ -910,12 +910,12 @@ area nor a grid, and the polygon rule's implementation does not apply to it:
   precomputed bounding box, exactly as the polygon rule stores rings.
 - **The cell table records intersection rather than containment.** It has no `whole` / `partial`
   distinction, because a line has no interior. The feature either touches a cell or it does not.
-  `compactCells` has nothing to collapse, which is acceptable: a linear layer is small by construction,
+  `compactCells` has no cells to collapse, which is acceptable: a linear layer is small by construction,
   because its index scales with the length of the feature rather than with the area around it. A res-9
   cell is 200.8 m on an edge and 347.8 m across the flats (measured with h3-js 4.5.0), so a 1,000 km
   shoreline occupies on the order of 3,000 cells.
 - **h3-js has no polyline coverage primitive** (checked). The library offers `polygonToCells` for areas
-  and `gridPathCells` between two cells, and nothing that indexes a polyline. A linear builder densifies
+  and `gridPathCells` between two cells, and no primitive that indexes a polyline. A linear builder densifies
   its vertices at a step **below the cell edge length**, indexes each sample, and must record the step.
   A step above the edge length skips cells without any error.
 - **Absence means no row, and it means something different from the polygon case.** A cell with no line
@@ -1204,7 +1204,7 @@ and more effort on our side cannot fix any of them:
 1. **A national soil-erosion product with released per-location geometry and a redistribution license.**
    The EU Soil Monitoring Law is the current candidate. It entered into force 2025-12-16 with a
    three-year transposition period, and the Commission mentions a soil health data portal. Re-check when
-   member states begin publishing. Nothing exists today.
+   member states begin publishing. No such product exists today.
 2. **An ESDAC terms change**, or a per-dataset Notification that permits redistribution. The clause is
    per-dataset and ESDAC has no site-wide policy, so this could change for one product without changing
    for the others.
@@ -1225,7 +1225,7 @@ time horizon and climate allowance. It includes the cumulative erosion distance 
 shoreline management policy where the scenario carries one, the product and edition it was read from,
 and the authority's own dates. Where the authority publishes no determination, the caller receives
 that fact and no reassurance. In this first layer the coverage basis permits presence only, so an
-absent polygon is reported as "this product says nothing here" and never as "this location is not at
+absent polygon is reported as "this product makes no statement here" and never as "this location is not at
 risk". The source does not distinguish a location off the coast from a location on the coast outside
 the risk area. The observation states what the map assigns at a location under a named scenario and
 never whether a property will erode, because the authority itself declines that second statement in
@@ -1290,7 +1290,7 @@ is the first user of the linear rule, and its consumer wording differs.
 
 ## 8. What could not be verified
 
-These gaps are recorded as gaps. Nothing below was filled in with a plausible guess.
+These gaps are recorded as gaps. No gap below was filled in with a plausible guess.
 
 **Environment.**
 

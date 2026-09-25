@@ -221,7 +221,7 @@ export async function listZipEntries(archivePath: PathBuilderLike, options?: Zip
 /**
  * Stream one member's decompressed bytes out of an archive on disk.
  *
- * Nothing beyond the central directory and the inflate window is held in memory,
+ * No data beyond the central directory and the inflate window is held in memory,
  * so this is bounded by the consumer rather than by the member's size.
  * A consumer that stops early — a `take`, a `break` — destroys the member stream
  * and closes the archive on the way out.
@@ -344,7 +344,7 @@ export async function extractZipEntries(
  * Verify every member's CRC-32 against the value its central-directory header claims.
  * What `unzip -t` is for.
  *
- * This is a corruption check on a download, so it decompresses everything and keeps nothing.
+ * This is a corruption check on a download, so it decompresses everything and retains no member content.
  * The archive is read one member at a time and the checksum is folded chunk by chunk,
  * so memory is bounded by the inflate window.
  *

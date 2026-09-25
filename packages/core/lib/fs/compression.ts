@@ -109,7 +109,7 @@ export function unzstd(input: CompressionInput): Uint8Array {
  * Pipe a file into this and pass the result straight to `JSONSpliterator.fromAsync`;
  * no adapter belongs in between.
  *
- * Nothing here materializes a whole file: a corpus part file is tens of gigabytes decompressed.
+ * This decompressor materializes no whole file: a corpus part file is tens of gigabytes decompressed.
  */
 export function zstdDecompressor(): ZlibTransform {
 	return createZstdDecompress()

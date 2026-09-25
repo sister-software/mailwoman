@@ -383,7 +383,7 @@ function chooseBreaks(tokens: readonly string[], limits: WrapLimits, firstWidth:
 	const lineWidth = (from: number, to: number) =>
 		(from === 0 ? firstWidth : continuationWidth) + prefix[to]! - prefix[from]! - (from > 0 ? 1 : 0)
 
-	// Cost of setting tokens [from, to) as one line, `last` when nothing follows it.
+	// Cost of setting tokens [from, to) as one line, `last` when no token follows it.
 	const cost = (from: number, to: number, last: boolean) => {
 		const width = lineWidth(from, to)
 
@@ -646,7 +646,7 @@ function isStructure(line: string) {
  *
  * `paragraphs` is off for a run of `//` comments: a blank line there is a `//` on its own,
  * which reads as a gap in the code rather than a paragraph break.
- * Those get one sentence per line and nothing else.
+ * Those get one sentence per line and no other layout.
  */
 interface ParagraphShape {
 	paragraphs: boolean
@@ -850,8 +850,8 @@ function limitsFor(options: Required<ReflowOptions>, overhead: number): WrapLimi
 /**
  * A comment that says its piece in one sentence on one line within `printWidth` is left as it is.
  *
- * The measure only governs prose that has to break, so pulling a 108-column
- * one-liner onto two lines buys nothing and costs a line.
+ * The measure only governs prose that has to break, so pulling a 108-column one-liner
+ * onto two lines gains no readability and costs a line.
  * Two sentences on one line are a different matter: that is the shape the rule
  * exists to undo, whatever the width.
  */

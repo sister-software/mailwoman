@@ -165,7 +165,7 @@ describe("buildCorpus end-to-end against wof-admin JSON-bundle fixture", () => {
 		// `wof-admin` is not a register source at all, and every one of the register's
 		// 389 sources reads `unchecked`.
 		// Both refusals land in the same place: a source nobody reviewed contributes
-		// nothing to a corpus that reaches a published model.
+		// no rows to a corpus that reaches a published model.
 		const manifest = await buildCorpus({
 			outputDir: scratch.path("release-eligible"),
 			corpusVersion: "0.1.0",

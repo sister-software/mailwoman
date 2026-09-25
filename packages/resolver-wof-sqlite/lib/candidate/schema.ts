@@ -91,8 +91,8 @@ export interface CandidateTable {
 	 * The encyclopedia-concordance join in `admin-global-priority-importance.db` reaches 133,888
 	 * of 702,709 scored places and only eleven countries (US/FR/GB/DE/IT/ES/NL/JP/CN/KR/TW).
 	 *
-	 * CA, AU and RU have zero concordance rows, so Whitby CA, Windsor CA and Epping
-	 * AU carry the population fallback and nothing else.
+	 * CA, AU and RU have zero concordance rows, so Whitby CA, Windsor CA
+	 * and Epping AU carry only the population fallback.
 	 *
 	 * Under the strict split those three become unmeasured, the consumer's
 	 * positive-evidence-only rule leaves them exactly where population put them (first),

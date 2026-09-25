@@ -211,7 +211,7 @@ export class APIClient<C extends APIClientConfig = APIClientConfig> extends Even
 	 * can see the raw `AxiosError` (status and `Retry-After`) before it is summarized.
 	 * The pacing/cooldown limit deliberately does not happen here.
 	 *
-	 * It sits in the adapter (see the constructor), downstream of the cache, so a hit costs nothing.
+	 * It sits in the adapter (see the constructor), downstream of the cache, so a hit incurs no cost.
 	 *
 	 * Every retry attempt re-enters `this.axios(...)` and therefore re-enters that limit.
 	 * A retry burst cannot outrun the pacer.

@@ -185,7 +185,7 @@ def realign_anchor_to_pieces_shaped(
     So at TRAIN the anchor fires on the same spans inference paints — INCLUDING a house-number-that-looks-
     like-a-ZIP ("12345 Main St") — which the gold paths never did (the #723 train/inference mismatch that
     let the anchor pollute leading-5-digit house numbers). A shaped span that misses ``anchor_lookup`` paints
-    nothing (confidence 0), exactly like inference. Lookup normalization + char->piece projection are SHARED
+    no anchor (confidence 0), exactly like inference. Lookup normalization + char->piece projection are SHARED
     with the gold paths via ``_paint_anchor_chars`` / ``_project_anchor_chars_to_pieces`` — so this can only
     differ from gold in WHERE it paints, never in what it paints or how it lands on pieces. (The rare DE
     ``D-`` / Dutch-spaced shapes inherit the gold path's space-strip+upper normalization — a pre-existing

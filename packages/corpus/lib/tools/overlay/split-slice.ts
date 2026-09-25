@@ -31,7 +31,7 @@ import { type CountryHoldout, defaultHoldouts, type SplitName, splitForRow } fro
 /**
  * The component tags the holdout policy reads.
  *
- * `splitForRow` consults `region`, `postcode` and `locality` and nothing else, so reconstructing
+ * `splitForRow` consults `region`, `postcode` and `locality` and no other field, so reconstructing
  * the rest of a row's components would cost a string slice per span for no decision.
  */
 const HOLDOUT_TAGS = new Set<string>(["region", "postcode", "locality"])

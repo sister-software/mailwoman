@@ -134,7 +134,7 @@ const ASSERTS_BY_ROLE: Readonly<Record<string, readonly AddressSourceRecord["ass
  * the pass recorded what a register costs to reach and never opened anybody's terms.
  * `Free` is the clearest case.
  *
- * It says the download is free of charge and licenses nothing, so treating it as
+ * It says the download is free of charge and grants no license, so treating it as
  * permissive would admit a source on a sentence about price.
  *
  * The labels are the pass's own, carried through {@link rewriteRetiredVocabulary} so a word
@@ -598,7 +598,7 @@ const UNRESOLVED_COLUMN_PLACEHOLDERS: ReadonlySet<string> = new Set(["varies", "
  *
  * Reads the column rather than ignoring it.
  * The build ignored these three entirely, which put a populated column in the source CSV
- * and an empty field in the register with nothing recording why.
+ * and an empty field in the register with no field recording why.
  *
  * A reader comparing the two would reasonably conclude the build was dropping usable data.
  *

@@ -57,7 +57,7 @@ export function componentOf(r: GauntletResult, key: string): string | null {
 			}
 
 			// loud: a silent null here made venue/dependent_locality expectations grade
-			// against nothing for their whole life (caught 2026-08-01).
+			// against no value for their whole life (caught 2026-08-01).
 			// An unknown key is an authoring bug.
 			throw new Error(`expect_components key "${key}" has no GauntletResult mapping — extend componentOf`)
 	}
@@ -169,8 +169,8 @@ export function scriptRenderings(value: string): string[] {
 /**
  * Does `got` satisfy the asserted `expected`?
  *
- * Exact case-folded equality, nothing else — the whole of the interface for
- * every ordinary `expect_components` key.
+ * Exact case-folded equality with no other rule — the whole of the interface
+ * for every ordinary `expect_components` key.
  *
  * A global set-based fallback over {@linkcode scriptRenderings} lived here briefly
  * (2026-08-10 → 2026-08-11) so a dual-script span could satisfy a truth freezing one of its renderings.
@@ -193,7 +193,7 @@ export function componentMatches(got: string, expected: string): boolean {
  * absent from {@linkcode scriptRenderings}`(got)`, case-folded?
  *
  * Empty = the interface is satisfied.
- * Nothing else about `got` is asserted — neutral separators between renderings,
+ * No other property of `got` is asserted — neutral separators between renderings,
  * and any extra rendering, ride along free.
  */
 function missingRenderings(got: string, required: readonly string[]): string[] {
@@ -224,7 +224,7 @@ function resolvedPlace(r: GauntletResult): GauntletResult["hierarchy"][number] |
  * Assert one assembled result against its stored case.
  * Returns the mismatches (empty = the case passes).
  *
- * Four independent checks, all opt-in per row — a null column asserts nothing:
+ * Four independent checks, all opt-in per row — a null column asserts no check:
  *
  * 1. Coordinate, great-circle against `expect_tolerance_m` (default {@linkcode DEFAULT_TOL_M}).
  * 2. Tier, strict — an `address_point` that drifts to `admin` is a regression even inside tolerance.
@@ -233,7 +233,7 @@ function resolvedPlace(r: GauntletResult): GauntletResult["hierarchy"][number] |
  *    This is the one the other three cannot express: the country sweep's family-A rows
  *    (Gaborone → the Austrian hamlet `Aichegg`, Kinshasa → `Alionys II`, Djibouti → `Ober-Himmeri`)
  *    came back with the right parsed locality and only a coordinate 8,045 km away to say so, and a row
- *    whose expected place sits inside a 25 km bar of its impostor would have had nothing at all.
+ *    whose expected place sits inside a 25 km bar of its impostor would have had no evidence at all.
  *    The corpus stored both columns from the first migration and no branch read them,
  *    so "wrong place, plausible coordinate" was unassertable for the corpus's whole life.
  * 4. Components, exact case-insensitive per key, against the parsed/assembled
@@ -244,7 +244,7 @@ function resolvedPlace(r: GauntletResult): GauntletResult["hierarchy"][number] |
  *    `expect_component_renderings` — `{ tag: [rendering, …] }` — and for a listed key the
  *    assertion becomes: {@linkcode scriptRenderings} of the got value must contain every
  *    listed rendering, case-folded (both scripts required when the case defines both).
- *    Nothing else about that value is asserted.
+ *    No other property of that value is asserted.
  *    Precedence: a key present in `expect_component_renderings` supersedes
  *    the same key in `expect_components`; an empty rendering list throws
  *    (an authoring bug the seed schema refuses upstream).
@@ -339,7 +339,7 @@ export function checkCase(c: GauntletCaseTable, r: GauntletResult): string[] {
 	if (renderinginterface) {
 		for (const [k, required] of Object.entries(renderinginterface)) {
 			// loud, like the unknown-key throw above: an empty or non-string-array list
-			// would assert nothing while looking asserted.
+			// would assert no rendering while looking asserted.
 			// The seed schema refuses these on load, so reaching one here means a row bypassed it.
 			if (!Array.isArray(required) || !required.length || required.some((v) => typeof v !== "string")) {
 				throw new Error(

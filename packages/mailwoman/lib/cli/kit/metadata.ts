@@ -48,7 +48,7 @@ export interface MailwomanManifest {
  *
  * Nineteen call sites spelled `workspacePath("mailwoman", "out", "cli.js")`,
  * and every one of them named a file that had moved.
- * A path built from pieces matches no sweep and is checked by nothing until the process fails to start.
+ * A path built from pieces matches no sweep and no check covers it until the process fails to start.
  *
  * The manifest already states where the binary is, and that statement is what `npm` installs against.
  */

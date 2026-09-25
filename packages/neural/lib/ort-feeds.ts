@@ -84,7 +84,7 @@ export interface InferResult {
 	 * Absent on every pre-v3 bundle, so consumers must treat undefined as "no span
 	 * decode available" and fall back to the BIO path.
 	 *
-	 * Fetching it costs ~0.75 ms (CPU, S=128); a runtime that never reads it pays nothing
+	 * Fetching it costs ~0.75 ms (CPU, S=128); a runtime that never reads it pays no cost
 	 * (ORT prunes the unfetched branch) — measured in `docs/articles/evals/2026-07-15-v301-phase2-export.md`.
 	 */
 	spanScores?: number[][][]

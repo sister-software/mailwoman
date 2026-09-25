@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Threads a configured authoritative provider's answer onto a geocode result (#1901). The block is
- *   additive and separate: the provider's assertions ride beside Mailwoman's own answer, and nothing
+ *   additive and separate: the provider's assertions ride beside Mailwoman's own answer, and no code
  *   here rewrites the open result's coordinate, components, or tier — a consumer that wants the
  *   provider's identity reads the block and decides for itself. That separation is what makes the
  *   byte-equivalence guarantee trivial: with no provider configured, this module is never called and
@@ -28,7 +28,7 @@ import type {
  * One provider match on the wire — the snake_case projection of {@link AuthoritativeMatch}, field for field.
  *
  * Absent fields were absent from the provider's answer.
- * Nothing is defaulted in.
+ * No field is defaulted in.
  *
  * Unexported: consumers reach it as `AuthoritativeAssertion["matches"]`,
  * and the export-hygiene check limits the surface to actual importers.

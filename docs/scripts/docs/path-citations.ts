@@ -158,7 +158,7 @@ export interface CitationCensus {
 	 */
 	refused: Record<CitationRefusal, number>
 	/**
-	 * The citations that resolved to nothing.
+	 * The citations that resolved to no target.
 	 */
 	broken: BrokenCitation[]
 }

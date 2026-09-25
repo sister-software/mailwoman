@@ -98,7 +98,7 @@ If phrase-priors-off also diverges, the next bisect is the A1 tokenizer itself. 
 
 ## A discipline lesson worth keeping
 
-We found a real bug in our verdict-smoke process along the way. The original 50-step smoke for v1 passed: train_loss descended, val_macro_f1 climbed, and nothing produced a NaN or spike. We promoted it to a full run, which diverged at step 1000, in a regime the smoke had never reached.
+We found a real bug in our verdict-smoke process along the way. The original 50-step smoke for v1 passed: train_loss descended, val_macro_f1 climbed, and no step produced a NaN or spike. We promoted it to a full run, which diverged at step 1000, in a regime the smoke had never reached.
 
 Two things had to change for the smoke to predict the full run:
 
@@ -122,7 +122,7 @@ Most of the v0.5.0 fresh-slate work survives this episode intact:
 
 We spent roughly four hours of GPU time on four diverging training runs, learned what the destabilizer is not, and stopped before spending a fifth run on it. v0.5.0's classifier weights aren't shipping today.
 
-The outcome is still useful. We have a smaller hypothesis space (two architectural pieces left to bisect), better infrastructure than we started with (TRAINING_ENV, MANIFEST harness fix, longer smokes), and a concrete recommendation for v0.5.0.1's first step. The v0.4.0 model continues to ship in production, and nothing downstream is blocked.
+The outcome is still useful. We have a smaller hypothesis space (two architectural pieces left to bisect), better infrastructure than we started with (TRAINING_ENV, MANIFEST harness fix, longer smokes), and a concrete recommendation for v0.5.0.1's first step. The v0.4.0 model continues to ship in production, and no downstream work is blocked.
 
 ## What we'd tell a future ourselves
 

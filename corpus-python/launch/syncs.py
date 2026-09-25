@@ -8,7 +8,7 @@ from the local machine to R2 and then to the volume through these functions.
     modal run -m launch.train_remote::sync_assets --corpus-versions v0.31.0-example
 
 `sync` stages a row of `launch/corpora.py`, which lists what the version stages and what must exist on
-the volume afterwards. `sync_assets` takes its paths from the command line and records nothing. Use
+the volume afterwards. `sync_assets` takes its paths from the command line and records no state. Use
 `sync_assets` for a trial corpus, and add a row to `launch/corpora.py` once other runs will repeat it.
 
 An overlay corpus ships only its own parquet files. Its MANIFEST refers to the base version's files by
@@ -29,7 +29,7 @@ def _run_transfers(transfers: list[Transfer]) -> None:
     """Run each transfer and raise if a destination holds no files afterwards.
 
     rclone exits 0 when the source prefix is empty, so the file count is the only signal that a
-    transfer copied nothing.
+    transfer copied no files.
     """
     import subprocess
 

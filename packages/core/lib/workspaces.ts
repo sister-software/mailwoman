@@ -7,7 +7,7 @@
  *   the repository writes `packages/*` beside the literal `docs`; every reader that walks the workspaces goes through
  *   here so a glob is expanded once, the same way, and a literal entry that names no manifest is an error rather than
  *   an empty result. Only a single trailing `*` segment is supported: the repository never writes another shape, and
- *   a pattern this reader cannot expand must refuse, because "matched nothing" would read as "no workspaces".
+ *   a pattern this reader cannot expand must refuse, because "found no matches" would read as "no workspaces".
  */
 
 import { type PathBuilderLike, resolvePath } from "path-ts"
@@ -112,7 +112,7 @@ export async function isRegisteredWorkspace(repoRoot: PathBuilderLike, directory
  *
  * {@link readWorkspaceDirectories} drops these, and dropping them is right:
  * a directory with no manifest is no workspace.
- * What it leaves is a directory nothing reaches.
+ * What it leaves is a directory no reader reaches.
  *
  * Retiring a workspace removes its manifest and its source, and `tsc` has already written `out/`
  * and a `tsconfig.tsbuildinfo` beside them, so the emit outlives the workspace that produced it.

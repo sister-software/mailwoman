@@ -136,7 +136,7 @@ const WOFMermaid: CommandComponent<typeof spec, [string, string]> = ({ args, opt
 	}
 
 	// Stdout path: markup is written above via process.stdout.write.
-	// Render nothing through Ink.
+	// Render no output through Ink.
 	return null
 }
 

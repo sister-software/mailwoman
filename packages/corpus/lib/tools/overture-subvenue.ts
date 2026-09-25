@@ -23,9 +23,9 @@
  *   re-proposes them.
  *
  *   ── poi.db is four countries ─────────────────────────────────────────────────────────────────────
- *   Measured the same day: US 11,521,612 / CA 794,418 / FR 721,352 / MX 644,316, and nothing else. The
+ *   Measured the same day: US 11,521,612 / CA 794,418 / FR 721,352 / MX 644,316, and no other country. The
  *   shipped layer is not a world gazetteer, so Overture can attest en-US, en-CA, fr-FR and es-MX
- *   surfaces and nothing else. Every non-Latin designator the corpus task asks for — `ターミナル`,
+ *   surfaces and no other field. Every non-Latin designator the corpus task asks for — `ターミナル`,
  *   `Halle`, `Flügel` — has to come from the OSM leg. Do not read a zero count here as evidence of
  *   absence in the world. it is evidence of absence in four countries.
  *

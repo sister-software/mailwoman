@@ -7,7 +7,7 @@
  *
  *   A parse defect on a non-Latin locale has two very different causes that look identical from the outside: the corpus
  *   never taught the format, or the vocabulary cannot express the string and the model is learning a byte sequence
- *   instead of a word. Proposing corpus rows for the second is working against the representation, and nothing in a
+ *   instead of a word. Proposing corpus rows for the second is working against the representation, and no part of a
  *   trace says which one you are looking at — the trace shows pieces, and `<0xC6>` reads as noise rather than as the
  *   finding.
  *
@@ -156,7 +156,7 @@ export interface VocabularyOptions {
 	 * A comparison arm — the same content the tokenizer handles well,
 	 * usually the same addresses transliterated.
 	 *
-	 * Without one a fallback share is a number with nothing to be high or low against.
+	 * Without one a fallback share is a number with no comparison arm to be high or low against.
 	 */
 	control?: readonly string[]
 	tokenizerPath?: string

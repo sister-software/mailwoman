@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   The map chrome over a stand-in map. Every story sits on a coloured ground rather than white, because glass is a
- *   material over something — reviewed on a blank page it says nothing about whether it is readable in place.
+ *   material over something — reviewed on a blank page it makes no statement about whether it is readable in place.
  */
 
 import type { Meta, StoryObj } from "@storybook/react-vite"

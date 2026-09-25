@@ -13,7 +13,7 @@ import type { BroadbandServicableLocationID } from "#sdk/location"
  *
  * Loosely typed as `string` for now.
  * The Nexus original derived this from `StateName` (via `@isp.nexus/tiger`);
- * this port drops that dependency since nothing here consumes the literal union.
+ * this port drops that dependency since no code here consumes the literal union.
  *
  * Tighten it against `@mailwoman/tiger`'s `StateName` if a downstream dictionary ever needs it.
  *

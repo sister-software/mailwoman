@@ -61,7 +61,7 @@ rung that can be executed off the shelf like this one.
   opening a venue name under its true parent: **0/30 dependent-locality false positives**.
 - **B-R7.3 PASS.** 40-row positive board: **40/40 emit, 40/40 tag-correct (100%)**.
 - **D-R7.4.** All **87/87** pairs survive the fold as distinct entries — the index total moved
-  exactly 20,039 → 20,126, so nothing collapsed silently.
+  exactly 20,039 → 20,126, so no entry collapsed silently.
 
 **The freshness guard fixed in R5 earned itself on its first real exercise.** Adding
 `ni-pairs-v1.jsonl` as a fourth source made the guard report `header source md5s [3 entries] !=

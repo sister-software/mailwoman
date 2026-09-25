@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   `post /v1/licenses/refresh`: the lid and its secret answer the current token. A wrong secret and an unknown lid
- *   answer the same body, so the route confirms nothing about which lids exist. Rate limited per lid, which is what an
+ *   answer the same body, so the route confirms no lid's existence. Rate limited per lid, which is what an
  *   attacker guessing secrets holds constant, and per address independently. Therefore, a stranger who learns a lid cannot
  *   spend its owner's allowance.
  */

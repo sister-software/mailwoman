@@ -90,7 +90,7 @@ def _parquet_paths(corpus_dir: Path, split: str) -> list[Path]:
             else:
                 missing.append(str(raw))
         # A partly resolved manifest means the corpus is broken, for example an overlay without its base.
-        # Training on the files that remain would use the wrong corpus, so this raises. When nothing
+        # Training on the files that remain would use the wrong corpus, so this raises. When no path
         # resolves, the glob fallback below handles older monolithic corpora.
         if resolved and missing:
             raise FileNotFoundError(

@@ -11,7 +11,7 @@
 - Assembly happens in `mailwoman/`. The `poiQueryKind` factory flag wires `@mailwoman/poi-taxonomy` into the classifier factory and builds the intent stage with an anchor re-parse that is guarded against recursion.
 - The `POIIntent` interface already includes the brand variant, but Plan 2 wires **category** detection only. The brand table (Wikidata QIDs) is Plan 3 data work.
 
-**Tech Stack:** TypeScript (erasable-only, `.ts` imports), vitest, oxfmt/oxlint. The only new dependency is a workspace edge: `mailwoman` gains `@mailwoman/poi-taxonomy`, and `kind-classifier` gains nothing.
+**Tech Stack:** TypeScript (erasable-only, `.ts` imports), vitest, oxfmt/oxlint. The only new dependency is a workspace edge: `mailwoman` gains `@mailwoman/poi-taxonomy`, and `kind-classifier` gains no new dependency.
 
 ## Global Constraints
 

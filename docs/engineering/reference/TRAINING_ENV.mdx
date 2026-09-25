@@ -112,7 +112,7 @@ Without the override, kernel launches fail with opaque GPU errors. Persist it in
 ## Step 5 — Other env quirks
 
 - **`hipBLASLt unsupported`**: PyTorch emits a `UserWarning: Attempting to use hipBLASLt on an unsupported architecture! Overriding blas backend to hipblas` on every Linear layer call. The warning is harmless because the `hipblas` fallback works correctly on gfx1103. Future PyTorch versions may stop logging it.
-- **`amdgpu.ids: No such file or directory`**: this warning is also harmless. The file ships with `mesa-amdgpu-vulkan-drivers`, which the lab base image does not install. Nothing fails as a result.
+- **`amdgpu.ids: No such file or directory`**: this warning is also harmless. The file ships with `mesa-amdgpu-vulkan-drivers`, which the lab base image does not install. The missing file causes no failure.
 - **Math SDPA**: per [the lab GPU notes](https://github.com/sister-software/mailwoman/blob/main/docs/articles/concepts/training-pipeline.mdx), set `torch.backends.cuda.enable_flash_sdp(False)` and use `math` SDPA backend if attention kernels misbehave. The current corpus-python configs already do this.
 
 ## Cost summary

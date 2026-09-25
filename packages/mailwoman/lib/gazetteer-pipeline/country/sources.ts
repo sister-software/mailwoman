@@ -8,7 +8,7 @@
  *   Three sources feed the admin gazetteer and each is selected differently: the WOF leg is
  *   presence-driven (`ingestWOF` globs `**\/data\/**\/*.geojson` over the repos root and reads no list),
  *   while Overture and GeoNames are list-driven from `defaults.ts`. So adding a country by cloning is half
- *   the job. the other half is removing it from whichever list serves it today, and nothing enforced the
+ *   the job. the other half is removing it from whichever list serves it today, and no check enforced the
  *   pairing.
  *
  *   the invariant is not "one country, one source", and that matters because the runbook this came from

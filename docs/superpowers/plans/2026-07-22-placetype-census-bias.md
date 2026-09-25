@@ -37,7 +37,7 @@ The decoder consults the gazetteer _as it parses_. It probes candidate word-span
 7. **The schema is tag-typed**: (child, parent, placetype_tag, count). v1 does not use `count`, because it is presence-only. The field is reserved for future confidence scaling. Do not implement that scaling during this work.
 8. **This release train ships GB only, and NZ is held** (Kimi #6). The v385 control shows that the index has no effect without resurrected weights, and the base package serves non-resurrected weights. An NZ index in that package would be unused payload. The NZ rung-3 result (100%/0.0% on feed-2k) shows that the schema generalizes to a second country.
 9. **The artifact header** holds δ_country, source snapshot md5s, build date, fold version, and schema version. The runtime flag declares the minimum schema version it understands. The artifact follows sealed-artifact discipline.
-10. **Surface audit** (Kimi #2 note): Priors apply on the Viterbi path only, and `parseWithLogits` exposes raw pre-prior logits by design. List which user-facing surfaces take which path, so that turning the flag on cannot silently do nothing.
+10. **Surface audit** (Kimi #2 note): Priors apply on the Viterbi path only, and `parseWithLogits` exposes raw pre-prior logits by design. List which user-facing surfaces take which path, so that turning the flag on cannot silently perform no work.
 
 ## Resolved questions (were open in rev 1)
 

@@ -8,7 +8,7 @@ import { decodeInputChunk, type MapTUIInput } from "@mailwoman/map-tui/input"
 import { describe, expect, it } from "vitest"
 
 /**
- * The events from one chunk, for the majority of cases that leave nothing pending.
+ * The events from one chunk, for the majority of cases that leave no fragment pending.
  *
  * Anything asserting about the held fragment calls {@link decodeInputChunk} directly.
  */
@@ -151,7 +151,7 @@ describe("decodeInputChunk", () => {
 
 		it("stops holding a fragment that has stopped being plausible", () => {
 			// An unterminated string sequence would otherwise grow the held fragment for the life of the process.
-			// Dropping emits nothing, which is the safe failure — flushing it back through
+			// Dropping emits no event, which is the safe failure — flushing it back through
 			// the decoder is what read sequence bodies as keys in the first place.
 			const runaway = decodeInputChunk(`${ESC}]52;c;${"A".repeat(70_000)}`)
 

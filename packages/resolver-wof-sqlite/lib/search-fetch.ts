@@ -222,7 +222,7 @@ export function fetchSearchRows<DB>(options: {
 
 	const rawRows = allRows<RawSearchRow>(stmt, ...params)
 
-	// #905 companion fetch: the same `match`, ordered by population alone. For name floods ("Paris" matches thousands of gap-fill villages) the bm25-based window above cannot admit the famous holder. Its bm25 is length-poisoned by the row's alias bulk (measured ~15 pts, vs a +4.0 boost cap), so FR Paris never even reaches post-scoring. This fetch makes the prominent holders of a name pool-complete BY construction. The exact-tier sort below decides whether they win. Skipped without a population index (nothing to order by).
+	// #905 companion fetch: the same `match`, ordered by population alone. For name floods ("Paris" matches thousands of gap-fill villages) the bm25-based window above cannot admit the famous holder. Its bm25 is length-poisoned by the row's alias bulk (measured ~15 pts, vs a +4.0 boost cap), so FR Paris never even reaches post-scoring. This fetch makes the prominent holders of a name pool-complete BY construction. The exact-tier sort below decides whether they win. Skipped without a population index (no column to order by).
 	if (extractHasPopulation) {
 		const popStmt = db.prepare(`
 			SELECT

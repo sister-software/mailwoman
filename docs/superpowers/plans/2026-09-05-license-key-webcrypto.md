@@ -96,7 +96,7 @@ const token = encodeLicenseKey(payload, pair.privateKeyPEM)
 process.stdout.write(`${JSON.stringify({ ...pair, kid, payload, token }, null, "\t")}\n`)
 ```
 
-Run from the worktree root: `node /tmp/claude-1000/-home-lab-Projects-mailwoman/dc5b25ae-2f59-4cfe-a00a-391f0b430ece/scratchpad/legacy-fixture.ts > packages/core/test/fixtures/license/legacy-token.json` (create the directory first). The private key in this file is a test key that signs nothing real. It exists so the WebCrypto signer can also be checked for byte-identical output.
+Run from the worktree root: `node /tmp/claude-1000/-home-lab-Projects-mailwoman/dc5b25ae-2f59-4cfe-a00a-391f0b430ece/scratchpad/legacy-fixture.ts > packages/core/test/fixtures/license/legacy-token.json` (create the directory first). The private key in this file is a test key that signs no real token. It exists so the WebCrypto signer can also be checked for byte-identical output.
 
 - [ ] **Step 3: Verify the fixture verifies today**
 
@@ -1397,7 +1397,7 @@ yarn lint
 yarn vitest run packages/core/test packages/mailwoman/test/unit/cli-kit packages/mailwoman/test/unit/doctor packages/mailwoman/test/unit/cli-launcher.test.ts packages/mailwoman/test/integration/license-cli.test.ts packages/mailwoman/test/integration/openapi-cli.test.ts packages/repo-health/test
 ```
 
-Then run `yarn test` alone, with nothing else running. Read the failures in the log rather than relying on the exit code, because model-loading suites time out under machine load and pass when run alone.
+Then run `yarn test` alone, with no other process running. Read the failures in the log rather than relying on the exit code, because model-loading suites time out under machine load and pass when run alone.
 
 - [ ] **Step 3: Measure the launcher**
 

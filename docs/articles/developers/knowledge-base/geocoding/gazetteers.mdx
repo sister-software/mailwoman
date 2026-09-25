@@ -82,7 +82,7 @@ place stored that way, and it loses them in a pattern — by country, all at onc
 gap that a spot check in Berlin will never find and a spot check in Osaka will find immediately.
 
 Mailwoman's reverse path reports the difference rather than hiding it. Its `containment` field reads
-`polygon` when a real boundary confirmed the deepest place and `approximate` when nothing had a
+`polygon` when a real boundary confirmed the deepest place and `approximate` when no place had a
 boundary and the nearest center won instead. Read that field, and a country's point-shaped records
 announce themselves in the output. [Reverse geocode a coordinate](../../how-to/reverse-geocode.mdx)
 has the walkthrough.
@@ -97,8 +97,8 @@ The pattern: a name the postal service accepts as a city is carried by the gazet
 rank — a neighborhood, a borough, an alias attached to some other town — and the resolver, looking
 for a locality, does not find the record you expected. What it finds instead is whatever else in that
 region happens to carry the name. The output is a coordinate, in the right country, at the right
-administrative tier, for the wrong place. Nothing in it is flagged, because from the resolver's
-position nothing went wrong.
+administrative tier, for the wrong place. No part of it is flagged, because from the resolver's
+position no error occurred.
 
 The defense is to read the ancestry rather than the coordinate. A result that identifies the record it
 landed on lets you check that the record is the one you meant; a result that gives you only a point
@@ -124,7 +124,7 @@ town's parent wrong costs you the state.
 Depending on an open gazetteer means inheriting its shape. Coverage that is thin for a country stays
 thin until upstream fixes it, and the fix is not something a better model reaches. The framing worth keeping
 is that the model bounds how well the input is understood and the gazetteer bounds how well the world
-is known, and improving one does nothing for the other. That is why coverage claims here are made per
+is known, and improving one leaves the other unchanged. That is why coverage claims here are made per
 locale and measured rather than asserted for the world.
 
 ## Related

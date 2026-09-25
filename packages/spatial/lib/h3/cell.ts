@@ -72,8 +72,8 @@ const SHORT_CELL_MASK = 0xf_ff_ff_ff_ff_ff_ffn
  * Strip the mode and resolution nibbles off a full H3 cell index, keeping the
  * base cell and the whole digit path.
  *
- * The digits past the cell's own resolution are all `7` in a valid index, so nothing is discarded
- * and nothing is inferred: the short form carries the cell losslessly for every resolution, and
+ * The digits past the cell's own resolution are all `7` in a valid index, so no digit is discarded
+ * and no digit is inferred: the short form carries the cell losslessly for every resolution, and
  * {@link expandH3Cell} reverses it exactly once you tell it which resolution the cell was captured at.
  *
  * Zero-padded to a fixed 13 characters, so the hex form orders and compares the

@@ -65,7 +65,7 @@ The index resolution was chosen by measurement. The measurements below come from
 complete.** Flood polygons are large relative to their cells, so most cells fall wholly inside one zone and
 `compactCells` collapses long uniform interiors. Soil delineations are small relative to their cells, so
 **the containment index answers almost no probe on its own at any candidate resolution**, and compaction
-saves almost nothing. At resolution 9, 369 whole cells compact to 315, a 14.6% reduction, while the flood
+saves almost no space. At resolution 9, 369 whole cells compact to 315, a 14.6% reduction, while the flood
 layer's interiors collapse by orders of magnitude. At resolution 7 there are zero whole cells to collapse.
 
 For that reason this layer carries the reduced `soil_capability_cell` **alongside** the index instead of

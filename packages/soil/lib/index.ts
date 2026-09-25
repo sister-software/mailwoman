@@ -29,7 +29,7 @@ export { FarmlandScope, farmlandScope, SSURGO_PRODUCT_LIMITS } from "#vocabulary
  * The kinds of answer the layer gives for a coordinate.
  *
  * A caller must keep `DesignatedNoRating` and `Unknown` apart.
- * The first means the survey mapped the location and rated nothing.
+ * The first means the survey mapped the location and assigned no rating.
  *
  * The second means the layer has no survey data for the location.
  */
@@ -39,7 +39,7 @@ export const SoilReadingKind = {
 	 */
 	Designated: "designated",
 	/**
-	 * The survey mapped this location and rated nothing.
+	 * The survey mapped this location and assigned no rating.
 	 * Every share is an absence share.
 	 */
 	DesignatedNoRating: "designated_no_rating",

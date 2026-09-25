@@ -85,7 +85,7 @@ segmentation makes the whole address consistent.
 `φ(i, j, t)` may read anything inside `x[i..j]`, including internal syntax. `ψ` reads spans only as
 atoms. No term crosses a span boundary. A parser may know that `of` in `Port of Spain` is an
 adposition. That knowledge raises `φ` for the whole span as a well-formed toponym and contributes
-nothing to any attachment across the span's boundary.
+no signal to any attachment across the span's boundary.
 
 **The dependency reading and the existing tree are the same object.** The `HEAD/REL` view has a
 venue or street as root and `address`-typed edges to locality, postcode, and region. That view is
@@ -111,7 +111,7 @@ coordinator inside its specific element, which is why a token-level reading misp
 junction.
 
 This internal grammar is a small typed grammar, `G_name`. The atomicity restriction fixes its place
-in the objective: **`G_name` scores the inside of `φ` and nothing else.** A span holds together as a
+in the objective: **`G_name` scores only the inside of `φ`.** A span holds together as a
 name partly _because_ its internal parse under `G_name` is well-formed. This lets an
 out-of-registry pub name like `Ye Three Lords` earn protection from its shape alone. That
 well-formedness never permits an external attachment into the span's interior.
@@ -237,7 +237,7 @@ evidence can then raise the scores of parses it should rule out.
    `packages/neural/lib/fst-prior.ts`. The FST prior has no maximal-match preference. The walk
    starts at every word position, applies bias at the first accepting state, and applies bias
    _again_ at every longer accepting extension from the same start. Nested and covering entries add
-   up in the emission matrix, and nothing ranks, deduplicates, or suppresses overlapping spans.
+   up in the emission matrix, and no stage ranks, deduplicates, or suppresses overlapping spans.
    `FSTAcceptedMatch`'s own docstring says the observability path "reports every accepted surface,
    including nested matches". A covering `Port of Spain` locality entry therefore cannot outrank the
    nested `Spain` country hit at the FST layer. Both become per-token bias, and the

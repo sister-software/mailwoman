@@ -33,7 +33,7 @@ const TRAILING_PARENTHETICAL = /\s*\([^)]*\)\s*$/
 /**
  * `name` with a trailing parenthetical qualifier removed, or `name` unchanged when it carries none.
  *
- * A name that is nothing but a parenthetical comes back unchanged rather than emptied:
+ * A name that is only a parenthetical comes back unchanged rather than emptied:
  * an empty locality is a row the caller drops silently, and a surface this function
  * cannot read is one it should hand back intact.
  */

@@ -11,7 +11,7 @@
  *   The health verb performs two mutations, and neither is a check: `health baseline debt` rewrites
  *   `packages/repo-health/baseline.json` from the current readings, and `health fix <check>` applies the mechanical
  *   repair a check's diagnostics describe. Both are exported by repo-health and left out of the check registry, whose
- *   type admits nothing that writes. this is the only caller of either.
+ *   type admits no writer. this is the only caller of either.
  */
 
 import { prettyJSON, stringifyJSON } from "@mailwoman/core/json"
@@ -312,7 +312,7 @@ async function runFix(
 
 	// A fix can create work for itself: moving `build-outlier-oa.ts` into `build/` leaves
 	// `outlier-oa.ts` beside two siblings that now share `outlier-`.
-	// So the plan is re-taken until the check has nothing left to say.
+	// So the plan is re-taken until the check has no further finding.
 	// The bound is a guard against a rule that never settles rather than an expected
 	// number of passes — the repository's deepest family took two.
 	for (let pass = 0; pass < MAXIMUM_FIX_PASSES; pass++) {
@@ -346,7 +346,7 @@ async function runFix(
 			}
 		}
 
-		// A dry run changes nothing, so a second pass would plan the same moves forever.
+		// A dry run makes no change, so a second pass would plan the same moves forever.
 		if (dryRun) break
 	}
 

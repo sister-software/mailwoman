@@ -59,10 +59,10 @@ export const SANCTIONED_RELEASE_ABSENCES: Readonly<Record<string, string>> = {
  *
  * Membership in {@link SANCTIONED_RELEASE_ABSENCES} was a reporting record: `checkReleaseListIdentity`
  * reads it so a missing workspace fails with a name rather than an arithmetic difference.
- * It stopped nothing.
+ * It stopped no publish.
  *
  * `packages/osm` is held out for a rights reason, and it is not `private`,
- * so nothing between an operator and npm refused it.
+ * so no check between an operator and npm refused it.
  * `yarn npm publish` from that directory, or `mwops release publish-workspace --allow-unplanned`
  * naming it, would have published ODbL-derived extraction code that counsel has not signed off.
  *

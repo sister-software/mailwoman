@@ -47,7 +47,7 @@ function NotFound({ pathname }: { pathname: string }) {
  * The real geocoder, with the host panels.
  *
  * The map renders at the default centre at once.
- * The geolocation answer moves the bias when it arrives, so nothing waits on
+ * The geolocation answer moves the bias when it arrives, so no code waits on
  * the network before the first paint.
  */
 function RealGeocoder({ route, query }: { route: Route; query: string | null }) {

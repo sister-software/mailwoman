@@ -89,7 +89,7 @@ export function buildStreetMorphologyEmissionPriors(
 	const iDepLoc = labelToCol.get("I-dependent_locality")
 
 	// If the label vocabulary doesn't include street tags at all (e.g. A Stage 1 model),
-	// there's nothing to bias toward.
+	// there are no street tags to bias toward.
 	// Return zero-matrix and let the additive pipeline no-op.
 	if (bStreet === undefined || bStreetPrefix === undefined || bStreetSuffix === undefined) {
 		return matrix

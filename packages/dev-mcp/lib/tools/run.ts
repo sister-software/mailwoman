@@ -38,7 +38,7 @@ const RUN_ROW_FIELDS = [
 	"lon",
 	// Haversine kilometres from the row's truth point, for the sets that carry one — board,
 	// panel, golden, parity, and a literal set whose caller pinned coordinates.
-	// `null` on a row with no truth and on a row that resolved nothing,
+	// `null` on a row with no truth and on a row that resolved no coordinate,
 	// which are different facts: read it beside `lat`.
 	"km",
 	"tier",

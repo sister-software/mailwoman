@@ -56,7 +56,7 @@ export interface POIExecutorOpts {
 	 * Looks up a result's WOF ancestry, deepest first.
 	 * It must be synchronous.
 	 *
-	 * Results get no `ancestry` key when this function is missing or returns nothing.
+	 * Results get no `ancestry` key when this function is missing or returns no ancestry entries.
 	 */
 	reverseGeocode?: (latitude: number, longitude: number) => ReadonlyArray<POIAncestryEntry> | undefined
 }

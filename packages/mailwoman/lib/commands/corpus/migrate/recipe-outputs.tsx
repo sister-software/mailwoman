@@ -7,7 +7,7 @@
  *
  *   Each file is migrated to a sibling `<name>.migrated` and then moved over the original, so a refused file leaves its
  *   original intact. A row that already carries `surface` passes through unchanged, so a second run over a migrated
- *   file rewrites nothing.
+ *   file rewrites no row.
  */
 
 import { extractDelimited } from "@mailwoman/core/scripting/arguments"

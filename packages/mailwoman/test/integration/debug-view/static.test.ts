@@ -16,7 +16,7 @@
  *   every frame is stripped OF ansi before IT is matched. The frame has two outputs and the assertions below are about
  *   only one of them: chalk emits a dim/reset pair around each evidence label, so `/system\s+us/` cannot match a
  *   coloured frame — `\s+` does not span the reset sequence sitting between the label and its value. chalk's level
- *   follows `FORCE_COLOR`. It several terminals and `tmux`/`direnv` setups set and nothing here clears. Therefore, a test
+ *   follows `FORCE_COLOR`. It several terminals and `tmux`/`direnv` setups set and no code here clears. Therefore, a test
  *   that matches the raw capture passes or fails by the environment it happens to run in.
  */
 

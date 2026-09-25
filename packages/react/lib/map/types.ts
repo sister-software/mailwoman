@@ -10,7 +10,7 @@
  *   (style, overlays, initial center, viewport bias, backend/version selection). Phase 4 adds the
  *   `resolveMapPlace` enricher, the {@link GeocoderPanels} injection bag, and the {@link CompareContext}.
  *
- *   The map-spec types are imported type-only from `react-map-gl/maplibre`; nothing here loads maplibre at
+ *   The map-spec types are imported type-only from `react-map-gl/maplibre`; no maplibre is loaded at
  *   runtime, so this module stays node-safe (its concrete-value consumers — `MapCanvas`, `Geocoder` —
  *   are the ones behind the `@mailwoman/react/map` subpath).
  */
@@ -121,7 +121,7 @@ export type InferenceBackend = "webgpu" | "wasm"
  * with the map + version/backend surface the geocoder needs.
  * The host composes `mapStyle` (via cartographer's `StyleSpecificationComposer` + the tile-worker TileJSON),
  * supplies the overlay specs, the initial center (from geolocation), the FST autocomplete,
- * and the calibrator — nothing in the package imports `@mailwoman/cartographer`,
+ * and the calibrator — the package imports no `@mailwoman/cartographer`,
  * `@mailwoman/neural`'s web loader, httpvfs, or Docusaurus.
  */
 export interface GeocoderRuntime extends PipelineRuntime {
@@ -176,7 +176,7 @@ export interface GeocoderRuntime extends PipelineRuntime {
 	 *
 	 * Absent → the candidate renders as a bare point (marker + a mid-zoom fly-to).
 	 *
-	 * Returning `null` also renders nothing.
+	 * Returning `null` also renders no overlay.
 	 */
 	resolveMapPlace?: (candidate: ResolvedPlaceView, result: ParseResult) => ResolvedMapPlace | null
 
@@ -309,7 +309,7 @@ export interface GeocoderPanels {
 	 */
 	result?: (context: ResultContext) => ReactNode
 	/**
-	 * Rendered in place of the resolved-place panel when nothing resolved (host's FailureDiagnostic).
+	 * Rendered in place of the resolved-place panel when no place resolved (host's FailureDiagnostic).
 	 *
 	 * Ignored when {@link result} is set.
 	 */

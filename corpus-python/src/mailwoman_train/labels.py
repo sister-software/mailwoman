@@ -287,7 +287,7 @@ IGNORE_INDEX: Final[int] = -100
 #
 # Stable order: never reorder, only append, so a checkpoint's locale-head ids stay
 # reproducible (same discipline as the BIO stage-N constants above). A row whose ``country``
-# is absent from this map maps to IGNORE_INDEX and contributes nothing to the aux loss —
+# is absent from this map maps to IGNORE_INDEX and contributes no gradient to the aux loss —
 # graceful for locales the head wasn't trained on. The head still carries a slot for every
 # entry here, so the pilot (US/FR/DE) can grow to the others without a geometry change.
 LOCALE_COUNTRIES: Final[tuple[str, ...]] = (

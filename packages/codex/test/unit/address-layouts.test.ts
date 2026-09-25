@@ -366,7 +366,7 @@ describe("the admin run keeps its tier order in every layout", () => {
 			}
 		}
 
-		// The count states the population, so an empty `outside` cannot be a reader that found nothing to read.
+		// The count states the population, so an empty `outside` cannot be a reader that found no entries to read.
 		expect(judged).toBeGreaterThan(190)
 		expect(outside).toEqual([])
 	})

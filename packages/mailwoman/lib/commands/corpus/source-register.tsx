@@ -21,7 +21,7 @@
  *   each input's row count.
  *
  *   The build refuses to write a register that fails its own audit, so a research pass that leaves a jurisdiction
- *   seeded with no sources — or a source pointing at a license decision nothing declares — fails here rather than in a
+ *   seeded with no sources — or a source pointing at a license decision no register declares — fails here rather than in a
  *   consumer.
  */
 

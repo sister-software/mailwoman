@@ -115,7 +115,7 @@ describe("convention engine — live dispatch", () => {
 
 	afterEach(() => {
 		// lookup[Symbol.dispose]() in each test closes db.
-		// Nothing else to do.
+		// No other cleanup is needed.
 	})
 
 	it("default (empty source) → coordinate-first recovers the postcode's town from a typo", async () => {

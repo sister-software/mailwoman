@@ -60,7 +60,7 @@ def test_interior_ideographic_space_is_removed_from_a_name() -> None:
 
 
 def test_name_normalization_leaves_itaiji_alone() -> None:
-    # Deliberate: the canonical collapse tables are CC BY-SA, so nothing derived from them ships.
+    # Deliberate: the canonical collapse tables are CC BY-SA, so no table derived from them ships.
     assert normalize_name("渡邊") == "渡邊"
     assert normalize_name("渡辺") == "渡辺"
 
@@ -367,7 +367,7 @@ def test_kana_stem_is_the_shortest_hiragana_variant_and_keeps_the_kanji_generic(
     stem = pick_kana_stem("厚木市", ["あつぎ", "あつぎし", "厚木", "厚木町"])
     assert stem == "あつぎ"
     assert kana_surface("厚木市", stem) == "あつぎ市"
-    # An official name that is already kana has nothing to substitute.
+    # An official name that is already kana has no character to substitute.
     assert pick_kana_stem("かすみがうら市", ["かすみがうら"]) is None
     # No hiragana variant at all → no register.
     assert pick_kana_stem("大阪市", ["大阪"]) is None

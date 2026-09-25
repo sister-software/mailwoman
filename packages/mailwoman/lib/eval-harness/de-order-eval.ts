@@ -149,7 +149,7 @@ export interface DeOrderEvalOptions {
 	 * Omitted runs all six.
 	 *
 	 * A run not selected prints its heading with `skipped` and its 2x2 cell reads `—`,
-	 * so a cell nobody measured cannot be read as a cell that measured nothing.
+	 * so a cell nobody measured cannot be read as a cell that measured no row.
 	 * Selecting a subset that omits `de-native-on` produces no `de.native_locality`
 	 * and fails the promotion verdict, which is the correct outcome rather than a silent absence.
 	 */

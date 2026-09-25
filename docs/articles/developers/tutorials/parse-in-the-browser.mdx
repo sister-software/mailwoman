@@ -227,7 +227,7 @@ entirely, which is what you want in a test environment where the failure path on
 
 Two constraints ride on that:
 
-- **The parse runs on the thread that called it.** Nothing here moves inference to a worker. Session
+- **The parse runs on the thread that called it.** No code here moves inference to a worker. Session
   creation reads a 39.4 MB model and each parse is tens of milliseconds; put both in a worker of your
   own if your page has an animation to keep smooth.
 - **WebGPU availability is a browser and hardware property rather than a configuration one.** The fallback

@@ -49,7 +49,7 @@ def build_reference_encoder() -> MailwomanCoarseEncoder:
     """Build a small seeded encoder with every optional channel and head enabled.
 
     Each channel draws from the RNG when it is constructed, so the initial weights record the
-    construction order. A disabled channel would construct nothing, and a reordering involving it
+    construction order. A disabled channel would construct no projection, and a reordering involving it
     would go undetected.
     """
     torch.manual_seed(0)

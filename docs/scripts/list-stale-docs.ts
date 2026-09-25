@@ -5,7 +5,7 @@
  *
  *   Quarterly docs freshness sweep (docs-architecture cleanup, Phase 4): list maintained pages
  *   whose `review-by:` frontmatter date has passed, as a ready-to-file Markdown issue body on
- *   stdout. Empty output means nothing is due — the workflow
+ *   stdout. Empty output means no page is due — the workflow
  *   (`.github/workflows/docs-freshness.yml`) files or updates one "Docs freshness sweep" issue
  *   only when there's a list to file.
  *

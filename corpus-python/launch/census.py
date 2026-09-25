@@ -37,7 +37,7 @@ def diagnose_corpus(
 
     Pass ``--corpus-dir`` to point at an overlay. Pass ``--verify-country DE --verify-source
     synth-german`` to additionally PULL a few rows through the real filter and confirm they survive
-    — a source whose rows are all filtered out is a run that trains on nothing and reports success.
+    — a source whose rows are all filtered out is a run that trains on no rows and reports success.
     This is the pre-launch "verify the loader sees the source, then launch" check.
     """
     import json
@@ -193,7 +193,7 @@ def country_census_raw(
 
     # completeness audit — corpus countries vs the config's admitted set. The Norway bug was one
     # silent drop. this asks what else. Two failure modes:
-    #   (a) present-but-dropped: rows in the corpus, absent from country_weights -> silently trained on nothing.
+    #   (a) present-but-dropped: rows in the corpus, absent from country_weights -> silently trained on no rows.
     #   (b) admitted-but-absent: in country_weights, ~zero corpus rows -> the config promises a locale it can't deliver.
     import yaml as _yaml
 

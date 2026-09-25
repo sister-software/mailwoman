@@ -5,7 +5,7 @@
  *
  *   Tests for region-country coherence (`applyRegionCountryCoherence`, wired under `opts.adminCoherence`).
  *   When the locale-inferred `defaultCountry` is applied as a hard `spr.country` candidate filter, a region
- *   qualifier naming a foreign subdivision ("QC" under a US locale) resolves to nothing and is discarded —
+ *   qualifier naming a foreign subdivision ("QC" under a US locale) resolves to no place and is discarded —
  *   and the locality is force-matched to the populous US namesake ("Montreal" → Montreal, WI). This pass
  *   expands the region token to its country via codex's ISO-3166-2 subdivision table (QC → Quebec / CA),
  *   confirms both the subdivision and a same-named locality resolve under that country, and swaps the pair.

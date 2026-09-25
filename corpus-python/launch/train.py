@@ -221,7 +221,7 @@ def main(
     Run the mailwoman training pipeline on Modal.
 
     Stage what the recipe reads first, with its own sync. this entry point trains against whatever
-    is already on the volume and stages nothing.
+    is already on the volume and stages no files.
 
     --config         Training config YAML filename
     --resume         Resume mode: 'auto' (find latest checkpoint) or 'none'

@@ -22,7 +22,7 @@ const run = recipeRunner("trailing-region", trailingRegionRecipe, 901)
  * One tuple repeated with each placement.
  *
  * Same locality, region, country and code throughout, so any difference in the
- * emitted `raw` is the placement and nothing else.
+ * emitted `raw` is the placement and no other component.
  */
 const base = { locality: "Portopetro", region: "Illes Balears", country: "Spain", cc: "ES", locale: "es-ES" }
 

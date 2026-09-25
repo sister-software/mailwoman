@@ -69,7 +69,8 @@ describe("VirtualClock.runUntilSettled — the stuck-work guard", () => {
 	it("still reports genuinely stuck work, rather than hanging", async () => {
 		const clock = new VirtualClock()
 
-		// A promise nothing will ever resolve — the case the guard exists for.
+		// A promise that no code will ever resolve.
+		// This is the case the guard exists for.
 		const stuck = new Promise<never>(() => {})
 
 		await expect(clock.runUntilSettled(stuck)).rejects.toThrow(/blocked on something this clock does not drive/)

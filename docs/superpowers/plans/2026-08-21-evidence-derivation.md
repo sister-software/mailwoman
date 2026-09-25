@@ -35,7 +35,7 @@
 
 **Interfaces:**
 
-- Consumes: nothing
+- Consumes: no inputs
 - Produces: a written verdict with counts. No code.
 
 - [ ] **Step 1: Restart the dev-MCP worker so it serves current source**
@@ -120,7 +120,7 @@ git commit -m "evidence: decompose the board's 187 coverage misses before buildi
 
 **Interfaces:**
 
-- Consumes: nothing
+- Consumes: no inputs
 - Produces:
   - `type EpistemicStatus = "designated" | "observed" | "derived" | "inferred" | "unresolved"` and the `EpistemicStatus` const object
   - `type Assertion = "authoritative" | "inferred"` and the `Assertion` const object
@@ -465,7 +465,7 @@ rule into the type system for callers who build a link outside a database."
 
 ## Task 3: Move `CoverageBasis` into evidence, add the exclusion check
 
-`@mailwoman/core/layers` currently owns `CoverageBasis` and `supportsExclusion`. Evidence cannot depend on core, and duplicating the union across both would repeat the failure AGENTS.md records: "When two copies must agree, share the FUNCTION — sharing the constants proves nothing." Evidence therefore takes ownership, and core re-exports.
+`@mailwoman/core/layers` currently owns `CoverageBasis` and `supportsExclusion`. Evidence cannot depend on core, and duplicating the union across both would repeat the failure AGENTS.md records: "When two copies must agree, share the FUNCTION — sharing the constants proves no fact." Evidence therefore takes ownership, and core re-exports.
 
 **Files:**
 
@@ -744,7 +744,7 @@ In `packages/core/tsconfig.json`, add to `references`:
 { "path": "../evidence" }
 ```
 
-- [ ] **Step 8: Verify nothing downstream broke**
+- [ ] **Step 8: Verify no downstream consumer broke**
 
 ```bash
 yarn install
@@ -1579,7 +1579,7 @@ answer cannot be reported as a retrieved one without the record disagreeing."
 
 **Interfaces:**
 
-- Consumes: nothing from earlier tasks
+- Consumes: no output from earlier tasks
 - Produces: `PLBlockTable` gains `housing_units: number`, `occupied: number`, `vacant: number`
 
 - [ ] **Step 1: Write the failing test**
@@ -1773,4 +1773,4 @@ fail the comparison it exists to perform. Its one live call site (`street-tier.t
 locality node on a false mismatch. This is a separate issue with a separate fix, so do not add it to a task
 here.
 
-**Spec amended.** §3 originally left `CoverageBasis` duplicated across evidence and core. AGENTS.md's parity rule ("share the FUNCTION — sharing the constants proves nothing") forbids that, so Task 3 moves ownership to evidence and re-exports from core. The spec was updated in the same commit as this plan, and the two agree.
+**Spec amended.** §3 originally left `CoverageBasis` duplicated across evidence and core. AGENTS.md's parity rule ("share the FUNCTION — sharing the constants proves no fact") forbids that, so Task 3 moves ownership to evidence and re-exports from core. The spec was updated in the same commit as this plan, and the two agree.

@@ -1,6 +1,6 @@
 """One seeded isotonic fit, pinned through both artifacts it writes.
 
-Nothing exercised this. `main` reads a confidences JSONL that only the TypeScript collector
+No test exercised this. `main` reads a confidences JSONL that only the TypeScript collector
 produces, so the suite has never had one — and the module writes two artifacts from one fit: the
 lookup table a decoder loads, and the markdown report whose figures are generated rather than
 hand-typed. A number that drifts in the report and not in the table, or the reverse, is a report
@@ -9,7 +9,7 @@ that no longer describes the table it ships beside.
 The fixture draws confidences whose accuracy rises with confidence, so the isotonic fit has a
 monotone shape to recover rather than a flat one. Group sizes are chosen so the >=100-eval-span
 filter admits both locales and both tags: a fixture below that line would pin `per_locale_ece` and
-`per_tag_ece` as empty and measure nothing about the subgroup path.
+`per_tag_ece` as empty and measure no statistic about the subgroup path.
 """
 
 from __future__ import annotations
@@ -162,7 +162,7 @@ def write_reference() -> None:
     """Capture the current fit as the reference the tests above compare against.
 
     Run this only when the current code already passes against the existing reference — otherwise
-    the artifact records whatever the code does now, and the tests assert nothing.
+    the artifact records whatever the code does now, and the tests assert no fact.
     """
     import tempfile
 

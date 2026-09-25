@@ -233,7 +233,7 @@ describe("filingLandscape — Check 2: meaning-of-zero", () => {
 		expect(withUnknown.surveyed_block_count).toBe(2)
 
 		// The unknown geoid must not silently appear as a zero-count entry anywhere in filings either.
-		// It simply contributes nothing (filings for the two known blocks are identical either way).
+		// It simply contributes no entry (filings for the two known blocks are identical either way).
 		expect(withUnknown.filings).toEqual(knownOnly.filings)
 	})
 })

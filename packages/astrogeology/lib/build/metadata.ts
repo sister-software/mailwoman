@@ -5,7 +5,7 @@
  *
  *   The `mailwoman:*` block, written into an archive's PMTiles metadata and read back. The block is validated before
  *   it is written and again after `pmtiles edit` has written it, so an archive that leaves the build carries the block
- *   the schema describes and nothing else the tool may have dropped.
+ *   the schema describes and no other field the tool may have dropped.
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"

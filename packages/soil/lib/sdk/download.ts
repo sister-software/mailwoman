@@ -37,7 +37,7 @@ export interface DownloadSurveyAreaOptions {
 
 	/**
 	 * The cache directory, where each version date gets its own subdirectory so a new
-	 * vintage never overwrites an old one and a repeat run downloads nothing.
+	 * vintage never overwrites an old one and a repeat run downloads no file.
 	 */
 	cacheRoot: PathBuilderLike
 	onProgress?: (message: string) => void

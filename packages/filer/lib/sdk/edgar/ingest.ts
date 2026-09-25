@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  * @file The edgar chain, assembled — carrier names in, {@linkcode EdgarSubsidiaryRow}s out.
  *
- *   Every link existed and was tested in isolation before this file. nothing joined them, so nothing had
+ *   Every link existed and was tested in isolation before this file. no code joined them, so no code had
  *   ever produced a row `buildFilerDatabase` could consume. This is that join, and it is deliberately thin
  *   — the judgment lives in the pieces it calls rather than here.
  *
@@ -22,7 +22,7 @@
  *   at the wrong registrant. A caller may supply pins. it may not skip the check. That is why
  *   {@link EdgarIngestOptions} exposes `pinnedCIKs` and no bypass.
  *
- *   **Every drop is counted, none are thrown.** A name that resolves to nothing, a registrant SEC files
+ *   **Every drop is counted, none are thrown.** A name that resolves to no CIK, a registrant SEC files
  *   under a software SIC, a 10-K carrying no Exhibit 21 — all ordinary, all recorded in
  *   {@link EdgarIngestReport}. A run that produces fewer rows than expected should be answerable from the
  *   report without re-running anything.
@@ -345,7 +345,7 @@ export async function collectEdgarSubsidiaryRows(
 				? {}
 				: {
 						// Zero rows and zero abstentions means the filing had no Exhibit 21 to read at all.
-						// Zero rows with abstentions means one was read and yielded nothing.
+						// Zero rows with abstentions means one was read and yielded no rows.
 						skipReason: collected.unparseable ? EdgarSkipReason.NoSubsidiaries : EdgarSkipReason.NoExhibit21,
 					}),
 		})

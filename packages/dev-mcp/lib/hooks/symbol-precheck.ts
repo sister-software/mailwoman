@@ -6,7 +6,7 @@
  *
  *   PreToolUse hook that reports where a top-level symbol already exists before a Write or Edit declares it.
  *
- *   The hook never blocks an edit. It prints `additionalContext` when it finds a match and prints nothing
+ *   The hook never blocks an edit. It prints `additionalContext` when it finds a match and prints no output
  *   otherwise, including on every error. It runs under a `Write|Edit` matcher in `.claude/settings.json`.
  */
 
@@ -48,5 +48,5 @@ async function main(): Promise<void> {
 try {
 	await main()
 } catch {
-	// A hook error must never interrupt the edit, so the hook prints nothing.
+	// A hook error must never interrupt the edit, so the hook prints no output.
 }

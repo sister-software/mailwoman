@@ -9,7 +9,7 @@ mailwoman 9.0.0 and same-day hosted geocode.earth.
 Method notes: the design came from a three-turn DeepSeek consult (session
 `019fd8b2-63e4-71f6-931b-0f197276cdf8`). Following the consult calibration practice, the plan adopts
 the consult's structural contributions. Its three required factual claims are **preregistered as
-falsifiers to run before any import** (§2) rather than trusted. Nothing below runs until the
+falsifiers to run before any import** (§2) rather than trusted. No step below runs until the
 falsifiers are graded.
 
 ## §1 — The build, scoped

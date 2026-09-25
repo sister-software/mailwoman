@@ -73,7 +73,7 @@ those files yet:
 
 - **`scripts/copy-weights.ts`** materializes `model.onnx`, `postcode-*.bin`, `anchor-lexicon` and
   the pair index, but it has **no case for `fst-<locale>.bin`**. At release time (its `before:init`
-  hook), the workspace will hold only the dev symlink from `link-dev-weights.ts`, or nothing.
+  hook), the workspace will hold only the dev symlink from `link-dev-weights.ts`, or no file.
   `yarn pack` rejects a symlink in the tarball (HTTP 415), and the files guard in
   `publish-workspace.ts` refuses to publish a missing `files[]` target. **In either case the next
   release fails or ships a broken package.** The postcode-de.bin outage had the same cause.
@@ -119,7 +119,7 @@ not-planned** (https://github.com/sister-software/mailwoman/issues/1143). The di
 gives the re-measured 0.605/0.777, the reason decode cannot fix it, and what #1315 covered. The
 stale 0.215 was removed from the title. **#1102 is cross-linked** and carries the residual
 bare-street class and the `ban-fragments-fr` board as a training target. The fixture already
-existed, so nothing new was written.
+existed, so no new fixture was written.
 
 **The only remaining step for the executor:** update `MAILWOMAN_ROAD_TO_V8.md` line ~209 (the
 Track-F check) to mark #1143's "waived with named owner + board" condition as satisfied. This is

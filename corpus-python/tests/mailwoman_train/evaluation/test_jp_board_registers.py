@@ -160,7 +160,7 @@ def test_unresolved_rows_are_unacceptable_and_land_in_their_own_register_bucket(
 
 
 def test_resolve_tags_select_which_spans_form_the_centroid_key():
-    """Resolve stage3-jp rows by prefecture and municipality. The stage3 region and locality pair finds nothing."""
+    """Resolve stage3-jp rows by prefecture and municipality. The stage3 region and locality pair finds no row."""
     correct = {r["raw"] for r in ALL_ROWS}
     assert _score(correct)["acceptable"] == 6
 

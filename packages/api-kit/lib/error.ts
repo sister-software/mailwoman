@@ -5,7 +5,7 @@
  *
  *   The native error envelope. Surfaces that carry a vendor-compat interface (photon, nominatim,
  *   libpostal) keep their own error shapes — this envelope is for surfaces ours to design (the
- *   `@mailwoman/api` native `/v1/*` routes), where nothing constrains the wire shape but us.
+ *   `@mailwoman/api` native `/v1/*` routes), where we alone constrain the wire shape.
  */
 
 import { z } from "@hono/zod-openapi"

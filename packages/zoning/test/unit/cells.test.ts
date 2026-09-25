@@ -8,7 +8,7 @@
  *   the point OF this file is the alternative index. `classifyFeatureCells` takes overlapping containment and
  *   refuses a feature that reaches no cell, so this index cannot produce a zero-cell feature. What it can
  *   report is how many features the obvious index — `polygonToCells`, cell-centre-in-polygon — would have
- *   returned nothing for, and every one of those would read downstream as an absence of zoning. On the real
+ *   returned no cell for, and every one of those would read downstream as an absence of zoning. On the real
  *   national set at resolution 9 that is most of them.
  */
 
@@ -106,7 +106,7 @@ describe("ZoningCellIndex", () => {
 		unmeasured.add(classifyFeatureCells(SLIVER, 9, "sliver", "zoning cells"))
 
 		// Absent rather than zero.
-		// A column reporting "0 dropped" when nothing was measured is the meaning-of-zero
+		// A column reporting "0 dropped" when no measurement was taken is the meaning-of-zero
 		// mistake in miniature: it reads as the good news the measurement exists to establish.
 		expect(unmeasured.finish().polyfillZeroCellFeatures).toBeUndefined()
 	})

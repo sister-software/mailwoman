@@ -5,7 +5,7 @@
  *
  *   `About` — the explainer for the browser geocoder: the neural model, the confidence colours, the gazetteer
  *   resolver, the byte-range database and the FST prior. Prose about the product a host places above or beside the
- *   geocoder. it renders nothing live.
+ *   geocoder. it renders no live content.
  */
 
 import type { ReactNode } from "react"

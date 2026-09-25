@@ -49,7 +49,7 @@ export interface ProviderFilingSummary {
  * Filing summary for a query, stamped with `layer_manifest.sourceVintage`.
  *
  * `unknown_block_count` counts blocks without coverage.
- * It says nothing about whether providers file there.
+ * It makes no statement about whether providers file there.
  */
 export interface FilingLandscape {
 	vintage: string

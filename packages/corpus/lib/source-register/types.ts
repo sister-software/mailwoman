@@ -195,7 +195,7 @@ export const LicenseReviewState = {
 	 * Nobody has read the publisher's terms.
 	 *
 	 * The research pass's license text is kept verbatim in
-	 * {@linkcode UncheckedLicense.publisherStatement} and grants nothing.
+	 * {@linkcode UncheckedLicense.publisherStatement} and grants no license.
 	 */
 	Unchecked: "unchecked",
 	/**
@@ -222,8 +222,8 @@ export interface UncheckedLicense {
 	/**
 	 * The research pass's license text, verbatim.
 	 *
-	 * Most values are access labels such as `Free` or `Licensed`, which say nothing
-	 * about redistribution or training.
+	 * Most values are access labels such as `Free` or `Licensed`, which make no
+	 * statement about redistribution or training.
 	 */
 	publisherStatement: string
 	note: string

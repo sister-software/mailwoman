@@ -38,7 +38,7 @@ def cache_root_path(*parts: str) -> Path:
 def temp_root_path(*parts: str) -> Path:
     """Return a path under `$MAILWOMAN_TEMP_ROOT` for a named intermediate file.
 
-    Use `tempfile` for scratch files that nothing reads afterwards.
+    Use `tempfile` for scratch files that no later step reads.
     """
     return public().temp_root.joinpath(*parts)
 

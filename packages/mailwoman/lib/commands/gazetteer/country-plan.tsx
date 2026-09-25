@@ -5,7 +5,7 @@
  *
  *   `mailwoman gazetteer country-plan <cc>` — what moving a country between admin sources would involve.
  *
- *   read-only, by construction and not by flag. It clones nothing, edits nothing and builds nothing. the
+ *   read-only, by construction and not by flag. It performs no clone, makes no edit and runs no build. the
  *   `--apply` half is a separate command precisely because the steps it would take are a clone measured in
  *   hundreds of megabytes and an edit to a file that is reviewed like code.
  *
@@ -256,7 +256,7 @@ const CountryPlanCommand: CommandComponent<typeof spec, [string?]> = ({ options,
 					applied.push(`  ${result.changed ? "✓" : "·"} ${result.note}`)
 				}
 
-				// All or nothing.
+				// All steps or none.
 				// A half-applied move is the exact state the #267 warning describes,
 				// and writing one edit while refusing the other would manufacture it.
 				if (writeFailures) {

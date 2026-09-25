@@ -9,7 +9,7 @@
  *   These assert a mapping, deliberately: `run options → layer options → geocode deps`. The check itself needs the ~9 GB
  *   database set and a loaded ONNX, so a test that ran it would be an integration run rather than a check — and the failure mode
  *   this surface exists to prevent is silent. A dropped pin does not throw. it produces a check log identical to the
- *   unpinned one, which reads exactly like "the pin changed nothing". Every hop is therefore pinned here.
+ *   unpinned one, which reads exactly like "the pin changed no option". Every hop is therefore pinned here.
  */
 
 import { describeResolverPins, resolverPinDeps } from "mailwoman/eval-harness/gauntlet/harness"

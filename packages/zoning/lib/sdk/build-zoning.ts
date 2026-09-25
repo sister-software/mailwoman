@@ -22,7 +22,7 @@
  *   two-path check rather than the archive agreeing with itself.
  *
  *   there is no build-time touch table. A zoning cell row names one polygon, so it is final the moment that
- *   polygon is classified. The rows go straight in, and memory stays flat in row count with nothing to resolve
+ *   polygon is classified. The rows go straight in, and memory stays flat in row count with no pending row to resolve
  *   afterwards.
  *
  *   the ingest is bounded anyway. h3's wasm heap cannot be reset from JavaScript and does not survive an

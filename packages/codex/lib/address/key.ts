@@ -127,7 +127,7 @@ export function normalizeAddressToken(input: string): string {
  * field normalized via {@linkcode normalizeAddressToken}, in fixed order, joined by the separator.
  *
  * Empty / whitespace-only fields are skipped.
- * Returns an empty string if nothing identifying remains.
+ * Returns an empty string if no identifying field remains.
  */
 export function canonicalKey(components: ComponentDict, opts: CanonicalKeyOptions = {}): string {
 	const separator = opts.separator ?? "|"

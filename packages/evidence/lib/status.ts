@@ -80,7 +80,7 @@ export type Assertion = (typeof Assertion)[keyof typeof Assertion]
  * string on the same row is an address somebody filed with it.
  *
  * One verdict for the whole source cannot record both, and the compressed form reads as
- * "trust nothing here", which discards the identity the register does assign.
+ * "trust no value here", which discards the identity the register does assign.
  *
  * The constants are the wire values.
  */

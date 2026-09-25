@@ -151,7 +151,7 @@ const notAdmitted = sorted.filter((code) => measured.has(code) && !shippedFamili
 /**
  * Jurisdictions the corpus holds rows for that no shipped graph's config admits.
  *
- * Those rows train nothing that ships.
+ * Those rows train no shipped model.
  * A reader comparing the corpus against the model needs this separated from a jurisdiction
  * the corpus holds no row for, because closing this one takes a `country_weights` entry
  * while closing the other takes acquiring data.
@@ -240,8 +240,8 @@ or \`house_number\` label, which are the rows that teach an address rather than 
 can hold millions of rows while its street-row count reads 0. CN reads 11,357,947 and 0.
 
 **Admission** is \`country_weights\` in the training config, a hard filter. A code absent from it
-trains on nothing whatever the corpus holds. A code present in it with no corpus row trains on
-nothing either, by the other route.
+trains on no rows whatever the corpus holds. A code present in it with no corpus row trains on
+no rows either, by the other route.
 
 **Gazetteer** counts admin places available to resolve, and \`rooftop\` marks the two jurisdictions
 whose rooftop database a consumer can obtain. Every other rooftop database is build-local.
@@ -280,7 +280,7 @@ ${
 ${droppedWithRows.map((code) => `\`${code}\` (${measured.get(code)!.corpusRows.toLocaleString()})`).join(", ")}
 
 Each of these holds corpus rows and appears in neither shipped graph's \`country_weights\`, so those
-rows train nothing that ships. This is the mechanism that left Norway untaught while its rows sat in
+rows train no shipped model. This is the mechanism that left Norway untaught while its rows sat in
 the corpus. A jurisdiction here that also carries a weights package is served by a data-only overlay
 over a graph that was never taught it.
 
@@ -292,7 +292,7 @@ over a graph that was never taught it.
 
 ${newlyAdmitted.length ? newlyAdmitted.map((code) => `\`${code}\``).join(" ") : "None."}
 
-Admission is not teaching. Each of these trains on nothing until the corpus holds a row for it.
+Admission is not teaching. Each of these trains on no rows until the corpus holds a row for it.
 
 It stops admitting ${nextDrops.length} of the jurisdictions a shipped graph admits${nextDrops.length ? `: ${nextDrops.map((code) => `\`${code}\``).join(" ")}` : "."}
 

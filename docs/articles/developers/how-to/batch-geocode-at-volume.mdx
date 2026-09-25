@@ -1,6 +1,6 @@
 ---
 title: Geocode a large file at volume
-description: Find your machine's rows-per-second ceiling, then reach it with a worker pool — because async concurrency inside one process adds nothing.
+description: Find your machine's rows-per-second ceiling, then reach it with a worker pool — because async concurrency inside one process adds no measurable cost.
 role: guide
 verified-with: mailwoman 8.7.0
 ---
@@ -11,7 +11,7 @@ verified-with: mailwoman 8.7.0
 that reaches it.
 
 The short version: inference blocks the JavaScript thread, so running more geocodes concurrently inside
-one process changes nothing. Throughput comes from more processes. This page measures both claims on one
+one process changes no throughput. Throughput comes from more processes. This page measures both claims on one
 machine so you can repeat the measurement on yours. The peak worker count is a property of your box rather than
 a constant.
 
@@ -19,7 +19,7 @@ a constant.
 
 - The library install from [Geocode a CSV of customer addresses](../tutorials/geocode-a-csv.mdx), plus
   `candidate.db` on disk at `<data root>/db/wof/candidate.db`. Every transcript below assumes both. The
-  scripts find it through `resolveCandidateDBPath()`, so nothing needs exporting.
+  scripts find it through `resolveCandidateDBPath()`, so no environment variable needs exporting.
 - [customers.csv](/examples/customers.csv) next to your scripts — twenty rows, repeated to make a file
   worth timing.
 - A machine whose core count you know. `nproc` on Linux, `sysctl -n hw.ncpu` on macOS.
@@ -250,7 +250,7 @@ Fastest of three runs per size:
 
 The curve peaks and then falls. Sixteen cores did not provide 16×, and eight workers were worse than two.
 One worker is the baseline plus a message hop, which is the sanity check that the pool itself costs
-nothing.
+no more than a message hop.
 
 Part of the reason the peak sits low is that each worker's inference session already claims four
 threads. `NeuralAddressClassifier.loadFromWeights` caps ONNX Runtime's intra-op pool at

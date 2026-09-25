@@ -12,7 +12,7 @@ import type { FRN } from "#frn"
  * One cores registration record, exactly as the detail page states it.
  *
  * Every field is optional because the page omits a row rather than emitting an empty one,
- * and an absent contact fax says nothing about the entity.
+ * and an absent contact fax makes no statement about the entity.
  *
  * No field here is interpreted, derived or classified.
  * See the file header's note 2 on why Nexus's name-sniffing classification is not carried over.

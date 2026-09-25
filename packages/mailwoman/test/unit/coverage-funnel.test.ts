@@ -7,7 +7,7 @@
  *
  *   The case that matters most is the jurisdiction the census report never mentions. `censusCoverage` keys its rows on
  *   the union of five registers, so such a jurisdiction has no row there at all, and a funnel that inherited that
- *   denominator would print nothing for it — which is the reading this module exists to prevent.
+ *   denominator would print no row for it — which is the reading this module exists to prevent.
  */
 
 import {
@@ -178,7 +178,7 @@ describe("readCoverageFunnel", () => {
 		expect(kenya?.stages.licensed.state).toBe(StageState.Blocked)
 
 		// US has an elected licence and still resolves neither field, which is the point:
-		// electing terms alone admits nothing.
+		// electing terms alone admits no source.
 		const us = report.rows.find((row) => row.iso2 === "US")
 
 		expect(us?.stages.licensed.state).toBe(StageState.Reached)
@@ -188,8 +188,8 @@ describe("readCoverageFunnel", () => {
 
 	it("reads a jurisdiction with no source as absent on both fields rather than blocked", async () => {
 		// Blocked means somebody looked and something stops the next step.
-		// A jurisdiction with no source has nothing to resolve a role for, which is a
-		// different reading from a source whose role nobody resolved.
+		// A jurisdiction with no source has no role to resolve, which is a different
+		// reading from a source whose role nobody resolved.
 		const report = await funnel()
 		const antarctica = report.rows.find((row) => row.iso2 === "AQ")
 

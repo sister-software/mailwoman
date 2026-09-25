@@ -63,7 +63,7 @@ export function useParsePipeline({ runtime, defaultText }: UseParsePipelineOptio
 	// A preset that called `setText(value)` then `submit()` parsed the previous text —
 	// the field showed the preset and the map answered the address before it.
 	// A caller that already knows the query passes it.
-	// The field's own submit passes nothing.
+	// The field's own submit passes no query.
 	const submit = useCallback(
 		async (query?: string) => {
 			if (!runtime.ready || busy) return

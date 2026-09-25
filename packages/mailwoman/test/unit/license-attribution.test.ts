@@ -5,7 +5,7 @@
  * @file What `mailwoman license attribution` reports, and the three things it refuses to imply.
  *
  *   That a commercial key clears an upstream condition. That a package recording no attribution has none. And that the
- *   absence of a runtime dataset from the report means the installation owes nothing for one.
+ *   absence of a runtime dataset from the report means the installation owes no attribution for one.
  *
  *   Two of the three are pinned as equalities rather than as text, because the wording of a disclaimer can be kept
  *   while the behavior stops matching it. The report under a commercial key equals the report under AGPL, and the

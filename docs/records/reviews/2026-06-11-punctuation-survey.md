@@ -131,7 +131,7 @@ the Australian `1/123` unit/house convention specifically.
 **pelias/api sanitizers.** Read from
 [sanitizer/\_text.js](https://github.com/pelias/api/blob/master/sanitizer/_text.js): unicode
 normalization, whitespace trim, **trim of leading/trailing quotes** (same long quote list),
-truncation to 140 chars. The sanitizers do nothing else. They neither strip brackets nor
+truncation to 140 chars. The sanitizers perform no other step. They neither strip brackets nor
 delete punctuation before the parser sees the text, so the parser receives raw punctuation.
 
 **(d) Lessons.** PR #56's discussion frames hyphens as "glue" whose alternative readings must
@@ -182,7 +182,7 @@ the whitespace/punctuation breaks the pipeline expects).
 - [#3754](https://github.com/osm-search/Nominatim/issues/3754): "Severobaykal'sk" findable
   only _with_ the apostrophe — closed as a data issue. Because the apostrophe becomes a token
   break, the name indexes as two tokens while the apostrophe-less query is one fused token.
-  Lesson: **normalize-to-break and normalize-to-nothing diverge exactly on the
+  Lesson: **normalize-to-break and normalize-to-empty diverge exactly on the
   punctuation-omitted query**, and pushing that onto users gets issues filed.
 
 ## 4. Photon (Komoot)
@@ -220,7 +220,7 @@ char_filter provides most of it.
   numbers" — i.e. the punctuation-heavy sub-premise tail is by agreement out of scope
   ([Geocoding best practices](https://developers.google.com/maps/documentation/geocoding/best-practices)).
   Abbreviation interpretation is acknowledged as language-dependent. Everything else is a
-  black box; nothing citable about brackets or slashes.
+  black box; no citable source about brackets or slashes.
 - **Mapbox**: the only punctuation with documented semantics is the **semicolon — banned
   inside a single query because it's the batch-query delimiter**; queries are otherwise "20
   words and numbers … separated by spacing and punctuation," handling undocumented
@@ -408,7 +408,7 @@ before parsing for the same reason.
 M2 + M3 are one build (the Stage 2.7 proposer with three cue families: designators, paired
 delimiters, numeric punctuation) and need no retrain. M4's lookup folds are partially
 inference-side. M1 rides the next scheduled retrain with char-offset labels. M5 is an
-independent wof-build change. Nothing in the survey contradicts the Stage 2.7 direction; the
+independent wof-build change. No finding in the survey contradicts the Stage 2.7 direction; the
 survey's strongest external validation is that the two systems closest to our architecture
 (Pelias for parse-side, Nominatim for index-side) each independently arrived at "record
 punctuation, defer the decision, generate variants". The one system that reduced punctuation to

@@ -17,7 +17,7 @@
  *   per candidate and produces a table rather than an artifact. What it reports is not the `partial` share: 95.7% of
  *   these polygons are smaller than a res-9 cell, so that statistic sits near 100% everywhere. The two
  *   columns that decide are candidates-per-cell and the count of features a centre-in-polygon polyfill would
- *   have returned nothing for.
+ *   have returned no polygon for.
  *
  *   `--authority` is the smoke rung, and `--limit` narrows it further. Building one local authority over the
  *   real export exercises the field names, the ring-role resolution, the vocabulary census, the projection
@@ -170,7 +170,7 @@ const GazetteerBuildZoning: CommandComponent<typeof spec> = ({ options }) => {
 		}
 
 		// A build needs the vintage, because it stamps the manifest.
-		// A manifest carrying a guessed version carries a number that means nothing.
+		// A manifest carrying a guessed version carries a number that states no fact.
 		if (!vintage) {
 			throw new Error(
 				"gazetteer build zoning: no product vintage — pass --source-vintage, or drop --offline so the item can be read. " +
@@ -195,7 +195,7 @@ const GazetteerBuildZoning: CommandComponent<typeof spec> = ({ options }) => {
 		}
 
 		// A narrowed RUN counts itself first.
-		// `ogrinfo` reports the layer's total and nothing narrower, so a build whose declared count
+		// `ogrinfo` reports the layer's total and no narrower count, so a build whose declared count
 		// was the whole product's would refuse every smoke run, and the declared-count check is
 		// the thing that turns a truncated read into a failure rather than into a smaller country.
 		// Counting is one extra pass over a file the build reads anyway.

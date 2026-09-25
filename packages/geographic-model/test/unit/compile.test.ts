@@ -137,7 +137,7 @@ const cornerShop = establishment("corner_shop", ["retailer", "general_store"])
 /**
  * A descendant that states the inherited proposition itself, under a weaker modality.
  *
- * The authored record is the more specific one, so nothing is derived for that pair.
+ * The authored record is the more specific one, so no fact is derived for that pair.
  */
 const veterinaryPharmacy = establishment(
 	"veterinary_pharmacy",
@@ -235,7 +235,7 @@ describe("the inheritance closure", () => {
 		// A diamond: `retailer` is reachable directly and through `pharmacy`, and appears once.
 		expect(ancestorsIn(model, "late_night_pharmacy")).toEqual(["pharmacy", "retailer"])
 
-		// A concept that is a kind of nothing gets an entry stating that rather than an absent entry.
+		// A concept with no ancestors gets an entry stating that rather than an absent entry.
 		expect(ancestorsIn(model, "retailer")).toEqual([])
 		expect(ancestorsIn(model, "obtain_medication")).toEqual([])
 	})
@@ -403,7 +403,7 @@ describe("the artifact's bytes", () => {
 	})
 
 	it("are identical for a document whose tables and keys are permuted", () => {
-		// Without this the test would pass on two identical inputs and prove nothing about ordering.
+		// Without this the test would pass on two identical inputs and leave the ordering property unchecked.
 		expect(stringifyJSON(permuted(fixture()))).not.toBe(stringifyJSON(fixture()))
 
 		expect(compiledBytes(permuted(fixture()))).toBe(compiledBytes(fixture()))
@@ -451,7 +451,7 @@ describe("the read surface", () => {
 		expect(index.relation(toRelationID("affords"))?.semantics).toBe(RelationSemantics.Defeasible)
 		expect(index.ancestorsOf(toConceptID("hospital_pharmacy"))).toEqual(["pharmacy", "retailer"])
 
-		// Known, and a kind of nothing.
+		// Known, and with no ancestors.
 		expect(index.ancestorsOf(toConceptID("retailer"))).toEqual([])
 		// Not in the artifact at all.
 		expect(index.ancestorsOf(toConceptID("chemist"))).toBeUndefined()

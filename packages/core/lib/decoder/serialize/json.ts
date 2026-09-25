@@ -124,7 +124,7 @@ export function decodeAsJSON(
 
 	// Always emitted when asked, `[]` included.
 	// The same reasoning as `unknown` above, and required here: a caller that has to
-	// presence-check cannot tell "nothing was dropped" from "this build does not report drops".
+	// presence-check cannot tell "no field was dropped" from "this build does not report drops".
 	if (opts.includeDropped) {
 		out.dropped = dropped
 	}

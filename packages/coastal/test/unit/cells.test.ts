@@ -64,7 +64,7 @@ describe("featureCellRows", () => {
 		const rows = featureCellRows(classifyFeatureCells(sliver, 9, "sliver", "test"))
 
 		// Cell-touches-polygon rather than centre-in-polygon: a polyfill keyed on centres returns
-		// zero cells here, and a feature indexed to nothing reads downstream as an absence.
+		// zero cells here, and a feature indexed to no cell reads downstream as an absence.
 		// It touches two cells rather than one at this coordinate, because a 5.5 m square that straddles a
 		// cell boundary is in both, which is the answer overlapping containment is supposed to give.
 		expect(rows.length).toBeGreaterThan(0)

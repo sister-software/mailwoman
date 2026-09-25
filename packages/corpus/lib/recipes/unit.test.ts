@@ -91,7 +91,7 @@ describe("renderUnit", () => {
 	})
 
 	it("keeps the designator when the unit has no identifier to write bare", () => {
-		// A standalone designator has nothing to strip to, so the layout keeps the
+		// A standalone designator has no shorter form to strip to, so the layout keeps the
 		// designator form rather than emitting a row with no unit at all.
 		const rows = over(2000, (random) => renderUnit(random, TUPLE, "Basement"))
 
@@ -113,7 +113,7 @@ describe("renderUnit", () => {
 
 	it("writes the postcode on its own comma segment on a minority of tails", () => {
 		// The counter-reading of the bare unit.
-		// Nothing else in the corpus writes a bare number alone in a later comma segment, so without
+		// No other source in the corpus writes a bare number alone in a later comma segment, so without
 		// this the unit reading would be the only evidence for a segment users write a postcode into.
 		const raws = over(2000, (random) => renderUnit(random, TUPLE, "Apt 101").raw)
 		const commaPostcode = raws.filter((raw) => raw.includes("Athens, GA, 30601"))

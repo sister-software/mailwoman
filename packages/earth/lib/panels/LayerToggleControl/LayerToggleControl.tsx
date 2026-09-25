@@ -7,7 +7,7 @@
  *
  *   Useful while debugging cartography — the protomaps basemap stacks ~70 layers, many of which (POI labels,
  *   hillshade, building outlines) get in the way of seeing what's underneath. The sheet owns the disclosure, so this
- *   renders the list and nothing that opens or closes it.
+ *   renders the list and no control that opens or closes it.
  *
  *   Groups come from the layer-ID prefix the protomaps theme uses (`roads_*`, `places_*`, `landuse_*`, `buildings_*`,
  *   `boundaries`, …), so the control adapts to whatever layers the current style carries. A layer no pattern matches
@@ -94,7 +94,7 @@ export interface LayerToggleControlProps {
 	/**
 	 * The live map.
 	 *
-	 * `null` before react-map-gl instantiates it, which is when the control renders nothing.
+	 * `null` before react-map-gl instantiates it, which is when the control renders no content.
 	 */
 	map: MapInstance | null
 }
@@ -120,7 +120,7 @@ export function LayerToggleControl({ map }: LayerToggleControlProps) {
 
 		map.on("styledata", sync)
 		map.on("idle", sync)
-		// The map is usually already idle when this control mounts, and an idle map sends nothing.
+		// The map is usually already idle when this control mounts, and an idle map sends no event.
 		// Asking for one more frame produces the `idle` that reads the first set of groups,
 		// so the reading arrives from an event rather than from a write during the effect.
 		map.triggerRepaint()

@@ -89,7 +89,7 @@ export interface WOFRecord {
  * Real WOF postalcode distros tag every row `-1` ("unknown but treated as active");
  * the Pelias importer accepts `-1` alongside `1`.
  * Tightening the predicate to `= 1` is the trap: the postalcode distros then contribute
- * zero rows to the corpus, silently, with nothing raised to notice it by.
+ * zero rows to the corpus, silently, with no error raised to notice it by.
  */
 export function isCurrentFeature(props: Record<string, unknown>): boolean {
 	const raw = props["mz:is_current"]

@@ -1,7 +1,7 @@
 """Every fragment renderer agrees with its own text, and keeps agreeing across a split.
 
 Each of these builds `raw` and its char offsets separately — `raw` by joining pieces, the offsets
-by advancing a cursor over the same pieces — so the two can disagree and nothing downstream
+by advancing a cursor over the same pieces — so the two can disagree and no downstream check
 notices: `char_label_array_from_spans` reads the offsets and paints whatever they point at, and a
 row that labels the wrong characters still trains, still exports, and still scores.
 

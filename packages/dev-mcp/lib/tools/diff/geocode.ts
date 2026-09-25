@@ -7,9 +7,9 @@
  *   file is the interface, and its job is to put the attribution in front of the distance.
  *
  *   The `training-arc` and `eval-model` skills have named this tool since they were written, and it was
- *   never registered: the diff, the three attributions and the renderer all existed while nothing exposed
+ *   never registered: the diff, the three attributions and the renderer all existed while no tool exposed
  *   them. An agent following step 4 of the grading protocol called a tool that was not there, so the step
- *   that separates a model regression from a data-coverage fall-through had nothing behind it.
+ *   that separates a model regression from a data-coverage fall-through had no implementation behind it.
  */
 
 import { diffGeocode, type GeocodeArm, type GeocodeRun, renderGeocodeDiff } from "mailwoman/geocode"

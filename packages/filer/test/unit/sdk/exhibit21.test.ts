@@ -349,7 +349,7 @@ const FIXTURE_FILES = [
  * `htmlToLayoutText`'s adjacent-whitespace check kills the C4 test, reverting the
  * plain-text block-boundary line-break kills the C2 test).
  * What the substring invariant does catch is the other real risk it's meant to guard against:
- * a jurisdiction/name fabricated from nothing — synthesized, defaulted, or otherwise not derived from
+ * a jurisdiction/name fabricated from no input — synthesized, defaulted, or otherwise not derived from
  * the input at all — which requires a name-only shape (no jurisdiction column/parenthetical/comma)
  * actually present in the swept set to have something to violate.
  */

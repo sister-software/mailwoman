@@ -224,7 +224,7 @@ export type BuildProfile = (typeof BuildProfile)[keyof typeof BuildProfile]
  * which the caller refuses rather than admits.
  *
  * The join is on the register's `sourceID`, which is what an adapter stamps into a row's `source`.
- * A register source whose id no adapter emits contributes nothing here and is not an error:
+ * A register source whose id no adapter emits contributes no entry here and is not an error:
  * the register lists sources that have been researched, and most have no adapter yet.
  */
 async function readSourceEligibility(): Promise<ReadonlyMap<string, readonly string[]>> {
@@ -242,8 +242,8 @@ async function readSourceEligibility(): Promise<ReadonlyMap<string, readonly str
  * and the frozen record says so with a `null` decision rather than inventing one.
  *
  * Read even under the exploratory profile, since the manifest records what was known
- * at build time whichever profile ran, and a build that recorded nothing would be
- * indistinguishable from one whose sources had no decisions.
+ * at build time whichever profile ran, and a build that recorded no decision would
+ * be indistinguishable from one whose sources had no decisions.
  */
 async function readRegisterDecisions(): Promise<ReadonlyMap<string, LicenseDecision>> {
 	const register = await readAddressSourceRegister()
@@ -281,7 +281,8 @@ export interface BuildCorpusManifest {
 	/**
 	 * Rows dropped because the register does not call their source eligible.
 	 *
-	 * Always zero under {@linkcode BuildProfile.Exploratory}, which asks nothing of the register.
+	 * Always zero under {@linkcode BuildProfile.Exploratory}, which asks no
+	 * eligibility question of the register.
 	 */
 	excluded_by_eligibility: number
 	/**

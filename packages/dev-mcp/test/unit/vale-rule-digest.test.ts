@@ -29,7 +29,7 @@ const named = new Set(rules.map((rule) => rule.name))
  * Returned as patterns rather than as words on purpose: writing the words into this test
  * would put them in a tracked file, which is the thing the withholding exists to prevent
  * and which `repo-health`'s `bannedVocabulary` counter holds at zero.
- * Compiling the rule's own token and running it over the listing asks the same question and writes nothing.
+ * Compiling the rule's own token and running it over the listing asks the same question and writes no file.
  */
 async function tokenPatterns(rule: string): Promise<RegExp[]> {
 	const source = await readLocalTextFile(repoRootPath("config", "vale", "styles", `${rule}.yml`))

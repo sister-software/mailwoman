@@ -101,14 +101,14 @@ export async function readCoordPanel(
 /**
  * A panel place written through its country's codex layout, with any extra components folded into the dict.
  *
- * `${locality}, ${region} ${postcode}` is the United States postal order and nothing else:
+ * `${locality}, ${region} ${postcode}` is the United States postal order and no other order:
  * it prints Japan's admin run backwards, drops each country's own separator convention,
  * and puts a postcode after a region in the systems that lead with it.
  * A surface that differs only in which components are present — a country name,
  * a house number and a street — is a dict rather than a template.
  *
  * Answers `""` when no layout can write the country: 55 of the 252 shipped records carry no usable
- * skeleton, and reporting nothing for one of those is an absence rather than an invented order.
+ * skeleton, and reporting no layout for one of those is an absence rather than an invented order.
  */
 export function renderAdmin(place: PanelLocality, extra: ComponentDict = {}): string {
 	return formatAddress(

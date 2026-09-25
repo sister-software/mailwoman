@@ -45,7 +45,7 @@ describe("placeIDProvenance", () => {
 	it("puts each boundary in the band that starts at it, with no gap", () => {
 		// Every base belongs to the fold it names, and the id one below belongs to the previous fold.
 		// A ladder written with the wrong comparison misclassifies exactly these three ids
-		// and nothing else, which is why they are asserted rather than sampled.
+		// and no other id, which is why they are asserted rather than sampled.
 		expect(placeIDProvenance(OVERTURE_ID_BASE).id_source).toBe(PlaceIDSource.Overture)
 		expect(placeIDProvenance(OVERTURE_ID_BASE - 1).id_source).toBe(PlaceIDSource.WOF)
 		expect(placeIDProvenance(GEONAMES_ID_BASE - 1).id_source).toBe(PlaceIDSource.Overture)

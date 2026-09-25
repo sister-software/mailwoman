@@ -63,7 +63,7 @@ describe("evidenceCensus", () => {
 	})
 
 	it("flags starvation only when every PRESENT channel is silent", () => {
-		// The Weimar signature: channels configured, retrieval fed nothing, model decided from embeddings alone.
+		// The Weimar signature: channels configured, retrieval fed no row, model decided from embeddings alone.
 		expect(evidenceCensus(trace({ anchor: SILENT, gazetteer: SILENT, country: SILENT })).silent).toBe(true)
 	})
 

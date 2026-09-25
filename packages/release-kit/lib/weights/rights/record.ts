@@ -331,7 +331,7 @@ function stringOrNull(value: unknown): string | null {
  * Reads the rights record of one weights workspace.
  *
  * @throws When the manifest is unreadable or lacks `name`, `version` or `license`.
- * An empty record would wrongly report that the package ships nothing.
+ * An empty record would wrongly report that the package ships no weights.
  */
 export async function readWeightsRightsRecord(
 	repoRoot: PathBuilderLike,

@@ -6,7 +6,7 @@
  *   Board rows per country that can fail, beside the country's gazetteer share.
  *
  *   A row's `status` decides whether it checks or tracks. `pass` fails the run when its answer moves;
- *   `improvement_target` records a known-wrong answer and fails nothing. A single row count conflates them, so a
+ *   `improvement_target` records a known-wrong answer and fails no run. A single row count conflates them, so a
  *   country whose board is entirely trackers reports the same coverage as one that can go red.
  *
  *   The gazetteer share is the denominator: two checking rows is a different claim for India's 1,113,550 places

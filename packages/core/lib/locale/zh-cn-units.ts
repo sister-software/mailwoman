@@ -78,7 +78,7 @@ const GENERIC_ALTERNATION = CN_UNIT_GENERICS.map(([generic]) => generic).join("|
 const UNIT = `(?:${ORDINAL}(?:${GENERIC_ALTERNATION})|场部)`
 
 /**
- * The whole chain the span holds — one or more units, nothing else.
+ * The whole chain the span holds — one or more units and no more.
  */
 const CHAIN = new RegExp(`^(?:${UNIT})+$`, "u")
 
@@ -112,8 +112,7 @@ export interface CNUnit {
 }
 
 /**
- * Whether a string is a well-formed `locality_unit` span — nothing but ordinal units
- * and an optional headquarters.
+ * Whether a string is a well-formed `locality_unit` span of ordinal units and an optional headquarters.
  */
 export function isCNUnitChain(span: string): boolean {
 	return CHAIN.test(span)

@@ -2,7 +2,7 @@
 
 Every generated row passes `validate_components` before it is written: the surface-form invariant
 (each component value is an exact substring of the raw address) is the one guarantee a synthetic
-row carries, and a model that violates it produces a row that trains a span pointing at nothing.
+row carries, and a model that violates it produces a row that trains a span pointing at no token.
 """
 
 from __future__ import annotations

@@ -7,16 +7,16 @@
  *
  *   This is the question four one-off probes were written to answer in a single day — `icu-probe.mjs`, `keynorm-probe`,
  *   `probe-fst-bias`, and the ad-hoc FST walks that settled the San Juan and Sultan Qaboos cases. It is also the
- *   question that most often precedes a wrong conclusion, because a resolve that returns nothing has two causes that
+ *   question that most often precedes a wrong conclusion, because a resolve that returns no result has two causes that
  *   look identical from the outside: the parser never asked, or the gazetteer has no answer.
  *
  *   **The distinction this module exists to keep:**
  *
  *   - `hit: false, entries: null` — the source does not know the string. absence.
  *   - `hit: true` with a zero-valued entry — the source knows it and scores it zero. A measured zero.
- *   - `hit: true, entries: []` — accepted, but nothing the consumer can act on (for the FST: no BIO-mapped placetype).
+ *   - `hit: true, entries: []` — accepted, but with no data the consumer can act on (for the FST: no BIO-mapped placetype).
  *
- *   `probe-fst-bias.run.ts` already documents the first two for the FST case and this generalizes them. Nothing here
+ *   `probe-fst-bias.run.ts` already documents the first two for the FST case and this generalizes them. No code here
  *   re-derives what a consumer reads: the FST collapse is `collapseFSTBias`, the decoder's own function.
  */
 
@@ -132,7 +132,7 @@ export interface LookupResult {
 	 * Present instead OF `rows` for a sweep.
 	 * A locale whose artifact is missing carries its own `unavailable_reason` here
 	 * rather than dropping out of the map: five shipped overlays ship no FST at all,
-	 * and a locale absent from the result reads as a locale that knew nothing.
+	 * and a locale absent from the result reads as a locale the source did not know.
 	 */
 	by_locale?: Record<string, { artifact?: string; rows: LookupRow[]; unavailable_reason?: string }>
 	notes: string[]
@@ -242,7 +242,7 @@ export function lookupNormalize(queries: string[], locale: string): LookupRow[] 
 
 /**
  * Open a sealed SQLite artifact read-only, reporting a missing or unopenable file
- * as unavailable rather than as a source that knows nothing.
+ * as unavailable rather than as a source with no entry.
  *
  * `readOnly: true` is not a precaution here, it is the interface: every built database in this
  * repo is sealed 0444 and is never modified after creation, so a read-write open would fail on a
@@ -263,7 +263,7 @@ export async function openSealedArtifact<DB>(
 }
 
 /**
- * Load an FST artifact, reporting a missing file as unavailable rather than as a source that knows nothing.
+ * Load an FST artifact, reporting a missing file as unavailable rather than as a source with no entry.
  */
 export async function loadFSTArtifact(
 	path: PathBuilderLike | undefined,

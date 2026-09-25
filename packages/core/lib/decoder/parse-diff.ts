@@ -6,7 +6,7 @@
  *   Diff two parses of the same input, over spans rather than over the component map.
  *
  *   The component map is what a comparison reaches for and it loses the thing you need. Two arms that both emit
- *   `locality` tell you nothing about whether the locality moved, and a map keyed by tag cannot represent a span that
+ *   `locality` make no statement about whether the locality moved, and a map keyed by tag cannot represent a span that
  *   slid one token left — it looks identical to a span that was replaced. This is not hypothetical: it is how a
  *   regression that turned
  *
@@ -90,8 +90,8 @@ export interface ParseDiff {
 	/**
 	 * The locale/country call and how sure each arm was of it.
 	 *
-	 * A parse that changed nothing else but moved its country confidence across the
-	 * scope threshold will geocode somewhere else entirely.
+	 * A parse that changed no other component but moved its country confidence across
+	 * the scope threshold will geocode somewhere else entirely.
 	 */
 	localeCountryBefore?: { country: string; confidence: number }
 	localeCountryAfter?: { country: string; confidence: number }

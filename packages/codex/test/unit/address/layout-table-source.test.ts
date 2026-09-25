@@ -12,7 +12,7 @@
  *
  *   It reads the dataset through `@mailwoman/core`, which is legal for a test and not for `lib/`: `@mailwoman/core`
  *   imports `@mailwoman/codex`. Therefore, a source file here reaching back would close that loop. This file lives under
- *   `test/`, which nothing imports, and codex's own manifest stays free of core. The former home was
+ *   `test/`, which no code imports, and codex's own manifest stays free of core. The former home was
  *   `@mailwoman/core`, and `@mailwoman/core` imports `@mailwoman/codex`. A codex test reading the dataset would close
  *   that loop. this package already depends on both.
  *
@@ -52,7 +52,7 @@ const FIELD: Readonly<Record<string, string>> = {
  *
  * Two slots drop out.
  * Both are authored rather than transcribed, so comparing them against the source would
- * report every country carrying one as a departure and say nothing:
+ * report every country carrying one as a departure and make no statement:
  *
  * - `country`, because `%R` is absent from nearly every `fmt` — libaddressinput's
  *   consumers add the destination country themselves.
@@ -116,7 +116,7 @@ const countryFormats = await (async () => {
 
 describe("the generated layout table matches libaddressinput", () => {
 	it("reads the dataset it claims to be generated from", () => {
-		// A directory read that answered nothing would make every assertion below pass vacuously.
+		// A directory read that returned no records would make every assertion below pass vacuously.
 		expect(countryFormats.size).toBeGreaterThan(240)
 		expect(countryFormats.get("US")).toBe("%N%n%O%n%A%n%C, %S %Z")
 	})
@@ -168,7 +168,7 @@ describe("the generated layout table matches libaddressinput", () => {
 	it("answers null for a country the dataset gives no usable order", () => {
 		const unusable = [...countryFormats].filter(([, fmt]) => !fmt || !skeletonOfFormat(fmt).length).map(([cc]) => cc)
 
-		// Absence is a real answer here: rendering nothing beats inventing an order.
+		// Absence is a real answer here: rendering no text beats inventing an order.
 		// The count is pinned so that a dataset refresh which quietly drops a country's
 		// `fmt` shows up as a failure rather than as silence.
 		expect(unusable).toHaveLength(55)

@@ -78,7 +78,7 @@ function rank(scored: Array<{ kind: QueryKind; confidence: number }>): QueryKind
  * Every kind whose verdict carries `intentMarkers`.
  *
  * Checked before the marker builder runs so the hot path — a structured address,
- * where none of these fire — pays one set membership test per kind and nothing else.
+ * where none of these fire — pays one set membership test per kind alone.
  */
 const MARKER_KINDS: ReadonlySet<QueryKind> = new Set<QueryKind>(["route_pair", "near_me", "poi_category"])
 

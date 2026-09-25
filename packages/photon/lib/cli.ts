@@ -164,8 +164,8 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 			// Locality→postcode enrichment: an admin answer for a place whose containing
 			// postcode is unambiguous (exactly one) carries that postcode.
 			// The register/WOF attests it, the query simply never said it.
-			// Multi-postcode cities (Paris) get nothing: the exactly-one rule is the
-			// abstention, per the registry doctrine.
+			// Multi-postcode cities (Paris) get no postcode: the exactly-one rule is
+			// the abstention, per the registry doctrine.
 			// Keyed by the resolved place's WOF id, so no name matching is involved.
 			let enrichedPostcode: string | undefined
 

@@ -8,7 +8,7 @@
  * End-to-end smoke of the `map-tui` bin, driven through a real pty.
  *
  * A pty is not a nicety here: the app only takes over the screen when stdin can be put
- * in raw mode, so a piped-stdio child would render nothing and exit on EOF.
+ * in raw mode, so a piped-stdio child would render no interface and exit on EOF.
  * `script` supplies one — `-e` returns the child's exit code, and `stty` inside the command
  * sets a window size, since a pty created without a controlling terminal reports 0x0.
  *

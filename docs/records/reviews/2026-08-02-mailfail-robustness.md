@@ -278,7 +278,7 @@ input it came from.
 **Suggested fix.** Fixing Finding 1 removes the throw, which removes most of this. Independently,
 `safeClassify` swallowing every error with a bare `catch {}` means a model fault is
 indistinguishable from a clean no-match. Surfacing it on `PipelineResult` (a `classifierError`
-field, or a `path` marker) would cost nothing and make this class self-reporting.
+field, or a `path` marker) would cost no extra work and make this class self-reporting.
 
 ---
 
@@ -328,7 +328,7 @@ A phone number is read as a locality at **0.964**. On the resolver side, the cor
 27.0. There is no threshold on either signal that separates these from a correct hit.
 
 **Assessment.** This is not straightforwardly a bug — `Boom` is a real Belgian municipality and a
-geocoder should find it. The defect is that nothing downstream can tell the two cases apart. A
+geocoder should find it. The defect is that no downstream check can tell the two cases apart. A
 plausible mitigation is a population/importance floor for single-token localities that lack any
 corroborating component (a house number, postcode, or region). That floor would drop the whole
 table above while keeping `Springfield`, a bare city name a user might type.
@@ -347,7 +347,7 @@ following threw, hung, or emitted anything:
   `{}` with no throw. Single alphanumerics (`a`, `X`, `7`, `0`) emit one component, which is
   defensible for a single-token query; only `a` resolves.
 - **Emoji.** Single emoji, ten building emoji, ZWJ family sequences, skin-tone modifiers,
-  regional-indicator flags — all emit nothing. Keycap sequences (`1️⃣2️⃣3️⃣`) emit
+  regional-indicator flags — all emit no component. Keycap sequences (`1️⃣2️⃣3️⃣`) emit
   `{"locality":"3","street":"2","house_number":"1"}`, which is the digits inside them being read rather than an emoji failure.
 - **Encoding stress.** Unpaired high and low surrogates, embedded NUL, BOM, zero-width spaces
   inside tokens, RTL override wrapping, NFD-decomposed accents, fullwidth Latin, non-breaking

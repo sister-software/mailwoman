@@ -118,7 +118,7 @@ export interface SameDataPanelRow {
 	 * the gold identity set out of the backend's answers as it recorded.
 	 *
 	 * Drives which denominator the row counts in, and is never inferred from an empty pool.
-	 * A pool can be empty because the gazetteer holds nothing, which is a different fact.
+	 * A pool can be empty because the gazetteer holds no place, which is a different fact.
 	 */
 	goldPresent: boolean
 	source: {

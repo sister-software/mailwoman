@@ -210,7 +210,7 @@ def run(config_path: Path, *, json_path: Path | None = None, draws: int | None =
     resolve_config_reps(cfg, corpus_dir)
 
     # Raise rather than fall back to a default epoch length: a census counted over a different number
-    # of rows than the audit reports is not comparable with it, and nothing downstream would say so.
+    # of rows than the audit reports is not comparable with it, and no downstream check would say so.
     epoch_rows = draws or getattr(cfg.data, "train_rows_per_epoch", None)
     if not epoch_rows:
         raise ValueError("config has no train_rows_per_epoch — pass --draws for the epoch length")

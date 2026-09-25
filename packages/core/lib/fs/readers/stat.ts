@@ -46,7 +46,7 @@ export function tryStat(pathBuilderLike: PathBuilderLike | URL): Promise<Stats |
 }
 
 /**
- * Stat a file or directory, raising enoent when nothing is there.
+ * Stat a file or directory, raising enoent when the path is absent.
  *
  * The throwing counterpart to {@linkcode tryStat}.
  * Reach for this one where absence is a defect the caller wants reported,
@@ -64,7 +64,7 @@ export function statLink(path: PathBuilderLike | URL): Promise<Stats> {
 }
 
 /**
- * Stat a path without following a symbolic link, answering `null` when nothing is there.
+ * Stat a path without following a symbolic link, answering `null` when the path is absent.
  *
  * The link-level counterpart to {@linkcode tryStat}.
  */
@@ -277,7 +277,7 @@ export async function formatFileSize(path: PathBuilderLike | URL, options?: Byte
 /**
  * Resolve a path to its canonical location, following every symbolic link.
  *
- * @throws Enoent when nothing is there. {@linkcode tryRealPath} answers `null` instead.
+ * @throws Enoent when the path is absent. {@linkcode tryRealPath} answers `null` instead.
  */
 export function realPath(path: PathBuilderLike): Promise<string> {
 	return realpath(path.toString())
@@ -286,7 +286,7 @@ export function realPath(path: PathBuilderLike): Promise<string> {
 /**
  * Resolve a path to its canonical location, following every symbolic link.
  *
- * @returns The canonical path, or `null` when nothing is there.
+ * @returns The canonical path, or `null` when the path is absent.
  */
 export function tryRealPath(path: PathBuilderLike): Promise<string | null> {
 	return realpath(path.toString()).catch((error) => {
@@ -303,7 +303,7 @@ export function open(path: PathBuilderLike | URL, flags?: string | number, mode?
 /**
  * The target a symbolic link points at, verbatim — relative if it was written relative.
  *
- * @throws Einval when the path is not a link, enoent when nothing is there.
+ * @throws Einval when the path is not a link, enoent when the path is absent.
  */
 export function readLink(path: PathBuilderLike): Promise<string> {
 	return readlink(path.toString())

@@ -22,7 +22,7 @@
  *     identical to "this country has no data" from a row count.
  *
  *   absence is reported rather than omitted. A country asked for and not found gets a row saying so, because "the query
- *   returned nothing" and "we never looked there" are the two facts this file exists to keep apart.
+ *   returned no rows" and "we never looked there" are the two facts this file exists to keep apart.
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"

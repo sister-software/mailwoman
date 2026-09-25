@@ -24,7 +24,7 @@
  *   of a full build — an unguarded typo'd `--provider-list-path` would otherwise surface as a raw enoent
  *   only after a nationwide availability ingest had already finished, discarding hours of work.
  *   `--filer-db-path` given without `--provider-list-path` is a loud error rather than a silent no-op:
- *   filer.db is only ever read to resolve a multi-FRN primary FRN, so it does nothing without a provider
+ *   filer.db is only ever read to resolve a multi-FRN primary FRN, so it performs no work without a provider
  *   list to resolve FRNs FOR.
  */
 

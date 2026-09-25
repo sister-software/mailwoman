@@ -12,7 +12,7 @@
  *
  *   This reads such a parquet and writes it back with `recipe`, `register`, `surface` and `base_source_id` in place
  *   of `synth_method` and `synth_base_id`, preserving every row. What it claims is bounded the same way
- *   `migrate-recipe-output.ts` bounds it: the two renames assert nothing new, the surface comes from the recipe that
+ *   `migrate-recipe-output.ts` bounds it: the two renames assert no new claim, the surface comes from the recipe that
  *   wrote the row, and the register is whatever {@linkcode OVERLAY_REGISTERS} records for that source — which is
  *   `mailwoman-derived-tuples` wherever the upstream was not recorded.
  */

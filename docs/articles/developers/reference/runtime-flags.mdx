@@ -18,7 +18,7 @@ schema splits its variables by whether they are safe to log rather than by wheth
 set them, so it also declares the release-publishing settings, the weights dev-linking overrides, the
 corpus fetch knobs, and the switches the evaluation scripts read. None of those does anything in an
 installed package, and several are declared but read nowhere. If a variable is not on this page,
-setting it changes nothing you can observe.
+setting it produces no observable change.
 
 Behavior defaults are listed after the variables. They are not environment variables. Each is an
 option on `createRuntimePipeline`, `geocodeAddress`, or the resolver, and the table states where.
@@ -49,12 +49,12 @@ surface that resolves places — `parse`, `geocode`, `serve`, `poi`, `registry`,
 the `nominatim` and `photon` drop-ins — reads an explicit `--candidate-db`, then this variable, then
 the convention path `<data root>/db/wof/candidate.db`, taking the first that exists on disk.
 `mailwoman data pull candidate` writes that path, so a bare pull is the whole setup. (The `libpostal`
-drop-in never appears in that list: it parses and expands, and resolves nothing.)
+drop-in never appears in that list: it parses and expands, and resolves no place.)
 
 Two things the variable is still for. Point it at a copy that lives outside the data root, or set it
 to the literal `none` (equivalently `--candidate-db none`) to pin the older FTS backend over a full
 Who's On First distribution. `data pull` still prints an `export` line on success; it is a leftover
-from when the export was required, and following it changes nothing unless your file is elsewhere.
+from when the export was required, and following it produces no change unless your file is elsewhere.
 
 The change has a real edge: a machine that had `candidate.db` sitting at the convention path while
 running on the FTS backend switches backends on upgrade, with no configuration edited. `none` is the
@@ -83,7 +83,7 @@ are on [CLI](./cli.mdx); each flag's description gives the variable it falls bac
 
 The candidate row has one wrinkle the other two do not. Each position is used only if the file it
 names is on disk, so a stale `$MAILWOMAN_CANDIDATE_DB` pointing at a deleted file does not fall
-through to the convention path. It resolves to nothing and you land on the search backend. And
+through to the convention path. It resolves to no path and you land on the search backend. And
 `none` at either of the first two positions is a pin rather than a path: it stops the search there.
 
 A `.env` file in the working directory is read once at startup and the live environment layers on top
@@ -135,7 +135,7 @@ only way to leave the mechanism off.
 | `candidate.db` downloaded but a command still uses the search backend | `$MAILWOMAN_CANDIDATE_DB` is set to a path that is not there  | Unset it. A variable naming a missing file does not fall through to the convention path         |
 | A reverse geocode reports approximate containment                     | `MAILWOMAN_WOF_POLYGONS_DB` is unset                          | Point it at the polygon sidecar                                                                 |
 | A batch request answers `413 batch too large`                         | The request exceeded `MAILWOMAN_BATCH_MAX`                    | Raise the variable, or chunk the request                                                        |
-| A variable you set has no effect                                      | It is outside this page's boundary                            | Check the table above. Repository-only variables do nothing installed                           |
+| A variable you set has no effect                                      | It is outside this page's boundary                            | Check the table above. Repository-only variables have no effect when installed                  |
 
 `mailwoman doctor` reports which of these are resolved, and prints the one command that fixes each
 gap.

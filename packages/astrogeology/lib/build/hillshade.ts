@@ -8,7 +8,7 @@
  *
  *   why not A shaded image. `gdaldem hillshade` answers a single greyscale band, and greyscale carries no colour for
  *   a style to tint: MapLibre's raster paint properties are brightness, contrast, saturation and hue-rotate, and on
- *   an image with no chroma the last two do nothing. That is why the Moon and Mars rendered as the same grey ball
+ *   an image with no chroma the last two have no effect. That is why the Moon and Mars rendered as the same grey ball
  *   whatever their palettes said. Encoded elevation moves the colour decision into the style, where
  *   `hillshade-highlight-color`, `-shadow-color` and `-accent-color` give each body its own relief, and a re-tint
  *   costs an edit rather than a rebuild.
@@ -168,9 +168,9 @@ export async function buildHillshadePMTiles(
 	//    The XYZ scheme is angular, so the epsg:4326 label with the whole-body
 	//    extent only tells gdal which grid to tile.
 	//    The resize to exactly the requested zoom's pixel grid is what fixes the tiling zoom,
-	//    because the MBTiles driver picks it from the source resolution and nothing else:
-	//    its maxzoom is a metadata value and ZOOM_LEVEL an open option, and under both the
-	//    118 m Moon mosaic landed at zoom 7 and 8 (907 MB and 2.98 GB) against a requested 6.
+	//    because the MBTiles driver picks it from the source resolution alone: its maxzoom
+	//    is a metadata value and ZOOM_LEVEL an open option, and under both the 118 m Moon
+	//    mosaic landed at zoom 7 and 8 (907 MB and 2.98 GB) against a requested 6.
 	const width = TILE_PIXELS * 2 ** options.maxZoom
 
 	const declare = [

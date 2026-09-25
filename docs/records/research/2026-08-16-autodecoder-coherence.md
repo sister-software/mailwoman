@@ -40,7 +40,7 @@ The required distinction for you: the auto-decoder provides robustness-to-partia
 
 ## Part 2 — Coherence/plausibility scoring of assembled structured outputs
 
-Failure case being designed against: input "Weimar, Thüringen" parsed correctly; resolver assembled locality=Weimar (Texas), region ignored — near-zero real-world joint probability, nothing flagged.
+Failure case being designed against: input "Weimar, Thüringen" parsed correctly; resolver assembled locality=Weimar (Texas), region ignored — near-zero real-world joint probability, with no flag raised.
 
 ### 2.1 Masked modeling over structured records; energy-based and verifier models
 
@@ -75,7 +75,7 @@ The hazard is real and named in three adjacent literatures:
 - **Industry address validation**: the commercial stack decomposes the answer per level — USPS **DPV** as an _independent_ deliverability oracle; Google's Address Validation reporting per-component confirmation levels (confirmed / unconfirmed-but-plausible / suspicious); geocoder confidence + precision codes (rooftop vs interpolated vs centroid); plus blunt sanity checks (coordinates in an ocean / wrong country). [S for the landscape; Google's exact confirmation-level enum names are M] The transferable pattern: **per-component verdicts against reference data** rather than one scalar confidence — your checker should say "locality confirmed, region contradicted", which is also the actionable form for a re-query.
 - **Record-linkage QA**: Fellegi–Sunter (which `packages/match` already implements) natively defines the upper/lower-threshold **clerical-review band** — the trichotomy (accept / review / reject) is the century-old shape of "flag the confidently wrong for a second look". [M — textbook]
 - **KB consistency checking**: SDValidate/SDType (2.3), relation-assertion error detection with induced constraints (Melo & Paulheim 2017/2020), path-ranking-guided embeddings for noisy-KG error detection. [S]
-- I found **no published work naming the exact compound failure** — "parser right, assembler wrong, joint assembly implausible, nothing flagged" — as its own problem; the pieces live in toponym resolution (the disambiguation failure) and KB error detection (the joint-implausibility detector). [S — absence claim, bounded by my searches]
+- I found **no published work naming the exact compound failure** — "parser right, assembler wrong, joint assembly implausible and no flag raised" — as its own problem; the pieces live in toponym resolution (the disambiguation failure) and KB error detection (the joint-implausibility detector). [S — absence claim, bounded by my searches]
 
 ---
 

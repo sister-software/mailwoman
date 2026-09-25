@@ -107,7 +107,7 @@ The design left three questions open. This section resolves them.
 
    `resolveFromPackageDir` is unchanged either way. It sees an ordinary directory with every artifact present, and
    `existsSync` follows the link. Symlinks are safe _here_ because their publish hazard (`YN0035`, a tarball
-   refusing symlinks) applies only to package directories, and nothing tars the data root.
+   refusing symlinks) applies only to package directories, and no packaging step tars the data root.
 
 2. **`copy-weights.ts` keeps reading the data root directly.** Pointing it at the overlay would make the
    release ship exactly the bytes dev ran. That is useful but outside phase 0. Revisit it at phase 3, when
@@ -129,7 +129,7 @@ The design left three questions open. This section resolves them.
 
 **Risk handled in phase 0:** only `model` and `tokenizer` throw. The other ~11 siblings degrade to
 `undefined` by design. The new rung could therefore replace a thrown error with a checkout that parses
-without lexicons, the FST, or the pair index, scores worse, and reports nothing. Sibling reporting ships
+without lexicons, the FST, or the pair index, scores worse, and reports no problem. Sibling reporting ships
 with the rung rather than after it.
 
 ## Phase 1 — `mw data inventory` — DONE
@@ -225,8 +225,8 @@ These rules come from the repo's own documents. They are restated here because e
 ## Open, and directly open
 
 - **The seat-preference term's effect is unverified end-to-end.** It moves 3,896 top slots at the ranker.
-  Three inverted probes (the term itself, `compareReferential`, and the candidate `ORDER BY`) changed
-  nothing in pipeline output on four inputs the sweep says should move. A deliberate `throw` confirmed that
+  Three inverted probes (the term itself, `compareReferential`, and the candidate `ORDER BY`) produced
+  no change in pipeline output on four inputs the sweep says should move. A deliberate `throw` confirmed that
   the harness reads the edits. The pipeline therefore decides those answers downstream of candidate
   ordering, at a stage not yet identified. The worktree arm should be used on this first.
 - **`ten-minute-trial.mdx` promises zero configuration.** Every phase here must keep that true. For that

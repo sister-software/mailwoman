@@ -5,11 +5,11 @@
  *
  *   Route definitions + handlers for the native `/v1` surface. The OpenAPI document is emitted from
  *   these definitions. There is no handwritten spec. Unlike the drop-ins (photon, nominatim,
- *   libpostal), nothing here mimics a vendor's legacy query-parsing tolerance: request bodies are
+ *   libpostal), no vendor's legacy query-parsing tolerance is mimicked here: request bodies are
  *   validator-enforced, and a validation failure always answers through the shared api-kit envelope
  *   (`apiError`), never the raw zod shape. `GET /v1/parse` is the one query-string route, and it
  *   reads `c.req.query()` directly — a query string has no repeated-value interface worth preserving
- *   here (contrast the drop-ins' `legacyQuery` adapter), so there's nothing to tolerate.
+ *   here (contrast the drop-ins' `legacyQuery` adapter), so no tolerance is required.
  *
  *   Per-route validation hooks (the 3rd arg to `app.openapi(route, handler, hook)`) override the
  *   app-level `defaultHook` (wired in `app.ts`) so each route can answer its own friendly business

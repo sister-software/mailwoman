@@ -16,7 +16,7 @@
  *   leaks.
  *
  *   Every rate in {@link PremiseLinkageReport} is a {@link PremiseLinkageCount} — a numerator and its
- *   denominator as separate fields. Nothing here stores a precomputed ratio: a ratio cannot say
+ *   denominator as separate fields. No field here stores a precomputed ratio: a ratio cannot say
  *   whether it was measured over three rows or three thousand, and a reader who cannot see the
  *   denominator cannot tell a result from a rounding artifact.
  */
@@ -93,7 +93,7 @@ export interface PremiseLinkageObjectID {
  * Private.
  *
  * One controlled row as the adapter reads it — licensed fields included.
- * Held in memory for one run and never serialized: nothing in this repository writes this type to disk.
+ * Held in memory for one run and never serialized: no code in this repository writes this type to disk.
  */
 export interface PremiseLinkageInputRow extends PremiseLinkagePresence {
 	/**
@@ -192,8 +192,8 @@ export type PremiseLinkageFailureCategory =
 /**
  * Persistable.
  *
- * One arm's graded answer for one row, carrying nothing that can be joined back
- * to a premise without the run's salt.
+ * One arm's graded answer for one row, carrying no field that can be joined
+ * back to a premise without the run's salt.
  */
 export interface PremiseLinkageResultRow extends PremiseLinkagePresence {
 	/**

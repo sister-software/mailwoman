@@ -3,7 +3,7 @@
 The whole-stack smoke eval (#524). Every other validation lens is per-layer; this file
 exists because three production bugs (#520 gazetteer-feeds crash, #521 reconcile
 fragmentation subsidy, #522 resolver placetype exclusion) all shipped through
-green per-layer checks on 2026-06-11. Nothing in the battery ran
+green per-layer checks on 2026-06-11. No check in the battery ran
 parse → reconcile → resolve as one pass the way the demo (and any real consumer)
 does — the operator's browser inspection found all three in five minutes.
 

@@ -38,7 +38,7 @@ const commandURL = (parts: readonly string[], index = false): URL =>
  *
  * A prefix directory contributes its children as `<directory>-<child>`
  * rather than itself, because that is the name they answer to.
- * `listCommandNames` is help-only, so reading one extra directory level costs nothing anyone waits on.
+ * `listCommandNames` is help-only, so reading one extra directory level costs no user-visible time.
  */
 async function listCommandNames(directory: URL): Promise<string[]> {
 	const entries = await Globerator.from("*", { cwd: directory, withFileTypes: true, onlyFiles: false }).toArray()
@@ -86,7 +86,7 @@ async function listCommandNames(directory: URL): Promise<string[]> {
 }
 
 /**
- * The path segments one typed command name resolves to under `within`, or nothing when it names no command.
+ * The path segments one typed command name resolves to under `within`, or no path when it names no command.
  *
  * The literal spelling is tried first, so a command whose file sits where its name says is one `stat`.
  * Only then are the prefix-directory readings tried — `postcode-codepoint` as `postcode/codepoint` —

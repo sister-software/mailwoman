@@ -130,7 +130,7 @@ moves the clock: the same script over one row runs in 1.35 s and over twenty in 
 
 **`databases: extracts.for` is what lets this script get more precise later.** `RegionDatabaseProvider` resolves the
 per-state rooftop and interpolation databases by filename under `$MAILWOMAN_DATA_ROOT`, opens each one
-once, and returns nothing for a state you have not downloaded. Omit it and the loop is pinned to city
+once, and returns no database for a state you have not downloaded. Omit it and the loop is pinned to city
 centroids no matter what you pull. Step 6 is the proof.
 
 **`enableQuoteHandling: true` is opt-in and you want it.** Without it, `CSVSpliterator` splits on every
@@ -138,7 +138,7 @@ comma, so `"Rowan, Fitch & Co."` becomes two columns and every field after it sh
 the address. The row still geocodes. It geocodes the wrong string.
 
 **The address is rebuilt from four columns with `join(", ")`.** The parser takes free text, so handing
-it commas between the parts you already know are separate costs nothing and removes a guess.
+it commas between the parts you already know are separate is free and removes a guess.
 
 **`hierarchy[].name` is compared against the city you sent.** `name` is the gazetteer's own name for
 the place it matched; `value` is your input span. Step 4 is what that comparison is for.
@@ -166,7 +166,7 @@ head -3 customers.geocoded.jsonl
 Twenty rows in 1.53 s wall on the machine this page was verified on, model load included. The three DC
 rows share a coordinate because they share a city, and `resolution_tier: "admin"` says so — three
 different buildings, one centroid, and `uncertainty_m: null` because the admin tier has no radius to
-report. The `RegionDatabaseProvider` was asked for DC and had nothing to give.
+report. The `RegionDatabaseProvider` was asked for DC and had no database to give.
 
 JSON lines rather than one JSON array: the file is appendable, streamable, and survives a crash halfway
 through with the rows written so far still readable.
@@ -217,7 +217,7 @@ tail -1 customers.geocoded.jsonl
 ```
 
 `Zzyzx Falls, ZZ` is not a place, and the row came back with a coordinate anyway — in Pennsylvania. The
-gazetteer matched on `Falls`, found Falls Township, and returned it. Nothing in the result object is
+gazetteer matched on `Falls`, found Falls Township, and returned it. No field in the result object is
 false: the coordinate is Falls Township's, and `matched_locality` says Falls Township. Only the
 assumption that a coordinate means a match is false.
 
@@ -275,14 +275,14 @@ jq '.features[0]' customers.geojson
 `20 rows → 20 records → 20 entities` is the line to read: twenty inputs in, twenty entities out, so no
 two records were linked. `26 candidate pairs` counts the comparisons the blocking pass thought worth
 scoring, out of the 190 a full cross-product of twenty records would have been — the pass runs whether
-or not it finds anything, and on a file of distinct customers it changes nothing.
+or not it finds anything, and on a file of distinct customers it produces no change.
 
 Reach for this one when you want GeoJSON without writing the conversion. Reach for the loop when you
 want your own columns to survive.
 
 ## 6. Make the same script more precise
 
-Nothing above needs to change to get building-level coordinates — only the data root does. Pull one
+No step above needs to change to get building-level coordinates — only the data root does. Pull one
 jurisdiction ([Improve geocode precision](./improve-geocode-precision.mdx) walks through what this
 downloads and what it costs) and run `geocode-csv.mjs` again, untouched:
 
@@ -306,7 +306,7 @@ head -4 customers.geocoded.jsonl | jq -c '{customer_id, resolution_tier, uncerta
 {"customer_id":"C-1004","resolution_tier":"interpolated","epistemic_status":"derived","uncertainty_m":98,"lat":38.900203906079575,"lon":-76.99797771359188}
 ```
 
-The four DC rows no longer share a coordinate, and the summary line is identical because nothing about
+The four DC rows no longer share a coordinate, and the summary line is identical because no part of
 the file or the loop changed. The sixteen rows in other states still read `admin` — precision is bought
 per jurisdiction rather than per install.
 

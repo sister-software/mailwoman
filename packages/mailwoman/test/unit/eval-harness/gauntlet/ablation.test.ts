@@ -251,7 +251,7 @@ describe("scoreAblation — one deletion against its own anchor", () => {
 		expect(scored.unresolved).toBe(true)
 	})
 
-	// A row whose own anchor never resolved measures nothing.
+	// A row whose own anchor never resolved measures no distance.
 	// Reporting it as held would be the meaning-of-zero trap one level below the renderer.
 	it("returns broken=null when the anchor itself never resolved", () => {
 		const scored = scoreAblation(result({ lat: null, lon: null }), result(), "75013", "postcode", 5)
@@ -501,7 +501,7 @@ describe("runAblationOptions — a CLI flag reaches the layer", () => {
 	})
 
 	// Absent must stay absent: an `outDir: undefined` own property would defeat the `??` default,
-	// and an empty `components` array would filter every tag out and measure nothing.
+	// and an empty `components` array would filter every tag out and measure no row.
 	it("omits each option entirely when its flag was never set", () => {
 		const options = runAblationOptions({})
 

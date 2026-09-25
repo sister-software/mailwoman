@@ -54,7 +54,7 @@ hierarchy:
   locality             Kraków [wof:9000000568126] (50.0614, 19.9366)
 ```
 
-Both addresses parse equally well. The Polish one comes out fully labeled — `street: "ul. Floriańska"`, `house_number: "3"`, `postcode: "31-019"`, `locality: "Kraków"` — exactly as the French one does. What differs is the data available to pin those labels. France has BAN, a national open address register wired into the resolver's rooftop tier, so the French run reports `address_point` and a 1 m uncertainty: a registered doorway. Poland has no open register wired in, so the ladder walks down to its floor and returns the locality centroid, labeled `admin`, with no uncertainty line at all. A town-grade point carries no radius worth promising. The house number in the Polish query contributed nothing to the coordinate. On the Polish eval panel the median miss from this kind of centroid resolution is 2.45 km.
+Both addresses parse equally well. The Polish one comes out fully labeled — `street: "ul. Floriańska"`, `house_number: "3"`, `postcode: "31-019"`, `locality: "Kraków"` — exactly as the French one does. What differs is the data available to pin those labels. France has BAN, a national open address register wired into the resolver's rooftop tier, so the French run reports `address_point` and a 1 m uncertainty: a registered doorway. Poland has no open register wired in, so the ladder walks down to its floor and returns the locality centroid, labeled `admin`, with no uncertainty line at all. A town-grade point carries no radius worth promising. The house number in the Polish query contributed no signal to the coordinate. On the Polish eval panel the median miss from this kind of centroid resolution is 2.45 km.
 
 One operational footnote from the second command: `--default-country none`. The default `en-US` locale scopes the resolver to the United States, and under that scope this same query returns Krakow, Michigan. Coverage questions are routing questions too; if your input spans countries, unpin the scope or set it per batch.
 
@@ -74,7 +74,7 @@ The scope table also carries a row this summary folds out: its tier 4 records a 
 
 Two clarifications the table can't carry. First, there is one trained model. The `en-us` and `fr-fr` weight packages currently ship the same binary, trained on a multi-country corpus; locale-specific weights are future work, and the tiers describe how well that one model plus the data serves each locale. Second, Tier 2 is exactly the "parses well, resolves coarsely" case the Kraków run demonstrated. The Dutch panel is the outlier that shows the difference comes from data: block-grain PC6 postcodes take NL to a 0.05 km median without any rooftop register, because the postcode data is nearly rooftop-grade by itself.
 
-Absence from the table is also a claim. The Ulaanbaatar address you try will probably still resolve (the admin gazetteer covers most of the world), but nothing has measured how well, so nothing is promised.
+Absence from the table is also a claim. The Ulaanbaatar address you try will probably still resolve (the admin gazetteer covers most of the world), but no eval has measured how well, so no result is promised.
 
 ## What the data is
 
@@ -92,7 +92,7 @@ Provenance is a design constraint. The shipped core is built entirely from permi
 
 ## Where coverage runs out
 
-Coverage gives out by degrees. [The precision ladder](./how-mailwoman-resolves-a-place.mdx#the-precision-ladder) consults each rung only when the finer one has nothing, so a missing register degrades the answer rather than emptying it. Without a rooftop point, the resolver returns an interpolated estimate. Without a street segment, it returns a postcode or locality centroid. The output's `resolution_tier` field reports the rung it used. Do not ignore `resolution_tier` and treat every coordinate as a delivery point. The Kraków result is a correct town rather than a correct door.
+Coverage gives out by degrees. [The precision ladder](./how-mailwoman-resolves-a-place.mdx#the-precision-ladder) consults each rung only when the finer one has no candidate, so a missing register degrades the answer rather than emptying it. Without a rooftop point, the resolver returns an interpolated estimate. Without a street segment, it returns a postcode or locality centroid. The output's `resolution_tier` field reports the rung it used. Do not ignore `resolution_tier` and treat every coordinate as a delivery point. The Kraków result is a correct town rather than a correct door.
 
 The floor drops away only when the gazetteer has never heard of the place. Then the parse survives and the coordinate does not:
 
@@ -119,4 +119,4 @@ Three instruments, in the order you'd reach for them:
 - **The eval record.** [The eval reports](https://github.com/sister-software/mailwoman/blob/main/docs/records/evals/index.mdx) are the graded, dated evidence behind every claim above — the [parity scorecards](https://github.com/sister-software/mailwoman/blob/main/docs/records/evals/competitive-parity/index.mdx) for per-tag parse quality, the [resolver and geo panels](https://github.com/sister-software/mailwoman/blob/main/docs/records/evals/resolver-geo/index.mdx) for coordinate accuracy per locale.
 - **Your own sample.** The two-command pattern at the top of this page works on your data. If your addresses are heavy in a Tier-2 or Tier-3 locale, run a few hundred through `mailwoman geocode` and read the `resolution_tier` distribution before committing; [which languages Mailwoman handles well](./language-support.mdx) is the plain-language companion read, per language rather than per data layer.
 
-When a place is missing from the tiers, the fog, and the panels, that absence is the answer: nothing has measured it, so Mailwoman makes no claim about it. The tier table moves when new data and new evals land, and the scope declaration is where it moves first.
+When a place is missing from the tiers, the fog, and the panels, that absence is the answer: no eval has measured it, so Mailwoman makes no claim about it. The tier table moves when new data and new evals land, and the scope declaration is where it moves first.

@@ -22,7 +22,7 @@ export interface PipelineLoadingState {
 	/**
 	 * Bytes received over bytes expected for the asset being fetched right now, in [0, 1].
 	 *
-	 * `null` while nothing is downloading or when the response declares no length.
+	 * `null` while no download is in progress or when the response declares no length.
 	 *
 	 * The step index alone cannot report this download.
 	 * The model is fetched before the first step is entered, so a step-derived
@@ -98,7 +98,7 @@ export interface PipelinePanels {
 	 */
 	extras?: (result: ParseResult) => ReactNode
 	/**
-	 * Rendered in place of the resolved-place panel when nothing resolved (host's FailureDiagnostic).
+	 * Rendered in place of the resolved-place panel when no place resolved (host's FailureDiagnostic).
 	 */
 	failure?: (result: ParseResult) => ReactNode
 }

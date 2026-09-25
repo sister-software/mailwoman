@@ -5,7 +5,7 @@
  *
  *   `mailwoman corpus list` — print every adapter known to the default registry, one per line.
  *
- *   Used by humans and by scripts that want to fan out a build over adapters. Prints nothing (zero
+ *   Used by humans and by scripts that want to fan out a build over adapters. Prints no output (zero
  *   lines + exit 0) when no adapter has been registered yet. that's the expected state during early
  *   Phase 1 while adapters are still being authored.
  */

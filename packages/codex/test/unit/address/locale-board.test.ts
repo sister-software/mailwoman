@@ -5,7 +5,7 @@
  *
  *   One real address per locale this project publishes weights for, with the surface it must render to.
  *
- *   This board exists because the engine it replaces got five of these eleven wrong, and nothing measured it. The
+ *   This board exists because the engine it replaces got five of these eleven wrong, and no test measured it. The
  *   OpenCage templates are written for OpenStreetMap's tag vocabulary and are correct for the anglophone and
  *   German-order locales. they insert a comma into Spain's street line, drop Italy's province, reorder India's tail,
  *   and print both CJK locales backwards with commas inserted — `1-9-1, 丸の内, 千代田区, 東京都 100-0005` where the

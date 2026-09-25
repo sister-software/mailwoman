@@ -3,7 +3,7 @@
 Construction order is an interface, and it binds this module twice. `_init_weights` walks
 `self.parameters()`, which yields them in registration order and draws from the global RNG for
 each. Therefore, the three builders must be called from `__init__` in the order they appear below and
-nothing inside one may be reordered. A loaded checkpoint is unaffected — `load_state_dict`
+no line inside one may be reordered. A loaded checkpoint is unaffected — `load_state_dict`
 overwrites — but a from-scratch run started after a reorder no longer reproduces one started
 before it.
 
@@ -165,7 +165,7 @@ class CoarseEncoderConstruct(CoarseEncoderState):
     ) -> None:
         """The five soft-feed channels, each a projection plus a learned cue vector.
 
-        A disabled channel records width 0 and constructs nothing, so its absence is no projection
+        A disabled channel records width 0 and constructs no projection, so its absence is no projection
         rather than a zero-width one. `inject_first_token` additionally places the pooled anchor at
         position 0 and is meaningful only with the postcode anchor on.
 

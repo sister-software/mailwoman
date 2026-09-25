@@ -7,7 +7,7 @@
  *
  *   `stripHTMLToText` (`@mailwoman/core/trust-policies`) answers almost all of this already, and
  *   correctly: it decodes entities, survives a `<` inside an attribute value, and leaves source
- *   whitespace runs intact. What it cannot do is the one rule here — `textContent` inserts nothing at an
+ *   whitespace runs intact. What it cannot do is the one rule here — `textContent` inserts no separator at an
  *   element boundary, so `<td>a</td><td>b</td>` reads as `"ab"` and `<p>Acme Fiber</p><p>LLC</p>` as
  *   `"Acme FiberLLC"`, a name that appears nowhere in the document. Reach for the sanitizer from a module
  *   that already sanitizes. its Node build constructs a jsdom window at import (measured 422 ms, 71 MB,

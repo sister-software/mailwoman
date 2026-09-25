@@ -7,7 +7,7 @@
  *   instruments the frozen definition's checks read, prints each measurement beside the bar it was
  *   registered against, and reports which of the three decisions the arithmetic maps to.
  *
- *   The command chooses nothing. Lanes, checks, denominators, bars, artifact pins and the one marker query
+ *   The command chooses no lane. Lanes, checks, denominators, bars, artifact pins and the one marker query
  *   all come from `decision-definition.json`, which the loader refuses to hand over if its content hash has
  *   moved.
  *

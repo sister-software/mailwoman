@@ -68,7 +68,7 @@ describe("WorkerHost restart", () => {
 		await host.start()
 
 		// Same list, same fork state.
-		// A restart with nothing edited stays quiet.
+		// A restart with no edit stays quiet.
 		const unchanged = await host.restart()
 
 		expect(unchanged.tools_changed).toBe(false)

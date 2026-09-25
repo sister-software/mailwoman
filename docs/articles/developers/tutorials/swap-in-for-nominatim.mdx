@@ -77,10 +77,10 @@ The paths in the transcripts on this page use the data root from the verificatio
 will differ. The file is saved at `<data-root>/db/wof/candidate.db`, and every entry point finds it
 there automatically, including the drop-ins, `mailwoman geocode` and `mailwoman serve`. The `export`
 line that the pull prints is left over from `8.6.0`, when only the drop-ins had that fallback. Running
-it changes nothing. Pass `--candidate-db <path>` if your copy is stored elsewhere.
+it has no effect. Pass `--candidate-db <path>` if your copy is stored elsewhere.
 
 Re-running the pull is safe. If the file is already on disk, it reports `already present … skipped`
-and downloads nothing, so you can leave this command in a provisioning script.
+and downloads no file, so you can leave this command in a provisioning script.
 
 ## 2. Start the Photon-compatible server
 
@@ -293,8 +293,8 @@ curl -s "http://127.0.0.1:8088/search?q=springfield&countrycodes=de" | jq -c
 []
 ```
 
-The empty array means the restriction was applied and nothing in Germany matched. A hard filter that
-returns nothing is working correctly. Step 3's soft bias never removes results this way.
+The empty array means the restriction was applied and no place in Germany matched. A hard filter that
+returns no result is working correctly. Step 3's soft bias never removes results this way.
 
 geopy's `Nominatim` geocoder takes the same two arguments as its `Photon` one, plus the `user_agent`
 it requires:
@@ -377,7 +377,7 @@ the engines behind them, then checked against a running server. Each request par
 three verdicts:
 
 - **Honored** — the parameter changes the answer.
-- **Accepted, ignored** — the request is valid and the parameter is parsed, but nothing downstream
+- **Accepted, ignored** — the request is valid and the parameter is parsed, but no downstream stage
   reads it. Your client will not break, and it will get the unfiltered answer.
 - **Not read** — the parameter never reaches a handler.
 
@@ -398,7 +398,7 @@ one.
 | `radius` on `/reverse`                     | Accepted, ignored | The reverse geocoder returns the containing place instead of running a radius search                          |
 | `bbox`                                     | Not read          | The handler parses no bounding box. Use `lat`/`lon` for viewport influence                                    |
 | `osm_key`/`osm_value`/`type`               | Always present    | Derived from the resolved place's type so clients can dereference them. Not OpenStreetMap tag values          |
-| `osm_id` / `osm_type`                      | Never set         | Nothing here is keyed to an OpenStreetMap object. A client that stores them stores `undefined`                |
+| `osm_id` / `osm_type`                      | Never set         | No part of this is keyed to an OpenStreetMap object.A client that stores them stores `undefined`              |
 | `/reverse` without a full WOF distribution | Empty collection  | See the prerequisites                                                                                         |
 
 ### Nominatim: `/search`, `/reverse`, `/lookup`, `/status`
@@ -433,7 +433,7 @@ one.
 
 ## 8. Stop them
 
-Press `Ctrl-C` in each server's terminal. Serving writes nothing to the data root, so a restart
+Press `Ctrl-C` in each server's terminal. Serving writes no files to the data root, so a restart
 continues from the same state.
 
 ## What you have now

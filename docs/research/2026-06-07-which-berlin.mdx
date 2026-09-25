@@ -19,11 +19,11 @@ This isn't a contrived edge case. Bare locality names collide constantly across 
 
 We only tripped over it by accident, chasing something else entirely.
 
-## The hint that did nothing, loudly
+## The hint that showed zero improvement, loudly
 
 Every address carries a postcode, and a postcode mostly pins down a country. So we built a small extractor that turns the postcode into a guess about which country you're in, and we ran a simulation: feed that country guess into the resolver's ranking, give candidates from the right country a nudge, and see how much the name-match score improves.
 
-It improved by nothing. Zero. Flat line.
+It improved by zero. Flat line.
 
 Which, briefly, looked like a dead end. The hint was supposed to help and the number said it didn't. Then it clicked: the number _couldn't_ say it helped, because the number grades by name, and fixing a wrong-country pick doesn't change the name. We'd handed our metric exactly the kind of improvement it was built to ignore.
 
@@ -31,7 +31,7 @@ Which, briefly, looked like a dead end. The hint was supposed to help and the nu
 
 So we threw out the name check and graded by distance instead. We have the real government coordinates for every test address, so we can ask the only question that matters: how far is the resolver's pick from where the address really is?
 
-The picture inverted immediately. On German addresses, the postcode hint dragged 33 picks back across the Atlantic to where they belonged, erasing about 117,000 kilometers of total error. On American addresses it pulled 333 of them more than 100 km closer to the truth and pushed only 7 the wrong way, a roughly fifty-to-one trade. The hint was worth a continent, and the name scorecard had been sitting there the whole time reporting that absolutely nothing was happening.
+The picture inverted immediately. On German addresses, the postcode hint dragged 33 picks back across the Atlantic to where they belonged, erasing about 117,000 kilometers of total error. On American addresses it pulled 333 of them more than 100 km closer to the truth and pushed only 7 the wrong way, a roughly fifty-to-one trade. The hint was worth a continent, and the name scorecard had been sitting there the whole time reporting that absolutely no change was happening.
 
 A metric you can satisfy without being right will let you be wrong forever, cheerfully, in production. "Berlin" matches "Berlin" no matter which one you meant. The distance to the real point does not care what you call the place; itmeasures whether you found it. We switched the yardstick, and we're building the country hint into the resolver for real now that we can finally see what it does.
 

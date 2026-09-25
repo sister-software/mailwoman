@@ -28,7 +28,7 @@ on supply: 126 labeled rows. Korean joins the same package when its corpus is bu
 1. **ONNX export.** `export_onnx.py` wraps the model behind inputs `input_ids` + `attention_mask` (plus the anchor,
    gazetteer and span variants). No wrapper takes `char_ids`. The char model's forward reads `char_ids (B, S, W)`
    and `attention_mask (B, S)` and ignores `input_ids`.
-2. **Runtime encoder.** `@mailwoman/neural` has no character encoder: nothing in `packages/neural/lib` mentions
+2. **Runtime encoder.** `@mailwoman/neural` has no character encoder: no file in `packages/neural/lib` mentions
    `char_ids`. The TypeScript side needs `encodeRowUnits` with the same arithmetic as the Python one — a unit per
    character, the window, the vocabulary lookup, `<unk>` for a character outside the vocabulary, S-truncation.
 3. **Runtime runner.** `onnx-runner.ts` and `web-onnx-runner.ts` build `input_ids` tensors. A char-mode session feeds

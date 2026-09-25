@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   The bodies this pipeline builds, with the conventions their usgs products use. A body is explicit in every record
- *   and artifact. nothing here treats Earth as the reference.
+ *   and artifact. No code here treats Earth as the reference.
  */
 
 import { BODY_RADII_KM, type PlanetaryBodyID } from "@mailwoman/spatial"

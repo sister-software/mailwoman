@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  * @file A complete {@link EngineRegistryLike} for tests, with the one or two members a case cares about overridden.
  *
- *   Every tool in this package takes the registry, and almost every test of one needs a registry that does nothing.
+ *   Every tool in this package takes the registry, and almost every test of one needs a registry with no behavior.
  *   Written inline, that stub is an object literal missing most of the interface, which only compiles by asserting —
  *   and an assertion keeps compiling after a method is renamed or its signature changes. Therefore, the stub quietly stops
  *   standing for the thing it doubles. Built here instead, a change to `EngineRegistryLike` fails in one place with

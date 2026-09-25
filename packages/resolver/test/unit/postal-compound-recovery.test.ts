@@ -5,7 +5,7 @@
  *
  *   Tests for the #942 postal-compound recovery — the knife-edge no-street query shape
  *   ("Kožljek 7, 1382 Kožljek") whose parse globs the trailing city into the postcode span. The
- *   fixture mirrors the real failure: the compound resolves as nothing, the confident postcode
+ *   fixture mirrors the real failure: the compound resolves to no place, the confident postcode
  *   span blocks its own city tokens, and the tree comes back empty. With the flag on, the code
  *   subset anchors the check, the residual city tokens become span material, and the failed
  *   postcode node gains a coordinate floor. Street blocking (the "Ave, France" guard) stays.
@@ -166,7 +166,7 @@ describe("postal-compound recovery (#942)", () => {
 		const out = await resolver.resolveTree(tree, { defaultCountry: "SI", postalCompoundRecovery: true })
 		const pc = out.roots.find((n) => n.tag === "postcode")
 
-		expect(pc).toBeUndefined() // nothing synthesized
+		expect(pc).toBeUndefined() // no postcode synthesized
 		expect(out.roots.filter((n) => n.placeID)).toHaveLength(1)
 	})
 

@@ -69,7 +69,7 @@ const ABSENCE_CLAIM_MAX_UPPER_BOUND = 0.01
  * A full board carries its own denominator, and a declared subset carries the predicate that chose it.
  *
  * `random-draw` is separate from `subset` because the two support opposite claims.
- * A declared subset is chosen by a predicate and generalizes to nothing beyond it.
+ * A declared subset is chosen by a predicate and generalizes to no rows beyond it.
  *
  * A random draw from a 26-million-row register is the one subset here whose rate estimates the population's.
  *
@@ -80,7 +80,7 @@ export type Selection = "full" | "subset" | "hand-picked" | "random-draw"
 /**
  * How each selection reads inside the observed-rate sentence.
  *
- * A full board says nothing — its denominator already is the population —
+ * A full board adds no qualifier: its denominator already is the population,
  * so it contributes an empty string.
  * Every other kind names itself where a reader will trip over it.
  */

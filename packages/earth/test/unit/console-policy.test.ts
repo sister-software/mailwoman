@@ -6,7 +6,7 @@
  *
  *   The policy decides whether a demo build ships, so both of its errors cost something. Missing a real asset 404
  *   passes a build whose runtime cannot load what it needs. Matching a digit run inside a longer token fails a build
- *   over its own commit SHA, which is a failure nobody can act on because nothing in the build produced it.
+ *   over its own commit SHA, which is a failure nobody can act on because no part of the build produced it.
  */
 
 import { describe, expect, it } from "vitest"

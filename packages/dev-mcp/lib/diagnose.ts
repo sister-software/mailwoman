@@ -7,7 +7,7 @@
  *
  *   Two commitments from the epic bind every line here.
  *
- *   1. **Expectations pin outcomes, never mechanisms.** Nothing in an account is asserted by a board row, and nothing
+ *   1. **Expectations pin outcomes, never mechanisms.** No fact in an account is asserted by a board row, and no value
  *      here is cached. Every account is recomputed from the current system on every call, so an explanation is free to
  *      dissolve the moment the system stops working that way. (The anti-Pelias rule: no mechanistic belief accumulates
  *      that a truer understanding of addresses could break against.)
@@ -224,7 +224,7 @@ export interface AccountInput {
  * The decode's own confidence, over the tokens the tree was built from.
  *
  * `n_tokens: 0` with null statistics is a real state (an empty parse), kept apart from a mean of zero.
- * One says nothing was decoded, the other says everything was decoded with no confidence.
+ * One says no token was decoded, the other says everything was decoded with no confidence.
  */
 interface DecodeReading {
 	path: "viterbi" | "argmax"
@@ -281,7 +281,7 @@ interface LookupFact {
 	picked: { name: string; source: string } | null
 	/**
 	 * The picked candidate's rank in the first recorded stage (the backend's own order),
-	 * or `null` when nothing was picked or the pick came from a path that never ranked.
+	 * or `null` when no candidate was picked or the pick came from a path that never ranked.
 	 */
 	picked_initial_rank: number | null
 	/**
@@ -298,7 +298,7 @@ export interface RetrievalFacts {
 	 * A different claim, and one the shapes must not read as retrieval failure.
 	 *
 	 * Coverage bound, and it is required for every retrieval shape below: the trace
-	 * records the walk's own `#lookupAndPick` and nothing else.
+	 * records the walk's own `#lookupAndPick` and no other method.
 	 * The resolver's post-walk recovery passes — span-rescore (a famous name the model tagged
 	 * `street`, which the walk never queries because `street` is not in the placetype map)
 	 * and the postcode-compound recovery — query the backend directly and emit no record.
@@ -350,7 +350,7 @@ export interface RowAccount {
 	 * The account's retrieval facts are blind for this row.
 	 *
 	 * See {@link RetrievalFacts.lookups} for which passes are outside the trace's coverage.
-	 * Reported so the empty lookup list is not read as "retrieval had nothing to do": the retrieval
+	 * Reported so the empty lookup list is not read as "retrieval had no work to do": the retrieval
 	 * shapes cannot fire here, and their silence is a coverage bound rather than a finding.
 	 */
 	resolved_without_recorded_lookup: boolean
@@ -527,9 +527,9 @@ export function matchShapes(facts: {
 		shapes.push("evidence_starved")
 	}
 
-	// A span is only empty AT the deciding site when nothing resolved it: a `postcode_format_probe`
-	// and an `empty_admin_pick` both answer off an empty candidate table, and reading
-	// those as retrieval failure would report a working fallback as a defect.
+	// A span is only empty AT the deciding site when no lookup resolved it:
+	// a `postcode_format_probe` and an `empty_admin_pick` both answer off an empty candidate table,
+	// and reading those as retrieval failure would report a working fallback as a defect.
 	const emptyDeciding = lookups.some(
 		(lookup) =>
 			lookup.n_candidates === 0 &&
@@ -704,7 +704,7 @@ export interface SettingTally {
  * how many it moved, how many it could not apply to.
  *
  * All three, always.
- * A setting that moved nothing on forty rows and a setting that was never applicable
+ * A setting that changed no outcome on forty rows and a setting that was never applicable
  * are the same zero in a moved-only table, and they are not the same fact.
  */
 export function aggregateCounterfactuals(

@@ -83,7 +83,7 @@ Mailwoman v2 keeps every rule classifier from v1:
 - `whos_on_first` — gazetteer lookup for country, region, locality, and neighborhood names.
 - `street_prefix` / `street_suffix` — dictionaries of known directionals and street types.
 
-These classifiers are deterministic, fast, and correct for the cases they cover. A US 5-digit postcode is a postcode — a model gains nothing by re-learning that pattern.
+These classifiers are deterministic, fast, and correct for the cases they cover. A US 5-digit postcode is a postcode — a model gains no benefit by re-learning that pattern.
 
 The **policy registry** decides, per component, per locale, which classifier(s) get authority:
 

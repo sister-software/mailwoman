@@ -6,7 +6,7 @@
  *   The grading environment's artifact-presence interface (#1516, second half).
  *
  *   The failure being guarded is silent by construction: a weights package missing its `postcode-<cc>.bin`
- *   throws nothing, resolves the anchor channel off, and costs the run 3-4 baseline cases — which reads as a
+ *   throws no error, resolves the anchor channel off, and costs the run 3-4 baseline cases — which reads as a
  *   model regression. The guard must fire on that, and must stay quiet for the packages that ship no binary on
  *   purpose (en-gb under the #1476 mitigation, en-nz for want of a WOF NZ postcode database), which is why the
  *   expectation is read from each package's own card instead of a list in the harness.

@@ -47,7 +47,7 @@ export const inputsTool = (_deps: DevToolDeps): DevTool => ({
 			try {
 				expression = new RegExp(pattern, "iu")
 			} catch (error) {
-				// A malformed pattern must not read as "nothing matches".
+				// A malformed pattern must not read as "matches no row".
 				// That is a zero the caller would act on.
 				throw new Error(`mwdev_inputs: \`matching\` is not a valid regular expression: ${(error as Error).message}`)
 			}

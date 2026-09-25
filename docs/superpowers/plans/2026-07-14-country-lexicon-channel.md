@@ -32,7 +32,7 @@ phrase matching and projection as claimed, but a country channel still needs a r
   `requires.gazetteer.required = true`, and the ONNX graph carries `gazetteer_features` and
   `gazetteer_confidence`.
 
-**Extending the gazetteer with country data would therefore change nothing. The data is already
+**Extending the gazetteer with country data would therefore change no result. The data is already
 there and already fed to the model, and the WOF-admin case still fails (#1104).** The failure comes
 from low signal salience rather than missing data. Two code-level reasons make the shared slot
 insufficient:
@@ -114,8 +114,7 @@ parity checks all pass.
 - `country-inference.ts` — `COUNTRY_FEATURE_DIM=2`, `parseCountryLexicon`, `buildCountryFeatures`.
 - `country-inference.test.ts` — parity fixture mirroring the Python test.
 - `soft-features.ts` — a `country` channel (independent of the near-postcode choreography).
-- `onnx-runner.ts` — feeds `country_features`/`country_confidence`, guarded by `inputNames`. It does
-  nothing on models without those inputs, so it stays inactive until the retrain exports them.
+- `onnx-runner.ts` — feeds `country_features`/`country_confidence`, guarded by `inputNames`. It has no effect on models without those inputs, so it stays inactive until the retrain exports them.
 - `classifier.ts` — `countryLexicon` config field, `#decode` wiring, trace, `loadFromWeights`
   soft-feed sibling load.
 - `scorer.ts` — `DEFAULT_COUNTRY_LEXICON`, `requires.country` fail-closed + `overrides.country`

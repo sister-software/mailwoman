@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Tree resolution over a browser-side place lookup: the browser half of the same resolve cascade the
- *   node path runs, with nothing in it that belongs to one host.
+ *   node path runs, with no host-specific part.
  *
  *   The lookup is structural (`MailwomanLookupLike`) rather than a concrete class, so the httpvfs lookup,
  *   the wasm lookup here, and any future one all satisfy it.
@@ -135,7 +135,7 @@ const WOF_RANK_REGION = 4
  * How the demo picks the pin from a resolved tree: prefer the most address-precise resolved node —
  * under the locality-first epoch convention the Node ladder follows (`extractGeocodeResult`):
  * an area-class postcode (an FR 5-digit zone, an SI 4-digit code) is coarser than the
- * locality it sits in, so it ranks below locality and pins only when nothing finer resolved.
+ * locality it sits in, so it ranks below locality and pins only when no finer place resolved.
  *
  * Before 2026-08-11 this table put every postcode first (the old cascade's tier order) —
  * the staged-repoint e2e measured the demo pinning the SI `6250` area centroid where Node
@@ -344,7 +344,7 @@ export async function runCascade(
 	}
 
 	if (!collected.length) {
-		// Nothing in the tree resolved (span-rescore included) — the old cascade's last resort.
+		// No place in the tree resolved (span-rescore included) — the old cascade's last resort.
 		return usable(await lookup.findPlace({ text: rawText, limit: 5 }))
 	}
 

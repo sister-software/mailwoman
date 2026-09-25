@@ -11,7 +11,7 @@
  *   the `weights-rights` repository check hold the tree equal to what this writer produces, so a card edit that
  *   changes an attribution cannot land with the published statement left behind.
  *
- *   Private weights workspaces are skipped. `neural-weights-base-latn` publishes nothing and ships no model card, so a
+ *   Private weights workspaces are skipped. `neural-weights-base-latn` publishes no package and ships no model card, so a
  *   rights file there would state terms for a tarball that never reaches anyone.
  */
 

@@ -14,7 +14,7 @@
  *   whose assertion fields are `expectComponents` (a tag→value map), `expectLat`/`expectLon`,
  *   `expectToleranceM` and `expectTier` — the same four things, under the same vocabulary.
  *
- *   oracle rather than truth. Nothing here is authoritative. Google and the Census Bureau disagree with each
+ *   oracle rather than truth. No result here is authoritative. Google and the Census Bureau disagree with each
  *   other, with the postal authority, and with the address as written, and both will confidently
  *   return a coordinate for an address that does not exist. The value of running one is that a human
  *   authoring a gauntlet case gets a second opinion with provenance attached rather than that a case can be

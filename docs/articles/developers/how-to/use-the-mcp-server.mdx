@@ -11,7 +11,7 @@ verified-with: mailwoman 8.7.0
 which of them work with no data on disk and which need a gazetteer.
 
 `@mailwoman/mcp` is not a service. It speaks JSON-RPC over stdin and stdout, so the client starts it,
-talks to it, and stops it. There is no port to open and nothing to deploy.
+talks to it, and stops it. There is no port to open and no deployment step.
 
 ## Prerequisites
 
@@ -28,7 +28,7 @@ talks to it, and stops it. There is no port to open and nothing to deploy.
 npm install -g @mailwoman/mcp
 ```
 
-The package brings its own model weights (39.4 MB) and the resolver. Nothing else is needed to start it.
+The package brings its own model weights (39.4 MB) and the resolver. No other setup is needed to start it.
 
 ## 2. Wire it into a client
 
@@ -51,7 +51,7 @@ One variable is enough. The server finds the gazetteer at `<data root>/db/wof/ca
 `mailwoman data pull candidate` writes to, so pointing at the data root wires up all four model-backed
 tools. Add `"MAILWOMAN_CANDIDATE_DB"` beside it only for a gazetteer that lives outside that root.
 
-This is a change. Through `8.6.0` this server read the variable and nothing else, as most entry points
+This is a change. Through `8.6.0` this server read only that variable, as most entry points
 did, so a config with only the data root in it left the model-backed tools without a resolver. Only the
 Nominatim and Photon drop-ins reached the convention path, and they did it by hand. `8.7.0` moved that
 fallback into the shared resolver, so the MCP server inherited it along with everything else.

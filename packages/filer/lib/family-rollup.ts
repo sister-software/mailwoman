@@ -22,7 +22,7 @@
  *   multi-family shape is exceptional.
  *
  *   **Return shape: always `FamilyRollup[]`, never `null` or a bare
- *   object.** Empty when nothing is found — by `familyID`, when that family has no member row in force
+ *   object.** Empty when no row is found — by `familyID`, when that family has no member row in force
  *   `asOf` the date (including when it has never existed at all); by `nodeID`, when that node belongs to no
  *   family as of that date. A `familyID` query returns at most one element (a `family_id` names exactly one
  *   family); a `nodeID` query may return more than one.

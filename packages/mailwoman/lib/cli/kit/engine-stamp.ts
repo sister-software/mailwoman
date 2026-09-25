@@ -46,7 +46,7 @@ export function resolveEngineStamp(): Promise<ResolvedEngineStamp> {
 }
 
 /**
- * Write the two-line notice to stderr, or nothing when the commercial branch applies.
+ * Write the two-line notice to stderr, or no notice when the commercial branch applies.
  *
  * Stderr, so stdout stays machine-readable for every `--json` consumer.
  */

@@ -26,7 +26,7 @@ is a license grant rather than an assignment.
 1. **Developer Certificate of Origin.** By submitting a contribution you
    certify the DCO (version 1.1, full text below) for every commit in it —
    the submission itself is the certification. A `Signed-off-by` trailer
-   (`git commit -s`) is welcome but not required, and nothing in CI checks
+   (`git commit -s`) is welcome but not required, and no CI check looks
    for one.
 
 2. **License grant.** You grant Teffen Ellis (DBA Sister Software),

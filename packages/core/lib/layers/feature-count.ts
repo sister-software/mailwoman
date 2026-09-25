@@ -19,10 +19,9 @@ export function limitedFeatureCount(layerCount: number, limit: number | undefine
 export interface DeclaredFeatureCountInput {
 	/**
 	 * A count the caller supplies for a range it is reading, because `ogrinfo`
-	 * reports a layer's total and nothing narrower.
+	 * reports a layer's total and no narrower count.
 	 *
-	 * Wins when present, even at zero: a chunk that declares nothing about its
-	 * size passes 0 and the parent checks the sum.
+	 * Wins when present, even at zero: a chunk that declares no size passes 0 and the parent checks the sum.
 	 */
 	declared?: number
 	limit?: number

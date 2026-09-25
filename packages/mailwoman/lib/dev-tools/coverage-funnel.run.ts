@@ -4,7 +4,7 @@
  *
  * Unlike `mailwoman data coverage`, which lists only countries some coverage source
  * mentions, this covers every register jurisdiction.
- * A stage reads `unknown` when a checkout cannot answer it, which says nothing about the jurisdiction.
+ * A stage reads `unknown` when a checkout cannot answer it, which makes no statement about the jurisdiction.
  *
  * Without `--config`, the `admitted` stage reads the config that `scope.config.json`
  * records for the Latin family's shipped graph.
@@ -238,7 +238,7 @@ console.log(
 )
 
 // A postal regime's addresses are not covered by its parent country's funnel row.
-// For example, a BFPO address counts under GB, but nothing parses it as GB.
+// For example, a BFPO address counts under GB, but no parser reads it as GB.
 console.log(`\n## Postal regimes — where the parser unit is not the ISO country code\n`)
 console.log(`| regime | kind | ISO | coverage | parent jurisdictions' stages reached |`)
 console.log(`| --- | --- | --- | --- | --- |`)

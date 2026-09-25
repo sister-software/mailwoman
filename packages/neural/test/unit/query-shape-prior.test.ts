@@ -252,8 +252,8 @@ describe("addEmissionMatrix", () => {
 })
 
 /**
- * A format the detector produces and this prior has no label for contributes zero bias and raises
- * nothing, so the two lists can disagree for as long as nobody reads a board row that needed the bias.
+ * A format the detector produces and this prior has no label for contributes zero bias and raises no
+ * error, so the two lists can disagree for as long as nobody reads a board row that needed the bias.
  *
  * Driving the real detector is what makes the assertion hold for formats added later:
  * a hardcoded list here would be the second list all over again.

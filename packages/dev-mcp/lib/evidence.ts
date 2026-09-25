@@ -7,7 +7,7 @@
  *
  *   The distinction this module exists to keep is three-way rather than two-way. A channel can be **absent** (never
  *   configured — the trace carries no record of it), **silent** (fed, and fed all zeros — the retrieval side had
- *   nothing to say about any token), or **fired** (fed at least one nonzero feature). Collapsing absent into silent is
+ *   no statement to make about any token), or **fired** (fed at least one nonzero feature). Collapsing absent into silent is
  *   the standing meaning-of-zero mistake: one is a fact about the configuration, the other about this input, and the
  *   actions are different (wire the mechanism vs. extend its data).
  *

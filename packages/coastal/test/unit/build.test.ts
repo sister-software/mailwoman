@@ -154,8 +154,8 @@ describe("the sealed artifact", () => {
 			.prepare("SELECT count(*) AS n FROM coastal_zone_cell WHERE area_id = ?")
 			.get(`${NFI}:4`) as { n: number }
 
-		// A polyfill keyed on cell centres returns nothing for a 5 m square,
-		// and a feature indexed to nothing reads downstream as an absence.
+		// A polyfill keyed on cell centres returns no cells for a 5 m square,
+		// and a feature indexed to no cell reads downstream as an absence.
 		// The failure the per-part zero-cell guard exists to make impossible.
 		expect(sliver.n).toBeGreaterThan(0)
 	})
@@ -357,7 +357,7 @@ describe("the declared domains", () => {
 		}
 
 		// A single space rather than an empty string.
-		// A reader testing `=== ""` finds nothing and reports these as ordinary.
+		// A reader testing `=== ""` finds no empty string and reports these as ordinary.
 		expect(row.mt_policy).toBe(" ")
 		expect(row.published_year).toBe(0)
 	})

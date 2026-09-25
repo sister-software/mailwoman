@@ -10,7 +10,7 @@
  *   record had none of: the `us` bundle's record named the Census Bureau and OpenAddresses while 68.2% of its
  *   125,276,536 rows were stamped `overture:NAD`.
  *
- *   Read-only and offline. It opens the copy in the data root and nothing else.
+ *   Read-only and offline. It opens the copy in the data root and no other file.
  */
 
 import { Text } from "ink"

@@ -14,7 +14,7 @@ Per Phase 2 §4 plan:
 The eval invoked here is a *streaming* val-set eval (token-level F1 over the val parquet
 split). The richer golden-set eval lives in ``eval.py`` and is meant to run post-training.
 
-`train()` below is the ORDER the stages run in, and nothing else: `setup.py` holds what a run
+`train()` below is the ORDER the stages run in, and no other concern: `setup.py` holds what a run
 decides before its first batch, `loop.py` holds the optimizer loop, and the callbacks hold what is
 written as it goes. `tests/mailwoman_train/train/test_train_loop_trace.py` pins the CSV shape, the
 event order and the final per-parameter weights, so a stage that moves is a failing test rather

@@ -2,7 +2,7 @@
 
 `build` threads one `random.Random` through the selection masks, the register draw, the postcode
 fraction, the hyphen variant, the spacing and the country prefix. They share a stream, so moving,
-adding or dropping a draw anywhere re-renders the whole corpus, and nothing else in the suite would
+adding or dropping a draw anywhere re-renders the whole corpus, and no other test in the suite would
 notice: the JP builder reads Overture-JP and KEN_ALL. It no test has. Therefore, it has never run under
 pytest at all.
 
@@ -225,7 +225,7 @@ def write_reference() -> None:
     """Capture the current build as the reference the tests above compare against.
 
     Run this only when the current code already passes against the existing reference — otherwise
-    the artifact records whatever the code does now, and the tests assert nothing.
+    the artifact records whatever the code does now, and the tests assert no fact.
     """
     import tempfile
 

@@ -250,7 +250,7 @@ describe("selectReportable", () => {
 
 describe("a missing ripgrep", () => {
 	it("says the search could not run rather than answering zero", () => {
-		// Meaning-of-zero: an empty result must mean "searched and found nothing".
+		// Meaning-of-zero: an empty result must mean "searched and found no match".
 		// If the searcher never ran, the caller has to hear that, because a silent
 		// zero here reads as "this symbol has no home".
 		expect(() => findDeclarations(["percentile"], { cwd: FIXTURE_ROOT, binary: "rg-does-not-exist" })).toThrow(

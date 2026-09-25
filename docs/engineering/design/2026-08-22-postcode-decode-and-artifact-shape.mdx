@@ -29,7 +29,7 @@ over-specified: retrieval disambiguates and any decode is redundant. Strip it to
 evidence a decoder can read with no database.
 
 Pelias penalizes numeric spans positionally: is this five-digit run a house number or a postcode,
-given where it sits? That is a prior on the SPAN. Nothing asks whether the code's own content
+given where it sits? That is a prior on the SPAN. No prior asks whether the code's own content
 **corroborates** the neighboring spans, or lets that corroboration move confidence.
 
 ## What already exists
@@ -88,7 +88,7 @@ ancestor edges whose CHILD is a postalcode:  0
 
 Postcodes live in separate extracts, outside the admin hierarchy. A containment relation does exist,
 purpose-built, in `postcode-locality-intl.db` — `is_containing` and `distance_km` per pair, 7.6M
-pairs for GB — and nothing in either grader consults it.
+pairs for GB — and neither grader consults it.
 
 ### 2. WOF parentage is a contaminated instrument for US ZIPs
 
@@ -134,7 +134,7 @@ reduce     kept   plausible   implausible   precision
 
 **554 of 749 minority state entries (74%) are flatly contradicted by the numbering plan**, and the
 plausible and implausible share distributions overlap (medians 6.9% and 5.1%). A weighted array would
-ship mostly noise with a number attached, which is worse than shipping nothing because it looks
+ship mostly noise with a number attached, which is worse than shipping no array because it looks
 calibrated.
 
 ### 5. Point-in-polygon beats parentage by 12×, and needs no license
@@ -335,7 +335,7 @@ codes with a 3.24 km median p95 radius.
   neither existing consumer was designed around — which is exactly why PFX1 makes the radius
   mandatory beside a coordinate.
 - **US SCF → state**: from PIP, single-state for 877 of 902 SCFs. Not an array.
-- **US SCF → locality**: from PIP where a polygon exists, county where it does not, and **nothing**
+- **US SCF → locality**: from PIP where a polygon exists, county where it does not, and **no locality**
   where neither does. PFX1 already treats empty ancestry as a legitimate answer.
 
 ## Two decisions that block the next artifact
@@ -415,7 +415,7 @@ version, section table, source-md5 stamp. The per-file discipline stays for the 
   FSA/LDU still maps onto PFX1 unchanged — FSA is the prefix tier (~1,650 nodes, analogous to GB
   outward), LDU the unit tier — and no FSA index has been built.
 - **Feeding the decode back into span confidence.** `postcode_prefix_ancestors` records what a prefix
-  asserts, as metadata on a resolved node. Nothing lets it raise or lower confidence that a
+  asserts, as metadata on a resolved node. No mechanism lets it raise or lower confidence that a
   neighboring span is really a locality. This is the piece that does not exist, and it is
   what the Pelias observation addresses.
 

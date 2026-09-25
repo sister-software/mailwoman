@@ -60,7 +60,7 @@ export async function withRetries<T>(
 }
 
 /**
- * The byte count already at `path`, or 0 when nothing is there — the resume
+ * The byte count already at `path`, or 0 when the file is absent — the resume
  * point of an interrupted range download.
  */
 async function bytesOnDisk(path: string): Promise<number> {
@@ -110,7 +110,7 @@ export async function resumableDownload(options: {
 		}
 
 		if (res.status === HTTP_RANGE_NOT_SATISFIABLE && have > 0) {
-			// Nothing past `have`: the file on disk is already the whole body (a parallel filler
+			// No bytes past `have`: the file on disk is already the whole body (a parallel filler
 			// or an earlier run landed it), and `Content-Range: bytes */<total>` says how long it is.
 			const whole = /\*\/(\d+)/.exec(res.headers.get("content-range") ?? "")?.[1]
 			total = whole ? Number(whole) : have

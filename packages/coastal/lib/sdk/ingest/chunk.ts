@@ -16,7 +16,7 @@
  *
  *   the domain checks RUN here, and they throw. An unknown policy, policy interpretation or defence type is a
  *   source-schema change, which is the event a reader most needs to hear about. coercing it to a nearest
- *   neighbour or to null converts "the source changed" into "there is nothing here". The defence check
+ *   neighbour or to null converts "the source changed" into "there is no data here". The defence check
  *   compares case-folded and stores the source's own string, because the census found `Sheet piles` beside
  *   `Sheet Piles` and `Vertical Wall - Concrete` beside `Vertical Wall - concrete`.
  *

@@ -71,7 +71,7 @@ describe("slotNodes", () => {
 		const localities = collectNodes(tree.roots, (n) => n.tag === "locality")
 		expect(localities.map((n) => n.value)).toEqual(["Bengaluru", "Karnataka"])
 
-		// Nothing grounded: text order, and the component map agrees.
+		// No component was grounded: text order, and the component map agrees.
 		expect(slotNodes(tree.roots).find((n) => n.tag === "locality")?.value).toBe("Bengaluru")
 		expect(decodeAsJSON(tree).locality).toBe("Bengaluru")
 

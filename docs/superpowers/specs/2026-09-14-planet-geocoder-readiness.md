@@ -74,7 +74,7 @@ ships a weights package and is checked by two rows; China by two. The release li
 can measure, and a summary score over 1,261 rows reads as planet coverage while a third of those rows track
 rather than check and 36% of the total sits in eleven countries.
 
-Nothing here says the board is wrong. It says a per-country verdict is only available where the rows are, and the
+No claim here says the board is wrong. It says a per-country verdict is only available where the rows are, and the
 places a planet geocoder is about to be judged — the other 119 countries — are not those places.
 
 **The instrument for this already ships.** `mailwoman data coverage` reports `boardRows` and `boardPassedRows`
@@ -170,10 +170,10 @@ repository holds:
 
 Korean is categorical: the address vocabulary itself — 로, 길, 동, 시 — is Hangul, and every Korean row today is
 labeled `ja-JP`. Japanese is not: 97% of those rows are Han-only because 県/市/区/郡/町 and most place names are
-Han, so script does almost nothing for the Japanese/Chinese distinction.
+Han, so script offers almost no signal for the Japanese/Chinese distinction.
 
 The Japanese figure is a floor with a narrow denominator. That gold set carries postcode + prefecture +
-municipality and nothing below it — median input 16 characters, p90 19, longest row `〒401-0300 山梨県南都留郡富士
+municipality and no component below that level — median input 16 characters, p90 19, longest row `〒401-0300 山梨県南都留郡富士
 河口湖町` — which is the most Han-heavy part of a Japanese address. A full address with a building name
 (マンション, ハイツ, ビル) would carry Kana far more frequently, and this set cannot say how much more.
 
@@ -192,7 +192,7 @@ SG        66
 ```
 
 **India holds more places than any other country and is checked by two board rows.** That pairing states the
-planet problem in one line: retrieval reaches a million Indian places, and nothing measures whether the answers
+planet problem in one line: retrieval reaches a million Indian places, and no instrument measures whether the answers
 are right.
 
 ### One reading here was the instrument rather than the data
@@ -207,7 +207,7 @@ value that reads as the promoted gazetteer losing the Netherlands. It has not:
 
 The census counts `spr` rows; the resolver reads the FTS index. Only the first is low. What remains true and
 narrow is that the `spr` count for NL moved 19,812 → 28 between generations while the FTS content stayed rich,
-and nothing reachable from here says why or what still reads `spr`.
+and no evidence reachable from here says why or what still reads `spr`.
 
 ## What is still unanswered
 
@@ -231,4 +231,4 @@ Named so the next reader does not mistake silence for absence:
    anything measured against those numbers.
 4. **#2266 and #2267**, the resolver ranking defects, in whatever order the board's power allows.
 
-Items 3 and 4 are already filed with diagnosis and receipts; nothing here supersedes them.
+Items 3 and 4 are already filed with diagnosis and receipts, and no item here supersedes them.

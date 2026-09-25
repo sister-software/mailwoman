@@ -63,7 +63,7 @@ function splitAnchor(text: string): { localityText: string; regionText?: string 
  * A region qualifier, after a comma or as a trailing US state code,
  * limits the search to that region's bounding box.
  *
- * @returns `null` when nothing resolves.
+ * @returns `null` when no place resolves.
  */
 export async function resolveAnchorCenter(
 	gazetteerURL: string,

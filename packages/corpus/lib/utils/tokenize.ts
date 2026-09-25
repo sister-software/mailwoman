@@ -7,7 +7,7 @@
  *
  *   Two implementations live in the corpus package:
  *
- *   1. `whitespaceTokenizer()` (this file): pure-JS, depends on nothing. Splits a string into maximal
+ *   1. `whitespaceTokenizer()` (this file): pure-JS, has no dependencies. Splits a string into maximal
  *        runs of letters/digits/marks, dropping whitespace and standalone punctuation. Used as the
  *        default for in-container alignment tests and as a fallback when no SentencePiece model is
  *        available.

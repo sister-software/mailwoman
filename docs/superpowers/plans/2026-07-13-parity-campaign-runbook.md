@@ -12,7 +12,7 @@
 
 ## Night-1 punch list (one A100 budget, everything else CPU)
 
-0. **Router measurement (CPU, first):** kind-classifier recall/precision on a synthetic fragment holdout (bare-street + street+number per locale, from the libpostal dictionaries/FST) + the parity corpus. Checks the routing path; nothing trains on it tonight regardless.
+0. **Router measurement (CPU, first):** kind-classifier recall/precision on a synthetic fragment holdout (bare-street + street+number per locale, from the libpostal dictionaries/FST) + the parity corpus. Checks the routing path; no training runs on it tonight regardless.
 1. **Probe 0 — FST morphology bias ON (CPU):** wire `--fst`/`fstBiasScale` through `mailwoman eval parity` (the runner calls `classifier.parse` — ParseOpts already accepts `fst`), re-run parity. Watch: over-tagging on morphology hits inside non-street inputs; anchor-channel conflicts on number-adjacent tokens. Outcomes: sufficient / helpful-but-capped / harmful (expect capped: the bias can't fix numeric-neighbor label confusion — pre-registered prediction 1).
 2. **Probe 0b — CRF transitions (CPU):** confirm decode ignores learned transitions today; fit a transition matrix on (base + fragment extract) labels with the encoder frozen; decode Viterbi-with-transitions; re-run parity. Cheapest possible sequence-prior change.
 3. **#511 base-consistency check (CPU):** for every street-labeled n-gram in the fragment extract, scan the BASE corpus label distribution (source-scoped, per the #511 memory). Contradiction pattern to expect: truncation-derived bare streets whose surface forms appear base-labeled as locality. Drop/re-label contradictions before weighting anything.

@@ -7,7 +7,7 @@ admin ladder by exact lookup. the third is the typed part (``柏木町４－７`
 whichever register the filer used, then a building name and floor.
 
 Alignment: the (prefecture, municipality) pair must be one Overture keys, and the leading name of 丁目番地等 must be
-a district that municipality lists. Spans are then placed on the RAW string. Nothing is normalized, because the
+a district that municipality lists. Spans are then placed on the RAW string. No value is normalized, because the
 whole value of a noisy row is the surface a person typed — with the JP head's own tags: ``prefecture``,
 ``municipality``, ``district``, ``block`` for a trailing 丁目, ``house_number`` for the number in its typed form
 (designator forms ``N番N号`` are left whole under ``house_number`` here: splitting them into ``sub_block`` /

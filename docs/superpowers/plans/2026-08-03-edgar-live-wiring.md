@@ -48,7 +48,7 @@
 
 **Interfaces:**
 
-- Consumes: nothing from other tasks.
+- Consumes: no output from other tasks.
 - Produces: an exported `documentWindow(html: string): string` used by Task 3's table strategy as well. Signature: takes the raw archive document, returns the substring `parseExhibit21` should reason about.
 
 **Why:** EDGAR's archive serves an exhibit wrapped in its SGML submission envelope. `bandwidth-2025.htm` begins:
@@ -147,7 +147,7 @@ git commit -m "fix(filer): parse the exhibit rather than EDGAR's SGML envelope a
 **Interfaces:**
 
 - Consumes: `documentWindow` from Task 2.
-- Produces: nothing new for later tasks.
+- Produces: no new interface for later tasks.
 
 **Why:** Every table-shaped rule below is failing against a real filing today. The counts are from the 2026-08-03 run over the vendored corpus.
 
@@ -222,7 +222,7 @@ Each rule counts the row in `unparseable` and drops it. Apply them in this order
 
 - [ ] **Step 6: Reconcile the blank-table fallthrough Task 2 already added**
 
-`parseExhibit21` used to commit to the table strategy as soon as a `<table>` existed. `shentel-2025.htm` has two entirely blank decorative tables, with the real list as block text outside them, so it returned nothing. Task 2 added `isEntirelyBlankTable`: when every cell of every row is blank, `parseExhibit21` proceeds as if no table were present.
+`parseExhibit21` used to commit to the table strategy as soon as a `<table>` existed. `shentel-2025.htm` has two entirely blank decorative tables, with the real list as block text outside them, so it returned no subsidiary. Task 2 added `isEntirelyBlankTable`: when every cell of every row is blank, `parseExhibit21` proceeds as if no table were present.
 
 **An earlier draft of this plan specified a broader rule, "when the table strategy produces zero subsidiaries, fall through and take the fallback's result", and that rule is wrong.** It also fires on `exhibit21-mangled.html`. In that fixture, a blank `<td></td>` beside a real `<td>Delaware</td>` becomes an isolated `"Delaware"` line once tags are stripped. The line strategy accepts that line as a name-only subsidiary, fabricates `{name: "Delaware"}`, and breaks the currently green "deliberately mangled fixture yields zero subsidiaries" test.
 
@@ -268,7 +268,7 @@ git commit -m "fix(filer): read every table in an Exhibit 21, and the columns it
   ): Promise<ExhibitDocument[]>
   ```
 
-**Why:** This is the one link the chain is missing. `fetchExhibit21` takes a URL and states that finding the URL is out of scope, and nothing supplies one. EDGAR's accession `index.json` types every file as a GIF icon name (`"type":"text.gif"`), so it cannot identify the Exhibit 21 document. The accession's `…-index-headers.html` can, because it carries the submission's SGML manifest, HTML-escaped, with one block per document. From `filer/test-fixtures/edgar/lumen-2025-index-headers.html` (162 documents, one of type `EX-21`):
+**Why:** This is the one link the chain is missing. `fetchExhibit21` takes a URL and states that finding the URL is out of scope, and no caller supplies one. EDGAR's accession `index.json` types every file as a GIF icon name (`"type":"text.gif"`), so it cannot identify the Exhibit 21 document. The accession's `…-index-headers.html` can, because it carries the submission's SGML manifest, HTML-escaped, with one block per document. From `filer/test-fixtures/edgar/lumen-2025-index-headers.html` (162 documents, one of type `EX-21`):
 
 ```
 &lt;DOCUMENT&gt;
@@ -340,7 +340,7 @@ it("skips a block missing a FILENAME rather than emitting a URL ending in a slas
 })
 ```
 
-Note the last three. A filing with no Exhibit 21 is ordinary. In the 2026-08-03 run, Consolidated Communications and United States Cellular both filed a 10-K whose latest accession has none. `parseCompanyTickers`/`parseTenKFilings` behave differently: they throw on a malformed payload, because those payloads are SEC's own documented API shapes. An absent exhibit is the filer's choice and says nothing about the upstream interface. Say so in the docstring.
+Note the last three. A filing with no Exhibit 21 is ordinary. In the 2026-08-03 run, Consolidated Communications and United States Cellular both filed a 10-K whose latest accession has none. `parseCompanyTickers`/`parseTenKFilings` behave differently: they throw on a malformed payload, because those payloads are SEC's own documented API shapes. An absent exhibit is the filer's choice and makes no statement about the upstream interface. Say so in the docstring.
 
 - [ ] **Step 2: Run them to verify they fail**
 

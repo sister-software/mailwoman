@@ -12,7 +12,7 @@
  *   The sweep that motivated it found two register entries with zero test files, and they had decayed in opposite
  *   directions — which is exactly why the two readings both have to stay open: one flag restricted a union with a parser
  *   deleted two majors earlier (removal), and one reached ~1,850 lines of well-tested implementation through a switch
- *   nothing tested (missing testing — of the switch rather than the switched).
+ *   no test covered (missing testing — of the switch rather than the switched).
  *
  *   matching is deliberately loose. A flag name appearing anywhere in a test file counts, including in prose. A stricter
  *   check (the flag passed as an option, say) would be more meaningful and far more fragile, and this check's job is to
@@ -28,7 +28,7 @@ import { trackedSourcePaths } from "#tracked-sources"
 const REGISTER = "docs/engineering/reference/runtime-flags.mdx"
 
 /**
- * A register that parses fewer flags than this is a parser that silently matched nothing,
+ * A register that parses fewer flags than this is a parser that silently matched no flag,
  * and every assertion below would be vacuously true.
  */
 const PLAUSIBLE_REGISTER_SIZE = 20

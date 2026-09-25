@@ -24,7 +24,7 @@ The first pass is plain code without a model, in [`@mailwoman/normalize`](https:
 - Punctuation folding.
 - Whitespace collapse, which reduces a run of spaces to one and trims a trailing `.`/`,`/`;`/`:` (`normalize/whitespace.ts`).
 
-The trailing-punctuation trim fixed a real failure. A stray period attached to the final token (`…Washington DC.`) used to drop the street tier from `address_point` to `admin`, and trimming it costs nothing.
+The trailing-punctuation trim fixed a real failure. A stray period attached to the final token (`…Washington DC.`) used to drop the street tier from `address_point` to `admin`, and trimming it costs no extra work.
 
 Every transform is offset-mapped. The normalized string carries a map back to the raw character positions, so a span the model finds in the clean text still points at the right bytes of the user's input. A normalization that corrupted the offsets would do more harm than good.
 

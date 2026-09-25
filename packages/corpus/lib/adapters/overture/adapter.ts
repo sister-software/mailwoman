@@ -61,7 +61,7 @@ const DEFAULT_COUNTRY_SEED = 20_260_922
 /**
  * One attested written form of a country's name.
  *
- * Raises rather than emitting nothing when the codex has no entry.
+ * Raises rather than emitting an empty result when the codex has no entry.
  * A requested fraction that silently produced no country rows would read later as
  * a check failure with no cause attached, which is how the 2026-07-18 Brazil arm's
  * `country` regression stayed unexplained for a night.
@@ -96,7 +96,7 @@ interface OvertureCorpusRow {
  * Overture-SG writes the estate or building name in this field
  * (91,818 of 142,210 rows carry a multi-word name such as `serangoon garden estate`) and the
  * literal `NIL` on 47,407 more, where every other country's rows carry a digit-containing unit
- * or nothing (DE 3,084 digit-containing of 40,837 non-empty. NL and ES none name-shaped).
+ * or no unit (DE 3,084 digit-containing of 40,837 non-empty. NL and ES none name-shaped).
  * A name taught as `unit` teaches that a trailing proper name is one, which is the
  * shape of the `#NNN`-unit defect the corpus exists to fix.
  *

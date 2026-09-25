@@ -6,7 +6,7 @@
  *   The host-only chrome around the geocoder, composed for `@mailwoman/react/map`'s `panels` injection point: the
  *   about box, the release line, the geo-bias row, the permalink, the calibration and dev-mode toggles, the result
  *   panel with its visualizers, the decode-path drawer, the map controls and the version compare. Everything here is
- *   presentation over the runtime handle. nothing here loads or resolves.
+ *   presentation over the runtime handle. No code here loads or resolves.
  */
 
 import type { ParseResult } from "@mailwoman/core/pipeline/client-result"

@@ -169,7 +169,7 @@ export class GeocoderFixture {
 	/**
 	 * Parse the resolved-place "coords" row into numbers.
 	 *
-	 * `NaN` components mean nothing resolved.
+	 * `NaN` components mean no coordinate resolved.
 	 */
 	async readCoords(): Promise<{ lat: number; lon: number }> {
 		const { resolved } = await this.readResult()

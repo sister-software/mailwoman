@@ -6,7 +6,7 @@
  *   Typed schema for filer.db — the identity crosswalk read-side layer (Phase 3a decisions 2, 6, 7).
  *   Deliberately not a layer-interface artifact (decision 2): filer.db has no coordinate references until
  *   ASR arrives in Phase 3c, and `@mailwoman/core/layers`' `layer_coverage` is H3-keyed, so conforming
- *   to that interface would mean writing coverage rows that assert nothing. Instead `filer_manifest` is
+ *   to that interface would mean writing coverage rows that carry no assertion. Instead `filer_manifest` is
  *   filer.db's own single-row identity/provenance record — see {@link readFilerManifest}, which copies
  *   `readLayerManifest`'s (`core/layers/manifest.ts`) throw-unless-exactly-one discipline without
  *   reusing its table or its tier/freshness-policy/spine-key validation, none of which apply here.
@@ -38,7 +38,7 @@
  *
  *   **Strength and kind are two orthogonal columns (decisions 1, 2; `schema_version` 2, written by
  *   `build-filer.ts`):** {@link FilerEdgeAssertion} grades how strongly an assertion is evidenced
- *   (authoritative vs. inferred) — it says nothing about what the assertion means. `filer_edge` carries a
+ *   (authoritative vs. inferred) — it makes no statement about what the assertion means. `filer_edge` carries a
  *   separate, orthogonal `relationship` column ({@link FilerRelationship}) for that: before this column
  *   existed, relationship kind lived implicitly in the target node's `identifier_type` (an edge into a
  *   `holding_company_name` node was "assumed" to mean ownership), a scheme that cannot distinguish a
@@ -61,7 +61,7 @@
  *   and keep whichever edge target matched. That puts a sealed, separately-versioned artifact's output at
  *   the mercy of a designation-list edit in another workspace: `canonicalizeOrganizationName`'s own
  *   docstring says its jurisdiction/domain packs "are grounded seeds rather than exhaustive — extend them per
- *   ISO 20275 as locales are added", and nothing in `filer_manifest` pins the canonicalizer's identity. A
+ *   ISO 20275 as locales are added", and no field in `filer_manifest` pins the canonicalizer's identity. A
  *   reviewer reproduced the consequence — a `family_id` minted before `"inc"` joined `BASE_DESIGNATIONS`
  *   stops matching anything the current canonicalizer produces, and every display name silently
  *   disappears with no error and no warning. Persisting the provenance rather than re-deriving it is also
@@ -81,7 +81,7 @@
  *
  *   Deliberately not `evidence`: the match's raw payload is already persisted, once, on the `filer_edge`
  *   row the builder writes in lockstep with every inferred family row, and no family reader needs it (the
- *   one family→edge join, `readFamilyDisplayNames`, selects the display name and nothing else).
+ *   one family→edge join, `readFamilyDisplayNames`, selects the display name and no other field).
  *   `match_score` is the one field a reader does need and cannot get without a join no family reader
  *   makes — duplicating an unbounded JSON blob to save a join nobody makes would only add a second copy
  *   to drift.
@@ -176,8 +176,8 @@ export type FilerEdgeAssertion = (typeof FilerEdgeAssertion)[keyof typeof FilerE
  *   so a row's `relationship` always describes the edge in the direction it was asserted,
  *   without requiring the reader to know which side is the source.
  * - `SupersededBy` — the source registration was replaced by the target one.
- *   Identity continuity over time, and deliberately not an ownership or control fact:
- *   it says this registration became that registration, and nothing about who owns either.
+ *   Identity continuity over time, and deliberately not an ownership or control fact: it says
+ *   this registration became that registration, and makes no statement about who owns either.
  *   Written from Form 499's `Replaced by filer <id>` note (`form499-notes.ts`),
  *   which the FCC states on 2,826 filers in the 2025-12-07 vintage, 2,820 of whose
  *   targets resolve to a filer in the same file.
@@ -379,7 +379,7 @@ export interface FilerFamilyTable {
 	 *
 	 * Null for authoritative memberships, and a check constraint enforces that
 	 * direction (see {@link createFilerFamilyTable}).
-	 * An inferred membership carrying no score tells a caller nothing about how far to trust it,
+	 * An inferred membership carrying no score gives a caller no signal about how far to trust it,
 	 * so every inferred writer should populate this, but, matching `filer_edge`'s own
 	 * permissiveness ({@link FilerEdgeTable.match_score} is likewise nullable on inferred rows),
 	 * that direction is a writer's obligation rather than a constraint.
@@ -406,7 +406,7 @@ export const FILER_FAMILY_SCHEMA_VERSION = 2
  * version-2 artifact is structurally readable by a version-3 reader.
  * What it cannot be trusted about is content.
  *
- * Every ceased filer in a version-2 build carries `valid_to: null`, because nothing set it.
+ * Every ceased filer in a version-2 build carries `valid_to: null`, because no writer set it.
  * So an `asOf`-scoped read against a 2013 date returns carriers dissolved a decade
  * earlier, silently and with no error to notice.
  *
@@ -416,7 +416,7 @@ export const FILER_FAMILY_SCHEMA_VERSION = 2
  * read this at all", and against this constant for "should I trust a temporal answer from it".
  *
  * `@mailwoman/filer` ships on npm, so this bump is a real versioned change with a consumer rebuild.
- * The "nothing has shipped yet, columns are free" argument that governed Phase 3b is spent.
+ * The "no release has shipped yet, columns are free" argument that governed Phase 3b is spent.
  */
 export const FILER_SCHEMA_VERSION = 3
 
@@ -622,7 +622,7 @@ export async function createFilerClusterIndex(db: Kysely<FilerDatabase>): Promis
  *
  * `match_score` gets a check of its own.
  * A score may appear only on an inferred row, since an authoritative membership matched
- * nothing and any number there would be a fabricated confidence.
+ * no candidate and any number there would be a fabricated confidence.
  */
 export async function createFilerFamilyTable(db: Kysely<FilerDatabase>): Promise<void> {
 	await db.schema

@@ -10,7 +10,7 @@ source-of-truth: api/routes.ts, api/schema.ts, api/app.ts, api-kit/error.ts, nom
 ## Scope
 
 Mailwoman serves four HTTP surfaces. One is native. Three answer on the wire shapes that Nominatim,
-Photon and libpostal clients already send, so an existing client changes a base URL and nothing else.
+Photon and libpostal clients already send, so an existing client changes only a base URL.
 
 This page is the endpoint and error interface for all four. It is not a tutorial: for a running
 server with real responses, follow [Run the API server](../tutorials/run-the-api-server.mdx), and for

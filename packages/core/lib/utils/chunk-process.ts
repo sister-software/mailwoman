@@ -19,7 +19,7 @@
  *   A NON-zero exit throws, and that is A correctness rule rather than A convenience. A chunk that died
  *   mid-range has already written part of its rows into the shared artifact. continuing would seal a
  *   database missing rows nobody could name, which reads downstream as a smaller source rather than as a
- *   failure. The same applies to a chunk that exits cleanly having printed nothing.
+ *   failure. The same applies to a chunk that exits cleanly having printed no rows.
  */
 
 import { TextSpliterator } from "spliterator"

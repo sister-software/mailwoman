@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- * @file The streaming zip readers' two interfaces that nothing else checks: a consumer may stop early, and a member name
+ * @file The streaming zip readers' two interfaces that no other test checks: a consumer may stop early, and a member name
  *   the archive never declared an encoding for can still be read.
  *
  *   Both were broken. Stopping early raised `Cannot close while reading in progress` from yauzl, because the archive was

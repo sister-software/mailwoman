@@ -300,7 +300,7 @@ describe("buildPOIDatabase — --source osm build-local branch", () => {
 		const osmRows = osmFixtureRows()
 		const coverageCellsOverride = bboxCoverageCells(bbox, osmRows)
 
-		// Sanity: the fixture must actually exercise the zero-count case, or this test proves nothing.
+		// Sanity: the fixture must actually exercise the zero-count case, or this test proves no fact.
 		expect(coverageCellsOverride.some((c) => c.observedRows === 0)).toBe(true)
 
 		const result = await buildPOIDatabase({

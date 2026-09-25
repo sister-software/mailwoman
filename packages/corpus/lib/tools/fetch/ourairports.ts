@@ -28,7 +28,7 @@
  *
  *   `agents.md` routes http through `APIClient`, and that rule is about API requests — small bodies,
  *   repeated calls, rate-limited hosts. This is four static file transfers against a GitHub Pages CDN
- *   with no rate limit and nothing to pace, run once per refresh. It uses the same `downloadToFile`
+ *   with no rate limit and no request to pace, run once per refresh. It uses the same `downloadToFile`
  *   every other module in this `fetch/` family uses, which is where the retry and timeout live.
  *   The Wikidata sibling (`wikidata-subvenue.ts`) is an API client and is built on `APIClient`
  *   accordingly. the split between the two is the one `agents.md` draws.

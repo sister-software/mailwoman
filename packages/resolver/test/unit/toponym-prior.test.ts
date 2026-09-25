@@ -356,7 +356,7 @@ describe("promoteCapitals (#1880 — bounded capital promotion after the fame ke
 		// Bare `Springfield` is ratified (2026-08-11) to the referential answer: a seat margin of even
 		// 1 log10 unit flipped it to Springfield, Illinois, and sent bare `Hamilton` to the Waikato seat.
 		// Both measured on the shipped candidate.db.
-		// Level 1 therefore promotes nothing.
+		// Level 1 therefore promotes no candidate.
 		const seat = (p: { lat: number }): number => (p.lat === 39.8 ? 1 : 0)
 
 		const ranked = promoteCapitals(

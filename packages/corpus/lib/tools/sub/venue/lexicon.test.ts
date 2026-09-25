@@ -56,7 +56,7 @@ const wikidataFixture = {
 				kind: { value: "label" },
 			},
 			// A second Japanese label, which is what makes the shared-substring head derivation possible at all.
-			// A group of one has nothing to share.
+			// A group of one has no peer to share with.
 			// The real pull carries five.
 			{
 				item: { value: "http://www.wikidata.org/entity/Q849706" },
@@ -218,13 +218,13 @@ test("nameContainsSurfaces matches whole tokens for Latin script, not substrings
 	// every -gate/-hall compound in Germanic and Nordic street naming (Briggate, Kirkgate).
 	expect(nameContainsSurfaces("Nordterminal", index)).toEqual([])
 	expect(nameContainsSurfaces("Briggate", index)).toEqual([])
-	// And the whole point of the gate: an ordinary venue name contributes nothing.
+	// And the whole point of the gate: an ordinary venue name contributes no signal.
 	expect(nameContainsSurfaces("Otto Lilienthal Flughafen Berlin Tegel", index)).toEqual([])
 })
 
 test("nameContainsSurfaces falls back to substring matching for Han and Kana", () => {
 	// The Japanese harvest depends entirely on this branch: `第1ターミナル` has no word boundaries,
-	// so a token split returns the whole string and matches nothing.
+	// so a token split returns the whole string and matches no entry.
 	const index = buildSurfaceIndex([
 		surface({ phrase: "ターミナル", recordID: "terminal", lang: "ja" }),
 		surface({ phrase: "terminal", recordID: "terminal" }),
@@ -394,7 +394,7 @@ test("deriveHeadNounSurfaces holds the cognate floor at five folded characters",
 test("deriveHeadNounSurfaces finds the Japanese head by shared substring", () => {
 	// `ターミナル` is in none of the Wikidata labels on its own.
 	// Every one of them is a compound — and it is the form Japanese addresses actually carry (`第1ターミナル`).
-	// Nothing else in the pipeline can produce it.
+	// No other step in the pipeline can produce it.
 	const derived = deriveHeadNounSurfaces([
 		surface({ phrase: "ターミナルビル", recordID: "terminal", lang: "ja" }),
 		surface({ phrase: "旅客ターミナル", recordID: "terminal", lang: "ja" }),
@@ -519,7 +519,7 @@ test("buildSubVenueLexicon: the seed's English surfaces are curated, everything 
 
 	// Nine shipped designators plus twelve modifiers.
 	// The six proposed designators contribute an English surface too, but uncurated —
-	// nothing new auto-promotes.
+	// no new entry auto-promotes.
 	expect(curated).toHaveLength(SHIPPED_DESIGNATOR_SEED.length + SHIPPED_MODIFIER_SEED.length)
 	expect(curated.every((s) => s.source === "seed")).toBe(true)
 	expect(table.surfaces.filter((s) => s.source.startsWith("wikidata")).every((s) => !s.curated)).toBe(true)

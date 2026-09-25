@@ -39,7 +39,7 @@
  *   holds a self-row only, in both. GB ancestry therefore comes from the Royal Mail area→constituent
  *   country table in `@mailwoman/codex/gb` joined to the WOF admin DB for the IDs. The two areas the
  *   codex documents as majority calls across a national border (TD, SY —
- *   `GB_BORDER_STRADDLING_AREAS`) assert the United Kingdom and nothing finer, because at outward
+ *   `GB_BORDER_STRADDLING_AREAS`) assert the United Kingdom and no finer unit, because at outward
  *   granularity "mostly Scotland" is not something a node may state as fact.
  *
  *   ## The US arm answers a different question, because it has a different problem
@@ -237,7 +237,7 @@ const UK_COUNTRY_WOF_NAME: Record<UkCountryCode, string> = {
  *
  * @throws When one is missing.
  * A build that silently dropped an ancestor would ship nodes asserting less than the source supports,
- * and nothing downstream could tell that from a prefix that genuinely asserts nothing.
+ * and no downstream reader could tell that from a prefix that genuinely asserts no fact.
  */
 function resolveGBAncestry(adminPath: PathBuilderLike): {
 	country: PostcodePrefixAncestor
@@ -638,7 +638,7 @@ function buildUSPostcodePrefixIndex(options: BuildPostcodePrefixOptions): BuildP
  *
  * Every code here is USPS-issued, so the country holds even for the territories
  * WOF models as countries of their own.
- * The assertion is about postal jurisdiction, and nothing finer is claimed for them
+ * The assertion is about postal jurisdiction, and no finer unit is claimed for them
  * because their units land in no US region polygon.
  */
 function resolveUSCountry(adminPath: PathBuilderLike): PostcodePrefixAncestor {

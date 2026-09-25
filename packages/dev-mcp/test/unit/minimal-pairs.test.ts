@@ -7,8 +7,8 @@
  *
  *   The registry is stubbed on purpose: what is under test is whether the diff reports gained, lost and changed as
  *   three different facts and finds the first rung that moves — not whether the parser is right about Spain. A test
- *   that loaded a real engine would take minutes, need weights present, and would fail for reasons that have nothing
- *   to do with this file.
+ *   that loaded a real engine would take minutes, need weights present, and would fail for reasons that are unrelated
+ *   to this file.
  */
 
 import type { EngineRegistryLike } from "@mailwoman/dev-mcp/engine/registry"

@@ -147,7 +147,7 @@ describe("planCountryMove", () => {
 	const census = (over: number, geo: number, wof = 0) => ({ country: "TR", wof, overture: over, geonames: geo })
 
 	it("writes BOTH halves of a move — add to the target, remove from the source", () => {
-		// The half nothing enforced.
+		// The half no check enforced.
 		// Adding a country by cloning is half the job.
 		// The other half is removing it from whichever list serves it today,
 		// and the build ships either way because verifyAdmin tests floors.

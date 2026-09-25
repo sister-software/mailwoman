@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Start a long-running command in its own session and exit, so nothing that kills this process can reach the child.
+ *   Start a long-running command in its own session and exit, so no signal that kills this process can reach the child.
  *
  *   what this is FOR. A Modal training launch is a local client talking to a remote container. Modal's `-d` does not
  *   make that client disposable. Its own banner says detached mode "only keeps the last triggered Modal function alive
@@ -57,7 +57,7 @@ const [command, ...args] = positionals as [string, ...string[]]
 await makeDirectories(dirname(logPath))
 
 // A raw descriptor rather than a `WriteStream`: `createWriteStream` opens lazily, so its `fd`
-// is still null at the moment `spawn` reads the stdio array, and the child inherits nothing.
+// is still null at the moment `spawn` reads the stdio array, and the child inherits no handle.
 // Appending, so a relaunch of a resumed run keeps the earlier attempt's output in the same file.
 const log = await open(logPath, "a")
 

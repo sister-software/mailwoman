@@ -34,7 +34,7 @@ const planSchema = z.object({
 })
 
 /**
- * `release.plan` — reads and changes nothing.
+ * `release.plan` — reads and makes no change.
  *
  * Listed in `registry.ts`; the description on the operation is what `mwops` prints.
  */

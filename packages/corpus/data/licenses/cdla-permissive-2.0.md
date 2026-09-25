@@ -33,11 +33,11 @@ restriction or obligation under the agreement. Among the grants this repository 
 one that addresses a trained model in its own text rather than leaving it to be argued from the
 definition of a derived work.
 
-Two things that does not establish. It says nothing about the terms of whatever sources Overture
+Two things that does not establish. It makes no statement about the terms of whatever sources Overture
 itself drew each row from, which the `poi` bundle's record still carries as an open question. And it
 is a statement about this agreement alone, so it does not decide the question for any other source.
 
 ## What this text does not settle
 
-Nothing here is elected. The `poi` bundle's record cites these terms and no license decision in
+No election is made here. The `poi` bundle's record cites these terms and no license decision in
 `address-source-register.json` reads anything but `unchecked`.

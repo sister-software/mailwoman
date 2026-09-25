@@ -45,7 +45,7 @@ describe("parseGauntletReport", () => {
 	})
 
 	it("reads the firing count separately from the verdict", () => {
-		// An unchanged verdict from a mechanism that never ran proves nothing.
+		// An unchanged verdict from a mechanism that never ran proves no fact.
 		expect(parseGauntletReport(STDOUT, STDERR).postcode_country_coherence_fired_on).toEqual({ n: 110, of: 558 })
 	})
 

@@ -125,7 +125,7 @@ using db = new DatabaseClient<WOFDatabase>(values["postcode-db"]!)
  * and a model that declines to commit on it is behaving correctly while the probe records a failure.
  *
  * The seat's own coordinate comes from the no-postcode arm this probe already runs,
- * so nothing here needs a second gazetteer and the pairing is checkable from the output.
+ * so no code here needs a second gazetteer and the pairing is checkable from the output.
  */
 async function postcodeNearest(code: string, seat: { lat: number; lon: number }): Promise<PostcodePick | null> {
 	let best: PostcodePick | null = null

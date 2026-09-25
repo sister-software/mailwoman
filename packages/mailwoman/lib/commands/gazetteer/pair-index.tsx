@@ -44,7 +44,7 @@ const EXPECTED_US_PAIR_COUNT = 47_878
 /**
  * The known (child, parent) pairs that the command probes after writing, keyed by country code.
  *
- * Each country needs its own pairs, because probing another country's names verifies nothing.
+ * Each country needs its own pairs, because probing another country's names verifies no name.
  * The command throws for a country without an entry.
  */
 const PROBE_PAIRS_BY_COUNTRY: Readonly<Record<string, ReadonlyArray<readonly [city: string, district: string]>>> = {

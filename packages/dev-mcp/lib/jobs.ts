@@ -8,7 +8,7 @@ import { type ChildProcess, spawnProcess } from "@mailwoman/core/process"
  *   Long-running child processes, polled rather than awaited.
  *
  *   A regression-layer gauntlet is about two minutes and a full run is longer, which is past what a synchronous tool
- *   call should hold open: an MCP client that times out mid-run leaves the work orphaned and reports nothing. So a job
+ *   call should hold open: an MCP client that times out mid-run leaves the work orphaned and reports no result. So a job
  *   starts, returns its id, and is polled through `mwdev_job`.
  *
  *   Output is captured rather than inherited. This process speaks JSON-RPC over stdout, so a child writing there would

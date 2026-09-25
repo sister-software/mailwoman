@@ -12,7 +12,7 @@ import type { PathBuilderLike } from "path-ts"
  * Matches a top-level function declaration.
  *
  * Both declaration patterns anchor to column zero, because an indented declaration
- * is in a nested scope that nothing else can reuse.
+ * is in a nested scope that no other consumer can reuse.
  */
 const FUNCTION_PATTERN = /^(?:export\s+)?(?:async\s+)?function\s+(\w+)/gm
 

@@ -32,7 +32,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest"
  * A service that answers every point with one polygon carrying `zone`, drawn `offsetDegrees` away
  * from the fixture's own FZ3 square so the nearest-vertex distance is under this test's control.
  *
- * `null` answers with nothing.
+ * `null` answers with no polygon.
  */
 function scriptedService(zone: string | null | undefined, offsetDegrees = 0): ServiceFeatureReader {
 	return async () =>
@@ -137,7 +137,7 @@ describe("verifyFloodDatabase", () => {
 
 	it("reports a containing polygon with no zone label as service_unlabelled, never as agreement", async () => {
 		// The artifact reads FZ3 here.
-		// The service's polygon contains the point and says nothing.
+		// The service's polygon contains the point and makes no statement.
 		// Reading that as `null` would let it agree with an absence reading elsewhere,
 		// which is the manufactured Zone 1 the interface forbids.
 		const result = await verifyFloodDatabase({

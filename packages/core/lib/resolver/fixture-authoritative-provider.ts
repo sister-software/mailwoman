@@ -37,7 +37,7 @@ export interface FixtureAuthoritativeProviderOptions {
 	 * Rules checked in order.
 	 * The first hit answers.
 	 *
-	 * No hit → a `refused` response, because a fixture that silently "matches nothing"
+	 * No hit → a `refused` response, because a fixture that silently "matches no rule"
 	 * is indistinguishable from a fixture that was never consulted.
 	 */
 	rules: ReadonlyArray<FixtureAuthoritativeRule>

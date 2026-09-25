@@ -18,7 +18,7 @@
  *   `docs/records/evals/2026-08-05-en-gb-anchor-off.md`). Train keys a postcode as
  *   `raw[begin:end].replace(" ", "").upper()` over a shape-detected span, so a GB unit enters the
  *   lookup as `SW1A2AA`. Inference scanned `[A-Za-z0-9]+` runs, which can never produce a key
- *   spanning a space — `SW1A 2AA` was probed as `SW1A` and `2AA`. Nothing caught it because every
+ *   spanning a space — `SW1A 2AA` was probed as `SW1A` and `2AA`. No test caught it because every
  *   shipped lookup held DE/FR/US five-digit keys only, where the two rules agree exactly.
  *   {@linkcode AnchorSpanMode} is the fix, and it is OPT-IN: `shaped` changes what the encoder sees,
  *   so it lands with the retrain that widened the lookup rather than before.
@@ -125,9 +125,9 @@ export function parseAnchorLookup(
  * a declared verbatim mirror of `collectMatches`.
  * It is not quite verbatim today: the TS list carries an IE Eircode pattern the Python list lacks.
  *
- * That costs nothing while no IE key exists in any lookup
- * (a shaped span that misses paints nothing, exactly as at train), but the two lists
- * must be reconciled before an IE postcode source is added.
+ * That has no effect while no IE key exists in any lookup
+ * (a shaped span that misses paints no pieces, exactly as at train), but the two
+ * lists must be reconciled before an IE postcode source is added.
  */
 export type AnchorSpanMode = "alnum-run" | "shaped"
 
@@ -143,7 +143,7 @@ const GB_UNIT_KEY = /^[A-Z]{1,2}\d[A-Z\d]?\d[A-Z]{2}$/
  * Ascii-only uppercase — the case fold the shaped keyer runs before shape detection (#1512).
  *
  * The defect it closes: `POSTCODE_PATTERNS`' alphanumeric shapes require `[A-Z]` by design
- * (they must not match lowercase prose), so `collectMatches` finds nothing in the raw lowercase register.
+ * (they must not match lowercase prose), so `collectMatches` finds no match in the raw lowercase register.
  * Measured on the 120-row gb-golden board: 106/120 rows yield a shaped span as-written
  * and uppercase, **0/120** lowercase.
  *
@@ -168,7 +168,7 @@ const GB_UNIT_KEY = /^[A-Z]{1,2}\d[A-Z\d]?\d[A-Z]{2}$/
  * painter's normalization verbatim); it is the shape scan that was register-sensitive.
  *
  * Folding for the scan and keying off the original text leaves the key byte-identical,
- * so nothing about which lookup entry wins changes.
+ * so the winning lookup entry stays the same.
  */
 function asciiUpper(text: string): string {
 	return text.replaceAll(/[a-z]/g, (c) => c.toUpperCase())
@@ -193,8 +193,9 @@ const GB_INWARD_LENGTH = 3
  * the anchor channel is silently feeding zeros on exactly the rows the retrain was for.
  *
  * Not counted: NL PC6 (`1012LG`) and every numeric system.
- * Those are written glued at least some of the time, so the alnum-run scan reaches them —
- * their presence says nothing about the card's declaration.
+ * Those are written glued at least some of the time, so the alnum-run scan reaches them.
+ *
+ * Their presence makes no statement about the card's declaration.
  *
  * Cheap by construction: it stops at {@linkcode SHAPED_ONLY_KEY_SCAN_LIMIT} keys, because the
  * caller only needs "any?" and a magnitude to print, and a 1.7M-key Map is walked at every load.
@@ -257,7 +258,7 @@ export function countShapedOnlyKeys(lookup: AnchorLookup): number {
  * Scan cap for {@linkcode countShapedOnlyKeys}.
  *
  * The answer is used as "any, and roughly how many" in an error message.
- * Walking all 1,749,839 keys of the GB lookup to distinguish 1,000 from 1,746,976 adds nothing.
+ * Walking all 1,749,839 keys of the GB lookup to distinguish 1,000 from 1,746,976 adds no information.
  */
 export const SHAPED_ONLY_KEY_SCAN_LIMIT = 1000
 

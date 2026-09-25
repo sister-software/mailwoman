@@ -6,7 +6,7 @@
  *   The constraint census — what our checks cost, measured per constraint rather than per row.
  *
  *   `census.ts` asks whether a mechanism in the parse path fires at all (L0/L1). This asks the resolver-path question
- *   underneath it: of the lookups that resolved nothing, which constraint was in force, and did we hold the row
+ *   underneath it: of the lookups that resolved no candidate, which constraint was in force, and did we hold the row
  *   anyway. Both are needed and neither substitutes for the other. A constraint can be perfectly alive and still be
  *   the reason an answer was lost.
  *
@@ -15,7 +15,7 @@
  *   A key that exists nowhere is a coverage fact. Both currently reach a caller as `null`, and they call for opposite
  *   work: one is a retrieval fix, the other is a data acquisition. They are never summed here.
  *
- *   The raw material has existed since #1721 and nothing consumed it: `ResolveNodeTrace.checks` records mechanism
+ *   The raw material has existed since #1721 and no code consumed it: `ResolveNodeTrace.checks` records mechanism
  *   events in execution order, and `picked: null` is — in that type's own words — "a claim rather than an omission". The
  *   first run over the board found `parent_fallback_retry` firing 194 times and converting zero, because it relaxes
  *   the parent while the band is what blocks (#1756).
@@ -34,7 +34,7 @@ import { openSealedArtifact } from "#lookup/index"
 import { provenanceFor, type Provenance } from "#tool-kit"
 
 /**
- * One lookup that resolved nothing, with the constraint that was in force
+ * One lookup that resolved no candidate, with the constraint that was in force
  * and what the gazetteer holds regardless.
  */
 interface ConstraintMiss {
@@ -184,7 +184,7 @@ function render(result: Omit<ConstraintCensusResult, "rendered">): string {
 }
 
 /**
- * Walk an input set through one traced engine and aggregate every lookup that resolved nothing.
+ * Walk an input set through one traced engine and aggregate every lookup that resolved no candidate.
  */
 export async function runConstraintCensus(
 	registry: EngineRegistryLike,

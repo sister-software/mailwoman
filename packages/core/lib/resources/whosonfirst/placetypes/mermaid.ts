@@ -166,7 +166,7 @@ export function generateMermaidMarkup(placetype: Placetype, options: GenerateMer
 	const walk = (node: Placetype, depth: number): void => {
 		for (const child of node.findChildren(roles)) {
 			const childDepth = depth + 1
-			// Single-level case: nothing to interpolate across, sample mid-gradient.
+			// Single-level case: no range to interpolate across, sample mid-gradient.
 			const t = maxDepth > 1 ? (childDepth - 1) / (maxDepth - 1) : 0.5
 			const edgeColor = toMermaidColor(edgeInterpolator(t))
 

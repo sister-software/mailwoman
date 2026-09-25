@@ -187,7 +187,7 @@ describe("buildDiskStorage: validate BEFORE writing", () => {
 		// `JSON.stringify(Infinity)` is `"null"`, and `null` reads back as 0 in the
 		// interceptor's `createdAt + ttl < Date.now()` expiry test.
 		// So "cache forever" would round-trip into "expired the instant it is read".
-		// Rejecting loudly beats caching nothing.
+		// Rejecting loudly beats caching no entry.
 		const storage = buildDiskStorage({ directory: directory.path })
 
 		await storage.set("forever", cachedValue({ immutable: true }, Number.POSITIVE_INFINITY))

@@ -61,7 +61,7 @@ export interface UsePlaceAutocomplete {
 	/**
 	 * The current suggestions.
 	 *
-	 * The list is empty when nothing matches or the visitor dismissed it.
+	 * The list is empty when no suggestion matches or the visitor dismissed it.
 	 */
 	suggestions: Suggestion[]
 

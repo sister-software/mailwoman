@@ -23,8 +23,8 @@ import type { RecipeOptions } from "#recipes/scaffold"
  *
  * `parseJSONStrict` without a type argument hands back `unknown`; naming the shape
  * is what lets the assertions be checked at all.
- * The previous `Record<string, never>` typed every property as `never`, so nothing
- * could be read without a cast and nothing was ever verified.
+ * The previous `Record<string, never>` typed every property as `never`, so no property
+ * could be read without a cast and no property was ever verified.
  */
 export interface RecipeRow {
 	raw: string

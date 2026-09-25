@@ -247,7 +247,7 @@ export interface RunCodePointCheckOptions {
  * Run the check.
  *
  * Both databases are opened read-only.
- * Nothing is written anywhere.
+ * No write occurs anywhere.
  *
  * Memory: the incumbent's GB rows are held in a `Map` of ~1.84 M entries (~250 MB) so the join
  * is a single pass over each side rather than a SQL `attach` join across two 800 MB+ files.

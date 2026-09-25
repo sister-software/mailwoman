@@ -6,7 +6,7 @@
  *   A geocode session opened for `en-US` and handed a bare kanji line: the parse must run on the character-path
  *   family and the resolver must not be scoped to the locale's country. Before the routed classifier, the Latin model
  *   read the whole line as a locality. after it, the parse was right and the `--locale en-US` scope still starved the
- *   lookup, so the row resolved nothing. Both defects are pinned by one row through the shipped session.
+ *   lookup, so the row resolved no coordinate. Both defects are pinned by one row through the shipped session.
  *
  *   Runs only where the CJK family and the candidate table are materialized (the lab data root, a CI runner that
  *   links them); elsewhere it skips rather than asserting on a degraded route.

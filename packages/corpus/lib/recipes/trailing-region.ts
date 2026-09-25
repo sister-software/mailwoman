@@ -139,7 +139,7 @@ export const trailingRegionRecipe: CorpusRecipe = {
 			const dependentLocality = String(t.dependentLocality ?? "").trim()
 
 			// A pair whose region equals its locality (Santa Cruz de Tenerife inside Santa Cruz de Tenerife)
-			// teaches nothing about the boundary this recipe exists for.
+			// carries no signal about the boundary this recipe exists for.
 			if (!locality || !region || locality === region) {
 				skipped++
 

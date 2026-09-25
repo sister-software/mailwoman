@@ -151,7 +151,7 @@ describe("loader-built classifier — pair prior in the shared decode (#1278)", 
 
 		const json = await classifier.parseJSON("Shoreditch London", { spanProposer: false })
 
-		// δ=6 emissions alone lose by 4; β=5 alone recovers nothing without the emission mass.
+		// δ=6 emissions alone lose by 4; β=5 alone recovers no reading without the emission mass.
 		// The flip is the proof both halves were threaded into the one shared decode.
 		// Here the prior comes from the config-default posture pin ('en-gb');
 		// the per-parse path is proven in the next test.
@@ -190,7 +190,7 @@ describe("loader-built classifier — pair prior in the shared decode (#1278)", 
 		const priorFree = await loadNeuralClassifierFromURLs(baseOpts([]))
 
 		// Phase 2: the gb index is live + retained (not conditional to null), but no posture
-		// pin + a text that detects `us` (no UK postcode) means nothing selects it — byte-stable.
+		// pin + a text that detects `us` (no UK postcode) means no path selects it — byte-stable.
 		expect(loaded.pairIndexes).toHaveLength(1)
 		expect(loaded.pairIndexes[0]!.resolver).not.toBeNull()
 		expect(priorFree.pairIndexes).toEqual([])

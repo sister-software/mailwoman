@@ -2,9 +2,9 @@
 
 Import this, never redefine it. One `modal.App` object is what makes `modal run -m
 launch.train_remote::<name>` able to find a function defined in any module of this package, so a
-second app object here would produce functions nothing can launch.
+second app object here would produce functions that no launcher can call.
 
-Nothing in this module runs remotely. The secrets read the local checkout at deploy time and the
+No part of this module runs remotely. The secrets read the local checkout at deploy time and the
 image pins the export/quant toolchain. both are evaluated at import, in the container as well as
 locally, which is why each tolerates the container's empty environment rather than raising in it.
 """
@@ -100,7 +100,7 @@ training_image = (
         "datasets>=2.19",
         "tqdm>=4.66",
         # `mailwoman_train.env` reads it for the platform data root, and `paths.py` imports env at
-        # module scope. Nothing imports either one until the anchor painter reaches
+        # module scope. No module imports either one until the anchor painter reaches
         # `features/postcode_shapes.py`, so the absence surfaces mid-training rather than at startup.
         "platformdirs>=4.3",
         # Optional experiment tracking — streamed to a Hugging Face Space dashboard when
@@ -196,7 +196,7 @@ r2_secret = modal.Secret.from_dict(_load_r2_env() if modal.is_local() else {})
 # 401s and trackio_logging.py swallows it), so a token is only needed to push the
 # dashboard to a Space.
 def _load_hf_env() -> dict[str, str]:
-    """The HF token, or nothing. Absence is tolerated here and refused in `_load_r2_env` — a run
+    """The HF token, or no value. Absence is tolerated here and refused in `_load_r2_env` — a run
     without R2 cannot read its corpus, while a run without this token still trains and logs to CSV.
     """
     return _read_env_keys(("HF_TOKEN", "HUGGING_FACE_HUB_TOKEN"))

@@ -58,8 +58,8 @@ export const HUB_DOWNLOAD_API_BASE_URL = "https://hub.arcgis.com/api/download/v1
  * The Department publishes no rate limit for this service, so this is courtesy pacing
  * rather than a published ceiling — stated as such rather than dressed up as a measured limit.
  * Two requests a second is far below anything a hosted ArcGIS feature service is
- * provisioned for and costs a build nothing: the acquisition path makes single-digit
- * numbers of calls and the verification a few dozen.
+ * provisioned for and costs a build no measurable time: the acquisition path makes
+ * single-digit numbers of calls and the verification a few dozen.
  */
 export const GZT_MIN_REQUEST_INTERVAL_MS = 500
 
@@ -70,7 +70,7 @@ export const GZT_MIN_REQUEST_INTERVAL_MS = 500
  * The Department publishes no maintenance-frequency statement at all.
  *
  * What is observable is that the item's `modified` date and the data's latest `UPLOAD_DATE`
- * move a handful of times a year, so a shorter TTL adds nothing.
+ * move a handful of times a year, so a shorter TTL buys no fresher data.
  */
 const GZT_CACHE_TTL_MS = 6 * 60 * 60 * 1000
 

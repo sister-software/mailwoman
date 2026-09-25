@@ -90,7 +90,7 @@ const CorpusUpload: CommandComponent<typeof spec> = ({ options }) => {
 		}
 
 		// rclone reads `:s3:` credentials from the environment.
-		// Point RCLONE_CONFIG at nothing so the "config file not found" notice stops
+		// Point RCLONE_CONFIG at no file so the "config file not found" notice stops
 		// appearing in output that people read as a failure.
 		const env = childEnv({
 			RCLONE_CONFIG: "",

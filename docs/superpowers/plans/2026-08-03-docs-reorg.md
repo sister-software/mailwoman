@@ -15,7 +15,7 @@
 - Every commit leaves `yarn workspace @mailwoman/docs build` green. Broken links and anchors make the build throw.
 - Every published page declares `role:` ∈ `{tutorial, guide, reference, explanation, landing, evidence}`. Tutorials and guides also declare `verified-with:`, reference pages declare `source-of-truth:`, and landing and solutions pages declare `audience:`.
 - Register rules (spec §Register):
-  - Nothing rude or abrasive appears anywhere.
+  - No rude or abrasive text appears anywhere.
   - No page names or accuses any person or organization.
   - Named individuals never appear in comparative or strategic material.
   - Competitor prices appear only with dated public citations.
@@ -135,7 +135,7 @@ BlockIgnores = (?s)(```.*?```), (?s)(<details>.*?</details>)
 **Files:**
 
 - Move: `docs/articles/evals/` → `docs/records/evals/`; `docs/articles/retrospectives/` → `docs/records/retrospectives/`; `docs/articles/reviews/` → `docs/records/reviews/`; `docs/articles/plan/` (remainder: phases, dated plans, superseded reference) → `docs/records/plan/`
-- Modify: `docs/docusaurus.config.ts` — delete the `exclude` globs for `reviews/**` and eval postmortems (nothing internal remains under `articles/`), `docs/sidebars.ts` + `docs/src/components/DocsSubHeader/sections.ts` — drop the `archive`, `evals`, `retrospectives` sections (two files, same commit)
+- Modify: `docs/docusaurus.config.ts` — delete the `exclude` globs for `reviews/**` and eval postmortems (no internal page remains under `articles/`), `docs/sidebars.ts` + `docs/src/components/DocsSubHeader/sections.ts` — drop the `archive`, `evals`, `retrospectives` sections (two files, same commit)
 
 **Interfaces:**
 
@@ -322,7 +322,7 @@ Per-page briefs (each: colleague voice, starts-and-destinations opener, every co
 **Files:** Finalize `about/{mission,security-and-compliance,contact}.mdx`, `pricing.mdx` (seeded in Task 5).
 
 - _mission_ — the public open-strategy: commodify the layer, the operator's VS Code argument, why AGPL + flat license, funded-by-customers posture. The register rules apply without exception on this page.
-- _security-and-compliance_ — self-host boundary, what leaves the machine (nothing), SBOM, data provenance (ODbL/attribution posture), license tiers link.
+- _security-and-compliance_ — self-host boundary, what leaves the machine (no data), SBOM, data provenance (ODbL/attribution posture), license tiers link.
 - _pricing_ — the ratified three tiers ($0 AGPL / $250 mo · $2,400 yr Pro under the ~250-staff·$10M fence / Enterprise from $15k), grandfathering commitment, flat-price rationale sentence ("costs us the same"), no cadence commitment.
 - [ ] Same pipeline. **Commit** `docs(about): mission, trust, pricing`.
 

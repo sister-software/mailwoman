@@ -73,7 +73,7 @@ describe("dataProvenanceCheck", () => {
 		// The live case: `packages/core/data/coarse-placer/` shipped a trained classifier
 		// in every copy of `@mailwoman/core` and no record named it.
 		// Every artifact in that directory is a level down, so a rule over files alone
-		// reported nothing about any of core's four data directories.
+		// made no report about any of core's four data directories.
 		const context = await plant({
 			"packages/example/data/PROVENANCE.md": "# provenance\n\n`table.json` is written by `build-table`.\n",
 			"packages/example/data/table.json": "{}\n",

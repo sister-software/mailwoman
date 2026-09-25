@@ -61,7 +61,7 @@ before that.
    file that lists the Price ids the worker allowlists, the Payment Links the site renders, and the portal login address
    that the site and the email give a customer. A Payment Link is created only with consent collection. If Stripe
    refuses it, the report reads `blocked`, and the fix is to set the terms-of-service URL under the account's public
-   details in the dashboard. The run is idempotent, so a second run reads `exists` everywhere and creates nothing. An
+   details in the dashboard. The run is idempotent, so a second run reads `exists` everywhere and creates no object. An
    object that differs from the catalog is reported under `drift`. `--apply` updates the fields an update can change (a
    link's promotion codes, a webhook's events). It deactivates and recreates a Payment Link whose agreement or consent
    collection differs. It leaves a Price's amount and a webhook's API version as drift for the operator.
@@ -117,13 +117,13 @@ yarn mwops shop rehearse-renewal --session cs_test_… --worker-origin https://m
 
 The second command waits for the deployed worker to issue the first token, advances the clock 32 days, waits for Stripe
 to pay the renewal and deliver its `invoice.paid`, and reports both tokens' dates with `agrees: true` when the renewed
-expiry is the new period end plus the grace. Nothing is replayed or signed by hand. If a wait times out, check
+expiry is the new period end plus the grace. No step is replayed or signed by hand. If a wait times out, check
 Stripe's delivery to the worker first.
 
 ## The kill switch
 
 To stop issuance, set `ISSUANCE_ENABLED = "false"` and redeploy. The webhook keeps answering 200 and recording events.
-`invoice.paid` answers `refused: issuance is disabled` and mints nothing. A claim for a license with no token answers
+`invoice.paid` answers `refused: issuance is disabled` and mints no token. A claim for a license with no token answers
 `pending`. Refresh, status, and a claim for an already-minted token keep serving that token. When issuance is turned
 back on, the six-hourly reconciliation mints what was refused. That covers every paid invoice of a subscription the
 ledger knows, and the first invoice of an unknown subscription if that invoice was created within the last week (the

@@ -24,7 +24,7 @@ import {
 
 /**
  * The weighted centroid, extent and provenance that an aggregate probe returns.
- * `lat` is null when nothing matched.
+ * `lat` is null when no row matched.
  */
 interface AggRow {
 	lat: number | null

@@ -9,7 +9,7 @@
  *   different places 90 metres apart. An identity law that could see a coordinate would call that pair
  *   equivalent, which is the whole failure the closed comparator set exists to prevent. And every comparator
  *   whose axis is absent on both sides must report `undecidable`, never `equivalent`: two runs that resolved
- *   nothing agree about nothing, and a suite that scored that as a pass would report the same total as one
+ *   no coordinate agree about no field, and a suite that scored that as a pass would report the same total as one
  *   whose laws genuinely held.
  */
 

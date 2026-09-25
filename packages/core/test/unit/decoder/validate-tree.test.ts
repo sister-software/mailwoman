@@ -88,7 +88,7 @@ describe("validateTree", () => {
 	})
 
 	test("a unit with NO anchor of any kind is still stranded", () => {
-		// Widening the interface must not make the check vacuous: a unit alone has nothing to belong to.
+		// Widening the interface must not make the check vacuous: a unit alone has no other component to belong to.
 		const tree = { raw: "Terminal 5", roots: [node("unit", "Terminal 5")] }
 
 		expect(validateTree(tree).violations.some((x) => x.type === "stranded-dependent" && x.tag === "unit")).toBe(true)

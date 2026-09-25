@@ -7,7 +7,7 @@
  *
  *   `validateTree` (v0.7 task #37) was written because a parse can match a component and still be incoherent — a
  *   `street_suffix` floating with no `street`, an `intersection_a`/`_b` pair claiming a junction that has no road. For
- *   years nothing consumed it: `validateTree` was called only by its own test, so the check existed and the answer was
+ *   years no caller consumed it: `validateTree` was called only by its own test, so the check existed and the answer was
  *   never asked for. #1747 repaired one instance after finding the diagnosis had sat unread.
  *
  *   the property that makes this worth restricting is that the verdict needs no truth. Every other board assertion compares

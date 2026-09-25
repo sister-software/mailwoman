@@ -13,7 +13,7 @@
  *      data's accuracy is Ordnance Survey's.
  *   2. **The coordinate conversion cancels.** Truth is converted OSGB36 → WGS84 by the same `@mailwoman/spatial`
  *      routine the database build uses, so a systematic conversion bias would be invisible here. The conversion is
- *      pinned against the OSTN15 test set in its own suite. this eval adds nothing to that claim.
+ *      pinned against the OSTN15 test set in its own suite. this eval adds no evidence to that claim.
  *   3. **Premise-level accuracy is out of reach.** A unit postcode is tens of houses. there is no open GB register
  *      to grade a rooftop answer against. The distance thresholds below are therefore postcode-scale (≤1 km) rather
  *      than rooftop-scale.

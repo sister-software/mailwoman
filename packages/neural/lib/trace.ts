@@ -40,7 +40,7 @@ export interface TracePrior {
 	/**
 	 * Whether this prior changed any emission.
 	 *
-	 * A configured prior that matched nothing reports `false`.
+	 * A configured prior that found no match reports `false`.
 	 */
 	applied: boolean
 
@@ -84,7 +84,7 @@ export type TraceRepairPass =
  * One repair pass that changed labels, with the per-piece labels before and after.
  *
  * The label arrays are index-aligned with `pieces`.
- * Passes that changed nothing are omitted.
+ * Passes that changed no label are omitted.
  */
 export interface TraceRepair {
 	pass: TraceRepairPass

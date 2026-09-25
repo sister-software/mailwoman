@@ -148,11 +148,11 @@ describe("declaredAmbiguityMarker", () => {
  * This reports too FEW, and it exists because the two were asymmetric:
  * `301 College Ave #101, Athens, GA 30601` returned the Athens label centroid at `admin`,
  * 1,627 m from the rooftop that `301 College Ave, Athens, GA 30601` reaches at `address_point`,
- * and nothing in the response separated it from a correct answer to `Athens, GA`.
+ * and no field in the response separated it from a correct answer to `Athens, GA`.
  *
  * The false-positive cases are the ones that shape the table.
  * A house number on an interpolated answer is located — interpolation is how a house
- * number is placed along a segment — and a unit is located by nothing in this repository,
+ * number is placed along a segment — and a unit is located by no code in this repository,
  * so a floor for either would fire on correct answers.
  */
 describe("coarserAnswerMarker", () => {

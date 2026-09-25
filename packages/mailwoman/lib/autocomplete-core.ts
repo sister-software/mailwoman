@@ -18,7 +18,7 @@ import { $public } from "#env"
  *
  * The filename is lowercase on both halves of the locale tag, because that is what
  * the builder writes (`gazetteer-pipeline/fst.ts`'s artifact list).
- * A `fst-en-US.bin` default resolves to nothing on every machine, and the command
+ * A `fst-en-US.bin` default resolves to no artifact on every machine, and the command
  * reports it as a missing artifact rather than as a name it got wrong.
  */
 export function resolveFSTPath(explicitPath?: string): PathBuilderLike {

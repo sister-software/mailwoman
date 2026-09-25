@@ -55,7 +55,7 @@ export interface GeoBiasRowProps {
  * A denial turns the chip back off, which looks identical to the visitor turning it off,
  * and the browser will not prompt a second time.
  *
- * Therefore, pressing again appeared to do nothing at all.
+ * Therefore, pressing again appeared to have no effect at all.
  */
 export const GeoBiasRow: React.FC<GeoBiasRowProps> = ({ active, error, onToggle }) => (
 	<div className={styles.biasRow}>

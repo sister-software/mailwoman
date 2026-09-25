@@ -212,7 +212,7 @@ export const NominatimSearchResponseSchema = z
 /**
  * The `/reverse` 200 response for the OpenAPI document.
  *
- * The response is a single jsonv2 result, `null` when nothing resolves, a FeatureCollection
+ * The response is a single jsonv2 result, `null` when no place resolves, a FeatureCollection
  * for `format=geojson`, or a schema.org `Place` for `format=jsonld`.
  */
 export const NominatimReverseResponseSchema = z

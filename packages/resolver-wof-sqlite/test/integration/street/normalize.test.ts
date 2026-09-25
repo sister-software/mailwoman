@@ -239,8 +239,8 @@ describe("normalizeStreetForKeyLocale — the it branch (ANNCSU rooftop keying)"
 
 	it("it: the three spellings of località reach one key", () => {
 		// The register writes all three.
-		// The shared fold strips the accent and the apostrophe, so the `it` branch adds
-		// nothing here and this test is what catches the fold changing under it.
+		// The shared fold strips the accent and the apostrophe, so the `it` branch adds no
+		// extra normalization here and this test is what catches the fold changing under it.
 		expect(normalizeStreetForKeyLocale("LOCALITA' Governatori", "it")).toBe("localita governatori")
 		expect(normalizeStreetForKeyLocale("Località Governatori", "it")).toBe("localita governatori")
 		expect(normalizeStreetForKeyLocale("Localita Governatori", "it")).toBe("localita governatori")

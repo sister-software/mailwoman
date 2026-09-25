@@ -1,6 +1,6 @@
 """Turning a per-character label sequence back into the surfaces a row claims.
 
-This is the pre-registered span reconstruction and nothing else: contiguous B/I runs of the same
+This is the pre-registered span reconstruction and no other rule: contiguous B/I runs of the same
 tag over the char sequence. It imports no torch, so the scoring above it is testable without a
 checkpoint.
 """

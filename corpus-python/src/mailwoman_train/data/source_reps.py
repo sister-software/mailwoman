@@ -17,7 +17,7 @@ those sources take ``D / S`` of the draws, so ``total_weight = W / (1 - D / S)``
     weight_i = reps_i * rows_i * total_weight / S
 
 The reps-targeted sources' draws come out of the fixed sources' share, exactly as adding any weight does.
-``D`` must stay below ``S``, and at least one source must carry a fixed weight, or there is nothing to
+``D`` must stay below ``S``, and at least one source must carry a fixed weight, or there is no reference to
 derive the scale against.
 """
 

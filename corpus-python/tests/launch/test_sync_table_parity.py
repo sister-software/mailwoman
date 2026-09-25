@@ -2,7 +2,7 @@
 
 `launch/corpora.py` holds one row per corpus version, and `plan_sync` builds the transfers from it.
 `sync-census.json` is a hand-kept pin of the rclone commands, verified paths and `__pycache__`
-clears that the original functions ran. Nothing regenerates it.
+clears that the original functions ran. No code regenerates it.
 
 When a version fails, fix its table row. Edit the fixture only when a version's staging is meant to
 change, and say which version and why in the commit message.

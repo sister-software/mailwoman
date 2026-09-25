@@ -1,7 +1,7 @@
 # v8.3.0 Phase-0 memo 1 — the Latin base recipe assembly (D1–D3 evidence)
 
 **Resolves:** ROAD_TO_MAILWOMAN_V8_3_0 §4 decisions D1 (budget), D2 (feed), D3 (tokenizer).
-**Rule:** nothing here launches; this memo + operator sign-off on the three decisions do.
+**Rule:** no launch happens here. This memo + operator sign-off on the three decisions do.
 
 ## D1 — step budget + compute envelope
 

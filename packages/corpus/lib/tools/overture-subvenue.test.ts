@@ -8,7 +8,7 @@
  *
  *   The fixture is the point. `@mailwoman/corpus` declares poi.db's columns locally (it does not
  *   depend on `@mailwoman/resolver-wof-sqlite`, which owns the full `POIDatabase` interface). Therefore,
- *   nothing type-checks the projection against the real schema. What stands in for that is a fixture
+ *   no type checker covers the projection against the real schema. What stands in for that is a fixture
  *   whose DDL matches the shipped layer's — `h3_cell`, `category_id`, `neg_rank`, `rowid_key` clustered
  *   PK, `name`, `country` — so a rename upstream fails here instead of throwing at runtime against a
  *   3.9 GB database no CI runner has.
@@ -87,7 +87,7 @@ const ROWS: FixtureRow[] = [
 	{ category: "pier", name: "Pier 39", country: "US" },
 	{ category: "airport_lounge", name: "Delta Sky Club Concourse A", country: "US" },
 	{ category: "gas_station", name: "Holiday Station", country: "US" },
-	// Unnamed rows exist in the layer and carry nothing a lexicon can learn from.
+	// Unnamed rows exist in the layer and carry no name a lexicon can learn from.
 	{ category: "airport_terminal", name: null, country: "US" },
 ]
 
@@ -228,7 +228,7 @@ test("readOvertureLayerVintage reads the layer-interface manifest", async () => 
 test("OVERTURE_SUBVENUE_CATEGORIES maps every category to a designator the lexicon knows", () => {
 	// `pier` is a wave-2 addition to PROPOSED_DESIGNATORS.
 	// The rest predate it.
-	// A category mapped to a designator with no record would produce surfaces pointing at nothing.
+	// A category mapped to a designator with no record would produce surfaces pointing at no record.
 	expect(Object.entries(OVERTURE_SUBVENUE_CATEGORIES).toSorted()).toEqual([
 		["airport_lounge", "terminal"],
 		["airport_terminal", "terminal"],

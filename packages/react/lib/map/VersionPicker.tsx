@@ -37,7 +37,7 @@ export interface VersionPickerProps {
 }
 
 /**
- * Renders the model version selector, or nothing when fewer than two versions exist.
+ * Renders the model version selector, or `null` when fewer than two versions exist.
  */
 export function VersionPicker({
 	versions,

@@ -84,7 +84,7 @@ export function repairPostcodeContradiction(tree: AddressTree, shape: QueryShape
 
 		const { start, end, body } = hit.span
 
-		// Condition 1: the span already resolved to a postcode node somewhere — nothing to repair.
+		// Condition 1: the span already resolved to a postcode node somewhere, so it needs no repair.
 		if (anyNode(tree, (n) => n.tag === "postcode" && overlaps(n, start, end))) continue
 
 		// Condition 2: every value-containing node touching the span is a misread-family

@@ -50,7 +50,7 @@ export function runtimeModeFromSearch(search: string): RuntimeMode {
 /**
  * The `?q=` query, decoded, or null when absent or blank.
  *
- * Blank is null so a link that carries `?q=` with nothing after it behaves like a link without it.
+ * Blank is null so a link that carries `?q=` with no value after it behaves like a link without it.
  */
 export function queryFromSearch(search: string): string | null {
 	const value = new URLSearchParams(search).get("q")

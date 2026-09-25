@@ -87,7 +87,7 @@ export function buildEngineStamp(input: {
 }
 
 /**
- * The stderr notice: two lines, or nothing when the commercial branch applies.
+ * The stderr notice: two lines, or no notice when the commercial branch applies.
  *
  * An expired key is the one reading whose cause the notice states, because the
  * date tells the operator what to do.

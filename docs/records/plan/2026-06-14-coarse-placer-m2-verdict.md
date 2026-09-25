@@ -55,7 +55,7 @@ The two **new** wins are exactly the cases the rule targets — **Birmingham, AL
 ## Decision: the threshold, and the asymmetry
 
 DeepSeek's sharpest point: **90/90 is the wrong objective for a _soft_ prior.** The prior never filters — it
-only re-ranks, tier-safe — so a wrong off-map guess costs ~nothing (the M1 + M2 checks both show off-map
+only re-ranks, tier-safe — so a wrong off-map guess costs ~zero (the M1 + M2 checks both show off-map
 0→0, 0 regressions), while a false _reject_ of an in-map address forfeits the result. The cost is
 **asymmetric** → bias toward in-map recall, and set the threshold on the **assembled pipeline** rather than the
 component min.

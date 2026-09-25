@@ -311,7 +311,7 @@ def write_reference() -> None:
     """Capture the current loader as the reference the tests above compare against.
 
     Run this only when the current code already passes against the existing reference — otherwise
-    the artifact records whatever the code does now, and the tests assert nothing.
+    the artifact records whatever the code does now, and the tests assert no fact.
     """
     import tempfile
 

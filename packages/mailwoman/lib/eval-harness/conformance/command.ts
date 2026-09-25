@@ -121,7 +121,7 @@ export interface ConformanceLawMeasurement {
  *
  * `measured` is absent exactly when `problems` is non-empty.
  * A refused run has no findings, and reporting it as zero findings would read as a
- * suite that passed nothing rather than a suite that ran nothing.
+ * suite that passed no case rather than a suite that ran no case.
  */
 export interface ConformanceMeasurement {
 	laws: string[]

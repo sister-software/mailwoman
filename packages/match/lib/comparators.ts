@@ -118,7 +118,7 @@ export function jaroWinkler(
  * The right question for organization names and address bags, where word order carries no
  * information and a shared rare token is worth more than character-level proximity.
  *
- * Either side empty scores 0 rather than 1: an empty bag agrees with nothing, and treating
+ * Either side empty scores 0 rather than 1: an empty bag agrees with no bag, and treating
  * "no evidence" as "perfect agreement" is how a blocking pass floods with false pairs.
  */
 export function jaccard(a: ReadonlySet<string>, b: ReadonlySet<string>): number {

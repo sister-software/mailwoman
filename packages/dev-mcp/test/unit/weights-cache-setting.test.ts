@@ -141,7 +141,7 @@ describe("weights_cache — the guard", () => {
 
 		// The measurable half: a refusal that happened after a 1.4 s build would still
 		// be correct and would still cost the build.
-		// Nothing resident means it refused on the path rather than on the artifacts.
+		// An empty registry means it refused on the path rather than on the artifacts.
 		expect(registry.size).toBe(0)
 	})
 })

@@ -27,7 +27,7 @@ def test_the_three_built_countries_are_registered() -> None:
 
 
 def test_every_country_directory_is_declared_as_one_kind_or_the_other() -> None:
-    """A directory in neither group is a country nobody can find and nothing checks.
+    """A directory in neither group is a country nobody can find and no test checks.
 
     Without this the registry and the filesystem drift apart silently: a new country lands as a
     directory, is never registered, and a caller reaching for it through `country_module` is told

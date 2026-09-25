@@ -6,7 +6,7 @@
  *   Ed25519 on `crypto.subtle`, the one implementation Node, a Cloudflare Worker and a browser share. Keys
  *   travel as PEM: PKCS8 for the private half, spki for the public half, which is what `node:crypto` wrote before and
  *   what an operator's signing key file already holds. The PEM codec here is a base64 transform of the DER bytes the
- *   WebCrypto API imports and exports. nothing parses ASN.1.
+ *   WebCrypto API imports and exports. no code parses ASN.1.
  *
  *   Signing is deterministic in Ed25519, so a WebCrypto signature over the same key and bytes equals the `node:crypto`
  *   one byte for byte. the test holds that against a fixture produced before this module existed.

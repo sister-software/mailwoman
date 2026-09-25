@@ -6,7 +6,7 @@
  *   Read a promotion-eval run's own artifacts.
  *
  *   Unlike the gauntlet, the eval writes structured output: `verdict.json` carries every floor with its reading, and
- *   `provenance.txt` records each graded artifact's md5 and dynamic-quant fingerprint. So nothing here parses prose for
+ *   `provenance.txt` records each graded artifact's md5 and dynamic-quant fingerprint. So this module parses no prose for
  *   a number — the log is read only for the two things that exist nowhere else, the lore-guard refusal and the
  *   pre-filled ledger command.
  *
@@ -289,7 +289,7 @@ export async function missingWeightsCacheArtifacts(
 		}
 	}
 
-	// Without a card there is nothing to check the rest against, and the caller already has a fatal answer.
+	// Without a card there is no reference to check the rest against, and the caller already has a fatal answer.
 	if (missingRequired.length) return { kind: "wrong-shape", paths: missingRequired }
 
 	// A cache that has the three required files but is missing what its own card

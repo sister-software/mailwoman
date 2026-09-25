@@ -57,7 +57,7 @@ The administrative name is much weaker. The name confirms on **26% of Korean pos
 
 Two problems cause the misses. The first is a granularity mismatch. GeoNames labels a postcode with a place at the eup/myeon/dong level, such as 추자면, Chuja-_myeon_. WOF's locality layer is one level finer, at the hamlet. The nearest WOF point to that postcode is a village called "Mung" _inside_ Chuja-myeon. The coordinate is correct, but the name belongs to a smaller place. Both sources are accurate about different levels of the hierarchy, and the levels do not align.
 
-The second problem is more serious. The largest group of misses is 구 (gu), the urban districts, such as Gangnam-gu and Haeundae-gu. For most of Seoul and Busan, the gu is the main administrative unit of the address. WOF Korea does not carry gu as named localities, so there is nothing to confirm against. **The gazetteer has the least coverage in the most address-dense part of the country.** The method works, but the map lacks names where most people live, and that limits Korea today. No change to the method can match a name that is absent from the dataset.
+The second problem is more serious. The largest group of misses is 구 (gu), the urban districts, such as Gangnam-gu and Haeundae-gu. For most of Seoul and Busan, the gu is the main administrative unit of the address. WOF Korea does not carry gu as named localities, so there is no locality name to confirm against. **The gazetteer has the least coverage in the most address-dense part of the country.** The method works, but the map lacks names where most people live, and that limits Korea today. No change to the method can match a name that is absent from the dataset.
 
 ## A bug the verifier caught, and you should want it to
 
@@ -67,7 +67,7 @@ Korean place names repeat often. Dozens of villages across the country share a n
 
 ## What we keep, and what the map still owes us
 
-The architecture worked as intended. A point-primary build and a name-primary build, for two countries whose data shares almost nothing, both feed the same resolver strategy without new resolver code. That shows the approach generalizes beyond one locale. It cannot supply place names that are missing from Who's On First.
+The architecture worked as intended. A point-primary build and a name-primary build, for two countries whose data has almost no overlap, both feed the same resolver strategy without new resolver code. That shows the approach generalizes beyond one locale. It cannot supply place names that are missing from Who's On First.
 
 Korea ships with its actual coverage: reliable province and coordinate, a documented 26% name tier, marked experimental and kept out of the default bundle until the name coverage improves. The source for better coverage is known. Korea's road-name database, Juso, carries the gu and dong names natively. It requires a government API key, so obtaining it is a deliberate acquisition, and it is next on the list. Taiwan is further behind. GeoNames has no postal file for Taiwan (the URL returns a 404), so there is no coordinate to start from until we find another source.
 

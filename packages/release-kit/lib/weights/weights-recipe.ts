@@ -20,7 +20,7 @@
  *   the base directory is PER KEY, and that is the trap this module exists to hold in one place. The model
  *   and tokenizer resolve against the data root. three of the four lexicons resolve against the repo
  *   (they are generated, committed files); `localitySurfaceLexicon` resolves against the data root because
- *   it is built rather than committed. and the postcode databases resolve against the data root's `wof/`. Nothing
+ *   it is built rather than committed. and the postcode databases resolve against the data root's `wof/`. No field
  *   in the JSON marks which is which, so a reader that guessed one rule would silently resolve four of
  *   seven artifact classes to paths that do not exist — and every one of them degrades to `undefined`
  *   rather than failing.
@@ -36,7 +36,7 @@ import { resolvePath, type PathBuilder, type PathBuilderLike } from "path-ts"
  * `shippedName` is the filename the artifact must carry in a weights directory
  * rather than its source basename.
  * They differ, and the difference is the interface: `resolveFromPackageDir` finds
- * siblings by fixed name, so an artifact placed under its source name resolves to nothing
+ * siblings by fixed name, so an artifact placed under its source name resolves to no path
  * and reports absence rather than failing.
  */
 export interface LinkableArtifact {
@@ -182,7 +182,7 @@ export async function readWeightsRecipe(
 		// in `@mailwoman/resolver-wof-sqlite/weights-overlay-linker`, which each overlay's
 		// link script already calls with its own measured parameters.
 		// Modelling one input path here was a guess: an earlier draft read a `db`
-		// key that no entry has, so this returned nothing for all eight countries
+		// key that no entry has, so this returned no path for all eight countries
 		// and the artifact silently never appeared as buildable.
 		// Report that a build is owed and leave the build where it lives.
 		if (softFeed.pairIndexByCountry?.[country]) {

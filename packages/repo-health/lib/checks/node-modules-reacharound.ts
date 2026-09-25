@@ -9,7 +9,7 @@
  *   `resolve(root, "node_modules/@mailwoman/neural-weights-en-us/model.onnx")` — instead of asking Node where that
  *   package lives (`import.meta.resolve`, `createRequire().resolve`) or exposing the file through an `exports` subpath.
  *   The assembled literal encodes a layout its owner never agreed to: it survives a package moving, a scope rename, a
- *   hoist, and a `files` change by silently pointing at nothing, and the caller reads that as "the artifact is missing"
+ *   hoist, and a `files` change by silently pointing nowhere, and the caller reads that as "the artifact is missing"
  *   rather than "I looked in the wrong place".
  *
  *   The check targets literal `node_modules` path segments rather than general path construction.
@@ -66,7 +66,7 @@ const ALLOWED: Record<string, string> = {
 	// The symlink farm a worktree arm needs, because a git worktree has none and symlinking the
 	// main checkout's directory across resolves every workspace back into the main checkout
 	// (yarn links `@mailwoman/core -> ../../packages/core`, resolved against the symlink's real path).
-	// There is nothing to resolve: the directory does not exist until this code creates it.
+	// There is no path to resolve: the directory does not exist until this code creates it.
 	"packages/dev-mcp/lib/worktree/arm.ts": "constructs the worktree's node_modules farm; nothing exists to resolve yet",
 	// The oracle for that farm, on the same principle as the weights-cache pair above: a fixture
 	// built with the implementation's own helper cannot fail when the implementation is wrong.
@@ -88,14 +88,14 @@ const ALLOWED: Record<string, string> = {
 	// links the checkout's node_modules into the staging tree rather than reading a package's layout.
 	// `yarn pack` needs the project context there, and the link target is the checkout
 	// root's own directory rather than another package's install dir.
-	// Same principle as worktree-arm: nothing package-owned is being addressed by hand.
+	// Same principle as worktree-arm: no package-owned path is being addressed by hand.
 	"packages/release-kit/lib/release/stage.ts":
 		"symlinks the checkout's node_modules into the staging tree; not a package lookup",
 	// the one home.
 	// `weightsCachePackageDir` is the inverse of a resolution rather than a
 	// substitute for one: the directory does not exist yet when the layout is needed
 	// (`npm install --prefix <cacheRoot>` is about to create it, or `stage-weights-cache.ts`
-	// is about to write a candidate bundle into it), so there is nothing to resolve.
+	// is about to write a candidate bundle into it), so there is no path to resolve.
 	// Every other site in the tree now calls this.
 	"packages/neural/lib/weights/index.ts": "weightsCachePackageDir — the single home for the npm-prefix cache layout",
 }
@@ -199,8 +199,8 @@ export const nodeModulesReacharoundCheck: RepoCheck = {
 		const diagnostics: Diagnostic[] = []
 		const sources = await listCandidateSources(context)
 
-		// A guard that silently stops looking is worse than no guard: if the prefilter
-		// ever finds nothing, the walk is broken rather than the tree clean.
+		// A guard that silently stops looking is worse than no guard: if the prefilter ever
+		// finds no source, the walk is broken rather than the tree clean.
 		if (!sources.length) {
 			diagnostics.push({
 				severity: DiagnosticSeverity.Error,

@@ -32,8 +32,8 @@ like a doorstep whether or not it is one.
 ## Forward and reverse
 
 Address to coordinate is **forward geocoding**. Coordinate to address is **reverse geocoding**. They
-sound like the same operation run backwards and they are not, because the inputs have nothing in
-common: forward geocoding starts with a string a person typed, and reverse geocoding starts with a
+sound like the same operation run backwards and they are not, because the inputs are unrelated:
+forward geocoding starts with a string a person typed, and reverse geocoding starts with a
 number a device measured. Forward geocoding's hard problem is ambiguity — which Church Street. Reverse geocoding's hard problem is containment — this point falls inside a locality
 polygon, a county polygon and a country polygon at once, so which one answers the question.
 
@@ -62,7 +62,7 @@ Those two can fail independently, and that is the whole reason to keep them apar
 - **Wrong place, fine coordinate.** The geocoder found a different Springfield and returned a rooftop
   in it. The coordinate carries eight decimal places and is off by four hundred kilometers.
 
-The second failure is the dangerous one, because nothing in the output looks wrong. Eight decimal
+The second failure is the dangerous one, because no part of the output looks wrong. Eight decimal
 places of latitude is about a millimetre of ground, and decimals are a property of the number's
 format rather than of the measurement behind it. A coordinate cannot tell you which of the two
 failures you are looking at. Something else has to.
@@ -80,7 +80,7 @@ The tiers are roughly the same everywhere, whatever the software is called:
   as good as it gets, and it exists only where a register exists.
 - An **interpolated point** — nobody surveyed the building, but the street segment is known to run
   from number 100 to number 198, so number 150 is estimated about halfway along. That holds where the
-  numbering runs evenly along the segment and fails where it does not, and nothing in the result says
+  numbering runs evenly along the segment and fails where it does not, and no field in the result says
   which case you got.
 - A **street centroid** — the middle of the street, used when the input carries no house number.
 - An **administrative centroid** — the middle of the town, the postcode, or the region. This tier

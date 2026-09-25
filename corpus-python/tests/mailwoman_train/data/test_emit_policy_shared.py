@@ -140,7 +140,7 @@ def test_emit_row_excludes_by_source_not_by_probability() -> None:
 
 
 def test_all_zero_probabilities_pass_every_row_through() -> None:
-    """With nothing live the policy is a no-op for excluded and non-excluded sources alike."""
+    """With no source live the policy is a no-op for excluded and non-excluded sources alike."""
     policy = EmitPolicy(excluded_sources=frozenset({EXCLUDED}))
 
     assert not policy.augments

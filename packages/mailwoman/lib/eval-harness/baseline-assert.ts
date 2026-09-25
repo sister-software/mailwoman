@@ -199,7 +199,7 @@ export async function listProfiles(): Promise<string[]> {
 }
 
 /**
- * Look up a profile, refusing loudly on a typo rather than silently checking nothing.
+ * Look up a profile, refusing loudly on a typo rather than silently checking no profile.
  */
 export async function resolveProfile(name: string): Promise<BaselineProfile> {
 	const profile = (await loadBaselineFile()).profiles[name]

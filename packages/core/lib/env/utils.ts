@@ -12,7 +12,7 @@ import { z } from "zod"
  * Wrap a coerced schema so a blank value means the same as an absent one.
  *
  * A shell `export FOO=`, an unset Docker/CI `${VAR}` interpolation and a compose file
- * with a missing key all arrive as an empty string rather than as nothing.
+ * with a missing key all arrive as an empty string rather than as an absent value.
  * `z.coerce.number()` turns that into `0`, which any `.positive()` or `.min()` then rejects.
  *
  * So the process dies at import instead of falling back to its default, and the

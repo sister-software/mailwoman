@@ -66,7 +66,7 @@ export interface ReconcileOptions {
 	 * How far back to list paid invoices, by the invoice's creation time: the bound
 	 * on recovering a subscription the ledger has never seen.
 	 *
-	 * Wider than the cron interval, so one failed pass costs nothing.
+	 * Wider than the cron interval, so one failed pass costs no coverage.
 	 */
 	sinceSeconds: number
 }
@@ -239,7 +239,7 @@ async function fullyRefunded(stripe: Stripe, invoiceID: string): Promise<boolean
 
 /**
  * The state Stripe's current records say a license should hold, or `undefined`
- * when Stripe has nothing to add.
+ * when Stripe has no change to add.
  *
  * A full refund is final, and it is read from the charge rather than the subscription,
  * which a refund leaves `active`: a license minted by the missed-invoice sweep,

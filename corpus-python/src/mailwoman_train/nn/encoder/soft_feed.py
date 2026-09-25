@@ -21,7 +21,7 @@ def soft_feed_channel(
 ) -> tuple[nn.Linear | None, nn.Parameter | None]:
     """One soft-feed channel's projection and learned cue vector, or a pair of Nones.
 
-    A disabled channel must construct nothing at all rather than construct-and-discard. `_init_weights`
+    A disabled channel must construct no projection at all rather than construct-and-discard. `_init_weights`
     re-initializes by walking `self.parameters()`, which yields parameters in registration order
     and draws from the global RNG for each. Therefore, an extra registered module shifts the initial
     weights of every parameter registered after it.
@@ -47,7 +47,7 @@ def inject_soft_feed(
 
     Every channel is the same additive form: `h_i + c_i · (W · features_i + cue)`. The confidence
     scaling is what keeps a channel continuous rather than a switch. A token with no clue has
-    c=0 and contributes exactly nothing, so an encoder given no features computes what an encoder
+    c=0 and contributes no signal, so an encoder given no features computes what an encoder
     built without the channel computes.
 
     Absent features on an ENABLED channel are zeros, which is the well-defined "no clue anywhere"

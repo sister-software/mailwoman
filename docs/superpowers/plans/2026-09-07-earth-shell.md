@@ -4,7 +4,7 @@
 
 **Goal:** A private workspace, `packages/earth`, that builds a React + Vite installable PWA for Cloudflare Workers Static Assets, mounts the geocoder UI from `@mailwoman/react/map` on a fake runtime, serves `/`, `/debug`, `/trace` and `/build.json`, and is ready for a Workers Builds project at `earth.mailwoman.ai`. This plan moves no real runtime. The second Earth plan does that.
 
-**Architecture:** One Vite app reads three client routes from `location.pathname` without a router. `vite-plugin-pwa` in `injectManifest` mode owns the manifest and a precache-only service worker that the runtime plan later extends with the range cache. A small Vite plugin emits `build.json` from `@mailwoman/core/git`. The plugin, the PWA identity and the Playwright preview config live in `packages/site-kit`, a private workspace the planetary app imports too, so neither app writes them twice. `wrangler.toml` declares `assets` and no `main`. The fake runtime the app mounts is the one `@mailwoman/react`'s stories and tests already use, moved from a test helper to a public subpath so nothing is copied.
+**Architecture:** One Vite app reads three client routes from `location.pathname` without a router. `vite-plugin-pwa` in `injectManifest` mode owns the manifest and a precache-only service worker that the runtime plan later extends with the range cache. A small Vite plugin emits `build.json` from `@mailwoman/core/git`. The plugin, the PWA identity and the Playwright preview config live in `packages/site-kit`, a private workspace the planetary app imports too, so neither app writes them twice. `wrangler.toml` declares `assets` and no `main`. The fake runtime the app mounts is the one `@mailwoman/react`'s stories and tests already use, moved from a test helper to a public subpath so no code is copied.
 
 **Tech Stack:** React 19, Vite 8, `vite-plugin-pwa` 1.3 (workbox 7), `react-map-gl` 8 over MapLibre 6, wrangler 4, Playwright for the browser smoke, vitest for the pure modules.
 
@@ -20,7 +20,7 @@
 - Source lives under `lib/` and tests under `test/`, with `rootDir: ./lib`. Relative imports use explicit `.ts`/`.tsx` extensions, and the code uses no `enum`.
 - Comments state invariants rather than history.
 - Every commit passes the pre-commit hook. Branch: `git fetch origin main && git checkout -b feat/earth-shell origin/main`.
-- Nothing in `docs/` changes in this plan except the three-origin CORS edit in the tile worker, which is not in `docs/`.
+- No file in `docs/` changes in this plan except the three-origin CORS edit in the tile worker, which is not in `docs/`.
 
 ## File Structure
 
@@ -97,7 +97,7 @@ import type { DemoMapStyle, DemoRuntime, Suggestion } from "#map/types"
 import type { ResolvedMapPlace } from "#map/place-render"
 ```
 
-`STUB_MAP_STYLE` and `FAKE_SUGGESTIONS` become `export const`. Check each type's home before committing: `ResolvedMapPlace` is exported from `#map/place-render`, `ParseResult` and `PipelineRuntime` from `#pipeline/types`, `DemoMapStyle`, `DemoRuntime` and `Suggestion` from `#map/types`. If `grep -n "export interface ParseResult" packages/react/lib/pipeline/types.ts` finds nothing, follow `packages/react/lib/index.ts` to where it is.
+`STUB_MAP_STYLE` and `FAKE_SUGGESTIONS` become `export const`. Check each type's home before committing: `ResolvedMapPlace` is exported from `#map/place-render`, `ParseResult` and `PipelineRuntime` from `#pipeline/types`, `DemoMapStyle`, `DemoRuntime` and `Suggestion` from `#map/types`. If `grep -n "export interface ParseResult" packages/react/lib/pipeline/types.ts` finds no match, follow `packages/react/lib/index.ts` to where it is.
 
 - [ ] **Step 2: Add the export**
 
@@ -130,7 +130,7 @@ yarn workspace @mailwoman/react test:browser
 yarn mwops health exports
 ```
 
-Expected: the react browser suite passes with the same count as on `main`; knip reports nothing (the subpath has consumers).
+Expected: the react browser suite passes with the same count as on `main`; knip reports no unused exports (the subpath has consumers).
 
 - [ ] **Step 5: Commit**
 
@@ -383,7 +383,7 @@ yarn vitest --run --config vitest.slow.config.ts packages/release-kit/test/integ
 yarn mwops health manifest-targets
 ```
 
-Expected: the absence list prints 15 names and includes `packages/earth` and `packages/site-kit`; `release-stage.test.ts` passes with `publishCount` 60; `manifest-targets` reports nothing. Every `exports` target points at a file that Task 3 creates, so if `manifest-targets` reports the three `lib/*.ts` files missing, run this step again after Task 3.
+Expected: the absence list prints 15 names and includes `packages/earth` and `packages/site-kit`; `release-stage.test.ts` passes with `publishCount` 60; `manifest-targets` reports no findings. Every `exports` target points at a file that Task 3 creates, so if `manifest-targets` reports the three `lib/*.ts` files missing, run this step again after Task 3.
 
 - [ ] **Step 6: Commit**
 
@@ -605,7 +605,7 @@ yarn compile
 yarn mwops health manifest-targets
 ```
 
-Expected: 8 tests pass; oxlint reports nothing; `tsc -b` emits `packages/earth/out/{routes,config}.js` and `packages/site-kit/out/build-info.js`; `manifest-targets` reports nothing.
+Expected: 8 tests pass; oxlint reports no findings; `tsc -b` emits `packages/earth/out/{routes,config}.js` and `packages/site-kit/out/build-info.js`; `manifest-targets` reports no findings.
 
 - [ ] **Step 5: Commit**
 

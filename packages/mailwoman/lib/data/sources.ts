@@ -12,7 +12,7 @@
  *   list the bundle did not carry. Every row carried it.
  *
  *   That is the failure this reader exists for. Prose about publishers is written once and the artifacts are rebuilt,
- *   so the two drift with nothing to notice. Running this against a downloaded copy reports what the rows say rather
+ *   so the two drift with no check to notice. Running this against a downloaded copy reports what the rows say rather
  *   than what the record says about them, and the difference is the finding.
  *
  *   A bundle whose artifacts carry no publisher column reports `none-recorded-in-the-artifacts` rather than an empty
@@ -59,7 +59,7 @@ export interface BundleSourceCensusResult {
 	bundle: string
 	/**
 	 * Absent when the bundle declares no {@link BundleSourceCensus}, which says its
-	 * artifacts carry no publisher column rather than that a census found nothing.
+	 * artifacts carry no publisher column rather than that a census found no column.
 	 */
 	status: "censused" | "none-recorded-in-the-artifacts" | "nothing-on-disk"
 	/**

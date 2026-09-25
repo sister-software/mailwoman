@@ -68,7 +68,7 @@ interface Span {
  *
  * A blank span is what a clerk's double space produces, and a zero-width one
  * what a token found at its own end produces.
- * Neither is a component, and both would train the model on nothing.
+ * Neither is a component, and both would train the model on no component.
  */
 function put(spans: Span[], text: string, start: number, end: number, tag: string): void {
 	if (end > start && text.slice(start, end).trim()) {

@@ -3,7 +3,7 @@
 **Date:** 2026-07-23 (night #2) · **Status:** proposal
 
 The stop rule ended the v3.12 lineage. This document writes out the dossier's **option B** so the
-morning decision only needs approval. **Nothing here has run.**
+morning decision only needs approval. **No step here has run.**
 
 ## Why B, mechanistically (the cRT diagnostic)
 

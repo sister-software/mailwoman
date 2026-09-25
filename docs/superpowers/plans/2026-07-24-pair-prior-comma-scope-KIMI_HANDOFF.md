@@ -2,7 +2,7 @@
 
 **Date:** 2026-07-24 · **For:** Kimi (external brainstorm) · **From:** the mailwoman placetype-pair
 arc. Everything below is measured, current, and reproducible from
-`.superpowers/sdd/task-8-report.md`; nothing is hypothetical unless marked.
+`.superpowers/sdd/task-8-report.md`; no claim is hypothetical unless marked.
 
 ## The system in three sentences
 

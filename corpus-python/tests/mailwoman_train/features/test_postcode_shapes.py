@@ -3,7 +3,7 @@
 The table used to be typed twice — once in `@mailwoman/neural`'s postcode repair, once in
 `features/postcode_shapes.py` — under a comment reading "keep the two in lockstep". It did not hold.
 The IE Eircode row was TypeScript-only for a month and the BR CEP row for five weeks, and each time
-the trainer painted one fewer shape than inference with nothing failing. A textual parity test was
+the trainer painted one fewer shape than inference with no failure. A textual parity test was
 added after the first drift and found the second, which is better than a comment and still after
 the fact.
 

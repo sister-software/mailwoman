@@ -1,4 +1,4 @@
-"""The typed environment. Nothing else in this package reads `os.environ`.
+"""The typed environment. No other module in this package reads `os.environ`.
 
 The counterpart of `packages/core/lib/env/schema.ts`, with the same split: `public()` carries
 non-secret operational configuration, `private()` carries credentials. A package that reads its own
@@ -32,7 +32,7 @@ def _platform_temp_root() -> Path:
     MEASURED on Linux, and the reason this is not `platformdirs.user_runtime_dir`: `env-paths`
     answers `/tmp/<user>/mailwoman` while `user_runtime_dir` answers `/run/user/<uid>/mailwoman`.
     The other three roots agree between the two libraries. this one does not, and a TypeScript tool
-    writing to one while a Python tool reads the other finds nothing.
+    writing to one while a Python tool reads the other finds no entry.
 
     `env-paths` joins the username on Linux and omits it on macOS, which is mirrored here.
     """

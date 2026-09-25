@@ -10,11 +10,11 @@
   and `data-root` were not on it before. The pin's baseline constant moved with it.
 - **`decodeLicenseKeyPayload`** joined `@mailwoman/core/license/key`: `verify --online` asks the worker about the lid a
   token carries even when this build cannot verify the token, because the license's status decides whether the customer
-  needs an upgrade or a purchase. The payload is read as written and used for nothing else.
+  needs an upgrade or a purchase. The payload is read as written and used for no other purpose.
 - **The worker client test** scripts the wire with `@mailwoman/core/api/test-transport` rather than a listener; the CLI
   integration test serves a fetch handler through `@mailwoman/api-kit`'s `serveNode` and reaches it through
   `MAILWOMAN_LICENSE_URL` and `MAILWOMAN_DOCS_URL`. The compiled CLI ships its register, so every CLI case asserts a
-  refusal by its word and that nothing was written.
+  refusal by its word and that no file was written.
 - **The claim reducer takes its clock from the events.** `initialClaimState()` takes no time, and the deadline counts from the
   first event, because a render must be pure.
 - **Docs tests import site sources through `#license/*`** (added to `docs/package.json` `imports`), as `test-interface`
@@ -28,7 +28,7 @@
 
 ## Global Constraints
 
-- The key-file read joins the CLI launcher's path: `packages/mailwoman/test/unit/module-count.test.ts` pins `mailwoman --version` at or under 200 modules (132 today). `fs/readers` and `data-root` are already on that path through the manifest read; nothing new may join it.
+- The key-file read joins the CLI launcher's path: `packages/mailwoman/test/unit/module-count.test.ts` pins `mailwoman --version` at or under 200 modules (132 today). `fs/readers` and `data-root` are already on that path through the manifest read; no new module may join it.
 - The HTTP client lives outside the `@mailwoman/core/license` barrel, as `publication.ts` does, so the launcher never loads it.
 - HTTP goes through `APIClient` (`@mailwoman/core/api`), never raw `fetch`, with a bounded timeout and `silentLogger()` so stdout stays a document.
 - A secret file is created `0600` through `writePrivateTextFile`; the key file is not a secret and uses `writeLocalTextFile`.

@@ -20,7 +20,7 @@ const config: OxfmtConfig = {
 	//
 	// What this gives up is oxfmt's tag work: canonical aliases, capitalised descriptions,
 	// the blank line before `@returns`.
-	// Nothing reformats those now, so they hold where this branch left them.
+	// No formatter reformats those now, so they hold where this branch left them.
 	jsdoc: false,
 }
 

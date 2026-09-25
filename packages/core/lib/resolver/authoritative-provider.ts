@@ -10,7 +10,7 @@
  *
  *   Ground rules the shapes below enforce:
  *
- *   - **Absence stays absent.** A provider that does not expose a field leaves it `undefined`; nothing
+ *   - **Absence stays absent.** A provider that does not expose a field leaves it `undefined`; no code
  *     here normalizes absence into `false`, `0`, or `""`. A consumer that needs the distinction reads
  *     the optional directly.
  *   - **Refusal and ambiguity are first-class outcomes**, not degenerate matches: a refusal is a
@@ -92,7 +92,7 @@ export type AuthoritativeMatchStatus = (typeof AuthoritativeMatchStatus)[keyof t
  * One place the provider asserted.
  *
  * Every field is the provider'S claim, carried verbatim.
- * Nothing here is a Mailwoman inference, which is exactly what makes the block auditable downstream.
+ * No part of this is a Mailwoman inference, which is exactly what makes the block auditable downstream.
  */
 export interface AuthoritativeMatch {
 	/**

@@ -7,10 +7,10 @@
  *   the frozen rows through the same pipeline construction the POI query board uses, asks the absence
  *   route what it makes of each answer, and prints each row's registered outcome beside the observed one.
  *
- *   The command chooses nothing. Rows, expected outcomes and the coverage layer all come from
+ *   The command chooses no row. Rows, expected outcomes and the coverage layer all come from
  *   `probe-definition.json`, which the loader refuses to hand over if its content hash has moved.
  *
- *   Nothing is injected into the runtime pipeline for the absence work: the pipeline answers, and the
+ *   No route is injected into the runtime pipeline for the absence work: the pipeline answers, and the
  *   route reads the finished answer. The semantic phrase route (#1929) is injected, because the
  *   activity-phrased rows cannot reach a category without it.
  *

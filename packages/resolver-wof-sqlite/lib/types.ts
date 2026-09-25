@@ -162,7 +162,7 @@ export interface FindPlaceQuery {
 	 * Restricts the typo-fuzzy tier to one ISO 3166-1 alpha-2 country.
 	 * Exact matches stay worldwide.
 	 *
-	 * A fuzzy miss in this country returns nothing and does not fall back to a worldwide correction.
+	 * A fuzzy miss in this country returns no result and does not fall back to a worldwide correction.
 	 * The field is ignored when `country` is set.
 	 */
 	fuzzyCountry?: string

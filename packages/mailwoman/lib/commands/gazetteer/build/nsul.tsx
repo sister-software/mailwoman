@@ -8,7 +8,7 @@
  *   Reads a hand-acquired archive from a vintage-dated `<data-root>/db/nsul/<yyyy-MM>/` directory
  *   (there is no download step, since the portal item is fetched by hand beside its `.md5` sidecar and
  *   `item.json`), verifies it against the sidecar, and writes a sealed, atomically-swapped artifact.
- *   Nothing on the parse/resolve path reads it yet. the runtime surface is a separate proposal
+ *   No step on the parse/resolve path reads it yet. the runtime surface is a separate proposal
  *   (#1975, F4).
  *
  *   Coverage is England, Scotland and Wales. Northern Ireland postcode data is outside ONS's open

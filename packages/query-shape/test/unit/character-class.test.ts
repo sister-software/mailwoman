@@ -207,7 +207,7 @@ describe("scriptForCodepoint", () => {
 	 * The converse, and the direction the first version of this suite did not check.
 	 *
 	 * Asserting only that what we claim is a script really is one stops the table over-claiming
-	 * and says nothing about what it misses, and a range cannot express an exception,
+	 * and makes no statement about what it misses, and a range cannot express an exception,
 	 * so a block holding two scripts gets drawn through.
 	 * Both of this file's misses were that: `COMMON_RANGES` took `0x3000..0x303f` whole,
 	 * and Unicode assigns 々 (U+3005) and 〇 (U+3007) inside it to Han.

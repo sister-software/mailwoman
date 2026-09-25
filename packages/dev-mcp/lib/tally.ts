@@ -9,7 +9,7 @@ import { stringifyJSON } from "@mailwoman/core/json"
  *
  *   The pattern this retires, named so it stays retired: every verdict census to date (`admin_coherence` counts on
  *   2026-08-17/18, the re-anchor after #1732) was a scratch script looping `session.geocode` and counting field values
- *   by hand, because `mwdev_run` returned rows and nothing counted across them. Aggregation belongs beside the
+ *   by hand, because `mwdev_run` returned rows and no tool counted across them. Aggregation belongs beside the
  *   measurement so the denominator discipline travels with it.
  *
  *   Absence discipline: a path that is missing on a row tallies under {@link ABSENT_KEY}, never silently skipped and

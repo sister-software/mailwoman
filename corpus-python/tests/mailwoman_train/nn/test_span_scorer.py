@@ -237,7 +237,7 @@ def test_span_head_cannot_influence_the_bio_logits():
 
     Seeding two models and diffing logits does not test this: `_init_weights()` walks the module list,
     so adding a head shifts every subsequent RNG draw and the whole ENCODER differs — 100% of logits
-    move for reasons that have nothing to do with the head, and at `init_from` (how this ships) the
+    move for reasons unrelated to the head, and at `init_from` (how this ships) the
     checkpoint's weights are loaded anyway, so draw order is irrelevant. What actually matters is that
     the head sits off the logits path: perturb it arbitrarily and the BIO logits must not move.
     """
@@ -322,11 +322,11 @@ def test_build_optimizer_gives_the_span_head_its_own_lr():
     assert labels == ["base", "span_head_learning_rate"]
     by_lr = {g["lr"]: g for g in optim.param_groups}
     assert set(by_lr) == {1e-5, 1e-3}
-    # Every span/semi-CRF param is in the fast group. nothing else is.
+    # Every span/semi-CRF param is in the fast group. No other param is.
     head_ids = {id(p) for n, p in model.named_parameters() if n.startswith(("span_scorer.", "semi_crf."))}
     fast_ids = {id(p) for p in by_lr[1e-3]["params"]}
     assert fast_ids == head_ids
-    # Nothing is lost or double-counted.
+    # No parameter is lost or double-counted.
     total = sum(len(g["params"]) for g in optim.param_groups)
     assert total == len(list(model.parameters()))
 

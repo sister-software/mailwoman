@@ -6,7 +6,7 @@
  *   Every shipped `pair-index-<country>.bin` must agree with the model card that describes it.
  *
  *   A model card is what a consumer, the release preflight and a future maintainer all read to learn
- *   what an artifact is. Nothing else compares the two, and a card can drift across several
+ *   what an artifact is. No other check compares the two, and a card can drift across several
  *   increments without any check noticing — leaving it not merely absent but confidently wrong. The
  *   artifact is the arbiter here. the card is graded against it.
  *

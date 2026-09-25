@@ -15,7 +15,7 @@
  *       spends three keys warning about.
  *   - `gb-ni-osm` → `postcode-prefix-gb-ni.bin`. 80 BT districts from OpenStreetMap, ancestry-only,
  *       no coordinates. ODbL 1.0, so build-local: folding these nodes into the Code-Point file would
- *       put a share-alike obligation on an OGL artifact, and nothing downstream could see it had
+ *       put a share-alike obligation on an OGL artifact, and no downstream check could see it had
  *       happened. That licence split — not the format — is why the two GB registers stay apart.
  *
  *   Self-verifying (the sealed-artifact spirit, PCN1's posture): after writing, the command re-reads
@@ -24,7 +24,7 @@
  *   summed `unitCount`, the median per-prefix `radiusP95Km`. Those three numbers are B3-1's bar, so
  *   the bar is graded by reading the artifact rather than by the builder's memory of it.
  *
- *   Output goes to a new dated path under `$MAILWOMAN_DATA_ROOT/postcode-prefix/`. Nothing is
+ *   Output goes to a new dated path under `$MAILWOMAN_DATA_ROOT/postcode-prefix/`. No file is
  *   overwritten, and the file is sealed read-only afterwards.
  */
 
@@ -74,7 +74,7 @@ interface DatabaseRecipe {
 	 * Prefixes probed after write.
 	 *
 	 * Per database, never shared: probing Code-Point prefixes against a freshly
-	 * built NI index prints reassuring-looking misses that verify nothing
+	 * built NI index prints reassuring-looking misses that verify no prefix
 	 * (the lesson the pair-index command's en-nz first build taught).
 	 */
 	probePrefixes: readonly string[]
@@ -221,7 +221,7 @@ const GazetteerBuildPostcodePrefix: CommandComponent<typeof spec, [DatabaseName]
 
 		// ── Self-verifying readback: B3-1's bar, graded by re-reading the file
 		// rather than the buffer still in memory.
-		// Reading the buffer would verify the serializer against itself and prove nothing
+		// Reading the buffer would verify the serializer against itself and prove no fact
 		// about what landed on disk — the whole point of a round-trip bar.
 		const resolver = new PostcodePrefixIndexResolver(await readLocalBuffer(outPath))
 		const readNodes = [...resolver.nodes()]

@@ -97,7 +97,7 @@ def restamp_resume_lrs(
     stayed correct. A length mismatch means that the interface check failed, so the zip fails loudly rather
     than truncating.
 
-    Prints one line per group whose rate the checkpoint had changed, and nothing when the checkpoint
+    Prints one line per group whose rate the checkpoint had changed, and no line when the checkpoint
     already agreed with the config.
     """
     lr_lambdas = getattr(scheduler, "lr_lambdas", None)

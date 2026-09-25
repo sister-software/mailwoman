@@ -56,7 +56,7 @@ export interface AcquiredRegion {
 /**
  * Downloads every survey area that matches the prefix and turns each into a builder input.
  *
- * @throws {Error} When the catalogue has nothing for the prefix, when `only` lists a symbol
+ * @throws {Error} When the catalogue has no entry for the prefix, when `only` lists a symbol
  * that the catalogue lacks, or when an area's archive, metadata or shapefile cannot be read.
  */
 export async function acquireRegion(options: AcquireRegionOptions): Promise<AcquiredRegion> {
@@ -109,7 +109,7 @@ export async function acquireRegion(options: AcquireRegionOptions): Promise<Acqu
 		})
 	}
 
-	// The latest refresh date is the date after which nothing in this artifact changed.
+	// The latest refresh date is the date after which no entry in this artifact changed.
 	const sourceVintage = selected
 		.map((entry) => entry.saverest)
 		.toSorted()

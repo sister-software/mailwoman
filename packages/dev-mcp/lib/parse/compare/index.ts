@@ -83,7 +83,7 @@ export interface ParseComparisonRow {
 	mailwoman: LabelledSpan[]
 	libpostal: LabelledSpan[] | null
 	/**
-	 * Why libpostal produced nothing, when it produced nothing.
+	 * Why libpostal produced no spans, when it produced none.
 	 *
 	 * A transport failure and a parser that found no components are different facts
 	 * and reach a reader as the same empty list otherwise.

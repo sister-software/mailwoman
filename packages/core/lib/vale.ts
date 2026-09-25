@@ -20,7 +20,8 @@ export interface ValeCommand {
 	 */
 	file: string
 	/**
-	 * Arguments that precede the caller's: the launcher's path when `file` is Node, nothing otherwise.
+	 * Arguments that precede the caller's: the launcher's path when `file` is Node,
+	 * and no arguments otherwise.
 	 */
 	argv: string[]
 }

@@ -15,7 +15,7 @@
  *   zone 1 is written AS coverage rather than AS rows. Inside England a location with no polygon is not
  *   unsurveyed — the Planning Practice Guidance defines Zone 1 as the land outside Zones 2 and 3 — so the
  *   designated absence is carried by a `layer_coverage` row at `basis = designated`, `completeness = 1.0`.
- *   Outside England there is no row, because the EA's statement says nothing about Wales, Scotland or
+ *   Outside England there is no row, because the EA's statement makes no statement about Wales, Scotland or
  *   Northern Ireland, each of which has a different authority and a different zone scheme. Those two
  *   readings must never collapse into one another, and the negative half of the verification exists to
  *   prove they do not.
@@ -236,7 +236,7 @@ export async function buildFloodDatabase(options: BuildFloodOptions): Promise<Bu
 			// The touch table exists only for this build and is dropped before the artifact is sealed.
 			// No primary key while loading: the resolution queries below read it through
 			// indexes created once the load is done, and a clustered key would sort every
-			// insert against an ingest order nothing controls.
+			// insert against an ingest order that no code controls.
 			kdb.exec(
 				"CREATE TABLE build_cell_touch (h3_cell INTEGER NOT NULL, resolution INTEGER NOT NULL, zone_code TEXT NOT NULL, area_id TEXT NOT NULL, is_full INTEGER NOT NULL)"
 			)
@@ -396,7 +396,7 @@ export function aggregateChunks(chunks: ReadonlyArray<FloodChunkResult>): Stream
  * Run the ingest as a sequence of bounded child processes, one per range of the authority's feature ids.
  *
  * The shared chunk interface — the parent's no-handle rule, and the fail-loud handling of a
- * chunk that dies or prints nothing — lives with `ingestChunkArguments` and `runChunkProcess`.
+ * chunk that dies or prints no output — lives with `ingestChunkArguments` and `runChunkProcess`.
  */
 async function runBatchedIngest(
 	tmpPath: string,
@@ -428,7 +428,7 @@ async function runBatchedIngest(
 						"--object-id-to",
 						String(to),
 						// A range's own count is not knowable up front — `ogrinfo` reports the layer's
-						// total and nothing narrower — so the chunk asserts nothing about its size
+						// total and no narrower count — so the chunk makes no claim about its size
 						// and the parent checks the sum against the whole file.
 						"--declared-feature-count",
 						String(0),

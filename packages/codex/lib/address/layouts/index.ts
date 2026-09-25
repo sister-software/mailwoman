@@ -343,7 +343,7 @@ export const LARGEST_FIRST_SYSTEMS: ReadonlySet<string> = new Set(
  * The hand-authored entries take precedence: those are checked against real addresses
  * on a board, where a generated skeleton is a transcription of a dataset.
  * Null is a real answer — 55 of the 252 shipped country records carry no usable `fmt`, and a caller
- * that renders nothing for one of those is reporting absence rather than inventing an order.
+ * that renders no string for one of those is reporting absence rather than inventing an order.
  */
 export function layoutForCountry(countryCode: string | null | undefined, script?: AddressScript): AddressLayout | null {
 	if (!countryCode) return null

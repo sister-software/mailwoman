@@ -12,7 +12,7 @@
  *
  *   `La Grange, IL 60525` is the reachability case. The decode labels `La` a street and asks the backend for `Grange`;
  *   WOF `85940805` (population 15,667) carries 19 `name_key` rows and none of them is bare `grange`, so the three rows
- *   that come back are score-0 rural places and the pick among them is arbitrary. Re-weighting changes nothing there.
+ *   that come back are score-0 rural places and the pick among them is arbitrary. Re-weighting changes no pick there.
  *
  *   So this asks, per panel row: the key the resolver was sent (`ResolveNodeTrace.value`, not the input and not the
  *   parse), and whether the gold place carries that key. The gold place is identified by its own name and the panel's
@@ -21,9 +21,9 @@
  *
  *   The question is not American, so neither is the rendering. A row is written through
  *   `formatAddress(components, country, { singleLine: true })` — the per-country layouts in `@mailwoman/codex` — rather
- *   than a template literal. `${locality}, ${region} ${postcode}` is the United States postal order and nothing else:
+ *   than a template literal. `${locality}, ${region} ${postcode}` is the United States postal order and no other order:
  *   it prints Japan's admin run backwards, drops the country's own separator convention, and puts a postcode after a
- *   region in the 60-odd systems that lead with it. A country whose layout names no `country` slot renders nothing and
+ *   region in the 60-odd systems that lead with it. A country whose layout names no `country` slot renders no line and
  *   the row is reported as unrenderable, which is a measured absence rather than an invented order.
  *
  *   Usage:
@@ -169,7 +169,7 @@ const outcomes: Array<{
 for (const place of panel) {
 	const input = renderAdmin(place)
 
-	// A country whose layout writes nothing answers "" rather than an invented order.
+	// A country whose layout writes no line answers "" rather than an invented order.
 	// A row nobody can write is reported as its own class, never graded as a miss.
 	if (!input) {
 		unrenderable++

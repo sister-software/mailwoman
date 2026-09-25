@@ -35,7 +35,7 @@ npx @mailwoman/photon serve
 ## libpostal
 
 `/parse` and `/expand`, over `GET` or `POST`. This is the one that needs no gazetteer at all — the
-model arrives as a package dependency, so it starts on a machine that has downloaded nothing.
+model arrives as a package dependency, so it starts on a machine that has downloaded no data.
 
 ```bash
 npx @mailwoman/libpostal serve
@@ -50,9 +50,9 @@ tutorial, one per surface. They are read off the route handlers and then checked
 server.
 
 The shape of what they say: free-text and structured field queries are honored, and country
-restriction is a hard filter. Language and category parameters are accepted and change nothing, so a
+restriction is a hard filter. Language and category parameters are accepted and change no result, so a
 client sending them gets a valid unfiltered answer rather than an error. Bounding-box parameters are
-not read at all. And nothing here is keyed to an OpenStreetMap object, so `osm_id` and `osm_type` are
+not read at all. And no part of this is keyed to an OpenStreetMap object, so `osm_id` and `osm_type` are
 never set.
 
 [What each drop-in honors](../developers/tutorials/swap-in-for-nominatim.mdx#7-what-each-drop-in-honors)

@@ -83,7 +83,7 @@ export function buildSurfaceIndex(surfaces: readonly SubVenueSurface[]): Surface
  * would fire on every `-hall`/`-gate` compound in Germanic and Nordic street naming,
  * which is exactly the confound class `Briggate`/`Kirkgate` represents.
  *
- * For Han/Kana names that rule finds nothing at all, because the script has no word
+ * For Han/Kana names that rule finds no boundary at all, because the script has no word
  * boundaries: `第1ターミナル` splits into one token that matches no surface.
  * There the longest known substring is the correct operator, and the compound objection does not transfer.
  * Japanese has no `-gate` street-name suffix class.

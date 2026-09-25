@@ -1,8 +1,8 @@
-"""Which checkpoint grows onto which tokenizer: the splice table, and nothing that runs.
+"""Which checkpoint grows onto which tokenizer: the splice table, and no code that runs.
 
 A splice is five paths and a pair of vocabulary sizes. Seven of these existed as seven Modal
 functions differing only in those values, which is how the size a splice is EXPECTED to produce
-stayed in a docstring where nothing could check it. Here the expectation is data, `launch/mean_init.py`
+stayed in a docstring where no test could check it. Here the expectation is data, `launch/mean_init.py`
 refuses a result that does not match it, and `tests/launch/test_splices.py` checks the table's own
 shape — a silent short expansion is a fine-tune that trains a head against rows the tokenizer never
 emits.

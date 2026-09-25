@@ -33,7 +33,7 @@ def apply_curricula(cfg: Config, tb: dict[str, Any], step: int) -> None:
 
     Every curriculum here ramps with the run so the model cannot launder a clue: it must keep label
     competence with and without each channel. Each is conditioned on its own config flag so a run
-    that leaves one off draws nothing for it and stays reproducible against the runs before it.
+    that leaves one off draws no row for it and stays reproducible against the runs before it.
     """
     # Postcode-anchor confidence curriculum (#239/#240): perturb by optimizer step so the
     # model can't launder the anchor (no-op until 25% of max_steps).

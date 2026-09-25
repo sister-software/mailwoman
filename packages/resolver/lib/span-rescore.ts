@@ -400,7 +400,7 @@ function confidentRanges(
 /**
  * Find the best locality the raw text exact-matches in the gazetteer.
  *
- * @returns Null when nothing matches (or the postcode check rejects every match).
+ * @returns Null when no entry matches (or the postcode check rejects every match).
  * Callers test `hasResolvedPlace` first.
  */
 export async function findRescoreCandidate(
@@ -416,7 +416,7 @@ export async function findRescoreCandidate(
 	const postcode = opts.postcode?.trim() || undefined
 
 	// Postcode-consistency anchor: where does the postcode itself resolve?
-	// (No-op when the backend has no postcode coverage — findPlace returns nothing
+	// (No-op when the backend has no postcode coverage — findPlace returns no candidate
 	// → no anchor → check can't fire → match accepted.)
 	let anchor: { lat: number; lon: number } | null = null
 
@@ -500,7 +500,7 @@ export async function findRescoreCandidate(
 
 	spans.sort((a, b) => b.end - b.start - (a.end - a.start) || a.start - b.start)
 
-	// #17 bare-toponym soft country. The caller's `country` is a locale default rather than knowledge. The #961 block below already says so, and for a bare city name it is the only country signal there is, which makes hard-filtering on it the worst possible use of it. Measured through the compiled CLI on 2026-08-10: `--locale en-US 'Zürich'` returned Zurich, Kansas (population 81) 8,043 km off, and `--locale en-GB 'Zürich'` returned nothing at all, because GB holds no Zurich to filter down to.
+	// #17 bare-toponym soft country. The caller's `country` is a locale default rather than knowledge. The #961 block below already says so, and for a bare city name it is the only country signal there is, which makes hard-filtering on it the worst possible use of it. Measured through the compiled CLI on 2026-08-10: `--locale en-US 'Zürich'` returned Zurich, Kansas (population 81) 8,043 km off, and `--locale en-GB 'Zürich'` returned no result at all, because GB holds no Zurich to filter down to.
 	//
 	// So for this one query shape the filter is demoted to an additive prior:
 	// probe the gazetteer unscoped, then rank with `rankByCountryPrior` so an in-country
@@ -521,7 +521,8 @@ export async function findRescoreCandidate(
 	 *
 	 * `WA Sammamish` recovers `Sammamish` and discards `WA`, and `WA` is the
 	 * token that decides which Sammamish.
-	 * The backend already answers containment through `regionQualifier`; nothing was asking it.
+	 * The backend already answers containment through `regionQualifier`.
+	 * No caller was asking it.
 	 *
 	 * Measured against the shipped artifact: `Irvington` alone ranks Irvington NY
 	 * (population 6,417) over Irvington NJ (61,323) on the fame prior, and `Irvington` with
@@ -621,7 +622,7 @@ export async function findRescoreCandidate(
 					limit: 5,
 					...(wholeSpan ? {} : { primaryOnly: true }),
 					// The qualifier the sub-span left behind.
-					// A backend without the ancestors sidecar ignores it and stamps nothing,
+					// A backend without the ancestors sidecar ignores it and stamps no containment,
 					// which is the same answer as not asking.
 					...(qualifier === undefined ? {} : { regionQualifier: qualifier }),
 				})
@@ -666,7 +667,7 @@ export async function findRescoreCandidate(
 		}
 	}
 
-	// #961 joint country recovery: the caller's `country` is a locale default rather than knowledge. The CLI's en-US default scoped both the anchor and the village probe to US, so the SI floor never fired through geocode-core while the same rows resolved 25/25 on the resolver harness. When the scoped pass finds nothing and a postcode is present, re-probe the spans unscoped (the admin gazetteer is one extract, all countries), then verify each exact candidate against the postcode's code subset resolved in the candidate's own country (postcode extracts route by country). A cross-country promotion is accepted only postcode-verified within the radius — never unverified — so a US-shaped query can't wander abroad on a name coincidence (the 48026 guard: resolved trees never reach this code, and unresolved ones must pass the joint postcode check).
+	// #961 joint country recovery: the caller's `country` is a locale default rather than knowledge. The CLI's en-US default scoped both the anchor and the village probe to US, so the SI floor never fired through geocode-core while the same rows resolved 25/25 on the resolver harness. When the scoped pass finds no match and a postcode is present, re-probe the spans unscoped (the admin gazetteer is one extract, all countries), then verify each exact candidate against the postcode's code subset resolved in the candidate's own country (postcode extracts route by country). A cross-country promotion is accepted only postcode-verified within the radius — never unverified — so a US-shaped query can't wander abroad on a name coincidence (the 48026 guard: resolved trees never reach this code, and unresolved ones must pass the joint postcode check).
 	if (opts.postalCompoundRecovery && postcode && thresholdKm > 0) {
 		const code = postcodeCodeSubset(postcode) || postcode.trim()
 
@@ -695,7 +696,7 @@ export async function findRescoreCandidate(
 					// No alternatives from this pass, deliberately.
 					// Admission here is per-candidate postcode verification — one `findPlace` per runner-up —
 					// and the class it serves is the opposite of the namesake one: a postcode is present
-					// and has already picked the country, so there is nothing ambiguous left to declare.
+					// and has already picked the country, so there is no ambiguity left to declare.
 					// The bare-toponym queries #1537 is about never reach this branch (it requires a postcode).
 					return { text: sp.text, start: sp.start, end: sp.end, place: h, postcodeVerified: true, alternatives: [] }
 				}

@@ -8,7 +8,7 @@
  *
  *   Node's whatwg `euc-kr` implements EUC-KR proper (KS X 1001) and not the UHC extension CP949 adds in lead bytes
  *   0x81–0xA0. Measured over every two-byte sequence Python's `cp949` accepts, `TextDecoder('euc-kr')` reads 8,824 of
- *   17,048 differently — 6,475 as U+fffd and 2,349 as a different character with nothing raised. `iconv-lite` matches on
+ *   17,048 differently — 6,475 as U+fffd and 2,349 as a different character with no error raised. `iconv-lite` matches on
  *   all 17,048.
  *
  *   It reached a real row: one address in 48,000 of the Korean register carries `더샾오피스텔`, posco's "The Sharp"

@@ -49,10 +49,10 @@ them:
 The `▁` marks a piece that starts a new word. The pieces come from a fixed inventory of 73,143 of
 them, built once from training text, and any string at all can be spelled out of that inventory —
 which is the property a word list does not have. A word list meets `Analytics` for the first time and
-has nothing to say; a piece inventory spells it out of pieces it has seen thousands of times.
+has no answer, while a piece inventory spells it out of pieces it has seen thousands of times.
 
 Two things are worth carrying out of this stage. Each piece records where it came from in your
-original string, so nothing downstream ever needs to know that pieces exist — you get character
+original string, so no downstream stage ever needs to know that pieces exist — you get character
 offsets into the text you passed in. And the text the model sees is not byte-for-byte the text you
 typed: a fully lowercase ASCII input is restored to mixed case first, because that is the register
 the training corpus was labeled in. `beacon` reaches the model as `Beacon`.
@@ -63,15 +63,15 @@ the training corpus was labeled in. `beacon` reaches the model as `Beacon`.
 **The rule-world version:** a pattern that fires or does not. `if (/^\d{5}$/.test(token))` and you
 have a postcode.
 
-**What happens here:** nothing fires. Every piece receives a score for every one of the 33 available
+**What happens here:** no stage fires. Every piece receives a score for every one of the 33 available
 marks, and the marks compete. `▁2` gets a score for "postcode starts here", a score for "house number
 starts here", a score for "outside every component", and thirty more.
 
 The scores are computed with the entire line visible at once. That is the part a per-token rule
 cannot reach. `F` is scored as the beginning of a street name because `800` sits to its left and a
 locality-shaped word, a two-letter uppercase token and a five-digit number sit to its right — the
-same evidence the person with the highlighter used, and for the same reason. Nothing about the
-letter `F` on its own suggests a street.
+same evidence the person with the highlighter used, and for the same reason. The
+letter `F` on its own suggests no street.
 
 ## Three: add what the place list already knows
 
@@ -93,7 +93,7 @@ heuristics — prefer the longer span, drop the continuation that has no beginni
 
 **What happens here:** whole readings are scored rather than repaired. A table built once from the
 label list says which mark may follow which — "continues the street" is legal after "street starts
-here" and after itself, and after nothing else — and the decoder searches for the highest-scoring
+here" and after itself, and after no other mark — and the decoder searches for the highest-scoring
 reading that stays inside those rules. A continuation with no beginning is not fixed up after the
 fact; it never appears, because no legal reading contains one.
 [Decoding and the best path](./decoding-and-viterbi.mdx) has the mechanism.
@@ -165,7 +165,7 @@ reading was a bad one. The four are not separable from the output alone, which i
 [Report a parsing bug](../../how-to/report-a-parsing-bug.mdx) asks for the input string rather than a
 description of the symptom.
 
-**Nothing in the chain abstains.** Every stage produces scores, and scores always have a maximum, so
+**No stage in the chain abstains.** Every stage produces scores, and scores always have a maximum, so
 there is always an answer. Hand it a line that is not an address and you get an address-shaped
 reading of it. [What the model cannot do](./what-the-model-cannot-do.mdx) is the list of places that
 matters.

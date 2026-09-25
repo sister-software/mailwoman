@@ -6,7 +6,7 @@
  *   The three `DatabaseClient` construction forms, pinned.
  *
  *   The constructor discriminates at runtime (`typeof source === "string"`, then `"database" in source`), so the
- *   overload list proves nothing about which branch a call actually takes — every form below compiled before it worked.
+ *   overload list proves no fact about which branch a call takes — every form below compiled before it worked.
  *   The no-options path is the one that failed: forwarding an absent second argument as an explicit `undefined` throws
  *   inside `node:sqlite`, which typechecks perfectly and breaks every caller that passes only a path.
  */
@@ -38,7 +38,7 @@ describe("DatabaseClient construction", () => {
 	})
 
 	it("forwards native options from the path form", async () => {
-		// readOnly on a fresh :memory: database has nothing to open, which is exactly how we observe the option arriving.
+		// readOnly on a fresh :memory: database has no file to open, which is exactly how we observe the option arriving.
 		expect(() => new DatabaseClient<FixtureDatabase>(":memory:", { readOnly: true }).destroy()).not.toThrow()
 	})
 

@@ -137,7 +137,7 @@ export function isHeaderOrDecorationRow(values: readonly string[]): boolean {
 }
 
 /**
- * A row whose first non-blank value is nothing but a footnote marker — `(1)`, `[2]`, `3`, `*`, `***`.
+ * A row whose first non-blank value is only a footnote marker — `(1)`, `[2]`, `3`, `*`, `***`.
  *
  * The row is the footnote's own text rather than a subsidiary: `widepoint-2025.htm`'s
  * second table is `[(1), "In January 2019, WidePoint Solutions Corp. Was merged into…"]`,

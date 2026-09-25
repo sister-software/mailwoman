@@ -95,7 +95,7 @@ export interface BDCAvailabilityTable {
  *   and every discarded value remains recoverable from `filer.db`'s `holding_company_name` edges.
  *   The identical discipline `frn`'s primary pick already applies.
  * - `brand_name` stays NULL unconditionally: the provider list carries no brand-name
- *   column at all, primary or otherwise, so there is nothing to populate it from.
+ *   column at all, primary or otherwise, so there is no column to populate it from.
  */
 export interface BDCProviderTable {
 	/**

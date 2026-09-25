@@ -31,6 +31,6 @@ export function pruneDBRangeCache(keepVersion: string): void {
 	void navigator.serviceWorker.ready
 		.then((registration) => registration.active?.postMessage(message))
 		.catch(() => {
-			/* no active worker — nothing to prune */
+			/* no active worker — no cache to prune */
 		})
 }

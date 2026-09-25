@@ -13,7 +13,7 @@
  *   the fork existed keeps pulling upstream forever, silently, over corrections the build depends on. That repair is
  *   here, and it is opt-in twice (`--apply --repoint`) because it changes what the next build ingests.
  *
- *   report first. Without `--apply` nothing is written: the sweep resolves every origin, reads every checkout and
+ *   report first. Without `--apply` no file is written: the sweep resolves every origin, reads every checkout and
  *   prints the plan — remote, vintage, shallowness, and whether the tree is safe to touch. A plan nobody saw cannot be
  *   checked, and the vintage half is not available anywhere else: the admin build reads whatever is on disk, so a repo
  *   six months behind produces a plausible artifact and no complaint.

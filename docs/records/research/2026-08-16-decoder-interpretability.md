@@ -345,7 +345,7 @@ that class existed, emitted a novelty p-value telling the triager to mint it.
 | Method                       | What it would have said about "Weimar, Thüringen"                                                                                                    |
 | ---------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Input predicate (no interp)  | "All channel confidences zero, parse confidence high" — the flag, computable today in `soft-features.ts` output.                                     |
-| Occlusion / channel ablation | Nothing — ablating already-zero channels is a no-op; must run the counterfactual direction (inject plausible channel values) instead.                |
+| Occlusion / channel ablation | No effect — ablating already-zero channels is a no-op; must run the counterfactual direction (inject plausible channel values) instead.              |
 | Integrated gradients         | ~All attribution mass on token embeddings, ~none on channels — automatic evidence-silent alarm, at gradient cost.                                    |
 | Attention inspection         | A head attends Thüringen→Weimar/comma; per Jain & Wallace vs. Wiegreffe & Pinter, this licenses no faithfulness claim.                               |
 | Activation patching          | Locality/region decisions localize to the embedding→mid-layer pathway with zero causal channel contribution — grammar-only decision, proven.         |

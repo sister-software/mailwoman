@@ -18,7 +18,7 @@ Countries divide by what they provide:
   assembles, and whose rows train under a shared head. It has no label set of its own to declare.
 
 `cjk/` is neither: it is a regional grouping, the shape `packages/corpus/lib/south-asia/` has on
-the TypeScript side. Nothing addresses mail to a region.
+the TypeScript side. No mail is addressed to a region.
 """
 
 from __future__ import annotations

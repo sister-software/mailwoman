@@ -90,8 +90,8 @@ const SERIES_MEANING: Readonly<Record<string, string>> = {
 /**
  * The questions this record leaves open, each phrased as the question rather than as a finding.
  *
- * A reader has to be able to tell a package with no recorded training inputs from a package trained
- * on nothing, and an artifact with no recorded digest from an artifact whose digest was checked.
+ * A reader has to be able to tell a package with no recorded training inputs from a package trained on
+ * no inputs, and an artifact with no recorded digest from an artifact whose digest was checked.
  */
 function unresolvedQuestions(record: WeightsRightsRecord): string[] {
 	const questions: string[] = []
@@ -160,7 +160,7 @@ function unresolvedQuestions(record: WeightsRightsRecord): string[] {
 /**
  * How many attribution entries state each use, in a fixed key order so the document is reproducible.
  *
- * A use nothing states is omitted rather than written as zero.
+ * A use that no entry states is omitted rather than written as zero.
  * Zero would read as a measurement — "no source was used for evaluation" — where the truth is that no
  * entry said so, and these entries are prose a reader wrote rather than a field a build filled.
  */

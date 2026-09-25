@@ -9,7 +9,7 @@
  *   The reported failure was `Maracaibo 4001, Zulia, Venezuela` answering with no country at all. The
  *   parse mis-tagged `Zulia` — a Venezuelan region — as a locality. Venezuela has no locality Zulia and
  *   Colombia does, so the locality claim was satisfiable only in CO. the walk inferred CO and probed
- *   `Venezuela` inside it, finding nothing.
+ *   `Venezuela` inside it, finding no match.
  *
  *   **The live input stopped reproducing it before the guard existed**, because the parse moved — today
  *   the same string reads `street: Maracaibo` + `house_number: 4001`, which never reaches the vulnerable

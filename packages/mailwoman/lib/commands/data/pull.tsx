@@ -13,7 +13,7 @@
  *   through `APIClient` (paced, retried, mapped errors — the repo default for API requests). The
  *   artifact body itself — every one of these is tens of MB to several GB — is streamed straight to
  *   disk through the shared raw-`fetch` `streamToDisk` (`@mailwoman/core/utils`): response caching is nonsense at this
- *   size, there's nothing to pace on a one-shot GET, and axios buffers a non-stream response type in
+ *   size, there's no transfer to pace on a one-shot GET, and axios buffers a non-stream response type in
  *   memory.
  *
  *   Download → verify → atomic move: each artifact lands at `<dataRoot>/tmp/` first, gets checked
@@ -118,8 +118,8 @@ export const spec = {
  *
  * The sidecar GET carries the same `Range: bytes=0-` header `downloadToDisk` needs
  * (see that function's docstring for the measured WAF behavior).
- * A `.md5` sidecar is a tiny text object on the same bucket, and nothing rules out
- * the WAF's ranged-request rule applying to it too.
+ * A `.md5` sidecar is a tiny text object on the same bucket, and no evidence rules
+ * out the WAF's ranged-request rule applying to it too.
  *
  * No bundle publishes one today (`data-bundles.ts`'s docstring), so this path
  * is unexercised against live data.
@@ -181,7 +181,7 @@ async function probeRemote(
  * and streams the complete object end to end (verified byte-for-byte against the known 20,480-byte size).
  *
  * The bucket's intended consumer (`sql.js-httpvfs` in the browser demo) always byte-ranges,
- * so an unranged GET is exactly the request shape nothing else here ever makes.
+ * so an unranged GET is exactly the request shape no other call here ever makes.
  * This is almost certainly a WAF rule scoped to that difference rather than a fluke.
  *
  * `bytes=0-` (open-ended from the start) is the fix: satisfies the ranged-request requirement

@@ -12,7 +12,7 @@
  *      refreshable through `mailwoman dev download ssl-address`) supplies the line skeleton in its `fmt` field — which
  *      fields print, in what order, with the line breaks between them.
  *   2. **`street-orders.ts`**, beside this file, supplies the street order, because libaddressinput models the street
- *      address as one opaque `%A` field and says nothing about whether the house number leads or follows. That table
+ *      address as one opaque `%A` field and makes no statement about whether the house number leads or follows. That table
  *      was read once from the OpenCage `address-formatting` templates and committed as data, so this generator needs no
  *      third-party package. its own header says how to refresh it.
  *
@@ -80,7 +80,7 @@ const FIELD: Readonly<Record<string, string>> = {
  * A list here is the same membership stated twice, and the two fall out of step silently:
  * a country authored in the table but missing from the list is emitted into both,
  * which `layout-table-source.test.ts` catches, and one listed but never authored
- * loses its layout, which nothing catches.
+ * loses its layout, which no check catches.
  */
 const HAND_AUTHORED = new Set(Object.keys(ADDRESS_LAYOUTS))
 

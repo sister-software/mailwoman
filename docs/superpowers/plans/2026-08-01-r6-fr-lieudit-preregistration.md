@@ -58,7 +58,7 @@ The artifact built without errors on the first try: **199,282 distinct (lieu-dit
 That matches the training extract's ~1.69M figure, as expected, since both read the same filter.
 Both self-check probes hit.
 
-The artifact still changed nothing. The board stayed at **0/80**, with 100% of its pairs present in
+The artifact still had no effect. The board stayed at **0/80**, with 100% of its pairs present in
 the index. An artifact that is verifiably correct but has no effect points to a mechanism bug, so
 the next step was diagnosis rather than tuning. The diagnosis found two defects, both in the shared
 probe chain and neither specific to French:

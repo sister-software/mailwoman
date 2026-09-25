@@ -6,9 +6,9 @@
  *
  *   Regenerating a recipe output is the first choice, because a regenerated one records its own invocation. This
  *   exists for the outputs that cannot be regenerated: their `--input` tuple extraction is no longer on disk, and
- *   nothing recorded where it came from. `corpus/tuples/` holds the extraction for some of them and not others.
+ *   no record says where it came from. `corpus/tuples/` holds the extraction for some of them and not others.
  *
- *   What this writes is what is known, and nothing more.
+ *   What this writes is what is known, and no more.
  *
  *   `recipe` and `base_source_id` are renames of `synth_method` and `synth_base_id`. No new claim.
  *
