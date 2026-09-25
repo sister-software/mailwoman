@@ -12,7 +12,7 @@
  *   itself joins them: `reliability.ts` beside `reliability-report.ts` is the family's own module rather than a bystander.
  *   A file in that position becomes the directory's `index`; a directory in it is already the destination and stays.
  *
- *   Two conditions decide what counts as a child, and both exist because a name is sometimes a interface rather than a
+ *   Two conditions decide what counts as a child, and both exist because a name is sometimes an interface rather than a
  *   layout. A workspace directory is an npm package name — `packages/neural-weights-en-gb` is published under that
  *   name and named by the release list — so it is never a group member. And a subdirectory counts only when it holds
  *   at least one tracked TypeScript file, which is what separates a code family from a data directory mirroring

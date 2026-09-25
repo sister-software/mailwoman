@@ -3,44 +3,25 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Which Bash commands may run, as a pure judgement over the command text. The hook adapter
- *   (`bash-write-guard.ts`) owns the payload and the output JSON. the policy lives here so a test can drive it without
- *   spawning a process, and so importing it never reads stdin.
+ *   Decides from the command text alone whether a Bash command may run.
  *
- *   what IT is FOR. `symbol-precheck.ts` is registered under a `Write|Edit` matcher, so an edit made with a heredoc or
- *   an in-place editor never reaches it: the hook that says where a name already lives cannot fire on a tool it does
- *   not match. An agent editing through Bash writes duplicate helpers with that guard absent.
+ *   The symbol precheck hook runs only on the Write and Edit tools, so this guard steers file edits
+ *   away from Bash. It also refuses Modal launches that a shell signal could cancel. The guard is an
+ *   allowlist because the shell has too many ways to spell a write for a denylist to cover. It does
+ *   not sandbox anything: an admitted program such as `node script.js` can still write any file.
  *
- *   A second concern lives here, and it is not about files. A `modal run` is a local client whose death cancels the
- *   remote container, so a launch this shell owns is a training run any signal can destroy. The rules that refuse those
- *   spellings carry their own `guidance`, because the file-write advice is useless to a caller whose run just died.
- *   Adding a rule of a third kind is fine on the same terms: say what to do instead, in the rule.
- *
- *   what IT cannot do, stated because the first version's docstring claimed otherwise. A list of command words cannot
- *   stop a determined write: `node script.js`, `yarn some-script` and a compiled binary all run code this cannot read,
- *   and an admitted program may write whatever it likes. This raises the cost of editing through Bash and makes the
- *   direct spellings fail loudly. it is not a sandbox. Anything that must be impossible belongs in file permissions.
- *
- *   why A list OF what is admitted. The refusing version shipped first and refused its own commit within the hour,
- *   because the message quoted an in-place editor in prose. A rule reading the whole command text cannot tell a writer
- *   from a description of one, and a list of forbidden shapes must anticipate every spelling of a write, which the
- *   shell has more of than anyone enumerates.
- *
- *   quoted text is removed before any decision, in one pass so the earliest quote wins: a commit message, a search
- *   pattern and a heredoc body are data, and the words inside them are not commands.
+ *   Quoted text and heredoc bodies are removed before any decision, because their words are data.
  */
 
 import { isAbsolute, resolvePath } from "path-ts"
 
 /**
- * Commands that read, search, build, test, or talk to git, the registry
- * and the services this repository operates.
+ * Commands that may run anywhere.
  *
- * None of them takes file content from the agent as an argument, which is the
- * property that matters: what they write, they derive.
+ * None of them takes file content from the agent as an argument.
+ * Anything they write, they derive.
  */
 const ADMITTED = new Set([
-	// Reading, searching and shell built-ins that answer questions.
 	"awk",
 	"basename",
 	"cat",
@@ -83,17 +64,10 @@ const ADMITTED = new Set([
 	"wc",
 	"which",
 	"xxd",
-	// Version control and the forge.
 	"gh",
 	"git",
-	// A directory has no content to take from the agent, so the symbol precheck has
-	// nothing to check: `mkdir` cannot write a helper.
-	// It cannot overwrite a file either — `mkdir` on an existing path raises eexist and `-p`
-	// is a no-op — and git tracks no empty directory, so nothing reaches a commit through it.
-	// Held out of the tree it refused `git mv` into a new directory, and refused the
-	// `mkdir -p .claude/state` the `task-intake` skill documents.
+	// `mkdir` creates no file content and cannot overwrite a file, and git does not track an empty directory.
 	"mkdir",
-	// Toolchain and this repository's own commands.
 	"docker",
 	"duckdb",
 	"hf",
@@ -113,8 +87,6 @@ const ADMITTED = new Set([
 	"sqlite3",
 	"tar",
 	"tsc",
-	// The python toolchain, the same shape as `yarn` beside it: `uv run` and `uvx` resolve an
-	// environment and run a named tool, deriving the venv they write rather than taking content.
 	"uv",
 	"uvx",
 	"vale",
@@ -124,14 +96,13 @@ const ADMITTED = new Set([
 ])
 
 /**
- * Commands that write wherever their arguments point.
+ * Commands that write to the paths in their arguments.
  *
- * Each is admitted only when no path argument lands inside the repository, which is what
- * keeps a scratch directory usable without opening the tree to a shell edit.
+ * Each is admitted only when no written path lands inside the repository.
+ * The value says whether every operand is written or only the last one.
  */
 const PATH_WRITERS: Readonly<Record<string, "all" | "last">> = {
 	chmod: "all",
-	// A copy, a move and a link read their first arguments and write only the last.
 	cp: "last",
 	install: "last",
 	ln: "last",
@@ -143,17 +114,14 @@ const PATH_WRITERS: Readonly<Record<string, "all" | "last">> = {
 }
 
 /**
- * Repository paths that hold derived files only — compiler output and the dependency install.
+ * Repository paths that hold only derived files: compiler output and installed dependencies.
  *
- * Measured against the index: no tracked path matches, so removing one deletes nothing
- * a commit holds, and `tsc -b` or `yarn install` restores it.
- * `.yarn/` is not here.
- * It carries the pinned yarn binary, which is tracked.
+ * No tracked path matches, and `tsc -b` or `yarn install` restores any of them.
+ * `.yarn/` is excluded because it holds the tracked yarn binary.
  *
- * The exemption is granted to {@link REMOVER} alone, and the asymmetry is the point:
- * removing derived output restores the derived state, while writing one by hand fabricates it.
- * A hand-written `out/<subpath>.d.ts` answers for a source file that does not exist,
- * because every subpath map lists `types` first.
+ * Only {@link REMOVER} gets this exemption.
+ * Removing derived output is safe, but a hand-written file such as `out/<subpath>.d.ts`
+ * would stand in for source that does not exist.
  */
 const DERIVED_PATH = /(?:^|\/)(?:out|dist|node_modules)(?:\/|$)|\.tsbuildinfo$/u
 
@@ -161,20 +129,17 @@ const REMOVER = "rm"
 
 /**
  * Commands that run another command.
- *
- * The words after one are re-judged as a command of their own, so a writer cannot hide behind a wrapper.
+ * The guard judges the wrapped command instead.
  */
 const WRAPPERS = new Set(["command", "env", "nohup", "time", "timeout", "xargs"])
 
 /**
- * A flag of a wrapper rather than the command it wraps: `timeout 600 yarn test`, `xargs -n1 wc -l`.
+ * Matches a wrapper's own argument, such as `600` in `timeout 600 yarn test` or `-n1` in `xargs -n1 wc -l`.
  */
 const WRAPPER_ARGUMENT = /^(?:-|\d)/u
 
 /**
- * What to do instead of launching a Modal run from Bash, carried by the two rules
- * that need it rather than by {@link GUIDANCE}, which talks about the Write
- * and Edit tools and would be the wrong advice here.
+ * The advice for the two Modal launch refusals.
  */
 const DETACHED_LAUNCH_GUIDANCE =
 	"Launch it through `node packages/mailwoman/lib/dev-tools/launch-detached.run.ts --log <file> -- modal run …`, " +
@@ -184,8 +149,7 @@ const DETACHED_LAUNCH_GUIDANCE =
 	"open. A run that did die continues with `--resume auto` from its last save."
 
 /**
- * What to do instead of removing a repository path, carried by the {@link REMOVER} refusal.
- * {@link GUIDANCE} names the Write and Edit tools, and neither of them deletes anything.
+ * The advice for a {@link REMOVER} refusal.
  */
 const REMOVAL_GUIDANCE =
 	"Removing DERIVED output is admitted: a path under `out/`, `dist/` or `node_modules/`, or a `*.tsbuildinfo`, read " +
@@ -194,11 +158,10 @@ const REMOVAL_GUIDANCE =
 	"a variable, is never derived; name the path in full."
 
 /**
- * Spellings of an admitted command that this guard refuses.
+ * Forms of an admitted command that the guard refuses.
  *
- * Each is checked against that command's own segment, never against the whole line.
- * Most write a file the agent supplies and take {@link guidance}; a rule about
- * something else supplies its own `guidance`.
+ * Each pattern is tested against that command's own segment.
+ * A rule without `guidance` uses {@link GUIDANCE}.
  */
 const REFUSED_SPELLINGS: ReadonlyArray<{
 	head: string
@@ -208,9 +171,8 @@ const REFUSED_SPELLINGS: ReadonlyArray<{
 }> = [
 	{
 		head: "modal",
-		// `-d` is the tell that the run is meant to outlive this shell,
-		// which is the intent a killable client breaks.
-		// A plain `modal run` of a sync or an audit is short and cheap to lose, so it stays admitted.
+		// `-d` marks a run meant to outlive the shell.
+		// A short `modal run` without it stays admitted.
 		pattern: /(?:^|\s)run\b[^\n]*(?:\s-d\b|\s--detach\b)/u,
 		because:
 			"`modal run -d` from Bash leaves the client in this shell's process group, and killing the client cancels the remote run",
@@ -218,11 +180,8 @@ const REFUSED_SPELLINGS: ReadonlyArray<{
 	},
 	{
 		head: "modal",
-		// The 2026-07-15 spelling.
-		// `timeout` is a wrapper, so it is stripped before the head is read and the head here
-		// is `modal`; the segment still carries the wrapper, which is what this matches.
-		// Any timed Modal command is refused rather than only a launch: the expiry kills
-		// the client either way, and a timeout is never how you bound a Modal run.
+		// The head skips the `timeout` wrapper, but the segment still starts with it.
+		// Every timed Modal command is refused, because the expiry kills the client.
 		pattern: /^\s*timeout\b/u,
 		because: "a shell `timeout` kills the `modal` client when it expires, which cancels whatever it was running",
 		guidance: DETACHED_LAUNCH_GUIDANCE,
@@ -237,36 +196,22 @@ const REFUSED_SPELLINGS: ReadonlyArray<{
 	},
 	{
 		head: "git",
-		// The reading forms of these subcommands are ordinary work: `stash list`, `stash show`,
-		// and a `checkout` that names a branch rather than a pathspec.
-		// Only the spellings that overwrite the working tree are refused.
+		// Only forms that overwrite the working tree are refused.
+		// `stash list`, `stash show` and a branch `checkout` stay admitted.
 		//
-		// `git stash drop stash@{N}` is admitted, and only in that spelling.
-		// It writes no file — it removes one ref from a stack the operator's standing rule says
-		// to clear after restoring an entry, so refusing it made that rule impossible to follow.
-		// The explicit index is the whole condition: bare `git stash drop` silently
-		// takes `stash@{0}`, and the stack is shared across every worktree,
-		// so the entry at the top is as likely to be another session's.
-		// Naming the index is what the standing rule already requires — re-find the
-		// entry by its SHA, then drop that index.
+		// `git stash drop` is admitted only with an explicit `stash@{N}`.
+		// The stash stack is shared by every worktree, so a bare drop could remove another session's entry.
 		//
-		// `git apply` is not among them.
-		// The refusals here exist to route an edit through the symbol precheck,
-		// and to stop a command from discarding work the agent cannot see.
-		// A patch does neither: it is an artifact the author produced and can dry-run with
-		// `git apply --check`, it fails rather than clobbering when the context does not match,
-		// and it is the only exact way to land a mechanically generated change —
-		// a bulk deletion, a moved block — without retyping every line.
-		// Retyping a thousand lines to satisfy a guard is itself the correctness
-		// risk the guard is meant to reduce.
+		// `git apply` stays admitted.
+		// A patch fails instead of overwriting when its context does not match,
+		// and it can land a large mechanical change exactly.
 		pattern: /(?:^|\s)(?:restore\b|stash\s+(?!list\b|show\b|drop\s+stash@\{\d+\}\s*$)|checkout\s+[^\n]*--\s)/u,
 		because: "this `git` subcommand overwrites the working tree",
 	},
 	{ head: "git", pattern: /(?:^|\s)config\s+-f/u, because: "`git config -f` writes an arbitrary file" },
 	{ head: "npm", pattern: /(?:^|\s)pkg\s+set\b/u, because: "`npm pkg set` writes a manifest" },
-	// The subcommand has to be a whole argument.
-	// `\b` ends a word at a hyphen too, so the old pattern read `yarn mwops health node-modules-reacharound`
-	// as `yarn node …` and refused a read-only check by its own name.
+	// The subcommand must be a whole argument.
+	// A `\b` boundary would also match `node-modules-…`.
 	{
 		head: "yarn",
 		pattern: /(?:^|\s)(?:dlx|exec|node)(?=\s|$)/u,
@@ -274,60 +219,56 @@ const REFUSED_SPELLINGS: ReadonlyArray<{
 	},
 	{ head: "npx", pattern: /(?:^|\s)-{1,2}y(?:es)?\b/u, because: "`npx -y` fetches and runs an unreviewed package" },
 	{ head: "vitest", pattern: /(?:^|\s)(?:-u\b|--update\b)/u, because: "`vitest -u` rewrites snapshots" },
-	// The same tool arrives through the package manager, where `yarn` is the command word.
 	{ head: "yarn", pattern: /(?:^|\s)vitest\b[^\n]*(?:\s-u\b|--update\b)/u, because: "`vitest -u` rewrites snapshots" },
-	// `oxlint --fix` and `oxfmt --write` are admitted on the same ground as the
-	// formatter over its inputs: what they write they derive from the rule set,
-	// and no content the agent supplies passes through them.
-	// A snapshot update is different in kind.
-	// `vitest -u` writes whatever the code under test produced, which is the assertion being replaced.
+	// `oxlint --fix` and `oxfmt --write` stay admitted because they derive their output from the rules.
+	// A snapshot update is refused because it replaces the assertion with whatever the code produced.
 ]
 
 /**
- * An inline script that reaches the filesystem, checked against the interpreter's own segment.
+ * Matches an inline script call that reaches the filesystem or spawns a process.
  *
- * A probe printing to stdout is the point of `-e` and `-c`; a write inside one
- * is an edit wearing a probe's clothes.
+ * An inline `-e` or `-c` script may print, but a write inside one counts as an edit.
  */
 const INLINE_WRITE =
 	/(?:writeFile|appendFile|createWriteStream|openSync|cpSync|renameSync|rmSync|unlinkSync|mkdirSync|execSync|spawnSync|shutil\.|os\.system|subprocess\.)/u
 
 /**
- * An interpreter reading its script from a heredoc.
+ * Matches a heredoc that feeds an interpreter its script.
  *
- * `<<<` is a here-string feeding stdin, which is not a script.
+ * The pattern excludes `<<<`, which is a here-string.
  */
 const INTERPRETER_HEREDOC = /<<(?!<)-?\s*['"]?[A-Za-z_]/u
 
 /**
- * A redirect and its target, including `&>` and a numbered descriptor.
+ * Matches a redirect and its target, including `&>` and a numbered descriptor.
  *
- * A descriptor duplication (`2>&1`) names no file and yields no target.
+ * A descriptor duplication such as `2>&1` yields no target.
  */
 const REDIRECT = /(?:&|\d)?>>?\|?\s*(?:&[\d-]|(?<target>[^\s;|&<>]*))/gu
 
 /**
- * Shell grammar rather than commands.
+ * Shell grammar words that precede a command.
  *
- * A loop header binds a variable to a word list.
- * The words that open a body are dropped, and whatever follows is judged as a command.
+ * A loop header's word list is data.
+ * The guard drops body keywords and judges the word after them.
  */
 const LOOP_HEADER = /^(?:for|select)\s+\w+\s+in\b/u
 const CONTROL_FLOW_WORDS = new Set(["do", "done", "then", "elif", "else", "fi", "esac", "while", "until", "if", "case"])
 
 /**
- * Remove quoted spans and heredoc bodies in one pass, so the earliest quote wins.
+ * Replaces heredoc bodies and quoted spans with placeholders.
  *
- * Stripping single quotes before double quotes lets the apostrophe in a word like
- * `don't` pair with a later quote and swallow the command between them.
+ * All three quote kinds are matched in one pass so the earliest quote wins.
+ * Separate passes would
+ * let the apostrophe in `don't` pair with a later quote.
  */
 function withoutQuotedText(command: string): string {
 	return (
 		command
 			.replaceAll(/<<-?\s*(['"]?)([A-Za-z_][A-Za-z0-9_]*)\1[\s\S]*?^\t*\2$/gmu, " HEREDOC ")
-			// The placeholder keeps the quote's word boundaries: glued where the quote was glued, spaced where it stood alone. Always spacing it would split `path="$PWD/bin" node x.ts` into two words and make the head `quoted`. `commandSegments` follows the same rule for `${…}`.
-			//
-			// The prefix must exclude the quote characters. One that can match a quote consumes an opening delimiter, and every quote after it pairs with the wrong partner for the rest of the command.
+			// A placeholder stays glued to a preceding character, so `path="$PWD/bin" node x.ts` keeps
+			// one assignment word. The glued character must not be a quote, or it would consume an
+			// opening delimiter and mispair every later quote.
 			.replaceAll(/([^\s'"`]?)(?:'[^']*'|"(?:[^"\\]|\\.)*"|`[^`]*`)/gu, (_match, glued: string) =>
 				glued ? `${glued}QUOTED` : " QUOTED "
 			)
@@ -335,34 +276,37 @@ function withoutQuotedText(command: string): string {
 }
 
 /**
- * Every command word in the text, in order, with wrappers unwrapped and grammar dropped.
+ * Returns each command in the text with its head word, after unwrapping wrappers and dropping grammar.
  *
- * A command substitution opens a command of its own rather than disappearing.
+ * A command substitution becomes a command of its own.
  */
 function commandSegments(stripped: string): Array<{ head: string; segment: string }> {
 	const found: Array<{ head: string; segment: string }> = []
 
 	const expanded = stripped
-		// A braced expansion collapses to a bare variable rather than to a spaced placeholder, so it stays glued to the word it belongs to: `FOO=${home}/data` is one assignment rather than an assignment beside a command called `VAR`.
+		// A braced expansion stays glued to its word, so `FOO=${home}/data` remains one assignment.
 		.replaceAll(/\$\{[^}]*\}/gu, "$VAR")
-		// A redirect is not a command, and its `&` is not a separator: `2>&1` must not split into a segment headed by `1`. It is removed rather than replaced, so no placeholder becomes a command word. Targets are judged separately, against the unmasked text.
+		// Redirects are removed so `2>&1` does not split on `&`. Their targets are checked later
+		// against the unmasked text.
 		.replaceAll(REDIRECT, " ")
-		// An opener starts a command of its own. A closer does not end one. Replacing `)` with a separator too would leave `comm -12 <(sort a) b` with a segment headed by `b`, and a filename is not a command.
+		// An opener starts a new command, and a closer does not. Otherwise `comm -12 <(sort a) b`
+		// would produce a segment headed by the filename `b`.
 		//
-		// A brace only opens a group when whitespace follows it, and only closes one when whitespace or a separator precedes it. That is bash's own rule for `{ cmd; }`. Splitting on every brace instead read the ordinary git spellings `head@{1}`, `stash@{0}` and `@{upstream}` as two segments, the second headed by a digit, and refused them with "`1` is not on the admitted command list". A brace glued to a word is part of that word: a reflog selector, a brace expansion, a format string.
+		// A brace opens a group only when whitespace follows it, and closes one only after whitespace
+		// or a separator, as in bash. A brace glued to a word, as in `stash@{0}`, belongs to that word.
 		.replaceAll(/\$\(|<\(|\(|\{(?=\s|$)|(?<=^|\s)\}/gu, " ; ")
 		.replaceAll(")", " ")
 
 	for (const rawSegment of expanded.split(/(?:&&|\|\||[;|&\n])/u)) {
 		const segment = rawSegment.trim()
 
-		// A loop header binds a name to a word list.
-		// The list is data, and the body follows the next separator.
+		// A loop header's word list is data.
+		// The loop body starts after the next separator.
 		if (!segment || LOOP_HEADER.test(segment)) continue
 
 		let words = segment.split(/\s+/u).filter((word) => word.length)
 
-		// Leading assignments, a negation, and the words that open a body all precede the command.
+		// Leading assignments, `!` and control-flow keywords precede the command word.
 		while (
 			words.length &&
 			(/^[A-Za-z_][A-Za-z0-9_]*=/u.test(words[0]!) || words[0] === "!" || CONTROL_FLOW_WORDS.has(words[0]!))
@@ -370,7 +314,7 @@ function commandSegments(stripped: string): Array<{ head: string; segment: strin
 			words = words.slice(1)
 		}
 
-		// A wrapper runs the command after its own flags, so judge that instead.
+		// A wrapper runs the command that follows its own arguments.
 		while (words.length && WRAPPERS.has(words[0]!.replace(/^.*\//u, ""))) {
 			words = words.slice(1)
 
@@ -390,7 +334,7 @@ function commandSegments(stripped: string): Array<{ head: string; segment: strin
 }
 
 /**
- * Where a relative path resolves, following any `cd` the command performs first.
+ * Returns the directory that relative paths resolve against, following the first literal `cd`.
  */
 function workingDirectory(stripped: string, cwd: string): string {
 	const match = stripped.match(/(?:^|[;&|]\s*)cd\s+(?<target>[^\s;|&]+)/u)
@@ -402,12 +346,9 @@ function workingDirectory(stripped: string, cwd: string): string {
 }
 
 /**
- * `~` is the shell's rather than a path segment.
+ * The home directory that `~` expands to.
  *
- * It is read from the raw environment rather than through the typed view because
- * this module is loaded by a hook that must answer in milliseconds and must not fail
- * when a variable is unset: an absent `home` leaves the path unexpanded, which
- * then reads as relative and resolves under the repository — the refusing direction.
+ * The hook must answer fast and never fail on an unset variable, so this reads `process.env` directly.
  */
 // oxlint-disable-next-line sister-software/no-process-globals -- see above.
 const HOME_DIRECTORY = process.env["HOME"] ?? ""
@@ -417,12 +358,9 @@ function expandHome(path: string): string {
 }
 
 /**
- * Where a target resolves, or null when this cannot read it: a stripped quote
- * and a variable are both opaque.
+ * Returns the absolute path of a target, or null when the target is a placeholder or a variable.
  *
- * Every caller takes its own refusing branch on null, so no reader of a target has
- * to re-derive the resolution, and `resolvePath` normalizes `..`, which is what
- * stops `out/../lib` from reading as derived output.
+ * `resolvePath` normalizes `..`, so `out/../lib` does not count as derived output.
  */
 function resolveTarget(raw: string, cwd: string): string | null {
 	if (!raw || raw === "QUOTED" || raw === "HEREDOC" || raw.includes("$")) return null
@@ -433,9 +371,9 @@ function resolveTarget(raw: string, cwd: string): string | null {
 }
 
 /**
- * True when a path lands inside the repository.
+ * Returns true when a path lands inside the repository.
  *
- * A path this cannot read counts as inside: an unknown target is the case a guard must not wave through.
+ * An unreadable target counts as inside, so the guard refuses it.
  */
 function insideRepository(raw: string, repoRoot: string, cwd: string): boolean {
 	if (!raw || raw.startsWith("/dev/")) return false
@@ -448,9 +386,9 @@ function insideRepository(raw: string, repoRoot: string, cwd: string): boolean {
 }
 
 /**
- * True when a path names {@link DERIVED_PATH}.
+ * Returns true when a path matches {@link DERIVED_PATH}.
  *
- * An unreadable target is not derived, so it stays guarded.
+ * An unreadable target never counts as derived.
  */
 function isDerivedPath(raw: string, cwd: string): boolean {
 	const resolved = resolveTarget(raw, cwd)
@@ -459,12 +397,7 @@ function isDerivedPath(raw: string, cwd: string): boolean {
 }
 
 /**
- * A refusal: why the command is refused, and what to do instead.
- *
- * Most refusals are about writing a file and take {@link guidance}.
- * A rule about something else — process ownership, say — carries its own `guidance`,
- * because being told to use the Write tool over a cancelled training run is
- * advice for a problem the caller does not have.
+ * A refusal with its reason and the advice on what to do instead.
  */
 export interface CommandRefusal {
 	reason: string
@@ -472,20 +405,19 @@ export interface CommandRefusal {
 }
 
 /**
- * Why a command is refused, or `null` when every part of it is admitted.
+ * Returns the refusal for a command, or `null` when every part of it is admitted.
  *
  * @param command The Bash command as written.
- * @param repoRoot The repository this guards, absolute and without a trailing separator.
- * @param sessionCwd Where a relative path resolves before any `cd` in the command itself.
+ * @param repoRoot The absolute repository path, without a trailing separator.
+ * @param sessionCwd The directory that relative paths resolve against before any `cd` in the command.
  */
 export function judgeCommand(command: string, repoRoot: string, sessionCwd: string): CommandRefusal | null {
 	const stripped = withoutQuotedText(command)
 	const cwd = workingDirectory(stripped, sessionCwd)
 	const segments = commandSegments(stripped)
 
-	// An inline script and a heredoc body both live inside the quoting stripped above,
-	// so these two read the RAW command.
-	// Requiring an interpreter first is what stops `grep -rn writeFile packages` from refusing itself.
+	// Inline scripts and heredoc bodies were stripped above, so these checks read the raw command.
+	// They apply only when an interpreter runs, so `grep -rn writeFile packages` stays admitted.
 	if (segments.some(({ head }) => head === "node" || head.startsWith("python"))) {
 		if (INTERPRETER_HEREDOC.test(command)) {
 			return refuse("This runs a script from a heredoc, which rewrites a file whole.")
@@ -534,14 +466,14 @@ export function judgeCommand(command: string, repoRoot: string, sessionCwd: stri
 }
 
 /**
- * A refusal carrying {@link guidance} unless the rule supplied advice of its own.
+ * Builds a refusal that uses {@link GUIDANCE} unless the rule supplies its own advice.
  */
 function refuse(reason: string, guidance?: string): CommandRefusal {
 	return { reason, guidance: guidance ?? GUIDANCE }
 }
 
 /**
- * What to do instead, appended to every refusal.
+ * The default advice attached to a refusal.
  */
 export const GUIDANCE =
 	"Use the Edit tool for a change to an existing file and the Write tool for a new one. Those tools carry the " +

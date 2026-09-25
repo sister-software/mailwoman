@@ -4,7 +4,7 @@
 
 **Goal:** Ship `mailwoman gazetteer granularity` — a per-country depth ladder over the admin gazetteer that answers "where does the gazetteer bottom out?" for all 244 countries, plus the projection-table extension it depends on.
 
-**Architecture:** Two increments. **PR A** extends `PLACETYPE_PROJECTION` from 25 to all 34 WOF placetypes and adds a completeness test, because an unmapped placetype makes the census build throw and nothing can deepen the gazetteer until that is closed. **PR B** adds a pure builder module (`gazetteer-pipeline/granularity.ts`) that reads the shipped admin DB and emits per-(country × rung) node counts and parent-coverage shares, a markdown renderer, and the Pastel command that wires them together. The builder is read-only SQL over `spr`/`ancestors` — no network, no model, same shape as `buildPlacetypeCensus`.
+**Architecture:** The work ships in two increments. **PR A** extends `PLACETYPE_PROJECTION` from 25 to all 34 WOF placetypes and adds a completeness test. An unmapped placetype makes the census build throw, so the gazetteer cannot be deepened until every placetype is mapped. **PR B** adds a pure builder module (`gazetteer-pipeline/granularity.ts`) that reads the shipped admin DB and emits per-(country × rung) node counts and parent-coverage shares. It also adds a markdown renderer and the Pastel command that wires them together. The builder runs read-only SQL over `spr`/`ancestors` and uses neither the network nor a model, like `buildPlacetypeCensus`.
 
 **Tech Stack:** TypeScript running directly under `node` (type stripping, explicit `.ts` import extensions), `node:sqlite` via `DatabaseSync`, vitest 4.1.10, Pastel/Ink command components via `mailwoman/cli-kit`.
 
@@ -15,18 +15,19 @@ This plan covers **PR A and PR B only** from the spec's four-PR split
 to the originating question on its own and is independently shippable.
 
 PR C (gap attribution + name match) and PR D (pair yield + manifest emission) get their own plan
-after B's numbers land, for two reasons recorded in the spec: C's source-gap leg is blocked on Open
-Question 1 (whether the cloned `whosonfirst-data*` repos are available anywhere — `wof/global` is
-empty), and the 5% parent-coverage floor wants a second calibration point, which B produces.
+after B's numbers land, for two reasons recorded in the spec. First, C's source-gap leg is blocked on
+Open Question 1, which asks whether the cloned `whosonfirst-data*` repos are available anywhere
+(`wof/global` is empty). Second, the 5% parent-coverage floor needs a second calibration point, and
+B produces one.
 
 ## Global Constraints
 
-- **No `enum`, no constructor parameter properties, no runtime namespaces** — `erasableSyntaxOnly: true` is enforced repo-wide. Use `const X = {…} as const` plus `type X = (typeof X)[keyof typeof X]`.
+- **Do not use `enum`, constructor parameter properties, or runtime namespaces.** `erasableSyntaxOnly: true` is enforced repo-wide. Use `const X = {…} as const` plus `type X = (typeof X)[keyof typeof X]`.
 - **Relative imports carry explicit `.ts` extensions.** Source runs directly under `node`.
-- **Acronyms capitalize as whole camelCase components** — `parseJSON`, `readID`, `WOFPlacetype`. Not `parseJson` / `readId`. Does not apply to `snake_case` DB columns.
-- **Data-root paths go through `@mailwoman/core/utils`** — `dataRootPath("wof", "admin-global-priority.db")`. Never hardcode `$MAILWOMAN_DATA_ROOT`; reference `$MAILWOMAN_DATA_ROOT` in prose and help text.
-- **Databases are read-only artifacts.** This plan only ever opens the admin DB with `{ readOnly: true }`.
-- **The meaning-of-zero rule is structural.** A measured-and-empty rung is a present row with a zero count; a never-measured rung is an absent row. These must never collapse into the same representation.
+- **Acronyms capitalize as whole camelCase components**, as in `parseJSON`, `readID` and `WOFPlacetype`, not `parseJson` / `readId`. This rule does not apply to `snake_case` DB columns.
+- **Data-root paths go through `@mailwoman/core/utils`**, for example `dataRootPath("wof", "admin-global-priority.db")`. Never hardcode `$MAILWOMAN_DATA_ROOT`. Reference `$MAILWOMAN_DATA_ROOT` in prose and help text.
+- **Databases are read-only artifacts.** This plan opens the admin DB only with `{ readOnly: true }`.
+- **The data structure encodes the meaning of zero.** A rung that was measured and found empty is a present row with a zero count. A rung that was never measured is an absent row. The two must never share a representation.
 - **Positive evidence only.** Nothing in this plan checks, masks, or forbids anything at decode time. It measures and reports.
 - Every new file carries the standard header: `@copyright Sister Software`, `@license AGPL-3.0`, `@author Teffen Ellis, et al.`, followed by a prose docstring explaining why the file exists.
 
@@ -47,25 +48,26 @@ empty), and the 5% parent-coverage floor wants a second calibration point, which
 - Produces: `WOF_PLACETYPES` (a `readonly string[]` of all 34), and a `PLACETYPE_PROJECTION` whose key set equals it. PR B's `placetypesForRung()` reads both.
 
 **Context the implementer needs.** `PLACETYPE_PROJECTION` is the executable copy of the projection
-table in `docs/articles/plan/reference/placetype-evidence.mdx`. A `null` value means "in the
-vocabulary, deliberately not projected" — distinct from a placetype missing from the map entirely,
-which `buildPlacetypeCensus` reports in `unmappedPlacetypes` and the `census` command turns into a
-throw (`mailwoman/commands/gazetteer/census.tsx:78-83`). Today the map has 25 keys against a
-34-placetype vocabulary, so deepening the gazetteer past the current 9-placetype ingest allowlist
-would break `mailwoman gazetteer census`.
+table in `docs/articles/plan/reference/placetype-evidence.mdx`. A `null` value means the placetype
+is in the vocabulary and is deliberately not projected. That differs from a placetype missing from
+the map entirely. `buildPlacetypeCensus` reports a missing placetype in `unmappedPlacetypes`, and
+the `census` command then throws (`mailwoman/commands/gazetteer/census.tsx:78-83`). Today the map
+has 25 keys against a 34-placetype vocabulary, so deepening the gazetteer past the current
+9-placetype ingest allowlist would break `mailwoman gazetteer census`.
 
-**Two projection decisions this task makes, both needing reviewer attention.** The prose table says
-`intersection`, `address` → "`intersection`; house_number/street grounding". Neither can be a single
-`ComponentTag`: an intersection is a two-span construct (`intersection_a` + `intersection_b`) and a
-WOF `address` is a whole address record rather than a span role. Both therefore map to `null` — measured and
-deliberately uncounted — with comments saying why. Do not invent a tag for either.
+**This task makes two projection decisions that need reviewer attention.** The prose table maps
+`intersection`, `address` → "`intersection`; house_number/street grounding". Neither can map to a
+single `ComponentTag`. An intersection is a two-span construct (`intersection_a` +
+`intersection_b`), and a WOF `address` is a whole address record rather than a span role. Both
+therefore map to `null`, which means they are measured and deliberately uncounted, and comments
+explain why. Do not invent a tag for either.
 
 - [ ] **Step 1: Write the failing completeness test**
 
 Replace the whole `describe("PLACETYPE_PROJECTION", …)` block at `placetype-census.test.ts:62-76`.
 Note the third test: the old file asserted `expect("wing" in PLACETYPE_PROJECTION).toBe(false)`,
-which this task deliberately makes false. Therefore, it is replaced with a placetype that is in fact not in
-the WOF vocabulary.
+which this task deliberately makes false. The new test uses a placetype that is not in the WOF
+vocabulary instead.
 
 ```typescript
 describe("PLACETYPE_PROJECTION", () => {
@@ -283,10 +285,10 @@ vocabulary in both directions."
   Tasks 3-5 consume all three.
 
 **Context the implementer needs.** The ladder is an ordered list because "bottoms out at" needs an
-ordering, but rung _membership_ is derived from `PLACETYPE_PROJECTION` so the scorecard and the
-census can never disagree about what projects where. `postcode` is deliberately excluded: it is an
-orthogonal channel rather than a containment rung, and folding it in would make "bottoms out at"
-incoherent. Context-only placetypes project to `null` and are excluded by construction.
+ordering. Rung _membership_ is derived from `PLACETYPE_PROJECTION`, so the scorecard and the census
+always agree about what projects where. `postcode` is deliberately excluded. It is an orthogonal
+channel rather than a containment rung, and including it would make "bottoms out at" meaningless.
+Context-only placetypes project to `null`, so they are always excluded.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -459,13 +461,13 @@ postcode is excluded: an orthogonal channel rather than a containment rung."
 
 1. `spr` carries `id, parent_id, name, placetype, country, latitude, longitude, min_latitude, min_longitude, max_latitude, max_longitude, is_current, is_deprecated, …`. Every query filters `is_current != 0 AND is_deprecated = 0`, matching `verifyAdmin`.
 2. `ancestors(id, ancestor_id)` is the transitive closure the freeze phase builds. `buildPlacetypeCensus` joins through it, and so does this.
-3. Rows with `id >= OVERTURE_ID_BASE` (8e12) are Overture-backfilled rather than real WOF. They are counted **separately** and never silently merged, because for the 86-country backfill set the locality rung and above are partly Overture already. Those cells are self-comparison and the report must say so.
+3. Rows with `id >= OVERTURE_ID_BASE` (8e12) are Overture-backfilled rather than real WOF. They are counted **separately** and never merged into the WOF counts. For the 86-country backfill set, the locality rung and above already contain some Overture data, so those cells compare Overture with itself, and the report must say so.
 
 **Why the projection happens in SQL.** A parent with both a `borough` child and a `neighbourhood`
 child must count **once** toward `dependent_locality` parent-coverage. Counting distinct parents per
-placetype and summing in JS double-counts it. So the query projects placetype → rung with a `CASE`
-expression generated from `placetypesForRung`, then does `COUNT(DISTINCT p.id)` per rung. The
-generated `CASE` cannot drift from the projection table because it is built from it.
+placetype and summing in JS would count it twice. The query therefore projects placetype → rung with
+a `CASE` expression generated from `placetypesForRung`, then runs `COUNT(DISTINCT p.id)` per rung.
+Because the `CASE` is generated from the projection table, the two cannot diverge.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -802,10 +804,10 @@ for (const cc of ["GB", "IE", "JP", "DE"]) {
 ```
 
 Expected: `countries: 244`. GB `depLoc nodes 13177`, IE `depLoc nodes 0`, JP `depLoc nodes 7759`,
-DE `depLoc nodes 67162` — these must match the design-stage probe exactly. GB's coverage share is
-the number to sanity-check against the census probe's 33.2% reading; it will not match exactly (the
-census measured distinct _surfaces_, this measures distinct _nodes_), but a wildly different figure
-means the join is wrong. **If the counts do not match the probe, stop and diagnose before Task 4.**
+DE `depLoc nodes 67162`. These must match the design-stage probe exactly. Sanity-check GB's coverage
+share against the census probe's 33.2% reading. It will not match exactly, because the census
+measured distinct _surfaces_ and this measures distinct _nodes_. A very different figure means the
+join is wrong. **If the counts do not match the probe, stop and diagnose before Task 4.**
 
 - [ ] **Step 6: Commit**
 
@@ -837,15 +839,16 @@ rung is a present zero, never an absent row."
 - Consumes: `CountryGranularity`, `LADDER`, `SUB_LOCALITY_RUNGS` (Tasks 2-3).
 - Produces: `DEFAULT_COVERAGE_FLOOR = 0.05` and `bottomsOutAt(country: CountryGranularity, floor?: number): ComponentTag | null`. Task 5 renders the result.
 
-**Context the implementer needs.** Two presence rules, because parent-coverage is only meaningful
-below the locality backbone (the backbone is its denominator). At or above `locality`, a rung counts
-as reached when it has any nodes. Below it, when parent-coverage clears the floor. The walk goes
-deepest-first and returns the first rung that qualifies; `null` means the country has nothing at
-all, which should only happen for a country code with no live rows.
+**Context the implementer needs.** There are two presence rules, because parent-coverage is only
+meaningful below the locality backbone, which is its denominator. At or above `locality`, a rung
+counts as reached when it has any nodes. Below `locality`, a rung counts as reached when its
+parent-coverage clears the floor. The walk goes deepest-first and returns the first rung that
+qualifies. `null` means the country has nothing at all, which should happen only for a country code
+with no live rows.
 
-The 5% default is the weakest number in the design and is flagged as such in the spec's open
-questions: GB, the one country with a validated reading, sits at 33.2%. The floor is a parameter
-precisely so the report can be re-run at another value without a code change.
+The 5% default is the weakest number in the design, and the spec's open questions flag it. GB, the
+one country with a validated reading, sits at 33.2%. The floor is a parameter so the report can be
+re-run at another value without a code change.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -1017,10 +1020,10 @@ country with a validated reading, sits near 33%."
 
 **Context the implementer needs.** The report is a committed artifact under
 `docs/articles/evals/coverage/`, following the `fill-rates.md` precedent
-(`$MAILWOMAN_DATA_ROOT/overture/<release>/fill-rates.md`). It must state its own limits inline.
-This is the spec's Section 5, and the reason is that the numbers will outlive the conversation that
-produced them. Someone reading the table in six months must be told, in the file, that counts are
-not quality and that the locality rung is self-comparison for backfilled countries.
+(`$MAILWOMAN_DATA_ROOT/overture/<release>/fill-rates.md`). It must state its own limits inline, as
+the spec's Section 5 requires, because the numbers will outlive the conversation that produced them.
+The file itself must tell a reader six months from now that counts do not measure quality and that
+the locality rung compares Overture with itself for backfilled countries.
 
 `buildDate` is injected rather than read from the clock so the renderer is deterministic under test.
 
@@ -1278,15 +1281,18 @@ meaning-of-zero rule made visible in the artifact."
 - Consumes: `buildGranularityLadder` (Task 3), `renderGranularityReport` + `GranularityReportMeta` (Task 5), `DEFAULT_COVERAGE_FLOOR` (Task 4).
 - Produces: the `mailwoman gazetteer granularity` subcommand and a written markdown report.
 
-**Context the implementer needs.** Commands in this repo are Pastel/Ink components. The pattern is
-fixed and `mailwoman/commands/gazetteer/census.tsx` is the closest analogue — read it before
-starting. The required shape: a zod `OptionsSchema` re-exported as `options`, a
-`CommandComponent<typeof OptionsSchema>` default export, `useCommandTask` wrapping the async work
-and returning `string[]` of result lines, and the three-branch render (`error` → red, `done` → the
-lines with the first in green, otherwise `null`).
+**Context the implementer needs.** Commands in this repo are Pastel/Ink components with a fixed
+pattern. `mailwoman/commands/gazetteer/census.tsx` is the closest analogue, so read it before
+starting. The required shape has four parts:
 
-Pastel binds a kebab flag to a lowercase-acronym prop, so option keys must match its derivation —
-`--out`, `--source`, `--floor` are all single words and unaffected here.
+- a zod `OptionsSchema` re-exported as `options`
+- a `CommandComponent<typeof OptionsSchema>` default export
+- `useCommandTask` wrapping the async work and returning `string[]` of result lines
+- the three-branch render (`error` → red, `done` → the lines with the first in green, otherwise
+  `null`)
+
+Pastel binds a kebab flag to a lowercase-acronym prop, so option keys must match its derivation.
+`--out`, `--source` and `--floor` are all single words, so this rule does not affect them.
 
 - [ ] **Step 1: Create the command**
 
@@ -1402,8 +1408,8 @@ const GazetteerGranularity: CommandComponent<typeof OptionsSchema> = ({ options 
 export default GazetteerGranularity
 ```
 
-Only `dirname` is imported from `node:path` — the command builds no paths, it only makes the output
-file's parent directory. Do not add imports the file does not use; oxlint flags them.
+Only `dirname` is imported from `node:path`. The command builds no paths and only creates the output
+file's parent directory. Do not add imports the file does not use, because oxlint flags them.
 
 - [ ] **Step 2: Run the command**
 
@@ -1423,7 +1429,7 @@ Expected, matching the numbers in the spec exactly:
 - GB `dependent_locality` cell reads `13,177`
 - DE reads `67,162`
 - JP reads `7,759`
-- IE and NZ read `0` — measured and empty rather than `—`
+- IE and NZ read `0` (measured and empty), not `—`
 
 **If any cell reads `—` for these five countries, the meaning-of-zero handling is wrong.** Stop and
 fix before committing.
@@ -1436,7 +1442,7 @@ Expected: writes `docs/articles/evals/coverage/gazetteer-depth-scorecard.md`.
 - [ ] **Step 5: Run the full unit suite**
 
 Run: `yarn ci:test:fast`
-Expected: PASS. This is the ~15s pure-surface leg; it must be green before the commit.
+Expected: PASS. This is the ~15s pure-surface leg, and it must be green before the commit.
 
 - [ ] **Step 6: Commit**
 
@@ -1465,4 +1471,4 @@ Before opening the PR:
 - [ ] The committed scorecard's GB/DE/JP row counts match the spec's Finding 1 and Finding 3 tables exactly.
 - [ ] IE and NZ render `0` at `dependent_locality`, never `—`.
 - [ ] `rg -n "/mnt/" mailwoman/gazetteer-pipeline/granularity*.ts mailwoman/commands/gazetteer/granularity.tsx` returns nothing.
-- [ ] `mailwoman gazetteer census --country gb` still succeeds — PR A widened the projection map and must not have broken it.
+- [ ] `mailwoman gazetteer census --country gb` still succeeds. PR A widened the projection map, and this checks that it did not break the command.

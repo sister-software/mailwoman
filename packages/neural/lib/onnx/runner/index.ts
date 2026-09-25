@@ -19,8 +19,7 @@ import {
 } from "#ort-feeds"
 
 /**
- * Re-exports the gazetteer feature widths for existing importers of this Node-only runner;
- * they live in the browser-safe gazetteer inference module so the web runner can use them.
+ * Re-exports the evidence feature widths from the browser-safe gazetteer inference module.
  */
 export { LOCALITY_SURFACE_FEATURE_DIM, STREET_TYPE_FEATURE_DIM } from "#gazetteer-inference"
 
@@ -36,50 +35,51 @@ export type { InferResult } from "#ort-feeds"
 /**
  * Configures an {@link ONNXRunner}.
  *
- * Requested execution providers always gain a CPU fallback, and `warmup` loads the
- * session at creation instead of on first inference.
+ * The runner always appends a CPU fallback to the requested execution providers.
  */
 export interface ONNXRunnerOpts {
 	/**
-	 * Whether `create()` loads the session immediately instead of on first inference, defaulting to `false`.
+	 * Whether `create()` loads the session immediately instead of on first inference.
+	 * It defaults to `false`.
 	 */
 	warmup?: boolean
 
 	/**
-	 * The sequence length the model's input shape is fixed to, defaulting to {@link DEFAULT_FIXED_SEQ_LEN}.
+	 * The fixed input sequence length of the model, which defaults to {@link DEFAULT_FIXED_SEQ_LEN}.
 	 *
-	 * Shorter inputs are padded with id 0 and masked out, and longer inputs are truncated.
+	 * Shorter inputs are padded with id 0 and masked out.
+	 * Longer inputs are truncated.
 	 */
 	fixedSeqLen?: number
 
 	/**
-	 * ONNX Runtime execution providers in priority order, such as `["cuda", "cpu"]`, defaulting to `["cpu"]`.
+	 * ONNX Runtime execution providers in priority order, such as `["cuda", "cpu"]`.
+	 * It defaults to `["cpu"]`.
 	 *
-	 * `cpu` is appended when missing, and if the list fails to initialize, the runner
-	 * retries on CPU alone because GPU providers throw instead of falling back.
+	 * The runner appends `cpu` when it is missing.
+	 * GPU providers throw when they fail to initialize, so the runner then retries on CPU alone.
 	 */
 	executionProviders?: string[]
 
 	/**
-	 * Caps the intra-op thread pool that a single operator splits its work across.
+	 * The maximum intra-op thread count for one operator.
 	 *
 	 * When unset, ONNX Runtime uses every core, which oversubscribes the machine
-	 * when several processes run short sequences at once.
+	 * when several processes run at once.
 	 */
 	intraOpNumThreads?: number
 }
 
 /**
- * Default sequence length for v0.1.0 / v0.2.0 (BertConfig max_position_embeddings = 128).
+ * The default model sequence length in pieces.
  */
 export const DEFAULT_FIXED_SEQ_LEN = 128
 
 /**
- * Sets the default ONNX Runtime intra-op thread count, which
- * `MAILWOMAN_INTRA_OP_THREADS` overrides per process.
+ * The default ONNX Runtime intra-op thread count.
+ * `MAILWOMAN_INTRA_OP_THREADS` overrides it per process.
  *
- * More threads cut single-process latency, but concurrent processes oversubscribe the machine,
- * so a multi-worker server should set the override to roughly cores divided by workers.
+ * A multi-worker server should set the override to about the core count divided by the worker count.
  */
 export const DEFAULT_INTRA_OP_THREADS = 2
 
@@ -88,9 +88,10 @@ function outputTensor(tensor: ort.Tensor): OutputTensor {
 }
 
 /**
- * Runs a token- or character-level ONNX model in Node, loading the session lazily from a path or bytes.
+ * Runs a token-input or character-input ONNX model in Node.
  *
- * It falls back to the CPU provider when the requested execution providers fail to initialize.
+ * The session loads lazily from a path or from bytes.
+ * The runner falls back to the CPU provider when the requested providers fail to initialize.
  */
 export class ONNXRunner {
 	private session: ort.InferenceSession | null = null
@@ -181,11 +182,11 @@ export class ONNXRunner {
 	}
 
 	/**
-	 * Runs one token-id sequence padded or truncated to `fixedSeqLen`,
-	 * and trims the output back to the real length.
+	 * Runs one token-id sequence, padded or truncated to `fixedSeqLen`,
+	 * and trims the output to the real length.
 	 *
-	 * A soft-feature channel is fed only when the graph declares it, and a declared
-	 * channel the caller omits is zero-filled.
+	 * A soft-feature channel is fed only when the graph declares it.
+	 * A declared channel that the caller omits is zero-filled.
 	 */
 	infer: InferFunction = async (tokenIDs, anchor, gazetteer, country, evidence) => {
 		const session = await this.ensureSession()
@@ -223,8 +224,8 @@ export class ONNXRunner {
 	}
 
 	/**
-	 * Runs a character-path graph on one encoding that the encoder has already padded,
-	 * trimming the output to the real unit count.
+	 * Runs a character-input graph on one padded encoding and trims the output to the real unit count.
+	 *
 	 * The character path takes no soft-feature channels.
 	 */
 	inferChars: InferCharsFunction = async (charIDs, attentionMask) => {
@@ -248,8 +249,8 @@ export class ONNXRunner {
 	/**
 	 * Returns the graph's declared input names, loading the session if needed.
 	 *
-	 * Callers infer a model's required soft-feature channels from these
-	 * when its model card has no `requires` block.
+	 * Callers infer the required soft-feature channels from these names
+	 * when the model card has no `requires` block.
 	 */
 	async inputNames(): Promise<readonly string[]> {
 		const session = await this.ensureSession()

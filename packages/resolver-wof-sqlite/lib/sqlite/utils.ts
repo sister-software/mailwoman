@@ -2,28 +2,22 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- *
- *   Small shared helpers for the SQLite-backed lookups.
+ * @file Shared helpers for the SQLite-backed lookups.
  */
 
 import { allRows, getRow } from "@mailwoman/core/utils"
 import type { DatabaseClient, SQLInputValue } from "@mailwoman/sqlite/client"
 import { hasColumn as columnExists, tableExists } from "@mailwoman/sqlite/introspection"
 
-// The row-shape assertion itself lives in `core` so the readers that cannot
-// depend on this package reach the same helper.
-// Re-exported here because this module is where this package's readers already look for it.
-
 /**
- * A prepared single-row query whose parameter tuple remains visible to TypeScript.
+ * A prepared single-row query whose parameter tuple stays visible to TypeScript.
  *
- * `StatementSync` accepts only the broad `SQLInputValue[]`, which otherwise erases
- * tagged key types before they reach SQLite.
+ * `StatementSync` accepts any `SQLInputValue[]`, which would erase tagged key types at the call site.
  */
 export type PreparedGet<Parameters extends SQLInputValue[], Row> = (...parameters: Parameters) => Row | undefined
 
 /**
- * Prepare a single-row query while preserving its exact parameter tuple at every call site.
+ * Prepares a single-row query with a typed parameter tuple.
  */
 export function prepareGet<Parameters extends SQLInputValue[], Row, DB>(
 	db: DatabaseClient<DB>,
@@ -35,12 +29,12 @@ export function prepareGet<Parameters extends SQLInputValue[], Row, DB>(
 }
 
 /**
- * Multi-row counterpart to {@link PreparedGet}.
+ * The multi-row counterpart to {@link PreparedGet}.
  */
 export type PreparedAll<Parameters extends SQLInputValue[], Row> = (...parameters: Parameters) => Row[]
 
 /**
- * Prepare a multi-row query while preserving its exact parameter tuple at every call site.
+ * Prepares a multi-row query with a typed parameter tuple.
  */
 export function prepareAll<Parameters extends SQLInputValue[], Row, DB>(
 	db: DatabaseClient<DB>,
@@ -52,12 +46,10 @@ export function prepareAll<Parameters extends SQLInputValue[], Row, DB>(
 }
 
 /**
- * True when `name` is a table in the open database.
+ * Returns true when `name` is a table in the open database, and false when the check itself fails.
  *
- * The street-level lookups use this to degrade gracefully on an empty/tableless extract — an interrupted
- * `build-*-extract.ts`, or a stray 0-byte file (e.g. `sqlite3 <missing>.db "…"` creates one),
- * rather than throwing `no such table` at construction and taking down a whole state's geocode (#568).
- * A missing table makes the lookup a no-op miss.
+ * The street-level lookups call it so that an empty extract, such as an interrupted build
+ * or a zero-byte file, makes every lookup miss instead of throwing `no such table`.
  */
 export function hasTable<DB>(db: DatabaseClient<DB>, name: string): boolean {
 	try {
@@ -68,19 +60,14 @@ export function hasTable<DB>(db: DatabaseClient<DB>, name: string): boolean {
 }
 
 /**
- * True when `table` exists in the open database and carries `column`.
+ * Returns true when `table` exists in the open database and has `column`.
  *
- * The column-level sibling of {@link hasTable}, and it exists for the same reason one
- * layer down: an artifact built before a column was added is still a valid artifact,
- * and a reader that unconditionally names the new column in its `select` turns "this
- * gazetteer is a build behind" into `no such column` at the first keystroke.
- * Probe once at construction and shape the query.
+ * An artifact built before a column was added is still valid, so readers call this once
+ * at construction and leave the column out of their queries when it is missing.
+ * Avoid calling it per query, because it runs a pragma.
  *
- * `table_info` is a pragma, so it must not sit on a per-query path.
- *
- * Note the interpolation: pragma does not take bound parameters, so `table` is spliced.
- * Every caller passes a module-level constant.
- * Never pass user input.
+ * The pragma does not accept bound parameters, so `table` is interpolated into the SQL.
+ * Pass only constants.
  */
 export function hasColumn<DB>(db: DatabaseClient<DB>, table: string, column: string): boolean {
 	try {

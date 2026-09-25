@@ -2,8 +2,7 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file The gold-set adjudication packet — the org-name-grain over-merged clusters, with every matcher-visible field,
- *   formatted for human review.
+ * @file Writes the over-merged NPPES clusters with every matcher-visible field for human adjudication.
  */
 
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
@@ -15,35 +14,36 @@ import type { MessyRow } from "#tools/nppes/sample"
 import type { TruthLabel } from "#tools/nppes/truth-grains"
 
 /**
- * Everything the packet reads.
+ * The inputs to {@link writeOvermergePacket}.
  */
 export interface OvermergePacketInput {
 	/**
-	 * The clusters to inspect — the shipped config's, since the packet exists to
-	 * adjudicate what production produces.
+	 * The clusters to inspect.
+	 * Callers pass the clusters from the shipped matcher config.
 	 */
 	entities: readonly ResolvedEntity[]
 	/**
-	 * The source rows, for the fields that ride as attributes rather than on the record face.
+	 * The source rows.
+	 *
+	 * The packet reads the authorized official and taxonomy from them.
 	 */
 	rows: readonly MessyRow[]
 	recordCount: number
 	maxNpis: number
 	/**
-	 * The state the sample was drawn from, so the packet's own header names the run an adjudicator is holding.
+	 * The state that the sample was drawn from.
+	 * The packet header prints it.
 	 */
 	state: string
 	orgNameLabel: TruthLabel
 }
 
 /**
- * Write the packet and return the number of over-merged clusters it holds.
+ * Writes the adjudication packet and returns the number of over-merged clusters in it.
  *
- * A cluster qualifies when its members carry more than one org-name label.
- * The matcher fused records the org-name truth says belong to different entities.
- *
- * Per-pair human adjudication is the only instrument that separates model error from
- * yardstick error once the residual is near the measured irreducible ceiling.
+ * A cluster is over-merged when its members carry more than one org-name truth label.
+ * A reviewer marks each cluster as one real entity or as distinct providers,
+ * which separates model error from truth-label error.
  */
 export async function writeOvermergePacket(path: PathBuilderLike, input: OvermergePacketInput): Promise<number> {
 	const { entities, rows, recordCount, maxNpis, state, orgNameLabel } = input

@@ -3,12 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Tests for {@linkcode filerLinkageEval} (§7-3b decisions 3 & 4). Criterion 4's structural requirements
- *   live here — the truth field's absence from the withheld run's input (asserted against the same
- *   `buildFilteredEvalInputs()` helper the eval itself calls rather than a parallel copy), and reproducibility — plus
- *   a positive control: the control run's perfect score is asserted, so stubbing
- *   the prediction predicate kills a test instead of leaving 19/19 green. Runs the real
- *   `buildFilerDatabase`/`clusterFilers` pipeline end to end against scratch on-disk artifacts.
+ *   Tests {@linkcode filerLinkageEval} by running the real build and clustering pipeline on scratch databases.
+ *
+ *   The control run must score perfectly. That check fails if the prediction is stubbed out.
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
@@ -58,25 +55,18 @@ const PUBLISHED_REPORT_PATH = repoRootPath(
 const MANAGEMENT_FAMILY_ID = "management_company_name:timberline management"
 
 /**
- * A family id no writer in this repo mints — deliberately not `holding_company_name:`-shaped,
- * so the standing guarantee below cannot pass by accident through a code path
- * that special-cases the builder's own namespace.
+ * A family ID outside the builder's namespaces, so no code path that special-cases
+ * those namespaces can handle it.
  */
 const INJECTED_FAMILY_ID = "cik:0001234567"
 
 /**
- * One eval run shared by every test below.
- *
- * `filerLinkageEval` builds two real SQLite artifacts and runs the full clustering pass twice,
- * so re-running it per test would multiply that for no added coverage.
- *
- * The reproducibility test runs its own second pass on purpose.
+ * The eval run that the tests share, because each run builds two databases.
  */
 let cached: Promise<FilerLinkageEvalResult> | undefined
 
 async function runEval(): Promise<FilerLinkageEvalResult> {
-	// The promise is what is cached rather than its value: `??=` on an awaited call would run
-	// the eval once per concurrent caller, and the point of the memo is that it runs once.
+	// Caching the promise keeps concurrent callers from starting a second run.
 	cached ??= filerLinkageEval({ date: PUBLISHED_LINKAGE_EVAL_DATE, printMarkdown: false })
 
 	return await cached
@@ -171,24 +161,15 @@ describe("buildTruthFamilyGroups — the held-out ground truth", () => {
 	})
 
 	it("gives a multi-FRN registrant ONE truth family, taken from whichever registration disclosed the parent (C2)", () => {
-		// The parent is on 9100000011's filing.
-		// The registrant is scored under 9100000010.
-		// Before the C2 fix these were two ids in two different truth families.
-		// One legal entity asserted to be in two families at once.
+		// The parent is on the filing for 9100000011, and the registrant is scored under 9100000010.
 		expect(truth().get(FRN_SHARED_REGISTRANT_1)).toBe(truth().get(FRN_MERIDIAN_1))
 		expect(truth().has(FRN_SHARED_REGISTRANT_2)).toBe(false)
 	})
 
 	it("gives every registrant in one truth component the SAME label, including ids only a sibling named", () => {
-		// The component roll-up, which the two-parents test above never reaches:
-		// that registrant's label is fully determined by its own accumulated set.
-		// Therefore, deleting the roll-up leaves it green.
-		// Here A names only P1 while B names P1 and P2.
-		// P1 unions them into one component, so the truth partition says one family,
-		// and both labels must therefore read `P1 + P2`.
-		// Without the roll-up A reads `P1` and B reads `P2 + P1`, the strings differ,
-		// and `groupPredicateFromMap` scores them as different truth families while the
-		// union-find says they are one: a truth partition that contradicts itself.
+		// Sibling one names only Ridgeway.
+		// Sibling two names Ridgeway and Fernbank.
+		// Ridgeway joins them into one component, so both labels must list both parents.
 		const base = buildLinkageEvalForm499Rows()
 
 		const rows = [
@@ -209,7 +190,6 @@ describe("buildTruthFamilyGroups — the held-out ground truth", () => {
 			},
 		]
 
-		// Only the second sibling also names the extra parent.
 		const providerRows = [
 			...buildLinkageEvalProviderRows(),
 			{ providerID: 700_092, frn: toFRN("9100000092")!, holdingCompany: "Fernbank Partners LLC" },
@@ -219,28 +199,13 @@ describe("buildTruthFamilyGroups — the held-out ground truth", () => {
 		const expected = "holding_company_name:fernbank partners + holding_company_name:ridgeway group"
 
 		expect(rolled.get(toFRN("9100000092")!)).toBe(expected)
-		// The sibling never named Fernbank, and must still carry it.
-		// That is what the roll-up is for.
 		expect(rolled.get(toFRN("9100000091")!)).toBe(expected)
 	})
 
 	it("keeps every family id in the label when one registrant names TWO parents", () => {
-		// Unreachable on the shipped corpus, reachable on any edit that adds a registrant naming two parents.
-		// Keying the accumulator on the union-find root as it stood MID-loop dropped
-		// whichever id was recorded before a later union re-rooted the component.
-		// The partition stayed correct, the published label silently lost a name.
-		// Both parents are unique to this registrant, so its label depends only on its own accumulated set.
-		// No other registrant's contribution can put a dropped id back via the
-		// component roll-up and mask the bug.
-		//
-		// both orientations are asserted, and that is the whole test.
-		// `union` merges toward the lexicographically smaller root, so exactly one
-		// ordering of any two parent names re-roots the component away from the key the
-		// first id was filed under, and only that one orphans anything.
-		// The first version of this test fixed the Form 499 parent as "Northbridge" and the
-		// provider parent as "Southgate", which is the safe ordering: the second union re-rooted
-		// onto the existing key, nothing was dropped, and the test passed against the unfixed code.
-		// Naming both parents per orientation removes the coin-flip.
+		// `union` merges toward the lexicographically smaller root, so only one ordering
+		// of the two parents re-roots the component mid-loop.
+		// The test runs both orderings so it always covers that case.
 		const labelFor = (form499Parent: string, providerParent: string): string | undefined => {
 			const rows = [
 				...buildLinkageEvalForm499Rows(),
@@ -264,12 +229,9 @@ describe("buildTruthFamilyGroups — the held-out ground truth", () => {
 		const northbridgeFirst = labelFor("Northbridge Holdings LLC", "Southgate Capital Partners LLC")
 		const southgateFirst = labelFor("Southgate Capital Partners LLC", "Northbridge Holdings LLC")
 
-		// The full joined label rather than a substring: the id set is what gets published,
-		// and `toContain(":northbridge")` would pass just as on a label that had lost the other parent.
+		// The test compares whole labels because a substring check would pass on a label missing one parent.
 		const expected = "holding_company_name:northbridge holdings + holding_company_name:southgate capital partners"
 
-		// Equal to each other and equal to the full expected set.
-		// The label is a property of the registrant rather than of which source happened to be read first.
 		expect(northbridgeFirst).toBe(expected)
 		expect(southgateFirst).toBe(expected)
 	})
@@ -282,11 +244,8 @@ describe("buildTruthFamilyGroups — the held-out ground truth", () => {
 
 describe("the corpus's own invariants", () => {
 	it("never restates one row's holdingCompany inside another row's name fields", () => {
-		// The corpus docstring claims withholding cannot be defeated through a name
-		// field that happens to repeat a parent's name.
-		// Nothing checked it, and the leakage census could not see it: a legal name is an attribute
-		// rather than an ownership row, so a restated parent would sail past the check
-		// and quietly feed the entity-resolution pass.
+		// A parent's name inside a legal name or DBA would leak the withheld answer.
+		// The leakage census counts only ownership rows, so it cannot catch this case.
 		const rows = buildLinkageEvalForm499Rows()
 		const parents = rows.map((row) => row.holdingCompany).filter((name) => name !== "")
 
@@ -320,8 +279,7 @@ describe("hashLinkageEvalInputs", () => {
 	})
 
 	it("matches the SHA published in the committed scorecard", () => {
-		// Before this pin, the published hash lived only in the markdown file —
-		// editing the corpus staled the scorecard silently, with nothing failing.
+		// Editing the corpus without regenerating the scorecard fails here.
 		expect(hashLinkageEvalInputs(buildFilteredEvalInputs())).toBe(PUBLISHED_WITHHELD_INPUTS_SHA256)
 		expect(hashLinkageEvalInputs(buildControlEvalInputs())).toBe(PUBLISHED_CONTROL_INPUTS_SHA256)
 	})
@@ -351,7 +309,7 @@ describe("filerLinkageEval — reproducibility (criterion 4)", () => {
 		expect(markdown).toContain("## Results")
 		expect(markdown).toContain(withheld.inputsSHA256)
 		expect(markdown).toContain(control.inputsSHA256)
-		expect(markdown).not.toMatch(/[{[]"[a-zA-Z]/) // no inline JSON-object/array literal
+		expect(markdown).not.toMatch(/[{[]"[a-zA-Z]/) // The report contains no inline JSON.
 	})
 })
 
@@ -371,9 +329,8 @@ describe("filerLinkageEval — the control run (POSITIVE CONTROL: this is what d
 	it("finds the multi-FRN registrant's family through the registration that disclosed it", async () => {
 		const { control } = await runEval()
 
-		// The parent sits on 9100000011's filing.
-		// The registrant is scored under 9100000010.
-		// A prediction that read only the representative FRN's own node would miss this.
+		// The parent is on the filing for 9100000011, and the registrant is scored under 9100000010.
+		// A prediction that read only the representative FRN would miss it.
 		expect(control.predictedFamilyIDsOf.get(FRN_SHARED_REGISTRANT_1)).toEqual([
 			"holding_company_name:meridian communications group",
 		])
@@ -396,7 +353,7 @@ describe("filerLinkageEval — the withheld run (the measurement)", () => {
 		expect(withheld.score.predictedPositivePairs).toBe(0)
 		expect(withheld.score.precision).toBeNull()
 		expect(withheld.score.recall).toBe(0)
-		// I2: undefined rather than zero — "claimed nothing" is not "claimed wrongly".
+		// F1 is null because the run made no positive calls.
 		expect(withheld.score.f1).toBeNull()
 	})
 
@@ -432,7 +389,8 @@ describe("filerLinkageEval — what is really in the artifacts", () => {
 
 		expect(withheld.predictedFamilyIDsOf.get(FRN_COMANAGED)).toEqual([])
 		expect(control.predictedFamilyIDsOf.get(FRN_COMANAGED)).toEqual([])
-		// Cascade 3 keeps its ownership family in the control run and loses only the management one.
+		// Cascade 3 keeps its ownership family in the control run.
+		// Only its management family is dropped.
 		expect(control.predictedFamilyIDsOf.get(FRN_CASCADE_3)).toEqual(["holding_company_name:cascade fiber holdings"])
 		expect(control.observedFamilyIDsOf.get(FRN_CASCADE_3)).toContain(MANAGEMENT_FAMILY_ID)
 	})
@@ -449,14 +407,9 @@ describe("filerLinkageEval — what is really in the artifacts", () => {
 })
 
 describe("the standing guarantee: this baseline CAN be beaten", () => {
-	/**
-	 * The three Cascade registrants, joined to one ownership family by a relationship the builder never emits.
-	 *
-	 * `subsidiary`, the shape a corporate-filing importer is specified to produce.
-	 *
-	 * Injected into the withheld artifact after the leakage check has already passed on
-	 * the untouched build, so the check stays armed while the probe runs.
-	 */
+	// This helper joins the three Cascade registrants to one family through a
+	// `subsidiary` relationship, which the builder never writes.
+	// The eval injects the rows after its leakage check has run.
 	const injectSubsidiaryFamily = async (db: DatabaseClient<FilerDatabase>): Promise<void> => {
 		for (const frn of [FRN_CASCADE_1, FRN_CASCADE_2, FRN_CASCADE_3]) {
 			await db
@@ -493,9 +446,7 @@ describe("the standing guarantee: this baseline CAN be beaten", () => {
 	it("moves the score off zero when ownership arrives as filer_family rows", async () => {
 		const injected = await runInjected()
 
-		// 3 of the 6 truth-positive pairs are the Cascade ones.
-		// None of the Meridian pairs is reachable from this injection, so recall lands
-		// at exactly one half with nothing falsely merged.
+		// The Cascade registrants account for 3 of the 6 true pairs, and the Meridian pairs stay unlinked.
 		expect(injected.score.truePositivePairs).toBe(3)
 		expect(injected.score.falsePositivePairs).toBe(0)
 		expect(injected.score.recall).toBe(0.5)
@@ -512,26 +463,19 @@ describe("the standing guarantee: this baseline CAN be beaten", () => {
 	it("counts the injected rows in the census", async () => {
 		const injected = await runInjected()
 
-		// The pre-fix census counted `holding_company` only and would have read 0 here,
-		// under a heading promising the numbers were counted from the build.
+		// The census counts every ownership relationship, including ones the builder never writes.
 		expect(injected.census.scoredFamilyRows).toBe(3)
 		expect(injected.census.nonOwnershipFamilyRows).toBe(2)
 		expect(injected.census.familyRows).toBe(5)
 	})
 
 	it("keeps the leakage check armed while the probe runs — the check sees the untouched build", async () => {
-		// The injection adds exactly the ownership rows the check refuses.
-		// It does not throw, because the check reads the census before the probe writes.
-		// Break that ordering and this test starts throwing instead of scoring.
+		// The injected rows would fail the leakage check.
+		// The run succeeds only because the check reads the census before the injection writes.
 		await expect(runInjected()).resolves.toBeDefined()
 	})
 
-	/**
-	 * A relationship string that is not a {@linkcode FilerRelationship} value at all.
-	 *
-	 * The shape a `filer_family` row would carry if some future writer, or a hand-edited artifact,
-	 * put an assertion in the table that this eval has never been taught to classify.
-	 */
+	// This relationship string is missing from `FilerRelationship`.
 	const UNRECOGNIZED_RELATIONSHIP = "transfer_of_control"
 
 	const injectFamilyRowsWithRelationship = async (
@@ -569,10 +513,7 @@ describe("the standing guarantee: this baseline CAN be beaten", () => {
 			injectEvidence: (db) => injectFamilyRowsWithRelationship(db, UNRECOGNIZED_RELATIONSHIP),
 		})
 
-		// The exhaustiveness refactor briefly folded unrecognized relationships in with
-		// `management_company`, because both simply failed the ownership test.
-		// That put the one class the eval cannot reason about on the silent side of the check.
-		// It gets its own bucket so the check can refuse on it and the published census cannot hide it.
+		// Unrecognized relationships get their own count so the leakage check can fail on them.
 		expect(injected.census.unrecognizedFamilyRows).toBe(3)
 		expect(injected.census.nonOwnershipFamilyRows).toBe(2)
 		expect(injected.census.scoredFamilyRows).toBe(0)
@@ -583,10 +524,8 @@ describe("the standing guarantee: this baseline CAN be beaten", () => {
 		const form499Rows = buildLinkageEvalForm499Rows()
 		const providerRows = buildLinkageEvalProviderRows()
 
-		// The plan and this eval's own page both assert, as a measured fact,
-		// that wiring edgar in as inferred `Subsidiary` edges leaves recall at 0.000
-		// and only `filer_family` rows move it, with nothing in-repo to re-derive it from.
-		// This test is that artifact: the exact edge shape an edgar importer emits.
+		// These are the edges an EDGAR importer writes.
+		// The family readers use only `filer_family`, so edges alone leave recall at zero.
 		const injected = await runLinkagePass({
 			inputs: buildFilteredEvalInputs(),
 			registrants: buildTruthRegistrants(form499Rows, providerRows),
@@ -605,10 +544,7 @@ describe("the standing guarantee: this baseline CAN be beaten", () => {
 						.values({
 							from_node_id: `frn:${frn}`,
 							to_node_id: INJECTED_FAMILY_ID,
-							// ParentCompany rather than Subsidiary: `schema.ts` defines the target as
-							// what it is TO the source, and `build-filer.ts` follows that convention.
-							// `from: frn → to: cik` with `Subsidiary` would assert the CIK is the FRN's subsidiary.
-							// The inverse of what a parent-CIK importer means.
+							// The relationship describes what the target is to the source, so the CIK is the parent.
 							relationship: FilerRelationship.ParentCompany,
 							assertion: "inferred",
 							match_score: 0.92,
@@ -622,10 +558,8 @@ describe("the standing guarantee: this baseline CAN be beaten", () => {
 			},
 		})
 
-		// The edges are in the artifact and the census sees them.
-		// This is not a failed injection.
+		// The census shows the edges were written.
 		expect(injected.census.ownershipEdges).toBe(3)
-		// And the score does not budge, because every corporate-family reader answers from `filer_family`.
 		expect(injected.score.truePositivePairs).toBe(0)
 		expect(injected.score.recall).toBe(0)
 		expect(injected.census.scoredFamilyRows).toBe(0)
@@ -635,12 +569,7 @@ describe("the standing guarantee: this baseline CAN be beaten", () => {
 		const form499Rows = buildLinkageEvalForm499Rows()
 		const providerRows = buildLinkageEvalProviderRows()
 
-		// `OWNERSHIP_BY_RELATIONSHIP` is a plain object literal, so a bare `map[relationship]`
-		// lookup inherits `Object.prototype`: "constructor" resolves to a function —
-		// truthy, and never nullish, so `??` never fires.
-		// That made `assertsOwnership("constructor")` true, which both scored an
-		// unclassifiable assertion and double-counted the row.
-		// Therefore, the three census splits summed to 8 against a published total of 5.
+		// A bare lookup of "constructor" in a plain object returns an inherited function, which is truthy.
 		const injected = await runLinkagePass({
 			inputs: buildFilteredEvalInputs(),
 			registrants: buildTruthRegistrants(form499Rows, providerRows),
@@ -655,18 +584,14 @@ describe("the standing guarantee: this baseline CAN be beaten", () => {
 		expect(injected.census.scoredFamilyRows).toBe(0)
 		expect(injected.census.unrecognizedFamilyRows).toBe(3)
 
-		// The published table invites this arithmetic explicitly, so pin it.
+		// The published census rows must sum to the total.
 		const { scoredFamilyRows, nonOwnershipFamilyRows, unrecognizedFamilyRows, familyRows } = injected.census
 
 		expect(scoredFamilyRows + nonOwnershipFamilyRows + unrecognizedFamilyRows).toBe(familyRows)
 	})
 
 	it("refuses to report a withheld build carrying a relationship it cannot classify", () => {
-		// The check's default must be the opposite of the prediction's.
-		// The prediction ignores what it does not understand (never score an unrecognized assertion);
-		// the check must refuse it (an assertion this eval cannot classify, in a build it
-		// did not write, is exactly what a leakage check exists to stop).
-		// One predicate cannot serve both.
+		// The prediction ignores an unrecognized relationship, but the leakage check must fail on one.
 		expect(() =>
 			assertNoOwnershipLeak({
 				holdingCompanyNodes: 0,
@@ -678,7 +603,7 @@ describe("the standing guarantee: this baseline CAN be beaten", () => {
 			})
 		).toThrow(/unrecognized relationship/)
 
-		// …and stays quiet on the shape the withheld build actually produces, so the check is not simply always-throwing.
+		// The check passes on the census that the real withheld build produces.
 		expect(() =>
 			assertNoOwnershipLeak({
 				holdingCompanyNodes: 0,

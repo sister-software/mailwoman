@@ -3,8 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Dump classifier spans for a supplied row set and selected text registers, allowing line-by-line comparison
- *   between model arms. Use `--rows` with `id<TAB>input` lines; blank lines and `#` comments are ignored.
+ * Prints one line of classifier spans per row and text register so two model arms can be diffed.
  */
 
 import { groupTuplesByTag } from "@mailwoman/core/decoder"
@@ -21,13 +20,17 @@ type Register = (typeof REGISTERS)[number]
 
 const { values } = parseArguments({
 	options: {
+		/**
+		 * Reads `id<TAB>input` lines from this file.
+		 * Blank lines and lines starting with `#` are skipped.
+		 */
 		rows: { type: "string" },
 		"cache-root": { type: "string" },
 		label: { type: "string", default: "arm" },
 		locale: { type: "string", default: "en-US" },
 		registers: { type: "string", default: "asis,lower,upper,comma-drop" },
 		/**
-		 * Use `classifier.parse` directly instead of the normalization pipeline.
+		 * Calls `classifier.parse` directly instead of the normalization pipeline.
 		 */
 		raw: { type: "boolean", default: false },
 	},
@@ -38,7 +41,7 @@ const selected = new Set(values.registers!.split(",")) as Set<Register>
 
 function applyRegister(text: string, reg: Register): string {
 	if (reg === "comma-drop") {
-		// Match the invariance suite's comma-drop transform, including whitespace collapse.
+		// This matches the invariance suite's comma-drop transform, including the whitespace collapse.
 		return text.replaceAll(",", "").replaceAll(/\s+/gu, " ").trim()
 	}
 

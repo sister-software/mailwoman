@@ -3,28 +3,14 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The compiled runtime artifact: its shape, its canonical bytes, and the reader that turns those
- *   bytes back into a typed value.
+ *   Defines the compiled geographic model artifact, its canonical serialization and its reader.
  *
- *   A runtime consumer reads this and never the authored records. That is the whole point of the
- *   artifact, and it is why the shape carries every table plus the materialized `isA` closure: a
- *   consumer that had to walk `concepts[].isA` to answer a question about one concept would be doing
- *   query-time traversal, which the boundary record excludes.
+ *   Runtime consumers read the artifact instead of the authored records. The artifact includes the
+ *   materialized `isA` closure so that consumers never traverse `concepts[].isA` at query time.
  *
- *   Two determinism rules define the bytes, and both are stated so a reader can check them:
- *
- *   1. **Every object's keys are emitted in code-point order**, at every depth. A rule that
- *      canonicalizes by itself beats a hand-kept field order, which drifts the first time the schema
- *      gains a field.
- *   2. **Every table is ordered by identifier**, under {@link compareIdentifiers} — code point, never
- *      `localeCompare`, whose answer depends on the machine's collation. Arrays inside a record keep
- *      the order they were authored in. the compiler writes the tables, so it orders those.
- *
- *   Nothing here records when compilation ran. `modelVersion` is the authored document's own version,
- *   so two builds of one document are byte-identical, and a clock in the artifact would make every
- *   regenerate a diff.
- *
- *   Boundary record: `docs/superpowers/specs/2026-08-26-geographic-model-boundaries.md` (#1917).
+ *   The serialization is deterministic. Object keys appear in code-point order at every depth, and the
+ *   compiler sorts each table by identifier in code-point order. Arrays inside a record keep their
+ *   authored order. The artifact records no build time, so two builds of one document are byte-identical.
  */
 
 import { prettyJSON, stringifyJSON } from "@mailwoman/core/json"
@@ -41,20 +27,18 @@ import type {
 } from "#schema"
 
 /**
- * The artifact format version — incremented by hand when the compiled shape changes, so a reader
- * meeting an artifact it was not written for says so instead of quietly reading fields that moved.
+ * The artifact format version.
  *
- * It is not data about the world, which is why a number is allowed here and nowhere in `./schema.ts`.
+ * Increment it whenever the compiled shape changes, so that a reader rejects
+ * an artifact it cannot interpret.
  */
 export const ARTIFACT_SCHEMA_VERSION = 1
 
 /**
- * One concept's transitive `isA` ancestors, materialized so a consumer answers
- * "what is this a kind of" with a lookup.
+ * One concept's transitive `isA` ancestors.
  *
- * Every concept gets an entry, including one with no ancestors at all: an entry with an
- * empty list says the concept was compiled and is a kind of nothing, and a missing entry
- * would say the same thing while also being what an absent concept looks like.
+ * Every compiled concept has an entry, even with an empty ancestor list,
+ * so a missing entry always means an unknown concept.
  */
 export interface InheritanceClosureEntry {
 	concept: ConceptID
@@ -62,21 +46,18 @@ export interface InheritanceClosureEntry {
 }
 
 /**
- * The whole compiled artifact.
+ * The compiled artifact.
  *
- * The five authored tables travel unchanged — the compiler orders them and rewrites no record —
- * beside the two tables it computes: {@link InheritanceClosureEntry} per concept,
- * and the derived facts the closure materializes.
+ * The compiler sorts the authored tables without changing any record.
+ * It adds the inheritance closure and the derived facts that it computes.
  */
 export interface CompiledGeographicModel {
 	/**
-	 * The format version of this artifact — {@link ARTIFACT_SCHEMA_VERSION} at the time it was written.
+	 * The format version, equal to {@link ARTIFACT_SCHEMA_VERSION} when the artifact was written.
 	 */
 	schemaVersion: number
 	/**
-	 * The authored document's own `version`.
-	 *
-	 * Never a build date.
+	 * The authored document's `version`.
 	 */
 	modelVersion: string
 	relations: readonly RelationRecord[]
@@ -85,26 +66,16 @@ export interface CompiledGeographicModel {
 	observations: readonly SourceObservationRecord[]
 	inheritanceClosure: readonly InheritanceClosureEntry[]
 	/**
-	 * The authored derived facts, plus every fact the compiler's derivations produced.
+	 * The authored derived facts plus the facts that the compiler derived.
 	 *
-	 * Each names the procedure that wrote it and every record that procedure read.
+	 * Each fact records its procedure and every record that the procedure read.
 	 */
 	derivedFacts: readonly DerivedFactRecord[]
 }
 
 /**
- * The artifact's stated order: UTF-16 code point, ascending.
- *
- * `String.prototype.localeCompare` is the trap this exists to avoid.
- * Its answer depends on the machine's collation, so an artifact ordered with it
- * is reproducible only on the machine that built it.
- */
-
-/**
- * Rebuild `value` with every object's keys in code-point order, at every depth.
- *
- * Arrays keep their order — ordering those is the compiler's job, and doing it
- * here would silently reorder authored data.
+ * Copies `value` with object keys in code-point order at every depth and drops `undefined` entries.
+ * Arrays keep their order.
  */
 function canonicalize(value: unknown): unknown {
 	if (Array.isArray(value)) return value.map(canonicalize)
@@ -125,15 +96,10 @@ function canonicalize(value: unknown): unknown {
 }
 
 /**
- * The artifact's canonical bytes: tab-indented, one trailing newline, keys in code-point order.
+ * Serializes the artifact as tab-indented JSON with a trailing newline and sorted keys.
  *
- * Tab indentation and the trailing newline match the repository's other committed
- * JSON tables (`taxonomy.json`, `brands.json`).
- * A committed copy of these bytes is the generator's output run through `oxfmt`,
- * which inlines short arrays .
- *
- * Therefore, a freshness check compares the parsed artifact against a fresh compile,
- * and a byte comparison compares two compiles.
+ * The committed copy also passes through `oxfmt`, which inlines short arrays.
+ * A freshness check therefore compares parsed values, and only a comparison of two compiles compares bytes.
  */
 export function serializeCompiledModel(model: CompiledGeographicModel): string {
 	return prettyJSON(canonicalize(model))
@@ -151,10 +117,7 @@ export class GeographicModelArtifactError extends Error {
 }
 
 /**
- * The tables every artifact carries.
- *
- * A reader that finds one missing refuses rather than answering every question
- * about that table with an empty list.
+ * The tables that every artifact must contain.
  */
 const ARTIFACT_TABLES = [
 	"concepts",
@@ -166,11 +129,7 @@ const ARTIFACT_TABLES = [
 ] as const
 
 /**
- * Why `value` is not a compiled artifact, or nothing when it is one.
- *
- * Kept separate from {@link parseCompiledGeographicModel} so the reader casts the
- * value it was handed, still typed `unknown`, rather than a narrowed shape it would
- * have to launder through a second cast to widen again.
+ * Returns the reason `value` is not a compiled artifact, or `undefined` when it is one.
  */
 function artifactProblem(value: unknown): string | undefined {
 	if (!isPlainObject(value)) return "a compiled geographic model must be an object"
@@ -191,14 +150,11 @@ function artifactProblem(value: unknown): string | undefined {
 }
 
 /**
- * Read a parsed artifact — the value `JSON.parse` produced from the compiled bytes —
- * as a {@link CompiledGeographicModel}.
+ * Reads a value from `JSON.parse` as a {@link CompiledGeographicModel}.
  *
- * It checks the format version and the presence of every table, and does not re-validate the records.
- * An artifact is generated from a document that `parseGeographicModelDocument` already accepted.
- *
- * Re-checking every record here would be a second validator, and the version check is what catches
- * the failure this reader can actually meet — an artifact written by a different compiler.
+ * The reader checks the format version, the model version and the presence of every table.
+ * It does not revalidate records, because the compiler accepts only documents
+ * that already passed validation.
  */
 export function parseCompiledGeographicModel(input: unknown): CompiledGeographicModel {
 	const problem = artifactProblem(input)

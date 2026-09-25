@@ -21,69 +21,74 @@ const DEFAULT_HF_RESOLVE_ROOT = "https://huggingface.co/buckets"
 const MODEL_FILENAME = "model.onnx"
 
 /**
- * Says where one declared artifact comes from: a Hugging Face bucket object under a
- * versioned directory, or a file already committed to the repo.
+ * The source of one declared artifact.
  *
- * Bucket objects are stored flat by basename, so an overlay's artifacts live under the
- * base locale's directory while a character-path family has its own.
+ * It is either a Hugging Face bucket object under a versioned directory or a file committed to the repo.
+ *
+ * Bucket objects are stored flat by basename.
+ * An overlay's artifacts live under the base locale's directory, and each
+ * character-path family has its own directory.
  */
 export type ArtifactOrigin = { kind: "hf"; remoteName: string; base: string } | { kind: "repo"; sourcePath: string }
 
 /**
- * One artifact a weights package declares in `files` that no `git archive` of this repo can supply.
+ * One artifact that a weights package declares in `files` and the repo does not track.
  */
 export interface WeightsArtifactPlan {
 	/**
-	 * The repo-relative workspace path, always under `packages/`, which the destination path inherits.
+	 * The repo-relative workspace path under `packages/`.
+	 * The destination path uses the same path.
 	 */
 	workspace: string
 
 	/**
-	 * The `files` entry verbatim, which is also the bucket object's name because the bucket is staged flat.
+	 * The verbatim `files` entry.
+	 *
+	 * It is also the bucket object's name because the bucket is staged flat.
 	 */
 	filename: string
 	origin: ArtifactOrigin
 
 	/**
-	 * The md5 a release model card declares for this filename.
-	 *
-	 * Absence means no card declares one, and the report lists such files in `checksumUndeclared`.
+	 * The MD5 that a release model card declares for this file.
+	 * The report lists files without one in `checksumUndeclared`.
 	 */
 	expectedMD5?: string
 }
 
 /**
- * What a materialization did, for the caller's receipt.
+ * The counts and file lists that a materialization reports to its caller.
  */
 export interface HFMaterializationReport {
 	version: string
 
 	/**
-	 * The base locale's versioned bucket directory; character-path families read
-	 * from their own directories beside it.
+	 * The base locale's versioned bucket directory.
+	 *
+	 * Character-path families read from their own directories beside it.
 	 */
 	base: string
 
 	/**
-	 * Distinct bucket objects downloaded, fewer than `written` whenever several
-	 * packages ship the same artifact.
+	 * The number of distinct bucket objects downloaded.
+	 *
+	 * It is lower than `written` when several packages ship the same artifact.
 	 */
 	downloaded: number
 
 	/**
-	 * Destination files written across every workspace, including files copied from the repo.
+	 * The number of destination files written across every workspace, including files copied from the repo.
 	 */
 	written: number
 	bytes: number
 
 	/**
-	 * Artifacts whose bytes matched a model card's declared md5.
+	 * The number of artifacts whose bytes matched a model card's declared MD5.
 	 */
 	checksumVerified: number
 
 	/**
-	 * Filenames no release model card declares an md5 for, listed by name
-	 * so an empty check set is not mistaken for a verified fetch.
+	 * The file names that no release model card declares an MD5 for.
 	 */
 	checksumUndeclared: string[]
 }
@@ -133,8 +138,9 @@ async function declaredChecksums(
 }
 
 /**
- * Returns the one release locale whose package declares `model.onnx`, which is the
- * bucket directory every Latin artifact is staged under.
+ * Returns the one release locale whose package declares `model.onnx`.
+ *
+ * Every Latin artifact is staged under that locale's bucket directory.
  *
  * @throws When zero or several release locales declare the model.
  */
@@ -161,7 +167,7 @@ export async function resolveBaseLocale(repoRoot: PathBuilderLike, locales: read
 }
 
 /**
- * Reads the model version a release publishes from the base locale's model-card `version`.
+ * Reads the release's model version from the `version` field of the base locale's model card.
  */
 export async function readBaseModelVersion(repoRoot: PathBuilderLike): Promise<string> {
 	const config = await readReleaseConfig(repoRoot)
@@ -177,11 +183,10 @@ export async function readBaseModelVersion(repoRoot: PathBuilderLike): Promise<s
 }
 
 /**
- * Lists the bucket objects the base model card declares that never go into a tarball,
- * currently the Fisher artifact and its sidecar.
+ * Lists the bucket objects that the base model card declares and no tarball ships,
+ * such as the Fisher artifact and its sidecar.
  *
- * They are probed with the rest so a half-staged release is refused,
- * since nothing at runtime would notice them missing.
+ * The fetch probes them with the other objects because no runtime check would detect their absence.
  */
 export async function distributionOnlyRemoteNames(repoRoot: PathBuilderLike, baseLocale: string): Promise<string[]> {
 	const cardPath = resolvePath(repoRoot, weightsWorkspace(baseLocale), "model-card.json")
@@ -194,8 +199,8 @@ export async function distributionOnlyRemoteNames(repoRoot: PathBuilderLike, bas
 }
 
 /**
- * Returns the public bucket URL directory for the base locale at `version`,
- * honoring `HF_BUCKET_RESOLVE_URL` as a mirror override.
+ * Returns the public bucket URL directory for the base locale at `version`.
+ * `HF_BUCKET_RESOLVE_URL` overrides the bucket root.
  */
 export async function hfVersionBase(repoRoot: PathBuilderLike, version: string): Promise<string> {
 	const config = await readReleaseConfig(repoRoot)
@@ -205,8 +210,7 @@ export async function hfVersionBase(repoRoot: PathBuilderLike, version: string):
 }
 
 /**
- * Returns the bucket URL directory for a character-path family at `version`,
- * which sits beside the Latin base's directory.
+ * Returns the bucket URL directory for a character-path family at `version`.
  */
 export async function hfFamilyBase(repoRoot: PathBuilderLike, family: string, version: string): Promise<string> {
 	return `${await hfResolveRoot(repoRoot)}/${family}/v${version}`
@@ -230,7 +234,8 @@ async function hfResolveRoot(repoRoot: PathBuilderLike): Promise<string> {
 
 /**
  * Plans every artifact that a release's weights packages declare in `files`
- * but the checkout does not track, with its origin and expected MD5.
+ * and the checkout does not track.
+ * Each plan carries the artifact's origin and expected MD5.
  */
 export async function planWeightsMaterialization(
 	repoRoot: PathBuilderLike,
@@ -306,11 +311,11 @@ function untrackedDeclaredArtifacts(
 }
 
 /**
- * Plans the untracked artifacts of one character-path family workspace,
- * read from the family's own versioned bucket directory.
+ * Plans the untracked artifacts of one character-path family workspace from
+ * the family's versioned bucket directory.
  *
- * Latin model cards are not consulted, because a family's `model.onnx` is a
- * different graph under the same name.
+ * The plan reads checksums only from the family workspace, because a family's `model.onnx`
+ * is a different graph from the Latin one with the same name.
  */
 export async function planCharFamilyArtifacts(
 	repoRoot: PathBuilderLike,

@@ -21,7 +21,8 @@ const CENSUS_HOST = "https://www2.census.gov"
 const DEFAULT_DATA_ROOT = dataRootPath()
 
 /**
- * Names a TIGER/Line product that {@link fetchTIGER} can load; only `tabblock20` keeps geometry.
+ * A TIGER/Line product that {@link fetchTIGER} can load.
+ * Only the `tabblock20` level keeps geometry.
  */
 export type TIGERFetchLevel = "tabblock20" | "place" | "addrfeat"
 
@@ -38,10 +39,7 @@ const LEVEL_TABLE: Record<TIGERFetchLevel, keyof TIGERDatabase> = {
 }
 
 /**
- * Configures {@link fetchTIGER}.
- *
- * `county` filters only the `tabblock20` level, and `vintage` defaults to
- * 2020 for blocks and 2024 otherwise.
+ * Options for {@link fetchTIGER}.
  */
 export interface FetchTIGEROptions {
 	/**
@@ -50,23 +48,28 @@ export interface FetchTIGEROptions {
 	stateFIPS: string
 
 	/**
-	 * The TIGER level to fetch, default `tabblock20`.
+	 * The TIGER level to fetch.
+	 * The default is `tabblock20`.
 	 */
 	level?: TIGERFetchLevel
 
 	/**
-	 * The TIGER vintage year, default 2020 for blocks to match the 2020 redistricting data and 2024 otherwise.
+	 * The TIGER vintage year.
+	 *
+	 * The default is 2020 for blocks, which matches the 2020 redistricting data, and 2024 for other levels.
 	 */
 	vintage?: number
 
 	/**
-	 * The output SQLite path, default `<dataRoot>/tiger/tiger.db`, which is
-	 * where the corpus `tiger` adapter reads.
+	 * The output SQLite path.
+	 *
+	 * The default is `<dataRoot>/tiger/tiger.db`, which the corpus `tiger` adapter reads.
 	 */
 	outPath?: string
 
 	/**
-	 * The root for the download cache and the default output, default the Mailwoman data root.
+	 * The root of the download cache and the default output.
+	 * The default is the Mailwoman data root.
 	 */
 	dataRoot?: string
 
@@ -76,14 +79,16 @@ export interface FetchTIGEROptions {
 	county?: string
 
 	/**
-	 * Rows per insert batch, default 1000.
+	 * The number of rows per insert batch.
+	 * The default is 1000.
 	 */
 	batchSize?: number
 }
 
 /**
- * Reports progress from {@link fetchTIGER}: a file downloaded or found in the cache,
- * a shapefile extracted, or rows inserted.
+ * A progress event from {@link fetchTIGER}.
+ *
+ * Each event reports a file downloaded or found in the cache, a shapefile extracted, or rows inserted.
  */
 export type FetchTIGEREvent =
 	| { phase: "download"; file: string; cached: boolean }
@@ -91,7 +96,7 @@ export type FetchTIGEREvent =
 	| { phase: "load"; inserted: number; total: number }
 
 /**
- * Reports the database path, table name and inserted row count when {@link fetchTIGER} finishes.
+ * The database path, table name and inserted row count that {@link fetchTIGER} returns.
  */
 export interface FetchTIGERResult {
 	outPath: string
@@ -179,11 +184,10 @@ async function discoverCounties(state: string, vintage: number): Promise<string[
 }
 
 /**
- * Downloads one state's TIGER/Line files at `level` and loads them into a SQLite
- * database, yielding progress events.
+ * Downloads one state's TIGER/Line files at `level`, loads them into a SQLite database
+ * and yields progress events.
  *
- * It first deletes that state's existing rows from the target table, so a rerun
- * replaces the state rather than duplicating it.
+ * It first deletes the state's existing rows from the target table so that a rerun replaces them.
  */
 export async function* fetchTIGER(options: FetchTIGEROptions): AsyncGenerator<FetchTIGEREvent, FetchTIGERResult> {
 	const level = options.level ?? "tabblock20"

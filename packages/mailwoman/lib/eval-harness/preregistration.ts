@@ -3,14 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Shared machinery for the frozen pre-registrations (#1928, #1965, #1967): the canonical-JSON content
- *   hash, the freeze-record loader that refuses a ruler whose hash has moved, and the artifact-identity
- *   readers every probe receipt carries.
- *
- *   one loader, three rulers. Each pre-registration keeps its own definition type, its own audit and its
- *   own committed JSON, but the refusal ladder is the interface they share: the freeze record must name
- *   this definition and version, the definition's content hash must equal the frozen hash, and the audit
- *   must be clean. A caller never receives a definition it may only partly trust.
+ *   Shared hashing, loading, audit, and artifact-identity helpers for frozen pre-registrations.
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
@@ -25,19 +18,20 @@ import { type LayerManifest, probeManifest } from "#data/inventory"
 import type { POIBoardResolverBackend } from "#eval-harness/poi/board"
 
 /**
- * A committed pre-registration file, named from the package root because `tsc` emits no `.json` into `out/`.
+ * Resolves a committed pre-registration file from the package root.
+ *
+ * The path starts at the package root because `tsc` does not copy `.json` files into `out/`.
  */
 export function preregistrationPath(directory: string, name: string): string {
 	return resolvePackagePath("mailwoman", "lib", "eval-harness", directory, name)
 }
 
 /**
- * Canonical JSON for hashing: keys sorted at every depth, array order preserved,
- * no insignificant whitespace.
+ * Serializes a value as canonical JSON for hashing.
  *
- * The hash covers content rather than bytes so a formatter pass cannot break the freeze
- * and a reordered key cannot slip past it.
- * Array order is meaningful — row order is reported order — so it is never sorted.
+ * Object keys are sorted at every depth and `undefined` entries are dropped,
+ * so reformatting the file does not change the hash.
+ * Array order is preserved because row order is reported order.
  */
 export function canonicalJSON(value: unknown): string {
 	if (value === null || typeof value !== "object") return stringifyJSON(value) ?? "null"
@@ -52,18 +46,18 @@ export function canonicalJSON(value: unknown): string {
 }
 
 /**
- * The content hash of one definition.
+ * Returns the SHA-256 of a definition's canonical JSON.
  */
 export function definitionContentHash(definition: unknown): string {
 	return sha256Hex(canonicalJSON(definition))
 }
 
 /**
- * The freeze record every pre-registration commits beside its definition:
- * the definition's identity and the content hash that pins it.
+ * The freeze record committed beside a pre-registration definition.
  *
- * The identity field's name varies per ruler (`probeID`, `decisionID`),
- * so the loader takes it as a parameter rather than declaring it here.
+ * The record also holds an identity field whose name varies per definition,
+ * such as `probeID` or `decisionID`.
+ * The loader receives that name through `idField`.
  */
 export interface FrozenDefinitionFreezeRecord {
 	definition: string
@@ -73,30 +67,32 @@ export interface FrozenDefinitionFreezeRecord {
 	note: string
 }
 
+/**
+ * Options for {@link loadFrozenDefinition}.
+ */
 export interface LoadFrozenDefinitionOptions<T> {
 	definitionPath: PathBuilderLike
 	freezePath: PathBuilderLike
 	/**
-	 * The prefix on every refusal — `"phase-2 decision"`, `"semantic-utility probe"`, `"absence probe"`.
+	 * The prefix on every error message, such as `"semantic-utility probe"`.
 	 */
 	label: string
 	/**
-	 * The identity field both the definition and the freeze record carry (`"probeID"`, `"decisionID"`).
+	 * The identity field that both the definition and the freeze record carry, such as `"probeID"`.
 	 */
 	idField: keyof T & string
 	/**
-	 * The definition's own executability audit.
-	 * Any problem refuses the load.
+	 * Returns the definition's problems.
+	 * Any problem fails the load.
 	 */
 	audit: (definition: T) => string[]
 }
 
 /**
- * Load a frozen pre-registration, refusing anything that would let the ruler move.
+ * Loads a frozen pre-registration definition.
  *
- * Three refusals, in order: the freeze record must name this definition and version,
- * the definition's content hash must equal the frozen hash, and the audit must be clean.
- * A caller never receives a definition it may only partly trust.
+ * The load throws when the freeze record's identity or version differs from the definition,
+ * when the definition's content hash differs from the frozen hash, or when the audit reports a problem.
  */
 export async function loadFrozenDefinition<T extends { version: string }>(
 	options: LoadFrozenDefinitionOptions<T>
@@ -139,7 +135,7 @@ export async function loadFrozenDefinition<T extends { version: string }>(
 }
 
 /**
- * The duplicate-id half of a definition audit: ids name rows in output, so a reused one is refused.
+ * Reports each row ID used more than once, because the output identifies rows by ID.
  */
 export function duplicateRowIDProblems(rows: ReadonlyArray<{ id: string }>): string[] {
 	const problems: string[] = []
@@ -157,7 +153,7 @@ export function duplicateRowIDProblems(rows: ReadonlyArray<{ id: string }>): str
 }
 
 /**
- * The sampling clauses every stratified pre-registration carries.
+ * The sampling settings of a stratified pre-registration.
  */
 export interface SamplingRegistration {
 	seed: number
@@ -166,10 +162,10 @@ export interface SamplingRegistration {
 }
 
 /**
- * The sampling half of a definition audit, shared because every stratified ruler
- * registers the same three quantities and each has one way to be unexecutable:
- * a target too small for the power the record will claim, a floor sitting above the
- * target it is a floor for, and a seed the generator cannot take.
+ * Audits sampling settings.
+ *
+ * It reports a per-stratum target below `minimumTarget`, a minimum above the target,
+ * and a seed that is not an integer.
  */
 export function samplingProblems(sampling: SamplingRegistration, minimumTarget: number): string[] {
 	const problems: string[] = []
@@ -194,8 +190,7 @@ export function samplingProblems(sampling: SamplingRegistration, minimumTarget: 
 }
 
 /**
- * The withheld-fields half of a definition audit: the ruler's list and the fixture type's list must
- * name the same fields, or "equal evidence" means one thing in the record and another in the file.
+ * Reports a problem when the registered withheld fields differ from the fields the fixture type withholds.
  */
 export function withheldFieldProblems(registered: readonly string[], enforced: readonly string[]): string[] {
 	const left = [...registered].toSorted(compareByCodePoint).join(",")
@@ -213,26 +208,34 @@ interface ModelCard {
 }
 
 /**
- * The weights half of a receipt's artifact identity.
+ * Identifies the model weights a run used.
  */
 export interface WeightsIdentity {
 	weightsLocale: string
 	/**
-	 * Md5 of the resolved `model.onnx`, which is what distinguishes two arms.
+	 * MD5 of the resolved `model.onnx`.
 	 *
-	 * A staged candidate's `model-card.json` can be a symlink into the shared data root,
-	 * so two caches holding different graphs read the same `weightsVersion`; the bytes never do.
+	 * Two caches can report the same `weightsVersion` for different graphs, because a
+	 * staged `model-card.json` can be a symlink into the shared data root.
+	 * The hash tells them apart.
 	 */
 	weightsModelMD5: string
 	weightsModelPath: string
 	weightsVersion: string
 }
 
+/**
+ * Options for resolving the weights a run uses.
+ */
 export interface WeightsIdentityOptions {
 	locale?: string
 	weightsCacheRoot?: string
 }
 
+/**
+ * Resolves the weights for a locale and reads their identity.
+ * The locale defaults to `en-US`.
+ */
 export async function readWeightsIdentity(options: WeightsIdentityOptions): Promise<WeightsIdentity> {
 	const locale = options.locale ?? "en-US"
 	const resolved = await resolveWeights({ locale, cacheRoot: options.weightsCacheRoot })
@@ -254,21 +257,22 @@ export async function readWeightsIdentity(options: WeightsIdentityOptions): Prom
 }
 
 /**
- * Which artifacts a probe run read, as its receipt carries them.
+ * The artifacts a probe run read, as recorded in its receipt.
  */
 export interface PreregisteredArtifactIdentity extends WeightsIdentity {
 	poiDatabasePath: string
 	/**
-	 * The database's own `layer_manifest` row, or the reason it could not be read.
-	 *
-	 * Never silently absent: an unstamped artifact and an unreadable one are different
-	 * findings, and both matter to a reproduction.
+	 * The database's `layer_manifest` row.
+	 * When it is missing, `poiLayerManifestNote` says why.
 	 */
 	poiLayerManifest?: LayerManifest
 	poiLayerManifestNote?: string
 	resolverBackend: POIBoardResolverBackend
 }
 
+/**
+ * Reads the POI database manifest and weights identity for a probe receipt.
+ */
 export async function readArtifactIdentity(
 	db: string,
 	backend: POIBoardResolverBackend,

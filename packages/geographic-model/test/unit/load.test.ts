@@ -3,15 +3,10 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The authoring loader: that a directory's layout is convenience and nothing else, and that a
- *   failure names the file an author can open.
+ *   Tests that the loader ignores file layout and attributes each issue to its source file.
  *
- *   The enumeration property is tested against a permuted file list rather than against a real
- *   directory, on purpose. `readdir` order is a property of the filesystem — hash order on ext4, and
- *   not something a test can arrange — so a test that wrote files in an awkward order would be
- *   asserting about the machine it ran on. Handing the merge its files in reverse states the property
- *   directly: any order, one answer. The temporary-directory case below then checks that the
- *   directory path produces that same answer twice.
+ *   The order test reverses the file list passed to the merge, because a test cannot control
+ *   `readdir` order on a real filesystem.
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
@@ -178,16 +173,14 @@ describe("a failure names the file", () => {
 	})
 
 	it("names both files when two of them claim one identifier", () => {
-		// `concepts/duplicate.json` sorts first, so it is the claimant every second claim is reported against.
+		// `concepts/duplicate.json` sorts first, so every duplicate issue reports it as the first user.
 		const files = [...sourceFiles(), file("concepts/duplicate.json", establishments)]
 
 		const duplicates = issuesOf(() => mergeGeographicModelFiles(files)).issues.filter(
 			(issue) => issue.code === ValidationIssueCode.DuplicateID
 		)
 
-		// The concept, the assertion nested inside it, and the mapping the same file carries —
-		// each at its own address, each naming the file that claimed the identifier
-		// and the file that claimed it first.
+		// The concept, its nested assertion and the mapping each produce one duplicate issue.
 		expect(duplicates.map((issue) => [issue.path, issue.file, issue.otherFile])).toEqual([
 			["$.concepts[2].id", "concepts/establishments.json", "concepts/duplicate.json"],
 			["$.concepts[2].assertions[0].id", "concepts/establishments.json", "concepts/duplicate.json"],
@@ -209,8 +202,7 @@ describe("a failure names the file", () => {
 
 		const [issue] = issuesOf(() => mergeGeographicModelFiles(files)).issues
 
-		// Second concept in the merged table, second file on disk.
-		// An author can only act on the second address.
+		// The issue keeps the merged-table path and adds the source file.
 		expect(issue?.path).toBe("$.concepts[1].kind")
 		expect(issue?.file).toBe("concepts/zz-broken.json")
 		expect(issue?.code).toBe(ValidationIssueCode.UnknownConceptKind)

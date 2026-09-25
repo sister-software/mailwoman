@@ -3,19 +3,20 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Generate addresses where a house number, street, venue, locality, region, and postcode co-occur.
- *   This complements no-street examples and preserves house-number signal. Venue names avoid the
- *   adversarial street-like terms used by `no-street.ts`.
+ *   Generates addresses in which a house number, a street and a venue appear together.
  */
 
-/* oxlint-disable mailwoman/prefer-home -- the four admin tails below are hand-written on purpose. the comment at the
-   `tail` assignment names the GB surface a layout cannot currently write and the counts behind it. */
+/* oxlint-disable mailwoman/prefer-home -- the four admin tails below are hand-written per country on purpose. */
 
 import { sample } from "@mailwoman/core/random"
 
 import { countryToLocale } from "#synthesizers/utils"
 import type { CanonicalRow } from "#types"
 
+/**
+ * The address context for one row.
+ * The synthesizer fills a missing street or house number.
+ */
 export interface HouseVenueBaseTuple {
 	locality: string
 	region: string
@@ -25,17 +26,22 @@ export interface HouseVenueBaseTuple {
 	houseNumber?: string
 }
 
-export type HouseVenueTemplate =
-	| "venue-after-street" // "123 Main St, Sunrise Bakery, Springfield, IL 02101"
-	| "venue-before-street"
+/**
+ * Whether the venue follows the street, as in `123 Main St, Sunrise Bakery, …`, or precedes it.
+ */
+export type HouseVenueTemplate = "venue-after-street" | "venue-before-street"
 
-// "Sunrise Bakery, 123 Main St, Springfield, IL 02101"
-
+/**
+ * Options for {@link synthesizeHouseVenueRow}.
+ */
 export interface HouseVenueSynthesisOpts {
 	random?: () => number
 	forceTemplate?: HouseVenueTemplate
 }
 
+/**
+ * One synthesized row with its template.
+ */
 export interface SynthesizedHouseVenueRow {
 	raw: string
 	components: CanonicalRow["components"]
@@ -45,9 +51,7 @@ export interface SynthesizedHouseVenueRow {
 
 // #region Venue pool
 
-/**
- * Venue names without street-like terms.
- */
+// Venue names in this pool avoid street-like words.
 const PLAIN_VENUES: ReadonlyArray<string> = [
 	"Bob's Pizza",
 	"Acme Corporation",
@@ -56,9 +60,7 @@ const PLAIN_VENUES: ReadonlyArray<string> = [
 	"Maple Leaf Cafe",
 	"Riverside Garden Center",
 	"Tech Solutions Inc",
-	// FR-flavored venue names (the run-2 contingency): the failing gauntlet fixtures carry
-	// international/English names at FR addresses, but native forms must appear too —
-	// the register mixes both in real Paris data.
+	// French addresses carry both English and French venue names, so the pool includes both.
 	"Café de la Poste",
 	"Boulangerie Saint-Michel",
 	"Le Petit Bistrot",
@@ -82,10 +84,7 @@ const PLAIN_VENUES: ReadonlyArray<string> = [
 	"Westwood Realty",
 ]
 
-/**
- * British venue names covering institutional, archaic, branded, and directional-led forms.
- * The held-out gauntlet fixture names are excluded.
- */
+// This pool must exclude the venue names in the held-out gauntlet fixtures.
 const GB_VENUES: ReadonlyArray<string> = [
 	"Ye Olde Cheshire Cheese",
 	"Ye Old Mitre",
@@ -121,9 +120,6 @@ const GB_VENUES: ReadonlyArray<string> = [
 
 // #region Fallback street pool
 
-/**
- * Fallback street names for tuples without a street value.
- */
 const FALLBACK_STREETS: ReadonlyArray<string> = [
 	"Main St",
 	"Oak Ave",
@@ -147,7 +143,7 @@ const FALLBACK_STREETS: ReadonlyArray<string> = [
 // #region House-number generator
 
 function randomHouseNumber(random: () => number): string {
-	// Generate a plain numeric house number from 1 to 9999.
+	// Each digit count from one to four is equally likely.
 	const digits = Math.floor(random() * 4) + 1
 	const max = Math.pow(10, digits)
 	const n = Math.floor(random() * max) + 1
@@ -159,26 +155,13 @@ function randomHouseNumber(random: () => number): string {
 
 // #region Synthesis
 
-/**
- * Share of GB rows drawn from the British venue pool.
- */
 const GB_VENUE_POOL_RATE = 0.7
 
-/**
- * Share of GB rows with a ranged house number.
- */
 const GB_RANGE_NUMBER_RATE = 0.15
 
-/**
- * Share of rows with an explicit trailing country component.
- */
 const COUNTRY_APPEND_RATE = 0.3
 
-/**
- * Trailing country surfaces by tuple country.
- *
- * The register mixes formal and short forms where both are common.
- */
+// Repeated entries weight the sample toward the more common form.
 const COUNTRY_SURFACES: Readonly<Record<string, ReadonlyArray<string>>> = {
 	US: ["United States", "USA"],
 	GB: ["United Kingdom", "United Kingdom", "United Kingdom", "UK"],
@@ -188,6 +171,12 @@ const COUNTRY_SURFACES: Readonly<Record<string, ReadonlyArray<string>>> = {
 	DE: ["Germany", "Deutschland"],
 }
 
+/**
+ * Synthesizes one row with a house number, a street, a venue and the tuple's locality and postcode.
+ *
+ * GB rows sometimes use British venue names and ranged house numbers.
+ * FR and GB rows omit the region.
+ */
 export function synthesizeHouseVenueRow(
 	base: HouseVenueBaseTuple,
 	opts: HouseVenueSynthesisOpts = {}
@@ -196,19 +185,14 @@ export function synthesizeHouseVenueRow(
 	const locale = countryToLocale(base.country)
 	const template = opts.forceTemplate ?? (random() < 0.5 ? "venue-after-street" : "venue-before-street")
 
-	// French and British layouts omit region and place postcode differently.
 	const frOrder = base.country === "FR"
 	const gbOrder = base.country === "GB"
 	const veOrder = base.country === "VE"
 
-	// Keep administrative context alongside venue, street, and house-number labels.
-
-	// British rows mix local forms with the shared venue pool.
 	const venue = gbOrder && random() < GB_VENUE_POOL_RATE ? sample(GB_VENUES, random) : sample(PLAIN_VENUES, random)
 	const street = base.street ?? sample(FALLBACK_STREETS, random)
 	let houseNumber = base.houseNumber ?? randomHouseNumber(random)
 
-	// Ranged house numbers are used only in some British examples.
 	if (gbOrder && random() < GB_RANGE_NUMBER_RATE && /^\d+$/.test(houseNumber)) {
 		const start = Number.parseInt(houseNumber, 10)
 		const span = (1 + Math.floor(random() * 4)) * 2
@@ -216,7 +200,6 @@ export function synthesizeHouseVenueRow(
 		houseNumber = `${start}-${start + span}`
 	}
 
-	// Omit region for France and Great Britain, whose layouts do not render it.
 	const components: CanonicalRow["components"] = {
 		house_number: houseNumber,
 		street,
@@ -226,7 +209,6 @@ export function synthesizeHouseVenueRow(
 		postcode: base.postcode,
 	}
 
-	// Preserve the recipe's country-specific address tails.
 	let tail = frOrder
 		? `${base.postcode} ${base.locality}`
 		: gbOrder
@@ -235,7 +217,6 @@ export function synthesizeHouseVenueRow(
 				? `${base.locality} ${base.postcode}, ${base.region}`
 				: `${base.locality}, ${base.region} ${base.postcode}`
 
-	// Trailing country surface (Addendum 3): appended after the tail in every order, tagged.
 	const countrySurfaces = COUNTRY_SURFACES[base.country]
 
 	if (countrySurfaces && random() < COUNTRY_APPEND_RATE) {
@@ -259,10 +240,8 @@ export function synthesizeHouseVenueRow(
 }
 
 /**
- * Interface: every synthesized row carries both house_number and venue
- * (the co-occurrence signal that synth-no-street's distributional shift cost the model).
- *
- * Used by tests + downstream consumers.
+ * Reports whether the components include both `house_number` and `venue`,
+ * which every row from this synthesizer does.
  */
 export function hasHouseNumberAndVenue(components: CanonicalRow["components"]): boolean {
 	return components.house_number !== undefined && components.venue !== undefined

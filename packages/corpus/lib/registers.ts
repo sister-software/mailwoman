@@ -3,26 +3,19 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The published registers corpus rows come from, as stable ids.
- *
- *   A row's `source` names the adapter or recipe that emitted it, which answers what code ran. A
- *   row's `register` names the publication its underlying record came from, which answers whose
- *   terms govern it and how much independent supply a country has. Two adapters over one
- *   publication carry one register id, and a recipe that renders a register's fields through a
- *   template carries that register too.
- *
- *   These ids are stored on every row of a built corpus, so they are wire values. Adding one is a
- *   normal change. Changing one that has been written breaks a corpus that already exists.
+ *   Stable ids for the publications that corpus rows come from.
  */
 
 /**
- * The publications this repository reads.
+ * The publications this repository reads, keyed by stable id.
  *
- * An aggregator is recorded as itself.
- * OpenAddresses and Overture each redistribute many national registers under terms that
- * vary per record, and the file a row came from is what names its upstream.
+ * A row's `source` identifies the adapter or recipe that emitted it.
+ * A row's `register` identifies the publication behind its record, which determines the governing terms.
  *
- * Recording the aggregator states what is known without asserting a national grant the row does not carry.
+ * Built corpora store these ids on every row, so an existing id must never change.
+ *
+ * An aggregator such as OpenAddresses or Overture is recorded as itself,
+ * because its per-record upstream and terms vary.
  */
 export const SourceRegister = {
 	/**
@@ -110,37 +103,24 @@ export const SourceRegister = {
 	 */
 	IowaContractors: "us-ia-contractor-registrations",
 	/**
-	 * This repository's own codex tables — country names, address layouts, postcode formats.
-	 *
-	 * A row built from these names a published fact rather than a published record.
-	 * The strings are curated here, so this register points at the repository
-	 * and not at an outside publisher.
+	 * This repository's curated codex tables, such as country names, address layouts and postcode formats.
 	 */
 	Codex: "mailwoman-codex",
 	/**
-	 * Facts a person read from a publisher and recorded in this repository by hand.
+	 * Facts that a person read from a publisher and recorded here by hand.
 	 *
-	 * Used where no bulk source yielded rows and a small reviewed set stands in its place.
-	 * The reviewed file names the publisher it was read from.
+	 * The reviewed file records the publisher.
 	 */
 	ReviewedByHand: "mailwoman-reviewed",
 	/**
-	 * A tuple extract under `$MAILWOMAN_DATA_ROOT/corpus/tuples/` whose upstream is not recorded.
+	 * A tuple extract under `$MAILWOMAN_DATA_ROOT/corpus/tuples/` whose upstream publication is unknown.
 	 *
-	 * These files were written by extractions that left no invocation behind, and their shapes
-	 * disagree about what produced them: `trailing-region-us-v33-shape-tuples.jsonl` carries
-	 * a postcode with its place and admin1, which is the GeoNames postal export's shape,
-	 * while `trailing-region-ca-v29-tuples.jsonl` carries a locality and region with no postcode,
-	 * which is the Who's On First ancestor-pair shape `trailing-region.ts`'s own docstring describes.
-	 * One recipe reads both.
-	 *
-	 * Naming a publisher here would be inference recorded as a fact on every row that reads one.
-	 * This id says what is known: the rows came from a derived extract in this repository, and
-	 * which publication stands behind it has to be re-established before a rights record can name one.
-	 *
-	 * A recipe run whose tuples carry a recorded upstream passes that upstream instead.
+	 * A recipe whose tuples record their upstream passes that register instead.
 	 */
 	DerivedTuples: "mailwoman-derived-tuples",
 } as const
 
+/**
+ * One of the {@link SourceRegister} ids.
+ */
 export type SourceRegister = (typeof SourceRegister)[keyof typeof SourceRegister]

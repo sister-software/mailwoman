@@ -88,7 +88,7 @@ Not every stage failure is treated the same. The coordinator distinguishes **gra
 
 | Stage                  | If it throws                                                                                                                                       |
 | ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `normalize`            | Propagates. Input preprocessing is a interface; a crash is a bug.                                                                                  |
+| `normalize`            | Propagates. Input preprocessing is a contract; a crash is a bug.                                                                                   |
 | `computeQueryShape`    | Propagates. Same rationale.                                                                                                                        |
 | `detectLocale`         | Propagates. A locale detector that crashes signals a real fault rather than noise.                                                                 |
 | `classifyKind`         | Propagates. Kind classification runs on the QueryShape wecomputed — there's nothing external that can poison it.                                   |

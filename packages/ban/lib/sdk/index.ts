@@ -3,9 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- * BAN ingestion code reads open département CSVs and builds French rooftop address-point extracts
- * using the shared situs schema. The workspace contains no BAN data. The source uses Licence Ouverte
- * / Etalab; published results must retain the required row attribution. See `ban/readme.md` for details.
+ * Reads BAN département CSVs and builds French rooftop address-point extracts in the shared situs schema.
+ * BAN data is under Licence Ouverte / Etalab, so published results must keep the row attribution.
  */
 
 export * from "#sdk/fetch"

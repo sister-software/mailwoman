@@ -1,29 +1,11 @@
-# v4.13.0 — the NULL control (#1748 / #1821)
+# v4.13.0-null-control-4k is a 4k-step fine-tune of the v4.4.0 base that adds no data.
 #
-# No added source. The v0.22.0 base corpus, unchanged, fine-tuned for the same 4,000 steps at the same
-# seed and the same EWC brake as v4.11.0. The treatment is removed. everything else is held.
+# It reads the v0.22.0 base corpus unchanged, with the seed, step count and EWC penalty of v4.11.0.
+# Fine-tunes that changed exposure, composition or regularization all regressed the same nine
+# venue-led board rows. This run tests whether a fine-tune of this base regresses those rows by itself.
 #
-# why this exists. Five runs varied the treatment and never measured the placebo:
-#
-#   v4.8.0    admin source @ 9.4%                    net -18   12 venue-led
-#   v4.9.0    + dependent locality                   net -20   15 venue-led
-#   v4.10.0   exposure -> 3.1%                       net -13    9 venue-led
-#   v4.11.0   venue-containing, no new source or weight net -13    9 venue-led
-#   v4.12.0   EWC brake x10                          net -12    9 venue-led
-#
-# Three unrelated changes — exposure, composition, regularization — reach the same floor with the same
-# nine venue-led rows. A floor that three independent changes cannot move is not a property of any of
-# them, and the obvious remaining explanation was never tested: that a 4,000-step fine-tune of this
-# base moves those rows on its own, whatever it is fed.
-#
-# what IT decides:
-#   - the nine still regress with no new data  -> the arc measured the wrong thing. Every corpus-side
-#     conclusion is void, the right baseline for a candidate is this run rather than the shipped model,
-#     and the question becomes whether fine-tuning this base is viable at all.
-#   - the nine hold                            -> the data is implicated after all and the floor is a
-#     real interaction between new tails and the model's existing ones.
-#
-# Either answer is worth more than a sixth variation on the treatment.
+# If the nine rows still regress, the fine-tune causes the regression, and this run replaces the shipped
+# model as the baseline for fine-tune candidates. If the rows hold, the added data causes it.
 data:
   corpus_dir: /data/corpus/versioned/v0.22.0-psc-frsurfaces-v3/corpus-v0.22.0-psc-frsurfaces-v3
   tokenizer_dir: /data/models/tokenizer/v0.9.0-multisplice
@@ -164,10 +146,6 @@ data:
     VU: 1.0
     ZA: 1.0
   source_weights:
-    # reps-first (#1677): weight = target_reps x rows x total / (samples - target_reps x rows).
-    # 6 reps/row x 17,908 rows against 155.0 total over 8,000 x 128 = 1,024,000 samples -> 18.17,
-    # a 10.5% share. Parity with the bare trailing-region sources, measured at 7.7 and 5.2 reps/row.
-    # For contrast, the weight that collapsed v4.6.0 was 1.0 and bought 165 reps/row.
     synth-house-venue: 2.0
     overture-latam: 6.0
     wof-admin: 2.0
@@ -191,14 +169,16 @@ data:
     overture: 3.0
     gnaf: 6.0
     synth-anchor-absorption: 6.0
-    synth-fr-bare-street: 0.0 # SUPERSEDED (vintages must never co-feed)
-    synth-fr-bare-street-v20: 0.0 # SUPERSEDED
-    synth-fr-bare-street-v21: 0.0 # SUPERSEDED by -v22
-    synth-fr-bare-street-v22: 6.0 # weight held at v4.5.1's value. the v22 counter-forms are the run's one variable
+    # Only the newest generation of each counter-form source trains. The loader refuses a source
+    # missing from this map, so each superseded generation stays listed at 0.0.
+    synth-fr-bare-street: 0.0
+    synth-fr-bare-street-v20: 0.0
+    synth-fr-bare-street-v21: 0.0
+    synth-fr-bare-street-v22: 6.0
     synth-si-bare-village: 12.0
     synth-no-street-led: 0.0
-    synth-cz-pcfirst-preposition: 0.0 # SUPERSEDED (vintages must never co-feed)
-    synth-cz-pcfirst-preposition-v20: 0.0 # SUPERSEDED by -v21
+    synth-cz-pcfirst-preposition: 0.0
+    synth-cz-pcfirst-preposition-v20: 0.0
     synth-cz-pcfirst-preposition-v21: 12.0
     synth-nl-postcode: 6.0
     synth-fragment: 6.0
@@ -292,7 +272,8 @@ model:
   use_phrase_priors: true
   phrase_feature_dim: 10
 
-train: # FINE-TUNE (B11 template): init_from the v4.4.0 base, fresh optimizer, EWC brake.
+# This run fine-tunes the v4.4.0 base with a fresh optimizer and an EWC penalty toward the base weights.
+train:
   init_from: /data/output-v440-suffix-boundary-v2-s42/checkpoints/step-060000
   ewc_lambda: 1.0e4
   ewc_fisher_path: /data/output-v440-suffix-boundary-v2-s42/checkpoints/step-060000/fisher-diag-v1.npz

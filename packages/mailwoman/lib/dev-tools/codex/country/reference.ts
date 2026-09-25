@@ -3,15 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Regenerate `codex/country/reference-data.ts` — the per-country calling code (E.164) + currency
- *   (ISO 4217) table — from mledoze/countries (https://github.com/mledoze/countries, ODbL). The
- *   output is committed. this tool makes it reproducible (provenance), not a hand-typed dictionary.
- *
- *   Calling-code rule: mledoze splits the code as `idd.root` + `idd.suffixes`. For most countries a
- *   single suffix completes the code (GB `+4` + `4` = 44); nanp members share root `+1` with their
- *   area code as the suffix, so they map to 1.
- *
- *   Usage: mailwoman dev generate country-reference
+ * Regenerates the committed calling-code and currency table in `codex/country/reference-data.ts`.
  */
 
 import { APIClient, pluckResponseData } from "@mailwoman/core/api"
@@ -22,15 +14,13 @@ import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 const SOURCE = "https://raw.githubusercontent.com/mledoze/countries/master/countries.json"
 
 /**
- * The committed output path, anchored at the `@mailwoman/codex` package root rather than at
- * this module, so it names the same file from the source tree, `out/`, and a published tarball.
- *
- * The codegen is repo-only: it rewrites codex's checked-in source, which is why the target is a `lib/` path.
+ * Resolves the committed table from the `@mailwoman/codex` package root, so the path
+ * is the same from the source tree, `out/` and a published tarball.
  */
 const DEFAULT_OUT = resolvePackagePath("@mailwoman/codex", "lib", "country", "reference-data.ts")
 
 /**
- * A single country record from mledoze/countries, narrowed to the fields this tool reads.
+ * Describes the fields this tool reads from one mledoze/countries record.
  */
 interface MledozeCountry {
 	cca2?: string
@@ -39,7 +29,7 @@ interface MledozeCountry {
 }
 
 /**
- * The emitted per-country reference row.
+ * Describes one emitted row of the reference table.
  */
 interface CountryReferenceEntry {
 	callingCode?: number
@@ -47,25 +37,29 @@ interface CountryReferenceEntry {
 }
 
 /**
- * Options for {@linkcode generateCountryReference}.
+ * Configures {@linkcode generateCountryReference}.
  */
 export interface GenerateCountryReferenceOptions {
 	/**
-	 * Output path override.
-	 *
-	 * Default: `codex/country/reference-data.ts` (the committed table).
+	 * Overrides the output path, which defaults to the committed `codex/country/reference-data.ts`.
 	 */
 	out?: string
 }
 
 /**
- * Summary returned by {@linkcode generateCountryReference}.
+ * Summarizes a {@linkcode generateCountryReference} run.
  */
 export interface GenerateCountryReferenceSummary {
 	countries: number
 	outPath: string
 }
 
+/**
+ * Joins mledoze's `idd.root` and `idd.suffixes` into an E.164 calling code.
+ *
+ * A single suffix completes the code, so GB's `+4` and `4` give 44.
+ * NANP members share root `+1` and list area codes as suffixes, so they map to 1.
+ */
 function callingCode(country: MledozeCountry): number | undefined {
 	const root = (country.idd?.root ?? "").replace("+", "")
 	const suffixes = country.idd?.suffixes ?? []
@@ -94,7 +88,7 @@ const serialize = (o: CountryReferenceEntry): string =>
 		.replaceAll('"symbol"', "symbol")
 
 /**
- * Fetch mledoze/countries and regenerate the committed `COUNTRY_REFERENCE` table.
+ * Fetches mledoze/countries and regenerates the committed `COUNTRY_REFERENCE` table.
  */
 export async function generateCountryReference(
 	options: GenerateCountryReferenceOptions = {},

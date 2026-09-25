@@ -2,20 +2,20 @@
 
 > **For agentic workers:** required sub-skill: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Make `@mailwoman/filer`'s EDGAR chain work against real SEC filings — the parser currently recovers 45 subsidiaries from 13 real Exhibit 21 documents that state 142, and 18 of those 45 are fabricated.
+**Goal:** Make `@mailwoman/filer`'s EDGAR chain work against real SEC filings. The parser currently recovers 45 subsidiaries from 13 real Exhibit 21 documents that list 142, and 18 of those 45 are fabricated.
 
-**Architecture:** Phase 3b built the EDGAR chain as separately-testable pieces (`sec-client.ts` → `edgar-filings.ts` → `exhibit21.ts` → `buildFilerDatabase({edgarRows})`) and verified each against hand-written fixtures. Running the assembled chain against 24 real telecom registrants on 2026-08-03 showed the fixtures were not representative: 10 of 21 reachable filings yielded zero subsidiaries, and the ones that yielded something included header rows, SGML wrapper tokens and bullet characters as subsidiary names. This plan vendors the real documents as fixtures, fixes `parseExhibit21` against them, and adds the one missing link in the chain — discovering which document in a filing is the Exhibit 21.
+**Architecture:** Phase 3b built the EDGAR chain as separately testable pieces (`sec-client.ts` → `edgar-filings.ts` → `exhibit21.ts` → `buildFilerDatabase({edgarRows})`) and verified each against hand-written fixtures. On 2026-08-03 the assembled chain ran against 24 real telecom registrants, and the results showed that the fixtures were not representative. 10 of 21 reachable filings yielded zero subsidiaries. The filings that yielded results included header rows, SGML wrapper tokens and bullet characters as subsidiary names. This plan vendors the real documents as fixtures and fixes `parseExhibit21` against them. It also adds the one missing link in the chain, which finds the Exhibit 21 document within a filing.
 
-**Tech Stack:** TypeScript (`erasableSyntaxOnly`, no `enum`), vitest, no HTML-parser dependency (`@mailwoman/filer`'s runtime deps stay `@mailwoman/*` + kysely + type-fest).
+**Tech Stack:** TypeScript (`erasableSyntaxOnly`, without `enum`), vitest. The plan adds no HTML-parser dependency, so `@mailwoman/filer`'s runtime deps stay `@mailwoman/*` + kysely + type-fest.
 
 ## Global Constraints
 
-- **Decision 6 binds everywhere: abstain, never guess.** A row/line that cannot be confidently reduced to a subsidiary name is COUNTED in `unparseable` and dropped. Every new rule below is an abstention rule or an alignment rule; none of them invents a value.
-- **The substring all values satisfy the required relationship.** Every emitted `name`/`jurisdiction` must appear in the document as a contiguous string once tags are stripped, entities decoded and whitespace collapsed. It is necessary but not sufficient — `exhibit21-real.test.ts`'s fabrication assertions exist because the 2026-08-03 run emitted `"EX-21.1"`, `"3"`, `"q42025exh211listofsubsidia.htm"` and `"•"` as subsidiary names, all of which satisfy the substring invariant.
-- **`filer/test-fixtures/edgar/expected.json` is the interface, and it was not derived from `parseExhibit21`.** It came from an independent DOM-based reference implementation, hand-checked against the source documents. Do not edit it to match implementation output. If you believe an expectation is wrong, say so in your report and stop — changing it silently converts the regression suite into a record of whatever the code does.
-- No `enum` (`erasableSyntaxOnly`). Acronyms are whole components in identifiers (`CIK`, `SEC`, `HTML`, `SGML`, `URL`).
-- Tabs for indentation, double quotes, no semicolons — match the surrounding file exactly.
-- `yarn typecheck:tests` must pass alongside `yarn vitest run filer/` — `satisfies` pins in test files are invisible to both vitest and `tsc -b`.
+- **Decision 6 applies everywhere: abstain, never guess.** A row or line that cannot be confidently reduced to a subsidiary name is counted in `unparseable` and dropped. Every new rule below either abstains or aligns columns, and none of them invents a value.
+- **Every emitted value must be a substring of the document.** Each emitted `name`/`jurisdiction` must appear in the document as a contiguous string after tags are stripped, entities decoded and whitespace collapsed. This check is necessary but not sufficient. `exhibit21-real.test.ts` has fabrication assertions because the 2026-08-03 run emitted `"EX-21.1"`, `"3"`, `"q42025exh211listofsubsidia.htm"` and `"•"` as subsidiary names, and all of them pass the substring check.
+- **`filer/test-fixtures/edgar/expected.json` is the interface, and it was not derived from `parseExhibit21`.** It came from an independent DOM-based reference implementation and was hand-checked against the source documents. Do not edit it to match implementation output. If you believe an expectation is wrong, say so in your report and stop. Editing it without saying so would turn the regression suite into a record of whatever the code does.
+- Do not use `enum` (`erasableSyntaxOnly`). Acronyms are whole components in identifiers (`CIK`, `SEC`, `HTML`, `SGML`, `URL`).
+- Use tabs for indentation and double quotes, and omit semicolons, matching the surrounding file exactly.
+- `yarn typecheck:tests` must pass alongside `yarn vitest run filer/`, because neither vitest nor `tsc -b` checks `satisfies` pins in test files.
 - Run `yarn vitest run filer/` (350 tests green at branch point) before reporting done. No test may be deleted or weakened to pass.
 
 ---
@@ -35,7 +35,7 @@
 
 ### Task 1: Real-corpus fixtures and the failing regression suite
 
-**Status: COMPLETE — committed at branch point.** Fixtures, `manifest.json`, `expected.json` and `exhibit21-real.test.ts` are on the branch and the suite fails. It is the red bar Tasks 2 and 3 turn green. Read `filer/sdk/exhibit21-real.test.ts` before starting Task 2 — it is the spec in executable form.
+**Status: complete, committed at the branch point.** The fixtures, `manifest.json`, `expected.json` and `exhibit21-real.test.ts` are on the branch, and the suite fails. Tasks 2 and 3 make it pass. Read `filer/sdk/exhibit21-real.test.ts` before starting Task 2, because it is the spec in executable form.
 
 ---
 
@@ -119,14 +119,14 @@ const TITLE_LINE_PATTERNS = [
 const MAX_ENTITY_NAME_WORDS = 12
 ```
 
-A candidate whose whitespace-separated token count exceeds this is counted in `unparseable` and dropped. Two real cases: Shenandoah's preamble sentence ("The following are all measured subsidiaries of Shenandoah Telecommunications Company, and are organized in the Commonwealth of Virginia.", 20 tokens) and `alti-global-2025.htm`, whose markup separates entries with nothing but a double space — its five text runs are 20-to-90-token concatenations of several entity names, and no split rule can recover the boundaries without inventing them. The longest legitimate name in the corpus is `"Voxbone Telekomunikasyon ve Iletisim Hizmetleri Ticaret Limited Sirketi"` at 8 tokens.
+A candidate whose whitespace-separated token count exceeds this is counted in `unparseable` and dropped. Two real cases need this rule. The first is Shenandoah's preamble sentence ("The following are all measured subsidiaries of Shenandoah Telecommunications Company, and are organized in the Commonwealth of Virginia.", 20 tokens). The second is `alti-global-2025.htm`, whose markup separates entries with only a double space. Its five text runs are 20-to-90-token concatenations of several entity names, and no split rule can recover the boundaries without inventing them. The longest legitimate name in the corpus is `"Voxbone Telekomunikasyon ve Iletisim Hizmetleri Ticaret Limited Sirketi"` at 8 tokens.
 
-`alti-global-2025.htm` is therefore expected to yield zero subsidiaries and a non-zero `unparseable`. That is the correct answer for that document rather than a gap.
+`alti-global-2025.htm` is therefore expected to yield zero subsidiaries and a non-zero `unparseable`. That is the correct answer for that document.
 
 - [ ] **Step 6: Run the suites**
 
 Run: `yarn vitest run filer/ && yarn typecheck:tests`
-Expected: `exhibit21.test.ts` fully green (no existing assertion may be changed). In `exhibit21-real.test.ts`, `bandwidth-2025.htm` (12), `shentel-2025.htm` (17) and `alti-global-2025.htm` (0) pass; the table-shaped fixtures still fail — Task 3 owns those.
+Expected: `exhibit21.test.ts` is fully green, and no existing assertion changes. In `exhibit21-real.test.ts`, `bandwidth-2025.htm` (12), `shentel-2025.htm` (17) and `alti-global-2025.htm` (0) pass. The table-shaped fixtures still fail, and Task 3 fixes them.
 
 - [ ] **Step 7: Commit**
 
@@ -167,7 +167,7 @@ Replace `extractOutermostTableHTML` with a function returning every depth-0 `<ta
 
 Per table, right-pad every row to the table's maximum cell count, then drop each column index whose value is blank in every row. `cable-one-2025.htm`'s rows go from `["Bluffton Telephone Company, LLC", "", "South Carolina"]` to `["Bluffton Telephone Company, LLC", "South Carolina"]`.
 
-Do this per table and column-wise, never per row. Filtering blanks row-by-row loses the fact that a row's LEADING cell was blank — which is the difference between a subsidiary row and an indented child row, and the parser cannot tell those apart from one row alone.
+Do this per table and by column, never per row. Filtering blanks row by row loses the fact that a row's leading cell was blank. That blank cell is what distinguishes an indented child row from a subsidiary row, and the parser cannot tell them apart from one row alone.
 
 - [ ] **Step 3: Extend the header/decoration label list**
 
@@ -187,46 +187,46 @@ Add every label the real corpus uses. Same rule as today: exact whole-cell case-
 
 - [ ] **Step 4: Header-driven column mapping, carried across sibling tables**
 
-When a table's header row labels EXACTLY ONE column with a jurisdiction label, record a mapping: the jurisdiction column is that one; the name column is the first other column that is not labeled with an "other" label (`% of ownership`, `conducts business under`, `d/b/a`, `name doing business as`, `other name(s) under which entity does business`, `ein`). Data rows in that table then read name and jurisdiction from those column indices and ignore the rest.
+When a table's header row labels exactly one column with a jurisdiction label, record a mapping. The jurisdiction column is that column. The name column is the first other column that does not carry an "other" label (`% of ownership`, `conducts business under`, `d/b/a`, `name doing business as`, `other name(s) under which entity does business`, `ein`). Data rows in that table then read name and jurisdiction from those column indices and ignore the rest.
 
-This is not guessing which of N columns means what — the document labels them.
+The parser does not guess what each column means, because the document labels the columns.
 
-The mapping CARRIES FORWARD to subsequent sibling top-level tables until another header row replaces it. EDGAR splits one logical table across page-break tables constantly, and only the first carries the header: `att-2025.htm`'s second table holds AT&T Mobility, Cricket Wireless, Teleport Communications America and BellSouth Telecommunications with no header of its own. Footnote rows are still caught by the footnote rule (Step 5) before the mapping is consulted, so a footnote table following a labeled list does not inherit it.
+The mapping carries forward to later sibling top-level tables until another header row replaces it. EDGAR filings can split one logical table across page-break tables, and only the first carries the header. For example, `att-2025.htm`'s second table holds AT&T Mobility, Cricket Wireless, Teleport Communications America and BellSouth Telecommunications with no header of its own. The footnote rule (Step 5) still catches footnote rows before the mapping is consulted, so a footnote table that follows a labeled list does not inherit the mapping.
 
 Two rules govern what happens when the mapped name column is blank on a row:
 
-1. **Indented corporate tree.** If the mapped name column is blank, take the first non-blank column strictly BETWEEN the name column and the jurisdiction column. Telephone and Data Systems indents each subsidiary one column right of its parent — `["", "ADI FINANCIAL, LLC", "", "ILLINOIS"]` under a header of `["SUBSIDIARY COMPANIES", "", "STATE OF ORGANIZATION"]` — and 132 of its 183 subsidiaries sit on such rows. The nesting depth is discarded (an Exhibit 21 row becomes a registrant→subsidiary edge either way); the name itself is not in doubt, because the header says the jurisdiction is to its right. A row like `["", "Delaware", ""]` under a mapping whose jurisdiction column is index 1 has no column between 0 and 1 and still abstains.
-2. **Otherwise fall through** rather than abstain. A row the mapping cannot name is handed to the generic rules below rather than counted immediately. A ragged table (`anterix-2025.htm`'s rows are 5 and 6 cells under a 6-cell header) misaligns the mapping without making the row unreadable.
+1. **Indented corporate tree.** If the mapped name column is blank, take the first non-blank column strictly between the name column and the jurisdiction column. Telephone and Data Systems indents each subsidiary one column right of its parent, as in `["", "ADI FINANCIAL, LLC", "", "ILLINOIS"]` under a header of `["SUBSIDIARY COMPANIES", "", "STATE OF ORGANIZATION"]`, and 132 of its 183 subsidiaries sit on such rows. The parser discards the nesting depth, since an Exhibit 21 row becomes a registrant→subsidiary edge either way. The name itself is certain, because the header places the jurisdiction to its right. A row like `["", "Delaware", ""]` under a mapping whose jurisdiction column is index 1 has no column between 0 and 1, so it still abstains.
+2. **Otherwise fall through** instead of abstaining. A row the mapping cannot name goes to the generic rules below instead of being counted immediately. A ragged table (`anterix-2025.htm`'s rows have 5 and 6 cells under a 6-cell header) misaligns the mapping, but the row is still readable.
 
-Add a hand-written indented-tree case to `exhibit21.test.ts` covering rule 1 — a 4-row table with a two-column header, one top-level row and two indented rows — plus the `["", "Delaware", ""]` counter-case that must still abstain. TDS itself is 176 KB and is not vendored.
+Add a hand-written indented-tree case to `exhibit21.test.ts` for rule 1: a 4-row table with a two-column header, one top-level row and two indented rows. Also add the `["", "Delaware", ""]` counter-case, which must still abstain. The TDS document is 176 KB and is not vendored.
 
 - [ ] **Step 5: Four new abstention rules**
 
-Each counts `unparseable` and drops the row. Order matters; apply in this order, after the existing blank-row and header/decoration checks.
+Each rule counts the row in `unparseable` and drops it. Apply them in this order, after the existing blank-row and header/decoration checks.
 
-**There is deliberately no per-row "this jurisdiction looks like a company name" rule.** It was in an earlier draft of this plan and it is wrong: Charter Communications writes its jurisdiction column as `"Delaware limited liability company"`, so such a rule abstains on 135 of Charter's 139 subsidiaries. Rule 4 below replaces it at table level, where the evidence to tell the two cases apart exists.
+**The plan deliberately has no per-row "this jurisdiction looks like a company name" rule.** An earlier draft had one, and it was wrong. Charter Communications writes its jurisdiction column as `"Delaware limited liability company"`, so such a rule abstains on 135 of Charter's 139 subsidiaries. Rule 4 below replaces it at the table level, where there is enough evidence to tell the two cases apart.
 
 1. **Footnote marker.** The row's first non-blank value matches `/^[([]?\d{1,3}[)\]]?$/` or `/^\*{1,3}$/`. Covers the footnote tables in `widepoint-2025.htm`, `atn-international-2025.htm` and `echostar-2025.htm`.
 2. **Section heading.** The row has exactly one non-blank value and the table is not a plain single-column name list (a table qualifies as one only when every row has at most one non-blank value and at least two rows have one). Covers `idt-2025.htm`'s `"Domestic Subsidiaries"` / `"Foreign Subsidiaries"` rows and its single-row trailing footnote tables.
-3. **Multi-value cell.** The row's name cell contains a block boundary (`</p>`, `</div>`, `<br>`, `</li>`) with non-blank text on both sides of it — the source kept several values apart and cleaning ran them together. `ooma-2025.htm`'s last row is one `<td>` holding five `<p>` blocks; without this rule it emits `{name: "Trunking.IO, LLC FluentStream Corp. FluentStream Intermediate, LLC FluentStream Technologies, LLC Phone.Com, Inc.", jurisdiction: "Delaware Delaware Delaware Colorado Delaware"}`. This check needs the cell's RAW HTML, so keep it alongside the cleaned text on `TableCell`.
-4. **Name/name table.** With no header mapping in force, a table qualifies as a two-across list of entity names — no jurisdiction column at all — and abstains as a whole when ALL THREE hold over its two-value data rows:
+3. **Multi-value cell.** The row's name cell contains a block boundary (`</p>`, `</div>`, `<br>`, `</li>`) with non-blank text on both sides of it. The source kept several values apart, and cleaning joined them. `ooma-2025.htm`'s last row is one `<td>` holding five `<p>` blocks. Without this rule it emits `{name: "Trunking.IO, LLC FluentStream Corp. FluentStream Intermediate, LLC FluentStream Technologies, LLC Phone.Com, Inc.", jurisdiction: "Delaware Delaware Delaware Colorado Delaware"}`. This check needs the cell's raw HTML, so keep the raw HTML alongside the cleaned text on `TableCell`.
+4. **Name/name table.** When no header mapping is in force, a table counts as a two-across list of entity names with no jurisdiction column. The whole table abstains when all three of these conditions hold over its two-value data rows:
    - there are at least 4 of them,
    - more than half of their second values carry a legal designation, and
    - the number of DISTINCT second values exceeds 70% of the row count.
 
    `idt-2025.htm`'s "Domestic Subsidiaries" table is `["IDT America, Corp. (NJ)", "IDT Payment Services, Inc*. (DE)"]` and four more like it: 5 rows, 5/5 carrying a designation, 5 distinct. Without this rule each emits a company as another company's jurisdiction.
 
-   **The distinctness condition is not belt-and-braces — drop it and Charter Communications loses all 135 of its subsidiaries.** Charter writes its jurisdiction column as `"Delaware limited liability company"`, so 135 of 135 second values carry a designation (`limited`, `company`) on a table that is a perfectly ordinary name/jurisdiction list. What separates them is repetition: a jurisdiction column repeats (Charter 9 distinct over 135 rows, 0.07; Comcast 0.05; Uniti 0.13; T-Mobile 0.15; Lumen 0.26), a second name column does not (IDT 1.00). Measured 2026-08-03 across the seven large filings that are not vendored.
+   **The distinctness condition is required. Without it, Charter Communications loses all 135 of its subsidiaries.** Charter writes its jurisdiction column as `"Delaware limited liability company"`, so 135 of 135 second values carry a designation (`limited`, `company`) in a table that is an ordinary name/jurisdiction list. Repetition separates the two cases. A jurisdiction column repeats values (Charter has 9 distinct over 135 rows, 0.07; Comcast 0.05; Uniti 0.13; T-Mobile 0.15; Lumen 0.26), and a second name column does not (IDT 1.00). These ratios were measured on 2026-08-03 across the seven large filings that are not vendored.
 
-   Use `canonicalizeOrganizationName` from `@mailwoman/record` (already a dependency, already used by `edgar-filings.ts`) for designation detection rather than hand-rolling a token list: it returns a `designations` array, non-empty exactly when the value carries one. Verified against these values on 2026-08-03 — `"IDT Payment Services, Inc*. (DE)"` → `["inc"]`, `"South Carolina"` / `"Delaware"` / `"British Columbia, Canada"` / `"England and Wales"` / `"DE"` → `[]`.
+   Use `canonicalizeOrganizationName` from `@mailwoman/record` for designation detection instead of writing a token list by hand. It is already a dependency and already used by `edgar-filings.ts`. It returns a `designations` array that is non-empty exactly when the value carries a designation. On 2026-08-03 it was checked against these values: `"IDT Payment Services, Inc*. (DE)"` → `["inc"]`, and `"South Carolina"` / `"Delaware"` / `"British Columbia, Canada"` / `"England and Wales"` / `"DE"` → `[]`.
 
 - [ ] **Step 6: Reconcile the blank-table fallthrough Task 2 already added**
 
-`parseExhibit21` used to commit to the table strategy the moment a `<table>` existed, so `shentel-2025.htm` — two entirely-blank decorative tables, with the real list as block text outside them — returned nothing. Task 2 added `isEntirelyBlankTable`: when every cell of every row is blank, `parseExhibit21` proceeds as if no table were present.
+`parseExhibit21` used to commit to the table strategy as soon as a `<table>` existed. `shentel-2025.htm` has two entirely blank decorative tables, with the real list as block text outside them, so it returned nothing. Task 2 added `isEntirelyBlankTable`: when every cell of every row is blank, `parseExhibit21` proceeds as if no table were present.
 
-**An earlier draft of this plan specified the broader rule "when the table strategy produces zero subsidiaries, fall through and take the fallback's result", and that rule is wrong.** It also fires on `exhibit21-mangled.html`, whose blank `<td></td>` beside a real `<td>Delaware</td>` becomes an isolated `"Delaware"` line once tags are stripped — which the line strategy accepts as a name-only subsidiary, fabricating `{name: "Delaware"}` and breaking the currently-green "deliberately mangled fixture yields zero subsidiaries" test.
+**An earlier draft of this plan specified a broader rule, "when the table strategy produces zero subsidiaries, fall through and take the fallback's result", and that rule is wrong.** It also fires on `exhibit21-mangled.html`. In that fixture, a blank `<td></td>` beside a real `<td>Delaware</td>` becomes an isolated `"Delaware"` line once tags are stripped. The line strategy accepts that line as a name-only subsidiary, fabricates `{name: "Delaware"}`, and breaks the currently green "deliberately mangled fixture yields zero subsidiaries" test.
 
-So: keep `isEntirelyBlankTable` as the condition. Read it before you write anything here — it may already be correct for every fixture, in which case this step is "confirm and leave alone", and say so in your report. Widen it only if a vendored fixture forces you to, and only in a way that still leaves `exhibit21-mangled.html` at zero subsidiaries.
+Keep `isEntirelyBlankTable` as the condition. Read it before you write anything here. It may already be correct for every fixture. In that case, confirm it, leave it alone, and say so in your report. Widen it only if a vendored fixture requires it, and only in a way that still leaves `exhibit21-mangled.html` at zero subsidiaries.
 
 - [ ] **Step 7: Run the suites**
 
@@ -268,7 +268,7 @@ git commit -m "fix(filer): read every table in an Exhibit 21, and the columns it
   ): Promise<ExhibitDocument[]>
   ```
 
-**Why:** This is the one link the chain is missing. `fetchExhibit21` takes a URL and says discovering it is out of scope; nothing supplies one. EDGAR's accession `index.json` types every file as a GIF icon name (`"type":"text.gif"`), so it cannot answer "which document is the Exhibit 21". The accession's `…-index-headers.html` can: it carries the submission's SGML manifest, HTML-escaped, one block per document. From `filer/test-fixtures/edgar/lumen-2025-index-headers.html` (162 documents, one of type `EX-21`):
+**Why:** This is the one link the chain is missing. `fetchExhibit21` takes a URL and states that finding the URL is out of scope, and nothing supplies one. EDGAR's accession `index.json` types every file as a GIF icon name (`"type":"text.gif"`), so it cannot identify the Exhibit 21 document. The accession's `…-index-headers.html` can, because it carries the submission's SGML manifest, HTML-escaped, with one block per document. From `filer/test-fixtures/edgar/lumen-2025-index-headers.html` (162 documents, one of type `EX-21`):
 
 ```
 &lt;DOCUMENT&gt;
@@ -340,7 +340,7 @@ it("skips a block missing a FILENAME rather than emitting a URL ending in a slas
 })
 ```
 
-Note the last three. A filing with no Exhibit 21 is ordinary rather than exceptional — in the 2026-08-03 run, Consolidated Communications and United States Cellular both filed a 10-K whose latest accession carries none. This differs from `parseCompanyTickers`/`parseTenKFilings`, which throw on a malformed payload because those are SEC's own documented API shapes; an absent exhibit is the filer's choice rather than an upstream interface failure. Say so in the docstring.
+Note the last three. A filing with no Exhibit 21 is ordinary. In the 2026-08-03 run, Consolidated Communications and United States Cellular both filed a 10-K whose latest accession has none. `parseCompanyTickers`/`parseTenKFilings` behave differently: they throw on a malformed payload, because those payloads are SEC's own documented API shapes. An absent exhibit is the filer's choice and says nothing about the upstream interface. Say so in the docstring.
 
 - [ ] **Step 2: Run them to verify they fail**
 
@@ -360,11 +360,11 @@ export function accessionArchiveURL(cik: CIK, accessionNumber: string): string {
 }
 ```
 
-`Number(cik)` is what strips the zero-padding: EDGAR's archive paths use the unpadded CIK (`.../data/18926/...`) while the submissions API uses the padded form. Both appear in this file; the docstring must say which is which.
+`Number(cik)` strips the zero-padding. EDGAR's archive paths use the unpadded CIK (`.../data/18926/...`), while the submissions API uses the padded form. Both forms appear in this file, and the docstring must say which is which.
 
 - [ ] **Step 4: Add the fetching pair**
 
-`fetchExhibit21Documents(client, filing)` fetches `${accessionArchiveURL(filing.cik, filing.accessionNumber)}/${filing.accessionNumber}-index-headers.html` through `client.getDocument` and returns `findExhibit21Documents(...)` over the body. Take `SECDocumentClient` (the one-method structural type) rather than the concrete client — same rationale as everywhere else in this file, and a test then needs no axios harness.
+`fetchExhibit21Documents(client, filing)` fetches `${accessionArchiveURL(filing.cik, filing.accessionNumber)}/${filing.accessionNumber}-index-headers.html` through `client.getDocument` and returns `findExhibit21Documents(...)` over the body. Take `SECDocumentClient` (the one-method structural type) rather than the concrete client, as the rest of this file does. A test then needs no axios harness.
 
 - [ ] **Step 5: Run the suites**
 
@@ -382,7 +382,7 @@ git commit -m "feat(filer): find a filing's Exhibit 21 from its SGML document ma
 
 ### Task 5: Collapse duplicate CIKs in candidate resolution
 
-**Status: COMPLETE.** Landed on this branch; the three tests below are in `edgar-filings.test.ts` and the collapse is mutation-verified in both directions — remove it and they fail, key it on the company NAME instead of the CIK and the 3a namesake tests fail.
+**Status: complete.** This task landed on this branch, and the three tests below are in `edgar-filings.test.ts`. Mutation testing verified the collapse in both directions. Removing it makes these tests fail, and keying it on the company name instead of the CIK makes the 3a namesake tests fail.
 
 **Files:**
 
@@ -394,7 +394,7 @@ git commit -m "feat(filer): find a filing's Exhibit 21 from its SGML document ma
 - Consumes: `CIKCandidate`, `resolveCIKCandidates` from the same file.
 - Produces: no new exports; `resolveCIKCandidates`'s return value gains an invariant (CIKs are distinct).
 
-**Why:** `company_tickers.json` carries one row PER TICKER, so a registrant with several share classes appears several times under one CIK. Resolving `"Liberty Broadband Corporation"` on 2026-08-03 returned CIK `0001611983` four times, each scoring 1.0 — and the tie rule, which exists to stop a caller narrowing an actual collision between two different companies, then reported a four-way tie. The same phantom tie appeared for Comcast, AT&T, T-Mobile and Telephone and Data Systems. The rule must fire on a collision between distinct CIKs and stay silent on one registrant's share classes.
+**Why:** `company_tickers.json` has one row per ticker, so a registrant with several share classes appears several times under one CIK. On 2026-08-03, resolving `"Liberty Broadband Corporation"` returned CIK `0001611983` four times, each scoring 1.0. The tie rule exists to stop a caller from narrowing an actual collision between two different companies, and it reported a four-way tie. The same phantom tie appeared for Comcast, AT&T, T-Mobile and Telephone and Data Systems. The rule must fire on a collision between distinct CIKs and stay silent on one registrant's share classes.
 
 - [ ] **Step 1: Write the failing tests**
 
@@ -435,7 +435,7 @@ it("keeps the highest-scoring row's spelling when collapsing share classes", () 
 })
 ```
 
-The second test is the one that matters: it is the 3a false-identity-link lesson, and it must keep passing. Do not weaken it.
+The second test matters most. It checks that two different companies with a tied score stay reported as a tie, which is the false-identity-link case from 3a, and it must keep passing. Do not weaken it.
 
 - [ ] **Step 2: Run them to verify the first and third fail**
 
@@ -444,7 +444,7 @@ Expected: the share-class tests fail (3 candidates rather than 1); the actual-ti
 
 - [ ] **Step 3: Implement**
 
-Collapse by CIK after scoring and before sorting: keep, per CIK, the highest-scoring entry (first-seen wins a tie within one CIK, so the result is deterministic in ticker-file order). Leave the tie rule exactly as it is — it now operates on distinct CIKs, which is what its docstring always claimed. Update that docstring to say the collapse happens first and why.
+Collapse by CIK after scoring and before sorting. For each CIK, keep the highest-scoring entry. The first-seen entry wins a tie within one CIK, so the result is deterministic in ticker-file order. Leave the tie rule exactly as it is. It now operates on distinct CIKs, as its docstring always claimed. Update that docstring to say the collapse happens first and why.
 
 - [ ] **Step 4: Run the suites**
 
@@ -462,6 +462,6 @@ git commit -m "fix(filer): one candidate per registrant — share classes are no
 
 ## Out of scope, and why
 
-**Automatic name→CIK selection.** The 2026-08-03 run took the top candidate for 24 telecom company names and got two confidently wrong registrants: `"Altice USA, Inc."` resolved to AlTi Global, Inc. (SIC 6282, investment advice) at 0.829, and `"WideOpenWest, Inc."` to WidePoint Corp at 0.886. Both are vendored as fixtures under their true registrant names. Any ingest path must corroborate a candidate against something other than its name — the registrant's SIC code, which the submissions payload already carries, is the cheapest available check. That belongs in a follow-up together with the orchestrator that walks corroborated CIKs into `EdgarSubsidiaryRow`s, and it is the piece that decides what lands in `filer_family`.
+**Automatic name→CIK selection.** The 2026-08-03 run took the top candidate for 24 telecom company names and got two confidently wrong registrants: `"Altice USA, Inc."` resolved to AlTi Global, Inc. (SIC 6282, investment advice) at 0.829, and `"WideOpenWest, Inc."` to WidePoint Corp at 0.886. Both are vendored as fixtures under their true registrant names. Any ingest path must corroborate a candidate against something other than its name. The registrant's SIC code, which the submissions payload already carries, is the cheapest available check. That check belongs in a follow-up, together with the orchestrator that turns corroborated CIKs into `EdgarSubsidiaryRow`s. That follow-up decides what lands in `filer_family`.
 
-**Comcast, Lumen, Uniti, TDS, Charter, T-Mobile and Cogent** were measured (Comcast's Exhibit 21 alone lists ~1,500 subsidiaries across 33 tables) but are not vendored — at 960 KB for Comcast alone they do not belong in the repository. The 13 vendored documents cover every defect class those seven exhibit.
+**Comcast, Lumen, Uniti, TDS, Charter, T-Mobile and Cogent** were measured but are not vendored. Comcast's Exhibit 21 alone lists ~1,500 subsidiaries across 33 tables and is 960 KB, which is too large for the repository. The 13 vendored documents cover every defect class those seven filings show.

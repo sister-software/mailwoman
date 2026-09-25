@@ -4,18 +4,18 @@
 
 **Goal:** Land the shared foundations the migration phases consume: `readJSONL`/`writeJSONL`/`iterateJSONL`, stats + `formatPercent`, `sha256File` in `@mailwoman/core/utils`; and `mailwoman/cli-kit` (command types + `useCommandTask` + `CheckList`) / `mailwoman/test-kit` extracted from `mailwoman/sdk` with deprecated shims.
 
-**Architecture:** New pure modules in `core/utils/` re-exported from the existing `@mailwoman/core/utils` subpath (no exports-map change). `mailwoman/sdk/cli.ts` and `mailwoman/sdk/test/` move to `mailwoman/cli-kit/` and `mailwoman/test-kit/`; the old files become one-line deprecated re-export shims so the published `./sdk/*` subpaths keep resolving; new `./cli-kit` + `./test-kit` subpaths are added to both exports maps. `cli-kit` stays a plain `.ts` (components via `createElement`, no JSX) so the dev `node →` source condition keeps working under type stripping.
+**Architecture:** New pure modules in `core/utils/` are re-exported from the existing `@mailwoman/core/utils` subpath, so the exports map does not change. `mailwoman/sdk/cli.ts` and `mailwoman/sdk/test/` move to `mailwoman/cli-kit/` and `mailwoman/test-kit/`. The old files become one-line deprecated re-export shims, so the published `./sdk/*` subpaths keep resolving. New `./cli-kit` and `./test-kit` subpaths are added to both exports maps. `cli-kit` stays a plain `.ts` file that builds components with `createElement` instead of JSX, so the dev `node →` source condition keeps working under type stripping.
 
 **Tech Stack:** node:crypto, spliterator (already a core dep), react hooks + ink (already mailwoman deps), vitest.
 
 ## Global Constraints (from the spec)
 
-- New core helpers use acronym casing: `readJSONL`, not `readJsonl` (don't join the #875 debt).
-- Dual exports maps: any new subpath is added to BOTH `exports` (with `node →` source condition first) and `publishConfig.exports` (types first, then default).
-- `erasableSyntaxOnly`; relative imports carry `.ts` extensions; tabs; oxfmt.
-- Canonical percentile = the check scripts' shape (nearest-rank floor, `null` on empty) — check parity in Phase 5 depends on this exact semantics.
-- `sdk/` submodules mean data acquisition — cli/test helpers move out; shims stay until next major.
-- Tool/kit modules never touch argv or call `process.exit(0)` implicitly; `useCommandTask` owns exit codes (error → 1).
+- New core helpers use acronym casing: `readJSONL`, not `readJsonl`. Do not add to the #875 casing debt.
+- Dual exports maps: Add any new subpath to both `exports` (with the `node →` source condition first) and `publishConfig.exports` (types first, then default).
+- `erasableSyntaxOnly`, `.ts` extensions on relative imports, tabs, and oxfmt.
+- The canonical percentile follows the check scripts' definition (nearest-rank floor, `null` on empty input). Check parity in Phase 5 depends on these exact semantics.
+- `sdk/` submodules are for data acquisition, so the cli and test helpers move out. The shims stay until the next major version.
+- Tool and kit modules never read argv or implicitly call `process.exit(0)`. `useCommandTask` owns exit codes, and an error exits with 1.
 
 ---
 
@@ -265,7 +265,7 @@ describe("hash", () => {
 })
 ```
 
-(Compute the real constant with `echo -n "mailwoman" | sha256sum` before writing the test and paste the actual value — the one above is a placeholder to be REPLACED at implementation time.)
+(Compute the real constant with `echo -n "mailwoman" | sha256sum` before writing the test, and paste the actual value. The value above is a placeholder that must be replaced during implementation.)
 
 - [ ] **Step 2: Run** → FAIL.
 
@@ -494,4 +494,4 @@ const GazetteerVerify: CommandComponent<typeof OptionsSchema> = ({ options }) =>
 - [ ] `yarn lint` → clean. `yarn compile` → clean. `yarn typecheck:scripts` → clean.
 - [ ] `node_modules/.bin/vitest run core/utils mailwoman/test mailwoman/commands` → PASS.
 - [ ] `node mailwoman/out/cli.js --help` and `node mailwoman/out/cli.js gazetteer verify --help` → exit 0.
-- [ ] Merge branch to main (local, no push), delete branch.
+- [ ] Merge the branch to main locally without pushing, then delete the branch.

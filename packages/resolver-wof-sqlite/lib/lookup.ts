@@ -71,7 +71,7 @@ export interface WOFSQLitePlaceLookupOpts {
 	 *
 	 * See `extracts.ts` for the derivation rules.
 	 *
-	 * Routing: queries with a `placetype` matching a extract's name
+	 * Routing: queries with a `placetype` matching an extract's name
 	 * (or explicit `placetypes` hint) are sent to that extract.
 	 * Everything else hits main.
 	 *
@@ -177,7 +177,7 @@ export class WOFSQLitePlaceLookup implements PlaceLookup, Disposable {
 	 * Bbox + near- with-radius queries fall back to no-filter when this is false,
 	 * preserving compatibility with DBs that were FTS-built before the R*Tree shipped.
 	 *
-	 * Per-extract: a extract is only considered to have the bbox index if its own R*Tree table exists.
+	 * Per-extract: an extract is only considered to have the bbox index if its own R*Tree table exists.
 	 */
 	readonly #hasBboxIndex: Map<string, boolean>
 	/**
@@ -310,16 +310,16 @@ export class WOFSQLitePlaceLookup implements PlaceLookup, Disposable {
 			this.#encyclopedicClauses.set(s.schemaName, encyclopedicClauses(this.#db, s.schemaName))
 		}
 
-		// Every lookup path here reaches `place_search`, and a extract without it
+		// Every lookup path here reaches `place_search`, and an extract without it
 		// fails in one of two ways that are both hard to read: an unroutable name
 		// returns zero hits (indistinguishable from "this country has no places")
 		// and a routable one throws mid-query from deep inside a select.
 		// The unroutable half is the worse of the two.
-		// A extract reaches routing only through the name `deriveSchemaName` derives from
+		// An extract reaches routing only through the name `deriveSchemaName` derives from
 		// its filename, so a file spelled one letter off the placetype it serves answers
 		// with nothing while holding every row that was asked for.
 		//
-		// Two independent things bring a extract under the guard, and it needs both.
+		// Two independent things bring an extract under the guard, and it needs both.
 		// Carrying `spr` is a claim to be a place extract.
 		// Carrying a name that routes is an invitation to be queried as one,
 		// and it is made by the filename alone.
@@ -327,7 +327,7 @@ export class WOFSQLitePlaceLookup implements PlaceLookup, Disposable {
 		// and still dies inside a select.
 		// Testing only the claim lets an empty or truncated file past construction.
 		// Testing only the name would exempt a correctly-named build input.
-		// A extract needs to fail neither test to be exempt.
+		// An extract needs to fail neither test to be exempt.
 		//
 		// Exempt by design: `postcode-locality-<cc>.db` carries a relation table and nothing else,
 		// matches no routed placetype, and is part of the documented default extract list.
@@ -371,7 +371,7 @@ export class WOFSQLitePlaceLookup implements PlaceLookup, Disposable {
 
 				this.#extractCountries.set(sh.schemaName, new Set(rows.map((r) => r.country)))
 			} catch {
-				// A extract without spr (or an attach oddity) just doesn't participate in country routing.
+				// An extract without spr (or an attach oddity) just doesn't participate in country routing.
 			}
 		}
 
@@ -609,7 +609,7 @@ export class WOFSQLitePlaceLookup implements PlaceLookup, Disposable {
 		// Bias fan-out (#58/proximity-bias): a country-less query with proximity hints must see
 		// the cross-extract ambiguity the hints exist to resolve — "48026" lives in postalcode-us
 		// and postalcode-intl, and single-extract routing would hide one side.
-		// Query every matching extract (self-recursion with a extract pin), merge by id,
+		// Query every matching extract (self-recursion with an extract pin), merge by id,
 		// and re-sort by the same (exact, prominence) keys the per-extract tier sort used.
 		// Bounded: hints + no country + >1 matching extract only.
 		const hasBiasHints = !!query.near || (query.bias?.length ?? 0) > 0

@@ -27,15 +27,15 @@
   <img src="docs/static/img/readme-terminal.svg" alt="Terminal session: npx mailwoman parse turns a free-text address into structured JSON components" width="760">
 </p>
 
-Mailwoman turns free-text postal addresses into structured components — house number,
-street, locality, region, postcode, country — and resolves them to coordinates against an
-open gazetteer. It is a small transformer encoder (~30M params) doing BIO token
-classification over a 33-label schema. It is **not** an LLM and nothing about it is
-generative — boring NER, which is the point for short, structured strings.
+Mailwoman turns free-text postal addresses into structured components (house number,
+street, locality, region, postcode, country) and resolves them to coordinates against an
+open gazetteer. It is a small transformer encoder (~30M params) that performs BIO token
+classification over a 33-label schema. It is **not** an LLM, and nothing about it is
+generative. It is conventional named-entity recognition, which suits short, structured strings.
 
-It runs in Node.js and the browser, with no Elasticsearch and no multi-gigabyte libpostal
-install. The model is about 30 MB and resolves coordinates from a SQLite gazetteer at the finest
-tier available — admin, postcode, street, or rooftop (US and French national registers).
+It runs in Node.js and the browser, without Elasticsearch or a multi-gigabyte libpostal
+install. The model is about 30 MB. It resolves coordinates from a SQLite gazetteer at the finest
+tier available: admin, postcode, street, or rooftop (US and French national registers).
 
 ```bash
 npx mailwoman parse "1600 Amphitheatre Parkway, Mountain View, CA 94043"
@@ -86,15 +86,15 @@ console.log(decodeAsJSON(tree))
 //   house_number: "1600", street_suffix: "Parkway", postcode: "94043" }
 ```
 
-The full library surface — confidence, the per-stage pipeline result, resolution, browser
-loading, and configuration — is documented in the [`mailwoman` package
-README](./packages/mailwoman/README.md) and in [Getting
-started](https://mailwoman.ai/docs/developers/get-started/install-and-first-parse).
+The [`mailwoman` package README](./packages/mailwoman/README.md) and [Getting
+started](https://mailwoman.ai/docs/developers/get-started/install-and-first-parse) document the
+full library API: confidence, the per-stage pipeline result, resolution, browser loading, and
+configuration.
 
 ## Drop-in servers
 
-Already running a geocoding stack? Three HTTP servers speak the wire formats your clients
-use today — no PostgreSQL, no Elasticsearch, no `osm2pgsql` import:
+If you already run a geocoding stack, three HTTP servers speak the wire formats your clients
+use today. They need neither PostgreSQL, Elasticsearch, nor an `osm2pgsql` import:
 
 | Package                                        | Speaks                                                | Start it                         |
 | ---------------------------------------------- | ----------------------------------------------------- | -------------------------------- |
@@ -102,14 +102,14 @@ use today — no PostgreSQL, no Elasticsearch, no `osm2pgsql` import:
 | [`@mailwoman/photon`](./packages/photon)       | Photon autocomplete — `/api`, `/reverse` (GeoJSON)    | `npx @mailwoman/photon serve`    |
 | [`@mailwoman/libpostal`](./packages/libpostal) | libpostal — `/parse`, `/expand` (no gazetteer needed) | `npx @mailwoman/libpostal serve` |
 
-Point geopy's `Nominatim(domain="localhost:8080")` at the first one and forward + reverse
-geocoding keep working. The API returns an OpenCage-style `annotations` block —
-IANA timezone, UN/LOCODE, EU NUTS codes, coordinate formats, sun times, currency —
-composed by [`@mailwoman/annotations`](./annotations).
+Point geopy's `Nominatim(domain="localhost:8080")` at the first one, and forward and reverse
+geocoding keep working. The API returns an OpenCage-style `annotations` block with the
+IANA timezone, UN/LOCODE, EU NUTS codes, coordinate formats, sun times, and currency.
+[`@mailwoman/annotations`](./annotations) composes that block.
 
 ## How it compares
 
-This table compares what each system needs to run rather than how well it performs. Mailwoman
+This table compares what each system needs to run. It does not compare accuracy. Mailwoman
 began as a fork of Pelias Parser and ships wire-compatible drop-ins for the other three.
 
 |                               | Mailwoman                       | libpostal          | Nominatim                  | Photon                         |
@@ -123,9 +123,9 @@ began as a fork of Pelias Parser and ships wire-compatible drop-ins for the othe
 
 ## Drop-in servers
 
-Migrating off Nominatim, Photon, or libpostal? Each has a compatible server — same wire
-interface, from a SQLite file instead of a cluster. A hosted Photon-compatible endpoint is
-live for evaluation:
+If you are migrating off Nominatim, Photon, or libpostal, each has a compatible server. The
+server keeps the same wire interface and reads a SQLite file instead of a cluster. A hosted
+Photon-compatible endpoint is live for evaluation:
 
 ```bash
 curl "https://photon.mailwoman.ai/api?q=berlin&limit=3"   # hosted — nothing to install
@@ -139,18 +139,19 @@ OpenAPI 3.1 specifications for all three ship in each package and at
 
 ## How it works
 
-The problem splits in two:
+The work splits into two parts:
 
 - **The model learns the grammar.** A sequence labeler trained from scratch on a diverse
-  corpus of real and synthetic addresses decides which span is a street, a locality, a
+  corpus of real and synthetic addresses decides which span is a street, a locality, or a
   postcode.
-- **The gazetteer knows the atlas.** A provenance-tracked Who's On First database resolves
-  parsed components to real-world places and coordinates.
+- **The gazetteer supplies place knowledge.** A provenance-tracked Who's On First database
+  resolves parsed components to real-world places and coordinates.
 
-Knowledge reaches the model at inference as _soft input features_ (anchors) — it informs,
-never overrides. If you know RAG from the LLM world, this is RAG for token classification.
-The confidence numbers the parser returns are calibrated probabilities rather than heuristic
-scores: when it says `0.88`, it is right about 88% of the time.
+Gazetteer knowledge reaches the model at inference as _soft input features_ (anchors). The
+features inform the model's decision and never override it. If you know RAG from the LLM
+world, this is RAG for token classification. The confidence numbers the parser returns are
+calibrated probabilities. When it reports `0.88`, it is right about 88%
+of the time.
 
 For the longer version, read [What Mailwoman
 Is](https://mailwoman.ai/docs/developers/get-started/what-mailwoman-is/).
@@ -171,16 +172,16 @@ reports](./docs/records/evals/).
 
 ## Points of interest, for agents
 
-Not every query is an address. "coffee near Honolulu" is a category search — Mailwoman now
-detects that as distinct from address parsing, splits the category from the location
-constraint, and resolves it against `poi.db`, a sealed spatial layer built from Overture
-Places (US, Canada, Mexico, France). Categories with no permissively licensed source — fire
-hydrants, post boxes — abstain by design rather than returning an empty result that reads as an
-answer; you build that layer yourself from your own OSM extract.
+Not every query is an address. "coffee near Honolulu" is a category search. Mailwoman
+distinguishes it from an address, splits the category from the location constraint, and
+resolves it against `poi.db`, a sealed spatial layer built from Overture Places (US, Canada,
+Mexico, France). Categories without a permissively licensed source, such as fire hydrants and
+post boxes, abstain intentionally instead of returning an empty result that looks like an
+answer. You can build that layer yourself from your own OSM extract.
 
-`@mailwoman/mcp` puts the whole toolset behind an MCP server: parse, geocode, POI search, and
-an OverpassQL export, over stdio, for any MCP-compatible agent. Both ship on npm as of
-`mailwoman` 7.2.1.
+`@mailwoman/mcp` exposes the whole toolset through an MCP server over stdio for any
+MCP-compatible agent: parse, geocode, POI search, and an OverpassQL export. Both features ship
+on npm as of `mailwoman` 7.2.1.
 
 ```bash
 mailwoman poi "gas station near Springfield, IL" --db poi.db
@@ -188,7 +189,7 @@ mailwoman poi "gas station near Springfield, IL" --db poi.db
 
 ## Beyond parse + geocode
 
-`mailwoman` is the entry point to 33 published packages. The rest of the toolkit:
+`mailwoman` is the entry point to 33 published packages. The rest of the toolkit includes:
 
 | Package                                             | What it does                                                                                |
 | --------------------------------------------------- | ------------------------------------------------------------------------------------------- |
@@ -199,9 +200,9 @@ mailwoman poi "gas station near Springfield, IL" --db poi.db
 | [`@mailwoman/timezone-lookup`](./timezone-lookup)   | Coordinate → IANA timezone (point-in-polygon, `node:sqlite`)                                |
 | [`@mailwoman/un-locode-lookup`](./un-locode-lookup) | Place → UN/LOCODE trade-location codes                                                      |
 | [`@mailwoman/nuts-lookup`](./nuts-lookup)           | EU coordinate → NUTS statistical regions                                                    |
-| [`@mailwoman/codex`](./codex)                       | Postal address FORMATTER (components → a per-country string) + the reference data behind it |
+| [`@mailwoman/codex`](./codex)                       | Postal address formatter (components → a per-country string) + the reference data behind it |
 | [`@mailwoman/mcp`](./mcp)                           | MCP server exposing parse/geocode/POI-search/OverpassQL-export to agents over stdio         |
-| [`@mailwoman/poi-taxonomy`](./poi-taxonomy)         | Category lexicon behind POI-query detection — Overture taxonomy snapshot + synonym table    |
+| [`@mailwoman/poi-taxonomy`](./poi-taxonomy)         | Category lexicon behind POI-query detection: Overture taxonomy snapshot + synonym table     |
 
 ## License
 
@@ -213,10 +214,10 @@ Mailwoman is dual-licensed:
 - **A commercial license** for closed-source/commercial use without the AGPL's source-sharing
   obligation. Contact `teffen@sister.software`.
 
-Release notes live on the [GitHub releases page](https://github.com/sister-software/mailwoman/releases);
-what we do and don't collect is stated in the
-[privacy policy](https://github.com/sister-software/mailwoman/blob/main/docs/records/site-2026-08/licensing/privacy.md); funders and sponsors
-can read our machine-readable [funding.json](https://mailwoman.ai/funding.json).
+Release notes live on the [GitHub releases page](https://github.com/sister-software/mailwoman/releases).
+The [privacy policy](https://github.com/sister-software/mailwoman/blob/main/docs/records/site-2026-08/licensing/privacy.md)
+states what we do and do not collect. Funders and sponsors can read our machine-readable
+[funding.json](https://mailwoman.ai/funding.json).
 Report security vulnerabilities privately per [`SECURITY.md`](./SECURITY.md).
 
 Portions of Mailwoman derived from [Pelias Parser](https://github.com/pelias/parser) remain
@@ -229,8 +230,8 @@ under the MIT license, and Mailwoman bundles third-party data under its own term
 
 > [!NOTE]
 > **This section is for working _on_ Mailwoman in this repository.** If you only want to
-> _use_ Mailwoman, the published packages above are all you need — you do not need to clone
-> the repo, build anything, or read any further.
+> _use_ Mailwoman, the published packages above are all you need. You do not need to clone
+> the repo, build anything, or read further.
 
 Mailwoman is a Yarn 4 monorepo: one root package (`mailwoman`) plus the scoped
 `@mailwoman/*` workspaces that compose it. Start with [`AGENTS.md`](./AGENTS.md) for the
@@ -250,10 +251,10 @@ yarn test           # vitest (runs from source, no precompile)
 Mailwoman began as a TypeScript fork of [Pelias Parser](https://github.com/pelias/parser), a
 rule-based engine: a tokenizer, a set of dictionary/pattern classifiers, and an
 `ExclusiveCartesianSolver` that enumerated consistent solutions. As the neural sequence
-labeler matured into the primary parse path, that rule engine was retired and — in v7.0.0 —
-deleted from the tree (`@mailwoman/classifiers` and the `@mailwoman/core/{solver,classification}`
-implementation). The last standalone release is `@mailwoman/classifiers@6.x`, frozen; consumers of
-the published package interact with the neural pipeline exclusively.
+labeler matured into the primary parse path, the rule engine was retired, and v7.0.0 deleted it
+from the tree (`@mailwoman/classifiers` and the `@mailwoman/core/{solver,classification}`
+implementation). The last standalone release is the frozen `@mailwoman/classifiers@6.x`.
+Consumers of the published package use only the neural pipeline.
 
 ### Contributing
 

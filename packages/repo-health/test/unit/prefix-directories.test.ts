@@ -2,8 +2,7 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file The sibling-prefix interface: three or more children sharing a hyphen prefix become a directory, and the two
- *   kinds of name that are interfaces rather than layout stay put.
+ * @file Tests the prefix-directories check, which groups sibling names that share a hyphen prefix into a directory.
  */
 
 import { collectRepoContext } from "@mailwoman/repo-health"
@@ -58,7 +57,8 @@ describe("findPrefixGroups", () => {
 			`${ADAPTERS}/gnaf/adapter.ts`,
 		])
 
-		// `geonames/` heads the family `geonames-postal/` belongs to; `gnaf/` repeats nothing and is untouched.
+		// `geonames/` heads the family of `geonames-postal/`.
+		// No sibling shares the `gnaf` prefix.
 		expect(groups).toHaveLength(1)
 		expect(groups[0]?.members.map((member) => member.name)).toEqual(["geonames", "geonames-postal"])
 	})
@@ -162,7 +162,7 @@ describe("prefixDirectoriesCheck", () => {
 		expect(diagnostics).toEqual([
 			expect.objectContaining({
 				severity: "error",
-				// A directory member's diagnostic names the directory rather than a file inside it.
+				// The diagnostic for a directory member points at the directory itself.
 				file: `${ADAPTERS}/state-hi-schools`,
 				message: expect.stringContaining(`${ADAPTERS}/state/`),
 			}),

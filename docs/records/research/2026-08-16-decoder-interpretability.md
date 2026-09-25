@@ -10,10 +10,10 @@ Grounding read: `docs/records/site-2026-08/concepts/what-mailwoman-is.mdx` (cali
 retrieval-augmented sequence labeler; channels are soft features, never overrides) and
 `packages/neural/lib/soft-features.ts` (the channel choreography: anchor, gazetteer, country,
 street-type channels, each `features[][]` + `confidence[]`, fed alongside `input_ids`; the
-ProductionScorer already asserts _which_ channels were fed). The Weimar case in this memo's terms:
-every channel row was zero, the token-embedding pathway alone produced the (correct) labels, and
-the resolver then chose Weimar, Texas — a _cross-boundary contradiction_ the current implementation has
-no way to notice.
+ProductionScorer already asserts _which_ channels were fed). In this memo's terms, the Weimar case
+went as follows. Every channel row was zero, and the token-embedding pathway alone produced the
+(correct) labels. The resolver then chose Weimar, Texas. This is a _cross-boundary contradiction_
+that the current implementation cannot detect.
 
 Verification key: **[S]** = verified via web search this session; **[M]** = from memory (high
 confidence unless hedged). Anything 2025-or-newer is flagged inline.
@@ -34,18 +34,18 @@ circuit [M]; Goldowsky-Dill et al. 2023, _Localizing Model Behavior with Path Pa
 Causal scrubbing (Chan et al. 2022, Redwood Research [M]) and ACDC (Conmy et al. 2023, _Towards
 Automated Circuit Discovery_ [M]) automate hypothesis testing and circuit search.
 
-**Cost/feasibility at our scale.** This is where the tagger's size flips the economics. At LLM
+**Cost/feasibility at our scale.** The tagger's small size makes patching cheap. At LLM
 scale, a patching sweep is linear in components and "can be prohibitively expensive, involving
 millions to billions of forward passes," which is why DeepMind built AtP* — a gradient
 approximation running in O(1) passes (Kramár et al. 2024, _AtP\*: An efficient and scalable method
 for localizing LLM behaviour to components_ [S]; note also _When Attribution Patching Lies_ (2026)
 [S] on AtP's false negatives and a second-order correction). For a 6-layer encoder with ~8 heads +
 1 MLP per layer over ~32 SentencePiece pieces, an **exhaustive** sweep is ≈ 6 × 9 × 32 ≈ 1,700
-patch sites per input — a couple of GPU batches, well under a second per case, seconds on ONNX CPU.
-Exhaustive _path_ patching over all component pairs is a few hundred thousand forwards — minutes.
-What is a research program at LLM scale is a nightly board metric here: a full causal trace of
-every row of the 558-row dev board is a lunch-break job on the lab GPU. We don't even need AtP
-approximations, though they come free (one backward pass) since we own the PyTorch side.
+patch sites per input. That is a couple of GPU batches: well under a second per case, or seconds
+on ONNX CPU. Exhaustive _path_ patching over all component pairs takes a few hundred thousand
+forward passes, which is minutes. A full causal trace of every row of the 558-row dev board would
+take under an hour on the lab GPU, so it can run as a nightly board metric. We do not need AtP
+approximations, although they cost only one backward pass because we own the PyTorch side.
 
 **What it provides.** The literal answer to "WHERE did this labeling decision form": layer/position/
 component coordinates for each B/I decision, and — by patching the _channel input rows_
@@ -64,7 +64,8 @@ deltas rather than sequence loss, or Viterbi coupling smears the localization.
 **Weimar verdict.** A patch sweep would have localized the locality/region decisions to the
 embedding→mid-layer-MLP pathway on the "Weimar"/"Thüringen" pieces with zero causal contribution
 from any channel row, and counterfactual channel injection would have shown the parse is
-channel-insensitive here — i.e., a mechanical demonstration that this was a grammar-only decision.
+channel-insensitive here. Together these would show mechanically that this was a grammar-only
+decision.
 
 ### 1.2 Integrated gradients, occlusion, and simpler attribution
 
@@ -85,7 +86,7 @@ attribution mass on channel inputs vs. token embeddings. Report it per parse; al
 high-confidence parse carries ~zero channel share. Note the degenerate case: when channels are
 all-zero, occlusion is a no-op and IG attribution to them is trivially ~0. The flag can be
 computed _without any attribution at all_ as an input predicate ("all channel confidences zero"),
-which soft-features.ts can emit today. Attribution warrants its keep on the _mixed_ cases where
+which soft-features.ts can emit today. Attribution is worth its cost on the _mixed_ cases where
 channels fired but may have been ignored.
 
 **Pitfalls.** IG's baseline choice matters (zero-embedding baselines are out-of-manifold [M]);
@@ -93,8 +94,8 @@ gradient attributions can fail sanity checks (Adebayo et al. 2018, _Sanity Check
 Maps_ [M]); none of these are causal guarantees — for required claims, confirm with patching.
 
 **Weimar verdict.** IG would have put essentially all attribution mass on the raw token embeddings
-and none on the (zero) channels — the exact "confident parse, silent evidence" signature — but the
-same flag falls out of a one-line input predicate without computing a single gradient.
+and none on the (zero) channels. That is the "confident parse, silent evidence" signature. A
+one-line input predicate produces the same flag without computing a gradient.
 
 ### 1.3 Why attention weights are not the explanation
 
@@ -161,12 +162,12 @@ library (Gemma-2-2B / Llama-3.2-1B / Qwen3-4B) [S].
 dictionary of 4–16k features, activations harvested over the corpus — an SAE per layer trains in
 well under an hour on the lab GPU; the full stack in an evening, Modal not required. The real cost
 is the _human_ loop: naming and validating thousands of features, building tooling to browse them,
-and re-doing it every retrain (mailwoman retrains constantly — the ~1-hour iteration loop is the
-project's core asset — and SAE features do not transfer across retrains; seed-instability results
-above make this worse).
+and redoing that work after every retrain. Mailwoman retrains constantly on a ~1-hour iteration
+loop, and SAE features do not transfer across retrains. The seed-instability results above make
+this worse.
 
-**What it provides vs. a tagger's alternatives — and why it's overkill here.** For an LLM, SAEs exist
-because you _don't know what the concepts are_. Our situation is inverted: the interesting concepts
+**What it provides compared with a tagger's alternatives, and why it is more than we need.** For an
+LLM, SAEs are useful because you _don't know what the concepts are_. Our situation is the reverse. The interesting concepts
 (postcode-ness, gazetteer membership, country, street-type) are already named input columns, and
 the label vocabulary is 33 BIO tags. For "does the model internally represent German-place
 morphology?" a supervised linear probe answers in minutes and — per the 2025 results — likely
@@ -205,12 +206,12 @@ Concept Bottleneck Models_ (NeurIPS) [S]; Shin et al. 2023, _A Closer Look at th
 Procedure of Concept Bottleneck Models_ (ICML) [S]; _Avoiding Leakage Poisoning: Concept
 Interventions Under Distribution Shifts_ (2025) [S]; a 2025 survey of risks/limitations of
 concept-based models and even a 2026 _In Defense of Information Leakage in Concept-based Models_
-[S] — the field now recognizes leakage as a tradeoff rather than a sin. Hard bottlenecks provide intervention
-validity and pay in accuracy exactly on inputs the concept vocabulary doesn't cover — which for us
-is every place the gazetteer doesn't know. **Weimar is the proof we want the leak**: a hard
-bottleneck (parse only from channels) would have had literally zero input and been forced to
-abstain or emit garbage; the bypass produced the correct parse. The failure was downstream — so
-the right implementation _flags_ bypass decisions rather than preventing them.
+[S]. The field now treats leakage as a tradeoff. Hard bottlenecks make interventions valid, but
+they lose accuracy on inputs the concept vocabulary does not cover. For us, that is every place
+the gazetteer does not know. **The Weimar case shows that we want the leak.** A hard bottleneck
+(parsing only from channels) would have had zero input and would have had to abstain or emit
+garbage. The bypass produced the correct parse. The failure happened downstream, so the right
+implementation _flags_ bypass decisions instead of preventing them.
 
 **Right for the right reasons.** Ross, Hughes & Doshi-Velez 2017, _Right for the Right Reasons:
 Training Differentiable Models by Constraining their Explanations_ (IJCAI) [S]: penalize input
@@ -225,14 +226,16 @@ _Finding Alignments Between Interpretable Causal Variables and Distributed Neura
 (DAS) [S]; Boundless DAS (Wu et al. 2023) [S]. These _train_ the model so that named causal
 variables (e.g., "country", "this-span-is-a-locality") live in designated activation subspaces and
 respond correctly to interventions. Since we own the PyTorch training loop and a retrain costs
-~1 hour, IIT is affordable here in a way it is not for LLM labs: add an interchange loss
-tying a small residual subspace to the country variable, and the model acquires a _guaranteed
-read-out port_ — per-decision explanation becomes reading a register instead of running forensics.
+~1 hour, IIT is affordable here in a way it is not for LLM labs. An interchange loss can tie a
+small residual subspace to the country variable. The model then exposes that variable as a
+readable value, and a per-decision explanation becomes a read of that subspace instead of a
+forensic investigation.
 
-**Measuring reliance (auditing, no retraining).** The clean instrument our architecture enables:
-paired inputs where only channels differ (same token string, different simulated "world") — the
-output delta is the causal channel-reliance, measurable per tag, per locale, per checkpoint, as a
-standing board metric. This is an input-level interchange intervention; no model surgery. Related
+**Measuring reliance (auditing without retraining).** Our architecture allows a direct
+measurement. Feed paired inputs that differ only in their channels (the same token string with a
+different simulated "world"). The output delta is the causal channel reliance. It can be measured
+per tag, per locale, and per checkpoint as a standing board metric. This is an input-level
+interchange intervention and requires no changes to the model. Related
 framings: permutation-style model reliance (Fisher, Rudin & Dominici 2019, _All Models are Wrong,
 but several are Useful_, JMLR [M]); shortcut-learning auditing (Geirhos et al. 2020, _Shortcut
 Learning in Deep Neural Networks_, Nature MI [M]); rationale-faithfulness metrics —
@@ -245,17 +248,16 @@ synthetic transformers with known circuits [S]; the MIB benchmark, 2025 [S, hedg
 "known-operations" analog is even better: we can _construct_ corpus items where the correct answer
 is derivable only from a channel, so any faithful method must attribute to it.
 
-**Pitfalls.** IIT constrains capacity and could cost tier-1 accuracy — it lands under the D-rule
-(no default-on mechanism with a known tier-1 regression), so it's a conditional experiment rather than a free
-win. Reliance metrics averaged over a board hide per-locale collapse; compute them per tier.
+**Pitfalls.** IIT constrains capacity and could cost tier-1 accuracy. The D-rule forbids a
+default-on mechanism with a known tier-1 regression, so IIT is a conditional experiment. Reliance metrics averaged over a board hide per-locale collapse; compute them per tier.
 Leakage literature warns that intervention on a leaky bottleneck can _hurt_ (leakage poisoning,
 2025 [S]) — relevant if we ever add "correct the channel and re-run" tooling.
 
-**Weimar verdict.** A hard concept bottleneck would have abstained (no concept evidence at all) and
-been _wrong to do so_ at parse level; reliance auditing would have scored the case "0% channel
-reliance, 100% grammar" — precisely the flag wanted — and an IIT-trained country register would
-have read "DE" while the resolver said "US", turning the actual failure into a machine-checkable
-contradiction.
+**Weimar verdict.** A hard concept bottleneck would have abstained because it had no concept
+evidence, and abstaining would have been _wrong_ at parse level. Reliance auditing would have
+scored the case "0% channel reliance, 100% grammar", which is the flag we want. An IIT-trained
+country register would have read "DE" while the resolver said "US". That would have made the
+actual failure a machine-checkable contradiction.
 
 ---
 
@@ -304,7 +306,7 @@ is large; alarm when the set is empty at the working level). Two specifics for o
   (multilabel NER sets with false-positive limits) [S]; conformal for key-information extraction
   (IJDAR 2026) [S]; survey: Campos et al. 2024, _Conformal Prediction for NLP_ (TACL) [S].
 
-**The evolving vocabulary — no off-the-shelf standard; here is the assembled practice.** I found no
+**The evolving vocabulary.** No off-the-shelf standard exists, so this section assembles practice from adjacent work. I found no
 literature that directly treats "calibrated posterior over a _changing_ discrete diagnosis
 vocabulary" as a solved problem [S — searched; absence noted rather than proven]. The assembled recipe
 from adjacent literatures:

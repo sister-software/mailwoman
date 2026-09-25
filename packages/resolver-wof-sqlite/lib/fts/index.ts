@@ -8,17 +8,19 @@ import type { DatabaseClient } from "@mailwoman/sqlite/client"
 import { tableExists } from "@mailwoman/sqlite/introspection"
 
 /**
- * Names the FTS5 virtual table that indexes WOF place names for `match` queries.
+ * The name of the FTS5 virtual table that indexes WOF place names for `match` queries.
  */
 export const PLACE_SEARCH_TABLE = "place_search"
 
 /**
- * Separates aliases in the `alt_names` bag so a phrase query cannot match across two adjacent aliases.
+ * The separator between aliases in the `alt_names` bag, which stops a phrase
+ * query from matching across two aliases.
  *
- * FTS5 gives positions only to tokens, so the separator must be a character that
- * unicode61 indexes as a token; spaces and punctuation leave the aliases adjacent,
- * while the Private Use Area codepoint U+E000 does not.
- * Query sanitizers strip it, so no user query can address the separator token.
+ * FTS5 assigns positions only to tokens.
+ * Spaces and punctuation are not tokens and would leave the aliases adjacent,
+ * but unicode61 indexes the Private Use Area codepoint U+E000 as a token.
+ *
+ * Query sanitizers strip this character, so no user query can match the separator.
  */
 export const ALIAS_SEPARATOR = "\uE000"
 
@@ -28,24 +30,25 @@ const ALIAS_SEPARATOR_CODEPOINT = ALIAS_SEPARATOR.codePointAt(0) as number
  * Folds a query or name for exact-tier comparison by lowercasing, trimming
  * and collapsing internal whitespace.
  *
- * Every exact-tier consumer folds through this function so its output compares
- * equal to the aliases {@link aliasBagExactMatch} parses.
+ * Every exact-tier consumer uses this function, so its output compares equal to
+ * the aliases that {@link aliasBagExactMatch} parses.
  */
 export function foldQueryText(input: string): string {
 	return input.toLowerCase().trim().replaceAll(/\s+/g, " ")
 }
 
 /**
- * Reports whether any alias in an `alt_names` bag exactly equals the already-folded query.
+ * Returns whether any alias in an `alt_names` bag exactly equals the folded query.
  *
- * A bag without {@link ALIAS_SEPARATOR} is a legacy space-joined bag whose alias boundaries are
- * lost, so it falls back to padded containment and only when no candidate matched strictly,
- * because unrestricted containment would promote fragments such as "York" inside "New York City".
+ * A bag without {@link ALIAS_SEPARATOR} is a legacy space-joined bag without alias boundaries.
+ * For such a bag the
+ * function checks word-bounded containment, and only when no candidate matched strictly, because containment alone
+ * would promote fragments such as "York" inside "New York City".
  *
  * @param altNames The `alt_names` bag from `place_search`, or null when the row has no aliases.
  * @param normalizedQuery The query folded by {@link foldQueryText}.
  * @param anyStrictExact Whether any candidate already matched on its canonical name or region abbreviation.
- * Only legacy bags consult it.
+ * Only legacy bags use it.
  */
 export function aliasBagExactMatch(altNames: string | null, normalizedQuery: string, anyStrictExact: boolean): boolean {
 	if (altNames === null || altNames === "" || !normalizedQuery) return false
@@ -60,70 +63,72 @@ export function aliasBagExactMatch(altNames: string | null, normalizedQuery: str
 }
 
 /**
- * Names the R*Tree virtual table that indexes WOF place bounding boxes for bbox and proximity lookups.
+ * The name of the R*Tree virtual table that indexes WOF place bounding boxes for bbox and proximity lookups.
  */
 export const PLACE_BBOX_TABLE = "place_bbox"
 
 /**
- * Names the auxiliary table of `wof:population` per place that drives the population ranking boost.
+ * The name of the sparse table of `wof:population` per place, which drives the population ranking boost.
  *
- * The table is sparse, and a missing row means no boost rather than a penalty.
+ * A place without a row gets no boost and no penalty.
  */
 export const PLACE_POPULATION_TABLE = "place_population"
 
 /**
- * Names the auxiliary table of per-place `referential` and `encyclopedic` salience scores,
+ * The name of the table of per-place `referential` and `encyclopedic` scores,
  * built by `mailwoman gazetteer importance`.
  *
- * The lookup only carries `encyclopedic` onto results and never ranks by it,
- * and it refuses to read a pre-split table that has a single `importance` column.
+ * The lookup copies `encyclopedic` onto results without ranking by it.
+ * It refuses to read an older table with a single `importance` column.
  */
 export const PLACE_IMPORTANCE_TABLE = "place_importance"
 
 /**
- * Reports what a {@link buildPlaceSearchFTS} run built and how many rows each index holds.
+ * The indexes a {@link buildPlaceSearchFTS} run built and their row counts.
  */
 export interface BuildPlaceSearchFTSResult {
 	/**
-	 * Is true when this call built the FTS5 index and false when an existing one was kept.
+	 * Whether this call built the FTS5 index.
+	 * It is false when an existing index was kept.
 	 */
 	created: boolean
 
 	/**
-	 * Counts the rows in the `place_search` table after the call.
+	 * The row count of the `place_search` table after the call.
 	 */
 	indexedRows: number
 
 	/**
-	 * Is true when this call built the R*Tree bbox index and false when an existing one was kept.
+	 * Whether this call built the R*Tree bbox index.
+	 * It is false when an existing index was kept.
 	 */
 	bboxCreated: boolean
 
 	/**
-	 * Counts the rows in the `place_bbox` R*Tree after the call.
+	 * The row count of the `place_bbox` R*Tree after the call.
 	 */
 	bboxIndexedRows: number
 
 	/**
-	 * Gives the wall-clock duration of the whole build in milliseconds.
+	 * The wall-clock duration of the whole build in milliseconds.
 	 */
 	durationMs: number
 }
 
 /**
- * Configures {@link buildPlaceSearchFTS}: `drop` rebuilds existing indexes,
- * and `onProgress` receives each build phase.
+ * Options for {@link buildPlaceSearchFTS}.
  */
 export interface BuildPlaceSearchFTSOpts {
 	/**
-	 * Drops and rebuilds existing `place_search` and `place_bbox` tables, such as
-	 * after an `spr` or `names` update; by default an existing index is kept.
+	 * Whether to drop and rebuild existing `place_search` and `place_bbox` tables,
+	 * such as after an `spr` or `names` update.
+	 * By default an existing index is kept.
 	 */
 	drop?: boolean
 
 	/**
-	 * Receives each build phase as it begins, which helps CLI output on planet-scale builds
-	 * where population takes minutes.
+	 * Receives each build phase as it begins.
+	 * Populating a planet-scale build takes minutes.
 	 */
 	onProgress?: (
 		phase: "checking" | "dropping" | "creating" | "populating" | "creating-bbox" | "populating-bbox" | "done",
@@ -135,7 +140,7 @@ export interface BuildPlaceSearchFTSOpts {
  * Builds the `place_search` FTS5 table and the `place_bbox` R*Tree from a WOF
  * database's `spr` and `names` tables.
  *
- * Without `drop: true`, an index that already exists is kept rather than rebuilt.
+ * Without `drop: true`, an existing index is kept.
  */
 export function buildPlaceSearchFTS<DB>(
 	db: DatabaseClient<DB>,
@@ -252,21 +257,21 @@ export function buildPlaceSearchFTS<DB>(
 }
 
 /**
- * Reports whether the connected database has the `place_search` FTS table.
+ * Returns whether the connected database has the `place_search` FTS table.
  */
 export function placeSearchFTSExists<DB>(db: DatabaseClient<DB>): boolean {
 	return tableExists(db, PLACE_SEARCH_TABLE)
 }
 
 /**
- * Reports whether the connected database has the `place_bbox` R*Tree table.
+ * Returns whether the connected database has the `place_bbox` R*Tree table.
  */
 export function placeBboxExists<DB>(db: DatabaseClient<DB>): boolean {
 	return tableExists(db, PLACE_BBOX_TABLE)
 }
 
 /**
- * Reports whether the connected database has the `place_population` table.
+ * Returns whether the connected database has the `place_population` table.
  */
 export function placePopulationExists<DB>(db: DatabaseClient<DB>): boolean {
 	return tableExists(db, PLACE_POPULATION_TABLE)

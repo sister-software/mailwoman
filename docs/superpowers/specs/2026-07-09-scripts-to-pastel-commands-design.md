@@ -1,21 +1,21 @@
 # Scripts → Pastel commands: the framework-consistency arc
 
-**Date:** 2026-07-09 · **Status:** SHIPPED 2026-07-10 (phases 0–5 merged to main; follow-ups all closed 2026-07-10: fleet retrofit, regen churn landed properly, build-demo-assets.ts deleted with the run-docs skill repointed at the plugin)
+**Date:** 2026-07-09 · **Status:** Shipped 2026-07-10. Phases 0–5 merged to main. All follow-ups closed on 2026-07-10: the fleet retrofit, the regenerated-output churn, and the deletion of build-demo-assets.ts with the run-docs skill repointed at the plugin.
 **Driver:** Operator directive: "all our scripts live in their respective packages and there's a consistent use of the framework instead of all these horrible little scripts."
-**Prior art:** `2026-07-07-scripts-drawer-to-zero.md` (executed — moved script logic into packages as modules, deferred commands as "a later nicety"; this arc is that later) and `2026-07-07-scripts-cleanup-gazetteer-cli-design.md` (the gazetteer half, shipped).
+**Prior art:** `2026-07-07-scripts-drawer-to-zero.md` (executed) moved script logic into packages as modules and deferred commands as "a later nicety". This arc does that deferred work. `2026-07-07-scripts-cleanup-gazetteer-cli-design.md` covered the gazetteer half and has shipped.
 
 ## Decisions (operator-confirmed 2026-07-09)
 
-1. **Scope:** corpus/scripts, codegen/lint (`mailwoman dev`), registry/tiger/coarse-placer tools, and the eval harness. Release-it hook scripts stay plain (release-it invokes them headless; a compile step in the release path adds nothing).
-2. **Logic home:** the owning workspace (`corpus/tools/`, `registry/tools/`, …). Command `.tsx` files are thin wrappers in `mailwoman/commands/` (Pastel file-routing requires they live there).
-3. **WOF bins:** absorb into `mailwoman gazetteer` and delete all four `resolver-wof-sqlite` bins. **Slim is deprecated — verified:** the demo runtime's `hasWOFDB` branch loads the version-independent candidate table via httpvfs (`docs/src/pages/demo/_app.tsx:431` → `WOFCandidateTableLookup`); `wof-hot.db` is never fetched. `buildSlimWOFDatabase` (the module) survives solely as the resolver-wof-wasm test-fixture builder. **Bellwether: the demo production smoke stays green.**
-4. **Lookup bins (timezone/nuts/un-locode):** stay lean `parseArgs` — the sanctioned exception (consumer-facing micro-packages; ink+react+zod+commander dep weight is hostile there). Documented below as policy.
-5. **Duplicated helpers** get folded into `@mailwoman/core` or the owning package as part of each phase (operator: "move them to core or their respective packages").
-6. **`sdk/` naming:** `sdk` submodules mean _data acquisition_ (`ban/sdk`, `osm/sdk`, `tiger/sdk` fit; `spatial/sdk` is a borderline data-format case, left alone). `mailwoman/sdk` violates this — it holds CLI helper types + the parser test harness. Both move out (§4).
+1. **Scope:** corpus/scripts, codegen/lint (`mailwoman dev`), registry/tiger/coarse-placer tools, and the eval harness. Release-it hook scripts stay plain because release-it runs them headless and a compile step in the release path would add nothing.
+2. **Logic home:** the owning workspace (`corpus/tools/`, `registry/tools/`, …). Command `.tsx` files are thin wrappers in `mailwoman/commands/`, because Pastel file-routing requires them there.
+3. **WOF bins:** absorb them into `mailwoman gazetteer` and delete all four `resolver-wof-sqlite` bins. **Slim is deprecated, and we verified that nothing loads it.** The demo runtime's `hasWOFDB` branch loads the version-independent candidate table through httpvfs (`docs/src/pages/demo/_app.tsx:431` → `WOFCandidateTableLookup`) and never fetches `wof-hot.db`. The `buildSlimWOFDatabase` module survives only as the resolver-wof-wasm test-fixture builder. **The demo production smoke test must stay green.**
+4. **Lookup bins (timezone/nuts/un-locode):** these keep lean `parseArgs` as the sanctioned exception. They are consumer-facing micro-packages, and the ink+react+zod+commander dependency weight is too heavy for them. The policy is documented below.
+5. **Duplicated helpers** move into `@mailwoman/core` or the owning package during each phase (operator: "move them to core or their respective packages").
+6. **`sdk/` naming:** `sdk` submodules mean _data acquisition_. `ban/sdk`, `osm/sdk`, and `tiger/sdk` fit. `spatial/sdk` is a borderline data-format case and stays as is. `mailwoman/sdk` breaks the convention because it holds CLI helper types and the parser test harness. Both move out (§4).
 
 ## 1. Target command tree
 
-Every table row = one thin `.tsx` in `mailwoman/commands/…` wrapping a `run()`-style module in the listed workspace. Scripts are deleted once their command exists and references are repointed.
+Each table row is one thin `.tsx` in `mailwoman/commands/…` that wraps a `run()`-style module in the listed workspace. A script is deleted once its command exists and all references point at the command.
 
 ### `mailwoman corpus` (existing group, gains)
 
@@ -30,7 +30,7 @@ Every table row = one thin `.tsx` in `mailwoman/commands/…` wrapping a `run()`
 | `corpus golden promote`     | `corpus/scripts/promote-golden.ts`                                                                                                         | `corpus/tools/golden-promote.ts`                                        |
 | — (fold)                    | `corpus/scripts/run-corpus-build.ts`                                                                                                       | duplicate of existing `corpus run` (`runAdapter`) — verify, then delete |
 
-The source enum makes `fetch` one command rather than nine. Existing `mailwoman/corpus-tools/` (3 files backing align-extract/stats/overlay-manifest commands) migrates into `corpus/tools/` in the same phase so the corpus workspace owns all corpus logic — commands repoint, `mailwoman` already depends on `@mailwoman/corpus`.
+The source enum makes `fetch` one command instead of nine. The existing `mailwoman/corpus-tools/` (3 files behind the align-extract/stats/overlay-manifest commands) moves into `corpus/tools/` in the same phase, so the corpus workspace owns all corpus logic. The commands are repointed, and `mailwoman` already depends on `@mailwoman/corpus`.
 
 ### `mailwoman dev` (new group)
 
@@ -47,7 +47,7 @@ The source enum makes `fetch` one command rather than nine. Existing `mailwoman/
 
 ### `mailwoman eval` (new group)
 
-Logic lands in **`mailwoman/eval-harness/`** — deliberate deviation from owning-workspace: no workspace owns evals, and a private evals workspace can't be a dependency of the published CLI. Follows the `gazetteer-pipeline` precedent. Check-threshold JSONs (`scripts/eval/checks/*.json`) and fixtures move with it; the ledger (`evals/scores-by-version.json`) stays at repo root (data rather than code).
+Logic lands in **`mailwoman/eval-harness/`**. This deliberately departs from the owning-workspace rule: no workspace owns evals, and the published CLI cannot depend on a private evals workspace. The `gazetteer-pipeline` module set the same precedent. Check-threshold JSONs (`scripts/eval/checks/*.json`) and fixtures move with the harness. The ledger (`evals/scores-by-version.json`) is data, so it stays at the repo root.
 
 | Command                      | Source script                                                                               |
 | ---------------------------- | ------------------------------------------------------------------------------------------- |
@@ -61,7 +61,7 @@ Logic lands in **`mailwoman/eval-harness/`** — deliberate deviation from ownin
 | `eval mask-regression`       | `scripts/eval/mask-regression-check.ts`                                                     |
 | `eval es-postcode-centroids` | `scripts/eval/overture-es-postcode-centroids.ts` (RELEASING.md repoints)                    |
 
-**Probe triage (the ~100-file long tail):** the rule is mechanical — a script referenced by CI, a skill, RELEASING.md, or another surviving script gets a command; every other probe moves to `scripts/diagnostic/` (the gitignored graveyard; git history preserves tracked ones at their old paths). `scripts/eval/record-matcher/` (train-gbt + learned-scorer evals) moves to `registry/tools/` with the registry phase, per the drawer spec's original intent. Python eval scripts (`fit-*.py`, `calibration-drift-guard.py`) are exempt (Python).
+**Probe triage (the ~100-file long tail):** a script gets a command if CI, a skill, RELEASING.md, or another surviving script references it. Every other probe moves to the gitignored `scripts/diagnostic/`, and git history keeps tracked probes at their old paths. `scripts/eval/record-matcher/` (train-gbt + learned-scorer evals) moves to `registry/tools/` in the registry phase, as the drawer spec originally intended. Python eval scripts (`fit-*.py`, `calibration-drift-guard.py`) are exempt because they are Python.
 
 ### `mailwoman registry` (single command → group; existing `registry.tsx` moves to `commands/registry/run.tsx` with `isDefault: true`, so bare `mailwoman registry` behaves exactly as today)
 
@@ -82,11 +82,11 @@ Logic lands in **`mailwoman/eval-harness/`** — deliberate deviation from ownin
 | `tiger race-dots`     | `tiger/tools/race-dots.ts`     |                                                     |
 | `tiger race-dots-map` | `tiger/tools/race-dots-map.ts` | `--serve` flag absorbs `tiger/tools/serve-range.ts` |
 
-**Latent bug fixed here:** `mailwoman/package.json` has no `@mailwoman/tiger` dependency though `commands/tiger/` exists — add it.
+**Latent bug fixed here:** `mailwoman/package.json` lacks a `@mailwoman/tiger` dependency even though `commands/tiger/` exists. Add the dependency.
 
 ### `mailwoman placer` (new group)
 
-Logic stays in `core/coarse-placer/tools/`. Namespace name: `placer` (short domain noun matching the existing style; help text says "coarse placer (#244)").
+Logic stays in `core/coarse-placer/tools/`. The namespace is `placer`, a short domain noun that matches the existing style. Its help text says "coarse placer (#244)".
 
 | Command                                                    | Source                                                                                                                                         |
 | ---------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -105,20 +105,20 @@ Logic stays in `core/coarse-placer/tools/`. Namespace name: `placer` (short doma
 | — (exists)                         | `resolver-wof-sqlite/build-candidate-cli.ts`        | `gazetteer build candidate` already shipped — bin deleted                                                                                     |
 | — (none)                           | `resolver-wof-sqlite/build-slim-cli.ts`             | deprecated: no command; bin deleted; demo-assets plugin's slim leg (`docs/plugins/demo-assets/resolve.ts:405-440`) removed in the same change |
 
-All four `bin` entries leave `resolver-wof-sqlite/package.json`. `build-fts-cli.test.ts` retargets the module API (`buildPlaceSearchFTS`) or the new command's run-function. Breaking for the published package — accepted (operator call). Verify `mailwoman` has the `@mailwoman/resolver-wof-sqlite` dep the gazetteer commands need (today it may ride transitively).
+All four `bin` entries leave `resolver-wof-sqlite/package.json`. `build-fts-cli.test.ts` retargets either the module API (`buildPlaceSearchFTS`) or the new command's run function. The operator accepted that this breaks the published package. Verify that `mailwoman` declares the `@mailwoman/resolver-wof-sqlite` dependency the gazetteer commands need, since today it may arrive only transitively.
 
 ## 2. What stays, deliberately
 
-- **Release tooling** (`scripts/copy-weights.ts`, `publish-workspace.ts`, `publish-release-to-hf.ts`, `bless-package.ts`, `check-release-parity.ts`, `rewrite-workspace-imports.ts`, `verify-*`, `smoke-*`, `publish-demo-assets-to-r2.py`) — release-it/CI residents, headless by design.
-- **The 3 lookup bins** — lean `parseArgs`, documented policy: _standalone published micro-packages do not take the Ink/Pastel dependency; `node:util` parseArgs is their standard._
-- **`scripts/diagnostic/`** — the gitignored graveyard, now also receiving the triaged probes.
-- **corpus-python** — Python; `train_with_resume.ts` keeps its documented `cliArguments` passthrough.
+- **Release tooling** (`scripts/copy-weights.ts`, `publish-workspace.ts`, `publish-release-to-hf.ts`, `bless-package.ts`, `check-release-parity.ts`, `rewrite-workspace-imports.ts`, `verify-*`, `smoke-*`, `publish-demo-assets-to-r2.py`) stays because release-it and CI run it headless.
+- **The 3 lookup bins** keep lean `parseArgs` under a documented policy: _standalone published micro-packages do not take the Ink/Pastel dependency; `node:util` parseArgs is their standard._
+- **`scripts/diagnostic/`** stays gitignored and now also receives the triaged probes.
+- **corpus-python** stays Python. `train_with_resume.ts` keeps its documented `cliArguments` passthrough.
 
-**Deletions:** `docs/scripts/build-demo-assets.ts` (self-deprecated), `scripts/generate.ts` (dead WOF port), `corpus/scripts/run-corpus-build.ts` (duplicate of `corpus run` — verify first), stale `RELEASING.md` reference to `build-candidate-geonames-aliases.ts`.
+**Deletions:** `docs/scripts/build-demo-assets.ts` (self-deprecated), `scripts/generate.ts` (dead WOF port), `corpus/scripts/run-corpus-build.ts` (a duplicate of `corpus run`, to be verified first), and the stale `RELEASING.md` reference to `build-candidate-geonames-aliases.ts`.
 
 ## 3. The dedupe program (2026-07-09 survey; counts = in-scope call sites)
 
-New core helpers follow the acronym-casing convention (`readJSONL` rather than `readJsonl`) so they don't join the #875 debt. Phase 0 lands the core helpers; later phases consume them as each script migrates — **no big-bang rewrite of untouched scripts**; a script's dedupe happens when it migrates (probes headed for `diagnostic/` are not rewritten).
+New core helpers follow the acronym-casing convention (`readJSONL` rather than `readJsonl`) so they do not add to the #875 debt. Phase 0 lands the core helpers, and later phases adopt them as each script migrates. **Untouched scripts are not rewritten in one pass.** A script is deduplicated when it migrates, and probes headed for `diagnostic/` are not rewritten.
 
 | #   | Concern                                                       | Sites                     | Destination                                                                                        |
 | --- | ------------------------------------------------------------- | ------------------------- | -------------------------------------------------------------------------------------------------- |
@@ -130,19 +130,19 @@ New core helpers follow the acronym-casing convention (`readJSONL` rather than `
 | 6   | hardcoded `$MAILWOMAN_DATA_ROOT`/`/data` literals             | ~13                       | `dataRootPath()` (exists) — excludes `build-transliteration-extract`'s deliberate rewrite prefixes |
 | 7   | coarse-placer FNV-1a `hash`                                   | 4                         | `core/coarse-placer/tools/shared.ts`                                                               |
 
-**Deliberately left:** byte-size formatting (1 file), CSV parsing (`ingest-csv`'s is deliberate), exec wrappers (three styles, no shared shape), padEnd table grids (37 bespoke), progress ticks (bespoke phrasing).
+**Deliberately left:** byte-size formatting (1 file), CSV parsing (`ingest-csv`'s parser is deliberate), exec wrappers (three styles without a shared shape), padEnd table grids (37 bespoke), and progress ticks (bespoke phrasing).
 
 ## 4. cli-kit: the framework layer (and the `sdk` correction)
 
-- `mailwoman/sdk/cli.ts` → **`mailwoman/cli-kit/`**. Gains the shared pieces the migration standardizes on:
-  - `useCommandTask<T>(task) → {status, result, error}` — one hook replacing the copy-pasted `useEffect`/`useState`/`setImmediate(process.exit)` dance in every command; owns exit-code discipline (error → 1, result-driven codes supported).
-  - `<CheckList checks>` — the ✓/✗ + PASS/FAIL renderer (`gazetteer/verify.tsx` pattern, extracted).
-  - The existing `CommandComponent`/`PositionalCommandComponent` types.
+- `mailwoman/sdk/cli.ts` → **`mailwoman/cli-kit/`**. It gains the shared pieces the migration standardizes on:
+  - `useCommandTask<T>(task) → {status, result, error}` is one hook that replaces the copy-pasted `useEffect`/`useState`/`setImmediate(process.exit)` sequence in every command. It sets exit codes (error → 1) and supports result-driven codes.
+  - `<CheckList checks>` is the ✓/✗ + PASS/FAIL renderer, extracted from the `gazetteer/verify.tsx` pattern.
+  - The existing `CommandComponent`/`PositionalCommandComponent` types move with it.
 - `mailwoman/sdk/test/` → **`mailwoman/test-kit/`**.
-- Both `./sdk/cli` and `./sdk/test` are published subpath exports (5.x) — they become **deprecated re-export shims** pointing at the new modules, removed at the next major (bundle with the #875 batch). New subpaths `./cli-kit`, `./test-kit` added to **both** exports maps (dev `node→.ts` and `publishConfig.exports`).
-- `sdk` submodule meaning is restored: data acquisition only. Add one line to AGENTS.md saying so.
+- `./sdk/cli` and `./sdk/test` are published subpath exports (5.x). They become **deprecated re-export shims** that point at the new modules and are removed at the next major, together with the #875 batch. The new subpaths `./cli-kit` and `./test-kit` are added to **both** exports maps (dev `node→.ts` and `publishConfig.exports`).
+- `sdk` submodules go back to meaning data acquisition only. Add one line to AGENTS.md that says so.
 
-Commands remain TSX (compiled); tool modules in owning workspaces remain plain `.ts` (run directly under node during dev). A tool module's interface: `export async function run(options: X, report?: (line: string) => void): Promise<Result>` — no argv access, no `process.exit`, throw on failure. The command owns argv (zod), rendering, and exit codes. This is the isolation boundary that makes tools testable without Ink.
+Commands remain compiled TSX. Tool modules in owning workspaces remain plain `.ts` that node runs directly during development. A tool module exposes `export async function run(options: X, report?: (line: string) => void): Promise<Result>`. It does not read argv or call `process.exit`, and it throws on failure. The command owns argv parsing (zod), rendering, and exit codes. This separation lets tools be tested without Ink.
 
 ## 5. Phasing (one PR each, sequenced)
 
@@ -155,24 +155,24 @@ Commands remain TSX (compiled); tool modules in owning workspaces remain plain `
 | 4     | registry/tiger/placer groups + record-matcher scripts → registry/tools + tiger dep fix             | `--help` smokes; one figure render; placer eval parity on cached dataset                                                               |
 | 5     | eval: eval-harness module extraction + commands + probe triage → diagnostic/                       | **promotion-eval + gauntlet before/after parity: identical exit codes + artifacts on the same model**; RELEASING.md + skills repointed |
 
-Phase 5 last because the checks guard releases — nothing else may wobble while they move. Phases 1/2/4 are independent after 0.
+Phase 5 runs last because a release requires these checks to pass, and nothing else should change while they move. Phases 1, 2, and 4 are independent of each other once phase 0 lands.
 
 ## 6. Risks + interfaces
 
-- **Check parity is the hard interface:** `eval promote`/`eval gauntlet` must reproduce the old scripts' exit codes, stdout verdict lines consumed by the operator, and artifact paths (ledger append command printed on pass). Run both on the same model before deleting.
-- **Reference repoints** (enumerated during each phase's plan): RELEASING.md, `.agents/skills/{mailwoman-release,wof-build,night-shift,eval-model}`, `.pi/prompts/release-check.md`, root `package.json` scripts (`ci:smoke` untouched), workflows.
-- **Published-surface changes:** resolver-wof-sqlite loses 4 bins (breaking, accepted); `mailwoman` `./sdk/*` shimmed not removed; `mailwoman` gains `@mailwoman/tiger` (+ possibly resolver-wof-sqlite) deps — check publish weight impact is nil (deps already in the workspace tree).
-- **Pastel flag-prop caveat** (AGENTS.md): kebab flags bind lowercase-acronym props (`--resolve-db` → `resolveDB`) — schema keys must match Pastel's derivation; keep the existing exception note.
-- **Compile requirement:** new commands only run via the compiled CLI (`node mailwoman/out/cli.js`) — dev loop for tool logic stays plain-node via the tool modules.
+- **Check parity is the strictest interface.** `eval promote` and `eval gauntlet` must reproduce the old scripts' exit codes, the stdout verdict lines the operator reads, and the artifact paths, including the ledger append command printed on a pass. Run old and new on the same model before deleting the old scripts.
+- **Reference repoints** (listed in each phase's plan): RELEASING.md, `.agents/skills/{mailwoman-release,wof-build,night-shift,eval-model}`, `.pi/prompts/release-check.md`, root `package.json` scripts (`ci:smoke` untouched), and workflows.
+- **Published-surface changes:** resolver-wof-sqlite loses 4 bins, which is a breaking change the operator accepted. `mailwoman` keeps `./sdk/*` as shims. `mailwoman` gains the `@mailwoman/tiger` dependency and possibly resolver-wof-sqlite. Check that publish weight does not grow, since these dependencies are already in the workspace tree.
+- **Pastel flag-prop caveat** (AGENTS.md): kebab flags bind to lowercase-acronym props (`--resolve-db` → `resolveDB`). Schema keys must match Pastel's derivation. Keep the existing exception note.
+- **Compile requirement:** new commands run only through the compiled CLI (`node mailwoman/out/cli.js`). During development, tool logic still runs under plain node through the tool modules.
 
 ## 7. Success metrics
 
 - [ ] `corpus/scripts/` deleted; corpus logic lives in `corpus/tools/` behind `mailwoman corpus …`
 - [ ] `scripts/` top level = release tooling + configs only (codegen/lint gone to `mailwoman dev`)
-- [ ] `scripts/eval/` reduced to Python calibration scripts + `checks` data consumed by eval-harness — or empty if those move directly; probes in `diagnostic/`
+- [ ] `scripts/eval/` holds only Python calibration scripts and the `checks` data eval-harness reads, or is empty if those move directly; probes live in `diagnostic/`
 - [ ] `registry/tools/`, `tiger/tools/`, `core/coarse-placer/tools/` all reachable via commands
 - [ ] resolver-wof-sqlite has zero `bin` entries; demo smoke green
 - [ ] `mailwoman/sdk/` gone (shims at old subpaths); `sdk` = data acquisition everywhere
-- [ ] Every command uses `useCommandTask`/cli-kit; zero copy-pasted runner dances
+- [ ] Every command uses `useCommandTask`/cli-kit, and no command carries a copy-pasted runner
 - [ ] Dedupe table §3 executed for all migrated code; survey re-run shows no new duplicates in migrated trees
 - [ ] `yarn lint`, `yarn compile`, full test suite, promotion-eval + gauntlet parity, demo smoke — all green at each phase boundary

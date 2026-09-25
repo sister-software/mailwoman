@@ -28,43 +28,45 @@ const MIN_TRIPLE_SOURCES = 3
  */
 export interface CrossDatasetCorrelationOptions {
 	/**
-	 * Creates the geocoder the sampled rows are resolved with; the command supplies
-	 * one backed by the mailwoman geocoder.
+	 * Creates the geocoder that resolves the sampled rows.
 	 */
 	createGeocoder: EvalGeocoderFactory
 
 	/**
-	 * The record-matcher sources directory, default `$MAILWOMAN_DATA_ROOT/record-matcher/sources`.
+	 * The record-matcher sources directory.
+	 *
+	 * It defaults to `$MAILWOMAN_DATA_ROOT/record-matcher/sources`.
 	 */
 	sources?: string
 
 	/**
-	 * The number of in-state rows sampled per source for geocoding, default 300.
+	 * The number of in-state rows sampled per source for geocoding.
+	 * It defaults to 300.
 	 */
 	cap?: number
 
 	/**
-	 * The state filter, default `TX`.
+	 * The state filter.
+	 * It defaults to `TX`.
 	 */
 	state?: string
 
 	/**
-	 * Whether to scan every in-state row to build a corpus-wide address-frequency
-	 * table for the matcher, default true.
+	 * Whether to scan every in-state row to build a corpus-wide address-frequency table.
+	 * It defaults to true.
 	 *
-	 * The statistic cannot come from the sample alone.
-	 * The scan reads the full source files, including the multi-gigabyte NPPES file;
-	 * `false` skips it and lets `resolveEntities` use frequencies from its own input.
+	 * The scan reads the full source files, including the multi-gigabyte NPPES file.
+	 * When it is false, `resolveEntities` computes frequencies from the sample alone.
 	 */
 	corpusFrequency?: boolean
 
 	/**
-	 * A path to also write the Markdown report to.
+	 * An optional path for the Markdown report.
 	 */
 	outMd?: string
 
 	/**
-	 * A path to also write the entity GeoJSON FeatureCollection to.
+	 * An optional path for the entity GeoJSON FeatureCollection.
 	 */
 	outGeojson?: string
 }
@@ -118,11 +120,11 @@ const commitmentsSpec = (S: string, STATE: string): SourceSpec => ({
 })
 
 /**
- * Geocodes a sample of each source dataset in one state, resolves records into entities
- * across sources, and returns a markdown report of the cross-source links.
+ * Geocodes a sample of each source dataset in one state, resolves the records into
+ * entities across sources, and returns a Markdown report of the cross-source links.
  *
- * Progress lines go to `report`, and the report and GeoJSON are also written
- * when `outMd` or `outGeojson` is set.
+ * Progress lines go to `report`.
+ * The function also writes the report and GeoJSON when `outMd` or `outGeojson` is set.
  */
 export async function crossDatasetCorrelation(
 	options: CrossDatasetCorrelationOptions,

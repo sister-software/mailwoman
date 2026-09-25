@@ -5,7 +5,7 @@ reads one interface instead of inferring the shape from an existing implementati
 inherits from these: they are structural, checked by mypy and by `isinstance` in tests.
 
 Each member below is a shape the tree already carries. A protocol that describes an interface
-nobody implements reads as a interface and enforces nothing, so a member is added here when the
+nobody implements reads as a promise and enforces nothing, so a member is added here when the
 code it names exists rather than in anticipation of it.
 """
 

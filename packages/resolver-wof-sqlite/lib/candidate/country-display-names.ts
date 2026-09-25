@@ -14,8 +14,9 @@ import { normalizeLocalityForKey } from "#street/normalize"
  * locales as a non-primary key on that country's candidate row.
  *
  * The row's display name is unchanged, so a query such as `格鲁吉亚` resolves to the existing Georgia row.
+ * When several country rows share an ISO code, the most populous one receives the keys.
  *
- * @returns The number of rows staged; zero means ICU supplied no new names.
+ * @returns The number of rows staged.
  */
 export function stageCountryDisplayNames(ctx: {
 	attrs: Map<number, PlaceAttrs>

@@ -19,7 +19,7 @@ West 26th Street, New York, NYC, 10010
 
 ## Step 1 — Tokenization
 
-The input string is split into **tokens** — single words or punctuation marks. Tokenization is more than `string.split(" ")` because Mailwoman keeps track of where each token came from in the original string.
+The input string is split into **tokens**, which are single words or punctuation marks. Tokenization is more than `string.split(" ")` because Mailwoman keeps track of where each token came from in the original string.
 
 ```mermaid
 flowchart LR
@@ -33,9 +33,9 @@ flowchart LR
     A --> H["10010"]
 ```
 
-Each token carries metadata: its character position in the original string, what kind of separator came before it (`comma`, `space`, `tab`, `newline`), and what other tokens it is grouped with. The grouping idea — Mailwoman calls these **sections** — is important: tokens that are separated by commas typically belong to different address components, so the solver treats them differently.
+Each token carries metadata: its character position in the original string, what kind of separator came before it (`comma`, `space`, `tab`, `newline`), and what other tokens it is grouped with. Mailwoman calls these groups **sections**. They matter because tokens separated by commas typically belong to different address components, so the solver treats them differently.
 
-Tokenization is also the place where pre-processing happens: lowercase normalization, abbreviation expansion (`St.` → `Street`), and accent handling for non-English input.
+Tokenization also performs pre-processing: lowercase normalization, abbreviation expansion (`St.` → `Street`), and accent handling for non-English input.
 
 Deep dive: [`concepts/tokenization.md`](../../concepts/tokenization.mdx).
 
@@ -45,10 +45,10 @@ Each token is shown to **every rule classifier** in parallel. A rule classifier 
 
 Examples of rule classifiers in Mailwoman v1:
 
-- `house_number` — does this token look like a number (with optional letter suffix like `123A`)?
-- `postcode` — does this token match a country-specific postcode pattern? (`10010` matches the US 5-digit pattern; `75008` matches the FR 5-digit pattern.)
-- `street_prefix` — is this token a known direction (`North`, `West`, `SE`) or a known street-type prefix (`Avenue`, `Rue`, `Boulevard`)?
-- `whos_on_first` — is this token (or this short phrase) found in the Who's On First gazetteer as the name of a country, region, locality, or neighborhood?
+- `house_number` asks whether this token looks like a number, with an optional letter suffix like `123A`.
+- `postcode` asks whether this token matches a country-specific postcode pattern. `10010` matches the US 5-digit pattern, and `75008` matches the FR 5-digit pattern.
+- `street_prefix` asks whether this token is a known direction (`North`, `West`, `SE`) or a known street-type prefix (`Avenue`, `Rue`, `Boulevard`).
+- `whos_on_first` asks whether this token or short phrase appears in the Who's On First gazetteer as the name of a country, region, locality, or neighborhood.
 
 Each classifier produces zero or more **classifications** for each token. A classification is a triple:
 
@@ -61,7 +61,7 @@ A single token can collect multiple classifications. For our example, `New` migh
 - `{ component: "locality", confidence: 0.4, source: "rule:whos_on_first" }` (because "New" alone matches a few WOF entries)
 - `{ component: "street_prefix", confidence: 0.1, source: "rule:street_prefix" }` (because "New" sometimes precedes a street name)
 
-This is intentional: rule classifiers are allowed to be **uncertain and contradictory**. The next step resolves the contradiction.
+Rule classifiers are intentionally allowed to be **uncertain and contradictory**. The next step resolves the contradiction.
 
 Deep dive: [`concepts/rule-based-classifiers.md`](../../concepts/rule-based-classifiers.mdx).
 
@@ -73,7 +73,7 @@ The **solver** looks at all the classifications produced for all the tokens and 
 - Components do not overlap on the same tokens.
 - The combination obeys soft preferences (a US-style postcode after a region is more likely than a postcode at the start, for example).
 
-Mailwoman v1's solver is an `ExclusiveCartesianSolver` with filters and augmenters. In plain terms: it generates every plausible combination, filters out the ones that violate the hard rules, scores the rest, and returns them ranked.
+Mailwoman v1's solver is an `ExclusiveCartesianSolver` with filters and augmenters. It generates every plausible combination, filters out the ones that violate the hard rules, scores the rest, and returns them ranked.
 
 For our example, a top-ranked output looks like:
 
@@ -88,24 +88,24 @@ For our example, a top-ranked output looks like:
 ]
 ```
 
-Notice the two `locality` candidates. The solver returns multiple ranked solutions; the consumer (the CLI, the API) picks the top one or shows all of them.
+Notice the two `locality` candidates. The solver returns multiple ranked solutions, and the consumer (the CLI, the API) picks the top one or shows all of them.
 
 ## Step 4 — Resolve
 
-Parsing answered "what kind of thing is each part of this string?". Resolving answers "where is the resulting place?". The parsed components are looked up in a gazetteer — Who's On First, in Mailwoman's case — and the gazetteer returns coordinates, a stable place ID, and optionally a bounding box.
+Parsing answered "what kind of thing is each part of this string?". Resolving answers "where is the resulting place?". The resolver looks up the parsed components in a gazetteer (Who's On First, in Mailwoman's case), and the gazetteer returns coordinates, a stable place ID, and optionally a bounding box.
 
 The resolver is a separate concern from the parser. Read about it in [`concepts/resolver-and-wof.md`](../../concepts/resolver-and-wof.mdx).
 
 ## What this approach is good at
 
-- **Determinism.** A rule classifier produces the same answer on the same input every time. No retraining, no randomness.
+- **Determinism.** A rule classifier produces the same answer on the same input every time, without retraining or randomness.
 - **Explainability.** When the parser is wrong, you can read the rule and see why.
-- **Fast iteration on a single bug.** "The postcode pattern misses Canadian H1A-X9X" is a one-line code change.
+- **Fast iteration on a single bug.** Fixing "the postcode pattern misses Canadian H1A-X9X" is a one-line code change.
 
 ## What this approach is bad at
 
-- **The long tail.** Every new address shape needs a new rule or a tweak to an existing one. The list of rules grows forever.
-- **Words that look like multiple things.** "Buffalo" is a US locality, a venue name (Buffalo Wild Wings), and an animal. Rules can declare all three; only data can rank them.
+- **The long tail.** Every new address shape needs a new rule or a tweak to an existing one, so the list of rules never stops growing.
+- **Words that look like multiple things.** "Buffalo" is a US locality, a venue name (Buffalo Wild Wings), and an animal. Rules can declare all three readings, but only data can rank them.
 - **Multi-word components.** "Saint Petersburg" is one locality rather than two. A rule that recognises common multi-word names is brittle.
 - **Languages other than English.** Every locale needs its own rule set, hand-written, by someone who reads that language well.
 

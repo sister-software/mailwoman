@@ -9,8 +9,7 @@ import type { CandidateTable } from "#candidate/schema"
 /**
  * The candidate-row fields that {@link rankByPrimaryPreference} reads.
  *
- * `is_primary` is optional so a reader over an older artifact without the column
- * gets no re-rank rather than an error.
+ * `is_primary` is optional, so an older artifact without the column skips the re-rank without an error.
  */
 export type PrimaryPreferenceRow = Pick<CandidateTable, "neg_rank" | "country_id"> &
 	Partial<Pick<CandidateTable, "is_primary" | "placetype_id" | "population" | "name_role">>
@@ -19,8 +18,7 @@ export type PrimaryPreferenceRow = Pick<CandidateTable, "neg_rank" | "country_id
  * The log10-population penalty applied to an alias row when the top primary-name
  * row for the same key is in another country.
  *
- * It is a bounded prior, not a sort key: an alias at least 10x more populous still wins,
- * so alt-names such as "LA" keep working.
+ * An alias at least 10 times as populous still wins, so alternate names such as "LA" keep working.
  */
 export const PRIMARY_PREFERENCE_LOG10 = 1
 
@@ -30,28 +28,28 @@ const SEAT_PLACETYPE = "locality"
  * The number of population-ordered rows fetched per name key before
  * {@link rankByPrimaryPreference} re-ranks them.
  *
- * Fetching only the caller's `limit` could leave the intended primary below a
- * cluster of more populous foreign aliases.
+ * A fetch of only the caller's `limit` could miss the intended primary behind more populous foreign aliases.
  */
 export const RERANK_FETCH = 64
 
 /**
- * A candidate row annotated with its re-ranked `effectiveNegRank` and
- * whether the penalty `demoted` it out of the exact tier.
+ * A candidate row with its re-ranked `effectiveNegRank` and its `demoted` flag.
  */
 export type RankedRow<R> = R & {
 	/**
-	 * `neg_rank` plus any cross-country alias penalty, the value rows are ordered by
-	 * and the source of the emitted `prominence`.
+	 * `neg_rank` plus any cross-country alias penalty.
 	 *
-	 * The raw `neg_rank` is kept for the resolver's minimum winning score.
+	 * Rows are ordered by this value, and the emitted `prominence` derives from it.
+	 *
+	 * The raw `neg_rank` stays on the row for the resolver's minimum winning score.
 	 */
 	effectiveNegRank: number
 
 	/**
-	 * True when this row is a cross-country alias that the penalty pushed behind the same-key primary.
+	 * True when this row is a cross-country alias that the penalty moved behind
+	 * the top primary for the same key.
 	 *
-	 * A demoted row loses `exactMatch`, so the resolver's country pin cannot carry
+	 * A demoted row loses `exactMatch`, so the resolver's country pin cannot promote
 	 * a coincidental foreign exonym back over the primary.
 	 * A dominant alias and a same-country alias are never demoted.
 	 */
@@ -60,31 +58,31 @@ export type RankedRow<R> = R & {
 	/**
 	 * True when this row came from the typo-correction fallback, which runs only after the exact probes miss.
 	 *
-	 * Such a row is still returned and ranked, but never claims `exactMatch`.
+	 * The row is still returned and ranked, but it never claims `exactMatch`.
 	 */
 	fuzzy?: boolean
 
 	/**
-	 * Whether the row lies inside the query's region qualifier, stamped by the candidate
-	 * lookup when the artifact carries the ancestors sidecar.
+	 * Whether the row lies inside the query's region qualifier.
 	 *
-	 * Absence means the question was never asked, not that the row is outside the region.
+	 * The candidate lookup sets it when the artifact has the ancestors sidecar.
+	 *
+	 * When the field is absent, containment was not checked.
 	 */
 	containedByQualifier?: boolean
 
 	/**
-	 * Present only when the variant-alias exemption spared this row the cross-country
-	 * alias penalty it would otherwise have taken.
+	 * Set only when the variant-alias exemption spared this row the cross-country alias penalty.
 	 */
 	variantExempted?: true
 }
 
 /**
  * Re-ranks population-ordered candidate rows so a cross-country alias must beat the top
- * primary by `delta` in log10 population, then returns the top `limit`.
+ * primary by `delta` in log10 population, and returns the top `limit` rows.
  *
  * When `placetypes` is given, an exact tie prefers a populated `locality`,
- * which orders a seat town ahead of its same-named, same-population district.
+ * which orders a seat town ahead of a district with the same name and population.
  */
 export function rankByPrimaryPreference<R extends PrimaryPreferenceRow>(
 	rows: readonly R[],

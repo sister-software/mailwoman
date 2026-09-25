@@ -1,20 +1,19 @@
 # `corpus-python` Layout Implementation Plan
 
-> **COMPLETE — merged to `main` 2026-09-12 at `5725f7bf5`.** All fourteen tasks landed and every §11
+> **Complete. Merged to `main` on 2026-09-12 at `5725f7bf5`.** All fourteen tasks landed and every §11
 > acceptance criterion in the spec passes: 2,448 tests, `mypy` clean over 208 source files, ruff check
 > and format clean over 315, bandit 0 issues, the Python prefix check at zero groups, root `yarn health`
-> and root `yarn test` (9,460 tests) green, and **no module over 500 lines, no function over 120**.
+> and root `yarn test` (9,460 tests) green. **Every module is at most 500 lines and every function at most 120.**
 >
-> The step checkboxes below were never ticked during execution and are left as written. They are the
-> plan as authored rather than a record of what happened. The record is the commit range and the criteria
-> above. One deviation from the spec is deliberate and documented there: the package is `evaluation/`,
+> The step checkboxes below were never ticked during execution and are left as written. They show the
+> plan as authored. The commit range and the criteria above record what happened. One deviation from the spec is deliberate and documented there: the package is `evaluation/`,
 > not `eval/`.
 
 > **For agentic workers:** required sub-skill: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Restructure `corpus-python/` from 48 flat modules plus a 5,278-line launcher into role directories at the package root with `countries/<cc>/` for country-specific code, adding declared protocols and training callbacks.
 
-**Architecture:** Follow `packages/corpus/lib` — role directories hold cross-country code, and the same role names nest under a country key for country-specific code. Value types move to a package-root `types.py` so the tokenizer/alignment cycle disappears. The Modal launcher becomes a package driven by a table instead of 57 cloned functions, which forces a rename off `modal/` because that directory shadows the Modal SDK once it is importable.
+**Architecture:** Follow the layout of `packages/corpus/lib`. Role directories hold cross-country code, and the same role names nest under a country key for country-specific code. Value types move to a package-root `types.py`, which removes the tokenizer/alignment import cycle. The Modal launcher becomes a package driven by a table instead of 57 cloned functions. The package cannot be named `modal/`, because a directory with that name shadows the Modal SDK once it is importable.
 
 **Tech Stack:** Python 3.12, `uv`, pytest, ruff 0.16.5, mypy strict, bandit, PyTorch 2.12.0, Modal.
 
@@ -25,11 +24,11 @@
 - Every command runs from `corpus-python/` unless the step says otherwise.
 - Run tests with `uv run --extra dev --extra train pytest tests -q`. The baseline is **983 passed, 11 skipped** in ~30 s. A task is not done below 983.
 - Never launch a training run. No step in this plan calls `modal run` against a GPU function.
-- Source lives under `src/mailwoman_train/`; tests mirror it under `tests/mailwoman_train/`.
+- Source lives under `src/mailwoman_train/`, and tests mirror it under `tests/mailwoman_train/`.
 - Acronyms capitalize as whole components in identifiers: `parseJSON` rather than `parseJson`. Python `snake_case` keeps its own convention (`onnx_path`), but a class is `ONNXExporter` rather than `OnnxExporter`.
-- `uvx ruff@0.16.5 check --fix .` and `uvx ruff@0.16.5 format .` after every move; ruff's `I` rule re-sorts imports and will otherwise fail CI.
+- Run `uvx ruff@0.16.5 check --fix .` and `uvx ruff@0.16.5 format .` after every move. Ruff's `I` rule re-sorts imports, and CI fails if they are left unsorted.
 - A comment states an invariant, a constraint, or why an obvious implementation is unsafe. Move history to the commit message. When moving a docstring that carries a measured number, the number travels with it.
-- No module in `src/mailwoman_train/` exceeds 500 lines; no function exceeds 120.
+- No module in `src/mailwoman_train/` exceeds 500 lines, and no function exceeds 120.
 - Commit after every task. Use `--no-verify` only when the pre-commit hook's Node half is unavailable in the worktree.
 
 ---
@@ -196,9 +195,9 @@ def test_piece_span_is_declared_in_types() -> None:
 uv run --extra dev --extra train pytest tests/mailwoman_train/test_import_hygiene.py -q
 ```
 
-Expected: both tests fail. The first lists exactly the five `tokenizer.py` sites at lines 541, 550, 566, 583 and 598 — and nothing else. The second fails with `ModuleNotFoundError: No module named 'mailwoman_train.types'`.
+Expected: both tests fail. The first lists exactly the five `tokenizer.py` sites at lines 541, 550, 566, 583 and 598, and no other sites. The second fails with `ModuleNotFoundError: No module named 'mailwoman_train.types'`.
 
-If the first test names more than those five, the cycle reachability walk is over-reaching; read the extra entries before weakening the assertion. If it names fewer, the walk is under-reaching and the detector is worthless. A false negative here is indistinguishable from a clean tree.
+If the first test lists more than those five, the cycle reachability walk is reporting too much. Read the extra entries before weakening the assertion. If it lists fewer, the walk is missing sites and the detector cannot be trusted, because a false negative here looks the same as a clean tree.
 
 - [ ] **Step 4: Create `types.py`**
 
@@ -245,7 +244,7 @@ from .country_lexicon import COUNTRY_FEATURE_DIM, realign_country_to_pieces
 from .gazetteer_anchor import realign_gazetteer_to_pieces, suppress_gazetteer_near_postcode
 ```
 
-Then delete the six `from .` lines inside `encode_with_features` at 541, 550, 566, 583 and 598, along with the two comment lines that explain the deferral ("Local import keeps tokenizer.py import-light…"). Leave every other comment in that function in place — they describe channel behavior rather than imports.
+Then delete the six `from .` lines inside `encode_with_features` at 541, 550, 566, 583 and 598, along with the two comment lines that explain the deferral ("Local import keeps tokenizer.py import-light…"). Leave every other comment in that function in place, because they describe channel behavior rather than imports.
 
 - [ ] **Step 7: Run the new test and the full suite**
 
@@ -285,7 +284,7 @@ git commit -m "refactor(train): move PieceSpan to types.py and remove the deferr
   - `mailwoman_train.corpora.builder`: `SCHEMA`, `RowRenderer`, `MAX_FIELD_CHARS`, `MAX_RENDERED_CHARS`, `coverage_stats`, `muni_bucket`, `select_exact`, `verify_record`, `water_fill`
   - JP-only names stay JP-only and move in Task 13: `JP_PREFECTURES`, `normalize_name`, `normalize_number`, `split_street`.
 
-This is the measured boundary — every name that crosses a builder today:
+These are the names that cross a builder boundary today, as measured:
 
 | Importer                                              | Takes from          | Names                                                                                                                                  |
 | ----------------------------------------------------- | ------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
@@ -297,7 +296,7 @@ This is the measured boundary — every name that crosses a builder today:
 | `tw_registry.py:29`                                   | `build_tw_slice`    | `ascii_digits`, `normalize_text`                                                                                                       |
 | `build_kr_slice.py:52`, `build_registry_corpus.py:34` | `build_cjk_overlay` | `verify_cn_record`                                                                                                                     |
 
-`BOARD_BUCKET_MIN` does not move. It is 90 in `build_tw_slice.py` and a different value in `build_jp_slice.py`; the two importers alias it apart (`JP_BOARD_BUCKET_MIN`, `TW_BOARD_BUCKET_MIN`). It is a per-country constant and stays with its country in Task 13.
+`BOARD_BUCKET_MIN` does not move. It is 90 in `build_tw_slice.py` and a different value in `build_jp_slice.py`, and the two importers alias the two values apart (`JP_BOARD_BUCKET_MIN`, `TW_BOARD_BUCKET_MIN`). It is a per-country constant and stays with its country in Task 13.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -365,7 +364,7 @@ A corpus builder is not a home for a helper five modules need. These names lived
 
 Move `fold_halfwidth_kana` (`build_jp_slice.py:178`) and `kanji_to_int` (`:212`) into `text/kana.py`, with their docstrings and any module-level regex or table they reference. Move `norm_key` from `build_jp_slice.py` and `ascii_digits` plus `normalize_text` from `build_tw_slice.py` into `text/normalize.py`.
 
-Carry each docstring verbatim. `normalize_name`'s docstring holds a measured number ("coverage read 1.000001, which is how a six-row defect announces itself") — that function stays in `build_jp_slice.py` for now and moves in Task 13, docstring intact.
+Carry each docstring verbatim. `normalize_name`'s docstring holds a measured number ("coverage read 1.000001, which is how a six-row defect announces itself"). That function stays in `build_jp_slice.py` for now and moves in Task 13 with its docstring intact.
 
 - [ ] **Step 5: Move the builder machinery**
 
@@ -413,7 +412,7 @@ git commit -m "refactor(train): give the shared CJK text helpers and row machine
 - Consumes: `mailwoman_train.types` (Task 1), `mailwoman_train.text.*` and `mailwoman_train.corpora.builder` (Task 2).
 - Produces: every module reachable at its new dotted path. No public function signature changes.
 
-Move in dependency order so each group's importers are already settled. `labels.py` has 55 importers and stays at the package root; `types.py` and `protocols.py` join it there.
+Move in dependency order so each group's importers are already settled. `labels.py` has 55 importers and stays at the package root, where `types.py` and `protocols.py` join it.
 
 | Group         | From                                                                                                    | To                                                                                                                              |
 | ------------- | ------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
@@ -459,7 +458,7 @@ __all__ = [
 ]
 ```
 
-Every other role `__init__.py` is a docstring only. Do not add re-exports to them: an importer names the module it wants, which is what keeps the tree readable.
+Every other role `__init__.py` contains only a docstring. Do not add re-exports to them. Each importer imports the specific module it wants, which keeps the tree readable.
 
 - [ ] **Step 1: Move one group**
 
@@ -483,7 +482,7 @@ Rewrite each hit to the new dotted path. A module that moved down one level need
 uv run --extra dev --extra train pytest tests -q
 ```
 
-Expected: at least **989 passed**. A failure here names exactly one unrepointed import — fix it and re-run before moving the next group.
+Expected: at least **989 passed**. A failure here points to exactly one import that still uses the old path. Fix it and re-run before moving the next group.
 
 - [ ] **Step 4: Lint and commit the group**
 
@@ -503,7 +502,7 @@ Fourteen groups, fourteen commits. Do not batch them: a single green suite per g
 uv run mypy
 ```
 
-Expected: clean. `config/schema.py` is 478 lines, under the 500 limit; `tokenizer/__init__.py` is 609 and Task 4 splits it.
+Expected: clean. `config/schema.py` is 478 lines, under the 500 limit. `tokenizer/__init__.py` is 609 lines, and Task 4 splits it.
 
 ---
 
@@ -659,7 +658,7 @@ Move `save_pretrained` (former `model.py:1160`) and `from_pretrained` (former `:
         serialization.save_pretrained(self, output_dir)
 ```
 
-Keep the classmethod shape of `from_pretrained` so `MailwomanCoarseEncoder.from_pretrained(model_dir)` still works — every checkpoint load in `train/` and `export/` calls it that way.
+Keep the classmethod shape of `from_pretrained` so `MailwomanCoarseEncoder.from_pretrained(model_dir)` still works, because every checkpoint load in `train/` and `export/` calls it that way.
 
 - [ ] **Step 5: Split `__init__` into named sub-builders**
 
@@ -677,7 +676,7 @@ The 405-line `__init__` assembles five independent pieces. Extract each into a p
         self._init_weights()
 ```
 
-Each `_build_*` method holds the lines it already held, unchanged. Keep the attribute names exactly as they are — `save_pretrained` writes a state dict keyed on them, and a rename silently invalidates every checkpoint on the Modal volume.
+Each `_build_*` method holds the lines it already held, unchanged. Keep the attribute names exactly as they are. `save_pretrained` writes a state dict keyed on them, so a rename silently invalidates every checkpoint on the Modal volume.
 
 - [ ] **Step 6: Split `forward` into staged helpers**
 
@@ -699,7 +698,7 @@ PY
 diff /tmp/encoder-reference.txt /tmp/encoder-after.txt && echo "IDENTICAL"
 ```
 
-Expected: `IDENTICAL`. A diff here means a sub-builder changed an initialization order — find it before continuing.
+Expected: `IDENTICAL`. A diff here means a sub-builder changed an initialization order. Find the change before continuing.
 
 - [ ] **Step 8: Run the suite and check sizes**
 
@@ -1009,7 +1008,7 @@ def default_callbacks(cfg: Config) -> list[TrainCallback]:
 
 - [ ] **Step 4: Rewrite `train()` to drive them**
 
-Replace the inline logging, eval, checkpoint and trackio blocks with hook calls at the same points in the loop. The loop keeps its own control flow — a callback never decides whether to continue.
+Replace the inline logging, eval, checkpoint and trackio blocks with hook calls at the same points in the loop. The loop keeps its own control flow, and a callback never decides whether to continue.
 
 - [ ] **Step 5: Run the suite**
 
@@ -1052,7 +1051,7 @@ git commit -m "feat(train): drive logging, eval, checkpointing and trackio throu
 - Consumes: `protocols.CountryModule` (Task 7), `text.kana`, `text.normalize`, `corpora.builder` (Task 2).
 - Produces: `countries.COUNTRY_MODULES: dict[str, CountryModule]` keyed by ISO 3166-1 alpha-2 lowercase (`"jp"`, `"kr"`, `"tw"`), and `countries.country_module(code) -> CountryModule` raising `KeyError` with the known codes listed.
 
-`JP_PREFECTURES`, `normalize_name`, `normalize_number` and `split_street` move from `build_jp_slice.py` to `countries/jp/text.py` here. `normalize_name`'s docstring carries a measured number — carry it verbatim.
+`JP_PREFECTURES`, `normalize_name`, `normalize_number` and `split_street` move from `build_jp_slice.py` to `countries/jp/text.py` here. `normalize_name`'s docstring carries a measured number, so move it verbatim.
 
 `BOARD_BUCKET_MIN` moves into each country's own module, resolving the aliasing at `build_registry_corpus.py:35-37`.
 
@@ -1131,7 +1130,7 @@ def registers() -> dict[str, Any]:
 
 The import at the top of that file is `from . import corpora, registers as _registers`, because the module-level function is named `registers` to match `protocols.CountryModule`. A country with no government register answers `{}`.
 
-Read `build_jp_slice.py`'s actual entry point before writing `build_corpus` — if its top-level builder has a different name or signature, match it rather than inventing one, and record the real signature in this task's commit message so Tasks 10-11 can rely on it.
+Read `build_jp_slice.py`'s actual entry point before writing `build_corpus`. If its top-level builder has a different name or signature, match it rather than inventing one, and record the real signature in this task's commit message so Tasks 10-11 can rely on it.
 
 - [ ] **Step 4: Move Korea, Taiwan and the CJK overlay**
 
@@ -1189,7 +1188,7 @@ def country_module(code: str) -> Any:
 grep -rn 'build_jp_slice\|build_kr_slice\|build_tw_slice\|build_cjk_overlay\|jp_registry\|kr_registry\|tw_registry\|kr_juso\|jp_kana' src tests scripts modal
 ```
 
-`build_registry_corpus.py` moves to `corpora/registry.py` and now imports `BOARD_BUCKET_MIN` from each country module, which removes the `JP_BOARD_BUCKET_MIN` / `TW_BOARD_BUCKET_MIN` aliases. `build_fragment_slice.py` and `build_secondary_slice.py` move to `corpora/fragment.py` and `corpora/secondary.py` — both have zero intra-package imports, so nothing repoints.
+`build_registry_corpus.py` moves to `corpora/registry.py` and now imports `BOARD_BUCKET_MIN` from each country module, which removes the `JP_BOARD_BUCKET_MIN` / `TW_BOARD_BUCKET_MIN` aliases. `build_fragment_slice.py` and `build_secondary_slice.py` move to `corpora/fragment.py` and `corpora/secondary.py`. Neither has an intra-package import, so no import needs repointing.
 
 - [ ] **Step 7: Run the suite**
 
@@ -1224,7 +1223,7 @@ git commit -m "refactor(train): key per-country code by country under countries/
 - Consumes: every role module.
 - Produces: `cli.main(argv=None)`, and one `cli/commands/<name>.py` per subcommand, each exporting `add_parser(subparsers) -> None` and `run(args) -> int`.
 
-`scripts/verify_toolchain.py` does not move. Measured reason: its imports are `importlib.metadata`, `re`, `sys`, `tomllib` and `pathlib` — standard library only — and `.husky/pre-commit:63` plus `package.json:54` invoke it as bare `python3` with no `uv run`. Folding it into the CLI would make the pre-commit hook depend on a synced venv.
+`scripts/verify_toolchain.py` does not move. It imports only the standard library (`importlib.metadata`, `re`, `sys`, `tomllib` and `pathlib`), and `.husky/pre-commit:63` and `package.json:54` invoke it as bare `python3` without `uv run`. Folding it into the CLI would make the pre-commit hook depend on a synced venv.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -1464,7 +1463,7 @@ grep -rn 'modal/train_remote\.py\|corpus-python/modal' --include='*.ts' --includ
 
 Rewrite each hit. The known set: `REPRODUCIBILITY.md:28,31`, `packages/mailwoman/lib/dev-tools/verify-export-quant-versions.run.ts:24`, `launch/AGENTS.md`, and the fixture strings in `packages/dev-mcp/test/unit/bash-write-guard.test.ts:85-89,95,154,204`.
 
-Leave `docs/records/` alone — those are dated point-in-time records and keep the path that was true when written.
+Leave `docs/records/` alone. Those files are dated records and keep the path that was correct when they were written.
 
 - [ ] **Step 5: the result still fires**
 
@@ -1527,11 +1526,11 @@ for name, spec in sorted(extract_sync_functions(Path('launch/train_remote.py').r
 "
 ```
 
-Transcribe each into a `CorpusVersion`. Read every one; the generator gives you the rows rather than the review.
+Transcribe each into a `CorpusVersion`. Read every one, because the generator produces the rows but does not review them.
 
 - [ ] **Step 3: Write the single sync function**
 
-`launch/sync.py` holds `plan_sync` (pure, no Modal, no network — this is what the parity test calls) and one `@app.function`-decorated `sync_corpus(version: str)` that runs the plan.
+`launch/sync.py` holds `plan_sync`, a pure function without Modal or network access that the parity test calls, and one `@app.function`-decorated `sync_corpus(version: str)` that runs the plan.
 
 - [ ] **Step 4: Run the parity test**
 
@@ -1539,7 +1538,7 @@ Transcribe each into a `CorpusVersion`. Read every one; the generator gives you 
 uv run --extra dev --extra train pytest tests/launch/test_sync_table_parity.py -q
 ```
 
-Expected: pass. A failure names the version whose generated commands differ from the frozen census. Fix the table entry, never the fixture.
+Expected: pass. On failure, the output reports the version whose generated commands differ from the frozen census. Fix the table entry, never the fixture.
 
 - [ ] **Step 5: Collapse the seven `mean_init_*`**
 
@@ -1556,7 +1555,7 @@ Expected: a count covering every surviving function. If the Modal version does n
 
 - [ ] **Step 7: Rewrite `launch/AGENTS.md` step 4**
 
-Step 4 currently reads "Add a `sync_v0XX` to `train_remote.py`, mirroring `sync_v050`". Rewrite it to describe adding a row to `launch/corpora.py`, and update every `modal run scripts/modal/train_remote.py::…` command in that file to `modal run -m launch.<module>`. That path prefix is stale twice over — `scripts/modal/` has not existed since the 2026-07-09 regroup.
+Step 4 currently reads "Add a `sync_v0XX` to `train_remote.py`, mirroring `sync_v050`". Rewrite it to describe adding a row to `launch/corpora.py`, and update every `modal run scripts/modal/train_remote.py::…` command in that file to `modal run -m launch.<module>`. That path prefix was already stale before this change, because `scripts/modal/` has not existed since the 2026-07-09 regroup.
 
 - [ ] **Step 8: Run everything and commit**
 
@@ -1617,7 +1616,7 @@ grep -rn 'mailwoman_corpus' --include='*.py' --include='*.toml' --include='*.jso
 git rm -r src/mailwoman_corpus
 ```
 
-Expected: the grep prints nothing before the delete. If it prints a hit, stop — the spec's claim of zero importers was measured on 2026-09-12 and something has changed.
+Expected: the grep prints nothing before the delete. If it prints a hit, stop. The spec measured zero importers on 2026-09-12, so something has changed since.
 
 - [ ] **Step 5: Write the Python prefix check**
 
@@ -1649,7 +1648,7 @@ yarn health
 yarn test
 ```
 
-Every one must pass. `yarn health` and `yarn test` need `node_modules` in the worktree; run `yarn install` first if they fail on a missing state file.
+Every one must pass. `yarn health` and `yarn test` need `node_modules` in the worktree. If they fail on a missing state file, run `yarn install` first.
 
 - [ ] **Step 8: Verify the size and hygiene criteria**
 

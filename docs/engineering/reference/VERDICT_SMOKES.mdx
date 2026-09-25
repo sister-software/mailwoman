@@ -6,40 +6,40 @@
 
 :::
 
-A **verdict smoke** is a short (few-hundred-to-few-thousand-step) training run whose only job is to decide whether a full-length training run is worth launching. The full run is expensive (rented GPU, ~6–10h); the smoke runs in minutes and is supposed to surface divergence, NaN, sampler starvation, and other recipe-level bugs before they cost a full-run.
+A **verdict smoke** is a short (few-hundred-to-few-thousand-step) training run whose only job is to decide whether a full-length training run is worth launching. The full run is expensive (rented GPU, ~6–10h). The smoke runs in minutes and should surface divergence, NaN, sampler starvation, and other recipe-level bugs before they cost a full run.
 
-This document captures the v0.4.0 meta-bug that made the framework unreliable, and the redesigned framework v0.5.0 (and onward) uses.
+This document describes the v0.4.0 meta-bug that made the framework unreliable and the redesigned framework that v0.5.0 and later use.
 
 ## Cosine-LR meta-bug
 
-The v0.4.0 ablation campaign (issue [#116](https://github.com/sister-software/mailwoman/issues/116), retrospective [v0-4-0-ablation-campaign](../../records/retrospectives/v0-4-0-ablation-campaign.mdx)) ran a verdict-smoke matrix at `max_steps=3000` over the §1/§3/§4 single-knob ablations. The `cw-only` smoke (§3 class-weighted CE + §4 source rebalance) passed with peak `macro_f1=0.4279` at step 2250 — clean curve, no warning signs.
+The v0.4.0 ablation campaign (issue [#116](https://github.com/sister-software/mailwoman/issues/116), retrospective [v0-4-0-ablation-campaign](../../records/retrospectives/v0-4-0-ablation-campaign.mdx)) ran a verdict-smoke matrix at `max_steps=3000` over the §1/§3/§4 single-knob ablations. The `cw-only` smoke (§3 class-weighted CE + §4 source rebalance) passed with peak `macro_f1=0.4279` at step 2250, and its curve showed no warning signs.
 
-Promoted to the full 50K run, **`cw-only` diverged at step 2250** — `macro_f1` collapsed 0.41 → 0.29.
+When promoted to the full 50K run, **`cw-only` diverged at step 2250**, and `macro_f1` collapsed 0.41 → 0.29.
 
-Why the smoke missed it: the smoke ran cosine LR decay over `warmup_steps=1000` → `max_steps=3000`. By step 2250 the cosine schedule had decayed the learning rate to roughly `0.5 * (1 + cos(π * 0.625))` ≈ **30% of peak**, and by step 2750 to ~6%. The destabilizing dynamics needed sustained peak LR to manifest, and the cosine tail collapsed the LR before the loss curve made the divergence visible.
+The smoke missed the divergence because it ran cosine LR decay over `warmup_steps=1000` → `max_steps=3000`. By step 2250 the cosine schedule had decayed the learning rate to roughly `0.5 * (1 + cos(π * 0.625))` ≈ **30% of peak**, and by step 2750 to ~6%. The destabilizing dynamics needed sustained peak LR to manifest, and the cosine tail collapsed the LR before the loss curve made the divergence visible.
 
-The smoke was reporting "this recipe is stable at this hyperparameter setting" when what it had demonstrated was "this recipe is stable when LR is decaying off". Two different statements; the smoke conflated them.
+The smoke reported that the recipe was stable at this hyperparameter setting. It had only shown that the recipe was stable while the LR decayed.
 
-This cost a 6h rented-GPU full-train cycle.
+The mistake cost a 6h rented-GPU full-train cycle.
 
 ## Redesigned framework
 
-Pick one of two modes for every smoke. Default is **constant-LR** for any new or unstable recipe.
+Pick one of two modes for every smoke. Use **constant-LR** for any new or unstable recipe.
 
 ### Mode A — Constant-LR (default)
 
-Linear warmup from 0 → `learning_rate` over `warmup_steps`, then **flat at `learning_rate` for the entire smoke window.** No decay.
+The LR warms up linearly from 0 to `learning_rate` over `warmup_steps`, then **stays flat at `learning_rate` for the entire smoke window** without decay.
 
-- Divergence shows up immediately because nothing is masking it.
-- The smoke window is a "would this recipe survive at sustained peak LR" probe — which is exactly the question that matters for "will the full run blow up."
+- Divergence shows up immediately because no decay masks it.
+- The smoke window tests whether the recipe survives sustained peak LR, which is the question that predicts whether the full run will diverge.
 - Use this for any recipe that introduces a new loss term, a new normalization scheme, new class weights, a tokenizer change, or any other change that hasn't been validated at full LR before.
 
 ### Mode B — Long-tail cosine
 
-Cosine schedule, but `max_steps >= 10000` so the cosine tail does not dominate the visible portion of the smoke window. By step 3000, with `max_steps=10000`, LR is still at ~84% of peak — close enough to peak that destabilization can still surface.
+This mode uses a cosine schedule with `max_steps >= 10000`, so the cosine tail does not dominate the visible portion of the smoke window. By step 3000, with `max_steps=10000`, LR is still at ~84% of peak, which is close enough for destabilization to surface.
 
 - Use this when the recipe is a tweak on a known-stable baseline (a small source-weight nudge, a tiny class-weight adjustment within a previously-stable family) and when the full-train cosine dynamics matter for the verdict you're trying to reach.
-- Costs more wall-clock than constant-LR smokes (a 10K-step smoke is ~6× the wall-clock of a 1.5K-step constant-LR smoke).
+- This mode costs more wall-clock than constant-LR smokes (a 10K-step smoke is ~6× the wall-clock of a 1.5K-step constant-LR smoke).
 
 ### Which to pick
 
@@ -51,7 +51,7 @@ Cosine schedule, but `max_steps >= 10000` so the cosine tail does not dominate t
 | Pre-flight integration check (wiring, dtype, sampler) — not a verdict      | Either; constant-LR is faster                           |
 | Reproducing a known divergence to characterize it                          | **A — constant-LR**                                     |
 
-When in doubt: pick constant-LR. The false-positive cost (a stable recipe gets flagged at sustained peak LR when it would survive cosine decay) is small — you promote it to the full run anyway. The false-negative cost (a divergent recipe passes the smoke and burns a full run) is what the v0.4.0 campaign paid.
+When unsure, pick constant-LR. A false positive (a stable recipe flagged at sustained peak LR that would survive cosine decay) costs little, because you promote it to the full run anyway. A false negative (a divergent recipe passes the smoke and wastes a full run) is the cost the v0.4.0 campaign paid.
 
 ## How to invoke
 
@@ -73,51 +73,51 @@ python -m mailwoman_train train \
 python -m mailwoman_train smoke --config <recipe>-smoke.yaml
 ```
 
-The flag overrides `cfg.train.lr_schedule`. Non-smoke (full) runs continue to use whatever the config declares — by default cosine, unchanged from v0.4.0.
+The flag overrides `cfg.train.lr_schedule`. Full runs continue to use whatever the config declares, which is cosine by default, as in v0.4.0.
 
 Long-tail mode does not change `max_steps`; it asserts the recipe already has it sized correctly and warns when `max_steps < 10000`.
 
 ## Reading a smoke result
 
-A smoke is **only** answering "would this recipe survive sustained peak LR for the smoke window?" — it is not predicting full-run F1, full-run convergence step, or anything else.
+A smoke answers **only** whether the recipe survives sustained peak LR for the smoke window. It does not predict full-run F1, the full-run convergence step, or anything else.
 
 - **Loss is finite and trending down / sideways across the full smoke window** → promote to full run.
 - **Loss spikes, NaN, or trends up at any point in the smoke window** → recipe is unstable at this LR. Reduce LR or revisit the recipe.
 - **Loss looks fine until the cosine tail (constant-LR mode disabled)** → you've reproduced the v0.4.0 meta-bug. Re-run in constant-LR mode.
-- **Val F1 peaks early and decays** in a constant-LR smoke → may still be fine in the full run (early-stopping or full-cosine recovers it), but the smoke is not the layer that decides this. Promote and let the full run be the verdict.
+- **Val F1 peaks early and decays** in a constant-LR smoke → the full run may still be fine (early stopping or the full cosine schedule recovers it), but the smoke cannot decide this. Promote and let the full run decide.
 
 ## Sidecars that ride alongside
 
-Three v0.4.0 diagnostic tools that should run against every v0.5.0 smoke / full-run pair. Each is in the tree as of 2026-05-23.
+Run these three v0.4.0 diagnostic tools against every v0.5.0 smoke / full-run pair. Each is in the tree as of 2026-05-23.
 
-- **`corpus-audit`** ([`corpus/scripts/audit.ts`](https://github.com/sister-software/mailwoman/blob/main/corpus/scripts/audit.ts)) — per-source parquet-file-count × source-weight diagnostic. Run before training to verify the sampled mix matches intent. Catches the v0.3.0 "NAD = 35% effective sample" class of misuse hazard before it costs a training cycle.
+- **`corpus-audit`** ([`corpus/scripts/audit.ts`](https://github.com/sister-software/mailwoman/blob/main/corpus/scripts/audit.ts)) — per-source parquet-file-count × source-weight diagnostic. Run it before training to verify that the sampled mix matches intent. It catches misconfigurations like the v0.3.0 "NAD = 35% effective sample" case before they cost a training cycle.
 
   ```bash
   npx tsx corpus/scripts/audit.ts /data/corpus/versioned/<rev>/corpus-<rev> \
       --config corpus-python/src/mailwoman_train/configs/<recipe>.yaml
   ```
 
-- **`regression_diagnostic.py`** ([`corpus-python/src/mailwoman_train/evaluation/regression_diagnostic.py`](https://github.com/sister-software/mailwoman/blob/main/corpus-python/src/mailwoman_train/evaluation/regression_diagnostic.py)) — post-eval FP/FN bucketing (`non_latin` / `case_only` / `bio_slip` / `empty_pred` / `num_confused` / `other`). Use it on every eval pass rather than post-hoc — bucket distributions are how recipe choices get debugged alone. The v0.4.0 retrospective entry documents reference distributions for calibration.
+- **`regression_diagnostic.py`** ([`corpus-python/src/mailwoman_train/evaluation/regression_diagnostic.py`](https://github.com/sister-software/mailwoman/blob/main/corpus-python/src/mailwoman_train/evaluation/regression_diagnostic.py)) — post-eval FP/FN bucketing (`non_latin` / `case_only` / `bio_slip` / `empty_pred` / `num_confused` / `other`). Use it on every eval pass rather than after the fact, because bucket distributions are how individual recipe choices get debugged. The v0.4.0 retrospective entry documents reference distributions for calibration.
 
-- **Decoder span-trim** (commit [`c72ab4c`](https://github.com/sister-software/mailwoman/commit/c72ab4c), `core/decoder/build-tree.ts:58`) — `trimBoundary(raw, start, end)` shrinks BIO span bounds past leading / trailing non-`/[\p{L}\p{N}]/u` characters. No retrain required; covers the `bio_slip` long tail the phrase grouper (Thread E) hasn't been designed to catch yet.
+- **Decoder span-trim** (commit [`c72ab4c`](https://github.com/sister-software/mailwoman/commit/c72ab4c), `core/decoder/build-tree.ts:58`) — `trimBoundary(raw, start, end)` shrinks BIO span bounds past leading / trailing non-`/[\p{L}\p{N}]/u` characters. It requires no retrain and covers the `bio_slip` long tail that the phrase grouper (Thread E) was not designed to catch.
 
 ## Lessons added from v0.5.0 (2026-05-24)
 
-Two hard-won additions from the v0.5.0 C-train bisect campaign. Both were footguns that the original framework didn't catch.
+The v0.5.0 C-train bisect campaign added two rules. The original framework missed both failure modes.
 
 ### Smoke effective batch must match the full run
 
-The v0.5.0 ablation-smoke at `batch_size=8, grad_accum=1` (eff_batch=8) passed without error — loss descended, val_macro_f1 climbed, no divergence through 1500 steps. The full train at `batch_size=16, grad_accum=8` (eff_batch=128) diverged at step 800.
+The v0.5.0 ablation smoke at `batch_size=8, grad_accum=1` (eff_batch=8) passed without error: loss descended, val_macro_f1 climbed, and nothing diverged through 1500 steps. The full train at `batch_size=16, grad_accum=8` (eff_batch=128) diverged at step 800.
 
-**The recipe's stability is batch-geometry-dependent.** A smoke that doesn't reproduce the full-run's gradient noise characteristics is a smoke that can't detect this class of failure. The gradient noise at eff*batch=8 is ~4× larger per-step than at eff_batch=128 (more stochastic), which paradoxically \_stabilises* training against the curvature-conflict instability (the model can't settle deep enough into the basin where the conflict manifests).
+**The recipe's stability depends on batch geometry.** A smoke that does not reproduce the full run's gradient noise cannot detect this class of failure. The per-step gradient noise at `eff_batch=8` is ~4× larger than at `eff_batch=128`. That extra noise _stabilises_ training against the curvature-conflict instability, because the model cannot settle deep enough into the basin where the conflict appears.
 
-**Rule:** smoke `batch_size` × `grad_accum_steps` must equal the full-run's product. If the full run uses eff_batch=128, the smoke must too — even if that means fewer steps per wall-clock minute. The smoke's job is to reproduce the full run's dynamics rather than to be fast.
+**Rule:** the smoke's `batch_size` × `grad_accum_steps` must equal the full run's product. If the full run uses eff_batch=128, the smoke must too, even if that means fewer steps per wall-clock minute. The smoke exists to reproduce the full run's dynamics, and speed is secondary.
 
 ### Gradient-norm ratio probe before retraining
 
-When a recipe diverges at sustained peak LR, the first diagnostic should be a **gradient-norm ratio probe** — not another retrain with a different knob.
+When a recipe diverges at sustained peak LR, run a **gradient-norm ratio probe** as the first diagnostic instead of another retrain with a different knob.
 
-For a dual-loss model (CE + CRF NLL), load a checkpoint from the just-before-divergence step. Run one forward, then two separate backwards — once with CE only, once with CRF only. Compare `‖∇_CRF‖ / ‖∇_CE‖`.
+For a dual-loss model (CE + CRF NLL), load a checkpoint from the last step before divergence. Run one forward pass, then two separate backward passes: one with CE only and one with CRF only. Compare `‖∇_CRF‖ / ‖∇_CE‖`.
 
 ```python
 # CE backward
@@ -134,11 +134,11 @@ ratio = crf_norm / max(ce_norm, 1e-12)
 
 **Reading the ratio:**
 
-- Ratio &gt;&gt; 1 (v0.5.0 observed 8–20×): CRF gradient dominates. The model is being pulled by the louder loss term. Repair: reduce `crf_loss_weight` drastically or drop CRF NLL entirely (CE-only training, CRF retained at inference via frozen mask).
-- Ratio &lt;&lt; 0.01: CRF gradient has collapsed. The model has decoupled the two objectives. Repair: same — CE-only, or decouple optimisers.
-- Ratio ≈ 0.5–2: losses are reasonably balanced. Divergence cause is elsewhere (capacity, data, LR schedule).
+- Ratio &gt;&gt; 1 (v0.5.0 observed 8–20×): The CRF gradient dominates, so the larger loss term drives the updates. Reduce `crf_loss_weight` sharply or drop CRF NLL entirely (CE-only training, with the CRF kept at inference through the frozen mask).
+- Ratio &lt;&lt; 0.01: the CRF gradient has collapsed, and the model has decoupled the two objectives. Use the same repair: CE-only training, or separate optimisers.
+- Ratio ≈ 0.5–2: the losses are reasonably balanced, and the divergence has another cause (capacity, data, LR schedule).
 
-This probe takes 5 minutes against an existing checkpoint and answers "which loss is the aggressor?" more precisely than any 25-hour retrain could. Run it before spending GPU time on the next hypothesis.
+This probe takes 5 minutes against an existing checkpoint. It identifies which loss drives the divergence more precisely than a 25-hour retrain. Run it before spending GPU time on the next hypothesis.
 
 Full technical write-up: [`docs/records/site-2026-08/concepts/dual-loss-curvature-conflict.mdx`](../../records/site-2026-08/concepts/dual-loss-curvature-conflict.mdx).
 

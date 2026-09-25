@@ -11,13 +11,10 @@ import { registerSW } from "virtual:pwa-register"
 
 import { App } from "./App.tsx"
 
-// MapLibre derives its default worker URL from `import.meta.url`, which a bundled build cannot answer.
-// The derived path names a file the build never emits, and the Worker's SPA
-// fallback answers it with index.html at status 200.
-// So the web worker starts, fails to parse html as a module, and dies with nothing logged.
-// Vector tiles and glyph ranges are parsed in that worker while raster tiles decode on the
-// main thread, so the symptom is a hillshade that draws and labels that never appear.
-// The `?worker&url` import makes Vite emit a real worker entry and hand back its URL.
+// In a bundled build, MapLibre's default worker URL points at a file that Vite never emits.
+// The SPA fallback serves index.html for it, and the worker then fails silently.
+// Without the worker, vector tiles and labels never render.
+// The `?worker&url` import makes Vite emit the worker and return its URL.
 setWorkerUrl(maplibreWorkerURL)
 
 registerSW()

@@ -177,7 +177,7 @@ a subword) and wants a separate decode/tokenizer look rather than more extract d
   GO: the standard release flow (releases.json + HF/R2 publish; the int8 is
   `/data/models/quantized/model-v180-step-40000-int8.onnx` + `./out/v180/model.onnx`).
 - **#727 diacritic follow-up** — tokenizer/decode-level (the accent strands a subword as its own
-  span); not a extract-data fix. A decode-side span-merge or a tokenizer look.
+  span); not an extract-data fix. A decode-side span-merge or a tokenizer look.
 - **AU iteration is blocked** until the resolver DB (`admin-global-priority.db`) gains AU rows — scope
   an AU WOF ingest if AU coverage is wanted (then the AU admin-split extract is a fast follow on the FR
   template).

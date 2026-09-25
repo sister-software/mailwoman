@@ -3,9 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The two reproducibility records. The lock pins each source by URL, byte count and SHA-256 (plus the snapshot date
- *   for a nightly archive); the build manifest names the sources a build read, the artifacts it wrote with their
- *   checksums, and the exact tool invocations in between, so a published archive can be traced to its inputs.
+ *   Schemas for the source lock and the build manifest, which trace a published archive to its inputs.
  */
 
 import { z } from "zod"
@@ -15,7 +13,7 @@ const SHA256_HEX_LENGTH = 64
 /**
  * One locked source.
  *
- * `snapshot` is present for a nightly archive and names the day it was taken.
+ * `snapshot` records the capture date of a nightly archive.
  */
 export const LockedSourceSchema = z.object({
 	url: z.url(),
@@ -26,19 +24,24 @@ export const LockedSourceSchema = z.object({
 })
 
 /**
- * `sources.lock.json`: the locked sources keyed by source id.
+ * Schema for `sources.lock.json`, which maps source IDs to locked sources.
  *
- * Written only by the fetch.
- * Read by every build.
+ * Only the fetch step writes this file.
  */
 export const SourcesLockSchema = z.record(z.string(), LockedSourceSchema)
 
+/**
+ * One locked source.
+ */
 export type LockedSource = z.infer<typeof LockedSourceSchema>
 
+/**
+ * Contents of `sources.lock.json`.
+ */
 export type SourcesLock = z.infer<typeof SourcesLockSchema>
 
 /**
- * The coordinate convention a source carries, recorded so a consumer never infers it.
+ * The coordinate convention of a source, recorded so that a consumer does not have to guess it.
  */
 export const SourceCoordinatesSchema = z.object({
 	longitudeDirection: z.enum(["east", "west"]),
@@ -71,8 +74,9 @@ export const OutputManifest = z.object({
 })
 
 /**
- * `manifest.json` beside a body's artifacts: what was read, what was written,
- * and the transformations between.
+ * Schema for the `manifest.json` beside a body's artifacts.
+ *
+ * It lists the sources read, the outputs written and the commands run between them.
  */
 export const PlanetaryBuildManifestSchema = z.object({
 	schemaVersion: z.literal(1),
@@ -86,4 +90,7 @@ export const PlanetaryBuildManifestSchema = z.object({
 	transformations: z.array(z.string()),
 })
 
+/**
+ * Contents of a body's build `manifest.json`.
+ */
 export type PlanetaryBuildManifest = z.infer<typeof PlanetaryBuildManifestSchema>

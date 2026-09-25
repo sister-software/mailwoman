@@ -3,15 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The three decisions `--debug`'s two surfaces have to agree on: which zoom the map pane opens at, which flag
- *   combinations are a usage error, and how small a frame is too small to render. Both the static capture
- *   (`command.tsx`) and the interactive session (`DebugSessionApp.tsx`) enforce all three, and they enforce them
- *   differently — the static path rejects a bad `--debug-size`, the session degrades a too-small terminal to a note —
- *   so the shared part is the verdict rather than the reaction to it.
- *
- *   Their own module because the alternative is a cycle: the session is imported BY the command module and would have
- *   to import these back OUT of it, which `import/no-cycle` refuses. Pure and JSX-free, so it type-strips under bare
- *   node like the rest of the non-component tier.
+ * Holds the zoom, flag and frame-size rules shared by the static `--debug` capture and the interactive session.
  */
 
 import { CommandError } from "@mailwoman/core/scripting/command"
@@ -22,19 +14,15 @@ import type { GeocodeResult } from "#geocode/result"
 // #region Zoom heuristic
 
 /**
- * The map pane's initial zoom for a freshly-geocoded result, before any interactive pan/zoom.
+ * Returns the map pane's initial zoom for a geocoded result.
  *
- * Tight for a house-grade fix.
- * Progressively wider for whatever admin tier the resolve actually reached, so an admin-only
- * fallback doesn't open on a single-building zoom over a whole region or country.
+ * An address-grade result opens close in.
+ * An admin-only result opens wider as its finest place gets coarser.
  */
 export function initialZoomForTier(result: GeocodeResult): number {
 	if (result.resolution_tier === "address_point" || result.resolution_tier === "interpolated") return 15
 
-	// `hierarchy` is ordered most specific first (`GeocodeResult.hierarchy`: "locality → country"),
-	// so the head is the finest place the resolver decorated.
-	// Reading `.at(-1)` took the country instead and opened every admin-tier answer at the whole-country
-	// zoom 4: a bare "Portland, Oregon" resolved its locality and then showed North America.
+	// `hierarchy` is ordered most specific first, so its head is the finest resolved place.
 	const leaf = result.hierarchy.at(0)?.tag
 
 	if (leaf === "locality" || leaf === "dependent_locality") return 11
@@ -49,14 +37,11 @@ export function initialZoomForTier(result: GeocodeResult): number {
 // #region CLI-usage guards
 
 /**
- * `--debug` is its own rendered surface (a captured Ink frame) — combining it with a `--format`
- * shorthand, or with an explicit non-default `--format` value, has no defensible reading.
+ * Rejects `--debug` combined with a `--format` shorthand or a non-default `--format` value.
  *
- * Thrown with {@link CommandError} so it reports through the standard error
- * state (exit code 1) on the static path.
- * The interactive session runs the same guard as the first statement of its mount effect,
- * before it takes the alternate screen, matching `resolveFormat`'s two-shorthands-at-once
- * check in `cli-native/commands/geocode.ts`.
+ * `--debug` renders its own output, so no other output format applies.
+ *
+ * @throws {CommandError} On a conflicting format flag.
  */
 export function assertDebugFormatSanity(options: GeocodeCommandOptions): void {
 	const shorthands = (["json", "text", "jsonld"] as const).filter((name) => options[name])
@@ -67,37 +52,27 @@ export function assertDebugFormatSanity(options: GeocodeCommandOptions): void {
 		)
 	}
 
-	// `--format json` stays indistinguishable from the default (unset) here —
-	// same documented blind spot as `resolveFormat` in `cli-native/commands/geocode.ts`.
-	// Only an explicit non-default value is a usage error.
+	// An explicit `--format json` cannot be told apart from the default, so only other values fail.
 	if (options.format && options.format !== "json") {
 		throw new CommandError(`--debug is its own output surface; drop --format ${options.format}.`)
 	}
 }
 
 /**
- * The smallest frame `mapPaneCellSize` can turn into a map-tui viewport that actually renders.
+ * Sets the smallest frame that renders a usable map pane.
  *
- * Below it, `mapPaneCellSize`'s row math goes non-positive before `MapRenderer` ever runs:
- * measured 2026-08-13, `100x5` (`mapPaneCellSize` rows -3) crashes with a raw
- * `RangeError: Invalid typed array length: -4608` from `new RGBAGrid` deep inside map-tui,
- * and a size whose map-pane row budget lands at 0 renders with the panes overlapping garbled.
- *
- * The row floor is `DebugFrame`'s fixed chrome plus the 6 map rows that were the smallest
- * legible pane: input area 9 + footer 1 + MapPane's own 4 = 14, so 20.
- * (It was 14 while the input area was 4 rows and there was no footer — the evidence rows
- * and the key hints moved the floor rather than a change of mind about how small a map may be.)
+ * A smaller frame makes `mapPaneCellSize` return a non-positive row count, which crashes map-tui.
+ * The row floor is `DebugFrame`'s fixed chrome plus six map rows.
+ * If the chrome grows, `MIN_DEBUG_ROWS` must grow with it.
  */
 const MIN_DEBUG_COLUMNS = 60
 const MIN_DEBUG_ROWS = 20
 
 /**
- * A COLSxROWS pair's floor violation as reportable text, or null when it clears the floor.
+ * Describes how a frame falls below the size floor, or returns null when it is large enough.
  *
- * One function decides the verdict and names the minimum, so the two surfaces that report it can
- * never disagree about where the floor sits: the static path prefixes `--debug-size` and rejects,
- * while the interactive session prefixes `terminal` and degrades the map pane to a note.
- * A live terminal below the floor is something the user can fix by resizing.
+ * The static path rejects the violation.
+ * The interactive session shows it as a note in place of the map pane.
  */
 export function debugSizeFloorViolation(columns: number, rows: number): string | null {
 	if (columns >= MIN_DEBUG_COLUMNS && rows >= MIN_DEBUG_ROWS) return null
@@ -106,8 +81,9 @@ export function debugSizeFloorViolation(columns: number, rows: number): string |
 }
 
 /**
- * The static path's reaction to {@link debugSizeFloorViolation} — checked at the CLI boundary,
- * before any DB/weights work, same posture as {@link assertDebugFormatSanity}.
+ * Rejects a `--debug-size` below the size floor before any database or weights load.
+ *
+ * @throws {CommandError} When the size is below the floor.
  */
 export function assertDebugSizeFloor(columns: number, rows: number): void {
 	const violation = debugSizeFloorViolation(columns, rows)

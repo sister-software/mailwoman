@@ -3,9 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Baseline resolver for the same-data benchmark.
- *   Selects by exact match, qualifier agreement, similarity, then canonical pool order.
- *   Uses only fixture data and shared normalization; it has no population or prominence score.
+ *   Baseline resolver for the same-data benchmark. It scores candidates from fixture data only and uses
+ *   neither population nor prominence.
  */
 
 import { collectNodes, type AddressTree } from "@mailwoman/core/decoder"
@@ -34,60 +33,61 @@ export const ADMIN_TAG_DEPTH = [
 const COUNTRY_PLACETYPES = new Set(["country", "dependency", "disputed"])
 
 /**
- * Registered similarity floor; weaker non-exact matches abstain.
+ * The registered similarity floor.
+ *
+ * The baseline abstains when its best non-exact match falls below it.
  */
 export const BASELINE_SIMILARITY_FLOOR = 0.9
 
 /**
- * Score components reported for each candidate.
+ * The score components reported for each candidate.
  */
 export interface BaselineScoreComponents {
 	/**
-	 * 1 when the candidate's folded name equals the subject's folded name.
+	 * 1 when the candidate's folded name equals the subject's folded name, otherwise 0.
 	 */
 	exact: number
 	/**
-	 * Jaro-Winkler over the two folded names, in [0, 1].
+	 * Jaro-Winkler similarity of the two folded names, in [0, 1].
 	 */
 	similarity: number
 	/**
-	 * 1 when the query carried a country qualifier the pool resolved, and this candidate sits in that country.
+	 * 1 when the pool resolved a country qualifier from the query and the candidate is in that country.
 	 */
 	countryQualifier: number
 	/**
-	 * 1 when the query carried a region qualifier the pool resolved, and this
-	 * candidate's `parent_id` is that region.
+	 * 1 when the pool resolved a region qualifier from the query and the candidate's
+	 * `parent_id` is that region.
 	 */
 	regionQualifier: number
 	total: number
 }
 
+/**
+ * The baseline's selection for one query.
+ */
 export interface BaselineSelection {
 	/**
-	 * The chosen candidate's id, or null for an abstention.
+	 * The chosen candidate's ID, or null when the baseline abstains.
 	 */
 	placeID: string | null
 	/**
-	 * The subject the baseline resolved on — the deepest admin value in the frozen tree.
+	 * The deepest admin value in the frozen tree.
 	 */
 	subject: string | null
 	/**
-	 * A monotone map of {@link BaselineScoreComponents.total} into [0, 1], for the calibration table.
-	 *
-	 * Registered as `total / 8` capped at 1, where 8 is the maximum the weights below can reach.
+	 * The total score divided by the maximum possible total, for the calibration table.
 	 */
 	confidence: number
 	components: BaselineScoreComponents | null
 	/**
-	 * Why it abstained, when it did.
-	 *
-	 * Named so an abstention is a claim rather than an omission.
+	 * The reason for an abstention.
 	 */
 	abstainedBecause?: "no_admin_node" | "empty_pool" | "below_similarity_floor"
 }
 
 /**
- * Registered weights: exact match, country, region, then similarity.
+ * The registered component weights.
  */
 const WEIGHT = { exact: 4, countryQualifier: 2, regionQualifier: 1, similarity: 1 } as const
 
@@ -105,7 +105,7 @@ function adminValues(tree: AddressTree): Map<string, string[]> {
 }
 
 /**
- * Return the deepest admin value and its shallower qualifiers.
+ * Returns the deepest admin value as the subject and every shallower value as a qualifier.
  */
 function subjectAndQualifiers(tree: AddressTree): { subject: string | null; qualifiers: string[] } {
 	const byTag = adminValues(tree)
@@ -126,7 +126,7 @@ function subjectAndQualifiers(tree: AddressTree): { subject: string | null; qual
 }
 
 /**
- * Resolve a country qualifier from the pool, or return `null`.
+ * Returns the country code of the first qualifier that matches a country in the pool, or `null`.
  */
 function countryScopeFromPool(qualifiers: readonly string[], pool: readonly SameDataCandidate[]): string | null {
 	for (const qualifier of qualifiers) {
@@ -150,7 +150,7 @@ function countryScopeFromPool(qualifiers: readonly string[], pool: readonly Same
 }
 
 /**
- * Resolve a region qualifier from the pool, or return `null`.
+ * Returns the ID of the first qualifier that matches a region in the pool, or `null`.
  */
 function regionScopeFromPool(qualifiers: readonly string[], pool: readonly SameDataCandidate[]): string | null {
 	for (const qualifier of qualifiers) {
@@ -167,7 +167,9 @@ function regionScopeFromPool(qualifiers: readonly string[], pool: readonly SameD
 }
 
 /**
- * Select deterministically from the pool, or abstain.
+ * Selects the highest-scoring candidate from the pool, or abstains.
+ *
+ * Ties go to the earlier candidate in the pool's canonical order.
  */
 export function selectBaseline(tree: AddressTree, pool: readonly SameDataCandidate[]): BaselineSelection {
 	const { subject, qualifiers } = subjectAndQualifiers(tree)
@@ -205,7 +207,7 @@ export function selectBaseline(tree: AddressTree, pool: readonly SameDataCandida
 				WEIGHT.similarity * similarity,
 		}
 
-		// Strictly greater keeps the pool's canonical order as the tie-break.
+		// A strict comparison keeps the earlier candidate on a tie.
 		if (!best || components.total > best.components.total) {
 			best = { candidate, components }
 		}

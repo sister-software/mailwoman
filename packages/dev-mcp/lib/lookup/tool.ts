@@ -44,7 +44,7 @@ import {
 import { syntheticIDNote } from "#place-id-provenance"
 
 /**
- * Primary and comparison rows, with per-query differences, for candidate lookups.
+ * A candidate lookup against two artifacts, with the per-query differences.
  */
 export interface CandidateCompareResult extends LookupResult {
 	rows_compare: LookupRow[]
@@ -52,7 +52,7 @@ export interface CandidateCompareResult extends LookupResult {
 }
 
 /**
- * Optional lookup settings.
+ * The arguments of {@link runLookup}.
  */
 export interface LookupArgs {
 	source: LookupSource
@@ -60,8 +60,8 @@ export interface LookupArgs {
 	locale?: string
 
 	/**
-	 * Names locales whose FST artifacts are probed separately and reported under
-	 * `by_locale`, and applies only to FST sources.
+	 * Locales whose FST artifacts are probed separately and reported under `by_locale`.
+	 * This applies only to FST sources.
 	 */
 	locales?: string[]
 	country?: string
@@ -69,8 +69,10 @@ export interface LookupArgs {
 	config?: EngineConfig
 
 	/**
-	 * Names a second candidate database that receives the same queries, so the result
-	 * reports per-query row and ranking deltas; it applies only to candidate lookups.
+	 * A second candidate database that receives the same queries.
+	 *
+	 * The result then reports row and ranking deltas for each query.
+	 * This applies only to candidate lookups.
 	 */
 	compareCandidateDB?: string
 }
@@ -79,7 +81,7 @@ export interface LookupArgs {
  * Runs the queries against one lookup source and closes every artifact it opened.
  *
  * A source whose artifact is missing returns no rows and an `unavailable_reason`,
- * so it never reads as a miss for every query.
+ * so it cannot be mistaken for a miss on every query.
  */
 export async function runLookup(
 	registry: EngineRegistryLike,
@@ -239,6 +241,11 @@ export async function runLookup(
 	}
 }
 
+/**
+ * Resolves the candidate database path.
+ *
+ * An explicit path that does not resolve is returned as given, so opening it reports why it is unavailable.
+ */
 async function resolveCandidateDB(config: EngineConfig, dataRoot: PathBuilderLike): Promise<string | undefined> {
 	const resolved = await resolveCandidateDBPath(config.candidate_db, dataRoot)
 

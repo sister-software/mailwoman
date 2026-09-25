@@ -80,7 +80,7 @@ The hint returns nothing: the English query name matches no place in the country
 exists under a LOCAL name (`Warsaw` vs `Warszawa` — proven end-to-end), indexing alt-name surface forms
 onto the candidate table fixes it cheaply (#823, no model change). Where the country has no candidate
 records at all, it's coverage. European exonyms dominate; the per-country split needs a local-name probe.
-`hint→∅` = of the hint-unresolved cities, how several returned no result (vs a wrong place).
+`hint→∅` = of the hint-unresolved cities, how many returned no result (vs a wrong place).
 
 | Country                                    | ISO2 | Bare | +hint | hint→∅ |
 | ------------------------------------------ | ---- | ---: | ----: | -----: |

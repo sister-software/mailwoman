@@ -3,12 +3,13 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   ArcGIS rest errors arrive under http 200 as a JSON envelope, `{ "error": { "code", "message", "details" } }`, so
- *   nothing upstream maps them: a caller that reads `data.features` off an error body gets `undefined` and reports an
- *   empty layer, or a message about a missing field that names the wrong fact. Every ArcGIS JSON read a layer product
- *   makes goes through {@link assertNoArcGISError} before it reads a field.
+ *   ArcGIS REST services return errors with HTTP 200 as a JSON `error` envelope. Layer products pass every ArcGIS
+ *   JSON body through {@link assertNoArcGISError} before reading fields, so an error is not read as an empty layer.
  */
 
+/**
+ * The `error` object in an ArcGIS JSON body.
+ */
 export interface ArcGISErrorEnvelope {
 	code?: number
 	message: string
@@ -16,7 +17,7 @@ export interface ArcGISErrorEnvelope {
 }
 
 /**
- * The error an ArcGIS error envelope becomes.
+ * An error thrown for an ArcGIS error envelope.
  */
 export class ArcGISServiceError extends Error {
 	public readonly code: number | undefined
@@ -36,10 +37,9 @@ export class ArcGISServiceError extends Error {
 }
 
 /**
- * The error envelope inside an ArcGIS JSON body, or `undefined` when the body is an answer.
+ * Returns the error envelope in an ArcGIS JSON body, or `undefined` when the body is a normal response.
  *
- * Only an object whose `error` carries a string `message` counts: a feature
- * attribute that happens to be named `error` is data.
+ * The body counts as an error only when its `error` object has a string `message`.
  */
 export function readArcGISError(payload: unknown): ArcGISErrorEnvelope | undefined {
 	if (typeof payload !== "object" || payload === null) return undefined
@@ -60,7 +60,7 @@ export function readArcGISError(payload: unknown): ArcGISErrorEnvelope | undefin
 }
 
 /**
- * Refuse an ArcGIS JSON body that is an error envelope.
+ * Throws {@link ArcGISServiceError} when an ArcGIS JSON body is an error envelope.
  */
 export function assertNoArcGISError(payload: unknown, context: string): void {
 	const error = readArcGISError(payload)

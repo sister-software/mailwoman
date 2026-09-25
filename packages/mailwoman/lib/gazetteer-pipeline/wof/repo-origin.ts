@@ -12,7 +12,8 @@ export const FORK_ORG = "mailwoman"
 export const UPSTREAM_ORG = "whosonfirst-data"
 
 /**
- * Describes the remote a WOF repo should be cloned from, with a `reason` a build log can print.
+ * Describes the remote a WOF repo should be cloned from.
+ * The `reason` field is meant for build logs.
  */
 export interface RepoOrigin {
 	repo: string
@@ -23,29 +24,30 @@ export interface RepoOrigin {
 }
 
 /**
- * Returns the GitHub SSH remote URL for an org and repo, the form existing clones use.
+ * Returns the GitHub SSH remote URL for an org and repo.
  */
 export function repoURL(org: string, repo: string): string {
 	return `ssh://git@github.com/${org}/${repo}`
 }
 
 /**
- * Classifies our fork of a repo as absent, clean (nothing upstream lacks),
- * or diverged (holding at least one commit of ours).
+ * The state of our fork of a repo.
+ *
+ * A `clean` fork has no commits ahead of upstream, and a `diverged` fork has at least one.
  */
 export type ForkState = "absent" | "clean" | "diverged"
 
 /**
- * Reports the {@link ForkState} of a repo in an org, injected
- * so {@link resolveWOFRepoOrigin} can be tested without GitHub.
+ * Reports the {@link ForkState} of a repo in an org.
+ * Tests inject a stub in place of GitHub.
  */
 export type ForkProbe = (org: string, repo: string) => Promise<ForkState>
 
 /**
- * Resolves a WOF repo to our fork only when the fork has diverged, and to upstream otherwise.
+ * Resolves a WOF repo to our fork when the fork has diverged, and to upstream otherwise.
  *
- * A clean fork resolves upstream because GitHub forks do not track their parent,
- * and a probe failure also resolves upstream with the failure recorded in `reason`.
+ * A clean fork resolves to upstream because GitHub forks do not track their parent.
+ * A probe failure also resolves to upstream and records the failure in `reason`.
  */
 export async function resolveWOFRepoOrigin(repo: string, probe: ForkProbe): Promise<RepoOrigin> {
 	let state: ForkState
@@ -82,9 +84,8 @@ export async function resolveWOFRepoOrigin(repo: string, probe: ForkProbe): Prom
  * Probes our fork through the `gh` CLI.
  *
  * @returns `diverged` when GitHub's compare shows the fork ahead of upstream, `clean`
- * when it is not, and `absent` when the fork lookup returns 404.
- * @throws Error when the fork lookup fails for any other reason or the compare yields no `ahead_by`.
- * {@link resolveWOFRepoOrigin} records the failure as an upstream fallback, not as a clean fork.
+ * when the fork has no commits ahead, and `absent` when the fork lookup returns 404.
+ * @throws Error when the fork lookup fails for another reason or the compare yields no `ahead_by`.
  */
 export const githubForkProbe: ForkProbe = async (org, repo) => {
 	try {

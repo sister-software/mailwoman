@@ -4,20 +4,24 @@
 
 **Goal:** Eliminate every migratable `cliArguments()` call site in favor of native `node:util` `parseArgs`, leaving exactly one documented edge case (verbatim child-process passthrough), and fix the code smells surfaced during triage.
 
-**Architecture:** Each script's hand-rolled argv loop is replaced by a strict `parseArgs` declaration reading `process.argv.slice(2)` by default (no `args:` passed except where a test injects argv). Three CLIs with negative-coordinate positionals switch to the standard `--` separator. The `runScript` exit-code bug (errors exit 0, clobbering `process.exitCode`) is fixed in the same pass since several migrated scripts depend on direct exit codes.
+**Architecture:** A strict `parseArgs` declaration replaces each script's hand-rolled argv loop. It reads `process.argv.slice(2)` by default, and `args:` is passed only where a test injects argv. Three CLIs with negative-coordinate positionals switch to the standard `--` separator. The same pass fixes the `runScript` exit-code bug, where errors exit 0 and overwrite `process.exitCode`, because several migrated scripts depend on direct exit codes.
 
 **Tech Stack:** node:util parseArgs, @mailwoman/core/scripting `runIfScript`, vitest, oxlint/oxfmt.
 
 ## Global Constraints
 
-- Zero raw `process.env` / `process.argv` (CI-enforced oxlint `sister-software/no-process-globals`). `parseArgs` reads `process.argv.slice(2)` by default — never pass `args:` yourself, EXCEPT `main(argv?)` functions whose tests inject argv (`build-fts-cli.ts` pattern), where `args: argv ? [...argv] : undefined` is correct.
-- `erasableSyntaxOnly` — no enums, no ctor param properties. Relative imports carry `.ts` extensions.
-- Tabs for indentation; oxfmt formatting (`yarn format`); oxlint (`yarn lint`).
-- Scripts run directly under `node` (type stripping) — never `npx tsx` in shebangs or usage text (feedback-no-npx-tsx).
+- Zero raw `process.env` / `process.argv` reads (CI-enforced by oxlint `sister-software/no-process-globals`). `parseArgs` reads `process.argv.slice(2)` by default, so never pass `args:` yourself. The one exception is a `main(argv?)` function whose tests inject argv (the `build-fts-cli.ts` pattern), where `args: argv ? [...argv] : undefined` is correct.
+- `erasableSyntaxOnly` rules out enums and constructor parameter properties. Relative imports carry `.ts` extensions.
+- Tabs for indentation, oxfmt formatting (`yarn format`), and oxlint (`yarn lint`).
+- Scripts run directly under `node` with type stripping. Never put `npx tsx` in shebangs or usage text (feedback-no-npx-tsx).
 - Tri-state boolean flags use `--x` / `--no-x` (feedback-native-parseargs-for-flags).
-- `parseArgs` facts verified on this Node: string options DO NOT consume a following `-`-prefixed value (`--lon -74` throws; `--lon=-74` works); bare `-74.0` positional throws in strict mode; everything after `--` lands in `positionals`; `multiple: true` collects repeated flags including empty strings.
-- Preserved external interfaces: `resolver-wof-sqlite` bin grammars (spawned by `docs/plugins/demo-assets/resolve.ts` incl. `--in ""`), `publish-release-to-hf.ts` flag set incl. retired `--wof-hot` (documented in RELEASING.md), `build-fts-cli.test.ts` `main(argv)` exit-code interface.
-- Deliberate KEEP: `corpus-python/scripts/train_with_resume.ts` `EXTRA_ARGS = cliArguments()` — verbatim passthrough to the python trainer; parseArgs cannot collect undeclared flags.
+- `parseArgs` behavior verified on this Node version:
+  - String options do not consume a following `-`-prefixed value. `--lon -74` throws, and `--lon=-74` works.
+  - A bare `-74.0` positional throws in strict mode.
+  - Everything after `--` lands in `positionals`.
+  - `multiple: true` collects repeated flags, including empty strings.
+- Preserved external interfaces: the `resolver-wof-sqlite` bin grammars (spawned by `docs/plugins/demo-assets/resolve.ts`, including `--in ""`), the `publish-release-to-hf.ts` flag set including the retired `--wof-hot` (documented in RELEASING.md), and the `build-fts-cli.test.ts` `main(argv)` exit-code interface.
+- Deliberately kept: `corpus-python/scripts/train_with_resume.ts` `EXTRA_ARGS = cliArguments()`. It passes arguments verbatim to the python trainer, and parseArgs cannot collect undeclared flags.
 
 ## Triage ledger (smells found, fixed by task number)
 
@@ -95,7 +99,7 @@ export function postScriptCleanup(signal: NodeJS.Signals = "SIGTERM", exitCode?:
 }
 ```
 
-Wait — keep `clearTimeout` BEFORE `process.exit` (order as in the original). Correct body of `.finally`:
+Correction: Keep `clearTimeout` before `process.exit`, in the original order. The correct body of `.finally` is:
 
 ```ts
 		.finally(() => {
@@ -129,9 +133,9 @@ export function runScript(scriptCallback: ScriptCallback): Promise<void> {
 }
 ```
 
-Note the signal-handler registration still passes the signal name as the first arg and `undefined` as exitCode — Ctrl-C now exits with `process.exitCode ?? 0` instead of hard 0; acceptable and more direct.
+The signal-handler registration still passes the signal name as the first arg and `undefined` as exitCode. Ctrl-C therefore exits with `process.exitCode ?? 0` instead of a hard 0, which is acceptable and more direct.
 
-- [ ] **Step 3: Update the cliArguments docstring** (same file, lines 72-77) — the negative-coordinate example dies in Task 9:
+- [ ] **Step 3: Update the cliArguments docstring** (same file, lines 72-77). Task 9 removes the negative-coordinate example:
 
 ```ts
 /**
@@ -333,7 +337,7 @@ git commit -m "refactor(corpus): audit.ts parses argv with node:util parseArgs"
 
 - Modify: `corpus/scripts/ingest-csv.ts:14-28,37-66`, main (`cliArgs` reads)
 
-The header claims `DELIBERATE hand-parse: dynamic --key value pairs` — but main() reads a fixed set: `input, table, output, sample, separator, skip, no-header, dry-run`. The dynamic part is the inferred SQL schema rather than the CLI. Migrate.
+The header claims `DELIBERATE hand-parse: dynamic --key value pairs`, but main() reads a fixed set: `input, table, output, sample, separator, skip, no-header, dry-run`. Only the inferred SQL schema is dynamic, and the CLI flags are fixed, so migrate it.
 
 - [ ] **Step 1: Edit**
 
@@ -677,7 +681,7 @@ function parseCLIArgs(argv: readonly string[] | undefined): CLIArgs {
 		printUsageAndExit(0)
 	}
 
-	// Callers pass `--in ""` for a extract (e.g. a custom postcode DB) that isn't built yet — keep
+	// Callers pass `--in ""` for an extract (e.g. a custom postcode DB) that isn't built yet — keep
 	// only non-empty paths; build-slim skips the rest.
 	const inputs = parsed.values.in.filter(Boolean)
 	const output = parsed.values.out
@@ -746,7 +750,7 @@ git commit -m "refactor(resolver-wof-sqlite): build CLIs parse argv with node:ut
 
 - Modify: `scripts/publish-release-to-hf.ts:33,42,44-54,79-110` + every `args.*`/`args[flagKey]` read
 
-⚠ Release tooling. Behavior-preserving except: unknown flags now ERROR instead of being silently ignored (typo protection); a trailing valueless `--flag` now errors instead of being dropped. The retired `--wof-hot` stays declared (RELEASING.md's documented invocation passes it).
+⚠ This is release tooling. The script behaves as before with two exceptions. Unknown flags now raise an error instead of being silently ignored, so a mistyped flag fails loudly. A trailing `--flag` without a value now raises an error instead of being dropped. The retired `--wof-hot` stays declared, because the invocation documented in RELEASING.md passes it.
 
 - [ ] **Step 1: Replace the parser**
 
@@ -836,7 +840,7 @@ git commit -m "refactor(release): publish-release-to-hf uses strict parseArgs (t
 - Modify: `un-locode-lookup/cli.ts` (same pattern; `--near` retired)
 - Modify: `timezone-lookup/README.md:18`, `nuts-lookup/README.md:17`, `un-locode-lookup/README.md:20`
 
-Grammar change (pre-1.0-style operator tools, shipped 2026-06-26): coordinates remain positionals but negative values now require the standard `--` separator (strict parseArgs's own error tells the user exactly this). `mailwoman-un-locode --near <lat> <lon>` → `mailwoman-un-locode -- <lat> <lon>`. Junk argv no longer silently swallowed.
+Grammar change (these are pre-1.0-style operator tools, shipped 2026-06-26): Coordinates remain positionals, but negative values now require the standard `--` separator. Strict parseArgs's own error message tells the user exactly this. `mailwoman-un-locode --near <lat> <lon>` becomes `mailwoman-un-locode -- <lat> <lon>`. Invalid argv is no longer silently ignored.
 
 - [ ] **Step 1: timezone-lookup/cli.ts** — full new content (keep the license header block):
 

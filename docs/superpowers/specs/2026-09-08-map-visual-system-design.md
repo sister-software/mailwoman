@@ -1,9 +1,9 @@
 # The map visual system: tokens, materials and chrome for Earth, Moon and Mars
 
-Three deployed apps — `earth.mailwoman.ai`, `moon.mailwoman.ai`, `mars.mailwoman.ai` — share one React
-component package and one stylesheet, and none of them looks like a product. This design gives the four
-consumers of `@mailwoman/react` a single owned vocabulary, replaces the desktop control panel with map
-chrome, and repairs the rendering defects measured below.
+Three deployed apps (`earth.mailwoman.ai`, `moon.mailwoman.ai`, `mars.mailwoman.ai`) share one React
+component package and one stylesheet, and none of them has a finished product design. This design gives
+the four consumers of `@mailwoman/react` a single token vocabulary that the package owns, replaces the
+desktop control panel with map chrome, and repairs the rendering defects measured below.
 
 ## Measured state
 
@@ -36,8 +36,8 @@ rule beneath it is scoped `:global([data-theme="dark"])`. Nothing under `package
 `#e6edf3` text on it.
 
 `packages/earth/test/browser/300-demo-theme.spec.ts` is the only test that touches the theme, and
-`GeocoderFixture.setTheme` sets the attribute itself before asserting. The test exercises a state
-production never enters, which is why this shipped.
+`GeocoderFixture.setTheme` sets the attribute itself before asserting. The test exercises a state that
+production never enters, which is why the defect shipped.
 
 The same file offsets the panel and the MapLibre control stack by `var(--ifm-navbar-height, 60px)` for a
 navbar that does not exist outside Docusaurus.
@@ -58,14 +58,14 @@ both set `"text-font": ["Fira Sans Regular"]`. Probing `https://public.mailwoman
 | `Open Sans Regular` (MapLibre's default stack)                        | 404               |
 | `Noto Sans Bold`, `Iosevka Nexus Regular`, `Arial Unicode MS Regular` | 404               |
 
-MapLibre renders no text at all when a glyph range fails, so naming an absent stack is a defect on its own
-terms and `#styles/fonts` now holds the served names. It is not what blanks the planetary labels: after the
-repair deployed on `9504425c7`, `mars.mailwoman.ai` still draws none.
+MapLibre renders no text at all when a glyph range fails, so requesting an absent stack is a defect in
+itself, and `#styles/fonts` now holds the served names. It does not explain the missing planetary labels,
+because after the repair deployed on `9504425c7`, `mars.mailwoman.ai` still draws none.
 
 ### No nomenclature tile is ever requested, and the cause is above the style
 
-Measured on the deployed Mars app, with a HAR so that Web Worker traffic is counted — MapLibre fetches
-vector tiles from a worker, which a page-level request listener cannot see:
+This was measured on the deployed Mars app with a HAR, so that Web Worker traffic is counted. MapLibre
+fetches vector tiles from a worker, which a page-level request listener cannot see:
 
 | Kind                      | Requests    |
 | ------------------------- | ----------- |
@@ -74,20 +74,20 @@ vector tiles from a worker, which a page-level request listener cannot see:
 | Nomenclature vector tiles | **0**       |
 | Glyph ranges              | **0**       |
 
-So the source resolves and is then asked for nothing. Everything below that point is healthy: the tile
-worker answers `mars.json` and every tile 200 with `access-control-allow-origin` echoing the app origin,
-and the tiles carry features at every zoom — 314 in `z0/0/0`, 111 in `z2/1/1`, 53 in `z3/2/3`.
+The source resolves, and then nothing requests tiles from it. Everything downstream is healthy. The tile
+worker answers `mars.json` and every tile with 200 and an `access-control-allow-origin` that echoes the
+app origin. The tiles carry features at every zoom: 314 in `z0/0/0`, 111 in `z2/1/1`, 53 in `z3/2/3`.
 
-The style is exonerated by exercising it directly. Loading the exact object `createPlanetaryStyle`
-composes into a bare `maplibre-gl` 6.7.0 page — the version the repo pins — under globe projection, at the
-app's own opening camera, renders **131 labels** from 591 source features, with all four layers present, 6
-tile requests, 2 glyph requests and no error events. The spaced-capital region treatment reads as intended.
+Testing the style directly ruled it out. The exact object `createPlanetaryStyle` composes was loaded into
+a bare `maplibre-gl` 6.7.0 page (the version the repo pins) under globe projection, at the app's own
+opening camera. It rendered **131 labels** from 591 source features, with all four layers present, 6 tile
+requests, 2 glyph requests and no error events. The spaced-capital region treatment rendered as intended.
 
 The cause is the MapLibre web worker. `packages/planetary/lib/main.tsx` never called `setWorkerUrl`, so
-MapLibre derived the worker's script URL from `import.meta.url`, which a bundled build cannot answer. The
-derived path names a file the build never emitted, and the Worker's SPA fallback answers it with
-`index.html` at status 200 — so the web worker starts, fails parsing HTML as a module, and dies with
-nothing logged.
+MapLibre derived the worker's script URL from `import.meta.url`, which does not resolve in a bundled
+build. The derived path points at a file the build never emitted, and the Worker's SPA fallback answers it
+with `index.html` at status 200. The web worker then starts, fails to parse HTML as a module, and exits
+without logging anything.
 
 | URL                                                        | Serves                                        |
 | ---------------------------------------------------------- | --------------------------------------------- |
@@ -95,20 +95,20 @@ nothing logged.
 | `moon.mailwoman.ai/assets/maplibre-gl-worker.mjs`          | 200 `text/html`, 645 bytes                    |
 | `earth.mailwoman.ai/assets/maplibre-gl-worker-AbPoOmO0.js` | 200 `text/javascript`, 485,612 bytes          |
 
-MapLibre parses vector tiles and rasterizes glyph ranges inside that worker; only raster tiles decode on
-the main thread. That is the whole observed split — a hillshade that draws and labels that never appear,
-with the source reading `used: true`, `_sourceLoaded: true` and `_sourceErrored: false`, and its
-`_timers` holding 0 entries against the hillshade's 32.
+MapLibre parses vector tiles and rasterizes glyph ranges inside that worker, and only raster tiles decode
+on the main thread. That explains the observed split: the hillshade draws and the labels never appear.
+The source reads `used: true`, `_sourceLoaded: true` and `_sourceErrored: false`, and its `_timers` holds
+0 entries against the hillshade's 32.
 
-Earth escaped it because its `main.tsx` calls `setWorkerUrl(maplibreWorkerURL)` over a
-`?worker&url` import, and carries a comment naming this exact failure. A 404 would have been visible; the
-SPA fallback is what made it silent.
+Earth avoided the defect because its `main.tsx` calls `setWorkerUrl(maplibreWorkerURL)` over a
+`?worker&url` import, with a comment describing this exact failure. A 404 would have been visible. The SPA
+fallback is what hid the failure.
 
-It shipped because the planetary browser smoke asserted search and the feature panel, both of which work
-with a dead map worker. The guard added with the fix polls for a nomenclature `.mvt` request and a glyph
-`.pbf` request, and refuses any worker script served as `text/html`. Without the fix it reports
-`no nomenclature vector tile was requested`; with it, the Mars preview requests 11 vector tiles at the
-opening view and 96 after framing Olympus Mons.
+The defect shipped because the planetary browser smoke asserted search and the feature panel, and both
+work with a dead map worker. The guard added with the fix polls for a nomenclature `.mvt` request and a
+glyph `.pbf` request, and refuses any worker script served as `text/html`. Without the fix it reports
+`no nomenclature vector tile was requested`. With the fix, the Mars preview requests 11 vector tiles at
+the opening view and 96 after framing Olympus Mons.
 
 ### Mars and the Moon render as the same picture
 
@@ -132,48 +132,51 @@ MapLibre's default grey ramp.
 The typeface is already served from `public.mailwoman.ai` as two `@font-face` files totalling 20 KB in
 `docs/src/css/fonts/`, on an origin both apps already preconnect to.
 
-### Three font families, no system
+### Three font families without a type system
 
-Read from the deployed Earth page: `main` computes `system-ui`, `label` computes `ui-monospace`, and
-`button` computes `Arial` — no family is set on it at all, so it takes the user agent's default.
+On the deployed Earth page, `main` computes `system-ui`, `label` computes `ui-monospace`, and `button`
+computes `Arial`. The button has no family set at all, so it takes the user agent's default.
 
 ### The panel leads with the model card
 
 The first prose on `earth.mailwoman.ai` is the release note for v9.1.0, followed by a model-version
-select, a backend readout, a Force WASM checkbox and a Compare checkbox — four expert controls above the
-address field. The right-hand panel lists internal style-layer counts (`Roads (39)`,
+select, a backend readout, a Force WASM checkbox and a Compare checkbox. These four expert controls sit
+above the address field. The right-hand panel lists internal style-layer counts (`Roads (39)`,
 `Landuse / parks (12)`). The example chips wrap 3/3/2/1/1/1 down five rows.
 
 ## Decisions
 
 1. **DTCG is the canonical token model.** Design Tokens Community Group JSON on disk is the artifact of
-   record. Styleframe compiles it; styleframe is replaceable because the output is plain CSS custom
+   record. Styleframe compiles it. Styleframe can be replaced, because the output is plain CSS custom
    properties and the input is a published standard.
-2. **`@mailwoman/react` owns the tokens.** The declaring package declares the vocabulary. No new
-   workspace: a new workspace joins seven registers, and nothing here needs a separate publish identity.
-3. **Three token layers.** Primitive, semantic, component. Component rules read semantic names only. The
-   current defect is component rules reading raw primitives.
-4. **Aesthetic: Apple materials, Google density.** Translucent glass chrome, neutral by default, in the
-   restrained Apple register. Map content carries the richness — label hierarchy, category color,
-   icon markers — in the Google Maps register.
-5. **Magenta is an accent rather than a theme.** `#ff00b0` appears in exactly three roles: the primary action
-   fill, the focus and selection ring, and the selected-feature marker. Everything else is neutral. This
-   is a rule a reviewer can check by grepping the compiled CSS.
+2. **`@mailwoman/react` owns the tokens.** The package that uses the vocabulary declares it. The design
+   adds no new workspace, because a new workspace joins seven registers and nothing here needs a separate
+   publish identity.
+3. **Three token layers.** The layers are primitive, semantic, and component. Component rules read
+   semantic names only. The current defect is that component rules read raw primitives.
+4. **Aesthetic: Apple materials, Google density.** The chrome is translucent glass, neutral by default,
+   in the restrained Apple style. Map content carries the visual detail (label hierarchy, category color,
+   icon markers) in the Google Maps style.
+5. **Magenta is an accent rather than a theme.** `#ff00b0` appears in exactly three roles: the primary
+   action fill, the focus and selection ring, and the selected-feature marker. Everything else is
+   neutral. A reviewer can check this rule by grepping the compiled CSS.
 6. **`#e0367c` is retired.** It is Infima-era drift from `#ff00b0`, which `docs/src/css/theme-light.css`
    holds as `--mw-magenta`.
-7. **The typeface is bound per role, and the binding is expected to change.** No rule names a family; a
-   rule names a scale role and a scale role names one of five face roles. Iosevka Nexus is the current
-   binding of all five and is not assumed permanent — a swap edits `font.family.*` and nothing else.
-   Map labels carry a separate binding, `font.family.map`, because MapLibre draws them from a
-   signed-distance-field range rather than a `@font-face`; its value must name a stack the bucket serves,
-   which today means `Noto Sans Regular`, `Noto Sans Medium` or `Noto Sans Italic`.
-8. **Base UI is deferred behind a trigger.** No UI library exists in any of the 74 workspaces today, and
-   the whole inventory across `@mailwoman/react`, `packages/earth` and `packages/planetary` is six element
-   types: 13 `<button>`, 10 `<label>`, 10 `<input>`, 6 `<summary>`, 6 `<select>`, 6 `<details>`. Two
-   places want behavior that is a mistake to hand-roll. The layers panel wants a popover with dismissal
-   and focus return, and the result view wants a sheet. When Phase 2 reaches either, take `@base-ui/react`
-   for those two alone, behind our own component names. Not a fourteen-component build-out.
-9. **No control depends on glass to be usable.** Every material carries an opaque fallback under
+7. **The typeface is bound per role, and the binding is expected to change.** A rule never refers to a
+   font family directly. It refers to a scale role, and each scale role maps to one of five face roles.
+   Iosevka Nexus is currently bound to all five and is not assumed permanent. A swap edits
+   `font.family.*` and nothing else. Map labels carry a separate binding, `font.family.map`, because
+   MapLibre draws them from a signed-distance-field range rather than a `@font-face`. Its value must be a
+   stack the bucket serves, which today means `Noto Sans Regular`, `Noto Sans Medium` or
+   `Noto Sans Italic`.
+8. **Base UI is deferred until a specific need arises.** None of the 74 workspaces uses a UI library
+   today. The whole inventory across `@mailwoman/react`, `packages/earth` and `packages/planetary` is six
+   element types: 13 `<button>`, 10 `<label>`, 10 `<input>`, 6 `<summary>`, 6 `<select>`, 6 `<details>`.
+   Two places need behavior that should not be hand-rolled. The layers panel needs a popover with
+   dismissal and focus return, and the result view needs a sheet. When Phase 2 reaches either, use
+   `@base-ui/react` for those two only, behind the project's own component names. This is not a
+   fourteen-component build-out.
+9. **Every control stays usable without glass.** Every material carries an opaque fallback under
    `@supports not (backdrop-filter: blur(1px))` and under `prefers-reduced-transparency`. Text contrast
    holds in all three states.
 
@@ -193,14 +196,14 @@ packages/react/fonts.css    the two Iosevka @font-face blocks, re-homed from doc
 
 ### Primitive layer
 
-Neutral ramps derived in OKLCH so lightness steps are perceptually even. Brand anchors carried verbatim
-from `theme-light.css`: magenta `#ff00b0`, blue `#1a00ff`, navy `#00093a`, amber, teal, `--mw-line`,
-`--mw-line-strong`. Two body ramps for the planetary hillshades, one cool and one warm, each derived from
-a single hue.
+The neutral ramps are derived in OKLCH so lightness steps are perceptually even. The brand anchors are
+copied verbatim from `theme-light.css`: magenta `#ff00b0`, blue `#1a00ff`, navy `#00093a`, amber, teal,
+`--mw-line`, `--mw-line-strong`. Two body ramps serve the planetary hillshades, one cool and one warm,
+each derived from a single hue.
 
 ### Semantic layer
 
-The API component rules consume:
+Component rules consume this API:
 
 ```
 color.background.canvas      color.text.primary        control.background
@@ -224,13 +227,13 @@ material.glass.shadow          material.glass.highlight
 material.glass.fallback-background
 ```
 
-Applied through `[data-material="glass"]`, with the fallback branch required.
+Materials are applied through `[data-material="glass"]`, and the fallback branch is required.
 
 ### Themes
 
-Light and dark as DTCG modifiers, compiled to `[data-theme="light"]` and `[data-theme="dark"]`. Earth and
-planetary set `data-theme="dark"` on `<html>` in `index.html`. The attribute stops being something
-inherited and becomes something the app declares.
+Light and dark are DTCG modifiers, compiled to `[data-theme="light"]` and `[data-theme="dark"]`. Earth
+and planetary set `data-theme="dark"` on `<html>` in `index.html`, so each app declares the attribute
+instead of inheriting it.
 
 ### Cascade layers
 
@@ -238,25 +241,26 @@ inherited and becomes something the app declares.
 @layer reset, tokens, base, components, utilities, overrides;
 ```
 
-`@mailwoman/react` writes into `tokens` and `components`. This is what keeps the package embeddable in
-Docusaurus without claiming the page's global CSS, and it is why the docs bridge cannot lose to Infima on
+`@mailwoman/react` writes into `tokens` and `components`. This lets the package embed in Docusaurus
+without taking over the page's global CSS, and it ensures the docs bridge wins over Infima on
 specificity.
 
 ### Consumers
 
-- `packages/earth`, `packages/planetary` — import `tokens.css` and `fonts.css`; their `app.css` files
+- `packages/earth` and `packages/planetary` import `tokens.css` and `fonts.css`. Their `app.css` files
   shrink to layout and stop carrying color literals.
-- `docs/` — one bridge file mapping `--ifm-*` to the semantic tokens, so Docusaurus chrome and the theme
-  toggle keep working. `theme-light.css` and `theme-dark.css` stop declaring the brand anchors and read
-  them instead.
-- Storybook — `.storybook/preview-tokens.css` is deleted; the real tokens serve it.
+- `docs/` gets one bridge file that maps `--ifm-*` to the semantic tokens, so Docusaurus chrome and the
+  theme toggle keep working. `theme-light.css` and `theme-dark.css` stop declaring the brand anchors and
+  read them instead.
+- Storybook: `.storybook/preview-tokens.css` is deleted, and the real tokens serve it.
 
-`packages/react/styles.css` is rewritten against the semantic names. No `--ifm-` string remains in it.
+`packages/react/styles.css` is rewritten against the semantic names, and no `--ifm-` string remains in
+it.
 
 ## Typography
 
-Type is organized on two axes so the face is swappable. A rule never names a family; it names a scale
-role, and a scale role names a face role. Changing the typeface edits five tokens.
+Type is organized on two axes so the face can be swapped. A rule never refers to a font family. It refers
+to a scale role, and each scale role maps to a face role. Changing the typeface edits five tokens.
 
 ### Face roles
 
@@ -268,13 +272,14 @@ role, and a scale role names a face role. Changing the typeface edits five token
 | `font.family.code`    | Identifiers, JSON, file paths                               | Monospaced, with `0`/`O` and `1`/`l` distinguishable                                  |
 | `font.family.glyph`   | Control glyphs — close, chevron, compass letter, microphone | Monochrome, inherits color and size, sits on the text baseline                        |
 
-Iosevka Nexus satisfies all five today, its mono covering number, code and glyph. That is why the single
-face has not hurt yet, and it is also why nothing currently records which role a rule wanted. Binding the
-roles now means the swap is an edit to `font.family.*` and to nothing else.
+Iosevka Nexus satisfies all five today, with its mono variant covering number, code and glyph. That is
+why using a single face has caused no problems yet, and also why nothing currently records which role a
+rule wanted. Binding the roles now makes a future swap an edit to `font.family.*` and nothing else.
 
 ### Scale roles
 
-Each names a face role and carries size, line height and weight. Apple's iOS metrics, our face.
+Each scale role maps to a face role and carries size, line height and weight. The metrics follow Apple's
+iOS type scale, applied to the project's face.
 
 | Scale role                                                                                                      | Face role        |
 | --------------------------------------------------------------------------------------------------------------- | ---------------- |
@@ -284,31 +289,30 @@ Each names a face role and carries size, line height and weight. Apple's iOS met
 | `font.code`, `font.code.compact`                                                                                | `family.code`    |
 | `font.glyph`, `font.glyph.large`                                                                                | `family.glyph`   |
 
-`<button>` inherits the family. That single omission is why the deployed page renders Arial.
+`<button>` inherits the family. The deployed page renders Arial because this one rule is missing.
 
 ### Icons are SVG rather than a font
 
-A control glyph is typeset — it inherits color and size and aligns to the baseline, so it belongs to a
-face role. An icon is artwork: the category markers in the reference are a colored disc carrying a white
-mark, which a monochrome icon font cannot express. So `glyph` is a font role and `icons` is an SVG sprite
-with a documented viewBox and a two-color interface.
+A control glyph is typeset. It inherits color and size and aligns to the baseline, so it belongs to a
+face role. An icon is artwork. The category markers in the reference are a colored disc carrying a white
+mark, which a monochrome icon font cannot express. `glyph` is therefore a font role, and `icons` is an
+SVG sprite with a documented viewBox and a two-color interface.
 
-There are zero inline `<svg>` elements across `@mailwoman/react`, `packages/earth` and
-`packages/planetary` today. Every control glyph is a literal character — `✓` in `CopyButton`,
-`PipelineExplorer` and `ResultPanel`, `×` in the planetary `FeaturePanel` — and two are emoji, `📍` and
-`🏛` in `ResolvedPlace.tsx`. Emoji render per platform and cannot take the accent color; they are the
-first thing the glyph role replaces.
+`@mailwoman/react`, `packages/earth` and `packages/planetary` contain zero inline `<svg>` elements today.
+Every control glyph is a literal character: `✓` in `CopyButton`, `PipelineExplorer` and `ResultPanel`,
+and `×` in the planetary `FeaturePanel`. Two are emoji, `📍` and `🏛` in `ResolvedPlace.tsx`. Emoji render
+differently per platform and cannot take the accent color, so the glyph role replaces them first.
 
 ### Map labels are a separate binding
 
-A map label is drawn by MapLibre from a signed-distance-field glyph range rather than by the browser from a
-`@font-face`. So `font.family.*` does not reach the map, and a face bound in the DOM does not appear on
-the globe until an SDF range for it exists in the bucket. Map labels therefore carry their own token,
-`font.family.map`, whose value must name a stack the bucket serves.
+MapLibre draws a map label from a signed-distance-field glyph range, while the browser draws DOM text from
+a `@font-face`. `font.family.*` therefore does not reach the map, and a face bound in the DOM does not
+appear on the globe until an SDF range for it exists in the bucket. Map labels carry their own token,
+`font.family.map`, whose value must be a stack the bucket serves.
 
 ## Map chrome
 
-Five presentational components in `@mailwoman/react/map`, each taking tokens and children and holding no
+`@mailwoman/react/map` gains five presentational components. Each takes tokens and children and holds no
 app logic. The placement follows the operator's layout: search on top, examples beneath it, controls in a
 right-hand column, footer near the bottom.
 
@@ -345,23 +349,23 @@ takes the cool ramp, Mars the warm oxide ramp. The two bodies stop being the sam
 
 ### Space
 
-A star field behind the globe, matching the reference: small light points at varied opacity on the body's
-space color. Rendered behind a transparent map canvas so it does not rotate with the body.
+A star field sits behind the globe, matching the reference: small light points at varied opacity on the
+body's space color. It renders behind a transparent map canvas so it does not rotate with the body.
 
 ### Framing
 
 `framingZoom` is capped at the hillshade's own maximum zoom, so a selected feature is sharp
 rather than the upsampled blur at zoom 7. The selected feature draws a label and a marker, so the panel
-and the map name the same thing.
+and the map identify the same feature.
 
 ## Earth layout
 
-Default view: wordmark, one line of what the page does, the search pill, the chip row, the control stack,
-the footer. Results in a bottom sheet.
+The default view shows the wordmark, one line describing what the page does, the search pill, the chip
+row, the control stack, and the footer. Results appear in a bottom sheet.
 
 Model version, backend readout, Force WASM, Compare and the style-layer counts move under a **Developer**
-section of the layers panel, reachable by toggle or `?dev=1`. Nothing is deleted; the expert set stops
-being the front door.
+section of the layers panel, reachable by toggle or `?dev=1`. Nothing is deleted, but the expert controls
+no longer appear first.
 
 `geocoder.module.css` loses the orphan `[data-theme="dark"]` rule and both `--ifm-navbar-height` offsets.
 
@@ -369,13 +373,14 @@ being the front door.
 
 - `300-demo-theme.spec.ts` stops setting `data-theme` and asserts the attribute the app sets.
 - A contrast check over every semantic foreground/background pair in both themes. A light value inside the
-  dark theme fails rather than ships.
+  dark theme fails the check instead of shipping.
 - A check that `packages/react/styles.css` contains no `--ifm-` string.
 - A `repo-health` check that every `text-font` in `packages/cartographer` names a served glyph stack.
 - A render check that each app draws a non-zero count of label features after load, so a future glyph
   regression fails a test rather than shipping a blank body.
 - Screenshots at phone and desktop widths, light and dark, over default, focus-visible, pressed, disabled,
-  open and selected. Glass is excluded from pixel comparison; blur compositing varies by browser and host.
+  open and selected. Glass is excluded from pixel comparison, because blur compositing varies by browser and
+  host.
 
 ## Phases
 
@@ -385,7 +390,7 @@ Each phase is deployable on its own.
 | --- | ------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------- |
 | 1a  | `text-font` repair in both styles                                                                                              | Shipped on `9504425c7`. Both styles name a served stack; planetary labels still absent, so this was necessary and not sufficient |
 | 1b  | `setWorkerUrl` in planetary's `main.tsx`, plus the browser guard for vector tiles, glyph ranges and HTML-served worker scripts | Moon and Mars name their features at all — the app's first job, and a precondition for judging any framing or palette change     |
-| 2   | DTCG tokens, styleframe compile, `fonts.css`, docs bridge, cascade layers, delete the orphan selector and the navbar offsets   | Panel readable, brand palette and typeface live, no layout change                                                                |
+| 2   | DTCG tokens, styleframe compile, `fonts.css`, docs bridge, cascade layers, delete the orphan selector and the navbar offsets   | Panel readable, brand palette and typeface live, layout unchanged                                                                |
 | 3   | The five chrome components, glass material with fallback, safe-area and motion tokens                                          | Nothing in production yet; stories and tests                                                                                     |
 | 4   | Earth relayout, Developer demotion                                                                                             | The new front door                                                                                                               |
 | 5   | Mars ramp, star field, framing cap, planetary chrome                                                                           | Moon and Mars distinct and legible                                                                                               |

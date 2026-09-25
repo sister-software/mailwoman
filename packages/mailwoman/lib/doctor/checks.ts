@@ -3,8 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Pure verdict logic for `mailwoman doctor`. The runner gathers observations and this module classifies them as
- *   `ok`, `missing`, or `degraded`. Optional-layer gaps include fix hints but do not affect the exit code.
+ * Classifies the observations that `mailwoman doctor` gathers into check verdicts.
  */
 
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
@@ -21,7 +20,7 @@ import type { LicenseKeyPublication } from "@mailwoman/core/license/publication"
 import type { LicenseStatusAnswer } from "@mailwoman/core/license/status"
 
 /**
- * Check outcomes: working, absent but fixable, or present but impaired.
+ * Enumerates check outcomes: working, absent but fixable, or present but impaired.
  */
 export const CheckStatus = {
 	OK: "ok",
@@ -29,77 +28,80 @@ export const CheckStatus = {
 	Degraded: "degraded",
 } as const
 
+/**
+ * Enumerates check outcomes: working, absent but fixable, or present but impaired.
+ */
 export type CheckStatus = (typeof CheckStatus)[keyof typeof CheckStatus]
 
 /**
- * One diagnostic result with status, details, and optional fix guidance.
+ * Holds one diagnostic result with its status, detail and optional fix.
  */
 export interface DoctorCheck {
 	id: string
 	/**
-	 * Checklist label.
+	 * Holds the checklist label.
 	 */
 	label: string
 	status: CheckStatus
 	detail: string
 	/**
-	 * User-facing consequence when the check is not `ok`.
+	 * Explains the user-facing effect when the check is not `ok`.
 	 */
 	consequence?: string
 	/**
-	 * Command or URL to address the issue.
+	 * Holds a command or URL that fixes the problem.
 	 */
 	fix?: string
 	/**
-	 * Whether a non-`ok` result affects the process exit code.
+	 * Controls whether a non-`ok` result fails the process exit code.
 	 */
 	core: boolean
 	/**
-	 * Structured license details, when this is a license check.
+	 * Holds structured license details for a license check.
 	 */
 	license?: LicensePosture
 }
 
 /**
- * License posture reported by the doctor.
+ * Describes the license terms that apply to Mailwoman or to one data layer.
  */
 export interface LicensePosture {
 	/**
-	 * Licensed package or data layer.
+	 * Identifies the licensed package or data layer.
 	 */
 	subject: string
 	/**
-	 * Recorded SPDX expression.
+	 * Holds the recorded SPDX expression.
 	 */
 	expression: string
 	/**
-	 * Applicable branch of a dual license, or the expression itself.
+	 * Holds the applicable branch of a dual license, or the expression itself.
 	 */
 	applied: string
 	/**
-	 * Known obligations of the applicable branch.
+	 * Lists the known obligations of the applicable branch.
 	 */
 	obligations: LicenseObligation[]
 	recognized: boolean
 	/**
-	 * Recorded attribution requirement.
+	 * Holds the recorded attribution requirement.
 	 */
 	attribution?: string
 	/**
-	 * Licensee, key ID, and key status for Mailwoman's own license.
+	 * `licensee`, `keyID` and `keyStatus` describe the key for Mailwoman's own license.
 	 */
 	licensee?: string
 	keyID?: string
 	keyStatus?: "valid" | "expired" | "unknown_key" | "invalid" | "retired"
 	/**
-	 * Self-service license ID and worker-reported status.
+	 * `lid` and `lidStatus` hold the self-service license ID and its status from the license worker.
 	 */
 	lid?: string
 	lidStatus?: LicenseStatusAnswer
 }
 
 /**
- * Diagnostic checks and derived exit code.
+ * Holds the ordered checks and the exit code derived from them.
  */
 export interface DoctorReport {
 	checks: DoctorCheck[]
@@ -107,7 +109,7 @@ export interface DoctorReport {
 }
 
 /**
- * Parsed major, minor, and patch version.
+ * Holds a parsed major, minor and patch version.
  */
 export interface SemverTriple {
 	major: number
@@ -116,7 +118,8 @@ export interface SemverTriple {
 }
 
 /**
- * Parse the minimum version from an `engines.node` range; missing minor and patch default to zero.
+ * Parses the minimum version from an `engines.node` range.
+ * A missing minor or patch defaults to zero.
  */
 export function parseVersionFloor(engines: string): SemverTriple | undefined {
 	const match = engines.match(/(\d+)(?:\.(\d+))?(?:\.(\d+))?/u)
@@ -127,7 +130,7 @@ export function parseVersionFloor(engines: string): SemverTriple | undefined {
 }
 
 /**
- * Parse a runtime version in `major.minor.patch` form.
+ * Parses a runtime version in `major.minor.patch` form.
  */
 export function parseVersion(version: string): SemverTriple | undefined {
 	const match = version.match(/^(\d+)\.(\d+)\.(\d+)/u)
@@ -138,7 +141,7 @@ export function parseVersion(version: string): SemverTriple | undefined {
 }
 
 /**
- * Check whether a version meets a minimum major/minor/patch floor.
+ * Reports whether a version meets the floor of an `engines.node` range.
  */
 export function versionMeetsFloor(version: string, floor: string): boolean {
 	const v = parseVersion(version)
@@ -153,26 +156,27 @@ export function versionMeetsFloor(version: string, floor: string): boolean {
 	return v.patch >= f.patch
 }
 
-// #region Observations (facts the runner gathers) → checks (verdicts)
+// #region Observations to checks
 
 /**
- * Observation of `@mailwoman/neural-weights-en-us` resolution.
+ * Records how `@mailwoman/neural-weights-en-us` resolved.
  */
 export interface WeightsObservation {
 	/**
-	 * Resolved paths and source, or absent on failure.
+	 * Holds the resolved paths and source.
+	 * It is absent when resolution failed.
 	 */
 	resolved?: { source: string; modelPath: string; tokenizerPath: string }
 	/**
-	 * Model file size, if available.
+	 * Holds the model file size in bytes.
 	 */
 	modelSize?: number
 	/**
-	 * Tokenizer file size.
+	 * Holds the tokenizer file size in bytes.
 	 */
 	tokenizerSize?: number
 	/**
-	 * Resolution error, if any.
+	 * Holds the resolution error.
 	 */
 	error?: string
 }
@@ -185,7 +189,7 @@ const WEIGHTS_CONSEQUENCE =
 	"leaves the rest of the address unlabelled."
 
 /**
- * Check the required trained model bundle.
+ * Checks that the required en-us model weights resolve and are not empty.
  */
 export function weightsCheck(o: WeightsObservation): DoctorCheck {
 	const base = { id: "weights", label: "Model weights (en-us)", core: true }
@@ -218,7 +222,7 @@ export function weightsCheck(o: WeightsObservation): DoctorCheck {
 }
 
 /**
- * Observation of an optional locale weights overlay.
+ * Records whether an optional locale overlay package resolved.
  */
 export interface LocaleOverlayObservation {
 	locale: string
@@ -228,7 +232,7 @@ export interface LocaleOverlayObservation {
 }
 
 /**
- * Check an optional locale overlay.
+ * Checks an optional locale overlay.
  */
 export function localeOverlayCheck(o: LocaleOverlayObservation): DoctorCheck {
 	const base = { id: `locale-overlay-${o.locale}`, label: `Locale overlay (${o.locale})`, core: false }
@@ -250,17 +254,17 @@ export function localeOverlayCheck(o: LocaleOverlayObservation): DoctorCheck {
 }
 
 /**
- * Observation of the configured data root.
+ * Records the state of the configured data root.
  */
 export interface DataRootObservation {
 	/**
-	 * Resolved data-root path.
+	 * Holds the resolved data-root path.
 	 */
 	path: string
 	exists: boolean
 	writable: boolean
 	/**
-	 * Whether the path came from `$MAILWOMAN_DATA_ROOT`.
+	 * Reports whether the path came from `$MAILWOMAN_DATA_ROOT`.
 	 */
 	fromEnv: boolean
 }
@@ -270,7 +274,7 @@ const DATA_ROOT_CONSEQUENCE =
 	"database already installed elsewhere will not be found unless you point $MAILWOMAN_DATA_ROOT at it."
 
 /**
- * Check the data root used by data commands.
+ * Checks that the data root exists and is writable.
  */
 export function dataRootCheck(o: DataRootObservation): DoctorCheck {
 	const base = { id: "data-root", label: "Data root", core: false }
@@ -300,29 +304,29 @@ export function dataRootCheck(o: DataRootObservation): DoctorCheck {
 }
 
 /**
- * Observation of the admin gazetteer paths used by the resolver.
+ * Records which admin gazetteer databases the resolver can find.
  */
 export interface GazetteerObservation {
 	/**
-	 * Candidate database selected explicitly or through the environment.
+	 * Holds the candidate database selected explicitly or through the environment.
 	 */
 	envCandidate?: { path: string; sizeBytes?: number }
 	/**
-	 * Candidate database at the default path.
+	 * Holds the candidate database found at the default path.
 	 */
 	conventionCandidate?: string
 	/**
-	 * WOF admin database used when no candidate database is available.
+	 * Holds the WOF admin database used when no candidate database exists.
 	 */
 	wofDatabase?: { path: string; sizeBytes?: number }
 	/**
-	 * Paths checked when no database is found.
+	 * Lists the paths probed, for the report when no database is found.
 	 */
 	probed: string[]
 }
 
 /**
- * Check whether a gazetteer is available for geocoding.
+ * Checks whether a gazetteer is available for geocoding, in the resolver's order of preference.
  */
 export function gazetteerCheck(o: GazetteerObservation): DoctorCheck {
 	const base = { id: "gazetteer", label: "Admin gazetteer", core: false }
@@ -333,7 +337,6 @@ export function gazetteerCheck(o: GazetteerObservation): DoctorCheck {
 		return { ...base, status: CheckStatus.OK, detail: `candidate.db · ${o.envCandidate.path}${size}` }
 	}
 
-	// Check the convention candidate path before WOF fallback databases.
 	if (o.conventionCandidate) {
 		return { ...base, status: CheckStatus.OK, detail: `candidate.db · ${o.conventionCandidate} (convention path)` }
 	}
@@ -356,7 +359,7 @@ export function gazetteerCheck(o: GazetteerObservation): DoctorCheck {
 }
 
 /**
- * Layer identity and rights fields read from its manifest.
+ * Holds the identity and rights fields read from a layer manifest.
  */
 export interface LayerIdentity {
 	name: string
@@ -366,21 +369,24 @@ export interface LayerIdentity {
 	attribution: string | null
 }
 
+/**
+ * Records whether the POI layer exists and whether its manifest could be read.
+ */
 export interface POIObservation {
 	path: string
 	exists: boolean
 	/**
-	 * Parsed manifest, when available.
+	 * Holds the parsed manifest when it could be read.
 	 */
 	manifest?: LayerIdentity
 	/**
-	 * Manifest read error.
+	 * Holds the manifest read error.
 	 */
 	error?: string
 }
 
 /**
- * Check whether the POI layer is available and readable.
+ * Checks whether the POI layer is present and its manifest is readable.
  */
 export function checkPOI(o: POIObservation): DoctorCheck {
 	const base = { id: "poi-layer", label: "POI layer", core: false }
@@ -412,7 +418,7 @@ export function checkPOI(o: POIObservation): DoctorCheck {
 }
 
 /**
- * Node runtime and package engine floor.
+ * Records the running Node version and the package's `engines.node` range.
  */
 export interface NodeRuntimeObservation {
 	nodeVersion: string
@@ -420,7 +426,7 @@ export interface NodeRuntimeObservation {
 }
 
 /**
- * Check the Node version requirement.
+ * Checks that the running Node version meets the `engines.node` floor.
  */
 export function nodeVersionCheck(o: NodeRuntimeObservation): DoctorCheck {
 	const base = { id: "node-version", label: "Node runtime", core: true }
@@ -441,7 +447,7 @@ export function nodeVersionCheck(o: NodeRuntimeObservation): DoctorCheck {
 }
 
 /**
- * ONNX runtime load status.
+ * Records whether `onnxruntime-node` loaded.
  */
 export interface ONNXRuntimeObservation {
 	loadable: boolean
@@ -449,7 +455,7 @@ export interface ONNXRuntimeObservation {
 }
 
 /**
- * Check whether `onnxruntime-node` can load.
+ * Checks whether `onnxruntime-node` can load.
  */
 export function onnxRuntimeCheck(o: ONNXRuntimeObservation): DoctorCheck {
 	const base = { id: "onnxruntime", label: "ONNX runtime", core: true }
@@ -473,29 +479,34 @@ export function onnxRuntimeCheck(o: ONNXRuntimeObservation): DoctorCheck {
 
 // #region License posture
 
+/**
+ * Records the inputs that decide which branch of Mailwoman's own license applies.
+ */
 export interface RuntimeLicenseObservation {
 	/**
-	 * Mailwoman license expression from the package manifest.
+	 * Holds the license expression from the package manifest.
 	 */
 	expression: string
 	/**
-	 * Offline key verification, if a key is configured.
+	 * Holds the offline key verification when a key is configured.
 	 */
 	key?: LicenseKeyVerification
 	/**
-	 * Publication status of the key ID, when available.
+	 * Holds the key ID's publication status when it is known.
 	 */
 	publication?: LicenseKeyPublication
 	/**
-	 * Worker status for a self-service license, when available.
-	 * This does not change the offline license branch.
+	 * Holds the license worker's status for a self-service license.
+	 *
+	 * This status does not change the offline license branch.
 	 */
 	lidStatus?: LicenseStatusAnswer
 }
 
 /**
- * Report the applicable license branch and known obligations.
- * This informational check does not affect runtime behavior.
+ * Reports which branch of Mailwoman's license applies and its known obligations.
+ *
+ * The check is informational and does not change runtime behavior.
  */
 export function runtimeLicenseCheck(o: RuntimeLicenseObservation): DoctorCheck {
 	const base = { id: "license-mailwoman", label: "License (mailwoman)", core: false }
@@ -541,9 +552,8 @@ export function runtimeLicenseCheck(o: RuntimeLicenseObservation): DoctorCheck {
 
 		const expiry = key.payload.expires ? `expires ${key.payload.expires}` : "no expiry"
 
-		// The worker's word about the license itself.
-		// Revoked or lapsed is a degraded posture the offline token cannot see.
-		// Unknown and unreachable are reported as what they are and change nothing.
+		// The offline token cannot show a revoked or lapsed license, so the worker's status degrades the check.
+		// Any other worker status is reported without changing the verdict.
 		if (o.lidStatus === "revoked" || o.lidStatus === "lapsed") {
 			return {
 				...base,
@@ -590,30 +600,32 @@ export function runtimeLicenseCheck(o: RuntimeLicenseObservation): DoctorCheck {
 	}
 }
 
+/**
+ * Records one attached layer database and its manifest.
+ */
 export interface LayerLicenseObservation {
 	id: string
 	label: string
 	path: string
 	/**
-	 * The manifest fields the doctor reads, or absent when the manifest could not be read.
+	 * Holds the manifest fields, or is absent when the manifest could not be read.
 	 */
 	manifest?: LayerIdentity
 	error?: string
 	/**
-	 * Other `.db` files in the layer's directory when the attached file itself is absent.
+	 * Lists other `.db` files in the layer's directory when the expected file is absent.
 	 *
-	 * The artifact built under a name the session does not look for.
+	 * These usually come from a build written under a name the session does not attach.
 	 */
 	alternates?: string[]
 }
 
 /**
- * What one attached layer database's recorded license asks of the operator.
+ * Reports the license an attached layer database records and its known obligations.
  *
- * The expression comes from the layer's own `layer_manifest`, never from a table in code,
- * so a layer that records `noassertion` or a vendor-suffixed identifier is
- * reported as unrecognized rather than guessed at.
- * Informational, never core.
+ * The expression comes from the layer's own `layer_manifest`, so an unfamiliar
+ * identifier is reported as unrecognized instead of guessed.
+ * The check is informational and never core.
  */
 export function layerLicenseCheck(o: LayerLicenseObservation): DoctorCheck {
 	const base = { id: `license-${o.id}`, label: `License (${o.label})`, core: false }
@@ -667,6 +679,9 @@ export function layerLicenseCheck(o: LayerLicenseObservation): DoctorCheck {
 	}
 }
 
+/**
+ * Formats obligations as a comma-separated list for a check detail.
+ */
 function describeObligations(obligations: readonly LicenseObligation[], recognized: boolean): string {
 	if (!recognized) return "unrecognized license"
 
@@ -678,24 +693,23 @@ function describeObligations(obligations: readonly LicenseObligation[], recogniz
 // #region Aggregate
 
 /**
- * Derive the process exit code: `0` when every core check is `ok`, else `1`.
+ * Returns `0` when every core check is `ok`, and `1` otherwise.
  *
- * Optional data-layer checks report their gaps but never fail the process.
- * The meaning-of-zero rule (a missing optional layer is not a hard error).
+ * Non-core checks, such as optional data layers, report gaps without failing the process.
  */
 export function computeExitCode(checks: readonly DoctorCheck[]): number {
 	return checks.some((c) => c.core && c.status !== CheckStatus.OK) ? 1 : 0
 }
 
 /**
- * Assemble the report + exit code from the ordered checks.
+ * Builds the report and its exit code from the ordered checks.
  */
 export function assembleReport(checks: DoctorCheck[]): DoctorReport {
 	return { checks, exitCode: computeExitCode(checks) }
 }
 
 /**
- * First line of a possibly-multiline error/stack, trimmed — keeps the checklist to one line per check.
+ * Returns the trimmed first line of an error message so each check stays on one line.
  */
 function firstLine(message: string): string {
 	// oxlint-disable-next-line mailwoman/prefer-spliterator -- An in-memory error message, and the limit argument stops after the first segment.

@@ -145,7 +145,7 @@ Three files that extend the TIGER pipeline. They directly depend on `@mailwoman/
 
 ### ▸ Phase 6 — Codegen & lint (stays for now, candidates for `mailwoman dev`)
 
-These are tooling scripts — not builders rather than eval rather than release. They belong in `scripts/` until there's a `mailwoman dev` command namespace to absorb them.
+These are tooling scripts, and none of them builds, evaluates or releases anything. They belong in `scripts/` until there's a `mailwoman dev` command namespace to absorb them.
 
 | File                             | Fate                                                                | Rationale                                                    |
 | -------------------------------- | ------------------------------------------------------------------- | ------------------------------------------------------------ |

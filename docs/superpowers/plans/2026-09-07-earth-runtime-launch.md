@@ -2,7 +2,7 @@
 
 > **For agentic workers:** required sub-skill: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** `packages/earth` runs the real browser geocoder with parity to today's docs page, the "demo" names in `@mailwoman/react/map` become product names, the browser test suite moves to the app, the docs site redirects `/demo`, `/debug` and `/trace` to `earth.mailwoman.ai`, and the geocoder page, its runtime assembly, its service worker and its dependencies leave `docs/`. Done includes the removal.
+**Goal:** `packages/earth` runs the real browser geocoder with parity to today's docs page, the "demo" names in `@mailwoman/react/map` become product names, the browser test suite moves to the app, the docs site redirects `/demo`, `/debug` and `/trace` to `earth.mailwoman.ai`, and the geocoder page, its runtime assembly, its service worker and its dependencies leave `docs/`. The plan is done only after that removal lands.
 
 **Architecture:** The runtime assembly (`_runtime.ts`, the basemap and polygon helpers, the geolocation hook, the range-cache registration) becomes application code under `packages/earth/lib/runtime/`, consuming the package homes the first runtime plan created. The service worker gains the range cache. The host panels and the two live explainers (`ModelVisualizer`, `LiveModelVisualizer`) move to the app with `/debug` and `/trace`. The docs keep `DemoEmbed` (renamed `RuntimeEmbed`) for the explainers that stay, the maplibre worker staging for `DashboardMap`, and the sql.js staging for the explainers that resolve. The Playwright suite moves with the page and its fixtures; `demo-smoke.yml` targets the new host.
 
@@ -14,11 +14,11 @@
 
 - Lands after the shell plan and the runtime-homes plan; rebase onto both.
 - A moved or renamed name gets no compatibility re-export.
-- Behaviour parity rather than redesign: the seven browser specs that pass on the docs page pass on the app, on the real assets, before the docs page is retired.
+- The move keeps behaviour and does not redesign it. The seven browser specs that pass on the docs page pass on the app, on the real assets, before the docs page is retired.
 - `packages/earth` never imports `@mailwoman/docs` or `docs/**`; `packages/**` never imports `@mailwoman/docs`.
 - Docs keep working after every task: `cd docs && yarn build` exits 0.
 - `process.env` never read directly; `node:*` only under `core/lib/fs`.
-- Comments state invariants; the migration goes in commits.
+- Comments state invariants. The migration history goes in commit messages.
 - Branch: `git fetch origin main && git checkout -b feat/earth-runtime-launch origin/main`.
 
 ## Rename map (`@mailwoman/react/map`)
@@ -75,7 +75,7 @@ Read each moved file's header and rewrite the sentences that name Docusaurus, `/
 
 - [ ] **Step 2: The service worker gains the range cache**
 
-Append the body of `docs/static/range-cache-sw.js` (the `fetch` handler with the 64 KB chunk persistence and torn-chunk check, the `message` handler for `mailwoman-prune-db-ranges`, `CACHE_NAME`) to `packages/earth/lib/service-worker.ts` below `precacheAndRoute`, typed (`self.addEventListener("fetch", …)` with `FetchEvent`), then `git rm docs/static/range-cache-sw.js`. The header paragraph of the old file, which explains the protocol, comes with it. `docs/src/contexts/DemoEmbed.tsx` still imported `registerRangeCacheServiceWorker` and `pruneDBRangeCache`: the docs explainers that resolve keep the range cache too, so the docs get their own copy of the worker? No: the docs' WOF reads are the explainers' and small; drop the range cache from docs (delete the two calls in `DemoEmbed.tsx`), which is a documented behaviour change for the docs explainers only (a repeat visit re-fetches chunks) and none for the app.
+Append the body of `docs/static/range-cache-sw.js` (the `fetch` handler with the 64 KB chunk persistence and torn-chunk check, the `message` handler for `mailwoman-prune-db-ranges`, `CACHE_NAME`) to `packages/earth/lib/service-worker.ts` below `precacheAndRoute`, typed (`self.addEventListener("fetch", …)` with `FetchEvent`), then `git rm docs/static/range-cache-sw.js`. The header paragraph of the old file, which explains the protocol, comes with it. `docs/src/contexts/DemoEmbed.tsx` still imports `registerRangeCacheServiceWorker` and `pruneDBRangeCache` for the docs explainers that resolve. The docs do not get their own copy of the worker, because the explainers' WOF reads are small. Drop the range cache from docs by deleting the two calls in `DemoEmbed.tsx`. This is a documented behaviour change for the docs explainers only (a repeat visit re-fetches chunks), and the app is unaffected.
 
 - [ ] **Step 3: sql.js assets under the app**
 
@@ -123,7 +123,7 @@ yarn workspace @mailwoman/earth build > /tmp/earth-build.log 2>&1; echo "EXIT=$?
 yarn workspace @mailwoman/earth preview
 ```
 
-Open `http://localhost:7780/?q=Chicago,%20IL`: the model loads from `public.mailwoman.ai`, the query resolves to the Chicago locality with a marker. A Vite "externalized for browser compatibility" warning names a `node:` specifier on the static graph; `yarn mwops health bundle-graph` says which package, and the fix is a condition there rather than an alias here.
+Open `http://localhost:7780/?q=Chicago,%20IL`: the model loads from `public.mailwoman.ai`, the query resolves to the Chicago locality with a marker. A Vite "externalized for browser compatibility" warning means a `node:` specifier is on the static graph. `yarn mwops health bundle-graph` reports which package imports it, and the fix is an export condition in that package rather than an alias here.
 
 ```bash
 git add packages/earth packages/site-kit docs
@@ -161,7 +161,7 @@ git mv docs/src/components/DashboardMap/map-debug.ts packages/earth/lib/explorer
 git rm -r docs/src/components/ResultPanel
 ```
 
-`AboutDemo` → `About` (the component and its file). A `@docusaurus/BrowserOnly` wrapper is deleted (the whole app is client-side); `@theme/CodeBlock` becomes a `<pre><code>`; `@site/…` and `#components/…` imports become `#panels/…` or `@mailwoman/react`; `#shared/…` imports follow the runtime-homes plan's map; `#contexts/DemoEmbed` in `ModelVisualizer` becomes the app's runtime handle (`traceParse` from `useGeocoderRuntime`, passed as a prop). `VersionCompare` imported `SpanHighlight` and `TimingPanel` from docs components: both render a parse result and stay useful to docs pages, so they move to `@mailwoman/react/pipeline` (`SpanHighlight`, `TimingPanel`) with exports, and both hosts import them. `DashboardMap/DashboardMap.tsx` in docs imported `map-debug.ts` from its own folder; if it did, `map-debug.ts` moves to `@mailwoman/react/map/map-debug` instead of the app, since two hosts read it.
+`AboutDemo` → `About` (the component and its file). A `@docusaurus/BrowserOnly` wrapper is deleted (the whole app is client-side); `@theme/CodeBlock` becomes a `<pre><code>`; `@site/…` and `#components/…` imports become `#panels/…` or `@mailwoman/react`; `#shared/…` imports follow the runtime-homes plan's map; `#contexts/DemoEmbed` in `ModelVisualizer` becomes the app's runtime handle (`traceParse` from `useGeocoderRuntime`, passed as a prop). `VersionCompare` imported `SpanHighlight` and `TimingPanel` from docs components: both render a parse result and stay useful to docs pages, so they move to `@mailwoman/react/pipeline` (`SpanHighlight`, `TimingPanel`) with exports, and both hosts import them. If `DashboardMap/DashboardMap.tsx` in docs imports `map-debug.ts` from its own folder, `map-debug.ts` moves to `@mailwoman/react/map/map-debug` instead of the app, since two hosts read it.
 
 - [ ] **Step 2: Compose the panels in the app**
 
@@ -211,7 +211,7 @@ yarn workspace @mailwoman/earth test:browser test/browser/100-demo-cold-load.spe
 yarn workspace @mailwoman/earth test:browser
 ```
 
-Expected: 7 of 7, then the full suite green (the cold-load spec's action timeout is 30 s; a timeout on a cold model load is timing, and a second run separates it from a failure). Commit:
+Expected: 7 of 7, then the full suite passes. The cold-load spec's action timeout is 30 s. A timeout on a cold model load can be slow loading rather than a defect, and a second run distinguishes the two. Commit:
 
 ```bash
 git add packages/earth docs .github/workflows
@@ -346,11 +346,11 @@ yarn install
 yarn mwops health exports > /tmp/knip.log 2>&1; grep -n "docs" /tmp/knip.log
 ```
 
-Remove every docs dependency knip names as unused; re-run until it names none. The spec predicted `onnxruntime-web`, `maplibre-gl`, `react-map-gl`, `sql.js-httpvfs` and twelve `@mailwoman/*` packages; the measurement decides, and `maplibre-gl`, `react-map-gl` and `@mailwoman/cartographer` stay for `DashboardMap`, `@mailwoman/neural` stays for the visualizer types the explainers keep, and `sql.js-httpvfs` stays for staging unless `resolver-wof-wasm/host-assets` resolves it through its own dependency (it does; drop it from docs).
+Remove every docs dependency knip names as unused; re-run until it names none. The spec predicted `onnxruntime-web`, `maplibre-gl`, `react-map-gl`, `sql.js-httpvfs` and twelve `@mailwoman/*` packages, but the knip output decides. `maplibre-gl`, `react-map-gl` and `@mailwoman/cartographer` stay for `DashboardMap`. `@mailwoman/neural` stays for the visualizer types the explainers keep. `resolver-wof-wasm/host-assets` resolves `sql.js-httpvfs` through its own dependency, so drop `sql.js-httpvfs` from docs.
 
 - [ ] **Step 3: Workflows, AGENTS, ignore files**
 
-`.github/workflows/docs-build.yml` `push.paths`: `docs/**`, `packages/react/**`, `packages/core/**`, `packages/codex/**`, `packages/cartographer/**`, `packages/neural/**`, `mailwoman` if the explainers import `mailwoman/browser-runtime` (they do: `RuntimeEmbed` loads through it) — the list is the set of packages a docs import reaches, measured by `grep -rhoE 'from "(@mailwoman/[a-z-]+|mailwoman)' docs/src | sort -u`. `AGENTS.md`: delete the `apps/web-demo/` bullet under the non-workspace directories; the `docs/` row says "Docusaurus site → https://mailwoman.ai. Prose, the explainers, links to earth, moon and mars"; add rows for `packages/earth`, `packages/site-kit` (and the planetary rows land with their plans); the fs bullet's mention of the browser bundle's shim policy, if any, goes. `docs/.gitignore` keeps `/static/mailwoman/sqljs/` and `/static/mailwoman/maplibre/`, drops the `pair-index` entry if staging went.
+`.github/workflows/docs-build.yml` `push.paths`: `docs/**`, `packages/react/**`, `packages/core/**`, `packages/codex/**`, `packages/cartographer/**`, `packages/neural/**`, `mailwoman` if the explainers import `mailwoman/browser-runtime` (they do, because `RuntimeEmbed` loads through it). The list is the set of packages a docs import reaches, measured by `grep -rhoE 'from "(@mailwoman/[a-z-]+|mailwoman)' docs/src | sort -u`. `AGENTS.md`: delete the `apps/web-demo/` bullet under the non-workspace directories; the `docs/` row says "Docusaurus site → https://mailwoman.ai. Prose, the explainers, links to earth, moon and mars"; add rows for `packages/earth`, `packages/site-kit` (and the planetary rows land with their plans); the fs bullet's mention of the browser bundle's shim policy, if any, goes. `docs/.gitignore` keeps `/static/mailwoman/sqljs/` and `/static/mailwoman/maplibre/`, drops the `pair-index` entry if staging went.
 
 - [ ] **Step 4: The proofs**
 

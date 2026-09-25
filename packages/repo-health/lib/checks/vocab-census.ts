@@ -2,17 +2,12 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file Classifies every `Mailwoman.AmbiguousShorthand` hit by the action it needs, and reports each as a diagnostic.
+ * @file Classifies every `Mailwoman.AmbiguousShorthand` hit by the action it needs and reports each as a diagnostic.
  *
- *   The sweep that removes these words is only safe if each site's replacement is decided by a rule rather than guessed
- *   at, one comment at a time. A careless reword drops the invariant or the measured number the comment existed to
- *   state. `shard` reached zero from 3,481 the same way: its four concepts were named first, so every site had one
- *   agreed replacement.
- *
- *   Three actions, in ascending cost. A interface-tied name keeps its spelling and only needs backticks, because Vale
- *   skips inline code. A modified reference carries the check's real name in the word before it, so `street-context
- *   gate` becomes `the street-context check`. A bare reference says only "the gate", and which check that is can be
- *   learned solely by reading the surrounding paragraph.
+ *   The three actions rise in cost. An interface-tied name keeps its spelling and needs only backticks, because Vale
+ *   skips inline code. A modified reference has the check's real name in the preceding word, so `street-context gate`
+ *   becomes "the street-context check". A bare reference needs a reader to work out the meaning from the surrounding
+ *   paragraph.
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
@@ -26,22 +21,20 @@ import { type Diagnostic, DiagnosticSeverity, type RepoCheck, type RepoContext }
 import { trackedSourcePaths } from "#tracked-sources"
 
 /**
- * A Vale `--output line` record: `path:line:col:Rule:message`.
+ * Matches one Vale `--output line` record of the form `path:line:col:Rule:message`.
  */
 const HIT_PATTERN = /^(.*?):(\d+):(\d+):Mailwoman\.AmbiguousShorthand(?:Code)?:'([^']+)'/
 
 /**
- * Names that keep their spelling — `agents.md` lists them as interface-tied.
+ * Matches a line that contains an interface-tied name, which keeps its spelling and needs only backticks.
  *
- * A hit naming one of these is a formatting fix rather than a rewrite.
- * Empty: every interface-tied identifier that carried a banned word has been renamed.
- *
- * Add a name here only when a new one must carry one, and record why in `AmbiguousShorthandCode.yml`.
+ * The pattern matches nothing because no interface-tied identifier currently contains a banned word.
+ * A new name added here needs its reason recorded in `AmbiguousShorthandCode.yml`.
  */
 const INTERFACE_TOKEN = /(?!)/
 
 /**
- * The action a hit needs.
+ * The action that a hit needs.
  */
 export const Remedy = {
 	backtick: "backtick",
@@ -49,23 +42,29 @@ export const Remedy = {
 	readContext: "read-context",
 } as const
 
+/**
+ * One action from the constant above.
+ */
 export type Remedy = (typeof Remedy)[keyof typeof Remedy]
 
+/**
+ * One classified Vale hit.
+ */
 export interface Hit {
 	path: string
 	line: number
 	word: string
 	remedy: Remedy
 	/**
-	 * The word immediately before the hit, which is what names the sense when there is one.
+	 * The word immediately before the hit.
+	 * It identifies the intended check when it carries meaning.
 	 */
 	modifier: string
 }
 
 /**
- * A modifier only names the check when it carries meaning.
- *
- * An article, a comment marker or a pronoun leaves the reference bare however many words precede it.
+ * Preceding words that carry no meaning, such as articles, pronouns and comment markers.
+ * A hit after one of them is a bare reference.
  */
 const EMPTY_MODIFIERS = new Set([
 	"the",
@@ -106,26 +105,17 @@ const EMPTY_MODIFIERS = new Set([
 ])
 
 /**
- * How far from Vale's reported line to look for the matched word.
+ * The number of lines on each side of Vale's reported line to search for the matched word.
  *
- * A bare `//` line shifts Vale's line numbers: measured on @vvago/vale 3.17.0,
- * a hit on line 5 with two empty comment lines above it is reported as line 6.
- * The count is unaffected.
- *
- * The hit is real either way — but the census indexes source by that number to derive a
- * modifier, and a reader following the output would be sent to the wrong line.
- *
- * Searching a window rather than trusting the number makes the instrument self-correcting.
- * Three lines is measured rather than guessed: the two files in this repository
- * that drift are each off by two.
+ * Empty `//` comment lines shift Vale's reported line numbers.
+ * The census searches this window to find the real line for the modifier and the diagnostic.
  */
 const LINE_DRIFT_WINDOW = 3
 
 /**
- * The line that actually carries `word`, nearest to Vale's reported one.
+ * Finds the line nearest to Vale's reported line that contains `word`.
  *
- * Falls back to the reported line when the word is nowhere in the window, so a hit is never dropped.
- * A missing modifier costs a bucket label, a dropped hit costs a site.
+ * It falls back to the reported line when the window does not contain the word, so no hit is dropped.
  */
 function locate(
 	lines: readonly string[],
@@ -153,13 +143,10 @@ function locate(
 }
 
 /**
- * Classifies each Vale `--output line` record against `sources`, a map from path to that file's lines.
+ * Classifies each Vale `--output line` record against `sources`, a map from each path to its lines.
  *
- * Pure, so the fixture test states its cases inline rather than writing files.
- *
- * Only the modifier a hit is bucketed by comes from the indexed line, so a stray
- * offset mislabels a bucket rather than losing a site.
- * Read the line before editing it.
+ * The function is pure, so tests pass their cases inline.
+ * A wrong line offset can mislabel a hit's action, but it cannot drop the hit.
  */
 export function classify(hitLines: readonly string[], sources: ReadonlyMap<string, readonly string[]>): Hit[] {
 	const hits: Hit[] = []
@@ -176,8 +163,7 @@ export function classify(hitLines: readonly string[], sources: ReadonlyMap<strin
 		const before = index === -1 ? "" : source.slice(0, index)
 		const modifier = (/([A-Za-z0-9_.`§/-]+)[\s-]*$/.exec(before.trimEnd())?.[1] ?? "").toLowerCase()
 
-		// A interface-tied name is decided by the whole line rather than the modifier: `mailwoman eval gate`
-		// and `` `promotion-eval.ts` `` put different words immediately before the hit.
+		// An interface-tied name is detected from the whole line, because the word before the hit varies.
 		const remedy = INTERFACE_TOKEN.test(source)
 			? Remedy.backtick
 			: EMPTY_MODIFIERS.has(modifier)
@@ -191,11 +177,10 @@ export function classify(hitLines: readonly string[], sources: ReadonlyMap<strin
 }
 
 /**
- * Which of the four words a match belongs to.
+ * Returns the banned word that a match belongs to.
  *
- * Searched anywhere in the token rather than at its start: the code rule matches
- * the whole compound, so `promotion-eval` is a `gate` and a prefix test files it
- * under whichever family the fall-through names.
+ * The search covers the whole token because the code rule matches whole compounds,
+ * where the banned word may not come first.
  */
 export function wordFamily(word: string): "gate" | "seam" | "shard" | "cut" {
 	const lower = word.toLowerCase()
@@ -210,19 +195,14 @@ export function wordFamily(word: string): "gate" | "seam" | "shard" | "cut" {
 }
 
 /**
- * The tracked surfaces the ban covers.
- *
- * Dated point-in-time records are exempt by the same rule that exempts them from
- * the acronym-casing convention, and `docs/` source is included because a plugin's
- * docstring is as much committed prose as a package's.
+ * The tracked source files that the census covers.
  */
 const TRACKED_GLOBS = ["*.ts", "*.tsx", "corpus-python/*.py"] as const
 
 /**
  * Runs Vale over every tracked source file and returns its `--output line` records.
  *
- * Vale is resolved through the workspace rather than the path, so the census
- * reads the same binary `yarn lint:prose` does.
+ * The census resolves Vale through the workspace, so it runs the same binary as `yarn lint:prose`.
  */
 async function collectHits(context: RepoContext): Promise<string[]> {
 	const root = context.repoRoot
@@ -231,20 +211,17 @@ async function collectHits(context: RepoContext): Promise<string[]> {
 		relative(root, path)
 	)
 
-	// The census config rather than the enforcing one: enforcement exempts the Vale fixtures,
-	// and the census needs one of them to trip so its positive control still means something.
-	// `@vvago/vale` is this package's devDependency for exactly this line.
-	// Knip cannot see a specifier passed to a resolver, so `knip.json` names the dependency as used.
+	// The enforcing config exempts the Vale fixtures.
+	// The census config includes them so the positive control can trip.
+	// Knip cannot see the `@vvago/vale` specifier passed to the resolver,
+	// so `knip.json` marks that devDependency as used.
 	const vale = await valeCommand(import.meta.url)
 	const config = resolvePath(root, "config/vale/.vale-code-census.ini")
 
-	// Run from the repo root, because the paths are repo-relative.
-	// Run it from anywhere else and Vale resolves none of them, reports zero alerts, and exits 0.
-	// The reading is identical to a clean tree.
-	// That is why the positive control below is not optional.
-	// Vale exits non-zero when it reports alerts, which is this command's expected outcome.
-	// Only a process error carries the output.
-	// A spawn failure has none and must not read as zero hits.
+	// Vale must run from the repo root because the paths are repo-relative.
+	// From another directory it resolves no files and exits 0.
+	// Vale exits non-zero when it reports alerts, so a process error carries the expected output.
+	// Any other error is rethrown so it cannot read as zero hits.
 	const result = await runFile(vale.file, [...vale.argv, "--config", config, "--output", "line", ...files], {
 		cwd: root,
 		maxBuffer: 1 << 28,
@@ -260,22 +237,15 @@ async function collectHits(context: RepoContext): Promise<string[]> {
 }
 
 /**
- * A file that must always trip, so a reported zero is distinguishable from a run that resolved no files.
+ * A permanent fixture that must always produce hits.
  *
- * The Vale fixture is the right control precisely because it is permanent:
- * every other file carrying these words is scheduled to lose them, and a control the
- * sweep eventually cleans stops proving anything on the day it matters most.
+ * It distinguishes a clean tree from a run that resolved no files.
  */
 const POSITIVE_CONTROL = "config/vale/fixtures/dirty.ts"
 
 /**
- * Paths whose hits do not count, and why each is excluded.
- *
- * The set measured is every tracked source minus these.
- * The denominator the count is reported against.
- *
- * Each states the vocabulary as data rather than using it as prose, so counting them measures
- * the instrument instead of the repository and the target of zero could never be reached.
+ * Path prefixes whose hits do not count, each with the reason.
+ * These files spell the banned words as data.
  */
 const UNMEASURED: ReadonlyArray<readonly [path: string, reason: string]> = [
 	["config/vale/fixtures/", "the rule's own fixtures; the dirty one must keep failing forever"],
@@ -286,8 +256,10 @@ const UNMEASURED: ReadonlyArray<readonly [path: string, reason: string]> = [
 ]
 
 /**
- * The `vocab-census` check: one error per ambiguous-shorthand hit Vale reports in tracked
- * source outside the unmeasured instrument files, each naming the action it needs.
+ * The `vocab-census` check.
+ *
+ * It reports one error for each ambiguous-shorthand hit outside {@link UNMEASURED},
+ * with the action the hit needs.
  */
 export const vocabCensusCheck: RepoCheck = {
 	id: "vocab-census",
@@ -309,10 +281,7 @@ export const vocabCensusCheck: RepoCheck = {
 
 		await Promise.all(
 			[...paths].map(async (path) => {
-				// Indexed by line number, so the whole file is resident by necessity rather than by choice.
-				// `skipEmpty: false` is required: the default drops blank lines, which shifts every line number
-				// after the first one and silently classifies each hit against a different line of source.
-				// Measured: the default moved 731 of 2,014 hits between action buckets.
+				// The classifier indexes lines by number, so `skipEmpty: false` must keep blank lines.
 				sources.set(
 					path,
 					TextSpliterator.from(await readLocalTextFile(resolvePath(context.repoRoot, path)), {
@@ -324,10 +293,8 @@ export const vocabCensusCheck: RepoCheck = {
 
 		const hits = classify(hitLines, sources)
 
-		// Asserted on the classified hits rather than on the raw Vale lines.
-		// A control that greps the raw output tests a different string than the classifier parses:
-		// renaming the rule to `AmbiguousShorthandCode` kept every raw line matching a substring check
-		// while the classifier's pattern matched none, and the census reported a clean tree.
+		// The control checks the classified hits, so it fails when the classifier's
+		// pattern stops matching Vale's output.
 		if (!hits.some((hit) => hit.path === POSITIVE_CONTROL)) {
 			return [
 				{
@@ -338,8 +305,7 @@ export const vocabCensusCheck: RepoCheck = {
 			]
 		}
 
-		// Excluded after the control is checked, never before: the control must be measured
-		// to prove the run resolved files, and excluded to keep the target of zero reachable.
+		// The exclusions apply after the control check, because the control file is itself excluded.
 		const counted = hits.filter((hit) => !UNMEASURED.some(([path]) => hit.path.startsWith(path)))
 
 		const diagnostics: Diagnostic[] = counted.map((hit) => ({

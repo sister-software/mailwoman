@@ -16,12 +16,12 @@ import type { WOFDatabase } from "#schema"
 const FOLD_OWNED_TABLES = ["spr", "names", "place_population", "ancestors"] as const
 
 /**
- * Deletes every row the GeoNames alias fold owns, ids in `[GEONAMES_ID_BASE, GEONAMES_POSTAL_ID_BASE)`,
- * and returns the count removed per table.
+ * Deletes every row the GeoNames alias fold owns, with ids in
+ * `[GEONAMES_ID_BASE, GEONAMES_POSTAL_ID_BASE)`, and returns the count removed per table.
  *
- * Fold ids are positional, so a re-fold without this purge binds stale names,
- * ancestors and populations to other places.
- * The upper bound protects the postal and postcode extracts whose id ranges sit above it.
+ * Fold ids are assigned sequentially, so a re-fold without this purge would attach
+ * stale names, ancestors and populations to other places.
+ * The upper bound leaves the postal and postcode id ranges above it untouched.
  */
 export function purgeGeonamesAliasRange<DB>(db: DatabaseClient<DB>): Record<string, number> {
 	const removed: Record<string, number> = {}
@@ -38,7 +38,7 @@ export function purgeGeonamesAliasRange<DB>(db: DatabaseClient<DB>): Record<stri
 }
 
 /**
- * Per-country progress for the ingest — one event per country dump processed (or skipped).
+ * One progress event per country dump that the ingest processed or skipped.
  */
 export interface GeonamesIngestProgress {
 	/**
@@ -52,20 +52,22 @@ export interface GeonamesIngestProgress {
 	places: number
 
 	/**
-	 * Whether the country's `<CC>.txt` dump was missing, which skips the country
-	 * instead of failing the ingest.
+	 * Whether the country's `<CC>.txt` dump was missing.
+	 *
+	 * A missing dump skips the country without failing the ingest.
 	 */
 	skipped: boolean
 
 	/**
-	 * The number of alternate names the admission rule refused, which separates a
-	 * sparse source from names the fold discarded.
+	 * The number of alternate names that the alias filter rejected.
+	 *
+	 * It distinguishes a sparse source from aliases that the fold discarded.
 	 */
 	aliasesRefused?: number
 }
 
 /**
- * Formats a GeoNames fold progress event as the single log line every caller prints.
+ * Formats a GeoNames fold progress event as one log line.
  */
 export function formatGeonamesIngestProgress(event: GeonamesIngestProgress, missingFile?: PathBuilderLike): string {
 	if (event.skipped) {
@@ -138,11 +140,12 @@ async function parseAlternateNamesV2(
 }
 
 /**
- * Purges the fold's id range and then folds GeoNames `P`-class places and their alternate
- * names for `countries` into `db`, returning the number of places ingested.
+ * Purges the fold's id range, then adds GeoNames `P`-class places and their
+ * alternate names for `countries` to `db`.
+ * It returns the number of places ingested.
  *
  * The caller must then rebuild `place_search` with `buildPlaceSearchFTS(db, { drop: true })`
- * for the new names to be searchable.
+ * to make the new names searchable.
  */
 export async function ingestGeonamesAliases(
 	db: DatabaseClient<WOFDatabase>,

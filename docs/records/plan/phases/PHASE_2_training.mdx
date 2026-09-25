@@ -14,22 +14,22 @@
 
 ## Iteration log (live)
 
-- **v0.1.0** (shipped 2026-05-18, PR #42) — first Tier 1 ship. F1 below targets (~0.03 macro) due to positional-heuristic overfit; calibration 0.337 in conf>0.9 bucket. direct below-target ship with `v0.2.0 retrain recipe` in session-notes.
+- **v0.1.0** (shipped 2026-05-18, PR #42) — first Tier 1 ship. F1 below targets (~0.03 macro) due to positional-heuristic overfit; calibration 0.337 in conf>0.9 bucket. It shipped below target, stated as such, with the `v0.2.0 retrain recipe` in session-notes.
 - **v0.2.0** (shipped 2026-05-18, PR #53) — `source_weights` mechanism + relaxed coarse check. 9× macro-F1 (0.037 → 0.335); calibration tightened 2.6× (0.337 → 0.882 in conf>0.9 bucket). Still below 95% target on country/region/locality but real, measurable, ship-worthy improvement.
 - **v0.3.0 → v3.0.0** (shipped 2026-05-22, PR #115; published as `@mailwoman/neural-weights-{en-us,fr-fr}@3.0.0` — major-bumped from npm's 2.0.6 line to signal the 15→21 BIO breaking change). Tier 2 label expansion (`venue` / `street` / `house_number` BIO classes), linear-chain CRF decoder over a frozen BIO transition mask, dual loss (CE + 0.05·CRF NLL), `corpus-v0.3.0` rebuild (677M aligned rows, adds `usgov-nad` at 57.9M with full venue+street+house_number coverage). Four hparam iterations converged on lr=1.5e-4 + grad_clip=1.0 + crf_loss_weight=0.05 + label_smoothing=0 (down from v0.2.0's lr=5e-4 CE-only — dual loss is far more LR-sensitive; see DECISIONS.md "v0.3.0 Stage 2 dual loss"). Early-stopped at step 1800 of 50K on val plateau. Eval against golden v0.1.2 (4,535 entries): macro F1 0.32; capability-surface win on the 3 new label classes (`house_number` F1 0.78 near #57's 0.8 target, `venue` 0.39, `street` 0.27 — both below floor; v0.4.0 targets); **coarse F1 regressed substantially** vs v0.2.0 (region 0.83 → 0.18, locality 0.65 → 0.27, postcode 0.86 → 0.76) — under-trained at step 1800 + expanded label space pulled prior mass off coarse predictions. CRF makes orphan-`I-*` decode structurally impossible (verified on the demo's "Saint Petersburg" case).
-- **JS Viterbi** (shipped 2026-05-22) — `neural/viterbi.ts` lands the Viterbi decoder + BIO structural transition mask. `NeuralAddressClassifier` defaults to Viterbi decode; orphan-`I-*` sequences are now structurally impossible at JS runtime (matching the eval-time path). Works on the v3.0.0 weights as-is — no model retraining required because the structural mask is built from the labels list. Learned CRF transitions will compose on top once a future weights release ships them.
+- **JS Viterbi** (shipped 2026-05-22) — `neural/viterbi.ts` lands the Viterbi decoder + BIO structural transition mask. `NeuralAddressClassifier` defaults to Viterbi decode; orphan-`I-*` sequences are now structurally impossible at JS runtime (matching the eval-time path). It works on the v3.0.0 weights as-is without retraining, because the structural mask is built from the labels list. Learned CRF transitions will compose on top once a future weights release ships them.
 - **v0.4.0** (shipped to packaged artifacts 2026-05-23 rather than npm-published — issue [#116](https://github.com/sister-software/mailwoman/issues/116)) — six planned work areas: (1) per-token CRF NLL normalization; (2) longer training (reach step-5000+ before judging); (3) class-weighted CE biased toward coarse classes; (4) source-weight rebalance away from NAD-heavy fine-label mix; (5) JS-side Viterbi decode + model-card label loading (landed 2026-05-22, see entry above); (6) reuse `corpus-v0.3.0`. **Shipped recipe is §4 + §5 only**; §1 and §3 deferred to v0.4.1 after destabilizing the dual-loss training.
 
   **Ablation campaign (2026-05-23, 5 divergence runs + 3 verdict smokes + 1 full 50K + 1 successful full run):**
-  1. The full §1+§3+§4 recipe diverged at **all three tested LRs** (lr=5e-4 step 750, lr=3e-4 step 1000, lr=1.5e-4 step 2000). LR delays divergence proportionally — destabilizer is in the recipe rather than LR.
+  1. The full §1+§3+§4 recipe diverged at **all three tested LRs** (lr=5e-4 step 750, lr=3e-4 step 1000, lr=1.5e-4 step 2000). Lower LR delays divergence proportionally, so the destabilizer is in the recipe rather than the LR.
   2. At `lr=5e-4`, both single-knob ablations failed identically (ablate-§1: 0.35 → 0.11; ablate-§3: 0.35 → 0.14). `lr=5e-4` is structurally unreachable for this codebase's dual-loss landscape regardless of which §1/§3 knob is active.
   3. Switched to lr=1.5e-4 (v0.3.0-stable) verdict-smoke matrix at max_steps=3000:
      - source-only (§4): PASS, peak 0.4190 step 2250
      - cw-only (§3+§4): PASS, peak 0.4279 step 2250
      - crf-only (§1+§4): FAIL, train_loss=1.24 at step 3000
   4. **Verdict-smoke framework had a false-positive on cw-only**: the smoke's cosine LR decayed to ~0 by step 2750, masking sustained-peak-LR divergence. When promoted to the full 50K run, cw-only diverged at step 2250 (macro_f1 collapse 0.41 → 0.29). Process improvement for v0.4.1: verdict smokes should use a constant LR or much longer max_steps. (Landed in v0.5.0 Thread F as `--smoke-mode constant|long-tail`; framework + decision matrix in [`VERDICT_SMOKES.md`](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/VERDICT_SMOKES.mdx).)
-  5. **Math sanity-check** of `model.py` + `crf.py` found no implementation bug — `per_token` reduction is `nll.sum() / total_tokens.clamp(min=1)`; class_weights enter via `cross_entropy(weight=...)`. Destabilization is a real recipe interaction rather than a coding artifact.
-  6. **Shipped checkpoint**: `v0_4_0-stableLR-source-only/step-002200` — §4 source rebalance + v0.3.0 dual-loss base + lr=1.5e-4. Only recipe that stayed clean and outperformed cw-only on golden v0.1.2 eval.
+  5. **Math sanity-check** of `model.py` + `crf.py` found no implementation bug. The `per_token` reduction is `nll.sum() / total_tokens.clamp(min=1)`; class_weights enter via `cross_entropy(weight=...)`. Destabilization is a real recipe interaction rather than a coding artifact.
+  6. **Shipped checkpoint**: `v0_4_0-stableLR-source-only/step-002200` — §4 source rebalance + v0.3.0 dual-loss base + lr=1.5e-4. It was the only recipe that stayed stable and outperformed cw-only on the golden v0.1.2 eval.
 
   **Golden v0.1.2 eval (4535 entries) — mixed result, issue #116 success metric not directly met:**
 
@@ -51,7 +51,7 @@
   - calibration: FLAT
   - training stability: NEGATIVE (recipe destabilization is the campaign's central finding)
 
-  Only one clean improvement axis. §1 (per_token CRF) and §3 (class_weights) deferred to v0.4.1 after a corpus-side investigation of why the full recipe destabilizes past step 2000.
+  Only one axis (fine F1) improved. §1 (per_token CRF) and §3 (class_weights) deferred to v0.4.1 after a corpus-side investigation of why the full recipe destabilizes past step 2000.
 
   **Post-hoc regression diagnostic (categorized, 4535 entries, 1217 postcode FNs + 194 country FNs):**
 
@@ -66,20 +66,20 @@
   Headline takeaways:
   - The dominant postcode FN is **empty_pred (65%)** on mid-position / short-form postcodes (`Paris 75008`, `47110 Sainte-Livrade-sur-Lot`). v0.4.0's source rebalance traded structured-address postcode exposure for coarse-only `10118`-style forms.
   - Country FN is **92% adversarial transliteration** (CJK/Cyrillic raw input → English country gold). This is a v0.3.0 pre-existing failure mode; after excluding adversarials, country FN drops 194 → ~16. **The country -0.07 F1 regression is mostly a golden-set adversarial-weighting artifact rather than a real recipe regression.**
-  - Decoder span-trim sidecar (commit `c72ab4c`, no retrain required) addresses the 6% bio_slip class + an unmeasured share of FP rate. Material impact on the headline numbers is smaller than the initial diagnostic suggested but the trim is still a correct decoder bug fix.
+  - The decoder span-trim sidecar (commit `c72ab4c`, without a retrain) addresses the 6% bio_slip class plus an unmeasured share of the FP rate. Its effect on the headline numbers is smaller than the initial diagnostic suggested, but the trim is still a correct decoder bug fix.
 
   v0.4.1 implications: source-weight tweak alone partially addresses the 11% num_confused class. The 65% empty_pred class requires a different intervention (likely source-weight + synthesis pass over component-order permutations, or an aggressive `wof-postalcode` bump). Full v0.4.1 scope draft staged at `control/drafts/v0_4_1-scope.md` on the i116 container.
 
-- **v0.5.0 thread C-s — scaffold only** (shipped 2026-05-23, see [Phase 8 fresh-slate plan § Thread C](./PHASE_8_v0_5_0_fresh_slate.mdx)) — v0.4.1 was [explicitly skipped](./PHASE_8_v0_5_0_fresh_slate.mdx) in favor of a fresh-slate iteration. Thread C-s lands the **model code path** for the v0.5.0 architecture changes — _no training run_ as part of this ship; the training kicks off after Threads A (tokenizer retrain) and B (corpus-v0.4.0 with adversarial expansion) complete.
+- **v0.5.0 thread C-s — scaffold only** (shipped 2026-05-23, see [Phase 8 fresh-slate plan § Thread C](./PHASE_8_v0_5_0_fresh_slate.mdx)) — v0.4.1 was [explicitly skipped](./PHASE_8_v0_5_0_fresh_slate.mdx) in favor of a fresh-slate iteration. Thread C-s lands the **model code path** for the v0.5.0 architecture changes, _without a training run_. Training starts after Threads A (tokenizer retrain) and B (corpus-v0.4.0 with adversarial expansion) complete.
 
   Architectural changes shipped in the scaffold:
   - **Top-k inference (`predict_top_k`):** the encoder now emits the K most-probable tag sequences with calibrated log-probability scores (`crf.top_k_decode`, list-Viterbi over the structural mask). Default k=5. This is what Stage 5 reconcile (Thread D) consumes — the classifier becomes a candidate generator rather than a single-answer predictor. Argmax path (`predict`) unchanged for back-compat.
-  - **Phrase-prior input-layer conditioning:** when `model.use_phrase_priors=true`, the encoder takes a per-token feature tensor `(B, S, PHRASE_FEATURE_DIM=10)` carrying BIE markers (`phrase_start`/`phrase_mid`/`phrase_end`) + a 7-way one-hot over the `PhraseKind` taxonomy (NUMERIC, STREET_PHRASE, LOCALITY_PHRASE, REGION_ABBREVIATION, POSTCODE, VENUE_PHRASE, HYPHENATED_COMPOUND — mirrored from Thread E's TS interface). Features are concatenated onto the token+position embedding and projected back to `hidden_size` with a learned linear. Default `false` preserves v0.3.0/v0.4.0 behavior bit-identically — enables clean ablation of the phrase-prior contribution.
-  - **Hidden-size knob kept at v0.3.0/v0.4.0 baseline (256).** The plan doc mentions a 256 → 384 or 512 bump "likely paid for by rented GPU." For the scaffold, hold the bump — validate the new architecture trains directly at the current size first; bump becomes an orthogonal `v0_5_0-classifier-large.yaml` follow-up once the baseline lands clean.
+  - **Phrase-prior input-layer conditioning:** when `model.use_phrase_priors=true`, the encoder takes a per-token feature tensor `(B, S, PHRASE_FEATURE_DIM=10)` carrying BIE markers (`phrase_start`/`phrase_mid`/`phrase_end`) + a 7-way one-hot over the `PhraseKind` taxonomy (NUMERIC, STREET_PHRASE, LOCALITY_PHRASE, REGION_ABBREVIATION, POSTCODE, VENUE_PHRASE, HYPHENATED_COMPOUND — mirrored from Thread E's TS interface). Features are concatenated onto the token+position embedding and projected back to `hidden_size` with a learned linear. The default `false` preserves v0.3.0/v0.4.0 behavior bit-identically, which allows a clean ablation of the phrase-prior contribution.
+  - **Hidden-size knob kept at v0.3.0/v0.4.0 baseline (256).** The plan doc mentions a 256 → 384 or 512 bump "likely paid for by rented GPU." The scaffold holds the bump and first validates that the new architecture trains at the current size. The bump becomes a separate `v0_5_0-classifier-large.yaml` follow-up once the baseline trains without divergence.
   - **Label vocab unchanged from v0.3.0** (21 BIO classes; see `mailwoman_train.labels.ACTIVE_BIO_LABELS`). POI taxonomy expansion is out of scope per the plan doc.
-  - **Recipe parked:** `configs/v0_5_0-classifier-smoke.yaml` defines the short verdict-smoke (constant-LR per Thread F's [VERDICT_SMOKES.md](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/VERDICT_SMOKES.mdx), `--smoke-mode constant`). Invocable once Threads A + B + F have all landed. not executed as part of this PR.
+  - **Recipe parked:** `configs/v0_5_0-classifier-smoke.yaml` defines the short verdict-smoke (constant-LR per Thread F's [VERDICT_SMOKES.md](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/VERDICT_SMOKES.mdx), `--smoke-mode constant`). It can run once Threads A + B + F have all landed. This PR did not execute it.
 
-  Forward-pass smoke (`tests/mailwoman_train/test_v0_5_0_forward_pass.py`, 14 cases) verifies wiring on stub batches in seconds — no loss.backward, no optimizer step. It is the integration check that decides whether the new architecture is ready for verdict-smoke training rather than whether it converges.
+  The forward-pass smoke (`tests/mailwoman_train/test_v0_5_0_forward_pass.py`, 14 cases) verifies wiring on stub batches in seconds, without running loss.backward or an optimizer step. This integration check decides whether the new architecture is ready for verdict-smoke training. It does not test whether the architecture converges.
 
 ## Pre-flight
 
@@ -101,7 +101,7 @@
 - [ ] `data_loader.py` — load Parquet extracts via `datasets.load_dataset('parquet', ...)`. Lazy, streaming, memory-stable.
 - [ ] Stratified sampling: per-country weights to prevent imbalance. Configurable in YAML.
 - [ ] Length filtering: drop rows where token count > 128. Address text is short by nature; long rows are typically adapter bugs.
-- [ ] Verify tokenizer alignment: load `tokenizer-v0.1.0`, re-tokenize a sample of `raw` strings, assert the tokenization matches the stored `tokens` field. If it doesn't, the corpus is corrupt — stop and investigate.
+- [ ] Verify tokenizer alignment: load `tokenizer-v0.1.0`, re-tokenize a sample of `raw` strings, assert the tokenization matches the stored `tokens` field. If it does not match, the corpus is corrupt, so stop and investigate.
 
 ### 3. Model architecture
 
@@ -126,7 +126,7 @@
 - [ ] Mixed precision (fp16/bf16) on GPU
 - [ ] Save checkpoint every 5k steps to `/data/models/checkpoints/`
 - [ ] Track: train loss, val loss, val F1 per component, val full-parse exact match
-- [ ] Use Weights & Biases or TensorBoard or plain CSV — pick one and stick with it. Don't ship a logging refactor in the middle of training.
+- [ ] Use Weights & Biases, TensorBoard, or plain CSV. Pick one and keep it. Do not ship a logging refactor in the middle of training.
 
 ### 5. Tiered training plan
 
@@ -176,7 +176,7 @@ Tiers 2 (street) and 3 (venue) are explicitly future iterations. Do not attempt 
   - `model-card.json` (ModelCard per `reference/INTERFACES.md`)
   - `package.json` with name, version, license
   - `README.md` describing the model, training corpus, eval scores
-- [ ] These packages are data-only. No JS code. They are loaded by `@mailwoman/neural` at runtime.
+- [ ] These packages are data-only and contain no JS code. `@mailwoman/neural` loads them at runtime.
 - [ ] Verify package size: aim for < 30MB int8 model. Tokenizer is ~1MB. Total package < 40MB.
 
 ### 10. Model card
@@ -193,7 +193,7 @@ Tiers 2 (street) and 3 (venue) are explicitly future iterations. Do not attempt 
 - [ ] `neural-weights-en-us@0.1.0` and `neural-weights-fr-fr@0.1.0` package directories complete
 - [ ] Model cards filled in
 - [ ] Eval reports committed to git (numbers rather than models)
-- [ ] Beats rule-based Mailwoman on golden set for `country` and `region` components by at least 2 F1 points. If not, investigate before proceeding — the architecture is fine, the corpus is probably the issue.
+- [ ] Beats rule-based Mailwoman on golden set for `country` and `region` components by at least 2 F1 points. If not, investigate before proceeding. The corpus is the likely cause rather than the architecture.
 
 ## When to ship vs train more (original framing — superseded by iteration cadence)
 
@@ -203,16 +203,16 @@ If after the first training run, golden F1 is:
 - 90–95% → analyze failure modes. Likely fixable with corpus tweaks (more synthesis, deduplication, a missing source). One additional iteration is fine.
 - < 90% → stop and re-examine. Could be: tokenizer mismatch, label misalignment, schema bug, severely imbalanced training data. Do not "train longer" without diagnosing first.
 
-⚠ Resist the urge to add street-level components in this phase to "get more value." Tier 1 ships coarse. Tier 2 is its own iteration. Mixing them blurs the metrics and slows iteration.
+⚠ Do not add street-level components in this phase. Tier 1 ships coarse components, and Tier 2 is its own iteration. Mixing them blurs the metrics and slows iteration.
 
 ### Revised (2026-05-18)
 
 The above original framing assumed a single training run. After v0.1.0 + v0.2.0, the actual cadence is:
 
-- **Each iteration ships an artifact**, target or no target. Below-target ships are OK if they're direct about it (model card + eval ledger entry) and the Ship-of-Theseus coexistence model means the rule classifiers still run alongside.
+- **Each iteration ships an artifact**, target or no target. A below-target release is acceptable if the model card and eval ledger entry state the shortfall, because the rule classifiers still run alongside the model.
 - **Per-iteration F1 floor** (not target): each iteration must improve over the prior one in at least one of: per-component F1, calibration tightness, or capability surface (new labels supported).
 - **Vocabulary tier expansion** (Tier 2 → venue+street+house_number; Tier 3 → organization/POI venue) happens as **iteration deltas within Phase 2** rather than as separate phases. Same encoder, more head classes. Each lands in its own retrain.
-- **The eval ledger is the success record** — `evals/scores-by-version.json` with corpus + golden-set sha-pinning makes every iteration's delta empirically defensible.
+- **The eval ledger records success.** `evals/scores-by-version.json`, with corpus + golden-set sha-pinning, gives every iteration's delta an empirical record.
 
 ## When to call this phase done
 

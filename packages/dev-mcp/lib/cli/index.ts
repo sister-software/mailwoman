@@ -4,10 +4,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   MCP stdio shim that forwards tool calls to a worker process. The shim imports only Node builtins and the
- *   MCP SDK, so it remains usable while the worker's source graph is stale. Restarting the worker loads current
- *   source without restarting the client. Tool schemas come from the worker handshake; changes trigger
- *   `notifications/tools/list_changed`. Engines build lazily on first use.
+ *   Runs the MCP stdio server that forwards tool calls to a restartable worker process.
  */
 
 import { prettyJSON } from "@mailwoman/core/json"
@@ -28,17 +25,18 @@ const { values } = parseArguments({
 	},
 })
 
-// Resolve the repository root independently of the MCP client's working directory.
+// The repository root does not depend on the MCP client's working directory.
 const repoRoot = values["repo-root"] ? resolvePath(values["repo-root"]) : repoRootPath()
 
 const host = new WorkerHost({
-	// Resolve the worker from the package root so moving this shim does not change its path.
 	workerPath: resolvePackagePath("@mailwoman/dev-mcp", "lib", "worker", "index.ts"),
 	workerArgs: ["--repo-root", repoRoot, ...(values["max-resident"] ? ["--max-resident", values["max-resident"]] : [])],
 })
 
 /**
- * Restart tool owned by the shim, available even when the worker cannot start.
+ * The restart tool.
+ *
+ * The shim handles it directly, so it works even when the worker cannot start.
  */
 const RESTART_TOOL = {
 	name: "mwdev_restart",

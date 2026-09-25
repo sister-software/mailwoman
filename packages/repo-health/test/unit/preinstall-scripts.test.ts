@@ -2,21 +2,11 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
+ * @file Checks that scripts CI runs before `yarn install` import only relative paths and `node:` builtins.
  *
- *   Guard for the scripts CI runs before `yarn install`.
- *
- *   Two workflow steps run `node <script>` against a checkout with no `node_modules`: the Docs workflow's structure
- *   check (early on purpose, so a frontmatter or orphan regression fails in seconds instead of after a full Docusaurus
- *   build) and the docs-freshness sweep, which never installs. Every module those entry points reach must resolve from
- *   the checkout alone — a relative path, or a `node:` builtin.
- *
- *   A local run cannot see the break. `node_modules` exists on a developer machine, so a workspace import added to one
- *   of these files resolves, passes review, and passes the fast suite. It fails only on CI, as `ERR_MODULE_NOT_FOUND`,
- *   which looks like a broken checkout.
- *
- *   So these files keep their `node:*` imports behind a scoped `typescript/no-restricted-imports` disable. The list
- *   below is the executable half of that exemption. Add an entry when a workflow starts running a script before its
- *   install step. remove one when that ordering changes.
+ *   A workspace import in these scripts resolves locally, where `node_modules` exists, and fails only on CI with
+ *   `ERR_MODULE_NOT_FOUND`. Add an entry when a workflow starts running a script before its install step, and remove
+ *   one when that order changes.
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
@@ -29,10 +19,9 @@ import { describe, expect, test } from "vitest"
 const REPO_ROOT = repoRootPath()
 
 /**
- * Every script a workflow runs before (or without) `yarn install`, keyed by
- * repo-relative path and carrying the step that runs it.
+ * Maps each script a workflow runs before or without `yarn install` to the workflow step that runs it.
  *
- * The graph reachable from each by relative import inherits the same constraint.
+ * Every file reachable from these scripts by relative import has the same constraint.
  */
 const PRE_INSTALL_ENTRY_POINTS: Record<string, string> = {
 	"docs/scripts/check/docs-structure.ts":
@@ -42,10 +31,8 @@ const PRE_INSTALL_ENTRY_POINTS: Record<string, string> = {
 }
 
 /**
- * Walk the relative-import closure of one entry point, collecting every non-relative
- * specifier it reaches along the way.
- *
- * A specifier is reported with the file that spells it, so a failure names the edit to make.
+ * Follows relative imports from one entry point and collects every non-relative
+ * specifier with the file that imports it.
  */
 async function collectReachableExternals(entryPoint: string): Promise<Array<{ file: string; specifier: string }>> {
 	const externals: Array<{ file: string; specifier: string }> = []
@@ -60,9 +47,7 @@ async function collectReachableExternals(entryPoint: string): Promise<Array<{ fi
 
 		const source = await readLocalTextFile(filePath)
 
-		// Runtime specifiers only: type-only imports are erased by Node's type stripping (see ts-ast.ts).
-		// The shared walk reads string-literal-like specifiers, so a no-substitution
-		// template literal counts too.
+		// `moduleSpecifiers` skips type-only imports by default, because Node's type stripping erases them.
 		for (const specifier of moduleSpecifiers(ts.createSourceFile(filePath, source, ts.ScriptTarget.Latest, true))) {
 			if (!specifier.startsWith(".")) {
 				externals.push({ file: relative(REPO_ROOT, filePath), specifier })

@@ -25,7 +25,7 @@ interface OptionSpecBase {
 	 *
 	 * It keeps working, with a notice on stderr, and never appears in help.
 	 *
-	 * A CLI flag is a interface with whatever scripts already call it, so a rename that removes
+	 * A CLI flag is an interface with whatever scripts already call it, so a rename that removes
 	 * the old spelling breaks them at the moment of the rename with no way to find out first.
 	 * The notice is what turns that into a warning the caller can act on before the alias goes.
 	 *

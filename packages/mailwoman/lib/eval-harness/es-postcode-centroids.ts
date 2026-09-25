@@ -3,18 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   #474: build ES postcode centroids from the local Overture addresses parquet (ES postcode fill =
- *   100%, 15.7M points) and emit a `spr`-table SQLite DB the existing postcode-anchor harness
- *   consumes (`WOFPostcodeLookup` / `postcode-anchor-accuracy.ts`). Per-postcode centroid = mean
- *   after dropping points >3σ from the per-postcode mean (agency data carries geocoding errors).
- *   Lets us measure Overture-derived centroids vs the shipped GeoNames-backfilled ones
- *   (postalcode-intl.db) on the ES eval rows — does Overture's 15.7M-point density beat GeoNames on
- *   anchor accuracy?
- *
- *   IT is OUT: Overture IT postcode fill = 0% (the #474 ingest check "≥80% else renegotiate" fails) —
- *   GeoNames stays IT's source. documented as an Overture gap.
- *
- *   Run: mailwoman eval es-postcode-centroids [--parquet <path>] [--out <db>] [--country ES]
+ *   Builds per-postcode centroids from an Overture addresses parquet into a WOF-shaped `spr` database that
+ *   `WOFPostcodeLookup` can query.
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
@@ -29,43 +19,38 @@ import { PathBuilder } from "path-ts"
  */
 export interface ESPostcodeCentroidsOptions {
 	/**
-	 * ISO country code selecting the Overture addresses parquet + output name.
-	 *
-	 * Default `ES`.
+	 * ISO country code that selects the input parquet and the output name.
+	 * It defaults to `ES`.
 	 */
 	country?: string
 	/**
-	 * Postcode digit length for the leading-zero-preserving lpad: 5 for ES/DE/FR/IT/NL, 4 for AT/CH/DK.
+	 * Width to which numeric postcodes are left-padded with zeros, such as 5 for ES,
+	 * DE, FR, IT and NL, or 4 for AT, CH and DK.
 	 *
-	 * `0` = no lpad (use the raw Overture form).
-	 * Default 5.
+	 * The value `0` keeps the raw Overture form, which non-numeric formats need.
+	 * It defaults to 5.
 	 */
 	pcLen?: number
 	/**
-	 * Overture addresses parquet.
+	 * Input parquet path.
 	 *
-	 * Default: the addresses-theme pin (`OVERTURE_ADDRESSES_RELEASE`) under `$MAILWOMAN_DATA_ROOT`.
+	 * It defaults to the pinned `OVERTURE_ADDRESSES_RELEASE` under `$MAILWOMAN_DATA_ROOT`.
 	 */
 	parquet?: string
 	/**
-	 * Output SQLite DB.
+	 * Output database path.
 	 *
-	 * Default `$MAILWOMAN_DATA_ROOT/db/wof/postalcode-<cc>-overture.db`.
+	 * It defaults to `$MAILWOMAN_DATA_ROOT/db/wof/postalcode-<cc>-overture.db`.
 	 *
-	 * The `postalcode-` prefix is required rather than cosmetic: `deriveSchemaName` turns
-	 * the filename into the attached SQL schema name and `pickExtractsForPlacetype`
-	 * routes by testing it against the placetype, which is `postalcode`.
-	 * A database spelled `postcode-` matches no branch and is silently never queried.
-	 *
-	 * The sibling `postcode-locality-*.db` family keeps the shorter prefix on purpose.
-	 * Those carry a `postcode_locality` relation table and no `spr`, so they are
-	 * never routed as place databases in the first place.
+	 * The filename must start with `postalcode-`.
+	 * `deriveSchemaName` turns the filename into the attached schema name, and `pickExtractsForPlacetype`
+	 * routes queries by matching that name against the `postalcode` placetype.
 	 */
 	out?: string
 }
 
 /**
- * Build the per-postcode-centroid `spr` DB from the Overture addresses parquet.
+ * Builds the per-postcode centroid `spr` database from an Overture addresses parquet.
  */
 export async function buildESPostcodeCentroids(options: ESPostcodeCentroidsOptions = {}): Promise<void> {
 	const CC = options.country || "ES"
@@ -76,18 +61,15 @@ export async function buildESPostcodeCentroids(options: ESPostcodeCentroidsOptio
 	)
 
 	const OUT_DB = options.out || wofDatabasePath(`postalcode-${CC.toLowerCase()}-overture.db`)
-	// The `source` stamp names the Overture release the rows came from, read off the
-	// parquet's release directory rather than typed: a build over a newer parquet
-	// used to stamp the pinned default's release on every row.
+	// The release comes from the parquet path so that each row's `source` matches the input actually read.
 	const RELEASE = /\d{4}-\d{2}-\d{2}\.\d+/u.exec(PARQUET.toString())?.[0] ?? "unknown"
 
-	// @duckdb/node-api is an optional peer dep (this is a maintainer-only data command) — load it
-	// lazily so importing this module never requires it.
+	// `@duckdb/node-api` is an optional peer dependency, so it loads only when this command runs.
 	const { DuckDBInstance } = await import("@duckdb/node-api")
 	const instance = await DuckDBInstance.create()
 	const conn = await instance.connect()
 
-	// Confirm the parquet columns first (the ingest output extracts ST_X/ST_Y → lat/lon).
+	// The query below expects `lat` and `lon` columns, which the ingest derives from the geometry.
 	const desc = await conn.runAndReadAll(`DESCRIBE SELECT * FROM read_parquet('${PARQUET}') LIMIT 1`)
 
 	console.error(
@@ -98,13 +80,9 @@ export async function buildESPostcodeCentroids(options: ESPostcodeCentroidsOptio
 			.join(", ")
 	)
 
-	// Per-postcode centroid: mean of points within 3σ of the per-postcode mean (population stddev).
-	// ES postcodes are 5-digit.
-	// Left-pad numeric codes so leading zeros survive (eval truth uses "01001").
-	// pcLen 0 = no lpad (use the raw Overture form).
-	// Correct when both the candidate database and the eval/query come from Overture (same surface form),
-	// and the only safe choice for non-numeric formats (PT "xxxx-XXX", SK/CZ "XXX XX", LV "LV-xxxx").
-	// A positive pcLen left-pads numeric codes to that width (the GeoNames-comparison case the ES build used).
+	// Each centroid is the mean of the points within three population standard deviations
+	// of the postcode's mean, tested separately on latitude and longitude.
+	// The padding restores leading zeros such as the one in "01001".
 	const pcExpr =
 		PC_LEN > 0
 			? `CASE WHEN regexp_full_match(trim(CAST(postcode AS VARCHAR)), '[0-9]{1,${PC_LEN}}') THEN lpad(trim(CAST(postcode AS VARCHAR)), ${PC_LEN}, '0') ELSE trim(CAST(postcode AS VARCHAR)) END`
@@ -133,14 +111,12 @@ GROUP BY b.pc
 
 	console.error(`extracted ${rows.length} ${CC} postcode centroids from Overture`)
 
-	// Emit the spr table the WOFPostcodeLookup query consumes: select country,
-	// latitude, longitude from spr where name=?
-	// And placetype='postalcode' and is_current!=0
+	// `WOFPostcodeLookup` reads `country`, `latitude` and `longitude` by `name`,
+	// with `placetype = 'postalcode'` and `is_current != 0`.
 	using out = new DatabaseClient<WOFDatabase>(OUT_DB)
-	// Throwaway build artifact.
-	// No durability needed; `journal_mode=off` + a single transaction around the inserts makes
-	// large locales (CA = 843k rows) finish in seconds instead of one implicit transaction
-	// (with its own journal write) per row, which is slow enough to be killed by a timeout.
+	// The output is a rebuildable artifact, so journaling is off.
+	// One transaction around all inserts keeps large countries fast, because a
+	// transaction per row is slow enough to hit command timeouts.
 	out.exec(`PRAGMA journal_mode=OFF; PRAGMA synchronous=OFF;`)
 
 	out.exec(`

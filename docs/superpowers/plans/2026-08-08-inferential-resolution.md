@@ -113,7 +113,7 @@ Christaller's central place theory gives _threshold_ (minimum population sustain
 _range_ (maximum distance travelled for it). The prediction: a settlement of a given size supports
 approximately N of a facility class, spatially distributed across its service area. So a query for
 a grocery store in a suburb where we hold no POI row is not unanswerable — density and settlement
-size say roughly how several exist and roughly where they concentrate (arterial roads, commercial
+size give a rough count of them and roughly where they concentrate (arterial roads, commercial
 zoning), which is a bounded region with a stated basis.
 
 The theory is 1933 and its assumptions (isotropic plain, rational consumers) do not survive contact
@@ -246,7 +246,7 @@ replication sequence, source URL/hash, builder version, region, timestamps and O
 Current state and history are separate products. Deletes and redactions are events rather than missing
 rows silently forgotten by a rebuild.
 
-Coverage is a first-class output distinct from row count. A extract may assert `observed_no_match` in
+Coverage is a first-class output distinct from row count. An extract may assert `observed_no_match` in
 a processed cell, `unsurveyed` outside its extract, or `layer_missing` when the artifact was not
 loaded; only a separately justified completeness claim can power hard negative evidence. OSM's
 crowdsourced absence almost never supplies that completeness by itself.
@@ -296,7 +296,7 @@ tables and the sealed artifact manifest rather than widening every lookup row.
 ## Falsifiers to run before building anything
 
 1. **Does negative evidence change any answer?** Take the benchmark's missed rows, apply "not any
-   street we hold in this locality", and count how several candidate sets shrink usefully. If few, the
+   street we hold in this locality", and count the candidate sets that shrink usefully. If few, the
    coverage register is not complete enough for this to bite yet.
 2. **Do naming families exist at measurable rates?** Sample localities from the situs data and test
    for schemes (presidents, trees, states, numbered grids). A low hit rate kills source 3.

@@ -2,12 +2,10 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file #1787 — a state slug names a US database, so a tree the resolver placed elsewhere must not produce one.
+ * @file Tests that `regionSlugFromTree` yields a US state slug only for trees the resolver did not place outside the US.
  *
- *   `regionToStateSlug` accepts any two-letter region, and the rooftop databases are `address-points-us-<slug>.db`. Eight
- *   of sixteen Italian province codes reach a real US database that way, five of five Spanish, six of twelve Brazilian,
- *   and Australia's WA→Washington. Nothing wrong comes back today only because Milano's 20xxx does not collide with
- *   Michigan's 48xxx, which is a coincidence of numbering rather than a guarantee.
+ *   The slug selects an `address-points-us-<slug>.db` database, and many non-US region codes (Italian "MI", Australian
+ *   "WA") collide with US state codes.
  */
 
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
@@ -23,7 +21,7 @@ const node = (over: Partial<AddressNode> & Pick<AddressNode, "tag" | "value">): 
 })
 
 /**
- * A tree carrying a region span and, optionally, the country the resolver placed it in.
+ * Builds a tree with a region span and an optional resolver country.
  */
 const tree = (region: string, country?: string): AddressTree => ({
 	raw: region,
@@ -45,7 +43,7 @@ describe("regionSlugFromTree country check", () => {
 	})
 
 	it("yields NOTHING for a tree the resolver placed outside the US", () => {
-		// Every one of these selects a real database on disk without the check.
+		// Each region code maps to a real US state slug when the country is ignored.
 		for (const [region, country] of [
 			["MI", "IT"],
 			["CO", "IT"],
@@ -61,8 +59,7 @@ describe("regionSlugFromTree country check", () => {
 	})
 
 	it("still yields a slug when the country is UNKNOWN", () => {
-		// Dropping it here would take the street tier from every US address whose country
-		// never resolved — the failure this check exists to avoid rather than to cause.
+		// A US address whose country never resolved still needs its street-tier database.
 		expect(regionSlugFromTree(tree("MI"))).toBe("mi")
 		expect(regionSlugFromTree(tree("TX"))).toBe("tx")
 	})

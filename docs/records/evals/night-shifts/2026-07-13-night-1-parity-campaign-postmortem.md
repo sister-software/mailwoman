@@ -26,14 +26,14 @@ are unmodified).
 ## What went well
 
 - **Characterize-before-fix paid three times.** Each closed change cost minutes and produced a
-  mechanism, nota number: the router can't name fragments; morphology bias trades AU units
+  mechanism, not just a number: the router can't name fragments; morphology bias trades AU units
   for marginal street recall; a base-corpus sequence prior actively entrenches full-address order
   against the fragment distribution — which is positive evidence FOR the fragment-extract training
   thesis (the distribution mismatch is real and sequence-level).
 - The `--weights-cache` grading path (PR #1099) made candidate A/B cycles trivial and
   channel-direct all night.
 - A stale memory got corrected by reading source: the street-morphology prior was built
-  (`neural/street-morphology-prior.ts`) rather than "designed rather than built".
+  (`neural/street-morphology-prior.ts`), not "designed, not built".
 
 ## What could've gone better
 

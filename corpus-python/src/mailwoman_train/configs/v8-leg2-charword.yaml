@@ -1,13 +1,11 @@
-# === v8-leg2-charword — CJK Leg 2 A (char-word): the unification bake-off (checks v9's shape rather than v8). ===
-# Controlled encoder pair on the production latam feed: identical data block (v385's mixture +
-# augmentations + affix relabel, channel painting stripped from both legs), identical geometry
-# (384/4, the Leg-1 substrate), identical schedule — the one delta between v8-leg2-charword and
-# v8-leg2-sp is the embedding front-end. From scratch, 8k steps, no channels, no CRF.
-# primary read: val token-F1 + per-tag F1 at 8k on the shared val stream (same seed); delta within
-# noise -> v9 may consider single-model unification. No check — a measurement.
-# Known asymmetries (recorded): the SP leg drops rows > 128 pieces while the char leg caps at 64
-# word units. the Latin char vocab (4,114 entries, min_count 2) was sealed from a 1M-row sample —
-# tail chars fall to UNK.
+# v8-leg2-charword is the character-word arm of a paired encoder comparison with v8-leg2-sp.
+#
+# The two recipes share the data block, the 384-unit 4-layer geometry and the 8k-step schedule. They
+# differ only in the embedding front end. Both train from scratch without channels or a CRF. The
+# comparison reads val token F1 and per-tag F1 at step 8k and has no pass bar.
+#
+# The SP arm drops rows longer than 128 pieces, and this arm caps rows at 64 word units. The Latin
+# char vocab came from a 1M-row sample, so rare characters map to UNK.
 #
 # Launch: cd corpus-python && modal run -d -m launch.train_remote --config v8-leg2-charword.yaml --resume none
 
@@ -15,7 +13,7 @@ data:
   corpus_dir: /data/corpus/versioned/v0.13.0-latam/corpus-v0.13.0-latam
   tokenizer_dir: /data/models/tokenizer/v0.9.0-multisplice
   max_length: 128
-  country_weights: # Verbatim from v2.4.1.
+  country_weights: # These weights are copied from v2.4.1.
     US: 1.0
     FR: 1.0
     DE: 1.0
@@ -39,10 +37,13 @@ data:
     HR: 1.0
     HU: 1.0
     AU: 1.0
-    CA: 1.0 # new (Overture) — live locality, sidesteps NZ's dead dependent_locality
-    MX: 1.0 # new (Overture) — BR dropped (0% OA-lineage + SN-garbage numbers)
-  source_weights: # v3.1.0 weights + overture-latam (CA/MX/BR, dedicated source so it doesn't dilute the trained EU overture rows) + synth-no-fragment (the one new variable); synth-no-street-led ZEROED (its on-disk part predates --exclude-surfaces and is contaminated vs the board — see the overlay note).
-    overture-latam: 6.0 # New — CA/MX/BR Overture rows. 6.0/~142 ≈ 4.2%, within Fable's ≤5-8% new-mass band. Distinct from  (EU) so EU exposure is untouched.
+    CA: 1.0 # CA rows come from Overture.
+    MX: 1.0 # MX rows come from Overture. BR is left out because its house numbers are unreliable.
+  # These are the v3.1.0 weights plus overture-latam and synth-no-fragment. synth-no-street-led is zero
+  # because its on-disk rows overlap the eval board.
+  source_weights:
+    # CA, MX and BR rows from Overture use their own source, so the EU `overture` weight is unchanged.
+    overture-latam: 6.0
     wof-admin: 2.0
     wof-postalcode: 2.0
     ban: 3.0
@@ -71,14 +72,11 @@ data:
     synth-no-street-led: 0.0
     synth-cz-pcfirst-preposition: 12.0
     synth-nl-postcode: 6.0
-    # probe 1: the fragment/autocomplete source (assay weight — moderate precedent).
+    # Address fragments of the kind typed into autocomplete.
     synth-fragment: 6.0
-    # #727 T2 new — the one variable. 12.0 = the targeted-fix precedent (fr-bare-street,
-    # si-bare-village, no-street-led are all 12.0). Streets with no house number + the
-    # bare-locality counter.
+    # French streets without a house number, plus bare-locality counterexamples. Targeted sources use 12.0.
     synth-fr-fragment: 12.0
-    # Track B — the Norway house-number-licence change. 12.0 = the targeted-fix tier
-    # (matches fr-fragment). Bare streets + street+number with no postcode partner, + counters.
+    # Norwegian bare streets and street-number pairs without a postcode, plus counterexamples.
     synth-no-fragment: 12.0
   train_rows_per_epoch: 1000000
   val_rows: 4096
@@ -86,12 +84,11 @@ data:
   augment_directional_prob: 0.3
   augment_region_prob: 0.3
   augment_glue_prob: 0.25
-  # #1101 FIX — the delimiter-free augmentation (built+tested, never shipped): an extra comma-stripped
-  # copy per row so the model segments street/locality without leaning on the comma. Closes the gauntlet
-  # comma-drop INV (White House + FR Rue du Chevaleret). One new variable vs v373.
+  # This probability adds a copy of a row with its commas removed, so the model learns to split street
+  # and locality without relying on commas.
   augment_punct_drop_prob: 0.3
   affix_relabel_lexicon_path: /data/gazetteer/affix-relabel-lexicon-v1.json
-  # --- The char-word path (#825 semantics via encode_row_units at ctx 0). ---
+  # Each unit is one whole word, encoded by `encode_row_units` without neighbor context.
   char_mode: word
   char_vocab_path: /data/corpus/versioned/v8-leg2/char-vocab-latin-v1.json
   char_ctx: 0

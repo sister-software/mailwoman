@@ -1,17 +1,13 @@
-"""Every path this package builds starts here.
+"""Builds this package's file paths from the roots set in the environment.
 
-The counterpart of `@mailwoman/core/data-root` and `@mailwoman/core/paths`. A path assembled from a
-string literal encodes one machine's layout. these functions read the roots the environment names,
-so the same code answers correctly on a lab checkout, a Modal container and a fresh clone.
+This module mirrors `@mailwoman/core/data-root` and `@mailwoman/core/paths`. Choose a root by the
+kind of file:
 
-Pick the root by what the file is rather than by where it happens to sit today:
-
-- `data_root_path` — corpus, gazetteer, model artifacts. Large, downloaded rather than reproducible cheaply.
-- `cache_root_path` — regenerable. Deleting it costs time, never work.
-- `temp_root_path` — a named intermediate a human may want to inspect. For an unnamed scratch file
-  that nothing reads afterwards, use `tempfile`, not this.
-- `config_root_path` — settings a human edits.
-- `package_path` / `repo_root_path` — files that travel with the source.
+- `data_root_path` holds large downloaded data such as corpora, gazetteers and model artifacts.
+- `cache_root_path` holds regenerable files.
+- `temp_root_path` holds named intermediates that a person may inspect.
+- `config_root_path` holds settings that a person edits.
+- `package_path` and `repo_root_path` locate files that ship with the source.
 """
 
 from __future__ import annotations
@@ -20,41 +16,38 @@ from pathlib import Path
 
 from .env import public
 
-#: This package's own directory: `<repo>/corpus-python/src/mailwoman_train`.
+#: This is the package directory, `<repo>/corpus-python/src/mailwoman_train`.
 _PACKAGE_ROOT = Path(__file__).resolve().parent
 
 
 def data_root_path(*parts: str) -> Path:
-    """A path under `$MAILWOMAN_DATA_ROOT`."""
+    """Return a path under `$MAILWOMAN_DATA_ROOT`."""
     return public().data_root.joinpath(*parts)
 
 
 def config_root_path(*parts: str) -> Path:
-    """A path under `$MAILWOMAN_CONFIG_ROOT`."""
+    """Return a path under `$MAILWOMAN_CONFIG_ROOT`."""
     return public().config_root.joinpath(*parts)
 
 
 def cache_root_path(*parts: str) -> Path:
-    """A path under `$MAILWOMAN_CACHE_ROOT`."""
+    """Return a path under `$MAILWOMAN_CACHE_ROOT`."""
     return public().cache_root.joinpath(*parts)
 
 
 def temp_root_path(*parts: str) -> Path:
-    """A path under `$MAILWOMAN_TEMP_ROOT`, for a named intermediate worth keeping.
+    """Return a path under `$MAILWOMAN_TEMP_ROOT` for a named intermediate file.
 
-    Not a replacement for `tempfile`. A scratch file nothing reads afterwards should clean itself
-    up. this is for output a human goes looking for.
+    Use `tempfile` for scratch files that nothing reads afterwards.
     """
     return public().temp_root.joinpath(*parts)
 
 
 def resolve_data_root_default(supplied: str | None, *parts: str) -> str:
-    """A caller's flag value, or the data-root path it defaults to — resolved only if needed.
+    """Return the supplied flag value, or the data-root path when the flag was omitted.
 
-    Argparse evaluates `default=` when the argument is DECLARED, so a data-root default written
-    there reads the environment at import and raises for a caller who was going to pass the flag
-    anyway. Declare `default=None` and call this after parsing: the environment is read only when
-    the caller left the flag off, which is the only case where its value matters.
+    Declare the argparse flag with `default=None` and call this after parsing. A data-root default in
+    `default=` would read the environment at declaration time and raise even when the flag is passed.
     """
     if supplied:
         return supplied
@@ -62,21 +55,18 @@ def resolve_data_root_default(supplied: str | None, *parts: str) -> str:
 
 
 def package_path(*parts: str) -> Path:
-    """A file shipped inside this package, such as a run config under `configs/`.
+    """Return a path inside this package, such as a run config under `configs/`.
 
-    Anchored at the package root, so it names the same file from a source checkout and from an
-    installed copy.
+    The path is anchored at the package directory, so it works from a checkout and an installed copy.
     """
     return _PACKAGE_ROOT.joinpath(*parts)
 
 
 def repo_root_path(*parts: str) -> Path:
-    """A file in the repository checkout.
+    """Return a path in the repository checkout.
 
-    Found by walking up for a directory holding both `packages/` and `package.json`, not by
-    counting parent hops: a hop count encodes the caller's depth and breaks silently when a module
-    moves. RAISES when no parent qualifies, because the alternative is a relative path that
-    resolves against whatever the working directory happens to be.
+    The root is the nearest parent directory that holds both `packages/` and `package.json`. This
+    raises `RuntimeError` outside a checkout.
     """
     for candidate in _PACKAGE_ROOT.parents:
         if (candidate / "packages").is_dir() and (candidate / "package.json").is_file():

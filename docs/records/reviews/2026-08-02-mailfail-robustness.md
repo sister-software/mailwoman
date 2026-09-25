@@ -14,14 +14,14 @@ Three findings need action, and one of them is not a garbage-input problem at al
 The stack is well-behaved on the input classes you would expect to break it. Empty
 strings, whitespace, punctuation runs, emoji, ZWJ sequences, box drawing, unpaired surrogates,
 embedded NUL, BOM, zalgo, RTL overrides, CJK and Devanagari all pass through without a throw and
-mostly without emitting anything. That is a real clean bill of health and it is stated below rather than buried.
+mostly without emitting anything. The "What held up" section below records that result in full.
 
-What breaks is length. Two independent quadratics live in the preprocessing stages, and a
+Long input breaks the stack. The preprocessing stages contain two independent quadratics, and a
 sequence-length cap in the ONNX runner desynchronises two arrays that the decoder then indexes in
-lockstep. That last one is the finding that matters most, because it fires on a **plausible real
-address of 325 characters** — not on garbage — and it is reachable from the shipped geocode path.
+lockstep. The desync matters most, because it fires on a **plausible real address of 325
+characters** rather than on garbage, and it is reachable from the shipped geocode path.
 
-And separately: a single common English word, a single letter, or a single digit will resolve to a
+Separately, a single common English word, a single letter, or a single digit will resolve to a
 real coordinate somewhere in the world, with a resolver score indistinguishable from a correct hit.
 
 ---
@@ -109,8 +109,8 @@ last OK length: 320 chars (127 pieces)
 first THROW   : 325 chars (131 pieces)
 ```
 
-That is not exotic. Shipping systems, CRMs and government forms concatenate address lines to well
-past 325 characters routinely.
+This length is common. Shipping systems, CRMs and government forms routinely concatenate address
+lines to well past 325 characters.
 
 **The 512-character drop-in cap does not guard against this.** `nominatim/cli.ts:67` and
 `photon/cli.ts:60` both cap at `MAX_QUERY_LEN = 512`, with a comment explaining the cap exists
@@ -124,10 +124,11 @@ because a long query "would exceed the model's input window." The cap is roughly
   reach the parser through here.
 - The four Hono servers each install `app.onError` (`nominatim/app.ts:72`, `photon/app.ts:73`,
   `libpostal/app.ts:78`, `api/app.ts:110`), so over the wire this is an HTTP **500 "internal
-  error"** rather than a process crash. Contained, but a 500 on a valid address is a product defect.
+  error"** rather than a process crash. The failure is contained, but a 500 on a valid address is a
+  product defect.
 - Library and CLI consumers of `geocodeAddress` get an uncaught `TypeError`.
-- `runPipeline` **does** catch, at `core/pipeline/runtime-pipeline.ts:648` (`safeClassify`) — see
-  Finding 4, because the catch is not the mercy it looks like.
+- `runPipeline` **does** catch, at `core/pipeline/runtime-pipeline.ts:648` (`safeClassify`). See
+  Finding 4, because that catch hides the failure and produces misleading output.
 
 **Suggested fix.** Truncate `pieces` to the runner's `fixedSeqLen` immediately after
 `classifier.ts:662`, so every downstream array is the same length by construction. That kills both
@@ -144,7 +145,7 @@ mitigation rather than the fix.
 
 **Severity: high.** Availability. Reachable from every path, including `parseForGeocode`.
 
-Stage-level timings, no model involved:
+Stage-level timings, measured without the model:
 
 | input                    |     chars | segments | `computeQueryShape` |
 | ------------------------ | --------: | -------: | ------------------: |
@@ -216,8 +217,8 @@ repeated-address 100 KB       100023 chars      18.99 s
 capitalized-run  100 KB        99999 chars     156.42 s
 ```
 
-**156 seconds of blocked event loop for 100 KB of `"Aa Aa Aa …"`.** Node is single-threaded; that
-is the whole server.
+**100 KB of `"Aa Aa Aa …"` blocks the event loop for 156 seconds.** Node is single-threaded, so the
+whole server is blocked for that time.
 
 **Suggested fix.** A token-count guard in `groupPhrasesSync` (`phrase-grouper/group.ts:74`, which
 today only checks `if (!text.length) return []`) bounds this cheaply. The structural fix is to
@@ -328,9 +329,9 @@ A phone number is read as a locality at **0.964**. On the resolver side, the cor
 
 **Assessment.** This is not straightforwardly a bug — `Boom` is a real Belgian municipality and a
 geocoder should find it. The defect is that nothing downstream can tell the two cases apart. A
-plausible mitigation is a population/importance floor for single-token localities with no
-corroborating component (no house number, no postcode, no region), which would drop the whole
-table above while leaving `Springfield` — a bare city name a user might type — intact.
+plausible mitigation is a population/importance floor for single-token localities that lack any
+corroborating component (a house number, postcode, or region). That floor would drop the whole
+table above while keeping `Springfield`, a bare city name a user might type.
 That trades recall for precision and should be measured against the fragment boards before anyone
 ships it.
 
@@ -338,7 +339,7 @@ ships it.
 
 ## What held up
 
-stated directly, because these are real results and not padding. Across all four paths, none of the
+These results are recorded because they are real results. Across all four paths, none of the
 following threw, hung, or emitted anything:
 
 - **Degenerate input is clean.** Empty string, single/multiple spaces, tab, newline, CRLF, only
@@ -368,14 +369,15 @@ have been stripped in Stage 1.
 **A predicted problem that is not real.** The static pass flagged
 `neural/span-proposer-lexicon.ts:138` as polynomial-ReDoS-shaped — `\s*#?\s*` before a required
 digit, on a default-ON path. Measured against `"PO Box" + " ".repeat(n) + "x"` for n up to 8,000,
-the time is flat at 0.1–0.6 ms with no growth. Ruled out; recording it so nobody re-derives it.
+the time is flat at 0.1–0.6 ms with no growth. The concern is ruled out, and it is recorded here so
+nobody re-derives it.
 
 ---
 
 ## What I did not test
 
-- **No HTTP-level testing.** No server was started, no request issued. Timings are of the parse the
-  endpoint performs. The exposure map is read from source.
+- **No HTTP-level testing.** No server was started and no request was issued. Timings are of the
+  parse the endpoint performs. The exposure map is read from source.
 - **No concurrency or sustained-load testing.** Every measurement is a single call on an idle
   process. Event-loop blocking is inferred from wall time on a single-threaded runtime rather than
   observed under load.

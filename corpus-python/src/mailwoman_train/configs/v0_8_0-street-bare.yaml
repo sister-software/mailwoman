@@ -1,17 +1,9 @@
-# v0.8.0 candidate — bare-street harness change.
+# This recipe is v0_7_2-intersection-bare.yaml plus the synth-street-bare source at weight 0.2.
+# The source comes from packages/corpus/lib/recipes/street/bare.ts. It teaches the model to label a
+# street name without a city or postcode tail, such as "Main St", as a street.
 #
-# single variable vs v0_7_2-intersection-bare.yaml: add the `synth-street-bare` source (weight 0.2).
-# The harness functional.test.ts cluster (32/34 fail on v0.7.2) is bare street names ("10th Ave",
-# "Main St", "1 Main Pl") mislabeled as `locality` — because synthesizeStreetRow only ever emitted
-# streets with a ", City, ST ZIP" tail. The new recipe output (the bare-street recipe, `packages/corpus/lib/recipes/street/bare.ts`; ~65% bare)
-# teaches bare streets → street, the bare-format analogue of the intersection-bare fix. safe: US,
-# in-distribution, no German-collapse risk (does not touch multi-locale).
-#
-# Expectation: harness functional + some usa/intersection up (potentially +5-8pp toward the 25% bar);
-# no regression to existing tags (street suffix is the signal, so bare localities are unaffected).
-# Promote only if harness improves meaningfully and no tag regresses >2pp.
-#
-# Launch: cd corpus-python && modal run -d -m launch.train_remote --config v0_8_0-street-bare.yaml --resume none --trackio
+# Launch it from corpus-python with:
+#   modal run -d -m launch.train_remote --config v0_8_0-street-bare.yaml --resume none --trackio
 
 data:
   corpus_dir: /data/corpus/versioned/v0.4.0/corpus-v0.4.0

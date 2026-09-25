@@ -2,20 +2,23 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file The ablation grade vocabulary — the verdict classes every gauntlet report iterates in one order.
+ * @file Ablation grades and the order in which gauntlet reports print them.
  */
 
 /**
- * The verdict for one deletion variant under the expectation model.
+ * Grade for one deletion variant under the expectation model.
  *
- * `held` / `degraded` / `correctlyAbstained` are passes.
- * The rest are failures, kept as distinct classes because they ask the operator for different things.
+ * The grades `held`, `degraded`, and `correctlyAbstained` pass.
+ * The failing grades stay distinct because each one points at a different kind of bug.
  *
- * `lost` is a recall bug, `overconfident` is a calibration bug, `coarser` is a precision
- * bug (it stayed on the ladder but gave up more than the surviving evidence justified),
- * `wrong` is a resolution bug (it left the ladder — a different place),
- * `substituted` is a slot-hazard bug, and `homonymTakeover` is arguably not a bug at all:
- * the remaining text genuinely names a different place.
+ * - `lost` means the case should resolve and did not.
+ * - `overconfident` means the case should abstain and resolved anyway.
+ * - `homonymTakeover` means the case should abstain and resolved because the
+ *   remaining text matches another place.
+ * - `coarser` means the result stayed on the ladder but at a coarser rung than expected.
+ * - `wrong` means the result left the ladder.
+ * - `substituted` means another value filled the deleted component's slot.
+ * - `ungraded` means the undeleted case was itself off the ladder.
  */
 export type AblationGrade =
 	| "held"
@@ -30,8 +33,7 @@ export type AblationGrade =
 	| "ungraded"
 
 /**
- * Every {@linkcode AblationGrade}, as data.
- * The histogram-iteration order the reports print in.
+ * Every {@linkcode AblationGrade} in the order that reports print them.
  */
 export const ABLATION_GRADES = [
 	"held",
@@ -47,7 +49,7 @@ export const ABLATION_GRADES = [
 ] as const satisfies readonly AblationGrade[]
 
 /**
- * The grades that count as the pipeline behaving correctly.
+ * Grades that count as passes.
  */
 export const PASSING_GRADES: ReadonlySet<AblationGrade> = new Set<AblationGrade>([
 	"held",
@@ -56,9 +58,9 @@ export const PASSING_GRADES: ReadonlySet<AblationGrade> = new Set<AblationGrade>
 ])
 
 /**
- * The empty verdict histogram — every {@linkcode AblationGrade} present at zero.
+ * Returns a new histogram with every {@linkcode AblationGrade} at zero.
  *
- * Built fresh per cell so no two cells share a mutable map.
+ * Each call returns a fresh object so that cells never share one.
  */
 export function emptyGrades(): Record<AblationGrade, number> {
 	return {

@@ -237,7 +237,7 @@ describe("the component check is exact — multi-script truth is a per-row opt-i
 		expect(checkCase(c, result({ venue: "Gandantegchinlen Monastery / Гандантэгчинлэн хийд" }))).toEqual([])
 	})
 
-	it("passes the bleed-shaped got too, once a interface SAYS both elements belong — explicit, not global", () => {
+	it("passes the bleed-shaped got too, once an interface SAYS both elements belong — explicit, not global", () => {
 		const c = storedCase({ expect_component_renderings: stringifyJSON({ locality: ["四季酒家", "Manchester"] }) })
 
 		expect(checkCase(c, result({ locality: "四季酒家 Manchester" }))).toEqual([])
@@ -271,7 +271,7 @@ describe("the component check is exact — multi-script truth is a per-row opt-i
 		expect(checkCase(c, result({ locality: "Улаанбаатар / Ulaanbaatar / ウランバートル" }))).toEqual([])
 	})
 
-	it("lets a interface key supersede the same key in expect_components", () => {
+	it("lets an interface key supersede the same key in expect_components", () => {
 		// expect_components freezes the Latin half.
 		// The interface requires both.
 		// The dual span passes (the superseded exact comparison would have failed it),

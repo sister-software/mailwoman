@@ -3,10 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Run component-level invariance checks through the production runtime pipeline.
- *   The suite avoids resolver I/O and compares original/transformed parses.
- *   Baseline mode reports pre-existing violations and gains separately; only new regressions
- *   count toward the failure thresholds.
+ *   Runs component-level invariance checks through the production runtime pipeline without resolver I/O. With a
+ *   baseline parser, only violations the baseline lacks count toward failure.
  */
 
 import { compareComponents, CRITICAL_TAGS, VERDICT_SEVERITY, type Verdict } from "#eval-harness/invariance/compare"
@@ -25,18 +23,16 @@ export {
 
 export { DEFAULT_SUITE_PATH, loadSuite, type InvarianceRow } from "#eval-harness/invariance/fixtures"
 
-// Repo-root-relative (mirrors `FRAGMENT_BOARD_FIXTURES` / `POI_BOARD_FIXTURES`): the compiled tree
-// (`out/`) never gets a copy of the `.jsonl` fixture — only `.ts` sources are transpiled — so this
-// resolves against the CWD the CLI is invoked from (the repo root) rather than `import.meta.dirname`.
-// #region parse function construction
-
-// #region the run
-
 /**
- * `GAINED` means the candidate holds a pair the baseline violated; it is non-blocking.
+ * Verdict for one pair.
+ *
+ * `GAINED` means the candidate holds a pair that the baseline violated, and it never fails the check.
  */
 export type OutcomeVerdict = Verdict | "GAINED"
 
+/**
+ * Result for one row and transform.
+ */
 export interface PairOutcome {
 	rowID: string
 	raw: string
@@ -46,49 +42,59 @@ export interface PairOutcome {
 	verdict: OutcomeVerdict
 	diff: string[]
 	/**
-	 * Only set in `--baseline` mode: the baseline model's verdict on the same pair.
+	 * Baseline parser's verdict on the same pair.
+	 * It is set only in baseline mode.
 	 */
 	baselineVerdict?: Verdict
 	/**
-	 * True when the candidate violation is no worse than the baseline's.
+	 * Whether the candidate's violation is no more severe than the baseline's verdict on the same pair.
 	 */
 	preExisting?: boolean
 	/**
-	 * Set when the baseline had no critical component but the candidate did.
+	 * Whether the row's original parse has a critical component from the candidate
+	 * and none from the baseline.
 	 */
 	gainedCapability?: boolean
 }
 
+/**
+ * Pair outcomes, counts, and the check verdict for a suite run.
+ */
 export interface InvarianceReport {
 	outcomes: PairOutcome[]
 	skipped: Array<{ rowID: string; transformID: string; reason: string }>
 	counts: { invariant: number; degraded: number; lost: number; gained: number }
 	/**
-	 * New-violation counts; equals `counts` when no baseline is supplied.
+	 * Counts of violations that the baseline lacks.
+	 * Without a baseline, every violation counts as new.
 	 */
 	newCounts: { degraded: number; lost: number; gained: number }
 	pass: boolean
 	exitCode: number
 }
 
+/**
+ * Options for {@link runInvarianceSuite}.
+ */
 export interface RunInvarianceOptions {
 	rows: InvarianceRow[]
 	parse: ParseFn
 	/**
-	 * `--baseline` regression mode: pre-existing baseline violations are reported but non-blocking.
+	 * Baseline parser.
+	 *
+	 * When set, violations that the baseline shares are reported without failing the check.
 	 */
 	baselineParse?: ParseFn
 	/**
-	 * Fail the check if the new-violation degraded count exceeds this.
-	 *
-	 * Default 0.
+	 * Largest number of new `DEGRADED` pairs that still passes.
+	 * It defaults to 0.
 	 */
 	maxDegraded?: number
 	report?: (line: string) => void
 }
 
 /**
- * Expand supported abbreviations in every component value.
+ * Expands supported abbreviations in every component value.
  */
 function canonicalizeMap(components: Record<string, string>): Record<string, string> {
 	const out: Record<string, string> = {}
@@ -101,7 +107,10 @@ function canonicalizeMap(components: Record<string, string>): Record<string, str
 }
 
 /**
- * Compare component maps, normalizing expected spelling changes for abbreviation swaps.
+ * Compares component maps.
+ *
+ * For `abbreviation-swap`, both maps are canonicalized first so the expected
+ * spelling change does not count as a difference.
  */
 function compareForTransform(
 	transformID: string,
@@ -116,16 +125,14 @@ function compareForTransform(
 }
 
 /**
- * Check whether any critical component has a nonblank value.
+ * Reports whether any critical component has a non-blank value.
  */
 function hasCriticalComponent(components: Record<string, string>): boolean {
 	return CRITICAL_TAGS.some((tag) => (components[tag] ?? "").trim().length)
 }
 
 /**
- * Run the suite and return per-pair results and summary counts.
- *
- * @returns A report with per-pair outcomes, summary counts, and the check exit code.
+ * Runs the suite, prints a summary through `options.report`, and returns the report.
  */
 export async function runInvarianceSuite(options: RunInvarianceOptions): Promise<InvarianceReport> {
 	const maxDegraded = options.maxDegraded ?? 0
@@ -133,7 +140,7 @@ export async function runInvarianceSuite(options: RunInvarianceOptions): Promise
 	const outcomes: PairOutcome[] = []
 	const skipped: Array<{ rowID: string; transformID: string; reason: string }> = []
 
-	// Cache each row's original parse once (idempotence deliberately bypasses this cache — see runPair).
+	// The idempotence check compares a cached parse with a fresh one, so its second call bypasses this cache.
 	const originalCache = new Map<string, Record<string, string>>()
 
 	async function originalFor(row: InvarianceRow): Promise<Record<string, string>> {
@@ -161,21 +168,18 @@ export async function runInvarianceSuite(options: RunInvarianceOptions): Promise
 	}
 
 	for (const row of options.rows) {
-		// Warm the original-parse cache once per row so every non-idempotence transform below
-		// reuses it instead of re-parsing the same baseline string per transform.
 		await originalFor(row)
 
-		// Track rows where the baseline lacks critical components but the candidate has them.
 		const gainedCapabilityRow =
 			options.baselineParse !== undefined &&
 			!hasCriticalComponent(await baselineOriginalFor(row)) &&
 			hasCriticalComponent(await originalFor(row))
 
-		// Production caller hint for every parse of this row (locale-hint / normalize case-fold).
 		const rowLocale = localeForCountry(row.country)
 
 		for (const transformID of row.transforms) {
-			const transform = getTransform(transformID) // throws loudly on an unknown id — fixture typo guard.
+			// `getTransform` throws on an unknown ID, which catches fixture typos.
+			const transform = getTransform(transformID)
 			const transformedText: string | null = transformID === "idempotence" ? row.raw : transform.apply(row.raw)
 
 			if (transformedText == null) {
@@ -188,7 +192,6 @@ export async function runInvarianceSuite(options: RunInvarianceOptions): Promise
 
 			if (transformID === "idempotence") {
 				const a = await originalFor(row)
-				// A second, independent call — the point of idempotence.
 				const b = await options.parse(row.raw, { locale: rowLocale })
 				candidateOutcome = { transformed: row.raw, ...compareForTransform(transformID, a, b) }
 			} else {
@@ -231,14 +234,10 @@ export async function runInvarianceSuite(options: RunInvarianceOptions): Promise
 				outcome.gainedCapability = gainedCapabilityRow
 
 				if (candidateOutcome.verdict === "INVARIANT" && baselineResult.verdict !== "INVARIANT") {
-					// Gained-capability class (#1516): the candidate holds a pair the baseline violated.
-					// A capability that went 0/207 → 205/207 is a gain rather than a violation.
-					// It is reported in its own section below and never touches the check.
 					outcome.verdict = "GAINED"
 				} else {
-					// Treat a violation as pre-existing only when its severity is no worse
-					// than the baseline's for the same pair.
-					// This compares verdict levels, not the underlying diff contents.
+					// The comparison uses verdict severity only.
+					// The diff contents may differ.
 					outcome.preExisting =
 						!gainedCapabilityRow &&
 						candidateOutcome.verdict !== "INVARIANT" &&
@@ -250,7 +249,6 @@ export async function runInvarianceSuite(options: RunInvarianceOptions): Promise
 		}
 	}
 
-	// Summarize and report the invariance outcomes.
 	const counts = { invariant: 0, degraded: 0, lost: 0, gained: 0 }
 	const newCounts = { degraded: 0, lost: 0, gained: 0 }
 
@@ -268,7 +266,7 @@ export async function runInvarianceSuite(options: RunInvarianceOptions): Promise
 		if (o.verdict === "GAINED") {
 			newCounts.gained++
 		} else {
-			// Exclude residuals on rows where the baseline lacked critical components.
+			// Violations on gained-capability rows do not count as new, because the baseline never parsed those rows.
 			const isNew = !options.baselineParse || (!o.preExisting && !o.gainedCapability)
 
 			if (isNew) {
@@ -288,7 +286,6 @@ export async function runInvarianceSuite(options: RunInvarianceOptions): Promise
 		`  INVARIANT ${counts.invariant}   DEGRADED ${counts.degraded}${options.baselineParse ? ` (${newCounts.degraded} new)` : ""}   LOST ${counts.lost}${options.baselineParse ? ` (${newCounts.lost} new)` : ""}${options.baselineParse ? `   GAINED ${counts.gained}` : ""}`
 	)
 
-	// Gains are reported separately and never treated as violations.
 	const violations = outcomes.filter((o) => o.verdict !== "INVARIANT" && o.verdict !== "GAINED")
 
 	if (violations.length) {
@@ -297,7 +294,7 @@ export async function runInvarianceSuite(options: RunInvarianceOptions): Promise
 		for (const v of violations) {
 			const tag = v.verdict === "LOST" ? "✗ LOST" : "~ DEGRADED"
 
-			// Show the baseline verdict; a new violation need not have an invariant baseline.
+			// A new violation can have a violating baseline of lower severity, so the report prints the baseline verdict.
 			const provenance = options.baselineParse
 				? v.preExisting
 					? " [pre-existing: baseline also violates — non-blocking]"
@@ -351,5 +348,3 @@ export async function runInvarianceSuite(options: RunInvarianceOptions): Promise
 		exitCode: pass ? 0 : 1,
 	}
 }
-
-// #endregion

@@ -1,40 +1,19 @@
-# Build + deploy the Docusaurus docs site, the prose site at mailwoman.ai.
+# Builds the Docusaurus site at mailwoman.ai and deploys it to GitHub Pages from main.
 #
-# The geocoder map is not here: Earth, Moon and Mars are their own static apps on Cloudflare, deployed by
-# deploy.yml. What this site still bundles from the workspaces is the runtime embed the concept pages mount
-# (docs/src/contexts/RuntimeEmbed.tsx), the explorers and license pages under docs/src/components, and the
-# OpenAPI documents plus the CLI reference the `prebuild` script generates from four package CLIs.
-#
-# On pull_request: the build job runs on every PR (so it can be a required status check), but the
-# structure check + build steps execute only when a path the site reads changed — otherwise the job
-# reports green in seconds. Catches broken links, MDX parse errors, and — before any install —
-# frontmatter/duplicate-title/orphan regressions via docs/scripts/check/docs-structure.ts.
-# On push to main: same steps (path-filtered at the trigger), then deploy to GitHub Pages.
-#
-# Binary assets (model.onnx, tokenizer.model, fst-en-US.bin, wof-hot.db) are
-# fetched at runtime from the HF Bucket (sister-software/mailwoman), not bundled
-# into the static site. The runtime-assets plugin still runs loadContent() to
-# validate the model card, but binary staging is skipped in CI because the
-# neural-weights-en-us package has no model files without link-dev-weights.ts.
+# The Earth, Moon and Mars map apps deploy separately through deploy.yml. This site bundles the
+# runtime embed, the explorers and license pages, and the OpenAPI and CLI references that the
+# `prebuild` script generates. Model and gazetteer binaries load at runtime from the HF bucket.
 name: Docs
 
 on:
-  # The site bundles the runtime embed and generates the OpenAPI documents at build time, so a change in one
-  # of these packages changes the built output. a change anywhere else does not reach it. The two lists below
-  # are the same list, and each entry is measured rather than remembered: the packages a docs source file imports
-  # directly (`grep -rhoE 'from "(@mailwoman/[a-z-]+|mailwoman)' docs/src docs/plugins docs/scripts | sort -u`)
-  # plus the three drop-in packages whose CLIs `docs/package.json`'s prebuild runs for their OpenAPI documents.
-  # A transitive dependency (the resolver behind the runtime embed, say) is deliberately not listed: the docs
-  # workspace's manifest closure is nearly the whole monorepo, and a list that long is no filter. workflow_dispatch
-  # is the override when a change outside these paths should rebuild the site.
+  # The path list holds the packages that docs sources import directly, plus the libpostal,
+  # nominatim and photon packages whose CLIs generate the OpenAPI documents. Transitive
+  # dependencies are left out because the docs closure covers nearly the whole monorepo.
+  # Use workflow_dispatch to rebuild after a change outside these paths.
   #
-  # The pull_request trigger deliberately carries no `paths:` filter, so the `build` job runs and
-  # reports a check on every PR — a prerequisite for making it a required status check in the
-  # branch ruleset. A workflow-level `paths:` filter would leave PRs that touch none of these paths
-  # with no check reported at all, which a required-check rule reads as "waiting forever" and the
-  # PR can never merge. Instead the heavy steps are conditional per-job below on a change-detection step;
-  # an unaffected PR reports green in seconds. The `push` trigger keeps its `paths:` filter — deploy
-  # should only fire when the built output can actually change.
+  # The pull_request trigger has no `paths:` filter so that the required `build` check reports
+  # on every PR. A skipped workflow would leave the check pending forever. The heavy steps check
+  # the change-detection step below instead.
   workflow_dispatch: {}
   pull_request:
     branches: [main]
@@ -51,7 +30,7 @@ on:
       - "packages/react/**"
       - "packages/resolver-wof-wasm/**"
       - "packages/spatial/**"
-      # The OpenAPI prebuild inputs.
+      # These packages feed the OpenAPI prebuild.
       - "packages/libpostal/**"
       - "packages/nominatim/**"
       - "packages/photon/**"
@@ -65,18 +44,13 @@ permissions:
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
-  # onnxruntime-node's postinstall downloads optional GPU-provider binaries from Microsoft's Akamai
-  # CDN — the CPU libs the runners actually use are bundled in the npm tarball. That CDN edge is
-  # intermittently unreachable from the lab runners (2026-07-28: three CI rounds died on it —
-  # ETIMEDOUT IPv4 + ENETUNREACH IPv6). Skip the download entirely: deterministic installs, no GPU
-  # inference on CI to miss it.
+  # The onnxruntime-node postinstall fetches GPU binaries from a CDN that the lab runners cannot
+  # always reach. CI uses the CPU libraries bundled in the npm tarball, so the download is skipped.
   ONNXRUNTIME_NODE_INSTALL: skip
 
 concurrency:
   group: docs-${{ github.workflow }}-${{ github.ref }}
-  # Cancel superseded runs on every trigger: only the latest head's build matters — a stale
-  # Pages deploy would be overwritten by the newer one anyway, and the deploy job is
-  # idempotent (deploy-pages redeploys whatever artifact the newer build uploads).
+  # A newer build supersedes any older deploy, so cancelling a stale run is safe.
   cancel-in-progress: true
 
 jobs:
@@ -89,21 +63,15 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      # Change detection replaces the trigger-level `paths:` filter (see the `on:` comment). On a
-      # pull_request, this computes whether any path the site reads changed. the heavy steps below
-      # run only when it did. On push/workflow_dispatch the filter is skipped and the steps run
-      # unconditionally (the push trigger already path-filtered the event, and dispatch is manual).
-      # This keeps the job — and therefore its status check — reported on every PR.
+      # On a pull request, the later steps run only when a path the site reads changed.
+      # Push and dispatch runs skip this step and run everything.
       - name: Detect changes the site reads
         id: changes
         if: github.event_name == 'pull_request'
         uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
         with:
-          # dorny/paths-filter resolves the PR's base/head SHAs from the event payload via the
-          # GitHub API, so it works correctly under actions/checkout's default shallow
-          # (fetch-depth: 1) clone. A hand-rolled `git diff --name-only origin/main...` would not:
-          # origin/main isn't fetched at all by a bare `actions/checkout@v7`, and even with a fetch
-          # added, triple-dot diff needs a merge-base that a depth-1 clone doesn't have.
+          # paths-filter reads the changed files from the GitHub API. A local `git diff` would
+          # fail because the shallow checkout has neither origin/main nor a merge base.
           filters: |
             docs:
               - "docs/**"
@@ -127,23 +95,13 @@ jobs:
         uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
-          # actions-cache restore disabled (2026-07-29): the restore against GitHub's cache service
-          # hangs through the lab's degraded path (multiple 20m job-budget deaths in Setup Node) and
-          # is redundant — .yarnrc.yml's enableGlobalCache serves installs offline on the runners.
+          # The setup-node cache stays off because restores can hang on the lab runners.
+          # The global Yarn cache in .yarnrc.yml already serves installs offline.
 
-      # Fast structural check (docs-architecture cleanup, Phase 4): frontmatter interface +
-      # required fields, exact duplicate titles, orphan pages. Static parse over node built-ins
-      # only — no install, no build — so a structural regression fails in seconds instead of
-      # after the full Docusaurus build.
-      #
-      # --strict since the docs-reorg Task 5 skeleton cutover: the flag selects the six-role
-      # frontmatter metadata (docs/scripts/docs/frontmatter/metadata.ts) and enforces `role:` on
-      # every published page, rather than the legacy seven-role vocabulary that only required one
-      # on a manifest of entry pages. It was held off until the old tree left docs/articles/,
-      # because that corpus predated the interface and failed the check wholesale. Voice and
-      # section rules that the check cannot see live in docs/engineering/writing-system.md.
-      # (--disable-warning: sidebars.ts is format-ambiguous — the docs workspace can't carry
-      # type:module without breaking the Docusaurus SSR bundle. see docs/scripts/package.json.)
+      # This check needs only Node built-ins, so it runs before the install. It checks
+      # frontmatter, duplicate titles and orphan pages. `--strict` requires `role:` on every
+      # published page. The docs workspace cannot declare type:module without breaking the
+      # Docusaurus SSR bundle, so Node warns about sidebars.ts and the flag silences that warning.
       - name: Docs structure checks
         if: github.event_name != 'pull_request' || steps.changes.outputs.docs == 'true'
         run: node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON docs/scripts/check/docs-structure.ts --strict
@@ -156,18 +114,12 @@ jobs:
         if: github.event_name != 'pull_request' || steps.changes.outputs.docs == 'true'
         run: yarn install --immutable
 
-      # Fixture regression test for config/vale/styles/*.yml (the Vale prose-lint rules): a rule
-      # that stops firing, or a TokenIgnores/BlockIgnores change that starts leaking banned words
-      # out of a code fence/import/JSX/`<details>` block, fails loudly here instead of silently
-      # drifting. See config/vale/check-rules.ts for what it checks.
+      # This step fails when a Vale rule stops firing on its fixtures or an ignore pattern changes.
       - name: Vale rule fixtures
         if: github.event_name != 'pull_request' || steps.changes.outputs.docs == 'true'
         run: node config/vale/check-rules.ts
 
-      # Whole-corpus run — every tracked Markdown/MDX file under docs/ except the intentional Vale
-      # failure fixtures. This includes published pages, records, plans, research, static reports,
-      # and docs-side skills. The count will drift as pages are added. the point that matters does
-      # not — this step runs against the whole corpus rather than changed files.
+      # Prose lint covers every tracked Markdown and MDX file under docs/, including unchanged files.
       - name: Prose lint
         if: github.event_name != 'pull_request' || steps.changes.outputs.docs == 'true'
         run: yarn workspace @mailwoman/docs lint:prose
@@ -185,9 +137,8 @@ jobs:
         uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         with:
           path: docs/build
-          # The action's tar excludes every dot-entry unless told otherwise, and the site's one dot-directory is
-          # `.well-known/`, where the license key register lives. Without this the register builds, uploads nothing,
-          # and `mailwoman license verify --online` reads the live site's 404 as unreachable.
+          # The upload skips dot-directories by default. The license key register lives in
+          # `.well-known/`, and `mailwoman license verify --online` fails without it.
           include-hidden-files: true
 
   deploy:

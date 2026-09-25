@@ -3,21 +3,24 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The body's build manifest, fetched once and read by everything that reports provenance.
- *
- *   The manifest names the archives a build read, their digests and the nomenclature snapshot date, so both the
- *   footer credit and the About sheet change when the archives do. They share this hook rather than a fetch each: two
- *   requests for one document would also be two chances to disagree about what the build used.
+ *   Fetches the body's build manifest, which lists the archives a build read, their digests and the
+ *   nomenclature snapshot date.
  */
 
 import { type PlanetaryBuildManifest, PlanetaryBuildManifestSchema } from "@mailwoman/astrogeology/schema/manifest"
 import { useEffect, useState } from "react"
 
+/**
+ * The loading state of the build manifest.
+ */
 export type BuildManifestState =
 	| { status: "loading" }
 	| { status: "ready"; manifest: PlanetaryBuildManifest }
 	| { status: "failed" }
 
+/**
+ * Fetches and validates the build manifest at `manifestURL`.
+ */
 export function useBuildManifest(manifestURL: string): BuildManifestState {
 	const [state, setState] = useState<BuildManifestState>({ status: "loading" })
 

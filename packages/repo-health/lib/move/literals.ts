@@ -2,19 +2,11 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file The third thing a move invalidates: a repo-relative path written as text.
+ * @file Finds repo-relative paths written as plain text (hook commands, globs, workflow steps, `Usage:` lines) that a
+ *   move makes stale.
  *
- *   A specifier is checked by the compiler and a manifest target by `manifest-targets`. A path inside a hook command,
- *   a Vale glob, a workflow step or a docstring's `Usage:` line is checked by nothing. It is read at runtime by
- *   something that treats absence as a negative answer rather than an error, which is why `agents.md` prescribes a
- *   sweep for quoted workspace paths after every move. This module is that sweep, done by the operation that caused
- *   the problem.
- *
- *   Matching is by exact substring of the old path, so a glob keeps its shape: `lib/tools/sub-venue/*.ts` becomes
- *   `lib/tools/sub/venue/*.ts` because only the moved segment is replaced.
- *
- *   Dated records are exempt. A plan or a spec describes what was true on its date, and rewriting the paths inside it
- *   makes it describe a tree that never existed.
+ *   The compiler and `manifest-targets` do not check these paths. Matching uses an exact substring of the old path, so
+ *   only the moved segment of a glob changes.
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
@@ -23,8 +15,8 @@ import { resolvePath } from "path-ts"
 import type { ModuleMove, PathLiteralRewrite } from "#move/types"
 
 /**
- * Point-in-time records, where a path is part of what the document reports
- * rather than a reference to be kept true.
+ * Path prefixes of dated records, which the sweep leaves unchanged because their
+ * paths describe the tree on their date.
  */
 export const DATED_RECORDS: readonly string[] = [
 	"docs/superpowers/plans/",
@@ -34,12 +26,11 @@ export const DATED_RECORDS: readonly string[] = [
 ]
 
 /**
- * The directory renames a set of file moves implies.
+ * Derives the directory renames implied by a set of file moves.
  *
- * A config names a directory far more often than it names a file.
- * `lib/tools/sub-venue/*.ts` is a glob, and no file path is a substring of it.
- *
- * Trimming the segments the two ends share leaves exactly the part that moved.
+ * Configs usually refer to directories or globs, which no moved file path matches as a substring.
+ * The function trims the trailing segments that the old and new paths share,
+ * leaving the directory part that moved.
  */
 export function directoryMoves(moves: readonly ModuleMove[]): ModuleMove[] {
 	const pairs = new Map<string, string>()
@@ -71,12 +62,11 @@ const SOURCE_ROOT = /\/(lib|src)\//u
 const SOURCE_EXTENSION = /\.tsx?$/u
 
 /**
- * The emitted paths a set of source moves implies, as a move of its own.
+ * Derives the moves of the `.js`, `.d.ts` and `.js.map` outputs for each moved `lib/`
+ * or `src/` TypeScript source.
  *
- * A test spawns `packages/mailwoman/out/cli/index.js`, a workflow runs one, a docstring names one.
- * None of those is the source path, so a sweep over source paths alone leaves them
- * naming an output `tsc` no longer produces, and `tsc -b` does not delete the file
- * it used to produce, so the stale one answers instead of failing.
+ * Tests, workflows and docstrings refer to `out/` paths, and a sweep over
+ * source paths alone would miss them.
  */
 export function emittedMoves(moves: readonly ModuleMove[]): ModuleMove[] {
 	const emitted: ModuleMove[] = []
@@ -98,10 +88,9 @@ export function emittedMoves(moves: readonly ModuleMove[]): ModuleMove[] {
 }
 
 /**
- * Every occurrence of a moved path in one file's text.
+ * Finds every occurrence of a moved path in one file's text, ordered by offset.
  *
- * Longest path first, so a file naming both a moved directory and a moved file inside
- * it does not have the shorter match consume the longer one.
+ * Longer paths claim their spans first, so a moved file inside a moved directory is rewritten as a whole.
  */
 export function pathLiteralsIn(file: string, text: string, moves: readonly ModuleMove[]): PathLiteralRewrite[] {
 	const rewrites: PathLiteralRewrite[] = []
@@ -123,11 +112,11 @@ export function pathLiteralsIn(file: string, text: string, moves: readonly Modul
 }
 
 /**
- * Every stale path literal the moves leave in the tracked tree, outside the moved
- * files' own content and the dated records.
+ * Finds every stale path literal the moves leave in the tracked files,
+ * skipping `out/` and the `exempt` prefixes.
  *
- * The moved files themselves are scanned: a `Usage:` line naming the script it sits in is
- * the single most common instance of this, and it goes stale the moment the file moves.
+ * Moved files are read from their destination and scanned too, because a script's
+ * `Usage:` line often quotes its own path.
  */
 export async function planPathLiteralRewrites(
 	repoRoot: string,
@@ -148,7 +137,7 @@ export async function planPathLiteralRewrites(
 		try {
 			text = await readLocalTextFile(resolvePath(repoRoot, read))
 		} catch {
-			// A binary or unreadable file holds no path literal anyone wrote.
+			// The sweep skips binary and unreadable files.
 			continue
 		}
 

@@ -1,19 +1,19 @@
 # Address Data Sources for NER Training
 
-Catalog of public-domain and openly-licensed data sources containing facility names + addresses, intended as raw material for training a token-classification (BIO-tagging) postal address parser. Companion to federal/aggregator sources (OpenAddresses, OSM, NAD, TIGER, NPI, IRS BMF, etc.) — this list focuses on **state-level** sources that add component-level variety, residential coverage, and venue-name-paired records the federal sources lack.
+This page catalogs public-domain and openly licensed data sources that contain facility names and addresses, for use as raw material when training a token-classification (BIO-tagging) postal address parser. It complements the federal and aggregator sources (OpenAddresses, OSM, NAD, TIGER, NPI, IRS BMF, etc.). This list focuses on **state-level** sources, which add component-level variety, residential coverage, and venue-name-paired records that the federal sources lack.
 
-Compiled with web-search verification of canonical agency URLs. Some per-state entries in the Regulated Facilities section are based on known agency patterns rather than direct URL verification. Those are noted inline.
+The canonical agency URLs were verified by web search. Some per-state entries in the Regulated Facilities section are based on known agency patterns rather than direct URL verification, and those entries say so inline.
 
 ## Why state sources matter for an address NER model
 
-1. **Component supervision is automatic.** State directories are typically already field-structured (separate columns for street, city, postcode, etc.). BIO tags derive from which column each token came from — no manual labeling required.
-2. **Format diversity per-state.** 50 states + DC means 50+ schema flavors, abbreviation conventions, and transcription styles — useful raw material for training format robustness.
-3. **Venue+address pairs are everywhere.** Every facility/professional/establishment listing pairs an organization name with a structured address — natural `B-venue` / `I-venue` training spans.
-4. **Residential coverage.** Real estate, contractor, cosmetology, notary, and license-lookup tools surface home/office addresses that federal facility datasets miss.
+1. **Component supervision is automatic.** State directories are typically already field-structured, with separate columns for street, city, postcode, etc. Each token's BIO tag comes from the column it was taken from, so no manual labeling is required.
+2. **Formats vary by state.** 50 states plus DC give 50+ schema variants, abbreviation conventions, and transcription styles, which are useful for training format robustness.
+3. **Venue+address pairs are common.** Every facility, professional, or establishment listing pairs an organization name with a structured address, which gives natural `B-venue` / `I-venue` training spans.
+4. **Residential coverage.** Real estate, contractor, cosmetology, notary, and license-lookup tools expose home and office addresses that federal facility datasets miss.
 
 ## Formats to watch for beyond CSV
 
-State agencies distribute address data in geospatial formats. The DBF attribute table inside a shapefile is essentially a CSV with geometry attached — extract with `ogr2ogr -f CSV` and the records are training-ready. Common formats:
+State agencies distribute address data in geospatial formats. The DBF attribute table inside a shapefile is essentially a CSV with geometry attached. Extract it with `ogr2ogr -f CSV`, and the records are ready for training. Common formats:
 
 - **Shapefile** (.shp/.dbf/.shx/.prj) — most common state GIS distribution
 - **GeoJSON** — increasingly standard on ArcGIS Hub portals
@@ -24,44 +24,44 @@ State agencies distribute address data in geospatial formats. The DBF attribute 
 
 The highest-value geospatial layers for address NER:
 
-- **Site address points / E911 / NG911 address points** — every addressable location as a point with full component breakdown (housenumber, prefix, street, suffix, unit, city, ZIP, parcel ID). Published by counties and increasingly by states via ArcGIS Hub. The strongest single layer type for component-supervised training.
-- **Parcel polygons with situs + owner addresses** — two addresses per record (property situs + owner mailing), which can diverge structurally (P.O. boxes for owners, street addresses for situs). State-aggregated in MA, NC, MN, UT, MT, VT, RI, and a handful of others.
-- **Road centerlines with address ranges** — state-current analogue to TIGER; each segment has from/to house numbers per side.
-- **Critical infrastructure / facilities layers** — state equivalents of HIFLD covering hospitals, schools, fire/police, jails, courts, public buildings. Each is a `B-venue` + address pair.
-- **EPA/state-DEP regulated sites** — Superfund, brownfields, RCRA, NPDES, leaking USTs as shapefile/GeoJSON.
-- **NCES, NREL AFDC, FCC ASR/ULS** — federal but distributed as shapefile in addition to CSV.
+- **Site address points / E911 / NG911 address points**: every addressable location as a point with a full component breakdown (housenumber, prefix, street, suffix, unit, city, ZIP, parcel ID). Counties publish these, and states increasingly do so through ArcGIS Hub. This is the most useful single layer type for component-supervised training.
+- **Parcel polygons with situs + owner addresses**: two addresses per record (the property situs and the owner's mailing address), which can differ structurally (P.O. boxes for owners, street addresses for situs). MA, NC, MN, UT, MT, VT, RI, and a handful of other states aggregate them statewide.
+- **Road centerlines with address ranges**: a current state-level analogue to TIGER. Each segment has from/to house numbers on each side.
+- **Critical infrastructure / facilities layers**: state equivalents of HIFLD covering hospitals, schools, fire/police, jails, courts, and public buildings. Each record is a `B-venue` + address pair.
+- **EPA/state-DEP regulated sites**: Superfund, brownfields, RCRA, NPDES, and leaking USTs as shapefile/GeoJSON.
+- **NCES, NREL AFDC, FCC ASR/ULS**: federal sources that are distributed as shapefiles as well as CSV.
 
-Most state ArcGIS Hubs publish data under CC-BY or equivalent open terms; check per-dataset.
+Most state ArcGIS Hubs publish data under CC-BY or equivalent open terms. Check each dataset.
 
 ## Licensing reality
 
-State records aren't "public domain" in the IP sense, but factual data (name + address) isn't copyrightable under _Feist v. Rural Telephone_. A few caveats:
+State records are not "public domain" in the IP sense, but factual data (name + address) is not copyrightable under _Feist v. Rural Telephone_. Some caveats apply:
 
 - **Washington OSPI school directory**: state law forbids commercial use of directory data.
-- **OSM (ODbL)**: share-alike obligations may extend to models trained on it — unsettled, but a risk if the corpus is republished.
-- **CC-BY state ArcGIS Hub data**: attribution required if redistributing the corpus.
-- **G-NAF, CC-BY-4.0**: clean for AU coverage.
+- **OSM (ODbL)**: share-alike obligations may extend to models trained on it. The question is unsettled, but it is a risk if the corpus is republished.
+- **CC-BY state ArcGIS Hub data**: attribution is required if the corpus is redistributed.
+- **G-NAF, CC-BY-4.0**: safe to use for AU coverage.
 
-For maximum licensing safety on published model weights, restrict to US-federal sources (NCES, NAD, TIGER, NPPES, IRS BMF) + state sources confirmed as public records with no use restrictions. Lose coverage, gain unambiguous redistribution rights.
+For the safest licensing on published model weights, restrict training to US-federal sources (NCES, NAD, TIGER, NPPES, IRS BMF) and state sources confirmed as public records without use restrictions. That choice reduces coverage and gives unambiguous redistribution rights.
 
 ---
 
 ## Gazetteer / resolver coordinate sources (companion layer)
 
-Everything below this section is **corpus** material — address _strings_ and name/address pairs to train the BIO parser. This section is the other half: the **gazetteer** the resolver and the postcode anchor consume — the datasets that turn a parsed span into a place + coordinate. Different shopping list, and it's where WOF's gaps bite (see `resolver-wof-sqlite/POSTCODE-ANCHOR.md` and the 2026-06-03 postcode-anchor postmortem).
+Everything after this section is **corpus** material: address _strings_ and name/address pairs to train the BIO parser. This section covers the other half, the **gazetteer** that the resolver and the postcode anchor consume. These datasets turn a parsed span into a place and a coordinate. The requirements differ from the corpus, and this is where WOF's gaps cause problems (see `resolver-wof-sqlite/POSTCODE-ANCHOR.md` and the 2026-06-03 postcode-anchor postmortem).
 
-WOF is an excellent **admin** gazetteer (the in-DB hierarchy + ancestors table is our Elasticsearch-free differentiator), and it's **CC0**, which is half of why it came naturally. But it was never complete for every token type: [no street node](../../records/site-2026-08/concepts/wof-hierarchy-gap.mdx) (`neighbourhood` → address directly), thin and uneven postcode geometry outside a few countries (US/NL carry own coords; DE ~66% placeable via ancestor-borrow; ES/IT orphan-heavy and effectively unplaceable), and limited POI/venue coverage. The canonical fix is the rest of the Pelias four-layer stack — **WOF** (admin) + **OpenAddresses** (addresses/postcodes) + **OpenStreetMap** (streets/POIs) + **GeoNames** (places/postcodes) — supplemented per gap.
+WOF is an excellent **admin** gazetteer. Its in-DB hierarchy and ancestors table let us resolve without Elasticsearch, and it is **CC0**, which made it an easy choice. It has never been complete for every token type, however. It has [no street node](../../records/site-2026-08/concepts/wof-hierarchy-gap.mdx) (`neighbourhood` → address directly). Its postcode geometry is thin and uneven outside a few countries: US/NL carry their own coordinates, DE is ~66% placeable by borrowing from ancestors, and ES/IT are mostly orphans and effectively unplaceable. Its POI/venue coverage is limited. The standard fix is the rest of the Pelias four-layer stack, supplemented for each gap: **WOF** (admin), **OpenAddresses** (addresses/postcodes), **OpenStreetMap** (streets/POIs), and **GeoNames** (places/postcodes).
 
 ### By gap layer
 
-- **Postcode → centroid.** **GeoNames postal** (`download.geonames.org/export/zip`, CC-BY 4.0, ~80+ countries) is a ready-made postcode → place + admin + lat/lon table, the cheapest fill for the DE/ES/IT gap with no point-cloud math (coarser than OA in places, with locality-level records). **OpenAddresses** point aggregation (median centroid per postcode) is higher-fidelity where we have the points. National authorities are the gold standard but fragmented: UK **Code-Point Open** (OS, OGL), France **BAN**, NL via PDOK.
-- **Street / rooftop coords.** **OpenAddresses** (primary), **OSM** `addr:*` on buildings (great in DE/NL, patchy elsewhere), national registries — France **BAN**, Australia **G-NAF** (CC-BY; backlog #31), Sweden **Lantmäteriet** (national address register; access requires **Geotorget** approval — shelved pending that external clock, fills the SE gap).
-- **POIs / landmarks / salience** (the generalized-anchor and exotic-POI layer). **OSM** is the richest open POI source. **Wikidata / Wikipedia** is the right home for the data-driven _salience_ signal the anchor guardrail demands (notability + coordinates + multilingual names), and we already pull `wikimedia-importance.csv` in `build-importance`, so the path has precedent.
-- **Admin (the anchor).** Keep WOF. Alternatives if it is ever reconsidered: GeoNames admin, **Overture Divisions**, geoBoundaries.
+- **Postcode → centroid.** **GeoNames postal** (`download.geonames.org/export/zip`, CC-BY 4.0, ~80+ countries) is a ready-made table of postcode → place + admin + lat/lon. It is the cheapest way to fill the DE/ES/IT gap and needs no point-cloud math, although it is coarser than OA in places and some records are locality-level. **OpenAddresses** point aggregation (median centroid per postcode) is more precise where we have the points. National authorities are the most accurate sources but are fragmented: UK **Code-Point Open** (OS, OGL), France **BAN**, and NL via PDOK.
+- **Street / rooftop coords.** **OpenAddresses** (primary), **OSM** `addr:*` on buildings (strong in DE/NL, patchy elsewhere), and national registries: France **BAN**, Australia **G-NAF** (CC-BY; backlog #31), and Sweden **Lantmäteriet** (the national address register). Lantmäteriet access requires **Geotorget** approval, so it is shelved until that approval arrives. It would fill the SE gap.
+- **POIs / landmarks / salience** (the generalized-anchor and exotic-POI layer). **OSM** is the richest open POI source. **Wikidata / Wikipedia** is the right source for the data-driven _salience_ signal that the anchor guardrail requires (notability, coordinates, and multilingual names). We already pull `wikimedia-importance.csv` in `build-importance`, so this path has a precedent.
+- **Admin (the anchor).** Keep WOF. If it is ever reconsidered, the alternatives are GeoNames admin, **Overture Divisions**, and geoBoundaries.
 
 ### Probe: GeoNames vs the WOF postcode gap (2026-06-03)
 
-Measured GeoNames postal against the gap in the WOF postcode data (the postcodes WOF carries as membership but cannot place). GeoNames carries coordinates for **100%** of its DE/ES/IT records:
+This probe measured GeoNames postal against the gap in the WOF postcode data (the postcodes WOF carries as members but cannot place). GeoNames has coordinates for **100%** of its DE/ES/IT records:
 
 | locale | WOF placement              | GeoNames closes                                                 | result                                                                                                       |
 | ------ | -------------------------- | --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
@@ -70,29 +70,29 @@ Measured GeoNames postal against the gap in the WOF postcode data (the postcodes
 | ES     | not built (orphan-heavy)   | ~full (11,150 codes, all with coords)                           | the clean way to add ES at all                                                                               |
 | NL     | 100% (own PC6 coords)      | no help — GeoNames is PC4-level (4,086), coarser than WOF's PC6 | keep WOF                                                                                                     |
 
-So GeoNames postal is the cheap, CC-BY fill for ES/IT (and roughly half of DE's remaining gap), and it corrects WOF's Italian mis-links as a side effect. Integration stays clean under the discipline above: match on the postcode string, keep the WOF id, write the GeoNames lat/lon as the centroid. (Overture was not probed — for _postcodes_ it folds in OpenAddresses, which we already use. Therefore, its differential value is the POI layer; that probe wants a DuckDB + S3-parquet setup and is the right next step for the generalized-anchor work rather than for postcodes.)
+GeoNames postal is therefore the cheap CC-BY fill for ES/IT and for roughly half of DE's remaining gap, and it also corrects WOF's Italian mis-links. The integration follows the rules in the Integrity discipline section below: match on the postcode string, keep the WOF id, and write the GeoNames lat/lon as the centroid. (Overture was not probed. For _postcodes_ it includes OpenAddresses, and we already use OpenAddresses directly. Overture's additional value is therefore the POI layer. A POI probe needs a DuckDB + S3-parquet setup and is the right next step for the generalized-anchor work, but not for postcodes.)
 
 ### The modern entrant: Overture Maps
 
-The Meta/Microsoft/AWS/TomTom consortium (2023+, post-dates the corpus catalog below). Its **Places** theme is a large open POI dataset and its **Addresses** theme folds in OpenAddresses, so it covers two of our three gaps in one source, with stable **GERS** entity IDs. Distributed as cloud parquet (DuckDB/S3). The one to probe before committing to per-source OSM imports.
+Overture Maps is a Meta/Microsoft/AWS/TomTom consortium (2023+, newer than the corpus catalog below). Its **Places** theme is a large open POI dataset, and its **Addresses** theme includes OpenAddresses. It therefore covers two of our three gaps in one source, with stable **GERS** entity IDs. It is distributed as cloud parquet (DuckDB/S3). Probe it before committing to per-source OSM imports.
 
 ### Licensing gradient
 
-For an AGPL product, license terms decide more than coverage does:
+For an AGPL product, license terms matter more than coverage:
 
-| Source        | License                 | Friction for a shipped DB                                                            |
-| ------------- | ----------------------- | ------------------------------------------------------------------------------------ |
-| WOF           | CC0                     | none (public domain)                                                                 |
-| OpenAddresses | per-source, mostly open | per-source attribution tracking (we already do this)                                 |
-| GeoNames      | CC-BY 4.0               | attribution                                                                          |
-| Overture      | CDLA-Permissive 2.0     | attribution                                                                          |
-| OpenStreetMap | ODbL                    | attribution + share-alike on derived databases — the spicy one; can pull copyleft on |
+| Source        | License                 | Friction for a shipped DB                                                              |
+| ------------- | ----------------------- | -------------------------------------------------------------------------------------- |
+| WOF           | CC0                     | none (public domain)                                                                   |
+| OpenAddresses | per-source, mostly open | per-source attribution tracking (we already do this)                                   |
+| GeoNames      | CC-BY 4.0               | attribution                                                                            |
+| Overture      | CDLA-Permissive 2.0     | attribution                                                                            |
+| OpenStreetMap | ODbL                    | attribution + share-alike on derived databases — the highest risk; can impose copyleft |
 
-So the gradient argues for **GeoNames + Overture + OpenAddresses** as the supplements, and treating OSM carefully (derived signals rather than the shipped DB).
+The licenses favor **GeoNames + Overture + OpenAddresses** as the supplements. Use OSM with care, for derived signals rather than in the shipped DB.
 
 ### Integrity discipline
 
-Attach supplemental data as **attributes on WOF-keyed entities** (a centroid here, a popularity score there) rather than as imported foreign-id entities. WOF stays the anchor and the eval keys; the coordinates and the long tail come from elsewhere. Mixing in Overture's GERS ids (or any parallel id space) as primary keys is what would break the WOF-id-keyed resolver evals, which is the reason behind the "extend the custom WOF build, never a prebuilt dump" rule. OA centroid aggregation passes this test because the postcode keeps its WOF id; only its coordinate comes from OA.
+Attach supplemental data as **attributes on WOF-keyed entities** (such as a centroid or a popularity score) rather than importing entities with foreign ids. WOF remains the anchor and provides the eval keys, while the coordinates and the long tail come from other sources. Using Overture's GERS ids (or any parallel id space) as primary keys would break the WOF-id-keyed resolver evals. That is the reason for the rule "extend the custom WOF build, never a prebuilt dump". OA centroid aggregation meets this requirement because the postcode keeps its WOF id, and only its coordinate comes from OA.
 
 ---
 
@@ -100,7 +100,7 @@ Attach supplemental data as **attributes on WOF-keyed entities** (a centroid her
 
 ### Federal aggregators
 
-- **NCES Common Core of Data (CCD) — Public School & District Universe** — https://nces.ed.gov/ccd/ccddata.asp — Bulk CSV/SAS downloads of every public school + district in the US with address. Default CCD home: https://nces.ed.gov/ccd/ — public-use, no restriction.
+- **NCES Common Core of Data (CCD) — Public School & District Universe** — https://nces.ed.gov/ccd/ccddata.asp — Bulk CSV/SAS downloads of every public school + district in the US with address. Default CCD home: https://nces.ed.gov/ccd/ — public-use without restriction.
 - **NCES CCD Public School Name & Address File** — https://nces.ed.gov/ccd/psadd.asp — Direct CSV address files, grouped by state. Public domain.
 - **NCES Private School Universe Survey (PSS)** — https://nces.ed.gov/surveys/pss/ — Biennial directory of private schools (not bundled into CCD).
 
@@ -162,7 +162,7 @@ Attach supplemental data as **attributes on WOF-keyed entities** (a centroid her
 
 ### Federal aggregator
 
-- **IMLS Public Libraries Survey (PLS)** — https://www.imls.gov/research-evaluation/surveys/public-libraries-survey-pls — Annual national bulk dataset (CSV/SAS/SPSS) of every administrative-entity public library and every outlet (branch), with addresses. Public-use, no restriction. Catalog mirror: https://catalog.data.gov/dataset/public-library-survey-pls-2022. Open Data: https://data.imls.gov/.
+- **IMLS Public Libraries Survey (PLS)** — https://www.imls.gov/research-evaluation/surveys/public-libraries-survey-pls — Annual national bulk dataset (CSV/SAS/SPSS) of every administrative-entity public library and every outlet (branch), with addresses. Public-use without restriction. Catalog mirror: https://catalog.data.gov/dataset/public-library-survey-pls-2022. Open Data: https://data.imls.gov/.
 
 ### State public library directories
 
@@ -222,7 +222,7 @@ Attach supplemental data as **attributes on WOF-keyed entities** (a centroid her
 
 ## Licensed professionals
 
-State-level public databases of licensed professionals (with practice/office addresses) suitable as training data for a postal address parsing NER model. All URLs verified via web search. Most state license-lookup tools are query-only (search-by-name/number); the NPPES NPI Registry and several state portals offer bulk CSV exports.
+This section lists state-level public databases of licensed professionals, with practice or office addresses, that are suitable as training data for a postal address parsing NER model. All URLs were verified by web search. Most state license-lookup tools are query-only (search by name or number). The NPPES NPI Registry and several state portals offer bulk CSV exports.
 
 ### Federal / multi-state
 
@@ -237,7 +237,7 @@ State-level public databases of licensed professionals (with practice/office add
 
 ### State unified license portals
 
-(Some states route professions through a single search; per-profession entries below reference these where applicable.)
+(Some states route all professions through a single search, and the per-profession entries below refer to it where applicable.)
 
 - **California DCA License Search** — covers medical, nursing, real estate (separate ADRE), 150+ DCA professions — https://search.dca.ca.gov/
 - **Florida DBPR License Search** — covers real estate, contractors and other trades (health professions are separate at FL DOH MQA) — https://www.myfloridalicense.com/wl11.asp?mode=2&search=Name
@@ -1080,13 +1080,13 @@ State-level public databases of licensed professionals (with practice/office add
 - **Wisconsin** — N/A unified — multiple specialized portals; GeoData@Wisconsin (https://geodata.wisc.edu/) is the largest geospatial catalog.
 - **Wyoming** — Wyoming Geospatial Hub — https://data.geospatialhub.org/ — ArcGIS Hub — geospatial-led; no unified statewide tabular portal.
 
-License terms note: most state ArcGIS Hub deployments default to Esri Open Data terms (effectively public-domain or attribution); confirm per dataset. Socrata-hosted state portals generally publish under each state's open-data terms (typically attribution-only).
+License terms: most state ArcGIS Hub deployments default to Esri Open Data terms (effectively public-domain or attribution). Confirm the terms for each dataset. Socrata-hosted state portals generally publish under each state's open-data terms, which are typically attribution-only.
 
 ---
 
 ### Regulated establishments per state
 
-Each state lists, where available: Child care licensing, Assisted living/nursing home (state-level), Alcohol/ABC, Cannabis (where legal & public), Auto dealer licensing.
+Each state entry lists the following, where available: Child care licensing, Assisted living/nursing home (state-level), Alcohol/ABC, Cannabis (where legal & public), Auto dealer licensing.
 
 ### Alabama
 
@@ -1499,7 +1499,7 @@ Each state lists, where available: Child care licensing, Assisted living/nursing
 
 ### State-aggregated parcel data
 
-Only states with a true statewide parcel aggregation (not per-county alone) listed. License notes added where visible.
+This list includes only states that aggregate parcels statewide, beyond per-county data. License notes are included where the terms were visible.
 
 - **Arkansas** — AR GIS Office — https://gis.arkansas.gov/product/parcels/ — statewide parcels aggregated; public domain.
 - **Connecticut** — CT Office of Policy and Management / CT ECO — https://cteco.uconn.edu/data/parcels/ — statewide parcels by town; public.

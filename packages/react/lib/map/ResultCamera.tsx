@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Apply a resolved place's camera target through MapLibre's imperative `flyTo` or `fitBounds` APIs.
- *   Renders no DOM; controlled-map consumers can instead use `cameraToViewState` for center targets.
+ *   Moves the map camera to a resolved place with MapLibre's imperative camera methods. A
+ *   controlled map can use `cameraToViewState` for center targets instead.
  */
 
 import type { FitBoundsOptions } from "maplibre-gl"
@@ -14,37 +14,37 @@ import { useMap } from "react-map-gl/maplibre"
 import type { MapCameraTarget } from "#map/place-render"
 
 /**
- * Build bounds options without an undefined `duration` key.
+ * Builds `fitBounds` options without an undefined `duration` key.
  *
- * MapLibre branches on key presence, so `duration: undefined` can produce a NaN camera flight.
+ * MapLibre checks whether the key exists, so `duration: undefined` can produce a NaN camera move.
  */
 export function fitBoundsOptionsFor(padding: number, animate: boolean): FitBoundsOptions {
 	return animate ? { padding } : { padding, duration: 0 }
 }
 
 /**
- * Configures {@link ResultCamera} with the camera target to apply and whether to animate the move.
+ * Props for {@link ResultCamera}.
  */
 export interface ResultCameraProps {
 	/**
-	 * The camera target to animate to.
-	 *
-	 * `null` leaves the camera untouched (no result yet).
+	 * The camera target.
+	 * `null` leaves the camera where it is.
 	 */
 	target: MapCameraTarget | null
 	/**
-	 * Animate (`flyTo`/`fitBounds`) vs jump. @default true.
+	 * Whether to animate the move. @default true
 	 *
-	 * When false, a `center` target jumps with `jumpTo`; a `bounds` target still uses
-	 * `fitBounds` (no instantaneous fit exists) but with `duration: 0`.
+	 * Without animation, a `center` target uses `jumpTo`.
+	 * A `bounds` target still uses `fitBounds` with `duration: 0` because MapLibre has no instant fit method.
 	 */
 	animate?: boolean
 }
 
 /**
- * Drive the live map to `target`.
+ * Moves the map to `target`.
  *
- * No DOM of its own — it is a behavior mounted as a `<Map>` child.
+ * Mount it as a child of `<Map>`.
+ * It renders nothing.
  */
 export function ResultCamera({ target, animate = true }: ResultCameraProps): ReactNode {
 	const map = useMap()

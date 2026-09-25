@@ -3,22 +3,13 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The two API clients this layer reads through — the Environment Agency's spatial-data services, and
- *   the Office for National Statistics boundary service the coverage statement's "England" is realized
- *   from.
+ *   Defines API clients for the Environment Agency flood services and the ONS boundary service.
  *
- *   both are API requests and both GO through {@linkcode APIClient}. Small bodies, repeated calls,
- *   third-party hosts — the pacing, bounded retry, response caching and `ResourceError` mapping are
- *   exactly what these need. The 367 MB geodatabase is not one of them: it is a file transfer, it streams
- *   to disk on raw `fetch`, and `download.ts` says so in place.
+ *   The geodatabase download bypasses these clients and streams to disk in `download.ts`.
  *
- *   freshness cannot be probed BY content length. The EA's download host answers `head` with http 405 and
- *   ignores `Range`. It returns 200 with the whole file — so a size probe starts a real 367 MB download.
- *   {@linkcode EAFloodClient.readCatalogueRecord} reads the ISO revision date out of the catalogue entry
- *   instead, which is the authority's own statement about what changed and the only cheap freshness signal
- *   that exists here. The EA's own dataset page cannot supply it: `environment.data.gov.uk` serves that
- *   page as a client-side application and returns only its shell to a fetch, so the catalogue is the
- *   primary source that is actually readable.
+ *   Freshness comes from the catalogue's revision date. The EA download host rejects `HEAD` with 405 and
+ *   ignores `Range`, so any size probe downloads the whole file. The EA dataset page renders client-side,
+ *   so a fetch returns no metadata.
  */
 
 import {
@@ -34,78 +25,67 @@ import { stringifyJSON } from "@mailwoman/core/json"
 
 import { EA_FLOOD_DATASET_ID, EA_FLOOD_LAYER } from "#vocabulary"
 
-// Re-exported so a caller branching on this client's failures needs exactly one import.
-
 /**
- * The EA's spatial-data service root for the Flood Map for Planning product.
+ * Service root for the EA Flood Map for Planning product.
  */
 export const EA_SPATIAL_BASE_URL = "https://environment.data.gov.uk/spatialdata/flood-map-for-planning-flood-zones"
 
 /**
- * The dataset landing page, whose ISO metadata carries the revision date and the attribution string.
+ * Base URL of the EA dataset pages.
  */
 export const EA_DATASET_BASE_URL = "https://environment.data.gov.uk/dataset"
 
 /**
  * Minimum spacing between EA requests, in milliseconds.
  *
- * The EA publishes no rate limit for these services and its WFS `GetCapabilities`
- * reports `<ows:Fees>none`, so this is courtesy pacing rather than a published ceiling —
- * stated as such rather than dressed up as a measured limit.
- * Two requests a second is far below anything a public OGC endpoint is provisioned for
- * and costs a build nothing: the acquisition path makes single-digit numbers of calls.
+ * The EA publishes no rate limit, so this value is a courtesy.
+ * A build makes only a few calls.
  */
 export const EA_MIN_REQUEST_INTERVAL_MS = 500
 
 /**
- * How long a cached EA metadata response stays fresh.
+ * Cache lifetime for EA metadata responses, six hours.
  *
- * Six hours, chosen against the product's cadence rather than a wall-clock intuition.
- * The ISO `MD_MaintenanceFrequencyCode` is `asNeeded` and the product description states an
- * intent to publish quarterly, so the revision date moves at most a handful of times a year.
- *
- * A shorter TTL adds nothing.
+ * The EA updates the product as needed and aims for quarterly releases.
  */
 const EA_CACHE_TTL_MS = 6 * 60 * 60 * 1000
 
+/**
+ * Options for {@link createEAFloodClient} and {@link createONSBoundaryClient}.
+ */
 export type CreateFloodClientOptions = CreatePacedCachedClientOptions
 
 /**
- * The data.gov.uk catalogue entry for the product — the readable primary source for
- * its ISO reference dates, its licence field, and the direct file URLs.
+ * The product's data.gov.uk catalogue ID.
+ * The entry holds the reference dates, licence and file URLs.
  */
 export const EA_CATALOGUE_PACKAGE_ID = "104434b0-5263-4c90-9b1e-e43b1d57c750"
 
 /**
- * The catalogue API the entry is read from.
- */
-
-/**
- * The licence value the catalogue entry must carry.
+ * The licence the catalogue entry must declare.
  *
- * A different value is a licence change, and a build that absorbed one would
- * ship an artifact under terms nobody checked.
+ * Any other value means the licence changed, and the build stops so someone can review the new terms.
  */
 export const EA_EXPECTED_CATALOGUE_LICENCE = "Open Government Licence"
 
 /**
- * What the catalogue says about the product.
+ * The product's catalogue entry.
  */
 export type FloodCatalogueRecord = CKANPackageRecord
 
 /**
- * A client for the EA's WFS / OGC API Features endpoints and the product's catalogue entry.
+ * Client for the EA's WFS and OGC API Features endpoints and the product's catalogue entry.
  */
 export class EAFloodClient extends APIClient<APIClientConfig> {
 	/**
-	 * The catalogue entry: reference dates, licence, and the direct file URLs.
+	 * Reads the catalogue entry, which holds the reference dates, licence and file URLs.
 	 *
-	 * The download URL is read from here rather than assembled, because the EA's file service
-	 * keys on an opaque `fileDataSetId` that has no relationship to the dataset id.
-	 * A hard-coded URL survives a republish by pointing at a file that is no longer the product.
+	 * The download URL must come from the catalogue.
+	 * The EA file service keys files by an opaque `fileDataSetId`, so a hard-coded
+	 * URL can go stale after a republish.
 	 *
-	 * @throws {Error} When the entry names a different dataset, carries no `revision`
-	 * reference date, or names a licence other than {@link EA_EXPECTED_CATALOGUE_LICENCE}.
+	 * @throws {Error} When the entry is for a different dataset, has no `revision` date,
+	 * or declares a licence other than {@link EA_EXPECTED_CATALOGUE_LICENCE}.
 	 */
 	public async readCatalogueRecord(): Promise<FloodCatalogueRecord> {
 		return readCKANPackageRecord(this, {
@@ -117,14 +97,9 @@ export class EAFloodClient extends APIClient<APIClientConfig> {
 	}
 
 	/**
-	 * The feature count the WFS reports for the flood-zone layer.
+	 * Reads the WFS feature count for the flood-zone layer without fetching geometry.
 	 *
-	 * `resultType=hits`, which returns the count without a single geometry.
-	 *
-	 * This is the second path in the build's two-path agreement check: the same authority,
-	 * a different distribution channel.
-	 * A geodatabase whose feature count disagrees with the live service is not a file
-	 * this build should be writing into a sealed artifact.
+	 * The build compares this count with the geodatabase and refuses a file that disagrees.
 	 */
 	public async readFeatureCount(): Promise<number> {
 		return readWFSFeatureCount(this, {
@@ -135,11 +110,10 @@ export class EAFloodClient extends APIClient<APIClientConfig> {
 	}
 
 	/**
-	 * The extent the OGC API Features collection declares for the layer, in CRS84 order.
+	 * Reads the layer's declared extent from the OGC API Features collection, in CRS84 order.
 	 *
-	 * Read at build time rather than trusted from the constant in `vocabulary.ts`:
-	 * the constant is what the ingest asserts against offline, and this is the live
-	 * value it is reconciled with when the network is available.
+	 * The offline ingest checks against the constant in `vocabulary.ts`.
+	 * This live value lets an online build confirm that constant.
 	 */
 	public async readDeclaredBBox(): Promise<[number, number, number, number]> {
 		return readOGCCollectionBBox(this, {
@@ -150,7 +124,7 @@ export class EAFloodClient extends APIClient<APIClientConfig> {
 }
 
 /**
- * Build an {@link EAFloodClient} with the disk cache and pacing this package's acquisition path expects.
+ * Creates an {@link EAFloodClient} with request pacing and a disk cache.
  */
 export function createEAFloodClient(options: CreateFloodClientOptions = {}): EAFloodClient {
 	return createPacedCachedClient(
@@ -166,49 +140,43 @@ export function createEAFloodClient(options: CreateFloodClientOptions = {}): EAF
 }
 
 /**
- * The ONS Open Geography boundary service — where "England" comes from.
+ * The ONS Open Geography boundary service, which supplies the outline of England.
  *
- * The EA states that its mapping "covers all of England" and does not publish where England is.
- * The national statistical authority does.
- *
- * Realizing the coverage statement therefore takes a second authority's artifact, and
- * which one it was is written into `flood_map_extent` rather than left implicit.
+ * The EA says its mapping covers all of England but publishes no outline.
+ * The build records the ONS boundary it used in `flood_map_extent`.
  */
 export const ONS_BOUNDARY_BASE_URL =
 	"https://services1.arcgis.com/ESMARspQHYMw9BZ9/arcgis/rest/services/Countries_December_2025_Boundaries_UK_BGC/FeatureServer/0"
 
 /**
- * The ONS product the default boundary comes from — generalised (20 m) and clipped to the coastline.
+ * The ONS boundary product, generalised to 20 m and clipped to the coastline.
  *
- * Generalised rather than full-resolution on purpose: the interior test is conservative by
- * construction, so a cell near the border is dropped rather than mis-claimed, and 20 m of
- * boundary generalisation is invisible against a coverage cell whose edge is kilometres long.
- * The full-resolution product would multiply the download for no change in the cell set.
+ * The full-resolution product would give the same cells for a much larger download.
+ * Coverage cells are kilometres across, and the interior test drops cells near the border.
  */
 export const ONS_BOUNDARY_PRODUCT = "Countries (December 2025) Boundaries UK BGC"
 
 /**
- * The attribution ONS Open Geography requires of a re-user of its boundary products.
+ * The attribution that ONS requires for reuse of its boundary products.
  */
 export const ONS_BOUNDARY_ATTRIBUTION =
 	"Contains National Statistics data © Crown copyright and database right 2025. " +
 	"Contains OS data © Crown copyright and database right 2025."
 
 /**
- * ONS boundary data is published under the Open Government Licence, the same licence as the flood product.
+ * Licence of the ONS boundary data.
  */
 export const ONS_BOUNDARY_LICENSE = "OGL-UK-3.0"
 
 /**
- * A client for the ONS boundary service.
+ * Client for the ONS boundary service.
  */
 export class ONSBoundaryClient extends APIClient<APIClientConfig> {
 	/**
-	 * One country's outline as a GeoJSON geometry, in WGS84.
+	 * Reads one country's outline as a WGS84 GeoJSON geometry.
 	 *
-	 * @throws {Error} When the service returns no feature for `countryName`, or more than one.
-	 * A country matched twice is a product whose name column changed meaning,
-	 * and picking the first would silently choose an outline.
+	 * @throws {Error} When the service returns zero or several features for `countryName`.
+	 * Several matches would mean the name column changed meaning.
 	 */
 	public async readCountryGeometry(countryName: string): Promise<{
 		geometry: { type: string; coordinates: unknown }
@@ -252,10 +220,9 @@ export class ONSBoundaryClient extends APIClient<APIClientConfig> {
 }
 
 /**
- * Build an {@link ONSBoundaryClient}.
+ * Creates an {@link ONSBoundaryClient} with a one-year cache.
  *
- * Cached for a year: a December-2025 boundary product does not change, and a new
- * vintage is a new service name rather than new content at this one.
+ * ONS publishes each boundary vintage under a new service name, so the content at one URL does not change.
  */
 export function createONSBoundaryClient(options: CreateFloodClientOptions = {}): ONSBoundaryClient {
 	return createPacedCachedClient(

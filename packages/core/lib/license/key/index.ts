@@ -3,9 +3,10 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Encode and verify offline commercial-license tokens in the form
- *   `mwl1.<payload>.<signature>`. Ed25519 signs the versioned payload; verification uses trusted
- *   public keys. WebCrypto keeps the module usable in Node, browsers, and Workers.
+ *   Encodes and verifies offline commercial-license tokens of the form `mwl1.<payload>.<signature>`.
+ *
+ *   Ed25519 signs the payload, and verification checks it against trusted public keys. The module uses WebCrypto,
+ *   so it runs in Node, browsers and Workers.
  */
 
 import { z } from "zod"
@@ -17,75 +18,80 @@ import { errorMessage } from "#errors/schema"
 import { parseJSONStrict, stringifyJSON } from "#json"
 
 /**
- * Version prefix for the token format.
+ * The token format's version prefix.
  */
 export const LICENSE_KEY_PREFIX = "mwl1"
 
 /**
- * Number of dot-separated token parts.
+ * The number of dot-separated parts in a token.
  */
 const LICENSE_KEY_PARTS = 3
 
 /**
- * Calendar date in `yyyy-MM-DD` format.
+ * A calendar date in `YYYY-MM-DD` format.
  */
 const CalendarDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/u, "expected YYYY-MM-DD")
 
 /**
- * License-key payload schema.
+ * The schema of a license-key payload.
  */
 export const LicenseKeyPayloadSchema = z.object({
 	/**
-	 * Payload format version.
+	 * The payload format version.
 	 */
 	v: z.literal(1),
 	/**
-	 * Signing key ID used to select the trusted public key.
+	 * The signing key ID, which selects the trusted public key.
 	 */
 	kid: z.string().min(1),
 	/**
-	 * License holder name shown by `doctor`.
+	 * The license holder's name, which `doctor` displays.
 	 */
 	licensee: z.string().min(1),
 	issued: CalendarDate,
 	/**
-	 * Inclusive expiration date, or absent for a non-expiring key.
+	 * The last valid date, inclusive.
+	 * A key without it does not expire.
 	 */
 	expires: CalendarDate.optional(),
 	/**
-	 * `all`, or the package names the agreement covers.
+	 * Either `all` or the list of packages covered by the agreement.
 	 */
 	scope: z.union([z.literal("all"), z.array(z.string().min(1)).min(1)]),
 	/**
-	 * License terms selected by the key.
+	 * The license terms that the key grants.
 	 */
 	terms: z.literal("LicenseRef-Commercial"),
 	/**
-	 * Opaque serial used to check online license status.
+	 * An opaque serial for checking the license status online.
 	 */
 	lid: z.string().min(1).optional(),
 	/**
-	 * Version of the terms accepted by the licensee.
+	 * The version of the terms that the licensee accepted.
 	 */
 	agreement: z.string().min(1).optional(),
 })
 
+/**
+ * A validated license-key payload.
+ */
 export type LicenseKeyPayload = z.infer<typeof LicenseKeyPayloadSchema>
 
 /**
- * Payload containing the serial and accepted-agreement fields.
+ * A payload that has both the serial and the accepted-agreement version.
  */
 export type SelfServiceLicenseKeyPayload = LicenseKeyPayload & { lid: string; agreement: string }
 
+/**
+ * Returns whether a payload has both `lid` and `agreement`.
+ */
 export function isSelfServicePayload(payload: LicenseKeyPayload): payload is SelfServiceLicenseKeyPayload {
 	return typeof payload.lid === "string" && typeof payload.agreement === "string"
 }
 
 /**
- * The outcome of verifying a token.
- *
- * Every failure names its reason.
- * A caller that only wants a yes reads `status`.
+ * The result of verifying a token.
+ * Every failure status includes a reason.
  */
 export type LicenseKeyVerification =
 	| { status: "valid"; kid: string; payload: LicenseKeyPayload }
@@ -94,19 +100,22 @@ export type LicenseKeyVerification =
 	| { status: "invalid"; reason: string }
 
 /**
- * A freshly generated Ed25519 signing pair, both halves PEM-encoded.
+ * An Ed25519 signing key pair with both keys PEM-encoded.
  */
 export interface LicenseSigningKeyPair {
 	privateKeyPEM: string
 	publicKeyPEM: string
 }
 
+/**
+ * Generates a new Ed25519 signing key pair.
+ */
 export function generateLicenseSigningKeyPair(): Promise<LicenseSigningKeyPair> {
 	return generateEd25519KeyPair()
 }
 
 /**
- * Build a key ID from the product major version and the first eight SHA-256 hex digits of its DER key.
+ * Builds a key ID from the product major version and the first eight hex digits of the DER key's SHA-256.
  */
 export async function licenseKeyID(publicKeyPEM: string, majorVersion: number): Promise<string> {
 	const digest = hexOf(await sha256Bytes(publicKeyDER(publicKeyPEM))).slice(0, 8)
@@ -115,7 +124,7 @@ export async function licenseKeyID(publicKeyPEM: string, majorVersion: number): 
 }
 
 /**
- * Sign a validated payload with the issuer's private key.
+ * Validates a payload and signs it with the issuer's private key.
  */
 export async function encodeLicenseKey(payload: LicenseKeyPayload, privateKeyPEM: string): Promise<string> {
 	const checked = LicenseKeyPayloadSchema.parse(payload)
@@ -126,15 +135,15 @@ export async function encodeLicenseKey(payload: LicenseKeyPayload, privateKeyPEM
 }
 
 /**
- * Return the final UTC instant of the expiration date.
+ * Returns the last UTC millisecond of the expiration date.
  */
 function expiryInstant(expires: string): Date {
 	return new Date(`${expires}T23:59:59.999Z`)
 }
 
 /**
- * Decode a well-formed payload without verifying its signature.
- * Use for reporting only.
+ * Decodes a token's payload without verifying its signature.
+ * Use the result only for display.
  */
 export function decodeLicenseKeyPayload(token: string): LicenseKeyPayload | undefined {
 	const parts = token.trim().split(".")
@@ -149,9 +158,9 @@ export function decodeLicenseKeyPayload(token: string): LicenseKeyPayload | unde
 }
 
 /**
- * Verify a token against trusted public keys.
+ * Verifies a token offline against trusted public keys keyed by key ID.
  *
- * Verification is offline; `now` supports deterministic tests.
+ * Tests pass `now` to get a fixed clock.
  */
 export async function verifyLicenseKey(
 	token: string,

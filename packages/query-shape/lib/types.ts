@@ -5,10 +5,8 @@
  */
 
 /**
- * Minimal character-range descriptor used internally.
- *
- * Compatible with `@mailwoman/core`'s `Span` class by shape — consumers holding
- * a `Span` can pass it where `SpanRange` is expected.
+ * A character range and its text.
+ * A `Span` from `@mailwoman/core` has a compatible shape.
  */
 export interface SpanRange {
 	start: number
@@ -17,51 +15,42 @@ export interface SpanRange {
 }
 
 /**
- * Per-token character classification.
+ * The character class of one token.
  */
 export type TokenCharacterClass = "digit" | "alpha" | "mixed" | "punct" | "cjk" | "cyrillic" | "arabic"
 
 /**
- * Whole-input character class — folded from `TokenCharacterClass`.
+ * The character class of the whole input, folded from the token classes.
  */
 export type CharacterClass = "numeric" | "alpha" | "alphanumeric" | "cjk" | "cyrillic" | "arabic" | "mixed"
 
 /**
  * An ISO 15924 script code.
  *
- * It stands beside `CharacterClass` rather than replacing it.
- * The class answers what the decoder and the tokenizer ask — is this run ideographic,
- * is it digits — and folds `cjk` over three scripts to do it.
+ * `CharacterClass` merges Kana, Han and Hangul into `cjk`.
+ * A script code keeps them apart, so `서울특별시` is `Hang` while `東京都` is `Hani`.
  *
- * The script answers which writing system, which is a different question and the one a locale
- * hint needs: `서울특별시` and `東京都` are the same `CharacterClass` and are `Hang` and `Hani`.
- *
- * `Zyyy` (Common) and `Zzzz` (Unknown) are Unicode's own codes and are answers rather than failures.
- * A digit is genuinely script-neutral.
- *
- * A codepoint in a script this file carries no ranges for is genuinely unknown,
- * and saying so beats folding it into a script that happens to be nearby.
+ * `Zyyy` (Common) marks script-neutral characters such as digits.
+ * `Zzzz` (Unknown) marks a codepoint in a script that the classifier has no ranges for.
  */
 export type ScriptCode = "Latn" | "Hani" | "Hira" | "Kana" | "Hang" | "Cyrl" | "Arab" | "Yiii" | "Zyyy" | "Zzzz"
 
 /**
- * One script the input is written in, and how much of it that script writes.
+ * One script in the input and its share of the input.
  */
 export interface ScriptShare {
 	script: ScriptCode
 	/**
-	 * Proportion of the input's script-containing codepoints, so digits
-	 * and punctuation are outside both halves of the fraction.
+	 * The fraction of the input's script codepoints in this script.
 	 *
-	 * Shares sum to 1 across the list, and the list is empty when nothing in the input names a script.
+	 * Digits and punctuation do not count.
+	 * Shares sum to 1 across a non-empty list.
 	 */
 	share: number
 }
 
 /**
- * Known-format identifier.
- *
- * The set is intentionally small + universal.
+ * The identifier of a structural format such as a postcode or PO box.
  */
 export type KnownFormat =
 	| "us_zip"
@@ -79,32 +68,38 @@ export type KnownFormat =
 	| "po_box"
 
 /**
- * Punctuation grammar separator between consecutive segments.
+ * The separator between consecutive segments.
  */
 export type SegmentSeparator = "comma" | "newline" | "tab" | "whitespace" | "japanese-style" | null
 
 /**
- * Whitespace pattern of the whole input.
+ * The whitespace pattern of the whole input.
  */
 export type WhitespacePattern = "single" | "double" | "tab" | "mixed" | "none"
 
+/**
+ * One token with its character class, length and script.
+ */
 export interface TokenClass {
 	span: SpanRange
 	class: TokenCharacterClass
 	length: number
 	/**
-	 * The ISO 15924 script this token is written in.
+	 * The token's ISO 15924 script.
 	 *
-	 * `Zyyy` for a token carrying no script-containing codepoint, such as a bare house number.
+	 * A token without script codepoints, such as a house number, is `Zyyy`.
 	 */
 	script: ScriptCode
 }
 
+/**
+ * One separator-delimited segment of the input.
+ */
 export interface Segment {
 	span: SpanRange
 	body: string
 	/**
-	 * Position in the segment list, 0-indexed.
+	 * The zero-based position in the segment list.
 	 */
 	index: number
 	/**
@@ -113,64 +108,57 @@ export interface Segment {
 	separator: SegmentSeparator
 }
 
+/**
+ * One span that matches a known format.
+ */
 export interface KnownFormatHit {
 	format: KnownFormat
 	span: SpanRange
 	/**
-	 * 0..1.
-	 *
-	 * Ambiguous patterns (`fr_postcode`/`de_postcode` overlap with `us_zip`) score lower.
+	 * The confidence from 0 to 1.
+	 * Ambiguous patterns, such as five digits, score lower.
 	 */
 	confidence: number
 }
 
 /**
- * A detected region abbreviation (e.g., "DC", "NY", "CA").
- *
- * Used by the locality soft prior to bias preceding place-name tokens toward `B-locality`.
+ * A detected region abbreviation, such as "DC" or "NY".
  */
 export interface RegionAbbreviationHit {
 	/**
-	 * Character offset into the normalized input.
+	 * The character offset into the normalized input.
 	 */
 	start: number
 	/**
-	 * The abbreviation text (e.g., "DC", "NY").
+	 * The abbreviation text.
 	 */
 	span: string
 }
 
 /**
- * Structural snapshot of an input string, computed once at the boundary between Stage 1
- * and Stage 2 of the runtime pipeline.
+ * A structural summary of an input string, computed once per query in the runtime pipeline.
  *
- * Microseconds-cheap.
- * Consumed by stages 2, 2.5, 3 (optional), and 6 as additional context.
- *
- * Bitter-lesson-safe: recognizes universal structural patterns
- * (character class, punctuation, postcode shape) rather than place-specific knowledge.
+ * The summary is cheap enough to compute on every keystroke.
+ * It records only structural patterns, such as character class, punctuation
+ * and postcode shape, and no place-specific knowledge.
  */
 export interface QueryShape {
 	characterClass: CharacterClass
 	/**
-	 * Every ISO 15924 script the input is written in, ranked by share of its script-containing codepoints.
+	 * Every ISO 15924 script in the input, ranked by share.
 	 *
-	 * This is what `characterClass` cannot say.
-	 * The class folds Kana, Han and Hangul to one `cjk` value, and answers `mixed`
-	 * for an input carrying a non-Latin span beside a Latin one.
-	 *
-	 * So a Han venue inside a London address, and a Korean address against a Japanese one,
-	 * are indistinguishable to a consumer reading the fold alone.
+	 * The scripts distinguish inputs that `characterClass` merges, such as Korean
+	 * and Japanese text or a Han name inside a Latin address.
 	 */
 	scripts: ScriptShare[]
 	tokenClasses: TokenClass[]
 	segments: Segment[]
 	knownFormats: KnownFormatHit[]
 	/**
-	 * Region abbreviation hits detected in the input.
+	 * The region abbreviations in the input.
 	 *
-	 * The locality soft prior uses these to bias preceding place-name tokens toward
-	 * `B-locality` / `I-locality` during Viterbi decoding.
+	 * The locality prior uses them to bias the preceding place-name tokens toward
+	 * `B-locality` and `I-locality` during Viterbi decoding.
 	 */
 	regionAbbreviations: RegionAbbreviationHit[]
 	totalLength: number
@@ -178,11 +166,9 @@ export interface QueryShape {
 }
 
 /**
- * Minimal normalized-input shape shared by the Stage 2–2.7 consumers —
- * `computeQueryShape` here, plus `@mailwoman/locale-hint`, `@mailwoman/kind-classifier`,
- * and `@mailwoman/phrase-grouper`, which re-export it rather than re-declaring.
+ * The normalized-input fields that `computeQueryShape` and several other packages read.
  *
- * The full `NormalizedInput` from `@mailwoman/normalize` is structurally compatible — no import required.
+ * `NormalizedInput` from `@mailwoman/normalize` has a compatible shape.
  */
 export interface NormalizedInputLite {
 	raw: string
@@ -191,13 +177,11 @@ export interface NormalizedInputLite {
 }
 
 /**
- * Read-only view of one known-format hit — the narrow subset of fields the downstream stages consume.
+ * A read-only view of the known-format hit fields that later stages read.
  *
- * `KnownFormatHit` satisfies it structurally (its `SpanRange` carries `body` as well).
- *
- * The `(string & {})` union arms keep these views assignable from the dependency-free pipeline
- * interface (`@mailwoman/core/pipeline`'s `QueryShapeLite`, whose fields are plain strings)
- * while the named union still drives editor completion at literal comparison sites.
+ * The `(string & {})` members let `QueryShapeLite` from `@mailwoman/core/pipeline`,
+ * whose fields are plain strings, satisfy these views.
+ * The named literals still give editor completion.
  */
 export interface KnownFormatHitView {
 	format: KnownFormat | (string & {})
@@ -206,26 +190,26 @@ export interface KnownFormatHitView {
 }
 
 /**
- * Narrow read-only view of a `QueryShape` for consumers that read only the format hits
- * and the whole-input class — `@mailwoman/locale-hint`'s input interface.
- *
- * The full `QueryShape` satisfies it structurally.
+ * A read-only view of a `QueryShape` with the format hits and the whole-input class.
+ * It is the input type of `@mailwoman/locale-hint`.
  */
 export interface QueryShapeFormatsView {
 	knownFormats: ReadonlyArray<KnownFormatHitView>
 	characterClass?: CharacterClass | (string & {})
 	/**
-	 * Optional so a hand-built shape stays valid; `computeQueryShape` always supplies it.
+	 * The ranked scripts.
+	 *
+	 * `computeQueryShape` always sets them.
+	 * The field is optional so that hand-built shapes stay valid.
 	 */
 	scripts?: ReadonlyArray<{ script: ScriptCode | (string & {}); share: number }>
 	totalLength?: number
 }
 
 /**
- * Read-only view of one segment.
+ * A read-only view of one segment.
  *
- * `Segment` satisfies it structurally; `span` stays optional so hand-built
- * shapes without offsets remain valid.
+ * The `span` field is optional so that hand-built shapes without offsets stay valid.
  */
 export interface SegmentView {
 	body: string
@@ -234,16 +218,15 @@ export interface SegmentView {
 }
 
 /**
- * `QueryShapeFormatsView` plus segmentation — `@mailwoman/kind-classifier`'s input interface.
+ * A {@link QueryShapeFormatsView} with segments.
+ * It is the input type of `@mailwoman/kind-classifier`.
  */
 export interface QueryShapeSegmentsView extends QueryShapeFormatsView {
 	segments?: ReadonlyArray<SegmentView>
 }
 
 /**
- * Read-only view of one token classification.
- *
- * `TokenClass` satisfies it structurally.
+ * A read-only view of one token classification.
  */
 export interface TokenClassView {
 	span: { start: number; end: number; body: string }
@@ -253,15 +236,20 @@ export interface TokenClassView {
 }
 
 /**
- * `QueryShapeSegmentsView` plus per-token classes — `@mailwoman/phrase-grouper`'s input interface.
+ * A {@link QueryShapeSegmentsView} with token classes.
+ * It is the input type of `@mailwoman/phrase-grouper`.
  */
 export interface QueryShapeTokensView extends QueryShapeSegmentsView {
 	tokenClasses?: ReadonlyArray<TokenClassView>
 }
 
+/**
+ * Options for `computeQueryShape`.
+ */
 export interface ComputeQueryShapeOpts {
 	/**
-	 * Locale hint for segmentation grammar (default: comma-based Western).
+	 * The locale that selects the segmentation rules.
+	 * Without it, commas separate segments.
 	 */
 	locale?: string
 }

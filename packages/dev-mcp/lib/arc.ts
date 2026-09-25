@@ -11,14 +11,14 @@ import type { EngineRegistryLike } from "#engine/registry"
 import type { ComparedRow } from "#tool-kit"
 
 /**
- * Read protected countries and D-rule reasons from `scope.config.json`.
+ * Returns each D-rule country and its reason from `scope.config.json`.
  */
 export async function protectedCountries(): Promise<ProtectedCountry[]> {
 	return dRuleCountries(await readScopeConfig())
 }
 
 /**
- * Board result and row-level changes for one comparison arm.
+ * The board counts and changed rows for one comparison leg.
  */
 export interface ArcLeg {
 	label: string
@@ -30,7 +30,8 @@ export interface ArcLeg {
 	of: number
 
 	/**
-	 * Counts regressed rows by country for the D-rule check, with rows that lack a country counted under `??`.
+	 * Counts regressed rows by country for the D-rule check.
+	 * Rows without a country count under `??`.
 	 */
 	regressedByCountry: Record<string, number>
 
@@ -41,7 +42,7 @@ export interface ArcLeg {
 }
 
 /**
- * Comparison results, attribution status, and release verdict.
+ * The legs, attribution and release verdict of one arc.
  */
 export interface ArcResult {
 	shape: RunShape
@@ -50,14 +51,16 @@ export interface ArcResult {
 	candidate: ArcLeg
 
 	/**
-	 * Subtracts the null leg's regressions from the candidate's, and is absent when no null leg ran.
+	 * The candidate's regressions minus the null leg's.
+	 * It is absent when no null leg ran.
 	 */
 	attributableRegressions?: number
 	attributableNet?: number
 
 	/**
-	 * Is false when the self-control leg disagreed with itself, so no candidate number
-	 * counts as evidence even though the candidate results are still reported.
+	 * False when the self-control leg disagreed with itself.
+	 *
+	 * The candidate numbers are still reported, but they are not evidence.
 	 */
 	attributable: boolean
 	dRuleViolations: Array<{ country: string; n: number; reason: string }>
@@ -98,28 +101,31 @@ function legFrom(label: string, weights: string, result: Record<string, unknown>
 }
 
 /**
- * Training shape determines whether a null comparison is required.
+ * The training shape.
+ *
+ * A fine-tune needs a null leg, and a from-scratch run does not.
  */
 export type RunShape = "fine-tune" | "from-scratch"
 
 /**
- * Options for {@link runArc}, naming the weights caches for the candidate and for the
- * optional self-control and null legs, each compared against the shipped weights.
+ * Options for {@link runArc}.
+ *
+ * Each weights cache path is compared against the shipped weights.
  */
 export interface ArcOptions {
 	candidate: string
 	shape?: RunShape
 
 	/**
-	 * Points to a weights cache holding a staged copy of the shipped weights,
-	 * which runs through the candidate path to show the rig is quiet.
+	 * The weights cache that holds a staged copy of the shipped weights.
+	 *
+	 * It runs through the candidate path to show that the rig produces no differences by itself.
 	 * Dereference symlinks when staging it.
 	 */
 	control?: string
 
 	/**
-	 * Points to the weights cache of a placebo fine-tune that uses the same base
-	 * and settings but no added data.
+	 * The weights cache of a placebo fine-tune with the same base and settings and without the added data.
 	 */
 	null?: string
 	inputs?: unknown
@@ -127,7 +133,7 @@ export interface ArcOptions {
 }
 
 /**
- * Determine attribution and ship/hold status from comparison results.
+ * Decides attribution and the ship, hold or unattributable verdict from the legs.
  */
 export function decideArc(
 	control: ArcLeg | undefined,
@@ -213,7 +219,7 @@ export function decideArc(
 }
 
 /**
- * Run controls and candidate comparisons sequentially.
+ * Runs the control, null and candidate comparisons in sequence and decides the verdict.
  */
 export async function runArc(registry: EngineRegistryLike, options: ArcOptions): Promise<ArcResult> {
 	const inputs = options.inputs ?? { kind: "board" }
@@ -242,7 +248,7 @@ export async function runArc(registry: EngineRegistryLike, options: ArcOptions):
 }
 
 /**
- * Summarize the verdict and attribution in one line.
+ * Returns the verdict, candidate counts, attribution and reasons as one line.
  */
 export function summarizeArc(arc: ArcResult): string {
 	const attribution =
@@ -261,7 +267,7 @@ export function summarizeArc(arc: ArcResult): string {
 }
 
 /**
- * Render the verdict, control results, and changed addresses.
+ * Renders the verdict, a table of legs and the changed addresses as text.
  */
 export function renderArc(arc: ArcResult): string {
 	const lines: string[] = [`verdict: ${arc.verdict}`]

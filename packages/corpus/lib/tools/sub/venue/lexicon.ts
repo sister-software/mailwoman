@@ -3,39 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   @file Build the sub-venue designator lexicon (#35) — the vocabulary a corpus recipe and, eventually,
- *   the span proposer read to recognize `Terminal 5`, `North Terminal`, `Concourse B`, `ターミナル1` as
- *   venue-interior structure. This is the assembly: the record schema lives in `sub-venue/table.ts`, the
- *   implementation in its siblings, and the curation decisions in `sub-venue-promotions.ts`.
- *
- *   Reads the fetch outputs (`mailwoman corpus fetch wikidata-subvenue`, a jsonl of
- *   `@mailwoman/osm/sdk`'s `SubVenueSourceRow`s per region, and the Overture category subsets of `poi.db` via
- *   `overture-subvenue.ts`) and emits one committed JSON table.
- *
- *   ── Determinism ──────────────────────────────────────────────────────────────────────────────────
- *   {@link buildSubVenueLexicon} is a pure function of its inputs with a stable sort on every array, so
- *   a regenerate against the same fetch outputs is byte-identical. No timestamp is emitted for the same
- *   reason `taxonomy.json` carries none. A clock in the artifact makes every regenerate a diff.
- *   Vintages live in `sources[]`, taken from the fetch manifests.
- *
- *   ── Where the stages live ────────────────────────────────────────────────────────────────────────
- *   Each stage carries the measurements that shaped it. the order they run in is
- *   {@link buildSubVenueLexicon}'s own docstring, and it is required.
- *
- *   - `sub-venue/table.ts` — the emitted record schema plus the shipped seed vocabulary.
- *   - `sub-venue/surfaces.ts` — phrase normalization, the phrase → record index, and the name-match
- *     operator that gates the harvest.
- *   - `sub-venue/wikidata.ts` — the designator-label sparql payload turned into surfaces.
- *   - `sub-venue/head-nouns.ts` — the addressed form derived from an encyclopaedic label.
- *   - `sub-venue/harvest.ts` — the harvestable row shape, its jsonl reader, and the attestation pass.
- *
- *   ── What `curated: false` means, and how a surface stops being it ────────────────────────────────
- *   Every machine-derived surface lands `curated: false`, and {@link SubVenueLexiconTable} consumers
- *   that gate parsing must filter to `curated: true`. A surface becomes curated only by matching a
- *   {@link SubVenuePromotion} in `sub-venue-promotions.ts` — a per-designator, per-locale decision
- *   carrying the census that backs it. Promotion is per-locale because the same token is a designator in
- *   one language and a disaster in another: `hall` is `Halle 2` at Frankfurt and `Village Hall` at 3,205
- *   British bus stops.
+ *   @file Builds the sub-venue designator lexicon from Wikidata, OSM and Overture fetch outputs.
  */
 
 import { readLocalJSONFile, statPath } from "@mailwoman/core/fs/readers"
@@ -71,30 +39,19 @@ export * from "#tools/sub/venue/table"
 export * from "#tools/sub/venue/wikidata"
 
 /**
- * Apply the curation decisions to a surface list, IN place on a copy.
+ * Returns a copy of the surfaces with `curated: true` set on each surface that a promotion matches.
  *
- * A promotion binds `(designatorID, phrase, locale)`.
- * A surface matches when it names the same record with the same phrase and its
- * language is the locale's language or the untagged `und`.
+ * A promotion matches a surface with the same record id and phrase whose language
+ * is the promotion's language or `und`.
+ * An extract surface must also come from the promotion's region.
  *
- * The default `name` tag carries no language, and a German extract's untagged `Halle 2` is German.
+ * A surface without a region, such as a Wikidata label, matches only when no rejection
+ * exists for the same designator, phrase and language in any region.
+ * For example, `pier` is promoted for en-GB and rejected for en-US,
+ * so the region-free English `pier` stays uncurated.
  *
- * Region is the subtle half.
- * A surface attested in an extract carries that extract's region and matches only its own locale.
- *
- * A surface with `region: ""` is region-free — a Wikidata label or a derived head noun —
- * and a promotion reaches it only when no rejection exists for the same designator,
- * phrase and language anywhere else.
- * That guard is not decoration: `pier` is promoted for en-GB and rejected for en-US,
- * and without it the en-GB decision would curate the region-free English surface
- * and hand `Pier 1 Imports` the promotion en-US was refused.
- *
- * Where no rejection competes — `terminal` in `es`, `ターミナル` in `ja` — the region-free
- * surface is the whole point, since a language's designator does not stop at a border.
- *
- * Rejections mark nothing themselves.
- * They exist in `promotions[]` as the record of a decision taken, so the next reader
- * meets en-GB `hall`'s 3,204 bus stops before re-proposing it rather than after.
+ * Rejections never mark a surface.
+ * They stay in the table as a record of the decision.
  */
 export function applyPromotions(
 	surfaces: readonly SubVenueSurface[],
@@ -131,7 +88,7 @@ export function applyPromotions(
 }
 
 /**
- * One harvestable input: rows plus the stamp they carry into the table.
+ * One harvest input with the source and region stamped on its surfaces.
  */
 export interface SubVenueHarvest {
 	rows: readonly SubVenueHarvestRow[]
@@ -140,50 +97,41 @@ export interface SubVenueHarvest {
 }
 
 /**
- * Everything {@link buildSubVenueLexicon} needs, already parsed.
- *
- * Keeping the builder off the filesystem is what makes it deterministic
- * and testable without fixtures on disk.
+ * The parsed inputs of {@link buildSubVenueLexicon}, which never reads the filesystem.
  */
 export interface BuildSubVenueLexiconInput {
 	/**
-	 * The raw `designator-labels.json` sparql envelope, or `null` to build the seed-only table.
+	 * The raw `designator-labels.json` SPARQL response, or `null` to build the seed-only table.
 	 */
 	wikidata: unknown | null
 	/**
-	 * Every harvestable source, in the order they should contribute.
+	 * The harvest inputs in contribution order.
 	 *
-	 * Order matters only for the surface index: a source can match a phrase an
-	 * earlier source introduced, never a later one.
+	 * Each harvest can match only phrases that exist before it runs, including those from earlier harvests.
 	 */
 	harvests: readonly SubVenueHarvest[]
 	/**
-	 * Provenance rows, copied off the fetch manifests by the caller.
+	 * Provenance rows that the caller copies from the fetch manifests.
 	 */
 	sources: readonly SubVenueLexiconSource[]
 	/**
-	 * Curation decisions.
+	 * The curation decisions, which default to {@link SUBVENUE_PROMOTIONS}.
 	 *
-	 * Defaults to the committed {@link SUBVENUE_PROMOTIONS}; pass an empty array to build
-	 * the pre-curation table (which is what the promotion census itself is taken against).
+	 * An empty array builds the uncurated table.
 	 */
 	promotions?: readonly SubVenuePromotion[]
 }
 
 /**
- * Build the lexicon table.
+ * Builds the lexicon table deterministically, so identical inputs produce identical output.
  *
- * Pure and deterministic — same inputs, byte-identical output.
+ * Three ordering rules apply:
  *
- * Order of operations is required in three places:
- *
- * 1. Seed surfaces are inserted before anything else, so `terminal` indexes to the
- *    `terminal` designator rather than to whichever Wikidata alias sorts first.
- * 2. Head nouns are derived after Wikidata and before the harvests, because `ターミナル` has
- *    to exist as a surface before a Japanese extract can be searched for it.
- *    That ordering is the entire reason the Japan harvest finds anything — see `provenance.md`.
- * 3. Promotions are applied last, over the union, so a decision can promote a
- *    surface whichever source produced it.
+ * 1. Seed surfaces come first, so `terminal` indexes to the `terminal` designator
+ *    instead of a Wikidata alias.
+ * 2. Head nouns are derived after Wikidata and before the harvests, because a harvest
+ *    can find only phrases such as `ターミナル` that already exist as surfaces.
+ * 3. Promotions apply last, so they can curate a surface from any source.
  */
 export function buildSubVenueLexicon(input: BuildSubVenueLexiconInput): SubVenueLexiconTable {
 	const designators: SubVenueDesignator[] = SHIPPED_DESIGNATOR_SEED.map((seed) => ({
@@ -217,8 +165,7 @@ export function buildSubVenueLexicon(input: BuildSubVenueLexiconInput): SubVenue
 		byID.set(record.id, record)
 	}
 
-	// A Wikidata concept id is provenance for the designator it names, whether
-	// or not the concept contributed a usable surface.
+	// A designator records its Wikidata concept id even when the concept contributes no surface.
 	for (const [id, qid] of Object.entries(CONCEPT_QIDS)) {
 		const record = byID.get(id)
 
@@ -241,7 +188,7 @@ export function buildSubVenueLexicon(input: BuildSubVenueLexiconInput): SubVenue
 			lang: "en",
 			region: "",
 			source: "seed",
-			// The English designator is the shipped vocabulary — curated by construction.
+			// Shipped English designators count as curated.
 			curated: d.shipped,
 			observations: 0,
 			context: {},
@@ -280,9 +227,7 @@ export function buildSubVenueLexicon(input: BuildSubVenueLexiconInput): SubVenue
 	const promotions = [...(input.promotions ?? SUBVENUE_PROMOTIONS)]
 	const curated = applyPromotions(surfaces, promotions)
 
-	// Deterministic order everywhere.
-	// `localeCompare` matches the tie-break discipline `generate-taxonomy.ts`
-	// and `build-brands.ts` already use.
+	// Every array is sorted so that the output is stable.
 	designators.sort((a, b) => a.id.localeCompare(b.id))
 	modifiers.sort((a, b) => a.id.localeCompare(b.id))
 
@@ -317,17 +262,16 @@ export function buildSubVenueLexicon(input: BuildSubVenueLexiconInput): SubVenue
 }
 
 /**
- * Serialize the table the way the committed artifact stores it: pretty-printed, trailing newline.
+ * Serializes the table as pretty-printed JSON.
  *
- * Run `oxfmt` over the result before committing — repo law is that committed JSON
- * is oxfmt-clean, which `JSON.stringify` cannot reproduce.
+ * Run `oxfmt` over the written file before committing, because committed JSON must match oxfmt's output.
  */
 export function serializeSubVenueLexicon(table: SubVenueLexiconTable): string {
 	return prettyJSON(table)
 }
 
 /**
- * The Wikidata fetch manifest's shape, narrowed to the fields the lexicon copies into `sources[]`.
+ * The fields of the Wikidata fetch manifest that the lexicon copies into `sources[]`.
  */
 interface WikidataFetchManifest {
 	endpoint?: string
@@ -337,49 +281,47 @@ interface WikidataFetchManifest {
 }
 
 /**
- * One OSM extract to harvest: the jsonl path plus the ISO country its rows describe.
+ * One OSM extract to harvest, with the ISO country code of its rows.
  */
 export interface SubVenueExtractInput {
 	path: string
 	region: string
 }
 
+/**
+ * Options for {@link generateSubVenueLexicon}.
+ */
 export interface GenerateSubVenueLexiconOptions {
 	/**
-	 * Directory holding the `mailwoman corpus fetch wikidata-subvenue` output.
+	 * The output directory of `mailwoman corpus fetch wikidata-subvenue`.
 	 *
-	 * Omit to build the seed-only table.
+	 * Without it, the function builds the seed-only table.
 	 */
 	wikidataDir?: PathBuilderLike
 	/**
-	 * OSM extract JSONLs, one per region.
+	 * OSM extract JSONL files, one per region.
 	 */
 	extracts?: readonly SubVenueExtractInput[]
 	/**
-	 * Already-read Overture rows (`readOvertureSubVenues`), grouped by the caller.
+	 * Overture rows that the caller already read with `readOvertureSubVenues`.
 	 *
-	 * Kept as a parameter rather than a path so this function stays free of a 3.9 GB
-	 * database dependency — the CLI opens `poi.db`, this assembles.
+	 * The caller opens `poi.db`, so this function does not depend on the database.
 	 */
 	overtureRows?: readonly (SubVenueHarvestRow & { country: string })[]
 	/**
-	 * `poi.db`'s layer vintage, for `sources[]`.
-	 *
-	 * Only read when `overtureRows` is non-empty.
+	 * The `poi.db` layer vintage, which is used only when `overtureRows` is non-empty.
 	 */
 	overtureVintage?: string
 	/**
-	 * Where the table is written.
+	 * The path of the written table.
 	 */
 	outPath: string
 }
 
 /**
- * Read the fetch outputs, build the table, and write it.
+ * Reads the fetch outputs, builds the table with {@link buildSubVenueLexicon}, and writes it.
  *
- * The IO half only — every decision lives in {@link buildSubVenueLexicon}, which is pure.
- * Run `oxfmt` over `outPath` afterwards.
- * Repo law is that committed JSON is oxfmt-clean.
+ * Run `oxfmt` over `outPath` afterwards, because committed JSON must match oxfmt's output.
  */
 export async function generateSubVenueLexicon(options: GenerateSubVenueLexiconOptions): Promise<SubVenueLexiconTable> {
 	const sources: SubVenueLexiconSource[] = []
@@ -399,9 +341,7 @@ export async function generateSubVenueLexicon(options: GenerateSubVenueLexiconOp
 			id: "wikidata",
 			origin: manifest.endpoint ?? "https://query.wikidata.org/sparql",
 			license: manifest.license ?? "CC0",
-			// The date only.
-			// A full ISO timestamp would make every re-fetch a diff in the committed artifact
-			// for no information a reader of a vocabulary table can act on.
+			// The table stores only the date so that a re-fetch on the same day produces no diff.
 			retrieved: (manifest.downloaded_at ?? "").slice(0, 10),
 			rows: labelFile?.rows ?? 0,
 		})
@@ -414,26 +354,17 @@ export async function generateSubVenueLexicon(options: GenerateSubVenueLexiconOp
 
 		sources.push({
 			id: `osm:${extract.region.toLowerCase()}`,
-			// The extract's name, never its path.
-			// `agents.md` forbids re-hardcoding the lab data root anywhere, and a
-			// committed artifact carrying `$MAILWOMAN_DATA_ROOT/...` would do exactly that
-			// while telling a reader on another machine nothing.
-			// `great-britain` identifies the Geofabrik region, which is the fact that matters.
+			// The origin records the Geofabrik region name, because a local path would leak the data root.
 			origin: `OpenStreetMap via Geofabrik (${basename(extract.path, ".jsonl")})`,
 			license: "ODbL (OpenStreetMap)",
-			// The extract's mtime — when the rows were produced.
-			// `corpus/agents.md`'s standing warning that a file's mtime is not its data's
-			// vintage applies to a downloaded archive.
-			// This file is a build output of ours, so its mtime is exactly the right number.
+			// The extract is a local build output, so its mtime is when its rows were produced.
 			retrieved: isoDate((await statPath(extract.path)).mtime),
 			rows: rows.length,
 		})
 	}
 
 	if (options.overtureRows?.length) {
-		// Overture rows carry their own country, so they are harvested per region rather than in one pass.
-		// A `region` on the surface is the axis promotion is decided on
-		// and a mixed-country bucket would make it meaningless.
+		// Promotions match on region, so the function harvests Overture rows one country at a time.
 		const byCountry = new Map<string, SubVenueHarvestRow[]>()
 
 		for (const row of options.overtureRows) {

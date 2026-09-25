@@ -1,17 +1,14 @@
 ---
 title: Switching from OpenCage
 sidebar_label: Switching from OpenCage
-description: OpenCage's annotations block, self-hosted — no API key, no per-request fee.
+description: OpenCage's annotations block, self-hosted without an API key or a per-request fee.
 ---
 
 # Switching from OpenCage
 
-[OpenCage](https://opencagedata.com) is a pleasure to use: forward and reverse geocoding plus a rich
-`annotations` block — timezone, coordinate formats, calling code, currency, flag, and more — on every
-result. It's also a hosted API with a key to guard and a per-request bill that grows with you.
+[OpenCage](https://opencagedata.com) is easy to use. It provides forward and reverse geocoding, and every result includes a detailed `annotations` block with timezone, coordinate formats, calling code, currency, flag, and more. It is also a hosted API, so you have to keep an API key secret and pay a per-request bill that grows with your usage.
 
-Mailwoman's whole annotations layer exists to give you that same block, self-hosted, with **no API key
-and no monthly fee**. You run `@mailwoman/nominatim`, and the OpenCage-keyed annotations come attached.
+Mailwoman's annotations layer provides the same block, self-hosted, **without an API key or a monthly fee**. Run `@mailwoman/nominatim`, and every result includes annotations with OpenCage's key names.
 
 ## One command
 
@@ -39,23 +36,16 @@ curl "http://localhost:8080/search?q=Boston MA"
 }
 ```
 
-The `annotations` keys mirror OpenCage's (`DMS`, `Maidenhead`, `Mercator`, `timezone.offset_sec`, …), so
-code that reads OpenCage annotations reads these.
+The `annotations` keys match OpenCage's (`DMS`, `Maidenhead`, `Mercator`, `timezone.offset_sec`, …), so code that reads OpenCage annotations can read these.
 
 ## What's different
 
-- **No key, no fee, no rate limit.** It runs on your box, from a SQLite file.
-- The forward search uses the Nominatim response shape with the OpenCage `annotations` block layered on
-  — close to, but not byte-identical to, OpenCage's envelope.
+- **It has no key, fee, or rate limit.** It runs on your own machine from a SQLite file.
+- The forward search uses the Nominatim response shape with the OpenCage `annotations` block added. The result is close to OpenCage's envelope but not byte-identical.
 
 ## What's missing
 
-- **Annotation coverage is growing.** Shipped: coordinate formats (DMS, geohash, Maidenhead, Mercator,
-  qibla), flag, ISO, and the IANA timezone with a DST-correct offset. Calling code, currency, UN/LOCODE,
-  and NUTS are on the way; what3words is proprietary and out of scope.
-- **Aggregated coverage.** OpenCage blends several backends, so it can resolve some places Mailwoman
-  doesn't yet. Where that matters, OpenCage's multi-service guidance and Mailwoman's [free first
-  pass](../recipes/multi-service-geocoding.md) compose well.
+- **Annotation coverage is incomplete.** Shipped annotations are coordinate formats (DMS, geohash, Maidenhead, Mercator, qibla), flag, ISO, and the IANA timezone with a DST-correct offset. Calling code, currency, UN/LOCODE, and NUTS are planned. what3words is proprietary and out of scope.
+- **Aggregated coverage.** OpenCage combines several backends, so it can resolve some places that Mailwoman cannot yet. Where that matters, combine OpenCage's multi-service guidance with Mailwoman as a [free first pass](../recipes/multi-service-geocoding.md).
 
-See [how Mailwoman compares](./how-mailwoman-compares.mdx) for the capability matrix, and [Switching from
-Nominatim](./switching-from-nominatim.mdx) for the full endpoint interface.
+See [how Mailwoman compares](./how-mailwoman-compares.mdx) for the capability matrix, and [Switching from Nominatim](./switching-from-nominatim.mdx) for the full endpoint interface.

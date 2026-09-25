@@ -2,16 +2,7 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file Writing a planned move to the checkout: rename the files, splice the specifiers, then re-resolve every
- *   specifier that was written.
- *
- *   The plan proved each replacement against an overlay — a filesystem where the move had already happened. This pass
- *   asks the real one the same question, because an overlay is a model and a model can be wrong about the thing it
- *   models. A mismatch throws with the surviving edits named: the tree is a git checkout, so the recovery is `git
- *   checkout` plus a re-read, and that is a better outcome than a silent half-move.
- *
- *   `git mv` rather than a rename, so the index carries the rename and a reviewer reads a moved file rather than a
- *   deletion beside an addition.
+ * @file Applies a module move plan to the checkout and re-resolves every rewritten specifier against the real tree.
  */
 
 import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
@@ -26,31 +17,35 @@ import { createMoveResolver } from "#move/resolution"
 import { spliceText, type TextEdit } from "#move/splice"
 import type { ManifestRewrite, ModuleMove, ModuleMovePlan, PathLiteralRewrite, SpecifierRewrite } from "#move/types"
 
+/**
+ * Options for {@linkcode applyModuleMoves}.
+ */
 export interface ModuleMoveApplyOptions {
 	/**
-	 * Report the plan and touch nothing.
+	 * When true, the call returns the plan without changing any file.
 	 */
 	dryRun?: boolean
 }
 
+/**
+ * The outcome of {@linkcode applyModuleMoves}.
+ */
 export interface ModuleMoveResult {
 	moves: ModuleMove[]
 	rewrites: SpecifierRewrite[]
 	manifestRewrites: ManifestRewrite[]
 	pathLiterals: PathLiteralRewrite[]
 	/**
-	 * Rewritten specifiers re-resolved to their target against the moved tree.
+	 * The count of rewritten specifiers that resolve to their target in the moved tree.
 	 *
-	 * Equal to `rewrites.length` on success.
-	 * A shortfall throws rather than returning.
+	 * It equals `rewrites.length` on success, because any shortfall throws.
 	 */
 	verified: number
 	dryRun: boolean
 }
 
 /**
- * Every edit the plan makes to a file's text, by file: a module specifier in a
- * source file, a subpath target in a manifest.
+ * Groups every text edit in the plan by the file it applies to.
  */
 function editsByFile(plan: ModuleMovePlan): Map<string, TextEdit[]> {
 	const byFile = new Map<string, TextEdit[]>()
@@ -75,12 +70,10 @@ function editsByFile(plan: ModuleMovePlan): Map<string, TextEdit[]> {
 }
 
 /**
- * Remove each source directory the moves emptied, and each parent that empties with it.
+ * Removes each source directory the moves emptied, and each parent that becomes empty with it.
  *
- * `git mv` moves files and leaves the directory standing, so a checkout keeps an
- * empty `sub-venue/` next to the new `sub/venue/`.
- * Git does not track it, which is worse than harmless: it makes the old layout look like it survived,
- * and it is what an existence check reads when asking whether a path still means anything.
+ * `git mv` leaves the emptied directory on disk.
+ * An existence check would otherwise still find the old path.
  */
 async function removeEmptiedDirectories(repoRoot: string, directories: readonly string[]): Promise<void> {
 	for (const directory of new Set(directories)) {
@@ -100,16 +93,10 @@ async function removeEmptiedDirectories(repoRoot: string, directories: readonly 
 }
 
 /**
- * Delete what each moved source used to emit.
+ * Deletes the build output each moved source used to emit.
  *
- * `tsc -b --clean` does not: nothing claims the output of a source that is no
- * longer there, so it survives every rebuild.
- * A stale `out/cli.js` then answers.
- *
- * It is a complete, loadable module compiled from the old tree — and the first
- * thing it does is import a path that moved.
- *
- * Removing it here is what makes the next build's absence mean absence.
+ * `tsc -b --clean` skips output whose source is gone, so a stale module from the old
+ * tree would otherwise survive every rebuild and still load.
  */
 async function removeOrphanedOutput(repoRoot: string, moves: readonly ModuleMove[]): Promise<void> {
 	for (const move of emittedMoves(moves)) {
@@ -127,11 +114,13 @@ async function rewriteFile(repoRoot: string, file: string, edits: readonly TextE
 }
 
 /**
- * Move the files and rewrite the specifiers `plan` names.
+ * Moves the files with `git mv`, rewrites the planned specifiers, manifest targets
+ * and path literals, and then re-resolves each rewritten specifier.
  *
- * A plan carrying an unresolved specifier is refused outright: it describes a tree
- * that would not resolve, and applying the part of it that does resolve leaves
- * the remainder harder to find rather than easier.
+ * The function throws before touching anything when the plan has an unresolved specifier.
+ * After the move, it throws when a rewritten specifier resolves elsewhere
+ * or a rewritten manifest source target is missing.
+ * Recovery from a failed move is `git checkout`.
  */
 export async function applyModuleMoves(
 	context: RepoContext,
@@ -191,7 +180,7 @@ export async function applyModuleMoves(
 		const directory = rewrite.file.slice(0, rewrite.file.lastIndexOf("/"))
 		const target = `${directory}/${rewrite.replacement.slice(2)}`
 
-		// An `out/` target names a file `tsc` has not emitted yet, so only a source target can be checked here.
+		// The build has not emitted `out/` targets yet, so only source targets can be checked.
 		if (target.includes("/out/")) continue
 
 		if (!(await pathExists(resolvePath(context.repoRoot, target)))) {

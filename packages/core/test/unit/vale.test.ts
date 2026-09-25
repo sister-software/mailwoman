@@ -2,12 +2,10 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file `valeCommand` — where the prose linter is, and what it does when the binary is not there.
+ * @file Tests how `valeCommand` locates the Vale launcher and handles a missing binary.
  *
- *   The package publishes a Node launcher around a binary its postinstall downloads separately. The download can fail
- *   while the install succeeds, and the launcher then exits 1 with a message on stderr — the same exit code a prose
- *   finding produces. These tests fix the two shapes apart: a package whose binary is present resolves to a command,
- *   and a package whose binary is missing raises before anything spawns.
+ *   The `@vvago/vale` postinstall downloads the binary separately and can fail while the install succeeds. The launcher
+ *   then exits 1, the same exit code as a prose finding. `valeCommand` must therefore throw before it spawns anything.
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
@@ -18,11 +16,10 @@ import type { PathBuilder } from "path-ts"
 import { describe, expect, it } from "vitest"
 
 /**
- * A fixture `@vvago/vale` installation, and a module URL inside it to resolve from.
+ * Writes a fixture `@vvago/vale` install and returns a caller module URL to resolve from.
  *
- * The launcher shape is what ships today: `bin.vale` names a `.cjs` file
- * and the binary lives beside it under `native/`.
- * `withBinary: false` reproduces an install whose postinstall download failed.
+ * The fixture's `bin.vale` points to a `.cjs` launcher, and the binary sits under `native/`.
+ * `withBinary: false` simulates a failed postinstall download.
  */
 async function fixtureInstall(
 	root: PathBuilder,
@@ -64,9 +61,6 @@ describe("valeCommand", () => {
 		await using scratch = await temporaryDirectory("mw-vale-missing-")
 		const { base } = await fixtureInstall(scratch.path, { withBinary: false })
 
-		// The launcher would exit 1 with a message on stderr, which a caller reading
-		// the exit status alone reports as a prose failure.
-		// The error names the download instead.
 		await expect(valeCommand(base)).rejects.toThrow(/does not exist, so no prose check ran/)
 	})
 })

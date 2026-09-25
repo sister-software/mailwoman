@@ -3,10 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Define and audit the frozen semantic-utility probe.
- *   The pre-registration pins targets, controls, comparator, metrics, baseline, and thresholds.
- *   It grades assembled POI answers and records distinct POI outcome shapes.
- *   Both same-category and adjacent-category controls are required.
+ *   Defines, audits, and decides the frozen semantic-utility probe.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -30,15 +27,12 @@ import {
 /**
  * Outcome shapes derived from `PipelineResult.path` and `POIIntentOutcome.type`.
  *
- * - `no_poi_branch` — the coordinator never took the POI branch, so there is no POI outcome at all.
- *   This is the measured baseline shape for every target row: an activity phrase scores `0`
- *   against the phrase lexicon, so the input is answered as an address parse of a sentence.
- * - `poi_abstain` — the branch was taken and declined.
- *   The reason travels beside the shape.
- * - `poi_intent_no_results` — the branch was taken, an intent was formed,
- *   and the executor returned nothing.
- * - `poi_intent_results` — the branch was taken and at least one row came back.
- *   The only shape the primary metric can grade, since the comparator reads the top result.
+ * - `no_poi_branch`: the coordinator did not take the POI branch.
+ * - `poi_abstain`: the POI branch declined.
+ *   The abstain reason is recorded beside the shape.
+ * - `poi_intent_no_results`: the POI branch formed an intent and the executor returned nothing.
+ * - `poi_intent_results`: the executor returned at least one row.
+ *   Only this shape can pass the primary metric, because the comparator reads the top result.
  */
 export const POI_OUTCOME_SHAPES = [
 	"no_poi_branch",
@@ -47,10 +41,13 @@ export const POI_OUTCOME_SHAPES = [
 	"poi_intent_results",
 ] as const
 
+/**
+ * One POI outcome shape.
+ */
 export type POIOutcomeShape = (typeof POI_OUTCOME_SHAPES)[number]
 
 /**
- * Classify the POI outcome shape from a pipeline result.
+ * Classifies the POI outcome shape of a pipeline result.
  */
 export function poiOutcomeShape(outcome: POIBoardOutcome): POIOutcomeShape {
 	if (outcome.path !== "poi" || !outcome.poiIntent) return "no_poi_branch"
@@ -61,14 +58,18 @@ export function poiOutcomeShape(outcome: POIBoardOutcome): POIOutcomeShape {
 }
 
 /**
- * Registered comparators; additions require a reviewed instrument.
+ * The registered outcome comparators.
  */
 export const PROBE_COMPARATORS = ["poi_board_assembled_answer"] as const
 
+/**
+ * One registered comparator name.
+ */
 export type ProbeComparatorName = (typeof PROBE_COMPARATORS)[number]
 
 /**
- * Grade one row with a registered comparator; reject unknown names.
+ * Grades one row with a registered comparator.
+ * It throws for an unregistered name.
  */
 export function gradeWithComparator(
 	comparator: ProbeComparatorName,
@@ -83,27 +84,30 @@ export function gradeWithComparator(
 }
 
 /**
- * Decisions admitted by the parent program.
+ * The decisions the probe can record.
  */
 export const PROBE_DECISIONS = ["GO", "DIAGNOSTIC-ONLY", "STOP-REDESIGN"] as const
 
+/**
+ * One probe decision.
+ */
 export type ProbeDecision = (typeof PROBE_DECISIONS)[number]
 
 /**
- * Frozen target fixture with query provenance, anchor, and baseline limitations.
+ * A frozen target row with its query provenance and baseline shape.
  */
 export interface ProbeTargetRow extends POIBoardFixture {
 	/**
-	 * Source attesting the query form.
+	 * The source that attests the query form.
 	 */
 	attestedIn: string
 	/**
-	 * The committed board row this row's anchor and expectation are copied from, byte-for-byte.
+	 * The committed board row whose anchor and expectation this row copies exactly.
 	 */
 	anchorFrom: string
 	/**
 	 * The activity phrase that replaces the venue noun.
-	 * The only thing that varies against `anchorFrom`.
+	 * It is the only difference from `anchorFrom`.
 	 */
 	activityPhrase: string
 	/**
@@ -111,21 +115,27 @@ export interface ProbeTargetRow extends POIBoardFixture {
 	 */
 	baselineShape: POIOutcomeShape
 	/**
-	 * What information the baseline inputs do not carry, stated for this row.
+	 * The information this row's baseline inputs lack.
 	 */
 	missingDistinction: string
 }
 
 /**
- * Both registered control groups are required.
+ * The registered control groups.
+ * The audit requires at least one row in each.
  */
 export const PROBE_CONTROL_GROUPS = ["same_category", "adjacent"] as const
 
+/**
+ * One control group.
+ */
 export type ProbeControlGroup = (typeof PROBE_CONTROL_GROUPS)[number]
 
 /**
- * One frozen control row, referenced BY ID into a committed fixture file and carried here with its
- * committed contents so {@linkcode resolveControlRows} can refuse a reference that has drifted.
+ * A frozen control row that refers by ID to a row in a committed fixture file.
+ *
+ * The row repeats the fixture's contents so {@linkcode resolveControlRows} can
+ * detect a fixture that has changed.
  */
 export interface ProbeControlRow {
 	id: string
@@ -138,9 +148,9 @@ export interface ProbeControlRow {
 	locale?: string
 	expect: POIBoardExpect
 	/**
-	 * The grade the row holds at baseline, and the grade it must still hold.
+	 * The grade the row holds at baseline and must keep.
 	 *
-	 * `controlRegressionTolerance` is the number of rows allowed to move off this.
+	 * `controlRegressionTolerance` limits how many rows may lose it.
 	 */
 	expectedGrade: "pass"
 	/**
@@ -150,7 +160,7 @@ export interface ProbeControlRow {
 }
 
 /**
- * One metric's arithmetic, written out so a reader never has to infer a denominator.
+ * One metric's numerator, denominator, and aggregation, stated explicitly.
  */
 export interface ProbeMetric {
 	id: string
@@ -161,41 +171,35 @@ export interface ProbeMetric {
 
 /**
  * The frozen decision thresholds.
- *
- * Numbers rather than adjectives, and all of them `>=` bars over stated denominators.
+ * Each one is a whole row count.
  */
 export interface ProbeThresholds {
 	/**
-	 * GO — the primary numerator must reach this absolute count out of the primary denominator.
+	 * The minimum primary numerator for GO.
 	 */
 	minimumPrimaryNumerator: number
 	/**
-	 * GO — and it must gain at least this many rows over the frozen baseline.
+	 * How many rows the primary numerator must gain over the frozen baseline for GO.
 	 *
-	 * Stated as well as the absolute bar because a baseline that is not zero would make
-	 * the absolute bar reachable without the observation moving anything.
+	 * The delta bar is needed because a nonzero baseline could meet the absolute bar with no change.
 	 */
 	minimumPrimaryDelta: number
 	/**
-	 * Diagnostic-only — the routing numerator must reach this absolute count
-	 * out of the diagnostic denominator.
+	 * The minimum diagnostic (routing) numerator for DIAGNOSTIC-ONLY.
 	 */
 	minimumDiagnosticNumerator: number
 	/**
-	 * Diagnostic-only — and gain at least this many rows over the frozen baseline.
+	 * How many rows the diagnostic numerator must gain over the frozen baseline for DIAGNOSTIC-ONLY.
 	 */
 	minimumDiagnosticDelta: number
 	/**
-	 * How many control rows may move off `expectedGrade`.
-	 *
-	 * Zero: a control regression is a stop under both decisions.
+	 * The number of control rows that may lose `expectedGrade` before the decision becomes STOP-REDESIGN.
 	 */
 	controlRegressionTolerance: number
 }
 
 /**
- * The frozen baseline, measured against the pipeline before any semantic observation
- * existed. #1930 compares the post-injection run against exactly these numbers.
+ * The frozen baseline counts, measured before the semantic observation was added.
  */
 export interface ProbeBaseline {
 	measuredAt: string
@@ -205,15 +209,13 @@ export interface ProbeBaseline {
 	controlHoldNumerator: number
 	receipt: string
 	/**
-	 * What the numbers were measured against, in words.
-	 *
-	 * The tree state and anything about the run a bare sha does not carry.
+	 * A prose description of the tree state and run conditions that the commit hash does not capture.
 	 */
 	note: string
 }
 
 /**
- * The whole pre-registration, as committed.
+ * The committed pre-registration.
  */
 export interface SemanticProbeDefinition {
 	probeID: string
@@ -241,7 +243,7 @@ export interface SemanticProbeDefinition {
 }
 
 /**
- * The freeze record: the definition's identity and the content hash that pins it.
+ * The probe's freeze record, holding the definition's identity and content hash.
  */
 export interface ProbeFreezeRecord {
 	definition: string
@@ -253,34 +255,34 @@ export interface ProbeFreezeRecord {
 }
 
 /**
- * The committed pre-registration.
+ * Path to the committed pre-registration.
  */
 export const PROBE_DEFINITION_PATH = preregistrationPath("semantic-utility", "probe-definition.json")
 
 /**
- * The committed freeze record for it.
+ * Path to the committed freeze record.
  */
 export const PROBE_FREEZE_PATH = preregistrationPath("semantic-utility", "probe-freeze.json")
 
 /**
- * The committed baseline receipt — the pre-injection measurement the #1930 decision compares against.
+ * Path to the committed baseline receipt.
  */
 export const PROBE_BASELINE_RECEIPT_PATH = preregistrationPath("semantic-utility", "baseline-receipt.json")
 
 export { canonicalJSON } from "#eval-harness/preregistration"
 
 /**
- * The content hash of one definition.
+ * Returns the content hash of a probe definition.
  */
 export function probeDefinitionHash(definition: SemanticProbeDefinition): string {
 	return definitionContentHash(definition)
 }
 
 /**
- * Everything that must be true of a definition, checked without running anything.
+ * Audits a probe definition without running anything.
  *
- * One message per problem, each naming the field or row id.
- * Empty means the definition is executable.
+ * It returns one message per problem, identifying the field or row ID.
+ * An empty list means the definition can run.
  */
 export function auditProbeDefinition(definition: SemanticProbeDefinition): string[] {
 	const problems: string[] = []
@@ -403,11 +405,7 @@ function auditThresholds(definition: SemanticProbeDefinition): string[] {
 }
 
 /**
- * Load the frozen pre-registration, refusing anything that would let the ruler move.
- *
- * Three refusals, in order: the freeze record must name this definition and version,
- * the definition's content hash must equal the frozen hash, and the audit must be clean.
- * A caller never receives a definition it may only partly trust.
+ * Loads the frozen pre-registration after checking its identity, hash, and audit.
  */
 export async function loadProbeDefinition(
 	definitionPath: PathBuilderLike = PROBE_DEFINITION_PATH,
@@ -423,7 +421,9 @@ export async function loadProbeDefinition(
 }
 
 /**
- * Resolve frozen control references and reject missing or changed fixtures.
+ * Resolves each control row to its committed fixture.
+ *
+ * It throws when a fixture is missing or differs from the frozen copy.
  */
 export function resolveControlRows(
 	definition: SemanticProbeDefinition,
@@ -461,7 +461,7 @@ export function resolveControlRows(
 }
 
 /**
- * One row's measured outcome, target or control.
+ * The measured outcome of one target or control row.
  */
 export interface ProbeRowOutcome {
 	id: string
@@ -474,7 +474,7 @@ export interface ProbeRowOutcome {
 }
 
 /**
- * The three counts a decision reads.
+ * The primary, diagnostic, and control counts that a decision reads.
  */
 export interface ProbeCounts {
 	primaryNumerator: number
@@ -486,7 +486,9 @@ export interface ProbeCounts {
 }
 
 /**
- * Count a run using registered row counts as denominators.
+ * Counts a run's outcomes.
+ *
+ * The denominators come from the definition's registered row counts.
  */
 export function computeProbeCounts(
 	definition: SemanticProbeDefinition,
@@ -506,7 +508,7 @@ export function computeProbeCounts(
 }
 
 /**
- * One decision with the arithmetic that produced it.
+ * One decision with the counts and deltas that produced it.
  */
 export interface ProbeVerdict {
 	decision: ProbeDecision
@@ -518,7 +520,11 @@ export interface ProbeVerdict {
 }
 
 /**
- * Apply frozen thresholds in order: controls, GO, diagnostic-only, then stop.
+ * Applies the frozen thresholds.
+ *
+ * Control regressions above tolerance give STOP-REDESIGN.
+ * Otherwise the primary bars give GO, the diagnostic bars give DIAGNOSTIC-ONLY,
+ * and anything else gives STOP-REDESIGN.
  */
 export function decideProbe(definition: SemanticProbeDefinition, counts: ProbeCounts): ProbeVerdict {
 	const thresholds = definition.thresholds

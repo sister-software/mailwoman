@@ -3,9 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Generate contrasting address forms where a leading five-digit token is a house number or a
- *   postcode depending on surrounding context. Real ZIPs come from the postcode-anchor lookup;
- *   fake five-digit values test house-number behavior without an anchor hit.
+ *   Generates address pairs in which context decides whether a leading five-digit token is a house number or a postcode.
  */
 
 /* oxlint-disable mailwoman/prefer-home -- the admin tails below are written as US templates because every tuple this
@@ -21,12 +19,20 @@ import { sample } from "@mailwoman/core/random"
    would hide the distribution behind a wall of identifiers. Genuine thresholds in these files are
    extracted as named constants above. */
 
+/**
+ * A US locality, region and postcode used as an address tail.
+ */
 export interface AnchorAbsorptionBaseTuple {
 	locality: string
 	region: string
 	postcode: string
 }
 
+/**
+ * The row templates.
+ *
+ * Names that start with `h-` produce a house number and names that start with `p-` a postcode.
+ */
 export type AnchorAbsorptionTemplate =
 	| "h-adversarial"
 	| "h-no-trailing-locality"
@@ -36,19 +42,24 @@ export type AnchorAbsorptionTemplate =
 	| "locale-ambig"
 	| "standard"
 
+/**
+ * Options for {@link synthesizeAnchorAbsorptionRow}.
+ */
 export interface AnchorAbsorptionSynthesisOpts {
 	random?: () => number
 	forceTemplate?: AnchorAbsorptionTemplate
 	/**
-	 * Real US ZIPs (in the anchor lookup) to use as the leading 5-digit house number.
+	 * Real US ZIP codes from the postcode-anchor lookup.
 	 *
-	 * So the painted anchor fires on it, the case-H/anchor-fp trigger.
-	 *
-	 * Builder loads these from pilot-anchor-lookup.json.
+	 * The templates place them where the anchor fires on a token that is really a house number.
+	 * The default is the postcodes of the built-in US tuples.
 	 */
 	realZips?: ReadonlyArray<string>
 }
 
+/**
+ * One synthesized row with its template.
+ */
 export interface SynthesizedAnchorAbsorptionRow {
 	raw: string
 	components: Partial<Record<ComponentTag, string>>
@@ -57,7 +68,7 @@ export interface SynthesizedAnchorAbsorptionRow {
 }
 
 /**
- * Sample a house number, including real five-digit ZIP-shaped values.
+ * Samples a house number, which is a real ZIP code a quarter of the time.
  */
 function houseNum(random: () => number, realZips: ReadonlyArray<string>): string {
 	if (random() < 0.25) return sample(realZips, random)
@@ -65,10 +76,6 @@ function houseNum(random: () => number, realZips: ReadonlyArray<string>): string
 	return String(1 + Math.floor(random() * 9999))
 }
 
-/**
- * Address vocabulary used by the synthetic templates.
- * Every component must occur in `raw`.
- */
 const STREET_NAMES = [
 	"Main",
 	"Oak",
@@ -103,14 +110,8 @@ const US_TUPLES: ReadonlyArray<AnchorAbsorptionBaseTuple> = [
 	{ locality: "Sacramento", region: "CA", postcode: "95823" },
 ]
 
-/**
- * States used for rural postcode-first templates.
- */
 const RURAL_REGIONS = ["VT", "ND", "SD", "NH", "ME", "MT", "WY"]
 
-/**
- * German postcode-first examples.
- */
 const DE_TUPLES = [
 	{ postcode: "10115", locality: "Berlin", street: "Hauptstraße" },
 	{ postcode: "80331", locality: "München", street: "Sendlinger Straße" },
@@ -120,13 +121,11 @@ const DE_TUPLES = [
 ]
 
 const HOUSE_NUMS = ["5", "12", "27", "100", "212", "1450", "8"]
-/**
- * Five-digit values absent from the postcode lookup.
- */
+// These five-digit values must stay absent from the postcode lookup.
 const FAKE_ZIPS = ["00000", "99998", "99997", "00001", "99996"]
 
 /**
- * Build one context-sensitive number-label example.
+ * Builds one row from a sampled or forced template.
  */
 export function synthesizeAnchorAbsorptionRow(
 	opts: AnchorAbsorptionSynthesisOpts = {}
@@ -137,7 +136,7 @@ export function synthesizeAnchorAbsorptionRow(
 	const street = `${sample(STREET_NAMES, random)} ${sample(STREET_TYPES, random)}`
 
 	if (template === "h-adversarial") {
-		// A trailing postcode makes the leading ZIP-shaped value a house number.
+		// The trailing postcode makes the leading real ZIP code a house number.
 		const zip = sample(realZips, random)
 		const t = sample(US_TUPLES, random)
 		const raw = `${zip} ${street}, ${t.locality}, ${t.region} ${t.postcode}`
@@ -165,7 +164,6 @@ export function synthesizeAnchorAbsorptionRow(
 	}
 
 	if (template === "p-de") {
-		// German postcode-first format.
 		const d = sample(DE_TUPLES, random)
 		const hn = sample(HOUSE_NUMS, random)
 		const raw = `${d.postcode} ${d.locality}, ${d.street} ${hn}`
@@ -193,7 +191,7 @@ export function synthesizeAnchorAbsorptionRow(
 	}
 
 	if (template === "locale-ambig") {
-		// Minimal context: a street type favors a house number; a locality favors a postcode.
+		// A following street makes the value a house number, and a following locality makes it a postcode.
 		const zip = sample(realZips, random)
 
 		if (random() < 0.5) {
@@ -211,7 +209,7 @@ export function synthesizeAnchorAbsorptionRow(
 	}
 
 	if (template === "h-no-trailing-locality") {
-		// A locality distinguishes a house number from the rural postcode-first form.
+		// The locality separates this form from the rural postcode-first form.
 		const hn = houseNum(random, realZips)
 		const t = sample(US_TUPLES, random)
 		const region = random() < 0.5 ? sample(RURAL_REGIONS, random) : t.region
@@ -225,7 +223,6 @@ export function synthesizeAnchorAbsorptionRow(
 		}
 	}
 
-	// Standard house number followed by a postcode.
 	const hn = houseNum(random, realZips)
 	const t = sample(US_TUPLES, random)
 	const raw = `${hn} ${street}, ${t.locality}, ${t.region} ${t.postcode}`
@@ -238,9 +235,8 @@ export function synthesizeAnchorAbsorptionRow(
 	}
 }
 
-// Weighted templates cover house-number and postcode readings at the intended proportions.
 /**
- * Templates and their sampling weights.
+ * The template sampling pool, in which each template's repeat count is its weight.
  */
 export const ALL_TEMPLATES: ReadonlyArray<AnchorAbsorptionTemplate> = [
 	...new Array<AnchorAbsorptionTemplate>(25).fill("h-adversarial"),

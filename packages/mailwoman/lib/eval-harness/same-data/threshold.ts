@@ -3,21 +3,15 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The abstention-threshold curve over the frozen same-data results (#2264): what an arm would score if it
- *   withheld every selection whose recorded confidence fell below a threshold.
+ *   Computes the abstention-threshold curve over frozen same-data results.
  *
- *   This re-grades committed results. it does not re-run a resolver, so it holds the walk fixed. A resolver
- *   that actually refused a node could ask different questions afterwards, through `parentFallback` and
- *   `hierarchyCompletion`, and reach a different final selection. The curve is an upper bound on what a
- *   threshold over this confidence signal can provide at the final selection rather than a prediction of what the
- *   shipped knob would do.
+ *   The curve shows what an arm would score if it withheld every selection whose recorded confidence fell
+ *   below a threshold. It re-grades committed results without re-running the resolver. A resolver that
+ *   refused a node could reach a different selection through `parentFallback` or `hierarchyCompletion`,
+ *   so the curve estimates the effect of a threshold without predicting a shipped option.
  *
- *   The signal it thresholds is the arm's own margin — the winner's lead over the runner-up within the set
- *   that arm considered — so a lookup that considered one candidate reports 1 and no threshold at or below 1
- *   can withhold it. That ceiling is the result worth reading rather than a limitation of the sweep.
- *
- *   A withheld row is re-graded into the same {@link ArmRowResult} shape and scored by `armMetrics`, so the
- *   curve and the benchmark's own tables count accuracy, wrong-area and false selection through one function.
+ *   The confidence is the winner's margin over the runner-up. A lookup with one candidate reports 1, so
+ *   no threshold at or below 1 withholds it.
  */
 
 import type { ArmRowResult } from "#eval-harness/same-data/arms"
@@ -33,21 +27,19 @@ import {
 /**
  * The thresholds the sweep reports.
  *
- * Dense below 0.5 because the recorded margins pile up near zero, and inclusive of 1
- * so the single-candidate ceiling is printed rather than inferred.
+ * The steps are dense near zero, where most recorded margins fall.
+ * The list includes 1 so the report shows the single-candidate ceiling.
  */
 export const THRESHOLD_STEPS = [
 	0, 0.01, 0.05, 0.1, 0.15, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 0.99, 1,
 ] as const satisfies readonly number[]
 
 /**
- * Re-grade one arm's results as if it had withheld every selection under `threshold`.
+ * Re-grades one arm's results as if it had withheld every selection with confidence below `threshold`.
  *
- * A withheld row becomes an abstention rather than a wrong answer: `correct` false,
- * no distance, and a mechanism that names the threshold.
- * An errored row passes through untouched.
- *
- * A harness failure is not a selection and the scorer excludes it either way.
+ * A withheld row becomes an abstention with `correct` false, null distance fields,
+ * and a mechanism prefixed with `withheld:below_threshold`.
+ * Errored rows are returned unchanged.
  */
 export function applyThreshold(results: readonly ArmRowResult[], threshold: number): ArmRowResult[] {
 	return results.map((result) => {
@@ -64,18 +56,20 @@ export function applyThreshold(results: readonly ArmRowResult[], threshold: numb
 	})
 }
 
+/**
+ * One point on an arm's threshold curve.
+ */
 export interface ThresholdPoint {
 	threshold: number
 	/**
-	 * Selections this threshold withheld.
-	 * The abstentions it adds to the arm's own.
+	 * The number of selections this threshold withheld, beyond the arm's own abstentions.
 	 */
 	withheld: number
 	metrics: ArmMetrics
 }
 
 /**
- * One arm's curve over `thresholds`.
+ * Computes one arm's curve over `thresholds`.
  */
 export function thresholdCurve(
 	arm: string,
@@ -96,8 +90,9 @@ export function thresholdCurve(
 }
 
 /**
- * The withheld-gold selections no threshold at or below 1 can withhold, because the lookup
- * that produced them considered a single candidate and so reported the maximum margin.
+ * Counts the selections on withheld-gold rows that report confidence 1, out of all such selections.
+ *
+ * No threshold at or below 1 can withhold these selections.
  */
 export function irreducibleFalseSelections(
 	results: readonly ArmRowResult[],
@@ -111,13 +106,11 @@ export function irreducibleFalseSelections(
 }
 
 /**
- * The thresholds that beat a reference arm on both axes at once — selection accuracy at
- * or above its accuracy, false-selection rate at or below its rate.
+ * Returns the curve points that match or beat a reference arm on both selection
+ * accuracy and false-selection rate.
  *
- * Empty when the trade cannot be won on both.
- *
- * Both axes together, because either one alone is trivially winnable: threshold 0 maximizes
- * accuracy and threshold 1 minimizes false selection, and each is the other's worst case.
+ * The filter requires both because either one alone is easy to win.
+ * Threshold 0 maximizes accuracy, and threshold 1 minimizes false selection.
  */
 export function dominatingPoints(
 	curve: readonly ThresholdPoint[],
@@ -130,18 +123,20 @@ export function dominatingPoints(
 	)
 }
 
+/**
+ * The decision rule's verdict at one threshold.
+ */
 export interface ThresholdDecision {
 	threshold: number
 	verdict: BenchmarkVerdict
 }
 
 /**
- * The registered decision rule, re-read at each of `thresholds` against an unthresholded reference arm.
+ * Evaluates the registered decision rule at each threshold against an unthresholded reference arm.
  *
- * It runs through the same `comparePaired` and `evaluateVerdict` the frozen decision used,
- * so a difference here is the threshold and nothing else.
- * It is exploratory by construction: a threshold read off visible results is the
- * pre-registration moving, which is what the rule exists to prevent.
+ * It uses the same `comparePaired` and `evaluateVerdict` as the frozen decision.
+ * The results are exploratory, because choosing a threshold after seeing results
+ * would break the pre-registration.
  */
 export function thresholdDecisions(
 	results: readonly ArmRowResult[],

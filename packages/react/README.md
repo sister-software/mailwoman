@@ -1,21 +1,22 @@
 # @mailwoman/react
 
-React components + headless hooks for [mailwoman](https://mailwoman.ai) — the
-parse/geocode/POI explorers from the docs site, decomposed and packaged for use in any React app.
+This package provides React components and headless hooks for [mailwoman](https://mailwoman.ai). It
+packages the parse/geocode/POI explorers from the docs site as smaller parts for use in any React app.
 
 ## What's in the box
 
-Two composed explorers, plus the small presentational units and headless hooks they decompose into:
+The package contains two composed explorers, plus the small presentational units and headless hooks
+they are built from:
 
-- **`POIExplorer`** — a self-contained POI-intent tester (classify → subject → OverpassQL). The intent
+- **`POIExplorer`** is a self-contained POI-intent tester (classify → subject → OverpassQL). The intent
   path runs entirely offline over `@mailwoman/kind-classifier`, `@mailwoman/poi-taxonomy`, and
-  `@mailwoman/query-shape` — no weights, no network. A live poi.db search is opt-in via an injected
-  `runLiveSearch` probe, so the httpvfs/worker implementation never enters this package's graph.
-- **`PipelineExplorer`** — a parse + resolve tester driven by an **injected `PipelineRuntime`**. The
+  `@mailwoman/query-shape`, without weights or network access. A live poi.db search is opt-in through an
+  injected `runLiveSearch` probe, so the httpvfs/worker implementation never enters this package's graph.
+- **`PipelineExplorer`** is a parse and resolve tester driven by an **injected `PipelineRuntime`**. The
   host supplies `runParse` (compute shape → classify → resolve) and the heavy visualizers as `panels`,
-  keeping onnxruntime-web, sql.js-httpvfs, and node builtins out of this package entirely.
+  which keeps onnxruntime-web, sql.js-httpvfs, and node builtins out of this package entirely.
 
-The headless hooks — `usePOISearch`, `useParsePipeline` — own the state machines; the presentational
+The headless hooks, `usePOISearch` and `useParsePipeline`, own the state machines. The presentational
 units (`QueryInput`, `SubjectPanel`, `OverpassBlock`, `LiveResultsBlock`, `ComponentTable`,
 `ResolvedPlace`, `CandidatePicker`, `KindBadge`, `LoadingIndicator`, …) are pure and prop-driven.
 
@@ -26,17 +27,17 @@ import { POIExplorer, PipelineExplorer } from "@mailwoman/react"
 import "@mailwoman/react/styles.css"
 ```
 
-Styling ships as a standalone stylesheet (`@mailwoman/react/styles.css`) — plain, `mw-`-prefixed, and
-Infima-token-aware, so it looks right both inside Docusaurus and standalone. No component imports CSS,
-so the bare package import stays node-safe.
+Styling ships as a standalone stylesheet (`@mailwoman/react/styles.css`). It is plain CSS with a `mw-`
+prefix and reads Infima tokens, so it renders correctly both inside Docusaurus and standalone. No
+component imports CSS, so the bare package import stays safe to load in Node.
 
 ## Development
 
-- `yarn workspace @mailwoman/react storybook` — Storybook (Vite) for every unit + the composed
-  explorers, with mocked runtimes (no network/db).
-- `yarn workspace @mailwoman/react test:browser` — Vitest browser-mode component + hook tests
+- `yarn workspace @mailwoman/react storybook` runs Storybook (Vite) for every unit and the composed
+  explorers, with mocked runtimes that need no network or database.
+- `yarn workspace @mailwoman/react test:browser` runs the Vitest browser-mode component and hook tests
   (Playwright / headless Chromium).
 
 ## License
 
-AGPL-3.0-only OR LicenseRef-Commercial — see the [mailwoman repository](https://github.com/sister-software/mailwoman).
+AGPL-3.0-only OR LicenseRef-Commercial. See the [mailwoman repository](https://github.com/sister-software/mailwoman).

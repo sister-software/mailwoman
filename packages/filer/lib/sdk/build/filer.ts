@@ -3,17 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Build and seal `filer.db` from Form 499, BDC provider-list, and optional EDGAR Exhibit 21 rows.
- *   Node, edge, and family tables deduplicate through their primary keys; attributes use a staging table
- *   keyed by `(node_id, key, value, source, source_vintage)` before materialization.
- *
- *   Form 499 and provider-list edges are authoritative. Exhibit 21 always contributes an authoritative
- *   disclosure edge; a unique canonical-name match may add an inferred FRN-to-CIK edge and family row.
- *   Registered-agent fields are stored as attributes only. Invalid identifiers and required dates fail
- *   loudly, while a missing optional FRN is counted as skipped.
- *
- *   Each build replaces the output with a complete single-vintage snapshot. The build uses a temporary
- *   file, writes the manifest, seals the database, then swaps it into place.
+ *   Builds and seals `filer.db` from Form 499, BDC provider-list and EDGAR Exhibit 21 rows.
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers"
@@ -56,96 +46,97 @@ import { classifyFiler, parseForm499, type Form499Row } from "#sdk/form499/index
 import { assertISODate } from "#sdk/guards"
 import { parseProviderList, type ProviderListRow } from "#sdk/provider-list"
 
-// Keep the validated EDGAR row type available from the published build-filer entrypoint.
 export type { EdgarSubsidiaryRow } from "#sdk/build/edgar/rows"
 
 /**
- * Source rows per transaction batch; one row may execute multiple inserts.
+ * Number of source rows per transaction.
  */
 const STAGE_BATCH_SIZE = 10_000
 
+/**
+ * Inputs for {@link buildFilerDatabase}.
+ * At least one row source is required.
+ */
 export interface BuildFilerOptions {
 	/**
-	 * Injected Form 499 rows; takes precedence over `form499Path`.
+	 * Form 499 rows.
+	 * They take precedence over `form499Path`.
 	 */
 	form499Rows?: AsyncIterable<Form499Row> | Iterable<Form499Row>
 	/**
-	 * Injected provider-list rows; takes precedence over `providerListPath`.
+	 * Provider-list rows.
+	 * They take precedence over `providerListPath`.
 	 */
 	providerRows?: AsyncIterable<ProviderListRow> | Iterable<ProviderListRow>
 	/**
-	 * Injected Exhibit 21 rows; Form 499 rows enable corroboration, otherwise only disclosures are linked.
+	 * Exhibit 21 rows.
+	 *
+	 * Without Form 499 rows, the build links only the disclosures.
 	 */
 	edgarRows?: AsyncIterable<EdgarSubsidiaryRow> | Iterable<EdgarSubsidiaryRow>
 	/**
-	 * Form 499 TSV path; ignored when `form499Rows` is supplied.
+	 * Path to the Form 499 TSV.
 	 */
 	form499Path?: string
 	/**
-	 * BDC provider-list CSV path; ignored when `providerRows` is supplied.
+	 * Path to the BDC provider-list CSV.
 	 */
 	providerListPath?: string
 	/**
-	 * Output path for the completed build.
+	 * Output path for the sealed database.
 	 */
 	out: PathBuilderLike
 	/**
-	 * Build vintage for the manifest and provider-list edges; rebuilding replaces the prior snapshot.
+	 * Vintage recorded in the manifest and on provider-list edges.
 	 */
 	sourceVintage: string
 	/**
-	 * ISO `valid_from` date for provider-list edges; required with that input.
+	 * ISO `valid_from` date for provider-list edges.
 	 *
-	 * Ignored otherwise and never inferred from the free-form `sourceVintage`.
+	 * It is required when provider-list input is present.
+	 * The build never derives it from `sourceVintage`.
 	 */
 	validFrom?: string
 	/**
-	 * Short Git revision supplied by the caller.
+	 * Short Git revision recorded in the manifest.
 	 */
 	buildSHA: string
 	onProgress?: (message: string) => void
 }
 
+/**
+ * Row counts for a completed build.
+ */
 export interface BuildFilerResult {
 	out: string
-	/**
-	 * Distinct nodes after primary-key deduplication.
-	 */
 	nodes: number
-	/**
-	 * Distinct edges after primary-key deduplication.
-	 */
 	edges: number
-	/**
-	 * Distinct attributes after staging-table deduplication.
-	 */
 	attributes: number
-	/**
-	 * Distinct family memberships after primary-key deduplication.
-	 */
 	families: number
 	/**
-	 * Optional edge opportunities skipped because a source field was empty or null.
-	 * Each occurrence counts.
+	 * Count of optional edges skipped because a source field was empty.
 	 */
 	skipped: number
 	/**
-	 * Edges closed by a Form 499 cessation note.
+	 * Count of edges closed by a Form 499 cessation note.
 	 */
 	closedByCessation: number
 	/**
-	 * Cessations with `ceasedAt <= lastFiledAt` cannot close a valid temporal window.
-	 * Their dates remain `ceased_at` attributes.
+	 * Count of cessations dated on or before `lastFiledAt`.
+	 *
+	 * These cannot close a valid window, so their dates stay as `ceased_at` attributes.
 	 */
 	cessationWindowAbstained: number
 	/**
-	 * `SupersededBy` edges from filer replacement notes.
+	 * Count of `SupersededBy` edges from replacement notes.
 	 */
 	supersessions: number
 }
 
 /**
- * Build, seal, and install a `filer.db` snapshot from the configured row sources.
+ * Builds, seals and installs a `filer.db` snapshot.
+ *
+ * Each build replaces the previous file with a complete single-vintage snapshot.
  */
 export async function buildFilerDatabase(options: BuildFilerOptions): Promise<BuildFilerResult> {
 	const progress = options.onProgress ?? (() => {})
@@ -160,7 +151,7 @@ export async function buildFilerDatabase(options: BuildFilerOptions): Promise<Bu
 		)
 	}
 
-	// Validate the date before I/O only when provider-list input is enabled.
+	// The date is checked before any I/O.
 	const providerValidFrom = hasProviderSource ? assertProviderValidFrom(options.validFrom) : null
 
 	const buildingPath = `${options.out}.building`
@@ -182,14 +173,11 @@ export async function buildFilerDatabase(options: BuildFilerOptions): Promise<Bu
 	const lifecycleTotals: Form499LifecycleTotals = { closed: 0, abstained: 0, supersessions: 0 }
 	let skipped = 0
 
-	/**
-	 * Table counts retained after closing the build connection.
-	 */
+	// The counts outlive the connection, which closes at the end of the block below.
 	let materialized: { nodes: number; edges: number; attributes: number; families: number }
 
 	{
 		using kdb = new DatabaseClient<FilerDatabase>(buildingPath)
-		// Apply bulk-build SQLite settings.
 		kdb.exec("PRAGMA page_size=8192; PRAGMA journal_mode=OFF; PRAGMA synchronous=OFF; PRAGMA cache_size=-2000000;")
 
 		progress("creating manifest/node/edge/attribute/cluster/family/attribute-stage tables")
@@ -199,14 +187,12 @@ export async function buildFilerDatabase(options: BuildFilerOptions): Promise<Bu
 			`INSERT OR IGNORE INTO filer_node (node_id, identifier_type, identifier_value) VALUES (?, ?, ?)`
 		)
 
-		// Identity links use SameEntity; company links use their specific relationship types.
 		const insEdge = kdb.prepare(
 			`INSERT OR IGNORE INTO filer_edge (
 				from_node_id, to_node_id, assertion, relationship, source, source_vintage, valid_from, valid_to, match_score, evidence
 			) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 		)
 
-		// The family table's composite primary key provides deduplication, including naming provenance.
 		const insFamily = kdb.prepare(
 			`INSERT OR IGNORE INTO filer_family (
 				node_id, family_id, naming_node_id, assertion, relationship, source, source_vintage, valid_from, valid_to, match_score
@@ -238,7 +224,7 @@ export async function buildFilerDatabase(options: BuildFilerOptions): Promise<Bu
 		progress("staging nodes/edges/attributes — raw prepared INSERT OR IGNORE")
 		kdb.exec("BEGIN")
 
-		// Retain each FRN's latest Form 499 legal name for the later EDGAR corroboration pass.
+		// The EDGAR pass matches subsidiary names against these Form 499 legal names.
 		const legalNameByFRN = new Map<string, { name: string; filedAt: string }>()
 
 		let form499RowIndex = 0
@@ -249,13 +235,13 @@ export async function buildFilerDatabase(options: BuildFilerOptions): Promise<Bu
 			const form499NodeID = mintForm499NodeID(row.form499ID, form499RowIndex)
 			insNode.run(form499NodeID, FilerIdentifierType.Form499ID, row.form499ID)
 
-			// Validate the date before using it for source vintage and temporal fields.
 			const lastFiledAt = assertISODate(
 				assertLastFiledAt(row.lastFiledAt, row.form499ID, form499RowIndex),
 				`form499 row #${form499RowIndex} (form499ID=${stringifyJSON(row.form499ID)}) lastFiledAt`
 			)
 
-			// Attributes attach to the always-present Form 499 node; DC-agent fields remain attributes, not edges.
+			// Attributes attach to the Form 499 node, which every row has.
+			// The build stores DC-agent fields as attributes only.
 			stageAttribute(form499NodeID, "legal_name", row.legalNameOfCarrier, "form-499", lastFiledAt)
 			stageAttribute(form499NodeID, "dba", row.doingBusinessAs, "form-499", lastFiledAt)
 
@@ -283,7 +269,8 @@ export async function buildFilerDatabase(options: BuildFilerOptions): Promise<Bu
 			stageAttribute(form499NodeID, "dc_agent_email_address", row.dcAgentEmailAddress, "form-499", lastFiledAt)
 			stageAttribute(form499NodeID, "dc_agent_address", row.dcAgentAddress, "form-499", lastFiledAt)
 
-			// Lifecycle notes are available in workbook input, but not in the 17-column TSV.
+			// Only workbook input carries lifecycle notes.
+			// The 17-column TSV lacks them.
 			const relationshipValidTo = processForm499Lifecycle(insNode, insEdge, stageAttribute, lifecycleTotals, {
 				lifecycle: row.lifecycle,
 				form499NodeID,
@@ -300,7 +287,8 @@ export async function buildFilerDatabase(options: BuildFilerOptions): Promise<Bu
 					relationshipValidTo,
 				})
 			} else {
-				// Missing FRNs are valid; the row cannot produce FRN-anchored edges.
+				// A row may omit its FRN.
+				// Such a row produces no FRN edges.
 				skipped++
 			}
 
@@ -318,7 +306,6 @@ export async function buildFilerDatabase(options: BuildFilerOptions): Promise<Bu
 			const frnNodeID = mintFRNNodeID(row.frn, `provider-list row #${providerRowIndex} (providerID=${row.providerID})`)
 			insNode.run(frnNodeID, FilerIdentifierType.FRN, row.frn)
 
-			// Keep the free-form source vintage separate from the validated temporal date.
 			insEdge.run(
 				providerNodeID,
 				frnNodeID,
@@ -368,7 +355,7 @@ export async function buildFilerDatabase(options: BuildFilerOptions): Promise<Bu
 			commitBatch()
 		}
 
-		// Build the canonical-name buckets after collecting all Form 499 names.
+		// The groups must wait until every Form 499 name is collected.
 		const frnsByCanonicalLegalName = groupFRNsByCanonicalLegalName(legalNameByFRN)
 
 		let edgarRowIndex = 0
@@ -422,13 +409,10 @@ export async function buildFilerDatabase(options: BuildFilerOptions): Promise<Bu
 			.insertInto("filer_manifest")
 			.values({
 				name: "filer",
-				// Use the source vintage until filer.db has independent versioning.
 				version: options.sourceVintage,
-				// Readers can use this version to detect temporal-schema support.
 				schema_version: FILER_SCHEMA_VERSION,
 				source: sourcesUsed.join(","),
 				source_vintage: options.sourceVintage,
-				// Record the API entrypoint that produced this artifact.
 				build_cmd: "buildFilerDatabase (@mailwoman/filer/sdk)",
 				build_sha: options.buildSHA,
 				created_at: new Date().toISOString(),
@@ -451,7 +435,8 @@ export async function buildFilerDatabase(options: BuildFilerOptions): Promise<Bu
 
 		progress("finalize: ANALYZE + VACUUM")
 		kdb.exec("ANALYZE")
-		// Set page size before VACUUM; node:sqlite initializes new files at 4096 bytes.
+		// VACUUM applies the page size.
+		// Without this, node:sqlite keeps its 4096-byte default.
 		kdb.exec("PRAGMA page_size=8192")
 		kdb.exec("VACUUM")
 	}
@@ -459,7 +444,6 @@ export async function buildFilerDatabase(options: BuildFilerOptions): Promise<Bu
 	progress("seal")
 	await sealDatabase(buildingPath)
 
-	// Move the previous artifact aside before installing the sealed build.
 	if (await pathExists(options.out)) {
 		await movePath(options.out, `${options.out}.prev`)
 	}

@@ -2,20 +2,13 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file Every subpath a browser or Worker bundle reaches must bundle under that platform's export conditions with no
- *   Node builtin on its static graph. A bundler resolves `exports` and `imports` under `browser` (wrangler: `workerd`,
- *   `worker`, `browser`) before `default`; this check bundles each entry the same way, reads esbuild's metafile, and
- *   refuses a static edge onto a builtin or onto `@mailwoman/core`'s filesystem home. Such an edge is a package whose
- *   browser half is missing, and the fix is a `browser` condition in the owning package, never a stub in a consumer's
- *   bundler config.
+ * @file Bundles each browser and Worker subpath under its platform conditions and fails on a Node builtin in the
+ *   static graph.
  *
- *   Dynamic imports stay external, which is webpack's view of a `webpackIgnore` import and the view every bundler gets
- *   once the imported specifier carries a `browser` condition. A dynamic import of a builtin is tolerated only when a
- *   row lists it with a reason. the list is the whole allowance, and a new one is an error until it is removed or
- *   listed.
- *
- *   Resolution goes to `out/`. It is what a consumer bundles. Therefore, the check refuses an uncompiled tree rather than
- *   grading the source under a condition no consumer has.
+ *   The check reads esbuild's metafile and reports any static edge onto a builtin or onto `@mailwoman/core`'s `fs/`
+ *   directory. The fix for such an edge is a `browser` condition in the owning package. Dynamic imports stay external,
+ *   and a dynamic import of a builtin passes only when the row lists it with a reason. The check bundles `out/`, so it
+ *   requires a compiled tree.
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers"
@@ -25,8 +18,9 @@ import { resolvePath } from "path-ts"
 import { type Diagnostic, DiagnosticSeverity, type RepoCheck } from "#check"
 
 /**
- * A dynamic import of a builtin the row tolerates: the file that makes it,
- * the builtin, and why it is Node-only.
+ * A dynamic builtin import that a row allows.
+ *
+ * It records the importing file, the builtin, and the reason the import is Node-only.
  */
 interface AllowedDynamicImport {
 	file: RegExp
@@ -35,30 +29,33 @@ interface AllowedDynamicImport {
 }
 
 /**
- * One bundle to grade: the entry specifier, the platform a consumer bundles it for,
- * and what the bundle must and must not carry.
+ * One bundle to check.
+ *
+ * It records the entry specifier, the target platform, and the files the bundle must or must not contain.
  */
 export interface BundleRow {
 	entry: string
 	platform: "browser" | "neutral"
 	conditions: readonly string[]
 	/**
-	 * Third-party packages left out of the bundle because they are not under test
-	 * and carry their own platform builds.
+	 * Third-party packages left out of the bundle.
+	 * They ship their own platform builds.
 	 */
 	external?: readonly string[]
 	/**
-	 * Follow dynamic imports into the bundle instead of leaving them external.
+	 * Whether to bundle dynamic imports instead of leaving them external.
 	 *
-	 * A row that asserts what a lazily imported specifier resolves to under the row's conditions needs this.
-	 * Every other row grades the static graph alone.
+	 * A row needs this to assert what a lazily imported specifier resolves to.
 	 */
 	followDynamicImports?: boolean
 	allowedDynamicImports?: readonly AllowedDynamicImport[]
 	/**
-	 * Files that must be in the bundle, matched against the metafile's input path.
+	 * Patterns that some metafile input path must match.
 	 */
 	mustInclude?: readonly RegExp[]
+	/**
+	 * Patterns that no metafile input path may match.
+	 */
 	mustExclude?: readonly RegExp[]
 }
 
@@ -66,8 +63,8 @@ const WORKER_CONDITIONS = ["workerd", "worker", "browser"] as const
 const BROWSER_CONDITIONS = ["browser"] as const
 
 /**
- * What a browser bundle of a mailwoman package never bundles itself: the UI runtime
- * and the engines behind it, each shipping its own platform builds.
+ * The third-party packages that browser rows leave external.
+ * Each ships its own platform builds.
  */
 const BROWSER_EXTERNALS = [
 	"react",
@@ -83,8 +80,8 @@ const BROWSER_EXTERNALS = [
 ] as const
 
 /**
- * The two dynamic builtin imports on the neural client graph, each a Node-only
- * branch behind an environment guard.
+ * The dynamic builtin imports on the neural client graph.
+ * Each one sits in a Node-only branch.
  */
 const NEURAL_DYNAMIC_IMPORTS: readonly AllowedDynamicImport[] = [
 	{
@@ -108,8 +105,9 @@ const browserRow = (entry: string, extra: Partial<BundleRow> = {}): BundleRow =>
 })
 
 /**
- * Every entry graded, in two condition sets: the license key's subpaths as the Cloudflare Worker
- * bundles them, and the `@mailwoman/core` and `@mailwoman/neural` subpaths the browser client reaches.
+ * The rows to check.
+ *
+ * The license subpaths use the Cloudflare Worker conditions, and the other rows use the browser conditions.
  */
 const BUNDLE_ROWS: readonly BundleRow[] = [
 	{
@@ -152,11 +150,8 @@ const BUNDLE_ROWS: readonly BundleRow[] = [
 ]
 
 /**
- * The bare builtin names a dependency reaches without the `node:` prefix
- * (graceful-fs, spliterator and unzipper do).
- *
- * A `node:`-prefixed path is recognised by prefix.
- * This list only has to cover the unprefixed spellings.
+ * The unprefixed builtin names that dependencies import. {@link isNodeBuiltin}
+ * recognizes `node:` paths by prefix.
  */
 const BARE_BUILTINS = new Set([
 	"assert",
@@ -187,18 +182,16 @@ const isNodeBuiltin = (path: string): boolean => path.startsWith("node:") || BAR
 const CORE_FS_HOME = /packages\/core\/(?:lib|out)\/fs\//u
 
 /**
- * A builtin stays external so the metafile records the edge onto it with the file that made it
- * and the import kind, instead of esbuild refusing to resolve it under the browser platform.
+ * Marks builtins and, unless the row follows them, dynamic imports as external.
  *
- * A dynamic import stays external unless the row follows them, so the metafile is
- * the static graph: what a bundler compiles once each dynamic specifier resolves
- * under its own condition or is left to run time.
+ * An external builtin keeps esbuild from failing to resolve it, so the metafile
+ * records the edge with its importing file and kind.
  */
 function edgePolicy(row: BundleRow): Plugin {
 	return {
 		name: "bundle-graph-edge-policy",
 		setup(builder) {
-			// esbuild compiles the filter as a Go regular expression, which has no `u` flag.
+			// Esbuild compiles the filter as a Go regular expression, which has no `u` flag.
 			// oxlint-disable-next-line unicorn/require-unicode-regexp -- Go regexp syntax
 			builder.onResolve({ filter: /.*/ }, (args) => {
 				if (isNodeBuiltin(args.path)) return { path: args.path, external: true }
@@ -245,9 +238,8 @@ async function bundleRow(row: BundleRow, repoRoot: string): Promise<Metafile | D
 
 		return result.metafile
 	} catch (error) {
-		// A static reach past a builtin can fail to resolve under the browser platform
-		// before a metafile exists.
-		// Each resolution error is the finding, named by the file that made the import.
+		// A build can fail on resolution before it writes a metafile.
+		// Each resolution error becomes a diagnostic on the importing file.
 		const failure = error as BuildFailure
 
 		return (failure.errors ?? [{ text: String(error) }]).map((entry) =>
@@ -257,9 +249,8 @@ async function bundleRow(row: BundleRow, repoRoot: string): Promise<Metafile | D
 }
 
 /**
- * Grade one row: bundle it and read the metafile.
- *
- * Exported so a test can run a row that must fail.
+ * Bundles one row and returns the diagnostics from its metafile.
+ * Tests call it with rows that must fail.
  */
 export async function evaluateBundleRow(row: BundleRow, repoRoot: string): Promise<Diagnostic[]> {
 	const bundled = await bundleRow(row, repoRoot)
@@ -313,7 +304,9 @@ export async function evaluateBundleRow(row: BundleRow, repoRoot: string): Promi
 }
 
 /**
- * The `bundle-graph` check: every row in {@link BUNDLE_ROWS} bundles clean, or the tree is not compiled.
+ * The `bundle-graph` check.
+ *
+ * It reports an error for an uncompiled tree and for every row in {@link BUNDLE_ROWS} that fails.
  */
 export const bundleGraphCheck: RepoCheck = {
 	id: "bundle-graph",

@@ -3,41 +3,41 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Presentational selector for available model versions.
- *   The host owns loading and selection state; fewer than two versions renders nothing.
+ *   Renders a selector for the available model versions. The host owns loading and selection.
  */
 
 import type { ReactNode } from "react"
 
 import type { VersionOption } from "#map/types"
 
+/**
+ * Props for {@link VersionPicker}.
+ */
 export interface VersionPickerProps {
 	/**
-	 * The selectable model bundles.
+	 * The selectable model versions.
 	 */
 	versions: ReadonlyArray<VersionOption>
 	/**
-	 * The currently-selected version tag.
+	 * The selected version tag.
 	 */
 	selected: string | null
 	/**
-	 * Fired with the chosen version tag.
+	 * Called with the chosen version tag.
 	 */
 	onSelect: (version: string) => void
 	/**
-	 * Disable the control (e.g. While a parse is running).
+	 * Disables the control, for example while a parse runs.
 	 */
 	disabled?: boolean
 	/**
-	 * Field label. @default "Model version"
+	 * The field label. @default "Model version"
 	 */
 	label?: string
 }
 
 /**
- * The model-version selector.
- *
- * Renders `null` when there is nothing meaningful to pick.
+ * Renders the model version selector, or nothing when fewer than two versions exist.
  */
 export function VersionPicker({
 	versions,
@@ -59,8 +59,7 @@ export function VersionPicker({
 				value={selected ?? ""}
 				onChange={(e) => onSelect(e.target.value)}
 				disabled={disabled}
-				// The field clips a long release label.
-				// This is where the whole of it stays reachable.
+				// The title shows the full label, which the field may clip.
 				title={versions.find((v) => v.version === selected)?.label ?? selected ?? undefined}
 			>
 				{versions.map((v) => (

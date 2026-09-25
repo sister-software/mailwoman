@@ -2,11 +2,16 @@
 
 > **For agentic workers:** required sub-skill: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** The `poi_query` pipeline arc: a lexicon-conditional `poi_query` QueryKind, the `POIIntent` record, the intent-extraction stage (subject split + anchor re-parse), an OverpassQL export emitter, and the `poiQueryKind` factory flag — default-OFF, byte-identical when off by construction.
+**Goal:** Build the `poi_query` pipeline arc: a lexicon-conditional `poi_query` QueryKind, the `POIIntent` record, the intent-extraction stage (subject split plus anchor re-parse), an OverpassQL export emitter, and the `poiQueryKind` factory flag. The flag is off by default, and output is byte-identical by construction when it is off.
 
-**Architecture:** Spec §3.1–3.2 (`docs/superpowers/specs/2026-07-18-spatial-layers-and-poi-design.md`). Detection lives in `kind-classifier` behind an injected `POIPhraseLookup` (the package keeps its "no dictionaries" invariant — the lexicon arrives only via the factory). The intent stage lives in `core` as a new optional `stages.poiIntent`; `runPipeline` branches on `kind === "poi_query"`, and a `null` outcome falls through to the full pipeline (mis-detection safety valve). Assembly happens in `mailwoman/`: the `poiQueryKind` factory flag wires `@mailwoman/poi-taxonomy` into the classifier factory and builds the intent stage with a recursion-guarded anchor re-parse. Brand subjects: the `POIIntent` interface includes the brand variant now, but Plan 2 wires **category** detection only — the brand table (Wikidata QIDs) is Plan 3 data work.
+**Architecture:** This plan implements spec §3.1–3.2 (`docs/superpowers/specs/2026-07-18-spatial-layers-and-poi-design.md`).
 
-**Tech Stack:** TypeScript (erasable-only, `.ts` imports), vitest, oxfmt/oxlint. No new dependencies except workspace edges: `kind-classifier` gains nothing; `mailwoman` gains `@mailwoman/poi-taxonomy`.
+- Detection lives in `kind-classifier` behind an injected `POIPhraseLookup`. The package keeps its rule of containing no dictionaries, because the lexicon arrives only through the factory.
+- The intent stage lives in `core` as a new optional `stages.poiIntent`. `runPipeline` branches on `kind === "poi_query"`, and a `null` outcome falls through to the full pipeline, so a mis-detected query still gets a normal parse.
+- Assembly happens in `mailwoman/`. The `poiQueryKind` factory flag wires `@mailwoman/poi-taxonomy` into the classifier factory and builds the intent stage with an anchor re-parse that is guarded against recursion.
+- The `POIIntent` interface already includes the brand variant, but Plan 2 wires **category** detection only. The brand table (Wikidata QIDs) is Plan 3 data work.
+
+**Tech Stack:** TypeScript (erasable-only, `.ts` imports), vitest, oxfmt/oxlint. The only new dependency is a workspace edge: `mailwoman` gains `@mailwoman/poi-taxonomy`, and `kind-classifier` gains nothing.
 
 ## Global Constraints
 
@@ -18,12 +23,12 @@
    * @author Teffen Ellis, et al.
    */
   ```
-- `erasableSyntaxOnly`; tabs; relative imports with explicit `.ts` extensions; acronym casing (`categoryID`, `osmTag`, `emitOverpassQL`); DB/wire snake_case rule does not apply here (no DB).
-- **Byte-identity invariant:** with `poiQueryKind` unset/false, no code path may alter any existing result — the default `classifyKind` export must be untouched, `stages.poiIntent` must be unset, and `PipelineResult.poiIntent` must be absent (optional field never set) rather than `undefined`-valued.
-- `kind-classifier` must not import `@mailwoman/poi-taxonomy` (dependency direction: lexicon is injected). `core` must not import it either. Only `mailwoman/` may.
-- Both exports maps rule applies to any new subpath (none planned — new mailwoman files are internal modules re-exported from `mailwoman/index.ts` only if a task says so).
-- Work in `/home/lab/Projects/mailwoman-exotic-poi`, branch `feat/poi-pipeline` (based on post-#1180 main; installed + compiled).
-- Commits verified with `git log -1 --oneline` (never pipe commit output); every commit message ends with:
+- `erasableSyntaxOnly`, tabs, relative imports with explicit `.ts` extensions, and acronym casing (`categoryID`, `osmTag`, `emitOverpassQL`). The DB/wire snake_case rule does not apply, because this plan has no DB.
+- **Byte-identity invariant:** When `poiQueryKind` is unset or false, every existing result must stay unchanged. The default `classifyKind` export must stay untouched, `stages.poiIntent` must be unset, and `PipelineResult.poiIntent` must be absent (the optional field is never set) rather than set to `undefined`.
+- `kind-classifier` must not import `@mailwoman/poi-taxonomy`, because the lexicon is injected into it. `core` must not import it either. Only `mailwoman/` may.
+- The both-exports-maps rule applies to any new subpath. None is planned: new mailwoman files are internal modules and are re-exported from `mailwoman/index.ts` only if a task says so.
+- Work in `/home/lab/Projects/mailwoman-exotic-poi` on branch `feat/poi-pipeline` (based on main after #1180, installed and compiled).
+- Verify commits with `git log -1 --oneline`, and never pipe commit output. Every commit message ends with:
   ```
   Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>
   Claude-Session: https://claude.ai/code/session_012SJfJddDssHbDWqaqLoEpi
@@ -1136,7 +1141,7 @@ In `docs/articles/plan/reference/runtime-flags.mdx`, Default-OFF table (after th
 
 - [ ] **Step 3: Verify**
 
-Run: `yarn compile` (parse.tsx is TSX — compiled rather than type-stripped; a stale out/ would mask errors) then `node mailwoman/out/cli.js parse "hospital" --debug 2>&1 | head -20` — output must be unchanged vs. main (flag is off in the CLI's default pipeline; no `poiIntent` key appears).
+Run `yarn compile` first. parse.tsx is TSX, so it is compiled rather than type-stripped, and a stale out/ would hide errors. Then run `node mailwoman/out/cli.js parse "hospital" --debug 2>&1 | head -20`. The output must match main, because the flag is off in the CLI's default pipeline and the `poiIntent` key does not appear.
 Expected: compile clean; CLI output has no poiIntent field.
 
 - [ ] **Step 4: Format and commit**
@@ -1164,6 +1169,6 @@ git log -1 --oneline
 
 ## Execution notes
 
-- Task 4 Step 5b: the file's lazy stage wiring (placeCountry/streetEvidence resolve on first call) is why the plan mandates the **inline-spread** `parseAnchor` form. It reads `stages` at call time, immune to mutation ordering. Do not "optimize" it into a pre-built anchorStages object.
-- Deferred to Plan 3 (do not build here): the poi.db executor, brand table + brand detection wiring, `variant-aliases` slang→taxonomy wiring, the landmark-leader abstain path, ResolveOpts kind-threading, MCP server, API/photon response variants.
-- The golden-2pp / demo-preset check applies at DEFAULT-FLIP time rather than merge time (flag ships off; register row records the promotion check).
+- Task 4 Step 5b: The file wires stages lazily (placeCountry and streetEvidence resolve on first call), which is why the plan requires the **inline-spread** `parseAnchor` form. That form reads `stages` at call time, so the order of mutations cannot affect it. Do not replace it with a pre-built anchorStages object.
+- Deferred to Plan 3 (do not build here): the poi.db executor, the brand table and brand detection wiring, `variant-aliases` slang→taxonomy wiring, the landmark-leader abstain path, threading the kind through ResolveOpts, the MCP server, and API/photon response variants.
+- The golden-2pp and demo-preset checks apply when the default is turned on, rather than at merge time. The flag ships off, and its register row records the promotion check.

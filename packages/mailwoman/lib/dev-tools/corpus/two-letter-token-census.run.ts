@@ -3,14 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Count uppercase two-letter spans by tag and country to identify tokens used ambiguously as regions, countries, or
- *   other components. This reports corpus counts; the training audit reports the emitted mixture after weighting and
- *   augmentation.
- *
- *   Run:
- *
- *       node packages/mailwoman/lib/dev-tools/corpus/two-letter-token-census.run.ts
- *       node packages/mailwoman/lib/dev-tools/corpus/two-letter-token-census.run.ts --codes AR,VT,CT,NL --by-country
+ * Counts uppercase two-letter corpus spans by tag to find tokens labeled as more than one component.
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
@@ -33,11 +26,11 @@ const { values } = parseArguments({
 		split: { type: "string", default: "train" },
 		"out-json": { type: "string" },
 		/**
-		 * Show these codes regardless of rank; rank other codes by frequency.
+		 * Prints these comma-separated codes instead of the most frequent tokens.
 		 */
 		codes: { type: "string" },
 		/**
-		 * Also group counts by country.
+		 * Also groups the counts by country.
 		 */
 		"by-country": { type: "boolean", default: false },
 		detail: { type: "string", default: "30" },
@@ -55,7 +48,9 @@ const { db, fileList } = await openMixture(mixture.files, {
 })
 
 /**
- * Unnest aligned span arrays and count spans consisting of exactly two uppercase letters.
+ * Unnests the aligned span arrays and counts spans of exactly two uppercase letters.
+ *
+ * These are raw corpus counts before training applies source weights and augmentation.
  */
 const sql = `
 WITH spans AS (
@@ -82,7 +77,7 @@ console.log(
 )
 
 /**
- * Counts for one token by tag and country.
+ * Holds one token's span counts by tag and by country.
  */
 interface TokenCensus {
 	text: string
@@ -117,7 +112,7 @@ for (const row of reader.getRowObjects()) {
 }
 
 /**
- * Fraction of occurrences assigned to the most common tag.
+ * Returns the fraction of a token's spans that carry its most common tag.
  */
 function dominance(entry: TokenCensus): number {
 	return entry.total === 0 ? 0 : Math.max(...entry.byTag.values()) / entry.total
@@ -135,12 +130,12 @@ function tagBreakdown(entry: TokenCensus): string {
 }
 
 /**
- * Maximum dominant-tag share for the contested-token report.
+ * Sets the commonest-tag share below which a token counts as contested.
  */
 const CONTESTED_DOMINANCE = 0.95
 
 /**
- * Minimum frequency for inclusion in the contested-token report.
+ * Sets the fewest spans a token needs to appear in the contested-token report.
  */
 const CONTESTED_FLOOR = 1000
 

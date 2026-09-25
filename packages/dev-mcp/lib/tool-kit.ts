@@ -19,7 +19,7 @@ import { HOLDOUT_DEFAULT_N, HOLDOUT_SOURCES, type ResolvedInputSet } from "#inpu
 import type { JobRegistry } from "#jobs"
 
 /**
- * Provenance attached to each result.
+ * The provenance attached to each measurement result.
  */
 export interface Provenance {
 	engine_id: string
@@ -45,7 +45,7 @@ export interface Provenance {
 }
 
 /**
- * Convert input-set metadata to the provenance shape.
+ * Converts input-set metadata to the provenance shape.
  */
 export function inputSetProvenance(set: ResolvedInputSet): Provenance["input_set"] {
 	return {
@@ -114,7 +114,7 @@ const LITERAL_INPUTS_DESCRIPTION =
 	"file, rather than writing rows and discovering the score afterwards."
 
 /**
- * Validates the input-set selection that measurement tools accept, defaulting to the regression board.
+ * Validates the input-set selection that measurement tools accept.
  */
 export const INPUT_SET_SCHEMA = z
 	.union([
@@ -175,9 +175,10 @@ export const INPUT_SET_SCHEMA = z
 	.describe('Which inputs to measure. `{"kind":"board"}` is the full 558-row regression board and is the default.')
 
 /**
- * Validates engine configuration pins, named as the CLI names them.
+ * Validates engine configuration pins, using the CLI's key names.
  *
- * An unset key keeps the production default; it does not turn the feature off.
+ * An unset key keeps the production default.
+ * It never turns the feature off.
  */
 export const ENGINE_CONFIG_SCHEMA = z
 	.object({
@@ -215,7 +216,7 @@ export const ENGINE_CONFIG_SCHEMA = z
 	.describe("Every pin, in the CLI's vocabulary. Unset means the PRODUCTION DEFAULT, never off.")
 
 /**
- * Holds the shared services that each dev MCP tool factory receives.
+ * The shared services that each dev MCP tool factory receives.
  */
 export interface DevToolDeps {
 	registry: EngineRegistryLike
@@ -224,7 +225,7 @@ export interface DevToolDeps {
 }
 
 /**
- * Describes one dev MCP tool as registered with the server.
+ * One dev MCP tool as registered with the server.
  */
 export interface DevTool {
 	name: string
@@ -234,12 +235,13 @@ export interface DevTool {
 }
 
 /**
- * Maximum number of diffs rendered before returning only the machine-readable list.
+ * The maximum number of diffs rendered as text.
+ * Beyond it, results carry only the structured list.
  */
 export const RENDERED_DIFF_LIMIT = 40
 
 /**
- * Two acquired engines, or the error that prevented comparison.
+ * Two acquired engines, or the error that prevented the comparison.
  */
 export type TwoArms =
 	| { base: Engine; candidate: Engine; error?: undefined }
@@ -248,8 +250,8 @@ export type TwoArms =
 /**
  * Acquires a baseline engine and a candidate engine.
  *
- * It returns an error when `weightsCache` resolves to the baseline's engine,
- * because the pin was then silently ignored.
+ * It returns an error when `weightsCache` yields the baseline's engine,
+ * because the candidate weights were then not applied.
  */
 export async function acquireTwoArms(
 	registry: EngineRegistryLike,
@@ -281,7 +283,7 @@ export async function acquireTwoArms(
 }
 
 /**
- * Returns the flat component map of a geocode run's result, typed as string values for reporting.
+ * Returns the flat component map of a geocode run's result as string values.
  */
 export function componentsOf(run: GeocodeRun): Record<string, string> {
 	return run.result.components as Record<string, string>
@@ -344,7 +346,7 @@ function refusalRow(run: GeocodeRun): string[] {
 }
 
 /**
- * Renders a geocode run's trace as human-readable rows, or explains in `absent_reason` why no trace exists.
+ * Renders a geocode run's trace as text rows, or explains in `absent_reason` why no trace exists.
  */
 export function renderTrace(run: GeocodeRun): { rendered: string[]; absent_reason?: string } {
 	if (!run.trace) {
@@ -431,7 +433,7 @@ function resolverRows(trace: NonNullable<GeocodeRun["trace"]>): string[] {
 }
 
 /**
- * Count mechanism firings separately from outcome changes.
+ * Counts, for each arm, the rows on which each opt-in mechanism fired, whether or not the outcome changed.
  */
 export function firingSignals(rows: ComparedRow[]): Record<string, { a: number; b: number }> {
 	const scoped = (row: ComparedRow, arm: "a" | "b"): boolean =>
@@ -460,9 +462,9 @@ export function firingSignals(rows: ComparedRow[]): Record<string, { a: number; 
 }
 
 /**
- * Represents one input measured under both comparison arms.
+ * One input measured under both comparison arms.
  *
- * `differed` and `grade` are independent: output can change without the grade changing.
+ * `differed` and `grade` are independent, because the output can change without changing the grade.
  */
 export interface ComparedRow {
 	id: string
@@ -478,18 +480,20 @@ export interface ComparedRow {
 	issues_b: string[]
 
 	/**
-	 * Whether the place-identity chains differ; absent unless both arms report `place_ids`.
+	 * True when the place ID chains differ.
+	 * It is present only when both arms report `place_ids`.
 	 */
 	identity_differed?: boolean
 
 	/**
-	 * Whether the result tiers differ; absent unless both arms report a tier.
+	 * True when the result tiers differ.
+	 * It is present only when both arms report a tier.
 	 */
 	tier_differed?: boolean
 }
 
 /**
- * Names a field that comparison results can be stratified by.
+ * A field that comparison results can be stratified by.
  *
  * `truth_tolerance_m` applies only to rows graded against a coordinate.
  */
@@ -512,7 +516,8 @@ export function assertStratumKey(by: string): asserts by is StratumKey {
 }
 
 /**
- * Group rows by key, using one shared implementation for all stratifiers.
+ * Groups rows by the key that `key` returns.
+ * Every stratifier uses this function.
  */
 export function bucketRows<Row>(rows: Row[], key: (row: Row) => string): Map<string, Row[]> {
 	const buckets = new Map<string, Row[]>()
@@ -531,7 +536,7 @@ export function bucketRows<Row>(rows: Row[], key: (row: Row) => string): Map<str
 }
 
 /**
- * Report counts by stratum rather than blending results across groups.
+ * Returns the difference and grade counts for each stratum.
  */
 export function stratify(rows: ComparedRow[], by: StratumKey): Record<string, unknown> {
 	const buckets = bucketRows(
@@ -557,7 +562,7 @@ export function stratify(rows: ComparedRow[], by: StratumKey): Record<string, un
 /**
  * Summarizes a background job's report for display.
  *
- * A running check has nothing to summarize, because it writes `verdict.json` only when it finishes.
+ * A running check has no summary yet, because it writes `verdict.json` only when it finishes.
  */
 export function summarizeJob(
 	state: string,

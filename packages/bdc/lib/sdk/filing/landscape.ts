@@ -3,34 +3,16 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `filing_landscape` reader — the four PRE-registered acceptance criteria this whole phase
- *   is judged by. See `filing-landscape.test.ts` for the criterion tests. this module is only the reader.
+ *   Reads the `filing_landscape` summary from a BDC database.
  *
- *   Coverage check (the meaning-of-zero rule): a queried block counts as surveyed only when its res-6
- *   coverage cell is present in `layer_coverage` (via `readLayerCoverage`) — `undefined` means the area
- *   was never surveyed, and the block is reported in `unknown_block_count`, never folded into a
- *   zero-filing claim.
+ *   A queried block counts as surveyed only when its res-6 parent cell appears in `layer_coverage`.
+ *   Any other block counts as unknown, which is different from a surveyed block with zero filings.
+ *   A GEOID query takes each block's res-9 cell from its `bdc_availability` rows, so a GEOID without
+ *   rows is unknown. An `h3Cells` query supplies the cell, so a covered cell with no rows reports as
+ *   surveyed with zero filings.
  *
- *   - For a `geoids` query, the candidate res-9 cell is read off the block's own `bdc_availability`
- *     rows. A geoid with zero rows has no derivable cell at all (never guessed, matching the builder's
- *     "unknown geoid" discipline in `build-bdc.ts`), so it falls straight to unknown.
- *   - For an `h3Cells` query, the caller supplies the res-9 cell directly, so coverage can be checked
- *     even for a cell with no filing rows of its own — a genuine "surveyed, zero providers here" result,
- *     the meaning-of-zero rule's positive case (covered but empty is not the same as never surveyed).
- *
- *   The res-6 parent is reconstructed from the stored res-9 cell (`@mailwoman/spatial`'s `expandH3Cell`
- *   back to a full index, then `cellToParent`) rather than recomputed from the block centroid. See
- *   {@link res9ShortCellToRes6Parent}.
- *
- *   This same formula is exactly what `build-bdc.ts` must use (and does) to derive the
- *   coverage cell it writes at build time — H3's cell hierarchy is not geometrically exact, so a
- *   `latLngToCell(centroid, 6)` computed independently of the stored res-9 cell disagrees with
- *   `cellToParent(res9Cell, 6)` for a real fraction of points (verified ~6% over conus). Builder and
- *   reader deriving the res-6 parent differently is a self-contradiction waiting to happen: a
- *   genuinely-surveyed block (real rows, real `layer_coverage` entry) reads back as
- *   `unknown_block_count` while its own rows still populate `filings`. `filings` is scoped to units that
- *   pass the coverage check (see the `surveyedUnits` accumulator below) precisely so that can't happen: a
- *   block excluded from `surveyed_block_count` never contributes to `filings` either.
+ *   The res-6 parent comes from the stored res-9 cell, as it does in `build-bdc.ts`. Recomputing it
+ *   from the block centroid disagrees for some points because H3 cells do not nest exactly.
  */
 
 import { readLayerCoverage, readLayerManifest } from "@mailwoman/core/layers"
@@ -41,7 +23,8 @@ import { sql } from "kysely"
 import { BDC_COVERAGE_H3_RESOLUTION, BDC_H3_RESOLUTION, type BDCDatabase } from "#schema"
 
 /**
- * Exactly one of `geoids` or `h3Cells` is required — `filingLandscape` throws otherwise.
+ * Query for {@link filingLandscape}.
+ * Set exactly one of `geoids` or `h3Cells`.
  */
 export interface FilingLandscapeQuery {
 	geoids?: string[]
@@ -51,19 +34,9 @@ export interface FilingLandscapeQuery {
 /**
  * One provider/technology/speed-bucket group's block count within the query.
  *
- * `block_count` is the number of distinct queried blocks carrying this exact
- * combination, never a raw row count.
- *
- * A block can carry multiple `bdc_availability` rows for the same
- * (provider_id, technology_code) pair even in the default (non-`includeLocationIDs`)
- * build mode: `build-bdc.ts`'s materialize-time collapse merges to one row per distinct
- * (geoid, provider_id, technology_code, speeds, low_latency, business_residential_code) tuple
- * rather than one row per (geoid, provider_id, technology_code) triple.
- * So Broadband Serviceable Locations at the same triple with differing speeds/flags survive as
- * separate rows and can land in different `speed_bucket`s here (see that file's docstring).
- *
- * This `block_count`'s distinct is exactly what keeps that from double-counting
- * the block itself when it does.
+ * `block_count` counts distinct blocks.
+ * A block can hold several rows for one provider and technology with different speeds
+ * or flags, so counting rows would count it twice.
  */
 export interface ProviderFilingSummary {
 	provider_id: number
@@ -73,10 +46,10 @@ export interface ProviderFilingSummary {
 }
 
 /**
- * The queried landscape: always vintage-stamped (from `layer_manifest.sourceVintage`)
- * and always reports its unknown blocks.
+ * Filing summary for a query, stamped with `layer_manifest.sourceVintage`.
  *
- * `unknown_block_count` is reported, never zeroed, and never evidence of "no providers file here."
+ * `unknown_block_count` counts blocks without coverage.
+ * It says nothing about whether providers file there.
  */
 export interface FilingLandscape {
 	vintage: string
@@ -120,15 +93,15 @@ export const BDC_SPEED_BUCKET_THRESHOLD_25_MBPS = 25
 export const BDC_SPEED_BUCKET_THRESHOLD_100_MBPS = 100
 
 /**
- * Mbps boundary at/above which a block is bucketed {@link BDC_SPEED_BUCKET_GIGABIT}.
+ * Mbps boundary at or above which a block falls in {@link BDC_SPEED_BUCKET_GIGABIT}.
  */
 export const BDC_SPEED_BUCKET_THRESHOLD_GIGABIT_MBPS = 1000
 
 /**
- * Pure mirror of the SQL `case` expression below ({@link speedBucketCaseSQL}).
+ * Return the speed bucket for a download speed in Mbps.
  *
- * Same thresholds, same labels, exported so the boundary logic can be asserted
- * directly without a database round trip.
+ * It must match {@link speedBucketCaseSQL}.
+ * Tests use it to check the boundaries without a database.
  */
 export function speedBucketForDownloadSpeed(maxAdvertisedDownloadSpeed: number): string {
 	if (maxAdvertisedDownloadSpeed < BDC_SPEED_BUCKET_THRESHOLD_25_MBPS) return BDC_SPEED_BUCKET_UNDER_25
@@ -141,8 +114,7 @@ export function speedBucketForDownloadSpeed(maxAdvertisedDownloadSpeed: number):
 }
 
 /**
- * The same bucketing as {@link speedBucketForDownloadSpeed}, expressed as a `case` over
- * `max_advertised_download_speed` so the group BY below can group directly on the bucket.
+ * SQL form of {@link speedBucketForDownloadSpeed}, so the query can group by bucket.
  */
 const speedBucketCaseSQL = sql<string>`CASE
 	WHEN max_advertised_download_speed < ${BDC_SPEED_BUCKET_THRESHOLD_25_MBPS} THEN ${BDC_SPEED_BUCKET_UNDER_25}
@@ -161,8 +133,7 @@ export function res9ShortCellToRes6Parent(h3CellShortInt: number): number {
 /**
  * Count provider filings by technology and speed bucket for a set of blocks.
  *
- * Supply either GEOIDs or H3 cells.
- * The result includes its source vintage and reports blocks without coverage as unknown.
+ * Blocks without coverage count as unknown and contribute no filings.
  */
 export async function filingLandscape(
 	db: DatabaseClient<BDCDatabase>,
@@ -174,18 +145,17 @@ export async function filingLandscape(
 		throw new Error("filingLandscape: exactly one of `geoids` or `h3Cells` is required")
 	}
 
-	// Reject empty input so it cannot produce a misleading all-zero result.
+	// An empty query would return an all-zero result that looks like a real answer.
 	if (!(query.geoids ?? query.h3Cells)!.length) {
 		throw new Error("filingLandscape: `geoids`/`h3Cells` must not be an empty array")
 	}
 
-	// Validate the manifest before classifying blocks.
+	// Reading the manifest first fails fast on a database without one.
 	const manifest = await readLayerManifest(db)
 
 	const requestedUnits: ReadonlyArray<string | number> = query.geoids ?? query.h3Cells!
 	const unitColumn = query.geoids ? ("geoid" as const) : ("h3_cell" as const)
 
-	// GEOID queries derive cells from stored rows; H3 queries already provide the cell.
 	const candidateCellByUnit = new Map<string | number, number>()
 
 	if (query.geoids) {
@@ -207,7 +177,7 @@ export async function filingLandscape(
 
 	let surveyedBlockCount = 0
 	let unknownBlockCount = 0
-	// Only covered units contribute filings; rows from an uncovered unit must not appear in the census.
+	// Only covered units contribute filings.
 	const surveyedUnits: Array<string | number> = []
 
 	for (const unit of requestedUnits) {

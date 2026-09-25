@@ -3,13 +3,10 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Define and audit query refinements: adding non-conflicting detail must not remove
- *   candidates available to the coarser query. This module owns row derivation and validation;
- *   `candidate-admissibility.ts` evaluates the law.
+ *   Refinement-monotonicity suite rows and their audit. The law itself is evaluated in `candidate-admissibility.ts`.
  *
- *   Each committed row is the fullest query (`variant`); named steps derive its coarser bases.
- *   Multiple links share a `rowRef` and must form one chain. The suite test checks each chain tip
- *   against the corpus.
+ *   Each row's `variant` is the finer query, and a named coarsening step derives its `base`. Rows that share a
+ *   `rowRef` must form one chain whose finest query is the committed corpus row.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -22,28 +19,25 @@ import {
 } from "#eval-harness/conformance/fixture"
 
 /**
- * The law name every row in this suite carries.
+ * Law identifier that every suite row carries.
  */
 export const REFINEMENT_MONOTONICITY_LAW = "refinement-monotonicity"
 
 /**
- * The only named coarsening steps allowed in the suite.
+ * Named coarsening steps.
  *
- * - `drop-leading-segment` — remove the first comma-delimited part.
- *   Peels a venue or a street line off the front of a structured address, leaving the place it sits in.
- * - `drop-trailing-segment` — remove the last comma-delimited part.
- *   Peels the coarsest admin off the back, which is the arm that produces an
- *   ambiguous bare toponym from a disambiguated one.
- * - `drop-leading-numeric-token` — remove the leading whitespace-delimited token when it carries a digit.
- *   A postcode or a house number written without a comma is not a segment, so neither segment
- *   step can reach it, and the DE and FR structured rows are written exactly that way.
+ * - `drop-leading-segment` removes the first comma-separated segment, such as a venue or street line.
+ * - `drop-trailing-segment` removes the last comma-separated segment,
+ *   which is usually the coarsest admin area.
+ * - `drop-leading-numeric-token` removes the first whitespace-separated token when it contains a digit.
+ *   It reaches a postcode or house number that a comma does not separate, as in many DE and FR addresses.
  */
 export const REFINEMENT_STEPS = ["drop-leading-segment", "drop-trailing-segment", "drop-leading-numeric-token"] as const
 
 export type RefinementStep = (typeof REFINEMENT_STEPS)[number]
 
 /**
- * The comma-delimited parts of a query, trimmed, with empty parts dropped.
+ * Returns the trimmed, non-empty comma-separated segments of a query.
  */
 function segmentsOf(text: string): string[] {
 	return text
@@ -53,7 +47,8 @@ function segmentsOf(text: string): string[] {
 }
 
 /**
- * Derive the coarser query, or return `null` when the step removes nothing.
+ * Implementation of each step.
+ * A step returns `null` when it cannot remove anything.
  */
 export const REFINEMENT_DERIVATION_BY_STEP: Record<RefinementStep, (text: string) => string | null> = {
 	"drop-leading-segment": (text) => {
@@ -76,7 +71,7 @@ export const REFINEMENT_DERIVATION_BY_STEP: Record<RefinementStep, (text: string
 }
 
 /**
- * Identify the step deriving `base` from `variant`; first match follows declared step order.
+ * Returns the first step in {@link REFINEMENT_STEPS} order that derives `base` from `variant`, or `null`.
  */
 export function classifyRefinementStep(base: string, variant: string): RefinementStep | null {
 	if (base === variant) return null
@@ -89,7 +84,7 @@ export function classifyRefinementStep(base: string, variant: string): Refinemen
 }
 
 /**
- * Return the steps that can act on `text`.
+ * Returns the steps that can remove something from `text`.
  */
 export function statableSteps(text: string): RefinementStep[] {
 	return REFINEMENT_STEPS.filter((step) => REFINEMENT_DERIVATION_BY_STEP[step](text) !== null)
@@ -107,27 +102,25 @@ export const REFINEMENT_MONOTONICITY_SUITE_PATH: string = resolvePackagePath(
 )
 
 /**
- * One `rowRef` group's chain structure.
+ * Chain of fixtures that share one `rowRef`.
  */
 export interface RefinementChain {
 	rowRef: string
 	/**
-	 * The links in order, coarsest first.
+	 * Fixture IDs in chain order, coarsest first.
 	 *
-	 * Each entry is one fixture id.
+	 * The walk stops at a break, so a broken chain lists fewer IDs than its group has fixtures.
 	 */
 	links: string[]
 	/**
-	 * The fullest query in the group.
-	 * The text the committed row must hold.
+	 * Finest query in the group, which the committed corpus row must hold.
+	 * It is empty when the group has no single finest query.
 	 */
 	tip: string
 }
 
 /**
- * Build one chain per `rowRef`; the audit rejects groups with disconnected links.
- *
- * The suite test separately checks each tip against the committed corpus.
+ * Builds one chain per `rowRef` by walking from the single base that no fixture produces as a variant.
  */
 export function refinementChains(fixtures: readonly ConformanceFixture[]): RefinementChain[] {
 	const groups = new Map<string, ConformanceFixture[]>()
@@ -152,7 +145,7 @@ export function refinementChains(fixtures: readonly ConformanceFixture[]): Refin
 		const tip = tips.length === 1 ? tips[0]!.variant : ""
 		const links: string[] = []
 
-		// Walk from the coarsest end: the one base no fixture produces as a variant.
+		// The length guard stops the walk if the links form a cycle.
 		const variants = new Set(group.map((fixture) => fixture.variant))
 		const roots = group.filter((fixture) => !variants.has(fixture.base))
 
@@ -170,33 +163,34 @@ export function refinementChains(fixtures: readonly ConformanceFixture[]): Refin
 }
 
 /**
- * Counts describing how much of the population the suite covers.
+ * Counts that compare the suite against a corpus.
  */
 export interface RefinementCoverage {
 	/**
-	 * Board rows examined.
+	 * Number of corpus inputs read.
 	 */
 	read: number
 	/**
-	 * Rows where at least one named step applies.
+	 * Number of inputs that at least one step can coarsen.
 	 */
 	eligible: number
 	/**
-	 * Eligible rows represented by at least one suite link.
+	 * Number of distinct source rows that the fixtures cover.
 	 */
 	stated: number
 	/**
-	 * Total links across all chains.
+	 * Number of fixtures.
 	 */
 	links: number
 	/**
-	 * Eligible rows per step; a row may count under multiple steps.
+	 * Eligible inputs per step.
+	 * An input counts once for each step that applies to it.
 	 */
 	eligibleByStep: Record<RefinementStep, number>
 }
 
 /**
- * Measure suite coverage against caller-supplied corpus inputs.
+ * Measures how much of the corpus the suite covers.
  */
 export function refinementCoverage(
 	fixtures: readonly ConformanceFixture[],
@@ -228,7 +222,7 @@ export function refinementCoverage(
 }
 
 /**
- * Format coverage, link count, and the eligible population's per-step breakdown.
+ * Formats the coverage counts as one line.
  */
 export function describeRefinementCoverage(
 	fixtures: readonly ConformanceFixture[],
@@ -244,7 +238,11 @@ export function describeRefinementCoverage(
 }
 
 /**
- * Audit fixture fields, coarsening steps, chain links, and country context.
+ * Audits suite rows and chains.
+ *
+ * Each row needs the `candidate_admissibility` comparator, a `refines` expectation,
+ * a `rowRef`, a `caseCountry`, and a named coarsening step.
+ * Each chain must be connected, end at one finest query, and share one context.
  */
 export function auditRefinementSuite(fixtures: readonly ConformanceFixture[]): string[] {
 	const problems = auditCommonFixtureFields(
@@ -317,10 +315,7 @@ export function auditRefinementSuite(fixtures: readonly ConformanceFixture[]): s
 }
 
 /**
- * The step label a report line carries, e.g. `drop-trailing-segment`.
- *
- * `?` when the pair does not classify.
- * The audit refuses that, so it can only appear on a hand-built fixture that skipped the loader.
+ * Returns the fixture's step name, or `?` when no named step fits.
  */
 export function describeRefinementStep(fixture: ConformanceFixture): string {
 	return classifyRefinementStep(fixture.base, fixture.variant) ?? "?"

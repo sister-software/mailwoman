@@ -3,9 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Define and audit the case-folding invariance suite: case-only variants should produce equivalent parses. Validate
- *   that variants are named transformations and semantically applicable in the row's locale; locale-sensitive casing
- *   and identity transformations are excluded.
+ *   Case-folding invariance suite, which asserts that case-only variants of an address parse equivalently.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -20,19 +18,21 @@ import {
 } from "#eval-harness/conformance/fixture"
 
 /**
- * Law identifier used by every suite row.
+ * Law identifier that every suite row carries.
  */
 export const CASE_FOLDING_LAW = "case-folding-invariance"
 
 /**
- * Supported case transformations: uppercase, lowercase, and mixed/title case.
+ * Named case transformations.
+ *
+ * The `mixed` transformation title-cases each whitespace-separated token.
  */
 export const CASE_TRANSFORMATIONS = ["upper", "lower", "mixed"] as const
 
 export type CaseTransformationName = (typeof CASE_TRANSFORMATIONS)[number]
 
 /**
- * Capitalize the first cased character and lowercase the rest.
+ * Lowercases a token and then uppercases its first cased character.
  */
 function titleCaseToken(token: string): string {
 	const lower = token.toLowerCase()
@@ -48,8 +48,8 @@ function titleCaseToken(token: string): string {
 }
 
 /**
- * Pure transformations used to derive and verify suite variants.
- * Preserve whitespace in mixed case.
+ * Implementation of each named transformation.
+ * The `mixed` transformation keeps the original whitespace.
  */
 export const CASE_TRANSFORMATION_BY_NAME: Record<CaseTransformationName, (text: string) => string> = {
 	upper: (text) => text.toUpperCase(),
@@ -62,15 +62,15 @@ export const CASE_TRANSFORMATION_BY_NAME: Record<CaseTransformationName, (text: 
 }
 
 /**
- * Produce a case-insensitive key, including Unicode expansions such as `ß` to `ss`.
+ * Returns a case-insensitive key.
+ * Uppercasing first applies expansions such as `ß` to `SS`.
  */
 export function caseFoldKey(text: string): string {
 	return text.toUpperCase().toLowerCase()
 }
 
 /**
- * Identify the named case transformation from `base` to `variant`, or return
- * `null` if the pair differs otherwise.
+ * Returns the named transformation that maps `base` to `variant`, or `null` when none does.
  */
 export function classifyCaseTransformation(base: string, variant: string): CaseTransformationName | null {
 	if (base === variant || caseFoldKey(base) !== caseFoldKey(variant)) return null
@@ -83,15 +83,17 @@ export function classifyCaseTransformation(base: string, variant: string): CaseT
 }
 
 /**
- * Reasons a transformation is not applicable: it changes nothing,
- * or locale-specific casing changes letter identity.
+ * Rules that exclude a transformation.
+ *
+ * The first applies when the transformation leaves the text unchanged.
+ * The second applies when locale-specific casing would change which letter is written.
  */
 export const CASE_APPLICABILITY_RULES = ["identity-transformation", "locale-sensitive-casing"] as const
 
 export type CaseApplicabilityRule = (typeof CASE_APPLICABILITY_RULES)[number]
 
 /**
- * Locale-sensitive casing characters, keyed by ISO-2 country code.
+ * Characters whose casing depends on locale, keyed by ISO 3166-1 alpha-2 country code.
  */
 const LOCALE_SENSITIVE_CASING: Record<string, { characters: string; note: string }> = {
 	TR: { characters: "iıIİ", note: "Turkish separates dotted i/İ from dotless ı/I" },
@@ -100,22 +102,21 @@ const LOCALE_SENSITIVE_CASING: Record<string, { characters: string; note: string
 }
 
 /**
- * Applicability result and explanation.
+ * Whether a transformation applies to a text, with an explanation.
  */
 export interface CaseApplicability {
 	applicable: boolean
 	/**
-	 * The rule that excluded it.
-	 *
-	 * Absent when `applicable`.
+	 * Rule that excluded the transformation.
+	 * It is absent when `applicable` is true.
 	 */
 	rule?: CaseApplicabilityRule
 	reason: string
 }
 
 /**
- * Check whether a case transformation is meaningful for this text and locale.
- * Test identity transformations first.
+ * Checks whether a case transformation applies to the text in the given country.
+ * The identity rule wins when both rules match.
  */
 export function caseApplicability(
 	text: string,
@@ -155,9 +156,10 @@ export const CASE_FOLDING_SUITE_PATH: string = resolvePackagePath(
 )
 
 /**
- * Audit suite rows for valid case-only transformations and locale applicability.
+ * Audits suite rows.
  *
- * Requires `caseCountry` so each row uses the intended locale.
+ * Each row needs a `rowRef`, a `caseCountry`, and a variant that a named transformation
+ * derives from the base and that applies in that country.
  */
 export function auditCaseFoldingSuite(fixtures: readonly ConformanceFixture[]): string[] {
 	return auditCommonFixtureFields(fixtures, CASE_FOLDING_LAW, (fixture, label, problems) => {
@@ -199,7 +201,7 @@ export function auditCaseFoldingSuite(fixtures: readonly ConformanceFixture[]): 
 }
 
 /**
- * Return the transformation label, or `?` when the pair is invalid.
+ * Returns the fixture's transformation name, or `?` when no named transformation fits.
  */
 export function describeCaseTransformation(fixture: ConformanceFixture): string {
 	return classifyCaseTransformation(fixture.base, fixture.variant) ?? "?"

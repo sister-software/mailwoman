@@ -18,8 +18,7 @@ import type { PathBuilder, PathBuilderLike } from "path-ts"
 import { $public } from "#env"
 
 /**
- * Returns the conventional candidate gazetteer path, where `mailwoman data pull candidate`
- * writes it and where callers look by default.
+ * Returns the default candidate gazetteer path, where `mailwoman data pull candidate` writes it.
  */
 export function conventionCandidateDBPath(dataRoot: PathBuilderLike = dataRootPath()): string {
 	return wofDatabaseRoot(dataRoot)("candidate.db").toString()
@@ -27,10 +26,10 @@ export function conventionCandidateDBPath(dataRoot: PathBuilderLike = dataRootPa
 
 /**
  * Resolves the candidate gazetteer path from an explicit option, then
- * `$MAILWOMAN_CANDIDATE_DB`, then the convention path.
+ * `$MAILWOMAN_CANDIDATE_DB`, then the default path.
  *
- * A pinned path that does not exist yields `undefined` rather than falling through
- * to the convention path, and `none` pins the FTS backend.
+ * An explicit or environment path that does not exist yields `undefined` without trying the default path.
+ * The value `none` selects the FTS backend.
  */
 export async function resolveCandidateDBPath(
 	explicit?: string,
@@ -48,11 +47,11 @@ export async function resolveCandidateDBPath(
 }
 
 /**
- * Selects the WOF admin database paths the runtime uses: an explicit comma-separated list,
- * then `$MAILWOMAN_WOF_DB`, then {@link wofExtractPaths}'s default set.
+ * Returns the WOF admin database paths from an explicit comma-separated list,
+ * then `$MAILWOMAN_WOF_DB`, then the default set from {@link wofExtractPaths}.
  *
- * The paths are not filtered for existence, so each caller decides whether a
- * missing database is an error or a degradation.
+ * The paths may not exist.
+ * Each caller decides how to handle a missing database.
  */
 export function resolveWOFDatabasePaths(explicit?: string, dataRoot: PathBuilderLike = dataRootPath()): string[] {
 	const raw = explicit ?? $public.MAILWOMAN_WOF_DB
@@ -65,10 +64,11 @@ export function resolveWOFDatabasePaths(explicit?: string, dataRoot: PathBuilder
 }
 
 /**
- * Resolves the postal-city alias database path from an explicit option, then
- * `$MAILWOMAN_POSTAL_CITY_ALIAS_DB`, returning `undefined` when unset or missing.
+ * Resolves the postal-city alias database path from an explicit option,
+ * then `$MAILWOMAN_POSTAL_CITY_ALIAS_DB`.
  *
- * Only the FTS backend uses it, because the candidate backend folds aliases at build time.
+ * It returns `undefined` when neither is set or the file is missing.
+ * Only the FTS backend uses this database, because the candidate backend folds aliases in at build time.
  */
 export async function resolvePostalCityAliasDBPath(explicit?: string): Promise<string | undefined> {
 	const p = explicit ?? $public.MAILWOMAN_POSTAL_CITY_ALIAS_DB
@@ -107,10 +107,11 @@ interface ResolverLookupModule {
 }
 
 /**
- * Creates the place lookup: the candidate-table backend when a candidate gazetteer
- * resolves, otherwise the FTS backend over `wofPaths`.
+ * Creates the place lookup.
  *
- * The FTS backend attaches the postal-city alias scorer only when an alias database is configured.
+ * It uses the candidate-table backend when a candidate gazetteer resolves,
+ * and the FTS backend over `wofPaths` otherwise.
+ * The FTS backend gets the postal-city alias scorer when an alias database exists.
  */
 export async function createResolverBackend(
 	mod: ResolverLookupModule,
@@ -149,19 +150,18 @@ export async function createResolverBackend(
 }
 
 /**
- * Returns the repo path of the committed capital-status reference that
- * `mailwoman gazetteer capitals` writes.
+ * Returns the repository path of the capital-status reference that `mailwoman gazetteer capitals` writes.
  */
 export function conventionCapitalsPath(): PathBuilder {
 	return repoRootPathBuilder("data", "gazetteer", "capitals-v1.json")
 }
 
 /**
- * Loads the capital-status reference into a {@link CapitalIndex}, preferring the
- * candidate gazetteer's `capital` table over the repo file.
+ * Loads the capital-status reference into a {@link CapitalIndex}.
  *
- * When neither source exists, `missing: "degrade"` returns `undefined` and the
- * default throws; a malformed repo file throws under both modes.
+ * The candidate gazetteer's `capital` table takes precedence over the repository file.
+ * When neither exists, `missing: "degrade"` returns `undefined` and the default mode throws.
+ * A malformed repository file throws in both modes.
  */
 export async function loadCapitalIndex(opts: {
 	candidateDB?: PathBuilderLike
@@ -211,8 +211,7 @@ export async function loadCapitalIndex(opts: {
 }
 
 /**
- * Returns the WOF database paths that exist on disk, drawn from `explicit`
- * or else the data-root convention set.
+ * Returns the paths from `explicit`, or the default WOF set, that exist on disk.
  */
 export async function existingWOFDatabasePaths(explicit?: readonly string[]): Promise<string[]> {
 	const candidates = explicit ?? wofExtractPaths()
@@ -228,8 +227,10 @@ export async function existingWOFDatabasePaths(explicit?: readonly string[]): Pr
 }
 
 /**
- * Selects the resolver databases for POI lookups: the candidate gazetteer when one resolves,
- * otherwise the existing WOF databases from `resolveDB` or the convention set.
+ * Selects the resolver databases for POI lookups.
+ *
+ * It returns the candidate gazetteer when one resolves.
+ * Otherwise it returns the existing WOF databases from `resolveDB` or the default set.
  */
 export async function resolvePOIResolverPaths(options: {
 	candidateDB?: string
@@ -247,7 +248,8 @@ export async function resolvePOIResolverPaths(options: {
 /**
  * Returns the admin FTS database path from the explicit flag or `$MAILWOMAN_WOF_DB`.
  *
- * @throws When neither is set, with a message naming the build command.
+ * @throws When neither is set.
+ * The message includes the build command.
  */
 export async function requireWOFPath(explicit?: string): Promise<string> {
 	const resolved = explicit ?? $public.MAILWOMAN_WOF_DB

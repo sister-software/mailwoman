@@ -3,26 +3,14 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   What one weights package ships, which rights govern it, and which of those questions the repository cannot answer
- *   — read from the package manifest and the model card, with every gap recorded as a gap.
+ *   Reads the artifacts, license and source attribution of each weights package from its manifest and model card.
  *
- *   The record separates two things that a single `data_attribution` list runs together. A license obligation follows
- *   from the terms a distributor grants: this package is `AGPL-3.0-only OR LicenseRef-Commercial`, and that expression
- *   states what a consumer may do with the artifacts. A provenance obligation follows from where an artifact's inputs
- *   came from: attribution and share-alike conditions attach to the source and survive redistribution, whichever branch
- *   of our own license a consumer takes. The two are rendered into separate files for that reason.
+ *   A license obligation comes from the package's own SPDX expression. A provenance obligation comes from an
+ *   artifact's sources and survives redistribution under either license branch. The record keeps the two apart.
  *
- *   Three readings here would each be wrong in the same direction, so none of them is made. A package whose card
- *   records no training attribution is recorded as recording none, never as having none. A declared artifact with no
- *   digest is recorded `unrecorded`, never as verified. And an overlay does not inherit its base's attribution list as
- *   though it were its own: the base's record is named, and the overlay's own artifacts keep whatever attribution the
- *   repository actually holds for them.
- *
- *   The last part is what a per-package record adds over one list in one card. `pair-index-gb.bin` ships in
- *   `@mailwoman/neural-weights-en-gb`, and the entry attributing it to HM Land Registry Price Paid Data under OGL v3.0
- *   sits in `@mailwoman/neural-weights-en-us`'s card. A consumer who installs the overlay receives the artifact and no
- *   attribution. {@link readWeightsRightsRecords} finds that class by looking for each package's artifact filenames in
- *   every other package's attribution text.
+ *   The record reports a gap as a gap. A card without attribution entries yields an empty list, a missing digest
+ *   reads `unrecorded`, and an overlay's inherited attribution stays labeled as the base's. The cross-package pass
+ *   also finds artifacts whose attribution sits in another package's card.
  */
 
 import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
@@ -32,41 +20,32 @@ import { type PathBuilderLike, resolvePath } from "path-ts"
 import { literalFilesEntries } from "#pack/verify-tarball"
 
 /**
- * What a package's `version` field in `model-card.json` denotes.
+ * The meaning of the `version` field in a package's `model-card.json`.
  *
- * A graph package's card version names the trained model: `en-us` at 9.1.0 is
- * the suffix-boundary model, and `mwops release verify-metadata` keys the ledger
- * and documentation checks off it rather than off the npm version.
- * An overlay's card version names that overlay's own artifacts, and the graph its rows
- * decode through is whatever `mailwoman.baseWeights` resolves to.
- *
- * Neither number is the npm version, which moves in lockstep across every workspace on every release.
- * The two series are described in `docs/records/site-2026-08/releases.mdx`.
+ * A graph package's card version identifies the trained model, and
+ * `mwops release verify-metadata` keys its checks on it.
+ * An overlay's card version identifies the overlay's own artifacts.
+ * Neither is the npm version, which every workspace shares.
  */
 export const VersionSeries = {
 	Model: "model",
 	Overlay: "overlay",
 } as const
 
+/**
+ * One value of {@link VersionSeries}.
+ */
 export type VersionSeries = (typeof VersionSeries)[keyof typeof VersionSeries]
 
 /**
- * What an artifact is, which decides whose lineage it carries.
+ * The kind of an artifact, which determines which sources it derives from.
  *
- * A package ships files with unrelated provenance under one `files` array.
- * `model.onnx` carries the corpus a training run read.
+ * The files in one package have unrelated provenance.
+ * `model.onnx` derives from the training corpus, `tokenizer.model` from the tokenizer text,
+ * and a pair index or postcode binary from one named register.
  *
- * `tokenizer.model` carries the text a tokenizer was fitted on, which is a different
- * and usually smaller set.
- * A pair index and a postcode binary are each built from one named register.
- *
- * A lexicon is curated.
- * Reporting one attribution list against all of them attributes the corpus to files no
- * corpus touched, and leaves the files that do have a distinct source unattributed.
- *
- * Derived from the filename, because that is what the manifest gives and the naming
- * is consistent across the twelve published packages.
- * An unrecognized name reads `other` rather than being guessed into a role.
+ * {@link roleForArtifact} derives the role from the file name.
+ * An unrecognized name maps to `other`.
  */
 export const ArtifactRole = {
 	ModelGraph: "model-graph",
@@ -80,10 +59,13 @@ export const ArtifactRole = {
 	Other: "other",
 } as const
 
+/**
+ * One value of {@link ArtifactRole}.
+ */
 export type ArtifactRole = (typeof ArtifactRole)[keyof typeof ArtifactRole]
 
 /**
- * The role a declared filename carries.
+ * Returns the role of a declared file name.
  */
 export function roleForArtifact(path: string): ArtifactRole {
 	const exact: Readonly<Record<string, ArtifactRole>> = {
@@ -111,57 +93,45 @@ export function roleForArtifact(path: string): ArtifactRole {
 }
 
 /**
- * A digest the card records for an artifact, or the reason there is none.
+ * One declared artifact with its role and the digest that the card records for it.
  */
 export interface ArtifactRecord {
 	path: string
 	role: ArtifactRole
 	md5: string | null
 	/**
-	 * `recorded` when the card's `files_md5` names this artifact.
-	 *
-	 * `unrecorded` when it does not.
-	 * An unrecorded digest is not a verified one, and a reader that treated `md5: null`
-	 * as "nothing to check" would read the second as the first.
+	 * `recorded` when the card's `files_md5` lists this artifact, and `unrecorded` otherwise.
 	 */
 	digest: "recorded" | "unrecorded"
 }
 
 /**
- * How a source contributed, as its own entry states it.
+ * The ways a source contributed, as its attribution entry states them.
  *
- * A single attribution list runs three different contributions together.
- * Two of `en-us`'s ten entries describe a coordinate evaluation set and no training rows at all,
- * and reading them as training attribution says the model learned from data it never saw.
- *
- * Two more describe tokenizer-splice text, which is a different and far smaller
- * set than the training corpus.
- *
- * An entry may carry more than one.
- * `OpenAddresses CZ … tokenizer-splice training text + the oa-cz coord eval sets` carries two,
- * and flattening it to either one loses a fact the entry states.
+ * Some entries describe evaluation sets or tokenizer text instead of training rows.
+ * One entry may state several uses.
  */
 export const SourceUse = {
 	Training: "training",
 	Tokenizer: "tokenizer",
 	Evaluation: "evaluation",
 	/**
-	 * The entry says nothing about how the source was used.
-	 *
-	 * The pointer to `THIRD_PARTY_NOTICES.md` is the case.
+	 * The entry does not say how the source was used.
 	 */
 	Unstated: "unstated",
 } as const
 
+/**
+ * One value of {@link SourceUse}.
+ */
 export type SourceUse = (typeof SourceUse)[keyof typeof SourceUse]
 
 /**
- * The uses one attribution entry states, read from its own words.
+ * Returns the uses that one attribution entry states in its prose.
  *
- * A reading of prose rather than of a field, so it reports what the entry says
- * and the entry travels verbatim beside it.
- * `unstated` is returned when nothing matches, never `training`: defaulting to training would turn
- * every entry whose wording this does not recognize into a claim about what the model learned from.
+ * It returns `unstated` when no pattern matches.
+ * It never defaults to `training`, because that default would claim the model
+ * learned from every unrecognized source.
  */
 export function usesStatedIn(entry: string): SourceUse[] {
 	const uses: SourceUse[] = []
@@ -183,37 +153,32 @@ export function usesStatedIn(entry: string): SourceUse[] {
 }
 
 /**
- * One attribution entry as the card states it, plus whether it names a license.
+ * One attribution entry from a card, with the license and uses it states.
  */
 export interface AttributionRecord {
 	/**
-	 * The entry verbatim.
+	 * The verbatim entry.
 	 *
-	 * Reproduced rather than summarized: the entry is the statement the repository has made,
-	 * and a paraphrase of a rights statement is a different statement.
+	 * The record keeps the exact wording because a paraphrased rights statement is a different statement.
 	 */
 	text: string
 	/**
-	 * The license the entry names, when the entry names one in the parenthetical the cards use.
-	 *
-	 * `null` when it names none, which is a gap rather than a permissive reading.
+	 * The license that the entry states in a parenthetical.
+	 * It is `null` when the reader finds none.
 	 */
 	licenseNamed: string | null
 	/**
-	 * What the entry says the source was used for.
-	 *
-	 * `["unstated"]` when it says nothing, never `["training"]`.
+	 * The uses that the entry states.
+	 * It is `["unstated"]` when the entry states none.
 	 */
 	uses: SourceUse[]
 }
 
 /**
- * What an overlay inherits from the package whose model graph it decodes through.
+ * The attribution that an overlay inherits from the package that owns its model graph.
  *
- * The attribution is the base's, restated here so a consumer who installed the overlay alone can read
- * it, and labeled as the base's so nobody reads it as a claim about this package's own artifacts.
- * `en-au` inherits `en-us`'s ten entries and contributed none of them: no AusTender row
- * trained that encoder, and an inherited list presented as the overlay's own would say it did.
+ * The record repeats the base's attribution so a consumer of the overlay alone can read it.
+ * The record labels it as the base's because the overlay's own artifacts did not contribute to that model.
  */
 export interface InheritedLineage {
 	package: string
@@ -221,16 +186,18 @@ export interface InheritedLineage {
 	modelCardVersion: string | null
 	attribution: AttributionRecord[]
 	/**
-	 * The chain from this package to the graph package, longest first, when a base itself declares a base.
-	 *
-	 * Cycles and an unresolvable base are reported rather than followed.
+	 * The package names from this package to the graph package, in walk order.
 	 */
 	chain: string[]
+	/**
+	 * The reason the walk stopped early, such as a cycle or a base outside the set.
+	 * It is `null` when the walk reached a graph package.
+	 */
 	unresolved: string | null
 }
 
 /**
- * An artifact this package ships whose attribution another package's card carries.
+ * An artifact that this package ships whose attribution appears in another package's card.
  */
 export interface ForeignAttribution {
 	artifact: string
@@ -238,51 +205,43 @@ export interface ForeignAttribution {
 	text: string
 }
 
+/**
+ * The rights record of one weights package.
+ */
 export interface WeightsRightsRecord {
 	workspace: string
 	packageName: string
 	packageVersion: string
 	/**
-	 * The SPDX expression the manifest declares.
+	 * The SPDX expression that the manifest declares.
 	 *
-	 * The `package-license` repository check holds it equal to the root's.
+	 * The `package-license` repository check keeps it equal to the root's.
 	 */
 	license: string
 	/**
 	 * The card's own version, or `null` when the package ships no card.
-	 *
-	 * `base-latn` is the one such package.
 	 */
 	modelCardVersion: string | null
 	versionSeries: VersionSeries
 	/**
-	 * The package whose model graph this one decodes through, or `null` for a graph package.
+	 * The package that owns the model graph this package uses, or `null` for a graph package.
 	 */
 	baseWeights: string | null
 	artifacts: ArtifactRecord[]
 	/**
-	 * The card's attribution entries, from whichever of the two spellings it uses.
-	 *
-	 * An empty array means the card records none under either.
+	 * The card's attribution entries under either field spelling.
+	 * It is empty when the card records none.
 	 */
 	attribution: AttributionRecord[]
 	foreignAttribution: ForeignAttribution[]
 	/**
-	 * The lineage this package inherits by decoding through another package's model graph,
-	 * or `null` for a graph package.
-	 *
-	 * An overlay ships its own artifacts and no model graph, so what its rows
-	 * were trained on is a fact about the base.
-	 * Naming the base and stopping leaves a consumer who installed the overlay alone
-	 * unable to see any of it, which is the state every overlay's record was in:
-	 * `base_weights` filled, `training_attribution` empty.
+	 * The lineage inherited from the base package's model graph, or `null` for a graph package.
 	 */
 	inherited: InheritedLineage | null
 	/**
-	 * The corpus the card names, when it names one.
+	 * The corpus version that the card states.
 	 *
-	 * Not evidence of which records reached the model: the corpus on the training volume moves,
-	 * and no frozen per-release manifest exists to compare it against.
+	 * It does not prove which records reached the model, because no frozen per-release corpus manifest exists.
 	 */
 	corpusVersion: string | null
 	tokenizerVersion: string | null
@@ -292,12 +251,12 @@ interface ModelCard {
 	version?: unknown
 	files_md5?: unknown
 	/**
-	 * The spelling `cjk` uses.
+	 * The attribution field spelling that the `cjk` card uses.
 	 */
 	attribution?: unknown
 	training?: {
 		/**
-		 * The spelling `en-us` uses.
+		 * The attribution field spelling that the `en-us` card uses.
 		 */
 		data_attribution?: unknown
 		corpus_version?: unknown
@@ -306,17 +265,9 @@ interface ModelCard {
 }
 
 /**
- * The attribution entries a card holds, under either spelling the two graph packages use.
+ * Returns a card's attribution entries from `training.data_attribution` or a top-level `attribution`.
  *
- * `en-us` records them at `training.data_attribution` and `cjk` at a top-level `attribution`.
- * Reading one spelling reports the other package as recording nothing, which is the reading
- * this whole record exists to refuse: `cjk` carries six entries, each naming its license,
- * including the Taiwanese Open Government Data License that voids without its 顯名聲明
- * and the fifteen civil affairs bureaux that license names.
- *
- * Both are read rather than one being migrated to the other, because a model card is a
- * published artifact: the twelve on npm carry the spelling they were published with,
- * and a reader of this repository has to match them.
+ * Published cards use both spellings, and published cards cannot change, so the reader accepts both.
  */
 function attributionEntries(card: ModelCard | null): string[] {
 	const candidates = [card?.training?.data_attribution, card?.attribution]
@@ -333,29 +284,22 @@ function attributionEntries(card: ModelCard | null): string[] {
 }
 
 /**
- * The license a card's attribution entry names, from the parenthetical the entries use —
- * `LINZ-derived OpenAddresses NZ (CC-BY 4.0): …` yields `CC-BY 4.0`.
+ * Returns the license that an attribution entry states in a parenthetical.
  *
- * `null` when no parenthetical in the entry holds one, which includes the OA PL
- * entry whose parenthetical reads `public, BDOT-derived`.
+ * For example, `LINZ-derived OpenAddresses NZ (CC-BY 4.0): …` yields `CC-BY 4.0`.
  *
- * A `null` here reports what this reader found rather than what the entry grants.
- * Two of `cjk`'s entries state their terms as 利用規約 and 이용허락범위 제한 없음, outside any
- * parenthetical, so they read `null` while naming terms.
- *
- * The entry text travels verbatim beside this field for that reason.
+ * It returns `null` when no parenthetical holds a license.
+ * Some entries state their terms outside a parenthetical, so `null` describes what this reader found.
+ * The verbatim entry text stays beside it.
  */
 export function licenseNamedIn(entry: string): string | null {
-	// Every parenthetical rather than the first.
-	// An entry commonly opens with the dataset's own name —
-	// `Korean road-name address data (주소DB): 행정안전부 …, 공공누리 제1유형 (KOGL Type 1)` — and reading
-	// only the first reports an entry that names KOGL Type 1 as naming no license at all.
+	// An entry often opens with a parenthetical in the dataset's own name,
+	// so the reader checks every parenthetical.
 	for (const match of entry.matchAll(/\(([^()]{1,120})\)/gu)) {
 		const inner = match[1]!.trim()
 
-		// A license identifier carries a version number, or a family name this repository
-		// recognizes, or the word `license` in one of its spellings.
-		// `public, BDOT-derived` carries none of the three and describes access rather than a grant.
+		// A parenthetical holds a license when it contains a version number,
+		// a known license family, or a spelling of the word "license".
 		const namesLicense =
 			/\d/u.test(inner) ||
 			/\b(?:CC0|CC-BY|CC|ODbL|PDDL|OGL|OGDL|KOGL|CDLA|Etalab|MIT|Apache|Licence|License|Lizenz)\b/iu.test(inner)
@@ -367,12 +311,9 @@ export function licenseNamedIn(entry: string): string | null {
 }
 
 /**
- * Files a weights package declares that document it rather than carry data.
+ * The documentation files that a weights package declares.
  *
- * The same distinction `data-provenance` draws over a `data/` directory, for the
- * same reason: a digest over a README states nothing about an input's provenance,
- * and listing one as an artifact with no digest reports a gap that is not one.
- * `model-card.json` joins them because it is the record the rest of this document is read from.
+ * The record excludes them from the artifact list because they carry no data with provenance.
  */
 const DOCUMENTATION_FILES: ReadonlySet<string> = new Set([
 	"README.md",
@@ -387,10 +328,10 @@ function stringOrNull(value: unknown): string | null {
 }
 
 /**
- * Read one weights workspace's record.
+ * Reads the rights record of one weights workspace.
  *
- * @throws When the manifest is unreadable rather than returning an empty record: a rights
- * record nobody can read must not resolve to a package that ships nothing and owes nothing.
+ * @throws When the manifest is unreadable or lacks `name`, `version` or `license`.
+ * An empty record would wrongly report that the package ships nothing.
  */
 export async function readWeightsRightsRecord(
 	repoRoot: PathBuilderLike,
@@ -436,7 +377,7 @@ export async function readWeightsRightsRecord(
 			uses: usesStatedIn(text),
 		})),
 		foreignAttribution: [],
-		// Both filled by `readWeightsRightsRecords`: each is a question about the set rather than about one package.
+		// `readWeightsRightsRecords` fills `foreignAttribution` and `inherited` because both depend on the whole set.
 		inherited: null,
 		corpusVersion: stringOrNull(card?.training?.corpus_version),
 		tokenizerVersion: stringOrNull(card?.training?.tokenizer_version),
@@ -444,11 +385,10 @@ export async function readWeightsRightsRecord(
 }
 
 /**
- * Every weights workspace's record, with {@link WeightsRightsRecord.foreignAttribution} filled in.
+ * Reads the rights record of every listed weights workspace, then fills each record's
+ * {@link WeightsRightsRecord.foreignAttribution} and {@link WeightsRightsRecord.inherited}.
  *
- * The cross-package pass runs here rather than in the single-workspace reader because it
- * is a question about the set: an artifact's attribution is foreign only relative to the
- * other packages that could have carried it, and reading one package cannot establish that.
+ * An artifact's attribution is foreign when its file name appears in another package's attribution entry.
  */
 export async function readWeightsRightsRecords(
 	repoRoot: PathBuilderLike,
@@ -488,12 +428,12 @@ export async function readWeightsRightsRecords(
 }
 
 /**
- * Walk from an overlay to the package that owns the model graph, and carry that package's attribution back.
+ * Follows `mailwoman.baseWeights` from an overlay to the package that owns the
+ * model graph and returns that package's attribution.
  *
- * Follows `mailwoman.baseWeights` rather than assuming one hop, since a base may itself declare one.
- * A cycle and a base outside the set both stop the walk and are reported in `unresolved`,
- * because a lineage that cannot be resolved is a different answer from a lineage
- * that is empty, and this record exists to keep those apart.
+ * The walk follows every hop because a base may declare its own base.
+ * A cycle or a base outside the set stops the walk and sets `unresolved`,
+ * which keeps an unresolved lineage distinct from an empty one.
  */
 function resolveInherited(
 	record: WeightsRightsRecord,

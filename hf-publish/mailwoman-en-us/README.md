@@ -23,7 +23,7 @@ base_model: mailwoman-en-us
 
 # Mailwoman — Neural Address Parser (en-US, v0.5.4)
 
-Open-source neural address parser that runs entirely in the browser via ONNX Runtime Web.
+Mailwoman is an open-source neural address parser that runs entirely in the browser via ONNX Runtime Web.
 
 - **Source**: https://github.com/sister-software/mailwoman
 - **Demo**: https://mailwoman.ai/demo
@@ -70,13 +70,13 @@ Stage 3 (street decomposition + unit + po_box + intersection) is planned for v0.
 
 ## Training
 
-| Field             | Value                                              |
-| ----------------- | -------------------------------------------------- |
-| Corpus version    | 0.4.0                                              |
-| Tokenizer version | 0.6.0-a0 (multi-script, 0% CJK byte-fallback)      |
-| Steps             | 100,000                                            |
-| Hardware          | NVIDIA A100-SXM4-40GB                              |
-| Recipe            | v0.5.1 (constant LR, no smoothing, wof-admin: 2.0) |
+| Field             | Value                                               |
+| ----------------- | --------------------------------------------------- |
+| Corpus version    | 0.4.0                                               |
+| Tokenizer version | 0.6.0-a0 (multi-script, 0% CJK byte-fallback)       |
+| Steps             | 100,000                                             |
+| Hardware          | NVIDIA A100-SXM4-40GB                               |
+| Recipe            | v0.5.1 (constant LR, smoothing off, wof-admin: 2.0) |
 
 Training data sources:
 
@@ -92,13 +92,13 @@ Training data sources:
 | Demo presets (6 canonical addresses)    | 6/6 correct |
 | Golden eval exact match (4,535 entries) | 17.0%       |
 
-Note: exact-match metrics are not comparable across tokenizer versions. The v0.5.3 baseline (25.3%) used a different tokenizer and most "failures" are schema mismatch (golden set expects Stage 3 tags the model doesn't emit).
+Exact-match metrics cannot be compared across tokenizer versions. The v0.5.3 baseline (25.3%) used a different tokenizer. Most of the failures are schema mismatches, because the golden set expects Stage 3 tags that this model does not emit.
 
 ## Limitations
 
-- **English only**: trained on US addresses primarily. French and other locales planned.
-- **Non-Latin scripts**: tokenizer handles CJK/Korean/Thai (0% byte-fallback) but training data is mostly Latin. CJK address parsing not yet validated.
-- **Stage 2 schema**: doesn't decompose streets into prefix/suffix or emit unit/po_box/intersection. Stage 3 v0.6.0 will.
+- **English only**: the model was trained primarily on US addresses. French and other locales are planned.
+- **Non-Latin scripts**: the tokenizer handles CJK/Korean/Thai (0% byte-fallback), but the training data is mostly Latin. CJK address parsing has not been validated.
+- **Stage 2 schema**: the model does not decompose streets into prefix/suffix or emit unit/po_box/intersection. Stage 3 (v0.6.0) will add these.
 
 ## Citation
 

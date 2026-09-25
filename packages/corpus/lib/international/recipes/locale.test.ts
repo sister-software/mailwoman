@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Tests city cleanup, CSV parsing, country suffixes, and district/locality overrides. Small fixtures
- *   exercise these helpers without reading the full OpenAddresses or Land Registry datasets.
+ *   Tests the locale recipe's city cleanup, CSV reading, country appending and district overrides against small
+ *   fixtures.
  */
 
 import { COUNTRY_SURFACE_FORMS } from "@mailwoman/codex/country"
@@ -81,7 +81,6 @@ describe("readTuples (OA CSV parse)", () => {
 
 	afterAll(() => Promise.all(dirs.map((d) => removePathIfPresent(d))))
 
-	// Sample header and rows exercise quoted fields, CRLF, and region fallback.
 	const OA_HEADER = "LON,LAT,NUMBER,STREET,UNIT,CITY,DISTRICT,REGION,POSTCODE,ID,HASH"
 
 	it("parses quoted fields, CRLF terminators, and the region fallback", async () => {
@@ -90,9 +89,8 @@ describe("readTuples (OA CSV parse)", () => {
 		await writeLocalTextFile(
 			[
 				OA_HEADER,
-				// Quoted street and populated region.
 				'22.6,49.3,12,"Main St, West",,Springfield,dist,Bayern,38-710,id1,hash1',
-				// Empty region falls back to the part-level value.
+				// This row has an empty region, so the part's region applies.
 				"22.7,49.2,5,Elm Ave,,Shelbyville,dist,,38-711,id2,hash2",
 			].join("\r\n") + "\r\n",
 			file
@@ -112,9 +110,9 @@ describe("readTuples (OA CSV parse)", () => {
 		await writeLocalTextFile(
 			[
 				OA_HEADER,
-				// NZ columns put suburb in city and Auckland in district; no postcode is supplied.
+				// NZ puts the suburb in CITY and the city in DISTRICT.
 				"174.7,-36.8,31,Rawene Road,,Birkenhead,Auckland,,,id1,hash1",
-				// Without a district, use city as locality.
+				// This row has no district, so CITY becomes the locality.
 				"174.4,-36.6,26A,Henley Road,,Kaukapakapa,,,,id2,hash2",
 			],
 			file
@@ -168,9 +166,7 @@ describe("readTuples (OA CSV parse)", () => {
 		await writeLocalTextFile(
 			[
 				OA_HEADER,
-				// Equal city and district names must not produce duplicate locality components.
 				"1,2,10,Main St,,AMURRIO,Amurrio,Araba,01450,id,hash",
-				// Distinct values still produce a dependent locality.
 				"1,2,11,Elm Ave,,Baranbio,Amurrio,Araba,01450,id2,hash2",
 			],
 			file
@@ -197,9 +193,8 @@ describe("readTuples (OA CSV parse)", () => {
 		await writeLocalTextFile(
 			[
 				"X,Y,id_porpk,tipo,tipo_vial,nombre_via,numero,extension,id_pob,poblacion,cod_postal,ine_mun,municipio,provincia,comunidad_autonoma,fuente_datos,fecha_modificacion",
-				// Distinct settlement and municipality names.
 				'-2.922,43.0507,"1","PK",CARRETERA,A-2522,35,,"1600005667",Baranbio,01450,01002,Amurrio,Araba/Álava,País Vasco/Euskadi,src,2017/04/03',
-				// Empty population falls back to municipality as locality.
+				// This row has an empty `poblacion`, so it gets no dependent locality.
 				'-2.503,42.836,"2","PK",CARRETERA,A-4136,15,,,,01240,01001,Alegría-Dulantzi,Araba/Álava,País Vasco/Euskadi,src,2017/04/03',
 			],
 			file
@@ -232,10 +227,10 @@ describe("readTuples (OA CSV parse)", () => {
 		await writeLocalTextFile(
 			[
 				OA_HEADER,
-				"1,2,10,,,NoStreetCity,d,R,00000,i,h", // Missing street.
-				"1,2,11,SomeSt,,,d,R,00000,i,h", // Missing city.
-				'1,2,12,RealSt,,"Comunidad de 09076, 09150 y 09578",d,R,00000,i,h', // Pseudo-locality.
-				"1,2,13,Keep St,,Keepville,d,R,00000,i,h", // Valid row.
+				"1,2,10,,,NoStreetCity,d,R,00000,i,h",
+				"1,2,11,SomeSt,,,d,R,00000,i,h",
+				'1,2,12,RealSt,,"Comunidad de 09076, 09150 y 09578",d,R,00000,i,h',
+				"1,2,13,Keep St,,Keepville,d,R,00000,i,h",
 			],
 			file
 		)
@@ -319,7 +314,7 @@ describe("applyDistrictAsLocalityOverride (--district-as-locality tri-state)", (
 		const part: LocalePart = { path: "/x.csv" }
 
 		expect(applyDistrictAsLocalityOverride(part, true)).toEqual({ path: "/x.csv", districtAsLocality: true })
-		// Overrides copy the entry rather than mutating the registered source.
+		// The override returns a copy and leaves the registered part unchanged.
 		expect(part.districtAsLocality).toBeUndefined()
 	})
 

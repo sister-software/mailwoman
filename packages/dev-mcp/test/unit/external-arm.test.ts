@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Test external geocoder parsing and refusals against scripted responses without network access.
+ *   Tests external geocoder parsing and refusals against scripted responses, with no network access.
  */
 
 import { createFakeClock } from "@mailwoman/core/api/test-clocks"
@@ -83,7 +83,7 @@ describe("ExternalGeocoderClient.search", () => {
 	})
 
 	it("refuses a transposed position instead of scoring the distance to it", async () => {
-		// The swapped latitude is outside the valid range and must not be scored.
+		// After the swap the latitude is -120.4, which is out of range.
 		const swapped = {
 			features: [{ type: "Feature", geometry: { type: "Point", coordinates: [37.3, -120.4] }, properties: {} }],
 		}
@@ -125,7 +125,7 @@ describe("ExternalGeocoderClient.probeIdentity", () => {
 	})
 
 	it("refuses an endpoint that will not say what it is, because a drop-in answers identically", async () => {
-		// Photon exposes no version on its search path, so a missing status endpoint cannot identify it.
+		// Photon reports no version on its search path, so the endpoint cannot identify itself without `/status`.
 		const search = {
 			features: [{ type: "Feature", geometry: { type: "Point", coordinates: [2.35, 48.85] }, properties: {} }],
 		}
@@ -159,7 +159,7 @@ describe("ExternalGeocoderClient.probeIdentity", () => {
 
 describe("ExternalGeocoderClient pacing", () => {
 	it("spaces dispatches at the configured interval, which is the check that actually holds a rate", async () => {
-		// Verify actual dispatch spacing; a requests-per-minute setting alone does not enforce pacing.
+		// The test measures dispatch times, because a configured rate alone proves nothing about pacing.
 		const clock = createFakeClock()
 		const transport = stubTransport([{ body: PELIAS_HIT }], { clock })
 

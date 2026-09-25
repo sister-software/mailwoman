@@ -3,9 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Score parser output against the hand-written parity corpus.
- *   Default floors are pre-registered; comparisons fold case and whitespace.
- *   The street floor covers the assembled neural street-name family.
+ *   Parity-corpus eval, which scores parser output against hand-written expectations with case and whitespace folded.
  */
 
 import { groupTuplesByTag } from "@mailwoman/core/decoder"
@@ -20,42 +18,43 @@ import type { PathBuilderLike } from "path-ts"
 import { JSONSpliterator } from "spliterator"
 
 /**
- * Default triaged corpus; pass `--fixtures` to reproduce the original v1 denominator.
- * The report names the corpus and counts skipped tombstones.
- */
-/**
- * Minimum examples retained for parity-bucket diagnostics.
+ * Maximum number of spurious-emission examples printed per label.
  */
 const MIN_BUCKET_EXAMPLES = 8
 
 /**
- * Default triaged parity corpus.
+ * Repository-relative path of the default triaged parity corpus.
  */
 export const PARITY_FIXTURES_PATH = "packages/mailwoman/lib/eval-harness/fixtures/parity-corpus.triaged.jsonl"
 
 /**
- * Original v1 corpus, available through `--fixtures`.
+ * Repository-relative path of the original v1 corpus, which `--fixtures` can select.
  */
 export const PARITY_FIXTURES_V1_PATH = "packages/mailwoman/lib/eval-harness/fixtures/parity-corpus.jsonl"
 
+/**
+ * One parity-corpus row.
+ */
 export interface ParityFixture {
 	/**
-	 * Stable source-derived fixture id.
+	 * Stable fixture ID derived from the source.
 	 */
 	id: string
 	input: string
 	country: string
 	/**
-	 * Provenance: the v1 parity file this assertion came from.
+	 * The v1 parity file that the assertion came from.
 	 */
 	source: string
 	/**
-	 * Expected component values; absent on tombstones.
+	 * Expected component values.
+	 * Tombstone rows omit it.
 	 */
 	expect?: Record<string, string[]>
 	/**
-	 * Tombstone reason.
-	 * The runner skips these rows but the provenance survives.
+	 * Reason the row was retired.
+	 *
+	 * The runner skips such rows, and the file keeps them for provenance.
 	 */
 	dropped?: string
 	/**
@@ -63,15 +62,15 @@ export interface ParityFixture {
 	 */
 	alternatives?: number
 	/**
-	 * Legacy tags without a `ComponentTag` equivalent.
+	 * Legacy tags that have no `ComponentTag` equivalent.
 	 */
 	droppedTags?: string[]
 }
 
 /**
- * Pre-registered floors (plan 2, 2026-07-13).
+ * Pre-registered agreement floors per label.
  *
- * Shared verbatim with the held swap checks.
+ * The oracle-k eval and the failure report reuse these labels and tags.
  */
 export const PARITY_FLOORS = [
 	{ label: "house_number", floor: 0.97, tags: ["house_number"] },
@@ -79,6 +78,9 @@ export const PARITY_FLOORS = [
 	{ label: "street", floor: 0.9, tags: ["street_prefix", "street", "street_prefix_particle", "street_suffix"] },
 ] as const
 
+/**
+ * Options for {@link runParityEval}.
+ */
 export interface ParityEvalOptions {
 	locale?: string
 	modelPath?: string
@@ -86,27 +88,32 @@ export interface ParityEvalOptions {
 	modelCardPath?: string
 	fixturesPath?: string
 	/**
-	 * Package-shaped candidate weights root, including sibling channels.
+	 * Candidate weights root laid out like a weights package, including its sibling files.
 	 */
 	weightsCacheRoot?: string
 	/**
-	 * Enable the decode-time street-morphology emission bias.
+	 * Whether to apply the decode-time street-morphology emission bias.
 	 */
 	streetMorphology?: boolean
 	/**
-	 * Enable the gazetteer FST emission prior.
+	 * Whether to apply the gazetteer FST emission prior.
+	 * It is on unless set to `false`.
 	 */
 	gazetteerPrior?: boolean
 	/**
-	 * Use production word-consistency healing; disable to reproduce older baselines.
+	 * Whether to apply word-consistency healing.
+	 * It follows the production default unless set to `false`.
 	 */
 	wordConsistency?: boolean
 	/**
-	 * Maximum disagreements listed per floor label.
+	 * Maximum number of disagreements listed per floor label.
 	 */
 	failing?: number
 }
 
+/**
+ * Exit code of a parity eval run.
+ */
 export interface ParityEvalOutcome {
 	exitCode: number
 }
@@ -116,9 +123,8 @@ function loadFixtures(path: string): Promise<ParityFixture[]> {
 }
 
 /**
- * Run the parity-corpus eval.
- *
- * Narrates per-label + per-country tables and a floor verdict on stdout.
+ * Runs the parity-corpus eval and prints per-label, precision, and per-country
+ * tables with the floor verdict.
  */
 export async function runParityEval(options: ParityEvalOptions = {}): Promise<ParityEvalOutcome> {
 	const fixtures = await loadFixtures(options.fixturesPath ?? PARITY_FIXTURES_PATH)
@@ -135,7 +141,7 @@ export async function runParityEval(options: ParityEvalOptions = {}): Promise<Pa
 	let fstGazetteer: FSTMatcher | undefined
 
 	if (options.gazetteerPrior !== false) {
-		// Use the classifier's weights-package sibling, matching runtime resolution.
+		// The runtime loads the FST that sits beside the classifier's weights, so the eval does too.
 		const fstPath = (classifier as { fstPath?: PathBuilderLike }).fstPath
 
 		if (fstPath) {
@@ -145,7 +151,6 @@ export async function runParityEval(options: ParityEvalOptions = {}): Promise<Pa
 
 			console.log(`gazetteer prior ON (${fstPath})`)
 		} else {
-			// Report missing FST explicitly; otherwise results could be misread as prior-on.
 			console.warn(
 				"gazetteer prior REQUESTED but this weights package ships no FST — the channel is OFF and these numbers " +
 					"are the base model's. Do not compare them against a prior-on arm."
@@ -156,7 +161,6 @@ export async function runParityEval(options: ParityEvalOptions = {}): Promise<Pa
 	let fstStreetMorphology: FSTMatcher | undefined
 
 	if (options.streetMorphology) {
-		// Use the shared loader's artifact-first resolution and fallback behavior.
 		const { loadStreetMorphologyFST } = await import("@mailwoman/resolver-wof-sqlite/street")
 		const loaded = await loadStreetMorphologyFST({ onWarn: (message) => console.warn(message) })
 		fstStreetMorphology = loaded.matcher
@@ -167,15 +171,15 @@ export async function runParityEval(options: ParityEvalOptions = {}): Promise<Pa
 	}
 
 	const tallies = new Map(PARITY_FLOORS.map((f) => [f.label, { hit: 0, total: 0, failing: [] as string[] }]))
-	// Measure precision separately: floor rates exclude rows whose gold lacks the tag.
-	// Informational only; operators set any precision floor.
+	// Floor rates only cover rows whose gold has the tag.
+	// Precision covers the other rows and does not affect the verdict.
 	const precision = new Map(PARITY_FLOORS.map((f) => [f.label, { spurious: 0, absent: 0, examples: [] as string[] }]))
 	const byCountry = new Map<string, { cases: number; fullAgree: number }>()
 
 	for (const fixture of live) {
 		const expect = fixture.expect!
 
-		// Match production parse options, including query shape and word consistency.
+		// These parse options mirror production, including query shape and word consistency.
 		const byTag = groupTuplesByTag(
 			await classifier.parse(fixture.input, {
 				postcodeRepair: true,
@@ -188,7 +192,7 @@ export async function runParityEval(options: ParityEvalOptions = {}): Promise<Pa
 
 		let caseAgrees = true
 
-		// The precision half: on a row whose gold does not carry this tag, did we emit it anyway?
+		// Count rows where the parser emits a tag that the gold lacks.
 		for (const { label, tags } of PARITY_FLOORS) {
 			if (expect[label]?.length) continue
 			const bucket = precision.get(label)!
@@ -226,7 +230,7 @@ export async function runParityEval(options: ParityEvalOptions = {}): Promise<Pa
 			}
 		}
 
-		// Report full-case agreement separately; non-floor tags compare by tag name.
+		// Full-case agreement also requires every non-floor tag to match its gold value.
 		for (const [tag, goldValues] of Object.entries(expect)) {
 			if (PARITY_FLOORS.some((f) => f.label === tag)) continue
 
@@ -270,7 +274,6 @@ export async function runParityEval(options: ParityEvalOptions = {}): Promise<Pa
 		)
 	}
 
-	// Precision is informational and does not affect the verdict.
 	console.log("")
 	console.log("precision (the half the floors above cannot see — rows whose gold has NO such tag)")
 	console.log("label          spurious   rate     of rows")

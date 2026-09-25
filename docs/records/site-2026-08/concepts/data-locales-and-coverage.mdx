@@ -10,7 +10,7 @@ review-by: 2026-10-14
 
 # Data, locales, and coverage
 
-Old topographic sheets carried a reliability diagram in the margin: a small inset dividing the map into the parts surveyed on the ground, the parts compiled from aerial photography, and the parts sketched from older sources. Same sheet, same symbols, three grades of trust. This page is that inset for Mailwoman: which places the system handles, from what data, and where the trust runs out.
+Old topographic sheets carried a reliability diagram in the margin: a small inset dividing the map into the parts surveyed on the ground, the parts compiled from aerial photography, and the parts sketched from older sources. The sheet used the same symbols for all three grades of reliability. This page serves the same purpose for Mailwoman. It describes which places the system handles, from what data, and where coverage ends.
 
 One distinction organizes everything below. "Supported" is two separate claims, and a locale can hold one without the other:
 
@@ -72,7 +72,7 @@ The tier table lives in [the scope declaration](https://github.com/sister-softwa
 
 The scope table also carries a row this summary folds out: its tier 4 records a shipped tokenizer change for the diacritic-heavy locales, a change record rather than a coverage grade.
 
-Two clarifications the table can't carry. First, there is one trained model. The `en-us` and `fr-fr` weight packages currently ship the same binary, trained on a multi-country corpus; locale-specific weights are future work, and the tiers describe how well that one model plus the data serves each locale. Second, Tier 2 is exactly the "parses frequently, resolves thin" case the Kraków run demonstrated. The Dutch panel is the outlier that proves the axis is data: block-grain PC6 postcodes take NL to a 0.05 km median without any rooftop register, because the postcode data is nearly rooftop-grade by itself.
+Two clarifications the table can't carry. First, there is one trained model. The `en-us` and `fr-fr` weight packages currently ship the same binary, trained on a multi-country corpus; locale-specific weights are future work, and the tiers describe how well that one model plus the data serves each locale. Second, Tier 2 is exactly the "parses well, resolves coarsely" case the Kraków run demonstrated. The Dutch panel is the outlier that shows the difference comes from data: block-grain PC6 postcodes take NL to a 0.05 km median without any rooftop register, because the postcode data is nearly rooftop-grade by itself.
 
 Absence from the table is also a claim. The Ulaanbaatar address you try will probably still resolve (the admin gazetteer covers most of the world), but nothing has measured how well, so nothing is promised.
 
@@ -84,7 +84,7 @@ Everything the resolver consults is a read-only SQLite artifact, sealed at build
 - **Postcode layers.** US postcode centroids, Dutch PC6 codes at street-block grain, and a GeoNames-derived tail for much of the rest of the world, folded onto WOF-keyed entries.
 - **Rooftop registers.** The precision tier. The US situs layer: 124.9 million address points across 50 per-state extracts, built from the National Address Database and OpenAddresses (release 2026-05-20.0). The French BAN layer: 26.0 million points across 101 départements (release 2026-05-18). These two are why Tier 1 reports 1 m uncertainties and Tier 2 does not.
 - **Interpolation and street data.** US TIGER street segments for house-number ranges; BAN street centroids for French street-only queries.
-- **Reference data in the packages.** [`@mailwoman/codex`](https://www.npmjs.com/package/@mailwoman/codex) (per-address-system facts: USPS suffixes, ZIP shapes), locale-hintd variant aliases, and the bundled libpostal dictionaries and libaddressinput format rules.
+- **Reference data in the packages.** [`@mailwoman/codex`](https://www.npmjs.com/package/@mailwoman/codex) (per-address-system facts: USPS suffixes, ZIP shapes), locale-hinted variant aliases, and the bundled libpostal dictionaries and libaddressinput format rules.
 
 The full source catalog, with per-source notes and the licensing gradient, is [the address-data-sources reference](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/address-data-sources.mdx).
 
@@ -92,7 +92,7 @@ Provenance is a design constraint. The shipped core is built entirely from permi
 
 ## Where coverage runs out
 
-Coverage gives out by degrees. [The precision ladder](./how-mailwoman-resolves-a-place.mdx#the-precision-ladder) consults each rung only when the finer one has nothing, so a missing register degrades the answer rather than emptying it: no rooftop point means an interpolated estimate, no street segment means a postcode or locality centroid, and the output names the rung it used. What you must not do is ignore `resolution_tier` and treat every coordinate as a delivery point. The Kraków result is a correct town rather than a correct door.
+Coverage gives out by degrees. [The precision ladder](./how-mailwoman-resolves-a-place.mdx#the-precision-ladder) consults each rung only when the finer one has nothing, so a missing register degrades the answer rather than emptying it. Without a rooftop point, the resolver returns an interpolated estimate. Without a street segment, it returns a postcode or locality centroid. The output's `resolution_tier` field reports the rung it used. Do not ignore `resolution_tier` and treat every coordinate as a delivery point. The Kraków result is a correct town rather than a correct door.
 
 The floor drops away only when the gazetteer has never heard of the place. Then the parse survives and the coordinate does not:
 
@@ -105,7 +105,7 @@ locality:         Blorenfeld
 
 No point is invented. An unresolved span stays a labeled span, and downstream code can tell the difference.
 
-The visual evidence for all of this is on [the demo map](https://mailwoman.ai/demo). Its Layers panel carries two coverage overlays, "Coverage · optimistic fog" and "Coverage · direct fog": populated places the resolver cannot yet pin render as gray fog, weighted by importance, while rooftop and postcode coverage clears the fog. The optimistic reading lifts partial coverage so gaps surface as you zoom in; the second reading shades by what the data can do today. The fog sits exactly where civilization exists and our data does not — much of Africa, the Middle East, Central and South Asia, and South America, plus gaps like the UK and Ireland. The overlay build is documented in [the coverage-overlay runbook](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/coverage-overlay.mdx).
+The visual evidence for all of this is on [the demo map](https://mailwoman.ai/demo). Its Layers panel carries two coverage overlays, "Coverage · optimistic fog" and "Coverage · measured fog": populated places the resolver cannot yet pin render as gray fog, weighted by importance, while rooftop and postcode coverage clears the fog. The optimistic reading lifts partial coverage so gaps surface as you zoom in; the second reading shades by what the data can do today. The fog sits exactly where civilization exists and our data does not — much of Africa, the Middle East, Central and South Asia, and South America, plus gaps like the UK and Ireland. The overlay build is documented in [the coverage-overlay runbook](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/coverage-overlay.mdx).
 
 ## Where the parser's knowledge comes from
 
@@ -119,4 +119,4 @@ Three instruments, in the order you'd reach for them:
 - **The eval record.** [The eval reports](https://github.com/sister-software/mailwoman/blob/main/docs/records/evals/index.mdx) are the graded, dated evidence behind every claim above — the [parity scorecards](https://github.com/sister-software/mailwoman/blob/main/docs/records/evals/competitive-parity/index.mdx) for per-tag parse quality, the [resolver and geo panels](https://github.com/sister-software/mailwoman/blob/main/docs/records/evals/resolver-geo/index.mdx) for coordinate accuracy per locale.
 - **Your own sample.** The two-command pattern at the top of this page works on your data. If your addresses are heavy in a Tier-2 or Tier-3 locale, run a few hundred through `mailwoman geocode` and read the `resolution_tier` distribution before committing; [which languages Mailwoman handles well](./language-support.mdx) is the plain-language companion read, per language rather than per data layer.
 
-When a place is missing from the tiers, the fog, and the panels, that is the answer: unmeasured, therefore unclaimed. The tier table moves when new data and new evals land, and the scope declaration is where it moves first.
+When a place is missing from the tiers, the fog, and the panels, that absence is the answer: nothing has measured it, so Mailwoman makes no claim about it. The tier table moves when new data and new evals land, and the scope declaration is where it moves first.

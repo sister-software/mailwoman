@@ -1,25 +1,19 @@
-"""Staging assets from R2 onto the training volume, container-side.
+"""Stage assets from R2 onto the training volume from inside a container.
 
-Container-side is not a preference. On this volume the CLI write -> container read path is broken:
-files written by `modal volume put` are visible to `modal volume ls/get` but not to a mounted
-container, and `vol.reload()` does not bridge it. Container-side writes plus `vol.commit()` do
-propagate, so every asset routes local -> R2 -> here.
-
-Two entry points, and the difference is whether the transfer is NAMED:
+Files written by `modal volume put` do not become visible to a mounted container, even after
+`vol.reload()`. Container-side writes followed by `vol.commit()` do propagate, so every asset travels
+from the local machine to R2 and then to the volume through these functions.
 
     modal run -m launch.train_remote::sync --version v8cjk_kr
     modal run -m launch.train_remote::sync_assets --corpus-versions v0.31.0-example
 
-`sync` runs a row of `launch/corpora.py`, which records what that version stages and what must be
-on the volume afterwards. `sync_assets` takes the paths on the command line and records nothing.
-Reach for `sync_assets` while a corpus is still being tried. add the row when it becomes a run
-somebody will repeat, because a transfer nobody can enumerate is a corpus that quietly stops being
-staged. Fifty-line clones — one per version, differing only in path strings — is how this file once
-reached fifty-seven of them.
+`sync` stages a row of `launch/corpora.py`, which lists what the version stages and what must exist on
+the volume afterwards. `sync_assets` takes its paths from the command line and records nothing. Use
+`sync_assets` for a trial corpus, and add a row to `launch/corpora.py` once other runs will repeat it.
 
-An overlay corpus ships only its own new parquet files. its MANIFEST names the base version's files by
-absolute `/data/...` path, so the base must already be on the volume. Neither entry point checks
-that — `audit_epoch_mixture` does, and it reports which file is missing.
+An overlay corpus ships only its own parquet files. Its MANIFEST refers to the base version's files by
+absolute `/data/...` path, so the base must already be on the volume. Neither function checks this.
+`audit_epoch_mixture` checks it and reports the missing file.
 """
 
 from __future__ import annotations
@@ -32,10 +26,10 @@ from .plan import WIDE, WRAPPED, Copy, Transfer, corpus, mirror, plan_sync, reso
 
 
 def _run_transfers(transfers: list[Transfer]) -> None:
-    """Run each transfer, and refuse one that moved nothing.
+    """Run each transfer and raise if a destination holds no files afterwards.
 
-    rclone EXITS 0 WHEN THE SOURCE PREFIX IS EMPTY. Without the file count the caller reads a clean
-    run and a training job fails much later on a missing parquet file, with nothing pointing back here.
+    rclone exits 0 when the source prefix is empty, so the file count is the only signal that a
+    transfer copied nothing.
     """
     import subprocess
 
@@ -58,10 +52,10 @@ def _run_transfers(transfers: list[Transfer]) -> None:
 
 
 def _clear_pycache(paths: list[str]) -> None:
-    """Remove the stale bytecode a container-side write of new `.py` over old leaves behind.
+    """Delete each `__pycache__` directory in `paths`.
 
-    The `.pyc` imports in preference to the source beside it, so without this the run imports the
-    PREVIOUS code and reports success against it.
+    Python can load a stale `.pyc` instead of the freshly copied source beside it, so a run would
+    execute the previous code.
     """
     import shutil
 
@@ -72,11 +66,9 @@ def _clear_pycache(paths: list[str]) -> None:
 
 
 def _report_checks(paths: list[str]) -> None:
-    """Print each verified path and raise naming every absence.
+    """Print whether each path exists and raise with the list of missing paths.
 
-    Raising rather than printing is the point: a sync whose verify block only prints leaves the
-    operator to read a wall of True/False, and a launch against a half-staged volume trains on the
-    wrong data and reports success.
+    The function raises so that a half-staged volume stops the sync before a training run uses it.
     """
     missing = [path for path in paths if not (os.path.isfile(path) or os.path.isdir(path))]
     for path in paths:
@@ -86,10 +78,10 @@ def _report_checks(paths: list[str]) -> None:
 
 
 def verify_staged(version: str) -> None:
-    """Run the row's `verifier`, if it has one, and raise naming every check that failed.
+    """Run the version's `verifier`, if it has one, and raise with the labels of failed checks.
 
-    The module is imported from the VOLUME's copy, so an ImportError here reports that the training
-    package did not land.
+    The verifier module is imported from the volume's copy of the package. An ImportError therefore
+    means the training package was not staged.
     """
     import importlib
     import sys
@@ -118,7 +110,7 @@ def verify_staged(version: str) -> None:
     timeout=3600,
 )
 def sync(version: str = "") -> None:
-    """Stage one named version from `launch/corpora.py` and verify what it promised to leave behind."""
+    """Stage one version listed in `launch/corpora.py` and verify its expected paths."""
     entry = CORPUS_VERSIONS.get(version)
     if entry is None:
         raise RuntimeError(f"no version named {version!r}. Known: {', '.join(sorted(CORPUS_VERSIONS))}")
@@ -152,17 +144,17 @@ def sync_assets(
     code: bool = True,
     extras: str = "",
 ) -> None:
-    """Pull named corpus versions, a tokenizer, the training code and arbitrary extra files from R2.
+    """Copy corpus versions, a tokenizer, the training code and extra files from R2 to the volume.
 
-    Layout interface, matching what `mailwoman corpus upload` writes:
+    Corpus versions land in the layout that `mailwoman corpus upload` writes:
 
         :s3:{BUCKET}/corpus/<version>/  ->  {VOL_MOUNT}/corpus/versioned/<version>/corpus-<version>/
 
     Args:
-        corpus_versions: comma-separated version names, e.g. ``v0.24.0-trailing-region-structured``.
-        tokenizer: tokenizer subdirectory under ``models/tokenizer/``; empty syncs the flat directory.
-        code: sync ``corpus-python/src/`` (default true -- a run reads the volume's copy rather than git).
-        extras: comma-separated ``<r2-path>><vol-subdir>`` pairs for gazetteer files, eval fixtures.
+        corpus_versions: Comma-separated version names, such as ``v0.24.0-trailing-region-structured``.
+        tokenizer: A subdirectory of ``models/tokenizer/``. An empty value skips the tokenizer.
+        code: Whether to copy ``corpus-python/src/``. Training runs import the volume's copy.
+        extras: Comma-separated ``<r2-path>><vol-subdir>`` pairs, such as gazetteer files or eval fixtures.
 
     Usage:
         modal run -m launch.train_remote::sync_assets \
@@ -170,8 +162,7 @@ def sync_assets(
     """
     vol.reload()
 
-    # The same constructors the table rows use, so an ad-hoc transfer and a named one put a corpus
-    # version in the same place. A second spelling of the layout here is how they come to disagree.
+    # These are the constructors that `launch/corpora.py` rows use, so both entry points share one layout.
     copies: list[Copy] = [corpus(name.strip(), WRAPPED) for name in corpus_versions.split(",") if name.strip()]
 
     if tokenizer:

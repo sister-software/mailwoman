@@ -4,7 +4,7 @@
 
 **Goal:** Make every `@mailwoman/*` subpath the browser client reaches bundle under the `browser` condition with no Node builtin in its static graph, so `docs/plugins/demo-assets/webpack-policy.ts` needs no stub, shim or fallback for `@mailwoman/*`.
 
-**Architecture:** Two packaging defects account for every stub. `@mailwoman/core/objects` imports one predicate from the `spliterator` barrel, which drags that library's Node fs, worker-thread and XLSX readers into the client; the fix is a local predicate. `@mailwoman/neural`'s classifier lazily imports `#classifier/loader`, the Node weights loader, and `webpackIgnore` hides that only from webpack; the fix is a `browser` condition on that `imports` entry pointing at a refusing module. A table-driven esbuild test pins both, then the docs plugin loses its stubs and the docs build proves it.
+**Architecture:** Two packaging defects account for every stub. `@mailwoman/core/objects` imports one predicate from the `spliterator` barrel, which drags that library's Node fs, worker-thread and XLSX readers into the client. The fix is a local predicate. `@mailwoman/neural`'s classifier lazily imports `#classifier/loader`, the Node weights loader, and `webpackIgnore` hides that import only from webpack. The fix is a `browser` condition on that `imports` entry pointing at a module that throws. A table-driven esbuild test covers both fixes. Then the docs plugin drops its stubs, and the docs build confirms it works without them.
 
 **Tech Stack:** TypeScript under Node type stripping, esbuild (already a devDependency of `core` and `neural` at 0.28.2), vitest (the `unit-slow` CI leg runs `packages/*/test/integration/**`), Docusaurus 3 with webpack, Playwright for the docs browser suite.
 
@@ -23,7 +23,7 @@ first two files as rows and runs from `yarn health`. Tasks 2 through 6 are uncha
 - A moved name gets no compatibility re-export.
 - Done means `webpack-policy.ts` carries zero `node:` stubs and zero client-side aliases for `@mailwoman/*`; the Earth `vite.config.ts` will carry no `resolve.alias` for `@mailwoman/*`.
 - `node:*` imports are permitted only under `packages/core/lib/fs/`; `oxlint.config.ts` refuses them elsewhere. No task adds one.
-- A test imports the package under test through its public exports; never through a `#` specifier; a relative import names only a helper under `test/`.
+- A test imports the package under test through its public exports, never through a `#` specifier. A relative import may reach only a helper under `test/`.
 - `process.env` and `process.argv` are never read directly.
 - Comments state invariants rather than history: no dates, issue numbers or "moved from" narration in code.
 - Every commit passes the pre-commit hook (oxlint + oxfmt on staged files). Run `yarn compile` before any test that resolves `default` exports, because those resolve to `out/`.
@@ -54,7 +54,7 @@ The `read-excel-file/node` and `write-excel-file/node` aliases in `webpack-polic
 - Consumes: `@mailwoman/core/module/resolvers` `resolvePackagePath(name)`; `esbuild` `build()` with `metafile: true`.
 - Produces: the test rows later tasks turn green. Task 3 relies on the row for `@mailwoman/neural/classifier` asserting `out/classifier/loader-browser.js` is in the bundle and `out/classifier/loader.js` is not.
 
-The test lives in `neural` rather than one file per package because `neural` depends on `core`, both packages' subpaths are public exports, and a second copy of the esbuild walk in `core/test/` would trip `jscpd` (`minTokens: 80`). The existing `packages/core/test/integration/worker-bundle.test.ts` keeps its own shape; it asserts a different condition set.
+The test lives in `neural` rather than one file per package because `neural` depends on `core`, both packages' subpaths are public exports, and a second copy of the esbuild walk in `core/test/` would trip `jscpd` (`minTokens: 80`). The existing `packages/core/test/integration/worker-bundle.test.ts` keeps its own shape because it asserts a different condition set.
 
 - [ ] **Step 1: Write the test**
 
@@ -296,7 +296,7 @@ yarn compile
 yarn vitest --run --config vitest.slow.config.ts packages/neural/test/integration/browser-bundle.test.ts
 ```
 
-Expected: 8 rows pass, 2 fail. `@mailwoman/core/objects` fails on the static-chain assertion listing seven `spliterator` edges (`node:worker_threads`, `stream/web`, `node:stream/web`, `node:url`, `node:stream`, `node:fs`, `node:worker_threads`). `@mailwoman/neural/classifier` fails on `mustInclude` because `loader-browser.js` does not exist yet. If `@mailwoman/neural/web-loader` also fails on the dynamic allowance, the failing line names the file; it should not, since both dynamic imports are listed.
+Expected: 8 rows pass, 2 fail. `@mailwoman/core/objects` fails on the static-chain assertion listing seven `spliterator` edges (`node:worker_threads`, `stream/web`, `node:stream/web`, `node:url`, `node:stream`, `node:fs`, `node:worker_threads`). `@mailwoman/neural/classifier` fails on `mustInclude` because `loader-browser.js` does not exist yet. If `@mailwoman/neural/web-loader` also fails on the dynamic allowance, the failure message identifies the file. That row should pass, since both dynamic imports are listed.
 
 - [ ] **Step 3: Commit the failing test**
 
@@ -694,7 +694,7 @@ yarn typecheck:tests
 yarn ci:test:fast
 ```
 
-Expected: `health` exits 0 (if `health:debt` reports `asNever` or `doubleCast` growth, check whether `main` already fails the same way before touching the baseline; the baseline is not this change's to move). `typecheck:tests` and the fast test leg pass.
+Expected: `health` exits 0 (if `health:debt` reports `asNever` or `doubleCast` growth, check whether `main` already fails the same way before touching the baseline, because this change must not move it). `typecheck:tests` and the fast test leg pass.
 
 - [ ] **Step 3: Commit and open the PR**
 

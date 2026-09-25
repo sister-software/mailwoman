@@ -3,12 +3,10 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   A soft break is a line break down the page and a space on one line, and Great Britain is the layout that needs it.
+ *   Tests soft breaks, which render as a line break in multi-line output and as a space in single-line output.
  *
- *   Royal Mail prints the post town and the postcode on separate lines. Written on one line Great Britain puts a space
- *   between them — `27 Minories, London EC3N 1DE` — which is the form #1366 pinned and the majority register in
- *   attested data: `wof-postalcode` carries 10,282,560 GB rows without the comma against 3,265,642 with. One join per
- *   system cannot say both, and before the soft break the single-line render answered `London, EC3N 1DE`.
+ *   Great Britain prints the post town and postcode on separate lines, but its single-line form is
+ *   `27 Minories, London EC3N 1DE`.
  */
 
 import { formatAddress } from "@mailwoman/codex/address-format"
@@ -33,12 +31,9 @@ describe("GB's single-line form", () => {
 	})
 
 	it("moves the postcode's separator when the post town is absent, and nothing else", () => {
-		// The mark names the break preceding the postcode line, so it applies to
-		// whatever line survives above it.
-		// This case moved with the mark: it read `27 Minories, EC3N 1DE` before.
-		// Nobody has measured which form dominates a GB address written with no post town —
-		// the 10,282,560-to-3,265,642 count is over rows carrying both — so this case
-		// pins the behavior and claims nothing about the register.
+		// The soft break belongs to the postcode line, so it follows whichever line precedes the postcode.
+		// This case records current behavior.
+		// Real usage without a post town has not been measured.
 		expect(
 			formatAddress({ house_number: "27", street: "Minories", postcode: "EC3N 1DE" }, "GB", {
 				singleLine: true,
@@ -120,9 +115,8 @@ ${SLOTS.postcode}`,
 	})
 
 	it("keeps the mark on the right break when a line above it renders nothing", () => {
-		// `evaluateLines` drops the empty locality line and renumbers what survives.
-		// The mark names the line a break precedes, so it travels with the postcode
-		// rather than landing on the break above it.
+		// `evaluateLines` drops the empty locality line.
+		// The soft break stays with the postcode line.
 		const rendering = renderAddress(layout, { street: "Minories", postcode: "EC3N 1DE" })
 
 		expect(joinRendering(rendering, ", ", " ")).toBe("Minories EC3N 1DE")

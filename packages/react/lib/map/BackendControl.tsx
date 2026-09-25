@@ -3,29 +3,32 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Show the active inference backend and let visitors force WASM.
- *   The host handles backend changes; this component is presentational.
+ *   Shows the active inference backend and a checkbox that forces WASM. The host applies the change.
  */
 
 import type { ReactNode } from "react"
 
+/**
+ * Props for {@link BackendControl}.
+ */
 export interface BackendControlProps {
 	/**
-	 * The backend the runtime resolved to (e.g. `webgpu (28 MB int8)`); empty before it is known.
+	 * The backend the runtime chose, such as `webgpu (28 MB int8)`.
+	 * It is empty until known.
 	 */
 	activeBackend?: string
 	/**
-	 * Whether the CPU/wasm backend is currently forced.
+	 * Whether the WASM backend is forced.
 	 */
 	forceWASM: boolean
 	/**
-	 * Fired when the visitor toggles the "Force wasm" checkbox.
+	 * Called when the visitor toggles the "Force WASM" checkbox.
 	 */
 	onForceWASMChange: (forceWASM: boolean) => void
 }
 
 /**
- * The backend indicator + wasm opt-out.
+ * Renders the backend indicator and the "Force WASM" checkbox.
  */
 export function BackendControl({ activeBackend, forceWASM, onForceWASMChange }: BackendControlProps): ReactNode {
 	return (

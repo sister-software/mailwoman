@@ -1,7 +1,7 @@
 # Physical constraint as a generative prior — design record for #1975
 
 Status: design record, the first item of #1975's definition of done. Nothing in this record changes
-runtime behavior. It fixes where the prior sits, what it may express, what it must never be, what
+runtime behavior. It decides where the prior sits, what it may express, what it must never be, what
 every exclusion carries, and how the GB prototype is built and graded.
 
 ## 1. Inputs this record consumes
@@ -29,11 +29,11 @@ Two consequences follow, and both narrow the design.
 **The prior is a build-time product rather than a runtime scorer.** The assignment is computed once from
 sealed inputs into a sealed artifact, `postcode-unit-assignment-gb.db`, with a `layer_manifest` and
 per-row provenance. At runtime the resolver reads it as a lookup: a unit postcode resolves to the set
-of points assigned to it, or to their bound. No runtime component reasons about buildings. This is
-the same shape as `poi.db`, `uprn.db` and the postcode binaries: the intelligence lives in the
-builder, the runtime consumes a register.
+of points assigned to it, or to their bound. No runtime component reasons about buildings. `poi.db`,
+`uprn.db` and the postcode binaries work the same way: the builder does the inference, and the
+runtime reads a register.
 
-**There is an open register, and it answers the GB assignment directly.** The ONS National
+**An open register exists, and it answers the GB assignment directly.** The ONS National
 Statistics UPRN Lookup (NSUL) publishes, for every GB UPRN in AddressBase, the unit postcode as field
 `PCDS` (null when the postcode is not in Code-Point Open), the OSGB grid reference, and the
 statistical geographies, as a CSV collection of about 487 MB, every six weeks, under OGL-UK-3.0 with
@@ -46,7 +46,7 @@ prototype:
   physical inputs alone recover. That number is what Northern Ireland needs, where neither Open UPRN
   nor NSUL exists, and it is the only place the method's error can be measured.
 - NSUL's postcodes are those of Code-Point Open, so the two inputs agree by construction on the
-  universe of unit postcodes; the grade's denominator is UPRNs present in both.
+  universe of unit postcodes. The grade's denominator is UPRNs present in both.
 
 ## 3. Placement in the pipeline
 
@@ -62,22 +62,22 @@ touches exactly two things:
 
 It never touches `rankByImportance`, the span-rescore weights, the country prior, the
 placetype-pair prior, or any decode-time term in `@mailwoman/neural`. `plausibility.ts`, the
-post-resolve guard for country-centroid answers, stays as it is; this prior runs earlier and answers
+post-resolve guard for country-centroid answers, stays as it is. This prior runs earlier and answers
 a different question.
 
-For the first deliverable the runtime surface is not built at all. The artifact and its grade come
+The first deliverable does not build the runtime surface at all. The artifact and its grade come
 first, per #1571's rule that measurement precedes mechanism.
 
 ## 4. What the prior may express
 
 - **Hard physical exclusion.** A candidate coordinate that falls in a cell the assignment artifact
   covers at exclusion grade and that carries no addressable object can be removed from the
-  candidate set. The exclusion names the cell, the basis, and the artifact version.
+  candidate set. The exclusion records the cell, the basis, and the artifact version.
 - **Soft possibility structure.** For a unit postcode, the assigned points and their bound: the H3
   res-9 cells the assigned points occupy, and the count of points. This is a region with a
   completeness statement, never a single point presented as the postcode's location.
 - **The assignment itself**, per UPRN: the unit postcode, the rule that produced it (section 6), and
-  its confidence class — `unique`, `tie`, or `unassigned`.
+  its confidence class: `unique`, `tie`, or `unassigned`.
 
 ## 5. What the prior must never be, and what every exclusion carries
 
@@ -96,11 +96,11 @@ distance.
 
 ## 6. The GB prototype — one postcode area, open data only
 
-**Area.** The `PO` postcode area (Portsmouth, Chichester, Bognor Regis, the Isle of Wight). It mixes
-dense terraces, suburbs, rural parishes and an island, and the board already carries a `PO21` row
+**Area.** The prototype uses the `PO` postcode area (Portsmouth, Chichester, Bognor Regis, the Isle of
+Wight). It mixes dense terraces, suburbs, rural parishes and an island, and the board already carries a `PO21` row
 (`University of Chichester, The Dome, Upper Bognor Rd, Bognor Regis PO21 1HR, United Kingdom`), so
-the prototype's output can be read against a row the resolver is graded on today. Counts of unit
-postcodes and UPRNs in `PO` are filled by the run, with the arithmetic stated.
+the prototype's output can be read against a row the resolver is graded on today. The run fills in the
+counts of unit postcodes and UPRNs in `PO`, with the arithmetic stated.
 
 **Inputs on disk.**
 
@@ -116,18 +116,18 @@ OGL throughout. They return in section 7, where no OGL footprint source exists.
 
 **Method, in three rules applied in order, each recorded on the row it decides.**
 
-1. `nearest-centroid` — the null model. Each UPRN takes the unit postcode of the nearest Code-Point
-   centroid. This is the baseline every richer rule must beat.
-2. `same-building` — points inside one building footprint take one postcode: the postcode that the
-   majority of the building's points took under rule 1, with ties left as `tie`.
-3. `unassigned` — a point farther than a distance bound from every centroid, or inside a building whose
-   points split evenly, stays unassigned. The bound is set from the observed distribution of
+1. `nearest-centroid` is the null model. Each UPRN takes the unit postcode of the nearest Code-Point
+   centroid. Every richer rule must beat this baseline.
+2. `same-building` gives all points inside one building footprint one postcode: the postcode that the
+   majority of the building's points took under rule 1. Ties are left as `tie`.
+3. `unassigned` applies to a point farther than a distance bound from every centroid, or inside a
+   building whose points split evenly. Such a point stays unassigned. The bound is set from the observed distribution of
    nearest-centroid distances in the area and stated in the artifact's meta.
 
-**Grade.** Against NSUL for the same UPRNs: exact-assignment rate, `tie` rate, `unassigned` rate,
-and the confusion between adjacent unit postcodes, each with its denominator (UPRNs in `PO` present in
-both inputs). The null model is graded first, then the two-rule model, and the difference is the
-footprint input's measured contribution.
+**Grade.** The prototype is graded against NSUL for the same UPRNs on exact-assignment rate, `tie`
+rate, `unassigned` rate, and the confusion between adjacent unit postcodes. Each metric states its
+denominator (UPRNs in `PO` present in both inputs). The null model is graded first, then the two-rule
+model, and the difference is the footprint input's measured contribution.
 
 **Pre-registered rule.** If rule 2 does not lift exact assignment by at least 5 percentage points
 over rule 1 on `PO`, the footprint input is dropped from the design and the artifact is the null model
@@ -137,19 +137,20 @@ runtime surface at any tier and the artifact stays a measurement.
 ## 7. Northern Ireland — the hard test
 
 Amended after the run (record `docs/records/evals/2026-09-03-ni-unit-postcode-assignment.md`, PR
-#2125). Code-Point Open has zero `BT` units; Open UPRN is GB only; NSUL excludes `BT`; the NI register
-(Pointer) is licensed and not used. The one open BT postcode geometry we hold is not a census product:
-it is the Overpass acquisition `osm-ni-postcodes/2026-08-05/response.json` (ODbL, `build-local`),
-12,326 OSM elements carrying `addr:postcode` starting `BT`, from which `wof/postalcode-ni-osm.db`
-stores one medoid per unit — 4,757 units, 250 sectors, 80 districts. Those elements are also the only
-openly attested BT points, so centroid and truth are the same observations and an independent-input
-test cannot be run in Northern Ireland from open data.
+#2125). Code-Point Open has zero `BT` units, and Open UPRN covers GB only. NSUL excludes `BT`, and
+the NI register (Pointer) is licensed and not used. The only open BT postcode geometry the project
+holds is the Overpass acquisition `osm-ni-postcodes/2026-08-05/response.json` (ODbL, `build-local`),
+rather than a census product. It contains 12,326 OSM elements carrying `addr:postcode` starting `BT`,
+and `wof/postalcode-ni-osm.db` stores one medoid per unit from them: 4,757 units, 250 sectors, 80
+districts. Those elements are also the only openly attested BT points. The centroids and the truth
+would therefore come from the same observations, so an independent-input test cannot be run in
+Northern Ireland from open data.
 
-What could be measured is the attestation's internal consistency, leave-one-out nearest centroid:
-7,222 of 12,326 points exact (58.6%) over all points, 7,222 of 9,326 (77.4%) over points whose unit
-keeps a centroid after removal (3,000 units are singletons). Both are under the 80% floor. The
-method's register error stays the GB figure, 69.6% exact against NSUL on `PO`; a measurable NI test
-needs the licensed register.
+The run measured the attestation's internal consistency with a leave-one-out nearest-centroid test.
+7,222 of 12,326 points were exact (58.6%) over all points, and 7,222 of 9,326 (77.4%) over points
+whose unit keeps a centroid after removal (3,000 units are singletons). Both are under the 80% floor.
+The method's register error remains the GB figure, 69.6% exact against NSUL on `PO`. A measurable NI
+test needs the licensed register.
 
 ## 8. License posture per input
 
@@ -161,8 +162,8 @@ needs the licensed register.
 | ONS NSUL                      | OGL-UK-3.0 (confirmed) | attribution (four lines) | the GB register itself, once counsel reviews the attribution |
 | OSM buildings (NI only)       | ODbL-1.0               | attribution, share-alike | `build-local`; the same posture `packages/osm` holds         |
 
-The doctor summarizes each of these from the artifact's own `layer_manifest` once built, so the
-posture is data in the artifact rather than prose here.
+Once the artifact is built, the doctor summarizes each of these from the artifact's own
+`layer_manifest`, so the posture is recorded as data in the artifact rather than as prose here.
 
 ## 9. Falsifiers, in order
 
@@ -175,17 +176,17 @@ GeoPlace data © Local Government Information House Limited copyright and databa
   Northern Ireland (`BT`) postcode data is excluded from the open terms and needs a separate
   Land & Property Services license, which the NI section already assumed.
 - **F2.** The null model on `PO`: exact-assignment rate against NSUL. Below 80%, stop.
-- **F3.** The footprint rule lifts exact assignment by at least 5 pp over F2. Otherwise drop the
+- **F3.** The footprint rule must lift exact assignment by at least 5 pp over F2. Otherwise drop the
   footprint input.
-- **F4.** Only after F2 and F3: the runtime decoration step, graded on the full board and every
-  conformance suite with the D-rule, as an opt-in pin first.
+- **F4.** Only after F2 and F3, build the runtime decoration step as an opt-in pin first, and grade it
+  on the full board and every conformance suite with the D-rule.
 
 ## 10. Sequencing
 
 1. This record (done).
-2. F1: read NSUL's license page and one quarterly file's header; record on #1975.
-3. Acquire OS Open Map – Local for `PO`; build the assignment artifact with the three rules and
-   per-row provenance; grade F2 and F3; record on #1975 with denominators.
+2. F1: read NSUL's license page and one quarterly file's header, and record the result on #1975.
+3. Acquire OS Open Map – Local for `PO`. Build the assignment artifact with the three rules and
+   per-row provenance, grade F2 and F3, and record the results on #1975 with denominators.
 4. The NI run as section 7, recorded whichever way it comes out.
 5. Counsel review of section 8 before any artifact leaves `build-local`.
 6. F4, as a separate proposal with its own board grade.

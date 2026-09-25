@@ -3,22 +3,26 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Types for the POI explorer. The intent path (classification → subject → OverpassQL) is fully
- *   self-contained over the pure `@mailwoman/*` packages. the live poi.db path is expressed only as an
- *   injected async function ({@link POILiveSearch}) so the httpvfs/worker implementation stays out of this
- *   package's browser graph (it lives in the docs site, which knows where the layer is served).
+ *   Types for the POI explorer. Live poi.db search is injected as {@link POILiveSearch} so the httpvfs
+ *   worker stays out of this package's browser graph.
  */
 
 import type { QueryKindResult } from "@mailwoman/core/pipeline"
 import type { POIPhraseLookup, createKindClassifier } from "@mailwoman/kind-classifier"
 import type { createPOITaxonomyLookup } from "@mailwoman/poi-taxonomy/table"
 
+/**
+ * The POI taxonomy lookup that the explorer runtime loads.
+ */
 export type TaxonomyLookup = ReturnType<typeof createPOITaxonomyLookup>
 
+/**
+ * One taxonomy category record.
+ */
 export type CategoryRecord = NonNullable<ReturnType<TaxonomyLookup["getPOICategory"]>>
 
 /**
- * The lazily-loaded POI runtime: the taxonomy lookup, the adapted lexicon, and the kind classifier over it.
+ * The lazily loaded POI runtime, which holds the taxonomy lookup, the lexicon and the kind classifier.
  */
 export interface POIRuntime {
 	lookup: TaxonomyLookup
@@ -33,28 +37,27 @@ export interface POISubjectBase {
 	matchedPhrase: string
 	confidence: number
 	/**
-	 * The non-subject remainder of the query (the location anchor, e.g. "near Springfield").
+	 * The rest of the query after the subject, usually the location anchor such as "near Springfield".
 	 */
 	remainder: string
 }
 
 /**
- * A resolved POI subject that names a taxonomy category (`cafe`, `hospital`, `drinking fountain`).
+ * A resolved POI subject that matched a taxonomy category such as `cafe` or `hospital`.
  */
 export interface POICategorySubject extends POISubjectBase {
 	kind: "category"
 	category: CategoryRecord
 	/**
-	 * Whether this category needs the locally-built OSM (ODbL) layer — precomputed off the runtime.
+	 * Whether this category requires the locally built OSM (ODbL) layer.
 	 */
 	buildLocal: boolean
 }
 
 /**
- * A resolved POI subject that names a chain brand (`chevron`, `applebee's`).
+ * A resolved POI subject that matched a chain brand such as `chevron`.
  *
- * Brands carry a Wikidata QID and are searched by that QID rather than by category k-ring.
- * See `@mailwoman/poi-taxonomy`'s brand table + the layer's `brand_wikidata` index.
+ * Live search looks up a brand by its Wikidata QID instead of by category k-ring.
  */
 export interface POIBrandSubject extends POISubjectBase {
 	kind: "brand"
@@ -63,21 +66,21 @@ export interface POIBrandSubject extends POISubjectBase {
 	 */
 	name: string
 	/**
-	 * Wikidata QID, when the lexicon carried one (`Q319642` = Chevron).
-	 *
-	 * Absent ⇒ matched by name alone.
+	 * The brand's Wikidata QID.
+	 * It is absent when the lexicon had no QID for the brand.
 	 */
 	wikidata?: string
 }
 
 /**
- * A resolved POI subject — a taxonomy category or a chain brand — plus its match metadata.
+ * A resolved POI subject, either a taxonomy category or a chain brand.
  */
 export type POISubject = POICategorySubject | POIBrandSubject
 
 /**
- * The intent-only result: the kind verdict plus (when a subject was detected)
- * its OverpassQL export (category only).
+ * The intent-only result.
+ *
+ * It holds the kind verdict and, when a category subject was detected, its OverpassQL export.
  */
 export interface POIExplorerResult {
 	kindResult: QueryKindResult
@@ -99,10 +102,10 @@ export interface POISearchHit {
 }
 
 /**
- * Result of an injected live search.
+ * The result of an injected live search.
  *
- * Preserves the original tester's two failure modes — the anchor not resolving vs the
- * published layer being unreachable — so the UI can word them differently.
+ * The `unplaced` and `unavailable` states stay separate so the UI can tell an
+ * unresolved anchor apart from an unreachable layer.
  */
 export type POILiveSearchResult =
 	| { status: "success"; hits: POISearchHit[]; centerName: string }
@@ -112,33 +115,28 @@ export type POILiveSearchResult =
 /**
  * The injected live-search function.
  *
- * Given the resolved category (+ its Overture leaf fan-out) and the anchor text,
- * it probes the published poi.db and returns hits.
- * Absent ⇒ the explorer runs intent-only (no "Search live" button).
+ * It probes the published poi.db for the resolved category, its Overture leaf
+ * categories and the anchor text.
+ * The explorer runs intent-only when this function is absent.
  *
- * Brand support is additive: when the resolved subject is a chain brand, `brandWikidata`
- * carries its QID and the probe fetches by that QID instead of a category k-ring
- * (`categoryID`/`overtureCategoryIDs` are then the brand name / empty and unused).
- * The category path is byte-identical to before.
+ * For a brand subject, `brandWikidata` carries the QID and the probe fetches by it.
+ * In that case `categoryID` holds the brand name and `overtureCategoryIDs` is empty.
  *
- * A probe that can't serve brands simply leaves brand live search unwired at the
- * call site (see `usePOISearch`'s `brandLiveSearch` option).
- * The docs' httpvfs probe does exactly that, brand-wide row hydration being pathological
- * over byte-range (measured. The brand path is server-side only).
+ * A probe that cannot serve brands should leave `usePOISearch`'s `brandLiveSearch` option unset.
  */
 export type POILiveSearch = (params: {
 	categoryID: string
 	overtureCategoryIDs: string[]
 	anchor: string
 	/**
-	 * Present when the subject is a chain brand — the probe fetches by this QID
-	 * rather than a category k-ring.
+	 * The brand's Wikidata QID.
+	 * It is present only when the subject is a chain brand.
 	 */
 	brandWikidata?: string
 }) => Promise<POILiveSearchResult>
 
 /**
- * "Search live" state machine.
+ * The state of a "Search live" request.
  */
 export type LiveSearchState =
 	| { status: "idle" }
@@ -147,6 +145,7 @@ export type LiveSearchState =
 	| { status: "success"; hits: POISearchHit[]; centerName: string }
 
 /**
- * A single-argument runtime loader — injectable so stories/tests can substitute a mock taxonomy.
+ * A runtime loader.
+ * Stories and tests inject one to substitute a mock taxonomy.
  */
 export type LoadPOIRuntime = () => Promise<POIRuntime>

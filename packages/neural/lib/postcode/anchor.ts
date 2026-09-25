@@ -12,9 +12,9 @@ import { isStreetSuffixToken, isUSStateAbbreviation } from "@mailwoman/codex/us"
 import { collectMatches } from "#postcode/repair"
 
 /**
- * Describes one gazetteer hit for a postcode string.
+ * One gazetteer hit for a postcode.
  *
- * A `lat`/`lon` of 0 means the postcode is known but has no centroid.
+ * A `lat` and `lon` of 0 mean the postcode is known but has no centroid.
  */
 export interface PostcodePlace {
 	country: string
@@ -23,7 +23,7 @@ export interface PostcodePlace {
 }
 
 /**
- * Defines the postcode lookup the anchor extractor needs from a gazetteer.
+ * The postcode lookup that the anchor extractor needs from a gazetteer.
  */
 export interface PostcodeResolver {
 	/**
@@ -33,65 +33,63 @@ export interface PostcodeResolver {
 }
 
 /**
- * Describes a postcode-shaped span in the input and the soft country evidence it provides.
- *
- * `confidence` already includes `positionFactor`, which down-weights a digit-only
- * span in a street segment because it may be a house number.
+ * A postcode-shaped span in the input and the country evidence it provides.
  */
 export interface PostcodeAnchor {
 	/**
-	 * Holds the matched substring of the raw text with its character offsets.
+	 * The matched substring of the raw text and its character offsets.
 	 */
 	span: { text: string; start: number; end: number }
 
 	/**
-	 * Holds the key actually looked up, as produced by {@link normalizePostcode}.
+	 * The lookup key produced by {@link normalizePostcode}.
 	 */
 	normalized: string
 
 	/**
-	 * Lists one hit with a centroid per matched country, omitting a country whose hits all lack a centroid.
+	 * One hit with a centroid per matched country.
+	 * Countries whose hits all lack a centroid are omitted.
 	 */
 	candidates: PostcodePlace[]
 
 	/**
-	 * Spreads probability uniformly over the countries whose gazetteer contains
-	 * the postcode, independent of coordinates.
+	 * A uniform probability over the countries whose gazetteer contains the postcode.
 	 */
 	posterior: Record<string, number>
 
 	/**
-	 * Measures anchor strength in [0, 1] as `1 - log2(k) / log2(10)` for `k` matched
-	 * countries, times the fuzzy penalty and `positionFactor`.
+	 * The anchor strength in [0, 1].
+	 *
+	 * It equals `1 - log2(k) / log2(10)` for `k` matched countries, multiplied by
+	 * the fuzzy penalty and `positionFactor`.
 	 * It is `0` when no gazetteer contains the postcode.
 	 */
 	confidence: number
 
 	/**
-	 * Says how the span matched: `exact`; `outward`, a GB unit resolved to its outward
-	 * district without penalty; `fuzzy`, where only an edit-distance-1 variant matched
-	 * and confidence is penalized; or `none`.
+	 * How the span matched.
+	 *
+	 * `outward` means a GB unit postcode matched its outward code without penalty.
+	 * `fuzzy` means only an edit-distance-1 variant matched, and the confidence is penalized.
 	 */
 	matchType: "exact" | "outward" | "fuzzy" | "none"
 
 	/**
-	 * Holds the house-number prior already folded into `confidence`, which is `1` normally
-	 * and `0.2` for a digit-only code that shares its comma-delimited segment with a street word.
+	 * The house-number factor included in `confidence`.
 	 *
-	 * It is exposed so a consumer can rank competing spans without re-deriving it.
+	 * It is `0.2` for a digit-only code that shares its comma-delimited segment
+	 * with a street word, and `1` otherwise.
 	 */
 	positionFactor: number
 }
 
 /**
- * Configures {@link extractPostcodeAnchors}.
- *
- * `fuzzy` retries a missed span with its {@link editDistance1Variants} at reduced confidence.
+ * Options for {@link extractPostcodeAnchors}.
  */
 export interface ExtractPostcodeAnchorsOpts {
 	/**
-	 * Retries a span with no exact or outward match using its edit-distance-1 variants
-	 * to absorb a single typo, and is off by default.
+	 * Whether to retry an unmatched span with its {@link editDistance1Variants} at reduced confidence.
+	 * It defaults to false.
 	 */
 	fuzzy?: boolean
 }
@@ -103,8 +101,9 @@ const FUZZY_PENALTY = 0.6
 /**
  * Returns the edit-distance-1 variants of a postcode.
  *
- * Substitutions and insertions stay within the character's class (digit or letter),
- * which mirrors how postcodes are mistyped or misread and keeps the candidate set small.
+ * The variants are deletions, adjacent transpositions, and substitutions and insertions
+ * within the neighbouring character's class (digit or letter).
+ * Restricting the class keeps the candidate set small.
  */
 export function editDistance1Variants(s: string): string[] {
 	const classOf = (ch: string): string =>
@@ -141,8 +140,8 @@ export function editDistance1Variants(s: string): string[] {
 /**
  * Normalizes a postcode-shaped span to the gazetteer key form.
  *
- * The result is uppercased with whitespace collapsed, drops the German `D-` prefix,
- * and removes the space in Dutch `1234 AB` codes, because the extracts store them without those.
+ * It uppercases, collapses whitespace, drops the German `D-` prefix and removes the
+ * space in Dutch `1234 AB` codes, matching how the extracts store postcodes.
  */
 export function normalizePostcode(raw: string): string {
 	let s = raw.trim().toUpperCase().replaceAll(/\s+/g, " ")
@@ -159,11 +158,11 @@ export function normalizePostcode(raw: string): string {
 }
 
 /**
- * Returns the outward code of a normalized GB unit postcode (`SO4 3RX` becomes `SO4`),
- * or `null` for any other string.
+ * Returns the outward code of a normalized GB unit postcode, or `null` for any other string.
  *
- * The GB gazetteer holds outward codes only, so the extractor retries with this
- * when a full unit postcode misses.
+ * For example, `SO4 3RX` becomes `SO4`.
+ * The GB gazetteer holds only outward codes, so the extractor retries with the
+ * outward code when a full unit postcode misses.
  */
 export function gbOutwardCode(normalized: string): string | null {
 	const sp = normalized.indexOf(" ")
@@ -241,11 +240,9 @@ function positionFactor(text: string, start: number, normalized: string, systems
 }
 
 /**
- * Extracts a soft country anchor for each postcode-shaped span in the text
- * by looking it up in the gazetteer.
+ * Looks up each postcode-shaped span in the gazetteer and returns its country anchor.
  *
- * A span that no gazetteer knows is still returned, with an empty posterior and confidence 0,
- * so callers can tell the extractor fired and declined to anchor.
+ * A span that no gazetteer contains is still returned, with an empty posterior and a confidence of 0.
  */
 export function extractPostcodeAnchors(
 	text: string,

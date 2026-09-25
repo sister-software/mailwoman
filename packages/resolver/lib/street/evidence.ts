@@ -12,16 +12,16 @@ import type { Exclusion } from "@mailwoman/evidence"
  */
 export interface StreetLocalityEvidence {
 	/**
-	 * Returns whether the raw street surface exists as a street name, within `scope`
-	 * when given; the implementation folds the surface itself.
+	 * Returns whether the raw street surface exists as a street name, within `scope` when given.
 	 *
-	 * It must return `false` on any doubt, such as a missing index or read error,
-	 * because absence is never a veto.
+	 * The implementation folds the surface itself.
+	 * It must return `false` on a missing index or a read error, because a `false`
+	 * answer only withholds promotion.
 	 */
 	hasStreetName(streetSurface: string, scope?: StreetEvidenceScope): boolean
 
 	/**
-	 * The uppercase ISO 3166-1 alpha-2 countries this instance can answer for.
+	 * The upper-case ISO 3166-1 alpha-2 countries this instance covers.
 	 */
 	readonly countries: ReadonlySet<string>
 }
@@ -35,8 +35,10 @@ export interface StreetEvidenceScope {
 }
 
 /**
- * Folds a street surface for both index build and lookup by stripping diacritics,
- * lowercasing, turning hyphens and apostrophes into spaces, and collapsing whitespace.
+ * Folds a street surface for both index build and lookup.
+ *
+ * It strips diacritics, lowercases, turns hyphens, dashes and apostrophes into spaces,
+ * and collapses whitespace.
  */
 export function foldStreetSurface(surface: string): string {
 	return surface
@@ -97,13 +99,15 @@ export function isPureTypeVocabulary(foldedSurface: string): boolean {
 }
 
 /**
- * Describes one candidate parse for {@link pickByStreetEvidence}, whose score is
- * comparable only against other candidates for the same input.
+ * One candidate parse for {@link pickByStreetEvidence}.
+ *
+ * Scores are comparable only among candidates for the same input.
  */
 export interface StreetCandidate<T = unknown> {
 	/**
-	 * The candidate's raw street surface; an empty string means no street was parsed,
-	 * so the candidate cannot win on evidence.
+	 * The candidate's raw street surface.
+	 *
+	 * An empty string means the parse found no street, and evidence then skips the candidate.
 	 */
 	streetSurface: string
 
@@ -113,40 +117,39 @@ export interface StreetCandidate<T = unknown> {
 	score: number
 
 	/**
-	 * An opaque caller value, such as the segmentation or tree, carried through to the result.
+	 * An opaque caller value, such as the segmentation or tree, returned unchanged with the pick.
 	 */
 	payload?: T
 }
 
 /**
- * Configures {@link pickByStreetEvidence}, where `marginCap` (default 2.5) bounds how far
- * below rank 1 a winner may score and `exclusions` is indexed like the candidates.
+ * Options for {@link pickByStreetEvidence}.
  */
 export interface PickByStreetEvidenceOpts {
 	/**
-	 * The locality or postcode scope forwarded to {@link StreetLocalityEvidence.hasStreetName}.
+	 * The locality or postcode scope passed to {@link StreetLocalityEvidence.hasStreetName}.
 	 */
 	scope?: StreetEvidenceScope
 
 	/**
-	 * The largest score gap below rank 1 at which evidence may still promote a candidate, defaulting to 2.5.
+	 * The largest score gap below rank 1 at which evidence may still promote a candidate.
+	 * It defaults to 2.5.
 	 *
 	 * Raw score margins differ between models, so the value needs refitting when the span head is retrained.
 	 */
 	marginCap?: number
 
 	/**
-	 * One entry per candidate, in the same order; a non-null entry moves that candidate
-	 * behind every non-excluded one without removing it.
+	 * One entry per candidate, in the same order.
 	 *
-	 * If every candidate is excluded, the fallback pick is still rank 1.
+	 * A non-null entry moves that candidate behind every non-excluded one without removing it.
+	 * If every candidate is excluded, the fallback pick is rank 1.
 	 */
 	exclusions?: ReadonlyArray<Exclusion | null>
 }
 
 /**
- * Reports the candidate {@link pickByStreetEvidence} chose, its index, whether it
- * displaced rank 1, and the indexes demoted by exclusions.
+ * The result of {@link pickByStreetEvidence}.
  */
 export interface StreetEvidencePick<T = unknown> {
 	/**
@@ -161,23 +164,22 @@ export interface StreetEvidencePick<T = unknown> {
 	index: number
 
 	/**
-	 * Whether the pick is not rank 1, either through evidence or because rank 1 was excluded.
+	 * Whether the pick differs from rank 1, through evidence or because rank 1 was excluded.
 	 */
 	moved: boolean
 
 	/**
-	 * The input indexes that exclusions demoted, in input order, recorded
-	 * separately from what the evidence found.
+	 * The input indexes that exclusions demoted, in input order.
 	 */
 	demoted: number[]
 }
 
 /**
  * Picks the first candidate, in score order, whose street name exists in the evidence index,
- * is not pure type vocabulary, and scores within `marginCap` of rank 1.
+ * holds more than street type words, and scores within `marginCap` of rank 1.
  *
- * An excluded candidate is demoted behind every other candidate but never removed,
- * and when nothing qualifies the first non-excluded candidate wins.
+ * Excluded candidates are checked after all others.
+ * When nothing qualifies, the first non-excluded candidate wins.
  *
  * @param candidates Parse candidates sorted by score, rank 1 first.
  * @throws When `candidates` is empty.

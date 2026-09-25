@@ -2,21 +2,11 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file Module resolution as the proof step of a move: what a specifier names now, and what a proposed replacement
- *   would name once the files have moved.
+ * @file Resolves module specifiers against the checkout, or against an overlay where a planned move has already
+ *   happened.
  *
- *   Two behaviours of `ts.resolveModuleName` shape this file. Every workspace's subpath maps put `types` first, so a
- *   specifier resolves to `packages/corpus/out/recipes/nl-postcode.d.ts` in a built checkout and to
- *   `packages/corpus/lib/recipes/nl-postcode.ts` in a clean one — one specifier, two answers, decided by whether
- *   anyone had run `tsc`. Worse mid-move: `out/` still holds declarations emitted from the old paths, so the resolver
- *   reading the tree as it stands and the resolver reading it as it will be answer different files for the same
- *   import, and every such disagreement reads as a specifier nobody can repoint. The host therefore reports every
- *   `<package>/out/**` path as absent, which is not a workaround but the operation's subject: a module move is a
- *   source-tree change, and build output is not evidence about it.
- *
- *   The second behaviour is that resolution reads the filesystem, so proving a replacement before anything moves
- *   needs a host that reports the destination as present and the origin as gone. That is what
- *   {@linkcode createMoveResolver} builds from the moves.
+ *   The host reports every `out/` path as absent. Subpath maps list `types` first, so a built checkout would otherwise
+ *   resolve to `.d.ts` files emitted from the old paths.
  */
 
 import { resolvePath } from "path-ts"
@@ -25,7 +15,7 @@ import ts from "typescript"
 import type { ModuleMove } from "#move/types"
 
 /**
- * Nodenext, matching every workspace's `tsconfig.json`, so this module answers what `tsc` answers.
+ * These options match the workspaces' `tsconfig.json` so that resolution agrees with `tsc`.
  */
 const RESOLUTION_OPTIONS: ts.CompilerOptions = {
 	module: ts.ModuleKind.NodeNext,
@@ -35,26 +25,25 @@ const RESOLUTION_OPTIONS: ts.CompilerOptions = {
 
 const BUILD_OUTPUT = /(?:^|\/)out\//u
 
+/**
+ * Resolves specifiers to repo-relative source files.
+ */
 export interface MoveResolver {
 	/**
-	 * The repo-relative source file `specifier` names when written in `containingFile`,
-	 * or nothing when it resolves nowhere.
-	 *
-	 * Both paths are repo-relative.
+	 * Returns the repo-relative file that `specifier` resolves to from the repo-relative
+	 * `containingFile`, or `undefined` when it does not resolve.
 	 */
 	resolve(specifier: string, containingFile: string): string | undefined
 }
 
 /**
- * A resolver that answers as though the whole plan had already happened.
+ * Creates a resolver that sees the tree as though `moves` had already happened.
  *
- * Pass no moves for the resolver that reads the checkout as it stands.
+ * With no moves, the resolver reads the checkout as it stands.
  *
- * `contents` overrides what a file reads as, keyed by repo-relative path.
- * The manifests belong in it: a subpath KEY survives a move while its target changes,
- * so `@mailwoman/core/decoder/serialize-json` still names the moved file afterwards,
- * and a resolver reading the manifest as it stands would report that specifier
- * unrepointable and refuse a plan that is in fact complete.
+ * `contents` overrides file text by repo-relative path.
+ * Callers pass the rewritten manifests here, because a subpath key keeps its name
+ * after a move while its target changes.
  */
 export function createMoveResolver(
 	repoRoot: string,
@@ -78,15 +67,10 @@ export function createMoveResolver(
 	const canonicalized = new Map<string, string>()
 
 	/**
-	 * The real path a probe names, for a probe that goes through a symlink.
+	 * Converts a path through a `node_modules` symlink to its real path, so it matches the overlay keys.
 	 *
-	 * A workspace is reached as `node_modules/@mailwoman/x/…`, which is a different
-	 * string for the same file, and for a file the plan has not written yet,
-	 * `realpath` cannot answer at all, because nothing is there to resolve.
-	 * So the walk trims trailing segments until it reaches something that exists,
-	 * resolves that, and puts the trimmed segments back.
-	 *
-	 * Every overlay entry is keyed by a real path, and this is what lets a probe find one.
+	 * The path may not exist yet, so the walk trims trailing segments until it reaches
+	 * an existing path, resolves that, and appends the trimmed segments again.
 	 */
 	const canonical = (path: string): string => {
 		if (!path.includes("/node_modules/")) return path

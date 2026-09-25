@@ -18,8 +18,9 @@ const COVER_PLACETYPES = ["locality", "localadmin", "borough", "county", "macroc
 const COVERAGE_RADIUS_KM = 10
 
 /**
- * Enumerates why a non-current, unsuperseded record is absent from the index:
- * deprecated without a successor, or marked not current with no stated reason.
+ * The reason a non-current, unsuperseded record is out of the index.
+ *
+ * A record is either deprecated without a successor or marked not current without a stated reason.
  */
 export const CurrencyClass = {
 	DeprecatedNoSuccessor: "deprecated_no_successor",
@@ -27,13 +28,15 @@ export const CurrencyClass = {
 } as const
 
 /**
- * Names one {@link CurrencyClass} value.
+ * One {@link CurrencyClass} value.
  */
 export type CurrencyClass = (typeof CurrencyClass)[keyof typeof CurrencyClass]
 
 /**
- * Enumerates whether a live record within 10 km already serves a non-current place,
- * by exact name and placetype, exact name in another placetype, name containment, or not at all.
+ * How a live record within 10 km covers a non-current place.
+ *
+ * The verdicts are exact name and placetype, exact name in another placetype,
+ * name containment, or uncovered.
  */
 export const CoverageVerdict = {
 	CoveredExact: "covered_exact",
@@ -43,20 +46,22 @@ export const CoverageVerdict = {
 } as const
 
 /**
- * Names one {@link CoverageVerdict} value.
+ * One {@link CoverageVerdict} value.
  */
 export type CoverageVerdict = (typeof CoverageVerdict)[keyof typeof CoverageVerdict]
 
 /**
- * Records whether GeoNames has a populated place of the same name nearby,
- * which separates an upstream-pruned real place from a pruned ghost.
+ * Records whether GeoNames has a populated place of the same name within 10 km.
  *
- * `unmeasured` means no GeoNames dump was available for the country.
+ * An attested place is likely real.
+ * An unattested place may never have existed.
  */
 export interface TriageAttestation {
 	/**
-	 * The attestation result, where `unmeasured` means no dump existed to check,
-	 * unlike `unattested`, which means the check found nothing.
+	 * The attestation result.
+	 *
+	 * `unmeasured` means the country had no GeoNames dump to check.
+	 * `unattested` means the check ran and found no match.
 	 */
 	state: "attested" | "unattested" | "unmeasured"
 	population?: number
@@ -64,7 +69,7 @@ export interface TriageAttestation {
 }
 
 /**
- * The live record a coverage verdict rests on.
+ * The live record behind a coverage verdict.
  */
 export interface CoveredBy {
 	id: number
@@ -85,23 +90,22 @@ export interface TriageRow {
 	longitude: number
 
 	/**
-	 * The record's population, where 0 means the gazetteer carries none rather than a measured zero.
+	 * The record's population.
+	 * A value of 0 means the gazetteer has no population for it.
 	 */
 	population: number
 	currencyClass: CurrencyClass
 	coverage: CoverageVerdict
 
 	/**
-	 * The live record that covers this place, if any, so a reviewer can see
-	 * which record and placetype made the call.
+	 * The live record that covers this place, if any.
 	 */
 	coveredBy?: CoveredBy
 	attestation: TriageAttestation
 }
 
 /**
- * Counts coverage verdicts for one country and currency class, with `uncoveredAttested`
- * present only when attestation was measured.
+ * Counts coverage verdicts for one country and currency class.
  */
 export interface TriageSummary {
 	country: string
@@ -113,16 +117,16 @@ export interface TriageSummary {
 	uncovered: number
 
 	/**
-	 * The number of uncovered rows that GeoNames attests, which heads the review queue.
+	 * The number of uncovered rows that GeoNames attests.
 	 *
-	 * It is `undefined` when the country has no dump, so 0 always means checked and none found.
+	 * It is `undefined` when the country has no dump.
+	 * A value of 0 means the check ran and found none.
 	 */
 	uncoveredAttested?: number
 }
 
 /**
- * Configures {@link triageWOFCurrency}, which reads GeoNames `<CC>.txt` dumps from
- * `geonamesDir` and triages every country when `countries` is omitted.
+ * Options for {@link triageWOFCurrency}.
  */
 export interface TriageOptions {
 	/**
@@ -131,13 +135,15 @@ export interface TriageOptions {
 	adminDB: PathBuilderLike
 
 	/**
-	 * The directory of per-country GeoNames dumps; a country without a `<CC>.txt`
-	 * file is reported `unmeasured`.
+	 * The directory of per-country GeoNames `<CC>.txt` dumps.
+	 *
+	 * A country without a dump gets `unmeasured` attestations.
 	 */
 	geonamesDir?: PathBuilderLike
 
 	/**
-	 * The ISO 3166-1 alpha-2 countries to triage, defaulting to every country in the database.
+	 * The ISO 3166-1 alpha-2 countries to triage.
+	 * Defaults to every country in the database.
 	 */
 	countries?: readonly string[]
 
@@ -148,7 +154,7 @@ export interface TriageOptions {
 }
 
 /**
- * Holds the per-record ledger and per-country summaries produced by {@link triageWOFCurrency}.
+ * The per-record ledger and per-country summaries from {@link triageWOFCurrency}.
  */
 export interface TriageResult {
 	rows: TriageRow[]
@@ -267,8 +273,9 @@ async function loadAttestors(
 }
 
 /**
- * Triages an admin gazetteer's non-current locality, localadmin and borough records
- * into a reviewable ledger without writing to the database.
+ * Triages the non-current locality, localadmin and borough records of an admin gazetteer.
+ *
+ * The database is opened read-only.
  */
 export async function triageWOFCurrency(opts: TriageOptions): Promise<TriageResult> {
 	const progress = opts.onProgress ?? (() => {})

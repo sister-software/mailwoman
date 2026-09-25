@@ -3,37 +3,12 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The reduction: the containment index, read once, into one per-cell distribution both consumers share.
+ *   Reduces the delineations that reach a cell into that cell's capability-class distribution.
  *
- *   A distribution, never A winner, and that is forced BY measurement. 84.0% of the 339,191 national map
- *   units hold two or more components. in 16.8% the largest component covers under half the map unit. and
- *   85.4% of `IA153`'s delineations are smaller than one resolution-9 cell. No affordable cell size removes
- *   the mixture — it is a property of the survey, whose own `mukind` says so: 128,499 map units (38.0%) are
- *   complexes, associations or undifferentiated groups, which is nrcs stating that the soils are
- *   intermingled and cannot be separated at the mapping scale. A winner class would satisfy the result-level
- *   consumer and starve the signal consumer, which needs a magnitude to vary over.
- *
- *   the weight is A uniform-area lattice over the cell, and the grain is chosen against the authority'S own.
- *   A cell's children at {@link WEIGHT_LATTICE_DEPTH} levels finer have equal area by construction, so
- *   counting which delineation covers each child centre estimates covered area without a polygon clip. At
- *   depth 2 that is 49 children — 2.04% per child, which is the finest share nrcs's own
- *   `muaggatt.niccdcdpct` ever reports (observed minimum: 2%). Resolving finer than the authority publishes
- *   would be precision this layer cannot source.
- *
- *   A whole cell skips the lattice entirely, and that is exact rather than an optimization: a cell lying
- *   wholly inside one delineation is covered by that delineation and by nothing else, so its distribution is
- *   that map unit's component split and its `mapped_share` is 1.
- *
- *   `mapped_share` exists because A survey-area edge cell is partly outside every delineation. Without it,
- *   the unmapped remainder would silently deflate every class share — an absence represented as a small
- *   number, which is the one thing this schema exists to prevent. The five shares are normalized over the
- *   mapped part, so they sum to 1 exactly, and `mapped_share` says how much of the cell that was.
- *
- *   class 8 is A class share rather than an absence. It is a determination — the survey looked and rated the land
- *   as precluding commercial plant production, and 67,547 national components carry it. Folding it in with
- *   `notcom`, a water body and an unrated series would produce a well-formed wrong answer, and separating
- *   the four absences from the one positive negative is the whole reason this table has five columns rather
- *   than one.
+ *   The result is a distribution because most map units mix several soil components that the survey
+ *   cannot separate at its mapping scale. Shares are normalized over the mapped part of the cell, and
+ *   `mapped_share` records how large that part is. Capability class 8 is a rated class, so it is stored as a
+ *   class share. The unrated share, the no-data share and the not-rateable share each have their own column.
  */
 
 import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
@@ -44,30 +19,27 @@ import type { SoilCapabilityCellTable, SoilComponentTable, SoilMapUnitTable } fr
 import { SOIL_SHARE_WEIGHTING } from "#vocabulary"
 
 /**
- * How many resolution levels finer than the index the weighting lattice runs.
+ * The number of H3 levels below the index resolution at which the weighting lattice samples.
  *
- * Two, giving 49 children per cell and a 2.04% share granularity.
- * That is deliberately matched to the finest share the authority itself publishes —
- * `muaggatt.niccdcdpct`'s observed minimum is 2% — because a lattice finer than the source's
- * own reporting grain provides precision this layer cannot source, at 7× the cost per level.
+ * Children at a finer resolution have equal area, so counting which delineation
+ * covers each child centre estimates the covered area.
+ * A depth of 2 gives 49 children, or about 2% per child.
+ *
+ * NRCS publishes component shares no finer than 2%, and each extra level costs seven times as much.
  */
 export const WEIGHT_LATTICE_DEPTH = 2
 
 /**
- * Class shares below this are folded into `other_share` rather than stored.
+ * The class share below which a class is added to `other_share` instead of stored.
  *
- * One percent, which sits below the lattice's own 2.04% granularity,
- * so nothing a single child cell produces is truncated.
- * What lands here is the long tail that component percentages create inside a child
- * (a 1%-weight component inside one child cell contributes 0.02%).
- * Truncating a long tail is legitimate.
- *
- * Doing it silently is not, which is why the remainder is stored explicitly and the shares still sum to 1.
+ * The floor is below the lattice's 2% step, so it only removes the small shares
+ * that minor components contribute.
+ * Adding them to `other_share` keeps the shares summing to 1.
  */
 export const CLASS_SHARE_FLOOR = 0.01
 
 /**
- * One delineation reaching a cell, as the reduction needs it.
+ * One delineation that reaches a cell.
  */
 export interface CellCandidate {
 	areaID: string
@@ -81,12 +53,12 @@ export interface CellCandidate {
 }
 
 /**
- * What a map unit contributes per unit of area — computed once per map unit
- * and reused for every cell it reaches.
+ * The shares that a map unit contributes per unit of area.
  */
 export interface MapUnitProfile {
 	/**
-	 * Class code → share of the map unit, summing to 1 across classes and the three mapped-absence buckets.
+	 * Each class code's share of the map unit.
+	 * These shares and the three absence shares sum to 1.
 	 */
 	classShares: ReadonlyMap<string, number>
 	unrated: number
@@ -95,16 +67,12 @@ export interface MapUnitProfile {
 }
 
 /**
- * Turn one map unit and its components into the per-unit-area profile the reduction folds in.
+ * Builds the profile of one map unit from its components.
  *
- * A `no_mapping` map unit contributes wholly to `nodata` and never to a class:
- * it is a polygon the authority drew with no soil mapping behind it, and reading it as
- * a low class would be the reassuring wrong number §3.2 of the survey is about.
+ * A `no_mapping` map unit contributes only to `noData`, because it has no soil mapping.
  *
- * The split across components is by `comppct_r`, the component's representative percentage
- * of its map unit, normalized by the total actually present rather than assumed to be 100.
- * Measured on `IA153` all 152 map units sum to exactly 100, and a national build
- * must not depend on that holding everywhere.
+ * Components are weighted by `comppct_r`, the component's representative percentage of its map unit.
+ * The weights are divided by their actual total, because the percentages may not sum to 100.
  */
 export function mapUnitProfile(
 	mapUnit: Pick<SoilMapUnitTable, "no_mapping">,
@@ -120,11 +88,8 @@ export function mapUnitProfile(
 		total += component.comppct_r
 	}
 
-	// A map unit whose components carry no weight at all publishes no readable proportion,
-	// so nothing can be apportioned from it.
-	// It is marked `no_mapping` upstream for exactly this reason.
-	// Reaching here with a zero total means the upstream check and this one disagree, and answering
-	// with an empty distribution would silently drop the delineation's area out of every share.
+	// Components with zero total weight give no proportions, so the map unit counts as no data.
+	// An empty distribution would drop the delineation's area from every share.
 	if (total <= 0) {
 		return { classShares: new Map(), unrated: 0, notRateable: 0, noData: 1 }
 	}
@@ -145,12 +110,8 @@ export function mapUnitProfile(
 			continue
 		}
 
-		// A NULL rating means the survey did not rate this component, and why it did
-		// not is what separates the two buckets.
-		// A miscellaneous area is a non-soil area — rock outcrop, water —
-		// that the capability rating does not apply to.
-		// A named soil with no rating is one the survey chose not to rate.
-		// Read as one number they would both say "not arable", which neither of them says.
+		// A miscellaneous area, such as rock outcrop or water, cannot take a capability rating.
+		// Any other component with a NULL rating is a soil that the survey did not rate.
 		if (component.compkind === "Miscellaneous area") {
 			notRateable += weight
 		} else {
@@ -162,28 +123,26 @@ export function mapUnitProfile(
 }
 
 /**
- * What one cell's reduction produced, plus the diagnostics the receipt reports.
+ * The stored row for one cell, plus diagnostics for the build report.
  */
 export interface ReducedCell {
 	row: SoilCapabilityCellTable
 	/**
-	 * True when the top class covers less than half the cell.
-	 *
-	 * The §4.7 number, counted here so it comes off the artifact rather than out of a separate harness.
+	 * Whether the top class covers less than half the cell.
 	 */
 	topClassUnderHalf: boolean
 	/**
-	 * True when the lattice was used rather than the whole-cell fast path.
+	 * Whether the lattice was used instead of the whole-cell fast path.
 	 */
 	sampled: boolean
 }
 
 /**
- * Reduce one cell.
+ * Reduces one cell.
  *
- * @throws {Error} When a candidate names a map unit the profile map does not hold.
- * A missing profile means the attribute join is short, and answering with the remaining
- * candidates would report a well-formed distribution over part of the cell.
+ * @throws {Error} When a candidate's map unit has no profile.
+ * A missing profile means the attribute join is incomplete, and the remaining
+ * candidates would describe only part of the cell.
  */
 export function reduceCell(
 	cell: H3Cell,
@@ -199,8 +158,7 @@ export function reduceCell(
 	const whole = candidates.length === 1 ? candidates.find((candidate) => candidate.containment === "whole") : undefined
 
 	if (whole) {
-		// Exactly one delineation, and it covers the cell entirely.
-		// Nothing else can reach it, so the lattice would return the same answer at 49 times the cost.
+		// A single delineation covers the whole cell, so the lattice would give the same answer.
 		weights.set(whole.mukey, 1)
 	} else {
 		sampled = true
@@ -219,12 +177,8 @@ export function reduceCell(
 		}
 
 		if (!covered) {
-			// Every child centre fell outside every delineation reaching the cell.
-			// The cell is touched — the index says so — but no lattice point landed inside,
-			// which happens when a sliver clips a corner.
-			// Reporting shares over nothing would divide by zero.
-			// Reporting a mapped share of zero is the truthful answer, and the row is dropped
-			// by the caller rather than stored as an all-zero distribution.
+			// No child centre fell inside a delineation, which happens when a sliver clips a corner.
+			// The row has a mapped share of zero, and the caller drops it.
 			return {
 				row: emptyRow(h3Cell, candidates.length),
 				topClassUnderHalf: false,
@@ -243,10 +197,10 @@ export function reduceCell(
 }
 
 /**
- * The delineation covering a point, or `undefined` where none does.
+ * Returns the delineation that covers a point, or `undefined` when none does.
  *
- * The bounding box is the prefilter the geometry table stores precisely so the ray cast runs on the few
- * delineations that could contain the point rather than on every delineation reaching the cell.
+ * A bounding-box test runs first so that the ray cast runs only on delineations
+ * that could contain the point.
  */
 function candidateAt(
 	candidates: ReadonlyArray<CellCandidate>,
@@ -270,7 +224,7 @@ function candidateAt(
 }
 
 /**
- * Fold the per-map-unit weights through their profiles into the stored row.
+ * Combines the per-map-unit weights with their profiles into the stored row.
  */
 function assembleRow(
 	h3Cell: number,
@@ -304,9 +258,7 @@ function assembleRow(
 		noData += profile.noData * weight
 	}
 
-	// The floor truncates the long tail component percentages create inside a lattice child.
-	// The remainder is stored rather than dropped, so the five shares sum to 1
-	// and a reader can see how much was folded away.
+	// Classes below the floor go into `other_share` so that the shares still sum to 1.
 	let other = 0
 	const kept: Array<[string, number]> = []
 
@@ -342,10 +294,10 @@ function assembleRow(
 }
 
 /**
- * A cell no lattice point landed inside.
+ * Returns the row for a cell that no lattice point landed in.
  *
- * `mapped_share` zero says exactly that, and the caller drops it rather than storing an
- * all-zero distribution that would read as a surveyed cell holding nothing.
+ * The caller drops a row with a zero `mapped_share`, because storing it would
+ * look like a surveyed cell with no soil.
  */
 function emptyRow(h3Cell: number, delineations: number): SoilCapabilityCellTable {
 	return {
@@ -364,8 +316,7 @@ function emptyRow(h3Cell: number, delineations: number): SoilCapabilityCellTable
 }
 
 /**
- * Six decimals — a millionth of a cell, far below the lattice's own 2% granularity, and enough
- * that the stored shares still sum to 1 within a rounding error a reader can see is rounding.
+ * The number of decimals kept in a stored share, far finer than the lattice's 2% step.
  */
 const SHARE_DECIMALS = 6
 
@@ -374,10 +325,9 @@ function round(value: number): number {
 }
 
 /**
- * The sum of a stored row's five shares.
+ * Returns the sum of a stored row's class shares and four other shares.
  *
- * Exported because the invariant it checks — that they sum to 1 — is what makes `other_share`
- * required rather than decorative, and a test that could not state the sum could not pin it.
+ * Tests use it to check that the shares sum to 1.
  */
 export function shareTotal(row: SoilCapabilityCellTable): number {
 	const classes = parseJSONStrict<Record<string, number>>(row.class_shares)

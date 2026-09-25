@@ -1,7 +1,7 @@
 # Calibrating the interpolation radius — direct confidence for the street-level tier
 
 _2026-06-14. The forward geocoder's interpolation tier stamps an `uncertainty_m` radius = half the
-matched TIGER segment's length. That's an direct geometric prior, but is it a calibrated confidence
+matched TIGER segment's length. That's an honest geometric prior, but is it a calibrated confidence
 bound? A split-conformal calibration on the Travis-County E-911 holdout says no — the raw radius is too
 tight, covering only ~72% of true errors. Multiplying by Q̂ ≈ 1.70 makes it a real 90% bound. This
 records the measurement and the opt-in wiring that ships it._

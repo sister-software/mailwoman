@@ -98,7 +98,7 @@ describe("layer coverage IO", () => {
 			observedRows: 240,
 		})
 
-		// Missing coverage means unknown, not zero completeness.
+		// An unsurveyed cell reads as `undefined`, which means unknown coverage.
 		expect(await readLayerCoverage(db, 9999)).toBeUndefined()
 	})
 
@@ -116,7 +116,7 @@ describe("layer coverage IO", () => {
 
 	it("chunks inserts past a single statement's bound-variable limit", async () => {
 		using db = await openschemadb()
-		// Exercise two full insert batches and a partial third batch.
+		// The cell count fills two insert batches and part of a third.
 		const cellCount = COVERAGE_INSERT_BATCH * 2 + 17
 
 		const cells = Array.from({ length: cellCount }, (_, i) => ({
@@ -127,7 +127,6 @@ describe("layer coverage IO", () => {
 
 		await writeLayerCoverage(db, cells)
 
-		// Check the first batch.
 		expect(await readLayerCoverage(db, 0)).toEqual({
 			h3Cell: 0,
 			completeness: 0,
@@ -135,7 +134,6 @@ describe("layer coverage IO", () => {
 			observedRows: 0,
 		})
 
-		// Check a cell in the second batch.
 		const midSecondBatch = COVERAGE_INSERT_BATCH + Math.floor(COVERAGE_INSERT_BATCH / 2)
 
 		expect(await readLayerCoverage(db, midSecondBatch)).toEqual({
@@ -145,7 +143,6 @@ describe("layer coverage IO", () => {
 			observedRows: midSecondBatch,
 		})
 
-		// Check the final, partial batch.
 		const lastCell = cellCount - 1
 
 		expect(await readLayerCoverage(db, lastCell)).toEqual({
@@ -155,7 +152,6 @@ describe("layer coverage IO", () => {
 			observedRows: lastCell,
 		})
 
-		// Missing cells remain unknown.
 		expect(await readLayerCoverage(db, cellCount + 1000)).toBeUndefined()
 	})
 })
@@ -234,7 +230,7 @@ describe("coverage cell invariants", () => {
 
 		await writeLayerCoverage(db, [{ h3Cell: 5, completeness: 0.5, basis: CoverageBasis.Surveyed, observedRows: 2 }])
 
-		// Simulate a corrupted row that the writer would reject.
+		// Raw SQL bypasses the writer's validation to store an invalid row.
 		await sql`update layer_coverage set completeness = 4.2 where h3_cell = 5`.execute(db)
 
 		await expect(readLayerCoverage(db, 5)).rejects.toThrow(/completeness/)
@@ -243,7 +239,7 @@ describe("coverage cell invariants", () => {
 
 describe("SpineKeys.street — the third layer shape", () => {
 	it("accepts a street spine as satisfying the at-least-one rule", async () => {
-		// Situs extracts use a street key rather than H3, WOF ID, or address ID.
+		// Situs extracts are keyed by street.
 		const db = await openschemadb()
 
 		await expect(

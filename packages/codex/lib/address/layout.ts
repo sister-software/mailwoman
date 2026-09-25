@@ -3,96 +3,73 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Per-address-system layouts: the order a system prints its components in, as data.
+ *   Address layouts written as tagged templates in print order. Interpolations are slots, and the literal text
+ *   between them is a connector.
  *
- *   A layout is written as a tagged template that reads in the order it prints, so reviewing one means looking at the
- *   shape of the address it produces rather than at a nested function call. The interpolations are slots. the literal
- *   text between them are connectors.
+ *   A node that renders nothing drops out together with its connector. An interior connector renders only when
+ *   both neighbours rendered. An edge connector binds to the one slot it touches, so Japan's 〒 mark drops with an
+ *   absent postcode.
  *
- *   one rule governs rendering, and it replaces four mechanisms that each did part of the job elsewhere — the
- *   `filter(isPresent).join(…)` written by hand in 28 files, a pass that stripped a connector a template wrote between
- *   two slots when one was empty, a pass that spliced a missing line back in, and a chain of `if (x) parts.push(x)`:
- *
- *   > A node that renders nothing removes itself, and its connector goes with it.
- *
- *   A connector between two slots renders when a slot rendered on each side of it. A connector at the edge of a line
- *   has only one side, so it binds to the single slot it touches — which is how Japan's postal mark 〒 disappears with
- *   an absent postcode while an interior space does not.
- *
- *   why A template rather than nested calls. The order has to be readable by someone checking whether a country is
- *   right, and the check is "does this look like an address from there". A nested `seq(", ", locality, seq(" ", region,
- *   postcode))` encodes the same thing and reads like a parser. The template also needs no nesting for the common case:
- *   treating every separator as a connector makes each line flat, and the four outcomes of a partially-filled tail
- *   (`New York, NY 10118` / `New York, NY` / `New York, 10118` / `NY 10118`) fall out of the one rule.
- *
- *   The renderer is the sibling `render.ts`, and the public surface over it is `format.ts`. They are separate modules
- *   rather than one so a consumer that only wants the table — a conformance check, a documentation build — imports
- *   `#address/layouts` and loads no evaluator.
+ *   The evaluator lives in `render.ts`, so modules that only need the layout table do not load it.
  */
 
 import { COMPONENT_TAGS, type ComponentTag } from "#component"
 
 /**
- * A slot: one component tag's value, or nothing when the dict has no value for it.
+ * A slot that renders one component tag's value, or nothing when the value is absent.
  */
 export interface AddressSlot {
 	readonly tag: ComponentTag
 }
 
 /**
- * A connector: literal text that renders only between neighbours that rendered.
+ * Literal text that renders only between neighbours that rendered.
  *
- * Written as the text between interpolations, never constructed by hand.
+ * The `addr` template creates connectors from the text between interpolations.
  */
 export interface AddressConnector {
 	readonly connector: string
 }
 
 /**
- * First alternative that renders.
+ * A choice that renders its first alternative with output.
  *
- * The street line needs it and nothing else does: an intersection prints as `<a> & <b>`
- * where a street prints as its own family of tags.
+ * The street line uses it to choose between an intersection and a street address.
  */
 export interface AddressAlternation {
 	readonly alternatives: readonly AddressLayout[]
 }
 
+/**
+ * One element of a layout line.
+ */
 export type AddressAtom = AddressSlot | AddressConnector | AddressAlternation | AddressLayout
 
 /**
- * A layout: lines of atoms, in print order.
+ * Lines of atoms in print order.
  *
- * A line break in the template starts a new line.
- * How lines are joined for single-line output is the caller's choice,
- * and per-system for the systems that join on nothing.
+ * The caller chooses how lines are joined for single-line output.
  */
 export interface AddressLayout {
 	readonly lines: ReadonlyArray<readonly AddressAtom[]>
 	/**
-	 * Line indices whose preceding break collapses to a space on one line
-	 * rather than taking the system's join.
+	 * Indices of lines whose preceding break becomes a space in single-line output,
+	 * in place of the system's join.
 	 *
-	 * A system can need two different joins between its own lines.
-	 * Great Britain prints the post town and the postcode on separate lines, which is Royal
-	 * Mail's form and what the multi-line render must keep, while one line is written
-	 * `27 Minories, London EC3N 1DE` — a comma after the street and a space before the postcode.
+	 * Great Britain prints the post town and postcode on separate lines,
+	 * but its single-line form is `27 Minories, London EC3N 1DE`.
 	 *
-	 * One join per system cannot say that, and the single-line render answered `London, EC3N 1DE`.
-	 *
-	 * Keyed by the line a break PRECEDES rather than the one it follows,
-	 * because `evaluateLines` drops a line no component filled.
-	 * An index counted from the left survives that drop, and a count of breaks does not.
+	 * Each index refers to the line after the break.
+	 * `evaluateLines` drops empty lines, and an index into the template's lines stays valid after that drop.
 	 */
 	readonly softBreakBefore?: ReadonlySet<number>
 }
 
 /**
- * The same layout, with the break before the line that starts with `tag` marked soft.
+ * Returns a copy of the layout with a soft break before the line that starts with `tag`.
  *
- * Named by tag rather than by index so the mark survives an edit to the lines above it.
- * A layout with no line starting on `tag` is returned unchanged: the caller is describing a line that
- * is not there, and silently marking some other break would move a separator nobody asked about.
+ * The line is found by tag so that edits to earlier lines do not move the mark.
+ * When no line after the first starts with `tag`, the layout is returned unchanged.
  */
 export function withSoftBreakBefore(layout: AddressLayout, tag: string): AddressLayout {
 	const index = layout.lines.findIndex((line) => {
@@ -106,63 +83,60 @@ export function withSoftBreakBefore(layout: AddressLayout, tag: string): Address
 	return { ...layout, softBreakBefore: new Set([...(layout.softBreakBefore ?? []), index]) }
 }
 
+/**
+ * Returns whether an atom is a slot.
+ */
 export function isSlot(atom: AddressAtom): atom is AddressSlot {
 	return "tag" in atom
 }
 
+/**
+ * Returns whether an atom is a connector.
+ */
 export function isConnector(atom: AddressAtom): atom is AddressConnector {
 	return "connector" in atom
 }
 
+/**
+ * Returns whether an atom is an alternation.
+ */
 export function isAlternation(atom: AddressAtom): atom is AddressAlternation {
 	return "alternatives" in atom
 }
 
+/**
+ * Returns whether an atom is a nested layout.
+ */
 export function isLayout(atom: AddressAtom): atom is AddressLayout {
 	return "lines" in atom
 }
 
 /**
- * Every {@linkcode ComponentTag} as a slot, so a layout names a tag by destructuring
- * rather than by quoting it.
+ * A slot for every {@linkcode ComponentTag}, keyed by tag.
  *
- * A misspelled slot is then an unresolved identifier at compile time, and the spelling stays the tag's own.
- * `dependent_locality`, never a parallel camelCase vocabulary.
+ * Layouts reference `SLOTS.<tag>` so that a misspelled tag fails to compile.
  */
 export const SLOTS: Readonly<Record<ComponentTag, AddressSlot>> = Object.freeze(
 	Object.fromEntries(COMPONENT_TAGS.map((tag) => [tag, Object.freeze({ tag })])) as Record<ComponentTag, AddressSlot>
 )
 
 /**
- * The first alternative that renders wins.
- *
- * Used for the street line, where an intersection and a street name are two ways
- * of saying where rather than two things to print.
+ * Creates an alternation that renders the first alternative with output.
  */
 export function either(...alternatives: readonly AddressLayout[]): AddressAlternation {
 	return { alternatives }
 }
 
 /**
- * A post-office box takes a line of its own directly above the street line,
- * and coexists with one: a record may carry both a box and a street address,
- * and printing the box alone would lose the half a courier needs.
+ * The post-office box line, printed directly above the street line.
  *
- * That placement is measured rather than assumed.
- * The engine this table replaces rendered `P.O. Box 5` + `100 Main St` + `Portland, or 97214`
- * as three lines in that order, and the same shape for Germany, Australia and Great Britain.
- *
- * Libaddressinput models no box at all, which is why the slot is authored here rather than transcribed.
+ * A record can hold both a box and a street address, and both lines are printed.
+ * Libaddressinput has no box field, so this placement is defined here.
  */
 const poBoxLine = SLOTS.po_box
 
 /**
- * The street line where the number leads: the anglophone order, and France's.
- *
- * An intersection is an alternative to the street name because it is a different way of saying
- * where rather than a second thing to print — the shape the old `composeRoad` drew in
- * its own docstring before hand-compiling it into a chain of `if` statements.
- * The box is not an alternative, so it sits outside the choice.
+ * The street line with the number first, used by anglophone systems and France.
  */
 export const numberFirstStreet: AddressLayout = addr`${poBoxLine}
 ${either(
@@ -171,7 +145,7 @@ ${either(
 )}`
 
 /**
- * The number-first line where a comma separates the number from the name — India's order.
+ * The street line with the number first and a comma before the name, used by India.
  */
 export const numberFirstCommaStreet: AddressLayout = addr`${poBoxLine}
 ${either(
@@ -180,7 +154,7 @@ ${either(
 )}`
 
 /**
- * The street line where the number follows the name: the German-order systems, and Italy.
+ * The street line with the number after the name, used by German-order systems and Italy.
  */
 export const numberLastStreet: AddressLayout = addr`${poBoxLine}
 ${either(
@@ -189,13 +163,10 @@ ${either(
 )}`
 
 /**
- * The number-last line where a comma separates the name from the number —
- * `Calle Mayor, 12`, and Brazil's order.
+ * The street line with the number after the name and a comma between them, as in `Calle Mayor, 12`.
  *
- * The separator is not cosmetic.
- * Spain's corpus recipe renders both this form and the space form on purpose,
- * because both occur in what a person types.
- * Collapsing one into the other would remove half the signal.
+ * Brazil uses this form.
+ * Spain's corpus recipe renders both this form and the space form because people type both.
  */
 export const numberLastCommaStreet: AddressLayout = addr`${poBoxLine}
 ${either(
@@ -204,16 +175,10 @@ ${either(
 )}`
 
 /**
- * The street line written in Han script: the name, then the number, with nothing between them — `佐敦道21號`.
+ * The Han-script street line, with the name and number written together, as in `佐敦道21號`.
  *
- * A separator is not optional here the way a space or a comma is elsewhere.
- * `佐敦道 21號` is the romanized convention spelled in Chinese characters, which is what
- * a Latin-order layout produces when it is handed Han components, and it is the half
- * of the Hong Kong defect that survives getting the field order right.
- *
- * Lives beside the other street nodes rather than in the layout table, because the
- * generated skeletons name it: a country's local-script street order is the same
- * kind of fact as its number-first or number-last order.
+ * A space between them is a romanized convention and is wrong in Han script.
+ * The generated skeletons reference this node alongside the other street lines.
  */
 export const hanStreet: AddressLayout = addr`${poBoxLine}
 ${either(
@@ -222,12 +187,10 @@ ${either(
 )}`
 
 /**
- * Build a layout from a tagged template.
+ * Builds a layout from a tagged template.
  *
- * A newline in the literal text starts a line.
- * Other literal text is a connector.
- *
- * An interpolation is a slot, an alternation, or another layout.
+ * A newline in the literal text starts a new line, and other literal text becomes a connector.
+ * Each interpolation is a slot, an alternation or a nested layout.
  */
 export function addr(strings: TemplateStringsArray, ...values: readonly AddressAtom[]): AddressLayout {
 	const lines: AddressAtom[][] = [[]]
@@ -237,8 +200,7 @@ export function addr(strings: TemplateStringsArray, ...values: readonly AddressA
 	}
 
 	for (const [index, raw] of strings.entries()) {
-		// A template's literal segment is bounded by the source text that spells it — one address line at most, and a
-		// layout cannot grow at runtime.
+		// Template literal segments come from source code, so their size is fixed.
 		// oxlint-disable-next-line mailwoman/prefer-spliterator -- bounded by the source text, see above
 		const segments = raw.split("\n")
 

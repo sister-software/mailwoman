@@ -3,29 +3,12 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The GeoNames-to-WOF identity join the same-data benchmark grades through (#2261), and the guard that
- *   decides when the join may be trusted.
+ *   Maps GeoNames gold entities to sets of WOF IDs through the WOF concordance table.
  *
- *   The gold entity is a GeoNames row, so the truth stays open and independent of Mailwoman's own gazetteer.
- *   the candidates are WOF rows, because that is what the backend answers with. Without a published link
- *   between the two, correctness would have to be decided by distance, and distance is not identity — two
- *   same-named places a kilometre apart are different entities, and a correct selection 30 km from a large
- *   city's centroid is still correct.
- *
- *   The gold is a SET of ids rather than one id: 21 of the 10,738 coherent sets reach more than one distinct
- *   city-tier WOF row, so grading against one arbitrary member would measure which duplicate an arm returned.
- *   Count distinct ids rather than rows — the table writes the same link more than once (2,057,196 rows over
- *   1,775,438 distinct pairs), and the row-wise count reads 4,304.
- *
- *   A set is admitted only when every member's folded name matches the register's, every member sits in the
- *   register's country, and every member lies within {@link GOLD_COHERENCE_KM} of its coordinate. Most
- *   exclusions come from that guard: 1,152 geonameids reach only a neighbourhood or a region, where grading
- *   a locality selection against a region's id marks a correct answer wrong, and 1,492 reach a
- *   differently-named row.
- *
- *   A geonameid the join cannot resolve never enters the panel, and {@link GoldCensus} says which check
- *   refused it. Those counts describe the gazetteer rather than the panel, so reporting them keeps a
- *   coverage hole from reading as a selection rule.
+ *   The benchmark grades by identity through this join because distance cannot tell two nearby
+ *   same-named places apart. A GeoNames ID can map to several city-tier WOF rows, so the gold is a set of
+ *   IDs. The join admits a set only when every member passes the name, country, and distance checks in
+ *   {@link readGoldSets}.
  */
 
 import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street/normalize"
@@ -40,35 +23,31 @@ import type { PathBuilderLike } from "path-ts"
 const GEONAMES_SOURCE = "gn:id"
 
 /**
- * WOF placetypes that carry the tier a `cities15000.txt` row denotes.
+ * WOF placetypes at the city tier of a `cities15000.txt` row.
  *
- * `localadmin` is admitted beside `locality` because WOF splits the city tier across both,
- * the same equivalence the resolver's own placetype groups use.
+ * WOF splits the city tier between `locality` and `localadmin`.
  */
 const CITY_TIER = new Set(["locality", "localadmin"])
 
 /**
- * How far a concorded WOF row may sit from the register's coordinate and still be the same place.
+ * The maximum distance in kilometres between a concorded WOF row and the register's coordinate.
  *
- * Set at the wrong-area threshold the benchmark already registers,
- * so one distance means one thing throughout.
+ * It equals the benchmark's registered wrong-area threshold.
  */
 export const GOLD_COHERENCE_KM = 25
 
 /**
  * Identifiers per `IN` clause.
  *
- * SQLite's default host-parameter ceiling is 999, and staying under it keeps the filter in SQL —
- * the alternative, scanning the table's 2,057,196 `gn:id` rows into JavaScript and filtering there,
- * materializes two million objects on a host that also runs this repository's CI runners.
+ * The value stays under SQLite's default limit of 999 host parameters.
+ * Chunking keeps the filter in SQL, which avoids loading about two million `gn:id` rows into JavaScript.
  */
 const IDENTIFIERS_PER_QUERY = 900
 
 /**
- * The two tables this reader touches in the WOF admin gazetteer, as the read interface only.
+ * The columns this module reads from the WOF admin gazetteer.
  *
- * The artifact is built elsewhere (`@mailwoman/resolver-wof-sqlite`'s unified schema owns its DDL),
- * and a second builder here would be a second definition of a shipped table.
+ * The DDL lives in the unified schema of `@mailwoman/resolver-wof-sqlite`.
  */
 interface WOFGazetteerDatabase {
 	concordances: {
@@ -99,10 +78,7 @@ interface ConcordanceRow {
 }
 
 /**
- * The register row a gold set is checked against.
- *
- * The fields the guard reads, so a caller need not pass a whole `GeoNamesCity`
- * and this module need not depend on the panel builder.
+ * The fields of a GeoNames register row that the gold-set checks read.
  */
 export interface GoldSubject {
 	geonameid: string
@@ -114,9 +90,9 @@ export interface GoldSubject {
 }
 
 /**
- * Why a geonameid produced no gold.
+ * Counts of subjects by the check that excluded them, plus the coherent count.
  *
- * Each count names a different hole, and they are never summed into one number.
+ * Each exclusion count describes a separate gazetteer gap, so the report keeps them apart.
  */
 export interface GoldCensus {
 	subjects: number
@@ -128,22 +104,24 @@ export interface GoldCensus {
 	coherent: number
 }
 
+/**
+ * The coherent gold sets and the census of excluded subjects.
+ */
 export interface GoldSets {
 	/**
-	 * Geonameid → the WOF ids that denote it, ascending.
-	 *
-	 * Only coherent sets appear.
+	 * Maps each geonameid with a coherent set to its WOF IDs in ascending order.
 	 */
 	byGeonameID: Map<string, number[]>
 	census: GoldCensus
 }
 
 /**
- * Read the coherent gold set for each subject.
+ * Reads the coherent gold set for each subject.
  *
- * The concordance is queried in chunks and joined to `spr` so the guard can read
- * the other side's placetype, name, country and coordinate.
- * A join that returned ids alone could not tell a locality from the region above it.
+ * The query joins the concordance to `spr` so the checks can read each WOF row's
+ * placetype, name, country, and coordinate.
+ * A subject yields a set only when all of its city-tier rows match the register's name,
+ * sit in its country, and lie within {@link GOLD_COHERENCE_KM} of its coordinate.
  */
 export async function readGoldSets(databasePath: PathBuilderLike, subjects: readonly GoldSubject[]): Promise<GoldSets> {
 	using db = new DatabaseClient<WOFGazetteerDatabase>(databasePath, { readOnly: true })
@@ -195,8 +173,7 @@ export async function readGoldSets(databasePath: PathBuilderLike, subjects: read
 			continue
 		}
 
-		// The register writes two names for a place — its own and an ascii transliteration —
-		// and either may be the one the gazetteer carries.
+		// The gazetteer may carry either the register's native name or its ASCII transliteration.
 		const accepted = new Set([normalizeLocalityForKey(subject.name), normalizeLocalityForKey(subject.asciiname)])
 
 		if (!tier.every((row) => accepted.has(normalizeLocalityForKey(row.name)))) {
@@ -219,9 +196,7 @@ export async function readGoldSets(databasePath: PathBuilderLike, subjects: read
 
 		census.coherent++
 
-		// Deduplicated: the shipped table holds 2,057,196 `gn:id` rows over 1,775,438
-		// distinct (id, other_id) pairs, so the same link is written more than once
-		// and a naive map would put one WOF id in the gold set twice.
+		// The concordance table repeats some links, so the IDs need deduplicating.
 		byGeonameID.set(
 			subject.geonameid,
 			[...new Set(tier.map((row) => row.id))].toSorted((left, right) => left - right)

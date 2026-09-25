@@ -3,10 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Add local-authority zoning designations as observations after geocoding.
- *   The route never changes answer selection and reports only published designations.
- *   Each observation preserves the local code, jurisdiction, plan, coverage, and limitations.
- *   No designation is not evidence that land is unrestricted.
+ *   Attaches local-authority zoning designations to a geocode answer as an observation. The route
+ *   never changes answer selection.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -31,40 +29,39 @@ import {
 } from "#observations/layer-record"
 
 /**
- * Zoning designation and provenance recorded beside an answer.
+ * The published zoning designations for a coordinate, with their coverage and provenance.
+ *
+ * A location without a designation may still be restricted.
  */
 export interface ZoningDesignationObservation {
 	/**
 	 * Always `designated`.
-	 *
-	 * `unknown` produces no observation — see this file's header.
+	 * Any other reading produces a refusal instead.
 	 */
 	reading: ZoningReadingKind
 	/**
-	 * Every polygon containing the point.
+	 * Every designation polygon that contains the point.
 	 *
-	 * Usually one.
-	 * Several where a Local Area Plan overlays a Development Plan over the same ground,
-	 * which the publisher issues as two rows.
+	 * There are several when a Local Area Plan overlays a Development Plan on the same ground.
 	 */
 	designations: ZoningDesignation[]
 	containment: ZoningContainmentPath
 	/**
-	 * The coverage side of the claim.
+	 * The coverage record for the location.
 	 *
-	 * Its basis is `source_present`, which supports presence and nothing else.
+	 * Its basis is `source_present`, which supports a presence claim only.
 	 */
 	coverage?: ObservationCoverageRecord
 	/**
-	 * The index cell probed.
+	 * The index cell that was probed.
 	 */
 	indexCellIndex: string
 	/**
-	 * What the product does not state, in the publisher's own words.
+	 * The product's stated limitations, in the publisher's own words.
 	 */
 	limits: ReadonlyArray<string>
 	/**
-	 * Why this layer's coverage licenses no claim that a location is unrestricted.
+	 * The reason this layer's coverage cannot show that a location is unrestricted.
 	 */
 	coverageLimit: string
 	layer: ObservationLayerRecord
@@ -73,52 +70,60 @@ export interface ZoningDesignationObservation {
 }
 
 /**
- * Named reasons a coordinate produced no observation.
+ * The reasons a coordinate can produce no zoning observation.
  */
 export const ZONING_REFUSALS = [
 	/**
-	 * The geocode reached no coordinate, so there is nothing to ask the layer about.
+	 * The geocode produced no coordinate.
 	 */
 	"no_coordinate",
 	/**
-	 * No adopted plan in this product assigns a zoning designation here.
+	 * No adopted plan in this product designates the location.
 	 *
-	 * Not an absence claim: the location may be outside any plan area, inside one on land
-	 * the plan does not zone, in a jurisdiction that has never zoned, or in one whose
-	 * records are not published, and the product cannot tell those apart.
+	 * The product cannot distinguish land outside every plan area, unzoned land inside a plan,
+	 * a jurisdiction that never zoned, and a jurisdiction that publishes no records.
 	 */
 	"no_designation_here",
 ] as const
 
+/**
+ * One {@link ZONING_REFUSALS} value.
+ */
 export type ZoningRefusal = (typeof ZONING_REFUSALS)[number]
 
 /**
- * Observation or named refusal for one coordinate.
+ * The observation or refusal for one coordinate.
  */
 export type ZoningDecision =
 	| { fired: true; observation: ZoningDesignationObservation }
 	| { fired: false; refusal: ZoningRefusal }
 
+/**
+ * Reads zoning designations from one sealed layer.
+ */
 export interface ZoningDesignationRoute extends Disposable {
 	identity: ZoningLayerIdentity
 	/**
-	 * Read the layer for one coordinate; missing coordinates return a named refusal.
+	 * Reads the layer at one coordinate.
+	 * A missing coordinate returns the `no_coordinate` refusal.
 	 */
 	observe: (latitude: number | null | undefined, longitude: number | null | undefined) => ZoningDecision
 }
 
+/**
+ * Options for {@link createZoningDesignationRoute}.
+ */
 export interface ZoningDesignationRouteOptions {
 	/**
 	 * The sealed layer to read.
-	 *
-	 * Required: there is no default layer, and a route that guessed one would report
-	 * a designation from an authority nobody asked about.
+	 * The route has no default layer.
 	 */
 	databasePath: PathBuilderLike
 }
 
 /**
- * Build the route against one sealed layer; the reader validates its manifest and coverage.
+ * Builds the route against one sealed layer.
+ * The reader validates the layer's manifest and coverage.
  */
 export function createZoningDesignationRoute(options: ZoningDesignationRouteOptions): ZoningDesignationRoute {
 	const lookup = new ZoningLookup({ databasePath: options.databasePath })
@@ -132,7 +137,7 @@ export function createZoningDesignationRoute(options: ZoningDesignationRouteOpti
 }
 
 /**
- * Build the observation for a reading the refusal check let through.
+ * Builds the observation for a reading that passed the refusal check.
  */
 function toObservation(
 	reading: ZoningReading,
@@ -158,9 +163,11 @@ function toObservation(
 }
 
 /**
- * What the adopted plan assigns, in one wording — the authority's own code verbatim,
- * the publisher's generic type beside it, and the named plan — shared by the
- * one-line description and the marker message.
+ * Returns the clause that states what the adopted plan assigns.
+ *
+ * The clause gives the authority's code verbatim, the publisher's crosswalk code
+ * when present, and the plan name.
+ * The one-line description and the marker message share this wording.
  */
 export function zoningAssignmentClause(observation: ZoningDesignationObservation): string {
 	const first = observation.designations[0]
@@ -174,7 +181,7 @@ export function zoningAssignmentClause(observation: ZoningDesignationObservation
 }
 
 /**
- * One line a reader can check the claim from, with the authority, the plan and the vintage on it.
+ * Returns a one-line description of the observation, including the plan, coverage and layer provenance.
  */
 export function describeZoningDesignation(observation: ZoningDesignationObservation): string {
 	return (

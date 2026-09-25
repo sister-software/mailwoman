@@ -2,7 +2,7 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file Grade one row: the admin-match flags plus the great-circle error from the resolved place to OA's own point.
+ * @file Grades one OpenAddresses row by admin match and by distance from the resolved place to the row's point.
  */
 
 import { expandPlacetypeFilter } from "@mailwoman/codex/placetype-map"
@@ -16,9 +16,9 @@ import type { Resolved } from "#eval-harness/oa/resolver/tree-hits"
 import { mostSpecific } from "#eval-harness/oa/resolver/tree-hits"
 
 /**
- * One row's outcome, plus the raw resolved names the `--errors-json` dump needs
- * to bucket a miss offline: a present-but-wrong `resolvedLoc` is a resolver
- * ranking/disambiguation miss, an absent one a coverage/parse miss.
+ * Outcome for one row, with the resolved names that the `--errors-json` dump uses to classify misses.
+ *
+ * A wrong `resolvedLoc` points at resolver ranking, and a missing one points at coverage or parsing.
  */
 export interface RowScore extends ArmOutcome {
 	resolvedLoc?: string
@@ -27,20 +27,14 @@ export interface RowScore extends ArmOutcome {
 }
 
 /**
- * Score one resolved tree's places against the row's ground truth.
+ * Scores the resolved places for one row against the row's expected admin names and point.
  *
- * Admin-match is by name (OA carries no WOF id): a row matches if OA's expected
- * locality equals the resolved place's canonical name or any of its WOF altnames
- * (see {@linkcode LocalityMatcher}); region is name-or-abbrev tolerant.
+ * Matching is by name because OpenAddresses rows carry no WOF ID. {@linkcode LocalityMatcher}
+ * decides the locality match, and `regionMatches` accepts a region name or abbreviation.
  *
- * The locality node is looked up over the placetypes the resolver's own `locality`
- * tag expands to — locality, borough and localadmin — because New England civil
- * "towns" are `localadmin` in WOF rather than `locality`.
- * Mirroring the resolver's `PLACETYPE_FILTER_GROUPS.locality` is what makes this
- * metric count exactly what the resolver treats as a locality.
- *
- * The bare `=== "locality"` filter it replaced silently discarded correct localadmin hits
- * and under-reported rural US locality-match by tens of points (#375 oracle-locality diagnostic).
+ * The locality lookup prefers a `locality` place and falls back to any placetype that
+ * the resolver's `locality` filter expands to, such as `localadmin`.
+ * New England towns are `localadmin` in WOF, so a `locality`-only lookup would miss them.
  */
 export function scoreResolvedRow(row: OARow, resolved: Resolved[], localityMatches: LocalityMatcher): RowScore {
 	const best = mostSpecific(resolved)

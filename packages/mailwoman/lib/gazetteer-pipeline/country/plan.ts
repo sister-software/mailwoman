@@ -3,16 +3,11 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   What moving a country between admin sources would involve — computed rather than remembered.
+ *   Plans the recipe edits and repository clones needed to move a country between admin sources.
  *
- *   Every failure in the thread that produced this was a coordination failure rather than a hard one. A
- *   repository name landed in a destination slot and 65 GB arrived. A filter went missing. The recipe has
- *   to be edited in the same change as the clone, and nothing checked it. Each step is individually
- *   simple. what is hard is that they must agree, and the agreement was held by prose.
- *
- *   So this reads the current state from the artifact rather than from the lists. The lists are a
- *   declaration and the WOF leg is presence-driven, so the artifact is the only place the two are already
- *   reconciled — and reading the declaration to decide what to change is how #1015 happened.
+ *   The plan reads each country's current sources from the built gazetteer. The source lists in
+ *   `defaults.ts` can disagree with the build, because the WOF leg ingests whatever repositories are
+ *   present.
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers"
@@ -23,16 +18,15 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { AdminSource } from "#gazetteer-pipeline/country/sources"
 
 /**
- * Synthetic-id band boundaries, duplicated from the folds that mint them only as
- * SQL literals — a query cannot import a constant.
+ * The start of each fold's synthetic ID range, copied from the modules that assign them.
  *
- * `country-sources.test.ts` pins them against the exporting modules so the two cannot drift silently.
+ * `country-sources.test.ts` checks these copies against the exported constants.
  */
 const OVERTURE_BAND_START = 8_000_000_000_000
 const GEONAMES_BAND_START = 9_000_000_000_000
 
 /**
- * How many rows each source contributes to a country, in the built artifact.
+ * The number of rows each source contributes to a country in the built gazetteer.
  */
 export interface SourceCensus {
 	country: string
@@ -42,11 +36,9 @@ export interface SourceCensus {
 }
 
 /**
- * Read the per-source row counts for one country out of an admin gazetteer.
+ * Reads the per-source row counts for one country from an admin gazetteer.
  *
- * The band arithmetic is the measurement: nothing in `spr` records which fold wrote a row,
- * so the id range is the only evidence, which is also how the #1015 recipe had
- * to be reconstructed after the manifest lagged.
+ * The source is inferred from the ID range, because `spr` does not record which fold wrote a row.
  */
 export function censusForCountry(adminDBPath: string, country: string): SourceCensus {
 	using db = new DatabaseClient<WOFDatabase>(adminDBPath, { readOnly: true })
@@ -75,11 +67,9 @@ export function censusForCountry(adminDBPath: string, country: string): SourceCe
 }
 
 /**
- * The source serving a country today, or `undefined` when it has no rows at all.
+ * Returns every source that contributes rows to a country, largest first.
  *
- * @returns The largest contributor when several are present, because that is the
- * one a move is actually moving away from — and names the rest, so a two-source
- * country reads as two-source rather than as its winner.
+ * @returns An empty array when the country has no rows.
  */
 export function servingSources(census: SourceCensus): AdminSource[] {
 	return (
@@ -95,23 +85,17 @@ export function servingSources(census: SourceCensus): AdminSource[] {
 }
 
 /**
- * GitHub reports packed size.
- * A WOF repo unpacks to millions of small GeoJSON files.
+ * The approximate ratio of a cloned WOF repository's disk size to the packed size GitHub reports.
  *
- * Measured on a `--countries tr` sync: three repositories reported as 83.4 MB occupied 633 MB once cloned.
- * The ratio is stated here rather than at each call site because the number a caller is about to show
- * an operator is the checkout cost, and quoting the packed figure is how 65 GB arrived unannounced.
+ * WOF repositories unpack to many small GeoJSON files, so operators should see the checkout size.
  */
 export const CHECKOUT_SIZE_RATIO = 7
 
 /**
- * One edit a move requires, as a reviewable statement rather than an applied patch.
+ * One edit to a source list in `defaults.ts` that a move requires.
  *
- * `defaults.ts` is reviewed like code and its entries carry measurements.
- * The `IN` entry is six lines recording 189,026 sub-locality nodes at 98.6% conversion.
- *
- * A tool that rewrote that file silently would drop the prose at the one moment a reader
- * most needs it, so the plan prints the edit and leaves the commit to a person.
+ * The plan prints edits for a person to apply, because the list entries carry
+ * explanatory prose that an automatic rewrite would lose.
  */
 export interface RecipeEdit {
 	list: string
@@ -120,6 +104,9 @@ export interface RecipeEdit {
 	why: string
 }
 
+/**
+ * The plan for moving one country to a target source.
+ */
 export interface CountryPlan {
 	country: string
 	census: SourceCensus
@@ -127,22 +114,20 @@ export interface CountryPlan {
 	target: AdminSource
 	edits: RecipeEdit[]
 	/**
-	 * Repositories the move would clone, with the checkout cost already multiplied out.
+	 * The repositories the move would clone, with estimated checkout sizes.
 	 */
 	repos: Array<{ name: string; packedKB?: number; checkoutKB?: number }>
 	/**
-	 * Reasons the move cannot proceed.
-	 *
-	 * Empty when it can.
+	 * The reasons the move cannot proceed.
+	 * The array is empty when it can.
 	 */
 	blockers: string[]
 }
 
 /**
- * Compute the plan for moving `country` to `target`.
+ * Computes the plan for moving `country` to `target`.
  *
- * Pure: every input is passed in, so the plan is testable without a gazetteer, a network,
- * or a GitHub token, which is also what lets `--plan` run in CI.
+ * The function is pure, so it runs without a gazetteer, network access, or a GitHub token.
  */
 export function planCountryMove(options: {
 	country: string
@@ -165,11 +150,7 @@ export function planCountryMove(options: {
 			)
 		}
 
-		// Only when the target is not already serving.
-		// A country whose rows already come from WOF needs no addition, and printing
-		// one would have a reader edit a list the country is on.
-		// The plan would then be describing work that is done, which is the failure
-		// mode a plan is supposed to remove.
+		// A country that already has WOF rows is already on the list.
 		if (!current.includes(AdminSource.WOF)) {
 			edits.push({
 				list: "DEFAULT_WOF_PRIORITY_COUNTRIES",
@@ -180,10 +161,9 @@ export function planCountryMove(options: {
 		}
 	}
 
-	// The half that nothing enforced.
-	// A country served by two sources folds both into one database, and `verifyAdmin`
-	// tests floors — rows >= minRows, countries >= minCountries — so duplication moves
-	// every check number in the passing direction and the build ships.
+	// Every other current source must be removed.
+	// Otherwise both sources fold into one database, and `verifyAdmin` does not catch it
+	// because duplicate rows only raise the counts it checks.
 	for (const source of current) {
 		if (source === options.target) continue
 
@@ -230,7 +210,7 @@ export function planCountryMove(options: {
 }
 
 /**
- * Whether an admin gazetteer is readable at `path`, so a caller can degrade rather than throw.
+ * Returns whether an admin gazetteer exists at `path`.
  */
 export async function adminDBAvailable(path: string): Promise<boolean> {
 	return await pathExists(path)

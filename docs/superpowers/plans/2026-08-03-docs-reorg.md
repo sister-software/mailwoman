@@ -4,22 +4,30 @@
 
 **Goal:** Replace the ~400-page docs site with a fresh ~85-page three-audience site (Ory-style top level), plus the CLI commands that make every documented path true.
 
-**Architecture:** One Docusaurus instance; six top-nav doors (Product, Solutions, Resources, Developers, About, Pricing) with the existing DocsSubHeader as per-door sub-nav. Internal material moves out of the published content root entirely. A new `mailwoman data` command group closes the download gap; tutorials are executed before they ship. Vale + a rewritten structure check enforce the house style mechanically.
+**Architecture:** The site stays on one Docusaurus instance with six top-nav doors (Product, Solutions, Resources, Developers, About, Pricing). The existing DocsSubHeader serves as each door's sub-nav. Internal material moves out of the published content root entirely. A new `mailwoman data` command group gives users a way to download data, and every tutorial is executed before it ships. Vale and a rewritten structure check enforce the house style automatically.
 
 **Tech Stack:** Docusaurus 3 (`docs/`), Pastel/Ink CLI (`mailwoman/commands/`), Vale (vendored binary via `@vvago/vale`), vitest, zx.
 
-**Spec:** `docs/superpowers/specs/2026-08-03-docs-reorg-design.md` — read it first; its Decisions and Register-rules sections bind every task.
+**Spec:** `docs/superpowers/specs/2026-08-03-docs-reorg-design.md`. Read it first. Its Decisions and Register-rules sections apply to every task.
 
 ## Global Constraints
 
-- Every commit leaves `yarn workspace @mailwoman/docs build` green (broken links/anchors throw).
-- Every published page declares `role:` ∈ `{tutorial, guide, reference, explanation, landing, evidence}`; tutorials/guides also `verified-with:`; reference also `source-of-truth:`; landing/solutions also `audience:`.
-- Register rules (spec §Register): no rude or abrasive material anywhere; no named call-outs or accusations of any person or organization; named individuals never appear in comparative or strategic material; competitor prices only with dated public citations; another vendor's customers are never quoted; public-service benchmarks (BAN/Addok) framed as complementary, never adversarial; business and personal details not already published stay unpublished. Data-refresh cadence: state "no cadence committed."
-- Voice per role (spec §Writing system): colleague voice in tutorials/guides; controlled STE100-derived register in reference; analog-first narrative in explanations; every number sourced.
-- No redirects. No rewriting `docs/research/` (Field notes). Demo pipeline untouched except links.
-- Banned-word list and a machine-writing-tells audit apply to every page before commit. Voice authority is `docs/engineering/writing-system.md` (produced by Task 25 — the derivation from the standards draft plus the contemporary-docs comparison); where it conflicts with any older voice guidance, the writing system governs.
-- CLI code follows repo conventions: `.ts` extensions on relative imports, `erasableSyntaxOnly`, no raw `process.env`/`argv` (use `@mailwoman/core/env` / Pastel options), Kysely for any DB DDL, `node mailwoman/out/cli.js` for compiled-CLI runs, `yarn compile` before test runs.
-- Commits: conventional prefixes; end with the Co-Authored-By + Claude-Session trailer.
+- Every commit leaves `yarn workspace @mailwoman/docs build` green. Broken links and anchors make the build throw.
+- Every published page declares `role:` ∈ `{tutorial, guide, reference, explanation, landing, evidence}`. Tutorials and guides also declare `verified-with:`, reference pages declare `source-of-truth:`, and landing and solutions pages declare `audience:`.
+- Register rules (spec §Register):
+  - Nothing rude or abrasive appears anywhere.
+  - No page names or accuses any person or organization.
+  - Named individuals never appear in comparative or strategic material.
+  - Competitor prices appear only with dated public citations.
+  - Pages never quote another vendor's customers.
+  - Public-service benchmarks (BAN/Addok) are framed as complementary, never adversarial.
+  - Business and personal details that are not already published stay unpublished.
+  - For data-refresh cadence, state "no cadence committed."
+- Voice per role (spec §Writing system): tutorials and guides use a colleague voice, reference pages use a controlled register derived from STE100, and explanations use an analog-first narrative. Every number has a source.
+- Do not add redirects. Do not rewrite `docs/research/` (Field notes). Change the demo pipeline only to update links.
+- The banned-word list and a machine-writing-tells audit apply to every page before commit. The voice authority is `docs/engineering/writing-system.md`, which Task 25 derives from the standards draft and the contemporary-docs comparison. Where it conflicts with older voice guidance, the writing system governs.
+- CLI code follows repo conventions: `.ts` extensions on relative imports, `erasableSyntaxOnly`, and no raw `process.env`/`argv` (use `@mailwoman/core/env` or Pastel options). Use Kysely for any DB DDL, `node mailwoman/out/cli.js` for compiled-CLI runs, and `yarn compile` before test runs.
+- Commits use conventional prefixes and end with the Co-Authored-By and Claude-Session trailers.
 
 ## Phase overview
 
@@ -31,7 +39,7 @@ Phase 3  content, door by door, tutorials executed                    (tasks 9�
 Phase 4  full-site audit + PR                                         (tasks 23–24)
 ```
 
-Raw material note: Task 4 parks the old `articles/` tree at `docs/records/site-2026-08/` (unpublished) so Phase 3 writers can mine it without archaeology. It stays there. The repo keeps its own history browsable.
+Raw material note: Task 4 moves the old `articles/` tree to `docs/records/site-2026-08/` (unpublished), so Phase 3 writers can reuse it without digging through git history. It stays there, and the repo keeps its own history browsable.
 
 ---
 
@@ -150,7 +158,7 @@ BlockIgnores = (?s)(```.*?```), (?s)(<details>.*?</details>)
 - Produces: the six-door frame every Phase 3 task hangs pages on. Sidebar ids: `product`, `solutions`, `resources`, `developers`, `about`, `pricing` — Phase 3 tasks add doc ids to these lists.
 
 - [ ] **Step 1:** Park the old tree under `docs/records/site-2026-08/`.
-- [ ] **Step 2:** Write the nine seed pages (real content rather than stubs — these are the Get-started trio, Status, Support, About trio, Pricing; briefs in Tasks 9/22; write them to final quality now, they are the minimum viable site). Colleague voice; frontmatter per interface; every claim checked against `mailwoman/` source or `package.json` versions.
+- [ ] **Step 2:** Write the nine seed pages with real content: the Get-started trio, Status, Support, the About trio, and Pricing. Their briefs are in Tasks 9 and 22. Write them to final quality now, because together they are the smallest site that can ship. Use the colleague voice and the frontmatter interface, and check every claim against `mailwoman/` source or `package.json` versions.
 - [ ] **Step 3:** Rebuild nav: sidebars + sections + navbar + footer + front page. Front page fork: "Build with it" → Get started · "Make the case for it" → Solutions · "See the proof" → Benchmarks. Demo button prominent.
 - [ ] **Step 4:** `yarn workspace @mailwoman/docs build` green; structure check `--strict` green; `yarn workspace @mailwoman/docs lint:prose` green on the new pages. Screenshot via run-docs skill; eyeball nav and front page.
 - [ ] **Step 5: Commit** `feat(docs)!: six-door site skeleton; old tree parked under records`.
@@ -269,7 +277,7 @@ Per-page briefs (each: colleague voice, starts-and-destinations opener, every co
 
 **Files:** Create `developers/knowledge-base/postal/{what-is-an-address,postcodes-and-zip-codes,how-mail-gets-delivered,addressing-around-the-world,falsehoods-about-addresses,two-addresses-one-building,po-boxes-and-alternatives}.mdx`.
 
-- Mine `docs/records/site-2026-08/understanding/` (the-problem, falsehoods) — the material is strong; the rewrite tightens, de-slops, updates examples, merges the eight falsehood pages into one page with sections (the best-of decision).
+- Reuse `docs/records/site-2026-08/understanding/` (the-problem, falsehoods). The material is good. The rewrite tightens it, removes machine-writing tells, updates examples, and merges the eight falsehood pages into one page with sections (the best-of decision).
 - [ ] Draft → Vale/de-slop → build → **Commit** `docs(knowledge-base): postal systems shelf`.
 
 ### Task 17: Knowledge base — Geocoding shelf
@@ -283,7 +291,7 @@ Per-page briefs (each: colleague voice, starts-and-destinations opener, every co
 
 **Files:** Create `developers/knowledge-base/address-intelligence/{how-a-model-reads-an-address,tokens-and-labels,the-gazetteer-prior,decoding-and-viterbi,calibration-and-confidence,training-and-the-corpus,what-the-model-cannot-do}.mdx`.
 
-- Analog-first rule binds hardest here: every mechanism enters through its rule-world analog (gazetteer lookup → FST prior; hand-written pattern → learned emission; tie-break heuristics → Viterbi). Mine `records/site-2026-08/concepts/` parsing-internals set. Check every architectural statement against `neural/` at head (CRF is CE-only — no learned transitions; fr-fr ships en-us base weights; check current truth before writing, both have memory receipts).
+- The analog-first rule matters most here. Introduce every mechanism through its rule-based analog: gazetteer lookup → FST prior, hand-written pattern → learned emission, tie-break heuristics → Viterbi. Reuse the parsing-internals set in `records/site-2026-08/concepts/`. Check every architectural statement against `neural/` at head. Two recorded examples need checking before writing: the CRF is CE-only and has no learned transitions, and fr-fr ships en-us base weights.
 - [ ] Same pipeline. **Commit** `docs(knowledge-base): address intelligence shelf`.
 
 ### Task 19: Product door
@@ -306,14 +314,14 @@ Per-page briefs (each: colleague voice, starts-and-destinations opener, every co
 
 - Benchmarks become public evidence pages: method, n, both arms, the losses published (street-level precision; the Belgian reverse defect + its fix arc), harness links (commit the harnesses under `docs/static/benchmarks/` or link the repo paths), circularity caveats kept ("the BAN tier IS BAN"). Source material is provided by the controller at dispatch time; committed pages carry only public methods, results, and harnesses. _reading-our-numbers_ explains resolve-% vs precision traps.
 - Compare pages: factual tables, dated citations, each ends "run it yourself" → benchmark harness. Kind register throughout.
-- Check: no internal workflow references, no unsourced figures.
+- Check that the pages contain no internal workflow references and no unsourced figures.
 - [ ] Same pipeline. **Commit** `docs(resources): re-runnable benchmarks and comparisons`.
 
 ### Task 22: About door + Pricing final
 
 **Files:** Finalize `about/{mission,security-and-compliance,contact}.mdx`, `pricing.mdx` (seeded in Task 5).
 
-- _mission_ — the public open-strategy: commodify the layer, the operator's VS Code argument, why AGPL + flat license, funded-by-customers posture. Register rules absolute here.
+- _mission_ — the public open-strategy: commodify the layer, the operator's VS Code argument, why AGPL + flat license, funded-by-customers posture. The register rules apply without exception on this page.
 - _security-and-compliance_ — self-host boundary, what leaves the machine (nothing), SBOM, data provenance (ODbL/attribution posture), license tiers link.
 - _pricing_ — the ratified three tiers ($0 AGPL / $250 mo · $2,400 yr Pro under the ~250-staff·$10M fence / Enterprise from $15k), grandfathering commitment, flat-price rationale sentence ("costs us the same"), no cadence commitment.
 - [ ] Same pipeline. **Commit** `docs(about): mission, trust, pricing`.
@@ -334,5 +342,5 @@ Per-page briefs (each: colleague voice, starts-and-destinations opener, every co
 ## Self-review
 
 - **Spec coverage:** decisions 1–7 → Tasks 5 (shape), 3–5 (publicness), 6–8 (CLI), 9–22 (content), 1–2+23 (style enforcement), 24 (PR). Acceptance bullets each map: cold trial (9, 23), executed builds (12), build/check/Vale (23), publicness (4, 23), doors-from-front-page (5), drop-ins cold (7, 23).
-- **Placeholder scan:** the R2 artifact inventory (Task 6 step 1) and measured numbers (12, 15) are deliberately gathered-at-execution measurements rather than placeholders. The steps that gather them are explicit.
+- **Placeholder scan:** the R2 artifact inventory (Task 6 step 1) and the measured numbers (Tasks 12 and 15) are measurements that explicit steps gather during execution.
 - **Type consistency:** `validatePage` (Task 2) used only in-check; `DataBundle`/`resolveBundleArtifacts`/`needsDownload` names consistent across Task 6 steps; sidebar ids from Task 5 used verbatim in Phase 3 tasks.

@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  * @file What a command is called, separated from where its file sits.
  *
- *   The router used to read a command's name off its filename, which made the layout a interface: moving
+ *   The router used to read a command's name off its filename, which made the layout an interface: moving
  *   `gazetteer/build/postcode-codepoint.tsx` into `build/postcode/` renamed the command, silently, and
  *   `mailwoman gazetteer build postcode-codepoint` — a name written into built databases as their `builder`
  *   provenance — stopped existing. A file's location is this repository's business. a command's name is the user's.

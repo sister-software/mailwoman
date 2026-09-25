@@ -1,8 +1,8 @@
 # The span head is done — the deciding run says −3.2pp against a plain decode
 
 **Pre-registered kill shot** (`v3.2.0-fragment-span.yaml`, written before any number existed):
-`seg@1` must beat v310's `token@1` = **56/63 (0.889)** — the bar the flag failed. _"If a extract-trained
-span head cannot beat a extract-trained plain decode on the target class, the span head has no case at
+`seg@1` must beat v310's `token@1` = **56/63 (0.889)** — the bar the flag failed. _"If an extract-trained
+span head cannot beat an extract-trained plain decode on the target class, the span head has no case at
 any weight and the arc closes."_
 
 **Result: 54/63 = 0.857. −3.2pp. The arc closes.**

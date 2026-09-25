@@ -272,7 +272,7 @@ describe("StreetInterpolator — artifact-carried radius calibration", () => {
 		calibrated[Symbol.dispose]()
 	})
 
-	it("reports undefined for a extract predating the metadata table", () => {
+	it("reports undefined for an extract predating the metadata table", () => {
 		expect(interpolator.radiusCalibration).toBeUndefined()
 	})
 

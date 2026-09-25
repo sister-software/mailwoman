@@ -1,12 +1,13 @@
 import type { SidebarsConfig } from "@docusaurus/plugin-content-docs"
 
-// Node-only navigation configuration.
-// Keep these five sidebars synchronized with the switcher sections
-// in `src/components/DocsSubHeader/sections.ts`.
-// Every published document belongs to one sidebar.
-// The root-level pricing page is grouped under `about` and linked directly from the navbar.
+/**
+ * Docs sidebars.
+ * Every published document belongs to exactly one sidebar.
+ *
+ * Keep the top-level keys in sync with the switcher sections in `src/components/DocsSubHeader/sections.ts`.
+ * The switcher links to each sidebar's first document, so that entry is the section's landing page.
+ */
 const sidebars: SidebarsConfig = {
-	// Keep the overview first; the switcher uses it as the product landing page.
 	product: [
 		"product/overview",
 		"product/capabilities",
@@ -14,7 +15,6 @@ const sidebars: SidebarsConfig = {
 		"product/drop-in-replacements",
 		"product/data-products",
 	],
-	// Lead with the questions that typically arise first in an evaluation.
 	solutions: [
 		"solutions/eliminate-the-per-request-bill",
 		"solutions/own-what-you-look-up",
@@ -26,7 +26,6 @@ const sidebars: SidebarsConfig = {
 		{
 			type: "category",
 			label: "Get started",
-			// The switcher resolves this category to its first document.
 			items: [
 				"developers/get-started/what-mailwoman-is",
 				"developers/get-started/install-and-first-parse",
@@ -36,7 +35,6 @@ const sidebars: SidebarsConfig = {
 		{
 			type: "category",
 			label: "Tutorials",
-			// Tutorials progress from parsing and geocoding to deployment, then data builds.
 			items: [
 				"developers/tutorials/understand-a-parse",
 				"developers/tutorials/geocode-a-csv",
@@ -51,7 +49,6 @@ const sidebars: SidebarsConfig = {
 		{
 			type: "category",
 			label: "How-to guides",
-			// Group related tasks from input cleanup through validation, scale, and operations.
 			items: [
 				"developers/how-to/handle-messy-input",
 				"developers/how-to/handle-po-boxes-and-edge-kinds",
@@ -73,8 +70,7 @@ const sidebars: SidebarsConfig = {
 		{
 			type: "category",
 			label: "Reference",
-			// Put API references first.
-			// The CLI page is generated from command specifications.
+			// The CLI page is generated from the command specs.
 			items: [
 				"developers/reference/library-api",
 				"developers/reference/cli",
@@ -89,7 +85,6 @@ const sidebars: SidebarsConfig = {
 		{
 			type: "category",
 			label: "Knowledge base",
-			// Background material is grouped by subject rather than by task.
 			items: [
 				{
 					type: "category",
@@ -99,7 +94,6 @@ const sidebars: SidebarsConfig = {
 				{
 					type: "category",
 					label: "Postal systems",
-					// Explain address structure and delivery before covering edge cases and misconceptions.
 					items: [
 						"developers/knowledge-base/postal/what-is-an-address",
 						"developers/knowledge-base/postal/postcodes-and-zip-codes",
@@ -113,7 +107,6 @@ const sidebars: SidebarsConfig = {
 				{
 					type: "category",
 					label: "Geocoding",
-					// Introduce geocoding, its architectures and data, then discuss quality and alternatives.
 					items: [
 						"developers/knowledge-base/geocoding/what-geocoding-is",
 						"developers/knowledge-base/geocoding/the-two-architectures",
@@ -126,7 +119,6 @@ const sidebars: SidebarsConfig = {
 				{
 					type: "category",
 					label: "Address intelligence",
-					// Follow the parse pipeline from tokenization through decoding, calibration, and training.
 					items: [
 						"developers/knowledge-base/address-intelligence/how-a-model-reads-an-address",
 						"developers/knowledge-base/address-intelligence/tokens-and-labels",
@@ -142,14 +134,12 @@ const sidebars: SidebarsConfig = {
 		"developers/status",
 		"developers/support",
 	],
+	// The root-level pricing page lives here and is also linked from the navbar.
 	about: ["about/mission", "about/security-and-compliance", "about/contact", "pricing"],
-	// Benchmarks lead; comparisons and research notes follow.
-	// The benchmark inputs and scripts are published under `static/benchmarks/`.
 	resources: [
 		{
 			type: "category",
 			label: "Benchmarks",
-			// Show the overview and measurements before the guide to interpreting them.
 			items: [
 				"resources/benchmarks/index",
 				"resources/benchmarks/france-ban",
@@ -160,7 +150,6 @@ const sidebars: SidebarsConfig = {
 		{
 			type: "category",
 			label: "Compare",
-			// Compare hosted, self-hosted, and open-source alternatives in that order.
 			items: [
 				"resources/compare/index",
 				"resources/compare/google-maps",

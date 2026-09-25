@@ -3,11 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Report country coverage across five independent sources: weights package, training rows, training admission,
- *   gazetteer availability, and passing board cases. Keep parsing and geocoding distinct and report mismatches.
- *
- *   Corpus counts require scanning training parquet files, so cache them under the data root and recount only on
- *   request. Reports include the cache timestamp and identify when corpus and training-config versions differ.
+ * Reports per-country coverage across the corpus, training admission, weights packages, gazetteer and board.
  */
 
 import {
@@ -38,91 +34,95 @@ import { TextSpliterator } from "spliterator"
 import { Globerator } from "spliterator/node/fs"
 
 /**
- * Country geocoding tier, distinguishing consumer-published data from local-only data.
+ * Describes the best geocoding a country gets and whether its rooftop data is published or build-local.
  */
 export type GeocodeTier = "rooftop-published" | "rooftop-build-local" | "locality" | "none"
 
 /**
- * Coverage summary for one country.
+ * Holds the coverage summary for one country.
  */
 export interface CountryCoverage {
 	country: string
 	/**
-	 * Training rows across all sources.
+	 * Counts train-split rows across all corpus sources.
 	 */
 	corpusRows: number
 	/**
-	 * Rows labeled with a street or house number.
+	 * Counts rows labeled with a street or house number.
 	 */
 	corpusStreetRows: number
 	/**
-	 * Whether `country_weights` admits this country.
+	 * Reports whether `country_weights` admits this country.
 	 */
 	admitted: boolean
 	/**
-	 * Locale package, if one ships.
+	 * Holds the locale package name when one ships.
 	 */
 	weightsPackage?: string
 	/**
-	 * Admin places in the serving gazetteer.
+	 * Counts admin places in the serving gazetteer.
 	 */
 	gazetteerPlaces: number
 	geocodeTier: GeocodeTier
 	/**
-	 * Total board rows and passing checks.
+	 * Counts all board rows.
+	 * `boardPassedRows` counts the rows with `status: pass`.
 	 */
 	boardRows: number
 	boardPassedRows: number
 }
 
 /**
- * A country trains only when admitted and represented in the corpus.
+ * Reports whether a country trains, which requires admission and at least one corpus row.
  */
 export function trains(c: Pick<CountryCoverage, "admitted" | "corpusRows">): boolean {
 	return c.admitted && c.corpusRows > 0
 }
 
 /**
- * Mismatch categories across coverage sources.
+ * Lists the countries where two coverage sources disagree, grouped by the kind of disagreement.
  */
 export interface CoverageMismatches {
 	/**
-	 * Corpus rows exist, but the training config excludes the country.
+	 * Lists countries with corpus rows that the training config excludes.
 	 */
 	presentButDropped: string[]
 	/**
-	 * The config admits the country, but no corpus rows exist.
+	 * Lists admitted countries with no corpus rows.
 	 */
 	admittedButEmpty: string[]
 	/**
-	 * A weights package exists, but the country is not trained.
+	 * Lists countries with a weights package that do not train.
 	 */
 	packageWithoutTraining: string[]
 	/**
-	 * The country trains, but no board case passes for it.
+	 * Lists training countries with no passing board case.
 	 */
 	trainedButUnmeasured: string[]
 	/**
-	 * Board rows exist for a country that is not trained.
+	 * Lists countries with board rows that do not train.
 	 */
 	measuredButUntrained: string[]
 }
 
+/**
+ * Holds the full coverage report that `censusCoverage` returns.
+ */
 export interface CoverageReport {
 	countries: CountryCoverage[]
 	mismatches: CoverageMismatches
 	corpusVersion: string
 	/**
-	 * Corpus version referenced by the config.
+	 * Holds the corpus version that the training config references.
 	 */
 	configuredCorpusVersion?: string
 	/**
-	 * Present when the censused corpus differs from the configured corpus.
+	 * Explains the mismatch when the counted corpus differs from the configured corpus.
 	 */
 	corpusMismatch?: string
 	corpusRowsTotal: number
 	/**
-	 * Cached census timestamp, or `null` when recounted now.
+	 * Holds the cached census timestamp, or `null` when the corpus was recounted in this run.
 	 */
 	corpusCensusTakenAt: string | null
 	configPath: string
@@ -131,7 +131,7 @@ export interface CoverageReport {
 }
 
 /**
- * Path to the cached corpus census under the data root.
+ * Returns the path of the cached corpus census under the data root.
  */
 export function corpusCensusPath(): PathBuilder {
 	return dataRootPath("corpus", "coverage-census.json")
@@ -145,7 +145,7 @@ interface CorpusCensus {
 	rows: Record<string, number>
 	streetRows: Record<string, number>
 	/**
-	 * Counts and paths of unreadable train files, so partial totals are identifiable.
+	 * These file counts and unreadable paths show when a total covers only part of the corpus.
 	 */
 	filesRead: number
 	filesListed: number
@@ -153,7 +153,9 @@ interface CorpusCensus {
 }
 
 /**
- * Normalize Arrow list encodings and reject absent or unreadable columns.
+ * Flattens an Arrow list column to a string array.
+ *
+ * @throws If the column is absent or holds non-string entries, so a partial row never counts as empty.
  */
 export function normalizeArrowListColumn(value: unknown, column: string): string[] {
 	const entries = Array.isArray(value)
@@ -196,14 +198,11 @@ async function* streamCorpusCensusRows(path: string): AsyncGenerator<Record<stri
 }
 
 /**
- * Shared manifest reader supports both current and legacy parquet-list keys
- * and fails on unreadable manifests.
- */
-/**
- * Count all training rows and street-labeled rows per country.
+ * Counts train-split rows and street-labeled rows per country.
+ *
+ * @throws If the manifest lists train files but no row could be read.
  */
 export async function buildCorpusCensus(manifestPath: PathBuilderLike): Promise<CorpusCensus> {
-	// Include the legacy manifest key so `baseManifestFiles` can read either schema.
 	const manifest = await readLocalJSONFile<{ corpus_version?: string; slices?: unknown } & Record<string, unknown>>(
 		manifestPath
 	)
@@ -238,7 +237,6 @@ export async function buildCorpusCensus(manifestPath: PathBuilderLike): Promise<
 		}
 	}
 
-	// If train files are listed but none are read, report a read failure instead of a false zero.
 	if (parquetFiles.length && total === 0) {
 		throw new Error(
 			`Corpus census read 0 rows from ${parquetFiles.length} train file(s) listed by ${manifestPath}, ` +
@@ -262,7 +260,7 @@ export async function buildCorpusCensus(manifestPath: PathBuilderLike): Promise<
 }
 
 /**
- * Compare corpus versions after removing an optional leading `v`.
+ * Compares two corpus versions, ignoring an optional leading `v`.
  */
 export function sameCorpusVersion(a: string, b: string): boolean {
 	const bare = (version: string): string => version.trim().replace(/^v/, "")
@@ -271,7 +269,9 @@ export function sameCorpusVersion(a: string, b: string): boolean {
 }
 
 /**
- * Read the corpus version from `corpus_dir`, or return `undefined` when the config has none.
+ * Reads the corpus version from a training config's `corpus_dir`.
+ *
+ * Returns `undefined` when the config is missing or has no `corpus_dir`.
  */
 export async function readConfiguredCorpusVersion(configPath: PathBuilderLike): Promise<string | undefined> {
 	if (!(await pathExists(configPath))) return undefined
@@ -282,7 +282,7 @@ export async function readConfiguredCorpusVersion(configPath: PathBuilderLike): 
 
 		if (!match) continue
 
-		// Versioned corpus paths include the version as a directory segment.
+		// A versioned corpus path has the version as the segment after `versioned`.
 		const segments = match[1]!.split("/").filter((segment) => segment.length)
 		const versioned = segments.indexOf("versioned")
 
@@ -295,7 +295,10 @@ export async function readConfiguredCorpusVersion(configPath: PathBuilderLike): 
 }
 
 /**
- * Read `country_weights` without YAML coercion, preserving two-letter keys such as `no` as strings.
+ * Reads the countries with a positive weight in a training config's `country_weights`.
+ *
+ * The reader scans lines instead of parsing YAML because YAML 1.1 coerces the key `no` to a boolean.
+ *
  * @throws If the config file is missing.
  */
 export async function readAdmittedCountries(configPath: PathBuilderLike): Promise<Set<string>> {
@@ -309,7 +312,6 @@ export async function readAdmittedCountries(configPath: PathBuilderLike): Promis
 	const admitted = new Set<string>()
 	let inBlock = false
 
-	// Scan the small config directly to avoid YAML 1.1 coercing the country code `no` to boolean.
 	// oxlint-disable-next-line mailwoman/prefer-spliterator -- small, bounded, and sync by interface
 	for (const line of (await readLocalTextFile(configPath)).split("\n")) {
 		if (/^\s*country_weights:\s*$/.test(line)) {
@@ -320,7 +322,7 @@ export async function readAdmittedCountries(configPath: PathBuilderLike): Promis
 
 		if (!inBlock) continue
 
-		// Stop when the country_weights block ends.
+		// A top-level key that is not a country code ends the block.
 		if (/^\s{0,2}\S/.test(line) && !/^\s*["']?[A-Za-z]{2}["']?\s*:/.test(line)) break
 
 		const match = /^\s*["']?([A-Za-z]{2})["']?\s*:\s*([0-9.eE+-]+)/.exec(line)
@@ -334,7 +336,7 @@ export async function readAdmittedCountries(configPath: PathBuilderLike): Promis
 }
 
 /**
- * Count board rows and passing cases in the loader's two-letter country directories.
+ * Counts board rows and passing rows per country in the two-letter directories under `casesRoot`.
  */
 export async function readBoardCoverage(
 	casesRoot: PathBuilderLike
@@ -351,8 +353,7 @@ export async function readBoardCoverage(
 		if (!(await isDirectory(dirPath))) continue
 
 		for await (const file of Globerator.files("jsonl", { cwd: dirPath, recursive: false })) {
-
-			// Skip malformed fixture lines and continue counting.
+			// Malformed lines are skipped.
 			for await (const line of TextSpliterator.fromAsync(dirPath(file))) {
 				if (!line.trim()) continue
 
@@ -378,7 +379,9 @@ export async function readBoardCoverage(
 }
 
 /**
- * Count admin places per country in the serving gazetteer.
+ * Counts admin places per country in the serving gazetteer.
+ *
+ * Returns an empty map when the gazetteer is missing or unreadable.
  */
 export async function readGazetteerCoverage(dbPath: PathBuilderLike): Promise<Map<string, number>> {
 	const out = new Map<string, number>()
@@ -391,7 +394,7 @@ export async function readGazetteerCoverage(dbPath: PathBuilderLike): Promise<Ma
 		const tables = allRows<{ name: string }>(db.prepare("SELECT name FROM sqlite_master WHERE type = 'table'"))
 		const names = new Set(tables.map((t) => t.name))
 
-		// Support both candidate and legacy admin schemas.
+		// The query supports both the candidate schema and the legacy `spr` schema.
 		const sql = names.has("candidate")
 			? "SELECT c.code AS cc, COUNT(*) AS n FROM candidate x JOIN country_codes c ON c.id = x.country_id GROUP BY c.code"
 			: "SELECT country AS cc, COUNT(*) AS n FROM spr GROUP BY country"
@@ -402,54 +405,57 @@ export async function readGazetteerCoverage(dbPath: PathBuilderLike): Promise<Ma
 			}
 		}
 	} catch {
-		// Treat an unreadable gazetteer as unavailable.
+		// An unreadable gazetteer counts as unavailable.
 	}
 
 	return out
 }
 
 /**
- * Countries with consumer-published rooftop address points.
+ * Lists the countries whose rooftop address points are published to consumers.
  */
 export const ROOFTOP_PUBLISHED = new Set(["US", "FR"])
 
 /**
- * Countries whose rooftop address points a user builds locally, such as AU from G-NAF.
+ * Lists the countries whose rooftop address points a user must build locally, such as AU from G-NAF.
  */
 export const ROOFTOP_BUILD_LOCAL = new Set(["AU"])
 
 /**
- * How the training config was selected.
+ * Records how the training config was selected.
  */
 export const ConfigProvenance = {
 	/**
-	 * The caller named the file.
+	 * The caller passed the file.
 	 */
 	Given: "given",
 	/**
-	 * The file is the one `scope.config.json` records for a weights family's shipped graph.
+	 * `scope.config.json` records the file for a weights family's shipped graph.
 	 */
 	Registered: "registered",
 } as const
 
+/**
+ * Records how the training config was selected.
+ */
 export type ConfigProvenance = (typeof ConfigProvenance)[keyof typeof ConfigProvenance]
 
 /**
- * Resolved training config and its source.
+ * Holds a resolved training config path and how it was selected.
  */
 export interface ResolvedTrainingConfig {
 	path: string
 	provenance: ConfigProvenance
 	/**
-	 * The weights family whose shipped graph this config produced, when the register named it.
+	 * Holds the weights family whose shipped graph this config produced, for a registered config.
 	 */
 	family?: string
 }
 
 /**
- * Resolve the requested config or the registered config for a weights family.
+ * Resolves the requested training config, or else the registered config for a weights family.
  *
- * Defaults to the Latin family and records whether the path was caller-supplied or registered.
+ * The family defaults to `DEFAULT_ADMISSION_FAMILY`.
  */
 export function resolveTrainingConfig(
 	scope: ScopeConfig,
@@ -470,20 +476,17 @@ export function resolveTrainingConfig(
 }
 
 /**
- * The weights family whose config answers an admission question that names no family.
+ * Sets the weights family whose config answers an admission question when the caller gives no family.
  *
- * The Latin family, because its `country_weights` covers every country outside
- * the four the character family trains.
- * The choice is recorded rather than implied: reading the character config by default
- * would report 4 admitted countries for a repository whose shipped Latin graph admits 25.
+ * The Latin family is the default because its `country_weights` covers every
+ * country that the character family does not train.
  */
 export const DEFAULT_ADMISSION_FAMILY = "en-us"
 
 /**
- * Every country some shipped graph's training config admits, and which family admitted it.
+ * Maps each country admitted by a shipped graph's training config to the families that admit it.
  *
- * The union, because admission is per graph and the two graphs partition the world between them.
- * A country in neither map trains nothing that ships today, whatever the in-flight configs promise.
+ * Admission is per graph, so the result is the union across all shipped graphs.
  */
 export async function admittedByShippedGraphs(scope: ScopeConfig): Promise<Map<string, string[]>> {
 	const byCountry = new Map<string, string[]>()
@@ -500,21 +503,13 @@ export async function admittedByShippedGraphs(scope: ScopeConfig): Promise<Map<s
 }
 
 /**
- * The newest corpus manifest, by modification time.
+ * Returns the newest corpus manifest by modification time, or an empty string when none exists.
  *
- * The directory name cannot order these.
- * Corpus versions are `v0.9.9-si-bare-village`, `v0.26.0-trailing-region-leftcontext`,
- * `v8-jp-full-…` — a set that sorts neither lexically (`v0.9.9` beats `v0.26.0`, because `9` > `2`)
- * nor numerically (`v8` beats both).
+ * Version directory names such as `v0.9.9-…`, `v0.26.0-…` and `v8-…` sort correctly
+ * neither lexically nor numerically, so the name cannot order them.
  *
- * Measured: the name sort picked `v0.9.9` and reported the coverage of a corpus nine
- * versions old, with nothing in the output to say it had.
- * Every caller names the manifest it used.
- *
- * Two manifests sharing the newest mtime raise rather than one of them being returned.
- * An mtime tie is what a fresh checkout or a bulk copy produces, and the sibling `newestConfig` picked
- * one of 225 configs that way and reported another arm's numbers under this arm's name (#2349).
- * The caller that hits this passes the manifest it means.
+ * @throws If two manifests share the newest mtime, as a fresh checkout or bulk copy produces.
+ * The caller must then pass the manifest explicitly.
  */
 export async function newestManifest(): Promise<string> {
 	const root = dataRootPath("corpus", "versioned")
@@ -545,38 +540,36 @@ export async function newestManifest(): Promise<string> {
 	return newest.path
 }
 
-
+/**
+ * Configures `censusCoverage`.
+ */
 export interface CensusCoverageOptions {
 	/**
-	 * Training config whose `country_weights` decides admission.
+	 * Sets the training config whose `country_weights` decides admission.
 	 */
 	configPath: string
 	/**
-	 * Corpus manifest.json to census.
+	 * Sets the corpus `MANIFEST.json` to count.
 	 *
-	 * Only read when the cache is missing or `refresh` is set.
+	 * The census reads it only when the cache is missing or `refresh` is set.
 	 */
 	manifestPath: string
 	/**
-	 * The gauntlet cases tree.
+	 * Sets the root of the gauntlet cases tree.
 	 */
 	casesRoot: PathBuilderLike
 	/**
-	 * Serving gazetteer.
-	 *
-	 * Defaults to the data root's `wof/candidate.db`.
+	 * Sets the serving gazetteer, which defaults to the data root's `wof/candidate.db`.
 	 */
 	gazetteerPath?: string
 	/**
-	 * Recount the corpus rather than reading the cache.
-	 *
-	 * Costs minutes.
+	 * Recounts the corpus instead of reading the cache, which takes minutes.
 	 */
 	refresh?: boolean
 }
 
 /**
- * Assemble the five registers into one per-country report, and name where they disagree.
+ * Combines the coverage sources into one per-country report and lists where they disagree.
  */
 export async function censusCoverage(options: CensusCoverageOptions): Promise<CoverageReport> {
 	const cachePath = corpusCensusPath()
@@ -596,11 +589,6 @@ export async function censusCoverage(options: CensusCoverageOptions): Promise<Co
 	const board = await readBoardCoverage(options.casesRoot)
 	const gazetteerPath = options.gazetteerPath ?? wofDatabasePath("candidate.db")
 	const gazetteer = await readGazetteerCoverage(gazetteerPath)
-	// derived from `release.config.json` rather than restated here.
-	// This was a hand-written eleven-entry table, and `repo-health`'s `locale-tables`
-	// check exists because it was a second copy of the config's two lists.
-	// The check still holds every other country→locale table against the config,
-	// and this one can no longer disagree with it.
 	const weightsPackages = weightsPackageByCountry(await readReleaseConfig())
 
 	const all = new Set<string>([
@@ -611,8 +599,8 @@ export async function censusCoverage(options: CensusCoverageOptions): Promise<Co
 		...weightsPackages.keys(),
 	])
 
+	// `??` marks a row with no country, and the loader drops the `ZZ` placeholder.
 	all.delete("??")
-	// The unknown-country placeholder is not a country and is correctly dropped by the loader.
 	all.delete("ZZ")
 
 	const countries: CountryCoverage[] = [...all].toSorted().map((cc) => {
@@ -640,10 +628,8 @@ export async function censusCoverage(options: CensusCoverageOptions): Promise<Co
 
 	const configuredCorpusVersion = await readConfiguredCorpusVersion(options.configPath)
 
-	// A cached census and a config are two artifacts that both look authoritative
-	// and were never made to agree.
-	// When they name different corpora every row count below is about the wrong corpus,
-	// and reads as a real absence.
+	// A cached census can count a different corpus than the config trains on.
+	// Every row count then describes the wrong corpus, so the report flags it.
 	const corpusMismatch =
 		configuredCorpusVersion &&
 		census.corpusVersion !== "unknown" &&

@@ -3,9 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- * @file The near-name half of the symbol index: which shorter names a new name is read as a longer spelling of, and
- *   that the precheck reports one from the tree. Exact-name matching is covered by `symbol-precheck.test.ts`; this
- *   file exists because the near-name rule shipped once with no test at all.
+ * @file Tests the contained-name search of the symbol index and the precheck's report of a contained name.
  */
 
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"

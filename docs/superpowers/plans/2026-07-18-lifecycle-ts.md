@@ -14,7 +14,7 @@
 - **Node `>=24`** (native `AsyncDisposableStack`, `await using`).
 - **Zero runtime dependencies.** devDependencies only.
 - **License MIT**, copyright Sister Software.
-- **tsconfig:** extends `@sister.software/tsconfig` plus `erasableSyntaxOnly: true`, `isolatedDeclarations: true`, `rewriteRelativeImportExtensions: true`, `emitDeclarationOnly: false`, `composite: false`, `incremental: false`. Consequences: no `enum`, no constructor parameter properties, no decorators; every export carries an explicit type annotation; relative imports use explicit `.ts` extensions.
+- **tsconfig:** extends `@sister.software/tsconfig` plus `erasableSyntaxOnly: true`, `isolatedDeclarations: true`, `rewriteRelativeImportExtensions: true`, `emitDeclarationOnly: false`, `composite: false`, `incremental: false`. As a result, the code cannot use `enum`, constructor parameter properties, or decorators. Every export carries an explicit type annotation, and relative imports use explicit `.ts` extensions.
 - **Symbols** are namespaced global registry symbols: `Symbol.for("lifecycle-ts.asyncInit")`, `Symbol.for("lifecycle-ts.disposed")`.
 - **Acronym casing:** whole camelCase components (`createWOFResolver`-style) — applies to all identifiers.
 - **File headers:** every source file starts with:
@@ -1261,7 +1261,7 @@ export function createToken<T>(description: string): ServiceToken<T> {
 
 Declaration-emit note: `declare const serviceTokenBrand` is erased at runtime and legal in the emitted `.d.ts` as a non-exported ambient. If `tsc` under `isolatedDeclarations` rejects the unexported computed key ("has or is using private name"), export the symbol declaration (`export declare const serviceTokenBrand: unique symbol`) — behavior is identical.
 
-- [ ] **Step 4: Write `lib/registry.ts`** (basics — no injectables, no children yet)
+- [ ] **Step 4: Write `lib/registry.ts`** (basics only, without injectables or children yet)
 
 ```ts
 /**
@@ -2110,9 +2110,9 @@ Structure (follow the sister.software house voice — second person, problem →
 4. **Lazy handles** — `Service<T>`, awaitability, proxy view with thunk semantics. Example from Task 5 test.
 5. **The registry** — tokens, `register`/`get`, injectable constructors with static `dependencies` (the erasable-TS answer to parameter-decorator DI), child scopes, `await using registry`. Example from Task 7 test.
 6. **Limitations** (verbatim commitments from the spec):
-   - Cycles between injectable constructors throw `E_DEPENDENCY_CYCLE`; cycles through opaque factory resolvers cannot be statically detected and will deadlock — break them by depending on the handle and awaiting after construction.
-   - Async-only: no sync `Disposable` variants in v1.
-7. **Type discipline**: note that the package compiles under `isolatedDeclarations` — every export is explicitly annotated so declaration emit never relies on inference — plus `erasableSyntaxOnly` (runs under bare node type-stripping, no build step needed to consume the source).
+   - Cycles between injectable constructors throw `E_DEPENDENCY_CYCLE`. Cycles through opaque factory resolvers cannot be detected statically and will deadlock. Break them by depending on the handle and awaiting it after construction.
+   - The package is async-only. v1 has no sync `Disposable` variants.
+7. **Type discipline**: Note that the package compiles under `isolatedDeclarations`, so every export is explicitly annotated and declaration emit never relies on inference. It also compiles under `erasableSyntaxOnly`, so the source runs under bare node type-stripping and consumers need no build step.
 8. **License**: MIT.
 
 - [ ] **Step 2: Full verification sweep**
@@ -2148,6 +2148,6 @@ git commit -m "docs: README — protocol, handles, registry, limitations, isolat
 
 ## Out of scope for this plan
 
-- **npm publish / GitHub repo creation** — operator-conditional (release flow, npm auth). The package stays local until the operator reduces the release.
-- **mailwoman migration** — a separate plan per the spec (`core/scripting/utils`, `APIClient`, delete `core/lifecycle`, both exports maps): written after `lifecycle-ts` is reviewed.
+- **npm publish and GitHub repo creation** depend on the operator (release flow, npm auth). The package stays local until the operator runs the release.
+- **The mailwoman migration** gets a separate plan per the spec (`core/scripting/utils`, `APIClient`, deleting `core/lifecycle`, both exports maps). That plan is written after `lifecycle-ts` is reviewed.
 - The `AsyncDisposableLRUCache` decision (spec: default delete; decided in the migration PR).

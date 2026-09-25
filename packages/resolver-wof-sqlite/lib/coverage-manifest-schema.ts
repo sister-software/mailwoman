@@ -2,25 +2,11 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
+ * @file Schema and read/write helpers for the candidate gazetteer's coverage manifest.
  *
- *   Typed schema + read/write helpers for the candidate gazetteer's coverage manifest — the two
- *   country-keyed tables through which the artifact declares facts about itself, so those facts are
- *   updated at gazetteer rebuild rather than by a hand-edited code PR after someone remembers:
- *
- *   - `country_coverage`: the hard-country-filter coverage record (#743/#194) — per-country
- *     promotion-eval verdicts + the measured hard-resolve rates that used to live in a code comment on
- *     `HARD_PLACE_COUNTRY_SAFELIST`. Presence = measured; `hard_filter_safe = 0` = measured and
- *     failed the check (FI 69.5%, PL 77.8%) — distinguishable from a country never measured at all
- *     (the meaning-of-zero rule, `docs/engineering/reference/layer-interface.mdx`).
- *   - `country_bbox`: the coarse guard-B plausibility boxes that used to live in
- *     `resolver/plausibility.ts`'s `COUNTRY_BBOX`. An absent row fails open (never trips the guard),
- *     exactly like an absent key in the constant.
- *
- *   Emission happens at build time (`mailwoman/gazetteer-pipeline/coverage-manifest.ts` owns the
- *   measured record and calls {@link writeGazetteerCoverageManifest} before the DB is sealed — never
- *   patch a shipped DB, rebuild). The read happens at open time ({@link WOFCandidateTableLookup}
- *   calls {@link readGazetteerCoverageManifest} in its constructor); an artifact that predates the
- *   manifest returns `undefined` and every consumer falls back to the code constants byte-identically.
+ *   The manifest holds two country-keyed tables. `country_coverage` records each measured country's hard-filter
+ *   verdict. A missing row means the country was never measured, and `hard_filter_safe = 0` means it was measured and
+ *   failed. `country_bbox` holds coarse plausibility boxes, and a missing row never trips the guard.
  */
 
 import {
@@ -36,42 +22,43 @@ import { sql, type Kysely } from "kysely"
 import { hasTable } from "#sqlite-utils"
 
 /**
- * One country's hard-filter coverage measurement — the storage form of {@link CountryCoverageFact}.
+ * The stored form of {@link CountryCoverageFact}, one row per country.
  */
 export interface CountryCoverageTable {
 	/**
-	 * ISO 3166-1 alpha-2, uppercase (PK).
+	 * The upper-case ISO 3166-1 alpha-2 code, which is the primary key.
 	 */
 	country: string
 	/**
-	 * 0/1 — the promotion-eval verdict (a verdict column rather than re-derived
-	 * from the rate. See the fact type's docstring).
+	 * The promotion-eval verdict as 0 or 1.
+	 *
+	 * It is stored directly because the rate alone does not decide it.
 	 */
 	hard_filter_safe: number
 	/**
-	 * Measured hard-resolve rate 0..1 on the panel named in `source`; NULL when the receipt recorded none.
+	 * The hard-resolve rate from 0 to 1 on the panel given in `source`, or NULL when none was recorded.
 	 */
 	hard_resolve_rate: number | null
 	/**
-	 * Panel size behind `hard_resolve_rate`; NULL when unrecorded.
+	 * The panel size behind `hard_resolve_rate`, or NULL when none was recorded.
 	 */
 	sample_size: number | null
 	/**
-	 * ISO-8601 date of the measurement / promote eval.
+	 * The ISO 8601 date of the measurement.
 	 */
 	measured_at: string
 	/**
-	 * The receipt: which panel/check produced this row.
+	 * The panel or check that produced this row.
 	 */
 	source: string
 }
 
 /**
- * One country's coarse guard-B bounding box — the storage form of {@link CountryBBoxFact}.
+ * The stored form of {@link CountryBBoxFact}, one coarse bounding box per country.
  */
 export interface CountryBBoxTable {
 	/**
-	 * ISO 3166-1 alpha-2, uppercase (PK).
+	 * The upper-case ISO 3166-1 alpha-2 code, which is the primary key.
 	 */
 	country: string
 	lat_min: number
@@ -79,7 +66,7 @@ export interface CountryBBoxTable {
 	lon_min: number
 	lon_max: number
 	/**
-	 * Provenance of the box (harness + date).
+	 * The provenance of the box.
 	 */
 	source: string
 }
@@ -93,17 +80,17 @@ export interface GazetteerCoverageDatabase {
 }
 
 /**
- * Table names the lookup probes (existence-restricted, so a candidate.db built
- * before the manifest is byte-stable).
+ * The name of the per-country coverage table.
+ * Readers check that it exists before querying it.
  */
 export const COUNTRY_COVERAGE_TABLE = "country_coverage"
 /**
- * Table of per-country bounding boxes, used to reject a placement that fell outside its own country.
+ * The name of the per-country bounding-box table, used to reject a placement outside its own country.
  */
 export const COUNTRY_BBOX_TABLE = "country_bbox"
 
 /**
- * Create `country_coverage` — a handful of small PK-probed rows, the without rowid sweet spot.
+ * Creates the `country_coverage` table as a `WITHOUT ROWID` table keyed by country.
  */
 export async function createCountryCoverageTable(db: Kysely<GazetteerCoverageDatabase>): Promise<void> {
 	await db.schema
@@ -115,13 +102,13 @@ export async function createCountryCoverageTable(db: Kysely<GazetteerCoverageDat
 		.addColumn("sample_size", "integer")
 		.addColumn("measured_at", "text", (c) => c.notNull())
 		.addColumn("source", "text", (c) => c.notNull())
-		// `without rowid` has no first-class builder. The raw modifier is the idiomatic fallback.
+		// Kysely has no builder method for `without rowid`.
 		.modifyEnd(sql`without rowid`)
 		.execute()
 }
 
 /**
- * Create `country_bbox` — same shape discipline as {@link createCountryCoverageTable}.
+ * Creates the `country_bbox` table as a `WITHOUT ROWID` table keyed by country.
  */
 export async function createCountryBBoxTable(db: Kysely<GazetteerCoverageDatabase>): Promise<void> {
 	await db.schema
@@ -138,11 +125,10 @@ export async function createCountryBBoxTable(db: Kysely<GazetteerCoverageDatabas
 }
 
 /**
- * Write the coverage manifest into a candidate DB under construction
- * (pre-seal — a shipped DB is never patched, rebuild instead).
+ * Creates both manifest tables in a candidate database under construction and inserts the facts.
  *
- * Creates both tables and inserts the facts.
- * Call exactly once, from the gazetteer build.
+ * The gazetteer build calls it once.
+ * A shipped database is rebuilt instead of patched.
  */
 export async function writeGazetteerCoverageManifest(
 	db: Kysely<GazetteerCoverageDatabase>,
@@ -185,13 +171,10 @@ export async function writeGazetteerCoverageManifest(
 }
 
 /**
- * Read the coverage manifest from an open candidate DB, or `undefined`
- * when the artifact predates it (neither table present) — the signal for consumers
- * to fall back to the code constants byte-identically.
+ * Reads the coverage manifest from an open candidate database.
  *
- * Synchronous raw reads on purpose: this runs inside {@link WOFCandidateTableLookup}'s
- * synchronous constructor (the sync-reader carve-out in `agents.md`),
- * and the tables are a few dozen rows read once per open.
+ * It returns `undefined` when neither table exists, and consumers then fall back to the code constants.
+ * The reads are synchronous because the candidate lookup calls this from its constructor.
  */
 export function readGazetteerCoverageManifest<DB>(db: DatabaseClient<DB>): GazetteerArtifactCoverage | undefined {
 	const hasCoverage = hasTable(db, COUNTRY_COVERAGE_TABLE)

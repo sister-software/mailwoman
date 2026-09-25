@@ -3,48 +3,14 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   the declared-ambiguity marker (ROAD_TO_V9 §4.2 + the §4 guessing doctrine).
+ *   Builds the query-intent markers that depend on the resolved answer. `geocodeAddressOnce` appends
+ *   them to the kind classifier's markers. The markers never change which answer wins.
  *
- *   > when the dominance margin is thin (the measured 0.5 log10 line from the ablation-ladder work),
- *   > return the winner with declared ambiguity — the suggestion layer's nudge shape — and never
- *   > resolve a bare query to an obscure feature type silently.
+ *   The decisive-margin threshold, the coincident-place radius and the margin function come from the
+ *   ablation-expectation module, so the repository has one definition of a decisive margin.
  *
- *   The three other intent markers are raised by the kind classifier, from the string alone
- *   (`@mailwoman/kind-classifier`'s `intent-markers.ts`). This one cannot be: its trigger is a
- *   property of the resolved candidate list, which appears after Stage 6. So it lives
- *   here, on the geocode path, and `geocodeAddressOnce` appends it to the classifier's markers.
- *
- *   ## Reuse rather than re-derivation
- *
- *   {@linkcode DECISIVE_MARGIN_LOG10} (0.5) and {@linkcode COINCIDENT_PLACE_KM} (10) are imported
- *   from the ablation-expectation model rather than restated. Both are measured numbers with a table
- *   behind them (see that module's docstring: below 0.5 the top-ranked place is the intended one
- *   52.4% of the time, above it 89.1%), and a second copy would be a second thing to keep in sync
- *   with a measurement nobody re-runs. `dominanceMarginLog10` itself is imported too. The
- *   subtraction is three lines, and the point is that there is one definition of "decisive" in this
- *   repo.
- *
- *   The import crosses from `eval-harness/` into the production geocode path, which is unusual and
- *   deliberate. The alternative was moving the constants into `@mailwoman/core` (a shipped-package
- *   change for two numbers, with the eval harness then importing them back) or copying them (a
- *   silent-drift generator). The module imports nothing but `@mailwoman/spatial`, so the cost is a
- *   type-strip rather than a dependency.
- *
- *   ## The collapse is required
- *
- *   WOF stores a big city twice — Paris the `locality` and Paris the `localadmin`, same population —
- *   so a RAW top-2 margin reads 0.01 for Paris and 0.00 for Washington. Uncollapsed, every major city
- *   reads maximally ambiguous and this marker fires on every capital in the world.
- *   `extractGeocodeResult`'s own candidate list already de-dupes, but on an ~11 m grid, which is two
- *   orders of magnitude too tight for this job. So the collapse here is at
- *   {@linkcode COINCIDENT_PLACE_KM} and it runs on the resolver's places, before the geocode result's
- *   de-dupe, which is the only place the prominence column is still attached.
- *
- *   ## What it does not do
- *
- *   It never changes which answer wins. Nothing in this module reorders candidates, filters them, or
- *   touches a coordinate — it reads a ranked list and appends an advisory. That is the whole posture:
- *   the answer is what it always was, and the result now says how sure the ranking was.
+ *   WOF often stores a large city twice, once as `locality` and once as `localadmin`, with the same
+ *   population. Without collapsing coincident places first, every major city would look ambiguous.
  */
 
 import type { AddressNode, AddressTree, QueryIntentMarker, QueryKind } from "@mailwoman/core"
@@ -61,10 +27,9 @@ import { tierRank } from "#eval-harness/gauntlet/ablation/scoring"
 import type { ResolutionTier } from "#geocode/result"
 
 /**
- * The subset of a resolver `ResolvedPlace` this module reads.
+ * The fields of a resolver place that this module reads.
  *
- * Structural on purpose — `AddressNode.alternatives` is `ReadonlyArray<unknown>`
- * in the decoder interface, so there is nothing to import.
+ * `AddressNode.alternatives` is typed `ReadonlyArray<unknown>`, so the shape is declared here.
  */
 interface RankedPlaceLike {
 	id?: number | string
@@ -76,28 +41,18 @@ interface RankedPlaceLike {
 	/**
 	 * The candidate's prominence.
 	 *
-	 * On the candidate backend this is exactly `-effectiveNegRank`
-	 * (`resolver-wof-sqlite/candidate-lookup.ts`), so a difference of two prominences is
-	 * a log10 population margin and `DECISIVE_MARGIN_LOG10` applies to it directly.
-	 *
-	 * On the FTS backend it is `min(log-population, populationBoost) + proximityTerm`, which is
-	 * a different unit: capped, and contaminated by proximity when a bias point was supplied.
-	 * The marker is therefore backend-conditional and says so in its own evidence
-	 * (`marginUnit`), rather than pretending the two are the same number.
-	 *
-	 * This is the same "the two backends do not share a unit" finding the 2026-08-04
-	 * resolver-score characterization recorded.
+	 * On the candidate backend it equals `-effectiveNegRank`, so a difference of
+	 * two prominences is a log10 population margin.
+	 * On the FTS backend it is a capped log population plus a proximity term, which is a different unit.
 	 */
 	prominence?: number
 	score?: number
 }
 
 /**
- * Turn a resolver place into the shape {@linkcode dominanceMarginLog10} reads.
+ * Converts a resolver place into the shape that {@linkcode dominanceMarginLog10} reads.
  *
- * `negRank` is `-prominence` because prominence is `-negRank` on the backend that defines both.
- * The double negation is the whole conversion and it is written out
- * rather than folded so the sign is checkable.
+ * It returns null when the place lacks a name, coordinate or finite prominence.
  */
 function toAblationPlace(place: RankedPlaceLike, rank: number): AblationPlace | null {
 	if (place.lat == null || place.lon == null || !place.name) return null
@@ -113,8 +68,7 @@ function toAblationPlace(place: RankedPlaceLike, rank: number): AblationPlace | 
 		country: place.country ?? "",
 		lat: place.lat,
 		lon: place.lon,
-		// absent rather than an extent of zero.
-		// This model never reads a bbox for the margin, and inventing one would be a number nobody measured.
+		// The margin calculation never reads the bounding box.
 		bbox: null,
 		negRank: -prominence,
 		population: null,
@@ -122,11 +76,10 @@ function toAblationPlace(place: RankedPlaceLike, rank: number): AblationPlace | 
 }
 
 /**
- * The node whose resolution the query is about.
+ * Returns the resolved node that the answer's coordinate came from.
  *
- * The deepest resolved node carrying a coordinate and the resolver's name stamp,
- * matching `extractGeocodeResult`'s own `primaryNode` selection so the marker
- * and the returned candidate list describe the same place.
+ * The selection matches `primaryNode` in `extractGeocodeResult`, so the marker
+ * and the candidate list describe the same place.
  */
 function primaryResolvedNode(tree: AddressTree, lat: number | null, lon: number | null): AddressNode | null {
 	const all = collectNodes(tree.roots, () => true)
@@ -143,11 +96,10 @@ function primaryResolvedNode(tree: AddressTree, lat: number | null, lon: number 
  */
 export interface DeclaredAmbiguityOpts {
 	/**
-	 * The full kind verdict — top kind plus alternatives.
+	 * The top kind and every alternative kind from the verdict.
 	 *
-	 * `bare_toponym` is an alternative by design (see `@mailwoman/kind-classifier`'s `intent-rules.ts`),
-	 * so a caller that passes only the top kind will never see this marker fire,
-	 * which is a silent no-op rather than an error.
+	 * The classifier reports `bare_toponym` as an alternative, so passing only
+	 * the top kind means the marker never fires.
 	 */
 	kinds: ReadonlyArray<QueryKind>
 	tree: AddressTree
@@ -156,13 +108,10 @@ export interface DeclaredAmbiguityOpts {
 }
 
 /**
- * Raise `declared_ambiguity` when the query named one bare place and the gazetteer's
- * answer for that name is not decisive.
+ * Returns a `declared_ambiguity` marker when a bare place-name query has no decisive winner.
  *
- * @returns `null` — not an empty marker — when the query was not a bare toponym,
- * when nothing resolved, or when the margin cleared the threshold.
- * A magnitude never carries its own absence, and "we checked and it was decisive" is
- * represented by the caller's marker array simply not gaining an entry.
+ * @returns `null` when the query is not a bare toponym, when fewer than two distinct
+ * places can be ranked, or when the margin reaches {@linkcode DECISIVE_MARGIN_LOG10}.
  */
 export function declaredAmbiguityMarker(opts: DeclaredAmbiguityOpts): QueryIntentMarker | null {
 	if (!opts.kinds.includes("bare_toponym")) return null
@@ -185,11 +134,8 @@ export function declaredAmbiguityMarker(opts: DeclaredAmbiguityOpts): QueryInten
 	const ranked = [self, ...((node.alternatives as ReadonlyArray<RankedPlaceLike> | undefined) ?? [])]
 	const places = ranked.map(toAblationPlace).filter((p): p is AblationPlace => p !== null)
 
-	// Fewer than two rankable candidates is not "decisive" and not "ambiguous".
-	// It is unmeasured.
-	// The resolver may simply not have stamped a prominence (the FTS path does not always),
-	// and asserting decisiveness off a list of one that we could not rank would be
-	// exactly the meaning-of-zero error this repo keeps writing down.
+	// With fewer than two rankable places the margin is unmeasured.
+	// The FTS path does not always stamp a prominence.
 	if (places.length < 2) return null
 
 	const distinct = collapseCoincident(places)
@@ -213,13 +159,8 @@ export function declaredAmbiguityMarker(opts: DeclaredAmbiguityOpts): QueryInten
 		evidence: {
 			margin: Number(margin.toFixed(4)),
 			decisiveMarginLog10: DECISIVE_MARGIN_LOG10,
-			/**
-			 * Named so a consumer knows what the margin is.
-			 *
-			 * `log10_population` on the candidate backend.
-			 * On FTS the prominence term is capped and proximity-contaminated,
-			 * which the value states rather than hides.
-			 */
+			// The margin is a log10 population difference on the candidate backend.
+			// On the FTS backend the prominence is capped and includes a proximity term.
 			marginUnit: "resolver_prominence_delta",
 			coincidentCollapseKm: COINCIDENT_PLACE_KM,
 			distinctPlaces: distinct.length,
@@ -231,28 +172,11 @@ export function declaredAmbiguityMarker(opts: DeclaredAmbiguityOpts): QueryInten
 }
 
 /**
- * The coarsest tier at which each parsed component is still located, ranked by {@linkcode tierRank}.
+ * The coarsest tier that still uses each parsed component, compared with {@linkcode tierRank}.
  *
- * A component sets a floor rather than a target.
- * `house_number` reads `interpolated` and not `address_point` because interpolation
- * is how a house number is placed along a segment.
- *
- * The first version of this table put the floor at `address_point` and fired on
- * `129 E Burr Oak St, Athens, MI`, an interpolated answer at 124 m uncertainty that
- * locates the house as precisely as the tier permits.
- *
- * `postcode` reads `street` for the same reason from the other side: a postcode
- * centroid is a street-grade answer in most address systems, and a finer floor
- * would raise this marker on every correct Dutch result.
- *
- * `unit` is deliberately absent.
- * No layer in this repository locates a unit — there is no floor or interior
- * geometry in the artifact set — so a unit can never be "used", and a floor for
- * it would fire on every correct answer carrying one.
- *
- * The rank comes from `ablation/scoring.ts` rather than a second ladder declared here.
- * That module already orders the tiers for the deletion scorer, and two orders would let this marker
- * and the ablation runner disagree about whether an interpolated answer is a drop from an address point.
+ * An interpolated point locates a house number, so `house_number` needs only `interpolated`.
+ * A postcode centroid is street-grade in most address systems, so `postcode` needs only `street`.
+ * `unit` has no floor because no layer locates units.
  */
 const COMPONENT_TIER_FLOOR: ReadonlyArray<readonly [tag: string, floor: ResolutionTier]> = [
 	["house_number", "interpolated"],
@@ -265,44 +189,33 @@ const COMPONENT_TIER_FLOOR: ReadonlyArray<readonly [tag: string, floor: Resoluti
  */
 export interface CoarserAnswerOpts {
 	/**
-	 * The full kind verdict — top kind plus alternatives.
-	 *
-	 * The marker names the top kind, since a structured address that fell short is still a structured address.
+	 * The top kind and every alternative kind from the verdict.
+	 * The marker uses the top kind.
 	 */
 	kinds: ReadonlyArray<QueryKind>
 	/**
-	 * The parsed components, by tag.
-	 *
-	 * Read for presence only.
-	 * The values never enter the verdict.
+	 * The parsed components by tag.
+	 * Only their presence is read.
 	 */
 	components: Readonly<Record<string, string | null | undefined>>
 	reachedTier: ResolutionTier
 }
 
 /**
- * Raise `declared_coarser_answer` when the query supplied components finer than the tier the answer reached.
+ * Returns a `declared_coarser_answer` marker when the query supplied components
+ * finer than the tier the answer reached.
  *
- * The counterpart of {@linkcode declaredAmbiguityMarker} and written because its absence was a
- * real silence: `301 College Ave #101, Athens, GA 30601` returned the Athens label centroid at
- * `admin`, 1,627 m from the rooftop the same address without `#101` reaches at `address_point`,
- * and the response carried no field distinguishing it from a correct answer to `Athens, GA`.
- *
- * @returns `null` — never an empty marker — when nothing finer was asked for and when the tier met the ask.
- * "We checked and the answer was as fine as the question" is the caller's marker array not gaining an entry.
+ * @returns `null` when no supplied component needs a finer tier than the one reached.
  */
 export function coarserAnswerMarker(opts: CoarserAnswerOpts): QueryIntentMarker | null {
-	// `venue` and `plus_code` rank as house-grade in `tierRank`, so an entity answer
-	// and a decoded plus code satisfy every floor here and raise nothing, which is correct:
-	// a resolved venue is the place the query asked about.
+	// `tierRank` ranks `venue` and `plus_code` as house-grade, so those answers meet every floor.
 	const reached = tierRank(opts.reachedTier)
 
 	const unused = COMPONENT_TIER_FLOOR.filter(([tag, floor]) => opts.components[tag] && reached < tierRank(floor))
 
 	if (!unused.length) return null
 
-	// The finest floor any unused component sets.
-	// What the answer would have had to reach to use all of them.
+	// The answer needed the finest of the unused floors to use every component.
 	let floorTier = unused[0]![1]
 
 	for (const [, floor] of unused) {

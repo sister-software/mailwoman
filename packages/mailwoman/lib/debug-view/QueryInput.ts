@@ -3,24 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The debug view's query field: a controlled single-line text input with readline's editing keys.
- *
- *   It replaces `ink-text-input`, which mis-handles the whole modified-key family. Measured through a pty against Ink
- *   7.1.1 + ink-text-input 6.0.0 (`input.pty.test.ts` is the regression):
- *
- *   - **Ctrl+W (`\x17`)** — what a terminal sends for "delete the word before the cursor", and what iTerm2 sends for
- *     ⌥⌫ by default — reaches `useInput` as `input: "w"` with `key.ctrl` set, because Ink resolves ctrl+letter to the
- *     letter. `ink-text-input`'s handler guards only ctrl+C, so every other ctrl chord falls through to its insert
- *     branch and types the letter: holding alt and pressing backspace appended a `w`.
- *   - **Meta+backspace (`\x1b\x7f`)** arrives correctly flagged (`key.backspace` + `key.meta`, empty input) and is
- *     then treated as a plain backspace — one character rather than one word.
- *
- *   Both are the same defect: the modifier is delivered and ignored. So the rule here is inverted. An unhandled
- *   ctrl/meta chord is dropped, never inserted. A control byte can only ever reach the value as an edit.
- *
- *   JSX-free on purpose (`.ts`, `createElement`): bare node strips types but does not transform JSX, so this is the
- *   form that lets the pty probe run the real component from source, the way `map-tui`'s pty test runs its real bin.
- *   The component is one `<Text>`. The JSX would have bought nothing.
+ * Implements the debug view's single-line query field with readline editing keys.
  */
 
 import { Text, useInput, type Key } from "ink"
@@ -28,28 +11,24 @@ import { createElement, type ReactElement } from "react"
 
 // #region Editing model
 
+/**
+ * Holds the query field's text and cursor.
+ */
 export interface InputState {
 	value: string
 	/**
-	 * UTF-16 offset the cursor sits before, in `[0, value.length]`, and never inside a surrogate pair.
+	 * Holds the UTF-16 offset of the cursor, in `[0, value.length]` and never inside a surrogate pair.
 	 *
-	 * Every move and every delete in this module steps by whole codepoints,
-	 * so `value.slice(cursor)` is always a valid string.
-	 *
-	 * (Ink measures and indexes in UTF-16 too. Keeping the offset in the same units as
-	 * the render is what makes the two agree. See {@link stepLeft}.)
+	 * Every move and delete steps by whole codepoints, so `value.slice(cursor)` is always well formed.
+	 * Ink also indexes in UTF-16, so the cursor and the render agree.
 	 */
 	cursor: number
 }
 
 /**
- * The UTF-16 offset one codepoint left of `index`.
+ * Returns the UTF-16 offset one codepoint left of `index`.
  *
- * `codePointAt(index - 2)` returns a value above the BMP only when `index - 2` genuinely
- * starts a surrogate pair, so this steps 2 across `🏠` and 1 across everything else.
- * Stepping by one unit instead is how a backspace after an emoji leaves a lone surrogate in the query.
- *
- * A string that renders as `�` and that the tokenizer never saw in training.
+ * Stepping by one unit would let a backspace after an emoji leave a lone surrogate in the query.
  */
 function stepLeft(value: string, index: number): number {
 	if (index <= 0) return 0
@@ -60,7 +39,7 @@ function stepLeft(value: string, index: number): number {
 }
 
 /**
- * The UTF-16 offset one codepoint right of `index`.
+ * Returns the UTF-16 offset one codepoint right of `index`.
  */
 function stepRight(value: string, index: number): number {
 	if (index >= value.length) return value.length
@@ -71,41 +50,31 @@ function stepRight(value: string, index: number): number {
 }
 
 /**
- * Bound an offset to the value and out of the middle of a surrogate pair.
- * The only place a caller-supplied cursor can be illegal.
+ * Clamps a caller-supplied cursor to the value and moves it out of the middle of a surrogate pair.
  */
 function clampCursor(value: string, index: number): number {
 	const bounded = Math.max(0, Math.min(index, value.length))
 	const unit = value.charCodeAt(bounded)
 
-	// A low surrogate at the cursor means the offset landed inside a pair.
-	// The codepoint starts one unit back — unless the string opens with an unpaired
-	// low surrogate, where there is no unit back to snap to.
+	// A low surrogate at the cursor means the offset landed inside a pair, so the cursor moves back one unit.
 	return unit >= 0xdc_00 && unit <= 0xdf_ff ? Math.max(0, bounded - 1) : bounded
 }
 
 /**
- * What survives from a typed or pasted run: CR/LF/tab runs collapse to one space,
- * other control characters are dropped, and everything else is kept.
+ * Cleans typed or pasted text for the one-line field.
  *
- * Collapsing rather than rejecting is the point.
- * Pasting a multi-line address into a one-line field is a thing people do constantly,
- * and refusing the whole paste because it contains a newline drops the address on
- * the floor with no feedback — the field just doesn't respond.
- *
- * `12 Rue de Rivoli\n75001 Paris` becomes the query it obviously means.
+ * Each run of CR, LF or tab becomes one space, so a pasted multi-line address stays usable.
+ * Other control characters are dropped.
  */
 function printableRun(input: string): string {
 	return input.replaceAll(/[\r\n\t]+/gu, " ").replaceAll(/\p{Cc}/gu, "")
 }
 
 /**
- * Start of the word before `cursor`, whitespace-delimited: skip the whitespace immediately
- * behind the cursor, then the run of non-whitespace behind that.
+ * Returns the start of the whitespace-delimited word before `cursor`.
  *
- * Whitespace-delimited (readline's `unix-word-rubout`, the tty's own `werase`) rather than
- * alphanumeric-delimited (`backward-kill-word`), because the text being edited is an address:
- * one press should take `or`, then `Portland,`, then `St`, not stop inside `Portland` at the comma.
+ * This matches readline's `unix-word-rubout`.
+ * Words end at whitespace only, so one delete removes `Portland,` whole instead of stopping at the comma.
  */
 export function wordStart(value: string, cursor: number): number {
 	let index = Math.max(0, Math.min(cursor, value.length))
@@ -128,10 +97,11 @@ function deleteRange(state: InputState, start: number, end: number): InputState 
 }
 
 /**
- * Apply one keypress to the field, or return the state unchanged when the key isn't the field's business.
+ * Applies one keypress to the field, or returns the state unchanged when the field does not handle the key.
  *
- * Pure, and exported for its own tests: the pty proves the bytes arrive as this function expects,
- * and the unit tests prove the edits are right, without either having to do the other's job.
+ * Ink reports ctrl+letter as the bare letter with `key.ctrl` set.
+ * An unhandled ctrl or meta chord is therefore dropped, because inserting it
+ * would type the letter into the query.
  */
 export function applyKey(state: InputState, input: string, key: Key): InputState {
 	const { value } = state
@@ -145,10 +115,8 @@ export function applyKey(state: InputState, input: string, key: Key): InputState
 
 	if (key.end) return { value, cursor: value.length }
 
-	// Ink names the two deletes apart, and so does the keyboard: `backspace` is the key
-	// above Enter (`\x7f`), `delete` is the forward Delete of the navigation cluster
-	// (`ESC[3~`). Folding them together made the Delete key eat the character behind
-	// the cursor, which is the opposite of what it says on it.
+	// Backspace (`\x7f`) deletes behind the cursor.
+	// Forward Delete (`ESC[3~`) deletes ahead of it.
 	if (key.backspace) {
 		const start = key.meta ? wordStart(value, cursor) : stepLeft(value, cursor)
 
@@ -160,9 +128,8 @@ export function applyKey(state: InputState, input: string, key: Key): InputState
 	}
 
 	if (key.ctrl) {
-		// The readline set, spelled out.
-		// Every one of these arrives as a bare letter (Ink resolves ctrl+letter to the letter),
-		// so anything not listed has to fall through to the drop below — inserting it is the bug.
+		// These are the readline bindings.
+		// Any other ctrl chord is dropped.
 		switch (input) {
 			case "w":
 				return deleteRange({ value, cursor }, wordStart(value, cursor), cursor)
@@ -179,8 +146,7 @@ export function applyKey(state: InputState, input: string, key: Key): InputState
 		}
 	}
 
-	// An unhandled meta chord (alt+f, alt+b, …) is dropped, and so is anything with no printable content left.
-	// `input` is empty for the keys Ink names (arrows, escape, tab).
+	// Unhandled meta chords and input with no printable characters are dropped.
 	if (key.meta) return state
 
 	const insert = printableRun(input)
@@ -197,27 +163,34 @@ export function applyKey(state: InputState, input: string, key: Key): InputState
 
 // #region Component
 
+/**
+ * Configures the controlled `QueryInput` field.
+ */
 export interface QueryInputProps {
 	value: string
 	cursor: number
 	/**
-	 * Called with the next state on every edit.
-	 *
-	 * The field is fully controlled, so the parent owns both halves.
+	 * Receives the next value and cursor on every edit.
 	 */
 	onChange: (next: InputState) => void
 	onSubmit: (value: string) => void
 	/**
-	 * Inactive fields neither consume keys nor draw a cursor.
+	 * Controls whether the field consumes keys and draws a cursor.
 	 */
 	focus: boolean
 }
 
 /**
- * The cursor cell when it sits past the last character.
+ * Fills the cursor cell when the cursor sits past the last character.
  */
 const CURSOR_PAD = " "
 
+/**
+ * Renders the query field as one Ink `<Text>`.
+ *
+ * The module avoids JSX so the pty test can run it from source under plain Node,
+ * which strips types but does not transform JSX.
+ */
 export function QueryInput(props: QueryInputProps): ReactElement {
 	const { value, cursor, focus, onChange, onSubmit } = props
 
@@ -229,8 +202,7 @@ export function QueryInput(props: QueryInputProps): ReactElement {
 				return
 			}
 
-			// Tab (focus) and escape (quit) belong to the session's own handler.
-			// Consuming them here would make the field a trap the user cannot leave.
+			// The session handles tab and escape, which move focus and quit.
 			if (key.tab || key.escape) return
 
 			const next = applyKey({ value, cursor }, input, key)
@@ -244,8 +216,7 @@ export function QueryInput(props: QueryInputProps): ReactElement {
 
 	if (!focus) return createElement(Text, { wrap: "truncate-end" }, value)
 
-	// The inverted cell is a whole codepoint rather than a UTF-16 unit: `slice(cursor, cursor + 1)`
-	// over `🏠` inverts half a surrogate pair and paints `�` under the cursor.
+	// The inverted cell is a whole codepoint so the cursor never splits a surrogate pair.
 	const safeCursor = clampCursor(value, cursor)
 	const point = value.codePointAt(safeCursor)
 	const under = point == null ? CURSOR_PAD : String.fromCodePoint(point)

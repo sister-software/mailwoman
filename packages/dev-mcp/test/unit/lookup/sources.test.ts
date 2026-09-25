@@ -307,7 +307,7 @@ describe("lookupWOF", () => {
 		expect(row!.note).toContain("case- and punctuation-sensitive")
 	})
 
-	it("names a extract it could not query instead of counting it as a miss", async () => {
+	it("names an extract it could not query instead of counting it as a miss", async () => {
 		const broken = memoryDatabase<POIDatabase>()
 		const [row] = lookupWOF([{ name: "broken.db", db: broken }], ["Vaduz"])
 

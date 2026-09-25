@@ -1,7 +1,8 @@
 # Template: reference
 
-A `reference` page describes a surface so a reader can look one fact up and leave. It is the one role that
-runs the controlled register: declarative sentences, no contractions, no humor, tables in place of prose.
+A `reference` page describes a surface so a reader can look one fact up and leave. It is the only role that
+uses the controlled register: declarative sentences and tables in place of prose, without contractions or
+humor.
 Register rules are in [`../writing-system.md`](../writing-system.md) under Register by role.
 
 ## Frontmatter skeleton
@@ -20,7 +21,7 @@ source-of-truth: api/routes.ts, api/schema.ts, api/app.ts
 
 ## Section order
 
-1. `# Title` — the surface, named as it is named in code.
+1. `# Title`: the surface, named as it is named in code.
 2. **Scope.** One paragraph: what this surface is and what it is not.
 3. **Interface.** The tables. Endpoints, parameters, return shapes, defaults.
 4. **Errors.** One closed table: stable code, one-line meaning, next step.
@@ -30,19 +31,20 @@ source-of-truth: api/routes.ts, api/schema.ts, api/app.ts
 
 ## Opening move
 
-Name the surface and state what it is in one declarative sentence. No welcome, no scenario, no promise.
+Identify the surface and state what it is in one declarative sentence. Leave out any welcome, scenario, or
+promise.
 
 ## Exemplar paragraph
 
 > `@mailwoman/api` serves the native `/v1` surface: `parse`, `geocode`, `batch`, `resolve`, and `format`,
 > plus `/health`, `/metrics`, and an emitted `/openapi.json`. Request bodies are strict and
-> validator-enforced. The package takes an engine object in which every method is optional, and an absent
-> method answers a status rather than an exception: `/v1/parse` answers `501`, and `/v1/geocode`,
-> `/v1/batch`, `/v1/resolve`, and `/v1/reload` answer `503`. `/v1/format` is the exception. It is wired
-> in-package from `@mailwoman/codex/address-format` and is available with no engine method at all.
+> validator-enforced. The package takes an engine object in which every method is optional. When a method is
+> absent, the endpoint returns a status code instead of throwing: `/v1/parse` returns `501`, and
+> `/v1/geocode`, `/v1/batch`, `/v1/resolve`, and `/v1/reload` return `503`. `/v1/format` is the exception.
+> It is wired in-package from `@mailwoman/codex/address-format` and works without any engine method.
 
-Errors take one closed table. Each row carries a stable code a caller can match on, one line of meaning, and
-the next step. An entry that restates its own name is not documentation.
+Errors go in one closed table. Each row carries a stable code a caller can match on, one line of meaning, and
+the next step. A meaning that only restates the code's name gives the reader nothing.
 
 | Status | Body                                                 | Meaning                                                          | Next step                                                               |
 | ------ | ---------------------------------------------------- | ---------------------------------------------------------------- | ----------------------------------------------------------------------- |
@@ -59,7 +61,7 @@ curl -sS localhost:3000/v1/parse -H 'content-type: application/json' \
 
 ## Checks before commit
 
-- Every example was generated or executed. Nothing on this page was typed from memory.
+- Every example was generated or executed rather than typed from memory.
 - Request and response appear together, both complete.
 - On HTTP surfaces, curl comes first, then language tabs, every tab hitting the identical endpoint.
 - On library surfaces, examples are full files with their output rather than fragments.

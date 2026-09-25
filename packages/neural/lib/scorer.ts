@@ -28,27 +28,27 @@ import {
 import { EVIDENCE_LEXICON_FAMILIES } from "#weights/lexicon"
 
 /**
- * Sets the largest F1 drop, `maskOffF1 − maskOnF1`, a conventions mask may cause on a
- * tag the model card certifies before {@link createScorer} rejects it.
+ * The largest F1 drop (`maskOffF1 − maskOnF1`) that a conventions mask may cause on a certified tag.
  *
- * It is a delta rather than an absolute floor, so a mask that leaves a tag
- * intact is legal whatever that tag's F1.
+ * {@link createScorer} rejects a mask that exceeds it.
+ * The limit is a difference, so a mask that leaves a tag's F1 unchanged passes regardless of that F1.
  */
 export const CAPABILITY_DELTA_THRESHOLD = 0.05
 
 /**
- * Default postcode→anchor lookup (the pilot lookup the shipped en-us model trained against).
+ * The default postcode anchor lookup, which the shipped en-US model trained against.
  */
 export const DEFAULT_ANCHOR_LOOKUP = dataRootPath("anchor", "pilot-anchor-lookup.json")
 
 /**
- * Default gazetteer-anchor lexicon (codex-generated, repo-relative).
+ * The default repository-relative gazetteer lexicon, generated from the codex.
  */
 export const DEFAULT_GAZETTEER_LEXICON = "data/gazetteer/anchor-lexicon-v1.json"
 
 /**
- * Points to the repo-relative, codex-generated country-surface lexicon,
- * which {@link createScorer} tries before the weights package's copy.
+ * The default repository-relative country-surface lexicon, generated from the codex.
+ *
+ * {@link createScorer} tries it before the weights package's copy.
  */
 export const DEFAULT_COUNTRY_LEXICON = "data/gazetteer/country-surface-lexicon-v1.json"
 
@@ -114,56 +114,58 @@ function assertShapedKeyerObligation(
 }
 
 /**
- * Overrides individual scorer channels for a deliberate ablation, departing from the model
- * card's declared configuration. {@link createScorer} honors an override but logs a warning
- * when it disables a channel the card declares required or changes the conventions mode.
+ * Deliberate departures from the model card's declared channel configuration, used for ablations.
+ *
+ * {@link createScorer} applies each override.
+ * It logs a warning when an override disables a required channel or changes the conventions mode.
  */
 export interface ScorerOverrides {
 	/**
-	 * Set `false` to ablate the postcode anchor channel even when the card declares it required.
+	 * Set `false` to disable the postcode anchor channel even when the card requires it.
 	 */
 	anchor?: boolean
 
 	/**
-	 * Set `false` to ablate the gazetteer lexicon channel even when the card declares it required.
+	 * Set `false` to disable the gazetteer channel even when the card requires it.
 	 */
 	gazetteer?: boolean
 
 	/**
-	 * Set `false` to ablate the street-type evidence channel even when the card declares it required.
+	 * Set `false` to disable the street-type evidence channel even when the card requires it.
 	 */
 	streetType?: boolean
 
 	/**
-	 * Set `false` to ablate the locality-surface evidence channel even when the card declares it required.
+	 * Set `false` to disable the locality-surface evidence channel even when the card requires it.
 	 */
 	localitySurface?: boolean
 
 	/**
-	 * Set `false` to ablate the country-lexicon channel even when the card declares it required.
+	 * Set `false` to disable the country channel even when the card requires it.
 	 */
 	country?: boolean
 
 	/**
-	 * Replaces the card's conventions mode with `"auto"`, a system code, or `false` to disable conventions.
+	 * Replaces the card's conventions mode with `"auto"` or a system code.
+	 * The value `false` disables conventions.
 	 */
 	conventions?: "auto" | string | false
 
 	/**
-	 * Turns punctuation-gap bridging on or off, replacing the card's `bridge` declaration.
+	 * Replaces the card's `bridge` declaration for punctuation-gap bridging.
 	 */
 	bridge?: boolean
 
 	/**
-	 * Turns suppression of gazetteer evidence near a postcode on or off,
-	 * replacing the card's `suppress_gazetteer_near_postcode`.
+	 * Replaces the card's `suppress_gazetteer_near_postcode` declaration.
 	 */
 	suppressGazetteerNearPostcode?: boolean
 }
 
 /**
- * Configures {@link createScorer}, where omitted lexicon paths resolve to repo defaults and
- * then the weights package, and `strict` (default true) throws on an unfed required channel.
+ * Options for {@link createScorer}.
+ *
+ * Omitted lexicon paths resolve to repository defaults first and then to the weights package.
  */
 export interface CreateScorerOpts {
 	modelPath: PathBuilderLike
@@ -171,76 +173,77 @@ export interface CreateScorerOpts {
 	tokenizerPath: PathBuilderLike
 
 	/**
-	 * Points to the model card that supplies the label vocabulary, the `requires`
-	 * channel declaration and the certified capabilities.
+	 * The model card that supplies the labels, the `requires` channel declaration
+	 * and the certified capabilities.
 	 */
 	modelCardPath: PathBuilderLike
 
 	/**
-	 * Points to the per-locale FST gazetteer, such as `fst-<locale>.bin`,
-	 * which {@link NeuralAddressClassifier.fstPath} exposes so a runtime pipeline
-	 * applies the decode-time gazetteer bias.
+	 * The per-locale FST gazetteer, such as `fst-<locale>.bin`, exposed
+	 * through {@link NeuralAddressClassifier.fstPath}.
 	 *
-	 * Only the path is carried because `neural` does not depend on `resolver-wof-sqlite`,
-	 * and omitting it leaves that bias off.
+	 * The classifier stores only the path because `neural` does not depend on `resolver-wof-sqlite`.
+	 * Without it, the runtime pipeline applies no FST bias.
 	 */
 	fstPath?: PathBuilderLike
 
 	/**
-	 * Points to the postcode anchor lookup, read as a PCB1 binary when the path
-	 * ends in `.bin` and as JSON otherwise.
+	 * The postcode anchor lookup, read as a PCB1 binary when the path ends in `.bin` and as JSON otherwise.
 	 *
-	 * It defaults to {@link DEFAULT_ANCHOR_LOOKUP} when that exists and then the weights
-	 * package's lookup, in the reverse order for a card declaring `span_mode: "shaped"`.
+	 * It defaults to {@link DEFAULT_ANCHOR_LOOKUP} and then to the weights package's lookup.
+	 * A card that declares `span_mode: "shaped"` tries the weights package first.
 	 */
 	anchorLookupPath?: PathBuilderLike
 
 	/**
-	 * Points to the gazetteer-anchor lexicon, defaulting to {@link DEFAULT_GAZETTEER_LEXICON}
-	 * when it exists and then the weights package's copy.
+	 * The gazetteer lexicon, which defaults to {@link DEFAULT_GAZETTEER_LEXICON}
+	 * and then to the weights package's copy.
 	 */
 	gazetteerLexiconPath?: PathBuilderLike
 
 	/**
-	 * Points to the street-type evidence lexicon, defaulting to the card-named file under
-	 * `data/gazetteer/` when it exists and then the weights package's copy.
+	 * The street-type evidence lexicon, which defaults to the card's named file under
+	 * `data/gazetteer/` and then to the weights package's copy.
 	 */
 	streetTypeLexiconPath?: string
 
 	/**
-	 * Points to the locality-surface evidence lexicon, defaulting to the weights package's copy.
+	 * The locality-surface evidence lexicon, which defaults to the weights package's copy.
 	 */
 	localitySurfaceLexiconPath?: string
 
 	/**
-	 * Points to the country-surface lexicon, defaulting to {@link DEFAULT_COUNTRY_LEXICON}
-	 * when it exists and then the weights package's copy.
+	 * The country-surface lexicon, which defaults to {@link DEFAULT_COUNTRY_LEXICON}
+	 * and then to the weights package's copy.
 	 */
 	countryLexiconPath?: string
 
 	/**
-	 * Selects the weights package that supplies default lexicons and the anchor lookup;
-	 * the model, tokenizer and card are never resolved from it.
+	 * The locale of the weights package that supplies default lexicons and the anchor lookup.
+	 *
+	 * The model, tokenizer and card are never resolved from it.
 	 */
 	locale?: string
 
 	/**
-	 * Throws when a required channel cannot be fed or a conventions mask would destroy
-	 * a certified capability, and defaults to `true`.
+	 * Whether to throw when a required channel cannot be fed or a conventions
+	 * mask would break a certified capability.
+	 * It defaults to `true`.
 	 *
-	 * With `false`, the scorer logs the problem and runs below its declared configuration.
+	 * With `false`, the scorer logs the problem and continues.
 	 */
 	strict?: boolean
 
 	/**
-	 * Names the serving tier whose certified capabilities the conventions check
-	 * reads from the card, defaulting to `"server"`.
-	 * A tier the card does not certify makes the check a no-op.
+	 * The serving tier whose certified capabilities the conventions check reads,
+	 * which defaults to `"server"`.
+	 *
+	 * The check does nothing for a tier the card does not certify.
 	 */
 	tier?: string
 
 	/**
-	 * Declares deliberate ablations, which log a warning instead of throwing.
+	 * Deliberate ablations, which log a warning instead of throwing.
 	 */
 	overrides?: ScorerOverrides
 }
@@ -307,11 +310,12 @@ async function assertConventionsRespectCapabilities(
 }
 
 /**
- * Creates a `NeuralAddressClassifier` fed the channels its model card declares,
- * inferring them from the ONNX input names when the card has no `requires` block.
+ * Creates a `NeuralAddressClassifier` with the channels its model card declares.
  *
- * In `strict` mode it throws when a required channel cannot be fed or a conventions
- * mask would destroy a certified capability; otherwise it logs and continues.
+ * When the card has no `requires` block, the channels are inferred from the ONNX input names.
+ * In strict mode it throws when a required channel cannot be fed or a conventions
+ * mask would break a certified capability.
+ * Otherwise it logs and continues.
  */
 export async function createScorer(opts: CreateScorerOpts): Promise<NeuralAddressClassifier> {
 	const strict = opts.strict ?? true

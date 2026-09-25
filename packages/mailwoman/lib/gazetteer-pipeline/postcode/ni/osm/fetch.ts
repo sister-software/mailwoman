@@ -2,6 +2,8 @@
  * @copyright Sister Software.
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
+ *
+ *   Fetches Northern Ireland postcodes from OpenStreetMap through Overpass for a build-local database.
  */
 
 import { APIClient } from "@mailwoman/core/api"
@@ -12,25 +14,24 @@ import { md5Hex } from "@mailwoman/core/utils"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 
 /**
- * Points at the public, volunteer-run Overpass API, which the NI acquisition queries exactly once.
+ * The public, volunteer-run Overpass API endpoint.
  */
 export const OVERPASS_ENDPOINT = "https://overpass-api.de/api/interpreter"
 
 /**
- * Points at the Kumi Systems Overpass mirror, which is not the default because it
- * timed out on queries the main instance answered quickly.
+ * The Kumi Systems Overpass mirror.
  *
- * Pass it via {@link AcquireNIPostcodesOptions.endpoint} only if it has recovered.
+ * It is not the default because it has timed out on queries that the main instance answered.
  */
 export const OVERPASS_ENDPOINT_KUMI = "https://overpass.kumi.systems/api/interpreter"
 
 /**
- * Holds the Overpass query that fetches every OSM element tagged with a `BT` postcode,
- * whose md5 goes into the database's provenance.
+ * The Overpass query for every OSM element tagged with a `BT` postcode.
+ * Its MD5 is recorded as provenance.
  *
- * It filters by a bbox rather than an NI area because `BT` is exclusive to Northern
- * Ireland and a bbox uses Overpass's spatial index.
- * The match is case-sensitive, so a lowercase `bt3 9qq` in OSM is not returned.
+ * The query filters by bounding box because only Northern Ireland uses `BT`,
+ * and a bounding box uses Overpass's spatial index.
+ * The match is case-sensitive, so lowercase postcodes are not returned.
  */
 export const NI_POSTCODE_OVERPASS_QUERY = [
 	"[out:json][timeout:300];",
@@ -39,29 +40,28 @@ export const NI_POSTCODE_OVERPASS_QUERY = [
 ].join("\n")
 
 /**
- * The licence every byte of this acquisition carries.
+ * The licence of the acquired OSM data.
  */
 export const OSM_LICENSE = "Open Database License (ODbL) 1.0"
 
 /**
- * The ODbL deed.
+ * The URL of the ODbL licence text.
  */
 export const OSM_LICENSE_URL = "https://opendatacommons.org/licenses/odbl/1-0/"
 
 /**
- * Holds the attribution OSM requires in any redistributed data or derived work,
- * which this pipeline embeds in the artifact itself.
+ * The attribution OSM requires in redistributed data and derived works.
+ * The database embeds it.
  */
 export const OSM_ATTRIBUTION =
 	"© OpenStreetMap contributors. Data licensed under the Open Database License (ODbL) 1.0 " +
 	"(https://opendatacommons.org/licenses/odbl/1-0/); see https://www.openstreetmap.org/copyright."
 
 /**
- * Explains, for the database's metadata, why the NI OSM postcode database is
- * built locally and never published.
+ * A metadata note explaining why the NI OSM postcode database is built locally and never published.
  *
- * ODbL share-alike binds derived databases, and shipped mailwoman gazetteers use only
- * permissive sources so consumers inherit no such obligation.
+ * ODbL share-alike applies to derived databases.
+ * Shipped gazetteers use only permissive sources so consumers take on no such obligation.
  */
 export const NI_OSM_BUILD_LOCAL_NOTE =
 	"BUILD-LOCAL TIER — this artifact is never published. OSM data is ODbL 1.0, whose share-alike clause (§4.4) binds a " +
@@ -79,21 +79,22 @@ export interface OverpassElement {
 	id: number
 
 	/**
-	 * The node's latitude; ways and relations carry `center` instead.
+	 * The node's coordinate.
+	 * Ways and relations use `center` instead.
 	 */
 	lat?: number
 	lon?: number
 
 	/**
-	 * The geometry's centre, present on ways and relations under `out center`.
+	 * The geometry's centre on ways and relations.
 	 */
 	center?: { lat: number; lon: number }
 	tags?: Record<string, string>
 }
 
 /**
- * Describes the Overpass JSON envelope, whose `osm3s.timestamp_osm_base` records
- * which OSM extract the response reflects.
+ * The Overpass JSON response.
+ * `osm3s.timestamp_osm_base` records the OSM data timestamp.
  */
 export interface OverpassResponse {
 	version?: number
@@ -107,10 +108,10 @@ export interface OverpassResponse {
 }
 
 /**
- * Creates the paced, non-retrying `APIClient` used for Overpass requests.
+ * Creates a paced `APIClient` for Overpass requests with retries disabled.
  *
- * Retry stays off because an Overpass 429 or 504 means the volunteer host is
- * shedding load and should be retried later by hand.
+ * An Overpass 429 or 504 means the volunteer host is shedding load,
+ * so an operator should retry later by hand.
  */
 export function createOverpassClient(): APIClient {
 	return new APIClient({
@@ -126,42 +127,42 @@ export function createOverpassClient(): APIClient {
 }
 
 /**
- * Configures {@link acquireNIPostcodes}, including where to save the response
- * and whether to reuse an existing one.
+ * Options for {@link acquireNIPostcodes}.
  */
 export interface AcquireNIPostcodesOptions {
 	/**
-	 * The directory that receives `response.json` and its sidecars.
+	 * The directory for `response.json` and its sidecars.
 	 *
-	 * Use a new dated directory per acquisition so an earlier extract is never overwritten.
+	 * Use a new dated directory per acquisition so an earlier extract is kept.
 	 */
 	destDir: PathBuilderLike
 
 	/**
-	 * Whether to reuse an existing `response.json` instead of querying, default true.
+	 * Whether to reuse an existing `response.json` instead of querying.
+	 * Defaults to true.
 	 *
-	 * Overpass is a volunteer endpoint and the saved response is the reproducibility artifact,
-	 * so set `false` only to take a deliberate new extract into a new directory.
+	 * The saved response is what makes a build reproducible.
+	 * Set this to `false` only when taking a new extract into a new directory.
 	 */
 	reuseExisting?: boolean
 	client?: APIClient
 
 	/**
-	 * The Overpass instance to query, default {@link OVERPASS_ENDPOINT},
-	 * recorded in `acquisition.json` as provenance.
+	 * The Overpass instance to query.
+	 * Defaults to {@link OVERPASS_ENDPOINT}.
 	 */
 	endpoint?: string
 
 	/**
-	 * The retrieval time stamped into `acquisition.json`, default the current time.
+	 * The retrieval time written to `acquisition.json`.
+	 * Defaults to the current time.
 	 */
 	now?: Date
 	onPhase?: (phase: string, detail?: string) => void
 }
 
 /**
- * Describes the saved Overpass response from {@link acquireNIPostcodes},
- * with its checksums and whether an existing file was reused.
+ * The saved Overpass response from {@link acquireNIPostcodes} and its checksums.
  */
 export interface AcquireNIPostcodesResult {
 	/**
@@ -170,47 +171,48 @@ export interface AcquireNIPostcodesResult {
 	responsePath: PathBuilder
 
 	/**
-	 * The path of the `acquisition.json` retrieval-metadata sidecar.
+	 * The path of the `acquisition.json` sidecar.
 	 */
 	acquisitionPath: PathBuilder
 	bytes: number
 
 	/**
-	 * The md5 of the response bytes on disk.
+	 * The MD5 of the response bytes on disk.
 	 */
 	md5: string
 
 	/**
-	 * The md5 of the current {@link NI_POSTCODE_OVERPASS_QUERY}.
+	 * The MD5 of the current {@link NI_POSTCODE_OVERPASS_QUERY}.
 	 */
 	queryMD5: string
 
 	/**
 	 * The configured Overpass instance.
 	 *
-	 * On a reused response this is the option's value, not necessarily the instance that
-	 * originally answered; a first-hand `acquisition.json` records that.
+	 * For a reused response, this is the option value and may differ from the instance that answered.
+	 * The original `acquisition.json` records the instance that answered.
 	 */
 	endpoint: string
 
 	/**
-	 * True when the response was already on disk, so no request was made.
+	 * True when the response was already on disk and no request was made.
 	 */
 	reused: boolean
 }
 
 /**
- * Returns the md5 of {@link NI_POSTCODE_OVERPASS_QUERY}, which the builder records as provenance.
+ * Returns the MD5 of {@link NI_POSTCODE_OVERPASS_QUERY}.
  */
 export function niPostcodeQueryMD5(): string {
 	return md5Hex(NI_POSTCODE_OVERPASS_QUERY)
 }
 
 /**
- * Runs the NI postcode Overpass query and saves the response to `<destDir>/response.json`
- * with an md5 sidecar and an `acquisition.json` provenance record.
+ * Runs the NI postcode Overpass query and saves the response to `<destDir>/response.json`,
+ * with an MD5 sidecar and an `acquisition.json` provenance record.
  *
- * The response bytes are written unparsed, so the recorded md5 matches what Overpass actually sent.
+ * The response bytes are saved unparsed so the recorded MD5 matches what Overpass sent.
+ * When an existing response is reused without a sidecar, the sidecar is rebuilt from the file's mtime.
  */
 export async function acquireNIPostcodes(options: AcquireNIPostcodesOptions): Promise<AcquireNIPostcodesResult> {
 	const { reuseExisting = true, endpoint = OVERPASS_ENDPOINT } = options
@@ -283,7 +285,7 @@ export async function acquireNIPostcodes(options: AcquireNIPostcodesOptions): Pr
 }
 
 /**
- * The retrieval-metadata sidecar, as it lands on disk beside the response.
+ * The `acquisition.json` sidecar written beside the response.
  */
 export interface NIAcquisitionSidecar {
 	endpoint: string
@@ -298,8 +300,8 @@ export interface NIAcquisitionSidecar {
 	tier: string
 
 	/**
-	 * True when the sidecar was rebuilt for a response already on disk, so `retrievedAt`
-	 * is the file's mtime rather than an observed request time.
+	 * True when the sidecar was rebuilt for an existing response.
+	 * `retrievedAt` is then the file's mtime.
 	 */
 	reconstructed?: boolean
 }

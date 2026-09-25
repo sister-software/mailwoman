@@ -3,24 +3,10 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The reply prose rules, as one listing, derived from the rule files rather than restated beside them.
+ *   Builds a digest of the Vale rules that the Stop hook applies to replies, read from the rule files.
  *
- *   why derive IT. The Stop hook (`vale/response/check/index.ts`) checks every finished reply against
- *   `config/vale/.vale-chat.ini`, and until the check fires a session knows only the four rules the output style
- *   names. Twenty-odd others are invisible until one of them blocks a reply, so the first the agent hears of a rule is
- *   a rejection. Restating the set in prose would fix that once and then drift, because the rule files change and a
- *   second copy does not. This reads the files.
- *
- *   what IT withholds. `WITHHELD_TOKENS` names the rules whose word lists must not reach a session through its
- *   instructions: naming the words is how they enter a reply. That discipline is agents.md's ("This file does not list
- *   them, so that the words never enter an agent's context through the instructions") and the output style's. For
- *   those rules the digest carries the message and the rewrite it asks for, which is what a writer needs, and points
- *   at the file for the list, which is what a finding needs. Every other rule's `swap` map is mechanical and is
- *   included: a spelling a writer never sees cannot be avoided.
- *
- *   The parse is a line scan rather than a YAML load. The three fields wanted are flat scalars and one flat map, the
- *   tree ships no YAML parser, and `packages/mailwoman/lib/coverage/census.ts` reads its own flat block the same way
- *   for a reason a parser would break.
+ *   Reading the files keeps the digest in step with the rules. The parser scans lines because the fields it
+ *   needs are flat scalars and one flat map, and the repository ships no YAML parser.
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
@@ -30,10 +16,10 @@ import { PathBuilder, type PathBuilderLike } from "path-ts"
 import { TextSpliterator } from "spliterator"
 
 /**
- * Rules whose token list stays out of the digest.
+ * Rules whose word lists the digest omits.
  *
- * Each of these bans a word, so printing the word to open a session plants it.
- * A finding names the rule, and the rule file holds the list.
+ * Each rule bans words, and printing those words into a session's context makes
+ * an agent more likely to use them.
  */
 const WITHHELD_TOKENS = new Set([
 	"AmbiguousShorthand",
@@ -44,29 +30,28 @@ const WITHHELD_TOKENS = new Set([
 ])
 
 /**
- * Rules that exist for a surface other than a reply.
+ * Rules meant for source comments, which the digest leaves out.
  *
- * `.vale-chat.ini` loads the whole style directory, so a source-comment variant
- * is loaded and reports the same site twice.
- * The digest names the reply-facing one only.
+ * `.vale-chat.ini` loads the whole style directory, so these rules also load for replies.
  */
 const CODE_SURFACE_ONLY = new Set(["AmbiguousShorthandCode", "CommentSemicolons"])
 
+/**
+ * One Vale rule as the digest reads it.
+ */
 export interface ValeRule {
 	name: string
 	level: "error" | "warning" | "suggestion"
 	message: string
 	/**
-	 * A `substitution` rule states what to write in its swap map.
-	 *
-	 * An `existence` rule states it in a token list.
+	 * The Vale rule type, such as `substitution` or `existence`.
 	 */
 	extends: string
 	swap: Array<[string, string]>
 }
 
 /**
- * `message: "…"` / `level: error` / `extends: existence`, each a flat scalar at column zero.
+ * Reads a flat scalar at column zero, such as `level: error`, with surrounding quotes removed.
  */
 function scalarField(source: string, field: string): string {
 	const value = new RegExp(`^${field}:\\s*(.+)$`, "mu").exec(source)?.[1]
@@ -77,7 +62,7 @@ function scalarField(source: string, field: string): string {
 }
 
 /**
- * The `swap:` block's `from: to` pairs, which are indented under it and end at the next column-zero key.
+ * Reads the indented `from: to` pairs of the `swap:` block.
  */
 function swapPairs(source: string): Array<[string, string]> {
 	const block = /^swap:\n((?:[ \t]+.*\n?)*)/mu.exec(source)?.[1]
@@ -87,9 +72,7 @@ function swapPairs(source: string): Array<[string, string]> {
 	const pairs: Array<[string, string]> = []
 
 	for (const line of TextSpliterator.from(block)) {
-		// A key may be quoted and may itself contain `:` — `'(?:^|[^-\w])text search': forward geocoding`.
-		// Match the quoted form first so the split lands on the separator
-		// rather than on a colon inside the pattern.
+		// A quoted key may contain `:`, so the quoted forms are tried before the bare form.
 		const entry = /^\s+(?:'([^']*)'|"([^"]*)"|([^:]+)):\s*(.+?)\s*$/u.exec(line)
 		const key = entry?.[1] ?? entry?.[2] ?? entry?.[3]
 		const value = entry?.[4]
@@ -103,10 +86,7 @@ function swapPairs(source: string): Array<[string, string]> {
 }
 
 /**
- * The rules `.vale-chat.ini` leaves on.
- *
- * `BasedOnStyles = styles` turns the whole directory on, so the config's job here
- * is the `styles.X = no` lines that turn one back off.
+ * Returns the rules that `.vale-chat.ini` turns off with `styles.X = NO`.
  */
 function disabledRules(config: string): Set<string> {
 	const off = new Set<string>()
@@ -121,22 +101,19 @@ function disabledRules(config: string): Set<string> {
 }
 
 /**
- * Every rule file under the style directory, repo-relative, including the `Grammar/`
- * subdirectory that Vale addresses as `styles.Grammar.<name>`.
+ * Returns every tracked rule file under the style directory, including the `Grammar/` subdirectory.
  *
- * Read from git rather than from the directory, because `@mailwoman/core/fs` owns every `node:fs`
- * call in the tree and exposes no listing; `trackedFiles` is the enumerator the repo already uses.
- * An untracked rule file is therefore absent from the digest, which is correct.
- * The rule set is committed.
+ * The list comes from git, so an untracked rule file does not appear in the digest.
  */
 function ruleFiles(repoRoot: PathBuilderLike): Promise<string[]> {
-	// One `*` and not `**`: git's pathspec wildcard crosses `/`, so this reaches `Grammar/` too,
-	// where `**/*.yml` would require a subdirectory and return the three nested rules alone.
+	// A git pathspec `*` crosses `/`, so this pattern also matches `Grammar/`.
 	return trackedFiles(repoRoot, ["config/vale/styles/*.yml"])
 }
 
 /**
- * Vale's name for a rule file: `Grammar/SloganAssertions.yml` is `Grammar.SloganAssertions`.
+ * Returns Vale's name for a rule file.
+ *
+ * For example, `Grammar/SloganAssertions.yml` becomes `Grammar.SloganAssertions`.
  */
 function ruleName(path: string): string {
 	return path
@@ -145,6 +122,9 @@ function ruleName(path: string): string {
 		.replaceAll("/", ".")
 }
 
+/**
+ * Reads the rules that `.vale-chat.ini` enables for replies.
+ */
 export async function readChatRules(repoRoot: PathBuilderLike = repoRootPath()): Promise<ValeRule[]> {
 	const root = PathBuilder.from(repoRoot)
 	const config = await readLocalTextFile(root("config", "vale", ".vale-chat.ini"))
@@ -176,15 +156,15 @@ export async function readChatRules(repoRoot: PathBuilderLike = repoRootPath()):
 }
 
 /**
- * A message is written around Vale's `%s`, and its grammar depends on the placeholder staying
- * in position — "Remove the stock form %s" and "%s is filler" need different subjects.
- *
- * Rendering it as `<match>` keeps every sentence correct without rewriting any of them.
+ * Replaces Vale's `%s` placeholder with `<match>`, which keeps each message grammatical.
  */
 function asRule(message: string): string {
 	return message.replaceAll("'%s'", "`<match>`").replaceAll("%s", "`<match>`")
 }
 
+/**
+ * Renders the rules as a Markdown listing, grouped into error and warning levels.
+ */
 export function renderRuleDigest(rules: ValeRule[]): string {
 	if (!rules.length) return ""
 
@@ -198,9 +178,7 @@ export function renderRuleDigest(rules: ValeRule[]): string {
 					"",
 					heading,
 					...set.map((rule) => {
-						// A substitution rule is defined by its swap map, and its message is two
-						// placeholders around "instead of", which says nothing once they are gone.
-						// Print the pairs in its place.
+						// A substitution rule's message is only placeholders, so the digest prints its pairs instead.
 						if (rule.extends === "substitution" && rule.swap.length) {
 							return `- ${rule.name}: ${rule.swap.map(([from, to]) => `${from} → ${to}`).join(", ")}.`
 						}
@@ -225,6 +203,9 @@ export function renderRuleDigest(rules: ValeRule[]): string {
 	].join("\n")
 }
 
+/**
+ * Reads the reply rules and renders their digest.
+ */
 export async function valeRuleDigest(repoRoot?: string): Promise<string> {
 	return renderRuleDigest(await readChatRules(repoRoot))
 }

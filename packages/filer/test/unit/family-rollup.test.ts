@@ -3,24 +3,10 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Tests for {@linkcode familyRollup}, the corporate-family reader. Fixtures insert rows
- *   directly into an in-memory database, as in `filer-lookup.test.ts`. This suite tests
- *   the reader interface and query behavior. The §7-3b criteria are in `filer-lookup.test.ts`,
- *   because criterion 1 concerns the difference between `families` and `cluster`.
+ *   Tests {@linkcode familyRollup} against rows inserted directly into an in-memory database.
  *
- *   A node can belong to multiple families. `familyRollup` always returns an array, whether
- *   there are no matches, one match, or several. This matches the builder and `filerLookup`.
- *
- *   `display_names` comes from joining each family row to its source edge. The tests also
- *   create `filer_node` and `filer_edge`, though the reader only reads `filer_family` and
- *   `filer_manifest`.
- *
- *   The `display_names` fixtures use the real `mintFamilyID`. Arbitrary IDs could let an
- *   incorrect join pass unnoticed, especially when one member has multiple company edges.
- *
- *   Names are matched using the stored `filer_family.naming_node_id`, not by re-canonicalizing
- *   edge targets. Tests cover multiple edges for one member and IDs created by an older
- *   canonicalizer. End-to-end builder tests are in `filer-lookup.test.ts`.
+ *   A node can belong to several families, so `familyRollup` always returns an array. The reader takes
+ *   `display_names` from the authoritative edge that `filer_family.naming_node_id` points to.
  */
 
 import { isoDate } from "@mailwoman/core/utils"
@@ -73,10 +59,8 @@ async function seedManifest(
 }
 
 const FAMILY_ID = "holding_company_name:bigco-inc"
-// The company node whose raw spelling produced FAMILY_ID (`filer_family.naming_node_id`).
-// These reader-interface fixtures write no matching `filer_edge`, so their
-// `display_names` are `[]` either way.
-// The column is not NULL, so a value is still required on every insert.
+// `filer_family.naming_node_id` is NOT NULL, so every fixture row needs this value.
+// These fixtures write no matching edge, so their `display_names` stay empty.
 const NAMING_NODE_BIGCO = `${FilerIdentifierType.HoldingCompanyName}:BigCo Inc`
 const FRN_A = "frn:0001111111"
 const FRN_B = "frn:0002222222"
@@ -103,21 +87,15 @@ describe("familyRollup — general reader interface", () => {
 	it("reads the manifest FIRST — throws rather than answering unstamped when it is missing", async () => {
 		using db = openMemory()
 		await createAllTables(db)
-		// Deliberately no manifest row.
+		// The test writes no manifest row.
 
 		await expect(familyRollup(db, { familyID: FAMILY_ID })).rejects.toThrow(/expected exactly 1/)
 	})
 
-	/**
-	 * A pre-version-2 artifact has no `filer_family` table.
-	 *
-	 * This fixture models that case and checks that the reader gives a useful rebuild instruction.
-	 */
 	it("throws a descriptive, rebuild-pointing error — not a raw 'no such table' — when schema_version predates filer_family", async () => {
 		using db = openMemory()
 		await createFilerManifestTable(db)
-		// filer_family deliberately not created.
-		// This is the schema_version 1 shape being simulated.
+		// A schema_version 1 database has no `filer_family` table.
 		await seedManifest(db, { schema_version: 1 })
 
 		await expect(familyRollup(db, { familyID: FAMILY_ID })).rejects.toThrow(
@@ -229,13 +207,7 @@ describe("familyRollup — general reader interface", () => {
 		expect(byNode).toEqual(byFamily)
 	})
 
-	/**
-	 * A node belonging to two families (holding company != management company) is a normal,
-	 * builder-emitted shape — see `build-filer.test.ts`'s own "holding company differs
-	 * from its management company" fixture — so ambiguity is not an error condition here:
-	 * both rollups must come back, matching `filerLookup.ts`'s `families` field's
-	 * own array interface for the identical question.
-	 */
+	// The builder puts a node in two families when its holding and management companies differ.
 	it("returns ALL families a nodeID belongs to, never throwing on a normal multi-family shape", async () => {
 		using db = openMemory()
 		await createAllTables(db)
@@ -382,18 +354,9 @@ describe("familyRollup — general reader interface", () => {
 		expect(result[0]?.distinct_member_count).toBe(1)
 	})
 
-	/**
-	 * The reader finds each raw name by joining a family row to its authoritative edge,
-	 * using the stored naming node and provenance.
-	 *
-	 * It does not re-canonicalize names.
-	 * These fixtures test the join; real `mintFamilyID` calls verify that the
-	 * example spellings belong to the same family.
-	 * End-to-end builder tests are in `filer-lookup.test.ts`.
-	 */
 	describe("display_names — the naming-provenance join", () => {
 		const HOLDING_NODE_ONE_SPELLING = `${FilerIdentifierType.HoldingCompanyName}:Solo Spelling Inc`
-		// Use a real family ID so an incorrect join cannot pass on a made-up value.
+		// The fixtures use real family IDs so a wrong join cannot pass on a made-up value.
 		const FAMILY_ID_SOLO = mintFamilyID(FilerIdentifierType.HoldingCompanyName, "Solo Spelling Inc")!
 
 		it("a single-spelling family surfaces exactly that one spelling", async () => {
@@ -448,9 +411,6 @@ describe("familyRollup — general reader interface", () => {
 			expect(result[0]?.display_names).toEqual(["Solo Spelling Inc"])
 		})
 
-		/**
-		 * Return both spellings when different names belong to the same family.
-		 */
 		it("a multi-spelling family (two members, two raw spellings sharing one family_id) surfaces BOTH spellings, sorted — never collapsed to one", async () => {
 			using db = openMemory()
 			await createAllTables(db)
@@ -459,7 +419,6 @@ describe("familyRollup — general reader interface", () => {
 			const HOLDING_NODE_SPELLING_1 = `${FilerIdentifierType.HoldingCompanyName}:Acme Corp`
 			const HOLDING_NODE_SPELLING_2 = `${FilerIdentifierType.HoldingCompanyName}:Acme Corporation, LLC`
 
-			// Confirm both spellings produce the same family ID.
 			const familyIDSpelling1 = mintFamilyID(FilerIdentifierType.HoldingCompanyName, "Acme Corp")!
 			const familyIDSpelling2 = mintFamilyID(FilerIdentifierType.HoldingCompanyName, "Acme Corporation, LLC")!
 			expect(familyIDSpelling1).toBe(familyIDSpelling2)
@@ -514,7 +473,6 @@ describe("familyRollup — general reader interface", () => {
 				])
 				.execute()
 
-			// Both spellings belong to the same family.
 			await db
 				.insertInto("filer_family")
 				.values([
@@ -547,9 +505,6 @@ describe("familyRollup — general reader interface", () => {
 			expect(result[0]?.display_names).toEqual(["Acme Corp", "Acme Corporation, LLC"].toSorted())
 		})
 
-		/**
-		 * Checks that each family gets only its own name when a member has two matching edges.
-		 */
 		it("one member, two same-tuple edges naming DIFFERENT families: each family surfaces only its OWN name", async () => {
 			using db = openMemory()
 			await createAllTables(db)
@@ -561,7 +516,6 @@ describe("familyRollup — general reader interface", () => {
 			const FAMILY_NORTH = mintFamilyID(FilerIdentifierType.HoldingCompanyName, "Northwind Holdings")!
 			const FAMILY_SOUTH = mintFamilyID(FilerIdentifierType.HoldingCompanyName, "Southgate Group")!
 
-			// The fixture's premise: these are genuinely two families rather than one.
 			expect(FAMILY_NORTH).not.toBe(FAMILY_SOUTH)
 
 			await db
@@ -581,8 +535,7 @@ describe("familyRollup — general reader interface", () => {
 				])
 				.execute()
 
-			// Two edges out of one member sharing (from_node_id, relationship, source, valid_from) —
-			// distinct rows only because filer_edge's PK carries to_node_id.
+			// The two edges share every provenance field and differ only in `to_node_id`.
 			await db
 				.insertInto("filer_edge")
 				.values([
@@ -648,16 +601,13 @@ describe("familyRollup — general reader interface", () => {
 			expect(south[0]?.display_names).toEqual(["Southgate Group"])
 		})
 
-		/**
-		 * Names should still appear when an artifact's family ID came from an older canonicalizer.
-		 */
 		it("surfaces the display name even when the persisted family_id no longer matches what the CURRENT canonicalizer would mint", async () => {
 			using db = openMemory()
 			await createAllTables(db)
 			await seedManifest(db)
 
 			const NAMING_NODE_DRIFT = `${FilerIdentifierType.HoldingCompanyName}:Drifty Holdings Inc`
-			// Simulate an ID stored by an older canonicalizer.
+			// This ID stands in for one minted by an older canonicalizer.
 			const STALE_FAMILY_ID = `${FilerIdentifierType.HoldingCompanyName}:drifty holdings inc`
 
 			expect(mintFamilyID(FilerIdentifierType.HoldingCompanyName, "Drifty Holdings Inc")).not.toBe(STALE_FAMILY_ID)
@@ -709,9 +659,6 @@ describe("familyRollup — general reader interface", () => {
 			expect(result[0]?.display_names).toEqual(["Drifty Holdings Inc"])
 		})
 
-		/**
-		 * Inferred edges are guesses, not reported names, so they must not supply display names.
-		 */
 		it("ignores an INFERRED naming edge — a display name is a documented report, never a matcher's guess", async () => {
 			using db = openMemory()
 			await createAllTables(db)
@@ -765,7 +712,8 @@ describe("familyRollup — general reader interface", () => {
 
 			const result = await familyRollup(db, { familyID: FAMILY_GUESS, asOf: "2026-12-31" })
 
-			// The membership itself still reads back — only the name is withheld, because no authoritative edge documents it.
+			// The membership remains.
+			// Only the name is dropped because no authoritative edge supports it.
 			expect(result[0]?.members).toHaveLength(1)
 			expect(result[0]?.display_names).toEqual([])
 		})

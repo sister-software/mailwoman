@@ -19,21 +19,18 @@ import { assembleHierarchy, lineageAnchorNode, type HierarchyEntry } from "#hier
 import { assembleStreetName } from "#street/name-assembly"
 
 /**
- * Names the resolution tier that produced a result's coordinate, which also
- * determines how `uncertainty_m` is derived.
+ * The resolution tier that produced a result's coordinate.
  *
- * `admin` results carry no uncertainty estimate, while `venue` and `plus_code` are
- * set by later overrides rather than by {@link extractGeocodeResult}.
+ * `admin` results carry no uncertainty estimate.
+ * Later overrides set `venue` and `plus_code`, and {@link extractGeocodeResult} never returns them.
  */
 export type ResolutionTier = "address_point" | "interpolated" | "street" | "admin" | "venue" | "plus_code"
 
 /**
- * Describes a parsed component the answer did not follow, where `reason` is a
- * resolver decision code a consumer can branch on.
+ * A parsed component that the answer's coordinate ignored.
  *
- * The only current reason, `postcode_move_refused`, means the postcode resolved too
- * far from the selected locality, since a transposed postcode is still a valid code
- * and disagreement is the only available signal.
+ * The only current `reason`, `postcode_move_refused`, means the postcode resolved
+ * too far from the selected locality.
  */
 export interface UnfollowedComponent {
 	tag: ComponentTag
@@ -41,38 +38,33 @@ export interface UnfollowedComponent {
 	reason: "postcode_move_refused"
 
 	/**
-	 * How far, in kilometers, following this component would have moved the answer.
+	 * The distance in kilometers that following this component would have moved the answer.
 	 */
 	distance_km: number
 }
 
 /**
- * Defines the result shape the geocode core returns for one input.
+ * The result that the geocode core returns for one input.
  */
 export interface GeocodeResult {
 	input: string
 
 	/**
-	 * Every parsed component, projected directly from the resolved tree.
+	 * Every parsed component, projected from the resolved tree.
 	 *
-	 * It keeps locale-specific tags such as JP's `prefecture` and `block` that
-	 * the named fields below do not carry.
+	 * It includes locale-specific tags, such as `prefecture` and `block`, that the named fields omit.
 	 */
 	components: Partial<Record<ComponentTag, string>>
 
 	/**
-	 * Spans the one-value-per-tag projection could not represent, present only when there were any.
-	 *
-	 * Without it, a null `region` could mean either that the input named no region
-	 * or that a second region span was discarded.
+	 * Spans that the one-value-per-tag projection dropped.
+	 * The field is present only when some were dropped.
 	 */
 	dropped_components?: DroppedSpan[]
 
 	/**
-	 * Components kept in `components` that the answer did not follow, present only when there were any.
-	 *
-	 * Unlike `dropped_components`, these values still appear in the result,
-	 * so this list is the only sign that the coordinate ignored them.
+	 * Components in `components` that the coordinate ignored.
+	 * The field is present only when some exist.
 	 */
 	unfollowed_components?: UnfollowedComponent[]
 	lat: number | null
@@ -82,34 +74,35 @@ export interface GeocodeResult {
 	/**
 	 * What may be claimed about the coordinate, as derived by `epistemicStatusFor`.
 	 *
-	 * It is orthogonal to `resolution_tier`: the same rooftop tier is `designated` against a
-	 * register its authority declares complete and `observed` against a crowdsourced extract.
+	 * It varies independently of `resolution_tier`.
+	 * A rooftop answer is `designated` when its register is declared complete
+	 * and `observed` when it comes from a crowdsourced extract.
 	 */
 	epistemic_status: EpistemicStatus
 
 	/**
-	 * The derivation behind this answer, present only when the caller supplied a resolver trace sink.
+	 * The derivation behind this answer.
 	 *
-	 * Without a sink the resolver records nothing, so the field costs nothing when it is not requested.
+	 * It is present only when the caller supplied a resolver trace sink.
 	 */
 	derivation?: DerivationProjection
 
 	/**
-	 * The poi.db entity that supplied the coordinate, present only when the `venue` tier answered.
+	 * The poi.db entity that supplied the coordinate.
+	 * It is present only when the `venue` tier answered.
 	 */
 	entity?: { name: string; categoryID: string | null; confidence: number; country: string }
 
 	/**
-	 * The locality key and postcode the matched register row records, present only on
-	 * the `address_point` tier when the database carries them.
+	 * The locality key and postcode stored on the matched address-point row.
 	 *
-	 * They describe the rooftop, not the query, so consumers may use them to
-	 * decorate an answer but never to filter one.
+	 * These values describe the rooftop rather than the query.
+	 * Consumers may display them but must not filter on them.
 	 */
 	rooftop?: { localityNorm?: string; postcode?: string }
 
 	/**
-	 * The uncertainty radius in meters, or null on the admin tier and when the tier reports none.
+	 * The uncertainty radius in meters, or null when the tier reports none.
 	 */
 	uncertainty_m: number | null
 	locality: string | null
@@ -117,51 +110,51 @@ export interface GeocodeResult {
 	postcode: string | null
 
 	/**
-	 * The parsed house number, populated regardless of tier.
+	 * The parsed house number, filled on every tier.
 	 *
-	 * A consumer should render a house-grade result only on the `address_point` or `interpolated` tier.
+	 * Only the `address_point` and `interpolated` tiers place the coordinate at the house.
 	 */
 	house_number: string | null
 	/**
-	 * The full parsed street name, reassembled from prefix, base and suffix and populated regardless of tier.
+	 * The parsed street name, reassembled from prefix, base and suffix.
 	 */
 	street: string | null
 
 	/**
-	 * The parsed venue span, populated regardless of tier.
+	 * The parsed venue span.
 	 */
 	venue: string | null
 
 	/**
-	 * The parsed dependent-locality span, populated regardless of resolution.
+	 * The parsed dependent-locality span.
 	 *
-	 * `hierarchy` holds only resolved nodes, so a dependent locality with no
-	 * gazetteer match appears here but not there.
+	 * It appears here even when `hierarchy` omits it for lack of a gazetteer match.
 	 */
 	dependent_locality: string | null
 
 	/**
-	 * The parsed unit or sub-venue span, such as `Suite 300` or `Gate 12`, populated regardless of tier.
+	 * The parsed unit or sub-venue span, such as `Suite 300` or `Gate 12`.
 	 */
 	unit: string | null
 
 	/**
-	 * The uppercase ISO 3166-1 alpha-2 code the resolver attached to the first node that carries one, or null.
+	 * The uppercase ISO 3166-1 alpha-2 code from the first node that carries a resolver country.
 	 */
 	countryCode: string | null
 
 	/**
 	 * The admin hierarchy from the resolver, most specific first.
 	 *
-	 * Entries are independently resolved parse nodes, not one containment walk,
-	 * so `in_winner_lineage` marks whether each entry lies on the winner's ancestor chain:
-	 * `false` is outside it, and an absent value is unverifiable.
+	 * Each entry is resolved independently.
+	 * `in_winner_lineage` is `true` when the entry lies on the winner's ancestor chain,
+	 * `false` when it lies outside, and absent when the chain is unknown.
 	 */
 	hierarchy: HierarchyEntry[]
 
 	/**
-	 * Ranked candidate places for the query's primary place: the winner first,
-	 * then the resolver's alternatives with distinct coordinates.
+	 * Candidate places for the query's primary place.
+	 *
+	 * The winner comes first, followed by the resolver's alternatives with distinct coordinates.
 	 */
 	candidates: Array<{
 		name: string
@@ -173,45 +166,47 @@ export interface GeocodeResult {
 	}>
 
 	/**
-	 * The country the postcode-country coherence pass scoped the resolve to, or null.
+	 * The country that the postcode-country coherence pass scoped the resolve to.
 	 *
-	 * It is non-null only when the pass overrode the default country, so a comparison
-	 * can tell a pass that never ran from one that ran and changed nothing.
+	 * It is null unless the pass overrode the default country.
 	 */
 	postcode_country_scope: string | null
 
 	/**
-	 * The promoted candidate's country, present only when capital promotion
-	 * changed some node's leading candidate.
+	 * The promoted candidate's country.
+	 *
+	 * It is present only when capital promotion changed a node's leading candidate.
 	 */
 	capital_promotion?: string
 
 	/**
-	 * Present only when some node's winner reached the top because the variant-alias
-	 * exemption spared it the cross-country alias penalty.
+	 * Set when the variant-alias exemption lifted a node's winner past the cross-country alias penalty.
 	 */
 	variant_alias_exemption?: true
 
 	/**
-	 * Query-intent advisories, which never change the answer.
+	 * Query-intent advisories.
+	 * They never change the answer.
 	 *
-	 * The field is always present; an empty array means the intent vocabulary looked and found nothing.
+	 * The field is always present.
+	 * An empty array means no intent marker matched.
 	 */
 	intent_markers: QueryIntentMarker[]
 
 	/**
-	 * Whether the winner's resolved ancestry confirms, contradicts or cannot
-	 * address the parsed `region` and `country`.
+	 * Whether the winner's resolved ancestry confirms, contradicts or cannot check
+	 * the parsed `region` and `country`.
 	 *
-	 * It is present whenever a winner resolved and is never read for ranking.
+	 * It is present whenever a winner resolved.
+	 * Ranking never reads it.
 	 */
 	admin_coherence?: AdminCoherenceReport
 
 	/**
-	 * A configured authoritative provider's answer, carried beside Mailwoman's own without changing it.
+	 * The answer from a configured authoritative provider, reported alongside Mailwoman's own answer.
 	 *
 	 * The field is absent when no provider is configured.
-	 * Every value inside is the provider's assertion, including `refused` and `transport_error`.
+	 * Every value inside comes from the provider, including `refused` and `transport_error`.
 	 */
 	authoritative?: AuthoritativeAssertion
 }
@@ -231,8 +226,10 @@ function unfollowedComponents(allNodes: readonly AddressNode[]): UnfollowedCompo
 }
 
 /**
- * Projects a resolved address tree into a geocode result, taking the coordinate from the most precise
- * tier present: address point, then interpolated point, then street centroid, then the admin ladder.
+ * Projects a resolved address tree into a geocode result.
+ *
+ * The coordinate comes from the most precise tier present, in the order address point,
+ * interpolated point, street centroid and admin ladder.
  */
 export function extractGeocodeResult(input: string, tree: AddressTree): GeocodeOutcomeLike {
 	const projected = decodeAsJSON(tree, { includeDropped: true })

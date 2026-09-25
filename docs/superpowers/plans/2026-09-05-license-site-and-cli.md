@@ -9,13 +9,13 @@
 - **Module count:** `mailwoman --version` reads 136 with the key-file read on the launcher path, from 132; `fs/writers`
   and `data-root` were not on it before. The pin's baseline constant moved with it.
 - **`decodeLicenseKeyPayload`** joined `@mailwoman/core/license/key`: `verify --online` asks the worker about the lid a
-  token names even when this build cannot verify the token, since whether the license stands is what decides between an
-  upgrade and a purchase. The payload is read as written and used for nothing else.
+  token carries even when this build cannot verify the token, because the license's status decides whether the customer
+  needs an upgrade or a purchase. The payload is read as written and used for nothing else.
 - **The worker client test** scripts the wire with `@mailwoman/core/api/test-transport` rather than a listener; the CLI
   integration test serves a fetch handler through `@mailwoman/api-kit`'s `serveNode` and reaches it through
   `MAILWOMAN_LICENSE_URL` and `MAILWOMAN_DOCS_URL`. The compiled CLI ships its register, so every CLI case asserts a
   refusal by its word and that nothing was written.
-- **The claim reducer's clock is the events'**: `initialClaimState()` takes no time, and the deadline counts from the
+- **The claim reducer takes its clock from the events.** `initialClaimState()` takes no time, and the deadline counts from the
   first event, because a render must be pure.
 - **Docs tests import site sources through `#license/*`** (added to `docs/package.json` `imports`), as `test-interface`
   requires.
@@ -393,7 +393,7 @@ describe("the license worker client", () => {
 })
 ```
 
-`JSON.parse` is refused by lint outside core; this file is inside core, and the stub is a test double — if the rule still fires, use `tryParsingJSON` from `@mailwoman/core/json`.
+`JSON.parse` is refused by lint outside core; this file is inside core, and the stub is a test double. If the rule still fires, use `tryParsingJSON` from `@mailwoman/core/json`.
 
 - [x] **Step 2: Run to verify it fails**
 
@@ -523,11 +523,11 @@ Behaviour:
 - `license adopt <token> [--secret <s>]`: positional `token` (second positional after the action; add a second optional positional `argument` to the spec, described as "adopt: the token"). Verify offline. `valid` → write the key file; with `--secret`, the payload must carry `lid` (refuse otherwise: "this token was not issued by the self-service worker, so it has no refresh secret") and the credentials file is written 0600. `expired` → refuse with the expiry date; `unknown_key` → refuse: "this release does not trust key id <kid>; upgrade mailwoman to a release that lists it, then adopt again"; `invalid` → refuse with the reason. Print the paths written and `mailwoman license verify --online` as the next command. `--json` prints `{ keyPath, refreshPath?, payload }`.
 - `license refresh [--lid <lid> --secret <s>]`: credentials from the flags, else `readRefreshCredentials()`, else a usage error naming `adopt`. Call `refreshLicenseKey`. `active` → verify the token offline; `valid` → write the key file and print `status: active`, `expires`, the path; `unknown_key` → do not write, print the action, exit 1. `pending` → "the first payment has not been recorded yet; the email will carry the key" exit 1. `lapsed`/`revoked` → print the word, exit 1, key file untouched. `not_found` → "no license answers to this lid and secret" exit 1. `unreachable` → print it with the URL, exit 2. `--json` prints the answer plus `keyPath` when written.
 - `license verify --online`: when the payload carries `lid`, also `checkLicenseStatus(lid)` and print `license.mailwoman.ai: <word>` beside the publication line; the exit code adds `revoked` and `lapsed` as failures. JSON gains `lid_status`.
-- Every message that names a URL uses `licenseWorkerURL()`.
+- Every message that includes a URL uses `licenseWorkerURL()`.
 
 - [x] **Step 1: Write the failing tests**
 
-Add to `packages/mailwoman/test/integration/license-cli.test.ts`. The stub worker is a Hono app served through `@mailwoman/api-kit`'s `serveNode` on port 0, with `MAILWOMAN_LICENSE_URL` handed to the CLI child. The signing pair is generated in the test and injected into the register the CLI reads by... it cannot be: the compiled CLI ships its register. So the trusted case uses a token the build trusts — none exists in a test — and the tests assert the REFUSALS precisely and the file writes through `adopt` of a token whose verification the CLI reports; use `--json` output for the payload echo. Concretely:
+Add to `packages/mailwoman/test/integration/license-cli.test.ts`. The stub worker is a Hono app served through `@mailwoman/api-kit`'s `serveNode` on port 0, with `MAILWOMAN_LICENSE_URL` handed to the CLI child. The test generates a signing pair, but it cannot inject that pair into the register the CLI reads, because the compiled CLI ships its register. No token in a test is one the build trusts. The tests therefore assert the refusals precisely, and they assert the file writes through `adopt` of a token whose verification result the CLI reports. Use `--json` output for the payload echo. Concretely:
 
 ```ts
 import { Hono } from "hono"
@@ -624,7 +624,7 @@ test("verify --online reports the lid status beside the publication", async () =
 
 Write the third test in full following the second's shape (the stub gains `worker.post("/v1/license-status", (c) => c.json({ status: "revoked" }))`; the CLI is invoked with `["verify", "--key", token, "--online", "--json"]`; assert `lid_status: "revoked"` in the JSON and exit code 1). The `--online` publication check hits the real mailwoman.ai unless `MAILWOMAN_DOCS_URL` points at the stub; set `MAILWOMAN_DOCS_URL` to the stub too and serve `/.well-known/mailwoman/license-keys.json` with `{ keys: [] }` so the publication reads `unlisted` deterministically.
 
-Add `pathExists` (`@mailwoman/core/fs/readers`), `writePrivateTextFile` (`@mailwoman/core/fs/writers`), `resolvePath` (`path-ts`) to the test's imports. `hono` is already a dependency of `mailwoman`; `@mailwoman/api-kit` too — confirm in `packages/mailwoman/package.json` before importing, and add to `devDependencies` only if absent.
+Add `pathExists` (`@mailwoman/core/fs/readers`), `writePrivateTextFile` (`@mailwoman/core/fs/writers`), `resolvePath` (`path-ts`) to the test's imports. `hono` and `@mailwoman/api-kit` are already dependencies of `mailwoman`. Confirm both in `packages/mailwoman/package.json` before importing, and add either to `devDependencies` only if it is absent.
 
 - [x] **Step 2: Run to verify they fail**
 
@@ -848,7 +848,7 @@ Run: `yarn vitest run packages/mailwoman/test/unit/doctor`. Expected: fail on `l
 
 - [x] **Step 3: Implement**
 
-`checks.ts`: import `LicenseStatusAnswer` from `@mailwoman/core/license/status`; add `lidStatus?: LicenseStatusAnswer` to `RuntimeLicenseObservation` and `lid?: string; lidStatus?: LicenseStatusAnswer` to `LicensePosture` (spread `...(key && "payload" in key && isSelfServicePayload(key.payload) ? { lid: key.payload.lid } : {})` and `...(o.lidStatus ? { lidStatus: o.lidStatus } : {})`). In the commercial branch, build the freshness clause and append `license ${o.lidStatus}` when present (the word from the worker, or `license status unreachable`). When `o.lidStatus` is `revoked` or `lapsed`, return `Degraded` with `detail` naming the word and `consequence` as the template `` `The offline token verifies until its date, so the runtime still applies the commercial branch; online, this license is ${word}. Manage billing at ${docsSiteURL()}/license.` `` and `fix: "mailwoman license refresh"`. `appliedLicenseBranch` is untouched: the stamp and the doctor keep agreeing on the branch by construction; the lid status is the doctor's extra word.
+`checks.ts`: import `LicenseStatusAnswer` from `@mailwoman/core/license/status`; add `lidStatus?: LicenseStatusAnswer` to `RuntimeLicenseObservation` and `lid?: string; lidStatus?: LicenseStatusAnswer` to `LicensePosture` (spread `...(key && "payload" in key && isSelfServicePayload(key.payload) ? { lid: key.payload.lid } : {})` and `...(o.lidStatus ? { lidStatus: o.lidStatus } : {})`). In the commercial branch, build the freshness clause and append `license ${o.lidStatus}` when present (the word from the worker, or `license status unreachable`). When `o.lidStatus` is `revoked` or `lapsed`, return `Degraded` with `detail` naming the word and `consequence` as the template `` `The offline token verifies until its date, so the runtime still applies the commercial branch; online, this license is ${word}. Manage billing at ${docsSiteURL()}/license.` `` and `fix: "mailwoman license refresh"`. `appliedLicenseBranch` is untouched, so the stamp and the doctor agree on the branch by construction. The lid status is an extra word that only the doctor reports.
 
 `runner.ts`: add `checkLicenseStatus(lid: string): Promise<LicenseStatusAnswer>` to the dependencies interface, default `(lid) => checkLicenseStatus(lid)`; gather it beside the publication when `key && "payload" in key && isSelfServicePayload(key.payload)`; pass `lidStatus` into `runtimeLicenseCheck`. Update `format.ts` only if it renders `LicensePosture` fields by name (grep `keyStatus` there).
 
@@ -949,7 +949,7 @@ export const BuyLicense: React.FC = () => {
 }
 ```
 
-`styles.module.css`: `.provide`, `.plans` (two-column grid, one column under 640px), `.plan` (bordered card, `var(--ifm-color-emphasis-300)` border, no underline), `.fine` (smaller text). Follow `docs/src/components/PricingTiers/styles.module.css` for tokens.
+`styles.module.css`: `.provide`, `.plans` (two-column grid, one column under 640px), `.plan` (bordered card, `var(--ifm-color-emphasis-300)` border, without underline), `.fine` (smaller text). Follow `docs/src/components/PricingTiers/styles.module.css` for tokens.
 
 - [x] **Step 2: The page**
 
@@ -1001,7 +1001,7 @@ Update the frontmatter description if the page's scope grew. Run `yarn workspace
 
 - [x] **Step 3: Render it**
 
-Start the docs dev server as `docs/.claude/skills/run-docs/SKILL.md` describes, then `node .claude/skills/run-docs/driver.mts --check /license/` and `--screenshot /license/ <scratch>/license.png`; read the screenshot. Expected: the Purchase section renders the contact paragraph (links unset), the two new sections render, no console error.
+Start the docs dev server as `docs/.claude/skills/run-docs/SKILL.md` describes, then `node .claude/skills/run-docs/driver.mts --check /license/` and `--screenshot /license/ <scratch>/license.png`; read the screenshot. Expected: the Purchase section renders the contact paragraph (links unset), the two new sections render, and the console logs no error.
 
 - [x] **Step 4: Commit**
 

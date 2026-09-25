@@ -15,7 +15,7 @@ task bodies are left as written.
 - **`env` comes from `cloudflare:workers`.** The pool deprecates `env` from `cloudflare:test`. `test/support/env.d.ts`
   declares `Cloudflare.Env` as the worker's bindings plus `TEST_MIGRATIONS`, and `tsconfig.test.json` carries the pool's
   `cloudflare:test` types, so no test casts `env`.
-- **A charge no longer names its invoice.** Under the pinned API the link runs `charge.payment_intent` →
+- **A charge no longer references its invoice directly.** Under the pinned API the link runs `charge.payment_intent` →
   `invoicePayments.list({ payment: { type: "payment_intent", payment_intent } })` → `data[0].invoice`
   (`invoiceIDForCharge` in `lib/stripe/handlers.ts`).
 - **The claim route re-reads an unseen session.** A Checkout Session the ledger has not seen is retrieved from Stripe by
@@ -26,9 +26,9 @@ task bodies are left as written.
 - **Reconciliation has a third sweep and a `failed` list.** Every license is compared with its subscription's current
   state; a dispute Stripe has ruled `won` hands a revoked license back to its subscription's state; a license whose
   Stripe records cannot be read is reported by id and never stops the sweep.
-- **The webhook checks `eventRecorded` first, runs the handler, then `recordEventOnce`.** The order the Task 6 body
-  argues for, with the pre-check named.
-- **The deploy workflow refuses a `node:` import** from the dry-run bundle before deploying. Measured 2.1 MB, zero hits.
+- **The webhook checks `eventRecorded` first, runs the handler, then `recordEventOnce`.** This is the order the Task 6
+  body argues for, with the pre-check added as an explicit step.
+- **The deploy workflow refuses a `node:` import** from the dry-run bundle before deploying. The measured bundle is 2.1 MB with zero hits.
   It also refuses a private-key marker or a Stripe key prefix in the bundle, and `upload_source_maps = true`.
 - **From the PR #2160 review.** The email is re-sent while `pending` as well as `failed`, by the retry that finds the
   token and by reconciliation. The agreement version comes from the Checkout Session's `agreement_version` metadata
@@ -49,15 +49,15 @@ task bodies are left as written.
 
 ## Global Constraints
 
-- The worker imports four core subpaths and nothing else from core: `@mailwoman/core/license/key`, `@mailwoman/core/license/register`, `@mailwoman/core/crypto/base64url`, `@mailwoman/core/crypto/digest`. No barrel, no `#env`, no `fs`. The worker bundle test in core holds those two subpaths `node:`-free; the worker's own `wrangler deploy --dry-run` in Task 9 is the check that the worker's whole graph is.
-- No `nodejs_compat` flag. Every dependency must run on the Workers runtime as shipped: Stripe's SDK does through its fetch client and SubtleCrypto provider; `kysely` and `kysely-d1` are pure JS; Hono is web-standard.
+- The worker imports four core subpaths and nothing else from core: `@mailwoman/core/license/key`, `@mailwoman/core/license/register`, `@mailwoman/core/crypto/base64url`, `@mailwoman/core/crypto/digest`. It imports no barrel, no `#env`, and no `fs`. The worker bundle test in core keeps those two subpaths `node:`-free. The worker's own `wrangler deploy --dry-run` in Task 9 checks that the worker's whole graph is `node:`-free.
+- The worker does not set the `nodejs_compat` flag. Every dependency must run on the Workers runtime as shipped. Stripe's SDK runs there through its fetch client and SubtleCrypto provider, `kysely` and `kysely-d1` are pure JS, and Hono is web-standard.
 - Secrets arrive through Wrangler secret bindings only: `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `LICENSE_SIGNING_KEY_PEM`, `EMAIL_API_KEY`. None appears in `wrangler.toml`, in a test fixture that ships, in a log line, or in a response. `.dev.vars` is gitignored (confirm: `git check-ignore -q packages/license-worker/.dev.vars`; add the pattern to `.gitignore` if it is not).
 - Production and sandbox are two Wrangler environments with separate D1 databases, secrets, key ids, Price IDs, and site origins. A sandbox signing key never enters the register in core.
 - Every event id is written in the same D1 batch as its effects. A duplicate event id is a 200 with no effect. Any failure after signature verification is a 500, so Stripe retries. A bad signature is a 400 and is not retried.
 - The webhook handler never trusts an event body's fields for entitlement: it retrieves the invoice, the subscription, and when needed the Checkout Session from Stripe by id.
 - `Cache-Control: no-store` on every route that can carry a token. CORS admits exactly `SITE_ORIGIN` on the claim route and nothing on the others.
 - Money and time: `expires` is the subscription period end plus `graceDays` (14) as an inclusive UTC calendar date; `issued` is the invoice's paid date as a UTC calendar date. Both are persisted before signing so a retry reproduces the same payload.
-- Relative imports carry `.ts`; sibling modules go through `#*`. No `enum`. Comments state invariants. Acronym casing: `ID`, `URL`, `PEM`, `D1` (`D1Database` is Cloudflare's own name and stays).
+- Relative imports carry `.ts`; sibling modules go through `#*`. Do not use `enum`. Comments state invariants. Acronym casing: `ID`, `URL`, `PEM`, `D1` (`D1Database` is Cloudflare's own name and stays).
 - The worker is a new workspace and joins the registers AGENTS.md lists: root `workspaces`; both root `tsconfig.json` references; `SANCTIONED_RELEASE_ABSENCES` (reason: private infrastructure); `knip.json` workspace entry. It is private, so the release list, `bless-package`, and the smoke pack set do not apply. `checkReleaseListIdentity`'s `publishCount` pin stays 59.
 - The worker's tests run under their own vitest config; the root sweep excludes them the way it excludes `@mailwoman/react`'s browser tests, and CI runs them as their own step.
 - Commit messages end with `Claude-Session: https://claude.ai/code/session_011sdRccUsbdDyqumVDfHnvg`.
@@ -103,7 +103,7 @@ task bodies are left as written.
 - Modify: `packages/core/lib/crypto/ed25519.ts` (drop `sha256Bytes`), `packages/core/lib/license/key.ts` (drop the local `hex`; import `hexOf` and `sha256Bytes` from the digest module), `packages/core/package.json` (`./crypto/digest` export), `packages/core/test/unit/crypto/ed25519.test.ts` (import the digest from its home)
 - Test: `packages/core/test/unit/crypto/digest.test.ts`
 
-`sha256Bytes` sits in `ed25519.ts` today because the key id needed it; the worker needs the same digest for the refresh secret, and a third copy would be the duplicate the review of #2153 refused. One module, three importers.
+`sha256Bytes` sits in `ed25519.ts` today because the key id needed it; the worker needs the same digest for the refresh secret, and a third copy would be the duplicate the review of #2153 refused. One module serves all three importers.
 
 - [x] **Step 1: Write the failing test**
 
@@ -372,7 +372,7 @@ namespace_id = "2003"
 simple = { limit = 60, period = 60 }
 ```
 
-The `REPLACE` values are what the operator fills when the Stripe objects and the D1 database exist; `readEnv` refuses them (Task 3) so a deploy with a placeholder answers 503, never mints. The D1 binding is named `LICENSE_LEDGER`, not `DB`, so a grep for it finds only this worker.
+The `REPLACE` values are what the operator fills when the Stripe objects and the D1 database exist; `readEnv` refuses them (Task 3) so a deploy with a placeholder answers 503 and never mints. The D1 binding is named `LICENSE_LEDGER`, not `DB`, so a grep for it finds only this worker.
 
 `.dev.vars.example`:
 
@@ -780,7 +780,7 @@ test("state transitions write the license and subscription states", async () => 
 - [x] **Step 2: Run to verify it fails**
 
 Run: `yarn workspace @mailwoman/license-worker test test/ledger.test.ts`
-Expected: FAIL — modules missing.
+Expected: the tests fail because the modules are missing.
 
 - [x] **Step 3: Write the migration**
 
@@ -1091,7 +1091,7 @@ There is no `ok` case at unit level: an `ok` needs a key the shipped register ca
 - [x] **Step 2: Run to verify they fail**
 
 Run: `yarn workspace @mailwoman/license-worker test test/dates.test.ts test/plans.test.ts test/identifiers.test.ts test/signing.test.ts`
-Expected: FAIL, modules missing.
+Expected: the tests fail because the modules are missing.
 
 - [x] **Step 3: Implement**
 
@@ -1349,7 +1349,7 @@ describe("webhook verification", () => {
 
 - [x] **Step 2: Run to verify it fails**
 
-Expected: modules missing.
+Expected: the tests fail because the modules are missing.
 
 - [x] **Step 3: Implement**
 
@@ -1773,7 +1773,7 @@ The `currentToken(d.ledger, "lic_x")` line is a placeholder for "the checkout ev
 
 - [x] **Step 2: Run to verify it fails**
 
-Expected: modules missing.
+Expected: the tests fail because the modules are missing.
 
 - [x] **Step 3: Implement**
 
@@ -2397,13 +2397,13 @@ describe("the routes", () => {
 
 - [x] **Step 2: Run to verify it fails**
 
-Expected: routes 404.
+Expected: the routes answer 404.
 
 - [x] **Step 3: Implement the routes**
 
 Each route file exports `register<Name>Route(app, env, deps)` in the drop-in style. Behaviours:
 
-- **webhook** (`lib/routes/webhook.ts`): `await c.req.text()` once; `verifyStripeEvent`; on `ok: false` answer `c.json({ error: reason }, 400)`; `recordEventOnce`, and on `"duplicate"` answer 200 `{ received: true, duplicate: true }`; `handleStripeEvent` inside a try; on throw, delete nothing, answer 500 (the event row stays so the retry reads `duplicate`? NO: a failed handler must let the retry run, so record the event after the handler succeeds, in the same D1 batch as its last write. Simplest correct order: run the handler first, then `recordEventOnce`; the handler's own writes are idempotent by primary key (`insertToken` on `invoice_id`, `createLicense` on `subscription_id`), so a retry after a crash between handler and record re-runs the handler, which finds everything already there). Answer `{ received: true, handled }`.
+- **webhook** (`lib/routes/webhook.ts`): `await c.req.text()` once; `verifyStripeEvent`; on `ok: false` answer `c.json({ error: reason }, 400)`; `recordEventOnce`, and on `"duplicate"` answer 200 `{ received: true, duplicate: true }`; `handleStripeEvent` inside a try; on throw, delete nothing and answer 500. A failed handler must let Stripe's retry run, so the event is recorded only after the handler succeeds, in the same D1 batch as its last write. The simplest correct order runs the handler first and `recordEventOnce` second. The handler's own writes are idempotent by primary key (`insertToken` on `invoice_id`, `createLicense` on `subscription_id`), so a retry after a crash between handler and record re-runs the handler, which finds everything already written. Answer `{ received: true, handled }`.
 - **claim** (`lib/routes/claim.ts`): `CLAIM_LIMITER.limit({ key: clientIP })` → 429 when exceeded; `findTokenByCheckoutSession`; none → `{ status: "pending" }` when a `licenses` row exists for the session, 404 when none; `license_state` `revoked` → `{ status: "revoked" }`; else `{ status: "issued", token, lid, licensee, issued, expires, refresh_secret? }`. The refresh secret is stored hashed, so it can be shown only once: the `ensureLicenseFromCheckoutSession` return carries the plaintext on creation, and the claim route needs it too. Implement with a `refresh_secret_pending` column holding the plaintext until the first successful claim reads and clears it (one `UPDATE … SET refresh_secret_pending = NULL … RETURNING`), added to the migration in Task 2 (edit `0001_ledger.sql`; the D1 database is recreated from migrations in tests, and no production database exists yet). Exact-origin CORS via `hono/cors` with `origin: env.SITE_ORIGIN` on this route only.
 - **refresh** (`lib/routes/refresh.ts`): `REFRESH_LIMITER` keyed by lid; body `{ lid, secret }` validated by zod; `findLicense`; compare `await secretDigest(secret)` to the stored hash with a constant-time compare (`timingSafeEqual` is Node; compare byte arrays in a loop that runs to the end); wrong or unknown → the same `404 { error: "not found" }`; `license_state` `revoked` or `lapsed` → `{ status }` 200 without a token; else `{ status: "active", token, issued, expires }` from `currentToken`.
 - **status** (`lib/routes/status.ts`): `STATUS_LIMITER` keyed by lid; `{ lid }` → `{ status: license_state }` mapped to `active | lapsed | revoked` (`review` reads `active`: the customer paid) or `unknown`.
@@ -2660,7 +2660,7 @@ yarn workspace @mailwoman/license-worker wrangler deploy --env sandbox --dry-run
 grep -c "node:" /tmp/claude-1000/-home-lab-Projects-mailwoman/dc5b25ae-2f59-4cfe-a00a-391f0b430ece/scratchpad/worker-dry-run/index.js
 ```
 
-Expected: the dry run bundles without error and the grep reads `0`. A `node:` hit names the module to fix at its source, never with `nodejs_compat`.
+Expected: the dry run bundles without error and the grep reads `0`. A `node:` hit identifies a module to fix at its source, never with `nodejs_compat`.
 
 - [x] **Step 4: Commit**
 

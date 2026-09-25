@@ -45,7 +45,7 @@ The within-token punctuation gap is **not a punctuation-tokenizer problem** and 
 punctuation-specific fix. It decomposes into:
 
 - the **#694 comma-less/delimiter** change (fixing concatenated-input segmentation — already validated),
-- the **#1 boundary-instability** change (street/affix; the taxonomy's highest-changeage parser fix),
+- the **#1 boundary-instability** change (street/affix; the taxonomy's highest-leverage parser fix),
 - the **#690 OOD-token** family (leading-char drops; foreign postcode formats),
 - and **one new specific case**: the AU/UK slash unit-convention (`4/2A`).
 

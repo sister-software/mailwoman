@@ -22,7 +22,7 @@ title: v3.0.1 span-head re-probe — CHECK PASS, the arc's assumption is support
 **seg@1 beats token@1 by +7.9pp under identical conditions.** Phase 1's question — _does a segment
 decode over LEARNED span scores beat the token decode?_ — is answered **yes**.
 
-## The secondary read confirms the diagnosis, notthe outcome
+## The secondary read confirms the diagnosis, not just the outcome
 
 The v3.0.0 write-up called the failure _under-training rather than falsification_, on the strength of a loss
 that was still falling at 2k with raw span NLL ~35. One variable (the head's LR) tested that claim:
@@ -71,7 +71,7 @@ in Phase 2; not claimed as a shipped win here.
 - **The 0.90 parity floor is untouched by this.** Phase 1 was never a promote check; this checkpoint
   ships nowhere. Whether seg@1 clears 0.90 under production config is a Phase-2 question, and the
   night-3 oracle@10 ceiling (0.749 over v264's emissions) says the floor needs the recall class too,
-  notthe boundary class.
+  not just the boundary class.
 - **2k steps, one seed.** No claim about the 8k shape.
 
 ## Run facts

@@ -3,28 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The premise-linkage report writer (#1902) and the preflight that decides whether anything is
- *   written at all.
- *
- *   The threat this guards against is not a careless operator. It is an ordinary change: someone adds
- *   a field to help debug a bad run, a provider payload rides along inside it, and the report is
- *   already in a pull request before anybody reads the diff closely. So the writer does not trust the
- *   type system to have kept the report clean. The types are what the code was written against, and
- *   the leak arrives in the code that was written afterwards. It re-derives the answer from the values
- *   about to be serialized:
- *
- *   1. Every key must be one this schema declares. An unknown key is refused whatever it holds, which
- *        is what makes the check hold against fields that do not exist yet.
- *   2. No string may look like a street address, may contain a long digit run in the shape of an
- *        authoritative identifier, or may contain any input string this run read. The run's inputs are
- *        held in memory for exactly this comparison and discarded with the run.
- *   3. No row whose terms forbid a published coordinate may carry a coordinate error.
- *   4. The run itself must be at least the agreed minimum cell size, and any per-class cell below it is
- *        removed before publication — with the removal counted, because a suppression nobody can see is
- *        indistinguishable from a class that had no rows.
- *
- *   A refusal throws and names the path. It never writes a partial file: every check runs against the
- *   finished value before the file is opened.
+ *   Writes the premise-linkage report after checking the serialized values for leaked data.
  */
 
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
@@ -34,9 +13,7 @@ import type { PremiseLinkageReport, PremiseLinkageResultRow } from "#eval-harnes
 import { PREMISE_LINKAGE_SHAPE_CLASSES } from "#eval-harness/premise-linkage/schema"
 
 /**
- * Why the writer refused.
- *
- * A closed set, so a caller can branch on the reason without reading the message.
+ * Reasons the writer can refuse a report.
  */
 export const PremiseLinkageRedactionReason = {
 	UnknownKey: "unknown_key",
@@ -51,10 +28,10 @@ export type PremiseLinkageRedactionReason =
 	(typeof PremiseLinkageRedactionReason)[keyof typeof PremiseLinkageRedactionReason]
 
 /**
- * A refusal to publish, naming the value that caused it.
+ * Error thrown when the report fails a redaction check.
  *
- * The message carries the path and the reason, never the offending value.
- * An error message is a log line, and a log line is a disclosure.
+ * The message holds the path and reason only.
+ * It omits the offending value because error messages end up in logs.
  */
 export class PremiseLinkageRedactionError extends Error {
 	readonly path: string
@@ -69,10 +46,10 @@ export class PremiseLinkageRedactionError extends Error {
 }
 
 /**
- * Every key the publishable report may carry, flattened.
+ * Every key the publishable report may carry, at any depth.
  *
- * A flat set rather than a path-aware schema on purpose: the question it answers is "is
- * this name one we designed", and a name nobody designed is refused wherever it appears.
+ * The writer refuses any key outside this set, so a field added later cannot leak data
+ * until someone adds it here.
  */
 const REPORT_KEY_ALLOWLIST: ReadonlySet<string> = new Set<string>([
 	"mode",
@@ -107,25 +84,21 @@ const REPORT_KEY_ALLOWLIST: ReadonlySet<string> = new Set<string>([
 ])
 
 /**
- * A house number followed by a name.
- *
- * The shape of every street address in the registers this harness grades against,
- * and the shape no aggregate field has any reason to hold.
+ * Matches a house number followed by a word, which is the shape of a street address.
  */
 const ADDRESS_SHAPE = /\d+\s+\p{L}/u
 
 /**
- * A digit run long enough to be an authoritative object identifier (a uprn reaches twelve).
+ * Matches a digit run long enough to be an authoritative identifier such as a UPRN.
  *
- * The cost of this check is that a dataset version written as a bare eight-digit date is refused.
- * That is the intended trade: a version string can be given a non-bare form in one edit,
- * and a leaked identifier cannot be recalled.
+ * This also refuses a dataset version written as a bare eight-digit date.
+ * Write such versions with separators instead.
  */
 const IDENTIFIER_SHAPE = /\d{8,}/u
 
 function checkString(value: string, path: string, inputs: readonly string[]): void {
-	// Checked first because it is the only one of the three that proves a disclosure rather
-	// than suspecting one: this exact string was read from the controlled file during this run.
+	// The input check runs first because a match proves a disclosure.
+	// The shape checks only suggest one.
 	const haystack = value.toLowerCase()
 
 	for (const input of inputs) {
@@ -186,10 +159,9 @@ function walkPublishable(value: unknown, path: string, inputs: readonly string[]
 }
 
 /**
- * What the preflight reads.
+ * Input to the preflight.
  *
- * The rows and the inputs are checked and never written.
- * They are how the writer knows what the report was computed from.
+ * The preflight checks `rows` and `inputs` but never writes them.
  */
 export interface PremiseLinkagePreflightInput {
 	report: PremiseLinkageReport
@@ -198,12 +170,11 @@ export interface PremiseLinkagePreflightInput {
 }
 
 /**
- * Remove per-class cells and coordinate rows measured over fewer than `minCellSize`
- * rows, and count the removals.
+ * Removes per-class cells and coordinate rows measured over fewer than `minCellSize` rows,
+ * and records the count in `suppressedCells`.
  *
- * A per-class cell's size is the number of rows in that class.
- * `refusedOverAll.of`, which is the only denominator on the rates measured over
- * every row of the class rather than a subset of it.
+ * A per-class cell's size is `refusedOverAll.of`, because that rate is the one
+ * measured over every row of the class.
  */
 function suppressSmallCells(report: PremiseLinkageReport): PremiseLinkageReport {
 	const minimum = report.minCellSize
@@ -253,9 +224,9 @@ function checkRows(rows: readonly PremiseLinkageResultRow[]): void {
 }
 
 /**
- * Suppress, check, and return the report that may leave the controlled environment.
+ * Suppresses small cells, checks the result, and returns the report that may be published.
  *
- * @throws Before producing anything when the run cannot be published.
+ * @throws PremiseLinkageRedactionError when the run is too small or any check fails.
  */
 export function publishableReport(input: PremiseLinkagePreflightInput): PremiseLinkageReport {
 	const smallestPublishableRun = input.report.minCellSize
@@ -278,9 +249,9 @@ export function publishableReport(input: PremiseLinkagePreflightInput): PremiseL
 }
 
 /**
- * Write the publishable report as JSON.
+ * Writes the publishable report as JSON.
  *
- * One `writeFile` after every check, so a refusal leaves no file behind.
+ * All checks run before the write, so a refusal leaves no file behind.
  */
 export async function writePremiseLinkageReport(
 	path: PathBuilderLike,

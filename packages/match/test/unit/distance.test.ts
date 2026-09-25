@@ -72,7 +72,7 @@ describe("spatialComparison (collapsed key + distance, A1)", () => {
 	})
 
 	it("falls through to distance buckets when the keys DIFFER (the geo-first case)", () => {
-		// Different canonical strings, same rooftop → near-agreement rather than exact rather than far.
+		// Different canonical strings, same rooftop → near-agreement, neither exact nor far.
 		expect(cmp.assess(rec("123 main st", 45.5152), rec("123 main street apt 2", 45.5153))).toBe(1) // same-building
 		expect(cmp.assess(rec("a", 0), rec("b", 0.003))).toBe(2) // ~0.33 km → same-block
 		expect(cmp.assess(rec("a", 0), rec("b", 0.018))).toBe(3) // ~2 km → same-area

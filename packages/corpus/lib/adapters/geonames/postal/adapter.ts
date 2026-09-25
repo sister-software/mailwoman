@@ -3,9 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Read per-country GeoNames postal dumps and emit postcode-first locality variants. Each row
- *   contains place and region names inline. The adapter is intended for non-US countries and emits
- *   CC-BY-4.0 rows.
+ *   Reads a per-country GeoNames postal dump and emits postcode-first locality rows. Each dump row carries its place and
+ *   region names inline.
  */
 
 import { componentsPresentIn } from "@mailwoman/codex/address-format"
@@ -16,18 +15,18 @@ import { SourceRegister } from "#registers"
 import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter, SurfaceOrigin } from "#types"
 
 /**
- * Registry ID stamped on rows from this source.
+ * The source ID on rows from this adapter.
  */
 export const GEONAMES_POSTAL_ADAPTER_ID = "geonames-postal"
 /**
- * License attached to emitted rows.
+ * The license on rows from this adapter.
  */
 export const GEONAMES_POSTAL_DEFAULT_LICENSE = "CC-BY-4.0"
 
 /**
- * Zero-based GeoNames postal-dump columns.
+ * Zero-based column indices in a GeoNames postal dump.
  *
- * Coordinates identify the postcode, not necessarily the locality.
+ * The coordinates locate the postcode, which may differ from the locality's position.
  */
 export const GEONAMES_POSTAL_COLUMNS = {
 	country: 0,
@@ -39,6 +38,9 @@ export const GEONAMES_POSTAL_COLUMNS = {
 	longitude: 10,
 } as const
 
+/**
+ * Creates the GeoNames postal adapter.
+ */
 export function createGeonamesPostalAdapter(): CorpusAdapter {
 	return {
 		id: GEONAMES_POSTAL_ADAPTER_ID,
@@ -50,7 +52,6 @@ export function createGeonamesPostalAdapter(): CorpusAdapter {
 			"GeoNames postcodes (CC-BY-4.0) — multi-locale postcode→locality→region, names inline; international postcode-first order.",
 
 		async *rows(opts: AdapterOptions): AsyncIterable<CanonicalRow> {
-			// The dump has no header row.
 			const rows = readUnquotedTSV(opts.inputPath)
 
 			let emitted = 0
@@ -72,7 +73,7 @@ export function createGeonamesPostalAdapter(): CorpusAdapter {
 				if (!postcode || !locality) continue
 				const region = (rec[GEONAMES_POSTAL_COLUMNS.admin1Name] ?? "").trim()
 
-				// Skip the region variant when it merely repeats the locality.
+				// The region row is skipped when the region name equals the locality name.
 				const variants: Array<{ slot: string; comp: CanonicalRow["components"]; raw: string }> = [
 					{ slot: "pl", comp: { postcode, locality }, raw: `${postcode} ${locality}` },
 				]
@@ -109,6 +110,6 @@ export function createGeonamesPostalAdapter(): CorpusAdapter {
 }
 
 /**
- * Adapter instance registered with the corpus builder.
+ * The adapter instance registered with the corpus builder.
  */
 export const geonamesPostalAdapter = createGeonamesPostalAdapter()

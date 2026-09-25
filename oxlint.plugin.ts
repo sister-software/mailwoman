@@ -292,11 +292,14 @@ const requireDisableReasonRule: Rule = {
 }
 
 /**
- * Map synchronous `node:fs` methods to async helper suggestions.
+ * Replacement hint for `readdirSync`.
  */
 const GLOBERATOR_DIRECTORY_HINT =
 	'`Globerator.from("*", { cwd: path, absolute: false })`, adding `withFileTypes: true, onlyFiles: false` when entry types are needed (spliterator/node/fs)'
 
+/**
+ * Map from each synchronous `node:fs` function to the async helper that replaces it.
+ */
 const ASYNC_FILESYSTEM_HELPERS = new Map<string, string>([
 	["appendFileSync", "`appendLocalTextFile(content, path)` (@mailwoman/core/fs/writers)"],
 	["chmodSync", "`changeMode(path, mode)` (@mailwoman/core/fs/writers)"],
@@ -787,7 +790,7 @@ const preferHomeRule: Rule = {
 				}
 			},
 			ForStatement(node: AstNode) {
-				// A loop body is one statement; a block body is an array of statements.
+				// The AST types `body` loosely, so this guard rules out a statement array.
 				const body = Array.isArray(node.body) ? undefined : node.body
 
 				if (!isDescendingFromLength(node) || !body || !swapsTwoIndices(body)) return
@@ -839,6 +842,9 @@ const noCrossPackageReexportRule: Rule = {
 	},
 }
 
+/**
+ * The `mailwoman` oxlint plugin with every repo-local rule.
+ */
 const mailwomanPlugin: Plugin = {
 	meta: { name: "mailwoman" },
 	rules: {

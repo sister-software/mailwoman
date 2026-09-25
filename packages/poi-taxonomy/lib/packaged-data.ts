@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Locating the package's own shipped `data/` tables. Node-only — the browser-safe `./table` entry
- *   takes its table from the caller and never reaches the filesystem.
+ *   Reads the package's shipped `data/` tables. This module runs only in Node. The browser-safe
+ *   `./table` entry takes its table from the caller instead.
  */
 
 import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
@@ -13,19 +13,13 @@ import { resolvePath } from "path-ts"
 const moduleDir = import.meta.dirname
 
 /**
- * Absolute path to `data/<filename>`.
+ * Returns the absolute path to `data/<filename>`.
  *
- * `data/` sits at the package root (it is a `files` entry), and this module sits either
- * at that root — running from source — or under `out/` when compiled.
- * So there are exactly two places to look rather than three.
+ * The `data/` directory sits at the package root.
+ * The function looks for it inside this module's directory and in the parent directory.
  *
- * The probe tests for the file.
- * Probing by attempting a parse, as the per-table loaders used to, folds two different
- * failures into one: a corrupt `taxonomy.json` throws, gets swallowed as "not this candidate",
- * and the package reports a missing table it is in fact looking straight at.
- *
- * A local copy of `@mailwoman/core/module/packaged-data`'s `resolvePackagedDataPath`,
- * kept here to preserve this package's zero-dependency interface.
+ * The function checks that the file exists instead of trying to parse it.
+ * A parse attempt would report a corrupt table as a missing one.
  */
 async function resolvePackagedDataPath(filename: string): Promise<string> {
 	const candidates = [resolvePath(moduleDir, "data", filename), resolvePath(moduleDir, "..", "data", filename)]
@@ -45,13 +39,12 @@ async function resolvePackagedDataPath(filename: string): Promise<string> {
 }
 
 /**
- * Read and parse one of the package's shipped `data/` tables.
+ * Reads and parses one of the package's shipped `data/` tables.
  */
 export async function readPackagedTable<T>(filename: string): Promise<T> {
 	const path = await resolvePackagedDataPath(filename)
 
-	// A corrupt shipped table is a broken build, and the SyntaxError names the offset. `poi-taxonomy` declares zero
-	// dependencies, so `@mailwoman/core`'s parse wrappers are deliberately out of reach.
+	// A corrupt shipped table means a broken build, so the parse error propagates with its offset.
 	// oxlint-disable-next-line no-restricted-properties -- zero-dependency leaf. corrupt shipped data must throw with its offset
 	return (await readLocalJSONFile(path)) as T
 }

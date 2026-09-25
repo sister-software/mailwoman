@@ -3,12 +3,12 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Compare parsed `region` and `country` qualifiers with the winning candidate's resolver ancestry. This report is
- *   observational only; it does not affect ranking or selection.
+ *   Compares parsed `region` and `country` qualifiers with the winning candidate's resolver ancestry.
+ *   The report is informational and does not affect ranking or selection.
  *
- *   Each component is `confirmed`, `contradicted`, `unstated`, or `unverifiable`. Name comparisons use the shared
- *   locality fold, plus codex mappings for countries and supported subdivisions. Cross-language aliases are not
- *   inferred. Missing ancestry remains `unverifiable` rather than being treated as agreement or contradiction.
+ *   Name comparison uses the shared locality fold plus codex mappings for countries and supported
+ *   subdivisions. It does not infer cross-language aliases. A qualifier with no ancestry to compare
+ *   against is `unverifiable`.
  */
 
 import { countrySurfaceForms, ISO2_TO_NAME, matchCountry } from "@mailwoman/codex/country"
@@ -22,9 +22,7 @@ import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street"
 type AdminCoherenceVerdict = "confirmed" | "contradicted" | "unstated" | "unverifiable"
 
 /**
- * Per-component verdicts.
- *
- * Both fields are present when a winner exists; no winner omits the report.
+ * Verdicts for the parsed `region` and `country` qualifiers.
  */
 export interface AdminCoherenceReport {
 	region: AdminCoherenceVerdict
@@ -33,7 +31,7 @@ export interface AdminCoherenceReport {
 
 /**
  * Parsed `region` and `country` qualifiers.
- * Blank values are treated as absent.
+ * Blank values count as absent.
  */
 export interface ParsedAdminQualifiers {
 	region?: string | undefined
@@ -41,7 +39,7 @@ export interface ParsedAdminQualifiers {
 }
 
 /**
- * Resolver ancestry entry, structurally matching the fields used from `Ancestor`.
+ * The fields of a resolver `Ancestor` that the comparison reads.
  */
 interface AdminAncestor {
 	placetype: string
@@ -49,7 +47,7 @@ interface AdminAncestor {
 }
 
 /**
- * Winning candidate fields used for coherence: component tag, country code, and optional ancestry.
+ * The winning candidate's tag, country code and optional ancestry.
  */
 export interface AdminCoherenceWinner {
 	tag: string
@@ -58,14 +56,15 @@ export interface AdminCoherenceWinner {
 }
 
 /**
- * Normalize names with the same fold used to build candidate `name_key` values.
+ * Folds a name the same way candidate `name_key` values are built.
  */
 function foldKey(name: string): string {
 	return normalizeLocalityForKey(name)
 }
 
 /**
- * Expand a recognized country into folded canonical names, surface forms, and an ISO-2 key.
+ * Returns comparison keys for a country name: the folded input and, when codex recognizes
+ * the country, its canonical name, surface forms and ISO 3166-1 alpha-2 key.
  */
 function countryKeys(value: string): Set<string> {
 	const keys = new Set([foldKey(value)])
@@ -95,7 +94,7 @@ function intersects(a: ReadonlySet<string>, b: ReadonlySet<string>): boolean {
 }
 
 /**
- * Build country evidence keys from the resolver country stamp and country ancestors.
+ * Returns country keys from the winner's country code and its country ancestors.
  */
 function winnerCountryKeys(winner: AdminCoherenceWinner): Set<string> {
 	const winnerKeys = new Set<string>()
@@ -131,7 +130,7 @@ function regionVerdict(parsedRegion: string | undefined, winner: AdminCoherenceW
 
 	if (!parsed) return "unstated"
 
-	// A region winner confirms its own region qualifier.
+	// A winner tagged `region` is the parsed region itself.
 	if (winner.tag === "region") return "confirmed"
 
 	const regionAncestors = (winner.ancestry ?? []).filter((a) => REGION_CLASS_PLACETYPES.has(a.placetype))
@@ -142,7 +141,7 @@ function regionVerdict(parsedRegion: string | undefined, winner: AdminCoherenceW
 		if (intersects(parsedKeys, regionKeys(ancestor.name, iso))) return "confirmed"
 	}
 
-	// A country name may be parsed into the region slot; country evidence can confirm that qualifier.
+	// The parser sometimes places a country name in the region slot, so country keys can confirm it.
 	if (intersects(countryKeys(parsed), winnerCountryKeys(winner))) return "confirmed"
 
 	return regionAncestors.length ? "contradicted" : "unverifiable"
@@ -163,8 +162,7 @@ function countryVerdict(parsedCountry: string | undefined, winner: AdminCoherenc
 }
 
 /**
- * Compare parsed qualifiers with the winning candidate.
- * This function is pure and performs no lookups.
+ * Compares parsed qualifiers with the winning candidate without any lookups.
  */
 export function assessAdminCoherence(
 	parsed: ParsedAdminQualifiers,
@@ -177,7 +175,7 @@ export function assessAdminCoherence(
 }
 
 /**
- * Resolved-tree fields used by the adapter, declared locally to avoid importing the decoder.
+ * The resolved-tree node fields that {@link adminCoherenceField} reads.
  */
 export interface AdminCoherenceSourceNode {
 	tag: string
@@ -186,9 +184,10 @@ export interface AdminCoherenceSourceNode {
 }
 
 /**
- * Build the report fragment from parsed qualifiers and a resolved winner.
+ * Builds the `admin_coherence` response field from the parsed nodes and the resolved winner.
  *
- * Use the fallback winner when no admin pick exists; omit the field when neither winner exists.
+ * The function uses `fallbackWinner` when `winner` is absent.
+ * It returns an empty object when both are absent.
  */
 export function adminCoherenceField(
 	nodes: readonly AdminCoherenceSourceNode[],
@@ -207,7 +206,6 @@ export function adminCoherenceField(
 		{
 			tag: picked.tag,
 			countryCode: (picked.metadata?.["resolver_country"] as string | undefined)?.trim() || undefined,
-			// Missing ancestry is reported as `unverifiable`.
 			ancestry: picked.metadata?.["ancestors"] as readonly AdminAncestor[] | undefined,
 		}
 	)
@@ -216,16 +214,16 @@ export function adminCoherenceField(
 }
 
 /**
- * Tree node shape used by the forked-entity adapter, without a decoder dependency.
+ * A resolved-tree node with children, as read by {@link forkedEntityCoherenceField}.
  */
 export interface AdminCoherenceTreeNode extends AdminCoherenceSourceNode {
 	children: readonly AdminCoherenceTreeNode[]
 }
 
 /**
- * Build coherence for a forked-entity answer.
+ * Builds the `admin_coherence` field for a forked-entity answer.
  *
- * The entity has a country but no ancestry, so region checks may be `unverifiable`.
+ * The entity has a country but no ancestry, so a parsed region is usually `unverifiable`.
  */
 export function forkedEntityCoherenceField(
 	roots: readonly AdminCoherenceTreeNode[],

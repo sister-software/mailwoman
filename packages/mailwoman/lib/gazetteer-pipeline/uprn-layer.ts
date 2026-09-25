@@ -42,39 +42,40 @@ import { readAcquisitionSidecar, UNKNOWN_PROVENANCE } from "#gazetteer-pipeline/
 import { createOSDownloadsClient, OS_DOWNLOADS_API_BASE } from "#gazetteer-pipeline/postcode/codepoint/fetch"
 
 /**
- * The OS Data Hub product id for Open uprn.
+ * The OS Data Hub product ID for Open UPRN.
  */
 export const OPEN_UPRN_PRODUCT_ID = "OpenUPRN"
 
 /**
- * Spdx id for the Open Government Licence v3.0 — the `layer_manifest.license` form.
+ * The SPDX ID of the Open Government Licence v3.0, as stored in `layer_manifest.license`.
  */
 export const OPEN_UPRN_LICENSE = "OGL-UK-3.0"
 
 /**
- * The OGL v3 deed.
+ * The URL of the OGL v3 licence text.
  */
 export const OPEN_UPRN_LICENSE_URL = "https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/"
 
 /**
  * Returns the attribution OS requires of OS OpenData redistributors.
- * `year` is the copyright year stated in the archive's `licence.txt`, not the build year.
+ *
+ * Pass the copyright year from the archive's `licence.txt` as `year`.
  */
 export function openUPRNAttribution(year: number): string {
 	return `Contains Ordnance Survey data © Crown copyright and database right ${year}.`
 }
 
 /**
- * The exact CSV header that {@link buildUPRNLayer} requires, so a changed schema
- * fails the build instead of mapping columns by position.
+ * The exact CSV header that {@link buildUPRNLayer} requires.
+ * A changed header fails the build.
  */
 export const OPEN_UPRN_HEADER = "UPRN,X_COORDINATE,Y_COORDINATE,LATITUDE,LONGITUDE"
 
 const OPEN_UPRN_COLUMN_COUNT = 5
 
 /**
- * The coverage statement stored in the layer's metadata: Great Britain only,
- * because Northern Ireland's property identifiers are outside OS OpenData.
+ * The coverage statement stored in the layer's metadata.
+ * Open UPRN covers Great Britain only.
  */
 export const OPEN_UPRN_COVERAGE_NOTE =
 	"OS Open UPRN covers Great Britain only (England, Scotland, Wales — the product's single Downloads-API area is GB). " +
@@ -82,14 +83,14 @@ export const OPEN_UPRN_COVERAGE_NOTE =
 	"administered by Land & Property Services (Pointer) and are outside OS OpenData."
 
 /**
- * The row count below which {@link buildUPRNLayer} reports a full-source build as
- * a truncated read, since the UPRN register only grows.
+ * The row count below which {@link buildUPRNLayer} reports a likely truncated read.
  */
 export const OPEN_UPRN_MINIMUM_PLAUSIBLE_ROWS = 40_000_000
 
 /**
- * Describes one file that the OS Downloads API lists for the product, including
- * the md5 that {@link downloadOpenUPRN} verifies against.
+ * Describes one file that the OS Downloads API lists for the product.
+ *
+ * {@link downloadOpenUPRN} verifies the archive against `md5`.
  */
 export interface OpenUPRNDownload {
 	md5: string
@@ -101,7 +102,8 @@ export interface OpenUPRNDownload {
 }
 
 /**
- * The product record, for the release stamp (`2026-08`) that goes into the layer's provenance.
+ * The OS product record.
+ * Its `version` is the release label, such as `2026-08`.
  */
 export interface OpenUPRNProduct {
 	id: string
@@ -110,29 +112,30 @@ export interface OpenUPRNProduct {
 }
 
 /**
- * Holds the labelled lines of the archive's `versions.txt`, which date the extract
- * but carry no row counts to reconcile against.
+ * The labelled fields of the archive's `versions.txt`.
  */
 export interface OpenUPRNVersions {
 	/**
-	 * Holds the `Product Name` line, such as `osopenuprn`.
+	 * The `Product Name` field, such as `osopenuprn`.
 	 */
 	productName: string
 
 	/**
-	 * Holds the `File Name` line, the extract's file stem, such as `osopenuprn_202608`.
+	 * The `File Name` field, such as `osopenuprn_202608`.
 	 */
 	fileName: string
 
 	/**
-	 * Holds the `Data Extraction Date` line in `DD-MM-yyyy` form, such as `03-07-2026`,
-	 * and the build reads the attribution year from its last four characters.
+	 * The `Data Extraction Date` field in `DD-MM-YYYY` form.
+	 *
+	 * The build falls back to its last four characters for the attribution year.
 	 */
 	extractionDate: string
 }
 
 /**
- * Parses `versions.txt` by label rather than line position, returning an empty string for any missing field.
+ * Parses `versions.txt` by label.
+ * A missing field becomes an empty string.
  */
 export function parseOpenUPRNVersions(text: string): OpenUPRNVersions {
 	const field = (label: string): string => {
@@ -149,7 +152,7 @@ export function parseOpenUPRNVersions(text: string): OpenUPRNVersions {
 }
 
 /**
- * Represents one parsed Open UPRN row: the UPRN and the WGS84 point OS publishes for it.
+ * One parsed Open UPRN row with its WGS84 point.
  */
 export interface OpenUPRNPoint {
 	uprn: number
@@ -158,11 +161,11 @@ export interface OpenUPRNPoint {
 }
 
 /**
- * Parses one CRLF-terminated line of the Open UPRN CSV, returning `null`
- * when it is malformed or out of range.
+ * Parses one line of the Open UPRN CSV.
  *
- * It takes OS's WGS84 columns verbatim and ignores the OSGB36 columns, because reconverting
- * eastings would be less accurate than the publisher's own conversion.
+ * It returns `null` when the line is malformed or out of range.
+ *
+ * The parser uses the published WGS84 columns and ignores the OSGB36 eastings and northings.
  */
 export function parseOpenUPRNLine(line: string): OpenUPRNPoint | null {
 	const parts = (line.endsWith("\r") ? line.slice(0, -1) : line).split(",")
@@ -194,17 +197,17 @@ export function parseOpenUPRNLine(line: string): OpenUPRNPoint | null {
  */
 export interface DownloadOpenUPRNOptions {
 	/**
-	 * Names the directory that receives the archive, its `.md5` sidecar and `acquisition.json`.
+	 * The directory that receives the archive, its `.md5` sidecar and `acquisition.json`.
 	 *
-	 * A later download into the same directory overwrites them, so use a new
-	 * directory per acquisition to keep earlier ones.
+	 * A later download into the same directory overwrites these files.
 	 */
 	destDir: PathBuilderLike
 
 	/**
-	 * Reuses an archive already on disk when it matches OS's published MD5, and defaults to `true`.
+	 * Whether to reuse an archive on disk that matches the published MD5.
+	 * Defaults to `true`.
 	 *
-	 * The sidecars are rewritten on reuse too, so an archive fetched by hand gains provenance files.
+	 * The sidecars are rewritten on reuse as well.
 	 */
 	reuseExisting?: boolean
 	client?: ReturnType<typeof createOSDownloadsClient>
@@ -212,8 +215,7 @@ export interface DownloadOpenUPRNOptions {
 }
 
 /**
- * Describes the md5-verified archive that {@link downloadOpenUPRN} left on disk,
- * with `version` holding OS's release label.
+ * Describes the MD5-verified archive that {@link downloadOpenUPRN} left on disk.
  */
 export interface DownloadOpenUPRNResult {
 	archivePath: PathBuilder
@@ -221,7 +223,7 @@ export interface DownloadOpenUPRNResult {
 	md5: string
 
 	/**
-	 * Gives the OS release label, such as `2026-08`.
+	 * The OS release label, such as `2026-08`.
 	 */
 	version: string
 	download: OpenUPRNDownload
@@ -229,10 +231,10 @@ export interface DownloadOpenUPRNResult {
 }
 
 /**
- * Downloads the Open UPRN CSV archive into `destDir`, reusing an existing copy
- * whose md5 already matches OS's published digest.
+ * Downloads the Open UPRN CSV archive into `destDir`.
  *
- * It throws when the downloaded bytes do not match that digest.
+ * An existing copy whose MD5 matches the published digest is reused.
+ * The function throws when the downloaded bytes fail the MD5 check.
  */
 export async function downloadOpenUPRN(options: DownloadOpenUPRNOptions): Promise<DownloadOpenUPRNResult> {
 	const { reuseExisting = true } = options
@@ -315,16 +317,16 @@ export async function downloadOpenUPRN(options: DownloadOpenUPRNOptions): Promis
 }
 
 /**
- * Describes the CSV and provenance texts that {@link extractOpenUPRN} pulled from the archive.
+ * Describes the CSV and provenance texts that {@link extractOpenUPRN} extracted from the archive.
  */
 export interface ExtractOpenUPRNResult {
 	csvPath: PathBuilderLike
 	csvBytes: number
 
 	/**
-	 * Holds the full text of the archive's `licence.txt`, which a redistributor must carry.
+	 * The full text of the archive's `licence.txt`, which a redistributor must carry.
 	 *
-	 * It is decoded as strict UTF-8 with a Latin-1 fallback so the attribution never carries mojibake.
+	 * The text is decoded as strict UTF-8 with a Latin-1 fallback.
 	 */
 	licenseText: string
 	versions: OpenUPRNVersions
@@ -341,8 +343,7 @@ function decodeProvenanceText(bytes: Uint8Array): string {
 /**
  * Extracts the CSV, `licence.txt` and `versions.txt` from the Open UPRN archive into `<destDir>/extracted/`.
  *
- * A file already on disk is reused only when its size matches the zip entry's uncompressed
- * size, which distinguishes a finished extraction from an interrupted one.
+ * Files already on disk are skipped rather than extracted again.
  */
 export async function extractOpenUPRN(options: {
 	archivePath: PathBuilderLike
@@ -400,100 +401,105 @@ export async function extractOpenUPRN(options: {
 }
 
 /**
- * Options for {@link buildUPRNLayer}; `extracted` injects a fixture and skips download and extraction.
+ * Options for {@link buildUPRNLayer}.
  */
 export interface BuildUPRNLayerOptions {
 	/**
-	 * Names the acquisition directory holding the archive and its `extracted/` tree,
-	 * defaulting to `<data-root>/os-uprn/<date of now>`.
+	 * The acquisition directory that holds the archive and its `extracted/` tree.
+	 *
+	 * Defaults to `<data-root>/os-uprn/<date>`.
 	 */
 	sourceDir?: PathBuilderLike
 
 	/**
-	 * Names the output database, defaulting to `<data-root>/db/uprn/uprn.db`;
-	 * the build writes a staging path and swaps it into place.
+	 * The output database path.
+	 * Defaults to `<data-root>/db/uprn/uprn.db`.
+	 *
+	 * The build writes a staging file and swaps it into place.
 	 */
 	out?: PathBuilderLike
 
 	/**
-	 * Uses the archive already in `sourceDir` without network access,
-	 * and the build throws when no archive is there.
+	 * Whether to use the archive already in `sourceDir` without network access.
+	 *
+	 * The build throws when that directory holds no archive.
 	 */
 	offline?: boolean
 
 	/**
-	 * Supplies the build clock for the default `sourceDir` datestamp and the
-	 * `createdAt` fallback, defaulting to the current time.
+	 * The build clock for the default `sourceDir` date and the `createdAt` fallback.
 	 */
 	now?: Date
 
 	/**
-	 * Sets the ISO-8601 timestamp for `layer_manifest.created_at`, defaulting to `now`.
+	 * The ISO-8601 timestamp for `layer_manifest.created_at`.
+	 * Defaults to `now`.
 	 */
 	createdAt?: string
 
 	/**
-	 * Gives the Git SHA of the building tree, which the layer manifest records.
+	 * The Git SHA of the building tree, recorded in the layer manifest.
 	 */
 	buildSHA: string
 
 	/**
-	 * Sets the row count below which the build reports a truncation mismatch,
-	 * defaulting to {@link OPEN_UPRN_MINIMUM_PLAUSIBLE_ROWS}.
+	 * The row count below which the build reports a truncation mismatch.
+	 *
+	 * Defaults to {@link OPEN_UPRN_MINIMUM_PLAUSIBLE_ROWS}.
 	 */
 	minimumPlausibleRows?: number
 
 	/**
-	 * Supplies pre-extracted input, such as a test fixture, and skips download and extraction.
+	 * Pre-extracted input, such as a test fixture.
+	 * Setting it skips download and extraction.
 	 *
-	 * Provenance still comes from `sourceDir`'s `acquisition.json` when one is present.
+	 * Provenance still comes from `acquisition.json` in `sourceDir` when that file exists.
 	 */
 	extracted?: ExtractOpenUPRNResult
 	onPhase?: (phase: string, detail?: string) => void
 }
 
 /**
- * Summarizes a {@link buildUPRNLayer} run, with `mismatches` listing each failed row-accounting check.
+ * Summarizes a {@link buildUPRNLayer} run.
  */
 export interface BuildUPRNLayerResult {
 	out: string
 	sourceDir: string
 
 	/**
-	 * Counts the non-empty data lines read, excluding the header.
+	 * The number of non-empty data lines read, excluding the header.
 	 */
 	read: number
 
 	inserted: number
 
 	/**
-	 * Counts the lines that {@link parseOpenUPRNLine} rejected, which should be 0;
-	 * any are reported in `mismatches`.
+	 * The number of lines that {@link parseOpenUPRNLine} rejected.
+	 * A nonzero count is reported in `mismatches`.
 	 */
 	skippedMalformed: number
 
 	/**
-	 * Counts the lines whose UPRN was already written, which should be 0 because UPRN
-	 * is the source's primary key; any are reported in `mismatches`.
+	 * The number of lines whose UPRN was already written.
+	 * A nonzero count is reported in `mismatches`.
 	 */
 	skippedDuplicate: number
 
 	/**
-	 * Counts the resolution-6 H3 coverage cells written.
+	 * The number of H3 coverage cells written.
 	 */
 	coverageCells: number
 	archiveMD5: string
 
 	/**
-	 * Gives the OS release label, such as `2026-08`, or the unknown-provenance marker
-	 * when no acquisition record was found.
+	 * The OS release label, or the unknown-provenance marker when no acquisition record exists.
 	 */
 	osVersion: string
 	versions: OpenUPRNVersions
 
 	/**
-	 * Describes each failed row-accounting check in words; it is empty on a clean build,
-	 * and the caller decides whether to fail.
+	 * One message per failed row-accounting check.
+	 * The caller decides whether to fail the build.
 	 */
 	mismatches: string[]
 	durationMs: number
@@ -518,11 +524,11 @@ async function resolveOfflineArchive(sourceDir: PathBuilder): Promise<PathBuilde
 }
 
 /**
- * Builds the sealed `uprn.db` layer from OS Open UPRN, downloading the archive
- * unless `offline` or `extracted` is set.
+ * Builds the sealed `uprn.db` layer from OS Open UPRN.
  *
- * A changed header throws, but row-accounting and row-floor failures are returned
- * in `mismatches` for the caller to act on.
+ * The build downloads the archive unless `offline` or `extracted` is set.
+ * A changed header throws.
+ * Row-accounting failures are returned in `mismatches`.
  */
 export async function buildUPRNLayer(options: BuildUPRNLayerOptions): Promise<BuildUPRNLayerResult> {
 	const phase = options.onPhase ?? (() => {})

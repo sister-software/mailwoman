@@ -25,7 +25,7 @@ Mailwoman's SentencePiece tokenizer uses `byte_fallback=true` — when a charact
 
 ### "Addresses follow a fixed ordering."
 
-The United States uses most-specific-to-least-specific: `[number] [street] [city] [state] [zip]`. Japan uses least-specific-to-most-specific: `[zip] [prefecture] [city] [ward] [district] [block] [lot]`. Hungary uses three different orders depending on how several lines are available:
+The United States uses most-specific-to-least-specific: `[number] [street] [city] [state] [zip]`. Japan uses least-specific-to-most-specific: `[zip] [prefecture] [city] [ward] [district] [block] [lot]`. Hungary uses three different orders depending on how many lines are available:
 
 - One line: `{zip} {town}, {street} {buildingNr}`
 - Multiple lines: `{street} {buildingNr}. {zip} {town}, {country}`

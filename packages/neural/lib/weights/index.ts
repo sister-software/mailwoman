@@ -21,34 +21,35 @@ import {
 import { resolveEvidenceLexicon } from "#weights/lexicon"
 
 /**
- * User-level cache root used by `mailwoman parse --download-weights`.
+ * The user-level cache root that `mailwoman parse --download-weights` installs into.
  */
 export const weightsCacheDir = cacheRootPathBuilder("weights")
 
 /**
- * Data-root overlay root: `$MAILWOMAN_DATA_ROOT/weights`.
+ * Returns the data-root overlay root, `$MAILWOMAN_DATA_ROOT/weights`.
  */
 export function weightsOverlayRoot(): PathBuilder {
 	return dataRootPath("weights")
 }
 
 /**
- * Overlay directory for one locale.
+ * Returns the overlay directory for one locale.
  */
 export function weightsOverlayDir(locale: Intl.UnicodeBCP47LocaleIdentifier): PathBuilder {
 	return weightsOverlayPath(locale)
 }
 
 /**
- * The weights package for a locale tag, normalized to the all-lowercase BCP-47 package convention.
+ * Returns the weights package name for a locale tag, lowercased to match the package naming convention.
  */
 export function weightsPackageName(locale?: Intl.UnicodeBCP47LocaleIdentifier): string {
 	return `@mailwoman/neural-weights-${(locale ?? "en-us").toLowerCase()}`
 }
 
 /**
- * Returns the npm `--prefix` install directory of a locale's weights package under
- * `cacheRoot`, without checking that it exists.
+ * Returns the npm `--prefix` install directory of a locale's weights package under `cacheRoot`.
+ *
+ * It does not check that the directory exists.
  */
 export function weightsCachePackageDir(cacheRoot: PathBuilderLike, locale?: string): PathBuilder {
 	const normalized = PathBuilder.from(cacheRoot)
@@ -59,12 +60,12 @@ export function weightsCachePackageDir(cacheRoot: PathBuilderLike, locale?: stri
 /**
  * Options for {@link resolveWeights}.
  *
- * Passing `cacheRoot` confines resolution to that cache, and passing `modelPath` with
- * a tokenizer or char vocabulary bypasses package lookup entirely.
+ * Passing `cacheRoot` confines resolution to that cache.
+ * Passing `modelPath` with a tokenizer or character vocabulary skips package lookup.
  */
 export interface ResolveWeightsOpts {
 	/**
-	 * The locale tag that selects the weights package, defaulting to `en-us`.
+	 * The locale tag that selects the weights package, which defaults to `en-us`.
 	 */
 	locale?: string
 
@@ -79,30 +80,33 @@ export interface ResolveWeightsOpts {
 	tokenizerPath?: PathBuilderLike
 
 	/**
-	 * An explicit `char-vocab.json` path for char-encoder models.
+	 * An explicit `char-vocab.json` path for character-input models.
 	 */
 	charVocabPath?: PathBuilderLike
 
 	/**
-	 * An explicit `model-card.json` path for an explicit-path run, falling back to a card beside `modelPath`.
+	 * An explicit `model-card.json` path used with explicit model paths.
+	 * It defaults to a card beside `modelPath`.
 	 */
 	modelCardPath?: PathBuilderLike
 
 	/**
-	 * Not read by {@link resolveWeights}, which finds the base card through the
+	 * An unused option. {@link resolveWeights} finds the base card through the
 	 * package's `mailwoman.baseWeights` declaration.
 	 */
 	baseModelCardPath?: string
 
 	/**
-	 * The serving tier, where `pocket` omits every lexicon and keeps only the
-	 * postcode anchor; defaults to `server`.
+	 * The serving tier, which defaults to `server`.
+	 *
+	 * The `pocket` tier omits every lexicon and keeps only the postcode anchor.
 	 */
 	tier?: "server" | "pocket"
 
 	/**
-	 * A weights cache root that, when set, confines resolution to that cache
-	 * and throws if the locale's package is not installed there.
+	 * A weights cache root.
+	 *
+	 * When set, resolution uses only that cache and throws if the locale's package is not installed there.
 	 */
 	cacheRoot?: PathBuilderLike | null
 
@@ -113,8 +117,7 @@ export interface ResolveWeightsOpts {
 }
 
 /**
- * Names the kind of directory a resolved weights artifact came from,
- * as reported in {@link WeightsArtifactReport}.
+ * The kind of directory a resolved weights artifact came from, as reported in {@link WeightsArtifactReport}.
  */
 export const WeightsOrigin = {
 	Explicit: "explicit",
@@ -129,13 +132,12 @@ export const WeightsOrigin = {
 } as const
 
 /**
- * Names the kind of directory a resolved weights artifact came from,
- * as reported in {@link WeightsArtifactReport}.
+ * One {@link WeightsOrigin} value.
  */
 export type WeightsOrigin = (typeof WeightsOrigin)[keyof typeof WeightsOrigin]
 
 /**
- * One artifact's resolution result.
+ * The resolved path and origin of one artifact.
  */
 export interface WeightsArtifactReport {
 	name: string
@@ -144,14 +146,14 @@ export interface WeightsArtifactReport {
 }
 
 /**
- * Describes the weights files that {@link resolveWeights} located, with `source` naming
- * the rung that supplied them and `artifacts` recording each file's origin.
+ * The weights files that {@link resolveWeights} located.
  */
 export interface ResolvedWeights {
 	modelPath: string
 
 	/**
-	 * The SentencePiece model path, which a char-encoder model does not use; read `charVocabPath` instead.
+	 * The SentencePiece model path.
+	 * A character-input model uses `charVocabPath` instead.
 	 */
 	tokenizerPath: string
 	encoder: EncoderDescriptor
@@ -178,13 +180,14 @@ export interface ResolvedWeights {
 	semiCRFTransitionsPath?: string
 
 	/**
-	 * The postcode-to-anchor source, where `binary` marks a `postcode-<cc>.bin`
-	 * rather than an `anchor-lookup.json`.
+	 * The postcode anchor source.
+	 *
+	 * `binary` is true for a `postcode-<cc>.bin` and false for an `anchor-lookup.json`.
 	 */
 	anchorLookupPath?: { path: string; binary: boolean }
 
 	/**
-	 * The gazetteer-anchor lexicon, present when it exists and the tier is not `pocket`.
+	 * The gazetteer lexicon, present when it exists and the tier is not `pocket`.
 	 */
 	gazetteerLexiconPath?: string
 
@@ -209,7 +212,7 @@ export interface ResolvedWeights {
 	fstPath?: string
 
 	/**
-	 * The street-morphology FST from the package, falling back to the base package.
+	 * The street-morphology FST from the package or, failing that, from the base package.
 	 */
 	streetMorphologyPath?: string
 
@@ -219,18 +222,20 @@ export interface ResolvedWeights {
 	pairIndexPath?: string
 
 	/**
-	 * The resolution rung that supplied the weights, such as `package:…`, `overlay:…`,
-	 * `cache:…` or `explicit`, with `+base` appended when a base package filled in.
+	 * The location that supplied the weights, such as `package:…`, `overlay:…`, `cache:…` or `explicit`.
+	 *
+	 * The suffix `+base` means the base package supplied some files.
 	 */
 	source: string
 
 	/**
-	 * The package directory that sibling artifacts were resolved against; absent for explicit paths.
+	 * The package directory that sibling artifacts were resolved against.
+	 * It is absent for explicit paths.
 	 */
 	packageDir?: PathBuilder
 
 	/**
-	 * Each probed artifact with its resolved path and origin, including the ones not found.
+	 * Every probed artifact with its resolved path and origin, including those not found.
 	 */
 	artifacts: WeightsArtifactReport[]
 }
@@ -271,9 +276,9 @@ type ExplicitPathOpts = Omit<ResolveWeightsOpts, "modelPath" | "tokenizerPath" |
 /**
  * Locates the model, tokenizer and companion artifacts for a locale.
  *
- * It tries explicit paths, then the installed package, the data-root overlay,
- * the download cache and finally the locale's script-family base, and it throws with
- * every probed location when none has the model binaries.
+ * It tries explicit paths, the installed package, the data-root overlay, the download cache
+ * and the locale's script-family base, in that order.
+ * When none has the model binaries, it throws and lists the probed locations.
  */
 export async function resolveWeights(input: ResolveWeightsOpts): Promise<ResolvedWeights> {
 	const opts: ExplicitPathOpts = {
@@ -593,8 +598,9 @@ export async function resolvePlacetypeCensusPath(country: string): Promise<PathB
 }
 
 /**
- * Loads the placetype census for `country`, returning `null` when the file is absent,
- * unreadable, or built for a different country.
+ * Loads the placetype census for `country`.
+ *
+ * It returns `null` when the file is absent, unreadable or built for another country.
  */
 export async function loadPlacetypeCensus(
 	country: string,

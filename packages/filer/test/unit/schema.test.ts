@@ -209,10 +209,8 @@ describe("filer schema", () => {
 
 		await db.insertInto("filer_edge").values(AUTHORITATIVE_EDGE).execute()
 
-		// Same source, same pair, same valid_from — only `relationship` differs.
-		// `relationship` is deliberately not part of the composite PK
-		// (see createFilerEdgeTable's docstring), so this must still collide on the PK
-		// and be rejected, never silently stored as a second, contradictory row.
+		// Only `relationship` differs.
+		// It is outside the primary key, so the insert collides.
 		await expect(
 			db
 				.insertInto("filer_edge")
@@ -330,21 +328,8 @@ describe("filer schema", () => {
 			).rejects.toThrow(/UNIQUE constraint failed/)
 		})
 
-		/**
-		 * The counterpart to the two tests above, and the reason `naming_node_id` is IN
-		 * the primary key rather than a payload column beside it.
-		 *
-		 * `relationship` is excluded from the key because two values for one pair
-		 * at one instant are a contradiction.
-		 * Two `naming_node_id`s are not.
-		 *
-		 * `"Acme Holdings Inc"` and `"acme holdings, INC."` canonicalize to one `family_id`,
-		 * so a filer that reported both spellings (two 499 rows the same day, or one
-		 * `bdcProviderID` on two provider-list rows) produces two rows differing in nothing else.
-		 *
-		 * Narrow the key and the builder's `insert or ignore` drops the second,
-		 * taking that spelling's display name with it before any reader runs.
-		 */
+		// `naming_node_id` belongs to the primary key because two spellings of one company share a `family_id`.
+		// Without it, the builder's `INSERT OR IGNORE` would drop the second spelling.
 		it("keeps two DIFFERENT naming_node_ids for the same (node_id, family_id, source, valid_from) tuple as separate rows — the multi-spelling plurality", async () => {
 			using db = openMemory()
 			await createAllTables(db)
@@ -405,20 +390,8 @@ describe("filer schema", () => {
 			})
 		})
 
-		/**
-		 * `assertion` is graded evidence rather than decoration: edgar's subsidiary→FRN corroboration
-		 * is the repo's first inferred family membership, and without this column it would reach
-		 * `filerLookup.families` shape-identical to a Form 499 holding-company disclosure.
-		 *
-		 * Its two constraints close the two ways that grading can be defeated at write time.
-		 * A blank value (which `not NULL` accepts, and which would then match neither half of a criterion-2
-		 * read, so the row would vanish from any surface that splits on strength), and a `match_score`
-		 * on an authoritative row (a fabricated confidence for a membership that matched nothing).
-		 *
-		 * Each expectation names the constraint rather than just "check constraint failed".
-		 * This table carries three, and a test that only pins the generic prefix passes
-		 * when the wrong one fires.
-		 */
+		// The `assertion` checks reject a blank value and a `match_score` on an authoritative row.
+		// Each expectation matches the constraint name because the table has three CHECK constraints.
 		describe("assertion + match_score", () => {
 			it("rejects an empty-string assertion — NOT NULL alone accepts one, the same gap relationship's CHECK closes", async () => {
 				using db = openMemory()

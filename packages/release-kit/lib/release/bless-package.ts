@@ -3,22 +3,12 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Bless a package for publishing and trust configuration.
+ *   Publishes a package for the first time and configures its npm trusted publisher.
  *
- *   The second factor is delegated entirely to the npm CLI. Every write op runs with `--no-browser`
- *   and this terminal's stdio, so npm prints its `https://www.npmjs.com/auth/cli/…` approval URL
- *   here and polls while you approve it elsewhere. That is what makes a hardware security key work
- *   over SSH: the key never has to be attached to the machine running this operation — open the URL
- *   wherever the key lives and touch it there. If the account's second factor is still totp, npm
- *   prompts for the code on stdin instead. Either way this operation does not broker it.
- *
- *   To save you moving that URL by hand, it is also pushed to the terminal's clipboard over OSC 52
- *   (see `copyToTerminalClipboard`) — paste and go.
- *
- *   Expect one approval per write op. `npm trust` takes no `--otp` (it accepts no flags at all), and
- *   npm puts trusted-publishing config behind interactive 2FA that no token can skip, so the browser
- *   step here is not removable. It is a per-package bootstrap cost: once trust is on file, releases
- *   run from CI over OIDC with no second factor at all.
+ *   The npm CLI handles the second factor. Each write runs with `--no-browser` and this terminal's stdio,
+ *   so npm prints its approval URL here and polls while the operator approves it on any machine. This
+ *   module also copies the URL to the terminal clipboard over OSC 52. Each write needs its own approval,
+ *   because `npm trust` accepts no `--otp` flag. After trust is configured, CI publishes over OIDC.
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers"
@@ -31,65 +21,65 @@ import { formatTarballAudit, verifyTarball } from "#pack/verify-tarball"
 import { assertWorkspacePublishable } from "#release/stage"
 
 /**
- * The npm CLI approval URL, printed when a write op needs a second factor.
+ * Matches the approval URL that the npm CLI prints when a write needs a second factor.
  */
 const AUTH_URL_PATTERN = /https:\/\/www\.npmjs\.com\/auth\/cli\/[\w-]+/
 
+/**
+ * Options for {@link blessPackages}.
+ */
 export interface BlessPackageOptions {
 	repoRoot: string
 	/**
-	 * Workspace directories to bless, in order.
+	 * The workspace directories to bless, in order.
 	 */
 	dirs: string[]
 	/**
-	 * Optional semver bump applied with `npm version` before packing.
+	 * An optional semver bump that `npm version` applies before packing.
 	 */
 	version?: string
 	/**
-	 * The workflow that runs npm publish (case-sensitive, `.yml`).
+	 * The file name of the workflow that runs `npm publish`.
+	 * The match is case-sensitive.
 	 */
 	file: string
 	/**
-	 * Optional GitHub Actions environment for the trust configuration.
+	 * An optional GitHub Actions environment for the trust configuration.
 	 */
 	env?: string
 	provider: string
 	/**
-	 * Publish only.
-	 * Configure trust separately.
+	 * Whether to skip the trust configuration and only publish.
 	 */
 	noTrust: boolean
 	dryRun: boolean
 	log: (line: string) => void
 }
 
+/**
+ * The per-package outcome of {@link blessPackages}.
+ */
 export interface BlessPackageReport {
 	blessed: Array<{ name: string; published: boolean; trusted: boolean }>
 }
 
 /**
- * Write ops borrow this terminal so the npm CLI can run its own auth handshake — printing the
- * approval URL, or prompting for a code — without this operation standing in the middle of it.
+ * Runs an npm write with inherited stdin and stdout so npm keeps a real TTY for its prompts.
  *
- * Stdin and stdout stay inherited (npm keeps a real TTY for any prompt); only stderr is piped,
- * because that is where npm writes the approval URL and we want to read it on the way past.
- * Zx forwards piped output to the terminal itself, so nothing here re-emits it.
+ * Stderr is piped so {@link runNPMWrite} can read the approval URL.
+ * Zx still forwards the piped output to the terminal.
  */
 const npmWrite = $({ stdio: ["inherit", "inherit", "pipe"] })
 
 /**
- * Put text on the clipboard of whatever terminal sits at the far end of the connection,
- * via the OSC 52 escape sequence.
+ * Writes text to the clipboard of the operator's terminal with the OSC 52 escape sequence.
+ * Over SSH, the sequence reaches the local machine.
  *
- * Over SSH this reaches the _local_ machine with no forwarding and no agent —
- * the bytes ride the same stream as everything else on screen.
- *
- * Inside tmux this needs `set-clipboard on`.
- * The default, `external`, sets the clipboard from tmux's own copy-mode but silently
- * discards sequences that applications emit — the copy appears to work and nothing arrives.
+ * Inside tmux, this requires `set-clipboard on`.
+ * The tmux default, `external`, discards the sequences that applications emit.
  *
  * @returns Whether the sequence was written.
- * The terminal on the other end may still ignore it, which is not detectable from here.
+ * The terminal may still ignore it.
  */
 function copyToTerminalClipboard(text: string): boolean {
 	if (!process.stdout.isTTY) return false
@@ -100,11 +90,10 @@ function copyToTerminalClipboard(text: string): boolean {
 }
 
 /**
- * Run an npm write op, watching its stderr for the approval URL and pushing the first one to the clipboard.
+ * Runs an npm write and copies the first approval URL from its stderr to the clipboard.
  *
- * The listener only reads — zx already forwards piped stderr to the terminal,
- * so writing here would print npm's output twice.
- * A URL can straddle a chunk boundary, hence the rolling window rather than a per-chunk match.
+ * The listener only reads, because zx already forwards piped stderr to the terminal.
+ * The listener matches against a rolling window because a URL can span two chunks.
  */
 async function runNPMWrite(proc: ProcessPromise, log: (line: string) => void): Promise<void> {
 	let tail = ""
@@ -130,15 +119,12 @@ async function runNPMWrite(proc: ProcessPromise, log: (line: string) => void): P
 }
 
 /**
- * Refuse a workflow filename this repository does not have.
+ * Throws when the workflow file does not exist in this repository.
  *
- * The registry matches `claims.workflow_ref.file` literally against the workflow path
- * carried by the OIDC token, and it never checks that the claim names a real file.
- * A claim that names nothing is accepted at configuration time and then denies every CI
- * publish with a bare `E404 Not Found - PUT` naming neither trust nor the workflow.
+ * The registry accepts a trust config for any workflow file name without checking that the file exists.
+ * A wrong name then fails every CI publish with a bare `E404 Not Found - PUT`.
  *
- * This stat is the last cheap moment to catch that: once the config is on file it must be read
- * and revoked, and each of those steps costs its own interactive 2FA approval.
+ * Repairing a stored config takes a read and a revoke, and each step needs an interactive 2FA approval.
  */
 async function assertWorkflowExists(options: BlessPackageOptions): Promise<void> {
 	if (options.provider !== "github") return
@@ -151,10 +137,9 @@ async function assertWorkflowExists(options: BlessPackageOptions): Promise<void>
 }
 
 /**
- * A candidate's manifest.
+ * Reads a workspace manifest.
  *
- * `name` is required because every caller below publishes, tags or reports under it,
- * and a manifest without one cannot be blessed at all.
+ * The return type requires `name` because every caller publishes or reports under it.
  */
 async function readPkg(dir: PathBuilderLike): Promise<PackageJSONLike<{ name: string }>> {
 	return await readPackageJSON<{ name: string }>(PathBuilder.from(dir)("package.json"))
@@ -185,9 +170,9 @@ async function packAndPublish(dir: string, options: BlessPackageOptions): Promis
 	const pkg = await readPkg(dir)
 
 	if (options.version) {
-		// npm's default follows the bump with an arborist install of the workspace root, which
-		// cannot parse the yarn-only protocol `workspace:*` `--no-workspaces-update` prevents it.
-
+		// By default, npm follows the bump with an install of the workspace root,
+		// and that install cannot parse the Yarn `workspace:*` protocol.
+		// The `--no-workspaces-update` flag skips the install.
 		await $({
 			cwd: dir,
 		})`npm version ${options.version} --allow-same-version --no-git-tag-version --no-workspaces-update`
@@ -203,18 +188,13 @@ async function packAndPublish(dir: string, options: BlessPackageOptions): Promis
 
 	const tgz = `/tmp/${pkg.name.replaceAll(/[@/]/g, "-")}.tgz`
 
-	// Pack through the same helper the release path uses, rather than a bare `yarn pack`.
-	// That buys three things this path previously went without: symlinked `files` entries are
-	// dereferenced (the registry rejects tarballs containing symlinks outright), the dev `exports`
-	// map is transformed for consumers (a bare pack ships `node → .ts`, which no consumer can resolve),
-	// and the audit below has a tarball worth auditing.
+	// The release packer dereferences symlinked `files` entries, which the registry rejects,
+	// and rewrites the development `exports` map for consumers.
 	await packWorkspaceForPublish(dir, tgz)
 
-	// A first publish is the one that most needs this: it is the path taken when CI could
-	// not create the package, on a workspace whose derived binaries may never have been
-	// materialized locally. neural-weights-en-in@8.6.0 went out from here as three metadata
-	// files describing a 4.3 MB index that was not in the tarball, and npm accepted it.
-	// Published versions are immutable.
+	// A local workspace may lack derived binaries that were never built,
+	// and npm accepts an incomplete tarball.
+	// Published versions are immutable, so the audit runs before the publish.
 	const audit = verifyTarball(tgz)
 
 	log(`• ${pkg.name}: tarball verified — ${formatTarballAudit(audit)}`)
@@ -225,9 +205,7 @@ async function packAndPublish(dir: string, options: BlessPackageOptions): Promis
 		return false
 	}
 
-	// `--no-browser` stops npm handing the approval URL to an xdg-open that has
-	// nowhere to go on a headless host.
-	// It prints the URL to this terminal instead, where we can catch it.
+	// The `--no-browser` flag makes npm print the approval URL to stderr instead of opening a browser.
 	await runNPMWrite(npmWrite`npm publish ${tgz} --access public --no-browser`, log)
 
 	return true
@@ -264,12 +242,10 @@ async function trust(dir: string, options: BlessPackageOptions): Promise<boolean
 	log(`• ${pkg.name}: configuring trusted publisher…`)
 	log(`    npm ${args.join(" ")}`)
 
-	// There is no cheap way to ask whether trust is already on file: `npm trust list` needs
-	// the same second factor as the write, and reading it under `.quiet()` would swallow npm's
-	// approval URL — which it prints to stderr — leaving the operator staring at a silent process.
-	// So attempt the write unconditionally and let npm arbitrate.
-	// Failure never blocks the publishes.
-	// Npm has already printed the reason to this terminal, so only the retry command needs restating.
+	// Checking for an existing config with `npm trust list` would need its own
+	// second factor, so the write runs unconditionally.
+	// A failure does not block the remaining publishes.
+	// Npm has already printed the reason, so the log adds only the retry command.
 	try {
 		await runNPMWrite(npmWrite`npm ${args}`, log)
 
@@ -277,10 +253,8 @@ async function trust(dir: string, options: BlessPackageOptions): Promise<boolean
 
 		return true
 	} catch (error) {
-		// The create endpoint is not idempotent: a package that already carries a trust config
-		// answers 409 whatever that config says, so a stale one (wrong workflow file, wrong repo)
-		// is indistinguishable from a correct one here.
-		// Name that case, because the repair is a revoke rather than a retry — retrying returns 409 forever.
+		// The create endpoint answers 409 whenever a trust config exists, even a stale one.
+		// A retry keeps returning 409, so the log gives the revoke commands.
 		const stderr = String((error as { stderr?: string } | undefined)?.stderr ?? error)
 
 		if (/\b409\b/.test(stderr)) {
@@ -299,14 +273,17 @@ async function trust(dir: string, options: BlessPackageOptions): Promise<boolean
 	}
 }
 
+/**
+ * Publishes each workspace in `options.dirs` and configures its trusted publisher.
+ */
 export async function blessPackages(options: BlessPackageOptions): Promise<BlessPackageReport> {
 	if (!options.dirs.length) {
 		throw new Error("bless-package: --dirs <dir>[,<dir>…] is required")
 	}
 
-	// Every directory is checked before the first one publishes.
-	// A first publish is the path that would reach a held-out workspace, because it is the
-	// one operation that exists for a package the release list does not yet name.
+	// Every directory is checked before the first publish.
+	// A first publish can target a package that the release list does not include,
+	// so this is where a held-out workspace would otherwise leak.
 	for (const dir of options.dirs) {
 		assertWorkspacePublishable(dir)
 	}
@@ -327,9 +304,9 @@ export async function blessPackages(options: BlessPackageOptions): Promise<Bless
 
 		blessed.push({ name: (await readPkg(d)).name, published, trusted })
 
-		// Rate-limit guard between calls.
-		// It doubles as the window in which npm's auth grant is still warm, so a run of
-		// packages usually costs one approval rather than one each.
+		// The pause limits the request rate.
+		// The npm auth grant usually stays valid across the pause, so a run of
+		// packages often needs only one approval.
 		await $`sleep 2`
 	}
 

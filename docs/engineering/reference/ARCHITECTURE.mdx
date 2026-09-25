@@ -2,14 +2,14 @@
 
 :::info[Historical planning document]
 
-Written for Phase 2 planning (2026-05-18). Some details are outdated:
+This page was written for Phase 2 planning (2026-05-18). Some details are outdated:
 
-- **Label count:** describes a 47-label schema; shipped weights use 21 BIO labels (Tier 2)
-- **Tokenizer:** describes 16K vocab; the A1 48K tokenizer exists but is not yet used in a stable classifier
-- **Repo layout:** references a `packages/` directory; the current repo uses root workspaces
-- **Model config:** 6-layer/256d/4-head is accurate for current shipped weights
+- **Label count:** the page describes a 47-label schema. Shipped weights use 21 BIO labels (Tier 2).
+- **Tokenizer:** the page describes a 16K vocab. The A1 48K tokenizer exists but is not yet used in a stable classifier.
+- **Repo layout:** the page references a `packages/` directory. The current repo uses root workspaces.
+- **Model config:** 6-layer/256d/4-head is accurate for the current shipped weights.
 
-**See [`/docs/status`](/docs/status) for current shipped state.**
+**See [`/docs/status`](/docs/status) for the current shipped state.**
 
 :::
 
@@ -89,17 +89,17 @@ server/                      # existing — HTTP service
 cli.ts                       # existing
 ```
 
-The split between `neural/` (runtime) and `neural-weights-*/` (data) is deliberate. Users running US-only deployments should not download French weights. Weights packages are versioned independently from the runtime.
+The split between `neural/` (runtime) and `neural-weights-*/` (data) is deliberate, so that users running US-only deployments do not download French weights. Weights packages are versioned independently from the runtime.
 
 ## Key abstractions
 
 ### `ComponentTag`
 
-The canonical union of address component types. Defined in [`reference/SCHEMA.md`](./SCHEMA.mdx). Single canonical definition. Adding a tag requires a written rationale.
+`ComponentTag` is the canonical union of address component types. It has a single canonical definition in [`reference/SCHEMA.md`](./SCHEMA.mdx). Adding a tag requires a written rationale.
 
 ### `ClassificationProposal`
 
-The shape every classifier produces. Replaces the current ad-hoc shape used by rule classifiers. See `reference/INTERFACES.md`.
+`ClassificationProposal` is the shape every classifier produces. It replaces the ad-hoc shape that rule classifiers currently use. See `reference/INTERFACES.md`.
 
 ```ts
 interface ClassificationProposal {
@@ -113,11 +113,11 @@ interface ClassificationProposal {
 }
 ```
 
-Existing rule classifiers wrap their output in this shape. Neural classifier emits the same shape. The solver does not distinguish.
+Existing rule classifiers wrap their output in this shape, and the neural classifier emits the same shape. The solver treats proposals from both sources identically.
 
 ### `ClassifierPolicy`
 
-Per-component configuration that decides which classifier(s) get authority for that component. This is the Ship of Theseus dial.
+`ClassifierPolicy` is per-component configuration that decides which classifier(s) have authority for that component. It controls the gradual, component-by-component replacement of rule classifiers with the neural classifier.
 
 ```ts
 interface ClassifierPolicy {
@@ -128,11 +128,11 @@ interface ClassifierPolicy {
 }
 ```
 
-Default policy is `rule_only` for everything until neural is shipped. Migration happens one component at a time, conditioned on golden-set metrics.
+The default policy is `rule_only` for every component until the neural classifier ships. Migration then happens one component at a time, based on golden-set metrics.
 
 ### `LocaleProfile`
 
-Encapsulates locale-specific behavior: which weights package to load, which rule classifiers apply, which synthesis rules govern training data generation.
+`LocaleProfile` holds locale-specific behavior: which weights package to load, which rule classifiers apply, and which synthesis rules govern training data generation.
 
 ```ts
 interface LocaleProfile {
@@ -146,11 +146,11 @@ interface LocaleProfile {
 
 ## Locale strategy
 
-Locales are first-class. The system does not assume English. Every classifier (rule or neural) declares which locales it serves.
+Locales are first-class, and the system does not assume English. Every classifier (rule or neural) declares which locales it serves.
 
-- A US-only deployment loads `en-US` profile, English rule classifiers, US weights.
-- A multi-locale deployment loads all configured profiles. Locale detection per input is a separate concern handled by a `LocaleDetector` (Phase 2 work; v0 can require explicit locale).
-- New locale = new `LocaleProfile` + new weights package + (optionally) new rule classifiers. Core code does not change.
+- A US-only deployment loads the `en-US` profile, the English rule classifiers, and the US weights.
+- A multi-locale deployment loads all configured profiles. A `LocaleDetector` handles per-input locale detection separately (Phase 2 work; v0 can require an explicit locale).
+- A new locale needs a new `LocaleProfile`, a new weights package, and optionally new rule classifiers. Core code does not change.
 
 ## Inference path
 
@@ -211,7 +211,7 @@ If golden_F1 >= threshold: publish
 
 ## Model architecture (what the neural classifier IS)
 
-**Family: encoder-only transformer + per-token classification head.** Standard NER (named entity recognition) shape. Each token of the input address string gets exactly one BIO label from a fixed set (`O` + `B-<tag>` + `I-<tag>` for each tag in the `ComponentTag` union — currently 47 labels = 1 + 2 × 23 tags).
+**Family: encoder-only transformer + per-token classification head.** This is the standard NER (named entity recognition) shape. Each token of the input address string gets exactly one BIO label from a fixed set: `O`, plus `B-<tag>` and `I-<tag>` for each tag in the `ComponentTag` union. That is currently 47 labels (1 + 2 × 23 tags).
 
 ### Why this family rather than the others
 
@@ -224,12 +224,12 @@ If golden_F1 >= threshold: publish
 
 ### Concrete config (Phase 2 / issue #10)
 
-- **Backbone**: HuggingFace `BertForTokenClassification` with custom small config — **6 layers, 256 hidden dim, 4 attention heads, 1024 FF intermediate, max position 128.** Trained **from scratch** (not fine-tuned from a pretrained English-internet BERT — the address vocabulary is too narrow and too unlike natural language for that pretraining to help).
-- **Tokenizer**: SentencePiece (unigram), `vocab_size=16000`, `character_coverage=0.9995`, `byte_fallback=true`. Trained on the corpus rather than picked off the shelf. Tokenizer version is locked into corpus version.
+- **Backbone**: HuggingFace `BertForTokenClassification` with a small custom config: **6 layers, 256 hidden dim, 4 attention heads, 1024 FF intermediate, max position 128.** The model is trained **from scratch** rather than fine-tuned from a BERT pretrained on English web text, because the address vocabulary is too narrow and too unlike natural language for that pretraining to help.
+- **Tokenizer**: SentencePiece (unigram), `vocab_size=16000`, `character_coverage=0.9995`, `byte_fallback=true`. It is trained on the corpus rather than taken off the shelf, and the tokenizer version is locked to the corpus version.
 - **Output head**: linear projection → 47 logits per token (the BIO label space derived from `ComponentTag`).
-- **Inference**: softmax over labels, take argmax per token, decode BIO spans back to character offsets via SentencePiece's offset map, emit `ClassificationProposal` per span with mean per-token softmax probability as confidence.
-- **Size target**: < 30 MB int8-quantized ONNX, < 40 MB including tokenizer. Total parameter count in the low millions.
-- **Runtime**: `onnxruntime-node`, CPU execution provider default, no Python at inference time.
+- **Inference**: take the softmax over labels and the argmax per token, decode BIO spans back to character offsets through SentencePiece's offset map, and emit a `ClassificationProposal` per span with the mean per-token softmax probability as its confidence.
+- **Size target**: < 30 MB int8-quantized ONNX, < 40 MB including the tokenizer, with a total parameter count in the low millions.
+- **Runtime**: `onnxruntime-node` with the CPU execution provider by default. Inference does not use Python.
 
 ### The cousin: spaCy's `ja_core_news_trf`
 
@@ -246,33 +246,33 @@ The closest commercial reference point is spaCy's [Japanese transformer pipeline
 | Inference runtime     | Python (spaCy)                                                                           | Node (`onnxruntime-node`)                                                                        |
 | License               | CC BY-SA 3.0                                                                             | AGPL-3.0                                                                                         |
 
-spaCy validates the family choice — when the industry-standard NER toolkit's flagship Japanese model is BERT-encoder + token-classification head, we're in the right shape. The trade-offs we make vs them:
+spaCy supports the choice of model family. The flagship Japanese model of the industry-standard NER toolkit is a BERT encoder with a token-classification head, which is the same shape. Our design differs from theirs in three ways:
 
-- **Smaller** (10× fewer parameters): we're a narrower task. General-purpose Japanese NER must handle 22 entity types across all of news text; address parsing handles 23 component types in addresses only. Narrow task tolerates narrower model.
-- **From scratch rather than fine-tuned**: their cl-tohoku backbone was pretrained on Japanese Wikipedia + news. Our domain is far enough from natural-language text that the pretraining transfer is weak; training from scratch on a domain-pure corpus gets us a smaller, faster, more accurate model.
-- **Single head rather than multi-head**: they share one encoder across morphologizer + parser + NER. We have one head only. The encoder can fully specialize for component disambiguation. (Multi-head is a future extension: see below.)
+- **Smaller** (10× fewer parameters): our task is narrower. General-purpose Japanese NER must handle 22 entity types across all news text, while address parsing handles 23 component types in addresses only. A narrower task can use a smaller model.
+- **From scratch rather than fine-tuned**: their cl-tohoku backbone was pretrained on Japanese Wikipedia and news. Our domain is far enough from natural-language text that pretraining transfers poorly. Training from scratch on an address-only corpus should give a smaller, faster, more accurate model.
+- **Single head rather than multi-head**: they share one encoder across the morphologizer, parser and NER. We have only one head, so the encoder can specialize fully in component disambiguation. (Multi-head is a future extension, described below.)
 
 ### Multi-head extension (Phase 4+)
 
-The spaCy pipeline pattern — one shared encoder + multiple task heads — is worth revisiting later. Candidates if/when we want them:
+The spaCy pipeline pattern, one shared encoder with multiple task heads, is worth revisiting later. Candidate heads:
 
-- **Venue vs address-part head**: a binary classifier per token to help compositional disambiguation (`Buffalo Health Clinic Buffalo NY` — is "Buffalo" venue-token or locality-token?). Useful for [[project-mailwoman-bitter-lesson]]'s kryptonite cases.
-- **Locale detection head**: predicts `en-US` vs `fr-FR` vs `ja-JP` for the whole input, lets `LocaleDetector` (currently a separate concern) ride the same encoder.
-- **Completeness head**: predicts whether the input is a complete address, a fragment, or noise — feeds graceful-failure signaling per [[project-mailwoman-graceful-failure]].
-- **Confidence head**: a separate calibration learner trained on held-out data, replacing the per-token softmax with a calibrated probability.
+- **Venue vs address-part head**: a binary classifier per token to help compositional disambiguation (in `Buffalo Health Clinic Buffalo NY`, is "Buffalo" a venue token or a locality token?). It would help with the hardest cases in [[project-mailwoman-bitter-lesson]].
+- **Locale detection head**: predicts `en-US` vs `fr-FR` vs `ja-JP` for the whole input, so `LocaleDetector` (currently separate) could share the encoder.
+- **Completeness head**: predicts whether the input is a complete address, a fragment, or noise, and feeds graceful-failure signaling per [[project-mailwoman-graceful-failure]].
+- **Confidence head**: a separate calibration learner trained on held-out data, which replaces the per-token softmax with a calibrated probability.
 
-None of these are Phase 0–3 scope. Filed for Phase 4 territory or beyond. spaCy's existence is the evidence the pattern works at scale.
+None of these heads is in scope for Phases 0–3. They are filed for Phase 4 or later. spaCy shows that the pattern works at scale.
 
 ### Frameworks + tooling stance — what we use, what we don't, what we steal
 
-**Use**: HuggingFace Transformers + PyTorch for training (Python-only, single-shot, output is the ONNX file). `onnxruntime-node` for inference (TypeScript / Node, the user-facing path). SentencePiece for tokenization on both sides. `parquet-wasm` with Apache Arrow for corpus Parquet output. That's the production stack — anything not on this list is either dead weight or duplicative.
+**Use**: HuggingFace Transformers + PyTorch for training (Python-only, run once per model, producing the ONNX file). `onnxruntime-node` for inference (TypeScript / Node, the user-facing path). SentencePiece for tokenization in both training and inference. `parquet-wasm` with Apache Arrow for corpus Parquet output. This is the production stack, and anything outside it would be unused or duplicate functionality.
 
-**Don't use**: spaCy as a dependency, either runtime or training. Reasons:
+**Don't use**: spaCy as a runtime or training dependency, for these reasons:
 
-- **Runtime**: spaCy is Python-only. The plan's "TypeScript-first" stance is a hard constraint from the epic; adding Python at inference time defeats the deployment-regression-for-Node-users argument that's the project's reason to exist. spaCy's ONNX export path (`spacy-onnx-export`) exists but is rarely production-grade.
-- **Training**: spaCy's config-driven training is nice (`spacy.cfg` + `Thinc`) but pays off mostly when pipeline composition matters or the task is novel. Our task — single-head NER on `BertForTokenClassification` — is the most-trodden path in HuggingFace Transformers. spaCy adds an abstraction layer for marginal convenience. Operator's "less Python the better" stance argues against it even for training where Python is unavoidable.
+- **Runtime**: spaCy is Python-only. The plan's "TypeScript-first" stance is a hard constraint from the epic. Adding Python at inference time would complicate deployment for Node users, and avoiding that is the project's main reason to exist. spaCy's ONNX export path (`spacy-onnx-export`) exists but is rarely production-grade.
+- **Training**: spaCy's config-driven training (`spacy.cfg` + `Thinc`) is well designed, but it pays off mostly when pipeline composition matters or the task is novel. Our task, single-head NER on `BertForTokenClassification`, is the most common path in HuggingFace Transformers. spaCy would add an abstraction layer for little convenience. The operator prefers as little Python as possible, which argues against spaCy even for training, where Python is unavoidable.
 
-**Steal the patterns rather than the tool**:
+**Adopt the patterns rather than the tool**:
 
 | What                                                                                                                 | From                                                                                                                                                  | Where to apply                                                                                                           |
 | -------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
@@ -281,27 +281,27 @@ None of these are Phase 0–3 scope. Filed for Phase 4 territory or beyond. spaC
 | "Training described entirely by a config file, code is the runner" hygiene                                           | spacy.cfg pattern                                                                                                                                     | `corpus-python/src/mailwoman_train/cli/commands/train.py` config shape — adopt the pattern without taking spaCy as a dep |
 | Vintage / language-model-version conventions                                                                         | spaCy's `ja_core_news_trf-3.7.0` naming (`<lang>_<domain>_<size>_<framework>-<version>`)                                                              | Weights package versioning + ONNX file naming                                                                            |
 
-**Optional Phase 3 baseline comparison**: run a fine-tuned `xx_ent_wiki_sm` or `en_core_web_trf` against the same golden set, report comparison numbers in the model card. General NER tagging `LOC` / `ORG` where we expect `locality` / `venue` is informative — shows how the model compares with general NER. Operator-time, ~1 hour for a fair baseline run. Not in the install dependency tree; one-off comparison only.
+**Optional Phase 3 baseline comparison**: run a fine-tuned `xx_ent_wiki_sm` or `en_core_web_trf` against the same golden set and report the comparison in the model card. Seeing general NER tag `LOC` / `ORG` where we expect `locality` / `venue` shows how the model compares with general NER. A fair baseline run takes ~1 hour of operator time. The comparison is a one-off and stays out of the install dependency tree.
 
 ### Casual descriptions (for audiences who don't want the architecture deep-dive)
 
-- **Technical**: "Small encoder-only transformer (BERT-class, from scratch, ~few-million params, less than 40 MB int8 ONNX), per-token classification head emitting BIO-tagged address-component spans. Runs in Node via onnxruntime-node, no Python at inference."
-- **Practitioner**: "Tiny BERT-class NER model specialized for address parsing — a learned replacement for libpostal's CRF, sized to fit in a Node process. Architecturally the same family as spaCy's ja_core_news_trf, ~10× smaller because the task is narrower."
+- **Technical**: "Small encoder-only transformer (BERT-class, from scratch, ~few-million params, less than 40 MB int8 ONNX), with a per-token classification head that emits BIO-tagged address-component spans. It runs in Node via onnxruntime-node and needs no Python at inference."
+- **Practitioner**: "Tiny BERT-class NER model specialized for address parsing: a learned replacement for libpostal's CRF, sized to fit in a Node process. It belongs to the same architectural family as spaCy's ja_core_news_trf and is ~10× smaller because the task is narrower."
 - **User-facing**: "A small ONNX model that reads an address string and tells you, with per-component confidence, what each piece of it means."
-- **For the bitter-lesson audience**: "The contextual-parser half of a contextual-parser-plus-constraint-solver geocoder front-end. The transformer proposes; the policy registry + solver dispose."
+- **For the bitter-lesson audience**: "The contextual-parser half of a contextual-parser-plus-constraint-solver geocoder front-end. The transformer proposes candidates, and the policy registry and solver choose among them."
 
-Not a translator (no language pair, no autoregressive output) and not a generative model.
+The model is neither a translator (it has neither a language pair nor autoregressive output) nor a generative model.
 
 ## Training cadence vs. plan (2026-05-18 reframing)
 
-The original phase plan (`phases/PHASE_2_training.md`) targeted a **single training run hitting >95% per-component F1** in ~2 weeks. Two iterations in, that framing has been replaced by an **iteration cadence**: each cycle is ~3-7 days of focused work (corpus refinement → train 6-10h GPU → eval → ship), and each cycle produces a shippable artifact even if it doesn't hit the >95% bar.
+The original phase plan (`phases/PHASE_2_training.md`) targeted a **single training run reaching >95% per-component F1** in ~2 weeks. After two iterations, an **iteration cadence** replaced that plan. Each cycle is ~3-7 days of focused work (corpus refinement → train 6-10h GPU → eval → ship), and each cycle produces a shippable artifact even if it misses the >95% bar.
 
-Why the change:
+The plan changed for these reasons:
 
-- **>95% F1 in one shot was aspirational.** Address parsing from scratch on a noisy real-world corpus is harder than that target acknowledged. Ship floors are lower (~0.85 F1 on coarse components is useful in production with proper calibration).
-- **Shipping below-target is the bitter-lesson framing.** Per [[project-mailwoman-graceful-failure]], the success metric is graceful failure rather than max F1. A 0.85-F1 model with 0.88 calibration in its conf>0.9 bucket is more useful than a 0.95-F1 model with 0.33 calibration (the v0.1.0 situation).
-- **Ship-of-Theseus coexistence makes shipping safe.** The neural classifier adds proposals alongside the rule classifiers via the policy registry; we don't have to wait for parity to start using it.
-- **Iteration > single-run.** Each cycle produces artifacts: ONNX weights, model card, eval report, npm package shape, demo updates.
+- **>95% F1 in one run was unrealistic.** Address parsing from scratch on a noisy real-world corpus is harder than that target assumed. Ship floors are lower (~0.85 F1 on coarse components is useful in production with proper calibration).
+- **Shipping below target follows from the bitter-lesson framing.** Per [[project-mailwoman-graceful-failure]], the success metric is graceful failure rather than maximum F1. A 0.85-F1 model with 0.88 calibration in its conf>0.9 bucket is more useful than a 0.95-F1 model with 0.33 calibration (the v0.1.0 situation).
+- **Coexistence with the rule classifiers makes shipping safe.** The neural classifier adds proposals alongside the rule classifiers through the policy registry, so we can start using it before it reaches parity.
+- **Iterating beats a single run.** Each cycle produces artifacts: ONNX weights, a model card, an eval report, the npm package shape, and demo updates.
 
 ### Iteration history (live)
 
@@ -317,29 +317,29 @@ Why the change:
 
 ### Why more data doesn't blow up the iteration cost
 
-A single training run is fixed-step-count rather than fixed-epoch. v0.2.0's 50K steps × 128 effective batch = 6.4M examples seen ≈ **2.4% of the 263M-row corpus per pass**. Adding NAD (62M) + OA-CA (10M) + state backfills bumps the corpus to ~340M rows; same 50K steps still finishes in ~6.5-10h. The model is nowhere near training-data-limited; more corpus → more diversity per example seen rather than more wall-clock.
+A training run has a fixed step count rather than a fixed number of epochs. v0.2.0's 50K steps × 128 effective batch = 6.4M examples seen ≈ **2.4% of the 263M-row corpus per pass**. Adding NAD (62M), OA-CA (10M) and state backfills grows the corpus to ~340M rows, and the same 50K steps still finish in ~6.5-10h. The model is far from limited by training data, so a larger corpus adds diversity per example seen without adding wall-clock time.
 
-What costs more time per iteration:
+These steps add time to each iteration:
 
-1. **Vocabulary tier expansion** — adding venue/street/house_number labels requires adapter alignment updates (every adapter's `align.ts` emits the new labels where source data supports it) + golden set verification + corpus rebuild (~260 min). This is the bulk of v0.3.0 work.
-2. **CRF decoder + label smoothing** — small training-time additions, big calibration/coherence wins, lands in the same retrain.
-3. **Per-iteration golden expansion** — already automated via `expand-golden.ts` + `promote-golden.ts` (PR #48 / #49); each iteration can re-eval against the latest golden version.
+1. **Vocabulary tier expansion**: adding venue/street/house_number labels requires adapter alignment updates (every adapter's `align.ts` emits the new labels where source data supports them), golden set verification, and a corpus rebuild (~260 min). This is most of the v0.3.0 work.
+2. **CRF decoder + label smoothing**: small training-time additions with large calibration and coherence gains. They land in the same retrain.
+3. **Per-iteration golden expansion**: already automated through `expand-golden.ts` and `promote-golden.ts` (PR #48 / #49), so each iteration can re-evaluate against the latest golden version.
 
 ### Re-framed success metric per iteration
 
-The metric per iteration is whether the artifact is independently shippable and a measurable improvement over the prior one rather than whether F1 hit 95%. The eval ledger at `evals/scores-by-version.json` makes this empirical — every shipped run gets a row, with corpus + eval-set sha-pinning so the deltas are apples-to-apples.
+Each iteration succeeds if its artifact is independently shippable and measurably better than the previous one. Reaching 95% F1 is no longer the criterion. The eval ledger at `evals/scores-by-version.json` records this: every shipped run gets a row, and the corpus and eval set are pinned by sha so that deltas compare like with like.
 
 ## Why this shape
 
-- **Classifier-as-plugin** preserves Mailwoman's existing extensibility. New rule classifiers, new neural variants, future learned rankers all conform to the same interface.
-- **Per-component policy** allows incremental rollout without big-bang risk. A regression in neural `street` parsing doesn't affect `country` parsing.
-- **Locale profiles** prevent the architecture from being Anglocentric by default. If the abstractions can't express a non-Anglo locale, we fix the abstractions rather than the locale.
-- **Separate weights packages** keep npm install times sane and let users opt in to languages they need.
-- **Training in Python, inference in TS** uses each ecosystem for what it's best at and avoids the dual-language maintenance tax in production code.
+- **Classifier-as-plugin** preserves Mailwoman's existing extensibility. New rule classifiers, new neural variants, and future learned rankers all conform to the same interface.
+- **Per-component policy** allows incremental rollout instead of switching every component at once. A regression in neural `street` parsing does not affect `country` parsing.
+- **Locale profiles** keep the architecture from defaulting to English-speaking conventions. If the abstractions cannot express a locale outside those conventions, we fix the abstractions instead of working around the locale.
+- **Separate weights packages** keep npm install times reasonable and let users install only the languages they need.
+- **Training in Python and inference in TS** uses each ecosystem for its strengths and keeps production code in one language.
 
 ## Output shape (Phase 3 concern rather than Phase 2)
 
-The neural model emits per-token BIO labels regardless of how its output is presented. The DECODER chooses the format. Three legitimate shapes, in increasing expressivity:
+The neural model emits per-token BIO labels regardless of how its output is presented. The decoder chooses the format. Three shapes are valid, listed in order of increasing expressivity:
 
 | Shape                                                            | Preserves                                                      | Loses                                         | Round-trip fidelity                                                                                                                       |
 | ---------------------------------------------------------------- | -------------------------------------------------------------- | --------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
@@ -347,25 +347,25 @@ The neural model emits per-token BIO labels regardless of how its output is pres
 | **Tuple array** `[["locality", "Paris"], ["postcode", "75005"]]` | tag → value + **original order** + repetition                  | hierarchy                                     | Reconstruction is `array.map(([_, v]) => v).join(" ")`; trivially faithful to ordering.                                                   |
 | **S-expression** `(locality "Paris" (postcode "75005"))`         | order + **hierarchy** + arbitrary attributes (`:conf`, `:src`) | nothing material                              | The most expressive — lets the parsed output say "this postcode is inside this locality." Natural carrier for Phase 4 source annotations. |
 
-**Operator framing (2026-05-18):** address parsing is inherently lossy — you can't extract the original formatted address from the parsed result. The closest you can get is by applying a formatter to the parsed result. S-expressions may better preserve the original shape because they encode hierarchy + ordering + attributes in one tree.
+**Operator framing (2026-05-18):** address parsing is inherently lossy, because the original formatted address cannot be recovered from the parsed result. The closest approximation comes from applying a formatter to the parsed result. S-expressions may preserve the original shape better because they encode hierarchy, ordering and attributes in one tree.
 
-**Implementation plan (Phase 3, #11):** ship all three decoders behind a `--format json|tuple|sexp` CLI flag. Default = JSON for libpostal-compat; S-expr as power-user mode. Round-trip eval (`parse(format(parse(raw))) == parse(raw)`) tells us which shape preserves the most fidelity; if S-expr wins, flip default.
+**Implementation plan (Phase 3, #11):** ship all three decoders behind a `--format json|tuple|sexp` CLI flag. JSON is the default for libpostal compatibility, and S-expr is a power-user mode. A round-trip eval (`parse(format(parse(raw))) == parse(raw)`) shows which shape preserves the most fidelity. If S-expr wins, make it the default.
 
-**No model retraining required.** This is post-processing on the BIO output. The same neural model serves all three formats.
+**The formats require no model retraining.** They are post-processing on the BIO output, and the same neural model serves all three formats.
 
-**Existing isp-nexus formatter** (`isp-nexus/universe/mailwoman/postal/formatting.ts`) handles flat-object → multi-line-string for shipping-label rendering. Port it as the JSON-decoder's inverse direction; build a separate `sexp→string` formatter for the S-expr path.
+**Existing isp-nexus formatter** (`isp-nexus/universe/mailwoman/postal/formatting.ts`) converts a flat object into a multi-line string for shipping-label rendering. Port it as the inverse of the JSON decoder, and build a separate `sexp→string` formatter for the S-expr path.
 
 ## Source attribution (Phase 4 — #12, deferred)
 
-Differentiator vs libpostal and Pelias. Libpostal says "this token is a city"; Pelias adds hit/miss provenance against ES indexes. **Mailwoman's goal** (operator framing): "this token is a locality identified by the wof-admin gazetteer with 0.97 confidence."
+Source attribution distinguishes Mailwoman from libpostal and Pelias. Libpostal says "this token is a city", and Pelias adds hit/miss provenance against ES indexes. **Mailwoman's goal** (operator framing) is to say "this token is a locality identified by the wof-admin gazetteer with 0.97 confidence."
 
-The corpus already carries `source` per-row (every alignment + augmentation tags provenance). What's missing is propagating that provenance through the inference output.
+The corpus already records `source` per row, because every alignment and augmentation step tags provenance. The remaining work is to carry that provenance through to the inference output.
 
-**Decision (operator, 2026-05-18): hybrid Option C — model + Resolver.**
+**Decision (operator, 2026-05-18): hybrid Option C, model + Resolver.**
 
-- Model emits BIO labels + per-token confidence (already does)
-- Resolver at inference time maps `(span, label) → (source-class, src-conf)` via fast lookups against pre-indexed gazettes (wof, ban, tiger, nppes, hrsa, imls-pls, state-\*)
-- Output annotations live as S-expression attributes:
+- The model emits BIO labels and per-token confidence (it already does).
+- At inference time, the Resolver maps `(span, label) → (source-class, src-conf)` through fast lookups against pre-indexed gazettes (wof, ban, tiger, nppes, hrsa, imls-pls, state-\*).
+- Output annotations are stored as S-expression attributes:
 
 ```
 (locality "Paris" :src wof-admin :conf 0.97
@@ -374,7 +374,7 @@ The corpus already carries `source` per-row (every alignment + augmentation tags
 
 ### Provenance is already flowing through training
 
-`source_weights` (shipped 2026-05-18 in PR #44) affects what the trained model emphasizes during training even though the model itself doesn't emit source labels. The Resolver at inference time **surfaces** what was implicit in training. The data path:
+`source_weights` (shipped 2026-05-18 in PR #44) affects what the model emphasizes during training, even though the model itself does not emit source labels. At inference time, the Resolver **makes explicit** the source information that was implicit in training. The data path:
 
 ```
 corpus row (source-stamped)
@@ -387,13 +387,13 @@ corpus row (source-stamped)
 
 ### Rejected alternatives
 
-- **Resolver-only at inference, no source-aware training** — model has no internal calibration toward gazette-confirmed tokens; weaker.
-- **Multi-task neural head** emitting `(label, source-class)` per token — ~15 × 8 = 120 sub-classes; bigger model, harder to retrain, loses the clean separation between span-identification (model job) and provenance (Resolver job).
+- **Resolver-only at inference, without source-aware training**: the model would have no internal calibration toward gazette-confirmed tokens, which makes this option weaker.
+- **Multi-task neural head** emitting `(label, source-class)` per token: this needs ~15 × 8 = 120 sub-classes, makes the model bigger and harder to retrain, and removes the clean separation between span identification (the model's job) and provenance (the Resolver's job).
 
 ## Anti-patterns to avoid
 
-- ❌ A `mode: 'auto'` setting in `ClassifierPolicy` that "intelligently" picks rule vs neural. Hidden state, hard to debug. Always explicit.
-- ❌ Hardcoding `'en-US'` as default in core. Default should be "no locale, classifiers must opt in."
-- ❌ Loading all weights at module init. Lazy-load on first classification request.
-- ❌ Mixing inference and resolution. The parser does not know about coordinates, place IDs, or WOF resolution. That's Phase 4.
-- ❌ Adding tags to `ComponentTag` without updating the schema doc and the alignment logic in the same commit. Schema drift kills the corpus.
+- ❌ A `mode: 'auto'` setting in `ClassifierPolicy` that "intelligently" picks rule vs neural. It hides state and is hard to debug. Keep the policy explicit.
+- ❌ Hardcoding `'en-US'` as the default in core. The default should be "no locale; classifiers must opt in."
+- ❌ Loading all weights at module init. Lazy-load them on the first classification request.
+- ❌ Mixing inference and resolution. The parser does not know about coordinates, place IDs, or WOF resolution, which belong to Phase 4.
+- ❌ Adding tags to `ComponentTag` without updating the schema doc and the alignment logic in the same commit. Schema drift corrupts the corpus.

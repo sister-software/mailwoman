@@ -6,8 +6,8 @@ look.
 
 ## Read this first: what state these findings describe
 
-**Everything below is measured against artifacts that may reflect PARTIAL WORK.** Several of the arcs that
-produced them are mid-flight, and a finding here is a description of one build rather than a verdict on a design.
+**Everything below is measured against artifacts that may reflect partial work.** Several of the arcs that
+produced them are in progress, and a finding here describes one build rather than judging a design.
 Specifically:
 
 | Artifact                       | Identity                                       | Note                                                                                                   |
@@ -19,12 +19,12 @@ Neither artifact can state its own provenance, which is the exact gap phase 3 cl
 where this document says "the gazetteer does X", read it as "this build does X". A rebuild may already
 have changed it, and there is currently no way to tell from the file.
 
-Two further honesty markers used throughout:
+Three evidence markers are used throughout:
 
-- **observation** — a command produced it, and the command is shown.
-- **inference** — the evidence supports it, nothing measured it directly.
-- **falsified** — I proposed it, tested it, and it was wrong. Kept in, because the wrong turns are the
-  cheapest part of the report to skip and the most expensive to repeat.
+- **observation**: a command produced it, and the command is shown.
+- **inference**: the evidence supports it, but nothing measured it directly.
+- **falsified**: I proposed it, tested it, and it was wrong. These are kept in because a reader can
+  easily skip them, and repeating a wrong turn is expensive.
 
 ---
 
@@ -73,12 +73,12 @@ competing places. With `neg_rank` equal to the bit, their order fell out of the 
 ### Root cause, and a correction to my own first answer
 
 I initially reported this as a WOF data property. **It is not.** Both ids are ≥ 8e12, which is
-`OVERTURE_ID_BASE` — Turkey has no WOF repo cloned. Therefore, it is served by the Overture `divisions` backfill.
+`OVERTURE_ID_BASE`. Turkey has no WOF repo cloned, so the Overture `divisions` backfill serves it.
 `fold-overture.ts` copies `d.population` per row with no parent→child propagation, so the duplication
 arrived from Overture's own data.
 
-WOF's own `Of` is **[890463199](https://spelunker.whosonfirst.org/id/890463199)** — one county, population
-**31,951**, no seat-town duplicate at all.
+WOF's own `Of` is **[890463199](https://spelunker.whosonfirst.org/id/890463199)**. It is one county with
+population **31,951** and has no seat-town duplicate.
 
 |            | WOF 890463199      | This gazetteer (Overture) |
 | ---------- | ------------------ | ------------------------- |
@@ -102,7 +102,7 @@ population outranks other placetypes. Both checks are required and were measured
 - Narrowed, the term moves **3,896** top slots, every one promoting a populated place over a same-population
   duplicate.
 
-**UNVERIFIED, and this matters.** The 3,896 is scope at the **ranker**. The 558-row regression board is
+**The end-to-end effect is unverified.** The 3,896 is measured at the **ranker**. The 558-row regression board is
 byte-identical before and after, and three inverted probes — the term itself, `compareReferential`, and the
 candidate `ORDER BY` — changed nothing end-to-end on four inputs the sweep says move. A deliberate `throw`
 confirmed the harness reads the edits, so the pipeline decides those answers **downstream of candidate
@@ -198,20 +198,20 @@ The actual exonym is shared across _more_ places than the offending noun. Sharin
 
 **What does look separable** — and this is a hypothesis rather than a finding — is the mismatch between key count
 and prominence. 221 keys on a 63-person neighborhood is anomalous in a way 428 keys on the United States
-is not. That is a change with a board rather than a change to make from one example.
+is not. Any change based on it needs a board to measure it, rather than a decision from one example.
 
 ### Why this survived
 
 Three reasons worth stating, because they generalise:
 
-1. **The fan-out is invisible per query.** Nothing asks how several keys one place has, so 19 rows for `to`
+1. **The fan-out is invisible per query.** Nothing asks how many keys one place has, so 19 rows for `to`
    looks like a busy key rather than a data problem.
 2. **The bad rows are shaped exactly like the good ones.** Both are alt-names in a named language with
-   `privateuse=preferred`. Toledo shows why the implementation is required — abbreviation aliases are how
-   `TO` → Toledo works — so `is_primary=0` cannot only be dropped.
-3. **It is not the stopword problem**, which is what I expected going in. That belongs to the FTS route
-   (976 hits). The candidate route returns 19, and its bad rows arrive through legitimate-looking alias
-   data — a harder failure to see precisely because the count is small.
+   `privateuse=preferred`. Toledo shows why the alias rows are required: abbreviation aliases are how
+   `TO` → Toledo works. `is_primary=0` rows therefore cannot be dropped wholesale.
+3. **It is not the stopword problem**, which is what I expected going in. That problem belongs to the FTS
+   route (976 hits). The candidate route returns 19, and its bad rows arrive through legitimate-looking
+   alias data. The small count makes the failure harder to see.
 
 ---
 
@@ -220,5 +220,5 @@ Three reasons worth stating, because they generalise:
 Nothing here is filed. The `Of` half produced a shipped fix (seat preference) whose end-to-end reach is
 still unverified; the `to` half is unfixed and undiagnosed past the mechanism above.
 
-Both rest on two artifacts that cannot state their own provenance, which is the thing most likely to make
-this document stale without anyone noticing.
+Both rest on two artifacts that cannot state their own provenance. That gap is the most likely way for
+this document to go stale without anyone noticing.

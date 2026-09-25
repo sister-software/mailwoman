@@ -1,19 +1,19 @@
 # Query Shape — Cheap Structural Priors
 
-Captures the design intent for the `QueryShape` sub-system, a stage 2 + 2.5 addition to the runtime pipeline ([the-staged-pipeline](../../records/site-2026-08/understanding/our-approach/the-staged-pipeline.mdx)). Bitter-lesson-safe because it recognizes _what shape an input has_ rather than _which strings are localities_.
+This page records the design intent for the `QueryShape` sub-system, an addition to stages 2 and 2.5 of the runtime pipeline ([the-staged-pipeline](../../records/site-2026-08/understanding/our-approach/the-staged-pipeline.mdx)). The design is consistent with the bitter lesson because it recognizes _what shape an input has_ rather than _which strings are localities_.
 
 ## Status
 
 - **Conceived:** 2026-05-22 design conversation.
-- **Decision:** commit to the sub-system; bundle as `@mailwoman/query-shape`. Pure functions, no ML.
-- **Implementation phase:** not yet opened. Will land alongside Stage 2 + Stage 2.5 work in the staged-pipeline rollout.
+- **Decision:** commit to the sub-system and bundle it as `@mailwoman/query-shape`, built from pure functions without ML.
+- **Implementation phase:** not yet started. It will land alongside the Stage 2 and Stage 2.5 work in the staged-pipeline rollout.
 - **Cross-references:** [`concepts/the-staged-pipeline`](../../records/site-2026-08/understanding/our-approach/the-staged-pipeline.mdx), [`concepts/addresses-that-break-geocoders`](../../records/site-2026-08/understanding/why-its-hard/addresses-that-break-geocoders.mdx), [`reference/ARCHITECTURE`](./ARCHITECTURE.mdx).
 
 ## Bitter-lesson framing test
 
-Mailwoman v1 (Pelias lineage) hit the long-tail trap by using rules to encode _place knowledge_: dictionaries of 50K city names, hand-curated state abbreviation tables, country-specific keyword sets. Every new locale meant a new dictionary, and the maintenance burden compounded.
+Mailwoman v1 (Pelias lineage) used rules to encode _place knowledge_: dictionaries of 50K city names, hand-curated state abbreviation tables, and country-specific keyword sets. Every new locale needed a new dictionary, and the maintenance burden grew with each one.
 
-The QueryShape sub-system intentionally avoids that trap by restricting itself to **universal structural patterns** — what character classes the tokens are, where the punctuation is, whether a substring matches a known postcode regex. The locale-test:
+The QueryShape sub-system avoids that trap by restricting itself to **universal structural patterns**: the character classes of the tokens, the position of the punctuation, and whether a substring matches a known postcode regex. The locale test asks:
 
 > Would this code change if Mailwoman added a 50th locale?
 
@@ -24,7 +24,7 @@ The QueryShape sub-system intentionally avoids that trap by restricting itself t
 | Known-format regex set   | ~1 postcode pattern                  | bounded   |
 | User-location prior      | Nothing                              | universal |
 
-Compare to v1's gazetteer-based locality classifier (~50K place names per locale). That is the long-tail explosion this sub-system explicitly does not bring back.
+By comparison, v1's gazetteer-based locality classifier needed ~50K place names per locale. This sub-system is designed to avoid that per-locale growth.
 
 ## `QueryShape` data structure
 
@@ -74,13 +74,13 @@ interface KnownFormatHit {
 }
 ```
 
-Compute time: microseconds. No ML. Runs on every input before the encoder.
+Computing a `QueryShape` takes microseconds and uses no ML. It runs on every input before the encoder.
 
 ## Four primitives
 
 ### 1. Meta queries (character class)
 
-Pure-character analysis of the input. Cheap, deterministic, language-agnostic. Examples:
+This primitive analyzes only the characters of the input. It is cheap, deterministic, and language-agnostic. Examples:
 
 | Input                               | Character class signal                             |
 | ----------------------------------- | -------------------------------------------------- |
@@ -96,15 +96,15 @@ These signals feed **Stage 2 (`locale-hint`)** and **Stage 2.5 (kind classifier)
 
 ### 2. Phrasification (segmentation)
 
-Punctuation-bounded chunking. Currently the encoder re-learns segment structure from punctuation tokens; making it explicit gives downstream stages a free structural prior.
+This primitive splits the input into chunks bounded by punctuation. Currently the encoder re-learns segment structure from punctuation tokens. Making the structure explicit gives downstream stages a structural prior at almost no cost.
 
-Three uses, in order of complexity:
+Segments have three possible uses, in order of complexity:
 
-1. **As encoder input feature** — segment-id per token concatenated to the input embedding. Cheap; no architecture change.
-2. **As attention mask** — let tokens within a segment attend strongly to each other, weakly across. Modest architecture change.
-3. **As per-segment kind hint** — `segment[3] is 5-digit-numeric → postcode-prior for this segment only`. Stage 2.5 emits per-segment QueryShape; encoder gets per-segment priors.
+1. **As an encoder input feature:** a segment id per token, concatenated to the input embedding. This is cheap and needs no architecture change.
+2. **As an attention mask:** tokens attend strongly to other tokens within their segment and weakly across segments. This needs a modest architecture change.
+3. **As a per-segment kind hint:** `segment[3] is 5-digit-numeric → postcode-prior for this segment only`. Stage 2.5 emits a per-segment QueryShape, and the encoder receives per-segment priors.
 
-**Locale-dependence is bounded.** Commas segment in US/FR/UK; whitespace segments in JP; honorifics in Korean. The _punctuation grammar_ itself is locale-aware Stage-1 normalization, but the output is an abstract `Segment[]` that downstream stages consume uniformly. Each new locale adds ~5 lines of segmentation rules rather than 50K dictionary entries.
+**Locale dependence is bounded.** Commas mark segments in US/FR/UK addresses, whitespace marks them in JP, and honorifics mark them in Korean. The _punctuation grammar_ is part of locale-aware Stage-1 normalization, but its output is an abstract `Segment[]` that downstream stages consume the same way for every locale. Each new locale adds ~5 lines of segmentation rules rather than 50K dictionary entries.
 
 ### 3. Known-format detection
 
@@ -118,25 +118,25 @@ A bounded set of universal postcode and well-known-format regexes:
 - JP postcode (\\d{3}-\\d{4})
 - PO Box / BP variants
 
-When a known-format pattern matches with high confidence and the user-location prior agrees, Stage 2.5 can route directly to **Stage 6 (resolver)**, skipping the encoder entirely. This is a measurable browser-side win — ~5 ms encoder inference + ~25 MB model load saved per call for the trivial cases.
+When a known-format pattern matches with high confidence and the user-location prior agrees, Stage 2.5 can route directly to **Stage 6 (resolver)** and skip the encoder. In the browser, this saves ~5 ms of encoder inference and a ~25 MB model load per call for the trivial cases.
 
-⚠ **Fast paths are advisory rather than authoritative.** `"10118"` could be a partial typed input (`"10118 Maple St"` mid-keystroke). Every fast path must:
+⚠ **Fast paths are advisory rather than authoritative.** `"10118"` could be partially typed input (`"10118 Maple St"` mid-keystroke). Every fast path must:
 
-- Honor a `force_full_pipeline?: boolean` option (default false)
-- Apply a conservative confidence floor before short-circuiting
-- Still report alternatives in the result rather than collapse to one answer
+- Honor a `force_full_pipeline?: boolean` option (default false).
+- Apply a conservative confidence floor before short-circuiting.
+- Still report alternatives in the result instead of collapsing to one answer.
 
-If autocomplete or streaming-input workflows ever break because fast-paths short-circuited prematurely, the confidence floor was too low.
+If autocomplete or streaming-input workflows break because fast paths short-circuited too early, the confidence floor is too low.
 
 ### 4. User physical location
 
-External signal joining the input-side priors. Goes into **Stage 6 (resolver)** scoring:
+The user's location is an external signal that joins the input-side priors. It feeds **Stage 6 (resolver)** scoring:
 
 ```
 score(candidate) = match × population_prior × regional_prior_from_language × regional_prior_from_user_location
 ```
 
-All four factors are **soft priors**. The TX-IP user typing `"Paris"` in French input gets a tie between Paris-FR and Paris-TX; structural cues (state abbreviation, postcode shape, etc.) break it. None of the priors hard-filter — that would violate the project's stated "possibilities rather than constraints" principle ([`reference/CONTEXT.md`](./CONTEXT.mdx#the-confidence-as-trap-pattern)).
+All four factors are **soft priors**. A user with a Texas IP address who types `"Paris"` in French input gets a tie between Paris-FR and Paris-TX, and structural cues such as a state abbreviation or postcode shape break the tie. None of the priors acts as a hard filter, because a hard filter would violate the project's "possibilities rather than constraints" principle ([`reference/CONTEXT.md`](./CONTEXT.mdx#the-confidence-as-trap-pattern)).
 
 API shape (optional input):
 
@@ -165,11 +165,11 @@ flowchart LR
     S6 --> O["Top-k places"]
 ```
 
-QueryShape is computed once, at the boundary between Stage 1 and Stage 2, and passed to the rest of the pipeline as additional context. It is not its own stage. It is a shared data structure that Stages 2, 2.5, 3 (optional), and 6 all consume.
+QueryShape is computed once, at the boundary between Stage 1 and Stage 2, and passed to the rest of the pipeline as additional context. It is a shared data structure rather than a separate stage, and Stages 2, 2.5, 3 (optional), and 6 all consume it.
 
 ## Packaging decision
 
-Bundle as a single workspace package:
+The sub-system ships as a single workspace package:
 
 ```
 packages/query-shape/
@@ -183,40 +183,40 @@ packages/query-shape/
 └── package.json
 ```
 
-Zero ML. Zero npm dependencies beyond what `@mailwoman/core` already pulls. Tiny (< 100 KB compiled). Reusable in browser and Node.
+The package uses no ML and adds no npm dependencies beyond those `@mailwoman/core` already pulls in. It is small (< 100 KB compiled) and runs in both the browser and Node.
 
 ## Locality soft prior (v0.5.2 extension)
 
-Added 2026-05-25 after diagnosing demo preset locality/region confusion ([`DEMO_PRESET_DIAGNOSIS.md`](./DEMO_PRESET_DIAGNOSIS.mdx)).
+This extension was added on 2026-05-25 after diagnosing the demo preset locality/region confusion ([`DEMO_PRESET_DIAGNOSIS.md`](./DEMO_PRESET_DIAGNOSIS.mdx)).
 
-The existing `buildEmissionPriors` path applies logit boosts for known-format hits (e.g., postcode regex → `B-postcode`). The locality soft prior extends this: when an unambiguous 2-letter region abbreviation is detected (e.g., `DC`, `NY`, `CA`), preceding tokens that match a WOF locality entry at the detected locale receive a `+2.0` logit boost toward `B-locality` / `I-locality`.
+The existing `buildEmissionPriors` path applies logit boosts for known-format hits (e.g., postcode regex → `B-postcode`). The locality soft prior extends this. When an unambiguous 2-letter region abbreviation is detected (e.g., `DC`, `NY`, `CA`), the preceding tokens that match a WOF locality entry at the detected locale receive a `+2.0` logit boost toward `B-locality` / `I-locality`.
 
-New field on `QueryShape`:
+The extension adds a field to `QueryShape`:
 
 ```ts
 regionAbbreviations?: Array<{ start: number; span: string }>
 ```
 
-Detection is a single regex per locale (`/,\s*[A-Z]{2}\b/` for en-us), same cost as postcode-format detection. The WOF verification is the safety constraint — only bias tokens that are verified localities rather than every preceding token.
+Detection uses a single regex per locale (`/,\s*[A-Z]{2}\b/` for en-us), at the same cost as postcode-format detection. The WOF verification is the safety constraint: the prior biases only the preceding tokens that are verified localities.
 
-This passes the bitter-lesson framing test: the regex is locale-bounded rather than a gazetteer. The WOF check is a safety rail that prevents over-biasing non-locality tokens like "Pennsylvania" (street) in the same address.
+This design passes the bitter-lesson framing test, because the regex is locale-bounded rather than a gazetteer. The WOF check prevents the prior from over-biasing non-locality tokens in the same address, such as "Pennsylvania" in a street name.
 
 ## Open questions for implementation
 
-These are decisions to make when the implementation phase opens; recording so they aren't re-derived from scratch.
+These decisions need to be made when implementation starts. They are recorded here so they do not have to be worked out again.
 
-1. **Where does `QueryShape` get computed?** Eagerly at parse-entry (always pay the microseconds cost), or lazily on first downstream consumer (some inputs may not need it)? Recommend eagerly — it's cheaper to compute than to threaded-lazy-evaluate.
-2. **Known-format regex set extensibility?** Hardcoded vs. registerable. Recommend hardcoded for v1 (the postcode set rarely changes) and re-evaluate if community adapters want to register country-specific formats.
-3. **Confidence threshold for fast-path routing?** Pick conservatively (~0.95) and tune from real-world data. Failure mode of too-low is catastrophic (wrong answer instead of full pipeline); failure mode of too-high is slower inference.
-4. **Segment-id as encoder feature — additive or concatenated?** Concatenated to input embeddings is simplest and avoids architecture change. Decide when the encoder retrain happens.
-5. **How does `QueryShape` interact with `LocaleDetector`?** The detector probably uses `QueryShape.characterClass` + `QueryShape.tokenClasses` as input features. Suggests `LocaleDetector` runs _after_ `QueryShape.compute()`. Document this dependency.
+1. **Where is `QueryShape` computed?** It could be computed eagerly at parse entry, which always pays the microsecond cost, or lazily for the first downstream consumer, because some inputs may not need it. The recommendation is eager computation, because computing it costs less than threading lazy evaluation through the pipeline.
+2. **Should the known-format regex set be extensible?** The options are hardcoded or registerable. The recommendation is hardcoded for v1, because the postcode set rarely changes. Re-evaluate if community adapters want to register country-specific formats.
+3. **What confidence threshold should fast-path routing use?** Choose a conservative value (~0.95) and tune it from real-world data. A threshold that is too low returns wrong answers instead of running the full pipeline, which is severe. A threshold that is too high only slows inference.
+4. **Should the segment id be an additive or a concatenated encoder feature?** Concatenating it to the input embeddings is simplest and avoids an architecture change. Decide when the encoder is retrained.
+5. **How does `QueryShape` interact with `LocaleDetector`?** The detector will probably use `QueryShape.characterClass` and `QueryShape.tokenClasses` as input features, which means `LocaleDetector` runs _after_ `QueryShape.compute()`. Document this dependency.
 
 ## What this is not
 
 - **Not the gazetteer.** Place-name lookup lives in Stage 6 / Resolver. QueryShape never asks "is this a city name?".
-- **Not the kind classifier.** The kind classifier (Stage 2.5) consumes QueryShape but is itself a separate component that may or may not use ML.
-- **Not a replacement for the encoder.** Trivial inputs short-circuit; structured inputs still hit the full pipeline.
-- **Not free of locale concerns.** Segmentation grammar and the known-format set both grow per locale, but they grow at O(1) per locale rather than O(N place names).
+- **Not the kind classifier.** The kind classifier (Stage 2.5) consumes QueryShape, but it is a separate component that may or may not use ML.
+- **Not a replacement for the encoder.** Trivial inputs short-circuit, and structured inputs still run through the full pipeline.
+- **Not free of locale concerns.** The segmentation grammar and the known-format set both grow per locale, but they grow by O(1) per locale rather than O(N place names).
 
 ## See also
 

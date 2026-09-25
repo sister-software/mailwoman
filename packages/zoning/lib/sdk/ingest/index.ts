@@ -3,41 +3,11 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Read the Department's bulk export as a stream of WGS84 features, through ogr2ogr.
+ *   Streams the Department's bulk zoning export through ogr2ogr as reprojected WGS84 features.
  *
- *   OGR is build tooling, never A serve dependency (scope invariant 6). It converts the authority's geometry
- *   into the structure the runtime probes, and nothing downstream of this module knows gdal exists.
- *
- *   the stream is WKT rather than geojson, and that is A correctness choice rather than A taste one. This service
- *   encodes hole roles by ring orientation — clockwise exterior, the inverse of RFC 7946 — and puts each ring
- *   in its own `MultiPolygon` part on the features that carry holes that way. gdal's GeoJSON writer enforces
- *   the RFC 7946 winding unconditionally: `-lco RFC7946=no` is not a GeoJSONSeq option, and
- *   `--config OGR_ORGANIZE_POLYGONS skip` changes nothing. Measured on the largest feature in the country,
- *   Meath's `RA - Rural Area`: through GeoJSONSeq it arrives as 107 counter-clockwise rings totalling
- *   2,371.9 km², through CSV/WKT as the source's own 5 clockwise and 102 counter-clockwise totalling
- *   2,223.1 km² against the Department's published 2,232.1 km². The GeoJSON path has silently turned 102
- *   holes into 102 zoned areas.
- *
- *   and the transport is not the slow half. Measured on this lab over the whole national export: ogr2ogr
- *   reprojects to 224,066,621 bytes of WKT CSV in 13.2 s, and `CSVSpliterator` plus the WKT parse reads
- *   85,330 rows, 93,483 rings and 6,327,256 positions back out of it in 2.2 s.
- *
- *   the source is not IN WGS84 and saying SO is the check. The bulk export is IRENET95 / Irish Transverse
- *   Mercator — metres, easting/northing, epsg:2157 — declared in a top-level `crs` member RFC 7946 removed
- *   from the format. gdal honours the legacy member. a strict reader ignores it and places Ireland's zoning
- *   at latitude 735,435. So the projection is asserted against the source's declared authority code before a
- *   single feature is read, and every reprojected vertex is asserted inside the Department's own declared
- *   extent — which is the check that catches a coordinate-order mistake the projection check cannot see.
- *
- *   the datum shift needs A grid, and its absence is silent. proj substitutes a ballpark offset when the
- *   accurate transformation is unavailable and produces coordinates that are metres wrong and
- *   indistinguishable from correct ones. {@linkcode assertDatumTransformationAvailable} asks `projinfo` what
- *   proj would choose and refuses a ballpark. for this source it names
- *   `Inverse of Irish Transverse Mercator + IRENET95 to WGS 84 (1), 1 m`.
- *
- *   the publisher'S own area column is not IN the archive. `Shape__Area` is a service field and the export
- *   drops it, so the area cross-check reads it from the live service instead — which makes it a genuine
- *   two-path check rather than the archive agreeing with itself. See `sdk/client.ts`.
+ *   The stream uses CSV with WKT geometry because the source marks holes by ring orientation, and GDAL's
+ *   GeoJSON writer rewinds every ring to RFC 7946 order, which turns holes into zoned areas. The source is
+ *   in EPSG:2157, declared in a legacy top-level `crs` member that GDAL honours.
  */
 
 import { declaredFeatureCount } from "@mailwoman/core/layers"
@@ -55,11 +25,12 @@ import { GZT_DECLARED_BBOX, GZT_SOURCE_EPSG } from "#vocabulary"
  */
 export interface ZoningSourceFeature {
 	/**
-	 * The authority's own `objectid`, as a string.
+	 * The authority's `objectid` as a string.
 	 */
 	areaID: string
 	/**
-	 * `LA_CODE`, verbatim — `Fl` for Fingal, and never repaired.
+	 * The `LA_CODE` value, verbatim.
+	 * Fingal's unusual `Fl` code is kept as published.
 	 */
 	authorityCode: string
 	authorityName: string
@@ -70,115 +41,97 @@ export interface ZoningSourceFeature {
 	planTo: string | null
 	currentPlan: number
 	/**
-	 * `ZONE_ORIG`, verbatim, including case and any trailing space.
+	 * The `ZONE_ORIG` value, verbatim.
+	 *
+	 * Case and trailing spaces are kept because some codes differ only by them.
 	 */
 	localCode: string
 	localDescription: string | null
 	localCodeURL: string | null
 	/**
-	 * `ZONE_GZT` — the Department's national generic type for this polygon.
+	 * The `ZONE_GZT` value, which is the Department's national generic type for this polygon.
 	 */
 	crosswalkCode: string | null
 	crosswalkDescription: string | null
 	/**
-	 * `SZO` — the coarser national code, as published.
+	 * The `SZO` value, which is the coarser national code, as published.
 	 */
 	crosswalkRollup: string | null
 	/**
-	 * The rings, with hole roles resolved from orientation, plus the receipt of that resolution.
+	 * The rings with hole roles resolved from their orientation, plus a record of that resolution.
 	 */
 	rings: ResolvedRingRoles
 }
 
 /**
- * What the ingest was pointed at.
+ * Options for reading the bulk export.
  */
 export interface ZoningIngestOptions {
 	/**
-	 * Path to the bulk GeoJSON export.
+	 * The path of the bulk GeoJSON export.
 	 */
 	exportPath: string
 	/**
-	 * Stop after this many features.
-	 *
-	 * The fixtures and smoke rungs use it.
-	 * A full build does not set it.
+	 * The maximum number of features to read.
+	 * Fixture and smoke runs use it.
 	 */
 	limit?: number
 	/**
-	 * The epsg code the source must declare.
-	 *
-	 * A source declaring anything else is a product change rather than a variation to absorb.
+	 * The EPSG code that the source must declare.
+	 * A different code means the product has changed.
 	 */
 	expectEPSG?: number
 	/**
-	 * The extent every reprojected vertex must land inside.
-	 *
-	 * Defaults to the Department's own declaration.
+	 * The extent that every reprojected vertex must fall inside.
+	 * The default is the Department's declared extent.
 	 */
 	declaredBBox?: readonly [number, number, number, number]
 	/**
-	 * Read only the authority's feature ids in `[objectIDFrom, objectIDTo]`, inclusive.
+	 * The inclusive range of authority `objectid` values to read.
 	 *
-	 * This is what makes a bounded build possible: h3's wasm heap cannot be reset from JavaScript,
-	 * so the classification runs one child process per range of the authority's own ids.
-	 * Ranges rather than an offset because `objectid` is the source's stable key.
+	 * The h3 wasm heap cannot be reset from JavaScript, so the build runs one child process per range.
+	 * It uses `objectid` ranges because they select the same features on every run.
 	 *
-	 * A range names the same features on every run, which an offset into a result set does not.
-	 *
-	 * A narrower range costs A whole pass.
-	 * The source is one GeoJSON document rather than an indexed store,
-	 * so ogr2ogr scans all 247 MB for every range.
-	 *
-	 * The national set fits inside one chunk at the default bound, so that cost is not paid on a full build.
+	 * Every range costs a full scan of the export, because the export is one GeoJSON document.
 	 */
 	objectIDFrom?: number
 	objectIDTo?: number
 	/**
-	 * Restrict to one local authority's own `LA_CODE` — the smoke rung.
+	 * Restricts the read to one local authority's `LA_CODE`, for smoke runs.
 	 */
 	authorityCode?: string
 }
 
 /**
- * What the source declares about itself, read before any feature is.
+ * The metadata that the source declares, read before any feature.
  */
 export interface ZoningSourceIdentity {
 	epsg: number
 	featureCount: number
 	layer: string
 	/**
-	 * The source's own attribute field names.
-	 *
-	 * A `-select` naming a column this set does not hold makes ogr2ogr write
-	 * an empty column rather than refuse, so the query is built from the set
-	 * rather than from a schema read off a sibling publication.
+	 * The source's attribute field names.
 	 */
 	fields: ReadonlySet<string>
 }
 
 /**
- * Coordinate decimals ogr2ogr writes into the stream.
- *
- * Nine is ~0.1 mm at this latitude — far past the source's own precision, and chosen
- * so the reprojection contributes nothing measurable to the area cross-check.
+ * The number of coordinate decimals that ogr2ogr writes.
+ * Nine decimals is far finer than the source's precision.
  */
 const COORDINATE_PRECISION = 9
 
 /**
- * How far outside the declared extent a vertex may fall before the ingest refuses.
+ * The distance in degrees that a vertex may fall outside the declared extent.
  *
- * A declared extent is itself a rounded published value, so an exact test would be brittle.
- * This margin is small enough that an unprojected or axis-swapped read —
- * which lands degrees or whole hemispheres away — still fails.
+ * The published extent is rounded, so an exact test would fail on valid data.
+ * An unprojected or axis-swapped read lands much farther away and still fails.
  */
 const BBOX_MARGIN_DEGREES = 0.01
 
 /**
- * The attribute columns the ingest reads.
- *
- * Every one is required: this product publishes a single schema, and a column that
- * vanished would be a product change rather than a variation to absorb.
+ * The attribute columns that the ingest reads.
+ * Every column is required.
  */
 export const ZONING_SOURCE_FIELDS: ReadonlyArray<string> = [
 	"OBJECTID",
@@ -199,10 +152,10 @@ export const ZONING_SOURCE_FIELDS: ReadonlyArray<string> = [
 ]
 
 /**
- * What the source declares about itself: its authority code, its feature count and its field list.
+ * Reads the source's declared projection, feature count and field list.
  *
- * @throws {Error} When the export is unreadable, its declared epsg is not `expectEPSG`,
- * or it is missing a field the ingest reads.
+ * @throws {Error} When the export is unreadable, when its declared EPSG code differs
+ * from `expectEPSG`, or when it lacks a field that the ingest reads.
  */
 export async function readZoningSourceIdentity(options: ZoningIngestOptions): Promise<ZoningSourceIdentity> {
 	const identity = await readOGRLayerIdentity({
@@ -214,10 +167,8 @@ export async function readZoningSourceIdentity(options: ZoningIngestOptions): Pr
 
 	const missing = ZONING_SOURCE_FIELDS.filter((field) => field !== "OBJECTID" && !identity.fields.has(field))
 
-	// `-select` on a missing column makes ogr2ogr write an empty column rather than refuse,
-	// so a schema change would arrive as a stream of nulls: every local code blank,
-	// every plan unnamed, and a well-formed artifact describing nothing.
-	// Refused here instead, by name.
+	// Given a missing column, `-select` makes ogr2ogr write an empty column without an error.
+	// This check turns a source schema change into an error that lists the missing columns.
 	if (missing.length) {
 		throw new Error(
 			`zoning ingest: ${options.exportPath} carries no ${missing.join(", ")} column(s) — ogr2ogr writes a missing column as empty rather than refusing, so a schema change would arrive as a stream of blank codes`
@@ -228,7 +179,7 @@ export async function readZoningSourceIdentity(options: ZoningIngestOptions): Pr
 }
 
 /**
- * The `-where` predicate for a bounded chunk or a one-authority smoke run.
+ * Returns the `-where` arguments for a bounded chunk or a one-authority smoke run.
  */
 function whereClause(options: ZoningIngestOptions): string[] {
 	const bounds: string[] = []
@@ -249,10 +200,7 @@ function whereClause(options: ZoningIngestOptions): string[] {
 }
 
 /**
- * A published value, as a string or null.
- *
- * An empty string is not NULL here for the local code, which is the one column this layer
- * exists to repeat: a blank one is refused by the ingest rather than stored.
+ * Returns the value, or null when it is undefined or empty.
  */
 function blankToNull(value: string | undefined): string | null {
 	if (value === undefined) return null
@@ -261,15 +209,12 @@ function blankToNull(value: string | undefined): string | null {
 }
 
 /**
- * Stream the export through ogr2ogr as reprojected WKT, checking every vertex against the declared extent.
+ * Streams the export through ogr2ogr as reprojected WKT and checks every vertex against the declared extent.
  *
- * A swapped coordinate order survives a projection check — both axes are still
- * numbers in a plausible range — and shows up here immediately, before 85,330
- * polygons are written to the wrong side of the planet.
+ * The extent check catches swapped coordinate axes, which the projection check misses.
  *
- * @throws {Error} When ogr2ogr fails, when a feature carries no geometry,
- * when a reprojected vertex falls outside the declared extent, or when a feature's
- * rings cannot be resolved into at least one exterior.
+ * @throws {Error} When ogr2ogr fails, when a feature has no geometry or a blank local code, when
+ * a reprojected vertex falls outside the declared extent, or when a feature's rings have no exterior.
  */
 export async function* readZoningFeatures(options: ZoningIngestOptions): AsyncGenerator<ZoningSourceFeature> {
 	const [minLon, minLat, maxLon, maxLat] = options.declaredBBox ?? GZT_DECLARED_BBOX
@@ -321,9 +266,7 @@ export async function* readZoningFeatures(options: ZoningIngestOptions): AsyncGe
 
 			const localCode = row.zone_orig ?? ""
 
-			// The local code is what this layer exists to repeat, so a blank one is refused
-			// rather than stored: it would read as a zone the authority named nothing,
-			// which is not a reading the authority ever makes.
+			// The authority never publishes a zone without a code, so a blank code is an error.
 			if (!localCode.trim()) {
 				throw new Error(
 					`zoning ingest: feature ${areaID} carries a blank ZONE_ORIG — the authority's own code is the claim, so a blank is refused rather than stored`
@@ -340,9 +283,7 @@ export async function* readZoningFeatures(options: ZoningIngestOptions): AsyncGe
 				planFrom: blankToNull(row.plan_from),
 				planTo: blankToNull(row.plan_to),
 				currentPlan: Number(row.current_plan ?? 0),
-				// verbatim, and deliberately un-trimmed: `Proposed Residential ` carries
-				// a trailing space in the source, and five of the 581 distinct strings
-				// collide with another only on case or that space.
+				// The code stays untrimmed because some distinct codes differ only by case or a trailing space.
 				localCode,
 				localDescription: blankToNull(row.zone_desc),
 				localCodeURL: blankToNull(row.zone_link),
@@ -360,7 +301,7 @@ export async function* readZoningFeatures(options: ZoningIngestOptions): AsyncGe
 }
 
 /**
- * Parse one WKT geometry into the ring shape the rest of this package works in.
+ * Parses one WKT geometry into `MultiPolygon` rings.
  *
  * @throws {Error} When the geometry is neither a `Polygon` nor a `MultiPolygon`.
  */
@@ -371,44 +312,44 @@ function normalizePolygons(wkt: string, label: string): MultiPolygonRings {
 }
 
 /**
- * Where a build's features come from, and what the source declares about itself.
+ * Supplies a zoning build with its features and the source's declared identity.
  *
- * The builder takes one of these rather than a path, which is what makes the
- * fixture rung possible: hand-built geometry with no network and no gdal still
- * exercises the whole database half — the domain checks, the ring-role resolution,
- * the cell classification, the coverage rows, the manifest and the seal.
- * A fixture rung that could only run through ogr2ogr would test the conversion on the
- * machines that have it and nothing at all on the ones that do not.
+ * The builder takes this instead of a path so that fixtures can run the database
+ * build without network access or GDAL.
  */
 export interface ZoningFeatureSource {
 	/**
-	 * What the source says it holds.
+	 * The feature count that the source declares.
 	 *
-	 * The build compares its own streamed total against this, so a short read throws
-	 * instead of building a smaller country.
+	 * The build throws when its streamed total differs from this count.
 	 */
 	declaredFeatureCount: number
 	epsg: number
 	/**
-	 * A description of where these features came from, for the receipt.
+	 * A description of where the features came from, such as the export path.
 	 */
 	origin: string
 	features: () => AsyncIterable<ZoningSourceFeature>
 }
 
+/**
+ * Options for {@link createExportFeatureSource}.
+ */
 export interface ExportSourceOptions extends ZoningIngestOptions {
 	declaredFeatureCount?: number
 }
 
 /**
- * The bulk export as a feature source — identity read up front, features streamed on demand.
+ * Creates a {@link ZoningFeatureSource} for the bulk export.
+ *
+ * It reads the export's identity immediately and streams features when asked.
  */
 export async function createExportFeatureSource(options: ExportSourceOptions): Promise<ZoningFeatureSource> {
 	const identity = await readZoningSourceIdentity(options)
 
 	return {
-		// A range's or an authority's own count is supplied by the caller, because
-		// `ogrinfo` reports a layer's total and nothing narrower.
+		// The caller supplies the count for a range or one authority, because
+		// `ogrinfo` reports only the layer's total.
 		declaredFeatureCount: declaredFeatureCount({
 			declared: options.declaredFeatureCount,
 			limit: options.limit,

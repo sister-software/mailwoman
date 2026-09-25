@@ -2,11 +2,9 @@
  * @copyright Sister Software.
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file Fetch FCC CORES registration details by FRN for independent name and address corroboration.
- *   The client uses the HTML detail page at `apps.fcc.gov`; the documented JSON endpoint returns 403 from
- *   the lab host. The page provides registration details, not parent or subsidiary relationships, so it must
- *   not be used to create ownership edges. Parsing uses the shared HTML text helper and preserves raw entity
- *   type values; parse failures abstain rather than fabricate records.
+ * @file Fetches FCC CORES registration details by FRN to corroborate names and addresses.
+ *   The client reads the HTML detail page on `apps.fcc.gov` because the documented JSON API on `data.fcc.gov`
+ *   returns 403 to our host. The page lists registration details only, so it cannot support ownership edges.
  */
 
 import {
@@ -21,38 +19,33 @@ import { dataRootPath } from "@mailwoman/core/data-root"
 
 import { $private } from "#env"
 
-// Re-exported so callers can handle client errors from one import.
-
 /**
- * Default request rate; CORES publishes no limit, so keep requests conservative.
+ * Default request rate.
+ *
+ * CORES publishes no rate limit, so the default is conservative.
  */
 export const CORES_DEFAULT_REQUESTS_PER_SECOND = 4
 
 /**
- * Maximum request rate, enforced even when a caller requests more.
+ * Upper bound on the request rate.
+ * Higher requested rates are clamped to it.
  */
 export const CORES_MAX_REQUESTS_PER_SECOND = 8
 
 const MS_PER_SECOND = 1000
 
 /**
- * Cache lifetime for registration records, which change when entities update their details.
+ * Cache lifetime for registration pages, one week.
  */
 const DEFAULT_CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000
 
 const HTTP_OK = 200
 const HTTP_MULTIPLE_CHOICES = 300
 
-/**
- * Exact hostname allowed for CORES requests.
- */
 const CORES_ALLOWED_HOSTS = new Set(["apps.fcc.gov"])
 
 /**
- * Reject URLs outside the CORES host allowlist.
- *
- * @throws A {@linkcode ResourceError} whose URN kind is `request` — never transient,
- * since re-issuing the identical URL fails identically.
+ * Throws a non-retryable `request` error for a URL outside the CORES host allowlist.
  */
 function assertCORESHost(url: URL): void {
 	assertAllowedHost(url, {
@@ -74,8 +67,9 @@ export { coresDetailURL, fetchCORESRegistration, type CORESDocumentClient } from
  */
 export interface CreateCORESClientOptions {
 	/**
-	 * Descriptive User-Agent sent with requests; defaults to configured FCC
-	 * or SEC values, then a package fallback.
+	 * User-Agent header.
+	 *
+	 * It falls back to `FCC_CORES_USER_AGENT`, then `SEC_EDGAR_USER_AGENT`, then a package default.
 	 */
 	userAgent?: string
 	/**
@@ -84,7 +78,8 @@ export interface CreateCORESClientOptions {
 	requestsPerSecond?: number
 	clock?: ClockLike
 	/**
-	 * On-disk cache directory; defaults under the FCC data root.
+	 * Disk cache directory.
+	 * The default is `fcc/cores/cache` under the data root.
 	 */
 	cacheDir?: string
 	cacheTTLMs?: number
@@ -92,17 +87,22 @@ export interface CreateCORESClientOptions {
 	baseRetryDelayMs?: number
 	requestTimeoutMs?: number
 	/**
-	 * Axios overrides, including the adapter used by tests; replacing headers removes the default User-Agent.
+	 * Axios overrides.
+	 * Passing `headers` replaces the default User-Agent header.
 	 */
 	axios?: APIClientConfig["axios"]
 }
 
+/**
+ * Configuration for {@linkcode CORESClient}.
+ */
 export interface CORESClientConfig extends APIClientConfig {
 	userAgent: string
 }
 
 /**
- * Cache only non-empty HTML response bodies; empty responses may be truncated.
+ * Returns whether a response body is a non-empty string.
+ * An empty body may be a truncated response.
  */
 function isCacheableCORESBody(value: { data?: { data?: unknown } }): boolean {
 	const body = value.data?.data
@@ -115,7 +115,7 @@ function isCacheableCORESBody(value: { data?: { data?: unknown } }): boolean {
  */
 export class CORESClient extends APIClient<CORESClientConfig> {
 	/**
-	 * Fetch an absolute HTTPS URL on the allowed host and return its raw HTML body.
+	 * Fetches a URL on the allowed host and returns the raw HTML body.
 	 */
 	public async getDocument(input: string | URL): Promise<string> {
 		const url = input instanceof URL ? input : new URL(input)
@@ -129,7 +129,7 @@ export class CORESClient extends APIClient<CORESClientConfig> {
 }
 
 /**
- * Create an FCC CORES client with bounded pacing, retry, and disk caching.
+ * Creates an FCC CORES client with rate limiting, retries and a disk cache.
  */
 export function createCORESClient(options: CreateCORESClientOptions = {}): CORESClient {
 	const userAgent =
@@ -146,7 +146,7 @@ export function createCORESClient(options: CreateCORESClientOptions = {}): CORES
 	return new CORESClient({
 		displayName: "FCC CORES",
 		userAgent,
-		// Round up so fractional intervals cannot exceed the requested rate.
+		// Rounding up keeps the actual rate at or below the requested rate.
 		minRequestIntervalMs: Math.ceil(MS_PER_SECOND / requestsPerSecond),
 		retry: {
 			maxAttempts: options.maxAttempts ?? API_CLIENT_DEFAULTS.maxAttempts,

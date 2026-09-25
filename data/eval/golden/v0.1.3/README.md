@@ -1,32 +1,29 @@
 # Golden eval set v0.1.3
 
-Hand-labeled ground truth for the Mailwoman neural classifier. **This is the
-interface for "what good looks like."** Eval scripts compare classifier output
-to the components in each entry.
+Hand-labeled ground truth for the Mailwoman neural classifier. This set defines the expected
+output. Eval scripts compare classifier output to the components in each entry.
 
 ## What changed in v0.1.3 (2026-08-06)
 
-**US street spans are labeled SPLIT.** The rest of this file is v0.1.2's, carried
-forward; read `MANIFEST.json`'s `convention` block for the authoritative statement,
-`REVIEW-DECK.md` for the rows that moved, and
-[SCHEMA.mdx](../../../../docs/engineering/reference/SCHEMA.mdx) for the interface.
+US street spans are now labeled with the split convention. The rest of this file is carried forward
+from v0.1.2. The `convention` block in `MANIFEST.json` is the authoritative statement of the
+convention. `REVIEW-DECK.md` lists the rows that changed, and
+[SCHEMA.mdx](../../../../docs/engineering/reference/SCHEMA.mdx) describes the interface.
 
-`6220 SE Salmon St` is four components rather than two: `house_number` `6220`,
-`street_prefix` `SE`, `street` `Salmon`, `street_suffix` `St`. v0.1.2 folded the
-prefix and the type into `street`, which disagreed with the corpus that trains the
-model — and the eval scorer papered over the gap by gluing the model's spans back
-together before comparing. That cost a real verdict: the v9.0.0 candidate failed
-its promotion check on `us.street` over the convention rather than over its parse.
+`6220 SE Salmon St` is four components instead of two: `house_number` `6220`, `street_prefix` `SE`,
+`street` `Salmon`, `street_suffix` `St`. v0.1.2 folded the prefix and the type into `street`, which
+disagreed with the corpus that trains the model. The eval scorer hid the mismatch by joining the
+model's spans back together before comparing. As a result, the v9.0.0 candidate failed its promotion
+check on `us.street` because of the labeling convention. Its parse was not the cause.
 
-Produced from v0.1.2 by `mailwoman corpus golden-relabel`
-(`corpus/src/tools/golden-relabel-street.ts`), splitting on the USPS Pub-28 table
-in `@mailwoman/codex/us`. 1,907 of 2,956 US rows changed; 140 carry a review flag.
-**FR rows are byte-identical to v0.1.2** — French street typology is a separate
-question this relabel did not answer.
+`mailwoman corpus golden-relabel` (`corpus/src/tools/golden-relabel-street.ts`) produced this
+version from v0.1.2 by splitting on the USPS Pub-28 table in `@mailwoman/codex/us`. The relabel
+changed 1,907 of 2,956 US rows, and 140 rows carry a review flag. **FR rows are byte-identical to
+v0.1.2.** This relabel did not address French street typology.
 
-A scorer that folds `street_prefix`/`street`/`street_suffix` back together is not
-grading this answer key. `packages/mailwoman/lib/dev-tools/per-locale-f1.run.ts` reads the declaration in
-`MANIFEST.json` and scores split-convention rows unfolded.
+A scorer that folds `street_prefix`/`street`/`street_suffix` back together does not grade against
+this answer key. `packages/mailwoman/lib/dev-tools/per-locale-f1.run.ts` reads the declaration in
+`MANIFEST.json` and scores split-convention rows without folding them.
 
 Numbers here are not comparable with v0.1.2 numbers. The evaluation spec that grades
 against this key is `mailwoman/eval-harness/specs/v9.0.0-base.json`.
@@ -35,11 +32,11 @@ against this key is `mailwoman/eval-harness/specs/v9.0.0-base.json`.
 
 - `us.jsonl` — US addresses (target: 500 entries).
 - `fr.jsonl` — FR addresses (target: 500 entries).
-- `adversarial.jsonl` — graceful-failure + kryptonite cases per Phase 1.6 §3
-  (#22). Seeded with 54 entries across the four adversarial categories below.
+- `adversarial.jsonl` — graceful-failure and kryptonite cases from Phase 1.6 §3 (#22). It was
+  seeded with 54 entries across the four adversarial categories below.
 - `README.md` — this file.
 
-Each `.jsonl` is one entry per line, no trailing whitespace.
+Each `.jsonl` file has one entry per line and no trailing whitespace.
 
 ## Schema (per entry)
 
@@ -60,20 +57,20 @@ Each `.jsonl` is one entry per line, no trailing whitespace.
 ```
 
 - `raw`: the address string a classifier sees.
-- `components`: per-`ComponentTag` ground truth. Surface forms must occur in
-  `raw` (within fuzzy match tolerance — see alignment).
+- `components`: ground truth keyed by `ComponentTag`. Each surface form must occur in `raw`, within
+  the fuzzy-match tolerance of the alignment helper.
 - `country`: ISO 3166-1 alpha-2.
 - `source`: always `"golden"`.
-- `notes`: human-readable description of what makes this entry interesting
-  (edge case, dialect, abbreviation, accent, …).
+- `notes`: a human-readable description of what makes this entry interesting (edge case, dialect,
+  abbreviation, accent, …).
 
-`ComponentTag` is the union defined in `@mailwoman/core/types`. See
-`packages/core/core/types/component.ts` for the authoritative list.
+`ComponentTag` is the union defined in `@mailwoman/core/types`.
+`packages/core/core/types/component.ts` holds the authoritative list.
 
 ## Coverage targets (per the Phase 1 plan)
 
-A golden entry should land in one or more of these categories. Aim for
-roughly even coverage across them:
+Each golden entry should fall into one or more of these categories. Aim for roughly even coverage
+across them:
 
 - Residential (single-family, urban, rural)
 - Commercial / business
@@ -97,78 +94,66 @@ roughly even coverage across them:
    ```sh
    npx mailwoman corpus validate-golden data/eval/golden/v0.1.0/
    ```
-   It verifies every entry's components are reachable in `raw` (via the same
-   `reconcileComponents` alignment helper), every tag is in the
-   `ComponentTag` union, and the file shape is well-formed.
-3. Open a PR. The pre-merge eval script (added later) re-runs validation +
-   reports per-tag and per-source category coverage.
+   The validator checks that every entry's components are reachable in `raw` (using the
+   `reconcileComponents` alignment helper), that every tag is in the `ComponentTag` union, and that
+   the file is well-formed.
+3. Open a PR. The pre-merge eval script (added later) re-runs validation and reports coverage per
+   tag and per source category.
 
 ## Adversarial categories (`adversarial.jsonl`)
 
-Each entry in the adversarial file lands in exactly one category — the
-`notes` field begins with `kryptonite/<subtype>:` or
-`graceful/<subtype>:` so eval scripts can stratify.
+Each entry in the adversarial file belongs to exactly one category. Its `notes` field begins with
+`kryptonite/<subtype>:` or `graceful/<subtype>:` so that eval scripts can stratify results.
 
-**`kryptonite/place-name-venue`** — venue token shared with locality.
-"Buffalo Health Clinic, …, Buffalo, NY 14201". Model must label first
-Buffalo as venue, second as locality.
+**`kryptonite/place-name-venue`**: the venue shares a token with the locality. In "Buffalo Health
+Clinic, …, Buffalo, NY 14201", the model must label the first Buffalo as venue and the second as
+locality.
 
-**`kryptonite/place-shaped-venue`** — venue contains a multi-token
-sub-string that looks like a complete address. "Paris, Texas Steakhouse,
-…, Houston, TX 77002". The actual locality+region is later in the line;
-the place-shaped prefix is venue.
+**`kryptonite/place-shaped-venue`**: the venue contains a multi-token substring that looks like a
+complete address. In "Paris, Texas Steakhouse, …, Houston, TX 77002", the actual locality and
+region come later in the line, and the place-shaped prefix is part of the venue.
 
-**`kryptonite/particle-honorific`** — apostrophe + St./Saint /
-Mt./Mount / Ft./Fort / directional-initial ambiguity. Same surface form
-plays different syntactic roles in venue vs street vs locality. E.g.
-"P'tit St. Denis Street Café" — venue's "St." is an honorific rather than a
-street_prefix.
+**`kryptonite/particle-honorific`**: ambiguity from apostrophes, St./Saint, Mt./Mount, Ft./Fort
+and directional initials. The same surface form plays different roles in a venue, a street or a
+locality. For example, in "P'tit St. Denis Street Café" the venue's "St." is an honorific instead
+of a street_prefix.
 
-**`kryptonite/disambiguation`** — locality alone (or locality+region)
-that could resolve to a set of real places. Ground truth matches what was
-written rather than what is most famous.
+**`kryptonite/disambiguation`**: a locality alone (or a locality and region) that could resolve to
+several real places. The ground truth matches what was written, even when a more famous place shares the name.
 
-**`graceful/typo`** — single-char edits or transpositions on a clean
-address. "Pensylvania" → still recoverable; the model should produce
-the same parse with marginally lower confidence.
+**`graceful/typo`**: single-character edits or transpositions on a clean address, such as
+"Pensylvania". The model should produce the same parse with slightly lower confidence.
 
-**`graceful/mis-casing`** / **`graceful/mis-punctuation`** —
-all-uppercase, commas removed, comma-separated-no-spaces, dot-as-
-separator. Heavy load on token-boundary heuristics.
+**`graceful/mis-casing`** / **`graceful/mis-punctuation`**: all-uppercase text, removed commas,
+commas without spaces, and dots as separators. These cases test token-boundary heuristics.
 
-**`graceful/whitespace`** — runs of multiple spaces inside the address.
-The model must collapse internal whitespace.
+**`graceful/whitespace`**: runs of multiple spaces inside the address. The model must collapse
+internal whitespace.
 
-**`graceful/no-commas`** — separator-stripped form, common in legacy
-systems.
+**`graceful/no-commas`**: the address with separators stripped, which is common in legacy systems.
 
-**`graceful/label-prefix`** / **`graceful/contamination`** /
-**`graceful/trailing-junk`** — extraneous noise around the address.
-Tokens of noise should land `O`.
+**`graceful/label-prefix`** / **`graceful/contamination`** / **`graceful/trailing-junk`**:
+extraneous noise around the address. Noise tokens should be labeled `O`.
 
-**`graceful/attention`** — "c/o" forms. Lands on the `attention`
-component.
+**`graceful/attention`**: "c/o" forms, which belong to the `attention` component.
 
-**`graceful/unit`** — non-standard unit designators (hyphenated, hash-
-prefixed, multi-part building+suite).
+**`graceful/unit`**: non-standard unit designators (hyphenated, hash-prefixed, or multi-part
+building and suite).
 
-**`graceful/country`** — dotted "U.S.A." variants on the country line.
+**`graceful/country`**: dotted "U.S.A." variants on the country line.
 
-The per-entry `notes` field also documents _what the model should
-ideally do_ on each adversarial case — including when partial-parse +
-low-confidence-flag is the right answer rather than a full but wrong
-parse.
+The per-entry `notes` field also describes _what the model should ideally do_ on each adversarial
+case. For some cases, a partial parse with a low-confidence flag is the right answer instead of a
+full but wrong parse.
 
 ## Why hand-labeled rather than synthesized?
 
-Phase 1 corpus rows are derived from public data sources (WOF, BAN, OSM, …)
-and carry adapter-level ground truth — but those sources have their own
-biases (BAN over-represents urban France; WOF leans coarse). The golden set
-is the smoke test for those biases. It's small enough to be inspected by a
-human reviewer and broad enough to catch class regressions.
+Phase 1 corpus rows come from public data sources (WOF, BAN, OSM, …) and carry adapter-level
+ground truth. Those sources have their own biases: BAN over-represents urban France, and WOF is
+mostly coarse. The golden set tests for those biases. It is small enough for a human reviewer to
+inspect and broad enough to catch class regressions.
 
 ## Versioning
 
-This directory is locked to `corpus-v0.1.0`. Any schema change to
-`ComponentTag` triggers a new golden version (per the same rule applied to
-`tokenizer-v0.1.0`).
+This directory is locked to `corpus-v0.1.0`. Any schema change to `ComponentTag` requires a new
+golden version, following the same rule as `tokenizer-v0.1.0`.

@@ -3,8 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Enumerate and ingest WOF GeoJSON into the admin-gazetteer staging database.
- *   Reads run in parallel; writes use one thread. The caller owns database setup.
+ *   Ingests WOF GeoJSON files into the admin-gazetteer staging database.
  */
 
 import { isOfficialLanguage } from "@mailwoman/codex/country"
@@ -24,16 +23,15 @@ import {
 } from "#gazetteer-pipeline/admin/label-point-adjudicator"
 
 /**
- * Arity of a 2D bounding box: `[west, south, east, north]`.
+ * The number of values in a 2D bounding box: `[west, south, east, north]`.
  */
 const BBOX_2D_LENGTH = 4
 
 /**
- * Admin placetypes to ingest.
+ * The default admin placetypes to ingest.
  *
- * Postalcode builds supply their own allowlist.
- * `macrohood` and `microhood` map to `dependent_locality`; venues such as `campus`
- * belong to the sub-venue layer, not this admin index.
+ * Postalcode builds pass their own list.
+ * Venue placetypes such as `campus` belong to the sub-venue layer.
  */
 export const ADMIN_PLACETYPES: ReadonlySet<string> = new Set([
 	"country",
@@ -78,7 +76,6 @@ async function parseFeature(
 	placetypes: ReadonlySet<string>,
 	anchorLookup?: GeoNamesAnchorLookup
 ): Promise<ParsedFeature | null> {
-	// Use the shared WOF schema so property-key typos fail type checking.
 	const feature = parseJSONStrict<WOFFeature>(text)
 	const props: WOFProperties | undefined = feature.properties
 
@@ -94,8 +91,7 @@ async function parseFeature(
 
 	const mzIsCurrent = props["mz:is_current"]
 
-	// Prefer paired label coordinates, then paired geometry coordinates.
-	// When both exist, GeoNames can adjudicate large disagreements.
+	// The label point is preferred over the geometry point, and each counts only with both coordinates.
 	const hasLbl = typeof props["lbl:latitude"] === "number" && typeof props["lbl:longitude"] === "number"
 	const hasGeom = typeof props["geom:latitude"] === "number" && typeof props["geom:longitude"] === "number"
 
@@ -103,7 +99,8 @@ async function parseFeature(
 	let lon = hasLbl ? props["lbl:longitude"]! : hasGeom ? props["geom:longitude"]! : 0
 	let pointChoice: PointChoice | undefined
 
-	// Use GeoNames adjudication for localities only; region and county anchors are centroids.
+	// Only localities use GeoNames adjudication.
+	// GeoNames anchors for regions and counties are centroids.
 	if (placetype === "locality" && hasLbl && hasGeom && anchorLookup) {
 		const gnID = props["wof:concordances"]?.["gn:id"]
 
@@ -121,7 +118,8 @@ async function parseFeature(
 		pointChoice = chosen.choice
 	}
 
-	// WOF bbox order is west, south, east, north; default to a point bbox.
+	// WOF orders the bbox as west, south, east, north.
+	// Without one, the bbox is the point itself.
 	let [minLon, minLat, maxLon, maxLat] = [lon, lat, lon, lat]
 	const bboxStr = props["geom:bbox"]
 
@@ -142,7 +140,7 @@ async function parseFeature(
 		if (!match || !value) continue
 		const lang = match[1]!
 		const privateuse = match[2]!
-		// Only preferred forms in official languages count as official names.
+		// A name is official only when it is a preferred form in an official language.
 		const official = privateuse === "preferred" && isOfficialLanguage(country, lang) ? 1 : 0
 		const vals = Array.isArray(value) ? value : [value]
 
@@ -178,54 +176,59 @@ async function parseFeature(
 	}
 }
 
+/**
+ * Options for {@link ingestWOF}.
+ */
 export interface IngestWOFOptions {
 	/**
-	 * WOF repos root (a parent of `whosonfirst-data*` subrepos, or a single repo directory).
+	 * The WOF data root.
+	 *
+	 * It can be a parent of `whosonfirst-data*` repositories or a single repository.
 	 */
 	dataDir: PathBuilderLike
 	/**
-	 * Placetype allowlist.
-	 *
-	 * Default {@link ADMIN_PLACETYPES}.
+	 * The placetypes to ingest.
+	 * Defaults to {@link ADMIN_PLACETYPES}.
 	 */
 	placetypes?: ReadonlySet<string>
 	/**
-	 * Parallel file reads.
-	 *
-	 * Default 64.
+	 * The number of parallel file reads.
+	 * Defaults to 64.
 	 */
 	concurrency?: number
 	/**
-	 * Files per write transaction.
-	 *
-	 * Default 500.
+	 * The number of ingested records per write transaction.
+	 * Defaults to 500.
 	 */
 	batchCommitSize?: number
 	/**
-	 * Progress callback, invoked every 25,000 ingested records.
+	 * Called after every 25,000 ingested records.
 	 */
 	onProgress?: (processed: number, skipped: number, total: number) => void
 	/**
-	 * Optional GeoNames anchor lookup for label-point adjudication.
+	 * The GeoNames anchor lookup for label-point adjudication.
 	 */
 	anchorLookup?: GeoNamesAnchorLookup
 }
 
+/**
+ * Counts from one {@link ingestWOF} run.
+ */
 export interface IngestWOFResult {
 	filesFound: number
 	placesIngested: number
 	skipped: number
 	/**
-	 * Records where GeoNames adjudication selected the geometry point.
+	 * The number of records where GeoNames adjudication chose the geometry point over the label point.
 	 */
 	labelPointOverrides: number
 }
 
 /**
- * Ingest WOF GeoJSON into an open staging database.
+ * Ingests WOF GeoJSON into an open staging database.
  *
- * Reads are parallel; writes are serialized and batched.
- * Postalcode repositories are skipped unless `postalcode` is requested.
+ * Files are read in parallel and written serially in batched transactions.
+ * Postalcode repositories are skipped unless `placetypes` includes `postalcode`.
  */
 export async function ingestWOF(db: DatabaseClient<WOFDatabase>, opts: IngestWOFOptions): Promise<IngestWOFResult> {
 	const placetypes = opts.placetypes ?? ADMIN_PLACETYPES
@@ -242,9 +245,8 @@ export async function ingestWOF(db: DatabaseClient<WOFDatabase>, opts: IngestWOF
 		cwd: opts.dataDir,
 		absolute: true,
 		exclude,
-		// The repos root can expose one checkout through both layouts.
-		// Treat a symlink as an alias rather than a second source tree:
-		// the direct checkout supplies its records once.
+		// A data root can expose one checkout both directly and through a symlink.
+		// Skipping symlinks ingests each record once.
 		followSymlinks: false,
 	}).toArray()
 

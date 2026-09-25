@@ -17,7 +17,7 @@ only.
   `country_weights.get("NO")` misses and the loader drops every Norwegian row. Live since
   v1.9.0-multilocale, through the shipped v264 (6.3.0) and v310 (6.4.0). **25,126 corpus rows
   reaching the model zero times — 12,000 of them from `synth-no-street-led`, a Norwegian extract at
-  source weight 12.0, the maximum targeted-fix tier.** Someone built a extract to fix a Norwegian
+  source weight 12.0, the maximum targeted-fix tier.** Someone built an extract to fix a Norwegian
   defect and it has never run. Fix proven end-to-end: `NO: 0` → `NO: 23,519` bare digit tokens
   (4.19% of the corpus). Two-part fix — quote the key in 44 configs, plus a `__post_init__` guard
   that rejects any non-string country key, because a config-only fix rots the moment someone adds a
@@ -53,7 +53,7 @@ only.
 - **B1 was the right first move and it cost one Modal run.** The night's plan put the cheapest
   measurement first — "is Norway absent or mis-taught?" — ahead of the extract it was meant to inform.
   It answered a question nobody had asked (absent, and for a _mechanical_ reason) and made B2, B4 and
-  most of Track B either moot or unaskable-as-designed. A extract built on the pre-B1 theory would have
+  most of Track B either moot or unaskable-as-designed. An extract built on the pre-B1 theory would have
   been a fix for a defect that does not exist.
 - **The absence-vs-zero discipline paid immediately.** The census block prints the per-country row
   count _before_ the conditional table specifically so a missing row reads "no data" rather than
@@ -87,7 +87,7 @@ Polskiego 178`). Tracing its piece-level posterior showed B0's exact signature o
   correctly-parsed, in-corpus Polish street — B-house_number on the first digit piece, I-postcode on
   the continuations, length-conditioned (2-digit correct, 3-digit fails). H3 + B0 + this are one
   mechanism: the model faithfully reproducing a corpus prior that says long digit-run continuations
-  are postcode. It also explains why B4 barely moved — a extract fights that prior uphill.
+  are postcode. It also explains why B4 barely moved — an extract fights that prior uphill.
   `docs/articles/evals/2026-07-16-digit-incoherence-is-cross-lingual.md`.
 - **The 2k probe did its job. It stopped an 8k run I would otherwise have wanted.** The instrument
   and extract were correct; the read was clean; the target missed its pre-registered bar and the French
@@ -113,7 +113,7 @@ Polskiego 178`). Tracing its piece-level posterior showed B0's exact signature o
 
 | decision                                                                | alternatives                                     | why                                                                                                                                                                                                                                 |
 | ----------------------------------------------------------------------- | ------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Fix all 44 configs, notthe live one                                     | fix `v3.1.0` only; or fix none and file an issue | The dead configs are the historical record of what each run trained on. Leaving them lying is how the next salvage-a-config reintroduces it. The sweep is mechanical and parser-verified.                                           |
+| Fix all 44 configs, not just the live one                               | fix `v3.1.0` only; or fix none and file an issue | The dead configs are the historical record of what each run trained on. Leaving them lying is how the next salvage-a-config reintroduces it. The sweep is mechanical and parser-verified.                                           |
 | Guard **raises** rather than coerces `False` → `"NO"`                   | silently repair the key                          | A config saying `false` does not _mean_ Norway. It means YAML changed the author's meaning. Coercing hides the identical bug in the next field that grows a bare-token key.                                                         |
 | Did **not** add NZ (8,967 rows, absent from `country_weights` entirely) | add it while I'm in there                        | Not a type bug — a scope decision about which countries the product serves. That is the operator's call, and bundling it would smuggle a scope change into a bug fix.                                                               |
 | Did **not** retrain on the now-Norway-inclusive corpus                  | launch a run overnight                           | The night-shift rule: >30min GPU with no falsifiable probe is a guess. The retrain is warranted but the _read_ has to be pre-registered against a board that does not exist yet (B3). Order: B3 → register baselines → then launch. |
@@ -187,7 +187,7 @@ pre-registered probes for a future shift.
   mechanism rather than a separate lead.
 - **B4c — the root fix, an operator call.** The number-piece vocab splice (the tokenizer has 2
   multi-digit pieces, so `178` is 3 pieces with 2 postcode-leaning continuations). Removes the
-  continuations the extract only dents. A tokenizer+model bump, bigger than a extract.
+  continuations the extract only dents. A tokenizer+model bump, bigger than an extract.
 
 ## 8. Where things stand (a status rather than a wind-down)
 

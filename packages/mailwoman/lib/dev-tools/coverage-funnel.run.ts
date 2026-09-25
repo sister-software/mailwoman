@@ -1,36 +1,20 @@
 /**
- * The twelve-stage coverage funnel over every jurisdiction the source register carries,
- * plus the incumbency grouping and the inputs a work-selection ranking would read.
+ * Prints the coverage funnel for every jurisdiction in the source register,
+ * with incumbency groups and work-selection inputs.
  *
- * `mailwoman data coverage` reports the countries the five registers mention.
- * This reports the 250 the register knows, so a jurisdiction that appears in none
- * of them still gets a row saying so at every stage.
+ * Unlike `mailwoman data coverage`, which lists only countries some coverage source
+ * mentions, this covers every register jurisdiction.
+ * A stage reads `unknown` when a checkout cannot answer it, which says nothing about the jurisdiction.
  *
- * The difference between the two denominators is printed, because that difference
- * is the population a failure-driven roadmap cannot see.
- *
- * Every stage carries a state and a reason.
- * `unknown` says this instrument cannot answer the stage from a checkout — `sampled` reads it
- * until an `audit_epoch_mixture` output is supplied — and it is never a claim about the jurisdiction.
+ * Without `--config`, the `admitted` stage reads the config that `scope.config.json`
+ * records for the Latin family's shipped graph.
+ * `--mixture-audit` takes the output of `python -m mailwoman_train.audits.epoch_mixture --json`
+ * and fills the `sampled` stage, which otherwise reads `unknown` because sampling depends on a run.
+ * `--rows` prints every jurisdiction.
  *
  * Run:
  *
- *     node packages/mailwoman/lib/dev-tools/coverage-funnel.run.ts
- *     node packages/mailwoman/lib/dev-tools/coverage-funnel.run.ts --out-json <path>
- *     node packages/mailwoman/lib/dev-tools/coverage-funnel.run.ts --config <training config> --rows
- *     node packages/mailwoman/lib/dev-tools/coverage-funnel.run.ts --mixture-audit <epoch-mixture-audit.json>
- *
- * Without `--config` the `admitted` stage reads the config `scope.config.json` records
- * for the Latin family's shipped graph, which admits 25 countries.
- * The v5.9.0 in-flight config admits 135, so the stage reads a different number for
- * the same repository depending on which question is asked.
- *
- * The report names the file it read either way, and prints the union across both shipped graphs beside it.
- *
- * `--mixture-audit` takes what `python -m mailwoman_train.audits.epoch_mixture --json`
- * writes and fills the `sampled` stage.
- * Without it that stage reads `unknown` for all 250, because how many rows a country
- * contributes to an epoch is a property of a run.
+ *     node packages/mailwoman/lib/dev-tools/coverage-funnel.run.ts [--config <path>] [--mixture-audit <path>] [--rows] [--out-json <path>]
  */
 
 import { POSTAL_REGIMES } from "@mailwoman/codex/postal-regimes"
@@ -64,11 +48,10 @@ const { values } = parseArguments({
 })
 
 /**
- * What `mailwoman_train.audits.epoch_mixture --json` writes, down to the two fields this reads.
+ * Describes the fields this tool reads from `mailwoman_train.audits.epoch_mixture --json` output.
  *
- * The emitted level is the one that answers the stage.
- * Draw level counts what the sampler pulled, and emitted level counts what survived
- * augmentation to fill the trainer's row budget — the rows a run actually trains on.
+ * `emitted_level` counts the rows that survive augmentation and reach the trainer,
+ * so it answers the `sampled` stage.
  */
 interface EpochMixtureAudit {
 	emitted_level?: { by_country?: Record<string, number> }
@@ -76,24 +59,13 @@ interface EpochMixtureAudit {
 }
 
 /**
- * Rows sampled per country in one audited epoch, and the epoch's total.
+ * Reads the rows sampled per country in one audited epoch, and the epoch's total.
  *
- * A country absent from `by_country` stays absent from the map rather than being
- * written in as zero, and the funnel decides what that absence means.
- * `by_country` enumerates every country the audit drew, so a country the audit
- * never mentions drew zero of the audit's own denominator.
+ * A country missing from `by_country` stays missing from the map, and the funnel decides what that means.
+ * `by_country` lists every country the audit drew, so a missing country drew zero rows.
  *
- * An admitted country therefore reads `blocked` with that denominator beside it,
- * which is a measured zero rather than an unknown.
- * A country the config never admitted reads `absent`, since it had nothing to draw.
- *
- * Refuses an audit produced from a config other than the one the `admitted` stage reads.
- * Both stages describe one training arm, and reading them from two configs puts two arms in one column:
- * a run of this tool read `admitted` from the shipped Latin config, which admits 25 countries,
- * beside a `sampled` stage from `v5.9.0-locality-shape-60k.yaml`, which admits 135.
- *
- * So `sampled` reported 38 countries drawn while `admitted` reported 25,
- * and a country could appear in the second and not the first.
+ * @throws If the audit came from a different config than the `admitted` stage reads,
+ * because the two stages must describe one training arm.
  */
 async function readMixtureAudit(
 	path: string,
@@ -109,7 +81,7 @@ async function readMixtureAudit(
 		)
 	}
 
-	// The audit runs on the volume and records an absolute path under `/data`, so only the filename is comparable.
+	// The audit records an absolute path under the `/data` volume, so only the file names are comparable.
 	const audited = audit.meta?.config?.split("/").at(-1)
 	const wanted = configPath.split("/").at(-1)
 
@@ -160,9 +132,9 @@ console.log(
 		`${config.family ? `, weights family ${config.family}` : ""}).`
 )
 
-// The `admitted` stage reads one config, and one config answers for one graph.
-// Printing the shipped union beside it keeps a reader from taking an in-flight
-// config's admissions for the countries a released model trains.
+// The `admitted` stage reads one config, which covers one graph.
+// The union across shipped graphs prints beside it so an in-flight config is
+// not mistaken for a released model.
 const shippedAdmitted = await admittedByShippedGraphs(scope)
 const shippedByFamily = new Map<string, number>()
 
@@ -204,12 +176,9 @@ for (const stage of FUNNEL_STAGES) {
 }
 
 /**
- * How many country codes a group's cell prints before it counts the rest.
+ * Sets how many country codes an incumbency cell prints before it summarizes the rest.
  *
- * Presentation only.
- * The shallow groups hold over a hundred codes each, and a cell carrying all of them
- * wraps past the width a terminal table stays readable at.
- *
+ * This keeps the terminal table readable.
  * `--out-json` writes every code.
  */
 const CODES_PER_GROUP_CELL = 18
@@ -268,10 +237,8 @@ console.log(
 				`\`country_weights\` entry as well as corpus rows.`
 )
 
-// The funnel counts jurisdictions, and a jurisdiction is not always the parser unit.
-// A regime reported here is one whose addresses the funnel's row for its parent country
-// says nothing about: SH's row describes one place where three postal systems live,
-// and a BFPO address is counted under GB while nothing parses it as GB.
+// A postal regime's addresses are not covered by its parent country's funnel row.
+// For example, a BFPO address counts under GB, but nothing parses it as GB.
 console.log(`\n## Postal regimes — where the parser unit is not the ISO country code\n`)
 console.log(`| regime | kind | ISO | coverage | parent jurisdictions' stages reached |`)
 console.log(`| --- | --- | --- | --- | --- |`)
@@ -314,8 +281,7 @@ if (values["out-json"]) {
 				configProvenance: config.provenance,
 				shippedAdmittedCountries: [...shippedAdmitted.keys()].toSorted(),
 				manifestPath,
-				// No flag names the manifest, so it was chosen by modification time rather than given.
-				// The config beside it carries its own provenance for the same reason (#2349).
+				// This tool has no manifest flag, so `newestManifest` always chooses the manifest.
 				manifestProvenance: "newest modification time under the data root",
 				...funnel.provenance,
 			},

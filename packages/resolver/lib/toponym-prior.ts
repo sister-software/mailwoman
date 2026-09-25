@@ -7,11 +7,10 @@
 import type { ResolvedPlace } from "@mailwoman/core/resolver"
 
 /**
- * Sets the default bonus {@link rankByCountryPrior} gives a candidate in the
- * locale country, in log10-population units.
+ * The default bonus, in log10-population units, that {@link rankByCountryPrior}
+ * gives a candidate in the locale country.
  *
- * A weight of 2 lets an in-country place be up to 100 times smaller and still win,
- * matching the resolver's default `anchorWeight`.
+ * A weight of 2 lets an in-country place be up to 100 times smaller and still win.
  */
 export const DEFAULT_COUNTRY_PRIOR_WEIGHT = 2
 
@@ -141,8 +140,9 @@ function orderMeasuredByImportance<T extends Rankable>(rows: readonly T[]): T[] 
  * Reorders candidates by gazetteer `importance`, highest first, within the exact-match
  * and partial-match tiers.
  *
- * Candidates without an importance keep their positions, and same-country candidates
- * whose importance differs by no more than a small band are ordered by size instead.
+ * Candidates without an importance keep their positions.
+ * Same-country candidates whose importance differs by at most 0.02 are ordered by size
+ * instead, with populated places first within each country.
  */
 export function rankByImportance<T extends Rankable>(candidates: readonly T[]): T[] {
 	if (candidates.length < 2) return [...candidates]
@@ -160,10 +160,10 @@ export function rankByImportance<T extends Rankable>(candidates: readonly T[]): 
 }
 
 /**
- * Reorders candidates within each match tier by size plus `weight` for those in `country`,
- * and returns them unchanged when no country is given.
+ * Reorders candidates within each match tier by size, adding `weight` for candidates in `country`.
  *
- * The bonus is additive rather than a filter, so a much larger foreign namesake still wins.
+ * It returns the candidates unchanged when no country is given.
+ * The bonus is additive, so a much larger foreign place of the same name still wins.
  */
 export function rankByCountryPrior<T extends Rankable>(
 	candidates: readonly T[],
@@ -179,7 +179,7 @@ export function rankByCountryPrior<T extends Rankable>(
 }
 
 /**
- * Reports a place's capital status: 2 for a national capital, 1 for an admin-1 seat, and 0 for neither.
+ * Returns a place's capital status: 2 for a national capital, 1 for an admin-1 seat, and 0 otherwise.
  *
  * The caller supplies it, so the resolver never loads a capitals reference itself.
  */
@@ -188,14 +188,15 @@ export type CapitalLevelFn = (place: Pick<ResolvedPlace, "name" | "country" | "l
 const PROMOTABLE_CAPITAL_LEVEL = 2
 
 /**
- * Sets the size lead, in log10-population units, that a namesake needs to stay ahead
- * of a national capital; 2 means 100 times more populous.
+ * The size lead, in log10-population units, that another place needs to stay ahead of a national capital.
+ *
+ * A value of 2 means 100 times more populous.
  */
 export const NATIONAL_CAPITAL_MARGIN_LOG10 = 2
 
 /**
  * Moves the first national capital in the leading match tier above each preceding row that
- * is no more than {@link NATIONAL_CAPITAL_MARGIN_LOG10} larger, stopping at another capital.
+ * is at most {@link NATIONAL_CAPITAL_MARGIN_LOG10} larger, stopping at another capital.
  *
  * It runs after {@link rankByImportance} and never moves a capital across the exact-match boundary.
  */

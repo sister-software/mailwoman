@@ -5,7 +5,7 @@ import { toFeature } from "#geojson"
 import type { EntityGeoData, ReconciliationBucket, ResolvedEntity } from "#types"
 
 /**
- * Which source labels denote eligibility vs funding/enrollment.
+ * The source labels that mark eligibility and the labels that mark funding or enrollment.
  */
 export interface ReconcileConfig {
 	/**
@@ -20,7 +20,7 @@ export interface ReconcileConfig {
 }
 
 /**
- * One entity, classified.
+ * One entity with its reconciliation bucket.
  */
 export interface ReconciledEntity {
 	entity: ResolvedEntity
@@ -33,21 +33,21 @@ export interface ReconciledEntity {
 }
 
 /**
- * Holds the entities that {@link reconcileCoverage} placed in a bucket, with a count per bucket.
+ * The entities that {@link reconcileCoverage} placed in a bucket, with a count per bucket.
  */
 export interface ReconciliationResult {
 	/**
-	 * Entities with at least one eligibility or funding source, each assigned a bucket.
+	 * The entities that have at least one eligibility or funding source.
 	 */
 	reconciled: ReconciledEntity[]
 	counts: Record<ReconciliationBucket, number>
 }
 
 /**
- * Places an entity in a reconciliation bucket according to whether its source labels
- * include eligibility sources, funding sources, or both.
+ * Places an entity in a reconciliation bucket by whether its source labels include
+ * eligibility sources, funding sources, or both.
  *
- * @returns `null` when the entity has neither kind of source, so callers exclude it rather than miscount it.
+ * @returns `null` when the entity has neither kind of source.
  */
 export function bucketOf(sources: Iterable<string>, config: ReconcileConfig): ReconciliationBucket | null {
 	const elig = new Set(config.eligibilitySources)
@@ -75,8 +75,9 @@ export function bucketOf(sources: Iterable<string>, config: ReconcileConfig): Re
 }
 
 /**
- * Buckets resolved entities by their sources with {@link bucketOf}, and drops those
- * that have neither eligibility nor funding sources.
+ * Buckets resolved entities by their sources with {@link bucketOf}.
+ *
+ * Entities without an eligibility or funding source are dropped.
  */
 export function reconcileCoverage(entities: readonly ResolvedEntity[], config: ReconcileConfig): ReconciliationResult {
 	const reconciled: ReconciledEntity[] = []
@@ -102,8 +103,9 @@ export function reconcileCoverage(entities: readonly ResolvedEntity[], config: R
 }
 
 /**
- * Returns a display name for an entity's representative record: the organization's
- * canonical name, else the person's name, else the record id.
+ * Returns a display name for an entity's representative record.
+ *
+ * It prefers the organization's canonical name, then the person's name, then the record ID.
  */
 export function repName(entity: ResolvedEntity): string {
 	const rep = entity.representative
@@ -113,8 +115,7 @@ export function repName(entity: ResolvedEntity): string {
 }
 
 /**
- * Converts the located reconciled entities to point features tagged with their bucket,
- * the shape {@link toMapHTML} colors by bucket.
+ * Converts the reconciled entities that have coordinates to point features tagged with their bucket.
  */
 export function reconciliationGeoJSON(result: ReconciliationResult): GeoFeatureCollection<PointLiteral, EntityGeoData> {
 	return {
@@ -126,40 +127,43 @@ export function reconciliationGeoJSON(result: ReconciliationResult): GeoFeatureC
 }
 
 /**
- * Configures the title, optional notes and spot-check length of {@link reconciliationReport}.
+ * Options for {@link reconciliationReport}.
  */
 export interface ReconciliationReportOptions {
 	/**
-	 * The report's level-one heading, default "Coverage reconciliation — eligibility ↔ enrollment".
+	 * The report's level-one heading.
+	 *
+	 * It defaults to "Coverage reconciliation — eligibility ↔ enrollment".
 	 */
 	title?: string
 
 	/**
-	 * An italic paragraph under the title describing the sources and how they were scoped.
+	 * An italic paragraph under the title that describes the sources and their scope.
 	 */
 	scopeNote?: string
 
 	/**
-	 * A paragraph explaining the choice of match scorer.
+	 * A paragraph that explains the choice of match scorer.
 	 */
 	scorerNote?: string
 
 	/**
-	 * A sentence about sampling or capping, prepended to the closing caveat.
+	 * A sentence about sampling or capping that the report places before the closing caveat.
 	 */
 	sampleNote?: string
 
 	/**
-	 * How many "eligible, not enrolled" entities the spot-check lists, default 15.
+	 * The number of `eligible-not-enrolled` entities that the spot-check lists.
+	 * It defaults to 15.
 	 */
 	spotCheckLimit?: number
 }
 
 /**
  * Renders a Markdown reconciliation report with the bucket counts, the enrolled rate,
- * a spot-check of eligible-but-not-enrolled entities, and a fixed caveat.
+ * a spot-check of `eligible-not-enrolled` entities, and a fixed caveat.
  *
- * The enrolled rate is reported as a floor, because incomplete resolution can only miss links.
+ * The report presents the enrolled rate as a floor because incomplete resolution can only miss links.
  */
 export function reconciliationReport(result: ReconciliationResult, options: ReconciliationReportOptions = {}): string {
 	const { counts, reconciled } = result

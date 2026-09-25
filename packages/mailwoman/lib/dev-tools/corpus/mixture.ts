@@ -2,8 +2,7 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file Locating the parquet files of a built corpus and opening DuckDB over them. Shared by the dev-tools that
- *   measure a training mixture.
+ * @file Locates a built corpus's parquet files and opens DuckDB over them for mixture measurements.
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
@@ -13,41 +12,44 @@ import type { ParquetManifest } from "@mailwoman/corpus/parquet/writers"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 
 /**
- * The manifest records the path the builder wrote under, which is the Modal volume mount
- * rather than this checkout's data root.
+ * Sets the Modal volume mount that manifest paths start with.
  *
- * Both spell the same tree below their first segment.
+ * The tree below it matches the tree below this checkout's data root.
  */
 const MANIFEST_ROOT = "/data/"
 
+/**
+ * Maps a manifest path under the Modal mount to the same file under the local data root.
+ */
 function localPath(manifestPath: string): PathBuilderLike {
 	return manifestPath.startsWith(MANIFEST_ROOT) ? dataRootPath(manifestPath.slice(MANIFEST_ROOT.length)) : manifestPath
 }
 
 /**
- * A built corpus split, resolved to the files on this host.
+ * Holds one corpus split resolved to files on this host.
  */
 export interface MixtureFiles {
 	manifest: ParquetManifest
 	/**
-	 * Absolute paths, in manifest order, of the files this run reads.
+	 * Lists the paths this run reads, in manifest order.
 	 */
 	files: PathBuilderLike[]
 	/**
-	 * Files the manifest holds for this split, which `files` may be a prefix of when the caller capped it.
+	 * Counts the split's files in the manifest.
+	 * `files` is a prefix of them when the caller set a limit.
 	 */
 	available: number
 	/**
-	 * Rows the manifest attributes to `files`.
+	 * Counts the rows the manifest attributes to `files`.
 	 */
 	rows: number
 }
 
 /**
- * Resolve a corpus split's parquet files, raising when the manifest names a file this host does not hold.
+ * Resolves a corpus split's parquet files.
  *
- * A missing file read as an empty result would report a composition for a corpus that is
- * only partly materialized, and nothing downstream can tell that from a real absence.
+ * @throws If the split is absent or a listed file is missing on this host,
+ * so a partly materialized corpus never reports a composition.
  */
 export async function readMixtureFiles(
 	corpusDirectory: PathBuilderLike,
@@ -87,8 +89,9 @@ export async function readMixtureFiles(
 }
 
 /**
- * A DuckDB connection bounded to the memory and threads a caller is willing to spend,
- * plus the file list spelled for `read_parquet`.
+ * Opens a DuckDB connection with the given memory and thread limits.
+ *
+ * It also returns the files as a quoted list for `read_parquet`.
  */
 export async function openMixture(
 	files: readonly PathBuilderLike[],

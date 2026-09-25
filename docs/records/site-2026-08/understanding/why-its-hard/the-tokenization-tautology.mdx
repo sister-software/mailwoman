@@ -14,7 +14,7 @@ tags:
 
 # The tokenization tautology
 
-Traditional address parsers split the input into tokens, classify each token independently, then try to reassemble the pieces into a coherent parse. This sequence contains a structural circularity: **you cannot group tokens correctly without knowing their types, and you cannot type them correctly without knowing their groups.** The traditional architecture resolves this with heuristics, exceptions, and solver post-processing. The exception pile grows without bound.
+Traditional address parsers split the input into tokens, classify each token independently, then try to reassemble the pieces into a coherent parse. This sequence contains a structural circularity: **you cannot group tokens correctly without knowing their types, and you cannot type them correctly without knowing their groups.** The traditional architecture works around this with heuristics, exceptions, and solver post-processing, and the list of exceptions grows without bound.
 
 This article explains why the circularity exists, how traditional parsers work around it, and why Mailwoman's staged pipeline inverts the approach.
 
@@ -34,7 +34,7 @@ Reconcile overlapping and conflicting classifications (Cartesian solver)
 Output: ranked parse solutions
 ```
 
-The problem is that **Step 2 runs before Step 3 can feed back into it.** The classifier sees independent tokens. It does not see boundaries.
+The problem is that **Step 2 runs before Step 3 can feed back into it.** The classifier sees independent tokens and cannot see boundaries.
 
 ## Act 1 — Split first, ask questions later
 
@@ -44,9 +44,9 @@ Consider `Saint Petersburg, FL`. The tokenizer produces:
 [Saint] [Petersburg] [,] [FL]
 ```
 
-The classifier now sees each token independently. "Saint" matches the `street_prefix` dictionary with high confidence — it is a common street prefix. "Petersburg" matches the WOF locality gazetteer — over 30 populated places are named Petersburg. "FL" matches the US state abbreviation list.
+The classifier now sees each token independently. "Saint" matches the `street_prefix` dictionary with high confidence, because it is a common street prefix. "Petersburg" matches the WOF locality gazetteer, where over 30 populated places are named Petersburg. "FL" matches the US state abbreviation list.
 
-Each individual classification is **correct in isolation**. The error is in the combination: "Saint Petersburg" is one locality rather than a street prefix followed by a city name. But the classifier cannot know this because it classifies tokens before grouping them.
+Each individual classification is **correct in isolation**. The error is in the combination, because "Saint Petersburg" is one locality rather than a street prefix followed by a city name. The classifier cannot know this because it classifies tokens before grouping them.
 
 The solver receives:
 
@@ -58,10 +58,10 @@ The solver receives:
 
 The solver tries to build a valid address from these pieces. It can produce:
 
-- `street_prefix=Saint, locality=Petersburg, region=FL` (wrong — "Saint" is not a directional)
-- `locality=Saint Petersburg, region=FL` (correct — but requires merging two tokens the classifier already labeled differently)
+- `street_prefix=Saint, locality=Petersburg, region=FL` (wrong, because "Saint" is not a directional)
+- `locality=Saint Petersburg, region=FL` (correct, but it requires merging two tokens the classifier already labeled differently)
 
-Option 2 requires the solver to **override the classifier's decisions** — to say "you labeled 'Saint' as `street_prefix`, but I'm going to treat it as part of `locality`." This is what the solver does, via a penalty system that allows spans to be reassigned. But the penalty system was tuned for the US address shapes the developers tested against. Every new address shape that requires a different reassignment pattern needs new penalty tuning.
+Option 2 requires the solver to **override the classifier's decisions** and treat "Saint" as part of `locality` even though the classifier labeled it `street_prefix`. The solver does this through a penalty system that allows spans to be reassigned. That penalty system was tuned for the US address shapes the developers tested against. Every new address shape that requires a different reassignment pattern needs new penalty tuning.
 
 ## Act 2 — Classification commits before phrase grouping resolves
 
@@ -81,7 +81,7 @@ The classifier now sees eleven tokens. "St." matches `street_prefix` (abbreviati
 
 The venue name `P'tit St. Denis' Street Café` has been shredded across seven tokens, three of which look like address components. The solver must recognize that the entire prefix is a venue, overcoming the classifier's high-confidence assignments of `street_prefix` to "St." and `street_suffix` to "Street."
 
-This is the `NY-NY Steakhouse` problem generalized: **any word that appears in both the venue lexicon and the address lexicon will be misclassified, and the misclassification will be high-confidence because the lexicon hit is real.** The token "Street" IS a street suffix in most contexts. The token "NY" IS a region abbreviation. The parser cannot distinguish "venue uses address words" from "this is an address component" without knowing the overall structure of the input.
+This generalizes the `NY-NY Steakhouse` problem: **any word that appears in both the venue lexicon and the address lexicon will be misclassified, and the misclassification will be high-confidence because the lexicon hit is real.** The token "Street" _is_ a street suffix in most contexts, and the token "NY" _is_ a region abbreviation. The parser cannot distinguish "venue uses address words" from "this is an address component" without knowing the overall structure of the input.
 
 ## Act 3 — Confidence obscures the problem
 
@@ -95,9 +95,9 @@ The output:
 {region: "FL", confidence: 1.0}
 ```
 
-To a consumer, this looks like a high-quality parse. Every component has high confidence. The address structure is valid (street prefix + locality + region). The fact that "Saint" should be part of the locality is invisible in the confidence numbers. Each individual classifier did its job correctly.
+To a consumer, this looks like a high-quality parse. Every component has high confidence, and the address structure (street prefix + locality + region) is valid. The confidence numbers do not reveal that "Saint" should be part of the locality, because each individual classifier did its job correctly.
 
-Aggregating per-component confidence hides combination errors — the parser is confident about each piece and wrong about the whole. The consumer trusts the high scores and routes the package to "Street address: Saint, City: Petersburg, FL," which the USPS will reject or misroute.
+Aggregating per-component confidence hides combination errors. The parser is confident about each piece and wrong about the whole. The consumer trusts the high scores and routes the package to "Street address: Saint, City: Petersburg, FL," which the USPS will reject or misroute.
 
 ## Why rules can't fix it
 
@@ -106,14 +106,14 @@ Every new address shape that combines tokens differently requires a new rule, a 
 | Address shape                     | Rule needed                                 | Why the rule is fragile                                                                                                     |
 | --------------------------------- | ------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
 | `Saint Petersburg, FL`            | Multi-word locality patterns                | What about "St. Petersburg"? "Saint Peter"? "San Juan"?                                                                     |
-| `NY-NY Steakhouse, Houston TX`    | Venue-before-address boundary detection     | The comma is the only signal — no comma, no boundary                                                                        |
+| `NY-NY Steakhouse, Houston TX`    | Venue-before-address boundary detection     | The comma is the only signal. Without a comma, the rule finds no boundary.                                                  |
 | `350 5th Ave, New York, NY 10118` | Number-as-house-number rather than postcode | Positional assumption: first number is housenumber. Fails on `10118 350 5th Ave`.                                           |
 | `47110 Sainte-Livrade-sur-Lot`    | Postcode-first detection                    | Pattern match on 5-digit leading token. Fails on `90210 Beverly Hills` (postcode looks like ZIP, but context is different). |
 | `West 26th Street, New York`      | Directional prefix detection                | "West" is a directional rather than a locality. But "West New York" is a town in NJ.                                        |
 
 Each rule works for the specific case it was written for. Each rule introduces false positives in cases that resemble the target but aren't. The rule set accretes, and the false-positive rate compounds. After enough rules, adding a new one fixes one address and breaks three others.
 
-The Cartesian solver that reconciles these rules is what the operator's "Paris, Texas" talk calls **"Sparkling Bogosort"** — it enumerates valid permutations of all possible label assignments, filters the ones that violate hard constraints, and scores the rest. The name is accurate. For well-constrained inputs (a standard US address with a 5-digit ZIP that matches the state), the permutation space is small. For loosely-constrained inputs (an international address with missing components), the permutation space explodes.
+The operator's "Paris, Texas" talk calls the Cartesian solver that reconciles these rules **"Sparkling Bogosort"**. The solver enumerates valid permutations of all possible label assignments, filters out the ones that violate hard constraints, and scores the rest. For well-constrained inputs (a standard US address with a 5-digit ZIP that matches the state), the permutation space is small. For loosely-constrained inputs (an international address with missing components), the permutation space explodes.
 
 ## Mailwoman's inversion
 
@@ -136,7 +136,7 @@ Input:  "350 5th Ave, New York, NY 10118"
 Spans:  [350] [5th Ave] [New York] [NY] [10118]
 ```
 
-The grouper uses structural cues — punctuation, capitalization, numeric patterns, token proximity — not dictionaries. It does not know what the spans mean. It only knows where the boundaries are.
+The grouper uses structural cues such as punctuation, capitalization, numeric patterns, and token proximity, and it does not use dictionaries. It does not know what the spans mean. It only knows where the boundaries are.
 
 The **neural classifier** (Stage 3) then types each proposed span. Because the classifier sees the full token sequence simultaneously (it's a transformer rather than a per-token classifier), it conditions each span's type on the surrounding spans:
 
@@ -145,19 +145,19 @@ The **neural classifier** (Stage 3) then types each proposed span. Because the c
 - "NY" next to "10118" → likely a state abbreviation next to a ZIP code
 - "NY" followed by "NY Steakhouse" → likely part of a venue name
 
-The classifier can disagree with the grouper's boundaries (it can merge or split spans) but it starts from a better prior than token-level independent classification.
+The classifier can disagree with the grouper's boundaries by merging or splitting spans, but it starts from a better prior than independent token-level classification.
 
-The **reconciler** (Stage 5) then picks the joint interpretation that maximizes coherence — cross-component consistency on top of per-span correctness. This is where the `NY-NY Steakhouse` problem gets solved: the reconciler sees that labeling the first "NY" as `region` and the second "NY" as `region` produces a joint parse with two regions for different places, which the resolver's hierarchy cannot reconcile. The alternative interpretation — the "NY" tokens are part of a `venue` name — produces a joint-consistent parse. The reconciler switches.
+The **reconciler** (Stage 5) then picks the joint interpretation that maximizes coherence, which adds cross-component consistency on top of per-span correctness. This stage solves the `NY-NY Steakhouse` problem. Labeling both "NY" tokens as `region` produces a joint parse with two regions for different places, which the resolver's hierarchy cannot reconcile. Treating the "NY" tokens as part of a `venue` name produces a joint-consistent parse, so the reconciler picks that interpretation.
 
 ## What this doesn't solve
 
 The staged pipeline doesn't eliminate ambiguity. It moves the ambiguity to where the model has the most information:
 
-- The grouper can still propose wrong boundaries. But it's cheap to improve (rule-based, fast iteration) and wrong boundaries are upstream of classification rather than downstream of it.
-- The classifier can still mis-type a span. But it has the full context of the input, rather than one token in isolation.
-- The reconciler can still pick a wrong joint interpretation. But it has resolver feedback. The world hierarchy is a constraint the traditional solver never had.
+- The grouper can still propose wrong boundaries. It is cheap to improve because it is rule-based and quick to iterate on, and its errors occur upstream of classification rather than downstream.
+- The classifier can still mis-type a span, but it has the full context of the input rather than one token in isolation.
+- The reconciler can still pick a wrong joint interpretation, but it has resolver feedback. The world hierarchy is a constraint the traditional solver never had.
 
-The traditional pipeline has a structural ceiling: **context-free decisions that context-sensitive decisions downstream cannot reverse.** Mailwoman isn't perfect, but it moves the context-sensitive decisions upstream, where they belong.
+The traditional pipeline has a structural ceiling: **it makes context-free decisions that later context-sensitive stages cannot reverse.** Mailwoman is not perfect, but it moves the context-sensitive decisions upstream, where they belong.
 
 ## See also
 

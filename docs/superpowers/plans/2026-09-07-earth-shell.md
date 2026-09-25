@@ -2,9 +2,9 @@
 
 > **For agentic workers:** required sub-skill: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** A private workspace, `packages/earth`, that builds a React + Vite installable PWA for Cloudflare Workers Static Assets, mounts the geocoder UI from `@mailwoman/react/map` on a fake runtime, serves `/`, `/debug`, `/trace` and `/build.json`, and is ready for a Workers Builds project at `earth.mailwoman.ai`. No real runtime moves in this plan; that is the second Earth plan.
+**Goal:** A private workspace, `packages/earth`, that builds a React + Vite installable PWA for Cloudflare Workers Static Assets, mounts the geocoder UI from `@mailwoman/react/map` on a fake runtime, serves `/`, `/debug`, `/trace` and `/build.json`, and is ready for a Workers Builds project at `earth.mailwoman.ai`. This plan moves no real runtime. The second Earth plan does that.
 
-**Architecture:** One Vite app with three client routes read from `location.pathname`, no router. `vite-plugin-pwa` in `injectManifest` mode owns the manifest and a precache-only service worker that the runtime plan later extends with the range cache. A small Vite plugin emits `build.json` from `@mailwoman/core/git`. The plugin, the PWA identity and the Playwright preview config live in `packages/site-kit`, a private workspace the planetary app imports too, so neither app writes them twice. `wrangler.toml` declares `assets` and no `main`. The fake runtime the app mounts is the one `@mailwoman/react`'s stories and tests already use, moved from a test helper to a public subpath so nothing is copied.
+**Architecture:** One Vite app reads three client routes from `location.pathname` without a router. `vite-plugin-pwa` in `injectManifest` mode owns the manifest and a precache-only service worker that the runtime plan later extends with the range cache. A small Vite plugin emits `build.json` from `@mailwoman/core/git`. The plugin, the PWA identity and the Playwright preview config live in `packages/site-kit`, a private workspace the planetary app imports too, so neither app writes them twice. `wrangler.toml` declares `assets` and no `main`. The fake runtime the app mounts is the one `@mailwoman/react`'s stories and tests already use, moved from a test helper to a public subpath so nothing is copied.
 
 **Tech Stack:** React 19, Vite 8, `vite-plugin-pwa` 1.3 (workbox 7), `react-map-gl` 8 over MapLibre 6, wrangler 4, Playwright for the browser smoke, vitest for the pure modules.
 
@@ -13,11 +13,11 @@
 ## Global Constraints
 
 - The app is `private: true`, lives under `packages/`, and joins the root `workspaces` array, both root `tsconfig.json` reference entries, and `SANCTIONED_RELEASE_ABSENCES` with a stated reason. The `publishCount` pin in `packages/release-kit/test/integration/release-stage.test.ts` stays at 60.
-- No application Worker script: `wrangler.toml` has no `main`, no `run_worker_first`, no routes.
+- The app has no application Worker script. `wrangler.toml` has no `main`, no `run_worker_first`, and no routes.
 - Dependency ranges match the workspace that already declares them (`sherif` in `health:manifests` refuses a second range): `react` and `react-dom` `^19.2.8`, `react-map-gl` `^8.1.3`, `maplibre-gl` `^6.7.0`, `vite` `^8.2.2`, `@vitejs/plugin-react` `^6.1.1`, `wrangler` `^4.129.0`, `@playwright/test` at the range `docs/package.json` carries.
-- `process.env` is never read directly; there is no environment to read in this plan.
-- A test imports the package under test through its public exports; the app declares an `exports` entry for every module a test names.
-- Source under `lib/`, tests under `test/`, `rootDir: ./lib`, explicit `.ts`/`.tsx` extensions on relative imports, no `enum`.
+- Code never reads `process.env` directly, and this plan has no environment to read.
+- A test imports the package under test through its public exports, so the app declares an `exports` entry for every module a test names.
+- Source lives under `lib/` and tests under `test/`, with `rootDir: ./lib`. Relative imports use explicit `.ts`/`.tsx` extensions, and the code uses no `enum`.
 - Comments state invariants rather than history.
 - Every commit passes the pre-commit hook. Branch: `git fetch origin main && git checkout -b feat/earth-shell origin/main`.
 - Nothing in `docs/` changes in this plan except the three-origin CORS edit in the tile worker, which is not in `docs/`.
@@ -74,7 +74,7 @@ package.json, tsconfig.json, packages/release-kit/lib/release/stage.ts, dependen
 
 - Produces: `@mailwoman/react/map/fake-runtime` exporting `STUB_MAP_STYLE: DemoMapStyle`, `FAKE_SUGGESTIONS: Suggestion[]`, `makeFakeParseResult(input?: string): ParseResult`, `makePipelineRuntime(overrides?: Partial<PipelineRuntime>): PipelineRuntime`, `makeDemoRuntime(overrides?: Partial<DemoRuntime>): DemoRuntime`. Task 5 mounts `makeDemoRuntime()`.
 
-The app cannot import `packages/react/test/mocks.tsx` (a test helper is private to its package's `test/`), and a copy in the app would be the duplicate this repository refuses. A fake runtime is a legitimate product surface: a host that wants the UI without the model mounts it.
+The app cannot import `packages/react/test/mocks.tsx`, because a test helper is private to its package's `test/`. Copying it into the app would create a duplicate, which this repository does not allow. A fake runtime is also a legitimate product surface, because a host that wants the UI without the model can mount it.
 
 - [ ] **Step 1: Create the module with the five moved definitions**
 
@@ -97,7 +97,7 @@ import type { DemoMapStyle, DemoRuntime, Suggestion } from "#map/types"
 import type { ResolvedMapPlace } from "#map/place-render"
 ```
 
-`STUB_MAP_STYLE` and `FAKE_SUGGESTIONS` become `export const`. Check each type's home before committing: `ResolvedMapPlace` is exported from `#map/place-render`, `ParseResult` and `PipelineRuntime` from `#pipeline/types`, `DemoMapStyle`, `DemoRuntime` and `Suggestion` from `#map/types`; if `grep -n "export interface ParseResult" packages/react/lib/pipeline/types.ts` finds nothing, follow `packages/react/lib/index.ts` to where it is.
+`STUB_MAP_STYLE` and `FAKE_SUGGESTIONS` become `export const`. Check each type's home before committing: `ResolvedMapPlace` is exported from `#map/place-render`, `ParseResult` and `PipelineRuntime` from `#pipeline/types`, `DemoMapStyle`, `DemoRuntime` and `Suggestion` from `#map/types`. If `grep -n "export interface ParseResult" packages/react/lib/pipeline/types.ts` finds nothing, follow `packages/react/lib/index.ts` to where it is.
 
 - [ ] **Step 2: Add the export**
 
@@ -223,7 +223,7 @@ git commit -m "feat(react): the fake geocoder runtime is a public subpath, map/f
 }
 ```
 
-The ranges above are the ones `docs/package.json` and `packages/react/package.json` declare today; `sherif` refuses a range that differs from an existing declaration, so if either has moved by execution time, copy the current one. No workspace declares a `workbox-*` package yet, so `^7.4.1` (the plugin's peer range) is the first declaration.
+The ranges above are the ones `docs/package.json` and `packages/react/package.json` declare today. `sherif` refuses a range that differs from an existing declaration, so if either has moved by execution time, copy the current one. No workspace declares a `workbox-*` package yet, so `^7.4.1` (the plugin's peer range) is the first declaration.
 
 - [ ] **Step 2: Write the two tsconfigs**
 
@@ -257,7 +257,7 @@ The ranges above are the ones `docs/package.json` and `packages/react/package.js
 }
 ```
 
-Compare against `packages/license-worker/tsconfig.test.json` and copy any field it carries that these lack; the test-base file's header explains why `include`, `exclude` and `references` repeat per workspace.
+Compare against `packages/license-worker/tsconfig.test.json` and copy any field it carries that these lack. The test-base file's header explains why `include`, `exclude` and `references` repeat per workspace.
 
 - [ ] **Step 3: Register the workspace in the four registers**
 
@@ -383,7 +383,7 @@ yarn vitest --run --config vitest.slow.config.ts packages/release-kit/test/integ
 yarn mwops health manifest-targets
 ```
 
-Expected: the absence list prints 15 names and includes `packages/earth` and `packages/site-kit`; `release-stage.test.ts` passes with `publishCount` 60; `manifest-targets` reports nothing (every `exports` target names a file Task 3 creates, so run this step again after Task 3 if it reports the three `lib/*.ts` files missing).
+Expected: the absence list prints 15 names and includes `packages/earth` and `packages/site-kit`; `release-stage.test.ts` passes with `publishCount` 60; `manifest-targets` reports nothing. Every `exports` target points at a file that Task 3 creates, so if `manifest-targets` reports the three `lib/*.ts` files missing, run this step again after Task 3.
 
 - [ ] **Step 6: Commit**
 
@@ -665,7 +665,7 @@ export function buildInfoPlugin(options: { app: string }): Plugin {
 }
 ```
 
-`isoSeconds` is defined in `packages/core/lib/utils/time.ts` and reaches consumers through the `@mailwoman/core/utils` barrel; there is no `./utils/time` subpath.
+`isoSeconds` is defined in `packages/core/lib/utils/time.ts` and reaches consumers through the `@mailwoman/core/utils` barrel. The package has no `./utils/time` subpath.
 
 `packages/site-kit/lib/vite/pwa.ts`:
 
@@ -882,7 +882,7 @@ git commit -m "feat(earth,site-kit): Vite build with the PWA manifest, a precach
 - Consumes: `GeocoderDemo`, `DemoPanels` from `@mailwoman/react/map`; `makeDemoRuntime` from `@mailwoman/react/map/fake-runtime` (Task 1); `routeForPath`, `queryFromSearch`, `Route` from `#routes` (Task 3).
 - Produces: the DOM the smoke in Task 7 drives: the input `#mw-pipeline-input` and the submit button `GeocoderDemo` already renders, a `<main data-route="…">` wrapper, a `[data-testid="not-found"]` view.
 
-The component names (`GeocoderDemo`, `DemoPanels`, `DemoRuntime`) are renamed in the second Earth plan, at the moment the real runtime lands; this plan uses them as exported today.
+The component names (`GeocoderDemo`, `DemoPanels`, `DemoRuntime`) are renamed in the second Earth plan, when the real runtime lands. This plan uses them as they are exported today.
 
 - [ ] **Step 1: Write the app**
 
@@ -989,7 +989,7 @@ if (!root) throw new Error("index.html has no #root")
 createRoot(root).render(<App />)
 ```
 
-The debug and trace routes render the same geocoder in this plan; the drawer-open default and the trace page arrive with the runtime plan, which is where `DemoPanels` and the debug drawer move from `docs/src/pages/demo/`.
+The debug and trace routes render the same geocoder in this plan. The drawer-open default and the trace page arrive with the runtime plan, which is where `DemoPanels` and the debug drawer move from `docs/src/pages/demo/`.
 
 - [ ] **Step 2: Build and look**
 
@@ -1049,7 +1049,7 @@ yarn workspace @mailwoman/earth build
 yarn workspace @mailwoman/earth deploy:dry-run 2>&1 | tail -8
 ```
 
-Expected: wrangler reports the asset upload plan for `dist/` and ends with `--dry-run: exiting now.` with no error. A `wrangler` prompt for login means the dry run tried to authenticate; `WRANGLER_SEND_METRICS=false` and `CLOUDFLARE_API_TOKEN=` unset are the expected state for a dry run and it must not need a token.
+Expected: wrangler reports the asset upload plan for `dist/` and ends with `--dry-run: exiting now.` with no error. A `wrangler` login prompt means the dry run tried to authenticate. A dry run expects `WRANGLER_SEND_METRICS=false` and an unset `CLOUDFLARE_API_TOKEN=`, and it must not need a token.
 
 - [ ] **Step 4: The tile worker's tests**
 
@@ -1208,7 +1208,7 @@ In `.github/workflows/test.yml`, in the `react` leg, after the step that runs `y
   run: yarn workspace @mailwoman/earth test:browser
 ```
 
-That leg installs Chromium with `yarn workspace @mailwoman/react exec playwright install --with-deps chromium`; the browser cache is per runner, so the earth step finds it as long as both workspaces resolve the same `@playwright/test` (they do: `^1.63.0`). Run `yarn mwops health no-root-scripts` after the edit, because that check reads every workflow's `run:` lines.
+That leg installs Chromium with `yarn workspace @mailwoman/react exec playwright install --with-deps chromium`. The browser cache is per runner, so the earth step finds Chromium as long as both workspaces resolve the same `@playwright/test`. Both resolve `^1.63.0`. Run `yarn mwops health no-root-scripts` after the edit, because that check reads every workflow's `run:` lines.
 
 - [ ] **Step 5: Commit**
 
@@ -1258,4 +1258,4 @@ EOF
 
 - [ ] **Step 3: Record the one operator step**
 
-The Cloudflare dashboard project cannot be created from the repository. State it in the PR and in the handoff: create the Workers Builds project for `mailwoman-earth` with the README's settings and the custom domain `earth.mailwoman.ai`. The first build proves the yarn-root assumption; the README carries the fallback.
+The Cloudflare dashboard project cannot be created from the repository. State this in the PR and in the handoff: someone must create the Workers Builds project for `mailwoman-earth` with the README's settings and the custom domain `earth.mailwoman.ai`. The first build tests the assumption that the build runs from the yarn root, and the README documents the fallback if it does not.

@@ -21,8 +21,7 @@ import { representativePoint } from "#sdk/representative-point"
 import { tagAlias } from "#sdk/tag-columns"
 
 /**
- * Re-exports the sub-venue tag rules and SQL helpers so extractor callers can
- * customize rules without importing the rules module directly.
+ * This module re-exports the sub-venue tag rules and SQL helpers for callers that customize rules.
  */
 export {
 	buildSubVenueSQL,
@@ -34,11 +33,10 @@ export {
 } from "#sdk/extract/subvenue/rules"
 
 /**
- * Parses GDAL's `other_tags` hstore text (`"key"=>"value",...`) into a plain object,
- * returning an empty one for missing input.
+ * Parses GDAL's `other_tags` hstore text (`"key"=>"value",...`) into a plain object.
+ * Missing input yields an empty object.
  *
- * It scans characters rather than splitting on commas, because OSM values
- * such as names often contain commas.
+ * The parser scans quoted strings because OSM values such as names often contain commas.
  */
 export function parseOSMHstore(text: string | null | undefined): Record<string, string> {
 	const out: Record<string, string> = {}
@@ -116,7 +114,7 @@ const NON_LANGUAGE_NAME_SUFFIXES = new Set([
 const LANGUAGE_SUBTAG = /^[a-z]{2,3}(?:[-_][A-Za-z0-9]{2,8})*$/
 
 /**
- * Pull the `name:<lang>` family out of a tag dict, keyed by the raw subtag as OSM wrote it.
+ * Collects the `name:<lang>` tags, keyed by the language subtag as OSM wrote it.
  */
 export function harvestLocalizedNames(tags: Readonly<Record<string, string | undefined>>): Record<string, string> {
 	const out: Record<string, string> = {}
@@ -134,51 +132,54 @@ export function harvestLocalizedNames(tags: Readonly<Record<string, string | und
 }
 
 /**
- * Describes one extracted transport structure, such as a platform or gate,
- * as read by the sub-venue lexicon build and corpus extracts.
+ * One extracted transport structure, such as a platform or gate.
  */
 export interface SubVenueSourceRow {
 	/**
-	 * Names the matched rule's designator, such as `terminal`, `gate`, `platform` or `airport`.
+	 * The matched rule's designator, such as `terminal`, `gate`, `platform` or `airport`.
 	 */
 	designatorID: string
 	tier: SubVenueTier
 
 	/**
-	 * Holds the default `name` tag, or `null` when the feature is unnamed,
-	 * which is common for a gate that carries only `ref`.
+	 * The `name` tag.
+	 *
+	 * It is `null` for an unnamed feature, which is common for a gate with only a `ref`.
 	 */
 	name: string | null
 
 	/**
-	 * Holds the `ref` tag, the identifier in a label such as `Gate A12`,
-	 * which OSM usually keeps out of `name`.
+	 * The `ref` tag, such as `A12` in `Gate A12`.
+	 * OSM usually keeps this identifier out of `name`.
 	 */
 	ref: string | null
 
 	/**
-	 * Maps the language subtag of each `name:<lang>` tag to its value, and is empty
-	 * when the feature has none.
+	 * The value of each `name:<lang>` tag, keyed by language subtag.
 	 */
 	localizedNames: Record<string, string>
 	latitude: number
 	longitude: number
 
 	/**
-	 * Records the matched rule's tag as `key=value`, so each row's provenance survives into the lexicon.
+	 * The matched rule's tag as `key=value`, kept as provenance for the lexicon.
 	 */
 	matchedTag: string
 
 	/**
-	 * Is always `""` from the extractor, because a PBF feature does not carry
-	 * its country; the caller stamps it.
+	 * The country code.
+	 *
+	 * The extractor always leaves it empty because a PBF feature does not carry its country.
+	 * The caller fills it in.
 	 */
 	country: string
 }
 
 /**
- * Converts one ogr2ogr GeoJSONSeq feature into a {@link SubVenueSourceRow}, or returns `null`
- * when it matches no rule, has no usable geometry, or has no `name`, `ref` or `name:<lang>`.
+ * Converts one ogr2ogr GeoJSONSeq feature into a {@link SubVenueSourceRow}.
+ *
+ * It returns `null` when the feature matches no rule, lacks usable geometry,
+ * or has no `name`, `ref` or `name:<lang>` tag.
  */
 export function toSubVenueSourceRow(
 	feature: { properties?: Record<string, unknown>; geometry?: { type?: string; coordinates?: unknown } },
@@ -250,11 +251,11 @@ async function* runSubVenueLayer(
 }
 
 /**
- * Streams every named transport structure matching `rules` from a `.osm.pbf`
- * extract's `points` and `multipolygons` layers.
+ * Streams every named transport structure that matches `rules` from the `points`
+ * and `multipolygons` layers of a `.osm.pbf` extract.
  *
- * A feature mapped as both a node and an area yields twice with different coordinates,
- * so consumers that need unique features must de-duplicate.
+ * A feature mapped as both a node and an area appears twice with different coordinates.
+ * Consumers that need unique features must remove the duplicates.
  */
 export async function* extractOSMSubVenues(
 	pbfPath: string,
@@ -266,22 +267,22 @@ export async function* extractOSMSubVenues(
 }
 
 /**
- * Configures {@link writeSubVenueJSONL}, including an optional country code stamped onto every row.
+ * Options for {@link writeSubVenueJSONL}.
  */
 export interface WriteSubVenueJSONLOptions {
 	pbfPath: string
 	outPath: string
 
 	/**
-	 * Sets the ISO 3166-1 alpha-2 code stamped onto every row, since an extract's
-	 * country comes from the invocation rather than the features.
+	 * The ISO 3166-1 alpha-2 code written onto every row.
+	 * The features do not carry a country.
 	 */
 	country?: string
 	rules?: SubVenueTagRule[]
 }
 
 /**
- * Extracts sub-venue rows from one `.osm.pbf` file and writes them as JSONL, returning the row count.
+ * Extracts sub-venue rows from one `.osm.pbf` file, writes them as JSONL and returns the row count.
  */
 export async function writeSubVenueJSONL(options: WriteSubVenueJSONLOptions): Promise<number> {
 	await using out = createNewlineWriter(options.outPath)

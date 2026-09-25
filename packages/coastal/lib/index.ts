@@ -3,49 +3,19 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The `coastal-england.db` reader — what the Environment Agency's erosion mapping assigns at a coordinate,
- *   under a named scenario, and on what basis.
+ *   Reader for `coastal-england.db`, which reports the Environment Agency's coastal erosion zones at a
+ *   coordinate under a named scenario.
  *
- *   two readings, and the one that is missing is the point.
+ *   A reading is `designated` when an erosion polygon of that scenario contains the point, and `unknown`
+ *   otherwise. The source publishes no coverage statement, so an empty answer cannot mean "not at risk".
+ *   A point with no polygon may be inland or on an unmapped coast. The constructor therefore refuses
+ *   any coverage row whose basis would support an exclusion.
  *
- *   1. `designated` — the authority's map places the location inside an erosion zone under the scenario
- *      asked for, and the polygon (its distance, its shoreline-management policy, its defence type) is the
- *      answer.
- *   2. `unknown` — no polygon of that scenario contains the point. that is not an absence reading, and this
- *      layer has none.
+ *   The layer describes the authority's map. The Environment Agency states that its data
+ *   "cannot provide details for individual properties", and every reading carries the product limits.
  *
- *   There is no `designated_absence` here, and its absence is the inversion the sibling flood layer taught.
- *   For flood zones the Environment Agency states England-wide coverage and the Planning Practice Guidance
- *   defines Zone 1 as the land outside Zones 2 and 3, so an empty answer inside England is a designation.
- *   ncerm publishes no coverage statement at all. A location in England with no erosion polygon is either
- *   inland — most of the country, about which the product says nothing — or on the coast and outside the
- *   mapped risk area, which is the designation a caller actually wants. and the published layers cannot tell
- *   those apart. A reader that generalized the flood rule would report the whole country as not at risk of
- *   coastal erosion, which is a well-formed wrong answer nobody would question.
- *
- *   SO the constructor refuses A coverage row that would support an exclusion. Every row must read
- *   `source_present`; `supportsExclusion` must be false for all of them. That is not a convention this
- *   reader follows. It is a condition it checks at open time, so the day someone writes a stronger basis
- *   without settling the footprint question, the layer refuses to open rather than answering confidently.
- *
- *   neither reading is A statement about A property. The layer reports what the authority's map assigns at a
- *   location under a named scenario, which is a fact about the map. The Environment Agency states that its
- *   data "cannot provide details for individual properties", and this reader never claims otherwise —
- *   `limits` carries the authority's own exclusions on every answer.
- *
- *   A probe must name its scenario. Twelve layers answer twelve different questions, and a reader that
- *   picked one silently would let a 2105 projection be read as a present-day designation. An unknown
- *   scenario key throws rather than returning nothing, because "no such scenario" and "no zone here" are
- *   opposite facts that would otherwise look identical.
- *
- *   the probe is structure first, geometry last. `cellToParent` up the compacted whole-cell chain answers an
- *   interior point with primary-key probes alone. only a cell a boundary crosses reaches the ray cast, and
- *   then only against the polygons `coastal_zone_cell` already named for that cell and that scenario.
- *
- *   the reader is synchronous and uses RAW prepared statements, for the same reason the flood reader is: it
- *   answers one point per geocode with a bounded number of primary-key probes plus a bounded geometry read,
- *   and the ray cast it wraps is synchronous anyway. The DDL that created these tables is Kysely — see
- *   `schema.ts`.
+ *   A lookup walks the H3 ancestor chain first. Only a cell that a boundary crosses leads to a ray cast
+ *   against the polygons indexed for that cell and scenario.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -83,21 +53,23 @@ import {
 export { DEFAULT_NCERM_SCENARIO, NCERM_SCENARIOS, NCERM_SCENARIOS_BY_KEY, type CoastalScenario } from "#vocabulary"
 
 /**
- * What the layer can say about a coordinate under one scenario.
+ * Kinds of reading the layer returns for a coordinate under one scenario.
  */
 export const CoastalReadingKind = {
 	/**
-	 * The authority's map places this location inside an erosion zone under the scenario asked for.
+	 * An erosion zone of the requested scenario contains the location.
 	 */
 	Designated: "designated",
 	/**
 	 * No erosion polygon of that scenario contains the point.
-	 *
-	 * Never an absence reading — see this file's header.
+	 * This does not mean the location is safe.
 	 */
 	Unknown: "unknown",
 } as const
 
+/**
+ * One of the {@link CoastalReadingKind} values.
+ */
 export type CoastalReadingKind = (typeof CoastalReadingKind)[keyof typeof CoastalReadingKind]
 
 /**
@@ -105,22 +77,22 @@ export type CoastalReadingKind = (typeof CoastalReadingKind)[keyof typeof Coasta
  */
 export const CoastalContainmentPath = {
 	/**
-	 * The cell lies wholly inside the zone.
-	 * No geometry was read.
+	 * The cell lies wholly inside the zone, so no geometry was read.
 	 */
 	WholeCell: "whole_cell",
 	/**
-	 * The cell is crossed by a boundary.
-	 *
-	 * The point was ray-cast against the polygons named for that cell.
+	 * A boundary crosses the cell, so the point was ray-cast against that cell's polygons.
 	 */
 	RayCast: "ray_cast",
 	/**
-	 * No zone of this scenario reaches this cell at all.
+	 * No zone of this scenario reaches the cell.
 	 */
 	NoZoneCell: "no_zone_cell",
 } as const
 
+/**
+ * One of the {@link CoastalContainmentPath} values.
+ */
 export type CoastalContainmentPath = (typeof CoastalContainmentPath)[keyof typeof CoastalContainmentPath]
 
 /**
@@ -135,9 +107,9 @@ export interface CoastalDesignation {
 	distanceM: number
 	shorelineManagementPlan?: { number: number; name: string; policyUnit: string }
 	/**
-	 * The medium- and long-term policy and its interpretation, where the scenario carries one.
+	 * The medium- and long-term policy with interpretations.
 	 *
-	 * Absent on the NFI scenarios, where the source publishes none because no intervention is assumed.
+	 * The NFI scenarios assume no intervention, so they have no policy.
 	 */
 	policy?: {
 		mediumTerm: string | null
@@ -147,10 +119,9 @@ export interface CoastalDesignation {
 	}
 	defenceType?: string
 	/**
-	 * 2024, or 0 on the 87 rows the authority publishes with blank policy
-	 * and defence fields and documents no meaning for.
+	 * Publication year as published.
 	 *
-	 * Carried rather than coerced.
+	 * Some source rows carry 0 with blank policy and defence fields, and the source does not explain them.
 	 */
 	publishedYear?: number
 	/**
@@ -160,40 +131,34 @@ export interface CoastalDesignation {
 }
 
 /**
- * One reading, carrying everything a caller needs to re-derive it rather than take it.
+ * One erosion reading, with the inputs a caller needs to check it.
  */
 export interface CoastalErosionReading {
 	kind: CoastalReadingKind
 	/**
-	 * The scenario this reading answered under.
-	 *
-	 * Present on every reading, including `unknown`: an answer whose scenario a
-	 * reader cannot see is an answer to an unknown question.
+	 * The scenario the reading answers, present on every reading.
 	 */
 	scenario: CoastalScenario
 	/**
-	 * Every polygon of that scenario containing the point, ordered by `area_id`.
+	 * Every polygon of the scenario that contains the point, ordered by `area_id`.
 	 *
-	 * Usually one.
-	 * Several where the authority's own frontages overlap, which its `maxoverlap`
-	 * column records on about half the rows of a measured layer.
-	 * Empty on `unknown`.
+	 * Overlapping frontages can yield several.
+	 * The list is empty for an `unknown` reading.
 	 */
 	designations: CoastalDesignation[]
 	/**
-	 * How the answer was reached, across the scenario as a whole.
+	 * How the reading was reached for the scenario as a whole.
 	 */
 	containment: CoastalContainmentPath
 	/**
-	 * The coverage row for the location, when the product has data in that cell.
+	 * The coverage row for the location's cell, when the product has data there.
 	 *
-	 * Its basis is always `source_present`, so it licenses presence and nothing else.
-	 * An absent coverage row and a present one are both compatible with "no erosion
-	 * polygon here", and neither says the location is not at risk.
+	 * Its basis is always `source_present`, so neither its presence nor its
+	 * absence shows the location is safe.
 	 */
 	coverage?: CoverageCell & { h3CellIndex: string; resolution: number }
 	/**
-	 * The index cell probed, for a receipt.
+	 * The H3 index cell that was probed.
 	 */
 	indexCellIndex: string
 	/**
@@ -201,15 +166,13 @@ export interface CoastalErosionReading {
 	 */
 	limits: ReadonlyArray<string>
 	/**
-	 * Why this layer's coverage licenses no negative claim, in one sentence.
+	 * One sentence that explains why the coverage cannot support a negative claim.
 	 */
 	coverageLimit: string
 }
 
 /**
- * One ground-instability polygon containing a point.
- *
- * A different hazard, answered by its own method.
+ * One ground-instability polygon that contains a point.
  */
 export interface CoastalGroundInstabilityReading {
 	areaID: string
@@ -221,42 +184,39 @@ export interface CoastalGroundInstabilityReading {
 }
 
 /**
- * The layer's identity, read once at open time.
+ * Layer metadata read once when the database opens.
  */
 export interface CoastalLayerIdentity {
 	manifest: LayerManifest
 	indexResolution: number
 	coverageResolution: number
 	/**
-	 * Every resolution `coastal_zone_cell` stores a row at, coarsest first —
-	 * the ancestor chain a probe walks.
+	 * Every resolution with rows in `coastal_zone_cell`, coarsest first.
 	 *
-	 * Several, and necessarily so: each feature's whole tier is compacted parent-ward,
-	 * and a polygon too large for h3's allocator at the index resolution was indexed coarser.
-	 * A reader that probed one resolution would read every row at the others as an absence.
+	 * Whole cells are compacted to coarser parents, and very large polygons are indexed
+	 * coarser, so a lookup must probe every resolution in this list.
 	 */
 	cellResolutions: number[]
 	/**
-	 * Every scenario key the layer holds, from its own vocabulary table.
+	 * Every scenario key in the layer's vocabulary table.
 	 */
 	scenarioKeys: string[]
 	/**
 	 * The authority's footprint statements.
 	 *
-	 * Empty in this edition, which is what makes `source_present` the only basis
-	 * the coverage may carry — see `schema.ts`.
+	 * This edition has none, so coverage can only be `source_present`.
 	 */
 	mappedExtents: Array<{ extentID: string; source: string; statement: string; statementURL: string }>
 	/**
-	 * The coverage basis every row carries.
-	 *
-	 * Always `source_present` while `mappedExtents` is empty.
-	 * Checked at open time rather than assumed.
+	 * The coverage basis of every row, which the constructor checks is `source_present`.
 	 */
 	coverageBasis: CoverageBasis
 	databasePath: string
 }
 
+/**
+ * Options for {@link CoastalErosionLookup}.
+ */
 export interface CoastalErosionLookupOptions {
 	databasePath: PathBuilderLike
 }
@@ -281,13 +241,14 @@ interface AreaRow {
 }
 
 /**
- * Read a sealed `coastal-england.db`.
+ * Reader for a sealed `coastal-england.db`.
  *
- * Everything that would make the reader answer a well-formed wrong thing is refused at construction
- * rather than at query time: a manifest naming a different layer, a coverage table with no rows,
- * a coverage row whose basis would support an exclusion, an empty scenario vocabulary.
- * Each of those would otherwise present as a reader that quietly always answers `unknown`, or,
- * in the exclusion case, as a reader that confidently reports England as free of coastal erosion.
+ * The constructor throws on a manifest for another layer, a coverage basis that
+ * would support an exclusion, or an empty scenario vocabulary.
+ * Each of these would otherwise produce wrong answers.
+ *
+ * The reader is synchronous and uses raw prepared statements because each lookup
+ * runs a bounded number of key probes.
  */
 export class CoastalErosionLookup implements Disposable {
 	readonly identity: CoastalLayerIdentity
@@ -315,11 +276,9 @@ export class CoastalErosionLookup implements Disposable {
 			"SELECT area_id, containment FROM coastal_zone_cell WHERE h3_cell = ? AND scenario_key = ?"
 		)
 
-		// two statements, and the split is the point.
-		// The attributes and the bbox are read without the blob, because the bbox is the ray
-		// cast's prefilter: pulling hundreds of thousands of vertices off disk only to reject the
-		// polygon on a rectangle would make the prefilter cost more than the test it replaces.
-		// A `whole` cell never reads the blob at all.
+		// The attributes and bbox are read apart from the geometry blob.
+		// The bbox rejects most candidates before the large blob is read,
+		// and a whole cell never reads the blob.
 		this.#selectArea = this.#database.prepare(
 			"SELECT area_id, frontage_id, distance_m, smp_no, smp_name, smp_pu, mt_policy, mt_policy_interp, lt_policy, " +
 				"lt_policy_interp, defence_type, published_year, min_lat, min_lon, max_lat, max_lon " +
@@ -332,8 +291,8 @@ export class CoastalErosionLookup implements Disposable {
 			"SELECT h3_cell, completeness, basis, observed_rows FROM layer_coverage WHERE h3_cell = ?"
 		)
 
-		// 160 rows, so the bounding-box prefilter is a table scan and that is the cheapest correct thing.
-		// The blob is read separately for the same reason as above.
+		// The instability table is small, so a bbox table scan is cheap.
+		// The blob is again read separately.
 		this.#selectInstability = this.#database.prepare(
 			"SELECT area_id, kind, location, local_authority, smp_no, smp_name, smp_policy_units, rear_scarp_probability " +
 				"FROM coastal_ground_instability WHERE ? BETWEEN min_lon AND max_lon AND ? BETWEEN min_lat AND max_lat " +
@@ -346,11 +305,10 @@ export class CoastalErosionLookup implements Disposable {
 	}
 
 	/**
-	 * What the authority's map assigns at this coordinate, under one named scenario.
+	 * Return the erosion reading at a coordinate under one scenario.
 	 *
-	 * @throws {Error} When `scenarioKey` names no scenario this layer holds.
-	 * Returning an empty reading instead would make a typo indistinguishable from
-	 * a coast the authority has not mapped.
+	 * @throws {Error} When the layer does not hold `scenarioKey`.
+	 * An empty reading would hide the typo.
 	 */
 	public lookup(latitude: number, longitude: number, scenarioKey: string): CoastalErosionReading {
 		const scenario = NCERM_SCENARIOS_BY_KEY.get(scenarioKey)
@@ -379,13 +337,9 @@ export class CoastalErosionLookup implements Disposable {
 	}
 
 	/**
-	 * The ground-instability polygons containing this coordinate.
+	 * Return the ground-instability polygons that contain a coordinate.
 	 *
-	 * A different hazard from erosion, and never an answer to an erosion question.
-	 *
-	 * Its own method rather than a field on the erosion reading, because the two are different
-	 * hazards with different schemas and different authorities' meaning behind them.
-	 * A caller that wants both asks for both.
+	 * Ground instability is a separate hazard with its own schema, so erosion readings never include it.
 	 */
 	public groundInstabilityAt(latitude: number, longitude: number): CoastalGroundInstabilityReading[] {
 		const candidates = this.#selectInstability.all(longitude, latitude) as Array<{
@@ -432,14 +386,14 @@ export class CoastalErosionLookup implements Disposable {
 	}
 
 	/**
-	 * The coverage row for the index cell's parent at the coverage resolution.
+	 * Read the coverage row for the index cell's parent at the coverage resolution.
 	 */
 	#readCoverage(indexCell: H3Cell): (CoverageCell & { h3CellIndex: string; resolution: number }) | undefined {
 		return readCoverageAt(this.#selectCoverage, indexCell, this.identity.coverageResolution)
 	}
 
 	/**
-	 * Walk the index for one scenario, falling through to the geometry only for a cell a boundary crosses.
+	 * Walk the cell index for one scenario, and ray-cast only the polygons of partial cells.
 	 */
 	#resolveDesignations(
 		indexCell: H3Cell,
@@ -478,7 +432,7 @@ export class CoastalErosionLookup implements Disposable {
 		let rayCastRan = false
 
 		for (const areaID of [...partial].toSorted()) {
-			// A polygon that already answered `whole` higher in the chain needs no geometry read.
+			// A polygon already found whole elsewhere in the chain needs no geometry read.
 			if (whole.has(areaID)) continue
 
 			const area = this.#selectArea.get(areaID) as AreaRow | undefined
@@ -487,8 +441,6 @@ export class CoastalErosionLookup implements Disposable {
 
 			rayCastRan = true
 
-			// The bbox is the prefilter the geometry table stores precisely so the ray cast runs on the
-			// few polygons that could contain the point rather than on every polygon reaching the cell.
 			if (!bboxContains(area, longitude, latitude)) {
 				continue
 			}
@@ -519,7 +471,7 @@ export class CoastalErosionLookup implements Disposable {
 }
 
 /**
- * One stored row as a designation.
+ * Convert a stored area row to a designation.
  */
 function toDesignation(area: AreaRow, containment: CoastalContainmentPath): CoastalDesignation {
 	return {
@@ -531,9 +483,7 @@ function toDesignation(area: AreaRow, containment: CoastalContainmentPath): Coas
 			: {
 					shorelineManagementPlan: { number: area.smp_no, name: area.smp_name, policyUnit: area.smp_pu ?? "" },
 				}),
-		// The four policy fields travel together or not at all: an NFI row has no policy
-		// because the scenario assumes no intervention, and a half-populated policy object
-		// would read as a policy the authority declined to state.
+		// NFI rows have no policy, so the policy object is omitted when both policy fields are null.
 		...(area.mt_policy === null && area.lt_policy === null
 			? {}
 			: {
@@ -565,13 +515,7 @@ function readIdentity(database: DatabaseClient<CoastalDatabase>, databasePath: s
 		throw new Error(`coastal reader: ${databasePath} declares no h3 spine key`)
 	}
 
-	// the exclusion check, and IT is A condition rather than A convention.
-	// Ncerm publishes no coverage statement, so no row of this layer may license
-	// a claim that a location is not at risk.
-	// A stronger basis reaching a caller would let an absent polygon be read as a
-	// designation of safety over the whole of inland England.
-	// The check itself is the interface's rather than this product's.
-	// The sentence saying why is this product's.
+	// NCERM publishes no coverage statement, so no coverage row may support a claim that a location is safe.
 	assertCoverageLicensesNoExclusion(
 		(database.prepare("SELECT DISTINCT basis FROM layer_coverage").all() as Array<{ basis: string | null }>).map(
 			(coverageRow) => coverageRow.basis
@@ -606,13 +550,10 @@ function readIdentity(database: DatabaseClient<CoastalDatabase>, databasePath: s
 		)
 	}
 
-	// the coverage resolution is recovered from the cells rather than declared.
-	// The manifest's spine key names the index resolution; `layer_coverage` is
-	// keyed at a coarser one, and this layer has no footprint row to carry it
-	// (the flood layer's `flood_map_extent` and the soil layer's survey-area rows are
-	// where those two put theirs, and ncerm publishes no footprint at all).
-	// Recovering it is exact rather than approximate — a short cell expands to a valid index
-	// at exactly one resolution — and the shared helper throws on a table that mixes them.
+	// The manifest records only the index resolution, and this layer has no footprint
+	// row that could record the coarser coverage resolution.
+	// A short cell is valid at exactly one resolution, so the helper recovers it from
+	// the cells and throws if the table mixes resolutions.
 	const coverageResolution = recoverShortCellResolution(
 		(database.prepare("SELECT h3_cell FROM layer_coverage").all() as Array<{ h3_cell: number }>).map(
 			(coverageRow) => coverageRow.h3_cell

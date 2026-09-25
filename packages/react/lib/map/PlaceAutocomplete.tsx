@@ -3,7 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Render an accessible suggestion listbox; state and keyboard navigation live in the hook.
+ *   Renders the suggestion listbox. The `usePlaceAutocomplete` hook owns the state and keyboard
+ *   navigation.
  */
 
 import type { ReactNode } from "react"
@@ -11,39 +12,45 @@ import type { ReactNode } from "react"
 import { cx } from "#common/cx"
 import type { Suggestion } from "#map/types"
 
+/**
+ * Props for {@link PlaceAutocomplete}.
+ */
 export interface PlaceAutocompleteProps {
 	/**
-	 * The suggestions to render (from {@link usePlaceAutocomplete}).
+	 * The suggestions to render.
 	 */
 	suggestions: Suggestion[]
 	/**
-	 * The keyboard-highlighted index; `-1` for none.
+	 * The index highlighted by the keyboard, or `-1` for none.
 	 */
 	activeIndex: number
 	/**
-	 * Fired (with the suggestion `value`) when one is clicked.
+	 * Called with the suggestion's `value` when the visitor clicks it.
 	 */
 	onPick: (value: string) => void
 	/**
-	 * Fired with the index a pointer entered, so hover matches keyboard highlight.
+	 * Called with the index under the pointer, so that hover moves the highlight.
 	 */
 	onHover?: (index: number) => void
 	/**
-	 * The listbox element id — pass `listboxID` from the hook (matches the input's `aria-controls`).
+	 * The listbox element id.
+	 *
+	 * Pass `listboxID` from the hook so that it matches the input's `aria-controls`.
 	 */
 	listboxID: string
 	/**
-	 * Build the option element id — pass `optionID` from the hook.
+	 * Builds an option element id.
+	 * Pass `optionID` from the hook.
 	 */
 	optionID: (index: number) => string
 	/**
-	 * Leading label. @default "Did you mean:"
+	 * The label before the suggestions. @default "Did you mean:"
 	 */
 	caption?: string
 }
 
 /**
- * The suggestion listbox.
+ * Renders the suggestion listbox, or nothing when there are no suggestions.
  */
 export function PlaceAutocomplete({
 	suggestions,

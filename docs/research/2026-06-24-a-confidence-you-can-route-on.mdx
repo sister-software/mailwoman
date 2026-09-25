@@ -16,7 +16,7 @@ That's the gap we set out to close. Every geocoder chases accuracy, be-right-mor
 
 Think about a weather forecaster. A good one who says "70% chance of rain" is right on about seven of every ten days they say it. That's the whole interface: the number means what it says. A neural model makes the same promise implicitly every time it hands you a softmax probability, and for a long while ours without output broke it, confident in some bands and timid in others, with no single number you could lean on.
 
-We fixed that part first (it's [its own story](https://github.com/sister-software/mailwoman/blob/main/docs/records/site-2026-08/concepts/confidence-calibration.mdx)). The short version: a small post-hoc correction maps the model's raw confidence onto an direct one, so when a parsed span reads `conf="0.94"` it's right about 94% of the time, measured on addresses the fit never saw. When the model says it's sure, now you can believe it.
+We fixed that part first (it's [its own story](https://github.com/sister-software/mailwoman/blob/main/docs/records/site-2026-08/concepts/confidence-calibration.mdx)). The short version: a small post-hoc correction maps the model's raw confidence onto a calibrated one, so when a parsed span reads `conf="0.94"` it's right about 94% of the time, measured on addresses the fit never saw. When the model says it's sure, now you can believe it.
 
 A calibrated number per _span_ still isn't a number you can act on per _answer_, though. So we carried it the last step, to the resolved coordinate.
 
@@ -42,6 +42,6 @@ Go back to the hundred thousand records. With a threshold you can finally split 
 
 That's the difference between a vibe and a number. A pin with a vibe attached is a thing you re-litigate on every row. A pin with a calibrated confidence is a thing you build a pipeline around.
 
-It's a change rather than a wand. Crank the threshold and you hand more rows to humans; that's the cost, stated directly, and it's yours to set against your own tolerance for a wrong match. What we've done is make the trade legible and put an direct number on both sides of it.
+It's a change rather than a wand. Crank the threshold and you hand more rows to humans; that's the cost, stated directly, and it's yours to set against your own tolerance for a wrong match. What we've done is make the trade legible and put a real number on both sides of it.
 
 It's live now in `mailwoman@4.14.0`. Pass a calibrator to the parser, read the `conf=` off the resolved tree, pick your bar. Then stop guessing which answers to trust, and start knowing.

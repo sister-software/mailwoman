@@ -4,10 +4,8 @@
  * @author Teffen Ellis, et al.
  * @file Reports modules whose top-level declarations fall into communities that share no imported dependency.
  *
- *   The companion to {@link ./surface.ts}, which counts declarations. A count answers "is this module
- *   large"; this one answers "is this module two modules", which is a property of the reference graph and not of any
- *   total. A module that reads one table and returns a value stays one community however long it grows. a module whose
- *   pure transform and whose filesystem walker never call each other is two, at any size.
+ *   The companion check in `./surface.ts` measures module size. This check partitions the reference graph between
+ *   declarations, so it finds a module that holds two unrelated responsibilities at any size.
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
@@ -18,26 +16,23 @@ import { type Diagnostic, DiagnosticSeverity, type RepoCheck, type RepoContext }
 import { trackedSourcePaths } from "#tracked-sources"
 
 /**
- * What a module must exceed before its partition is reported.
+ * The minimums that a module must meet before the check reports its partition.
  */
 export const MODULE_COHESION_THRESHOLDS = {
 	/**
-	 * Newman's modularity of the best partition found.
+	 * The minimum Newman modularity of the best partition found.
 	 *
-	 * A module whose helpers all feed one entry point scores near zero however many helpers there are.
+	 * A module whose helpers all feed one entry point scores near zero.
 	 */
 	modularity: 0.35,
 	/**
-	 * Members a community needs before it counts toward a reported pair.
-	 *
-	 * A lone declaration is a helper rather than a responsibility.
+	 * The minimum number of declarations in a community that counts toward a reported pair.
 	 */
 	communityMembers: 2,
 	/**
-	 * Distinct imported specifiers a community needs before it counts toward a reported pair.
+	 * The minimum number of distinct imported specifiers in a community that counts toward a reported pair.
 	 *
-	 * One shared import is what a facade of same-shaped wrappers looks like.
-	 * `@mailwoman/core/fs/readers` partitions into eleven such groups and is correct as written.
+	 * A facade of wrappers that each read one import stays below it.
 	 */
 	communitySpecifiers: 2,
 } as const
@@ -49,8 +44,8 @@ const GAIN_EPSILON = 1e-9
 /**
  * One top-level declaration that holds a value.
  *
- * Type-only declarations are left out of the graph deliberately: a type referenced by every
- * group joins all of them, and one partition of nineteen declarations is the result.
+ * The graph omits type declarations because a type that every group references
+ * would join all the groups into one.
  */
 interface ValueDeclaration {
 	name: string
@@ -66,22 +61,22 @@ export interface DeclarationCommunity {
 	names: readonly string[]
 	exported: boolean
 	/**
-	 * The module specifiers this community's members read, which is what makes two
-	 * communities comparable: the graph says they are separate, and the imports say
-	 * whether they are separate about different things.
+	 * The module specifiers that this community's members read.
+	 *
+	 * Two communities with disjoint specifiers depend on different things.
 	 */
 	specifiers: ReadonlySet<string>
 	line: number
 }
 
 /**
- * The partition of one module, and the community pairs that look separable.
+ * The partition of one module and the community pairs that could be separated.
  */
 export interface ModuleCohesion {
 	modularity: number
 	communities: readonly DeclarationCommunity[]
 	/**
-	 * Community pairs that are each substantial on their own and share no imported dependency.
+	 * The pairs of exported communities that meet the size thresholds and share no imported dependency.
 	 */
 	disjointPairs: ReadonlyArray<readonly [DeclarationCommunity, DeclarationCommunity]>
 }
@@ -93,9 +88,8 @@ function topLevelValues(source: ts.SourceFile): ValueDeclaration[] {
 		declarations.push({
 			name,
 			node,
-			// Read off the declaration rather than the statement: `getCombinedModifierFlags`
-			// walks a variable declaration up through its list to the `export` that covers it,
-			// and a statement carries no such link.
+			// `getCombinedModifierFlags` must read the declaration, because it walks a
+			// variable declaration up to the statement's `export` modifier.
 			exported: !!(ts.getCombinedModifierFlags(node) & ts.ModifierFlags.Export),
 			line: source.getLineAndCharacterOfPosition(statement.getStart(source)).line + 1,
 		})
@@ -117,10 +111,9 @@ function topLevelValues(source: ts.SourceFile): ValueDeclaration[] {
 }
 
 /**
- * Every value binding an import introduces, mapped to the specifier it came from.
+ * Maps every value binding that an import introduces to its module specifier.
  *
- * Type-only imports are skipped: they are erased before anything runs,
- * so they say nothing about what a declaration does.
+ * Type-only imports are skipped because they are erased at compile time.
  */
 function importedBindings(source: ts.SourceFile): Map<string, string> {
 	const bindings = new Map<string, string>()
@@ -158,8 +151,10 @@ function importedBindings(source: ts.SourceFile): Map<string, string> {
 }
 
 /**
- * One level of Louvain over an unweighted undirected graph: move each node to the neighbouring
- * community that raises modularity most, and repeat until a whole pass moves nothing.
+ * Runs one level of Louvain over an unweighted undirected graph.
+ *
+ * Each pass moves every node to the neighbouring community that raises modularity most,
+ * and passes repeat until nothing moves.
  */
 function partitionByModularity(adjacency: ReadonlyArray<ReadonlySet<number>>): {
 	modularity: number
@@ -239,8 +234,8 @@ function partitionByModularity(adjacency: ReadonlyArray<ReadonlySet<number>>): {
 }
 
 /**
- * Partition `source` by which top-level declarations reference each other,
- * then read each community's imports.
+ * Partitions the top-level declarations of `source` by their references to each other
+ * and collects each community's imports.
  */
 export function moduleCohesion(source: ts.SourceFile): ModuleCohesion {
 	const declarations = topLevelValues(source)
@@ -313,10 +308,10 @@ function describe(community: DeclarationCommunity): string {
 }
 
 /**
- * Advisory partition of a module's declaration graph.
+ * The `module-cohesion` check.
  *
- * A warning names the two groups and the dependencies that separate them.
- * It proposes which declarations move together and does not claim the module is wrong.
+ * It warns when a module's declarations split into two groups with disjoint imports,
+ * and the warning lists both groups and their dependencies.
  */
 export const moduleCohesionCheck: RepoCheck = {
 	id: "module-cohesion",

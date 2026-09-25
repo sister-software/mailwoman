@@ -58,19 +58,18 @@ export const BDC_ATTRIBUTION =
 /**
  * Configures {@link buildBDCDatabase}.
  *
- * Rows come from `rows` or from per-provider `csvPaths`, and a block whose centroid
- * `blockCentroids` cannot supply is skipped rather than guessed.
- * `filerDB` is required when `providers` lists a provider ID under more than one FRN,
- * because choosing the primary FRN needs filing data.
+ * Rows come from `rows` or from per-provider `csvPaths`.
  */
 export interface BuildBDCOptions {
 	/**
-	 * An injected row source for tests; when given, `csvPaths` is ignored and nothing is read from disk.
+	 * Row source injected by tests.
+	 * When it is set, `csvPaths` is ignored.
 	 */
 	rows?: Iterable<BDCAvailabilityRow> | AsyncIterable<BDCAvailabilityRow>
 
 	/**
-	 * Per-provider availability CSVs; each file's provider ID is read from its first data row.
+	 * Per-provider availability CSVs.
+	 * Each file's provider ID comes from its first data row.
 	 */
 	csvPaths?: string[]
 
@@ -90,19 +89,20 @@ export interface BuildBDCOptions {
 	buildSHA: string
 
 	/**
-	 * Whether to populate `bdc_availability.location_id`, default false.
+	 * Whether to populate `bdc_availability.location_id`.
+	 * Defaults to false.
 	 *
-	 * The column is an opaque join key that is never resolved against the Fabric.
-	 * When it is off, rows are deduplicated across locations, so `BuildBDCResult.rows`
-	 * counts distinct block and service tuples rather than locations.
+	 * The column is an opaque join key.
+	 * When it is off, rows with the same block and service collapse into one,
+	 * so `BuildBDCResult.rows` counts those tuples instead of locations.
 	 */
 	includeLocationIDs?: boolean
 
 	/**
 	 * Resolves a 15-character census block GEOID to its centroid, such as `createTIGERBlockCentroidLookup`.
 	 *
-	 * It must return `undefined` for an unknown GEOID; the build counts that row in
-	 * `unknownGeoids` and skips it rather than guessing a cell.
+	 * It returns `undefined` for an unknown GEOID.
+	 * The build then skips the row and counts it in `unknownGeoids`.
 	 */
 	blockCentroids: (geoid: string) => { lat: number; lon: number } | undefined
 	onProgress?: (message: string) => void
@@ -115,29 +115,25 @@ export interface BuildBDCOptions {
 	/**
 	 * The filer database used to choose the primary FRN for a provider ID listed under several FRNs.
 	 *
-	 * It is queried only for such providers, and the build throws, naming the provider,
-	 * when one needs it and it is missing.
+	 * The build throws if such a provider exists and this option is missing.
 	 */
 	filerDB?: DatabaseClient<FilerDatabase>
 
 	/**
-	 * The date the primary-FRN filing query is scoped to, default `asOfDate`.
+	 * The date for the primary-FRN filing query.
+	 * Defaults to `asOfDate`.
 	 */
 	primaryFRNAsOf?: string
 }
 
 /**
- * Summarizes a {@link buildBDCDatabase} run: the output path, rows written, rows removed as
- * duplicates, providers, coverage cells, skipped unknown block GEOIDs and populated provider rows.
+ * Counts from a {@link buildBDCDatabase} run.
  */
 export interface BuildBDCResult {
 	out: string
 
 	/**
 	 * Rows written to `bdc_availability` after deduplication and unknown-GEOID skips.
-	 *
-	 * Without `includeLocationIDs`, locations in one block that share a provider,
-	 * technology, speeds and flags collapse to one row.
 	 */
 	rows: number
 
@@ -194,11 +190,11 @@ interface BDCStageRow {
 }
 
 /**
- * Reads the `provider_id` column from the first data row of an FCC BDC availability CSV,
- * whose rows all share one provider.
+ * Reads `provider_id` from the first data row of an FCC BDC availability CSV.
+ * Every row in a file shares one provider.
  *
- * It throws on a value that is not a safe integer, because `NaN` would bind as NULL,
- * `INSERT OR IGNORE` would drop every row, and the loss would be counted as ordinary deduplication.
+ * It throws on a value that is not a safe integer.
+ * A `NaN` would bind as NULL, and `INSERT OR IGNORE` would then drop every row as if it were a duplicate.
  */
 export function peekProviderID(csvBuffer: Buffer, csvPath?: string): ProviderID {
 	const headerEnd = csvBuffer.indexOf(0x0a)
@@ -318,6 +314,8 @@ async function populateBDCProviderTable(
 
 /**
  * Build and seal `bdc.db`, then atomically replace the destination.
+ *
+ * If the destination is missing but a parked copy from a crashed swap exists, the copy is restored first.
  */
 export async function buildBDCDatabase(options: BuildBDCOptions): Promise<BuildBDCResult> {
 	const progress = options.onProgress ?? (() => {})

@@ -1,6 +1,6 @@
-> **Point-in-time design record.** The embedded code listings are the plan as written rather than the shipped code —
-> several diverged during implementation (e.g. the repair test's input, the Stage-prefix heatmap window). The
-> shipped files are canonical; read this for intent and sequencing only.
+> **Point-in-time design record.** The embedded code listings are the plan as written, and several diverged from the
+> shipped code during implementation (e.g. the repair test's input, the Stage-prefix heatmap window). The shipped
+> files are canonical. Read this plan for intent and sequencing only.
 
 # Parse Trace + ModelVisualizer Implementation Plan
 
@@ -8,7 +8,7 @@
 
 **Goal:** A serializable `NeuralParseTrace` produced by the shared decode path (`traceParse` on `NeuralAddressClassifier`), rendered by a docs `<ModelVisualizer>` component fed from production assets.
 
-**Architecture:** Increments 1+2 of the approved spec (`docs/superpowers/specs/2026-07-03-parse-trace-model-visualizer-design.md`). The private `#decode` in `neural/classifier.ts` gains a trace flag that _retains_ intermediates it already computes (no fork — #481 invariant); a new public `traceParse` assembles them into `NeuralParseTrace`. Docs side: a pure `<ModelVisualizer trace={…}/>` renders four bands + a locale gauge, and a thin `LiveModelVisualizer` wires it to `useDemoEmbed()`. CLI + resolver stages are a **separate later plan** (spec increments 3–4).
+**Architecture:** Increments 1+2 of the approved spec (`docs/superpowers/specs/2026-07-03-parse-trace-model-visualizer-design.md`). The private `#decode` in `neural/classifier.ts` gains a trace flag that _retains_ intermediates it already computes, without forking the decode path (#481 invariant). A new public `traceParse` assembles them into `NeuralParseTrace`. Docs side: a pure `<ModelVisualizer trace={…}/>` renders four bands + a locale gauge, and a thin `LiveModelVisualizer` wires it to `useDemoEmbed()`. CLI + resolver stages are a **separate later plan** (spec increments 3–4).
 
 **Tech Stack:** TypeScript (tabs, workspace-root files, license headers), vitest, React 18 + CSS modules (docs), Storybook (`@storybook/react-vite`), Docusaurus.
 
@@ -18,7 +18,7 @@
 - **#481 invariant:** `#decode` stays the single decode path. Trace capture happens inside it, blocked on a flag. `parse` / `parseWithLogits` must stay byte-stable. The existing neural suite is the guard and must pass untouched.
 - **File conventions:** every new `.ts`/`.tsx` file starts with the 4-line `@copyright Sister Software / @license AGPL-3.0 / @author Teffen Ellis, et al.` docblock plus a purpose paragraph. Indentation is tabs. Workspace files live at workspace root (no `src/`); docs components live in `docs/src/components/<Name>/`.
 - **Acronym casing:** whole-component caps (`parseJSON` rather than `parseJson`). No new acronym identifiers are expected in this plan; if one appears, cap it whole.
-- **Docs type discipline:** `docs/src/shared/resources.tsx` uses locally-defined structural `*Like` types — do NOT import types from `@mailwoman/neural` into docs.
+- **Docs type discipline:** `docs/src/shared/resources.tsx` uses locally defined structural `*Like` types. Do not import types from `@mailwoman/neural` into docs.
 - **Run TS directly:** `node <file>` for scripts; `yarn vitest --run <path>` for tests (root vitest config resolves the `@mailwoman/*` source aliases).
 
 ---
@@ -39,7 +39,7 @@
 
 - [ ] **Step 1: Write the failing test**
 
-Create `neural/test/trace-parse.test.ts`. It follows the house pattern from `neural/test/classifier-query-shape.test.ts`: real tokenizer fixture + fake runner, no model file.
+Create `neural/test/trace-parse.test.ts`. It follows the house pattern from `neural/test/classifier-query-shape.test.ts`: a real tokenizer fixture and a fake runner, without a model file.
 
 ```ts
 /**
@@ -279,7 +279,7 @@ Notes for the implementer:
 
 - `logitsWithBoost` magnitude 3 (not the 0.3 the query-shape test uses) so decode choices are deterministic against the structural CRF mask.
 - If `us_zip` is not a recognized known-format key for the queryShape prior, check `neural/query-shape-prior.ts` for the exact `KnownFormatHitLike` shape and a format string it maps (the test's intent is only "a queryShape prior fires and shifts emissions").
-- If the `postcodeRepair` case doesn't fire on `"Main St 90210"`, read `neural/postcode-repair.ts` for a string its US pattern accepts — do not weaken the assertion to pass-without-change.
+- If the `postcodeRepair` case doesn't fire on `"Main St 90210"`, read `neural/postcode-repair.ts` for a string its US pattern accepts. Do not weaken the assertion so that it passes without a repair.
 
 - [ ] **Step 2: Run the test to verify it fails**
 
@@ -631,7 +631,7 @@ Expected: PASS (the snapshot test writes `neural/test/fixtures/trace-schema.snap
 - [ ] **Step 6: Byte-stability — run the whole neural suite**
 
 Run: `yarn vitest --run neural`
-Expected: PASS with zero changes to existing test files. Any existing-test failure means the trace capture perturbed the decode path — fix the capture, never the existing test.
+Expected: PASS with zero changes to existing test files. A failure in an existing test means the trace capture changed the decode path. Fix the capture and leave the existing test unchanged.
 
 - [ ] **Step 7: Commit**
 
@@ -735,7 +735,7 @@ Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>"
 
 - [ ] **Step 1: Widen the docs types**
 
-In `docs/src/shared/resources.tsx`, after the existing `MailwomanClassifierLike` block, add the structural trace types (docs convention: local `*Like` types, no `@mailwoman/neural` imports — the neural-side schema snapshot + committed fixture guard drift):
+In `docs/src/shared/resources.tsx`, after the existing `MailwomanClassifierLike` block, add the structural trace types. The docs convention is local `*Like` types without `@mailwoman/neural` imports. The neural-side schema snapshot and the committed fixture detect drift between the two:
 
 ```ts
 export interface TraceChannelLike {
@@ -998,7 +998,7 @@ Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>"
 
 - [ ] **Step 1: Implement the component**
 
-Four bands + gauge, one shared piece-per-column x-axis. Pure — no context, no fetches.
+The component renders four bands and a gauge on one shared x-axis with one piece per column. It is pure: it reads no context and makes no fetches.
 
 ```tsx
 /**
@@ -1554,7 +1554,7 @@ export function LiveModelVisualizer(): JSX.Element {
 
 Implementation notes:
 
-- Check `DemoEmbedState`'s exact field names in `docs/src/contexts/DemoEmbed.tsx` before wiring (`loadingProgress` may be structured rather than a string) — adjust the loading line to whatever the context exposes (the GuidedTour usage at `docs/src/components/GuidedTour/GuidedTour.tsx:102` is the reference consumer).
+- Check `DemoEmbedState`'s exact field names in `docs/src/contexts/DemoEmbed.tsx` before wiring (`loadingProgress` may be structured rather than a string). Adjust the loading line to whatever the context exposes (the GuidedTour usage at `docs/src/components/GuidedTour/GuidedTour.tsx:102` is the reference consumer).
 - `useDemoEmbed().classifier` is typed `MailwomanClassifierLike | null`. The optional `traceParse` added in Task 3 makes the feature-detect type-check.
 
 - [ ] **Step 2: Implement the page**
@@ -1606,7 +1606,7 @@ export default function TracePage(): JSX.Element {
 
 - [ ] **Step 3: Verify in the running site**
 
-Use the **run-docs skill** to start the docs site, then open `http://localhost:7770/trace`. Expected: asset loading indicator → input box → clicking Trace renders the four bands from a live parse. ⚠ The deployed HF bundle's `@mailwoman/neural` code is bundled from _local source_ (webpack alias), so `traceParse` exists at runtime; only the model/tokenizer bytes come from production.
+Use the **run-docs skill** to start the docs site, then open `http://localhost:7770/trace`. Expected: asset loading indicator → input box → clicking Trace renders the four bands from a live parse. ⚠ The deployed HF bundle's `@mailwoman/neural` code is bundled from _local source_ (webpack alias), so `traceParse` exists at runtime. Only the model and tokenizer bytes come from production.
 
 Run: `yarn workspace @mailwoman/docs typecheck`
 Expected: clean.
@@ -1641,7 +1641,7 @@ Expected: PASS / clean.
 
 - [ ] **Step 3: Repo lint/format checks**
 
-Run: `yarn lint:oxlint && yarn lint:oxfmt` (skip `lint:python` — no Python touched). If oxfmt flags the new files, run `yarn format` and re-check. Fix violations in the files this plan touched only.
+Run: `yarn lint:oxlint && yarn lint:oxfmt`. Skip `lint:python`, because this plan touches no Python. If oxfmt flags the new files, run `yarn format` and re-check. Fix violations in the files this plan touched only.
 
 - [ ] **Step 4: Docs production build smoke**
 

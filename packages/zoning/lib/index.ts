@@ -3,50 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The `zoning-ireland.db` reader — what a local authority's adopted plan assigns at a coordinate, in that
- *   authority's own vocabulary, and on what basis.
- *
- *   two readings, and the one that is missing is the point.
- *
- *   1. `designated` — an adopted plan places the location inside a zoning polygon, and the polygon is the
- *      answer: the authority's own code, its own description, the plan it belongs to and that plan's stated
- *      window, with the Department's national generic type beside the local code rather than instead of it.
- *   2. `unknown` — no polygon contains the point. that is not an absence reading, and this layer has none.
- *
- *   There is no `designated_absence` here, and zoning is the hardest case of the rule. For flood zones the
- *   Environment Agency states England-wide coverage and the Planning Practice Guidance defines Zone 1 as the
- *   land outside Zones 2 and 3, so an empty answer inside England is a designation. No such definition exists
- *   anywhere for zoning: a location with no zoning polygon is outside any adopted plan area, or inside one on
- *   land the plan does not zone, or in a jurisdiction that has never adopted zoning, or in a jurisdiction
- *   whose records nobody has published — and no product distinguishes them. The source itself proves the
- *   asymmetry: it states `UNZ - Unzoned` as a positive value on 4 of 85,330 rows, so where the authority
- *   means unzoned it says so, and every other absence is a row that is not there.
- *
- *   SO the constructor refuses A coverage row that would support an exclusion. Every row must read
- *   `source_present`; `supportsExclusion` must be false for all of them. That is not a convention this reader
- *   follows. It is a condition it checks at open time, so the day someone writes a stronger basis without
- *   settling the footprint question, the layer refuses to open rather than answering confidently.
- *
- *   neither reading is A statement about what may be built. The layer reports what a plan assigns at a
- *   location, which is a fact about the plan. The Department states that its data are "not published here as
- *   legal definitions of the current actuality with regard to Local Authority zoning or their geographic
- *   extents" and that "Original data should be sourced directly from the relevant Local Authority" — and
- *   `limits` carries the authority's own exclusions on every answer.
- *
- *   the plan is part OF the claim, never A parameter OF IT. A zone exists inside a named Development Plan or
- *   Local Area Plan with a stated validity window. a reading that dropped the plan would answer a question no
- *   authority asked. And `currentPlan = 1` means "not superseded", not "in force today": 2,363 of 85,330 rows
- *   carry a `validTo` already in the past, so the window travels on every reading and the comparison against a
- *   date is the caller's, made against a clock this reader does not own.
- *
- *   the probe is structure first, geometry last. `cellToParent` up the compacted whole-cell chain answers an
- *   interior point with primary-key probes alone. only a cell a boundary crosses reaches the ray cast, and
- *   then only against the polygons `zoning_cell` already named for that cell.
- *
- *   the reader is synchronous and uses RAW prepared statements, for the same reason the sibling layer readers
- *   are: it answers one point per geocode with a bounded number of primary-key probes plus a bounded geometry
- *   read, and the ray cast it wraps is synchronous anyway. The DDL that created these tables is Kysely — see
- *   `schema.ts`.
+ *   Synchronous reader for `zoning-ireland.db` that returns the zoning an adopted local plan assigns at a coordinate.
  */
 
 import {
@@ -83,7 +40,11 @@ import {
 export { GZT_LAYER_NAME, ProvenanceGrade } from "#vocabulary"
 
 /**
- * What the layer can say about a coordinate.
+ * The kinds of answer the layer gives for a coordinate.
+ *
+ * The layer has no absence kind.
+ * A point with no zoning polygon may be outside every plan area, on land that a plan leaves unzoned,
+ * or in a jurisdiction whose records are unpublished, and the source does not distinguish these cases.
  */
 export const ZoningReadingKind = {
 	/**
@@ -92,35 +53,37 @@ export const ZoningReadingKind = {
 	Designated: "designated",
 	/**
 	 * No zoning polygon contains the point.
-	 *
-	 * Never an absence reading — see this file's header.
+	 * This kind never means the location is unzoned.
 	 */
 	Unknown: "unknown",
 } as const
 
+/**
+ * One of the {@link ZoningReadingKind} values.
+ */
 export type ZoningReadingKind = (typeof ZoningReadingKind)[keyof typeof ZoningReadingKind]
 
 /**
- * How containment was established.
+ * How the lookup established containment.
  */
 export const ZoningContainmentPath = {
 	/**
-	 * The cell lies wholly inside the zone.
-	 * No geometry was read.
+	 * The cell lies wholly inside the zone, so no geometry was read.
 	 */
 	WholeCell: "whole_cell",
 	/**
-	 * The cell is crossed by a boundary.
-	 *
-	 * The point was ray-cast against the polygons named for that cell.
+	 * A boundary crosses the cell, so the point was ray-cast against the cell's polygons.
 	 */
 	RayCast: "ray_cast",
 	/**
-	 * No zone reaches this cell at all.
+	 * No zone reaches this cell.
 	 */
 	NoZoneCell: "no_zone_cell",
 } as const
 
+/**
+ * One of the {@link ZoningContainmentPath} values.
+ */
 export type ZoningContainmentPath = (typeof ZoningContainmentPath)[keyof typeof ZoningContainmentPath]
 
 /**
@@ -130,163 +93,167 @@ export interface ZoningJurisdiction {
 	jurisdictionID: string
 	name: string
 	/**
-	 * The publisher's own code, verbatim — `Fl` for Fingal, against `CL`, `CO`, `DU` for the rest.
+	 * The publisher's code, verbatim.
+	 *
+	 * Fingal uses `Fl`, while other councils use codes such as `CL`, `CO` and `DU`.
 	 */
 	sourceCode: string
 	country: string
 }
 
 /**
- * The plan a zone belongs to, with its own stated window.
+ * The plan that a zone belongs to, with its stated validity window.
+ *
+ * The caller must compare the window with the current date, because a plan that is
+ * not superseded can still have a `validTo` in the past.
  */
 export interface ZoningPlan {
 	planID: string
 	name: string
 	/**
-	 * `DP` Development Plan, `LAP` Local Area Plan, `SDZ` Strategic Development Zone.
+	 * The plan level: `DP` for Development Plan, `LAP` for Local Area Plan
+	 * or `SDZ` for Strategic Development Zone.
 	 */
 	level: string
 	validFrom: string | null
 	validTo: string | null
 	/**
-	 * The publisher's `CURRENT_PLAN` flag, carried as published.
+	 * The publisher's `CURRENT_PLAN` flag as published.
 	 *
-	 * `1` means not superseded rather than "in force today".
+	 * The value `1` means the plan is not superseded.
+	 * It does not mean the plan is in force today.
 	 */
 	currentPlan: number
 }
 
 /**
- * One zoning polygon the point falls inside, as the authority publishes it.
+ * One zoning polygon that contains the point, as the authority publishes it.
  */
 export interface ZoningDesignation {
 	areaID: string
 	/**
-	 * The authority's own zone code, verbatim.
+	 * The authority's zone code, verbatim.
 	 */
 	localCode: string
 	localDescription: string | null
 	localCodeURL: string | null
 	/**
-	 * The publishing authority's own crosswalk into a shared scheme, where it publishes one.
+	 * The publisher's crosswalk from the local code into a shared scheme, when it publishes one.
 	 *
-	 * Beside the local code, never instead of it: 52 of 795 (authority, local code) pairs
-	 * take more than one generic type, so this cannot be reconstructed from `localCode`
-	 * and is a per-polygon fact the Department authored.
+	 * The crosswalk is stored per polygon because one local code can map to several
+	 * generic types, so it cannot be derived from `localCode`.
 	 */
 	crosswalk?: {
 		scheme: string
 		code: string
 		description: string | null
 		/**
-		 * A coarser code from the same authority, carried as published.
+		 * A coarser code from the same authority, as published.
 		 */
 		rollup: string | null
 		/**
-		 * The publisher's own label for `code`, from its declared domain —
-		 * absent for a code the publisher uses and never declared.
+		 * The publisher's label for `code` from its declared domain.
+		 *
+		 * It is absent for a code that the publisher uses without declaring.
 		 */
 		label?: string
 		/**
-		 * `false` where the publisher uses this code without declaring it in its own domain.
+		 * Whether the publisher declares this code in its own domain.
 		 */
 		declared: boolean
 	}
 	/**
 	 * One of {@link ProvenanceGrade}.
 	 *
-	 * Every row of this artifact is `authoritative`; the column exists because a query
-	 * answered from an `inferred` row may never be presented as the authority's designation.
+	 * Every row of this artifact is `authoritative`.
+	 * A caller must never present an `inferred` row as the authority's designation.
 	 */
 	provenanceGrade: string
 	jurisdiction: ZoningJurisdiction
 	plan: ZoningPlan
 	/**
-	 * The authority states unzoned land positively on a handful of rows.
+	 * Whether the authority explicitly zones this polygon as unzoned.
 	 *
-	 * `true` here is the authority saying so.
-	 * An absent designation says nothing at all, which is the distinction this layer exists to keep.
+	 * Only this flag means unzoned.
+	 * A point with no designation says nothing about zoning.
 	 */
 	unzoned: boolean
 	containment: ZoningContainmentPath
 }
 
 /**
- * One reading, carrying everything a caller needs to re-derive it rather than take it.
+ * One reading at a coordinate, with the provenance a caller needs to check it.
  */
 export interface ZoningReading {
 	kind: ZoningReadingKind
 	/**
-	 * Every polygon containing the point, ordered by `area_id`.
+	 * Every polygon that contains the point, ordered by `area_id`.
 	 *
-	 * Usually one.
-	 * Several where a Local Area Plan overlays a Development Plan over the same ground,
-	 * which the source publishes as two rows.
+	 * A Local Area Plan that overlays a Development Plan produces two designations for the same ground.
 	 */
 	designations: ZoningDesignation[]
 	containment: ZoningContainmentPath
 	/**
 	 * The coverage row for the location, when the product has data in that cell.
 	 *
-	 * Its basis is always `source_present`, so it licenses presence and nothing else.
-	 * An absent coverage row and a present one are both compatible with "no zoning
-	 * polygon here", and neither says the location is unrestricted.
+	 * Its basis is always `source_present`, which only shows that the source has data nearby.
+	 * Neither a present nor an absent coverage row means the location is unrestricted.
 	 */
 	coverage?: CoverageCell & { h3CellIndex: string; resolution: number }
 	/**
-	 * The index cell probed, for a receipt.
+	 * The H3 index cell that the lookup probed.
 	 */
 	indexCellIndex: string
 	/**
-	 * What the product does not state, in the authority's own words.
+	 * The authority's own statements of what the product does not state.
 	 */
 	limits: ReadonlyArray<string>
 	/**
-	 * Why this layer's coverage licenses no negative claim, in one sentence.
+	 * One sentence on why this layer's coverage supports no negative claim.
 	 */
 	coverageLimit: string
 }
 
 /**
- * The layer's identity, read once at open time.
+ * The layer's identity, read once when the database opens.
  */
 export interface ZoningLayerIdentity {
 	manifest: LayerManifest
 	indexResolution: number
 	coverageResolution: number
 	/**
-	 * Every resolution `zoning_cell` stores a row at, coarsest first — the ancestor chain a probe walks.
+	 * Every resolution at which `zoning_cell` stores rows, coarsest first.
 	 *
-	 * Several, and necessarily so: each feature's whole tier is compacted parent-ward,
-	 * and a polygon too large for h3's allocator at the index resolution was indexed coarser.
-	 * A reader that probed one resolution would read every row at the others as an absence.
+	 * A probe walks all of them because whole cells are compacted into parents, and a polygon
+	 * too large for the h3 allocator at the index resolution was indexed at a coarser one.
 	 */
 	cellResolutions: number[]
 	/**
-	 * The jurisdictions the layer holds, by id.
+	 * The jurisdictions in the layer, keyed by id.
 	 */
 	jurisdictions: ReadonlyMap<string, ZoningJurisdiction>
 	/**
-	 * The crosswalk scheme this layer's rows carry, or `undefined` where the publisher ships none.
+	 * The crosswalk scheme of this layer's rows, or `undefined` when the publisher ships none.
 	 */
 	crosswalkScheme?: string
 	/**
 	 * The authority's footprint statements.
 	 *
-	 * Empty in this edition, which is what makes `source_present` the only basis
-	 * the coverage may carry — see `schema.ts`.
+	 * This edition has none, so `source_present` is the only coverage basis allowed.
+	 * See `schema.ts`.
 	 */
 	mappedExtents: Array<{ extentID: string; source: string; statement: string; statementURL: string }>
 	/**
-	 * The coverage basis every row carries.
-	 *
-	 * Always `source_present` while `mappedExtents` is empty.
-	 * Checked at open time rather than assumed.
+	 * The coverage basis of every row.
+	 * It is `source_present` while `mappedExtents` is empty.
 	 */
 	coverageBasis: CoverageBasis
 	databasePath: string
 }
 
+/**
+ * Options for {@link ZoningLookup}.
+ */
 export interface ZoningLookupOptions {
 	databasePath: PathBuilderLike
 }
@@ -319,13 +286,12 @@ interface PlanRow {
 }
 
 /**
- * Read a sealed `zoning-ireland.db`.
+ * Reads a sealed `zoning-ireland.db`.
  *
- * Everything that would make the reader answer a well-formed wrong thing is refused at construction
- * rather than at query time: a manifest naming a different layer, a coverage table with no rows,
- * a coverage row whose basis would support an exclusion, an empty jurisdiction table.
- * Each of those would otherwise present as a reader that quietly always answers `unknown`, or, in the
- * exclusion case, as a reader that confidently reports unzoned-and-unmapped land as free of restriction.
+ * The constructor throws on a manifest for a different layer, an empty coverage table,
+ * a coverage basis that supports exclusion or an empty jurisdiction table.
+ * These would otherwise make the reader
+ * return `unknown` everywhere, or let a caller read unmapped land as free of restriction.
  */
 export class ZoningLookup implements Disposable {
 	readonly identity: ZoningLayerIdentity
@@ -352,11 +318,9 @@ export class ZoningLookup implements Disposable {
 
 		this.#selectCell = this.#database.prepare("SELECT area_id, containment FROM zoning_cell WHERE h3_cell = ?")
 
-		// two statements, and the split is the point.
-		// The attributes and the bbox are read without the blob, because the bbox is the ray
-		// cast's prefilter: pulling hundreds of thousands of vertices off disk only to reject the
-		// polygon on a rectangle would make the prefilter cost more than the test it replaces.
-		// A `whole` cell never reads the blob at all.
+		// The attributes and bounding box are read without the ring blob, because the
+		// bounding box rejects most polygons before the ray cast needs the rings.
+		// A whole cell never reads the blob.
 		this.#selectArea = this.#database.prepare(
 			"SELECT area_id, jurisdiction_id, plan_id, local_code, local_description, local_code_url, crosswalk_code, " +
 				"crosswalk_scheme, crosswalk_description, crosswalk_rollup, provenance_grade, min_lat, min_lon, max_lat, max_lon " +
@@ -375,7 +339,7 @@ export class ZoningLookup implements Disposable {
 	}
 
 	/**
-	 * What an adopted plan assigns at this coordinate.
+	 * Returns what an adopted plan assigns at this coordinate.
 	 */
 	public lookup(latitude: number, longitude: number): ZoningReading {
 		const indexCell = latLngToCell(latitude, longitude, this.identity.indexResolution) as H3Cell
@@ -398,14 +362,14 @@ export class ZoningLookup implements Disposable {
 	}
 
 	/**
-	 * The coverage row for the index cell's parent at the coverage resolution.
+	 * Returns the coverage row for the index cell's parent at the coverage resolution.
 	 */
 	#readCoverage(indexCell: H3Cell): (CoverageCell & { h3CellIndex: string; resolution: number }) | undefined {
 		return readCoverageAt(this.#selectCoverage, indexCell, this.identity.coverageResolution)
 	}
 
 	/**
-	 * Walk the index, falling through to the geometry only for a cell a boundary crosses.
+	 * Walks the cell index up the ancestor chain and reads geometry only for cells that a boundary crosses.
 	 */
 	#resolveDesignations(
 		indexCell: H3Cell,
@@ -440,7 +404,7 @@ export class ZoningLookup implements Disposable {
 		let rayCastRan = false
 
 		for (const areaID of [...partial].toSorted()) {
-			// A polygon that already answered `whole` higher in the chain needs no geometry read.
+			// A polygon that already matched as whole needs no geometry read.
 			if (whole.has(areaID)) continue
 
 			const area = this.#selectArea.get(areaID) as AreaRow | undefined
@@ -449,8 +413,6 @@ export class ZoningLookup implements Disposable {
 
 			rayCastRan = true
 
-			// The bbox is the prefilter the geometry table stores precisely so the ray cast runs on the
-			// few polygons that could contain the point rather than on every polygon reaching the cell.
 			if (!bboxContains(area, longitude, latitude)) {
 				continue
 			}
@@ -480,7 +442,7 @@ export class ZoningLookup implements Disposable {
 	}
 
 	/**
-	 * One stored row as a designation, with its plan and its authority attached.
+	 * Converts a stored row to a designation with its plan and jurisdiction.
 	 */
 	#toDesignation(area: AreaRow, containment: ZoningContainmentPath): ZoningDesignation {
 		const plan = this.#selectPlan.get(area.plan_id) as PlanRow | undefined
@@ -499,8 +461,7 @@ export class ZoningLookup implements Disposable {
 			localCode: area.local_code,
 			localDescription: area.local_description,
 			localCodeURL: area.local_code_url,
-			// The crosswalk travels as one object or not at all: a code without its scheme
-			// reads as a code in whichever vocabulary the consumer happened to assume.
+			// The crosswalk is omitted unless both the code and its scheme are present.
 			...(area.crosswalk_code === null || area.crosswalk_scheme === null
 				? {}
 				: {
@@ -530,7 +491,7 @@ export class ZoningLookup implements Disposable {
 }
 
 /**
- * The publisher's crosswalk domain, by code — its label and whether the publisher declared it.
+ * Reads the publisher's crosswalk domain as a map from code to label and declared flag.
  */
 function readCrosswalkTerms(
 	database: DatabaseClient<ZoningDatabase>
@@ -543,7 +504,7 @@ function readCrosswalkTerms(
 }
 
 /**
- * Read and check the layer's identity.
+ * Reads the layer's identity and throws if it is unusable.
  */
 function readIdentity(database: DatabaseClient<ZoningDatabase>, databasePath: string): ZoningLayerIdentity {
 	const manifest = parseManifestRows(
@@ -558,13 +519,8 @@ function readIdentity(database: DatabaseClient<ZoningDatabase>, databasePath: st
 		throw new Error(`zoning reader: ${databasePath} declares no h3 spine key`)
 	}
 
-	// the exclusion check, and IT is A condition rather than A convention.
-	// The Department publishes its coverage detail only inside a map viewer, so no row
-	// of this layer may license a claim that a location is unrestricted.
-	// A stronger basis reaching a caller would let an absent polygon be read as a
-	// designation of freedom to build over most of the map.
-	// The check itself is the interface's rather than this product's.
-	// The sentence saying why is this product's.
+	// The Department publishes its coverage footprint only in a map viewer,
+	// so no coverage row may support a claim that a location is unrestricted.
 	assertCoverageLicensesNoExclusion(
 		(database.prepare("SELECT DISTINCT basis FROM layer_coverage").all() as Array<{ basis: string | null }>).map(
 			(coverageRow) => coverageRow.basis
@@ -603,11 +559,9 @@ function readIdentity(database: DatabaseClient<ZoningDatabase>, databasePath: st
 			.all() as Array<{ crosswalk_scheme: string }>
 	).map((entry) => entry.crosswalk_scheme)
 
-	// the coverage resolution is recovered from the cells rather than declared.
-	// The manifest's spine key names the index resolution; `layer_coverage` is keyed at
-	// a coarser one, and this layer has no footprint row to carry it.
-	// Recovering it is exact rather than approximate — a short cell expands to a valid index
-	// at exactly one resolution — and the shared helper throws on a table that mixes them.
+	// The layer stores no coverage resolution, so it is recovered from the coverage cells.
+	// A short cell expands to a valid index at exactly one resolution,
+	// and the helper throws on mixed resolutions.
 	const coverageResolution = recoverShortCellResolution(
 		(database.prepare("SELECT h3_cell FROM layer_coverage").all() as Array<{ h3_cell: number }>).map(
 			(coverageRow) => coverageRow.h3_cell

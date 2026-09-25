@@ -3,8 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Library interface for running the EDGAR ingest against the SEC and writing subsidiary rows. The CLI handles
- *   arguments, rendering, and exit codes; this module returns the data it needs.
+ *   Runs the EDGAR ingest against the SEC and writes subsidiary rows.
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
@@ -17,10 +16,12 @@ import { createSECClient } from "#sdk/sec-client"
 
 export type { EdgarIngestReport, EdgarSkipReason } from "#sdk/edgar/ingest"
 
+/**
+ * Options for {@link filerEdgarIngest}.
+ */
 export interface FilerEdgarIngestOptions {
 	/**
 	 * Company names to resolve.
-	 * Blank lines are skipped.
 	 */
 	queries: string[]
 	/**
@@ -28,7 +29,7 @@ export interface FilerEdgarIngestOptions {
 	 */
 	outDir: string
 	/**
-	 * Optional CIK lookup file, with one `name:CIK:` entry per line.
+	 * CIK lookup file with one `name:CIK:` entry per line.
 	 */
 	cikLookupPath?: string
 	/**
@@ -41,6 +42,9 @@ export interface FilerEdgarIngestOptions {
 	onOutcome?: (outcome: { query: string; ok: boolean; subsidiaries: number; detail: string }) => void
 }
 
+/**
+ * Result of {@link filerEdgarIngest}.
+ */
 export interface FilerEdgarIngestResult {
 	report: EdgarIngestReport
 	jsonlPath: string
@@ -48,8 +52,7 @@ export interface FilerEdgarIngestResult {
 }
 
 /**
- * Run EDGAR ingestion and write subsidiary rows to `outDir`.
- * Parse the optional CIK lookup file once and reuse it.
+ * Runs the EDGAR ingest and writes `edgar-subsidiaries.jsonl` to `outDir`.
  */
 export async function filerEdgarIngest(options: FilerEdgarIngestOptions): Promise<FilerEdgarIngestResult> {
 	const client = createSECClient()

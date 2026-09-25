@@ -3,9 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Shared footer identity: app name, optional documentation link, and build revision.
- *   Without build metadata, render the name without a dangling commit link.
- *   Safe to render without map dependencies.
+ *   Renders the footer identity with the app name, an optional documentation link and the build
+ *   commit. This component does not depend on the map.
  */
 
 import type { ReactNode } from "react"
@@ -13,35 +12,42 @@ import type { ReactNode } from "react"
 import { useBuildInfo } from "#common/useBuildInfo"
 
 /**
- * Number of commit characters shown in the footer.
+ * The number of commit characters shown in the footer.
  */
 const DISPLAYED_LENGTH = 6
 
+/**
+ * Props for {@link AppIdentity}.
+ */
 export interface AppIdentityProps {
 	/**
-	 * The app's display name — `Mailwoman Earth`, `Mailwoman Moon`, `Mailwoman Mars`.
+	 * The app's display name, such as `Mailwoman Earth`.
 	 */
 	name: ReactNode
 	/**
 	 * The documentation link's target.
-	 *
-	 * Omit to render the name and commit without one.
+	 * The link is omitted when this is unset.
 	 */
 	docsURL?: string
 	/**
-	 * What the documentation link reads. @default "Developer Documentation"
+	 * The documentation link's text. @default "Developer Documentation"
 	 */
 	docsLabel?: string
 	/**
-	 * Where to read the deployment record. @default "/build.json"
+	 * The URL of the build record. @default "/build.json"
 	 */
 	buildInfoURL?: string
 	/**
-	 * Optional URL builder for the commit; without it, show the revision as text.
+	 * Builds the commit link.
+	 * Without it, the commit is shown as plain text.
 	 */
 	commitHref?: (commit: string) => string
 }
 
+/**
+ * Renders the app name, documentation link and short build commit.
+ * The commit is omitted when no build record loads.
+ */
 export function AppIdentity({
 	name,
 	docsURL,

@@ -6,9 +6,9 @@
 - Version stated in the text: none. The page states it was last updated 2026-01-09.
 
 The National Address Database supplies 85,482,142 of the 125,276,536 address points in the `us`
-runtime bundle, which is 68.2% of it, and the bundle's record named neither the database nor its
-publisher until this text was read. Its rows reach the bundle through the Overture Maps Foundation.
-Overture stamps each one `NAD`, so the bundle carries the publisher on every row.
+runtime bundle, which is 68.2% of it. The bundle's record mentioned neither the database nor its
+publisher until this text was read. The rows reach the bundle through the Overture Maps Foundation.
+Overture stamps each row `NAD`, so the bundle carries the publisher on every row.
 
 ## What the disclaimer states about reuse, quoted
 
@@ -20,14 +20,14 @@ Overture stamps each one `NAD`, so the bundle carries the publisher on every row
 > Although the NAD is open data, it is not intended for use as a mailing list and is subject to
 > individual state statutes that prohibit it's use as a mailing list.
 
-Two sentences on the same page that a record reading "no copyright under 17 U.S.C. § 105" would
-collapse into one. The first says copyright imposes nothing. The second names a restriction arising
-somewhere else: individual state statutes, unnamed and unenumerated, on one particular use. A postal
-address product is the kind of thing that use is about, so this belongs in the record rather than in
-a footnote.
+These two sentences appear on the same page, and a record that says only "no copyright under 17
+U.S.C. § 105" would lose the second one. The first sentence says that copyright imposes no
+restriction. The second states a restriction from another source: individual state statutes, which
+the page neither names nor lists, on one particular use. A postal address product is close to that
+use, so the restriction belongs in the record and not in a footnote.
 
-Nothing here establishes which states those statutes are, what they prohibit, or whether any of them
-reaches what this repository does with the rows.
+This text does not establish which states have those statutes, what they prohibit, or whether any of
+them applies to what this repository does with the rows.
 
 ## What the disclaimer states about NAD's own sources, quoted
 
@@ -37,10 +37,10 @@ reaches what this repository does with the rows.
 > The states that partner with USDOT to provide data for the NAD do so willingly, with no obligation.
 > Not every state that provides data to the NAD has complete coverage.
 
-So NAD is itself an aggregate, and the federal-work statement is about NAD as published rather than
-about each contributing state's own publication.
+NAD is therefore itself an aggregate. The federal-work statement covers NAD as published and does not
+cover each contributing state's own publication.
 
 ## What this text does not settle
 
-Which state or local body supplied a given NAD row, and what that body requires. The bundle's rows
-carry `overture:NAD` and go no further. Nothing here is elected.
+The text does not say which state or local body supplied a given NAD row, or what that body requires.
+The bundle's rows carry `overture:NAD` and record no finer source. This file elects no license.

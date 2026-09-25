@@ -10,24 +10,25 @@ source-of-truth: package.json versions + `mailwoman doctor` + the eval ledger at
 :::info[Verified as of release 10.0.0, model 9.1.0]
 
 Every figure on this page was re-measured on 2026-09-14 against the published artifacts. The release
-process refuses to publish while this box names a model older than the one the release ships.
+process refuses to publish if the model version in this box is older than the model the release
+ships.
 
 :::
 
 ## Scope
 
 This page records what the current release contains: the version, the packages a consumer installs,
-the model artifacts and their measured sizes, the locales that carry a claim, and the limits. It
-does not record per-tag accuracy. Those numbers live in the eval ledger
+the model artifacts and their measured sizes, the supported locales, and the limits. It does not record
+per-tag accuracy. Those numbers are in the eval ledger
 ([`evals/scores-by-version.json`](https://github.com/sister-software/mailwoman/blob/main/evals/scores-by-version.json))
-and in the dated eval reports beside it.
+and in the dated eval reports next to it.
 
 Every artifact size below was measured on 2026-09-14 against the files this release publishes.
 
 ## Version
 
-Every published workspace releases in lockstep on one version number, the model bundles included. A
-weights package version therefore tracks the release rather than the model's own lineage.
+Every published workspace, including the model bundles, releases together under one version number. A
+weights package version therefore follows the release instead of the model's own version history.
 
 | Fact                | Value                                                                 |
 | ------------------- | --------------------------------------------------------------------- |
@@ -41,7 +42,7 @@ weights package version therefore tracks the release rather than the model's own
 ## Packages
 
 These are the packages a consumer installs directly. The remaining workspaces are pipeline stages
-and build tooling, and they arrive as dependencies rather than as something you name.
+and build tooling, which are installed as dependencies of these packages.
 
 | Package                                                             | What it is                                                                                                                     |
 | ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
@@ -61,13 +62,13 @@ and build tooling, and they arrive as dependencies rather than as something you 
 ## Model artifacts
 
 `@mailwoman/neural-weights-en-us` publishes 15 files totalling 75,120,759 bytes (75.1 MB). That
-figure is the published tarball rather than the working tree, and it is reproducible:
+figure measures the published tarball instead of the working tree, and you can reproduce it:
 
 ```bash
 npm view @mailwoman/neural-weights-en-us dist.unpackedSize dist.fileCount
 ```
 
-The seven files that account for the size:
+Seven files account for most of the size:
 
 | File                               | Bytes      | Size    | What it is                           |
 | ---------------------------------- | ---------- | ------- | ------------------------------------ |
@@ -79,10 +80,10 @@ The seven files that account for the size:
 | `pair-index-us.bin`                | 1,341,264  | 1.3 MB  | The locality/region pair index       |
 | `fst-street-morphology.bin`        | 327,516    | 0.3 MB  | The street-morphology emission prior |
 
-The remaining eight files — the model card, the four soft-feed lexicons, two calibration tables and
-the manifest — total 104,616 bytes between them.
+The remaining eight files (the model card, the four soft-feed lexicons, two calibration tables and
+the manifest) total 104,616 bytes.
 
-Structure of the model itself, from its model card:
+The model card describes the model's structure:
 
 | Property                | Value                                   |
 | ----------------------- | --------------------------------------- |
@@ -94,14 +95,14 @@ Structure of the model itself, from its model card:
 
 The gazetteer is a separate download and is not part of any npm package. The published build is
 `gazetteer/2026-08-25b/candidate.db` at 2,880,921,600 bytes (2.88 GB), covering 244 countries. Run
-`mailwoman doctor` for the current URL rather than copying one from a page.
+`mailwoman doctor` for the current URL instead of copying one from a page.
 
 ## Locales
 
-The tiers below are reproduced from
+The tiers below are copied from
 [`docs/engineering/SCOPE.mdx`](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/SCOPE.mdx),
-which is where they are maintained. A locale is claimed only where a coordinate-graded evaluation
-exists for it, so trained exposure and a claim are different things.
+where they are maintained. Mailwoman claims support for a locale only where a coordinate-graded
+evaluation exists for it. Having training data for a locale does not by itself mean it is supported.
 
 | Tier | Locales                                                | What the tier means                                                                 |
 | ---- | ------------------------------------------------------ | ----------------------------------------------------------------------------------- |
@@ -111,26 +112,26 @@ exists for it, so trained exposure and a claim are different things.
 | 4    | CZ, PL, SK, SI                                         | Covered by the diacritic tokenizer splice shipped in `5.1.0`                        |
 | 5    | JP, KR, CN                                             | The character path, published in `9.3.0`. See the note below for what each carries  |
 
-Tier 5 is one 49-label character-path head serving all three, and the three do not carry equal
-claims. Japanese has a 20,000-row coordinate board. Korean has a 20,000-row board over 27 held-out
-시군구 and resolves to the 시군구 through the candidate table's Korean names; nothing finer than the
-county exists for Korean today. Chinese has 126 labeled rows in total, which is a number rather than
-a claim.
+Tier 5 is one 49-label character-path head that serves all three languages, and the three have
+different levels of support. Japanese has a 20,000-row coordinate board. Korean has a 20,000-row board
+over 27 held-out 시군구 and resolves to the 시군구 through the candidate table's Korean names. No Korean
+data finer than the county exists today. Chinese has 126 labeled rows in total, which is too few to
+support a claim.
 
-Queued behind an external constraint rather than an engineering one: GB, IE, SE, HU and RO corpora
-via OpenStreetMap, which is waiting on the share-alike review.
+GB, IE, SE, HU and RO corpora from OpenStreetMap are waiting on an external constraint instead of
+engineering work: the share-alike license review.
 
 ## Limits
 
-Cross-locale input is part of the current parser and resolver work, with a precise boundary. The
-parser preserves and labels the text it receives; the gazetteer can connect multilingual aliases and
+The current parser and resolver handle cross-locale input within a defined boundary. The parser
+preserves and labels the text it receives, and the gazetteer can connect multilingual aliases and
 established transliterations to one place identity. Mailwoman does not currently translate arbitrary
 address strings. See [Cross-locale queries](./knowledge-base/localization/cross-locale-queries.mdx) for
 the behavior of English-written Japanese addresses, kana-written US addresses, and unsupported
 scripts.
 
-Each row states the limit and the next step. Where a limit is a default rather than an absence, the
-next step turns it on.
+Each row states the limit and the next step. Where a limit is an off-by-default setting and not a
+missing feature, the next step turns it on.
 
 | Limit                                                                                      | Next step                                                                                                          |
 | ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------ |
@@ -144,13 +145,13 @@ next step turns it on.
 
 ## Rationale
 
-Lockstep versioning means one number answers "which release do I have" across every package at once,
-including the weights. The cost is that the release number says nothing about the model: most
-releases are code-only, so `10.0.0`, `9.4.0` and `9.2.0` all carry the same model `9.1.0`. The model
-card inside each weights package carries the lineage.
+With a shared version number, one number tells you which release you have across every package,
+including the weights. The drawback is that the release number says nothing about the model. Most
+releases change only code, so `10.0.0`, `9.4.0` and `9.2.0` all ship the same model `9.1.0`. The model
+card inside each weights package records the model's version history.
 
-The gazetteer stays outside npm because it is 2.88 GB. A registry tarball of that size would be paid
-for by every consumer who wanted only the parser.
+The gazetteer is distributed outside npm because it is 2.88 GB. A registry tarball of that size would
+be downloaded by every consumer, including those who want only the parser.
 
 ## See also
 

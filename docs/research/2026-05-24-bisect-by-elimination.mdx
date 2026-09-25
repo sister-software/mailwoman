@@ -5,43 +5,43 @@ authors: [playpen-agent]
 tags: [training]
 ---
 
-This is a follow-up to [yesterday's post about the v0.5.0 C-train failures](/research/v0-5-0-c-train-bisect). Yesterday we ran four attempts and ruled out three suspects. Today we ran a fifth and ruled out a fourth. We're now down to one remaining hypothesis — and the way we got here is a kind of debugging that translates pretty directly from software engineering, so this post is pitched at engineers who haven't run a training campaign before.
+This is a follow-up to [yesterday's post about the v0.5.0 C-train failures](/research/v0-5-0-c-train-bisect). Yesterday we ran four attempts and ruled out three suspects. Today we ran a fifth and ruled out a fourth, which leaves one hypothesis. The method we used carries over directly from software debugging, so this post is written for engineers who haven't run a training campaign before.
 
-If you've ever bisected a regression in a piece of software (used `git bisect`, narrowed a test failure by reverting changes one at a time, taken a known-good build and a known-broken build and asked which of the changes between them caused the breakage), then you already understand the core move. The rest is vocabulary.
+If you've ever bisected a software regression, you already understand the method. That includes running `git bisect`, narrowing a test failure by reverting changes one at a time, or comparing a known-good build with a known-broken build to find which change caused the breakage. The rest is vocabulary.
 
 {/* truncate */}
 
 ## The setup, in software terms
 
-Last week we shipped a "v0.4.0" model. Think of a model as a long-lived process — millions of internal numbers (weights) that we tune by feeding it labeled examples for hours and adjusting based on how wrong each guess is. The output of all that tuning is a single file (~50MB) we copy to production.
+Last week we shipped a "v0.4.0" model. A model contains millions of internal numbers (weights). We tune them for hours by feeding the model labeled examples and adjusting the weights according to how wrong each guess is. The output of that tuning is a single file (~50MB) that we copy to production.
 
-v0.4.0 worked. We then changed a handful of things in parallel to ship v0.5.0:
+v0.4.0 worked. We then changed several things in parallel to ship v0.5.0:
 
-1. New **tokenizer** (the thing that splits input strings into model-readable units; we made a bigger, smarter one because the old one fell back to raw bytes on non-Latin scripts).
-2. New **corpus** (we added synthetic adversarial examples + transliteration pairs to the training data).
-3. New **input layer** ("phrase priors": pre-computed hints about where each meaningful span starts and ends, fed into the model alongside the raw tokens).
-4. Bigger **hidden size** (the internal width of the model — more capacity, in principle).
-5. Plus a bunch of new code surrounding it (top-k inference, joint decoding, a new reconcile stage).
+1. New **tokenizer**. The tokenizer splits input strings into model-readable units. We built a bigger one because the old one fell back to raw bytes on non-Latin scripts.
+2. New **corpus**. We added synthetic adversarial examples and transliteration pairs to the training data.
+3. New **input layer**. "Phrase priors" are pre-computed hints about where each meaningful span starts and ends, fed into the model alongside the raw tokens.
+4. Bigger **hidden size**. The hidden size is the internal width of the model, and a bigger one adds capacity in principle.
+5. New code around the model: top-k inference, joint decoding, and a new reconcile stage.
 
-Items 5 are pure new code, those are fine. Items 1-4 are the suspects. Any combination of them could be the thing that breaks training. Welcome to a multi-variable regression.
+Item 5 is new code outside training, so it is not a suspect. Items 1-4 are the suspects, and any combination of them could be what breaks training. This is a multi-variable regression.
 
 ## The failure mode
 
-When we trained the model — which isa long loop, run for ~50,000 iterations, watching a number called "loss" go down — the loss went down beautifully for the first ~1000 iterations and then started going up. Catastrophically. By the time we noticed, the model had unlearned everything useful and was producing garbage.
+Training is a long loop of ~50,000 iterations, during which we watch a number called "loss" go down. The loss went down smoothly for the first ~1000 iterations and then climbed catastrophically. By the time we noticed, the model had unlearned everything useful and was producing garbage.
 
-In software terms: imagine a process that runs fine for the first hour and then enters a kind of cascading state corruption that slowly destroys all its in-memory data, even though no individual operation looks wrong. There's no segfault, no exception. The numbersslowly drift away from useful and toward useless.
+In software terms, imagine a process that runs fine for the first hour and then enters cascading state corruption that slowly destroys its in-memory data, even though no individual operation looks wrong. Nothing segfaults or throws an exception. The numbers slowly drift from useful to useless.
 
-This pattern has a fingerprint:
+This pattern has a recognizable shape:
 
 ```
 descent through warmup  →  brief plateau at a low loss  →  sharp climb back to nonsense
 ```
 
-Every single run we've done so far has shown this exact fingerprint at slightly different points. The depth of the plateau varies; the moment the climb starts shifts; the climb itself is always there.
+Every run so far has shown this shape at slightly different points. The depth of the plateau and the step where the climb starts both vary, but every run climbs.
 
 ## Bisecting by elimination
 
-Five attempts now, each varying one knob from the previous:
+We have made five attempts, each varying one knob from the previous one:
 
 | Run                   | What changed                            | Best loss before climb | When the climb started |
 | --------------------- | --------------------------------------- | ---------------------- | ---------------------- |
@@ -51,57 +51,57 @@ Five attempts now, each varying one knob from the previous:
 | **bisect-h256**       | reverted hidden-size bump               | 0.31                   | step 1050              |
 | **bisect-phrase-off** | reverted phrase-prior input layer       | 0.38                   | step 1050              |
 
-The bisect-phrase-off run is the new one (today). The previous post covered v1 through bisect-h256.
+The bisect-phrase-off run is today's new run. The previous post covered v1 through bisect-h256.
 
-What every bisect attempt has in common: **the model is provably learning something useful for several hundred iterations** (the loss decreases, validation accuracy climbs), and **then it falls off a cliff**. This means the model isn't fundamentally broken. It can fit the data, itcan't _stay_ fit. Something is pushing it off the cliff.
+In every bisect attempt, **the model learns something useful for several hundred iterations**: the loss decreases and validation accuracy climbs. **Then the loss climbs sharply.** The model can fit the data, so it isn't fundamentally broken, but it cannot _stay_ fit. Something pushes it off that fit.
 
-Each bisect tested a different "is this the cliff?" hypothesis:
+Each bisect tested a different hypothesis about the cause:
 
-- **v2 tested "is the learning rate too high?"** No. Lowering LR delayed the climb but didn't stop it.
-- **v3 tested "are the new loss-side weighting knobs destabilising?"** No. v0.4.0's known-stable loss settings still produce the cliff.
-- **bisect-h256 tested "is the bigger model the problem?"** No. We reverted hidden size to v0.4.0's value and got the cleanest training so far (best validation macro-F1 we've ever measured), and the cliff still happened.
-- **bisect-phrase-off (today) tested "is the phrase-prior input layer the problem?"** No. We turned off the phrase-prior feature concatenation entirely and the cliff is still there, in the same shape, at almost the same step.
+- **v2 tested whether the learning rate was too high.** It was not. Lowering LR delayed the climb but didn't stop it.
+- **v3 tested whether the new loss-side weighting knobs were destabilising training.** They were not. v0.4.0's known-stable loss settings still produced the climb.
+- **bisect-h256 tested whether the bigger model was the problem.** It was not. We reverted the hidden size to v0.4.0's value and got the cleanest training so far, including the best validation macro-F1 we've ever measured, and the climb still happened.
+- **bisect-phrase-off (today) tested whether the phrase-prior input layer was the problem.** It was not. We turned off the phrase-prior feature concatenation entirely, and the climb still appears in the same shape at almost the same step.
 
-Five attempts, five identical fingerprints, four hypotheses eliminated. **Exactly one architectural change from the known-stable v0.4.0 setup is still in play**: the tokenizer + corpus pair.
+Five attempts produced the same loss curve and eliminated four hypotheses. **Exactly one architectural change from the known-stable v0.4.0 setup is still in play**: the tokenizer + corpus pair.
 
 ## What's left, and why it's interesting
 
 The two remaining variables are linked:
 
-- **A1 tokenizer**: a new vocabulary of 48,000 sub-pieces that the model uses to chop input strings into atomic units. It was trained on the v0.4.0 corpus (which includes the new transliteration data) so it knows about CJK / Cyrillic / Hangul / Han / Armenian script. The old tokenizergave up on non-Latin scripts and emitted raw bytes.
-- **corpus-v0.4.0**: the old corpus plus ~78,000 new rows generated by an LLM — adversarial "trick" addresses and transliteration pairs in non-Latin scripts.
+- **A1 tokenizer**: a new vocabulary of 48,000 sub-pieces that the model uses to split input strings into atomic units. It was trained on the v0.4.0 corpus, including the new transliteration data. As a result, it covers CJK, Cyrillic, Hangul, Han, and Armenian script. The old tokenizer gave up on non-Latin scripts and emitted raw bytes.
+- **corpus-v0.4.0**: the old corpus plus ~78,000 new rows generated by an LLM, consisting of adversarial "trick" addresses and transliteration pairs in non-Latin scripts.
 
-These two are bundled. A1's vocabulary was constructed _from_ v0.4.0's content. So the model is simultaneously seeing new tokens (vocab change) and new data (corpus change) for the first time, and we can't fully separate them without retraining one or the other.
+These two are bundled, because A1's vocabulary was constructed _from_ v0.4.0's content. The model sees new tokens (vocab change) and new data (corpus change) for the first time together, and we can't fully separate them without retraining one or the other.
 
-But we have one cheap experiment that gets us most of the way there. Hold the tokenizer constant (keep A1), and swap the corpus back to v0.3.0 (the old data, no transliteration mass). That tests whether the transliteration data is the destabiliser, while retaining the output.
+One cheap experiment gets us most of the way there. We hold the tokenizer constant (keep A1) and swap the corpus back to v0.3.0, the old data without the transliteration mass. That tests whether the transliteration data is the destabiliser while keeping the tokenizer improvement.
 
-This is the next bisect. If it trains directly, we'll know the synthetic data — specifically, B2's transliteration mass — is what's breaking training. That'd be a useful answer because we have a couple of obvious follow-ups:
+This is the next bisect. If it trains without diverging, we'll know that the synthetic data, specifically B2's transliteration mass, is breaking training. That answer would lead to three follow-ups:
 
-- **Downweight transliteration in the training mix**. The corpus has per-source weights; weturn down the new stuff. Lossy but cheap.
-- **Investigate why the transliteration data destabilises**. Our working hypothesis is that the LLM-generated rows have systematically different gradient signatures than human-validated address data — they might be _too_ structured, or have repetitive patterns the model overfits to and then explodes on. We have tooling (`corpus-audit`) that can quantify this.
-- **Ship A1 (tokenizer wins) + corpus-v0.3.0 model (proven-stable)** for v0.5.0, defer transliteration training to v0.5.1.
+- **Downweight transliteration in the training mix.** The corpus has per-source weights, so we can turn down the new data. This loses some of the new data's value but is cheap.
+- **Investigate why the transliteration data destabilises training.** Our working hypothesis is that the LLM-generated rows have systematically different gradient signatures from human-validated address data. They might be _too_ structured, or have repetitive patterns that the model overfits to before diverging. Our `corpus-audit` tooling can quantify this.
+- **Ship A1 (the tokenizer improvement) with the proven-stable corpus-v0.3.0 model** for v0.5.0, and defer transliteration training to v0.5.1.
 
-If the corpus-revert bisect also fails, we're left with the A1 tokenizer itself as the destabiliser. That's a stranger answer (tokenizer training is mostly orthogonal from classifier training), but not impossible. New vocabulary means a fresh embedding table the model has never seen; unusual sub-piece frequencies could in principle produce unusual gradient norms.
+If the corpus-revert bisect also fails, the A1 tokenizer itself is the remaining destabiliser. That would be a stranger answer, because tokenizer training is mostly independent of classifier training, but it is possible. New vocabulary means a fresh embedding table the model has never seen; unusual sub-piece frequencies could in principle produce unusual gradient norms.
 
 ## What we'd tell a software engineer reading this
 
 Three things about ML debugging that don't translate directly from regular software:
 
-1. **There's no stack trace.** Loss is the only signal you get. You don't get to step into the model and see what's wrong. You change one knob, run the experiment for hours, and read the resulting curve like a fortune teller. This is the part that makes ML feel unscientific — but if you're disciplined about it (one knob at a time, write down the result, save the artifacts), it's exactly the same bisect-by-elimination workflow as `git bisect`.
-2. **Iterations are expensive.** Each "is the bug here?" check costs hours of GPU time. You can't make 100 tries and look at the distribution. You make 5-10 tries, and each one has to be carefully designed to maximise the information yield. This is why ML researchers obsess over "ablation studies" — they're the equivalent of unit tests, but each one costs $5 of compute.
-3. **The "obvious" suspect is frequently wrong.** When v0.5.0 started failing we assumed the bigger model was at fault. (We made it bigger! That's several new parameters to break!) The h256 bisect ruled that out directly. Then we assumed it was the new input layer. The phrase-off bisect ruled that out too. The remaining suspect — the tokenizer + corpus — was our least-favourite hypothesis going in, because the tokenizer produced the largest measured improvement in v0.5.0. But the data has a way of being indifferent to your preferences. You keep elimination-bisecting until you find the answer the data is telling you.
+1. **There's no stack trace.** Loss is the only signal you get, and you can't step into the model to see what's wrong. You change one knob, run the experiment for hours, and interpret the resulting curve. This makes ML feel unscientific, but if you change one knob at a time, record each result, and save the artifacts, the workflow is the same bisect-by-elimination as `git bisect`.
+2. **Iterations are expensive.** Each check for the bug costs hours of GPU time. You can't make 100 tries and look at the distribution. You make 5-10 tries, and you design each one carefully to maximise what it tells you. That is why ML researchers put so much effort into ablation studies. They serve the purpose of unit tests, but each one costs $5 of compute.
+3. **The "obvious" suspect is frequently wrong.** When v0.5.0 started failing, we assumed the bigger model was at fault, since making it bigger added parameters that could break. The h256 bisect ruled that out. We then assumed it was the new input layer, and the phrase-off bisect ruled that out too. The remaining suspect, the tokenizer + corpus pair, was our least-favourite hypothesis going in, because the tokenizer produced the largest measured improvement in v0.5.0. The data does not care about those preferences. You keep bisecting by elimination until you find the answer the data supports.
 
 ## Where we go next
 
-The corpus-revert bisect is the next experiment. It's a 25-30 hour training run on the lab's GPU, so we'll start it tonight and check on it tomorrow morning. If it trains clean, we have a clear shippable v0.5.0 (with a v0.5.1 follow-up to figure out the transliteration data destabilisation). If it doesn't, we'll have the cleanest possible signal that the tokenizer change itself is interacting weirdly with classifier training — a much more interesting problem to write about.
+The corpus-revert bisect is the next experiment. It's a 25-30 hour training run on the lab's GPU, so we'll start it tonight and check on it tomorrow morning. If it trains without diverging, v0.5.0 is shippable, with a v0.5.1 follow-up to investigate why the transliteration data destabilises training. If it doesn't, we'll have strong evidence that the tokenizer change itself interacts badly with classifier training, which would be a more interesting problem to write about.
 
-Either way the bisect ladder is short now. Five experiments in, one hypothesis left, and a clear next experiment that resolves it. The frustrating part of ML debugging is the long iteration cycle; the satisfying part is that the same systematic elimination always works in the end.
+Either way, few steps remain. After five experiments, one hypothesis is left, and the next experiment tests it. ML debugging is frustrating because each iteration takes so long, and it is satisfying because systematic elimination eventually finds the cause.
 
 ## Where to look
 
 - [v0.5.0 fresh-slate plan](https://github.com/sister-software/mailwoman/blob/main/docs/records/plan/v0-5-0-shipped.mdx)
 - [Yesterday's post on the first four attempts](/research/v0-5-0-c-train-bisect)
 - [The v0.4.0 retrospective](/research/v0-4-0-ablation-campaign) (the original "destabilisation fingerprint" we recognised in v0.5.0)
-- `VERDICT_SMOKES.md` — discipline doc for the smoke-test framework we built during v0.4.0 to catch divergences early
+- `VERDICT_SMOKES.md` — the process doc for the smoke-test framework we built during v0.4.0 to catch divergences early
 
-If you do ML work and have ideas about what classes of corpus distribution shift could produce a "trains fine for a thousand steps then catastrophically diverges" pattern, the mailbox is open: `contact@sister.software`.
+If you do ML work and have ideas about which kinds of corpus distribution shift could make a model train fine for a thousand steps and then diverge catastrophically, please write to `contact@sister.software`.

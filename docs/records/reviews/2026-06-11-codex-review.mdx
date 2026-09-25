@@ -23,10 +23,10 @@ were called out as hygiene risks are no longer merely recommendations:
 
 That is the good news. The remaining risks are narrower and more operational than architectural:
 the v4.4.0 plan is disciplined but dense, some docs now lag the code by one round-trip, and parts
-of #480/#481 are only partially closed while their issues still read as fully open. The biggest
-thing to guard tonight is not another broad refactor; it is keeping the v4.4.0 boundary run direct:
-one artifact, one check interface, no quiet floor drift, and no shipping if the new floors expose
-po_box or perturb as still below the line.
+of #480/#481 are only partially closed while their issues still read as fully open. Tonight's
+priority is to keep the v4.4.0 boundary run clean rather than start another broad refactor. The
+run should use one artifact and one check interface. Floors should change only through a recorded
+decision. If the new floors show po_box or perturb still below the line, do not ship.
 
 ## Current State
 
@@ -101,7 +101,7 @@ But `docs/articles/status.mdx`, `docs/articles/api.mdx`, and
 `docs/articles/plan/reference/STAGES.mdx` still describe Stage 5 as opt-in / argmax default /
 `forceJointReconcile`-conditional. The docs are now behind the code.
 
-This is noteditorial. It changes how users interpret parser results and how reviewers reason
+This discrepancy matters beyond editing. It changes how users interpret parser results and how reviewers reason
 about regressions. The status page should say "default when the required stages are wired, falls
 back to argmax otherwise," and the API docs should prefer `jointReconcile` while marking
 `forceJointReconcile` deprecated.

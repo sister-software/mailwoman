@@ -12,7 +12,7 @@ import { userEvent } from "vitest/browser"
 
 import { renderComponent } from "../../render.tsx"
 
-// This helper polls `get` inside `act()` and returns null on timeout instead of throwing.
+// The helper polls `get` inside `act()` and returns null when the timeout expires.
 async function settle<T>(get: () => T | null, timeout = 8000): Promise<T | null> {
 	const start = Date.now()
 	let found: T | null = null
@@ -33,7 +33,7 @@ async function settle<T>(get: () => T | null, timeout = 8000): Promise<T | null>
 }
 
 test("submit drives the result panel + a map marker over the fake runtime", async () => {
-	// Disabling the result camera keeps the view fixed.
+	// The result camera is disabled so the view stays fixed.
 	// `ResultCamera.test.tsx` covers camera moves.
 	const { container } = renderComponent(
 		<Geocoder
@@ -56,7 +56,8 @@ test("submit drives the result panel + a map marker over the fake runtime", asyn
 	expect(container.textContent).toContain("Resolved place")
 	expect(container.textContent).toContain("New York")
 
-	// The marker mounts only after the map initializes, which needs software WebGL, so this check is best-effort.
+	// The marker mounts only after the map initializes.
+	// Map initialization needs software WebGL, so this check passes when the marker is absent.
 	const marker = await settle(() => container.querySelector(".maplibregl-marker"))
 
 	if (marker) {

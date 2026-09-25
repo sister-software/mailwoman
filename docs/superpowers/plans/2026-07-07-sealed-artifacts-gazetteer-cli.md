@@ -4,7 +4,12 @@
 
 **Goal:** Mechanically enforce the read-only-artifact policy (`sealDatabase`/`openBuiltDatabase`) and fold the scattered WOF admin-gazetteer build (1 script + 4 post-build steps) into one turnkey, verified, self-documenting `mailwoman gazetteer build admin` command.
 
-**Architecture:** A tiny sealing utility in `@mailwoman/core/utils`; the existing single-file `mailwoman/gazetteer-pipeline.ts` grows into a `gazetteer-pipeline/` module of unit-testable step functions (ingest → fold-overture → fold-geonames → freeze → enrich → fts → verify → seal); thin Pastel/Ink commands over it; a structural `verify` check with a committed per-country node-census baseline (the #1026 lesson).
+**Architecture:** The plan has four parts:
+
+- A small sealing utility in `@mailwoman/core/utils`.
+- The existing single-file `mailwoman/gazetteer-pipeline.ts` becomes a `gazetteer-pipeline/` module of unit-testable step functions (ingest → fold-overture → fold-geonames → freeze → enrich → fts → verify → seal).
+- Thin Pastel/Ink commands over that module.
+- A structural `verify` check with a committed per-country node-census baseline, added because of #1026.
 
 **Tech Stack:** TypeScript (Node 26 type-stripping for the module; TSX compile for Ink commands), `node:sqlite` `DatabaseSync`, Pastel file-based commands, vitest, DuckDB (`@duckdb/node-api`, lazy-optional) for the Overture S3 pull.
 
@@ -14,8 +19,8 @@
 
 - Every DB artifact a builder produces is sealed `0o444` at the end; writable staging is only ever `<out>.ingest`-style temp paths. Never mutate a shipped DB in place (build → verify → swap).
 - Kysely for DDL where tables are created (existing `unified-schema.ts` already complies); hot positional INSERT loops stay raw (`AGENTS.md` "Database / inline SQL").
-- Acronym casing: whole camelCase components (`buildFTS`, `ingestWOF`, `foldGeoNames` — note GeoNames is CamelCase already, keep as `foldGeonames` to match the existing `foldGeonamesIntoAdmin`/`ingestGeonamesAliases` family; do not half-rename the family).
-- No `npx tsx`; scripts run with bare `node` (type-stripping). Ink commands need `yarn compile` first; run compiled CLI as `node mailwoman/out/cli.js`.
+- Acronym casing uses whole camelCase components (`buildFTS`, `ingestWOF`). GeoNames is an exception: use `foldGeonames` to match the existing `foldGeonamesIntoAdmin`/`ingestGeonamesAliases` family, and do not rename only part of that family.
+- Do not use `npx tsx`. Scripts run with bare `node` (type-stripping). Ink commands need `yarn compile` first, and the compiled CLI runs as `node mailwoman/out/cli.js`.
 - Lint/format: `yarn oxlint <paths>` + `yarn oxfmt <paths>` before each commit. `yarn typecheck:scripts` must stay green.
 - Commits reference the tracking issue for this cleanup; end commit messages with the standard co-author trailer.
 - Data root paths go through `dataRootPath()` / `dataRootPath()` — never hardcode `$MAILWOMAN_DATA_ROOT/...` in shipped code (plan test fixtures use temp dirs).
@@ -236,7 +241,7 @@ git add -u mailwoman/gazetteer-pipeline.ts resolver-wof-sqlite/build-slim.ts scr
 git commit -m "feat: seal every builder's output 0444 (buildCandidate, build-slim, build-unified-wof)"
 ```
 
-_(PR A can be reduce here if the operator wants the invariant shipped independently.)_
+_(PR A can be split off at this point if the operator wants the invariant shipped independently.)_
 
 ---
 
@@ -762,7 +767,7 @@ db.exec("CREATE INDEX place_abbr_by_abbr ON place_abbr (abbr COLLATE NOCASE)")
 db.exec("CREATE INDEX place_abbr_by_id ON place_abbr (id)")
 ```
 
-`enrichAdmin` = `addRegionAbbrevs` + `buildPlaceAbbr`, returning the counts. (place_abbr was missing from the admin runbook entirely — found the hard way in the #1015 swap.)
+`enrichAdmin` runs `addRegionAbbrevs` and then `buildPlaceAbbr`, and returns the counts. (The admin runbook omitted place_abbr entirely, which the #1015 swap exposed.)
 
 - [ ] **Step 4: Run to verify it passes**, `npx tsc -b mailwoman`.
 - [ ] **Step 5: Commit** — `git commit -am "feat(gazetteer): enrich step — region abbrevs + place_abbr, no longer skippable"`
@@ -833,7 +838,7 @@ export function verifyReversePanel(adminDBPath: string): Promise<VerifyResult> /
 
 - [ ] **Step 1: Write the failing tests** — three fixture cases: (a) a fixture DB satisfying a tiny baseline passes all checks; (b) delete the country node → `node-census` fails naming the country; (c) drop `place_abbr` → that check fails. Plus: `REVERSE_PANEL_CASES` has ≥ 15 entries including Brussels/Antwerpen/Gent/Basel.
 - [ ] **Step 2: Run to verify they fail.**
-- [ ] **Step 3: Implement `verify.ts`** — pure SQL checks, no network; `verifyReversePanel` ports `scripts/reverse-eu-panel.ts`'s CASES + loop over `WOFReverseGeocoder` (same 15 cases; the script is deleted in Task 15).
+- [ ] **Step 3: Implement `verify.ts`** with pure SQL checks that make no network calls. `verifyReversePanel` ports `scripts/reverse-eu-panel.ts`'s CASES + loop over `WOFReverseGeocoder` (same 15 cases; the script is deleted in Task 15).
 - [ ] **Step 4: Run to verify they pass**, `npx tsc -b mailwoman`.
 - [ ] **Step 5: Generate the committed baseline** — one-off (run and then delete the snippet, or keep as `verify.ts`'s exported `writeBaseline(db, path)` helper — keep the helper, it's the deliberate-update path):
 
@@ -975,8 +980,8 @@ keeping the existing Step-4 swap/restart text (mv → bak, promote, restart serv
 
 **Files:** none (runbook execution; findings recorded in the PR description)
 
-- [ ] **Step 1: Full staging build** — `node mailwoman/out/cli.js gazetteer build admin --out $MAILWOMAN_DATA_ROOT/db/wof/admin-global-priority.E2E-PRB.db` (~8 min). Expected: every phase streams; **verify may FAIL `node-census`** if the Overture/GeoNames country-node interplay (#1026's suspected mechanism) reproduces — that is a CORRECT check result rather than a task failure.
-- [ ] **Step 2: If node-census fails** — capture the missing list into #1026 (comment with the exact `(country, placetype)` set). The fix belongs to #1026/PR C (fold-order archaeology) rather than this PR — the check exists precisely to block the swap.
+- [ ] **Step 1: Full staging build** — `node mailwoman/out/cli.js gazetteer build admin --out $MAILWOMAN_DATA_ROOT/db/wof/admin-global-priority.E2E-PRB.db` (~8 min). Expected: Every phase streams output. **verify may fail `node-census`** if the interaction between Overture and GeoNames country nodes (#1026's suspected mechanism) reproduces. That result means the check is working, and the task has still succeeded.
+- [ ] **Step 2: If node-census fails**, record the missing list in #1026 as a comment with the exact `(country, placetype)` set. The fix belongs to #1026/PR C (investigating the fold order), not to this PR. The check exists to block the swap in exactly this case.
 - [ ] **Step 3: If verify passes** — diff old-vs-new per-country/per-placetype census (`SELECT country, placetype, COUNT(*) FROM spr WHERE is_current!=0 GROUP BY 1,2` on both, joined) — attach the diff summary to the PR; the E2E artifact is a swap candidate for #1026 itself (operator decides; swap follows the RELEASING.md runbook).
 - [ ] **Step 4: Confirm the seal** — `ls -l` shows `-r--r--r--`; `node -e` RW-open via `openBuiltDatabase` throws `SealedArtifactError`.
 - [ ] **Step 5: Clean up** — remove the E2E artifact unless it's being promoted; push the branch; open the PR (B) referencing the spec, with the E2E findings.
@@ -986,5 +991,5 @@ keeping the existing Step-4 swap/restart text (mv → bak, promote, restart serv
 ## Self-review notes
 
 - Spec §1 → Tasks 1–2; §2 → Tasks 4, 12–14; §3 → Tasks 3, 5–10, 12; §4 → Task 11; §5's PR-B deletions → Task 15; §6 PR A/B → this plan, PR C → explicitly deferred (needs Task 11's census tooling). Covered.
-- The `verify` check intentionally fails against the current live DB (#1026 known regression) — Tasks 13/16 call this out so an executor doesn't "fix" the check to pass.
+- The `verify` check intentionally fails against the current live DB because of the known #1026 regression. Tasks 13 and 16 say so, so that an executor does not change the check to make it pass.
 - Type names consistent: `VerifyResult`/`VerifyBaseline` (11) consumed in 12–13; `buildAdmin` (12) consumed in 13; `sealDatabase` (1) consumed in 2, 12.

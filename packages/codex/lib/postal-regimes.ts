@@ -3,60 +3,49 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Postal regimes: the delivery systems whose parser unit is not the ISO 3166-1 country code.
+ *   Postal regimes whose addressing does not follow their ISO 3166-1 country code.
  *
- *   Most of the tree keys addressing behavior by country, and for most of the world that is the right unit. Seven
- *   families break it. One ISO code can carry three separate postal systems (`SH`). A country's own routing vocabulary
- *   can sit beside its geography without being part of it (`AA`/`AE`/`AP` are not US states, and a BFPO number is not a
- *   GB postcode). A postcode system can cross a political border. An address can be written as a landmark and a
- *   direction rather than as a street and a number.
- *
- *   Each record names the regime, the ISO code it sits under, and what this repository models for it today. That last
- *   field is the point: {@linkcode RegimeCoverage.Unmodeled} says no layout, lexicon or check treats this regime as
- *   distinct from its parent country, which means an address written in it is parsed as though it were an ordinary
- *   address of the parent. Recording that is what separates a known gap from an unnoticed one.
- *
- *   This table describes regimes. It synthesizes no conventions: a regime reading `unmodeled` gets no invented layout
- *   here, and the 158 jurisdictions whose source-register backbone state is `C` get no entry at all unless a regime
- *   named below covers them. The source for the seven families is the global address corpus specification §7 (#2323).
+ *   Most code keys addressing behavior by country. The regimes here are exceptions: one code with several postal
+ *   systems, routing codes shaped like geography, postcodes that cross borders, and addresses written as
+ *   landmark directions. Each record states how much of the regime this repository models, which keeps known
+ *   gaps visible. The table records regimes only and defines no layouts. The seven families come from section 7
+ *   of the global address corpus specification.
  */
 
 /**
- * What this repository models for a regime.
+ * How much of a regime this repository models.
  */
 export const RegimeCoverage = {
 	/**
-	 * A layout, lexicon, postcode shape or check treats the regime as distinct from its parent country.
+	 * A layout, lexicon, postcode shape or check treats the regime separately from its parent country.
 	 */
 	Modeled: "modeled",
 	/**
-	 * Something partial exists and does not cover the regime's own addressing.
-	 *
-	 * The record says what is missing.
+	 * Some support exists, but it does not cover the regime's own addressing.
+	 * The record's note lists the gaps.
 	 */
 	Partial: "partial",
 	/**
-	 * Nothing distinguishes the regime from its parent country.
-	 *
-	 * An address written in it parses as an ordinary address of that country,
-	 * which is a stated gap rather than a decision that the regime does not exist.
+	 * Addresses in the regime parse as ordinary addresses of the parent country.
 	 */
 	Unmodeled: "unmodeled",
 } as const
 
+/**
+ * A coverage level.
+ */
 export type RegimeCoverage = (typeof RegimeCoverage)[keyof typeof RegimeCoverage]
 
 /**
- * Why a regime's parser unit differs from its ISO country code.
+ * The reason a regime's addressing differs from its ISO country code.
  */
 export const RegimeKind = {
 	/**
-	 * One ISO code carries more than one postal system, each with its own conventions.
+	 * One ISO code covers several postal systems.
 	 */
 	SplitJurisdiction: "split-jurisdiction",
 	/**
-	 * Routing identifiers that occupy the shape of geography without being geography —
-	 * a pseudo-state, a forces number.
+	 * Routing codes shaped like geography, such as a military pseudo-state or a forces number.
 	 */
 	Routing: "routing",
 	/**
@@ -64,56 +53,51 @@ export const RegimeKind = {
 	 */
 	CrossBorder: "cross-border",
 	/**
-	 * An address written as a landmark, a direction and a distance rather than as a street and a number.
+	 * An address written as a landmark, a direction and a distance.
 	 */
 	Narrative: "narrative",
 	/**
-	 * A code that appears in real data and is not ISO 3166-1.
-	 *
-	 * Accepting one is an operational decision and states nothing about sovereignty.
+	 * A code that appears in real data outside ISO 3166-1.
+	 * Accepting it implies nothing about sovereignty.
 	 */
 	Operational: "operational",
 } as const
 
+/**
+ * A regime kind.
+ */
 export type RegimeKind = (typeof RegimeKind)[keyof typeof RegimeKind]
 
+/**
+ * One postal regime record.
+ */
 export interface PostalRegime {
 	/**
-	 * Stable identifier, kebab-case.
+	 * A stable kebab-case ID.
 	 *
-	 * Never an ISO code, so a regime is never mistaken for a country.
+	 * It is never an ISO code, so it cannot be confused with a country.
 	 */
 	regimeID: string
 	name: string
 	kind: RegimeKind
 	/**
-	 * The ISO 3166-1 alpha-2 codes an address in this regime carries, or would carry.
-	 *
-	 * More than one where the regime crosses a border.
+	 * The ISO 3166-1 alpha-2 codes that addresses in this regime use.
+	 * A cross-border regime lists several.
 	 */
 	iso2: readonly string[]
 	coverage: RegimeCoverage
 	/**
-	 * What an address in this regime looks like, in enough detail to recognize one.
-	 *
-	 * Written from the specification rather than measured against a corpus,
-	 * so it describes the regime and claims no row counts.
+	 * A description of the regime's addresses, taken from the specification.
 	 */
 	shape: string
 	/**
-	 * What the repository does with such an address today, and what is missing
-	 * when coverage is not `modeled`.
+	 * How the repository currently handles these addresses and what is missing.
 	 */
 	note: string
 }
 
 /**
- * The seven families the global address corpus specification §7 names, as records.
- *
- * Every one reads `unmodeled` today.
- * That is the measurement this table was written to record: the repository keys
- * addressing behavior by ISO country code throughout, so none of these regimes is
- * distinguished from its parent anywhere in the tree.
+ * The seven regime families from the global address corpus specification.
  */
 export const POSTAL_REGIMES: readonly PostalRegime[] = [
 	{
@@ -209,18 +193,16 @@ export const POSTAL_REGIMES: readonly PostalRegime[] = [
 const REGIME_BY_ID = new Map(POSTAL_REGIMES.map((regime) => [regime.regimeID, regime]))
 
 /**
- * The regime with this id, or `undefined`.
+ * Returns the regime with this ID, or `undefined`.
  */
 export function postalRegimeByID(regimeID: string): PostalRegime | undefined {
 	return REGIME_BY_ID.get(regimeID)
 }
 
 /**
- * Every regime an address carrying this ISO code could be written in.
+ * Returns every recorded regime that uses this ISO code.
  *
- * An empty array means no regime named here covers the country.
- * It does not mean the country's addresses are ordinary: a regime nobody has written
- * down is absent from this table exactly as one that does not exist is.
+ * An empty result means only that this table records no regime for the country.
  */
 export function postalRegimesForCountry(iso2: string): readonly PostalRegime[] {
 	const code = iso2.trim().toUpperCase()

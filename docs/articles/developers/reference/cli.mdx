@@ -126,7 +126,7 @@ mailwoman license [options] <action> [argument]
 | `--secret [secret]`           | string  | —       | adopt: the refresh secret from the purchase page or the first email, stored beside the key; refresh: the secret, when not reading the credentials file.     |
 | `--licensee [licensee]`       | string  | —       | issue: who holds the license, as the doctor should print it.                                                                                                |
 | `--expires [expires]`         | string  | —       | issue: the last day the key is valid, inclusive. Omit for a key with no expiry.                                                                             |
-| `--scope [scope]`             | string  | `all`   | issue: `all`, or a comma-separated list of package names the agreement covers.                                                                              |
+| `--scope [scope]`             | string  | `all`   | issue: `all`, or a comma-separated list of the packages the agreement covers.                                                                               |
 | `--major [major]`             | string  | —       | keygen: the mailwoman major version the key id is prefixed with. Defaults to this build's.                                                                  |
 | `--key [key]`                 | string  | —       | verify: the token to check. Defaults to $MAILWOMAN_LICENSE_KEY.                                                                                             |
 | `--signing-key [signing-key]` | string  | —       | issue: the private key PEM. Defaults to $MAILWOMAN_CONFIG_ROOT/license/signing-key.pem.                                                                     |
@@ -242,7 +242,7 @@ mailwoman serve [options]
 
 ### `mailwoman data`
 
-Fetch the reference databases geocoding needs — far too large to ship inside the npm package. `data --list` shows what exists, `data pull &lt;bundle&gt;` downloads one, `data status` reports what is already on disk, and `mailwoman doctor` names the one you are missing.
+Fetch the reference databases geocoding needs — far too large to ship inside the npm package. `data --list` shows what exists, `data pull &lt;bundle&gt;` downloads one, `data status` reports what is already on disk, and `mailwoman doctor` reports the one you are missing.
 
 ```
 mailwoman data [options]

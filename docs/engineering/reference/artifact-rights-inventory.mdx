@@ -5,19 +5,19 @@ description: What every published package ships, whose rights govern it, and whi
 
 # Artifact and rights inventory
 
-What each published package ships, which party grants rights to it, and where the record is
-incomplete. Observed on `main` on 2026-09-20 by reading manifests, model cards and rights documents
-in the checkout.
+This page records what each published package ships, which party grants rights to it, and where the
+record is incomplete. It was observed on `main` on 2026-09-20 by reading manifests, model cards and
+rights documents in the checkout.
 
-Three records are kept apart throughout, because conflating them is how a corpus measurement becomes
-a claim about a released model:
+The page keeps three records separate throughout. Mixing them would turn a corpus measurement into a
+claim about a released model:
 
-1. **Current corpus composition** — what the corpus on the training volume contains today.
-2. **Historical training inputs** — which records trained a particular released checkpoint.
-3. **Runtime datasets and dependencies** — what an operator downloads separately.
+1. **Current corpus composition**: what the corpus on the training volume contains today.
+2. **Historical training inputs**: which records trained a particular released checkpoint.
+3. **Runtime datasets and dependencies**: what an operator downloads separately.
 
-Only the first is measured here. The second is unresolved for every published package, and this
-document states that rather than implying otherwise.
+This page measures only the first. The second is unresolved for every published package, and this
+document says so explicitly.
 
 ## Rights chain
 
@@ -63,7 +63,7 @@ published it.
 
 ## Published packages
 
-Thirteen `neural-weights-*` workspaces. Twelve publish; `base-latn` is private.
+The repository has thirteen `neural-weights-*` workspaces. Twelve publish, and `base-latn` is private.
 
 The SPDX column and the counts are as first observed. The data-artifact column counts files whose
 provenance is in question, so it excludes the README, the model card and the two generated rights
@@ -95,14 +95,15 @@ as zero. `en-gb` now carries one attribution entry of its own, the OGL v3.0 entr
 in the repository including `@mailwoman/core` and `@mailwoman/codex`, declare
 `AGPL-3.0-only OR LicenseRef-Commercial`.
 
-Two defects in one field. `AGPL-3.0` is a deprecated SPDX identifier, superseded by `AGPL-3.0-only`
-and `AGPL-3.0-or-later`, so it does not state which. And `docs/src/pages/license.mdx` line 11 says
-"every release ships under both", which those four manifests contradict.
+The field has two defects. `AGPL-3.0` is a deprecated SPDX identifier, superseded by
+`AGPL-3.0-only` and `AGPL-3.0-or-later`, so it does not say which of the two applies. In addition,
+`docs/src/pages/license.mdx` line 11 says "every release ships under both", which those four
+manifests contradict.
 
-The repository's own admissibility function already refuses the identifier. Measured on this tree:
+The repository's own admissibility function already refuses the identifier. On this tree,
 `assertAdmissibleLicenseExpression("AGPL-3.0")` throws, and `summarizeLicense("AGPL-3.0")` returns
 `recognized: false` with `unrecognized: ["AGPL-3.0"]` and an empty obligation list. That function
-guarded spatial-layer manifests and nothing had applied it to a package manifest.
+guarded spatial-layer manifests, and nothing had applied it to a package manifest.
 
 **Repaired.** The four fields now read `AGPL-3.0-only OR LicenseRef-Commercial`, `docs/package.json`
 gained the field it lacked, and the `package-license` repository check refuses a workspace manifest
@@ -116,9 +117,10 @@ Every published package's model-card version differs from its manifest version, 
 at 6.5.0 against 10.0.0.
 
 **Correcting an earlier reading in this document.** The first version of this section called all
-twelve a release-engineering defect. For the graph packages that reading is wrong. Two version series
-exist by design and `docs/records/site-2026-08/releases.mdx` states them, with the current row reading
-`**10.0.0** (current) · model 9.1.0 (unchanged)` — a code-only release over unchanged model bytes.
+twelve a release-engineering defect. For the graph packages, that reading is wrong. Two version
+series exist by design, and `docs/records/site-2026-08/releases.mdx` documents them. Its current row
+reads `**10.0.0** (current) · model 9.1.0 (unchanged)`, which describes a code-only release over
+unchanged model bytes.
 `mwops release verify-metadata` keys its three surface checks off the card version rather than the npm
 version for exactly that reason, and `fetch-hf-weights` names the Hugging Face directory
 `<family>/v<card version>/`. Forcing the numbers equal would break both.
@@ -145,9 +147,9 @@ column gives 62, and 6 of 62 is 9.7%.
 **Repaired.** Each package's `PROVENANCE.json` now carries a role per artifact, derived from the
 filename. `en-us`'s twelve declared files resolve to a model graph, a SentencePiece tokenizer, two
 calibration tables, a US postcode binary, a placetype-pair index, two gazetteer FST binaries and four
-lexicons. A model graph carries the corpus a training run read; a tokenizer carries the text it was
-fitted on; a pair index and a postcode binary are each built from one named register. Those are four
-different questions and the record no longer answers them with one list.
+lexicons. A model graph derives from the corpus a training run read. A tokenizer derives from the text
+it was fitted on. A pair index and a postcode binary are each built from one named register. Each
+of these has its own provenance, and the record no longer covers them with one list.
 
 ### Two packages carry training attribution, under two different keys
 
@@ -178,14 +180,14 @@ attribute. The cross-package case above appears in `en-gb`'s record under
 `attribution_recorded_in_another_package`, found by matching each package's artifact filenames against
 every other package's attribution text rather than by hand.
 
-Generating the files does not discharge the obligation. `pair-index-gb.bin`'s attribution is still
-recorded in another package's card, and the repair for that is to put the entry where the artifact
-ships.
+Generating the files does not satisfy the obligation. `pair-index-gb.bin`'s attribution is still
+recorded in another package's card. The fix is to move the entry to the package that ships the
+artifact.
 
 ## Attributed sources for `en-us`, as recorded
 
-Eight of ten entries name a license, and five describe rows that trained the model. Reproduced as
-stated in the card, without interpretation. The `use` column is read from each entry's own words and
+Eight of ten entries name a license, and five describe rows that trained the model. The entries are
+reproduced as stated in the card, without interpretation. The `use` column is read from each entry's own words and
 travels beside the verbatim text in the package's `PROVENANCE.json`.
 
 |   # | source                                     | license as named                          | use as stated         |
@@ -375,37 +377,37 @@ same directories sit under `packages/core/data/`.
 | `internal/dictionaries/` |    34 | libpostal yes, Who's On First at a wrong path |
 | `coarse-placer/`         |     2 | no                                            |
 
-`packages/core/data/coarse-placer/` is `weights.bin` and `meta.json`: a multinomial logistic-regression classifier
-over 29 country classes on a 65,536-dimension hashed feature space, trained by
+`packages/core/data/coarse-placer/` contains `weights.bin` and `meta.json`: a multinomial logistic-regression
+classifier over 29 country classes on a 65,536-dimension hashed feature space, trained by
 `mailwoman placer train`. It is first-party work, so no third-party license attaches to the artifact.
-When this was first measured, what it was trained on was recorded nowhere: the notices files described
-the third-party data beside it, no model card existed for it, and `packages/core/data/` held no
+At the first measurement, the repository did not record what it was trained on. The notices files described
+the third-party data beside it, the classifier lacked a model card, and `packages/core/data/` held no
 `PROVENANCE.md`.
 
 `packages/core/data/PROVENANCE.md` now records all four directories and ships in the tarball, at
-2,208 files. It names the builder, `mailwoman placer build-dataset`, and its three inputs: the
+2,208 files. It identifies the builder, `mailwoman placer build-dataset`, and its three inputs: the
 `v0.5.0` corpus train extracts sampled per country, a `v0.9.2-multilocale-au` extract for Australian
 rows, and the Overture release pinned as `2026-06-17.0`. Read on this machine, the dataset is
 1,165,072 training rows, 145,629 each for validation and test, and 11,209 off-map test rows, none of
 it committed, and each row is `{raw, country}` with no source field.
 
-What stays open is the same thing the twelve weights packages leave open: which records trained the
-committed `weights.bin`. The builder names a corpus version and the shipped artifact carries no
-manifest, so the two cannot be joined. A rebuild closes it by freezing a manifest the way
-`buildCorpus` now writes `TRAINING_SOURCES.json`.
+The open question is the same one the twelve weights packages leave open: which records trained the
+committed `weights.bin`. The builder records a corpus version, but the shipped artifact carries no
+manifest, so the two cannot be linked. A rebuild would answer the question by freezing a manifest,
+in the same way `buildCorpus` now writes `TRAINING_SOURCES.json`.
 
 ### Two scope limits kept `data-provenance` from finding it, and one is unstated
 
 The check reads every `data/` directory **that already carries a `PROVENANCE.md`** and reports each
 artifact the file omits. `packages/core/data/` had no such file until now, so the directory was
-outside the check by construction — which the check's own header states. Four other packages carry
+outside the check by construction, as the check's own header states. Four other packages carry
 one: `activity-lexicon`, `corpus`, `geographic-model` and `poi-taxonomy`.
 
 The check is also **non-recursive**, which its header does not say: it collects files whose directory
 equals the `data/` directory itself. Every artifact in `packages/core/data/` is a level down, in
-`libpostal/`, `chromium-i18n/`, `internal/` or `coarse-placer/`. So the new record brings the
-directory into scope and the check finds zero artifacts to name and passes. The record is what a
-reader opens and it says so itself; making the check recursive is a change to the check.
+`libpostal/`, `chromium-i18n/`, `internal/` or `coarse-placer/`. The new record brings the
+directory into scope, but the check finds zero artifacts to list and passes. The record itself
+states this limit for readers. Making the check recursive requires a separate change to the check.
 
 The Who's On First path was also wrong. Both notice copies sent a reader to a `whosonfirst`
 directory directly under `data/`, which holds **0 files** in the tarball. The dictionaries are three
@@ -434,9 +436,9 @@ dated Overture release, so the fleet is not one build.
 **Scope.** The census read this machine's data root. Those files match the bytes `bundles.ts` records
 from a survey of the live bucket exactly on all four states checked: `ak` at 78,602,240, `ca` at
 3,471,339,520, `hi` at 77,320,192 and `ny` at 1,440,923,648. The same is not true of the other three
-bundles — the local `poi.db` is 4,149,665,792 bytes against a recorded 3,889,184,768 and its manifest
-reads version `2026-07-22.0` against a published path of `poi/2026-07-20a/` — so no claim here is made
-about those from a local read.
+bundles. The local `poi.db` is 4,149,665,792 bytes against a recorded 3,889,184,768, and its manifest
+reads version `2026-07-22.0` against a published path of `poi/2026-07-20a/`. This page therefore
+makes no claim about those bundles from a local read.
 
 Retrieving the National Address Database's disclaimer found a second omission. The page states the
 data carries no copyright under 17 U.S.C. § 105 and is available for re-use without limitation, and
@@ -457,19 +459,20 @@ answers it in two sentences:
 > 5.4. "Results" means any outcome obtained by computational analysis of Data, including for example
 > machine learning models and models' insights.
 
-That is a statement about this agreement and no other. It does not reach the sources Overture itself
-drew each row from, which stays open, and it settles nothing for Who's On First, GeoNames, TIGER/Line,
-OpenAddresses or Base Adresse Nationale. Its value is that it separates the question from the answer:
-the model question is open because most grants are silent on it rather than because it cannot be
-written down, and one publisher has written it down.
+These clauses apply to this agreement only. They do not cover the sources Overture itself drew each
+row from, which remain an open question, and they settle nothing for Who's On First, GeoNames,
+TIGER/Line, OpenAddresses or Base Adresse Nationale. They show that a grant can answer the model
+question in writing. The question stays open for the other sources because their grants do not
+address it, and one publisher has answered it.
 
-The `poi` bundle's record now splits accordingly. §2.1 asks that the agreement's text accompany shared
-Data, which is an obligation attaching to hosting `poi.db`. Nothing is asked of the model.
+The `poi` bundle's record now separates the two cases. §2.1 requires the agreement's text to
+accompany shared Data, which is an obligation on hosting `poi.db`. The agreement places no
+obligation on the model.
 
-GeoNames states its terms twice and only once with a version. The export readme beside the files names
-Creative Commons Attribution 4.0; the about page names the license and no version. The record names
-4.0 and says which document it came from, because the conditions differ across versions of that
-license.
+GeoNames states its terms twice, and only one statement gives a version. The export readme beside
+the files specifies Creative Commons Attribution 4.0, while the about page cites the license without
+a version. The record uses 4.0 and says which document it came from, because the conditions differ
+across versions of that license.
 
 ### The one workspace held for a rights reason had no enforced hold
 
@@ -483,9 +486,9 @@ hand, would have published it.
 **Repaired.** `assertWorkspacePublishable` refuses any workspace the record names, quoting the
 recorded reason, and both publish paths call it: `publishWorkspace` before it packs, and
 `blessPackages` across every named directory before the first publish. Publishing a held-out
-workspace now means deleting its entry, which a reviewer sees in the diff. Every entry is refused
-rather than the rights-held ones alone, so one rule cannot drift from a classification it does not
-carry.
+workspace now requires deleting its entry, which a reviewer sees in the diff. The check refuses every
+entry, including those held for reasons other than rights. It therefore has no separate
+classification of rights-held entries that could drift out of date.
 
 **What this control does not do.** It refuses a workspace by name. It does not decide whether an
 artifact's inputs permit publication, and it does not read a provenance record, because no frozen
@@ -496,16 +499,15 @@ training manifest exists to read.
 `mailwoman release hf` in `packages/mailwoman/lib/release-tools/publish-hf.ts` uploads `model.onnx`,
 `tokenizer.model`, `model-card.json` and the FST and postcode binaries. It read those files' sizes and
 nothing else about them. Uploading is publication, and attribution and share-alike conditions attach
-to a source and survive redistribution, so the moment to establish that a record exists is before the
-bytes leave.
+to a source and survive redistribution. The upload is therefore the last point at which to confirm
+that a provenance record exists.
 
 **Repaired.** `verifyTrainingProvenance` runs after the artifact checks and refuses a card whose
-`training.data_attribution` is absent or empty, naming the card and saying to record the sources the
-run trained on in it. Entries that name no
-license are printed with their text rather than refused, so the operator sees which source is
-unaccounted for at the moment of publication. Missing evidence about a source is a gap to record,
-while a finding against a source is a conclusion somebody has to reach, and a release control is not
-the place to reach it.
+`training.data_attribution` is absent or empty. The error identifies the card and asks the operator
+to record in it the sources the run trained on. Entries without a license are printed with their text
+instead of being refused, so the operator sees at publication time which source is unaccounted for.
+Missing evidence about a source is a gap to record. A finding against a source is a conclusion that
+a person has to reach, and a release control should not make it.
 
 **Correcting a false absence this control first reported.** The first version read
 `training.data_attribution` alone and refused `neural-weights-cjk` as recording nothing. That card
@@ -514,9 +516,9 @@ National Tax Agency's 利用規約, KOGL Type 1 for the Korean road-name address
 permit registry's 이용허락범위 제한 없음, and the Taiwanese Open Government Data License v1.0 together
 with the fifteen civil affairs bureaux whose 顯名聲明 that license makes a condition of the grant.
 
-Two spellings exist because the two graph packages were written apart, and both are read. A control
-that answers a false absence refuses a release nobody needed to block, and the absence it reports
-cannot be told from a real one.
+Two spellings exist because the two graph packages were written separately, and the check now reads
+both. A control that reports a false absence blocks a release that did not need blocking, and its
+report looks identical to a real absence.
 
 Both graph packages pass. `en-us` records ten entries, eight naming a license; the two that do not are
 the OpenAddresses PL entry, whose parenthetical reads `public, BDOT-derived`, and the pointer to
@@ -527,16 +529,16 @@ terms outside a parenthetical rather than stating none.
 
 `mailwoman license attribution` prints the engine's own expression, then per installed package the
 sources for the artifacts it ships, the entries it inherits from the package whose graph it decodes
-through, and every question that package's record leaves open. `--json` emits the same for a build to
-read. It says that a commercial agreement covers the code and model artifacts Sister Software authors
-and reaches none of the sources below it, names a package it did not find rather than omitting it, and
-prints what it does not cover — reference data downloaded separately, and the fact that a package
-recording no attribution is not a package with none.
+through, and every question that package's record leaves open. `--json` emits the same output for a build
+to read. The command states that a commercial agreement covers the code and model artifacts Sister
+Software authors and none of the sources below them. It lists any package it did not find instead of
+omitting it. It also prints what it does not cover: reference data downloaded separately, and the
+fact that a package recording no attribution may still have sources to attribute.
 
-Verified end to end on this checkout: `npm pack --dry-run` on `neural-weights-en-gb` carries
-`LICENSE.md` at 2.1 kB and `PROVENANCE.json` at 5.6 kB, so the records the next release publishes
-will reach a consumer rather than stopping at the repository. That is a statement about this
-checkout. What is on npm today is the next section.
+This was verified end to end on this checkout. `npm pack --dry-run` on `neural-weights-en-gb`
+includes `LICENSE.md` at 2.1 kB and `PROVENANCE.json` at 5.6 kB, so the records in the next release
+will reach consumers. That result applies to this checkout. The next section describes what is on
+npm today.
 
 ## What the tarballs already on npm carry
 
@@ -561,14 +563,14 @@ where the classifiers and `ExclusiveCartesianSolver` were removed in v7.0.0 and 
 package, and it links to the MIT license rather than reproducing the notice MIT requires accompany a
 copy.
 
-Both are corrected by the next release rather than retroactively. A published tarball is immutable and
-none of these has been altered. A consumer holding `10.0.0` reads the repository at the tag for the
-record, and the version that carries the files is the one to install for it.
+The next release corrects both, and the existing tarballs stay as they are. A published tarball is
+immutable, and none of these has been altered. A consumer holding `10.0.0` can read the record in the
+repository at that tag, or install the version that carries the files.
 
 ## What the record leaves open
 
-Each published package's `PROVENANCE.json` carries the questions that bear on it, so the record
-travels with the tarball rather than staying in this document. A package with no recorded training
+Each published package's `PROVENANCE.json` lists the open questions that apply to it, so the record
+ships with the tarball instead of existing only in this document. A package with no recorded training
 attribution reads `none-recorded-in-this-package`. An artifact with no recorded digest reads
 `unrecorded`.
 

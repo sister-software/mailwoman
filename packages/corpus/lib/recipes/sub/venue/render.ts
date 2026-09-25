@@ -2,8 +2,7 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file How the sub-venue recipe turns labelled pieces into a line: the register it samples, the join that keeps
- *   `raw` and `components` in step, and the per-country address order it takes from codex.
+ * @file Renders labelled pieces into sub-venue rows in a sampled case register and a per-country address order.
  */
 
 import { layoutForCountry } from "@mailwoman/codex/address-layouts"
@@ -14,23 +13,24 @@ import { isPresent } from "@mailwoman/core/objects"
 import type { LocaleBaseTuple } from "#surfaces/locale"
 
 /**
- * One labelled piece of the line.
+ * One labelled piece of a row.
  *
- * Pieces inside a group are space-joined.
- * Groups are joined by the register's separator.
+ * Pieces inside a group are joined with a space, and groups are joined with the register's separator.
  */
 export interface Piece {
 	text: string
 	tag?: ComponentTag
 }
 
+/**
+ * A run of pieces that share one comma segment.
+ */
 export type Group = Piece[]
 
 /**
- * Surface register.
+ * The case and punctuation style of a rendered row.
  *
- * Every eval in this repo gets a lowercase leg because lowercase is the register users type —
- * Google Maps taught them — so every recipe output has to carry one.
+ * Users often type addresses in lowercase, so every recipe output includes lowercase rows.
  */
 export const Register = {
 	Canonical: "canonical",
@@ -39,13 +39,19 @@ export const Register = {
 	Upper: "upper",
 } as const
 
+/**
+ * One of the {@link Register} values.
+ */
 export type Register = (typeof Register)[keyof typeof Register]
 
-// Registers: 45% canonical, 20% comma-free, 25% lower, 10% upper.
+// The cutoffs are cumulative: 45% canonical, 20% comma-free, 25% lower and 10% upper.
 const CANONICAL_REGISTER_CUTOFF = 0.45
 const COMMA_FREE_REGISTER_CUTOFF = 0.65
 const LOWER_REGISTER_CUTOFF = 0.9
 
+/**
+ * Samples a register with the fixed shares above.
+ */
 export function sampleRegister(random: () => number): Register {
 	const r = random()
 
@@ -59,7 +65,9 @@ export function sampleRegister(random: () => number): Register {
 }
 
 /**
- * Join groups into `raw` + `components`, applying the register to both so alignment still finds every value.
+ * Joins groups into `raw` and `components`.
+ *
+ * The register's case change applies to both so that alignment still finds every component value in `raw`.
  */
 export function renderGroups(
 	groups: Group[],
@@ -94,22 +102,15 @@ export function renderGroups(
 }
 
 /**
- * A layout connector that ends a comma segment. {@link renderGroups} joins pieces inside a group with
- * a space and groups with `", "`, which is the same division a layout draws with these two connectors.
+ * Layout connectors that end a group.
  */
 const GROUP_BREAK = new Set([", ", "\n"])
 
 /**
- * The street + tail groups for a country, in that country's own order, taken from that country's layout.
+ * Returns the street and locality groups for a country in the order of its codex address layout.
  *
- * The orders were restated here once — US and GB anglophone, everything else
- * postcode-then-locality — and the `else` caught Japan, Korea and Taiwan along with France.
- * `@mailwoman/codex` holds the order per country as data and `renderAddress` evaluates it,
- * returning a tagged piece per component with the connectors between them, so the groups
- * this recipe needs are that piece list cut at its comma and line breaks.
- *
- * Answers an empty list when no layout names the country: 55 of the 252 shipped records carry no
- * usable skeleton, and a row for one of those is absent rather than written in an order nobody uses.
+ * The function splits the rendered layout at comma and line-break connectors.
+ * It returns an empty list when codex has no Latin-script layout for the country.
  */
 export function addressGroups(country: string, tuple: LocaleBaseTuple, withStreet: boolean): Group[] {
 	const components: ComponentDict = {}

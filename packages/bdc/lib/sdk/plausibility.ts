@@ -3,21 +3,12 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Compose BDC filing and nearby infrastructure evidence for one broadband claim. Evidence can support a claim but
- *   never disprove it; missing coverage is reported as unknown or abstention.
+ *   Collects BDC filings and nearby infrastructure as evidence for one broadband claim. Evidence can
+ *   support a claim, and missing coverage produces an abstention or a lower confidence.
  *
- *   Filing lookup uses `geoid` when available; otherwise it uses the point's H3 cell and marks the result as an
- *   approximation. Physical lookup independently requires a coordinate, supplied directly or geocoded from an
- *   address. A geoid-only claim therefore skips physical lookup and lowers coverage confidence.
- *
- *   Fiber maps to telecom exchanges, cabinets, and data centers; fixed wireless maps to communications towers.
- *   Other technologies have no physical falsifier and skip that channel. Filing rows remain positive evidence even
- *   when they do not corroborate the claimed technology or speed.
- *
- *   `coverage_confidence` describes survey coverage, not whether evidence was found. Both applicable channels covered
- *   yields `high`; unknown coverage lowers confidence, and two unknown channels yield `insufficient_survey_data`.
- *   A non-applicable physical channel cannot produce `high` from filing coverage alone. Each wired layer's recorded
- *   H3 spine resolution is checked against `BDC_H3_RESOLUTION` before its coverage data is joined.
+ *   The filing channel uses `geoid` when present and otherwise approximates the block with the point's
+ *   H3 cell. The physical channel needs a coordinate, so a geoid-only claim skips it. Only fiber and
+ *   fixed wireless have physical-plant categories.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -46,15 +37,11 @@ import {
 	BroadbandTechnologyCode,
 } from "#sdk/technologies"
 
-/**
- * Derive fixed-wireless codes from the shared technology category set.
- */
 const FIXED_WIRELESS_CODES = BroadbandTechnologyCategoryToCodeSet[BroadbandTechnologyCategory.FixedWireless]
 
 /**
  * Broadband-service claim to check.
- *
- * A usable `geoid`, `point`, or geocodable `address` is required.
+ * It needs a `geoid`, a `point` or a geocodable `address`.
  */
 export interface PlausibilityClaim {
 	address?: string
@@ -69,6 +56,12 @@ export interface PlausibilityClaim {
  */
 export type PlausibilityAbstainReason = "requires_build_local_layer" | "requires_bdc_layer" | "insufficient_survey_data"
 
+/**
+ * One evidence item: a filing, a nearby physical-plant hit or an abstention.
+ *
+ * A filing that does not match the claimed technology or speed still counts as
+ * evidence, with `corroborates: false`.
+ */
 export type PlausibilityEvidence =
 	| {
 			kind: "observation"
@@ -82,9 +75,9 @@ export type PlausibilityEvidence =
 	| { type: "abstain"; reason: PlausibilityAbstainReason; layer?: string }
 
 /**
- * Observations retain their existing fields and add a shared `kind` discriminator.
+ * The observation members of {@link PlausibilityEvidence}, checked against the shared `Evidence` type.
  *
- * Abstentions are not observations: they describe unavailable evidence, not a finding.
+ * Abstentions are excluded because they record missing evidence.
  */
 export type PlausibilitySharedEvidence =
 	Extract<PlausibilityEvidence, { kind: "observation" }> extends Evidence
@@ -102,29 +95,36 @@ export type PlausibilityCoverageAxisState =
 	| "layer_missing"
 	/** The dependency exists, but the queried block or cell is unsurveyed. */
 	| "cell_unsurveyed"
-	/** Physical axis only: a geoid-only claim provides no search coordinate. */
+	/** The claim has only a geoid, so the physical search has no coordinate. */
 	| "no_coordinate"
-	/** Physical axis only: no physical-plant category applies to this technology. */
+	/** No physical-plant category applies to this technology. */
 	| "not_applicable"
 
 /**
- * Per-channel explanation for `coverage_confidence`, reported alongside its stable summary field.
+ * Per-channel survey states behind `coverage_confidence`.
  */
 export interface PlausibilityCoverageDetail {
 	filing: PlausibilityCoverageAxisState
 	physical: PlausibilityCoverageAxisState
 }
 
+/**
+ * Result of {@link plausibilityCheck}.
+ */
 export interface PlausibilityBundle {
 	claim: PlausibilityClaim
 	evidence_found: PlausibilityEvidence[]
-	coverage_confidence: "high" | "low" | "insufficient_survey_data"
 	/**
-	 * Per-channel explanation for coverage confidence.
+	 * How much of the area the layers surveyed, regardless of what evidence turned up.
+	 *
+	 * `high` requires both channels covered.
+	 * It is `insufficient_survey_data` when neither channel is covered, or
+	 * when the physical channel does not apply and filings are uncovered.
 	 */
+	coverage_confidence: "high" | "low" | "insufficient_survey_data"
 	coverage_detail: PlausibilityCoverageDetail
 	/**
-	 * Filing lookup key: exact `geoid`, or approximate H3 cell from a point/address.
+	 * Filing lookup key: the exact `geoid`, or the H3 cell of the point as an approximation.
 	 */
 	block_resolution: "geoid" | "h3_cell_approximation"
 	/**
@@ -134,7 +134,8 @@ export interface PlausibilityBundle {
 }
 
 /**
- * Minimal geocoding result used here, avoiding a circular dependency on the `mailwoman` workspace.
+ * The geocode fields this module reads.
+ * It avoids a circular dependency on the `mailwoman` package.
  */
 export interface GeocodeLike {
 	lat: number | null
@@ -142,15 +143,18 @@ export interface GeocodeLike {
 }
 
 /**
- * Open POI lookup and coverage database.
- *
- * The caller owns both handles; the database supports hit and cell-coverage reads.
+ * Open POI lookup and its layer database.
+ * The caller owns and closes both handles.
  */
 export interface PlausibilityPOIDeps {
 	lookup: POILookup
 	schemadb: layerschemahandle & Pick<DatabaseClient, "destroy">
 }
 
+/**
+ * Optional layers and services for {@link plausibilityCheck}.
+ * A missing layer produces an abstention.
+ */
 export interface PlausibilityDeps {
 	bdcDB?: DatabaseClient<BDCDatabase>
 	poi?: PlausibilityPOIDeps
@@ -158,7 +162,8 @@ export interface PlausibilityDeps {
 }
 
 /**
- * Map fiber and fixed-wireless technologies to physical-plant categories; other codes have no mapping.
+ * Physical-plant POI categories for each technology code.
+ * Only fiber and fixed wireless have entries.
  */
 export const PLAUSIBILITY_TECH_PHYSICAL_CATEGORIES: Readonly<Record<number, readonly string[]>> = {
 	[BroadbandTechnologyCode.OpticalCarrierFiber]: ["telecom_exchange", "telecom_cabinet", "data_center"],
@@ -176,7 +181,7 @@ export function physicalCategoriesForTechnology(technologyCode: number): readonl
 }
 
 /**
- * Numeric ordering of speed buckets, matching `filing-landscape.ts`.
+ * Rank of each speed bucket from `filing/landscape.ts`, slowest first.
  */
 const SPEED_BUCKET_RANK: Readonly<Record<string, number>> = {
 	[BDC_SPEED_BUCKET_UNDER_25]: 0,
@@ -193,7 +198,6 @@ function filingCorroborates(filing: ProviderFilingSummary, claim: PlausibilityCl
 
 	const filingRank = SPEED_BUCKET_RANK[filing.speed_bucket]
 
-	// Unknown buckets cannot corroborate.
 	if (filingRank === undefined) return false
 
 	const claimedRank = SPEED_BUCKET_RANK[speedBucketForDownloadSpeed(claim.claimedDownloadMbps)]!
@@ -202,7 +206,7 @@ function filingCorroborates(filing: ProviderFilingSummary, claim: PlausibilityCl
 }
 
 /**
- * Map detailed channel states to the values used by coverage combination.
+ * Collapse a channel state to covered, unknown or not applicable.
  */
 function confidenceStateForAxis(state: PlausibilityCoverageAxisState): "covered" | "unknown" | "not_applicable" {
 	if (state === "covered") return "covered"
@@ -234,8 +238,9 @@ function combineCoverage(
 }
 
 /**
- * Ensure a wired layer's recorded H3 spine resolution matches the constant
- * used by filing and coverage lookups.
+ * Throw unless a layer's recorded H3 spine resolution equals `BDC_H3_RESOLUTION`.
+ *
+ * The coverage lookup derives res-6 parents from res-9 cells, which only works at that resolution.
  */
 async function assertLayerSpineResolution(
 	layer: "bdc" | "poi",
@@ -256,11 +261,11 @@ async function assertLayerSpineResolution(
 }
 
 /**
- * Combine filing and physical evidence in one bundle.
- * Missing evidence never produces an "implausible" verdict.
+ * Collect filing and physical evidence for a claim into one bundle.
+ *
+ * The result has no "implausible" verdict, because missing evidence does not disprove a claim.
  */
 export async function plausibilityCheck(claim: PlausibilityClaim, deps: PlausibilityDeps): Promise<PlausibilityBundle> {
-	// Resolve a physical-search coordinate independently of the filing lookup key.
 	let point: PointLiteral | undefined = claim.point
 
 	if (!point && claim.address) {
@@ -281,14 +286,12 @@ export async function plausibilityCheck(claim: PlausibilityClaim, deps: Plausibi
 		throw new Error("plausibilityCheck: claim must supply one of `geoid`, `point`, or a resolvable `address`")
 	}
 
-	// Prefer the exact geoid path; otherwise use the point's approximate H3 cell.
 	const blockResolution: PlausibilityBundle["block_resolution"] = claim.geoid ? "geoid" : "h3_cell_approximation"
 
 	const pointCell = point
 		? shortCellToInt(latLngToCell(point.coordinates[1], point.coordinates[0], BDC_H3_RESOLUTION) as H3Cell)
 		: undefined
 
-	// Validate each wired layer independently before joining coverage cells.
 	if (deps.bdcDB) {
 		await assertLayerSpineResolution("bdc", deps.bdcDB, BDC_H3_RESOLUTION)
 	}
@@ -304,7 +307,7 @@ export async function plausibilityCheck(claim: PlausibilityClaim, deps: Plausibi
 	if (!deps.bdcDB) {
 		evidence.push({ type: "abstain", reason: "requires_bdc_layer", layer: "bdc" })
 	} else {
-		// A non-geoid claim must have a resolved point, so its H3 cell is defined.
+		// A claim without a geoid has a point, so `pointCell` is defined here.
 		const landscape =
 			blockResolution === "geoid"
 				? await filingLandscape(deps.bdcDB, { geoids: [claim.geoid!] })
@@ -339,7 +342,6 @@ export async function plausibilityCheck(claim: PlausibilityClaim, deps: Plausibi
 			physicalCoverage = "layer_missing"
 			evidence.push({ type: "abstain", reason: "requires_build_local_layer", layer: "poi" })
 		} else if (!point) {
-			// A geoid-only claim has no search point; mark the capability gap without fabricating evidence.
 			physicalCoverage = "no_coordinate"
 		} else {
 			const hits = await nearestInfrastructure(deps.poi.lookup, deps.poi.schemadb, {

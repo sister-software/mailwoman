@@ -2,7 +2,7 @@
  * @copyright Sister Software.
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file Test FCC CORES registration parsing and fetching with vendored responses; no live requests are made.
+ * @file Tests CORES registration parsing and fetching against saved HTML pages.
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
@@ -47,7 +47,6 @@ describe("parseCORESRegistration — real CORES detail pages", () => {
 	it("keeps the legal name and the brand as SEPARATE surfaces — the reason this client exists", async () => {
 		const registration = parseCORESRegistration(KNOLOGY_FRN, await fixture("frn-0001753557-knology-wow.html"))
 
-		// Keep the legal name and contact brand separate; neither is the Form 499 carrier name.
 		expect(registration?.entityName).toBe("Knology Total Communications, Inc.")
 		expect(registration?.contactOrganization).toBe("WOW! Internet, Cable and Phone")
 		expect(registration?.entityName).not.toBe(registration?.contactOrganization)
@@ -56,7 +55,7 @@ describe("parseCORESRegistration — real CORES detail pages", () => {
 	it("omits a field CORES left blank rather than emitting an empty string", async () => {
 		const registration = parseCORESRegistration(KNOLOGY_FRN, await fixture("frn-0001753557-knology-wow.html"))
 
-		// The source row is present but its cell is empty.
+		// The fixture has a fax row with an empty cell.
 		expect(registration).not.toHaveProperty("contactFax")
 	})
 
@@ -69,9 +68,8 @@ describe("parseCORESRegistration — real CORES detail pages", () => {
 	it("leaves an already-mixed-case entity name alone and title-cases a uniformly-cased one", async () => {
 		const comcast = parseCORESRegistration(COMCAST_FRN, await fixture("frn-0003768165-comcast.html"))
 
-		// Normalize the uniformly cased source name.
+		// The page gives the entity name in capitals and the contact organization in mixed case.
 		expect(comcast?.entityName).toBe("Comcast Cable Communications, LLC")
-		// Preserve the contact organization’s source casing.
 		expect(comcast?.contactOrganization).toBe("Comcast Cable Communications, LLC")
 	})
 })
@@ -88,7 +86,6 @@ describe("parseCORESRegistration — abstention", () => {
 	})
 
 	it("REFUSES a page whose own FRN row disagrees with the FRN requested", async () => {
-		// Reject a redirected or mis-served record with a different FRN.
 		const otherFRN = toFRN("0009999999")!
 
 		expect(parseCORESRegistration(otherFRN, await fixture("frn-0001753557-knology-wow.html"))).toBeNull()
@@ -133,9 +130,9 @@ describe("recaseUniform", () => {
 	it("keeps entity-form initialisms upper-case rather than title-casing them into nonsense", () => {
 		expect(recaseUniform("SOUTHERN LIGHT LLC")).toBe("Southern Light LLC")
 		expect(recaseUniform("HARGRAY COMMUNICATIONS GROUP LP")).toBe("Hargray Communications Group LP")
-		// Trailing punctuation does not prevent recognition.
+		// A preceding comma does not stop the designation from being recognized.
 		expect(recaseUniform("ACME FIBER, LLC")).toBe("Acme Fiber, LLC")
-		// Preserve conventional title casing.
+		// "Inc" is title-cased like an ordinary word.
 		expect(recaseUniform("OTELCO TELEPHONE INC")).toBe("Otelco Telephone Inc")
 	})
 })

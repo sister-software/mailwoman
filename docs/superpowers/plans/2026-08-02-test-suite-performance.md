@@ -4,31 +4,31 @@
 
 **Goal:** Reduce `test.yml` green wall-clock from 6m29s to ~2m00–2m15s, and make the evidence-lexicons check invariant to gazetteer size.
 
-**Architecture:** Five independent changes, ordered most-certain-prize first. Two are CI configuration (an Actions cache prune; caching the compiled `out/` tree). One moves derived weights artifacts from GitHub's cache service to the local data root the self-hosted runner already has. One splits the single test file that is 93% of the slow leg's runtime into four layers — a fast fixture on every PR, and the full-scale build path-conditional, nightly, and at release. One hoists repeated model loads in `neural/test/weights.test.ts`.
+**Architecture:** The plan makes five independent changes, ordered by how certain their payoff is. Two are CI configuration: an Actions cache prune and a cache for the compiled `out/` tree. One moves derived weights artifacts from GitHub's cache service to the local data root that the self-hosted runner already has. One splits the test file that takes 93% of the slow leg's runtime into layers: a fast fixture test on every PR, and the full-scale build as a path-conditional job, a nightly run, and a release run. One hoists repeated model loads in `neural/test/weights.test.ts`.
 
-**Tech Stack:** GitHub Actions, `gh` CLI, vitest 4.1.10, `node:sqlite` (`DatabaseSync`), TypeScript run directly under Node 24 (type stripping, no flags), yarn 4.17.0.
+**Tech Stack:** GitHub Actions, `gh` CLI, vitest 4.1.10, `node:sqlite` (`DatabaseSync`), TypeScript run directly under Node 24 (type stripping without flags), yarn 4.17.0.
 
 **Source spec:** `docs/superpowers/specs/2026-08-02-test-suite-performance-design.md`
 
 ## Global Constraints
 
-- **Node runs source directly** (type stripping, no flags). Relative imports carry explicit `.ts` extensions.
-- **`erasableSyntaxOnly: true`** repo-wide — no `enum` (use `const X = {…} as const` + `type X = (typeof X)[keyof typeof X]`), no constructor parameter properties, no runtime namespaces.
-- **zero raw `process.env` / `process.argv`** — CI-enforced by oxlint (`sister-software/no-process-globals`). The only blessed accessors are `@mailwoman/core/env` (`$public`) and `@mailwoman/core/utils/scripting`.
-- **Data-root paths go through `@mailwoman/core/utils`** — `dataRootPath(...)` / `dataRootPath()`. The `$MAILWOMAN_DATA_ROOT` default lives in exactly one place (`core/utils/data-root.ts`). Never re-hardcode it; in docs and help text reference `$MAILWOMAN_DATA_ROOT`.
-- **Acronym casing:** acronyms capitalize as whole camelCase components — `parseJSON`, `readID`, `modelURL`. Not `parseJson` / `readId`. Does not apply to `snake_case` DB columns or wire keys.
-- **Two pre-commit checks fire on every commit** and both reject silently-looking failures:
-  1. `oxfmt --check` on staged files — it reformats **markdown tables** too. Run `yarn oxfmt <paths>` before committing docs.
-  2. An MDX safety check — a raw `<` before an alphanumeric in markdown prose (e.g. `<1s`) is rejected because MDX parses it as a JSX tag. Backtick it.
-- **`yarn compile` before test runs** that touch compiled output. The CLI integration tests exec `mailwoman/out/cli.js`.
-- **Commit trailers** — every commit ends with:
+- **Node runs source directly** with type stripping and without flags. Relative imports carry explicit `.ts` extensions.
+- **`erasableSyntaxOnly: true`** applies repo-wide. Do not use `enum` (use `const X = {…} as const` + `type X = (typeof X)[keyof typeof X]`), constructor parameter properties, or runtime namespaces.
+- **Do not read `process.env` or `process.argv` directly.** oxlint enforces this in CI (`sister-software/no-process-globals`). The only approved accessors are `@mailwoman/core/env` (`$public`) and `@mailwoman/core/utils/scripting`.
+- **Data-root paths go through `@mailwoman/core/utils`** with `dataRootPath(...)` / `dataRootPath()`. The `$MAILWOMAN_DATA_ROOT` default is defined in one place (`core/utils/data-root.ts`). Never hardcode it again. Docs and help text should reference `$MAILWOMAN_DATA_ROOT`.
+- **Acronym casing:** acronyms capitalize as whole camelCase components, as in `parseJSON`, `readID` and `modelURL`, not `parseJson` / `readId`. This rule does not apply to `snake_case` DB columns or wire keys.
+- **Two pre-commit checks run on every commit**, and both reject commits with failures that are easy to miss:
+  1. `oxfmt --check` runs on staged files, and it reformats **markdown tables** too. Run `yarn oxfmt <paths>` before committing docs.
+  2. An MDX safety check rejects a raw `<` before an alphanumeric in markdown prose (for example `<1s`), because MDX parses it as a JSX tag. Put it in backticks.
+- **Run `yarn compile` before test runs** that touch compiled output. The CLI integration tests exec `mailwoman/out/cli.js`.
+- **Commit trailers:** every commit ends with:
   ```
   Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>
   Claude-Session: https://claude.ai/code/session_0193E36N6nVJKonvQyXjCWXg
   ```
 - **Work happens in the worktree** at `.claude/worktrees/perf+test-suite`, branch `worktree-perf+test-suite`, based on `origin/main` @ `9b46c82e`. Do not `cd` to the main checkout.
-- **Never use bare `git stash` / `git stash pop`** — the stash stack is shared with other worktrees and other agents.
-- **Out of scope:** step (e1) (`node_modules` caching) and the pnpm migration. Both deferred — see `docs/superpowers/specs/2026-08-02-pnpm-migration-design.md`.
+- **Never use bare `git stash` / `git stash pop`.** The stash stack is shared with other worktrees and other agents.
+- **Out of scope:** step (e1) (`node_modules` caching) and the pnpm migration. Both are deferred. See `docs/superpowers/specs/2026-08-02-pnpm-migration-design.md`.
 
 ## File Structure
 
@@ -53,7 +53,7 @@
 
 ### Task 1: Prune the Actions cache
 
-The repo is at 10.7 GB against a 10 GB limit with 78 entries, so GitHub evicts LRU and the hosted yarn cache is a coin-flip (Fetch measured at 0.6s / 56.4s / 61.0s on three runs of the same branch, same day). CodeQL overlay-base databases are 4324 MB of it across 54 entries.
+The repo's Actions cache holds 10.7 GB in 78 entries against a 10 GB limit, so GitHub evicts entries in LRU order and the hosted yarn cache hits unpredictably. Fetch took 0.6s, 56.4s and 61.0s on three runs of the same branch on the same day. CodeQL overlay-base databases account for 4324 MB across 54 entries.
 
 **Files:**
 
@@ -696,7 +696,7 @@ EOF
 
 ### Task 3: Memoize the two full-DB scans
 
-`buildLocalitySurfaceLexicon` calls `computeSurfaceCountryCounts(dbPath)` (a full scan of `spr` + `names`) and `loadPersonNameSurfaces()` on every invocation. The FR and US builds run in one process and share neither. This is worth doing on its own — it halves the full build wherever it runs — and Tasks 4 and 5 build on top of it.
+`buildLocalitySurfaceLexicon` calls `computeSurfaceCountryCounts(dbPath)` (a full scan of `spr` + `names`) and `loadPersonNameSurfaces()` on every invocation. The FR and US builds run in one process and share neither result. Memoizing both is worth doing on its own, because it halves the full build wherever it runs. Tasks 4 and 5 build on it.
 
 **Files:**
 
@@ -913,7 +913,7 @@ grep -rn "loadPersonNameSurfaces" --include="*.ts" --include="*.tsx" . | grep -v
 Run: `time yarn vitest run mailwoman/gazetteer-pipeline/evidence-lexicons.test.ts`
 Expected: PASS, and meaningfully faster than the 236.9s baseline. Record the number — the spec estimates ~130s.
 
-⚠ If it is not faster, the memo is not being hit. Add a temporary `console.error` in the miss branch and re-run to see how several times it scans.
+⚠ If it is not faster, the memo is not being hit. Add a temporary `console.error` in the miss branch and re-run to see how many times it scans.
 
 - [ ] **Step 7: Commit**
 
@@ -1213,7 +1213,7 @@ Expected: it runs in under a second. Some assertions will likely fail on the fir
 yarn vitest run mailwoman/gazetteer-pipeline/evidence-lexicons.fixture.test.ts --reporter=verbose
 ```
 
-Adjust the **fixture rows** (populations, names) to make the intended law fire. Do not weaken an assertion to match observed output — that inverts the test. If a law cannot be provoked with a seeded row, that is a finding worth reporting rather than a reason to delete the case.
+Adjust the **fixture rows** (populations, names) to make the intended law fire. Do not weaken an assertion to match observed output, because the test would then check the output instead of the law. If no seeded row can trigger a law, report that as a finding and keep the case.
 
 - [ ] **Step 3: Move the full-scale tests to their own file**
 
@@ -1319,7 +1319,7 @@ EOF
 
 ### Task 5: Give the full-scale build its three CI homes
 
-`evidence-lexicons.full.test.ts` is in no leg after Task 4. It gets a path-conditional job, a nightly workflow, and a release-time run — plus an annotation so a PR that skipped it says so.
+`evidence-lexicons.full.test.ts` is in no leg after Task 4. This task gives it a path-conditional job, a nightly workflow, and a release-time run. It also adds an annotation so that a PR that skipped the build reports the skip.
 
 **Files:**
 
@@ -1557,7 +1557,7 @@ EOF
 
 ### Task 6: Stop reloading the model in `weights.test.ts`
 
-96.6s across 14 tests. Five in the pair-prior block each call `execFileSync` on **two** `link-dev-weights.ts` scripts and then `loadFromWeights({locale: "en-gb"})`, at 12–13s apiece — while varying only decode-time configuration. The link scripts are idempotent symlink creation; running them five times is pure waste.
+The file takes 96.6s across 14 tests. Five tests in the pair-prior block each call `execFileSync` on **two** `link-dev-weights.ts` scripts and then `loadFromWeights({locale: "en-gb"})`, at 12–13s each, although they vary only decode-time configuration. The link scripts create symlinks idempotently, so running them five times wastes time.
 
 **Files:**
 
@@ -1721,7 +1721,7 @@ EOF
 
 ### Task 7: Cache the compiled `out/` tree
 
-`tsc -b` costs 29–36s in every leg — five times per PR on the same commit. Measured: cold is 32.9s; with `out/` and the `.tsbuildinfo` files present but `node_modules` freshly reinstalled it is 13.0s. So this is 33s → ~13s per leg rather than → 0s.
+`tsc -b` costs 29–36s in every leg, so it runs five times per PR on the same commit. A cold build measured 32.9s. With `out/` and the `.tsbuildinfo` files present but `node_modules` freshly reinstalled, it measured 13.0s. The cache therefore reduces each leg from 33s to about 13s. The compile step still costs time on a cache hit.
 
 **Files:**
 
@@ -1767,7 +1767,7 @@ In `.github/workflows/test.yml`, insert immediately **before** every `- name: Co
     key: out-${{ runner.os }}-${{ hashFiles('**/tsconfig.json', 'tsconfig.base.json', 'yarn.lock') }}-${{ github.sha }}
 ```
 
-⚠ The `github.sha` component means every commit is a fresh key and a fresh save. That is intentional for correctness but it fills the cache quickly — which is exactly why Task 1 has to land first and why the prune runs daily. If quota pressure returns, narrow the key to a hash of the source files rather than the SHA, and re-verify that a source-only change still busts it.
+⚠ The `github.sha` component means every commit is a fresh key and a fresh save. That is intentional for correctness, but it fills the cache quickly. That is why Task 1 has to land first and why the prune runs daily. If quota pressure returns, narrow the key to a hash of the source files rather than the SHA, and re-verify that a source-only change still busts it.
 
 - [ ] **Step 3: Verify the compile step shortens**
 
@@ -1780,7 +1780,7 @@ gh api repos/sister-software/mailwoman/actions/runs/<id>/jobs \
 
 Expected on the second run: `Compile` ≤ 15s (was 29–36s), and `Restore compiled tree` a few seconds.
 
-⚠ On the first run the cache misses on every leg and `Compile` is unchanged. That is correct rather than a failure — the key includes `github.sha`, so within one PR the legs of the _same_ run all miss. the result on re-runs and on the pushes after the first. If that trade is not worth it, drop `github.sha` from the key and hash the sources directly.
+⚠ On the first run the cache misses on every leg and `Compile` is unchanged. That is expected. The key includes `github.sha`, so all legs of the _same_ run miss. The saving shows up on re-runs and on later pushes. If that trade is not worth it, drop `github.sha` from the key and hash the sources directly.
 
 - [ ] **Step 4: Confirm the cache is not blowing the quota**
 
@@ -1880,7 +1880,7 @@ for w in 4 8 16; do
 done
 ```
 
-Record all three. Pick the value only if one is the result shows better on wall-clock **or** materially cheaper in CPU at equal wall-clock — the lab runs two data legs concurrently on 16 cores, so CPU matters.
+Record all three. Pick a value only if it is better on wall-clock **or** materially cheaper in CPU at equal wall-clock. CPU matters because the lab runs two data legs concurrently on 16 cores.
 
 - [ ] **Step 5: Apply the cap only if the measurement supports it**
 
@@ -1890,7 +1890,7 @@ If a cap wins, add it to the CI script in `package.json`:
     "ci:test:slow": "vitest --run --maxWorkers=8 mailwoman/test mailwoman/commands/geocode.test.ts resolver-wof-sqlite neural/test",
 ```
 
-If no value beats the default on either axis, **change nothing** and record the measurement in the commit message. A cap that does not help is config debt.
+If no value beats the default on either axis, **change nothing** and record the measurement in the commit message. A cap that does not help only adds configuration to maintain.
 
 - [ ] **Step 6: Commit**
 
@@ -1952,7 +1952,7 @@ Check every criterion from the spec:
 
 | criterion                                                     | target                                                          |
 | ------------------------------------------------------------- | --------------------------------------------------------------- |
-| green wall-clock, no-op PR                                    | ≤ 3m00s on all three runs (was 6m29s)                           |
+| green wall-clock on a no-op PR                                | ≤ 3m00s on all three runs (was 6m29s)                           |
 | hosted-leg install                                            | ≤ 30s on all three legs, all three runs (was 24s/83s coin-flip) |
 | `active_caches_size_in_bytes`                                 | < 8 GB (was 10.7 GB)                                            |
 | `unit-slow` test step, non-gazetteer PR                       | ≤ 120s (was 253s)                                               |
@@ -1961,7 +1961,7 @@ Check every criterion from the spec:
 | `evidence-lexicons` PR path invariant to gazetteer size       | fixture test unchanged by a rebuild                             |
 | no net loss of assertions                                     | every law still asserted on every PR                            |
 
-⚠ Report every number, including any that miss. A criterion that is not met is a finding rather than something to without output drop — say which one and by how much.
+⚠ Report every number, including any that miss. A criterion that is not met is a finding and must stay in the report. Say which criterion missed and by how much.
 
 - [ ] **Update the spec with the measured outcome**
 

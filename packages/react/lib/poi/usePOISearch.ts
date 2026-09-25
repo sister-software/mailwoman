@@ -15,8 +15,7 @@ import { loadPOIRuntime } from "#poi/runtime"
 import type { LiveSearchState, LoadPOIRuntime, POIExplorerResult, POILiveSearch, POIRuntime } from "#poi/types"
 
 /**
- * Configures {@link usePOISearch}: the query text, an injectable runtime loader
- * and live search, whether brands may search live, and the debounce delay.
+ * Options for {@link usePOISearch}.
  */
 export interface UsePOISearchOptions {
 	/**
@@ -25,33 +24,35 @@ export interface UsePOISearchOptions {
 	text: string
 
 	/**
-	 * Loads the taxonomy runtime once on mount, default `loadPOIRuntime`.
+	 * The loader that the hook calls once on mount.
+	 * It defaults to `loadPOIRuntime`.
 	 */
 	loadRuntime?: LoadPOIRuntime
 
 	/**
-	 * The live-search probe; without it, live search is unavailable.
+	 * The live-search probe.
+	 * Live search is unavailable when it is absent.
 	 */
 	runLiveSearch?: POILiveSearch
 
 	/**
-	 * Whether the probe can search for brand subjects by Wikidata ID, default false.
+	 * Whether the probe can search for brand subjects by Wikidata ID.
+	 * It defaults to false.
 	 *
-	 * Enable it only for a server-side backend; fetching every row for a brand over
-	 * an HTTP range-request database is too slow.
-	 * Category live search is unaffected.
+	 * Enable it only for a server-side backend.
+	 * Fetching every row for a brand over an HTTP range-request database is too slow.
 	 */
 	brandLiveSearch?: boolean
 
 	/**
-	 * The delay in milliseconds before the text is classified, default 250.
+	 * The delay in milliseconds before the text is classified.
+	 * It defaults to 250.
 	 */
 	debounceMs?: number
 }
 
 /**
- * Describes the state {@link usePOISearch} returns: runtime readiness, the classification
- * for the current text, and the live-search state with its trigger.
+ * The state that {@link usePOISearch} returns.
  */
 export interface UsePOISearch {
 	/**
@@ -60,24 +61,26 @@ export interface UsePOISearch {
 	runtimeReady: boolean
 
 	/**
-	 * The classification for the current debounced text, or null for empty text
-	 * and while classification is pending.
+	 * The classification for the current debounced text.
+	 *
+	 * It is null for empty text and while classification is pending.
 	 */
 	result: POIExplorerResult | null
 
 	/**
-	 * The state of the live search for the current debounced text, `idle` until one runs.
+	 * The live-search state for the current debounced text.
+	 * It stays `idle` until a search runs.
 	 */
 	liveSearch: LiveSearchState
 
 	/**
-	 * Whether a live search can run now: a probe is wired and the subject is
-	 * live-capable with a non-empty place anchor.
+	 * Whether a probe is wired and the subject supports live search with a non-empty place anchor.
 	 */
 	canSearchLive: boolean
 
 	/**
-	 * Starts a live search for the current subject, doing nothing when `canSearchLive` is false.
+	 * Starts a live search for the current subject.
+	 * It does nothing when `canSearchLive` is false.
 	 */
 	searchLive: () => Promise<void>
 }
@@ -107,12 +110,13 @@ function buildOverpass(
 }
 
 /**
- * Classifies debounced query text as a POI category or brand request and optionally
- * runs a live search around the text's remaining place anchor.
+ * Classifies debounced query text as a POI category or brand request and runs live searches on demand.
  *
- * Results are keyed to the query that produced them, so a stale result is never shown for newer text.
- * Live search requires a non-empty anchor and is unavailable for categories that need a locally
- * built layer, or for brands unless `brandLiveSearch` is set and the brand has a Wikidata ID.
+ * Each result is keyed to the query that produced it, so the hook never shows a stale result for newer text.
+ * Live search requires a non-empty anchor.
+ *
+ * It is unavailable for categories that need a locally built layer.
+ * It is available for brands only when `brandLiveSearch` is set and the brand has a Wikidata ID.
  */
 export function usePOISearch({
 	text,

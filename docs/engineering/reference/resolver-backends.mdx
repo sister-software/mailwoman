@@ -3,9 +3,9 @@ title: Resolver backends
 description: The two gazetteer backends, why the candidate table is the default, and the 2×2 any backend comparison has to run.
 ---
 
-Mailwoman resolves places through one of two SQLite backends. They rank differently, they stock
-different rows, and — until 2026-08-04 — choosing between them also silently chose a country policy,
-which made every comparison between them a comparison of four conditions instead of two.
+Mailwoman resolves places through one of two SQLite backends. They rank differently and contain
+different rows. Until 2026-08-04, choosing a backend also silently chose a country policy, so every
+comparison between them compared four conditions instead of two.
 
 |             | `WOFSQLitePlaceLookup` (FTS)               | `WOFCandidateTableLookup` (candidate)     |
 | ----------- | ------------------------------------------ | ----------------------------------------- |
@@ -23,30 +23,30 @@ which made every comparison between them a comparison of four conditions instead
 2. `$MAILWOMAN_CANDIDATE_DB`,
 3. the convention path `<data-root>/db/wof/candidate.db`.
 
-Each is used only if it exists on disk. `none` at either the explicit or the env position pins the
-FTS backend.
+Each source is used only if the file exists on disk. `none` in either the explicit option or the env
+variable pins the FTS backend.
 
-The convention fallback is what makes the candidate table the default. `photon` and `nominatim`
-already did it by hand; `parse`, `geocode`, `serve` and `registry` stopped at the env, which is why
-`doctor` carried a "trap" check whose whole job was to tell you about a candidate.db sitting on disk
-that no tool would touch. That check is now an ordinary green line.
+The convention-path fallback makes the candidate table the default. `photon` and `nominatim` already
+checked that path in their own code. `parse`, `geocode`, `serve` and `registry` stopped at the env
+variable, so `doctor` had a "trap" check that warned about a candidate.db on disk that no tool would
+use. That check now reports an ordinary passing line.
 
 ## Country scope is a separate switch
 
 `--country-scope` (`parse`, `geocode`) decides whether `--locale`'s region subtag scopes the
 resolver, independent of which backend is selected:
 
-| value            | behavior                                        |
-| ---------------- | ----------------------------------------------- |
-| `auto` (default) | scope on the FTS backend, no scope on candidate |
-| `locale`         | always scope from `--locale`                    |
-| `none`           | never scope                                     |
+| value            | behavior                      |
+| ---------------- | ----------------------------- |
+| `auto` (default) | scope on the FTS backend only |
+| `locale`         | always scope from `--locale`  |
+| `none`           | never scope                   |
 
 An explicit `--default-country` outranks all three.
 
-`auto` reproduces the historical coupling, and the coupling is a measurement hazard rather than an
-inconvenience. `12 Rue de Rivoli, 75001 Paris` resolving to Paris TX on FTS and Paris FR on candidate
-looks like a backend difference and is entirely the country filter:
+`auto` reproduces the historical coupling between backend and country scope, and that coupling can
+invalidate measurements. `12 Rue de Rivoli, 75001 Paris` resolves to Paris TX on FTS and to Paris FR
+on candidate. That looks like a backend difference, but the country filter causes all of it:
 
 | arm                   | result                                          |
 | --------------------- | ----------------------------------------------- |
@@ -55,12 +55,12 @@ looks like a backend difference and is entirely the country filter:
 | candidate + `dc=US`   | 32.960001, −96.838499 — `Paris Township` **TX** |
 | candidate + `dc=none` | 48.856599, 2.342841 — `Paris` **FR**            |
 
-The names are the gazetteer's own `name` field, re-read 2026-08-04. The `dc=US` candidate row was
-first written up as "Dallas TX", which is where the coordinate lands but not what the row is called;
-the place `wof:404526387` is `Paris Township`. Worth the correction, because the whole point of the
-table is that both backends are matching the string `Paris` — a metro name in that cell hides it.
+The names come from the gazetteer's own `name` field, re-read on 2026-08-04. The `dc=US` candidate
+row was first recorded as "Dallas TX". The coordinate lands in Dallas, but the place
+`wof:404526387` is `Paris Township`. The correction matters because the table shows that both
+backends match the string `Paris`, and a metro name in that cell would hide that.
 
-**Any comparison between backends must pin `--country-scope` to `locale` or `none` across both
+**Any comparison between backends must pin `--country-scope` to `locale` or `none` on both
 arms**, or run the full 2×2. See
 [`2026-08-03-backend-parity.md`](../../records/evals/2026-08-03-backend-parity.md) for the
 investigation that established this, and
@@ -69,12 +69,13 @@ for the country-filter half, which is still an open decision.
 
 ## Why candidate is the default
 
-Measured 2026-08-04 on the two tier-1 locales, 150 committed OpenAddresses rows each, country scope
-pinned identically across arms, graded as great-circle distance from the resolved **locality-tier**
-coordinate to the real address point.
+These results were measured on 2026-08-04 on the two tier-1 locales, using 150 committed
+OpenAddresses rows for each, with country scope pinned identically across arms. Each row is graded
+by the great-circle distance from the resolved **locality-tier** coordinate to the real address
+point.
 
-**US** (`oa-us-coord-150`) — the rows are identical at `dc=US` and `dc=none`, because a well-formed
-US address carries its own region and postcode and the filter never bites:
+**US** (`oa-us-coord-150`): the rows are identical at `dc=US` and `dc=none`, because a well-formed US
+address carries its own region and postcode, so the filter never changes a result:
 
 |           | ≤1 km |   ≤5 km |  ≤25 km | ≤100 km |      p50 |  p90 |    p99 |    max |
 | --------- | ----: | ------: | ------: | ------: | -------: | ---: | -----: | -----: |
@@ -88,35 +89,40 @@ US address carries its own region and postcode and the filter never bites:
 | FTS       |     64 |     126 |     126 |     134 |     1.27 |   144.2 |    572 |    572 |
 | candidate | **68** | **141** | **145** | **149** | **1.11** | **2.4** | **53** | **53** |
 
-Candidate fixes 1 US row and 19 FR rows across the 25 km line and breaks none. The tail is where it
-earns the default: worst-case error 692 km → 20 km on US and 572 km → 53 km on FR, with FR's p90
-collapsing from 144.2 km to 2.4 km.
+Candidate moves 1 US row and 19 FR rows inside the 25 km line and moves none outside it. The largest
+gains are in the tail. Worst-case error drops from 692 km to 20 km on US and from 572 km to 53 km on
+FR, and FR's p90 drops from 144.2 km to 2.4 km.
 
 ### Residuals, named
 
-These are real and shipped anyway. The standing invariant is to grade the assembled coordinate, and
-on the coordinate candidate is equal or better at every threshold on both tier-1 locales.
+The regressions below are real, and the candidate backend shipped as the default despite them. The
+project grades the assembled coordinate, and on that measure candidate is equal or better at every
+threshold on both tier-1 locales.
 
-- **FR, 1 row of 150 stops resolving** — `Chemin de l'Acco des Guérins 128, 05130 Venterol`. Two
-  French communes are named Venterol (05 and 26); FTS returns one, candidate returns neither.
-- **FR, 5 rows of 150 resolve to a differently-named commune within 25 km** — locality name-match 150/150 →
-  145/150 while every one of those rows' coordinates is inside 25 km, several inside 2 km. `Agudelle`
-  → `Allineuc` (2.24 km), `Agassac` → `Saint-Pierre-Laval` (2.28 km).
-- **POI board 51/51 → 50/51** — `gas station near Ottawa ON` anchors on Ottawa, Illinois, 1151 km
-  out. Canada is in **no** tier (see [SCOPE](../SCOPE.mdx)), and the cause is upstream of the
-  backend: the parse emits `Ottawa ON` as one locality span, so no region token survives for
-  coherence to bind. `Ottawa, ON` passes only because the candidate table happens to carry a
-  synthetic Overture row literally named "Ottawa, ON".
+- **FR: 1 row of 150 stops resolving.** The row is
+  `Chemin de l'Acco des Guérins 128, 05130 Venterol`. Two French communes are named Venterol (05 and
+  26). FTS returns one, and candidate returns neither.
+- **FR: 5 rows of 150 resolve to a differently named commune within 25 km.** Locality name-match drops
+  from 150/150 to 145/150, while every one of those rows' coordinates stays inside 25 km, and several
+  stay inside 2 km. Examples: `Agudelle` → `Allineuc` (2.24 km), `Agassac` → `Saint-Pierre-Laval`
+  (2.28 km).
+- **POI board drops from 51/51 to 50/51.** `gas station near Ottawa ON` anchors on Ottawa, Illinois,
+  1151 km away. Canada is in **no** tier (see [SCOPE](../SCOPE.mdx)), and the cause is upstream of the
+  backend. The parse emits `Ottawa ON` as one locality span, so no region token remains for the
+  coherence check to use. `Ottawa, ON` passes only because the candidate table happens to contain a
+  synthetic Overture row named "Ottawa, ON".
 
 ### A trap when you measure this yourself
 
-Do not grade "the deepest coordinated node". The candidate table carries 3.66 M postcodes the FTS
-admin distribution has none of, so "deepest" silently means _postcode_ on one arm and _locality_ on the
-other. Grading that way on the FR set reports a 54-row sub-km collapse that is really a commune
-centroid (0.5 km from the address) being compared against a postcode-area centroid (7 km) — French
-communes are small and postcodes span several of them. Pick a named tier and grade both arms at it.
+Do not grade "the deepest coordinated node". The candidate table carries 3.66 M postcodes, and the
+FTS admin distribution has none, so "deepest" means _postcode_ on one arm and _locality_ on the
+other. Grading that way on the FR set reports a 54-row gain at sub-km distance. That gain
+compares a commune centroid (0.5 km from the address) against a postcode-area centroid (7 km).
+French communes are small, and one postcode spans several of them. Choose a named tier and grade
+both arms at that tier.
 
-Reproduce with the model triple passed explicitly — the eval does not resolve installed weights:
+To reproduce, pass the model, tokenizer and model card explicitly, because the eval does not resolve
+installed weights:
 
 ```bash
 mailwoman eval oa-resolver \
@@ -128,49 +134,50 @@ mailwoman eval oa-resolver \
 
 ## What the candidate backend does not implement
 
-`ResolverBackend` marks `ancestors()` and `coincidentLocalitiesFor()` optional, and
-`WOFCandidateTableLookup` implements neither — its public surface is `findPlace` and `close`.
-`candidate.db` has no `ancestors` table for them to read, so this is a missing build output rather
-than a missing method.
+`ResolverBackend` marks `ancestors()` and `coincidentLocalitiesFor()` as optional, and
+`WOFCandidateTableLookup` implements neither. Its public surface is `findPlace` and `close`.
+`candidate.db` has no `ancestors` table for these methods to read, so closing the gap requires a
+new build output as well as the methods.
 
-The resolver guards both with a plain return, and the option they serve — `hierarchyCompletion` —
-**defaults to ON**. So on the default backend a caller who never touched the option gets a feature
-that reports success and does nothing:
+The resolver guards both calls with a plain return. The option they serve, `hierarchyCompletion`,
+**is enabled by default**. On the default backend, a caller who never set the option therefore gets
+a feature that reports success and does nothing:
 
 | Absent method               | What stops working                                                                                                                                                                                |
 | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `ancestors()`               | a parse that drops the locality of a city-state or dependent locality keeps the gap; `metadata.ancestors` — the containment lineage the Nominatim and Photon drop-ins expose — is never populated |
 | `coincidentLocalitiesFor()` | the dual-role pass never runs, so a region that is also a locality under the same name resolves to one role only                                                                                  |
 
-`Resolver.capabilityGaps` carries this as data and the resolver states each gap once on stderr, so
-the absence is legible rather than inferred. Reading it is not a substitute for closing it.
+`Resolver.capabilityGaps` exposes these gaps as data, and the resolver reports each gap once on
+stderr, so a caller can see the missing capability directly. The report does not fix the gap.
 
-**Before FTS can retire**, in order:
+**Before FTS can be retired**, complete these steps in order:
 
 1. Build an `ancestors` table into `candidate.db` (`build-candidate.ts`) and implement both methods
-   on `WOFCandidateTableLookup`. Until then the candidate backend cannot serve `hierarchyCompletion`,
-   and the drop-ins cannot serve ancestry.
+   on `WOFCandidateTableLookup`. Until then, the candidate backend cannot serve
+   `hierarchyCompletion`, and the drop-ins cannot serve ancestry.
 2. Port the remaining FTS-only paths: the NL postcode retry ladder, the `near`/`maxDistanceKm` hard
    filters, and the Geographic Rule Engine conventions.
-3. Retire the last hard pin. `commands/registry/run.tsx` constructs `WOFSQLitePlaceLookup` directly
-   on purpose, so that migrated evals reproduce the retired scripts' numbers; it needs an explicit
-   flag before the class disappears.
+3. Remove the last hard pin. `commands/registry/run.tsx` constructs `WOFSQLitePlaceLookup` directly
+   on purpose, so that migrated evals reproduce the retired scripts' numbers. It needs an explicit
+   flag before the class is removed.
 
-Removing FTS ahead of that list breaks the pin, ~16 test suites, and every `MAILWOMAN_CANDIDATE_DB=none`
-caller — who would lose all resolution rather than fall back.
+Removing FTS before completing these steps breaks the pin, ~16 test suites, and every
+`MAILWOMAN_CANDIDATE_DB=none` caller. Those callers would lose all resolution instead of falling
+back.
 
 ## Scores are not comparable across backends
 
-`node.metadata.resolver_score` is bm25-derived on FTS (≈19–41) and population/`neg_rank`-derived on
-candidate (≈5–7). A consumer must not carry a hardcoded threshold across a backend switch.
+`node.metadata.resolver_score` is derived from bm25 on FTS (≈19–41) and from population/`neg_rank`
+on candidate (≈5–7). A consumer must not keep a hardcoded threshold across a backend switch.
 
-Within either backend the score also **cannot screen out errors**: measured on 40 gold rows, the wrong
-answers' range sits inside the correct answers' range and their mean is _higher_ (FTS 25.67 wrong vs
-24.33 correct; candidate 6.52 vs 6.07). There is no threshold that discards errors without discarding
-correct answers, so no abstention surface can be built on this field as it stands.
+Within either backend, the score also **cannot screen out errors**. On 40 gold rows, the range of
+scores for wrong answers falls inside the range for correct answers, and their mean is _higher_ (FTS
+25.67 wrong vs 24.33 correct; candidate 6.52 vs 6.07). Any threshold that discards errors also
+discards correct answers, so this field cannot support an abstention mechanism in its current form.
 
 ## Synthetic WOF IDs are not stable
 
-The Overture-derived `8000000000000+` range is reassigned on every gazetteer build and differs
+Every gazetteer build reassigns the Overture-derived `8000000000000+` range, and the range differs
 between the two databases. **ID-equality grading is invalid for that range**, across backends and
 across builds. Grade by coordinate.

@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Compare post-hoc rejection scores with frozen weights. Keep routing fixed, select
- *   thresholds on development data, and report held-out results.
+ *   Compares post-hoc rejection scores on a frozen coarse-placer model. Routing stays fixed, thresholds are
+ *   selected on a development half, and results are reported on the other half.
  */
 
 /* oxlint-disable sister-software/prefer-region-over-marks -- these markers label steps inside one
@@ -21,12 +21,12 @@ import { readLocalJSONFile } from "#fs/readers"
 import { writeLocalFile } from "#fs/writers"
 
 /**
- * Number of quantiles evaluated per threshold sweep.
+ * The number of quantile steps in each threshold sweep.
  */
 const QUANTILE_SWEEP_STEPS = 200
 
 /**
- * Target percentage for in-map accuracy and held-out catch.
+ * The target percentage for both in-map accuracy and held-out catch rate.
  */
 const TARGET_PERCENT = 90
 
@@ -56,31 +56,32 @@ interface ParetoPoint {
  */
 export interface EvalOpenSetOptions {
 	/**
-	 * Model artifact directory.
-	 * Defaults to `$MAILWOMAN_DATA_ROOT/coarse-placer/model`.
+	 * The model artifact directory.
+	 * The default is `$MAILWOMAN_DATA_ROOT/coarse-placer/model`.
 	 */
 	model?: PathBuilderLike
 	/**
-	 * Dataset directory.
-	 * Defaults to `<repo>/data/coarse-placer`.
+	 * The dataset directory.
+	 * The default is `<repo>/data/coarse-placer`.
 	 */
 	data?: PathBuilderLike
 	/**
-	 * Mahalanobis fit rows per class; defaults to 2000.
+	 * The number of training rows per class used to fit the Mahalanobis score.
+	 * The default is 2,000.
 	 */
 	fitPerClass?: number
 	/**
-	 * Also write the markdown report here.
+	 * A path to write the Markdown report to.
 	 */
 	outMd?: string
 }
 
 /**
- * Result of {@linkcode evalOpenSet}.
+ * The result of {@linkcode evalOpenSet}.
  */
 export interface EvalOpenSetResult {
 	/**
-	 * Score with the best held-out minimum of in-map accuracy and held-out catch.
+	 * The score with the highest test-half minimum of in-map accuracy and held-out catch rate.
 	 */
 	winner: ScoreKey
 	honestMin: number
@@ -89,7 +90,7 @@ export interface EvalOpenSetResult {
 }
 
 /**
- * Invert a matrix with Gauss-Jordan elimination.
+ * Inverts a matrix with Gauss-Jordan elimination and partial pivoting.
  */
 function inverse(M: Float64Array[]): number[][] {
 	const n = M.length
@@ -135,7 +136,7 @@ function inverse(M: Float64Array[]): number[][] {
 }
 
 /**
- * Compare open-set scores and emit a Markdown report.
+ * Compares open-set rejection scores and returns a Markdown report.
  */
 export async function evalOpenSet(
 	options: EvalOpenSetOptions = {},
@@ -152,13 +153,14 @@ export async function evalOpenSet(
 	const C = meta.classes.length
 	const D = meta.featureDim
 	const OTHER = meta.classes.indexOf("OTHER")
-	const IN = meta.classes.map((_, i) => i).filter((i) => i !== OTHER) // in-map class indices
+	// The indices of the in-map classes.
+	const IN = meta.classes.map((_, i) => i).filter((i) => i !== OTHER)
 	const nIn = IN.length
 
 	if (W.length !== C * D) throw new Error(`weights ${W.length} ≠ ${C}×${D}`)
 
 	/**
-	 * Return uncalibrated logits for all classes.
+	 * Returns the logits of every class before temperature scaling.
 	 */
 	function logits(raw: string): Float64Array {
 		const feats = featurize(raw)
@@ -179,7 +181,7 @@ export async function evalOpenSet(
 	}
 
 	/**
-	 * Return in-map logits in class order.
+	 * Returns the in-map logits in class order.
 	 */
 	const inVec = (z: Float64Array): number[] => IN.map((c) => z[c]!)
 
@@ -187,7 +189,7 @@ export async function evalOpenSet(
 		return JSONSpliterator.fromAsync<DataRow>(resolvePath(dataDir, file))
 	}
 
-	// Fit class means and shared covariance from in-map training logits.
+	// The Mahalanobis score uses class means and a shared covariance fitted on in-map training logits.
 	report?.("fitting Mahalanobis on in-map train logits…")
 	const trainRows = load("train.jsonl")
 	const byClass = new Map<string, string[]>(COARSE_CLASSES.map((c): [string, string[]] => [c, []]))
@@ -201,10 +203,10 @@ export async function evalOpenSet(
 		}
 	}
 
-	const means = new Map<string, Float64Array>() // Country-to-mean-logit mapping.
+	// Each country maps to its mean in-map logit vector.
+	const means = new Map<string, Float64Array>()
 	const counts = new Map<string, number>()
 
-	// Compute per-class means.
 	for (const [country, raws] of byClass) {
 		if (!raws.length) continue
 		const mu = new Float64Array(nIn)
@@ -225,7 +227,7 @@ export async function evalOpenSet(
 		counts.set(country, raws.length)
 	}
 
-	// Compute shared covariance from centered logits.
+	// The shared covariance is computed from class-centered logits.
 	const Sigma = Array.from({ length: nIn }, () => new Float64Array(nIn))
 	let nTot = 0
 
@@ -258,7 +260,7 @@ export async function evalOpenSet(
 		}
 	}
 
-	// Add diagonal regularization before inversion.
+	// A small diagonal term keeps the covariance invertible.
 	for (let a = 0; a < nIn; a++) {
 		Sigma[a]![a] = Sigma[a]![a]! + 1e-3
 	}
@@ -266,7 +268,7 @@ export async function evalOpenSet(
 	const SigmaInv = inverse(Sigma)
 
 	/**
-	 * Return the negative minimum Mahalanobis distance to a class mean.
+	 * Returns the negated squared Mahalanobis distance to the nearest class mean.
 	 */
 	function mahaScore(z: Float64Array): number {
 		const v = inVec(z)
@@ -299,13 +301,11 @@ export async function evalOpenSet(
 		return -best
 	}
 
-	// Score in-map test and held-out data.
-
 	report?.("scoring in-map test + off-map heldout…")
 	const SCORES: ScoreKey[] = ["maxprob", "p_inmap", "energy", "maxlogit", "maha"]
 
 	/**
-	 * Score one address and check its in-map route against the label.
+	 * Computes every score for one address and checks its in-map route against the label.
 	 */
 	function scoreRow(raw: string, trueCountry: string | undefined): ScoredRow {
 		const z = logits(raw)
@@ -314,7 +314,7 @@ export async function evalOpenSet(
 		softmaxInto(z, probs)
 		const zin = inVec(z)
 
-		// Route by the in-map argmax for every score.
+		// Every score shares the same route, which is the top in-map logit.
 		let amIdx = 0,
 			am = -Infinity
 
@@ -339,7 +339,6 @@ export async function evalOpenSet(
 		}
 	}
 
-	// Score in-map test rows.
 	const inmapScored = await load("test.jsonl")
 		.filter((r) => r.country !== "OTHER")
 		.map((r) => scoreRow(r.raw, r.country))
@@ -349,14 +348,16 @@ export async function evalOpenSet(
 
 	const heldoutScored = heldout.map((r) => scoreRow(r.raw, undefined))
 
-	// Select thresholds on even-indexed rows; evaluate on odd-indexed rows.
+	// Even-indexed rows form the development half, and odd-indexed rows form the test half.
 	const inDev = inmapScored.filter((_, i) => i % 2 === 0)
 	const inTest = inmapScored.filter((_, i) => i % 2 === 1)
 	const heldDev = heldoutScored.filter((_, i) => i % 2 === 0)
 	const heldTest = heldoutScored.filter((_, i) => i % 2 === 1)
 
 	/**
-	 * Measure in-map accuracy and held-out catch at threshold `t`.
+	 * Measures in-map accuracy and held-out catch rate at threshold `t`.
+	 *
+	 * A row is kept when its score is at or above `t` and rejected otherwise.
 	 */
 	function pointAt(scoreKey: ScoreKey, t: number, inSplit: ScoredRow[], heldSplit: ScoredRow[]): ParetoPoint {
 		let keepCorrect = 0
@@ -376,9 +377,11 @@ export async function evalOpenSet(
 		return { t, inMapAcc: (100 * keepCorrect) / inSplit.length, heldCaught: (100 * caught) / heldSplit.length }
 	}
 
-	// Keep scores at or above the threshold; reject the rest.
+	/**
+	 * Sweeps thresholds for one score and returns its trade-off points.
+	 */
 	function paretoFor(scoreKey: ScoreKey) {
-		// Sweep quantiles across both datasets.
+		// Candidate thresholds are quantiles of the pooled in-map and held-out scores.
 		const all = [...inmapScored, ...heldoutScored].map((o) => o.s[scoreKey]).toSorted((a, b) => a - b)
 		const ts: number[] = []
 
@@ -389,12 +392,13 @@ export async function evalOpenSet(
 		const uniq = [...new Set(ts)]
 		const pts: ParetoPoint[] = uniq.map((t) => pointAt(scoreKey, t, inmapScored, heldoutScored))
 
-		// Find the balanced point and best values at each target constraint.
+		// The balanced point maximizes the smaller of the two rates.
 		let balanced: { val: number; pt: ParetoPoint | null } = { val: -1, pt: null }
-		let atHeld90: ParetoPoint | null = null // Best in-map accuracy at the held-out target.
+		// This point has the best in-map accuracy among points that meet the held-out target.
+		let atHeld90: ParetoPoint | null = null
+		// This point has the best held-out catch rate among points that meet the in-map target.
 		let atIn90: ParetoPoint | null = null
 
-		// Best held-out catch at the in-map target.
 		for (const p of pts) {
 			const m = Math.min(p.inMapAcc, p.heldCaught)
 
@@ -411,7 +415,7 @@ export async function evalOpenSet(
 			}
 		}
 
-		// Select the balanced threshold on development data and evaluate it on test data.
+		// The balanced threshold is chosen on the development half and measured on the test half.
 		let devBest: { val: number; t: number | null } = { val: -1, t: null }
 
 		for (const p of pts) {
@@ -430,8 +434,6 @@ export async function evalOpenSet(
 
 	type Pareto = ReturnType<typeof paretoFor>
 	const results = Object.fromEntries(SCORES.map((k) => [k, paretoFor(k)])) as Record<ScoreKey, Pareto>
-
-	// Assemble the report.
 
 	const f = (x: number | null | undefined): string => (x == null ? "—" : x.toFixed(1))
 
@@ -483,7 +485,7 @@ export async function evalOpenSet(
 
 	lines.push("")
 
-	// Rank scores by their held-out minimum.
+	// Scores are ranked by their test-half minimum.
 	const ranked = SCORES.map((k) => ({
 		k,
 		honestMin: Math.min(results[k].honest.inMapAcc, results[k].honest.heldCaught),

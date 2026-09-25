@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  * @file Tests for the CIK corroboration check.
  *
- *   CIK and SIC fixtures were retrieved from EDGAR's submissions API on 2026-08-03 and 2026-08-07.
+ *   The CIK and SIC fixtures come from EDGAR's submissions API.
  */
 
 import { CIKCorroborationBasis, corroborateCIK, TELECOM_SIC_CODES } from "@mailwoman/filer/sdk/cik-corroboration"
@@ -14,7 +14,7 @@ import { describe, expect, it } from "vitest"
 const cik = (value: string): CIK => toCIK(value)!
 
 /**
- * Measured fixtures: [label, CIK, SIC, expected corroboration].
+ * Each entry holds a label, CIK, SIC and the expected corroboration result.
  */
 const REGISTRANTS: ReadonlyArray<readonly [string, string, string, boolean]> = [
 	["Lumen Technologies", "0000018926", "4813", true],
@@ -23,10 +23,11 @@ const REGISTRANTS: ReadonlyArray<readonly [string, string, string, boolean]> = [
 	["Cable One", "0001632127", "4841", true],
 	["Liberty Broadband", "0001611983", "4841", true],
 	["Gogo", "0001537054", "4899", true],
-	// False matches with high name scores (0.829 and 0.886).
+	// These two are wrong companies that name matching scored highly.
 	["AlTi Global (matched 'Altice USA')", "0001838615", "6282", false],
 	["WidePoint (matched 'WideOpenWest')", "0001034760", "7373", false],
-	// Real carriers with software SIC classifications; these are known false negatives.
+	// These are real carriers filed under software SIC codes.
+	// The check rejects them by design.
 	["Bandwidth", "0001514416", "7372", false],
 	["Ooma", "0001327688", "7374", false],
 ]
@@ -81,7 +82,6 @@ describe("corroborateCIK — pins", () => {
 
 describe("corroborateCIK — abstention is not denial", () => {
 	it("reports a missing SIC as its own basis, distinct from a rejecting one", () => {
-		// Missing SIC is a source-data gap, not a judgment about the registrant.
 		for (const absent of [null, undefined, "", "   "]) {
 			expect(corroborateCIK(cik("0000018926"), absent)).toEqual({
 				corroborated: false,
@@ -104,13 +104,13 @@ describe("the allowlist itself", () => {
 	it("is enumerated, not a 48xx prefix test — 4899 is in, 4813 is in, 4899's neighbours are not", () => {
 		expect(TELECOM_SIC_CODES.has("4813")).toBe(true)
 		expect(TELECOM_SIC_CODES.has("4899")).toBe(true)
-		// A prefix rule would incorrectly include these codes.
+		// A 48xx prefix rule would accept these codes.
 		expect(TELECOM_SIC_CODES.has("4800")).toBe(false)
 		expect(TELECOM_SIC_CODES.has("4890")).toBe(false)
 	})
 
 	it("excludes the software classifications, because including them readmits WidePoint", () => {
-		// These codes include both false negatives and a false match, so use explicit pins when needed.
+		// Carriers under these codes need an explicit pin.
 		for (const sic of ["7372", "7373", "7374"]) {
 			expect(TELECOM_SIC_CODES.has(sic)).toBe(false)
 		}

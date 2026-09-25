@@ -33,6 +33,10 @@ const FR_BARE_STREET_FIXTURE_PATH = resolvePackagePath(
 
 const MAX_REPORTED_FAILURES = 12
 
+/**
+ * Returns the first existing copy of a weights file from the candidate cache,
+ * the data root, or the workspace.
+ */
 async function resolveWeightsSibling(fileName: string, weightsCache?: string): Promise<PathBuilderLike> {
 	const candidates = [
 		...(weightsCache ? [`${weightsCache}/node_modules/@mailwoman/neural-weights-en-us/${fileName}`] : []),
@@ -59,54 +63,59 @@ async function resolveWeightsSibling(fileName: string, weightsCache?: string): P
  */
 export interface FRParseRecallOptions {
 	/**
-	 * Points to a candidate ONNX model, which is used only when `tokenizer` is also set;
-	 * otherwise the installed en-US weights load.
+	 * Candidate ONNX model path.
 	 *
-	 * A candidate run also loads the postcode anchor and gazetteer lexicon found beside the weights.
+	 * It takes effect only when `tokenizer` is also set.
+	 * Otherwise the installed en-US weights load.
+	 *
+	 * A candidate run also loads the postcode anchor and gazetteer lexicon from the weights directory.
 	 */
 	model?: string
 	tokenizer?: PathBuilderLike
 
 	/**
-	 * Points to the model card that supplies the candidate's labels, defaulting
-	 * to `packages/neural-weights-en-us/model-card.json`.
+	 * Model card that supplies the candidate's labels.
+	 *
+	 * It defaults to `packages/neural-weights-en-us/model-card.json`.
 	 */
 	modelCard?: string
 
 	/**
-	 * Sets the label printed in the `[pair]` provenance line, which is omitted when the label is empty.
+	 * Label for the `[pair]` provenance line.
+	 * An empty label omits the line.
 	 */
 	label?: string
 
 	/**
-	 * Points to a frozen JSONL fixture of French bare-street rows that needs no database,
-	 * defaulting to the bundled `fr-bare-street-40.jsonl`.
+	 * JSONL fixture of French bare-street rows.
+	 * It defaults to the bundled `fr-bare-street-40.jsonl`.
 	 */
 	fixture?: string
 
 	/**
-	 * Reads rows from the local French OSM address-point database instead of the fixture.
+	 * Whether to read rows from the local French OSM address-point database instead of the fixture.
 	 */
 	fromDB?: boolean
 
 	/**
-	 * Gives a path where the intact counts and rates are written as JSON.
+	 * Path where the intact counts and rates are written as JSON.
 	 */
 	json?: string
 
 	/**
-	 * Points to a candidate weights root that is searched first for the anchor and lexicon files.
+	 * Candidate weights root that is searched first for the anchor and lexicon files.
 	 */
 	weightsCache?: string
 
 	/**
-	 * Sets the minimum bare-street intact rate, in percent, as a numeric string.
+	 * Minimum bare-street intact rate in percent, given as a numeric string.
 	 */
 	floor?: string
 }
 
 /**
- * Parse-recall rates and optional floor verdict.
+ * Parse-recall counts, rates in percent, and the floor verdict.
+ * The verdict `pass` is true when no floor is set.
  */
 export interface FRParseRecallResult {
 	bareIntact: number
@@ -132,6 +141,9 @@ interface StreetKeyNode {
 	children: readonly StreetKeyNode[]
 }
 
+/**
+ * Joins the street nodes of a parse in input order and normalizes the result as a French street key.
+ */
 function streetKeyOf(tree: { roots: readonly StreetKeyNode[] }): string {
 	const parts: Array<{ value: string; start: number }> = []
 
@@ -147,11 +159,12 @@ function streetKeyOf(tree: { roots: readonly StreetKeyNode[] }): string {
 }
 
 /**
- * Measures how often French street names survive parsing with and without a postcode,
- * and checks the bare rate against `options.floor` when given.
+ * Measures how often French street names survive parsing with and without a postcode.
  *
- * The floor verdict is returned as {@linkcode FRParseRecallResult.pass},
- * and only the failure line goes to `reportError`.
+ * When `options.floor` is set, it also checks the bare rate against that floor.
+ *
+ * The verdict is returned in {@linkcode FRParseRecallResult.pass}.
+ * Only the failure line goes to `reportError`.
  */
 export async function frParseRecall(
 	options: FRParseRecallOptions = {},

@@ -1,4 +1,5 @@
-// Operator-tool libraries for the `mailwoman filer` commands; CLI modules own argument handling and output.
+// These libraries back the `mailwoman filer` commands.
+// The CLI modules handle arguments and output.
 
 export * from "#tools/linkage/corpus"
 export * from "#tools/linkage/eval"

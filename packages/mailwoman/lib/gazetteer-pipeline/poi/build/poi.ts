@@ -2,6 +2,8 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
+ *
+ *   Builds and seals the `poi.db` layer from Overture Places or OSM rows.
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers"
@@ -34,7 +36,8 @@ import { cellToParent, latLngToCell, polygonToCells } from "h3-js"
 import { dirname, resolvePath, type PathBuilderLike } from "path-ts"
 
 /**
- * Re-exports the Overture Places ingest so the POI build command can load ingest and build from one module.
+ * Re-exports the Overture Places ingest so the POI build command can import ingest
+ * and build from one module.
  */
 export {
 	chooseCategoryColumn,
@@ -48,7 +51,7 @@ export {
 } from "#gazetteer-pipeline/poi/build/overture"
 
 /**
- * Re-exports the pinned Overture release that the POI ingest uses when no release is given.
+ * Re-exports the pinned Overture release that the POI ingest uses by default.
  */
 export { DEFAULT_RELEASE } from "#gazetteer-pipeline/poi/defaults"
 
@@ -57,8 +60,7 @@ const COVERAGE_H3_RESOLUTION = 6
 const STAGE_BATCH_SIZE = 10_000
 
 /**
- * Describes one Overture Places row in the flat shape {@link buildPOIDatabase} loads,
- * whether streamed from Parquet or injected by a caller.
+ * One POI row in the flat shape that {@link buildPOIDatabase} loads.
  */
 export interface POISourceRow {
 	name: string | null
@@ -117,7 +119,7 @@ async function* streamPOIRows(parquetPaths: readonly string[]): AsyncIterable<PO
 }
 
 /**
- * Describes a lon/lat rectangle, such as the declared bounding box of an OSM extract.
+ * A longitude and latitude rectangle, such as the declared bounding box of an OSM extract.
  */
 export interface BBox {
 	minLon: number
@@ -127,10 +129,9 @@ export interface BBox {
 }
 
 /**
- * Lists every res-6 H3 cell covering a bounding box with its observed row count,
- * including cells with no rows.
+ * Returns every H3 cell covering a bounding box with its observed row count, including cells with no rows.
  *
- * Rows that fall in cells outside the box are dropped, so the box must be the extract's full extent.
+ * Rows in cells outside the box are not counted, so the box should be the extract's full extent.
  */
 export function bboxCoverageCells(
 	bbox: BBox,
@@ -176,69 +177,72 @@ const SOURCE_MANIFEST_DEFAULTS = {
 } as const satisfies Record<string, { license: string; attribution: string; tier: LayerTier; shareAlike: boolean }>
 
 /**
- * Configures {@link buildPOIDatabase}, which reads `rows` when given and otherwise streams `parquetPaths`.
- *
- * The coverage cells default to cells observed in the data unless `coverageCellsOverride`
- * supplies them, for example from {@link bboxCoverageCells}.
+ * Options for {@link buildPOIDatabase}.
  */
 export interface BuildPOIOptions {
 	/**
-	 * The per-country Parquet files from `ingestPlaces`, read through DuckDB
-	 * and required unless `rows` is given.
+	 * The per-country Parquet files from `ingestPlaces`.
+	 * Required unless `rows` is given.
 	 */
 	parquetPaths?: readonly string[]
 
 	/**
-	 * An injected row source that replaces the Parquet read entirely.
+	 * A row source that replaces the Parquet read.
 	 */
 	rows?: AsyncIterable<POISourceRow> | Iterable<POISourceRow>
 
 	/**
-	 * The output `poi.db` path, which is deleted and rebuilt if it already exists.
+	 * The output `poi.db` path.
+	 * An existing file is deleted and rebuilt.
 	 */
 	out: PathBuilderLike
 
 	/**
-	 * The source release the rows came from, recorded as the manifest's `sourceVintage`.
+	 * The source release, recorded as the manifest's `sourceVintage`.
 	 */
 	release: string
 
 	/**
-	 * The short git SHA of the build, passed in by the caller.
+	 * The short git SHA of the build.
 	 */
 	buildSHA: string
 
 	/**
-	 * The manifest's `version`, defaulting to `release`.
+	 * The manifest's `version`.
+	 * Defaults to `release`.
 	 */
 	version?: string
 
 	/**
-	 * The ISO-8601 manifest timestamp, defaulting to the current time; pass it for reproducible builds.
+	 * The ISO-8601 manifest timestamp.
+	 *
+	 * Defaults to the current time.
+	 * Pass it for reproducible builds.
 	 */
 	createdAt?: string
 
 	/**
-	 * The manifest source, which also selects the licence and attribution, defaulting to `"overture-places"`.
+	 * The manifest source, which also selects the licence and attribution.
+	 * Defaults to `"overture-places"`.
 	 */
 	source?: "overture-places" | "osm"
 
 	/**
-	 * The manifest distribution tier, defaulting to {@link LayerTier.BuildLocal} for OSM
-	 * and {@link LayerTier.Shipped} otherwise.
+	 * The manifest distribution tier.
+	 *
+	 * Defaults to {@link LayerTier.BuildLocal} for OSM and {@link LayerTier.Shipped} otherwise.
 	 *
 	 * An OSM build cannot be {@link LayerTier.Shipped} because ODbL is share-alike.
 	 */
 	tier?: LayerTier
 
 	/**
-	 * Replaces the coverage cells derived from rows, for example with
-	 * {@link bboxCoverageCells} over the extract's bounding box.
+	 * Coverage cells that replace the cells observed in the rows, for example from {@link bboxCoverageCells}.
 	 *
-	 * Each cell's `observedRows` is kept as given, even 0, and `completeness`
-	 * and `basis` default to 1 and {@link CoverageBasis.SourcePresent}.
-	 * A cell reaches an exclusion-grade basis such as {@link CoverageBasis.Surveyed}
-	 * only by naming it here, so an unmeasured build cannot claim one.
+	 * Each cell keeps its `observedRows`, including 0.
+	 * `completeness` defaults to 1 and `basis` defaults to {@link CoverageBasis.SourcePresent}.
+	 *
+	 * A stronger basis such as {@link CoverageBasis.Surveyed} must be set here explicitly.
 	 */
 	coverageCellsOverride?: Iterable<{
 		h3Cell: number
@@ -250,14 +254,13 @@ export interface BuildPOIOptions {
 }
 
 /**
- * Reports the output path, row, skip, category and coverage-cell counts,
- * and per-country row counts of a POI build.
+ * The output path and counts from a POI build.
  */
 export interface BuildPOIResult {
 	out: string
 
 	/**
-	 * The number of rows written to the final `poi` table.
+	 * The number of rows written to the `poi` table.
 	 */
 	rows: number
 
@@ -267,7 +270,7 @@ export interface BuildPOIResult {
 	skipped: number
 
 	/**
-	 * The number of distinct dictionary-encoded categories, excluding the reserved uncategorized code 0.
+	 * The number of distinct categories, excluding the reserved uncategorized code 0.
 	 */
 	categories: number
 
@@ -285,8 +288,8 @@ export interface BuildPOIResult {
 /**
  * Builds and seals `poi.db` from POI rows, replacing any existing file at `out`.
  *
- * It stages and dictionary-encodes the rows, materializes the H3-clustered table,
- * and writes the FTS index and the layer manifest and coverage.
+ * The build stages and dictionary-encodes the rows, writes the table in H3 cell order,
+ * and adds the indexes, FTS table, layer manifest, and coverage.
  */
 export async function buildPOIDatabase(opts: BuildPOIOptions): Promise<BuildPOIResult> {
 	const progress = opts.onProgress ?? (() => {})

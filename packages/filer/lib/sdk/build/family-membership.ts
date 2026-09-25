@@ -2,27 +2,24 @@
  * @copyright Sister Software.
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file Write the `filer_family` membership accompanying each `HoldingCompany` or `ManagementCompany` edge.
- *   Family queries read `filer_family`, so callers must persist both the edge and its membership row.
+ * @file Writes the `filer_family` row for each `HoldingCompany` or `ManagementCompany` edge.
  */
 
 import type { StatementSync } from "@mailwoman/sqlite/client"
 
 import { mintFamilyID } from "#sdk/family-id"
 
-// Share family-ID canonicalization with family display-name lookup.
-
 /**
- * Inputs used to write one family row alongside its ownership or control edge.
+ * Inputs for one family row that accompanies an ownership or control edge.
  */
 export interface FamilyMembershipFact {
 	/**
-	 * Edge source node; becomes `filer_family.node_id`.
+	 * The edge's source node, stored as `filer_family.node_id`.
 	 */
 	memberNodeID: string
 
 	/**
-	 * Edge target node; becomes `filer_family.naming_node_id`.
+	 * The edge's target node, stored as `filer_family.naming_node_id`.
 	 */
 	namingNodeID: string
 
@@ -32,19 +29,19 @@ export interface FamilyMembershipFact {
 	identifierType: string
 
 	/**
-	 * Raw company name used to mint the family ID; its spelling remains on the naming node.
+	 * Raw company name used to mint the family ID.
 	 */
 	name: string
 
 	/**
-	 * Relationship copied from the accompanying edge.
+	 * Relationship copied from the edge.
 	 */
 	relationship: string
 
 	/**
 	 * Assertion copied from the edge.
 	 *
-	 * Required to prevent inferred claims defaulting to authoritative.
+	 * The field is required so an inferred claim cannot default to authoritative.
 	 */
 	assertion: string
 
@@ -58,14 +55,10 @@ export interface FamilyMembershipFact {
 }
 
 /**
- * Write the family row for an ownership or control edge.
+ * Writes the family row for an ownership or control edge.
  *
- * If the target name has no family ID, write nothing.
- * Reuse the caller's prepared statement and target node ID so the membership
- * and edge refer to the same entity.
- *
- * Persisting the naming node also lets readers recover its raw name by joining,
- * without re-canonicalizing it.
+ * Family queries read `filer_family`, so every such edge needs this row.
+ * The function writes nothing when the name yields no family ID.
  */
 export function insertFamilyMembership(insFamily: StatementSync, fact: FamilyMembershipFact): void {
 	const familyID = mintFamilyID(fact.identifierType, fact.name)

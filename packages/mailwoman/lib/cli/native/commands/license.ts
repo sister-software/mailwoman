@@ -94,7 +94,7 @@ export const spec = {
 			type: "string",
 			default: "all",
 			hint: "all|pkg,pkg",
-			description: "issue: `all`, or a comma-separated list of package names the agreement covers.",
+			description: "issue: `all`, or a comma-separated list of the packages the agreement covers.",
 		},
 		major: {
 			type: "string",

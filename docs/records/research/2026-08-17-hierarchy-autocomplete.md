@@ -12,26 +12,26 @@ memory / training knowledge rather than re-verified. Anything published after 20
 
 ## The plain answer
 
-Every **ingredient** has prior art and a name; the **composition** does not. Completion over a
-weighted automaton with per-entry payloads is "top-k completion" (Hsu & Ottaviano, WWW 2013) and
-ships in Lucene's suggest module — but every one of those systems treats the payload as an opaque
-byte string handed back to the caller [S]. Materializing a place's parent chain into the index entry
-so a hit returns its ancestry with zero joins is _standard shipped practice_ in geocoders —
-Foursquare's twofishes (2012) is nearly an exact match for our `chain [u32;8]` (a `parentIDs:
-list<i64>` on every serving feature, used at autocomplete time to render "Rego Park, Queens, NY")
-[S], and Pelias, Photon, WOF, Overture, and GeoNames all denormalize the chain at index/build time
-[S]. The encoding itself has textbook names: materialized path / Dewey labels [S]. Embedding
-non-lexical structure _in the trie nodes_ so the walk prunes on it also has an academic name — Roy &
-Chakrabarti's **"materialized trie"** (SIGMOD 2011) puts spatial summaries in trie nodes [S] — but
-that is geometry rather than an admin graph. What I could not find anywhere, under any name: a completion
-automaton treated as the _enumeration surface for the containment graph itself_ — where the same
-artifact family (FST + typed child→parent edge table + per-parent child-type distribution) answers
-"what strings continue this prefix", "what contains this completion", and "what kinds of children
-does this parent have" as one index discipline. The nearest practitioner art is CMS-grade
-query-time joins ("show the term's parents next to the suggestion", Drupal modules) [S]; the nearest
-academic art embeds geometry rather than ancestry. So: not novel as parts — twofishes got 80% of the way in
-2012 and nobody named it — but the unification, the PCN1 child-distribution direction, and using the
-walk itself for descendant enumeration have no established name. If you need a name to cite against,
+Every **ingredient** has prior art and a name, but the **composition** does not. Completion over a
+weighted automaton with per-entry payloads is called "top-k completion" (Hsu & Ottaviano, WWW 2013)
+and ships in Lucene's suggest module. Every one of those systems treats the payload as an opaque
+byte string handed back to the caller [S]. Geocoders commonly materialize a place's parent chain
+into the index entry so a hit returns its ancestry without joins. Foursquare's twofishes (2012)
+nearly matches our `chain [u32;8]`: it stores a `parentIDs: list<i64>` on every serving feature and
+uses it at autocomplete time to render "Rego Park, Queens, NY" [S]. Pelias, Photon, WOF, Overture,
+and GeoNames all denormalize the chain at index or build time [S]. The encoding itself has textbook
+names: materialized path and Dewey labels [S]. Embedding non-lexical structure _in the trie nodes_
+so the walk prunes on it also has an academic name. Roy & Chakrabarti's **"materialized trie"**
+(SIGMOD 2011) puts spatial summaries in trie nodes [S], but that structure holds geometry rather
+than an admin graph. I could not find, under any name, a completion automaton treated as the
+_enumeration surface for the containment graph itself_. In our design, one artifact family (FST +
+typed child→parent edge table + per-parent child-type distribution) answers three questions with
+one index: "what strings continue this prefix", "what contains this completion", and "what kinds
+of children does this parent have". The nearest practitioner art is CMS query-time joins ("show the
+term's parents next to the suggestion", Drupal modules) [S]. The nearest academic art embeds
+geometry rather than ancestry. The parts are not novel, and twofishes got 80% of the way in 2012
+without naming the technique. The unification, the PCN1 child-distribution direction, and using
+the walk itself for descendant enumeration have no established name. If you need a name to cite against,
 the direct construction is **"top-k completion with materialized-path payloads"**, with Roy &
 Chakrabarti's "materialized trie" as the closest academically named ancestor.
 
@@ -73,9 +73,9 @@ Chakrabarti's "materialized trie" as the closest academically named ancestor.
 
 **Covers:** the entire completion mechanic — weighted prefix walk, top-k expansion, even
 per-entry payload transport (Lucene) and hierarchy-shaped _key prefixes_ (ES geo context).
-**Does not cover:** any system that _interprets_ the payload as graph edges and walks it. Payloads
-are cargo, contexts are filters, outputs are sums. The `chain [u32;8]`-as-traversable-ancestry has
-no counterpart in this family.
+**Does not cover:** any system that _interprets_ the payload as graph edges and walks it. In this
+family, payloads are opaque data, contexts are filters, and outputs are sums. Nothing in this
+family treats a `chain [u32;8]` as traversable ancestry.
 
 ---
 
@@ -112,8 +112,9 @@ no counterpart in this family.
 
 - Now OpenSearch-based; planet DB ~95 GB as of 2026 [S — post-2025 datum]. `PhotonDoc` carries
   `addressParts: Map<AddressType, Map<String,String>>` plus a `ContextMap context` — parent names
-  copied out of Nominatim's address hierarchy into every document at import [S]. Same family as
-  Pelias: materialize at index time, flat bag, no ids-as-graph.
+  copied out of Nominatim's address hierarchy into every document at import [S]. Photon belongs to
+  the same family as Pelias. It materializes names at index time into a flat bag and does not
+  treat ids as a graph.
 
 ### Nominatim
 
@@ -315,8 +316,8 @@ discriminator.
   Our FST-curation doctrine already cites this lineage; the _bidirectional_ half of it (suffix side)
   is sitting unused.
 - **Reversed-token indexing**: Lucene `ReverseStringFilter` / Solr `ReversedWildcardFilterFactory` —
-  index `country` as `yrtnuoc` (with marker) so leading-wildcard becomes trailing [S]. The dumb,
-  proven trick for "match from the right." A reversed _word-token_ FST (tokens reversed rather than
+  index `country` as `yrtnuoc` (with marker) so leading-wildcard becomes trailing [S]. This is the
+  simple, established technique for "match from the right." A reversed _word-token_ FST (tokens reversed rather than
   characters) is the same trick one level up; no named instance found at word level over a
   gazetteer.
 - **AnalyzingInfixSuggester** (Lucene, McCandless 2013): abandons the FST entirely — indexes each
@@ -369,15 +370,15 @@ predecessor stand in_" is not.
   which for multi-token names is equivalent to a suffix-trie restricted to token boundaries. Build
   it with the existing fst-builder by feeding reversed token sequences; `walk(["york"])` on it
   enumerates predecessors ("new", "west", …) with the same BFS implementation.
-- If "enter at any token" is wanted (notlast-token-known), the named upgrade is the **factor
+- If "enter at any token" is wanted (not last-token-known), the named upgrade is the **factor
   automaton of the name set** (Mohri et al.) [S] — the ASR-biasing lineage the FST curation header
   already cites; but note AnalyzingInfixSuggester [S] as the precedent that an inverted index on
   token positions can beat an automaton here on implementation cost.
 - PIX1 already _is_ the typed-adjacency answer at the (child-name, parent-name) level; the research
   found no published counterpart, so there is no external design to converge toward — document it
-  as its own thing. The before-direction FST and PIX1 answer different questions (string
-  adjacency vs containment edge) — keep them separate artifacts; the Weimar-class confusion comes
-  from letting one impersonate the other.
+  as its own design. The before-direction FST and PIX1 answer different questions (string
+  adjacency vs containment edge). Keep them as separate artifacts. The Weimar-class confusion comes
+  from using one in place of the other.
 
 ### Gap 3: candidate.db ancestors encoding — fixed-slot chain vs interval labeling
 
@@ -390,10 +391,11 @@ predecessor stand in_" is not.
   scanning 8 slots or knowing Y's level_ (nested-set containment test [S]), and descendant
   enumeration as a contiguous range scan (`WHERE pre BETWEEN y.pre AND y.post`) — which is the
   candidate-table analog of the FST's BFS-descendants and what a "constrain to region" candidate
-  probe wants. The textbook objection — relabeling on update [S] — is void here: our databases are
-  sealed read-only artifacts rebuilt whole (house doctrine), which is precisely the regime interval
-  labeling was always safe in. Nobody in shipped geo appears to have done this; the toponym
-  literature's containment heuristics [S] say the check warrants its place in ranking.
+  probe wants. The textbook objection is the cost of relabeling on update [S]. That cost does not
+  apply here, because our databases are sealed read-only artifacts rebuilt whole (house doctrine).
+  Interval labeling has always been safe in that regime. No shipped geocoder appears to have done
+  this. The toponym literature's containment heuristics [S] indicate that the check is useful in
+  ranking.
 - **The DAG caveat decides the fallback.** WOF places can carry multiple hierarchies [M] and
   Overture keeps `hierarchies` plural [S]. A single interval pair encodes one tree. Policy:
   intervals over the _primary_ hierarchy (what the chain already commits to); if cross-hierarchy
@@ -424,7 +426,7 @@ Search-verified [S]:
 13. Roy & Chakrabarti SIGMOD 2011: index named "materialized trie", spatial info in trie nodes for pruning — ACM DL/MSR page + TASK (VLDB 2023) related-work characterization.
 14. IR-tree family = R-tree nodes + textual summaries; TASK VLDB 2023 current — EDBT/VLDB papers.
 15. Hsu & Ottaviano WWW 2013: RMQ trie / completion trie / score-decomposed trie — the "top-k completion" name — paper.
-16. wbsearchentities returns id/label/description/matched alias/score, no ancestry — MediaWiki API docs. DBpedia Lookup returns classes + QueryClass filter — dbpedia/lookup.
+16. wbsearchentities returns id/label/description/matched alias/score without ancestry — MediaWiki API docs. DBpedia Lookup returns classes + QueryClass filter — dbpedia/lookup.
 17. GRAIL = randomized multi-interval reachability labels for large DAGs, VLDB 2010 — paper. ORDPATH/Dewey = "containment encoding", byte-comparable ancestry — ORDPATH paper. Nested set / closure table trade-offs — standard DB sources.
 18. Leidner spatial minimality; GeoTxt containment heuristics; Spatial-Hierarchy Sets — geoparsing literature.
 19. GeoNames alternateNames: isPreferredName/isShortName/isColloquial/isHistoric + abbr/link/post/iata pseudo-langs; admin1–4 code columns — geonames readme.txt.

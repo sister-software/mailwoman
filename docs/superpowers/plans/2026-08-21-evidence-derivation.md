@@ -4,7 +4,7 @@
 
 **Goal:** Give the repository one vocabulary for typed evidence and epistemic status, wire the coverage-basis exclusion check that already exists and has never been called, and project a derivation into the geocode result.
 
-**Architecture:** A new zero-dependency leaf workspace `@mailwoman/evidence` owns the evidence union, the epistemic-status axis, `CoverageBasis` + `supportsExclusion` (moved out of `@mailwoman/core/layers`, which re-exports them), and the derivation projection. Four consumers adopt it in order of what is buildable today: `plausibilityCheck` re-expressed with no behaviour change, a GB spatial-existence probe over `uprn.db`, the resolver's demote-only negative mode, and a US `surveyed` coverage basis from Census H1. Exclusions demote; they never remove.
+**Architecture:** A new zero-dependency leaf workspace `@mailwoman/evidence` owns the evidence union, the epistemic-status axis, `CoverageBasis` + `supportsExclusion` (moved out of `@mailwoman/core/layers`, which re-exports them), and the derivation projection. Four consumers adopt it, ordered by what can be built today: `plausibilityCheck` re-expressed without a behaviour change, a GB spatial-existence probe over `uprn.db`, the resolver's demote-only negative mode, and a US `surveyed` coverage basis from Census H1. Exclusions demote candidates and never remove them.
 
 **Tech Stack:** TypeScript running directly under Node (type stripping, `.ts` specifiers, `erasableSyntaxOnly`), vitest, Kysely over `node:sqlite`, H3.
 
@@ -12,25 +12,25 @@
 
 ## Global Constraints
 
-- **`erasableSyntaxOnly: true`** — no `enum` (use `const X = {…} as const` + `type X = (typeof X)[keyof typeof X]`), no constructor parameter properties, no runtime namespaces.
+- **`erasableSyntaxOnly: true`.** Do not use `enum` (use `const X = {…} as const` + `type X = (typeof X)[keyof typeof X]`), constructor parameter properties, or runtime namespaces.
 - **Relative imports use explicit `.ts` extensions.** Each workspace tsconfig sets `rewriteRelativeImportExtensions: true`.
-- **`@mailwoman/evidence` has zero runtime dependencies.** Not `@mailwoman/core` rather than `@mailwoman/spatial`. Adding one defeats the reason the workspace exists.
-- **Acronym casing:** whole camelCase components — `parseJSON`, `readID`, `POILookup`. `ID` never `Id`. Enforced by `sister-software/no-title-case-acronym` in `yarn lint:oxlint`.
-- **No raw `process.env` / `process.argv`** — CI-enforced. Use `core/env/schema.ts` + `env-paths`.
+- **`@mailwoman/evidence` has zero runtime dependencies.** It depends on neither `@mailwoman/core` nor `@mailwoman/spatial`. Adding a dependency defeats the reason the workspace exists.
+- **Acronym casing:** acronyms are whole camelCase components: `parseJSON`, `readID`, `POILookup`. Write `ID`, never `Id`. `sister-software/no-title-case-acronym` in `yarn lint:oxlint` enforces this.
+- **Do not read `process.env` / `process.argv` directly.** CI enforces this. Use `core/env/schema.ts` + `env-paths`.
 - **Data-root paths go through `@mailwoman/core/utils`** (`dataRootPath`, `dataRootPath`). Never hard-code `$MAILWOMAN_DATA_ROOT`.
 - **Never hand-assemble a path into another package's install directory.** Use `import.meta.resolve`, a real `exports` subpath, or `dataRootPath`.
 - **Exclusions demote only.** No task in this plan may remove a candidate from a result set.
-- **Run `yarn compile` before any test run** that crosses a workspace boundary — a stale `out/` reads as a broken test.
+- **Run `yarn compile` before any test run** that crosses a workspace boundary. A stale `out/` makes a working test look broken.
 
 ---
 
 ## Task 1: Falsifier — decompose the 187 coverage misses
 
-**This task checks every other task.** If fold failures dominate, the negative-evidence arms do not get built and this plan stops at Task 9.
+**This task decides whether the other tasks proceed.** If fold failures dominate, the negative-evidence arms do not get built and this plan stops at Task 9.
 
 **Files:**
 
-- Create: `scratchpad/2026-08-21-coverage-miss-decomposition.md` (the verdict — a record rather than code)
+- Create: `scratchpad/2026-08-21-coverage-miss-decomposition.md` (the verdict, which is a record rather than code)
 - Read only: `packages/dev-mcp/lib/constraint-census.ts`
 
 **Interfaces:**
@@ -44,7 +44,7 @@ Run the `mwdev_restart` MCP tool. Expected: a result naming both boot fingerprin
 
 - [ ] **Step 2: Run the constraint census over the full board**
 
-Run the `mwdev_constraints` MCP tool with `inputs: {"kind": "board"}`. It takes >120s and moves to the background; wait for the task notification. The result is written to a file — do not try to read it inline.
+Run the `mwdev_constraints` MCP tool with `inputs: {"kind": "board"}`. It takes >120s and moves to the background, so wait for the task notification. The tool writes the result to a file. Do not try to read it inline.
 
 Expected shape (the 2026-08-21 baseline, for comparison):
 
@@ -65,19 +65,19 @@ jq -r '[.misses[] | select((.elsewhere|length)==0 and .band=="locality")][] | "\
 
 - [ ] **Step 4: Classify every row into exactly one of four classes**
 
-Classify by hand — this is a judgement the measurement cannot make. The classes, with the observed exemplars:
+Classify by hand, because the measurement cannot make this judgement. The classes, with the observed exemplars:
 
 | Class           | Test                                                                 | Exemplars                                                                             |
 | --------------- | -------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
 | `mistag_street` | the value is a fragment of a street phrase in the input              | `Avenida` ← `Avenida Corrientes`; `de Catalunya` ← `Rambla de Catalunya`; `Turner St` |
-| `mistag_poi`    | the value names a venue or landmark                                  | `Statue of Liberty`; `Great Mosque of Niamey`                                         |
+| `mistag_poi`    | the value is the name of a venue or landmark                         | `Statue of Liberty`; `Great Mosque of Niamey`                                         |
 | `junk_span`     | the value is not a name at all                                       | `New` ← `New Territories, Hong Kong`; `near NAFTI`                                    |
 | `fold_failure`  | **the place is real and we plausibly hold it under another surface** | see the three sub-mechanisms below                                                    |
 
-`fold_failure` is not one class. `normalizeLocalityForKey` — the fold `constraint-census` keys with — was
-measured correct (NFKD, strip combining marks, lowercase, strip `.,'’`, collapse whitespace), so the
-denominator is not contaminated by a diacritic bug. What it does do is keep hyphens and drop periods, and
-that produces three distinct failures. Record which one each row is:
+`fold_failure` covers three sub-mechanisms. `constraint-census` builds its keys with
+`normalizeLocalityForKey`, and that fold was measured correct (NFKD, strip combining marks, lowercase,
+strip `.,'’`, collapse whitespace), so no diacritic bug contaminates the denominator. The fold does keep
+hyphens and drop periods, and that produces three distinct failures. Record which one applies to each row:
 
 | Sub-mechanism       | Board row        | Folds to         | Register likely holds |
 | ------------------- | ---------------- | ---------------- | --------------------- |
@@ -85,14 +85,14 @@ that produces three distinct failures. Record which one each row is:
 | `fold_admin_suffix` | `São Paulo - SP` | `sao paulo - sp` | `sao paulo`           |
 | `fold_designator`   | `Co. Westmeath`  | `co westmeath`   | `westmeath`           |
 
-For every row you classify `fold_failure`, confirm it by probing the gazetteer for the same place under a repaired surface. Use the `mwdev_lookup` MCP tool. A row you cannot confirm is `unknown` rather than `fold_failure`. A magnitude never carries its own absence.
+For every row you classify `fold_failure`, confirm it by probing the gazetteer for the same place under a repaired surface. Use the `mwdev_lookup` MCP tool. A row you cannot confirm is `unknown` rather than `fold_failure`, and it counts toward neither class.
 
 - [ ] **Step 5: Write the verdict**
 
 Write `scratchpad/2026-08-21-coverage-miss-decomposition.md` containing: the five class counts, the denominator (96 locality-band rows), every `fold_failure` row with its confirming probe, and one of two verdicts stated explicitly:
 
-- **PROCEED** — mis-tags outnumber fold failures. Negative evidence has a real target. Continue to Task 2.
-- **STOP AND REPAIR THE FOLD** — fold failures dominate. Tasks 5–7 and 9–10 do not get built; the plan continues to Task 2, 3, 4, 8 (the vocabulary and derivation are useful regardless) and a new fold-repair plan is written.
+- **PROCEED:** mis-tags outnumber fold failures, so negative evidence has a real target. Continue to Task 2.
+- **STOP AND REPAIR THE FOLD:** fold failures dominate. Tasks 5–7 and 9–10 do not get built. The plan continues with Tasks 2, 3, 4 and 8, because the vocabulary and derivation are useful either way, and a new fold-repair plan is written.
 
 - [ ] **Step 6: Commit**
 
@@ -222,7 +222,7 @@ Create `packages/evidence/package.json`:
 }
 ```
 
-Note the absence of a `dependencies` block. That is the point of the workspace; do not add one.
+The file has no `dependencies` block. The workspace exists to have none, so do not add one.
 
 - [ ] **Step 4: Create both tsconfigs**
 
@@ -415,7 +415,7 @@ export * from "./status.ts"
 
 Add `"packages/evidence"` to the root `package.json` `workspaces` array (append after `"packages/ancestrie"`).
 
-Add to the root `tsconfig.json` `references` array — **both** entries:
+Add **both** of these entries to the root `tsconfig.json` `references` array:
 
 ```json
 { "path": "./packages/evidence" },
@@ -431,7 +431,7 @@ yarn install
 node -e "const w=require('./package.json').workspaces,r=require('./.release-it.json').plugins['@release-it-plugins/workspaces'].workspaces;console.log(w.filter(x=>!r.includes(x)))"
 ```
 
-Expected output: the six known absences only — `docs`, `packages/tile-worker`, `packages/geocode-oracle`, `packages/neural-weights-base-latn`, `packages/dev-mcp`, `packages/osm`. If `packages/evidence` appears, step 8 was incomplete.
+Expected output: only the six known absences, `docs`, `packages/tile-worker`, `packages/geocode-oracle`, `packages/neural-weights-base-latn`, `packages/dev-mcp`, `packages/osm`. If `packages/evidence` appears, step 8 was incomplete.
 
 ```bash
 yarn compile
@@ -465,7 +465,7 @@ rule into the type system for callers who build a link outside a database."
 
 ## Task 3: Move `CoverageBasis` into evidence, add the exclusion check
 
-`@mailwoman/core/layers` currently owns `CoverageBasis` and `supportsExclusion`. Evidence cannot depend on core, and duplicating the union across both would be exactly the failure AGENTS.md records: "When two copies must agree, share the FUNCTION — sharing the constants proves nothing." So evidence takes ownership and core re-exports.
+`@mailwoman/core/layers` currently owns `CoverageBasis` and `supportsExclusion`. Evidence cannot depend on core, and duplicating the union across both would repeat the failure AGENTS.md records: "When two copies must agree, share the FUNCTION — sharing the constants proves nothing." Evidence therefore takes ownership, and core re-exports.
 
 **Files:**
 
@@ -491,8 +491,8 @@ rule into the type system for callers who build a link outside a database."
 **Also in this task:** move `res9ShortCellToRes6Parent` from `packages/bdc/lib/sdk/filing-landscape.ts` to
 `@mailwoman/spatial/h3/cell`, generalized over its two resolutions. It currently closes over
 `BDC_H3_RESOLUTION` / `BDC_COVERAGE_H3_RESOLUTION`, and Task 5 needs the identical derivation inside
-`resolver-wof-sqlite` — importing it from `@mailwoman/bdc` would be the wrong dependency direction. Same
-share-the-function rule that moves `CoverageBasis`. Steps 10-12.
+`resolver-wof-sqlite`. Importing it from `@mailwoman/bdc` would reverse the dependency direction. The
+same share-the-function rule that moves `CoverageBasis` applies. See Steps 10-12.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -766,7 +766,7 @@ Saint-Denis  saint denis          saint denis       saint-denis
 Zürich       zu rich              zurich            zurich
 ```
 
-7 of 8 probe inputs disagree across the three. So `probeFold: "foldName@v1"` identifies nothing. Append to
+7 of 8 probe inputs disagree across the three, so `probeFold: "foldName@v1"` does not identify a fold. Append to
 `packages/evidence/coverage.ts`:
 
 ```ts
@@ -874,7 +874,7 @@ export function shortCellToParentInt(h3CellShortInt: number, from: number, to: n
 ```
 
 In `packages/bdc/lib/sdk/filing-landscape.ts`, replace the body of `res9ShortCellToRes6Parent` with a call and
-keep the export — its callers (`nearest-infrastructure.ts`, `plausibility.ts`, and its own parity test)
+keep the export. Its callers (`nearest-infrastructure.ts`, `plausibility.ts`, and its own parity test)
 should not have to change in this task:
 
 ```ts
@@ -891,7 +891,7 @@ yarn vitest run packages/bdc packages/spatial
 ```
 
 Expected: pass. `filing-landscape`'s existing parity test asserts this derivation agrees cell-for-cell with
-`build-bdc.ts`'s own coverage-cell derivation — that test is the regression net for this move and must not
+`build-bdc.ts`'s own coverage-cell derivation. That test is the regression check for this move and must not
 be edited.
 
 - [ ] **Step 13: Commit**
@@ -931,7 +931,7 @@ yarn compile
 yarn vitest run packages/bdc/lib/sdk/plausibility.test.ts
 ```
 
-Expected: pass. Record the test count — it must be identical after the change. **The whole acceptance criterion of this task is that this file's assertions never change.**
+Expected: pass. Record the test count, which must be identical after the change. **This task's only acceptance criterion is that this file's assertions do not change.**
 
 - [ ] **Step 2: Add the dependency**
 
@@ -1001,15 +1001,15 @@ reason, and coverage_confidence already carries that."
 **Blocked on Task 1 returning PROCEED.**
 
 The probe already exists. `packages/resolver-wof-sqlite/lib/uprn-lookup.ts` ships `UPRNLookup` with
-`coordinateOf(uprn)` and `nearestUPRN(latitude, longitude, radiusM)` — a bounded ring-walk over the res-9
-`h3_cell` index whose rings "stop as soon as geometry proves no unprobed cell could beat the best hit",
-capped at `UPRN_MAX_NEAREST_RADIUS_M = 10_000`, with an integration test. Its own docstring already states
-this task's requirement:
+`coordinateOf(uprn)` and `nearestUPRN(latitude, longitude, radiusM)`. The latter is a bounded ring-walk over
+the res-9 `h3_cell` index whose rings "stop as soon as geometry proves no unprobed cell could beat the best
+hit". It is capped at `UPRN_MAX_NEAREST_RADIUS_M = 10_000` and has an integration test. Its docstring
+already states this task's requirement:
 
 > callers building negative evidence must consult `readLayerCoverage` rather than this reader alone.
 
-So this task does not build a probe. It does the consult, and it puts the answer in the type so a caller
-cannot skip it.
+This task therefore does not build a probe. It adds the coverage consult and puts the answer in the type,
+so a caller cannot skip it.
 
 **Files:**
 
@@ -1027,8 +1027,8 @@ cannot skip it.
 
 - [ ] **Step 1: Write the failing test**
 
-Create `packages/resolver-wof-sqlite/uprn-existence.test.ts`. Build a scratch fixture — the real `uprn.db`
-is build-local and a test must never require it:
+Create `packages/resolver-wof-sqlite/uprn-existence.test.ts`. Build a scratch fixture, because the real
+`uprn.db` is build-local and a test must never require it:
 
 ```ts
 import { mkdtempSync, rmSync } from "node:fs"
@@ -1085,8 +1085,8 @@ function fixture(name: string, basis: CoverageBasis): string {
 }
 ```
 
-`coverageCellFor` is `shortCellToParentInt(uprnH3Cell(lat, lon), UPRN_H3_RESOLUTION, UPRN_COVERAGE_H3_RESOLUTION)` —
-import it rather than inlining the arithmetic, so the fixture and the implementation cannot disagree.
+`coverageCellFor` is `shortCellToParentInt(uprnH3Cell(lat, lon), UPRN_H3_RESOLUTION, UPRN_COVERAGE_H3_RESOLUTION)`.
+Import it rather than inlining the arithmetic, so the fixture and the implementation cannot disagree.
 
 ```ts
 describe("uprnAbsenceAt", () => {
@@ -1139,8 +1139,8 @@ In `packages/resolver-wof-sqlite/tsconfig.json` `references`, add `{ "path": "..
 
 - [ ] **Step 4: Implement the consult**
 
-Create `packages/resolver-wof-sqlite/uprn-existence.ts`. It is thin by construction — `nearestUPRN` does the
-search, `readLayerCoverage` does the coverage read, `requireExclusionBasis` does the blocking:
+Create `packages/resolver-wof-sqlite/uprn-existence.ts`. It stays thin: `nearestUPRN` does the search,
+`readLayerCoverage` does the coverage read, and `requireExclusionBasis` decides whether an exclusion is allowed:
 
 ```ts
 /**
@@ -1160,16 +1160,16 @@ search, `readLayerCoverage` does the coverage read, `requireExclusionBasis` does
 export const UPRN_EXISTENCE_FOLD = foldIdentity((s) => s)
 ```
 
-`UPRN_EXISTENCE_FOLD` uses the identity fold deliberately: this probe keys on a COORDINATE rather than a name, so
-there is no string folding to disagree about. Passing the same identity as both `probeFold` and `layerFold`
-records that the fold axis is not in play here, rather than silently omitting the check. Say so in the
-comment — a future reader will otherwise read it as a stub.
+`UPRN_EXISTENCE_FOLD` uses the identity fold on purpose. This probe keys on a coordinate rather than a name, so
+no string folding can disagree. Passing the same identity as both `probeFold` and `layerFold` records that the
+fold axis does not apply here, rather than silently omitting the check. Say so in the comment, or a future
+reader will take it for a stub.
 
 The function:
 
 1. `const cell = uprnH3Cell(latitude, longitude)` then `shortCellToParentInt(cell, UPRN_H3_RESOLUTION, UPRN_COVERAGE_H3_RESOLUTION)`.
 2. `const coverage = await readLayerCoverage(schemadb, coverageCell)` — `undefined` means absent.
-3. `if (lookup.nearestUPRN(latitude, longitude, radiusM)) return null` — a hit is presence; nothing to say.
+3. `if (lookup.nearestUPRN(latitude, longitude, radiusM)) return null`. A hit means a point exists, so there is no exclusion to report.
 4. `const manifest = await readLayerManifest(schemadb)` for `source` and `sourceVintage`, read once by the caller and passed in if this is hot.
 5. `return requireExclusionBasis({ layer: manifest.name, source: manifest.source, vintage: manifest.sourceVintage, h3Cell: coverageCell, cell: coverage, probeFold: UPRN_EXISTENCE_FOLD, layerFold: UPRN_EXISTENCE_FOLD, country, countries: new Set(["GB"]) })`.
 
@@ -1182,8 +1182,8 @@ Expected: PASS, 5 tests.
 
 `uprn.db` is build-local, so this is a manual check rather than a test. Confirm the two cases the fixture
 cannot: a real GB postcode centroid inside coverage returns `null` (points exist there), and a Northern
-Ireland coordinate returns `null` for the other reason (NI is outside OS Open UPRN coverage, and the
-`uprn-lookup.ts` docstring names it). If NI returns an exclusion, the coverage read is wrong.
+Ireland coordinate returns `null` for the other reason. NI is outside OS Open UPRN coverage, as the
+`uprn-lookup.ts` docstring states. If NI returns an exclusion, the coverage read is wrong.
 
 - [ ] **Step 7: Commit**
 
@@ -1321,7 +1321,7 @@ Add to `StreetEvidencePick`:
 	demoted: number[]
 ```
 
-In the body: build the demoted index set first, then run the existing G1/G2 loop over the un-excluded candidates in their original order; if that finds no pick, run it again over the excluded ones; if still none, return rank-1. **Do not blend the exclusion into `score`**. The anti-Pelias rule is one bit rather than a weight.
+In the body, build the demoted index set first. Then run the existing G1/G2 loop over the un-excluded candidates in their original order. If that finds no pick, run it again over the excluded ones. If that still finds none, return rank-1. **Do not blend the exclusion into `score`**. The anti-Pelias rule treats an exclusion as a single bit that reorders candidates.
 
 - [ ] **Step 5: Run the test to verify it passes**
 
@@ -1330,7 +1330,7 @@ Expected: PASS, including every pre-existing test unchanged.
 
 - [ ] **Step 6: Run the gauntlet for regression**
 
-Run the `mwdev_promotion_eval` MCP tool. Expected: 369 rows, no regression against the recorded baseline.
+Run the `mwdev_promotion_eval` MCP tool. Expected: 369 rows and no regression against the recorded baseline.
 
 - [ ] **Step 7: Commit**
 
@@ -1387,7 +1387,7 @@ describe("epistemic_status", () => {
 })
 ```
 
-Use the fixture helpers already present in that file; if none matches, build the result through the same path the neighboring tests use rather than inventing a new harness.
+Use the fixture helpers already present in that file. If none matches, build the result through the same path the neighboring tests use rather than inventing a new harness.
 
 - [ ] **Step 2: Run the test to verify it fails**
 
@@ -1415,7 +1415,7 @@ Derive it where `uncertaintyM` is currently derived (around `geocode-core.ts:141
 - tier is `interpolated` or `plus_code` → `Derived`
 - otherwise → `Observed`
 
-`Inferred` is not producible yet; no task in this plan emits it. Leave it defined and unused rather than repurposing another value.
+No task in this plan emits `Inferred`. Leave it defined and unused rather than repurposing another value.
 
 - [ ] **Step 4: Run the test to verify it passes**
 
@@ -1511,7 +1511,7 @@ Expected: FAIL — `projectDerivation` is not exported.
 
 - [ ] **Step 3: Implement the projection**
 
-Create `packages/evidence/derivation.ts` with the three types above and a `projectDerivation` that returns a frozen structure. It is a pure shaping function — no I/O, no defaults invented for missing inputs. Export it from `index.ts`.
+Create `packages/evidence/derivation.ts` with the three types above and a `projectDerivation` that returns a frozen structure. It is a pure shaping function. It performs no I/O and invents no defaults for missing inputs. Export it from `index.ts`.
 
 - [ ] **Step 4: Run the test to verify it passes**
 
@@ -1532,7 +1532,7 @@ In `packages/mailwoman/lib/geocode-core.ts`, add to `GeocodeResult`:
 	derivation?: DerivationProjection
 ```
 
-Populate it only when the caller supplied a trace sink. **Never populate it by turning the sink on yourself** — that would make the opt-in cost unconditional.
+Populate it only when the caller supplied a trace sink. **Never turn the sink on yourself to populate it**, because that would make the opt-in cost unconditional.
 
 - [ ] **Step 6: Pin no-sink-no-effect**
 
@@ -1670,7 +1670,7 @@ export function parseH1(fields: string[]): { housing_units: number; occupied: nu
 }
 ```
 
-Extract `seg2Path` beside `seg1Path` (`${fileAbbr}00002${vintage}.pl`), then add a pass that reads segment 2 into a `Map<string, ReturnType<typeof parseH1>>` keyed by GEOID before the existing segment-1 loop, and spread the H1 fields into each `batch.push({...})`. A LOGRECNO present in segment 1 but absent from segment 2 gets zeros — and the loader must `yield` a count of those, because a silent zero here is indistinguishable from a in fact empty block.
+Extract `seg2Path` beside `seg1Path` (`${fileAbbr}00002${vintage}.pl`), then add a pass that reads segment 2 into a `Map<string, ReturnType<typeof parseH1>>` keyed by GEOID before the existing segment-1 loop, and spread the H1 fields into each `batch.push({...})`. A LOGRECNO present in segment 1 but absent from segment 2 gets zeros. The loader must `yield` a count of those rows, because a silent zero here is indistinguishable from an empty block.
 
 - [ ] **Step 5: Run the test to verify it passes**
 
@@ -1734,8 +1734,8 @@ Read `packages/ban/lib/sdk/fetch.ts` and `packages/ban/lib/sdk/extract.ts` for f
 
 Write `scratchpad/2026-08-21-ban-designation-probe.md` stating one of:
 
-- **DESIGNATED, per commune** — the signal exists and is carried or recoverable. Name the field, the communes it covers, and the ones it does not. A follow-up task writes `layer_coverage` with `basis: designated` for the covered communes only, and no row for the rest (absent is unknown; never a zero-completeness row).
-- **SOURCE_PRESENT only** — no per-commune signal exists. The FR lexical arm does not ship. Record this as a closed negative result so it is not re-proposed.
+- **DESIGNATED, per commune:** the signal exists and is carried or recoverable. Name the field, the communes it covers, and the ones it does not. A follow-up task writes `layer_coverage` with `basis: designated` for the covered communes only and writes no row for the rest. An absent row means unknown, so never write a zero-completeness row.
+- **SOURCE_PRESENT only:** no per-commune signal exists, and the FR lexical arm does not ship. Record this as a closed negative result so nobody proposes it again.
 
 Either verdict must state what was measured rather than what was assumed.
 
@@ -1758,17 +1758,19 @@ whether that is true of the data or only of the sentence."
 
 **Type consistency.** `requireExclusionBasis` takes `RequireExclusionInput` in Tasks 3, 5 and 8 with the same field names. `Exclusion.scope` is `CoverageScope` throughout. `pickByStreetEvidence` keeps its existing name; `StreetEvidencePick.demoted` is `number[]` in both the test and the interface. `EpistemicStatus` values are lower-case strings in every assertion.
 
-**Codebase survey, 2026-08-21 — what this plan does not build because it already exists.** `UPRNLookup`
+**Codebase survey, 2026-08-21: what this plan does not build because it already exists.** `UPRNLookup`
 (`resolver-wof-sqlite/uprn-lookup.ts`) already does the bounded nearest-point search Task 5 was going to
-write, and already names the coverage consult as the caller's obligation. `res9ShortCellToRes6Parent`
-already exists in `bdc/sdk/filing-landscape.ts` and moves rather than being re-derived.
+write, and its docstring already makes the coverage consult the caller's obligation.
+`res9ShortCellToRes6Parent` already exists in `bdc/sdk/filing-landscape.ts`, so the plan moves it rather
+than re-deriving it.
 `normalizeLocalityForKey`'s fold was verified correct, so Task 1's denominator stands.
 `eval-harness/fragment-board.ts` is the board falsifier 2 will run on. `match/fellegi-sunter.ts` supplies
 `scorePair` / `decide` for the relation side when a later increment needs them.
 
 **Out of scope, found during the same survey.** `packages/resolver/lib/fold-name.ts`'s `foldName` claims to be
-diacritic-insensitive and is not — it maps each combining mark to a space, so 6 of 9 French commune pairs
-fail the comparison it exists to perform, and its one live call site (`street-tier.ts:516`) DELETES the
-locality node on a false mismatch. Separate issue, separate fix; do not fold it into a task here.
+diacritic-insensitive but is not. It maps each combining mark to a space, so 6 of 9 French commune pairs
+fail the comparison it exists to perform. Its one live call site (`street-tier.ts:516`) deletes the
+locality node on a false mismatch. This is a separate issue with a separate fix, so do not add it to a task
+here.
 
-**Spec amended.** §3 originally left `CoverageBasis` duplicated across evidence and core. AGENTS.md's parity rule ("share the FUNCTION — sharing the constants proves nothing") forbids that, so Task 3 moves ownership to evidence and re-exports from core. The spec was updated in the same commit as this plan; the two agree.
+**Spec amended.** §3 originally left `CoverageBasis` duplicated across evidence and core. AGENTS.md's parity rule ("share the FUNCTION — sharing the constants proves nothing") forbids that, so Task 3 moves ownership to evidence and re-exports from core. The spec was updated in the same commit as this plan, and the two agree.

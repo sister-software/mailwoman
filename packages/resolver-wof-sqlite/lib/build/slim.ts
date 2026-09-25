@@ -31,7 +31,7 @@
  *
  *   Multi-extract inputs (e.g. admin + postcode) are processed in sequence. selected rows accumulate
  *   into the single output DB. The postcode extract contributes only postcodes. admin contributes
- *   everything else. Empty / missing input paths are skipped (callers pass `""` when a extract, such
+ *   everything else. Empty / missing input paths are skipped (callers pass `""` when an extract, such
  *   as a custom postcode DB, isn't built yet).
  */
 

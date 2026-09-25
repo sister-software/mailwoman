@@ -15,7 +15,7 @@ remaining 269 fixtures for stray (a)/(c) violations — which surfaced one more 
 Check mechanics checked against `mailwoman/eval-harness/parity-corpus.ts`: only `house_number`,
 `postcode`, and the `street` family are pre-registered floors; `region`/`locality`/`venue`/
 `country` only feed an informational "full-agree" stat, never a check. Each fixture contributes at
-most **one** slot per label regardless of how several values are in that label's gold array (e.g. an
+most **one** slot per label regardless of how many values are in that label's gold array (e.g. an
 intersection's two-street array is one `street` comparison rather than two). The arithmetic below uses
 that same accounting.
 

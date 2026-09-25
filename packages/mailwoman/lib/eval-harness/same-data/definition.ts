@@ -3,9 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Define and audit the frozen same-data resolver benchmark.
- *   Hashed strata rules, sampling, and decision criteria make reruns comparable.
- *   The benchmark targets admin selection, where the resolver returns candidate sets.
+ *   Defines and audits the frozen same-data resolver benchmark.
  */
 
 import { compareByCodePoint } from "@mailwoman/core/strings/compare"
@@ -20,7 +18,8 @@ import {
 import { WITHHELD_CANDIDATE_FIELDS } from "#eval-harness/same-data/fixture"
 
 /**
- * Registered strata in fill order; eligibility rules keep their pools disjoint.
+ * The registered strata in fill order.
+ * Their eligibility rules keep the pools disjoint.
  */
 export const SAME_DATA_STRATA = [
 	"unambiguous",
@@ -30,20 +29,26 @@ export const SAME_DATA_STRATA = [
 	"gold_absent",
 ] as const
 
+/**
+ * One registered stratum ID.
+ */
 export type SameDataStratum = (typeof SAME_DATA_STRATA)[number]
 
 /**
- * Registered benchmark arms.
+ * The registered benchmark arms.
  */
 export const SAME_DATA_ARMS = ["mailwoman", "baseline", "ablation"] as const
 
+/**
+ * One registered arm ID.
+ */
 export type SameDataArm = (typeof SAME_DATA_ARMS)[number]
 
 /**
  * One stratum's registered rule.
  *
- * `correctIsAbstention` is the only per-stratum scoring difference, and it exists because a
- * stratum whose gold is withheld from the fixture has no correct selection by construction.
+ * `correctIsAbstention` is true for the stratum whose gold is withheld from the fixture,
+ * because that stratum has no correct selection.
  */
 export interface SameDataStratumDefinition {
 	id: SameDataStratum
@@ -54,21 +59,31 @@ export interface SameDataStratumDefinition {
 	correctIsAbstention: boolean
 }
 
+/**
+ * One arm as the definition file registers it.
+ */
 export interface SameDataArmDefinition {
 	id: SameDataArm
 	description: string
 	/**
-	 * Pinned `ResolveOpts`; absent for arms using library defaults.
+	 * The pinned `ResolveOpts`.
+	 * Arms that use library defaults omit it.
 	 */
 	resolveOpts?: Record<string, boolean>
 }
 
+/**
+ * One registered metric.
+ */
 export interface SameDataMetricDefinition {
 	id: string
 	denominator: string
 	definition: string
 }
 
+/**
+ * The committed same-data benchmark definition.
+ */
 export interface SameDataBenchmarkDefinition {
 	benchmarkID: string
 	version: string
@@ -92,11 +107,12 @@ export interface SameDataBenchmarkDefinition {
 		seed: number
 		order: string
 		/**
-		 * Target rows per stratum; underfilled strata report their achieved count.
+		 * The target rows per stratum.
+		 * An underfilled stratum reports its achieved count.
 		 */
 		rowsPerStratum: number
 		/**
-		 * Minimum rows for inclusion in the pooled decision.
+		 * The minimum rows a stratum needs to count in the pooled decision.
 		 */
 		minimumRowsPerStratum: number
 		underfillRule: string
@@ -130,14 +146,14 @@ export const SAME_DATA_DEFINITION_PATH = preregistrationPath("same-data", "bench
 export const SAME_DATA_FREEZE_PATH = preregistrationPath("same-data", "benchmark-freeze.json")
 
 /**
- * Return fields withheld from fixtures, as registered in the definition.
+ * Returns the fields the definition withholds from fixtures.
  */
 export function withheldFixtureFields(definition: SameDataBenchmarkDefinition): ReadonlySet<string> {
 	return new Set(definition.withheldFixtureFields.fields)
 }
 
 /**
- * Validate the benchmark definition and report execution blockers.
+ * Audits the benchmark definition and returns every problem that would block a run.
  */
 export function auditSameDataDefinition(definition: SameDataBenchmarkDefinition): string[] {
 	const problems: string[] = [...duplicateRowIDProblems(definition.strata), ...duplicateRowIDProblems(definition.arms)]
@@ -188,7 +204,7 @@ export function auditSameDataDefinition(definition: SameDataBenchmarkDefinition)
 }
 
 /**
- * Load the frozen definition and refuse identity, hash, or audit mismatches.
+ * Loads the frozen definition after checking its identity, hash, and audit.
  */
 export async function loadSameDataDefinition(): Promise<SameDataBenchmarkDefinition> {
 	return loadFrozenDefinition<SameDataBenchmarkDefinition>({

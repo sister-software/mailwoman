@@ -3,15 +3,14 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Seeded random generators and sampling helpers. The Python-shaped API matches helper semantics,
- *   not CPython's MT19937 stream. Existing generators reproduce streams used by corpus data, frozen
- *   evaluations, model splits, and calibration artifacts; do not substitute one for another.
- *   Use `mulberry32` for new code unless an existing stream must be reproduced.
+ *   Seeded random generators and sampling helpers.
+ *
+ *   Each LCG reproduces the stream behind existing corpus data, evaluations, model splits or calibration artifacts.
+ *   Swapping one generator for another changes those outputs. New code should use `mulberry32`.
  */
 
 /**
- * Create a Mulberry32 generator returning values in `[0, 1)`.
- * `SeededRandom` uses the same stream.
+ * Creates a Mulberry32 generator that returns values in `[0, 1)`.
  */
 export function mulberry32(seed: number): () => number {
 	let a = seed >>> 0
@@ -26,7 +25,8 @@ export function mulberry32(seed: number): () => number {
 }
 
 /**
- * Shuffle in place using the supplied bounded-index sampler.
+ * Shuffles an array in place with Fisher-Yates.
+ * `pick(bound)` must return an integer in `[0, bound)`.
  */
 export function shuffleBy<T>(array: T[], pick: (bound: number) => number): void {
 	for (let i = array.length - 1; i > 0; i--) {
@@ -39,15 +39,16 @@ export function shuffleBy<T>(array: T[], pick: (bound: number) => number): void 
 }
 
 /**
- * Shuffle in place using a random-number generator that returns values in `[0, 1)`.
+ * Shuffles an array in place with a generator that returns values in `[0, 1)`.
  */
 export function shuffleWith<T>(array: T[], random: () => number): void {
 	shuffleBy(array, (bound) => Math.floor(random() * bound))
 }
 
 /**
- * Choose one element using a generator in `[0, 1)`.
- * Throws for an empty array.
+ * Picks one element with a generator that returns values in `[0, 1)`.
+ *
+ * @throws When the array is empty.
  */
 export function sample<T>(array: ReadonlyArray<T>, random: () => number): T {
 	if (!array.length) throw new Error("sample: the array is empty, so there is no element to draw")
@@ -56,16 +57,15 @@ export function sample<T>(array: ReadonlyArray<T>, random: () => number): T {
 }
 
 /**
- * Multiplier and increment shared by the glibc-style generators below.
+ * The glibc LCG multiplier and increment.
  */
 const GLIBC_LCG_MULTIPLIER = 1_103_515_245
 const GLIBC_LCG_INCREMENT = 12_345
 
 /**
- * Reproduce the float-multiply LCG stream used for conformal calibration.
+ * Reproduces the float-multiply glibc LCG stream used for conformal calibration.
  *
- * Floating-point rounding makes it different from {@link makeGlibcLcgInt32};
- * keep it for existing artifacts only.
+ * Floating-point rounding makes this stream differ from {@link makeGlibcLcgInt32}.
  */
 export function makeGlibcLcgFloat64(seed: number): () => number {
 	let state = seed
@@ -74,7 +74,7 @@ export function makeGlibcLcgFloat64(seed: number): () => number {
 }
 
 /**
- * Reproduce the 32-bit LCG stream used for coarse-placer train/test splits.
+ * Reproduces the 32-bit integer glibc LCG stream used for coarse-placer train and test splits.
  */
 export function makeGlibcLcgInt32(seed: number): () => number {
 	let state = seed
@@ -83,10 +83,8 @@ export function makeGlibcLcgInt32(seed: number): () => number {
 }
 
 /**
- * Numerical Recipes LCG used by existing PO-box corpus rows and registry splits.
- *
- * Use `mulberry32` for new code.
- * Seed zero is valid and produces a distinct stream.
+ * Reproduces the Numerical Recipes LCG stream used for PO-box corpus rows and registry splits.
+ * It returns values in `[0, 1)`, and seed zero is valid.
  */
 export function makeLcg(seed: number): () => number {
 	let s = seed >>> 0
@@ -99,39 +97,42 @@ export function makeLcg(seed: number): () => number {
 }
 
 /**
- * Python-shaped random helper backed by {@link mulberry32}.
+ * A seeded generator with Python `random`-style methods, backed by {@link mulberry32}.
+ *
+ * The method semantics follow Python.
+ * The streams differ from CPython's.
  */
 export class SeededRandom {
 	readonly #next: () => number
 
 	constructor(seed: number) {
-		// Replace zero with a non-zero 32-bit seed for Mulberry32.
+		// Seed zero maps to one.
 		this.#next = mulberry32(seed >>> 0 || 1)
 	}
 
 	/**
-	 * Return a float in `[0, 1)`.
+	 * Returns a float in `[0, 1)`.
 	 */
 	random(): number {
 		return this.#next()
 	}
 
 	/**
-	 * Return an integer in the inclusive range `[lo, hi]`.
+	 * Returns an integer in the inclusive range `[lo, hi]`.
 	 */
 	randint(lo: number, hi: number): number {
 		return lo + Math.floor(this.random() * (hi - lo + 1))
 	}
 
 	/**
-	 * Choose one element uniformly.
+	 * Picks one element uniformly.
 	 */
 	choice<T>(seq: readonly T[]): T {
 		return seq[Math.floor(this.random() * seq.length)]!
 	}
 
 	/**
-	 * Choose `k` elements with replacement.
+	 * Picks `k` elements with replacement.
 	 */
 	choices<T>(seq: readonly T[], k: number): T[] {
 		const out: T[] = []
@@ -144,16 +145,15 @@ export class SeededRandom {
 	}
 
 	/**
-	 * Shuffle the array in place.
-	 * The output is not bit-identical to CPython's stream.
+	 * Shuffles the array in place.
 	 */
 	shuffle<T>(arr: T[]): void {
 		shuffleWith(arr, () => this.random())
 	}
 
 	/**
-	 * Return `k` distinct elements without replacement.
-	 * The input is unchanged and `k` must not exceed its length.
+	 * Returns `k` distinct elements without replacement and leaves the input unchanged.
+	 * `k` must be at most the input length.
 	 */
 	sample<T>(seq: readonly T[], k: number): T[] {
 		const pool = seq.slice()

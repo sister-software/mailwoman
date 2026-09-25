@@ -3,8 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Convert classification proposals to a flat address tree. Each proposal becomes a root node;
- *   containment is not reconstructed.
+ *   Converts between classification proposals and address trees.
  */
 
 import type { ComponentTag } from "@mailwoman/codex/component"
@@ -13,6 +12,11 @@ import type { AddressNode, AddressTree } from "#decoder/types"
 import type { Span } from "#tokenization/index"
 import type { ClassificationProposal, ClassificationProposalSource } from "#types/index"
 
+/**
+ * Builds a flat address tree with one root per proposal, sorted by start offset.
+ *
+ * The function does not rebuild containment, so every node has no children.
+ */
 export function proposalsToTree(raw: string, proposals: readonly ClassificationProposal[]): AddressTree {
 	const roots: AddressNode[] = proposals.map((p) => ({
 		tag: p.component as ComponentTag,
@@ -31,14 +35,15 @@ export function proposalsToTree(raw: string, proposals: readonly ClassificationP
 }
 
 /**
- * Convert each tree node to a proposal in depth-first order.
+ * Converts each tree node to a proposal in depth-first order.
  *
- * Spans use the structural fields consumed downstream, avoiding tokenization-module initialization.
+ * Each span is a plain object with `start`, `end` and `body`, so the tokenization module is not loaded.
  *
- * @param tree Parsed address tree.
- * @param source Provenance assigned to each proposal.
- * @param opts.sourceID Optional stable source ID.
- * @param opts.emits Optional allowlist of component tags.
+ * @param tree The parsed address tree.
+ * @param source The source recorded on each proposal.
+ * @param opts.sourceID A source ID that overrides each node's own ID.
+ * @param opts.emits The component tags to convert.
+ * All tags are converted when it is absent.
  */
 export function treeToProposals(
 	tree: AddressTree,

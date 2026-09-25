@@ -3,14 +3,11 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Frozen definition and scoring for the absence-observation probe. Targets expect an observation only inside
- *   exclusion-grade coverage; controls expect silence. Every row must match its registered outcome and category set.
- *   Anchors come from gazetteer places in pilot-layer coverage cells. This module is pure and audits definitions
- *   without loading a model or database.
+ *   Frozen definition and scoring for the absence-observation probe. Target rows expect the observation, and each
+ *   control group expects silence, so the probe needs rows in every group to detect a route that fires everywhere.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
-// Share canonical JSON encoding with the freeze-record implementation.
 import { compareByCodePoint } from "@mailwoman/core/strings/compare"
 
 import {
@@ -49,7 +46,8 @@ export interface AbsenceProbeRow {
 	 */
 	requiresSemanticRoute: boolean
 	/**
-	 * Registered category set in code-point order; the runner checks the actual searched set against it.
+	 * Registered category set in code-point order.
+	 * The runner compares the searched set against it.
 	 */
 	searchedCategories?: string[]
 	/**
@@ -57,13 +55,13 @@ export interface AbsenceProbeRow {
 	 */
 	anchorDerivation: string
 	/**
-	 * Regression guarded by this row.
+	 * Regression that this row guards against.
 	 */
 	guards: string
 }
 
 /**
- * Frozen probe definition.
+ * Frozen probe definition as stored in the preregistration JSON.
  */
 export interface AbsenceProbeDefinition {
 	probeID: string
@@ -79,7 +77,8 @@ export interface AbsenceProbeDefinition {
 	rows: AbsenceProbeRow[]
 	rowsNote: string
 	/**
-	 * Required number of rows matching their registered outcomes.
+	 * Number of rows that must match their registered outcomes.
+	 * The audit requires every row.
 	 */
 	requiredRowHolds: number
 	decisionRule: string[]
@@ -108,14 +107,15 @@ export const ABSENCE_PROBE_DEFINITION_PATH = preregistrationPath("absence-observ
 export const ABSENCE_PROBE_FREEZE_PATH = preregistrationPath("absence-observation", "probe-freeze.json")
 
 /**
- * Hash a definition.
+ * Returns the content hash that the freeze record pins.
  */
 export function absenceProbeDefinitionHash(definition: AbsenceProbeDefinition): string {
 	return definitionContentHash(definition)
 }
 
 /**
- * Audit a definition without running the probe; return one message per problem.
+ * Audits a definition without running the probe.
+ * It returns one message per problem.
  */
 export function auditAbsenceProbeDefinition(definition: AbsenceProbeDefinition): string[] {
 	const problems: string[] = []
@@ -184,7 +184,7 @@ export function auditAbsenceProbeDefinition(definition: AbsenceProbeDefinition):
 }
 
 /**
- * Load the frozen definition after checking its identity, hash, and audit results.
+ * Loads the frozen definition after checking its identity, its hash, and the audit.
  */
 export async function loadAbsenceProbeDefinition(
 	definitionPath: string = ABSENCE_PROBE_DEFINITION_PATH,
@@ -213,25 +213,31 @@ export interface AbsenceRowOutcome {
 	 */
 	holds: boolean
 	/**
-	 * Actual category set searched, when a POI intent formed.
+	 * Category set that the search used.
+	 * It is present only when a POI intent formed.
 	 */
 	searchedCategories?: string[]
 	/**
-	 * Difference between registered and actual category sets.
+	 * Description of how the searched set differs from the registered set.
 	 */
 	searchedSetBreach?: string
 	/**
-	 * Produced observation; omitted for a silent row.
+	 * Observation text.
+	 * A silent row omits it.
 	 */
 	observationLine?: string
 	/**
-	 * POI result, distinguishing no route from abstention or intent.
+	 * POI route result.
+	 * The value `none` means the POI route did not run.
 	 */
 	poiOutcome: "none" | "abstain" | "intent"
 	abstainReason?: string
 	resultsReturned?: number
 }
 
+/**
+ * Row tallies for a probe run.
+ */
 export interface AbsenceCounts {
 	rows: number
 	holds: number
@@ -242,7 +248,9 @@ export interface AbsenceCounts {
 }
 
 /**
- * Count outcomes against the complete registered row set.
+ * Counts outcomes.
+ *
+ * Target and control totals come from the definition, so a missing outcome lowers the pass rate.
  */
 export function computeAbsenceCounts(
 	definition: AbsenceProbeDefinition,
@@ -265,12 +273,16 @@ export function computeAbsenceCounts(
 }
 
 /**
- * Probe decisions; partial success is a breach.
+ * Probe decisions.
+ * Any failing row makes the decision `BREACHED`.
  */
 export const ABSENCE_DECISIONS = ["HOLDS", "BREACHED"] as const
 
 export type AbsenceDecisionOutcome = (typeof ABSENCE_DECISIONS)[number]
 
+/**
+ * Decision, counts, and failing rows for a probe run.
+ */
 export interface AbsenceVerdict {
 	decision: AbsenceDecisionOutcome
 	counts: AbsenceCounts
@@ -282,7 +294,7 @@ export interface AbsenceVerdict {
 }
 
 /**
- * Decide whether all outcomes satisfy the frozen definition.
+ * Decides whether every outcome satisfies the frozen definition.
  */
 export function decideAbsenceProbe(
 	definition: AbsenceProbeDefinition,

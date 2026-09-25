@@ -2,10 +2,7 @@
  * @copyright Sister Software.
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file Form 499 TSV columns, row types, classification mapping, and streaming parser.
- *   The parser validates all 17 columns and reports malformed rows with their file and line number.
- *   FRNs use the branded 10-digit format; holding and management companies remain separate fields.
- *   DC-agent data is retained as attributes only and must not imply a relationship between filers.
+ * @file Defines the Form 499 row type and classifications and parses the Form 499 TSV.
  */
 
 import type { PathBuilderLike } from "path-ts"
@@ -15,7 +12,8 @@ import { toFRN, type FRN } from "#frn"
 import type { Form499Lifecycle } from "#sdk/form499/notes"
 
 /**
- * The 17 Form 499 TSV columns in file order; the source has no header row.
+ * The 17 Form 499 TSV columns in file order.
+ * The file has no header row.
  */
 export const FORM_499_COLUMNS = [
 	"form499ID",
@@ -37,47 +35,50 @@ export const FORM_499_COLUMNS = [
 	"dcAgentAddress",
 ] as const satisfies readonly string[]
 
+/**
+ * Name of one Form 499 TSV column.
+ */
 export type Form499Column = (typeof FORM_499_COLUMNS)[number]
 
 /**
- * Parsed Form 499 filer row.
+ * One parsed Form 499 filer row.
  */
 export interface Form499Row {
-	/**
-	 * Form 499 filer ID as provided by the TSV.
-	 */
 	form499ID: string
 	/**
-	 * Valid 10-digit FRN, or `null` when the field is missing or invalid.
+	 * Ten-digit FRN, or `null` when the field is missing or invalid.
 	 */
 	frn: FRN | null
 	/**
-	 * Last-filed date as provided by the TSV; parsing occurs downstream.
+	 * Last-filed date exactly as the TSV gives it.
+	 * The builder validates it.
 	 */
 	lastFiledAt: string
 	/**
-	 * Whether the source field is the literal `"TRUE"` after trimming.
+	 * True when the trimmed field equals `"TRUE"`.
 	 */
 	usfContributor: boolean
 	legalNameOfCarrier: string
 	doingBusinessAs: string
 	/**
-	 * Free-text classification input for {@linkcode classifyFiler}.
+	 * Free-text communication type read by {@linkcode classifyFiler}.
 	 */
 	principalCommType: string
 	/**
-	 * Holding company, representing ownership; distinct from the management company.
+	 * Owning company.
 	 */
 	holdingCompany: string
 	/**
-	 * Management company, representing operational control.
+	 * Company with operational control.
 	 */
 	managementCompany: string
 	hqAddress: string
 	customerInquiriesTelephone: string
 	customerInquiriesAddress: string
 	/**
-	 * Registered agent display name; store as an attribute, not relationship evidence.
+	 * Registered agent name.
+	 *
+	 * A shared agent does not link two filers, so the builder stores it only as an attribute.
 	 */
 	dcAgentDisplayName: string
 	dcAgentOrganizationName: string
@@ -85,21 +86,23 @@ export interface Form499Row {
 	dcAgentEmailAddress: string
 	dcAgentAddress: string
 	/**
-	 * Lifecycle parsed from workbook notes; absent from the 17-column TSV.
+	 * Lifecycle parsed from workbook notes.
 	 *
-	 * `undefined` means the source cannot report lifecycle, unlike an empty workbook note set.
+	 * The TSV has no notes, so TSV rows leave this `undefined`.
+	 * A workbook row without notes has an empty lifecycle.
 	 */
 	lifecycle?: Form499Lifecycle
 	/**
-	 * Sorted USPS codes for jurisdictions marked in the workbook; absent from the TSV.
+	 * Sorted USPS codes for the jurisdictions marked in the workbook.
 	 *
-	 * An empty array means no jurisdiction was marked; `undefined` means unavailable from the source.
+	 * An empty array means the workbook marked none.
+	 * TSV rows leave this `undefined`.
 	 */
 	operatingStates?: string[]
 }
 
 /**
- * Classification values derived from `principalCommType` and `usfContributor`.
+ * Classifications derived from `principalCommType` and `usfContributor`.
  */
 export const FilerClassification = {
 	IncumbentLEC: "incumbent_lec",
@@ -109,10 +112,13 @@ export const FilerClassification = {
 	USFContributor: "usf_contributor",
 } as const
 
+/**
+ * Union of the {@link FilerClassification} values.
+ */
 export type FilerClassification = (typeof FilerClassification)[keyof typeof FilerClassification]
 
 /**
- * Map the row's contributor flag and communication-type text to classifications.
+ * Returns the classifications for a row's contributor flag and communication type.
  */
 export function classifyFiler(row: Form499Row): FilerClassification[] {
 	const classifications: FilerClassification[] = []
@@ -139,7 +145,8 @@ export function classifyFiler(row: Form499Row): FilerClassification[] {
 }
 
 /**
- * Map one TSV row to the 17 named fields; throw with path and line number on a column-count mismatch.
+ * Maps one TSV row to the named columns.
+ * A row with the wrong column count throws.
  */
 function toForm499Raw(fields: readonly string[], tsvPath: string, lineNumber: number): Record<Form499Column, string> {
 	if (fields.length !== FORM_499_COLUMNS.length) {
@@ -158,9 +165,6 @@ function toForm499Raw(fields: readonly string[], tsvPath: string, lineNumber: nu
 	return raw
 }
 
-/**
- * Convert raw fields to a row, parsing the FRN and contributor flag; retain other fields as strings.
- */
 function toForm499Row(raw: Record<Form499Column, string>): Form499Row {
 	return {
 		form499ID: raw.form499ID,
@@ -184,7 +188,7 @@ function toForm499Row(raw: Record<Form499Column, string>): Form499Row {
 }
 
 /**
- * Stream the TSV row by row, rejecting malformed column counts and skipping a blank trailing line.
+ * Streams rows from a Form 499 TSV and skips blank lines.
  */
 export async function* parseForm499(tsvPath: PathBuilderLike): AsyncIterable<Form499Row> {
 	let lineNumber = 0

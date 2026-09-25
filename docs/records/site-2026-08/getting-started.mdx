@@ -10,17 +10,12 @@ verified-with: mailwoman v6.1.0
 
 # Getting started
 
-This walks through installing Mailwoman, parsing an address from Node.js, and parsing the same
-address from the CLI. About five minutes.
+This guide covers installing Mailwoman, parsing an address from Node.js, and parsing the same address from the CLI. It takes about five minutes.
 
 ## Prerequisites
 
-- **Node.js ≥24.18.0.** Mailwoman's source runs directly under `node` (type stripping, no build
-  step for consumers) — earlier versions can't strip types the way the package expects.
-- **~33 MB download for the English weights.** `@mailwoman/neural-weights-en-us` ships a 37.6 MB
-  int8 ONNX model plus the tokenizer and a couple of small lookup files; npm compresses that to a
-  ~33 MB download (~41 MB unpacked). French weights (`@mailwoman/neural-weights-fr-fr`) are a
-  separate, similarly-sized package.
+- **Node.js ≥24.18.0.** Mailwoman's source runs directly under `node` using type stripping, so consumers need no build step. Earlier Node versions cannot strip types the way the package expects.
+- **A ~33 MB download for the English weights.** `@mailwoman/neural-weights-en-us` ships a 37.6 MB int8 ONNX model, the tokenizer, and a few small lookup files. npm compresses them to a ~33 MB download (~41 MB unpacked). The French weights (`@mailwoman/neural-weights-fr-fr`) are a separate package of similar size.
 
 ## Install
 
@@ -33,9 +28,7 @@ This installs the CLI, the neural runtime, and the English weights. Add
 
 ## Your first parse (Node.js)
 
-The recommended entry point is `createRuntimePipeline` from the `mailwoman` package — it wires up
-the full stage pipeline (normalize → locale check → kind classify → phrase group → token classify)
-around whatever classifier and resolver you give it:
+The recommended entry point is `createRuntimePipeline` from the `mailwoman` package. It builds the full stage pipeline (normalize → locale check → kind classify → phrase group → token classify) around the classifier and resolver you pass in:
 
 ```ts
 import { createRuntimePipeline } from "mailwoman"
@@ -65,27 +58,19 @@ region: "NY" (confidence: 0.93)
     postcode: "10118" (confidence: 0.92)
 ```
 
-`result.tree.roots` isn't a flat list with one entry per component. It's nested by containment — a
-`region` contains its `locality`, which contains its `street` and `postcode`. Therefore, walk
-it with recursion rather than a single loop.
+`result.tree.roots` is a tree nested by containment. Each component sits inside the component that contains it. A `region` contains its `locality`, which contains its `street` and `postcode`. Walk it with recursion rather than a single loop.
 
-The confidence numbers are calibrated probabilities rather than vibes: pass the bundled per-locale
-calibrator and "0.90" means right-about-90%-of-the-time. See
-[Confidence calibration](./concepts/confidence-calibration.mdx) for how to load it.
+The confidence numbers are calibrated probabilities. With the bundled per-locale calibrator, "0.90" means the label is correct about 90% of the time. See [Confidence calibration](./concepts/confidence-calibration.mdx) for how to load it.
 
-`result` also carries `result.kind` (the query-shape classification, e.g. `structured_address`),
-`result.path` (`"full"` or `"fast-path"`), and `result.timing` (per-stage wall-clock in
-milliseconds) — see [API reference](./api.mdx) for the full `PipelineResult` shape.
+`result` also carries `result.kind` (the query-shape classification, e.g. `structured_address`), `result.path` (`"full"` or `"fast-path"`), and `result.timing` (per-stage wall-clock time in milliseconds). See [API reference](./api.mdx) for the full `PipelineResult` shape.
 
 :::info[Direct classifier access]
-If you don't need the staged pipeline — normalize, locale check, phrase grouping, resolution —
-`NeuralAddressClassifier.parse()` on its own runs the neural stage alone and returns the same
-`AddressTree` shape. See [API reference](./api.mdx#neuraladdressclassifier) for the signature.
+If you don't need the staged pipeline stages (normalize, locale check, phrase grouping, resolution), call `NeuralAddressClassifier.parse()` directly. It runs only the neural stage and returns the same `AddressTree` shape. See [API reference](./api.mdx#neuraladdressclassifier) for the signature.
 :::
 
 ## CLI
 
-The same parse from the command line, once weights are installed:
+After the weights are installed, run the same parse from the command line:
 
 ```bash
 mailwoman parse "350 5th Ave, New York, NY 10118"
@@ -104,34 +89,17 @@ Output:
 }
 ```
 
-This is the flattened projection (`--format json`, the default) — one key per component tag,
-easier to skim than the nested tree. `--format tuple` emits `[tag, value]` pairs; `--format xml`
-emits the nested tree as XML. Add `--resolve --resolve-db <path-to-wof.sqlite>` to look up
-components against a Who's On First gazetteer distribution — see
-[API reference](./api.mdx#createwofresolverbackend) for what that adds and where to get a
-distribution.
+This is the flattened projection (`--format json`, the default). It has one key per component tag and is easier to skim than the nested tree. `--format tuple` emits `[tag, value]` pairs, and `--format xml` emits the nested tree as XML. Add `--resolve --resolve-db <path-to-wof.sqlite>` to look up components in a Who's On First gazetteer distribution. See [API reference](./api.mdx#createwofresolverbackend) for what resolution adds and where to get a distribution.
 
 ## Caveats
 
-- **The resolver you'd reach with `--resolve` here is administrative/postcode-level rather than
-  rooftop.** It returns place centroids (locality, region, postcode) rather than delivery-point
-  coordinates. Rooftop and interpolated street-level resolution exist, but through the separate,
-  richer `mailwoman geocode` command — see [Status](./status.mdx) for what's covered.
-- **Model quality varies by component and locale.** Some tags are strong, some are still
-  developing. [Status](./status.mdx) is the current per-tag picture; don't rely on a specific
-  number quoted here going stale under you.
-- **Non-Latin scripts still degrade.** The tokenizer falls back to byte-level encoding on
-  scripts it has no dedicated subwords for (Cyrillic, CJK, Arabic) — confidence drops and span
-  boundaries get less reliable. Several Latin-diacritic scripts (French, Czech, Polish, Slovak,
-  Slovenian, the Nordic languages) have dedicated tokenizer coverage; see
-  [Releases & capabilities](./releases.mdx) for which release added which, and
-  [which languages Mailwoman handles well](./concepts/language-support.mdx) for the full picture.
+- **The resolver behind `--resolve` works at the administrative and postcode level.** It returns place centroids (locality, region, postcode) rather than delivery-point coordinates. Rooftop and interpolated street-level resolution are available through the separate `mailwoman geocode` command. See [Status](./status.mdx) for what is covered.
+- **Model quality varies by component and locale.** Some tags are strong, and others are still developing. [Status](./status.mdx) has the current per-tag numbers. Check it instead of relying on numbers quoted on other pages, which can go out of date.
+- **Non-Latin scripts still perform worse.** The tokenizer falls back to byte-level encoding for scripts without dedicated subwords (Cyrillic, CJK, Arabic). Confidence drops and span boundaries become less reliable. Several languages written in Latin script with diacritics (French, Czech, Polish, Slovak, Slovenian, the Nordic languages) have dedicated tokenizer coverage. See [Releases & capabilities](./releases.mdx) for which release added each one, and [which languages Mailwoman handles well](./concepts/language-support.mdx) for the full picture.
 
 ## Where to go next
 
-- [Status](./status.mdx) — what ships today, what's behind a flag, what's still experimental
-- [API reference](./api.mdx) — full type signatures, configuration, and output shapes
-- [The knowledge ladder](./understanding/our-approach/the-knowledge-ladder.mdx) — the staged
-  pipeline's design principle, stage by stage
-- [Why a neural parser?](./understanding/our-approach/why-a-neural-parser.mdx) — the motivation
-  for a learned parser over hand-written rules
+- [Status](./status.mdx): what ships today, what is behind a flag, and what is still experimental
+- [API reference](./api.mdx): full type signatures, configuration, and output shapes
+- [The knowledge ladder](./understanding/our-approach/the-knowledge-ladder.mdx): the staged pipeline's design principle, stage by stage
+- [Why a neural parser?](./understanding/our-approach/why-a-neural-parser.mdx): the reasons for a learned parser over hand-written rules

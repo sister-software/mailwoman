@@ -2,9 +2,7 @@
  * @copyright Sister Software.
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file Stream the BDC provider list by header name, requiring `frn`, `provider_id`, and `holding_company`.
- *   Preserve every row in file order, including repeated provider IDs. Throw on malformed headers, column counts,
- *   provider IDs, or FRNs; the FRN is a required zero-padded 10-digit string.
+ * @file Parses the BDC provider-list CSV.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -14,7 +12,9 @@ import { CSVSpliterator } from "spliterator"
 import { toFRN, type FRN } from "#frn"
 
 /**
- * Required columns, located by header name so other columns may be reordered or added.
+ * Required columns.
+ *
+ * The parser finds them by header name, so their order does not matter.
  */
 const REQUIRED_PROVIDER_LIST_COLUMNS = ["frn", "provider_id", "holding_company"] as const satisfies readonly string[]
 
@@ -22,24 +22,19 @@ const REQUIRED_PROVIDER_LIST_COLUMNS = ["frn", "provider_id", "holding_company"]
  * One parsed provider-list row.
  */
 export interface ProviderListRow {
-	/**
-	 * Numeric FCC provider identifier.
-	 */
 	providerID: number
 	/**
-	 * Required zero-padded 10-digit FRN.
+	 * Zero-padded 10-digit FRN.
 	 */
 	frn: FRN
 	/**
-	 * Holding-company name from this row, or `null` when empty.
-	 * It may vary across rows for one provider ID.
+	 * Holding-company name, or `null` when empty.
+	 *
+	 * Rows for the same provider ID can carry different names.
 	 */
 	holdingCompany: string | null
 }
 
-/**
- * Require all mandatory columns and identify any missing column in the error.
- */
 function assertRequiredProviderListColumns(header: readonly string[], csvPath: string): void {
 	for (const column of REQUIRED_PROVIDER_LIST_COLUMNS) {
 		if (!header.includes(column)) {
@@ -51,7 +46,8 @@ function assertRequiredProviderListColumns(header: readonly string[], csvPath: s
 }
 
 /**
- * Convert a validated row to its typed form; include file and line details for invalid identifiers.
+ * Converts one CSV row to a typed row.
+ * An invalid provider ID or FRN throws.
  */
 function toProviderListRow(
 	header: readonly string[],
@@ -94,13 +90,14 @@ function toProviderListRow(
 }
 
 /**
- * Stream the CSV with quote-aware parsing.
+ * Streams rows from a BDC provider-list CSV.
  *
- * Use the first non-blank row as the header, skip blank rows, and reject mismatched column counts.
- * Yield every data row in file order without deduplicating provider IDs.
+ * The first non-blank row is the header.
+ * The parser skips blank rows and throws on a row whose column count differs from the header.
+ *
+ * It yields every row in file order, including repeated provider IDs.
  */
 export async function* parseProviderList(source: PathBuilderLike): AsyncIterable<ProviderListRow> {
-	// Include the source path in parse errors.
 	const csvPath = source.toString()
 	let lineNumber = 0
 	let header: string[] | null = null

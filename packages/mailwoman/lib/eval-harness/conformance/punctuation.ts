@@ -3,10 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Define and audit narrow punctuation invariance transformations.
- *   Rows may remove separating commas or periods, append a terminal period, or swap apostrophe forms.
- *   Punctuation-blind keys reject unrelated edits; applicability checks reject unsafe transformations.
- *   Hyphens and punctuation inside names are out of scope. Variants are derived from their names.
+ *   Punctuation invariance suite, which asserts that separator commas, periods and apostrophe forms do not change a
+ *   parse. Hyphens and punctuation inside tokens are out of scope.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -22,27 +20,20 @@ import {
 } from "#eval-harness/conformance/fixture"
 
 /**
- * The law name every row in this suite carries.
+ * Law identifier that every suite row carries.
  */
 export const PUNCTUATION_LAW = "punctuation-invariance"
 
 /**
- * The only punctuation transformations allowed in this suite.
+ * Named punctuation transformations.
  *
- * - `comma-removed` — every separating comma deleted (`Portland, or` → `Portland or`).
- *   The headline register: a user who types an address as a phrase rather than as fields.
- *   The comma goes and the spacing stays, so the tokens keep their text and their order
- *   and only the field separator is gone.
- * - `period-removed` — every separating point deleted (`Neusser Str. 12` → `Neusser Str 12`).
- *   The abbreviation register, where one source writes `Str.` / `Jr.` / `Co.` and the next writes it bare.
- * - `terminal-period` — one full stop appended (`Portland, or` → `Portland, or.`).
- *   The sentence register, and the executable statement that Stage 1's trailing
- *   trim still takes the sentence punctuation a user appends.
- * - `apostrophe-typographic` — every `'` replaced by `’`: what a word processor
- *   does to a straight apostrophe.
- * - `apostrophe-ascii` — every `’` replaced by `'`: what a plain keyboard and a CSV export produce instead.
+ * - `comma-removed` deletes every separating comma and keeps the spacing (`Portland, or` → `Portland or`).
+ * - `period-removed` deletes every separating period (`Neusser Str. 12` → `Neusser Str 12`).
+ * - `terminal-period` appends one period unless the text already ends with one.
+ * - `apostrophe-typographic` replaces every `'` with `’`.
+ * - `apostrophe-ascii` replaces every `’` with `'`.
  *
- * Apostrophe directions have separate names so each input form is tested independently.
+ * A mark is separating when whitespace or the end of the text follows it.
  */
 export const PUNCTUATION_TRANSFORMATIONS = [
 	"comma-removed",
@@ -55,12 +46,12 @@ export const PUNCTUATION_TRANSFORMATIONS = [
 export type PunctuationTransformationName = (typeof PUNCTUATION_TRANSFORMATIONS)[number]
 
 /**
- * Whether a transformation removes marks, replaces them, or changes a boundary.
+ * Whether a transformation removes marks, replaces them, or changes the end of the text.
  */
 export type PunctuationScope = "boundary" | "removal" | "replacement"
 
 /**
- * Scope for each transformation, shared with applicability checks.
+ * Scope of each named transformation.
  */
 export const PUNCTUATION_TRANSFORMATION_SCOPE: Record<PunctuationTransformationName, PunctuationScope> = {
 	"comma-removed": "removal",
@@ -71,9 +62,7 @@ export const PUNCTUATION_TRANSFORMATION_SCOPE: Record<PunctuationTransformationN
 }
 
 /**
- * The mark each removal transformation takes.
- *
- * Absent for the other scopes, which act on a form rather than on a removable separator.
+ * Mark that each removal transformation deletes.
  */
 const REMOVED_MARK: Partial<Record<PunctuationTransformationName, string>> = {
 	"comma-removed": ",",
@@ -86,14 +75,14 @@ const REMOVED_MARK: Partial<Record<PunctuationTransformationName, string>> = {
 const TEXT_ECHOING_COMPARATORS = new Set<OutcomeComparatorName>(["parse_whole_strict", "component_map"])
 
 /**
- * Removals whose punctuation belongs to the preceding token.
- *
- * The applicability check also inspects asserted spans for embedded commas.
+ * Removals whose mark belongs to the preceding token, as in `Str.`.
+ * Removing the mark changes that token's text.
  */
 const TOKEN_TEXT_REMOVALS = new Set<PunctuationTransformationName>(["period-removed"])
 
 /**
- * Remove separator runs of `mark`, preserving intra-token marks and whitespace.
+ * Deletes each run of `mark` that whitespace or the end of the text follows.
+ * Other runs and all whitespace stay.
  */
 function removeSeparatingRuns(text: string, mark: string): string {
 	let out = ""
@@ -126,7 +115,7 @@ function removeSeparatingRuns(text: string, mark: string): string {
 }
 
 /**
- * Apply a named transformation; suite variants are derived from this table.
+ * Implementation of each named transformation.
  */
 export const PUNCTUATION_TRANSFORMATION_BY_NAME: Record<PunctuationTransformationName, (text: string) => string> = {
 	"comma-removed": (text) => removeSeparatingRuns(text, ","),
@@ -137,16 +126,15 @@ export const PUNCTUATION_TRANSFORMATION_BY_NAME: Record<PunctuationTransformatio
 }
 
 /**
- * Remove punctuation for comparison; equal keys differ only in punctuation.
- *
- * Letters, digits, marks, and whitespace remain unchanged and in order.
+ * Returns the text with every Unicode punctuation character removed.
+ * Two strings with equal keys differ only in punctuation.
  */
 export function punctuationBlindKey(text: string): string {
 	return text.replaceAll(/\p{P}/gu, "")
 }
 
 /**
- * Identify the named transformation from `base` to `variant`, or return `null`.
+ * Returns the named transformation that maps `base` to `variant`, or `null` when none does.
  */
 export function classifyPunctuationTransformation(base: string, variant: string): PunctuationTransformationName | null {
 	if (base === variant || punctuationBlindKey(base) !== punctuationBlindKey(variant)) return null
@@ -159,8 +147,12 @@ export function classifyPunctuationTransformation(base: string, variant: string)
 }
 
 /**
- * Reasons a transformation cannot safely test this row: identity, in-token punctuation,
- * or a text-echoing comparator that would grade the edit itself.
+ * Rules that exclude a transformation.
+ *
+ * `identity-transformation` applies when the text does not change.
+ * `mark-inside-token` applies when every removable mark sits inside a token.
+ *
+ * `text-echoing-comparator` applies when the row's comparator grades text that the transformation rewrites.
  */
 export const PUNCTUATION_APPLICABILITY_RULES = [
 	"identity-transformation",
@@ -171,42 +163,41 @@ export const PUNCTUATION_APPLICABILITY_RULES = [
 export type PunctuationApplicabilityRule = (typeof PUNCTUATION_APPLICABILITY_RULES)[number]
 
 /**
- * Applicability result and explanation.
+ * Whether a transformation applies to a row, with an explanation.
  */
 export interface PunctuationApplicability {
 	applicable: boolean
 	/**
-	 * The rule that excluded it.
-	 *
-	 * Absent when `applicable`.
+	 * Rule that excluded the transformation.
+	 * It is absent when `applicable` is true.
 	 */
 	rule?: PunctuationApplicabilityRule
 	reason: string
 }
 
 /**
- * What the row grades on, beyond its text.
+ * Grading details of the row that the applicability check needs besides its text.
  */
 export interface PunctuationApplicabilityContext {
 	/**
-	 * The row's own `outcomeComparator`.
+	 * The row's `outcomeComparator`.
 	 *
-	 * Absent skips the {@linkcode PUNCTUATION_APPLICABILITY_RULES} `text-echoing-comparator` reading,
-	 * which is what the suite audit does: the audit knows the comparator but not the spans.
-	 * Therefore, it applies the declared half of the rule and the suite test applies the corpus-grounded half.
+	 * The `text-echoing-comparator` rule runs only when this is set.
 	 */
 	comparator?: OutcomeComparatorName
 	/**
-	 * The component values the committed row asserts, e.g. `["Gate 12, Terminal 2"]`.
+	 * Component values that the committed row asserts, for example `["Gate 12, Terminal 2"]`.
 	 *
-	 * A removal whose mark appears in one of them rewrites that value on the variant
-	 * side whatever the transformation's declared scope says.
+	 * A removal whose mark appears in one of them rewrites that value in the variant.
+	 *
+	 * The suite audit omits this field because it lacks the corpus rows.
+	 * The suite test supplies it.
 	 */
 	echoedSpans?: readonly string[]
 }
 
 /**
- * Check whether this transformation can test the supplied text and comparator.
+ * Checks whether a transformation applies to the text under the row's comparator.
  */
 export function punctuationApplicability(
 	text: string,
@@ -271,7 +262,10 @@ export const PUNCTUATION_SUITE_PATH: string = resolvePackagePath(
 )
 
 /**
- * Audit fixture fields, country context, transformations, and declared applicability.
+ * Audits suite rows.
+ *
+ * Each row needs a `rowRef`, a `caseCountry`, and a variant that a named transformation
+ * derives from the base and that applies under the row's comparator.
  */
 export function auditPunctuationSuite(fixtures: readonly ConformanceFixture[]): string[] {
 	return auditCommonFixtureFields(fixtures, PUNCTUATION_LAW, (fixture, label, problems) => {
@@ -313,10 +307,7 @@ export function auditPunctuationSuite(fixtures: readonly ConformanceFixture[]): 
 }
 
 /**
- * The transformation label a report line carries, e.g. `comma-removed`.
- *
- * `?` when the pair does not classify.
- * The audit refuses that, so it can only appear on a hand-built fixture that skipped the loader.
+ * Returns the fixture's transformation name, or `?` when no named transformation fits.
  */
 export function describePunctuationTransformation(fixture: ConformanceFixture): string {
 	return classifyPunctuationTransformation(fixture.base, fixture.variant) ?? "?"

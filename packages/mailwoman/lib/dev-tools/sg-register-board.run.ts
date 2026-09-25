@@ -3,23 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Build `gauntlet/cases/sg/register.jsonl`, the Singapore register board: a seeded draw of Overture-SG rooftop
- *   rows, each rendered in one of the four typed forms the `sg-register` corpus recipe renders (the HDB block line
- *   with a `#NN-NN` unit, the `S(nnnnnn)` postcode, the building-led line, the official line), balanced across the
- *   four so a form the model has never seen cannot hide behind the ones it has.
- *
- *   The truth is the register row's own point and its fields. `expectComponents` carries what the recipe tagged, so the
- *   board grades the parse the recipe teaches (`Blk` untagged, `#05-67` as `unit`, `S(` `)` untagged); the coordinate
- *   tolerance is the postcode's: a six-digit Singapore postcode names one building, and the register's postcode point
- *   sat within 1 km of the rooftop on 300 of 300 drawn rows.
- *
- *   Every row is graded through the gauntlet's own grader before it is written, and its `status` is what the shipped
- *   pipeline does today: `pass` when it passes, `improvement_target` when it does not. The board is therefore a
- *   regression pin for what already works and a target list for what does not, in one file, and the summary this
- *   prints per register is the board read.
- *
- *   Run: node packages/mailwoman/lib/dev-tools/sg-register-board.run.ts [--n 240] [--seed 7] [--parquet <path>] [--out
- *   <path>] [--skip-grade]
+ * Builds the Singapore register board, `gauntlet/cases/sg/register.jsonl`, from a seeded draw of Overture rows.
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
@@ -56,10 +40,15 @@ const SOURCE = `sg-register-board:${isoDate()}`
 const ADDED_AT = isoDate()
 
 /**
- * The postcode's own tolerance: one six-digit code is one building.
+ * Sets the coordinate tolerance, which is a postcode's precision because a
+ * six-digit Singapore postcode covers one building.
  */
 const TOLERANCE_M = 1000
 
+/**
+ * Lists the four forms the `sg-register` corpus recipe renders.
+ * The board draws an equal share of each.
+ */
 const REGISTERS: readonly SGRegister[] = ["block", "bracket_postcode", "building_led", "official"]
 
 const ADDRESS_KIND: Record<SGRegister, string> = {
@@ -69,6 +58,9 @@ const ADDRESS_KIND: Record<SGRegister, string> = {
 	official: "sg_official",
 }
 
+/**
+ * Holds the Overture fields read for one drawn row.
+ */
 interface RegisterRow {
 	number: string
 	street: string
@@ -79,14 +71,13 @@ interface RegisterRow {
 }
 
 /**
- * Draw `n` register rows, seeded through DuckDB's own generator so a re-run
- * with the same seed draws the same rows.
+ * Draws about `N` rows split across the registers, seeding DuckDB so the same seed draws the same rows.
  *
- * The building-led quarter is drawn from the rows whose `unit` is a building name.
- * The rest from every row.
+ * Building-led rows come from rows whose `unit` is a building name.
+ * The other registers draw from all rows.
  */
 async function drawRows(): Promise<Map<SGRegister, RegisterRow[]>> {
-	// @duckdb/node-api is an optional peer dep (this is a maintainer-only board builder).
+	// `@duckdb/node-api` is an optional dependency, so it is imported only when this tool runs.
 	const { DuckDBInstance } = await import("@duckdb/node-api")
 	const instance = await DuckDBInstance.create()
 	const conn = await instance.connect()
@@ -113,7 +104,7 @@ async function drawRows(): Promise<Map<SGRegister, RegisterRow[]>> {
 		}))
 	}
 
-	// Over-draw the building-led pool: the SQL shape test admits estate names the recipe refuses.
+	// The SQL pattern admits estate names that `isBuildingName` rejects, so the pool is drawn three times larger.
 	const named = await read(`AND regexp_matches(trim(unit), '^[A-Z][A-Z .&''-]* [A-Z .&''-]+$')`, perRegister * 3)
 	const buildings = named.filter((r) => isBuildingName(r.unit)).slice(0, perRegister)
 
@@ -158,6 +149,7 @@ for (const register of REGISTERS) {
 	}
 }
 
+// Grading sets each row's `status` to `pass` or `improvement_target` from the shipped pipeline's result.
 if (!values["skip-grade"]) {
 	const graded = await gradeSeedCases(cases)
 

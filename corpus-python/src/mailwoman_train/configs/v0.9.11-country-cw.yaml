@@ -1,41 +1,16 @@
-# === v0.9.11-country-cw (#464) — step 2a: class-weight bump (B/I-country 2.0 -> 3.5). ====
-# One variable vs v0.9.10-country-bal: country class-weight 2.0 -> 3.5 (DeepSeek 3-5x), same balanced
-# corpus (v0.4.10-country-bal). Targets the v0.9.10 recall gap (40.7% on the homograph check) — the
-# model went precision-first/conservative (P=100, over-fire 0) and abstains when unsure. a higher
-# miss-penalty should lift recall. The cheap change before the soft gazetteer anchor (step 2b) — if
-# this alone recovers recall without re-introducing over-fire, the anchor may be unneeded. Check: same
-# country-homograph eval (country F1 up, over-fire still 0, region/locality held, no spine regression).
-# The shipped v4.1.0 model is starved on `country` (P=R=F1=0 on the homograph eval — it never emits
-# the tag. the night-9 49-F1/23%-precision over-fire was a separate bad recipe output). So this fills a void,
-# the same way `unit` did — but the corpus is built to avoid re-creating the over-fire, and the change
-# is model-first (no deterministic override. the gazetteer informs the model, never substitutes —
-# see docs/engineering/reference/closed-vocab-fields-model-first.mdx).
+# This recipe is v0.9.10-country-bal.yaml with the B-country and I-country class weights raised from
+# 2.0 to 3.5. It trains on the same v0.4.10-country-bal corpus. The higher weight penalizes a missed
+# country more heavily, which is meant to raise country recall.
 #
-# One variable vs v4.1.0 (v0.9.7-unit-v3): the balanced country recipe output is overlaid on the shipped
-# unit base (v0.4.5-unit-v2 → v0.4.10-country-bal). No affix (not shipped). No anchor feature yet
-# (DeepSeek's data-first: prove balanced data alone, add the soft anchor only if long-tail recall
-# lags). Class-weight B/I-country stays at 2.0 (shipped model had 2.0 and country was 0% → the gap was
-# data). Everything else held — v0.9.3 recipe (anchor on, self-cond on, region-tail German), seed 42.
+# The corpus overlays the country-balanced recipe (packages/corpus/lib/recipes/country-balanced.ts) on
+# v0.4.5-unit-v2. That recipe renders homographs such as Georgia and Jordan both as countries and as
+# US regions or localities, and it adds US state codes as region negatives.
 #
-# the recipe output (the country-balanced recipe, `packages/corpus/lib/recipes/country-balanced.ts`, 50k): breadth (OA skeletons + varied ISO country forms
-# + ~25% absent) + homograph contrast (~26%: Georgia/Jordan/Lebanon/Mexico/Peru/Turkey both as
-# country [foreign city] and as US region/locality [US ZIP]) + code-as-region negatives (~10%:
-# CA/GA/IN/MA/PA/AL). The contrast is the signal the over-firing v0.9.9 recipe output lacked.
+# The held-out check set is data/eval/external/country-homograph-real.jsonl.
 #
-# PRE-registered check (stop at 20k) — data/eval/external/country-homograph-real.jsonl (n=54, held-out):
-#   - `country` F1 >> 0 (was 0) and over-fire = 0 (no region/locality token mistagged as country).
-#   - `region` / `locality` F1 stay at the v4.1.0 baseline (region 76.9, locality 62.1 on the homograph eval).
-#   - No regression (within ~1pp, fp32-to-fp32): US house_number / postcode / street / locality;
-#     FR per-class floors. DE native-order (de-order-eval.ts). retain unit >= 88 (unit-real-designators).
-#   decision: country alive + over-fire 0 + region/locality held + no regression check -> candidate.
-#     If long-tail recall lags: bump class-weight B/I-country 2->3-4 + add the soft gazetteer anchor.
-#     If it over-fires: raise the homograph/negative balance (HOMOGRAPH_FRAC/ABBREV_FRAC) + rerun.
-# Measure: scripts/eval/score-country-homograph.ts + per-locale-f1.ts (US/FR) + de-order-eval.ts +
-#   unit-real-designators (fp32-to-fp32).
-#
-# corpus: v0.4.10-country-bal (v0.4.5-unit-v2 base + the balanced country recipe output). Launch:
-#   cd corpus-python && modal run -d -m launch.train_remote \
-#     --config v0.9.10-country-bal.yaml --resume none \
+# Launch it from corpus-python with:
+#   modal run -d -m launch.train_remote \
+#     --config v0.9.11-country-cw.yaml --resume none \
 #     --trackio --trackio-space sister-software/mailwoman-trackio
 
 data:
@@ -62,14 +37,9 @@ data:
     synth-po-box: 1.5
     synth-intersection: 0.2
     synth-german: 6.0
-    # Retained from v4.1.0, so `unit` stays at or above 88% on unit-real-designators.
+    # The synth-unit source keeps the unit training that the v4.1.0 model shipped with.
     synth-unit: 1.5
-    # New (#464, model-first country): the balanced country source — homograph contrast pairs
-    # (Georgia/Jordan/Lebanon/Mexico/Peru/Turkey rendered both as country and US region/locality) +
-    # code-as-region negatives (CA/GA/IN/MA/PA/AL) + breadth. Single variable vs v4.1.0 (no affix).
-    # Class-weight B/I-country stays at 2.0 below — the shipped model already had 2.0 and country was
-    # still 0%, so the gap was data rather than weighting. Bump to 3-4 + add the soft anchor only if the check
-    # shows long-tail recall lagging. See docs/engineering/reference/closed-vocab-fields-model-first.mdx.
+    # The synth-country source is the country-balanced recipe described in the header.
     synth-country: 2.0
   train_rows_per_epoch: 1000000
   val_rows: 4096

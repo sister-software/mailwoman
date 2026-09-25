@@ -450,7 +450,7 @@ describe("buildCandidateTable", () => {
 		expect(probe(db, normalizeLocalityForKey("The White House"))).toHaveLength(0)
 	})
 
-	test("a extract with no `names` table reports the absence instead of a silent zero", async () => {
+	test("an extract with no `names` table reports the absence instead of a silent zero", async () => {
 		const input = scratch.path("admin.db")
 		const pc = scratch.path("postcodes.db")
 		const output = scratch.path("candidate.db")

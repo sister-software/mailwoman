@@ -2,25 +2,27 @@
 
 > **For agentic workers:** required sub-skill: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Enrich api-kit (generic metrics, native error envelope, full-info OpenAPI documents that pass redocly's default ruleset) and ship the new `@mailwoman/api` workspace — the engine-agnostic native surface (`/v1/parse`, `/v1/geocode`, `/v1/batch`, `/v1/resolve`, `/v1/format`, `/health`, `/metrics`) — WITHOUT touching any consumer. Phase 4b does the `mailwoman serve` cutover, `mailwoman/server` deletion, and RemoteResolver repoint.
+**Goal:** Enrich api-kit with generic metrics, a native error envelope, and full-info OpenAPI documents that pass redocly's default ruleset. Ship the new `@mailwoman/api` workspace, the engine-agnostic native surface (`/v1/parse`, `/v1/geocode`, `/v1/batch`, `/v1/resolve`, `/v1/format`, `/health`, `/metrics`). Do not touch any consumer. Phase 4b does the `mailwoman serve` cutover, deletes `mailwoman/server`, and repoints RemoteResolver.
 
-**Architecture:** Two structural decisions correct the original spec sketch, both dependency-driven:
+**Architecture:** Two structural decisions correct the original spec sketch. Both follow from the dependency graph:
 
-1. **Metrics genericize into api-kit.** `mailwoman/server/metrics.ts` imports `ResolutionTier` from `mailwoman` — porting verbatim would invert the dependency arrow. api-kit gets a dependency-free, string-keyed port (`recordTimed(ms, tier)`, `metricsSnapshot()`, same reservoir/percentile math); `@mailwoman/api` supplies the tier names.
-2. **`@mailwoman/api` is engine-agnostic**, like the three drop-ins: `createMailwomanAPI(engine: MailwomanAPIEngine)` — no dependency on the `mailwoman` package (which would cycle when `mailwoman serve` mounts this app in 4b). Its only workspace deps: `@mailwoman/api-kit`, `@mailwoman/formatter` (the `/v1/format` endpoint calls it directly — the design's original motivation), `@mailwoman/core` (types only: `SerializedSolution`, `AddressTree`).
+1. **Metrics become generic and move into api-kit.** `mailwoman/server/metrics.ts` imports `ResolutionTier` from `mailwoman`, so porting it verbatim would invert the dependency direction. api-kit gets a dependency-free, string-keyed port (`recordTimed(ms, tier)`, `metricsSnapshot()`, with the same reservoir and percentile math), and `@mailwoman/api` supplies the tier names.
+2. **`@mailwoman/api` is engine-agnostic**, like the three drop-ins: `createMailwomanAPI(engine: MailwomanAPIEngine)`. It does not depend on the `mailwoman` package, because that dependency would form a cycle when `mailwoman serve` mounts this app in 4b. Its only workspace dependencies are `@mailwoman/api-kit`, `@mailwoman/formatter` (the `/v1/format` endpoint calls it directly, which was the design's original motivation), and `@mailwoman/core` (types only: `SerializedSolution`, `AddressTree`).
 
-The native surface is OURS (no vendor constraint): fresh `/v1/*` paths per the approved spec, camelCase JSON fields for new shapes, the api-kit error envelope everywhere, wire shapes for `/v1/geocode`//`/v1/batch`//`/v1/resolve` carried from the express `GeocodeRouter` (their bodies are consumed by RemoteResolver + existing automation; keep them stable across the 4b repoint — same `GeocodeResult` passthrough, same `{ results: [...] }` batch envelope, same `{ tree }` resolve envelope, same 400/413/503 semantics).
+We own the native surface, so no vendor interface constrains it. It uses fresh `/v1/*` paths per the approved spec, camelCase JSON fields for new shapes, and the api-kit error envelope everywhere. The wire shapes for `/v1/geocode`, `/v1/batch`, and `/v1/resolve` carry over from the express `GeocodeRouter`, because RemoteResolver and existing automation consume their bodies. Keep them stable across the 4b repoint: the same `GeocodeResult` passthrough, the same `{ results: [...] }` batch envelope, the same `{ tree }` resolve envelope, and the same 400/413/503 semantics.
 
 **Tech Stack:** hono `^4.12.29`, `@hono/zod-openapi` `^1.4.0`, zod `^4.4.3`, vitest. Exemplars on main: `photon/{routes,app}.ts`, `nominatim/{routes,app}.ts`, `api-kit/*`.
 
 ## Global Constraints
 
-- **5-point new-workspace registration** (phase-1 Critical — memory `project-hono-api-phase1`): root `package.json` workspaces array, root `tsconfig.json` references, `.release-it.json` workspaces list, `scripts/smoke-clean-install.ts` (`WORKSPACES` + `IMPORT_CHECK`), root `vitest.config.ts` alias. Receipt = `yarn compile && node scripts/smoke-clean-install.ts`.
-- **Do not touch consumers**: `mailwoman/server/*`, `mailwoman/commands/serve.tsx`, `resolver/remote-resolver.ts`, and all their tests stay exactly as they are — phase 4b owns them. The express server keeps working on main throughout 4a.
-- api-kit stays plumbing-only: the generic metrics module and the error envelope are plumbing (no domain knowledge); the full-info doc options are plumbing. Domain schemas (`/v1/*` shapes) live in `@mailwoman/api`.
-- Emitted-document quality check (new this phase): `emitOpenAPIDocuments` output for `@mailwoman/api` must pass `npx --yes @redocly/cli@latest lint` with zero errors (the old handwritten yamls did; the drop-ins currently don't — they get re-stamped in 4b using the same enriched options).
-- `erasableSyntaxOnly`; `.ts` imports; acronym casing (`createMailwomanAPI`, `MailwomanAPIEngine`, `attachOpenAPIDocs`); both exports maps on the new package; lockfile deltas commit with their change; compile before `out/`; oxfmt before commit; vitest one `--dir` per invocation; kill only exact `$!` PIDs.
-- Two carry-forward micro-fixes ride Task 1 (same files, trivial): the `__proto__` docstring backtick fix in `photon/routes.ts` + `nominatim/routes.ts` (oxfmt's JSDoc pass mangled `__proto__` into bold markers — wrap it in backticks in both files identically), and the LonLat spec strike — an ANNOTATED edit to `docs/superpowers/specs/2026-07-12-hono-api-surface-design.md` (strike `LonLat` from the api-kit atoms list with a dated parenthetical: zero consumers across three surfaces; per the anti-meta guardrail, it returns only with its first consumer).
+- **Register a new workspace in five places** (a phase-1 Critical finding, see memory `project-hono-api-phase1`): the root `package.json` workspaces array, root `tsconfig.json` references, the `.release-it.json` workspaces list, `scripts/smoke-clean-install.ts` (`WORKSPACES` + `IMPORT_CHECK`), and the root `vitest.config.ts` alias. The receipt is `yarn compile && node scripts/smoke-clean-install.ts`.
+- **Do not touch consumers.** `mailwoman/server/*`, `mailwoman/commands/serve.tsx`, `resolver/remote-resolver.ts`, and all their tests stay exactly as they are, because phase 4b owns them. The express server keeps working on main throughout 4a.
+- api-kit stays plumbing-only. The generic metrics module, the error envelope, and the full-info doc options carry no domain knowledge, so they belong there. Domain schemas (the `/v1/*` shapes) live in `@mailwoman/api`.
+- Emitted-document quality check (new this phase): The `emitOpenAPIDocuments` output for `@mailwoman/api` must pass `npx --yes @redocly/cli@latest lint` with zero errors. The old handwritten yamls passed. The drop-ins currently do not, and 4b regenerates them with the same enriched options.
+- House rules: `erasableSyntaxOnly`, `.ts` imports, acronym casing (`createMailwomanAPI`, `MailwomanAPIEngine`, `attachOpenAPIDocs`), both exports maps on the new package, lockfile changes committed with the change that caused them, compile before reading `out/`, oxfmt before commit, one vitest `--dir` per invocation, and kill only exact `$!` PIDs.
+- Task 1 also carries two small fixes in the same files:
+  - The `__proto__` docstring backtick fix in `photon/routes.ts` and `nominatim/routes.ts`. oxfmt's JSDoc pass turned `__proto__` into bold markers. Wrap it in backticks identically in both files.
+  - The LonLat spec strike, an annotated edit to `docs/superpowers/specs/2026-07-12-hono-api-surface-design.md`. Strike `LonLat` from the api-kit atoms list and add a dated parenthetical saying it has zero consumers across three surfaces. Per the anti-meta guardrail, it comes back only with its first consumer.
 
 ---
 
@@ -36,13 +38,13 @@ The native surface is OURS (no vendor constraint): fresh `/v1/*` paths per the a
 **Interfaces:**
 
 - Produces (Task 3 + phase 4b consume):
-  - `recordTimed(latencyMs: number, tier: string): void`, `metricsSnapshot(): MetricsSnapshot`, `resetMetricsForTest(): void` — the `mailwoman/server/metrics.ts` reservoir/percentile logic ported verbatim EXCEPT: `tierCounts` becomes `Record<string, number>` (created null-prototype, keys created on first use), `"error"` stays the reserved error key, and the snapshot's `geocode` block is renamed `timings` (generic). `MetricsSnapshot = { uptime_s: number; timings: { total: number; errors: number; tiers: Record<string, number>; latency_ms: { p50; p90; p99; max } | null; latency_samples: number } }`.
+  - `recordTimed(latencyMs: number, tier: string): void`, `metricsSnapshot(): MetricsSnapshot`, `resetMetricsForTest(): void`. These port the `mailwoman/server/metrics.ts` reservoir and percentile logic verbatim, with three exceptions: `tierCounts` becomes `Record<string, number>` (created with a null prototype, with keys added on first use), `"error"` stays the reserved error key, and the snapshot's `geocode` block is renamed to the generic `timings`. `MetricsSnapshot = { uptime_s: number; timings: { total: number; errors: number; tiers: Record<string, number>; latency_ms: { p50; p90; p99; max } | null; latency_samples: number } }`.
   - `APIErrorSchema` (in `error.ts`) — the native envelope: `z.object({ error: z.string(), detail: z.string().optional() }).openapi("APIError")` — and `apiError(c: Context, status: ContentfulStatusCode, error: string, detail?: string)` helper returning `c.json(...)`.
   - `OpenAPIDocInfo` grows OPTIONAL fields (existing callers unaffected): `description?`, `summary?`, `license?: { name: string; identifier?: string }`, `contact?: { name?: string; url?: string }`, `externalDocs?: { description?: string; url: string }`, `servers?: Array<{ url: string; description?: string; variables?: Record<string, { default: string; description?: string }> }>`, `tags?: Array<{ name: string; description?: string }>`, `security?: unknown[]`. `attachOpenAPIDocs`/`emitOpenAPIDocuments` map them into the document config (info-block fields under `info`, the rest top-level; keep the `as never` boundary casts).
 
-- [ ] **Step 1: Failing tests.** `api-kit/metrics.test.ts` ports the assertions from `mailwoman/server/metrics.test.ts` (read it) onto the generic names — record across two tiers + an error, snapshot percentiles over a known latency set, reset. Add to `api-kit/index.test.ts`: a doc-enrichment test — `emitOpenAPIDocuments(app, { title, version, servers: [{ url: "http://localhost" }], security: [], license: { name: "AGPL-3.0-only" }, tags: [{ name: "meta" }] })` → the v31 document carries `servers`, `security`, `info.license.name`, `tags`.
+- [ ] **Step 1: Failing tests.** `api-kit/metrics.test.ts` ports the assertions from `mailwoman/server/metrics.test.ts` (read it) onto the generic names: record across two tiers and an error, check snapshot percentiles over a known latency set, and reset. Add to `api-kit/index.test.ts`: a doc-enrichment test — `emitOpenAPIDocuments(app, { title, version, servers: [{ url: "http://localhost" }], security: [], license: { name: "AGPL-3.0-only" }, tags: [{ name: "meta" }] })` → the v31 document carries `servers`, `security`, `info.license.name`, `tags`.
 - [ ] **Step 2:** RED run (`yarn vitest run --dir ./api-kit`), implement `metrics.ts` (ported logic per the Produces interface), `error.ts`, and the `openapi.ts` extension; re-export both new modules from `index.ts`; GREEN (expect 7 prior + new all passing).
-- [ ] **Step 3: Micro-fixes.** In `photon/routes.ts` + `nominatim/routes.ts`, the `legacyQuery` docstring line containing the mangled `?**proto**=` becomes ``a repeated `?__proto__=` param must create an own property``; verify `yarn oxfmt` does not re-mangle (backticks guard it) — if it does, rephrase to "a repeated dunder-proto param". Spec strike per Global Constraints. Run `yarn vitest run --dir ./photon` and `--dir ./nominatim` (comment-only changes; suites stay green).
+- [ ] **Step 3: Micro-fixes.** In `photon/routes.ts` + `nominatim/routes.ts`, the `legacyQuery` docstring line containing the mangled `?**proto**=` becomes ``a repeated `?__proto__=` param must create an own property``; verify that `yarn oxfmt` does not mangle it again (oxfmt should leave text inside backticks alone). If it does, rephrase to "a repeated dunder-proto param". Make the spec strike described in Global Constraints. Run `yarn vitest run --dir ./photon` and `--dir ./nominatim`. The changes touch only comments, so the suites should stay green.
 - [ ] **Step 4:** `yarn compile`; `yarn oxfmt api-kit photon nominatim docs/superpowers/specs`; commit `feat(api-kit): generic timing metrics, native error envelope, full-info OpenAPI documents`.
 
 ---
@@ -58,7 +60,7 @@ The native surface is OURS (no vendor constraint): fresh `/v1/*` paths per the a
 
 - Produces:
   - Workspace `@mailwoman/api` (version `5.10.1`, dual exports maps, files `out/**` + README, publishConfig access public — mirror `api-kit/package.json` exactly, adding deps: `@hono/zod-openapi`, `@mailwoman/api-kit`, `@mailwoman/core` (workspace:_), `@mailwoman/formatter` (workspace:_), `hono`, `zod`).
-  - `api/engine.ts` — the engine interface (all methods optional; absent → 501, drop-in convention):
+  - `api/engine.ts` — the engine interface. Every method is optional, and an absent method returns 501, following the drop-in convention:
 
 ```ts
 /**
@@ -104,9 +106,15 @@ export interface MailwomanAPIEngine {
 }
 ```
 
-- `api/schema.ts` — zod wire schemas: `ParseRequestSchema` (`{ address: z.string(), debug: z.boolean().optional() }`), `ParseOutcomeSchema` (loose mirror), `GeocodeRequestSchema` (`{ address: z.string() }`), `GeocodeOutcomeSchema` (`z.looseObject({})`), `BatchRequestSchema` (`{ addresses: z.array(z.string()) }`), `BatchResponseSchema`, `ResolveRequestSchema` (`{ tree: z.looseObject({ roots: z.array(z.unknown()) }), opts: z.looseObject({}).optional() }`), `ResolveResponseSchema`, `FormatRequestSchema` (`{ components: z.record(z.string(), z.union([z.string(), z.array(z.string())])), country: z.string(), options: z.looseObject({}).optional() }`), `FormatResponseSchema` (`{ formatted: z.string(), canonicalKey: z.string() }`), `HealthResponseSchema` (loose), re-export `APIErrorSchema` usage from api-kit (import, don't redefine). This surface is ours: bodies are required and validator-enforced (no legacy tolerance to preserve) — validation failures map through a `defaultHook` to the api-kit envelope (`apiError(c, 400, "invalid request body", <zod summary>)`). This is the documented pattern boundary from phase 2: where no legacy interface exists, the validator may speak, but only in our envelope.
+- `api/schema.ts` — zod wire schemas: `ParseRequestSchema` (`{ address: z.string(), debug: z.boolean().optional() }`), `ParseOutcomeSchema` (loose mirror), `GeocodeRequestSchema` (`{ address: z.string() }`), `GeocodeOutcomeSchema` (`z.looseObject({})`), `BatchRequestSchema` (`{ addresses: z.array(z.string()) }`), `BatchResponseSchema`, `ResolveRequestSchema` (`{ tree: z.looseObject({ roots: z.array(z.unknown()) }), opts: z.looseObject({}).optional() }`), `ResolveResponseSchema`, `FormatRequestSchema` (`{ components: z.record(z.string(), z.union([z.string(), z.array(z.string())])), country: z.string(), options: z.looseObject({}).optional() }`), `FormatResponseSchema` (`{ formatted: z.string(), canonicalKey: z.string() }`), `HealthResponseSchema` (loose), and `APIErrorSchema` imported from api-kit rather than redefined. We own this surface, so request bodies are required and enforced by the validator, and there is no legacy leniency to preserve. Validation failures map through a `defaultHook` to the api-kit envelope (`apiError(c, 400, "invalid request body", <zod summary>)`). This follows the pattern boundary documented in phase 2: where no legacy interface exists, the validator may report errors, but only in our envelope.
 
-- [ ] Steps: package.json + tsconfig (mirror api-kit + core/formatter refs + `resolveJsonModule`/`files` for the self-referencing import) → ALL FIVE registration points → `yarn install` → `engine.ts`/`schema.ts` → placeholder `index.ts` re-exports → `yarn compile` → `node scripts/smoke-clean-install.ts` (expect pass with the new package packed) → oxfmt → commit `feat(api): scaffold @mailwoman/api — engine interface + wire schemas (5-point registration)`.
+- [ ] Steps:
+  1. Write package.json and tsconfig, mirroring api-kit, with core/formatter references and `resolveJsonModule`/`files` for the self-referencing import.
+  2. Update all five registration points.
+  3. Run `yarn install`.
+  4. Write `engine.ts` and `schema.ts`, plus placeholder re-exports in `index.ts`.
+  5. Run `yarn compile`, then `node scripts/smoke-clean-install.ts`, which should pass with the new package packed.
+  6. Run oxfmt and commit `feat(api): scaffold @mailwoman/api — engine interface + wire schemas (5-point registration)`.
 
 ---
 
@@ -119,28 +127,48 @@ export interface MailwomanAPIEngine {
 
 **Interfaces:**
 
-- Produces: `createMailwomanAPI(engine: MailwomanAPIEngine, options?: MailwomanAPIOptions): OpenAPIHono` where `MailwomanAPIOptions = { cors?: boolean; bodyLimitBytes?: number }` (cors default true; bodyLimit default 2 MiB — carried from the express `express.json({ limit: "2mb" })`); `registerMailwomanAPIRoutes(app, engine)`.
+- Produces: `createMailwomanAPI(engine: MailwomanAPIEngine, options?: MailwomanAPIOptions): OpenAPIHono`, where `MailwomanAPIOptions = { cors?: boolean; bodyLimitBytes?: number }`. cors defaults to true, and bodyLimit defaults to 2 MiB, carried over from the express `express.json({ limit: "2mb" })`. Also produces `registerMailwomanAPIRoutes(app, engine)`.
 
 Route/wire interface:
 
-- `POST /v1/parse` (body `ParseRequestSchema`) + `GET /v1/parse?address=&debug=` — 200 `ParseOutcomeSchema`; 400 envelope `"address is required"` when absent/empty (GET reads via `legacyQuery`-style first-value; this surface accepts simple single params, no tolerance theater — use `c.req.query()` directly); 501 when `engine.parse` absent.
-- `POST /v1/geocode` — 200 GeocodeOutcome passthrough; 400 `"address is required"`; 503 envelope `"geocoder not available"` when `engine.geocode` absent (NOTE: 503 not 501 — carried from express `DEPS_UNAVAILABLE` semantics: the engine method is expected in production; absence means deps missing). Metrics: wrap with `recordTimed` from api-kit, tier from `outcome["resolution_tier"] ?? "admin"`, `"error"` on throw (rethrow into the 500 net after recording).
-- `POST /v1/batch` — 200 `{ results }`; 400 `"body must be { addresses: string[] }"`; empty array → 200 `{ results: [] }`; 413 envelope when `addresses.length > batchMax` (`MailwomanAPIOptions` gains `batchMax?: number` default 500 — carried from `$public.MAILWOMAN_BATCH_MAX`'s default; the CLI passes the env-derived value in 4b); 503 when absent. Per-row metrics recorded by the ENGINE in 4b (the app records only whole-call latency here — note in the docstring).
-- `POST /v1/resolve` — 200 `{ tree }`; 400 `"body must be { tree: AddressTree, opts? }"`; 503 when absent. (RemoteResolver's target after 4b.)
-- `POST /v1/reload` — 200 `{ reloaded, versions }` passthrough; 503 when `engine.reload` absent (deploy-only endpoint, check at ingress — carried note from express).
-- `POST /v1/format` — wired IN-PACKAGE: validate body, call `formatAddress(components, country, options)` + `canonicalKey(components)` from `@mailwoman/formatter`, 200 `{ formatted, canonicalKey }`; 400 envelope on validation failure. No engine method — always available.
-- `GET /health` — 200: `{ status: "ok", uptime_s, ...engine.health?.() ?? {} }` (engine block spread in; absent engine → still 200 with status+uptime — health must answer even when broken, carried from express).
-- `GET /metrics` — 200 api-kit `metricsSnapshot()`.
-- `app.onError` → 500 envelope `"internal error"` (+ `detail` carrying `err.message` — ours, so we can be helpful).
-- CORS default on (`GET, POST, OPTIONS`); `attachOpenAPIDocs` with full info: title/version from the self-referencing package.json, license `{ name: "AGPL-3.0-only OR LicenseRef-Commercial", identifier: "AGPL-3.0-only" }`, contact Sister Software + https://mailwoman.ai, servers `[{ url: "http://{host}:{port}", variables: { host: { default: "127.0.0.1" }, port: { default: "3000" } } }]`, `security: []`, tags.
+- `POST /v1/parse` (body `ParseRequestSchema`) and `GET /v1/parse?address=&debug=` return 200 `ParseOutcomeSchema`. They return the 400 envelope `"address is required"` when the address is absent or empty. GET reads the first value `legacyQuery`-style. This surface accepts simple single params without extra leniency, so use `c.req.query()` directly. They return 501 when `engine.parse` is absent.
+- `POST /v1/geocode` returns the GeocodeOutcome passthrough with 200, or 400 `"address is required"`. It returns the 503 envelope `"geocoder not available"` when `engine.geocode` is absent. The status is 503 rather than 501, carried over from the express `DEPS_UNAVAILABLE` semantics: production expects the engine method, so its absence means dependencies are missing. Metrics: wrap the call with `recordTimed` from api-kit, take the tier from `outcome["resolution_tier"] ?? "admin"`, and record `"error"` on a throw, then rethrow into the 500 handler.
+- `POST /v1/batch` returns 200 `{ results }`, or 400 `"body must be { addresses: string[] }"`. An empty array returns 200 `{ results: [] }`. It returns the 413 envelope when `addresses.length > batchMax`. `MailwomanAPIOptions` gains `batchMax?: number`, defaulting to 500 like `$public.MAILWOMAN_BATCH_MAX`, and the CLI passes the env-derived value in 4b. It returns 503 when the engine method is absent. In 4b the engine records per-row metrics, and the app records only whole-call latency here. Note this in the docstring.
+- `POST /v1/resolve` returns 200 `{ tree }`, 400 `"body must be { tree: AddressTree, opts? }"`, or 503 when the engine method is absent. RemoteResolver targets it after 4b.
+- `POST /v1/reload` returns the `{ reloaded, versions }` passthrough with 200, or 503 when `engine.reload` is absent. It is a deploy-only endpoint that should be restricted at ingress, a note carried over from express.
+- `POST /v1/format` is wired inside the package. It validates the body, calls `formatAddress(components, country, options)` and `canonicalKey(components)` from `@mailwoman/formatter`, and returns 200 `{ formatted, canonicalKey }`, or the 400 envelope on a validation failure. It needs no engine method, so it is always available.
+- `GET /health` returns 200 with `{ status: "ok", uptime_s, ...engine.health?.() ?? {} }`, spreading in the engine block. Without an engine it still returns 200 with status and uptime, because health must answer even when the server is broken (carried over from express).
+- `GET /metrics` returns 200 with api-kit `metricsSnapshot()`.
+- `app.onError` returns the 500 envelope `"internal error"`, with `detail` carrying `err.message`. We own this surface, so the error can be informative.
+- CORS is on by default (`GET, POST, OPTIONS`). `attachOpenAPIDocs` gets full info: title/version from the self-referencing package.json, license `{ name: "AGPL-3.0-only OR LicenseRef-Commercial", identifier: "AGPL-3.0-only" }`, contact Sister Software + https://mailwoman.ai, servers `[{ url: "http://{host}:{port}", variables: { host: { default: "127.0.0.1" }, port: { default: "3000" } } }]`, `security: []`, tags.
 
-- [ ] Steps (TDD): write `api/index.test.ts` first — fixture engines pinning: every endpoint's happy path; 400/413/501/503 envelopes with exact bodies; format round-trip (`{ components: { house_number: "1600", road: "Pennsylvania Ave NW", city: "Washington" }, country: "US" }` → formatted string contains "1600" and canonicalKey is non-empty — do not pin the full formatted string, the formatter template owns it); health-with/without-engine; metrics endpoint reflects a recorded geocode; validation failure → envelope not zod-shape; `/openapi.json` has all 8 paths; **redocly check**: emit the v31 document to a temp file (scratchpad) and `npx --yes @redocly/cli@latest lint <file>` → zero errors (execute via node child_process in the test? NO — keep it a Task-5-style manual receipt: run it as a step rather than a test). RED → implement `routes.ts`/`app.ts` → GREEN → compile → oxfmt → README (short, factual: engine interface, endpoints table, serveNode snippet with hostname) → commit `feat(api): the native /v1 surface — parse, geocode, batch, resolve, format, health, metrics`.
-- [ ] Final step: the redocly receipt — boot nothing; `node -e` emit the document to the scratchpad, lint it, capture output in the report. Zero errors required (this is the Global-Constraints check).
+- [ ] Steps (TDD): Write `api/index.test.ts` first, with fixture engines that pin:
+  - every endpoint's happy path
+  - the 400/413/501/503 envelopes with exact bodies
+  - a format round-trip: `{ components: { house_number: "1600", road: "Pennsylvania Ave NW", city: "Washington" }, country: "US" }` produces a formatted string that contains "1600" and a non-empty canonicalKey. Do not pin the full formatted string, because the formatter template owns it.
+  - health with and without an engine
+  - the metrics endpoint reflecting a recorded geocode
+  - a validation failure returning our envelope rather than the zod shape
+  - `/openapi.json` listing all 8 paths
+
+  The **redocly check** emits the v31 document to a temp file in the scratchpad and runs `npx --yes @redocly/cli@latest lint <file>`, which must report zero errors. Do not run it through node child_process inside the test. Keep it a manual receipt in the Task 5 style, run as a step rather than a test.
+
+  Then run the tests and see them fail, implement `routes.ts` and `app.ts`, get the tests passing, compile, and run oxfmt. Write a short, factual README covering the engine interface, an endpoints table, and a serveNode snippet with hostname. Commit `feat(api): the native /v1 surface — parse, geocode, batch, resolve, format, health, metrics`.
+
+- [ ] Final step: the redocly receipt. Boot nothing. Emit the document to the scratchpad with `node -e`, lint it, and capture the output in the report. It must report zero errors, which is the Global Constraints check.
 
 ---
 
 ### Task 4: Repo-wide green + branch wrap
 
 - [ ] `rm -rf api/out api-kit/out && yarn compile`; `yarn vitest run --dir ./api`; `--dir ./api-kit`; `--dir ./photon`; `--dir ./nominatim`; `yarn test:integration`; `node scripts/smoke-clean-install.ts`; `yarn lint:oxlint`; `yarn oxfmt --check api api-kit`.
-- [ ] Push `feat/hono-api-package`; PR: spec/plan links; the two architecture corrections (metrics genericization — dependency arrow; engine-agnostic api — reference-cycle avoidance) called out explicitly as spec deviations for the record; wire-shape carryover table (geocode/batch/resolve bodies stable for the 4b repoint); redocly zero-error receipt; 5-point registration receipt; no consumers touched (express server still running on main); phase-4b scope note. Attribution line.
-- Controller runs the final whole-branch review, then merges under the standing grant.
+- [ ] Push `feat/hono-api-package` and open a PR. The PR body includes:
+  - links to the spec and plan
+  - the two architecture corrections, called out explicitly as spec deviations for the record: generic metrics (to keep the dependency direction) and the engine-agnostic api (to avoid a reference cycle)
+  - a table of carried-over wire shapes (the geocode, batch, and resolve bodies stay stable for the 4b repoint)
+  - the redocly zero-error receipt
+  - the 5-point registration receipt
+  - confirmation that no consumers were touched (the express server still runs on main)
+  - a phase-4b scope note
+  - the attribution line
+- The controller runs the final whole-branch review, then merges under the standing grant.

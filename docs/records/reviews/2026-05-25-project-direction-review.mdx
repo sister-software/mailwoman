@@ -6,7 +6,7 @@
 
 ## The project, in one paragraph
 
-Mailwoman is a TypeScript-first address parser that runs in Node and the browser. It combines rule-based classifiers (postcodes, state abbreviations, dictionary lookups) with a small neural model (9M-parameter encoder-only transformer) that handles contextual ambiguity. A staged pipeline — normalize, locale/kind classify, phrase group, token classify, sequence correct, reconcile, resolve — decomposes the problem by knowledge layer. Rule and neural classifiers coexist via a per-component policy registry; the neural model warrants authority one component at a time (Ship of Theseus). The gazetteer is Who's On First, delivered as a SQLite database queried through a browser-compatible WASM runtime.
+Mailwoman is a TypeScript-first address parser that runs in Node and the browser. It combines rule-based classifiers (postcodes, state abbreviations, dictionary lookups) with a small neural model (9M-parameter encoder-only transformer) that handles contextual ambiguity. A staged pipeline — normalize, locale/kind classify, phrase group, token classify, sequence correct, reconcile, resolve — decomposes the problem by knowledge layer. Rule and neural classifiers coexist via a per-component policy registry; the neural model gains authority one component at a time (Ship of Theseus). The gazetteer is Who's On First, delivered as a SQLite database queried through a browser-compatible WASM runtime.
 
 ---
 
@@ -26,7 +26,7 @@ The explicit refusal to replace rule classifiers that are already correct (postc
 
 ### The bilingual US + FR scope is realistic
 
-Starting with English (US) and French addresses constrains the problem in useful ways: both use Latin script, both have strong open government address data, and together they exercise the pipeline's locality-handling (FR has `de la`/`du`/`des` street particles, CEDEX postal routing, arrondissements) without requiring the tokenizer to handle CJK or RTL scripts. The plan to validate the architecture against Japanese (Phase 6) as a stress test — block-based addressing, no streets, different administrative hierarchy — is the right way to prove generality without over-scoping v1.
+Starting with English (US) and French addresses constrains the problem in useful ways: both use Latin script, both have strong open government address data, and together they exercise the pipeline's locality-handling (FR has `de la`/`du`/`des` street particles, CEDEX postal routing, arrondissements) without requiring the tokenizer to handle CJK or RTL scripts. The plan to validate the architecture against Japanese (Phase 6) as a stress test is the right way to test generality without over-scoping v1. Japanese addressing is block-based, has no streets, and uses a different administrative hierarchy.
 
 ### The browser-first constraint is a forcing function
 
@@ -79,9 +79,9 @@ The shipped v0.4.0 model has:
 
 Full parse exact match on 4,535 golden entries is ~0.08 — meaning the model gets every component right on only 8% of addresses. In practice, the hybrid system (rule classifiers carrying coarse components, neural on house_number and street) performs better than these per-tag neural numbers suggest, but the neural model alone is nowhere near production-quality on most components.
 
-This is not a fatal observation. The project is early-stage and the architecture is additive. But it means the project's "what you can use today" story is limited, and that limitation is not the result shows communicated in the docs.
+This observation is not fatal. The project is early-stage and the architecture is additive. It does mean the project's "what you can use today" story is limited, and the docs do not state that limitation.
 
-### The v0.5.0 scope bundle was too several variables
+### The v0.5.0 scope bundle was too many variables
 
 v0.5.0 combined five architectural changes (new tokenizer, expanded corpus with 78K LLM-generated rows, phrase-prior input layer, hidden-size bump, and the reconcile stage) into one release. The training divergence forced a bisect to isolate which change was the destabilizer — exactly the "one change at a time" lesson the v0.4.0 retrospective itself recommended. The project learned this lesson in v0.4.0, acknowledged it in the retrospective, and then repeated the pattern in v0.5.0.
 
@@ -137,12 +137,12 @@ These are all reasonable future work, but they multiply variables before the cur
 Mailwoman should aim to be the **TypeScript-native open geocoding front-end**: a parser, structured candidate generator, and resolver interface that can run locally, in a browser, or next to Pelias-like services. It does not need rooftop precision or a universal world model to be valuable. It needs to be:
 
 - **Easy to deploy.** `npm install @mailwoman/neural-weights-en-us` should work.
-- **direct about ambiguity.** "Springfield" should return candidates rather than a confident wrong answer.
+- **Direct about ambiguity.** "Springfield" should return candidates rather than a confident wrong answer.
 - **Cheap enough for browsers and serverless.** The 60MB cold-load budget is the right constraint.
 - **Retrainable on open data.** The corpus pipeline makes this possible already.
 - **Calibrated enough that downstream systems can decide when to ask for more context.**
 
-This direction is coherent. The architecture supports it. The project's primary risk is not that the architecture is wrong — it's that the training instability consumes enough iteration cycles that the integration gap (reconcile as default, real top-K, end-to-end measurement) never closes.
+This direction is coherent, and the architecture supports it. The project's primary risk is that the training instability consumes enough iteration cycles that the integration gap (reconcile as default, real top-K, end-to-end measurement) never closes.
 
 ---
 
@@ -187,7 +187,7 @@ The model should not be judged only as a tagger. Before any new weights ship, th
 
 ### 4. Make the docs serve the current state of the project
 
-See the [docs/audience review](./2026-05-25-docs-audience-review.mdx) for the detailed plan. The highest-changeage items are:
+See the [docs/audience review](./2026-05-25-docs-audience-review.mdx) for the detailed plan. The most valuable items are:
 
 - Status page
 - Getting started guide
@@ -204,7 +204,7 @@ Before paying for a rented-GPU or large-LLM validation run:
 - The eval matrix must produce baseline numbers for both fallback and joint paths
 - The status page must reflect current state
 
-Then spend on the next training run. Not before.
+Spend on the next training run only after all four conditions hold.
 
 ---
 
@@ -214,7 +214,7 @@ Then spend on the next training run. Not before.
 
 The thesis is sound. The architecture is the best version of this idea that exists in open-source geocoding. The corpus pipeline and diagnostic infrastructure are industrial-strength. The blog posts are unusually direct and readable.
 
-The project's primary risk is not architectural — it's that five things changed at once, training destabilized, and the integration that would validate the architecture got deferred behind the training problem. The fix is mechanical: stabilize training, wire the pipeline end-to-end, measure the architectural thesis, then expand scope.
+The project's primary risk comes from process rather than architecture. Five things changed at once, training destabilized, and the integration that would validate the architecture was deferred behind the training problem. The fix is a sequence of concrete steps: stabilize training, wire the pipeline end to end, measure the architectural thesis, and then expand scope.
 
 The thing to guard is the decomposition: rules for high-precision bounded problems, a small neural model for contextual ambiguity, structural priors from the phrase grouper, joint coherence from the reconciler, world hierarchy from the gazetteer. That decomposition is correct, and nothing in the current evidence contradicts it.
 

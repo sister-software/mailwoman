@@ -4,23 +4,17 @@
 @license AGPL-3.0
 @author Teffen Ellis, et al.
 
-Stage 3 of the confidence-calibration pipeline (task #59). Fits an isotonic-regression calibrator on
-the (raw span confidence, correct?) pairs from `collect-span-confidences.ts`, emits a 20-bin lookup
-table, and reports Expected Calibration Error (ECE) before/after on a HELD-OUT eval split.
+Fit an isotonic calibrator for span confidence and report calibration error on a held-out split.
 
-Isotonic, not Platt: the model's miscalibration isn't a clean sigmoid (it's overconfident in some
-bands, underconfident in others), so a monotone non-parametric fit is the right tool. We implement
-the Pool-Adjacent-Violators algorithm (PAVA) directly in numpy — ~15 lines, fully auditable, and it
-keeps scikit-learn out of the corpus-python deps for one lookup table.
+The input is the `(confidence, correct)` span records that `collect-span-confidences.run.ts` writes.
+The script fits on a seeded 80% of the records and measures every figure on the other 20%. It writes
+a lookup table for the opt-in decoder calibrator in `packages/core/lib/decoder/calibration.ts` and a
+markdown report.
 
-Honesty guardrails baked in:
-  - 80/20 fit/eval split (seeded). The 20-bin table is fit on the 80%; every ECE number is measured
-    on the 20% the fit never saw — in-sample ECE would flatter the calibrator.
-  - A SEPARATE OA-only eval ECE. The corpus half is in-domain (the model trained on it) so its
-    confidence runs optimistically high; the OA half is genuinely held-out real addresses. The
-    OA-only number is the trustworthy headline; the combined number is the deliverable's metric.
-
-The output table is consumed by the opt-in decoder calibrator (`core/decoder/calibration.ts`).
+The model is overconfident in some confidence bands and underconfident in others, so a sigmoid (Platt)
+fit does not suit it. The Pool-Adjacent-Violators fit is written in numpy to avoid a scikit-learn
+dependency. The report gives OpenAddresses rows a separate ECE because the corpus rows are in-domain
+and their confidence runs high.
 
 Usage:
   python -m mailwoman_train.calibration.isotonic \
@@ -42,17 +36,17 @@ from ..paths import repo_root_path
 
 REPO = repo_root_path()
 
-#: A subgroup needs this many held-out spans before its ECE is reported. Below it the figure is bin
-#: noise, and the global ECE it would be compared against is not.
+#: The report omits a subgroup with fewer held-out spans than this, because its ECE is mostly bin noise.
 MIN_SUBGROUP_SPANS = 100
 
-#: The accept thresholds the abstention curve reports, as calibrated confidence.
+#: The abstention curve reports these calibrated-confidence accept thresholds.
 ABSTENTION_THRESHOLDS = (0.5, 0.8, 0.9, 0.95, 0.97)
 
 
 def pava(y: np.ndarray, w: np.ndarray) -> np.ndarray:
-    """Pool-Adjacent-Violators: weighted isotonic (non-decreasing) least-squares fit of `y`."""
-    # Each block: [weighted_sum, weight, count]. Merge a new point left while it violates monotonicity.
+    """Return the weighted non-decreasing least-squares fit of `y` by Pool-Adjacent-Violators."""
+    # Each block holds a weighted sum, a weight and a count. A new point merges leftward until the
+    # block means are non-decreasing.
     sums: list[float] = []
     wts: list[float] = []
     cnts: list[int] = []
@@ -74,7 +68,7 @@ def pava(y: np.ndarray, w: np.ndarray) -> np.ndarray:
 
 
 def fit_isotonic(conf: np.ndarray, correct: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
-    """Return (x_sorted, g) — the isotonic step function over confidence. Evaluate via np.interp."""
+    """Return the sorted confidences and their isotonic fitted values for use with `calibrate`."""
     order = np.argsort(conf, kind="mergesort")
     xs = conf[order]
     ys = correct[order].astype(float)
@@ -83,13 +77,13 @@ def fit_isotonic(conf: np.ndarray, correct: np.ndarray) -> tuple[np.ndarray, np.
 
 
 def calibrate(x: np.ndarray, xs: np.ndarray, g: np.ndarray) -> np.ndarray:
-    """Apply the isotonic fit to confidences `x` (clamped to the fit range by np.interp)."""
+    """Map confidences `x` through the fit. `np.interp` clamps values outside the fitted range."""
     calibrated: np.ndarray = np.interp(x, xs, g)
     return calibrated
 
 
 def ece(conf: np.ndarray, correct: np.ndarray, n_bins: int) -> tuple[float, float, list[dict[str, Any]]]:
-    """Expected + Max Calibration Error over equal-width bins. Returns (ECE, MCE, per-bin rows)."""
+    """Return the expected and maximum calibration error over equal-width bins, with per-bin rows."""
     edges = np.linspace(0.0, 1.0, n_bins + 1)
     n = len(conf)
     e = 0.0
@@ -112,33 +106,29 @@ def ece(conf: np.ndarray, correct: np.ndarray, n_bins: int) -> tuple[float, floa
 
 
 def robust_mce(rows: list[dict[str, Any]], min_n: int = 20) -> float:
-    """Max calibration error over bins with at least `min_n` samples — equal-width MCE is otherwise
-    dominated by single-sample sparse bins (especially post-isotonic, where calibrated values cluster)."""
+    """Return the maximum calibration error over bins that hold at least `min_n` samples.
+
+    Sparse bins with one or two samples would otherwise dominate the maximum.
+    """
     gaps = [abs(r["conf"] - r["acc"]) for r in rows if r["n"] >= min_n and r["conf"] is not None]
     return max(gaps) if gaps else 0.0
 
 
 def brier(conf: np.ndarray, correct: np.ndarray) -> float:
+    """Return the Brier score, the mean squared gap between confidence and correctness."""
     return float(np.mean((conf - correct) ** 2))
 
 
 def provenance_path(path: Path) -> str:
-    """How the emitted table names the confidence set it was fit on.
-
-    Repository-relative where that is meaningful, absolute otherwise. `relative_to` RAISES on a
-    path outside the checkout, and it is read after the fit, so an input elsewhere on disk used to
-    lose the whole run to a ValueError at the serialization step.
-    """
+    """Return `path` relative to the repository root, or absolute when it lies outside the checkout."""
     return str(path.relative_to(REPO)) if path.is_relative_to(REPO) else str(path)
 
 
 @dataclass(frozen=True)
 class Fit:
-    """One isotonic fit and every figure measured from it.
+    """Hold one isotonic fit and every figure measured from it.
 
-    Every number the table and the report carry is computed once, here. They used to be derived
-    twice — once into the payload, once into the markdown — and a report that recomputes its own
-    figures can disagree with the table it ships beside.
+    The payload and the report both read these values, so the two outputs cannot disagree.
     """
 
     n_total: int
@@ -154,6 +144,7 @@ class Fit:
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
+    """Parse the command-line options."""
     ap = argparse.ArgumentParser()
     ap.add_argument("--conf", default=str(REPO / "data/eval/calibration/confidences.jsonl"))
     ap.add_argument("--out", default=str(REPO / "data/eval/calibration/isotonic-en-us-v4.0.0.json"))
@@ -169,7 +160,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 
 
 def lookup_table(xs: np.ndarray, g: np.ndarray, bins: int) -> list[dict[str, Any]]:
-    """The shipped table: the calibrated value at each equal-width bin's CENTER."""
+    """Return the calibrated value at the center of each equal-width bin."""
     edges = np.linspace(0.0, 1.0, bins + 1)
     centers = (edges[:-1] + edges[1:]) / 2
     cal_centers = calibrate(centers, xs, g)
@@ -187,10 +178,9 @@ def lookup_table(xs: np.ndarray, g: np.ndarray, bins: int) -> list[dict[str, Any
 def subgroup_ece(
     keys: np.ndarray, ev_conf: np.ndarray, ev_cal: np.ndarray, ev_correct: np.ndarray, ece_bins: int
 ) -> dict[str, dict[str, Any]]:
-    """Per-key ECE on the eval split (#368 S1).
+    """Return raw and calibrated ECE on the eval split for each distinct key.
 
-    The global ECE masks WHERE the model is mis-calibrated, which is what a single global table
-    then under-serves. A key under `MIN_SUBGROUP_SPANS` is omitted rather than reported small.
+    The function omits a key with fewer than `MIN_SUBGROUP_SPANS` spans.
     """
     out: dict[str, dict[str, Any]] = {}
     for k in sorted(set(keys.tolist())):
@@ -204,10 +194,10 @@ def subgroup_ece(
 
 
 def abstention_curve(ev_cal: np.ndarray, ev_correct: np.ndarray) -> list[dict[str, Any]]:
-    """Precision against coverage as the accept threshold rises (#368 S2).
+    """Return coverage and precision at each threshold in `ABSTENTION_THRESHOLDS`.
 
-    The downstream-routing artifact — auto-accept above T, review the rest. It is meaningful only
-    once confidence is calibrated, which is why it is measured here and not at the decoder.
+    A caller accepts spans at or above the threshold and sends the rest to review. The curve uses
+    calibrated confidence, since raw confidence does not predict accuracy.
     """
     curve = []
     for t in ABSTENTION_THRESHOLDS:
@@ -219,7 +209,7 @@ def abstention_curve(ev_cal: np.ndarray, ev_correct: np.ndarray) -> list[dict[st
 
 
 def fit_and_measure(records: list[dict[str, Any]], *, bins: int, ece_bins: int, seed: int) -> Fit:
-    """Fit on 80% of the records and measure every reported figure on the 20% the fit never saw."""
+    """Fit on a seeded 80% of the records and measure every figure on the remaining 20%."""
     conf = np.array([r["conf"] for r in records], dtype=float)
     correct = np.array([1.0 if r["correct"] else 0.0 for r in records], dtype=float)
     source = np.array([r["source"] for r in records])
@@ -239,8 +229,7 @@ def fit_and_measure(records: list[dict[str, Any]], *, bins: int, ece_bins: int, 
     ece_raw, mce_raw, rel_raw = ece(ev_conf, ev_correct, ece_bins)
     ece_cal, mce_cal, rel_cal = ece(ev_cal, ev_correct, ece_bins)
 
-    # The OA half is genuinely held-out real addresses. the corpus half is in-domain, so its
-    # confidence runs optimistically high. Reported apart because averaging them hides that.
+    # The corpus rows are in-domain and their confidence runs high, so each source gets its own ECE.
     oa = ev_src == "oa"
     ece_raw_oa, _, _ = ece(ev_conf[oa], ev_correct[oa], ece_bins)
     ece_cal_oa, _, _ = ece(ev_cal[oa], ev_correct[oa], ece_bins)
@@ -276,7 +265,7 @@ def fit_and_measure(records: list[dict[str, Any]], *, bins: int, ece_bins: int, 
 
 
 def build_payload(args: argparse.Namespace, fit: Fit) -> dict[str, Any]:
-    """The shipped table, with the provenance and the figures behind the demo's reliability diagram."""
+    """Return the JSON payload with the lookup table, its provenance and the eval figures."""
     return {
         "model": args.model,
         "model_version": args.model_version,
@@ -291,9 +280,7 @@ def build_payload(args: argparse.Namespace, fit: Fit) -> dict[str, Any]:
         "per_tag_ece": fit.per_tag,
         "per_locale_ece": fit.per_locale,
         "abstention_curve": fit.abstention,
-        # Per-bin reliability on the held-out eval split (mean conf vs accuracy per equal-width bin),
-        # before + after calibration. The data behind the reliability diagram the demo draws —
-        # serialized so the front-end is self-contained (no need to re-derive from the raw conf set).
+        # The demo draws its reliability diagram from these per-bin rows.
         "reliability_raw": fit.reliability_raw,
         "reliability_cal": fit.reliability_cal,
         "table": fit.table,
@@ -323,7 +310,7 @@ def _headline_lines(args: argparse.Namespace, fit: Fit) -> list[str]:
         "",
         "| Split | ECE raw | ECE calibrated | target |",
         "| --- | --- | --- | --- |",
-        # `<0.05` is backtick-wrapped: docs/articles/*.md is MDX, which parses a bare `<` as a JSX tag.
+        # The docs site parses articles as MDX, so a bare `<` would start a JSX tag.
         f"| **Combined (deliverable)** | {m['ece_raw_eval']:.4f} | **{m['ece_cal_eval']:.4f}** | `<0.05` |",
         f"| OA-only (held-out, trustworthy) | {m['ece_raw_oa_eval']:.4f} | {m['ece_cal_oa_eval']:.4f} | — |",
         f"| corpus-only (in-domain) | {m['ece_raw_corpus_eval']:.4f} | {m['ece_cal_corpus_eval']:.4f} | — |",
@@ -419,7 +406,7 @@ def _table_lines(fit: Fit) -> list[str]:
 
 
 def render_report(args: argparse.Namespace, fit: Fit) -> str:
-    """The self-reported markdown. Every figure is read off `fit`. An eval number is never hand-typed."""
+    """Return the markdown report. Every figure comes from `fit`."""
     lines = [
         *_headline_lines(args, fit),
         *_reliability_lines("raw confidence", fit.reliability_raw, "conf"),
@@ -433,6 +420,7 @@ def render_report(args: argparse.Namespace, fit: Fit) -> str:
 
 
 def main() -> None:
+    """Fit the calibrator, then write the lookup table and the report."""
     args = parse_args()
     records = [json.loads(line) for line in Path(args.conf).read_text().splitlines() if line.strip()]
     fit = fit_and_measure(records, bins=args.bins, ece_bins=args.ece_bins, seed=args.seed)

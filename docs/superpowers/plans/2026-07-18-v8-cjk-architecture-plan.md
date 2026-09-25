@@ -1,18 +1,18 @@
 # v8 — Crossing the non-Latin (CJK) threshold: architecture plan
 
-Epic #1176. guide: parse JP (then KR, then CN/TW) into resolvable components without regressing the Latin 23.
+Epic #1176. Goal: parse JP (then KR, then CN/TW) into resolvable components without regressing the Latin 23.
 
-_Planning artifact. Grounded in: `what-mailwoman-is.mdx`, `SCHEMA.mdx`, `model.py` (CharCNNEncoder), `char_tokenizer.py`, `neural-weights-en-us/model-card.json`, the #825 bsplice postmortem, and the extract-recipe pipeline. No code touched._
+_This is a planning artifact. It is based on `what-mailwoman-is.mdx`, `SCHEMA.mdx`, `model.py` (CharCNNEncoder), `char_tokenizer.py`, `neural-weights-en-us/model-card.json`, the #825 bsplice postmortem, and the extract-recipe pipeline. No code was changed._
 
 ---
 
 ## TL;DR (the decisions)
 
-1. **Approach A (char-level encoder), deployed script-routed (C at the runtime layer). Reject B outright.** A and C are not competitors. A is the _encoder_, C is the _shipping mechanism_. The Latin SP model is not touched at all; a new char-level CJK model ships beside it and a script-router dispatches. This makes the forgetting guard **provable rather than measured** (Latin bytes are identical → diff 0 CI[0,0], the same proof the #825 mean-init won on).
-2. **The char path is already half-built.** `CharCNNEncoder` (`model.py`) + `char_tokenizer.py` are committed, ONNX-clean, and conditional-off — the deliberate "CJK-forward path" from #825. v8 activates and trains it; it is not a from-scratch encoder rebuild. This collapses the cost gap that made A look expensive.
-3. **Schema is already done on paper.** The seven JP tags (`prefecture`/`municipality`/`district`/`block`/`sub_block`/`building_number`/`building_name`) are declared in `COMPONENT_TAGS` and blocked by `LocaleProfile.componentsSupported`. v8 activates them — a universal-schema extension rather than a JP-private fork.
-4. **The real long pole is not the encoder or the schema. It is corpus BIO alignment over _unsegmented_ kanji.** Overture gives field _values_ (`street=字崎枝`) rather than character-level spans, and JP addresses have no whitespace. Aligning fields back to a space-free string is the hidden risk (§5). De-risk it in week 1, before any training.
-5. **Model the large-to-small order natively (model-first). Do not normalize.** A human reads order from context; the model must too. The block grammar is learned from labels rather than rewritten by a preprocessor.
+1. **Use approach A (a char-level encoder), deployed with script routing (approach C at the runtime layer). Reject B outright.** A and C do not compete. A is the _encoder_, and C is the _shipping mechanism_. The Latin SentencePiece (SP) model stays untouched. A new char-level CJK model ships beside it, and a script router dispatches between them. The protection against forgetting is then **provable rather than measured**: the Latin bytes are identical, so the diff is 0 with CI[0,0], the same proof that justified the #825 mean-init.
+2. **The char path is already half-built.** `CharCNNEncoder` (`model.py`) and `char_tokenizer.py` are committed, export to ONNX, and are off unless enabled. They are the deliberate "CJK-forward path" from #825. v8 activates and trains that path rather than rebuilding an encoder from scratch, which removes most of the cost that made A look expensive.
+3. **The schema already exists on paper.** The seven JP tags (`prefecture`/`municipality`/`district`/`block`/`sub_block`/`building_number`/`building_name`) are declared in `COMPONENT_TAGS`, and `LocaleProfile.componentsSupported` keeps them from being emitted. v8 activates them as an extension of the universal schema rather than a JP-private fork.
+4. **The longest task is corpus BIO alignment over _unsegmented_ kanji. The encoder and the schema take less work.** Overture provides field _values_ (`street=字崎枝`) rather than character-level spans, and JP addresses have no whitespace. Aligning fields back to a space-free string is the hidden risk (§5). Reduce that risk in week 1, before any training.
+5. **Model the large-to-small order natively (model-first). Do not normalize it.** A human reads order from context, and the model must too. The model learns the block grammar from labels, and no preprocessor rewrites it.
 
 ---
 
@@ -20,37 +20,37 @@ _Planning artifact. Grounded in: `what-mailwoman-is.mdx`, `SCHEMA.mdx`, `model.p
 
 ### Why B is rejected before the probe (it fights known scar tissue)
 
-The #825 postmortem is the whole argument. A Slavic-diacritic **retrain on the same subword tokenizer failed** — root cause was tokenizer fragmentation, and _data cannot fix a fragmentation a unigram vocab structurally cannot emit_. CJK is that failure mode maximised: there are no coherent CJK subword pieces in `v0.9.0-multisplice` at all, only byte-pieces. B's three named risks (Latin dilution, vocab blowup, F1-comparison invalidation) are all real, but the disqualifier is subtler: **B forces the choice between diluting the hardened Latin model or forking it anyway** — and if you fork it anyway, you have paid the multilingual-retrain tax _and_ still ship two models. B is strictly dominated.
+The #825 postmortem makes the case. A Slavic-diacritic **retrain on the same subword tokenizer failed**. The root cause was tokenizer fragmentation, and _data cannot fix a fragmentation that a unigram vocab cannot emit_. CJK is the extreme case of that failure: `v0.9.0-multisplice` has no coherent CJK subword pieces at all, only byte pieces. B's three named risks (Latin dilution, vocab growth, invalidated F1 comparisons) are all real, but the deciding problem is subtler. **B forces a choice between diluting the hardened Latin model and forking it anyway.** A fork means paying for a multilingual retrain _and_ still shipping two models. A is better than B on every axis.
 
-There is also a structural fact that inverts the "A is the big rebuild" intuition: **the embedding table already dominates the model.** 73,143 pieces × 384 = ~28M of the ~29M total params; the transformer body is only ~8.87M. A char-level front-end collapses that table to a few-thousand-char vocab. **The char model is _smaller_ rather than bigger**. It is easier on the pocket budget rather than harder. The "biggest rebuild" framing was true when char-level meant writing a new encoder; it is false now that `CharCNNEncoder` exists.
+A structural fact also reverses the intuition that A is the big rebuild: **the embedding table already dominates the model.** 73,143 pieces × 384 is about 28M of the ~29M total params, and the transformer body is only about 8.87M. A char-level front end shrinks that table to a vocab of a few thousand chars. **The char model is therefore _smaller_ than the SP model**, and it fits the pocket budget more easily. Calling A the biggest rebuild was accurate when char-level meant writing a new encoder. It stopped being accurate once `CharCNNEncoder` existed.
 
 ### The recommendation: A internally, C at the boundary
 
-- **A (char-level CharCNN):** the CJK model's front-end. Word-composition-from-characters, so there is no subword vocab to fragment CJK. Already scaffolded, ONNX-clean (Embedding + Conv1d + ReLU + masked max-pool + Linear — all runtimes accept it).
-- **C (script-routing):** the _deployment_. Detect script (trivial: Unicode block histogram on the raw string — the `query-shape` stage already computes character-class priors and is the natural home). Route CJK → char model, Latin → the untouched SP model. Ship side-by-side.
+- **A (char-level CharCNN)** is the CJK model's front end. It composes words from characters, so there is no subword vocab to fragment CJK. It is already scaffolded and exports to ONNX (Embedding + Conv1d + ReLU + masked max-pool + Linear, which all runtimes accept).
+- **C (script routing)** is the _deployment_. Detect the script with a Unicode-block histogram on the raw string, which is simple. The `query-shape` stage already computes character-class priors and is the natural place for it. Route CJK to the char model and Latin to the untouched SP model, and ship them side by side.
 
-This provides the one property the operator demanded — "a new capability rather than a trade" — **by construction**. The Latin model is not retrained rather than spliced rather than touched. Its regression is provably zero.
+This design gives the operator's required property, "a new capability rather than a trade", **by construction**. The Latin model is not retrained, spliced, or otherwise changed, so its regression is provably zero.
 
-The open question that A-internally leaves unresolved, and that the probe must answer, is whether the two models eventually **unify** into one char model serving all scripts. Unification is elegant (one transformer body, shared) and is the bitter-lesson-direct end state. But it re-introduces the dilution risk. **Decision: do not unify in v8.** Ship dual-path. Treat unification as a later consolidation blocked on a Latin bake-off (§3).
+The open question, which the probe must answer, is whether the two models should eventually **unify** into one char model that serves all scripts. Unification is elegant, with one shared transformer body, and it is the end state the bitter lesson points toward. It also brings back the dilution risk. **Decision: do not unify in v8.** Ship both paths. Treat unification as a later consolidation that depends on a Latin bake-off (§3).
 
 ### The cheapest pre-registered probe
 
-Two legs, both ~1-hour A100 retrains at this model size (the pocket budget's iteration loop is the point). Pre-register both reads before running.
+The probe has two legs. Each is about a 1-hour A100 retrain at this model size, and fast iteration is the reason for the pocket budget. Pre-register both reads before running.
 
 **Leg 1 — CJK viability (the go/no-go for A on CJK):**
 
-- Build ~200k JP rows from Overture-JP on the JP schema subset (§2), aligned to character-level BIO (§5 must be solved first, because this is the check on the check).
-- Wire the data loader to feed `char_ids` (currently `char_tokenizer.encode_row_charword` exists but `data_loader.py` has no char path, so this is the one piece of real plumbing the probe needs).
-- Train the **bare** char model — no anchor/gazetteer/phrase channels (the scaffolding docstring already scopes the probe this way; channels re-align per-word only after the probe confirms).
-- Eval on a **held-out JP coordinate-acceptability board**, held out by locality bucket (the same discipline as the Latin coord boards).
-- **Falsifiable read:** bare-char-JP reaches coordinate-acceptability ≥ the bare-Latin-model floor (~0.70 oracle@5, the substrate baseline). PASS → A is viable for CJK, proceed to the phased build. FAIL → the bottleneck is upstream of the encoder (alignment or schema), diagnose before spending on channels.
+- Build about 200k JP rows from Overture-JP on the JP schema subset (§2), aligned to character-level BIO. §5 must be solved first, because the probe's result is only as good as that alignment.
+- Wire the data loader to feed `char_ids`. `char_tokenizer.encode_row_charword` exists, but `data_loader.py` has no char path, so this is the one piece of real plumbing the probe needs.
+- Train the **bare** char model without the anchor, gazetteer, or phrase channels. The scaffolding docstring already scopes the probe this way. The channels are re-aligned per word only after the probe passes.
+- Evaluate on a **held-out JP coordinate-acceptability board**, held out by locality bucket, using the same discipline as the Latin coord boards.
+- **Falsifiable read:** Bare-char-JP reaches a coordinate acceptability at or above the bare-Latin-model floor (~0.70 oracle@5, the substrate baseline). If it passes, A is viable for CJK, and the phased build proceeds. If it fails, the bottleneck is upstream of the encoder (alignment or schema), so diagnose it before spending on channels.
 
 **Leg 2 — the unification bake-off (decides dual-path-forever vs eventual-merge):**
 
-- Train the _same_ bare char model on the _Latin_ corpus. Compare to the bare SP Latin model on the existing Latin coord boards.
-- **Falsifiable read:** does char-level match SP on Latin (within noise on US comma-free + FR-fragment)? If **yes**, unification is on the table for a future major. If **no**, dual-path is permanent — which is _fine_ (C handles it), but you want that answer now, cheaply rather than after committing to a merge.
+- Train the _same_ bare char model on the _Latin_ corpus, and compare it with the bare SP Latin model on the existing Latin coord boards.
+- **Falsifiable read:** Does the char-level model match SP on Latin, within noise on US comma-free and FR-fragment? If it does, unification becomes an option for a future major version. If it does not, the two paths are permanent. C handles that case _fine_, but the answer is cheap now and expensive after committing to a merge.
 
-Leg 1 checks v8. Leg 2 checks the _shape of v9+_ and costs one extra retrain — run it in the same session.
+Leg 1 tests v8. Leg 2 tests the _shape of v9+_ and costs one extra retrain, so run it in the same session.
 
 ---
 
@@ -58,7 +58,7 @@ Leg 1 checks v8. Leg 2 checks the _shape of v9+_ and costs one extra retrain —
 
 ### The tags exist; activate them
 
-`COMPONENT_TAGS` already declares the JP seven (`SCHEMA.mdx` §JP-specific), blocked behind `LocaleProfile.componentsSupported`. This was Phase-0 foresight paying off exactly as designed ("so that schema additions in Phase 6 do not require a core rewrite"). v8 is that Phase 6.
+`COMPONENT_TAGS` already declares the seven JP tags (`SCHEMA.mdx` §JP-specific), and `LocaleProfile.componentsSupported` holds them back. Phase 0 declared them in advance "so that schema additions in Phase 6 do not require a core rewrite". v8 is that Phase 6.
 
 Mapping the chōme-banchi system to the tags:
 
@@ -72,37 +72,37 @@ Mapping the chōme-banchi system to the tags:
 | 号 gō (building number)           | `building_number` | 1号            |
 | building name (frequently romaji) | `building_name`   | Tokyo Building |
 
-Postcode (〒100-0005) maps to the existing universal `postcode`. Country to `country`. So JP reuses the universal head for the coarse fields and adds the seven street/block tags. **Do not reuse `street`/`house_number` for JP** — chōme-banchi is not a street+number grammar, and forcing it corrupts both label statistics (the same argument `SCHEMA.mdx` makes for keeping `cedex` out of `postcode`).
+Postcode (〒100-0005) maps to the existing universal `postcode`, and country maps to `country`. JP therefore reuses the universal head for the coarse fields and adds the seven street/block tags. **Do not reuse `street`/`house_number` for JP.** Chōme-banchi is not a street-plus-number grammar, and forcing it into those tags corrupts the label statistics of both. `SCHEMA.mdx` makes the same argument for keeping `cedex` out of `postcode`.
 
 ### Universal extension rather than a JP fork
 
-Activate the tags in the shared union; let `componentsSupported` per-locale check emission. The classifier head expands from 33 → 47 labels (7 new tags × B/I). Rationale: KR and CN will need overlapping structure (KR has 시/도 province, 시/군/구 city, 동 dong, 번지 — several map onto `municipality`/`district`/`sub_block`), so a JP-private label set wouldbe re-forked at KR. One universal union, per-locale masks, is the established pattern (the FR `cedex` precedent).
+Activate the tags in the shared union, and let the per-locale `componentsSupported` decide which tags each locale emits. The classifier head grows from 33 to 47 labels (7 new tags × B/I). KR and CN will need overlapping structure. KR has 시/도 province, 시/군/구 city, 동 dong, and 번지, and several of those map onto `municipality`, `district`, and `sub_block`. A JP-private label set would have to be forked again for KR. One universal union with per-locale masks is the established pattern, as in the FR `cedex` precedent.
 
-**Head-expansion note (from #727 phase-1):** a freshly-added head/label group needs its **own param-group LR** — the existing warm layers and the cold new label rows must not share a learning rate. Bake this into the JP training config.
+**Head-expansion note (from #727 phase-1):** A newly added head or label group needs its **own param-group LR**. The existing warm layers and the cold new label rows must not share a learning rate. Put this in the JP training config.
 
 ### Order: native rather than normalized
 
-Large-to-small is a _grammar the model learns from labels_ rather than a preprocessing step. This is the project's model-first doctrine verbatim ("if a human can reason it from context, the model should learn it"). Normalizing JP to Western order would (a) require a parser to do the reordering — the exact rule-engine the architecture rejects — and (b) train a surface real queries don't use, the same reason romanization (approach C-old) was rejected on 2026-07-18. The corpus synthesizes rows in native order; the model reads position from context, as it already does for FR's inverted `house_number`/`street` order.
+The model learns large-to-small order _as a grammar from labels_, and no preprocessing step rewrites it. This follows the project's model-first doctrine: "if a human can reason it from context, the model should learn it". Normalizing JP to Western order has two problems. First, a parser would have to do the reordering, and that is the rule engine the architecture rejects. Second, the model would train on a surface form that real queries do not use. Romanization (approach C-old) was rejected on 2026-07-18 for the same reason. The corpus synthesizes rows in native order, and the model reads position from context, as it already does for FR's inverted `house_number`/`street` order.
 
 ---
 
 ## 3. Preserving the Latin 23
 
-**Mechanism: separate model per script family, script-routed at runtime. The Latin SP model is not touched.**
+**Mechanism: a separate model per script family, routed by script at runtime. The Latin SP model stays untouched.**
 
-This is the strongest possible forgetting guard. The Latin regression is not _measured small_, it is _provably zero_, because the artifact is byte-identical (the #825 "diff 0 CI[0,0]" proof, but for the whole model instead of the encoder). No dual-path-single-model complexity, no frozen-encoder-plus-adapter fine-tuning risk. Two ONNX artifacts, one router.
+This is the strongest available protection against forgetting. The Latin regression is _provably zero_ rather than merely _measured as small_, because the artifact is byte-identical. It is the #825 "diff 0 CI[0,0]" proof applied to the whole model instead of the encoder. The design avoids the complexity of a single model with two paths and the fine-tuning risk of a frozen encoder with an adapter. It consists of two ONNX artifacts and one router.
 
-- **Router:** Unicode-block histogram on the raw string → script family → model. Lives in `query-shape` (already computes character-class priors). A mixed-script string (romaji building name inside a kanji address) routes by dominant CJK content; the char model handles the embedded romaji fine (its char vocab includes Latin).
-- **Cost:** +1 model artifact. The char CJK model is _small_ (few-thousand-char embedding table vs 73k SP), so the marginal MB is modest and Tier-A/Tier-B payload logic is unchanged — the router picks the model, the gazetteer split is orthogonal.
-- **Channels:** the anchor/gazetteer/country/conventions channels project per-SP-piece today. For the char model they re-align **per-word** (one projection per whitespace-or-CJK-char token). The scaffolding defers this until after the probe — correct sequencing; the bare probe isolates the encoder, channels come once CJK viability is proven.
+- **Router:** A Unicode-block histogram on the raw string selects the script family, which selects the model. The router lives in `query-shape`, which already computes character-class priors. A mixed-script string, such as a romaji building name inside a kanji address, routes by its dominant CJK content. The char model handles the embedded romaji, because its char vocab includes Latin.
+- **Cost:** one more model artifact. The char CJK model is _small_ (an embedding table of a few thousand chars versus 73k SP pieces), so the added size is modest. The Tier-A/Tier-B payload logic is unchanged, because the router picks the model and the gazetteer split is independent of that choice.
+- **Channels:** Today the anchor, gazetteer, country, and conventions channels project per SP piece. For the char model they are re-aligned **per word**, with one projection per whitespace token or CJK char. The scaffolding defers this until after the probe. That order is correct, because the bare probe isolates the encoder, and the channels come once CJK viability is proven.
 
-Unification into one char model is explicitly **out of v8 scope**, blocked on probe Leg 2. Ship dual-path; revisit at v9+ if char matches SP on Latin.
+Unification into one char model is explicitly **out of v8 scope** and depends on probe Leg 2. Ship both paths, and revisit at v9+ if the char model matches SP on Latin.
 
 ---
 
 ## 4. Phased v8 plan
 
-Check discipline: each phase has a falsifiable read; a fail diagnoses before the next phase, it does not proceed on hope.
+Check discipline: Each phase has a falsifiable read. If a phase fails, diagnose the failure before starting the next phase rather than proceeding on hope.
 
 | Phase                          | Work                                                                                                                                                                                                 | Check                                                                                                                                                     |
 | ------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -113,25 +113,25 @@ Check discipline: each phase has a falsifiable read; a fail diagnoses before the
 | **4 — JP train + channels**    | Train char CJK model with channels re-aligned per-word; int8 ONNX export.                                                                                                                            | JP coord board clears the v8 bar (TBD — set from probe, e.g. wrong-prefecture < X%). Latin: N/A, untouched (provable).                                    |
 | **5 — Ship JP-only**           | Router in `query-shape`; second model artifact; drop-in + browser (onnxruntime-web) verified; demo repoint.                                                                                          | Published-tarball md5 verify; **JP is the first non-Latin parse claim.**                                                                                  |
 | **6 — KR**                     | Pull Overture-KR; KR schema map; KR extract; train (likely _same_ char model, KR labels added).                                                                                                      | KR coord board. **See reframe below — KR may be cheaper than JP.**                                                                                        |
-| **7 — CN/TW**                  | Overture-TW 9.7M on disk; CN pullable. Hanzi, no whitespace (JP-alignment problem again).                                                                                                            | CN/TW coord board.                                                                                                                                        |
+| **7 — CN/TW**                  | Overture-TW 9.7M on disk; CN pullable. Hanzi has no whitespace, so the JP alignment problem recurs.                                                                                                  | CN/TW coord board.                                                                                                                                        |
 
-**What ships first: JP-only (Phase 5).** It is the operator's stated headline, the data is on disk (19.6M), and it validates the whole char+router+schema stack end-to-end before KR/CN pile on.
+**What ships first: JP only (Phase 5).** JP is the operator's stated headline, its data is on disk (19.6M rows), and it validates the whole char, router, and schema stack end to end before KR and CN are added.
 
-**Reframe worth surfacing: KR before JP may be the cheaper first ship.** Korean addresses are **whitespace-separated** between components — which is exactly the segmentation the existing whitespace-word pipeline assumes. JP is space-free and needs the Phase-0 alignment implementation. If the operator wants the _fastest_ non-Latin ship rather than specifically-JP-first, KR clears Phase 0 nearly for free. JP-first is the right call for headline value; KR-first is the right call for de-risking the char path with the least alignment work. Flagging the trade; JP-first as written unless the operator reprioritises.
+**KR before JP may be the cheaper first release.** Korean addresses separate components **with whitespace**, which is exactly the segmentation the existing whitespace-word pipeline assumes. JP has no spaces and needs the Phase-0 alignment work. If the operator wants the _fastest_ non-Latin release rather than JP specifically, KR clears Phase 0 at almost no cost. JP first gives the most headline value. KR first reduces the risk in the char path with the least alignment work. This plan keeps JP first unless the operator changes the priority.
 
 ---
 
 ## 5. The single biggest risk you haven't named
 
-**It is not the encoder, the schema, or the tokenizer. It is corpus BIO alignment over unsegmented CJK — and it sits upstream of every training dollar.**
+**The biggest risk is corpus BIO alignment over unsegmented CJK. It outweighs the encoder, the schema, and the tokenizer, and every training dollar depends on it.**
 
-The Latin pipeline aligns because Overture fields map to **whitespace tokens** (`STREET=Salmon St` → tokens `[Salmon, St]`, BIO-aligned by the whitespace tokenizer). JP breaks both assumptions:
+The Latin pipeline aligns correctly because Overture fields map to **whitespace tokens**. `STREET=Salmon St` becomes the tokens `[Salmon, St]`, and the whitespace tokenizer aligns the BIO labels. JP breaks both assumptions:
 
-1. **No whitespace.** `東京都千代田区丸の内1丁目` is one unbroken string. The CharCNN scaffolding's "one char per token for CJK" degenerates each kanji to a single-char word — which _loses_ the morpheme grouping (丁目 as a unit, 番地 as a unit) that the block grammar needs. The word-composition-from-chars advantage evaporates if every token is one char.
-2. **Field values don't carry positions.** Overture gives `district=丸の内`, `block=1丁目` as _values_ rather than offsets. Aligning them back to the concatenated string is a **substring-match problem that is ambiguous** when a kanji recurs (a district char that also appears in the city name binds to the wrong span). The Latin pipeline never faces this because whitespace disambiguates.
+1. **JP has no whitespace.** `東京都千代田区丸の内1丁目` is one unbroken string. The CharCNN scaffolding treats each CJK char as one token, which reduces each kanji to a single-char word. That _loses_ the morpheme grouping (丁目 as a unit, 番地 as a unit) that the block grammar needs. Composing words from chars brings no benefit if every token is one char.
+2. **Field values carry no positions.** Overture gives `district=丸の内` and `block=1丁目` as _values_ rather than offsets. Aligning them back to the concatenated string is a **substring-match problem that becomes ambiguous** when a kanji recurs. A district char that also appears in the city name can bind to the wrong span. The Latin pipeline avoids this because whitespace disambiguates.
 
-If alignment is silently wrong, you train on mislabeled spans and the coord board tells you _something_ is broken but not _what_ — the most expensive failure mode (compute already spent). The #825 measurement led to this rule: **grade the thing the model consumes, before you train.**
+If alignment is silently wrong, the model trains on mislabeled spans. The coord board then shows that _something_ is broken without showing _what_, and the compute is already spent. That is the most expensive failure mode. The #825 measurement led to this rule: **grade the input the model consumes before you train.**
 
-**Cheap de-risk (Phase 0, no compute):** take 500 Overture-JP rows, run field→character-span alignment, and **hand-check 50 by eye** — a human reads kanji spans in seconds. If field-concatenation alignment is clean, the risk is retired for pennies. If it is ambiguous, you have surfaced — _before training_ — that you need a JP morphological segmenter (MeCab/Sudachi) or the deterministic block-structure regex (postcode/丁目/番地/号 are regular delimiters) to produce gold character spans. Either way it is a Phase-0 data dependency rather than a Phase-4 surprise. The whole point of the pocket-sized model is that the small model surfaces corpus bugs instead of absorbing them — Phase 0 is that principle applied before the first retrain.
+**Cheap risk reduction (Phase 0, without compute):** Take 500 Overture-JP rows, run the field-to-character-span alignment, and **hand-check 50 by eye**. A human reads kanji spans in seconds. If field-concatenation alignment is clean, the risk is closed at almost no cost. If it is ambiguous, the check shows _before training_ that gold character spans need a JP morphological segmenter (MeCab/Sudachi) or the deterministic block-structure regex, since postcode, 丁目, 番地, and 号 are regular delimiters. Either way, the problem becomes a Phase-0 data dependency rather than a Phase-4 surprise. A pocket-sized model is useful because it exposes corpus bugs instead of absorbing them, and Phase 0 applies that principle before the first retrain.
 
-Secondary de-risk it also retires: it tells you whether the CharCNN "one-char-per-CJK-token" scaffolding is adequate or whether CJK tokens must be **morpheme-grouped** before char-composition (i.e. segment first, then compose each morpheme from its chars). That is a small change to `char_tokenizer.encode_row_charword`, but you want to know in week 1 rather than after the probe.
+The same check answers a second question. It shows whether the CharCNN scaffolding's one-char-per-CJK-token approach is adequate, or whether CJK tokens must be **grouped into morphemes** before char composition (segment first, then compose each morpheme from its chars). That is a small change to `char_tokenizer.encode_row_charword`, but the answer is needed in week 1 rather than after the probe.

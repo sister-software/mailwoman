@@ -3,36 +3,21 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mailwoman gazetteer postcode-binary` — build per-country browser postcode binaries (#240) from
- *   the SQLite databases. Emits one `postcode-<cc>.bin` per locale into the `--out` dir (default
- *   `docs/static/mailwoman/`, alongside `fst-en-US.bin`), each loadable by `@mailwoman/neural`'s
- *   `PostcodeBinaryResolver` in the wasm/browser parser. Per-country so the browser fetches only
- *   the locale it needs (the tiered-loading story in the design doc).
+ *   Implements `mailwoman gazetteer postcode-binary`, which writes one `postcode-<cc>.bin` per country
+ *   from the SQLite postcode databases. `PostcodeBinaryResolver` in `@mailwoman/neural` reads these
+ *   files, and per-country files let the browser fetch only the locale it needs.
  *
- *   The database `name` is already the normalized postcode key (DE/FR `68161`/`75008`, NL space-less
- *   `1012LM`, US `94105`). It is exactly what the anchor queries. Therefore, it serializes verbatim.
+ *   The database `name` column already holds the normalized postcode key that the anchor queries, so
+ *   the command serializes it unchanged.
  *
- *   **GB is special**, and it is where this command shipped two defects (#1509 — the derivation and
- *   the refusal both live in `gazetteer-pipeline/postcode/binary.ts`, with the reproduction). The
- *   outward district is now derived by shape (the inward code is the trailing three characters of the
- *   space-stripped form), so the same rule reads the spaced GeoNames-lineage database and the
- *   space-stripped Code-Point Open one. `--gb-granularity` picks the key set:
+ *   `--gb-granularity` selects the GB key set. `unit`, the default, holds every unit plus its outward
+ *   district and matches the anchor model's training data. `outward` holds only districts and is small
+ *   enough for a browser bundle. `gazetteer-pipeline/postcode/binary.ts` derives the outward district
+ *   from the postcode's shape, so it handles both spaced and space-stripped sources.
  *
- *   - `unit` (default) — every unit plus its outward district: 1,749,839 keys / 20.0 MB from
- *       `postalcode-gb-codepoint.db`. This is the train-faithful set. A model trained against
- *       `pilot-anchor-lookup-v2` was painted from unit centroids, so serving it anything coarser feeds
- *       the anchor channel a different distribution than training saw.
- *   - `outward` — districts only: 2,863 keys / 0.03 MB. The only GB set that fits a browser bundle, and
- *       the command's original behaviour.
- *
- *   Every locale's key count is checked against a documented floor before anything is written. a build
- *   below it exits nonzero with a named reason rather than shipping a valid, empty binary.
- *
- *   Defaults to `POSTCODE_BINARY_SOURCES` (`gazetteer-pipeline/postcode/binary.ts`): US, NL/FR/DE/ES/IT
- *   from `postalcode-intl.db`, and GB from `postalcode-gb-codepoint.db` (the licence-clean OGL v3.0
- *   source). Each `.bin` is written directly to `--out` (the original
- *   `scripts/build-postcode-binary.ts` behavior). Per-locale progress streams to stderr. the roll-up
- *   lands on stdout.
+ *   The command checks each locale's key count against a floor before writing and throws when the count
+ *   is too low. Without `--locale`, the sources come from `POSTCODE_BINARY_SOURCES`. Per-locale progress
+ *   goes to stderr.
  */
 
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
@@ -53,16 +38,13 @@ interface LocaleSource {
 }
 
 /**
- * Size past which a `.bin` written into the browser asset dir is worth a word.
- *
- * Not a limit and not enforced.
- * The command's default `--out` is `docs/static/mailwoman`, and a GB unit build lands 20
- * MB there, so the number exists to make the reader notice rather than to decide for them.
+ * Binary size above which the command prints a note suggesting the browser granularity.
+ * The command does not enforce it.
  */
 const BROWSER_BUDGET_BYTES = 4 * 1024 * 1024
 
 /**
- * Native command-line interface consumed by the filesystem command router.
+ * The command specification for `mailwoman gazetteer postcode-binary`.
  */
 export const spec = {
 	name: "postcode-binary",
@@ -79,12 +61,12 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
+/**
+ * Writes the postcode binaries and renders a summary.
+ */
 const GazetteerPostcodeBinary: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { wofDatabasePath } = await import("@mailwoman/resolver-wof-sqlite/paths")
-		// `@mailwoman/neural/postcode-binary-resolver` is a self-contained serializer
-		// whose only imports are type-only, so this load costs a file read
-		// rather than the ONNX runtime the package name suggests.
 		const { serializePostcodeBinary } = await import("@mailwoman/neural/postcode")
 
 		const { browserGranularityFor, buildPostcodeBinaryEntries, keyFloorViolation, POSTCODE_BINARY_SOURCES } =
@@ -98,8 +80,7 @@ const GazetteerPostcodeBinary: CommandComponent<typeof spec> = ({ options }) => 
 			const [country, db] = localeSpec.split(":")
 
 			if (country && db) {
-				// An absolute `db` replaces the WOF directory.
-				// A relative one resolves under it.
+				// A relative `db` resolves under the WOF directory, and an absolute one is used as is.
 				locales.push({ country, db: wofDatabasePath(db) })
 			}
 		}
@@ -134,9 +115,7 @@ const GazetteerPostcodeBinary: CommandComponent<typeof spec> = ({ options }) => 
 				gbGranularity: granularity,
 			})
 
-			// refuse before writing (#1509).
-			// A magnitude never carries its own absence: a zero-key binary is structurally valid,
-			// so the only place the failure can surface is here.
+			// An empty binary is structurally valid, so the key-count floor is the only check that catches it.
 			const violation = keyFloorViolation(country, entries.length, granularity)
 
 			if (violation) {
@@ -160,14 +139,9 @@ const GazetteerPostcodeBinary: CommandComponent<typeof spec> = ({ options }) => 
 					`) → ${outPath} (${ByteFormatter.formatIEC(bytes.length)})`
 			)
 
-			// The GB default is `unit` because that is what the anchor-v2 model was trained
-			// against, and a serving bundle shipping anything coarser feeds the channel
-			// a different distribution than training painted.
-			// But this command's default `--out` is the browser asset dir, where 20 MB is
-			// not a postcode binary, it is the whole page budget.
-			// The size is printed either way.
-			// This names the setting rather than deciding for the operator.
-			// Which countries carry a browser granularity is the source table's to say.
+			// The default output directory holds browser assets, so an oversized binary
+			// gets a note that suggests the browser granularity.
+			// The source table defines which countries have one.
 			const browserGranularity = browserGranularityFor(country)
 
 			if (browserGranularity && granularity !== browserGranularity && bytes.length > BROWSER_BUDGET_BYTES) {
@@ -196,7 +170,7 @@ const GazetteerPostcodeBinary: CommandComponent<typeof spec> = ({ options }) => 
 		)
 	}
 
-	return null // per-locale progress streams to stderr until the roll-up lands
+	return null
 }
 
 export default GazetteerPostcodeBinary

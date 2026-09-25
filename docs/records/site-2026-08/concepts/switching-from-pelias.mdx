@@ -6,18 +6,13 @@ description: A self-hosted geocoder without the Elasticsearch cluster and the im
 
 # Switching from Pelias
 
-[Pelias](https://pelias.io) is the modular, self-hosted geocoder — importers for OSM, OpenAddresses,
-Who's On First, and more, feeding an Elasticsearch cluster. It's capable and it's a lot to operate: the
-cluster, the importers, the gigabytes, the analysis chain you tune by hand.
+[Pelias](https://pelias.io) is a modular, self-hosted geocoder. Its importers for OSM, OpenAddresses, Who's On First, and other sources feed an Elasticsearch cluster. It is capable, and it takes a lot of work to operate: the cluster, the importers, gigabytes of data, and an analysis chain you tune by hand.
 
-Mailwoman keeps the parts you wanted from Pelias — self-hosted, open data, hierarchy-aware — and drops
-the cluster. The hierarchy lives in SQLite (a Who's On First `ancestors` table), and a calibrated neural
-model does the work the analysis chain did with rules.
+Mailwoman keeps what Pelias offers (self-hosting, open data, and hierarchy awareness) and removes the cluster. The hierarchy lives in SQLite, in a Who's On First `ancestors` table. A calibrated neural model does the work that Pelias's analysis chain did with rules.
 
 ## Mapping the move
 
-Pelias has its own `/v1` response envelope, and Mailwoman does not ship a `/v1`-compatible package today.
-The migration is by capability rather than by drop-in:
+Pelias has its own `/v1` response envelope, and Mailwoman does not ship a `/v1`-compatible package today. You migrate by mapping each capability to a Mailwoman package. Swapping the endpoint URL alone does not work:
 
 | Pelias             | Mailwoman                                     |
 | ------------------ | --------------------------------------------- |
@@ -33,14 +28,12 @@ npx @mailwoman/photon serve      # autocomplete (GeoJSON)
 
 ## What's different
 
-- **No Elasticsearch, no import pipeline.** One SQLite gazetteer instead of a cluster you feed.
-- **A model rather than an analysis chain.** Parsing is a calibrated neural tagger, so you get [a confidence you
-  can route on](./confidence-calibration.mdx) — and an OpenCage-style annotations block Pelias doesn't produce.
+- **It needs neither Elasticsearch nor an import pipeline.** One SQLite gazetteer replaces the cluster and its imports.
+- **A model replaces the analysis chain.** Parsing uses a calibrated neural tagger, so you get [a confidence you can route on](./confidence-calibration.mdx). You also get an OpenCage-style annotations block, which Pelias does not produce.
 
 ## What's missing
 
-- **No `/v1` envelope yet.** If your client is hard-wired to Pelias's exact response, you'll adapt it to
-  the Nominatim / Photon shapes (or a `/v1` adapter is a reasonable contribution).
-- **Coverage and ranking** are their own long roads; Pelias's mature importer set still wins in places.
+- **There is no `/v1` envelope yet.** If your client depends on Pelias's exact response, adapt it to the Nominatim or Photon shapes. A `/v1` adapter would be a reasonable contribution.
+- **Coverage and ranking** still need long-term work. Pelias's mature importers still produce better results in some places.
 
 See [how Mailwoman compares](./how-mailwoman-compares.mdx) for the capability matrix.

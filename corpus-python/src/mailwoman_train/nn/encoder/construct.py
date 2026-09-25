@@ -1,6 +1,6 @@
 """Building the input layer, the soft-feed channels and the transformer body.
 
-Construction order is a interface, and it binds this module twice. `_init_weights` walks
+Construction order is an interface, and it binds this module twice. `_init_weights` walks
 `self.parameters()`, which yields them in registration order and draws from the global RNG for
 each. Therefore, the three builders must be called from `__init__` in the order they appear below and
 nothing inside one may be reordered. A loaded checkpoint is unaffected — `load_state_dict`

@@ -3,16 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The metadata reads, pinned against the published fields they parse.
- *
- *   the licence check is the one that matters. The item's `licenseInfo` carries two statements that
- *   contradict each other — an aspiration to publish under CC-BY, and an all-rights-reserved clause naming
- *   Tailte Éireann as an upstream licensor — and the second is the reason this layer is built locally rather
- *   than shipped. A build that absorbed its disappearance would ship the artifact under terms nobody checked,
- *   so the guard reads it separately from the credit line and refuses on either.
- *
- *   the fixture text is the real field, markup and all, because the parse is a markup strip and a fixture in
- *   plain text would test nothing.
+ *   Tests the zoning metadata parsing and attribution checks against the published field text, including its markup.
  */
 
 import { htmlToText } from "@mailwoman/core/html/text"
@@ -21,7 +12,7 @@ import { GZT_ATTRIBUTION, GZT_DECLARED_CODE_SET, GZT_DECLARED_CODES, GZT_LICENSE
 import { describe, expect, it } from "vitest"
 
 /**
- * The clause the published `licenseInfo` ends with, verbatim including its inline markup.
+ * The final clause of the published `licenseInfo`, verbatim with its inline markup.
  */
 const PUBLISHED_LICENSE_TAIL =
 	"<p style='margin:0cm'><font color='#050505'><span style='font-size:14.6667px;'>Copyright in this site and the " +
@@ -30,7 +21,7 @@ const PUBLISHED_LICENSE_TAIL =
 	"reserved. </span></p><p><span>&#169; Tailte Éireann. All rights reserved. Licence No. 2023/OSi_NMA_073</span></p>"
 
 /**
- * The credit line the item's `accessInformation` carries, verbatim.
+ * The credit line from the item's `accessInformation`, verbatim.
  */
 const PUBLISHED_ACCESS_INFORMATION = "Department of Housing, Local Government, and Heritage"
 
@@ -97,18 +88,12 @@ describe("the shipped constants", () => {
 	})
 
 	it("asserts NO licence, because three published statements disagree about the grant", () => {
-		// `noassertion` is spdx's own token for a determination nobody has made.
-		// Writing `CC-BY-4.0` here while an all-rights-reserved clause names a licensor
-		// would be this program asserting a grant.
 		expect(GZT_LICENSE).toBe("NOASSERTION")
 		expect(GZT_LICENSE).not.toContain("CC-BY")
 	})
 
 	it("declares the publisher's own 54 generic types, and no more", () => {
-		// The service's coded-value domain holds 54.
-		// The data uses 55 — `N/A` on four rows — and that one is recorded as observed
-		// rather than added here, because a declaration this package wrote would be
-		// indistinguishable from one the Department made.
+		// The data also uses the undeclared `N/A`, which the ingest records as observed but undeclared.
 		expect(GZT_DECLARED_CODES).toHaveLength(54)
 		expect(GZT_DECLARED_CODE_SET.size).toBe(54)
 		expect(GZT_DECLARED_CODE_SET.has("N/A")).toBe(false)

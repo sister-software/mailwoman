@@ -3,11 +3,12 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mailwoman coverage build` — bake the demo map's "fog of war" address-coverage H3 hexbin tileset
- *   (PMTiles) from the per-state address-point (+ interpolation) databases. See `coverage-core.ts` for the
- *   pipeline + fog model. Publish the result with `mailwoman tiles publish`.
+ *   Implements `mailwoman coverage build`, which builds the demo map's address-coverage H3 hexbin
+ *   PMTiles from the per-state address-point and interpolation databases.
  *
- *   Maintainer-only: needs the local databases + `tippecanoe` on path + the @duckdb/node-api dev dep.
+ *   `coverage-core.ts` implements the pipeline. `mailwoman tiles publish` uploads the result. The
+ *   command requires the local databases, `tippecanoe` on the path and the `@duckdb/node-api`
+ *   development dependency.
  */
 
 import { extractDelimited } from "@mailwoman/core/scripting/arguments"
@@ -32,18 +33,12 @@ import {
 } from "#cli-kit"
 
 /**
- * The coarsest and finest H3 resolutions the library defines.
- *
- * A cell index outside 0–15 is not a resolution the H3 bindings can address,
- * so this bound is the format's rather than a tuning choice.
+ * The finest resolution that H3 defines.
  */
 const MAX_H3_RESOLUTION = 15
 
 /**
- * The deepest zoom a tile pyramid addresses.
- *
- * Tippecanoe and the Web Mercator tile scheme both stop at 22, so a higher value
- * names a tile no renderer will request.
+ * The maximum zoom level that Tippecanoe supports.
  */
 const MAX_TILE_ZOOM = 22
 
@@ -66,10 +61,10 @@ const unit = (description: string, defaultValue: number) =>
 	}) as const
 
 /**
- * The command-line interface the filesystem command router reads for `mailwoman coverage build`.
+ * The command specification for `mailwoman coverage build`.
  *
- * Its option names and descriptions are the source the CLI reference page is generated from, so a
- * rename here moves `docs/articles/developers/reference/cli.mdx` and the docs check refuses the drift.
+ * The CLI reference page `docs/articles/developers/reference/cli.mdx` is generated from
+ * these option names and descriptions, and the docs check fails when the page is stale.
  */
 export const spec = {
 	name: "build",
@@ -129,7 +124,9 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-
+/**
+ * Builds the coverage tiles and renders progress and a summary.
+ */
 const CoverageBuild: CommandComponent<typeof spec> = ({ options }) => {
 	const [stage, setStage] = useState<{ name: string; message: string }>()
 

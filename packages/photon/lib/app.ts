@@ -17,10 +17,10 @@ import { registerPhotonRoutes } from "#routes"
  */
 export interface PhotonAppOptions {
 	/**
-	 * Whether to send permissive CORS headers and answer preflight `OPTIONS` requests, default true.
+	 * Whether to send permissive CORS headers and answer preflight `OPTIONS` requests.
 	 *
-	 * Browser map widgets call Photon cross-origin, as upstream Photon allows; set `false`
-	 * when a reverse proxy already sets the CORS headers.
+	 * It defaults to true because browser map widgets call Photon from other origins.
+	 * Set it to `false` when a reverse proxy already sets the CORS headers.
 	 */
 	cors?: boolean
 
@@ -28,15 +28,16 @@ export interface PhotonAppOptions {
 	 * The engine stamp added to every FeatureCollection and sent in the `Server`
 	 * and `Link: rel="license"` headers.
 	 *
-	 * The `photon` command always passes one; an embedding application without
-	 * the `mailwoman` package may omit it.
+	 * The `photon` command always passes one.
+	 * An embedding application may omit it.
 	 */
 	engine?: EngineStamp
 }
 
 /**
- * Describes the Photon API in its OpenAPI document, shared by the served `/openapi.json` route
- * and the CLI's `openapi` subcommand so the two cannot drift.
+ * The OpenAPI document info for the Photon API.
+ *
+ * The served `/openapi.json` route and the CLI's `openapi` subcommand both use it.
  */
 export const PHOTON_DOC_INFO: OpenAPIDocInfo = {
 	...(await readServedDocumentInfo(import.meta.url, "@mailwoman/photon")),
@@ -60,7 +61,7 @@ export const PHOTON_DOC_INFO: OpenAPIDocInfo = {
 }
 
 /**
- * Build the Photon-compatible app around an injected {@link PhotonEngine}.
+ * Builds the Photon-compatible app around the given {@link PhotonEngine}.
  */
 export function createPhotonApp(engine: PhotonEngine, options: PhotonAppOptions = {}): OpenAPIHono {
 	const app = new OpenAPIHono()

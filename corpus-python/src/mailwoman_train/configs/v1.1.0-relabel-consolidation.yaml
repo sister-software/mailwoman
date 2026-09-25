@@ -1,41 +1,17 @@
-# === v1.1.0-relabel-consolidation (#511 — the full RUN) ==========================================
-# The v4.2.0 consolidation recipe on a label-consistent mix: data.affix_relabel_lexicon_path makes
-# the base corpus agree with the affix recipe output (trailing USPS suffix -> street_suffix, leading
-# directional -> street_prefix, exact recipe semantics — see relabel.py / #511).
+# This recipe trains the v4.2.0 consolidation mix from scratch with the affix relabel pass on.
+# The relabel pass in data/relabel.py makes the base corpus split street suffixes and leading
+# directionals the same way the affix recipe does.
 #
-# probe-validated (v1.0.6, 2026-06-10): single-variable vs probe 0, relabel on ended the transient
-# decay — prefix 88.0R@+2k -> 84.0R@+4k (one eval instance, vs the control's 81 -> 61.1 collapse),
-# suffix F1 96.7 -> 100.0, street flat 87.5. The #492 contradiction theory is confirmed.
+# With consistent labels, the affix sources need less compensation than the v1.0.2 recipe gave them.
+# The synth-affix weight drops from 17.0 to 2.0, and the street_prefix and street_suffix class
+# weights drop to 1.5. The relabeled base puts a suffix on most street rows, so a large suffix
+# class weight would push the model to over-predict it.
 #
-# Two deliberate changes vs the shipped Run B (v1.0.2) — both reversions of anti-contradiction
-# compensation that a consistent mix no longer needs (stated here per no-silent-check-drift):
-#   1. synth-affix 17.0 -> 2.0 (the v1.0.0 base value). 17.0 was calibrated to outshout a 1,000:1
-#      contradiction that no longer exists. the probe held affix at high-80s/100 even resuming a
-#      20.0-weight model. If affix lands short at 2.0, sweep up (4.0) — do not restore 17.0 blind.
-#   2. affix tag class-weights 2.0/4.0 -> 1.5/1.5 (v1.0.0 base). Suffix is no longer starved — it
-#      now appears on ~65% of base street rows. a 4x boost on a majority tag risks over-fire.
-# From scratch (--resume none, no init_from): the equilibrium claim is that a consistent mix
-# produces affix-stable weights natively rather than that a rescued checkpoint can keep them.
+# Before launch, the volume needs the relabel lexicon at /data/gazetteer/affix-relabel-lexicon-v1.json
+# and the v0.4.12-consolidation corpus.
 #
-# PRE-registered check — the v4.2.0 ship-check floors, unchanged (scripts/eval/checks/v4.2.0-ship.json,
-# fp32-to-fp32, ship-config channels: gazetteer lexicon + suppress-gaz-near-postcode + anchor):
-#   - affix: street_prefix >= 78, street_suffix >= 67 — measured at 20k and 40k (stability is the
-#     claim under test. a 20k peak that decays by 40k is a miss even if 40k clears the floor).
-#   - US street >= 80.4, locality >= 72.9, unit >= 90.6, US postcode >= 97, micro >= 85.4 (v4.2.0).
-#   - country >= 83.3 band (country-homograph-real), over-fire 0.
-#   - FR postcode >= 99.5, FR house_number >= 91. DE native-order locality >= 83.8.
-#   - New watches (DeepSeek consult 2026-06-10): folded-street invariance, short-street ("Main St")
-#     recall, house_number->street_prefix CRF transition sanity. The expanded affix eval (#511
-#     task: >=100 prefix / >=100 suffix instances from NAD native fields) re-baselines before the
-#     check verdict. the 32-row eval result is recorded alongside rather than substituted.
-#   decision: all hold -> ship candidate (int8 -> v4.3.0). Affix short at 2.0 -> one weight sweep
-#   (4.0), nothing else. Any spine regression -> stop, the relabel pass gets re-audited before any
-#   weight surgery (a relabel bug presents as boundary noise rather than as a dilution problem).
-#
-# Requires on the volume: relabel.py + config.py + data_loader.py (synced 2026-06-10), the relabel
-# lexicon at /data/gazetteer/affix-relabel-lexicon-v1.json, corpus v0.4.12-consolidation.
-# Launch:
-#   cd corpus-python && modal run -d -m launch.train_remote --config v1.1.0-relabel-consolidation.yaml --resume none
+# Launch it from corpus-python with:
+#   modal run -d -m launch.train_remote --config v1.1.0-relabel-consolidation.yaml --resume none
 data:
   corpus_dir: /data/corpus/versioned/v0.4.12-consolidation/corpus-v0.4.12-consolidation
   tokenizer_dir: /data/models/tokenizer/v0.6.0-a0
@@ -60,7 +36,7 @@ data:
     synth-po-box: 1.5
     synth-intersection: 0.2
     synth-german: 6.0
-    # Every proven change rides at its solo-validated weight.
+    # Each of these sources keeps the weight from its own single-source run.
     synth-unit: 1.5
     synth-affix: 2.0
     synth-country: 2.0
@@ -71,10 +47,9 @@ data:
   augment_region_prob: 0.3
   anchor_lookup_path: /data/anchor/pilot-anchor-lookup.json
   gazetteer_lexicon_path: /data/gazetteer/anchor-lexicon-v1.json
-  # The v0.9.12 US-postcode fix (#468): zero the gazetteer clue on tokens adjacent to a postcode-anchor
-  # hit, at train time (paired with classifier.suppressGazetteerNearPostcode at inference). First trained here.
+  # Choreography zeroes the gazetteer clue on tokens next to a postcode-anchor hit during training.
+  # Inference must pair it with classifier.suppressGazetteerNearPostcode.
   gazetteer_choreography: true
-  # the #511 change: end the base-vs-recipe affix label contradiction (probe-validated v1.0.6).
   affix_relabel_lexicon_path: /data/gazetteer/affix-relabel-lexicon-v1.json
 
 model:

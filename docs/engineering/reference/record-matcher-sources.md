@@ -8,18 +8,19 @@ tags:
 
 # Record-matcher source-data catalog
 
-The public datasets [the record-matcher](../../records/site-2026-08/concepts/geocode-first-record-matching.mdx) resolves, their schemas, the column mappings, and the join keys.
-These are **real public compliance/reporting datasets** with **no shared entity key across them** and heavy
-within-dataset repetition — resolving them into deduplicated, cross-linked entities is what makes them
-analyzable. Our scope is the **resolution**; whatever correlations surface are the data consumer's to
-interpret.
+This page lists the public datasets that [the record-matcher](../../records/site-2026-08/concepts/geocode-first-record-matching.mdx)
+resolves, with their schemas, column mappings, and join keys. They are **real public compliance and reporting
+datasets**. They have **no shared entity key across them**, and each one repeats entities heavily. Resolving them
+into deduplicated, cross-linked entities makes them possible to analyze. Our scope is the **resolution**, and the
+data consumer interprets any correlations that appear.
 
-Data lives at `$MAILWOMAN_DATA_ROOT/record-matcher/sources/` (persistent — not `/tmp`). The NPPES
-registry is 4.8 GB / 9.6M rows, so everything streams (`streamRows`, #616) — never `readFileSync`.
+The data lives in `$MAILWOMAN_DATA_ROOT/record-matcher/sources/`, which is persistent storage rather than `/tmp`.
+The NPPES registry is 4.8 GB / 9.6M rows, so every reader streams it (`streamRows`, #616) and never uses
+`readFileSync`.
 
-The committed `ColumnMapping`s live in the benchmark + correlation scripts
-(`scripts/record-matcher/{nppes-dedup-benchmark,cross-dataset-correlation}.ts`); this page is the
-human-readable index of them.
+The committed `ColumnMapping`s live in the benchmark and correlation scripts
+(`scripts/record-matcher/{nppes-dedup-benchmark,cross-dataset-correlation}.ts`). This page is a human-readable
+index of them.
 
 ## The datasets
 
@@ -47,9 +48,9 @@ human-readable index of them.
 | `address`      | `Provider First Line Business Practice Location Address` + City + State + Postcode |
 | `phone`        | `Provider Business Practice Location Address Telephone Number`                     |
 
-The mailing-address columns (`Provider First Line Business Mailing Address` + …) give the address-variation
-records in the dedup benchmark. Practice-location secondary addresses live in the separate
-`practice-locations` file (same `NPI` key).
+The mailing-address columns (`Provider First Line Business Mailing Address` + …) supply the address-variation
+records in the dedup benchmark. Secondary practice-location addresses live in the separate
+`practice-locations` file, keyed by the same `NPI`.
 
 ### FCC RHC posted-services → `SourceRecord`
 
@@ -63,7 +64,7 @@ records in the dedup benchmark. Practice-location secondary addresses live in th
 
 ### FCC RHC commitments → `SourceRecord` (explode: two records per row)
 
-Each row carries a **Filing HCP** and a **Participating HCP** — explode into two records:
+Each row carries a **Filing HCP** and a **Participating HCP**. Split each row into two records:
 
 | field          | Filing HCP                                    | Participating HCP                                    |
 | -------------- | --------------------------------------------- | ---------------------------------------------------- |
@@ -88,18 +89,18 @@ certification data.
 
 ## Join structure
 
-- **Within NPPES:** the `NPI` keys registry ↔ other-names ↔ practice-locations. This is what makes the
-  dedup benchmark's NPI-as-ground-truth possible (#617).
-- **Across sources:** there is **no shared key.** NPPES (`NPI`), FCC RHC (`HCP Number` / `Filing HCP`), and
-  TX HHSC (`Facility ID`) are independent id spaces. Resolution across them is by **geocoded location +
-  name/org agreement** — the cross-dataset correlation (#618). A resolved entity spanning ≥2 sources is the
-  link we surface for review.
-- **Latent bridges** (not yet used): `Medicare/Medicaid Provider Number` (TX HHSC ↔ CMS ↔ NPPES), `SPIN`
-  (FCC commitments ↔ spin-lookup). These would corroborate geo-resolved links where present.
+- **Within NPPES:** `NPI` links registry ↔ other-names ↔ practice-locations. This key lets the dedup
+  benchmark use the NPI as ground truth (#617).
+- **Across sources:** the sources have **no shared key.** NPPES (`NPI`), FCC RHC (`HCP Number` /
+  `Filing HCP`), and TX HHSC (`Facility ID`) use independent id spaces. The cross-dataset correlation (#618)
+  links them by **geocoded location plus agreement on name or organization**. We surface a resolved entity
+  that spans ≥2 sources as a link for review.
+- **Latent bridges** (not yet used): `Medicare/Medicaid Provider Number` (TX HHSC ↔ CMS ↔ NPPES) and `SPIN`
+  (FCC commitments ↔ spin-lookup). Where present, these keys could confirm links found by geocoding.
 
 ## Provenance
 
-All files are public downloads: NPPES from the NPPES NPI Registry, FCC RHC from the USAC/FCC open-data
-portal, TX HHSC from the Texas Health and Human Services open-data site. Dates in the filenames are
-download dates. No credentials, no scraping — public compliance disclosures in a useless shape, which is
-exactly the problem the matcher addresses.
+All files are public downloads. NPPES comes from the NPPES NPI Registry, FCC RHC from the USAC/FCC open-data
+portal, and TX HHSC from the Texas Health and Human Services open-data site. The dates in the filenames are
+download dates. The downloads need no credentials and involve no scraping. They are public compliance
+disclosures published in a form that is hard to analyze, and the matcher exists to solve that problem.

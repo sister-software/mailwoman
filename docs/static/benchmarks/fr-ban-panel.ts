@@ -4,7 +4,7 @@
 //
 // what this measures, and what IT does not
 //
-// The French rooftop tier is the Base Adresse Nationale. `mailwoman data pull fr` downloads a extract built from BAN, and this panel grades Mailwoman's answer against the same register the answer was looked up in. That is circular, and it is stated on the published page beside every number it touches. What survives the circularity is still worth measuring: whether the pipeline parses the address into the spans the rooftop probe needs, whether it scopes the probe to the right commune, and whether it does both when the surface form is rearranged. A miss here is a parse or a routing failure, never a coordinate-accuracy failure. So read this panel as "does the address find its own row", not as "how accurate is the coordinate".
+// The French rooftop tier is the Base Adresse Nationale. `mailwoman data pull fr` downloads an extract built from BAN, and this panel grades Mailwoman's answer against the same register the answer was looked up in. That is circular, and it is stated on the published page beside every number it touches. What survives the circularity is still worth measuring: whether the pipeline parses the address into the spans the rooftop probe needs, whether it scopes the probe to the right commune, and whether it does both when the surface form is rearranged. A miss here is a parse or a routing failure, never a coordinate-accuracy failure. So read this panel as "does the address find its own row", not as "how accurate is the coordinate".
 //
 // two arms
 //

@@ -6,38 +6,38 @@ tags: [geocoding, resolver, concepts, night-shift]
 date: 2026-06-14
 ---
 
-We turned the demo into a real geocoder — type an address, get a rooftop coordinate, all in your browser, no server. The last touch was the one that makes a search box feel alive: autocomplete, so the city finishes itself while you type. We already had the autocomplete. We'd shipped it as a command-line tool days earlier, watched it rank San Francisco above San Diego, and called it done. So we dropped the same function into the box, typed `New Yor`, and it suggested Denver.
+We turned the demo into a real geocoder. You type an address and get a rooftop coordinate, computed in your browser without a server. The last feature was autocomplete, which completes the city name while you type. We had shipped autocomplete as a command-line tool days earlier and seen it rank San Francisco above San Diego, so we considered it done. We connected the same function to the search box, typed `New Yor`, and it suggested Denver.
 
-The questions that opened up: why does a function that nails `San` choke on `New Yor`? What's the difference between completing a word and completing the word a person is in the middle of typing? And how does an autocomplete that knows ten thousand cities fail to finish one of them?
+This raised three questions. Why does a function that handles `San` correctly fail on `New Yor`? How does completing a word differ from completing the word a person is still typing? How does an autocomplete that knows ten thousand cities fail to complete one of them?
 
 {/* truncate */}
 
 ## The autocomplete we already had
 
-Our gazetteer — every country, region, county, and city we resolve against — is stored as a finite-state transducer: a trie over place-name tokens, with each accepting state carrying the places that spell out to that point. `mailwoman autocomplete "San"` walks the trie to the `San` node and reads off everything beneath it, ranked by importance: San Francisco, San Diego, San Bernardino. It's quick because there's no search — the FST _is_ the index. You walk to a node and the answers are sitting there.
+Our gazetteer (every country, region, county, and city we resolve against) is stored as a finite-state transducer. It is a trie over place-name tokens, and each accepting state carries the places whose names end at that point. `mailwoman autocomplete "San"` walks the trie to the `San` node and reads off everything beneath it, ranked by importance: San Francisco, San Diego, San Bernardino. It is fast because the FST _is_ the index, so no separate search runs. The walk reaches a node, and the answers are stored there.
 
-For a command line, this is exactly right. You type a whole word, you hit tab, you get completions. The unit of input is the word, and the trie is keyed by words. The shapes match.
+This design fits a command line. You type a whole word, press tab, and get completions. The unit of input is the word, and the trie is keyed by words.
 
 ## Then we typed half a word
 
-A search box does not hand you whole words. It hands you `New Yor`. It hands you `Chic`. It hands you the front half of a word and asks what you meant.
+A search box receives partial words such as `New Yor` or `Chic`. It gets the first part of a word and has to infer the rest.
 
-To walk a token trie you need tokens, and `Yor` is not a token — it's the beginning of one. The walk steps through `New`, reaches for an edge labeled `Yor`, finds nothing, and fails. That part is forgivable; a trie can't match a fragment. What was not forgivable was the fallback: a fuzzyforward geocoding over the gazetteer that did its earnest best and returned the nearest fuzzy match it could find. For `New Yor`, that was Denver. We do not know why Denver — whether the fuzzy distance metric weighted string length unexpectedly, or whether token boundaries threw the scoring off, or something else. We did not investigate, because the right answer was not to fix the fallback. It was to stop needing one.
+Walking a token trie requires whole tokens, and `Yor` is the beginning of a token. The walk steps through `New`, looks for an edge labeled `Yor`, finds none, and fails. A trie cannot match a fragment, so that failure is expected. The problem was the fallback, a fuzzy forward geocode over the gazetteer that returned the nearest fuzzy match. For `New Yor`, that was Denver. We do not know why it chose Denver. The fuzzy distance metric may have weighted string length unexpectedly, the token boundaries may have skewed the scoring, or the cause may be something else. We did not investigate, because the correct fix was to remove the need for the fallback.
 
 ## It was worse than Denver
 
-So we fed it whole tokens, expecting relief, and got `New` → New London. Four times.
+We then gave it whole tokens and got `New` → New London, four times.
 
-Two problems, stacked. The first was duplicate collapse: New London the city, New London the county, and a couple of smaller New Londons each took a slot, so the dropdown was four rows of the same name before it offered anything else. The second was subtler and worse. The `New` node has 311 children. The walk collects completions breadth-first under a budget, and a dense branch — all those New Londons — filled the budget before the search ever reached `New York`. The autocomplete knew New York perfectly well. Itnever got there. The most prominent place a person could possibly mean, starved out by smaller ones that happened to sort first.
+Two problems combined. The first was missing deduplication. New London the city, New London the county, and a couple of smaller New Londons each took a slot, so the dropdown showed four rows of the same name before anything else. The second problem was more serious. The `New` node has 311 children. The walk collects completions breadth-first under a budget, and the dense New London branch filled the budget before the search reached `New York`. The trie contained New York, but the walk never reached it. The most prominent place a person was likely to mean was crowded out by smaller places that sorted first.
 
 ## The fix
 
-When the walk fails on a partial last token, don't fall back to fuzzy search. Walk the _complete_ prefix instead — `New` — then filter that node's outgoing edges by the fragment: keep every edge whose token starts with `yor`. `york` survives. `london` doesn't. You've completed the word using the trie you already have, no fuzzy search, no Denver.
+When the walk fails on a partial last token, the new code skips fuzzy search. It walks the _complete_ prefix (`New`) and then filters that node's outgoing edges by the fragment, keeping every edge whose token starts with `yor`. `york` matches and `london` does not. The existing trie completes the word without fuzzy search.
 
-Then cap how several places any single branch can contribute, so one dense `New London` branch cannot crowd out `New York` before the search reaches it. Collapse same-name places to the most prominent one. Three changes — character-level completion via edge filtering, a per-branch cap, name dedup — and `New Yor` becomes New York, `Chic` becomes Chicago, `San Fr` becomes San Francisco. The search box finishes your word.
+The code also caps how many places any single branch can contribute, so a dense `New London` branch cannot crowd out `New York` before the search reaches it, and it collapses same-name places to the most prominent one. With three changes (character-level completion via edge filtering, a per-branch cap, and name deduplication), `New Yor` becomes New York, `Chic` becomes Chicago, and `San Fr` becomes San Francisco.
 
 ## Two problems wearing one name
 
-"Complete a place word" and "complete the word a person is typing" look like the same feature. They are not. One assumes the token is finished and asks what comes after it; the other assumes the token is unfinished and has to finish it character by character, while ranking results well enough that the obvious choice surfaces. The CLI only ever exercised the easy half, so the hard half shipped untested and we never knew.
+"Complete a place word" and "complete the word a person is typing" look like one feature, but they are two. The first assumes the token is finished and asks what comes after it. The second assumes the token is unfinished, so it has to complete it character by character and rank the results well enough that the obvious choice appears first. The CLI only exercised the first case, so the second shipped untested.
 
-The same function was correct on the command line and a liability in the search box, and nothing about its name, its tests, or its track record warned us — because the surface it was correct on never asked it the hard question. "Autocomplete" was two features in a trench coat, and we only met the second one when a stranger typed half a word and it tried to send them to Colorado.
+The same function was correct on the command line and wrong in the search box. Its name, tests, and history gave no warning, because the command line never exercised partial words. We found the second case only when someone typed half a word and the demo suggested a city in Colorado.

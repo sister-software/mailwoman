@@ -3,10 +3,10 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Query an already-running external geocoder under the pre-registered protocol: send the same raw input to
- *   each arm, score only the top result, and count missing coordinates as misses at every threshold. The client
- *   never starts services or scores shared public endpoints. If the endpoint cannot identify itself, the caller
- *   must declare its version.
+ *   Queries a running external geocoder and reads only its top result.
+ *
+ *   The client never starts a service and refuses shared public endpoints. A result without a coordinate
+ *   counts as a miss at every distance threshold.
  */
 
 import { APIClient, type APIClientConfig, isTransientResourceError } from "@mailwoman/core/api"
@@ -15,7 +15,7 @@ import { isRecordLike } from "@mailwoman/core/objects"
 import { type GeoFeatureCollection, isPointLiteral, isValidLatitude, isValidLongitude } from "@mailwoman/spatial"
 
 /**
- * External geocoder engines supported by this client.
+ * The external geocoder engines this client supports.
  */
 export const ExternalEngine = {
 	Pelias: "pelias",
@@ -23,76 +23,86 @@ export const ExternalEngine = {
 	Nominatim: "nominatim",
 } as const
 
+/**
+ * One supported external engine name.
+ */
 export type ExternalEngine = (typeof ExternalEngine)[keyof typeof ExternalEngine]
 
 /**
- * Shared public endpoints that cannot be scored as reproducible arms.
+ * Shared public hosts.
+ *
+ * Their data vintage and rate limits are outside our control, so they cannot serve as reproducible arms.
  */
 const REFUSED_ENDPOINT_HOSTS = new Set(["photon.komoot.io", "nominatim.openstreetmap.org"])
 
 /**
- * Minimum delay between requests to a local external arm.
+ * The minimum delay between requests to one external arm, in milliseconds.
  */
 export const EXTERNAL_ARM_MIN_REQUEST_INTERVAL_MS = 50
 
 /**
- * Maximum attempts per input, including the first request.
+ * The maximum attempts per input, including the first request.
  */
 const MAX_ATTEMPTS = 3
 
 /**
- * Base exponential retry delay in milliseconds.
- * `Retry-After` takes precedence.
+ * The base exponential retry delay in milliseconds.
+ * A `Retry-After` header overrides it.
  */
 const BASE_RETRY_DELAY_MS = 250
 
 /**
- * Socket-inactivity timeout for one query attempt.
+ * The socket inactivity timeout for one attempt, in milliseconds.
  */
 const REQUEST_TIMEOUT_MS = 20_000
 
 /**
- * Query used only to inspect the endpoint's identity response.
+ * The query sent to read the endpoint's identity.
+ * Its result is not scored.
  */
 const IDENTITY_PROBE_QUERY = "Paris"
 
-/**
- * Number of results requested under the top-1 protocol.
- */
 const TOP_N = 1
 
 /**
- * One external result, including a reason when no coordinate is available.
+ * The top result from an external engine.
+ *
+ * `noResultReason` explains why a coordinate is missing.
  */
 export interface ExternalAnswer {
 	lat: number | null
 	lon: number | null
 	/**
-	 * Engine-provided result label, shown for inspection and not compared across engines.
+	 * The engine's label for the result.
+	 *
+	 * It is shown for inspection and never compared across engines.
 	 */
 	label: string | null
 	/**
 	 * Place IDs from mailwoman results, finest first.
-	 * Compared only when both arms provide IDs.
+	 * They are compared only when both arms provide IDs.
 	 */
 	place_ids?: string[]
 	/**
-	 * Engine-specific type or layer for the top result; reported but not compared.
+	 * The engine's type or layer for the top result.
+	 * It is reported and never compared.
 	 */
 	resultType: string | null
 	noResultReason: string | null
 }
 
 /**
- * Endpoint identity and provenance, with `null` for unavailable fields.
+ * The identity and provenance of an endpoint.
+ * An unavailable field is `null`.
  */
 export interface ExternalArmIdentity {
 	engine: ExternalEngine
 	endpoint: string
 	version: string | null
 	/**
-	 * Source of the version value.
-	 * `caller-declared` is an assertion, not an observation.
+	 * Where the version came from.
+	 *
+	 * A `caller-declared` version is the caller's claim, which the endpoint did not confirm.
 	 */
 	version_source: "endpoint" | "caller-declared" | null
 	data_vintage: string | null
@@ -100,25 +110,22 @@ export interface ExternalArmIdentity {
 	interpolation_enabled: boolean | null
 	response_version: string | null
 	/**
-	 * Reachability and identity-probe outcomes.
+	 * The outcomes of the status and search probes.
 	 */
 	probe: { status_path: string | null; status_http: number | null; search_ok: boolean }
 	warnings: string[]
 }
 
 /**
- * Wire paths and response readers for one engine.
+ * The request paths and response readers for one engine.
  */
 interface EngineProtocol {
 	/**
-	 * Health or version path relative to the endpoint.
+	 * The health or version path, relative to the endpoint.
 	 */
 	statusPath: string
 	searchPath: (query: string) => string
 	readTop: (body: unknown) => ExternalAnswer
-	/**
-	 * Identity fields extracted from status and search responses.
-	 */
 	readIdentity: (
 		statusBody: unknown,
 		searchBody: unknown
@@ -126,7 +133,7 @@ interface EngineProtocol {
 }
 
 /**
- * Return an indexable record, or an empty object for other values.
+ * Returns the value as a record, or an empty object when it is not one.
  */
 function fields(value: unknown): Record<string, unknown> {
 	return isRecordLike(value) ? (value as Record<string, unknown>) : {}
@@ -137,7 +144,7 @@ function readString(value: unknown): string | null {
 }
 
 /**
- * Parse a numeric coordinate or Nominatim string and validate its geographic range.
+ * Reads a coordinate from a number or a numeric string, as Nominatim returns, and checks its range.
  */
 function readCoordinate(value: unknown, isValid: (candidate: number) => boolean): number | null {
 	const parsed =
@@ -147,9 +154,10 @@ function readCoordinate(value: unknown, isValid: (candidate: number) => boolean)
 }
 
 /**
- * Read the first GeoJSON feature only.
+ * Reads the first GeoJSON feature.
  *
- * An unplaceable top feature is a miss, not a reason to inspect later results.
+ * A top feature without a usable point counts as a miss.
+ * The reader never falls back to later features.
  */
 function readGeoJSONTop(body: unknown, typeKey: string): ExternalAnswer {
 	const features = (body as Partial<GeoFeatureCollection<unknown, Record<string, unknown>>> | null)?.features
@@ -253,7 +261,9 @@ const ENGINE_PROTOCOLS: Record<ExternalEngine, EngineProtocol> = {
 }
 
 /**
- * Validate an HTTP(S) endpoint and reject prohibited public hosts.
+ * Validates an HTTP or HTTPS endpoint and returns it without a trailing slash.
+ *
+ * @throws For a malformed URL, another protocol or a refused public host.
  */
 export function assertScorableEndpoint(endpoint: string): string {
 	let url: URL
@@ -282,8 +292,9 @@ export function assertScorableEndpoint(endpoint: string): string {
 }
 
 /**
- * Paced external geocoder client using the registered top-1 protocol.
- * Responses are not cached.
+ * A paced client that requests one result per query from an external geocoder.
+ *
+ * The client does not cache responses.
  */
 export class ExternalGeocoderClient extends APIClient {
 	readonly engine: ExternalEngine
@@ -298,7 +309,6 @@ export class ExternalGeocoderClient extends APIClient {
 			...overrides,
 			axios: {
 				timeout: REQUEST_TIMEOUT_MS,
-				// Identify this client to every engine.
 				headers: { "User-Agent": "mailwoman-dev-mcp" },
 				...overrides.axios,
 			},
@@ -310,8 +320,9 @@ export class ExternalGeocoderClient extends APIClient {
 	}
 
 	/**
-	 * Return the top result for one raw query.
-	 * Throws if the endpoint remains unavailable.
+	 * Returns the top result for one raw query.
+	 *
+	 * @throws When the endpoint stays unavailable after retries.
 	 */
 	async search(query: string): Promise<ExternalAnswer> {
 		const response = await this.fetch<unknown>({ url: `${this.endpoint}${this.#protocol.searchPath(query)}` })
@@ -320,8 +331,13 @@ export class ExternalGeocoderClient extends APIClient {
 	}
 
 	/**
-	 * Read endpoint identity from its status and search responses.
-	 * The probe query is not scored.
+	 * Reads the endpoint's identity from its status and search responses.
+	 *
+	 * Every engine here has a compatible drop-in inside this repository, so an endpoint
+	 * that reports no version could be mailwoman itself.
+	 * In that case the caller must pass `declaredVersion`.
+	 *
+	 * @throws When the search probe fails, or when neither the endpoint nor the caller supplies a version.
 	 */
 	async probeIdentity(declaredVersion?: string): Promise<ExternalArmIdentity> {
 		let statusBody: unknown
@@ -335,7 +351,7 @@ export class ExternalGeocoderClient extends APIClient {
 			statusHTTP = status.status
 			statusPath = this.#protocol.statusPath
 		} catch (error) {
-			// Continue to search even if the optional status path fails.
+			// The status path is optional, so the search probe still runs.
 			statusHTTP = readErrorStatus(error)
 		}
 
@@ -394,11 +410,11 @@ export class ExternalGeocoderClient extends APIClient {
 			version,
 			version_source: read.version === null ? "caller-declared" : "endpoint",
 			data_vintage: read.data_vintage,
-			// These engines do not expose these fields.
+			// None of the supported engines reports these two fields.
 			system_scope: null,
 			interpolation_enabled: null,
 			response_version: read.response_version,
-			// Search failures throw before identity is returned.
+			// A failed search probe throws above, so `search_ok` is always true here.
 			probe: { status_path: statusPath, status_http: statusHTTP, search_ok: true },
 			warnings,
 		}

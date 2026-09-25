@@ -1,67 +1,69 @@
 # Self-service commercial licensing: a Stripe subscription that mints a signed license key
 
-**Status:** design approved 2026-09-05 (subscription model, Payment Link, portal, no login, D1-only worker, and the
-per-period token chosen by the operator).
+**Status:** design approved 2026-09-05. The operator chose the subscription model, the Payment Link, the portal
+without a Mailwoman login, the D1-only worker, and the per-period token.
 **Builds on:** PR #2117 (the signed key), PR #2153 (the engine stamp, the `/license` page, the notice), issue #2121
 (the original proposal, whose security requirements this design keeps).
 **Supersedes:** the scratchpad proposal's one-time payment, `POST /v1/checkout-sessions` endpoint, and Cloudflare Queue.
-**Revised 2026-09-05:** no separate key package and no compatibility re-exports; the key format stays in core on
-WebCrypto and the worker imports it by subpath under export conditions.
+**Revised 2026-09-05:** the design adds neither a separate key package nor compatibility re-exports. The key format
+stays in core on WebCrypto, and the worker imports it by subpath under export conditions.
 
 ## The problem
 
 A commercial license exists (`COMMERCIAL-LICENSE.md`, `LicenseRef-Commercial`), a signed key format exists
 (`mwl1.<payload>.<signature>`, Ed25519, verified offline against the public keys each release ships), and the
-operator can mint one by hand with `mailwoman license issue`. There is no way for a customer to provide one without
-writing an email and waiting for a person. The pricing page (`docs/articles/pricing.mdx`, routed at `/docs/pricing`)
+operator can mint one by hand with `mailwoman license issue`. A customer can only get one by writing an email and
+waiting for a person. The pricing page (`docs/articles/pricing.mdx`, routed at `/docs/pricing`)
 already publishes two prices, $250 a month or $2,400 a year per legal entity, so the shop must sell both.
 
-Everything a customer needs to manage billing, Stripe already hosts: cards, invoices, renewal, cancellation, tax
-details, and an email-link login to reach them. What Stripe cannot show is the license key, its expiry, or a way to
-fetch the current one. This design builds the part Stripe cannot and leans on Stripe for the rest.
+Stripe already hosts everything a customer needs to manage billing: cards, invoices, renewal, cancellation, tax
+details, and an email-link login to reach them. Stripe cannot show the license key, its expiry, or a way to fetch the
+current one. This design builds those parts and relies on Stripe for the rest.
 
 ## Decisions taken
 
-**A yearly or monthly subscription rather than a one-time payment.** Stripe's Customer Portal does renewal payment methods
-and cancellation only for a subscription, and both published prices are recurring.
+**A yearly or monthly subscription rather than a one-time payment.** Stripe's Customer Portal handles renewal payment
+methods and cancellation only for a subscription, and both published prices are recurring.
 
 **The token follows the billing period.** Every `invoice.paid` mints a new token whose `expires` is the period end
-plus a 14-day grace window. An offline credential is what a customer keeps after cancelling, so it must never outlive
-what was paid for by more than the grace. A monthly customer therefore holds a new token each month, delivered by email
+plus a 14-day grace window. A customer keeps the offline credential after cancelling, so it must never outlive the
+paid period by more than the grace window. A monthly customer therefore holds a new token each month, delivered by email
 and fetchable with `mailwoman license refresh`.
 
 **Stripe Payment Links rather than a session-creation endpoint.** A Payment Link supports the licensee-name custom field,
 required terms acceptance, tax ID collection, a success URL with `{CHECKOUT_SESSION_ID}`, and `client_reference_id`.
-That removes the endpoint, its rate limit, its CORS rule, and the pre-allocated order; Stripe's own IDs carry
+That removes the endpoint, its rate limit, its CORS rule, and the pre-allocated order. Stripe's own IDs provide
 idempotency instead.
 
-**Stripe's no-code Customer Portal for billing; no Mailwoman login.** A "Manage billing" link on the `/license` page
-opens Stripe's portal login. Recovery of the key is `mailwoman license refresh` with the per-license secret issued at
-purchase, so a "My Licenses" web page is not needed until a customer holds several licenses.
+**Billing uses Stripe's no-code Customer Portal, without a Mailwoman login.** A "Manage billing" link on the
+`/license` page opens Stripe's portal login. A customer recovers the key with `mailwoman license refresh` and the
+per-license secret issued at purchase, so a "My Licenses" web page is not needed until a customer holds several
+licenses.
 
-**No Cloudflare Queue.** Stripe retries an undelivered webhook with backoff for up to three days; a handler that
-returns 5xx on any failure and writes D1 under unique constraints gets at-least-once delivery and idempotency from
-that alone. A queue arrives when a measurement calls for one.
+**The design uses no Cloudflare Queue.** Stripe retries an undelivered webhook with backoff for up to three days. A
+handler that returns 5xx on any failure and writes D1 under unique constraints therefore gets at-least-once delivery
+and idempotency without a queue. A queue can be added when a measurement shows the need.
 
 **The key format stays in `@mailwoman/core`, and the worker imports it by subpath.** Ed25519 moves from `node:crypto`
-onto WebCrypto, which Node, `workerd`, and browsers all implement. Therefore, one implementation signs and verifies everywhere.
-The worker imports `@mailwoman/core/license/key` and `@mailwoman/core/license/register`, never the `license` barrel and
-never a module that reaches `node:fs`; a bundle test holds that line. Where a core module's implementation must differ
-per platform, its `package.json` export carries `workerd` and `browser` conditions beside `node`, the way the browser
-tier of `@mailwoman/neural` already does. No second package.
+onto WebCrypto. Node, `workerd`, and browsers all implement WebCrypto, so one implementation signs and
+verifies everywhere. The worker imports `@mailwoman/core/license/key` and `@mailwoman/core/license/register`. It never imports
+the `license` barrel or a module that reaches `node:fs`, and a bundle test enforces that. Where a core module's
+implementation must differ per platform, its `package.json` export carries `workerd` and `browser` conditions beside
+`node`, as the browser tier of `@mailwoman/neural` already does. The design adds no second package.
 
-**No compatibility re-exports.** A name that moves is imported from its new home by every caller in the same change.
-A function that becomes async is awaited by every caller in the same change.
+**The design adds no compatibility re-exports.** When a name moves, every caller imports it from its new home in the
+same change. When a function becomes async, every caller awaits it in the same change.
 
-**The worker holds its own signing key.** A second key id, never the operator's local `v9-ecec29be`. A leaked worker
-key then retires without touching hand-issued licenses.
+**The worker holds its own signing key.** It uses a second key id, never the operator's local `v9-ecec29be`. A leaked
+worker key can then be retired without affecting hand-issued licenses.
 
-**Offline verification stays the anchor.** Online status can tighten a verdict, never manufacture trust. A network
-failure reads `unreachable`, a site that answers without a register reads `unpublished`, and the doctor says which.
+**Offline verification remains the basis of trust.** Online status can tighten a verdict but never create trust. A
+network failure reads `unreachable`, a site that answers without a register reads `unpublished`, and the doctor
+reports which one occurred.
 
 ## Prerequisites the code cannot supply
 
-These are operator work; the first sale waits on them, the implementation does not:
+These items are operator work. The first sale waits on them, and the implementation does not:
 
 1. **Self-executing terms.** `COMMERCIAL-LICENSE.md` says it is a non-self-executing template and that no rights are
    granted until terms are agreed in writing. A paid Checkout cannot grant under that text. A versioned clickwrap
@@ -148,27 +150,28 @@ subpath is neutral or needs the split; the design does not guess.
 }
 ```
 
-An installed release that predates the fields verifies such a token: the schema is a plain object that strips
-unknown keys, and the signature covers the raw payload bytes. The token carries no email, no Stripe IDs, no amount,
-no currency. `licensee` stays the one human identity in it.
+An installed release that predates the fields still verifies such a token, because the schema is a plain object
+that strips unknown keys and the signature covers the raw payload bytes. The token carries no email, Stripe IDs,
+amount, or currency. `licensee` remains its only human identity.
 
 **Key states** become data rather than prose. One typed register, `packages/core/lib/license/register.ts`, exported as
 `@mailwoman/core/license/register`, holds every key with its `status`: `active` (may sign and verify), `retired` (may no
 longer sign; existing tokens still verify offline), `revoked` (compromised; online status rejects at once and the next
 release removes offline trust). `TRUSTED_LICENSE_SIGNING_KEYS` and the well-known JSON both derive from it at build
-time, so the two cannot disagree; `trusted-keys.ts` is deleted, and its importers read the register. Today's `retired`
-acts as revocation; after this change it does not.
+time, so the two cannot disagree. `trusted-keys.ts` is deleted, and its importers read the register. Today `retired`
+acts as revocation, and after this change it no longer does.
 
 ## The worker
 
-A private workspace `packages/license-worker/`, beside `packages/tile-worker/` and sharing nothing with it. It joins
+The worker is a private workspace, `packages/license-worker/`, beside `packages/tile-worker/` and sharing no code
+with it. It joins
 the seven registers a new workspace joins (`workspaces`, both `tsconfig.json` references, the release-list absence
 recorded in `SANCTIONED_RELEASE_ABSENCES` with the reason "private infrastructure", the smoke pack set, and, being
 private, neither `bless-package` nor the release list). Unlike `tile-worker`, it gets a deploy workflow:
 `.github/workflows/license-worker.yml` runs `wrangler deploy` on a manual dispatch with the environment as input.
 
-Two Wrangler environments, `sandbox` and `production`, each with its own D1 database, webhook secret, signing key, key
-id, Price allowlist, and email credentials. Test-mode Stripe keys never meet the production environment, and the
+The worker has two Wrangler environments, `sandbox` and `production`, each with its own D1 database, webhook secret,
+signing key, key id, Price allowlist, and email credentials. Test-mode Stripe keys never meet the production environment, and the
 sandbox signing key never enters shipped trust.
 
 ### Bindings
@@ -188,11 +191,11 @@ sandbox signing key never enters shipped trust.
 
 At startup the worker signs a fixed probe with `LICENSE_SIGNING_KEY_PEM`, derives the key id from the matching public
 key, and refuses every request with a 503 if it differs from `LICENSE_SIGNING_KID` or is absent from the shipped
-register's `active` entries. The worker's own bundle is what the bundle test above proves `node:`-free.
+register's `active` entries. The bundle test above verifies that the worker's own bundle is free of `node:` imports.
 
 ### Plan catalog
 
-Code rather than Stripe metadata and not client input:
+The plan catalog lives in code, rather than in Stripe metadata or client input:
 
 ```ts
 interface CommercialPlan {
@@ -212,7 +215,7 @@ constructor and a 300-second tolerance, and accepts only these event types:
 
 - `checkout.session.completed` — records the licensee's legal name (the required custom field), the consent record, the
   customer, and the subscription against a new `licenses` row keyed by subscription id, minting `lid` and the refresh
-  secret. Mints no token: the first `invoice.paid` does.
+  secret. It mints no token, because the first `invoice.paid` does.
 - `invoice.paid` — the mint. Retrieves the invoice and its subscription from Stripe (never trusting the event body),
   confirms `paid`, that the one line item's Price is allowlisted, that live/test mode matches the environment, and that
   the subscription's `licenses` row exists. When the row does not exist yet, because this event outran
@@ -222,30 +225,33 @@ constructor and a 300-second tolerance, and accepts only these event types:
   the email send happens in the same request, keyed by invoice id, and a failed send leaves the token issued with
   `email_state = failed` for the reconciliation pass to retry.
 - `invoice.payment_failed`, `customer.subscription.updated`, `customer.subscription.deleted` — update `payment_state`
-  and `subscription_state`; no token is minted or altered. A deleted subscription marks the license `lapsed` once the
+  and `subscription_state`. No token is minted or altered. A deleted subscription marks the license `lapsed` once the
   grace window passes.
 - `charge.refunded` (full) and `charge.dispute.created` — mark the license `revoked` online. A partial refund marks
-  `review` and mints nothing; the operator decides.
+  `review` and mints nothing, and the operator decides.
 - `charge.dispute.closed` — reconciles to Stripe's current payment state.
 
-Every event id is written to `stripe_events` first, in the same D1 batch as its effects; a duplicate id is a no-op 200. Any failure after signature verification answers 500 so Stripe retries. Bad signatures answer 400 and are never
-retried. Nothing logs a body, a customer field, a token, or a secret.
+Every event id is written to `stripe_events` first, in the same D1 batch as its effects, and a duplicate id is a
+no-op 200. Any failure after signature verification answers 500 so Stripe retries. Bad signatures answer 400 and are
+never retried. Nothing logs a body, a customer field, a token, or a secret.
 
 **`GET /v1/checkout-sessions/:sessionID/license`.** The success page's claim. Answers `{ status }` with
 `pending`, `issued`, `failed`, or `revoked`, and for `issued` the token, the licensee, `issued`, `expires`, `lid`, and
-the refresh secret. `Cache-Control: no-store`; CORS exactly `SITE_ORIGIN`; never a redirect. Possession of the Checkout
-Session id is the capability, as it is on Stripe's own success pages; the page sends no referrer to third parties.
+the refresh secret. The route sets `Cache-Control: no-store`, allows CORS for exactly `SITE_ORIGIN`, and never
+redirects. Possession of the Checkout Session id grants access, as it does on Stripe's own success pages, and the page
+sends no referrer to third parties.
 
 **`POST /v1/licenses/refresh`.** Body `{ lid, secret }`. Answers the current token for an `active` license whose
 secret hashes to the stored value, `{ status: "revoked" | "lapsed" }` otherwise, and the same `404` for an unknown lid
 and a wrong secret. Rate-limited per lid and per address. This is the customer's recovery path and their monthly
 fetch.
 
-**`POST /v1/license-status`.** Body `{ lid }`. Answers `active`, `lapsed`, `revoked`, or `unknown`, nothing else.
+**`POST /v1/license-status`.** Body `{ lid }`. Answers only `active`, `lapsed`, `revoked`, or `unknown`.
 `mailwoman license verify --online` and the doctor call it for tokens that carry `lid`, beside the key-id check
 against the well-known register.
 
-**`GET /health`.** Signing self-test result, D1 reachability, `ISSUANCE_ENABLED`. No customer data.
+**`GET /health`.** Reports the signing self-test result, D1 reachability, and `ISSUANCE_ENABLED`, without customer
+data.
 
 ### D1 schema
 
@@ -259,15 +265,15 @@ latest `expires`.
 
 `stripe_events`: `event_id` (PK), `type`, `object_id`, `received_at`, `outcome`.
 
-Tokens at rest are what the customer already holds, so they are stored as written; the D1 database is customer data
+Tokens at rest are what the customer already holds, so they are stored as written. The D1 database is customer data
 and gets the same retention, export, and deletion handling as the Stripe account.
 
 ### Reconciliation
 
 A Cron Trigger every six hours lists subscriptions from Stripe that changed in the window and compares them with
-`licenses`: a paid invoice with no `license_tokens` row is minted; a `sent`-less token is re-sent under the same
-invoice id; a state that disagrees with Stripe is corrected. It writes a one-line report per drift to the worker log
-with ids only.
+`licenses`. It mints a token for a paid invoice that has no `license_tokens` row, re-sends a token that was never
+sent under the same invoice id, and corrects a state that disagrees with Stripe. It writes a one-line report per
+drift to the worker log, with ids only.
 
 ## The docs site
 
@@ -300,9 +306,9 @@ publication, and report `active`, `lapsed`, `revoked`, `unknown`, or `unreachabl
 5. Deploy the worker with `ISSUANCE_ENABLED=false`; confirm `/health` reports the self-test passed.
 6. Enable the Payment Links on the page.
 
-Rotation: add the new key as `active` and release; switch the worker to it; mark the old key `retired` in the register
-and release; keep it `retired` until every token it signed has expired. Compromise: mark `revoked` and release; online
-status refuses its tokens at once.
+Rotation: add the new key as `active` and release, then switch the worker to it. Mark the old key `retired` in the
+register and release, and keep it `retired` until every token it signed has expired. Compromise: mark the key
+`revoked` and release, and online status refuses its tokens at once.
 
 ## Refunds, disputes, lapses
 
@@ -318,11 +324,16 @@ Public status answers carry no reason.
 
 ## Security requirements
 
-Carried from #2121 and kept: a distinct deploy credential and service from the tile worker; production and sandbox
-separated in every binding; secrets only through Wrangler secret bindings and never in git, build output, or logs; the
-Stripe API version and SDK pinned; exact-origin CORS and `no-store` on every token-containing route; rate limits on claim,
-refresh, and status; a CI step that scans the worker bundle and its source maps for private-key markers and test-key
-prefixes; and a kill switch that stops issuance without stopping verification or refresh.
+These requirements are carried over from #2121:
+
+- a deploy credential and service distinct from the tile worker's;
+- production and sandbox separated in every binding;
+- secrets only through Wrangler secret bindings, and never in git, build output, or logs;
+- the Stripe API version and SDK pinned;
+- exact-origin CORS and `no-store` on every route that returns a token;
+- rate limits on claim, refresh, and status;
+- a CI step that scans the worker bundle and its source maps for private-key markers and test-key prefixes;
+- a kill switch that stops issuance without stopping verification or refresh.
 
 ## Verification
 
@@ -367,8 +378,8 @@ failure, on any `email_state = failed` older than an hour, and on reconciliation
 
 ## Out of scope
 
-Seats, resellers, OEM terms, perpetual licenses, coupons, a web account, per-package scopes, and the enterprise tier.
-Each keeps the local issuer as its path.
+Seats, resellers, OEM terms, perpetual licenses, coupons, a web account, per-package scopes, and the enterprise tier
+are out of scope. Each continues to use the local issuer.
 
 ## Issue split
 

@@ -15,16 +15,16 @@ test.describe("Mailwoman Earth shell", () => {
 		await expect(page.locator("main[data-route='geocoder']")).toBeVisible()
 		await expect(page.locator("#mw-pipeline-input")).toHaveValue("90210")
 
-		// The input submits on Enter; the magnifier is decorative.
+		// The input submits on Enter.
+		// The magnifier icon has no click handler.
 		await page.locator("#mw-pipeline-input").press("Enter")
 
 		await expect(page.getByText("New York").first()).toBeVisible()
 	})
 
 	test("the footer carries the docs link and the commit the build was made from", async ({ page }) => {
-		// Check the real runtime footer; the fake runtime can hide a missing commit link.
-		//
-		// Block model and gazetteer downloads; the footer must render independently of data loading.
+		// This test uses the real runtime because the fake runtime can hide a missing commit link.
+		// It blocks data downloads because the footer must render without them.
 		await page.route("https://public.mailwoman.ai/**", (route) => route.abort())
 
 		await page.goto("/")
@@ -36,7 +36,6 @@ test.describe("Mailwoman Earth shell", () => {
 			"https://mailwoman.ai/docs"
 		)
 
-		// Validate the built commit URL's format without pinning a specific hash.
 		const commit = footer.locator("a[href*='/commit/']")
 
 		await expect(commit).toBeVisible()
@@ -71,7 +70,7 @@ test.describe("Mailwoman Earth shell", () => {
 		expect(info.revision.length).toBeGreaterThanOrEqual(7)
 		expect(info.buildTime.endsWith("Z")).toBe(true)
 
-		// The linked commit must be complete and match the abbreviated build revision.
+		// The commit is the full hash, and the revision is its abbreviation.
 		expect(info.commit).toHaveLength(40)
 		expect(info.commit.startsWith(info.revision)).toBe(true)
 

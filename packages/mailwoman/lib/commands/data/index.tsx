@@ -3,15 +3,10 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mailwoman data [--list]` — the landing page for the `data` command group (#1577).
+ *   Implements the `mailwoman data` command group and its bare invocation.
  *
- *   A directory's `index.tsx` is the group command itself, giving the group a description, its own options, and a bare
- *   invocation handler.
- *
- *   Output goes out through {@linkcode writeRawStdout} rather than Ink for the same reason
- *   `commands/geocode.tsx` does: an Ink frame at least as tall as the viewport makes Ink emit
- *   `\x1b[2J\x1b[3J\x1b[H`, and `3J` wipes the scrollback. The bundle table is 20+ lines, so on a
- *   short terminal it would.
+ *   Output goes through {@linkcode writeRawStdout} instead of Ink. An Ink frame at least as tall as the
+ *   viewport makes Ink clear the scrollback, and the bundle list can exceed a short terminal.
  */
 
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
@@ -21,18 +16,17 @@ import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandT
 import { bundleArtifactPath, BUNDLES, PUBLIC_BUCKET_BASE_URL } from "#data/bundles"
 
 /**
- * Shown at the top of `mailwoman data --help`.
+ * The group description shown by `mailwoman data --help` and in the root command listing.
  *
- * Commander reuses it in the root command listing, so it is held to two sentences.
- * The long-form "why" lives in {@link overview}, which is what a bare `mailwoman data` prints.
+ * A bare `mailwoman data` prints the longer explanation from {@link overview}.
  */
 export const description =
 	"Fetch the reference databases geocoding needs — far too large to ship inside the npm package. `data --list` " +
 	"shows what exists, `data pull <bundle>` downloads one, `data status` reports what is already on disk, and " +
-	"`mailwoman doctor` names the one you are missing."
+	"`mailwoman doctor` reports the one you are missing."
 
 /**
- * Native command-line interface consumed by the filesystem command router.
+ * The command specification for `mailwoman data`.
  */
 export const spec = {
 	name: "data",
@@ -43,12 +37,9 @@ export const spec = {
 } as const satisfies CommandSpec
 
 /**
- * The per-bundle table `--list` prints: name, artifact count, total size, destination,
- * and the one-line description from the registry.
+ * Formats the bundle list printed by `--list`.
  *
- * Sizes are the surveyed `approxBytes` totals.
- * The same numbers `data pull --dry-run` plans against, so a reader can budget disk
- * before starting a 41 GB download.
+ * Sizes are the registry's `approxBytes` totals, which `data pull --dry-run` also uses.
  */
 function listBundles(dataRoot: PathBuilderLike): string {
 	const lines: string[] = ["Downloadable bundles (mailwoman data pull <bundle>)", ""]
@@ -81,10 +72,7 @@ function listBundles(dataRoot: PathBuilderLike): string {
 }
 
 /**
- * Bare `mailwoman data` — the explainer, then the shortest path to a working geocode.
- *
- * Keeps the reader from having to guess that `pull` and `status` exist,
- * or that `doctor` is the thing that names the gap.
+ * Formats the explanation and subcommand summary printed by a bare `mailwoman data`.
  */
 function overview(dataRoot: PathBuilderLike): string {
 	return [
@@ -106,6 +94,9 @@ function overview(dataRoot: PathBuilderLike): string {
 	].join("\n")
 }
 
+/**
+ * Prints the bundle list with `--list`, or the overview otherwise.
+ */
 const DataIndex: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { dataRootPath } = await import("@mailwoman/core/data-root")

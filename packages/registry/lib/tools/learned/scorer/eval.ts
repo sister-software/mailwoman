@@ -35,41 +35,49 @@ export interface ScorerPairwiseEvalOptions {
 	createGeocoder: EvalGeocoderFactory
 
 	/**
-	 * The record-matcher sources directory, defaulting to `record-matcher/sources` under the data root.
+	 * The record-matcher sources directory.
+	 *
+	 * It defaults to `record-matcher/sources` under the data root.
 	 */
 	sources?: string
 
 	/**
-	 * The state to sample providers from, defaulting to `TX`.
+	 * The state to sample providers from.
+	 * It defaults to `TX`.
 	 */
 	state?: string
 
 	/**
-	 * The number of NPIs to sample, defaulting to 1500.
+	 * The number of NPIs to sample.
+	 * It defaults to 1500.
 	 */
 	npis?: number
 
 	/**
-	 * The base PRNG seed, defaulting to 1; each split adds its index to it.
+	 * The base PRNG seed.
+	 * It defaults to 1, and each split adds its index to it.
 	 */
 	seed?: number
 
 	/**
-	 * The number of train/test splits to average over, defaulting to 8.
+	 * The number of train/test splits to average over.
+	 * It defaults to 8.
 	 */
 	seeds?: number
 
 	/**
-	 * A path to which the markdown report is also written.
+	 * An optional path for the Markdown report.
 	 */
 	outMd?: string
 }
 
 /**
- * Compares Fellegi-Sunter, logistic-regression and gradient-boosted-tree pair scorers on an NPPES sample,
- * labelling pairs by shared NPI and averaging ROC-AUC and best F1 over several train/test seeds.
+ * Compares Fellegi-Sunter, logistic-regression and gradient-boosted-tree pair scorers on an NPPES sample.
  *
- * It prints the markdown report, writes it to `outMd` when given, and returns it.
+ * A pair is a match when both records share an NPI.
+ * The function averages ROC-AUC and best F1 over several train/test splits.
+ *
+ * It prints the Markdown report, writes it to `outMd` when given, and returns it.
  */
 export async function scorerPairwiseEval(
 	options: ScorerPairwiseEvalOptions,

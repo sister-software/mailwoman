@@ -3,15 +3,11 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The same-data benchmark's three-row synthetic smoke (#2261): one correct-candidate row, one
- *   contradiction, one withheld gold. It exists to prove the harness catches the two failures that would
- *   otherwise be invisible in a real run.
+ *   Tests the same-data benchmark arms and scorer on small synthetic fixtures.
  *
- *   A replay miss records `error` rather than an abstention: the fixture refused rather than the resolver, and the
- *   scorer excludes the row from every metric so the abstention counts stay about the resolver.
- *
- *   An unequal fixture is caught over what the arms read rather than over the file — `assertEqualEvidence`
- *   runs on the receipts the arms carry out of their own runs.
+ *   A replay miss records an `error`, because the fixture failed rather than the resolver. The scorer
+ *   excludes such rows from every metric. `assertEqualEvidence` compares the evidence receipts that
+ *   the arms return.
  */
 
 import type { AddressTree } from "@mailwoman/core/decoder"
@@ -60,11 +56,10 @@ function tree(raw: string, value: string): AddressTree {
 }
 
 /**
- * The three questions the walk asks of a lone bare toponym: the locality lookup,
- * and the two bare-toponym races that check whether the token names a country or a region.
+ * Returns the three lookups that the walk makes for a bare place name.
  *
- * A fixture holding only the first starves the walk, which is the superset requirement
- * in miniature, and the recorder meets it by recording under every arm's options.
+ * The walk looks up the locality, then checks whether the token is a country or a region.
+ * A fixture must record all three, or the replay misses.
  */
 function lookupsFor(text: string, candidates: SameDataCandidate[]) {
 	const queries = [
@@ -133,7 +128,7 @@ describe("same-data synthetic smoke (#2261)", () => {
 
 	it("records a replay miss as an ERROR, never as an abstention", async () => {
 		const panel = panelFor("smoke-miss", [101], true)
-		// Everything the walk asks except the locality lookup, so exactly one question goes unanswered.
+		// Removing the locality lookup leaves exactly one query unanswered.
 		const starved = fixtureFor("smoke-miss", [SPRINGFIELD_IL])
 
 		starved.lookups = starved.lookups.filter((lookup) => lookup.query.placetype !== "locality")
@@ -144,7 +139,7 @@ describe("same-data synthetic smoke (#2261)", () => {
 		expect(result.error).toMatch(/replay miss/)
 		expect(result.selection).toBeNull()
 
-		// And the scorer must not count that row as an abstention.
+		// The scorer must not count the row as an abstention.
 		const metrics = armMetrics("mailwoman", "unambiguous", new Map([[panel.id, panel]]), [result])
 
 		expect(metrics.errors).toBe(1)

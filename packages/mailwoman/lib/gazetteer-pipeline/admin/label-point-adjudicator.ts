@@ -3,9 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Choose between WOF label and geometric points using a GeoNames anchor.
- *   Override the label preference only when points disagree beyond the registered distance
- *   and the anchor is decisively closer to one. Otherwise retain the label point.
+ *   Chooses between a WOF record's label point and geometry point by comparing both with a GeoNames
+ *   anchor.
  */
 
 import { readUnquotedTSVText } from "@mailwoman/core/fs/delimited"
@@ -14,7 +13,7 @@ import { haversineKm } from "@mailwoman/spatial"
 import { type PathBuilderLike, resolvePathBuilder } from "path-ts"
 
 /**
- * A candidate or anchor coordinate pair, WGS-84 decimal degrees.
+ * A coordinate in WGS-84 decimal degrees.
  */
 export interface PointPair {
 	latitude: number
@@ -22,31 +21,40 @@ export interface PointPair {
 }
 
 /**
- * Minimum label/geometric separation before consulting the anchor, in kilometers.
+ * The label-to-geometry distance in kilometers above which the anchor is consulted.
  */
 export const LABEL_GEOM_DISAGREEMENT_KM = 5
 
 /**
- * Required anchor-distance ratio to override the label preference.
+ * How many times closer to the anchor one point must be for the anchor to decide.
  */
 export const ANCHOR_DECISIVE_RATIO = 2
 
+/**
+ * Which point the adjudicator stored, and whether the anchor decided it.
+ */
 export type PointChoice = "lbl" | "geom" | "geom-by-anchor" | "lbl-by-anchor"
 
+/**
+ * The chosen point and the reason for the choice.
+ */
 export interface AdjudicatedPoint extends PointPair {
 	choice: PointChoice
 }
 
 /**
- * Resolve a `gn:id` concordance to its GeoNames coordinate, scoped by country.
+ * Looks up the GeoNames coordinate for a `gn:id` concordance within a country.
  *
- * `undefined` is absence — no anchor for this record — and the caller must fall back
- * to the label preference rather than treating it as a zero-distance anchor.
+ * It returns `undefined` when there is no anchor, and the caller then keeps the label point.
  */
 export type GeoNamesAnchorLookup = (country: string, gnID: string | number) => Promise<PointPair | undefined>
 
 /**
- * Choose the stored point; ambiguous or unanchored cases retain the label point.
+ * Chooses the point to store.
+ *
+ * The geometry point wins only when the two points are more than {@link LABEL_GEOM_DISAGREEMENT_KM}
+ * apart and the geometry point is {@link ANCHOR_DECISIVE_RATIO} times closer to the anchor.
+ * Every other case keeps the label point.
  */
 export function choosePoint(geom: PointPair, lbl: PointPair, anchor: PointPair | undefined): AdjudicatedPoint {
 	const disagreement = haversineKm(geom.latitude, geom.longitude, lbl.latitude, lbl.longitude)
@@ -70,16 +78,17 @@ export function choosePoint(geom: PointPair, lbl: PointPair, anchor: PointPair |
 }
 
 /**
- * GeoNames country-file columns for id, latitude, and longitude.
+ * The GeoNames country-file columns for ID, latitude, and longitude.
  */
 const GN_COLUMN_ID = 0
 const GN_COLUMN_LAT = 4
 const GN_COLUMN_LON = 5
 
 /**
- * Build a lazy, cached lookup from GeoNames country files.
+ * Builds a cached anchor lookup over GeoNames country files.
  *
- * Missing files produce empty maps; files load on the first country lookup.
+ * Each country's file loads on its first lookup.
+ * A missing file behaves as an empty file.
  */
 export async function createGeoNamesAnchorLookup(geonamesDir: PathBuilderLike): Promise<GeoNamesAnchorLookup> {
 	const byCountry = new Map<string, Promise<Map<string, PointPair>>>()
@@ -93,7 +102,6 @@ export async function createGeoNamesAnchorLookup(geonamesDir: PathBuilderLike): 
 			const points = new Map<string, PointPair>()
 			const path = resolvePathBuilder(geonamesDir, `${country.toUpperCase()}.txt`)
 
-			// Cache missing extracts as empty maps; parse file contents, not the path string.
 			if (await pathExists(path)) {
 				for (const cols of readUnquotedTSVText(await readLocalTextFile(path))) {
 					const latitude = Number(cols[GN_COLUMN_LAT])

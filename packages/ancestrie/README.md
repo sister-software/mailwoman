@@ -1,20 +1,20 @@
 # @mailwoman/ancestrie
 
-A **materialized trie over an ancestry graph**: a completion trie whose entries carry their containment lineage, sealed into one static binary artifact. One prefix walk yields lexical continuations, ranks, and ancestry together — no joins, no side lookups, no server.
+This package is a **materialized trie over an ancestry graph**. It is a completion trie whose entries carry their containment lineage, sealed into one static binary artifact. One prefix walk returns lexical continuations, ranks, and ancestry together, without joins, side lookups, or a server.
 
-The package is domain-agnostic on purpose. Entries are `{ tokens, id, parentIDs, rank, payload? }` — no placetypes, no gazetteer vocabulary. Tokenization and normalization belong to the consumer: you pass the same `normalizeToken` function to the builder and the query side, and the package never normalizes on its own.
+The package is domain-agnostic. Entries are `{ tokens, id, parentIDs, rank, payload? }` and carry neither placetypes nor gazetteer vocabulary. The consumer owns tokenization and normalization. You pass the same `normalizeToken` function to the builder and the query side, and the package never normalizes on its own.
 
-> **Status: published** as `@mailwoman/ancestrie` (operator-blessed 2026-08-18; in the `.release-it.json` workspaces list, versioned in lockstep with its siblings).
+> **Status: published** as `@mailwoman/ancestrie`. The operator approved publication on 2026-08-18. The package is in the `.release-it.json` workspaces list and is versioned in lockstep with its siblings.
 
 ## Lineage
 
-Every ingredient here has prior art; the composition does not. Completion over a weighted trie with per-entry payloads is "top-k completion" (Hsu & Ottaviano, WWW 2013) and ships in Lucene's suggest module — but those systems treat the payload as opaque cargo. Foursquare's **twofishes** (2012) got closest in practice: a `parentIDs: list<i64>` on every serving feature, used at autocomplete time to render "Rego Park, Queens, NY" — a materialized parent chain inside an autocomplete index, never written up or named. The closest _named_ academic structure is Roy & Chakrabarti's **materialized trie** (SIGMOD 2011), which embeds spatial summaries in trie nodes — geometry for pruning rather than an ancestry graph for enumeration. Elasticsearch's completion-suggester geo context is the near-miss on the index side: a containment hierarchy (geohash prefixes) living inside the completion automaton's key bytes, but as a filter key, never an enumerated output. What none of them do is treat the completion structure as the enumeration surface for the containment graph itself — which is what this package is. The full survey, with sources, is in-repo: [`docs/records/research/2026-08-17-hierarchy-autocomplete.md`](../../docs/records/research/2026-08-17-hierarchy-autocomplete.md).
+Each ingredient here has prior art, but the combination does not. Completion over a weighted trie with per-entry payloads is "top-k completion" (Hsu & Ottaviano, WWW 2013) and ships in Lucene's suggest module, but those systems treat the payload as opaque data. Foursquare's **twofishes** (2012) came closest in practice. It stored a `parentIDs: list<i64>` on every serving feature and used it at autocomplete time to render "Rego Park, Queens, NY". That is a materialized parent chain inside an autocomplete index, though twofishes never documented or named it. The closest _named_ academic structure is Roy & Chakrabarti's **materialized trie** (SIGMOD 2011), which embeds spatial summaries in trie nodes. Those summaries are geometry used for pruning rather than an ancestry graph used for enumeration. On the index side, Elasticsearch's completion-suggester geo context comes close. It stores a containment hierarchy (geohash prefixes) inside the completion automaton's key bytes, but uses it only as a filter key and never enumerates it as output. None of these systems uses the completion structure to enumerate the containment graph itself, and this package does. The full survey, with sources, is in the repository: [`docs/records/research/2026-08-17-hierarchy-autocomplete.md`](../../docs/records/research/2026-08-17-hierarchy-autocomplete.md).
 
-The implementation generalizes mailwoman's FST gazetteer (`packages/resolver-wof-sqlite/fst-*.ts`): the prefix walk, the partial-last-token completion and BFS expansion (#587), and the dedupe option all port from there. Since phase 2 the resolver's `fst-autocomplete` DELEGATES here through the `AncestrieReaderLike` storage interface — the algorithm has one home, pinned by the resolver's `fst-ancestrie-parity.test.ts`. The resolver's `FST\0` binary format does not migrate: its place rows are per-(surface, place) — the same id under different aliases carries per-surface data — which the id-keyed `ANCT` entry model deliberately cannot express.
+The implementation generalizes mailwoman's FST gazetteer (`packages/resolver-wof-sqlite/fst-*.ts`). The prefix walk, the partial-last-token completion, the BFS expansion (#587), and the dedupe option all come from there. Since phase 2, the resolver's `fst-autocomplete` delegates to this package through the `AncestrieReaderLike` storage interface, so the algorithm lives in one place. The resolver's `fst-ancestrie-parity.test.ts` checks that the two agree. The resolver's `FST\0` binary format does not migrate. Its place rows are keyed per (surface, place), so the same id under different aliases carries per-surface data. The id-keyed `ANCT` entry model intentionally cannot express that.
 
 ## API
 
-Build side (anywhere — no Node imports):
+The build side runs anywhere because it has no Node imports:
 
 ```ts
 import { AncestrieBuilder } from "@mailwoman/ancestrie"
@@ -29,9 +29,9 @@ builder.add({ tokens: ["nyc"], id: 11, parentIDs: [10], rank: 0.9, payload: { ki
 const bytes = builder.seal({ metadata: { builtAt: new Date().toISOString() } })
 ```
 
-`parentIDs[0]` is the **primary parent**: interval containment answers over the primary-parent forest only (the DAG-canonicalization rule); the full parent list is preserved and surfaced verbatim. At seal time each entry receives **pre/post interval labels** over that forest — O(1) containment in both directions, and descendant enumeration as a contiguous range scan. Sealing is canonical: the same entries produce identical bytes in any add order.
+`parentIDs[0]` is the **primary parent**. Interval containment answers over the primary-parent forest only, which is the DAG-canonicalization rule. The full parent list is preserved and returned verbatim. At seal time each entry receives **pre/post interval labels** over that forest. The labels give O(1) containment checks in both directions and turn descendant enumeration into a contiguous range scan. Sealing is canonical, so the same entries produce identical bytes in any add order.
 
-Read side (browser-safe — `fetch(...).arrayBuffer()` works as-is):
+The read side is browser-safe, and `fetch(...).arrayBuffer()` works as-is:
 
 ```ts
 import { Ancestrie, autocomplete } from "@mailwoman/ancestrie"
@@ -50,12 +50,12 @@ const { suggestions } = autocomplete(trie, ["new", "yor"], {
 // each suggestion: { id, rank, tokens, completionTokens, matchDepth, chain, parentIDs, payload? }
 ```
 
-`autocomplete` handles both query shapes at once — complete tokens and a partial last token — and BFS-expands past the match with a per-branch cap so a dense branch cannot starve a higher-ranked sibling. Every suggestion returns its chain.
+`autocomplete` handles complete tokens and a partial last token in the same query. It BFS-expands past the match with a per-branch cap so that a dense branch cannot crowd out a higher-ranked sibling. Every suggestion returns its chain.
 
 ## Binary format
 
-The versioned layout (magic `"ANCT"`, format version 1) is documented exhaustively in the header of [`format.ts`](./format.ts): header, string table, state/edge tables, rank-sorted entry refs, the pre-order entry table with interval labels, parent table, id index, payload blob, and the optional JSON metadata trailer. All little-endian, all read through `DataView`.
+The versioned layout (magic `"ANCT"`, format version 1) is documented in the header of [`format.ts`](./format.ts). It covers the header, string table, state/edge tables, rank-sorted entry refs, the pre-order entry table with interval labels, parent table, id index, payload blob, and the optional JSON metadata trailer. All fields are little-endian and are read through `DataView`.
 
 ## License
 
-AGPL-3.0-only OR LicenseRef-Commercial, as the rest of the monorepo.
+AGPL-3.0-only OR LicenseRef-Commercial, the same as the rest of the monorepo.

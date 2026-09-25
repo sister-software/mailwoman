@@ -6,23 +6,23 @@
 
 ## Motivation
 
-`core/lifecycle` normalizes the lifecycle of constructable API clients and file
-writers that share little beyond needing an async construction step (`ready()`
-et al.) and orderly async disposal. The design goal is a lightweight take on VS
-Code's internal dependency-injection system — aliased interface types married
-to runtime tokens — built on the standard `AsyncDisposable` protocol and
-`AsyncDisposableStack`, in effect adding the missing JavaScript symbol for
-_constructing_ asynchronous things.
+`core/lifecycle` gives a common lifecycle to constructable API clients and file
+writers. These classes share little except an async construction step (`ready()`
+and similar) and orderly async disposal. The design is a lightweight version of VS
+Code's internal dependency-injection system, in which interface types are paired
+with runtime tokens. It is built on the standard `AsyncDisposable` protocol and
+`AsyncDisposableStack`, and it adds the JavaScript symbol that is missing for
+_constructing_ asynchronous objects.
 
-The current module has design-level flaws (inert dispose guards, wrong-object
-type predicates, a resolve race, lying proxy types — see the bug ledger below)
-and reaches into `@mailwoman/core` internals (`ResourceError`,
-`ConsoleLogger`). Rather than patch in place, the API is redesigned from
-scratch as a standalone package, and mailwoman migrates onto it.
+The current module has design-level flaws: inert dispose guards, type predicates
+that check the wrong object, a resolve race, and proxy types that misdescribe the runtime values
+(see the bug ledger below). It also reaches into `@mailwoman/core` internals (`ResourceError`,
+`ConsoleLogger`). Instead of patching it in place, we redesign the API from
+scratch as a standalone package and migrate mailwoman onto it.
 
-**Type ergonomics are a first-order requirement** rather than a nice-to-have: full
-inference at every call site, no `any` in the public surface, no runtime
-behavior the types fail to describe.
+**Type ergonomics are a first-order requirement.** Every call site must get full
+inference, the public surface must contain no `any`, and the types must describe all
+runtime behavior.
 
 ## Package identity
 
@@ -35,16 +35,19 @@ behavior the types fail to describe.
 | Tooling  | Source-first TS (node type-stripping), vitest, oxlint + oxfmt — cloned from the `path-ts` template |
 | tsconfig | `erasableSyntaxOnly`, `isolatedModules`, **`isolatedDeclarations: true`**                          |
 
-`isolatedDeclarations` is adopted from day one: every export carries explicit
-type annotations so declaration emit needs no inference. The README documents
-the option and why the package enforces it. Fallback if it ever conflicts with
-the proxy types: drop the flag, keep the README note.
+`isolatedDeclarations` is enabled from the first release. Every export carries explicit
+type annotations, so declaration emit needs no inference. The README documents
+the option and explains why the package enforces it. If the flag ever conflicts with
+the proxy types, drop the flag and keep the README note.
 
-**Excluded from the package:** `AsyncDisposableLRUCache` (zero consumers;
-would drag in `lru-cache` as the sole dep — stays behind in mailwoman, fate
-decided in the migration PR), HTTP-flavored errors, any logger dependency,
-decorators of any kind (no parameter decorators in stage-3, and node
-type-stripping cannot execute decorator metadata).
+**Excluded from the package:**
+
+- `AsyncDisposableLRUCache`. It has zero consumers and would add `lru-cache` as the only
+  dependency. It stays in mailwoman, and the migration PR decides its fate.
+- HTTP-flavored errors.
+- Any logger dependency.
+- Decorators of any kind. Stage-3 decorators have no parameter decorators, and node
+  type-stripping cannot execute decorator metadata.
 
 ## Architecture — three strictly ordered layers
 
@@ -54,8 +57,8 @@ handle     → Service<T> lazy awaitable wrapper    (usable standalone)
 registry   → ServiceRegistry scoped container     (fully optional)
 ```
 
-Each layer is usable without the one above it. Direct construction always
-remains possible — the registry is a convenience, never a requirement.
+Each layer works without the layer above it. Direct construction always
+remains possible, and the registry is an optional convenience.
 
 ## Layer 1 — protocol
 
@@ -72,29 +75,29 @@ export interface AsyncInitializable {
 }
 ```
 
-- **Namespaced `Symbol.for`**: survives npm-dedup failure (two module copies
-  agree on symbol identity) without the collision risk of a bare
+- **Namespaced `Symbol.for`**: when npm dedup fails and two module copies load, both
+  copies still agree on symbol identity. The namespace avoids the collision risk of a bare
   `Symbol.for("asyncInit")`.
-- The `ready?()` alias from the old design is **dropped**. One protocol: the
-  symbol. A class wanting a friendly method name calls its own symbol method.
-- Guards — all walk the prototype chain via `in`, all narrow as
-  type-predicates:
+- The `ready?()` alias from the old design is **dropped**. The symbol is the only
+  protocol. A class that wants a friendly method name can call its own symbol method.
+- Guards: each one walks the prototype chain with `in` and narrows as a
+  type predicate.
   - `isAsyncInitializable(input): input is AsyncInitializable`
-  - `isAsyncDisposable(input): input is AsyncDisposable` — fixes the old
-    `Object.hasOwn`-on-instance bug that missed prototype methods
+  - `isAsyncDisposable(input): input is AsyncDisposable` fixes the old bug in which
+    `Object.hasOwn` on the instance missed prototype methods.
   - `isDisposed(input): boolean`
-  - `markDisposed(input): boolean` — sets the **actual** `disposed` symbol
-    (the old code set a literal string key, leaving the guard inert)
+  - `markDisposed(input): boolean` sets the **actual** `disposed` symbol.
+    The old code set a literal string key, so the guard never fired.
 - Helpers:
-  - `init<T extends AsyncInitializable>(instance: T, context?): Promise<T>` —
-    awaits `[asyncInit]`, returns the instance.
-  - `construct(Ctor, ...args)` — `new` + `init` in one call; `args` typed via
+  - `init<T extends AsyncInitializable>(instance: T, context?): Promise<T>`
+    awaits `[asyncInit]` and returns the instance.
+  - `construct(Ctor, ...args)` runs `new` and `init` in one call. `args` is typed through
     `ConstructorParameters<typeof Ctor>`.
 
 ## Layer 2 — handle: `Service<T>`
 
-A lazy, awaitable, disposable wrapper. `Service<T>` implements
-`PromiseLike<T>` **and** `AsyncDisposable`, so it drops directly into
+`Service<T>` is a lazy, awaitable, disposable wrapper. It implements
+`PromiseLike<T>` **and** `AsyncDisposable`, so it works directly with
 `await using` and `AsyncDisposableStack.use()`.
 
 **Resolver forms** (the `ServiceResolver<T>` union):
@@ -106,18 +109,18 @@ A lazy, awaitable, disposable wrapper. `Service<T>` implements
 
 **Semantics — each fixes a flaw in the old module:**
 
-- **Promise-memoized resolution.** `resolve()` stores the in-flight promise rather than the instance — concurrent awaits share one resolution (the old code
-  raced and could construct duplicate instances, leaking one). A _failed_
-  resolution clears the memo so a later await may retry.
+- **Promise-memoized resolution.** `resolve()` stores the in-flight promise instead of the instance, so concurrent awaits share one resolution. The old code
+  raced and could construct duplicate instances, leaking one of them. A _failed_
+  resolution clears the memo so that a later await can retry.
 - **Every resolver form runs `[asyncInit]`** and receives the
-  `LifecycleContext` (the old constructor branch skipped init and dropped
-  context).
-- **Reliable class-vs-factory detection.** Prototype-chain `in` checks plus a
-  `Function.prototype.toString().startsWith("class")` tiebreak — an
-  inherited-disposable subclass is never invoked without `new` (the old
-  `Object.hasOwn(prototype, …)` check crashed on exactly that case).
-- **direct proxy types.** The method-resolver proxy survives, but non-function
-  properties are typed as what the runtime returns — thunks:
+  `LifecycleContext`. The old constructor branch skipped init and dropped the
+  context.
+- **Reliable class-vs-factory detection.** Prototype-chain `in` checks decide most cases, and a
+  `Function.prototype.toString().startsWith("class")` check breaks ties. An
+  inherited-disposable subclass is never called without `new`. The old
+  `Object.hasOwn(prototype, …)` check crashed on exactly that case.
+- **Accurate proxy types.** The method-resolver proxy stays, but non-function
+  properties are typed as the thunks the runtime returns:
 
 ```ts
 export type ServiceProxy<T> = {
@@ -136,8 +139,8 @@ export interface ServiceToken<T> {
 export function createToken<T>(description: string): ServiceToken<T>
 ```
 
-The token marries an interface type to a runtime key — services typed by
-interface need no class (replaces the old `attach()` escape valve).
+The token pairs an interface type with a runtime key, so a service typed by an
+interface needs no class. Tokens replace the old `attach()` workaround.
 
 ### The registry
 
@@ -157,26 +160,26 @@ export class ServiceRegistry implements AsyncDisposable {
 export const defaultRegistry: ServiceRegistry
 ```
 
-- **Instantiable** — scoped registries, `await using registry = new
-ServiceRegistry()`. The old static-singleton-that-`extends Service` with
-  `super(null as never)` is gone; the singleton convenience survives as
-  `defaultRegistry`.
-- **Backed by `AsyncDisposableStack`** — native LIFO ordering and
+- **Instantiable.** Registries are scoped: `await using registry = new
+ServiceRegistry()`. The old static singleton that `extends Service` with
+  `super(null as never)` is removed. `defaultRegistry` keeps the singleton
+  convenience.
+- **Backed by `AsyncDisposableStack`.** Native LIFO ordering and
   `SuppressedError` aggregation replace the hand-rolled reverse loop.
-- **Registration recorded at `register` time** rather than first-await — a
-  resolved-but-never-awaited service can no longer escape disposal (old code
-  populated its map inside `then()`).
-- **Double-register on one token throws** `E_DUPLICATE_TOKEN` (the old map
-  silently overwrote, leaking the first instance).
-- **Dispose aborts `signal` before disposing** so in-flight resolvers can
-  bail.
-- **Silent by default**; `onWarning` is the only logging hook. mailwoman wires
+- **Registration is recorded at `register` time** instead of on the first await, so a
+  resolved service that is never awaited is still disposed. The old code
+  populated its map inside `then()`.
+- **Registering one token twice throws** `E_DUPLICATE_TOKEN`. The old map
+  silently overwrote the entry and leaked the first instance.
+- **Dispose aborts `signal` before disposing** so that in-flight resolvers can
+  stop early.
+- **The registry logs nothing by default.** `onWarning` is the only logging hook, and mailwoman passes
   `ConsoleLogger` at the call site.
 
 ### Injectable constructors — declared dependencies
 
-The erasable-TS answer to VS Code's parameter-decorator injection
-(decorators being unavailable, see exclusions):
+Injectable constructors replace VS Code's parameter-decorator injection with erasable TypeScript,
+because decorators are unavailable (see the exclusions above):
 
 ```ts
 type TokenInstances<D extends readonly ServiceToken<unknown>[]> = {
@@ -199,39 +202,37 @@ class Indexer {
 registry.register(IIndexer, Indexer)
 ```
 
-- Constructor signature must match the token tuple. A mismatch is a compile
+- The constructor signature must match the token tuple. A mismatch is a compile
   error.
-- The registry awaits all declared dependencies (resolved **and**
-  `[asyncInit]`-initialized), then constructs. **The old "cannot use a
-  dependency inside the constructor" limitation is lifted** — construction is
-  under registry control, so dependencies are real instances by the time the
-  constructor body runs.
-- A dependency token missing from the registry (and its ancestors) throws
-  `E_MISSING_DEPENDENCY`, naming the token and the requesting class.
-- **Cycles are the one survivor of the old limitation.** A→B→A cannot both be
-  constructor-resolved; resolution detects the cycle and throws
-  `E_DEPENDENCY_CYCLE` naming the full path. Escape: declare the dependency
-  lazily (token of the _handle_, `ServiceToken<Service<T>>`-style) and await
-  it after construction — opting into the constraint explicitly instead of
-  being silently limited.
+- The registry awaits all declared dependencies, resolved **and**
+  `[asyncInit]`-initialized, before it constructs. **Constructors can now use their
+  dependencies**, which the old design did not allow. The registry controls construction,
+  so dependencies are real instances by the time the constructor body runs.
+- A dependency token missing from the registry and its ancestors throws
+  `E_MISSING_DEPENDENCY`, and the message includes the token and the requesting class.
+- **Cycles are the one remaining case of the old limitation.** In A→B→A, the two services cannot both be
+  resolved through their constructors. Resolution detects the cycle and throws
+  `E_DEPENDENCY_CYCLE` with the full path. To work around it, declare the dependency
+  lazily with a token for the _handle_ (`ServiceToken<Service<T>>`-style) and await
+  it after construction. The class then accepts the constraint explicitly.
 
 ### Child scopes (nested stacks)
 
 - `createChild()` returns a registry that **registers itself into the
-  parent's stack** — parent dispose reaches children first (native LIFO:
-  latest-created child dies earliest).
-- **Token resolution walks up**: `child.get(token)` falls back to the parent
-  chain — scoped overrides for free.
-- **Abort chains down**: parent `signal` abort aborts every descendant
-  (listener attached at creation, removed on child dispose).
-- **A disposed child unlinks from the parent stack** — no double-dispose when
-  the parent later goes down.
-- Registries also compose with hand-rolled `AsyncDisposableStack`s — nesting
+  parent's stack**. Disposing the parent therefore disposes children first, and with native LIFO the
+  most recently created child is disposed earliest.
+- **Token resolution walks up the chain.** `child.get(token)` falls back to the parent
+  chain, so a child can override a token for its own scope.
+- **Abort propagates down.** Aborting the parent `signal` aborts every descendant.
+  The listener is attached at creation and removed when the child is disposed.
+- **A disposed child unlinks itself from the parent stack**, so the parent does not dispose it again
+  later.
+- Registries also compose with hand-rolled `AsyncDisposableStack`s, so nesting
   does not require a registry at every level.
 
 ## Errors
 
-`LifecycleError extends Error` with a `code` union — no HTTP semantics:
+`LifecycleError extends Error` carries a `code` union and has no HTTP semantics:
 
 | Code                   | Raised when                                             |
 | ---------------------- | ------------------------------------------------------- |
@@ -259,7 +260,7 @@ Traceability from the 2026-07-18 `core/lifecycle` review:
 
 ## Testing
 
-Vitest; every ledger row and every error code gets a test. Enumerated targets:
+Tests use Vitest. Every ledger row and every error code gets a test. The targets are:
 
 - Double-dispose guard blocks (mark + isDisposed round-trip)
 - Inherited-disposable class resolves via `new` (no bare-call crash)
@@ -273,12 +274,12 @@ Vitest; every ledger row and every error code gets a test. Enumerated targets:
 
 ## Migration (mailwoman, separate PR after `lifecycle-ts@1.0.0` publishes)
 
-Direct migration — no shims (surface is ~6 call sites across 2 files):
+The migration is direct and adds no shims, because the surface is ~6 call sites across 2 files:
 
-- `core/scripting/utils/index.ts` → `defaultRegistry`: `abortController.abort(…)` → registry dispose (which aborts first); `inspect()`-based timeout report reworked against the new surface.
-- `core/api/APIClient.ts` → `isAsyncDisposable` from `lifecycle-ts` — its cache gets disposed for the first time (old predicate always returned false for prototype methods).
-- Delete `core/lifecycle/`; remove the `./lifecycle` subpath from **both** exports maps in `core/package.json` (dev + `publishConfig`).
-- Decide `AsyncDisposableLRUCache`: zero consumers → default is delete; keep only if a consumer appears by then.
+- `core/scripting/utils/index.ts` moves to `defaultRegistry`. `abortController.abort(…)` becomes a registry dispose, which aborts first. The `inspect()`-based timeout report is rewritten against the new surface.
+- `core/api/APIClient.ts` uses `isAsyncDisposable` from `lifecycle-ts`. Its cache is disposed for the first time, because the old predicate always returned false for prototype methods.
+- Delete `core/lifecycle/`, and remove the `./lifecycle` subpath from **both** exports maps in `core/package.json` (dev + `publishConfig`).
+- Decide the fate of `AsyncDisposableLRUCache`. It has zero consumers, so the default is to delete it. Keep it only if a consumer appears by then.
 - `@mailwoman/core` gains `lifecycle-ts` as a dependency.
 
 ## Out of scope

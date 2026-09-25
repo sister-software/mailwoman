@@ -3,20 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Regenerates `codex/country/official-languages.ts` from Unicode CLDR supplemental data
- *   (territoryInfo `_officialStatus` + languageAlias). The emitted table is the #936 ingest bit's
- *   authority for "is this name row in an official language of its country?" — consumed by the
- *   gazetteer builders (`mailwoman gazetteer build`, `@mailwoman/resolver-wof-sqlite`'s GeoNames
- *   fold), never at query time.
- *
- *   Each language is emitted under every ISO-639 spelling CLDR aliases to it (fi + fin, sv + swe)
- *   so consumers can test WOF's 639-3 tags, Overture's BCP-47 keys, and GeoNames' mixed 2/3-letter
- *   codes without a mapping step.
- *
- *   Usage: mailwoman dev generate official-languages [--cldr-dir <dir>] [--cldr-version 47.0.0]
- *
- *   With `cldrDir`, reads cldr-territoryInfo.json + cldr-aliases.json from disk. otherwise fetches
- *   the pinned cldr-core release from jsdelivr.
+ * Regenerates the committed `codex/country/official-languages.ts` table from Unicode CLDR supplemental data.
  */
 
 import { APIClient, pluckResponseData } from "@mailwoman/core/api"
@@ -25,34 +12,31 @@ import { writeLocalFile } from "@mailwoman/core/fs/writers"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 /**
- * The committed output path, anchored at the `@mailwoman/codex` package root rather than at
- * this module, so it names the same file from the source tree, `out/`, and a published tarball.
+ * Resolves the committed table from the `@mailwoman/codex` package root, so the path
+ * is the same from the source tree, `out/` and a published tarball.
  */
 const DEFAULT_OUT = resolvePackagePath("@mailwoman/codex", "lib", "country", "official-languages.ts")
 
 /**
- * Options for {@linkcode generateOfficialLanguages}.
+ * Configures {@linkcode generateOfficialLanguages}.
  */
 export interface GenerateOfficialLanguagesOptions {
 	/**
-	 * Read cldr-territoryInfo.json + cldr-aliases.json from this directory instead of fetching.
+	 * Reads `cldr-territoryInfo.json` and `cldr-aliases.json` from this directory instead of fetching them.
 	 */
 	cldrDir?: PathBuilderLike
 	/**
-	 * Pinned cldr-core release fetched from jsdelivr when
-	 * {@linkcode GenerateOfficialLanguagesOptions.cldrDir} is absent.
+	 * Sets the cldr-core release to fetch from jsdelivr when `cldrDir` is absent.
 	 */
 	cldrVersion?: string
 	/**
-	 * Output path override.
-	 *
-	 * Default: `codex/country/official-languages.ts` (the committed table).
+	 * Overrides the output path, which defaults to the committed `codex/country/official-languages.ts`.
 	 */
 	out?: string
 }
 
 /**
- * Summary returned by {@linkcode generateOfficialLanguages}.
+ * Summarizes a {@linkcode generateOfficialLanguages} run.
  */
 export interface GenerateOfficialLanguagesSummary {
 	territories: number
@@ -61,10 +45,9 @@ export interface GenerateOfficialLanguagesSummary {
 }
 
 /**
- * One call per CLDR supplemental file, against a CDN that throttles.
+ * Fetches CLDR supplemental files with retries.
  *
- * Retry only — the caller makes a handful of requests, so a rate budget would
- * be ceremony over a burst that never happens.
+ * The generator makes only two requests, so the client sets no rate budget.
  */
 const cldrClient = new APIClient({ displayName: "cldr", retry: true })
 
@@ -83,7 +66,11 @@ async function loadCLDR(file: string, cldrDir: PathBuilderLike | undefined, cldr
 }
 
 /**
- * Regenerate the committed `OFFICIAL_LANGUAGES` table from CLDR supplemental data.
+ * Regenerates the committed `OFFICIAL_LANGUAGES` table from CLDR supplemental data.
+ *
+ * Gazetteer builders read the table to decide whether a name row is in an official language of its country.
+ * Each language appears under every ISO 639 spelling that CLDR aliases to it, such as `fi`
+ * and `fin`, so WOF, Overture and GeoNames codes all match without a mapping step.
  */
 export async function generateOfficialLanguages(
 	options: GenerateOfficialLanguagesOptions = {},
@@ -105,7 +92,7 @@ export async function generateOfficialLanguages(
 
 	const languageAlias = aliasesDoc.supplemental.metadata.alias.languageAlias
 
-	// canonical code → every plain 2-3 letter alias spelling that maps to it (fi gains "fin")
+	// This maps each canonical code to its two- and three-letter alias spellings.
 	const spellingsOf = new Map<string, Set<string>>()
 
 	for (const [alias, entry] of Object.entries(languageAlias)) {
@@ -135,7 +122,7 @@ export async function generateOfficialLanguages(
 			const status = data._officialStatus
 
 			if (!status) continue
-			// CLDR keys can carry script subtags ("zh_Hant") — name tags use the base language.
+			// CLDR keys can have script subtags such as `zh_Hant`, but name tags use the base language.
 			const base = lang.split("_")[0]!
 			const spellings = [base, ...(spellingsOf.get(base) ?? [])].toSorted()
 

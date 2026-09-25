@@ -3,23 +3,15 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Relative links in markdown, resolved against the filesystem.
+ *   Finds relative markdown links under `docs/` whose targets do not exist on disk.
  *
- *   A markdown link is a string literal no compiler reads, so a directory move repoints the imports and leaves the
- *   prose pointing at nothing. The other docs checks cannot see this class: `collectDocPages()` walks `docs/articles`
- *   alone, and the trees that carry most of the cross-references — `engineering/`, `records/`, `superpowers/` — are
- *   not built by Docusaurus, so no build has ever resolved a path in them.
- *
- *   Scope is deliberately narrow. Only `./` and `../` targets are checked: a bare `docs/x.md` is ambiguous between a
- *   repo-relative path and a Docusaurus doc id, an absolute `/docs/…` is a route rather than a file, and an external
- *   URL is not this check's business. An anchor is stripped before resolution, because a fragment names a heading
- *   inside the target rather than a different file. A target that exists as a directory passes: a link to a folder is
- *   how Docusaurus reaches its index page.
+ *   Only `./` and `../` targets are checked. A bare `docs/x.md` could be a repo path or a Docusaurus doc id, and an
+ *   absolute `/docs/…` link is a route. The `#anchor` is dropped before resolution, and a target directory passes
+ *   because Docusaurus serves its index page.
  */
 
-// Node builtins on purpose.
-// `check/docs-structure.ts` reaches this file, and the Docs workflow runs it
-// before `yarn install`, so no workspace specifier can resolve.
+// The Docs workflow runs `check/docs-structure.ts`, which imports this file, before `yarn install`.
+// Only Node builtins can resolve at that point.
 /* oxlint-disable typescript/no-restricted-imports -- runs before `yarn install`; see above */
 import { readdir, readFile } from "node:fs/promises"
 import * as path from "node:path"
@@ -31,47 +23,47 @@ import { pathExists } from "./exists.ts"
 const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url))
 
 /**
- * The docs package root, truncated at the `scripts/` segment rather than counted upward,
- * so moving this file to a different depth still resolves.
+ * The docs package root.
  *
- * Same rule as `frontmatter/index.ts`'s `DOCS_ROOT`, and for the same reason.
+ * It is the part of this file's path before the last `scripts/` segment,
+ * so it stays correct if this file moves to another depth.
  */
 const DOCS_ROOT = SCRIPT_DIR.slice(0, SCRIPT_DIR.lastIndexOf(`${path.sep}scripts${path.sep}`))
 
 /**
- * Directories under `docs/` that hold generated or installed files rather than authored prose.
+ * These directories under `docs/` hold generated or installed files and are skipped.
  */
 const SKIP_DIRECTORIES = new Set(["node_modules", "build", ".docusaurus", "static", "i18n"])
 
 /**
- * A markdown inline link whose target starts with `./` or `../`, with any `#anchor`
- * captured separately so it can be discarded.
+ * This pattern matches an inline link whose target starts with `./` or `../`.
  *
- * Reference-style definitions (`[id]: ../x.md`) are out of scope.
- * The docs tree writes none.
+ * Group 1 is the target, and group 2 is the optional `#anchor`.
+ *
+ * Reference-style definitions (`[id]: ../x.md`) are ignored.
  */
 const RELATIVE_LINK = /\]\((\.\.?\/[^)#\s]+)(#[^)\s]*)?\)/g
 
 /**
- * One link whose target does not exist.
+ * A relative link whose target does not exist.
  */
 export interface BrokenLink {
 	/**
-	 * The file holding the link, relative to the repository root.
+	 * The file that contains the link, relative to the repository root.
 	 */
 	file: string
 	/**
-	 * The target exactly as written, anchor excluded.
+	 * The target as written, without its anchor.
 	 */
 	target: string
 	/**
-	 * 1-indexed line the link sits on.
+	 * The 1-based line where the link starts.
 	 */
 	line: number
 }
 
 /**
- * Every authored `.md`/`.mdx` under `docs/`, as absolute paths.
+ * Return the absolute paths of every authored `.md` and `.mdx` file under `root`, sorted.
  */
 export async function collectMarkdownFiles(root: string = DOCS_ROOT): Promise<string[]> {
 	const found: string[] = []
@@ -99,8 +91,7 @@ export async function collectMarkdownFiles(root: string = DOCS_ROOT): Promise<st
 }
 
 /**
- * The relative links in `files` whose targets do not exist, reported against `repoRoot`
- * so a finding is a path a reader can open.
+ * Return the relative links in `files` whose targets do not exist, with file paths relative to `repoRoot`.
  */
 export async function findBrokenLinks(
 	files: string[],
@@ -111,8 +102,7 @@ export async function findBrokenLinks(
 	for (const file of files) {
 		const text = await readFile(file, "utf8")
 		const directory = path.dirname(file)
-		// Line numbers come from a prefix count rather than a per-line scan,
-		// so a link split across lines still reports the line it starts on.
+		// Line numbers come from line-start offsets, so a link that spans lines reports its first line.
 		const lineStarts: number[] = [0]
 
 		for (let index = 0; index < text.length; index++) {

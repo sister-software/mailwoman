@@ -7,26 +7,28 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 
 /**
- * Describes the minimal fields a release-manifest entry needs, which hosts extend with their own.
+ * The minimal fields of a release-manifest entry.
+ * Hosts extend it with their own fields.
  */
 export interface ReleaseBase {
 	/**
-	 * Identifies the entry when a version is selected.
+	 * The version string that identifies the entry.
 	 */
 	version: string
 
 	/**
-	 * Sets the version picker's display label, which falls back to `version`.
+	 * The version picker's display label.
+	 * The picker falls back to `version` when it is absent.
 	 */
 	label?: string
 }
 
 /**
- * The releases manifest the host fetches — the default version plus the selectable release entries.
+ * The releases manifest that the host fetches.
  */
 export interface ReleaseManifest<TRelease extends ReleaseBase = ReleaseBase> {
 	/**
-	 * Names the version selected when the manifest first loads.
+	 * The version that the hook selects when the manifest first loads.
 	 */
 	defaultVersion: string
 
@@ -34,29 +36,29 @@ export interface ReleaseManifest<TRelease extends ReleaseBase = ReleaseBase> {
 }
 
 /**
- * Provides the abort signal and progress setters passed to a host's `loadAssets`.
+ * The abort signal and progress setters that the hook passes to a host's `loadAssets`.
  *
- * The setters become no-ops once the load is aborted or superseded, and the hook
- * itself sets the final ready or error state.
+ * The setters do nothing once the load is aborted or superseded.
+ * The hook sets the final ready or error state itself.
  */
 export interface AssetsLoadContext {
 	/**
-	 * Aborts when a version or backend switch supersedes this load, or when the component unmounts.
+	 * The signal aborts when a version or backend switch supersedes this load or when the component unmounts.
 	 */
 	signal: AbortSignal
 
 	/**
-	 * Says whether this load should use the CPU WASM backend instead of WebGPU.
+	 * Whether this load should use the CPU WASM backend instead of WebGPU.
 	 */
 	forceWASM: boolean
 
 	/**
-	 * Sets the human-readable progress line, such as `Loading v7 model (~28 MB)…`.
+	 * Sets the progress line, such as `Loading v7 model (~28 MB)…`.
 	 */
 	setProgress: (progress: string) => void
 
 	/**
-	 * Sets the labels of the staged loader's steps.
+	 * Sets the labels of the loader's steps.
 	 */
 	setStepLabels: (labels: string[]) => void
 
@@ -66,133 +68,147 @@ export interface AssetsLoadContext {
 	setStepIndex: (index: number) => void
 
 	/**
-	 * Reports the backend the neural runtime resolved to, such as `webgpu (27 MB int8)`.
+	 * Reports the backend that the neural runtime resolved to, such as `webgpu (27 MB int8)`.
 	 */
 	setBackend: (backend: string) => void
 
 	/**
-	 * Reports the fraction, in [0, 1], of the current download received so far, or `null`
-	 * when nothing is downloading or the response declares no length.
+	 * Reports the fraction of the current download received so far, in [0, 1].
 	 *
-	 * The step index cannot show this because the model is fetched before the first step begins.
+	 * The value is `null` when nothing is downloading or the response declares no length.
+	 *
+	 * The step index cannot show this progress because the model is fetched before the first step begins.
 	 */
 	setByteFraction: (fraction: number | null) => void
 }
 
 /**
- * Supplies the host's manifest loader, asset loader and optional asset disposer
- * to {@link useReleaseRuntime}.
+ * The host's manifest loader, asset loader and optional asset disposer for {@link useReleaseRuntime}.
  */
 export interface ReleaseRuntimeConfig<TAssets, TRelease extends ReleaseBase = ReleaseBase> {
 	/**
-	 * Fetches the releases manifest once on mount, returning `null` when none is
-	 * available so nothing is selectable.
-	 * A rejection is reported through `errorMessage`.
+	 * Fetches the releases manifest once on mount.
+	 *
+	 * It returns `null` when no manifest is available.
+	 * The hook reports a rejection through `errorMessage`.
 	 */
 	loadManifest: (signal: AbortSignal) => Promise<ReleaseManifest<TRelease> | null>
 
 	/**
-	 * Loads the asset bundle for one release, reporting progress through `ctx`;
-	 * it runs on every version or `forceWASM` change.
+	 * Loads the asset bundle for one release and reports progress through `ctx`.
+	 * The hook calls it on every version or `forceWASM` change.
 	 *
-	 * A rejection is reported through `errorMessage`, and the hook discards
-	 * and disposes a result that resolves after `ctx.signal` aborts.
+	 * The hook reports a rejection through `errorMessage`.
+	 * It disposes a result that resolves after `ctx.signal` aborts.
 	 */
 	loadAssets: (release: TRelease, ctx: AssetsLoadContext) => Promise<TAssets>
 
 	/**
-	 * Releases resources the garbage collector does not own, such as an ONNX
+	 * Releases resources that the garbage collector does not own, such as an ONNX
 	 * session's WASM heap or a GPU buffer.
 	 *
-	 * The hook calls it for a replaced bundle, for a bundle that resolved after its load
-	 * was aborted, and on unmount; without it, every reload leaves a model resident.
+	 * The hook calls it for a replaced bundle, for a bundle that resolved
+	 * after its load was aborted, and on unmount.
+	 * Without it, every reload leaves a model resident.
 	 */
 	disposeAssets?: (assets: TAssets) => void | Promise<void>
 
 	/**
-	 * Sets the progress line shown before the manifest arrives, defaulting to `Loading releases…`.
+	 * The progress line shown before the manifest arrives.
+	 * It defaults to `Loading releases…`.
 	 */
 	initialProgress?: string
 }
 
 /**
- * Describes the release-loading state {@link useReleaseRuntime} returns,
- * which a host pairs with its map surface to build a `GeocoderRuntime`.
+ * The release-loading state that {@link useReleaseRuntime} returns.
+ *
+ * A host pairs it with its map surface to build a `GeocoderRuntime`.
  */
 export interface ReleaseLoaderState<TAssets, TRelease extends ReleaseBase = ReleaseBase> {
 	/**
-	 * Holds the releases manifest, which is `null` until it loads or when none is available.
+	 * The releases manifest.
+	 * It is `null` until it loads or when none is available.
 	 */
 	manifest: ReleaseManifest<TRelease> | null
 
 	/**
-	 * Names the selected version, which is `null` before the manifest loads.
+	 * The selected version.
+	 * It is `null` before the manifest loads.
 	 */
 	selectedVersion: string | null
 
 	/**
-	 * Holds the manifest entry matching `selectedVersion`, or `null` when none matches.
+	 * The manifest entry that matches `selectedVersion`, or `null` when none matches.
 	 */
 	selectedRelease: TRelease | null
 
 	/**
-	 * Holds the asset bundle for the selected version, which is `null` while it loads.
+	 * The asset bundle for the selected version.
+	 * It is `null` while the bundle loads.
 	 */
 	assets: TAssets | null
 
 	ready: boolean
 
 	/**
-	 * Describes load progress for display, and is empty once loading finishes or fails.
+	 * The load progress line.
+	 * It is empty once loading finishes or fails.
 	 */
 	loadingProgress: string
 
 	/**
-	 * Gives the zero-based loader step index, which is `-1` before the first step.
+	 * The zero-based loader step index.
+	 * It is `-1` before the first step.
 	 */
 	loadingStepIndex: number
 
 	loadingStepLabels: string[]
 
 	/**
-	 * Gives the fraction, in [0, 1], of the current download received so far, or `null`
-	 * when nothing is downloading or the length is unknown.
+	 * The fraction of the current download received so far, in [0, 1].
+	 *
+	 * It is `null` when nothing is downloading or the length is unknown.
 	 */
 	loadingByteFraction: number | null
 
 	/**
-	 * Holds a manifest or asset load error, separate from any parse error a consumer tracks.
+	 * A manifest or asset load error.
+	 * It is separate from any parse error that a consumer tracks.
 	 */
 	errorMessage: string | null
 
 	/**
-	 * Names the backend the neural runtime resolved to, such as `webgpu (27 MB int8)`,
-	 * or is `""` before it is known.
+	 * The backend that the neural runtime resolved to, such as `webgpu (27 MB int8)`.
+	 * It is `""` before the backend is known.
 	 */
 	activeBackend: string
 
 	/**
-	 * Says whether the CPU WASM backend is forced instead of WebGPU.
+	 * Whether the CPU WASM backend is forced instead of WebGPU.
 	 */
 	forceWASM: boolean
 
 	/**
-	 * Switches to another version, clearing any error and reloading the asset bundle.
+	 * Switches to another version.
+	 * It clears any error and reloads the asset bundle.
 	 */
 	selectVersion: (version: string) => void
 
 	/**
-	 * Forces or releases the CPU WASM backend, which reloads the asset bundle.
+	 * Forces or releases the CPU WASM backend.
+	 * Either change reloads the asset bundle.
 	 */
 	setForceWASM: (forceWASM: boolean) => void
 }
 
 /**
- * Loads the release manifest on mount, then loads the selected release's assets
- * whenever the version or `forceWASM` changes.
+ * Loads the release manifest on mount.
  *
- * Each reload aborts the previous load and disposes the old assets, and `ready`
- * becomes true only once the new assets have fully loaded.
+ * It then loads the selected release's assets whenever the version or `forceWASM` changes.
+ *
+ * Each reload aborts the previous load and disposes the old assets.
+ * `ready` becomes true only after the new assets have fully loaded.
  */
 export function useReleaseRuntime<TAssets, TRelease extends ReleaseBase = ReleaseBase>(
 	config: ReleaseRuntimeConfig<TAssets, TRelease>

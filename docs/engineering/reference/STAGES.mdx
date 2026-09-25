@@ -6,14 +6,14 @@ For the narrative / why-it-exists framing, read [`concepts/the-staged-pipeline`]
 
 ## Status
 
-- **Canonical:** this file is the canonical interface interface for the runtime pipeline. Any stage implementation must conform.
+- **Canonical:** this file is the canonical interface for the runtime pipeline. Every stage implementation must conform to it.
 - **Last edited:** 2026-05-25.
 - **Implementation state (frozen 2026-05-25):**
   - **Shipped and wired as default:** Stage 1 (normalize), Stage 2.5 (kind classifier), Stage 2.7 (phrase grouper, rule-based), Stage 3 (neural classifier + CRF Viterbi), Stage 4a (CRF structural mask), Stage 6 (WOF SQLite resolver).
-  - **Shipped, soft-signal (#244):** Stage 1.5 (coarse-placer country router). Off in the bare `core` coordinator (byte-stable); wired **on by default** in the `mailwoman` package. Runs after normalize, feeds the resolver's `anchorPosterior` re-rank — never the classifier.
-  - **Shipped, opt-in (retired as default 2026-06-14, #566):** Stage 5 (joint reconcile). Was default-on when the phrase grouper + a `parseWithLogits` classifier were wired, but graded against the assembled pipeline it broke the street + house_number geocode precondition on 77–84% of clean US addresses while fixing 0% — so **argmax is now the default decode**. Code + A/B harnesses remain; `jointReconcile: true` opts back in (`forceJointReconcile` is the deprecated alias).
-  - **Shipped but not wired as factory default:** Stage 2 (`locale-hint` workspace exists rather than in `createRuntimePipeline` factory).
-  - **Scaffold only:** Stage 4b (span re-reader — unbuilt).
+  - **Shipped, soft-signal (#244):** Stage 1.5 (coarse-placer country router). It is off in the bare `core` coordinator (byte-stable) and wired **on by default** in the `mailwoman` package. It runs after normalize and feeds the resolver's `anchorPosterior` re-rank. It never feeds the classifier.
+  - **Shipped, opt-in (retired as default 2026-06-14, #566):** Stage 5 (joint reconcile). It was default-on when the phrase grouper and a `parseWithLogits` classifier were wired. Graded against the assembled pipeline, it broke the street + house_number geocode precondition on 77–84% of clean US addresses while fixing 0%, so **argmax is now the default decode**. The code and A/B harnesses remain. `jointReconcile: true` opts back in (`forceJointReconcile` is the deprecated alias).
+  - **Shipped but not wired as factory default:** Stage 2. The `locale-hint` workspace exists, but the `createRuntimePipeline` factory does not wire it.
+  - **Scaffold only:** Stage 4b (span re-reader, unbuilt).
   - **In-flight:** CE-only C-train producing new Stage 3 weights (step 6800/50K, val_macro_f1=0.496).
 
 ## The pipeline
@@ -40,7 +40,7 @@ The fast-path arrow is where the latency saving comes from: when the kind classi
 
 ## Shared types
 
-These types appear across multiple stages; defined here, used everywhere.
+These types appear across multiple stages and are defined here.
 
 ```ts
 import type { Span } from "@mailwoman/core"
@@ -65,7 +65,7 @@ export interface PipelineOpts {
 
 ## Stage 1 — Normalize
 
-**Purpose.** Deterministic preprocessing of the raw input string. Unicode NFC, case folding, abbreviation expansion, whitespace and punctuation normalization. Pure functions, no ML.
+**Purpose.** Stage 1 preprocesses the raw input string deterministically: Unicode NFC, case folding, abbreviation expansion, and whitespace and punctuation normalization. It uses pure functions without ML.
 
 **Interface.**
 
@@ -110,7 +110,7 @@ export interface NormalizeOpts {
 export function normalize(raw: string, opts?: NormalizeOpts): NormalizedInput
 ```
 
-**Today.** `@mailwoman/normalize` workspace shipped 2026-05-22 (increment B of [PHASE_7](../../records/plan/phases/PHASE_7_stage_1_normalize_and_query_shape.mdx)). Public `normalize()` function with NFC + punctuation + whitespace (always) + abbreviation expansion + case-fold (opt-in). Essential `offsetMap` composed across transforms. Small en-US + fr-FR abbreviation dictionaries.
+**Today.** `@mailwoman/normalize` workspace shipped 2026-05-22 (increment B of [PHASE_7](../../records/plan/phases/PHASE_7_stage_1_normalize_and_query_shape.mdx)). The public `normalize()` function always applies NFC, punctuation, and whitespace normalization, and optionally applies abbreviation expansion and case folding. It composes the `offsetMap` across transforms. The en-US and fr-FR abbreviation dictionaries are small.
 
 **Future.** Share dictionaries with corpus synthesis (synthesis is the _inverse_ — canonical → variants; normalize is variants → canonical). Add per-locale case-folding edge cases (Turkish `İ`, Greek final sigma). Bidirectional offset lookup (`raw[i] → normalized[i]`).
 
@@ -136,7 +136,7 @@ export function computeQueryShape(input: string | NormalizedInputLite, opts?: Co
 
 **Reuse.** Once computed, `QueryShape` passes into every subsequent stage as additional context. It is not its own stage.
 
-**Today.** `@mailwoman/query-shape` workspace shipped 2026-05-22 (increment A of [PHASE_7](../../records/plan/phases/PHASE_7_stage_1_normalize_and_query_shape.mdx)). Pure functions, no ML, zero workspace dependencies. Detects character class, punctuation-bounded segments, known postcode formats (US ZIP/ZIP+4, UK, CA, JP + ambiguous 5-digit FR/DE/US), PO Box / BP. Hyphen / apostrophe / underscore are "connectors" so `"10118-1234"` and `"Saint-Denis"` stay one token. Accepts both `string` and `NormalizedInputLite` (structurally compatible with `@mailwoman/normalize`'s `NormalizedInput`).
+**Today.** `@mailwoman/query-shape` workspace shipped 2026-05-22 (increment A of [PHASE_7](../../records/plan/phases/PHASE_7_stage_1_normalize_and_query_shape.mdx)). It uses pure functions without ML and has zero workspace dependencies. It detects character class, punctuation-bounded segments, known postcode formats (US ZIP/ZIP+4, UK, CA, JP + ambiguous 5-digit FR/DE/US), and PO Box / BP. Hyphen, apostrophe, and underscore are "connectors", so `"10118-1234"` and `"Saint-Denis"` stay one token. It accepts both `string` and `NormalizedInputLite` (structurally compatible with `@mailwoman/normalize`'s `NormalizedInput`).
 
 ## Stage 2 — `locale-hint`
 
@@ -177,7 +177,7 @@ export interface LocaleHintStage {
 }
 ```
 
-**Today.** `@mailwoman/locale-hint` workspace shipped 2026-05-23. Rule-based: caller-hint precedence at confidence 1.0; otherwise derived from `QueryShape.characterClass` (CJK → ja-JP, Cyrillic → ru-RU, Arabic → ar) + known-format hits (us_zip4 → en-US, uk_postcode → en-GB, ca_postcode → en-CA, jp_postcode → ja-JP). Ambiguous 5-digit → en-US at low confidence with FR/DE as alternatives. Always returns a verdict (fallback en-US at 0.3) — it never abstains. Not yet wired as default in `createRuntimePipeline` — callers must pass `detectLocale` explicitly. The coordinator falls back to caller-trust stub.
+**Today.** `@mailwoman/locale-hint` workspace shipped 2026-05-23. Rule-based: caller-hint precedence at confidence 1.0; otherwise derived from `QueryShape.characterClass` (CJK → ja-JP, Cyrillic → ru-RU, Arabic → ar) + known-format hits (us_zip4 → en-US, uk_postcode → en-GB, ca_postcode → en-CA, jp_postcode → ja-JP). Ambiguous 5-digit → en-US at low confidence with FR/DE as alternatives. It always returns a locale (falling back to en-US at 0.3) and never abstains. `createRuntimePipeline` does not wire it by default, so callers must pass `detectLocale` explicitly. Without it, the coordinator falls back to a stub that trusts the caller's locale.
 
 **Future.** Replace the rule scorers with a small character-level classifier (~100 KB) trained on the first 200 characters of input. Per-locale corpus rows already carry the `locale` field — supervised training data is free. Below the confidence floor, `locale-hint` signals an ensemble run downstream.
 
@@ -259,7 +259,7 @@ export interface PhraseGrouper {
 
 Per "possibilities not constraints", the grouper emits overlapping proposals freely (e.g. `Saint Petersburg` surfaces as a single `LOCALITY_PHRASE` AND as two single-token `LOCALITY_PHRASE`s) — the reconciler picks the best non-overlapping subset.
 
-**Today.** `@mailwoman/phrase-grouper` workspace shipped 2026-05-23 (v0.5.0 Thread E). Rule-based: per-kind scorers over token-level structural cues (proximity, punctuation, capitalization, hyphenation, format-shape repetition from QueryShape). Bitter-lesson-safe — no place-name dictionaries. Wired as the default `groupPhrases` in `mailwoman/runtime-pipeline.ts::createRuntimePipeline` (hard dep in v0.5.0 rather than an opt-in shim — there are no v0.4.0 users to migrate). Result surfaced on `PipelineResult.phraseProposals`.
+**Today.** `@mailwoman/phrase-grouper` workspace shipped 2026-05-23 (v0.5.0 Thread E). Rule-based: per-kind scorers over token-level structural cues (proximity, punctuation, capitalization, hyphenation, format-shape repetition from QueryShape). It is bitter-lesson-safe because it uses no place-name dictionaries. It is wired as the default `groupPhrases` in `mailwoman/runtime-pipeline.ts::createRuntimePipeline`. In v0.5.0 it is a hard dependency rather than an opt-in shim, because there are no v0.4.0 users to migrate. The result is exposed on `PipelineResult.phraseProposals`.
 
 **Future.** Learned 1-2M-param span proposer trained on segment-boundary labels derived from corpus-v0.4.0 + the kryptonite catalogue. Same `PhraseProposal[]` output interface; the consumers (Stages 3, 5) don't need to know which implementation produced the proposals. See [`PHASE_8_E_learned_span_proposer.md`](../../records/plan/phases/PHASE_8_E_learned_span_proposer.mdx) for the scope.
 
@@ -293,7 +293,7 @@ export interface ClassifierContext {
 
 **Today.** Shipped at v3.0.0. Both rule classifiers and `NeuralSequenceClassifier` implement `Classifier`. The neural model is the small encoder-only transformer documented in [`ARCHITECTURE.md`](./ARCHITECTURE.mdx). The Tier 2 vocabulary (21 BIO labels) is current.
 
-**Future.** Larger context window (128 → 256 tokens), more locales, continued corpus expansion. Optional: use `QueryShape.segments` as an encoder input feature (segment-id per token concatenated to the input embedding) — cheap, no architecture change, gives the encoder a free structural prior.
+**Future.** Larger context window (128 → 256 tokens), more locales, continued corpus expansion. Optionally, use `QueryShape.segments` as an encoder input feature (segment-id per token concatenated to the input embedding). This is cheap, requires no architecture change, and gives the encoder a structural prior.
 
 **Failure classes owned.** Street/locality collisions (#4) via context-aware classification.
 
@@ -321,11 +321,11 @@ export interface CrfDecoder {
 }
 ```
 
-**Today.** Used at training time and in the Python eval. JavaScript runtime ships Viterbi (2026-05-22) with the BIO structural mask — orphan-`I-*` sequences are structurally impossible at runtime, even without learned CRF transitions in the model bundle. Learned transitions will compose on top once a future weights release ships them via `crf-transitions.json` or the model card.
+**Today.** Used at training time and in the Python eval. The JavaScript runtime has shipped Viterbi with the BIO structural mask since 2026-05-22. The mask makes orphan-`I-*` sequences impossible at runtime, even without learned CRF transitions in the model bundle. Learned transitions will compose on top once a future weights release ships them via `crf-transitions.json` or the model card.
 
 ### Stage 4b — Span re-reader (future)
 
-When Stage 3 emits a span with low confidence, or two overlapping high-confidence proposals, re-run the encoder on that span alone with extra structural conditioning. **Additive: only proposes new alternatives, never deletes existing ones.**
+When Stage 3 emits a span with low confidence, or two overlapping high-confidence proposals, re-run the encoder on that span alone with extra structural conditioning. **The re-reader is additive: it proposes new alternatives and never deletes existing ones.**
 
 **Interface.**
 
@@ -404,7 +404,7 @@ export interface ParseTree {
 
 Score per beam = `phrase_conf × classifier_score × resolver_score × concordance_bonus`. Concordance bonus is **+1** in log-space for a fully consistent WOF parent_id chain across all admin pairs in the assignment, **-Infinity** (hard veto) for an explicit chain contradiction, **0** when no admin signal is available. Per-axis pruning (kSpan / kTag / kResolver) keeps the search tight.
 
-**Today.** Joint-decoding path shipped in v0.5.0 Thread D (`core/pipeline/reconcile.ts`, 2026-05-23), built to close the kryptonite catalogue — `NY-NY Steakhouse, Houston, TX`, `Paris, Texas`, `Saint Petersburg, FL`, `Buffalo Buffalo` — via the concordance bonus and hard-veto contradiction handling. **Retired as the default on 2026-06-14 ([#566](https://github.com/sister-software/mailwoman/issues/566)):** graded against the assembled pipeline it broke the street + house_number geocode precondition on 77–84% of clean US addresses while fixing 0% of the catalogue, so **argmax is the default decode**. The code and A/B harnesses remain; `jointReconcile: true` opts back in (`forceJointReconcile` is the deprecated alias).
+**Today.** Joint-decoding path shipped in v0.5.0 Thread D (`core/pipeline/reconcile.ts`, 2026-05-23), built to close the kryptonite catalogue — `NY-NY Steakhouse, Houston, TX`, `Paris, Texas`, `Saint Petersburg, FL`, `Buffalo Buffalo` — via the concordance bonus and hard-veto contradiction handling. **Retired as the default on 2026-06-14 ([#566](https://github.com/sister-software/mailwoman/issues/566)):** graded against the assembled pipeline, it broke the street + house_number geocode precondition on 77–84% of clean US addresses while fixing 0% of the catalogue, so **argmax is the default decode**. The code and A/B harnesses remain; `jointReconcile: true` opts back in (`forceJointReconcile` is the deprecated alias).
 
 **Future.** Add learned-reranker comparison now that joint decoding has a kryptonite-eval baseline. Long-term: replace the concordance scoring with a learned reranker trained on the kryptonite catalogue.
 
@@ -463,7 +463,7 @@ export interface Resolution {
 
 ## The coordinator
 
-The orchestration function that composes all stages. Lives in `@mailwoman/core/pipeline` (shipped 2026-05-23). Generic over its stage implementations — each stage is structurally typed, injected via the `RuntimePipelineStages` record. Keeps core free of dependencies on the concrete neural / normalize / query-shape / resolver packages. The user-facing convenience factory `createRuntimePipeline()` lives in the `mailwoman` workspace and pre-wires the defaults.
+The coordinator is the orchestration function that composes all stages. It lives in `@mailwoman/core/pipeline` (shipped 2026-05-23). It is generic over its stage implementations: each stage is structurally typed and injected through the `RuntimePipelineStages` record. This keeps core free of dependencies on the concrete neural, normalize, query-shape, and resolver packages. The user-facing convenience factory `createRuntimePipeline()` lives in the `mailwoman` workspace and pre-wires the defaults.
 
 ```ts
 // packages/core/src/pipeline.ts
@@ -539,7 +539,7 @@ The coordinator skips stages 3-5 when **all** of the following hold:
 3. `queryShape.knownFormats` contains a matching high-confidence hit.
 4. `opts.forceFullPipeline` is not set.
 
-The match between `kind` and `knownFormats` is the safety check — a `postcode_only` kind without a matching postcode regex hit is suspicious and falls through to the full pipeline.
+The match between `kind` and `knownFormats` is the safety check. A `postcode_only` kind without a matching postcode regex hit is suspicious and falls through to the full pipeline.
 
 ```ts
 function canShortCircuit(kind: QueryKindResult, shape: QueryShape, opts?: PipelineOpts): boolean {
@@ -582,8 +582,8 @@ The packaging is intentional: a consumer can pull just `@mailwoman/core` + `@mai
 - **Stage interfaces** (this file): semver-major bump on any breaking change. The `Components` shape change from flat dict to typed `{ value, confidence, span, … }` will be a breaking change.
 - **Stage implementations**: independently versioned per workspace. Weights packages get major bumps on label-vocabulary changes (Tier 1 → Tier 2 was the v2 → v3 bump).
 - **Pipeline coordinator**: lives in `@mailwoman/core`; semver-major on any change to `PipelineResult` shape.
-- **Adding a new stage**: requires editing this file with new interface + Today/Future block + failure classes + open questions, then a interface test in `@mailwoman/core` proving the new stage composes with the existing ones.
-- **Removing a stage**: requires the operator's written sign-off in `DECISIONS.md`. Don't.
+- **Adding a new stage**: requires editing this file with new interface + Today/Future block + failure classes + open questions, then an interface test in `@mailwoman/core` proving the new stage composes with the existing ones.
+- **Removing a stage**: requires the operator's written sign-off in `DECISIONS.md`, and should be avoided.
 
 ## Open questions across the pipeline
 

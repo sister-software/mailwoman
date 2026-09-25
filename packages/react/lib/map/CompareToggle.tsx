@@ -3,21 +3,24 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Provide a compare-mode checkbox and optional second-version selector.
- *   The host performs the comparison; this component only reports user selections.
+ *   Renders a compare-mode checkbox and a selector for the second model version. The host runs the
+ *   comparison.
  */
 
 import type { ReactNode } from "react"
 
 import type { VersionOption } from "#map/types"
 
+/**
+ * Props for {@link CompareToggle}.
+ */
 export interface CompareToggleProps {
 	/**
-	 * The selectable model bundles (the primary version is filtered out of the compare list).
+	 * The selectable model versions.
 	 */
 	versions: ReadonlyArray<VersionOption>
 	/**
-	 * The primary version, excluded from the compare options.
+	 * The primary version, which the compare list leaves out.
 	 */
 	primaryVersion: string | null
 	/**
@@ -25,31 +28,30 @@ export interface CompareToggleProps {
 	 */
 	compareMode: boolean
 	/**
-	 * Fired when the visitor flips compare mode.
+	 * Called when the visitor toggles compare mode.
 	 */
 	onCompareModeChange: (compareMode: boolean) => void
 	/**
-	 * The version chosen to compare against, or `null` when none is chosen.
+	 * The version to compare against, or `null` when none is chosen.
 	 */
 	compareVersion: string | null
 	/**
-	 * Fired with the chosen compare version (or `null` when the empty option is picked).
+	 * Called with the chosen version, or with `null` when the visitor picks the empty option.
 	 */
 	onCompareVersionChange: (version: string | null) => void
 	/**
-	 * Disable the compare-version select (e.g. While a parse or compare load runs).
+	 * Disables the version select, for example while a parse runs.
 	 */
 	disabled?: boolean
 	/**
-	 * A status line rendered under the select (e.g. The compare backend, or a "Loading…" line).
+	 * A status line shown under the select, such as the compare backend or a loading message.
 	 */
 	status?: ReactNode
 }
 
 /**
- * The compare toggle + (when on) the compare-version selector.
- *
- * Renders `null` with fewer than two versions.
+ * Renders the compare checkbox and, in compare mode, the version selector.
+ * It renders nothing when fewer than two versions exist.
  */
 export function CompareToggle({
 	versions,

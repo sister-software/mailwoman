@@ -3,9 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Cache geocoding sessions by effective configuration and source fingerprint. Warm sessions avoid repeated startup.
- *   The registry lives in the MCP server process; source edits invalidate sessions because Node cannot reload modules
- *   in place.
+ *   Caches geocode sessions by effective configuration and source fingerprint.
  */
 
 import { sha256Hex } from "@mailwoman/core/hash"
@@ -22,8 +20,9 @@ import { missingWeightsCacheArtifacts } from "#eval-report"
 import { computeTreeFingerprint, staleEngineMessage, type TreeFingerprint } from "#tree-fingerprint"
 
 /**
- * CLI configuration pins.
- * `undefined` selects the production default.
+ * The engine configuration in CLI snake_case keys.
+ *
+ * An unset key uses the production default.
  */
 export interface EngineConfig {
 	locale?: string
@@ -34,7 +33,7 @@ export interface EngineConfig {
 	resolve_db?: string
 	data_root?: string
 	/**
-	 * Candidate weights bundle to load instead of the installed package.
+	 * A candidate weights bundle to load instead of the installed package.
 	 */
 	weights_cache?: string
 	gazetteer_prior?: boolean
@@ -47,29 +46,29 @@ export interface EngineConfig {
 	postcode_containment_coherence?: boolean
 	admin_containment_rerank?: boolean
 	/**
-	 * Opt-in POI venue tier.
+	 * Enables the POI venue tier, which is off by default.
 	 */
 	poi_venue_tier?: boolean
 	/**
-	 * Opt-in capital-status ranking.
+	 * Enables capital-status ranking.
 	 */
 	capital_tier?: boolean
 	/**
-	 * Exempt own-name variant aliases from the cross-country primary-preference penalty.
+	 * Exempts own-name variant aliases from the cross-country primary-preference penalty.
 	 */
 	variant_alias_exemption?: boolean
 	/**
-	 * Record decode-path evidence for each run.
+	 * Records decode-path evidence for each run.
 	 */
 	trace?: boolean
 	/**
-	 * Recheck failed lookups against other administrative bands for diagnosis.
+	 * Rechecks failed lookups against other administrative bands for diagnosis.
 	 */
 	diagnose_unreachable?: boolean
 }
 
 /**
- * Map CLI snake_case keys to effective session option names for confound checks.
+ * Maps each CLI key to its session option name, for confound checks.
  */
 export const EFFECTIVE_KEY_FOR = {
 	locale: "locale",
@@ -97,20 +96,25 @@ export const EFFECTIVE_KEY_FOR = {
 } as const satisfies Record<keyof EngineConfig, string>
 
 /**
- * Translate a CLI key to its session-option name.
- * Preserve unknown keys for cross-engine comparisons.
+ * Returns the session option name for a CLI key.
+ *
+ * An unknown key is returned unchanged, so a comparison can still name another engine's key.
  */
 export function effectiveKeyFor(declared: string): string {
 	return (EFFECTIVE_KEY_FOR as Record<string, string>)[declared] ?? declared
 }
 
 /**
- * Geocode session options mapped to a record while preserving each field's type.
+ * The resolved geocode session options.
  */
 export type EffectiveConfig = { [Key in keyof GeocodeSessionOptions]: GeocodeSessionOptions[Key] }
 
+/**
+ * Resolves an engine configuration to session options.
+ *
+ * Unset keys take their defaults from the geocode command's option factory.
+ */
 export function resolveConfig(config: EngineConfig): GeocodeSessionOptions {
-	// Use the command's option factory so unset pins resolve to production defaults.
 	const production = createGeocodeCommandOptions()
 
 	return {
@@ -140,7 +144,10 @@ export function resolveConfig(config: EngineConfig): GeocodeSessionOptions {
 }
 
 /**
- * Refuse missing or incomplete candidate bundles before constructing an engine.
+ * Throws when a candidate weights bundle is missing files.
+ *
+ * Loading an incomplete bundle would silently fall back to other weights or disable channels,
+ * and the eval would report that as the candidate's score.
  */
 export async function assertWeightsCacheStaged(cacheRoot: PathBuilderLike, locale = "en-us"): Promise<void> {
 	const { kind, paths } = await missingWeightsCacheArtifacts(cacheRoot, locale)
@@ -158,6 +165,9 @@ export async function assertWeightsCacheStaged(cacheRoot: PathBuilderLike, local
 	)
 }
 
+/**
+ * Returns a 16-character ID derived from the sorted configuration and the source fingerprint.
+ */
 export function engineID(effective: EffectiveConfig, fingerprint: TreeFingerprint): string {
 	const canonical = stringifyJSON(
 		Object.fromEntries(Object.entries(effective).toSorted(([a], [b]) => a.localeCompare(b)))
@@ -166,6 +176,9 @@ export function engineID(effective: EffectiveConfig, fingerprint: TreeFingerprin
 	return sha256Hex(`${canonical}\n${fingerprint.digest}`).slice(0, 16)
 }
 
+/**
+ * A resident geocode session and its usage statistics.
+ */
 export interface Engine {
 	engineID: string
 	session: GeocodeSession
@@ -176,6 +189,9 @@ export interface Engine {
 	uses: number
 }
 
+/**
+ * The JSON summary of one resident engine.
+ */
 export interface EngineSummary {
 	engine_id: string
 	locale: string
@@ -185,13 +201,13 @@ export interface EngineSummary {
 	uses: number
 	tree_fingerprint: string
 	/**
-	 * Model artifact actually loaded, including its resolution source.
+	 * The model file the session loaded and where it was resolved from.
 	 */
 	weights: { model_path: string; source: string } | null
 }
 
 /**
- * Minimal registry interface used by tools and test doubles.
+ * The registry interface that tools and test doubles use.
  */
 export interface EngineRegistryLike {
 	readonly repoRoot: string
@@ -199,11 +215,11 @@ export interface EngineRegistryLike {
 	readonly size: number
 	readonly maxResident: number
 	/**
-	 * Whether source files changed after this process imported modules.
+	 * Resolves true when source files changed after this process imported its modules.
 	 */
 	sourceMoved(): Promise<boolean>
 	/**
-	 * The working tree's fingerprint right now — recomputed on every call, never cached.
+	 * Computes the working tree's current fingerprint on every call.
 	 */
 	fingerprint(): Promise<TreeFingerprint>
 	acquire(config: EngineConfig): Promise<Engine>
@@ -213,7 +229,9 @@ export interface EngineRegistryLike {
 }
 
 /**
- * Resident engine cache with least-recently-used eviction.
+ * A cache of resident engines with least-recently-used eviction.
+ *
+ * Node cannot reload modules in place, so the registry refuses to build an engine after the source changes.
  */
 export class EngineRegistry implements EngineRegistryLike {
 	readonly #engines = new Map<string, Engine>()
@@ -222,7 +240,7 @@ export class EngineRegistry implements EngineRegistryLike {
 	readonly #bootFingerprint: TreeFingerprint
 
 	/**
-	 * Capture the imported source fingerprint before constructing the registry.
+	 * Creates a registry that records the source fingerprint at boot.
 	 */
 	static async create(repoRoot: string, maxResident = 2): Promise<EngineRegistry> {
 		return new EngineRegistry(repoRoot, maxResident, await computeTreeFingerprint(repoRoot))
@@ -239,15 +257,12 @@ export class EngineRegistry implements EngineRegistryLike {
 	}
 
 	/**
-	 * Fingerprint of the source loaded by this process.
+	 * The fingerprint of the source this process loaded.
 	 */
 	get bootFingerprint(): TreeFingerprint {
 		return this.#bootFingerprint
 	}
 
-	/**
-	 * Whether source changed since this process imported its modules.
-	 */
 	async sourceMoved(): Promise<boolean> {
 		return (await this.fingerprint()).digest !== this.#bootFingerprint.digest
 	}
@@ -257,8 +272,9 @@ export class EngineRegistry implements EngineRegistryLike {
 	}
 
 	/**
-	 * Return a cached engine or build one for this configuration.
-	 * Throws if source changed after boot.
+	 * Returns the cached engine for this configuration, or builds one.
+	 *
+	 * @throws When the source changed after boot.
 	 */
 	async acquire(config: EngineConfig): Promise<Engine> {
 		const current = await this.fingerprint()
@@ -274,12 +290,10 @@ export class EngineRegistry implements EngineRegistryLike {
 			return existing
 		}
 
-		// Compare against the boot fingerprint even when no engines are resident.
 		if (current.digest !== this.#bootFingerprint.digest) {
 			throw new Error(staleEngineMessage(this.#bootFingerprint, current))
 		}
 
-		// Validate candidate artifacts before paying the engine construction cost.
 		if (effective.weightsCacheRoot) {
 			await assertWeightsCacheStaged(effective.weightsCacheRoot, effective.locale)
 		}

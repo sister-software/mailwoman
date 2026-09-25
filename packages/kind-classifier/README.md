@@ -1,11 +1,11 @@
 # @mailwoman/kind-classifier
 
-**Stage 2.5 of the Mailwoman runtime pipeline** — query kind classification.
+This package is **stage 2.5 of the Mailwoman runtime pipeline**, which classifies
+the query kind.
 
-Categorizes an input into one of seven `QueryKind`s by composing rule-based
-scorers over the `QueryShape` output. Returns possibilities (alternatives)
-alongside the top pick so the coordinator can fall back when the winning kind
-isn't actionable.
+It assigns an input to one of seven `QueryKind`s by combining rule-based scorers
+over the `QueryShape` output. It returns alternatives alongside the top pick, so
+the coordinator can fall back when the winning kind is not actionable.
 
 ```ts
 import { classifyKind } from "@mailwoman/kind-classifier"
@@ -51,16 +51,17 @@ locale-hint → kind-classifier → phrase-grouper → classifier → ...
 
 ## Design
 
-- **Pure functions, no ML.** Rule-based v1; a trained classifier is deferred.
+- **Pure functions without ML.** Version 1 is rule-based, and a trained
+  classifier is deferred.
 - **Returns alternatives.** The coordinator might skip a `locality_only` parse
-  and fall back to a `vague` handler — the alternatives list makes that possible.
+  and fall back to a `vague` handler, which the alternatives list makes possible.
 - **Consumes `QueryShape` + `LocaleHint`** from the two preceding stages.
 
 ## Related
 
-- [`@mailwoman/query-shape`](../query-shape) — feeds structural data into this stage
-- [`@mailwoman/locale-hint`](../locale-hint) — feeds locale context
-- [`@mailwoman/phrase-grouper`](../phrase-grouper) — Stage 2.7, next in the pipeline
+- [`@mailwoman/query-shape`](../query-shape): supplies structural data to this stage.
+- [`@mailwoman/locale-hint`](../locale-hint): supplies locale context.
+- [`@mailwoman/phrase-grouper`](../phrase-grouper): stage 2.7, next in the pipeline.
 - [Staged Pipeline Interface](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/STAGES.mdx)
 
 ## License

@@ -4,23 +4,41 @@
 
 **Goal:** Migrate `@mailwoman/nominatim` from express to Hono + `@hono/zod-openapi` with the OpenAPI document emitted from the route table, retiring `nominatim/openapi.yaml` (the last handwritten drop-in spec) through the parity check.
 
-**Architecture:** The photon pattern (phase 2, merged as #1082), applied to nominatim's four GET endpoints. Same `legacyQuery` adapter (express-simple `string|string[]` query shape, null-prototype), same tolerant-union query schemas with doc-exact `.openapi()` overrides, same handlers-own-every-wire-decision mandate. The merged `photon/{engine,projection,schema,routes,app}.ts` files are the living exemplar — follow them structurally; this plan supplies the nominatim-specific code. No new api-kit atoms: nominatim's geojson envelope (`toFeatureCollection`) is its own vendor shape (polygon-capable `geometry: unknown`, result-field `properties`) rather than the api-kit Point envelope; the spec's `LonLat` atom stays deferred with no consumer (record in the PR).
+**Architecture:** This phase applies the photon pattern (phase 2, merged as #1082) to nominatim's four GET endpoints. It uses the same `legacyQuery` adapter (the express-simple `string|string[]` query shape, with a null prototype), the same tolerant-union query schemas with doc-exact `.openapi()` overrides, and the same rule that handlers own every wire decision. The merged `photon/{engine,projection,schema,routes,app}.ts` files are the working example, so follow their structure. This plan supplies the nominatim-specific code. It adds no new api-kit atoms. Nominatim's geojson envelope (`toFeatureCollection`) is its own vendor shape (polygon-capable `geometry: unknown`, with result fields in `properties`) rather than the api-kit Point envelope. The spec's `LonLat` atom stays deferred because nothing consumes it. Record that in the PR.
 
 **Tech Stack:** hono `^4.12.29`, `@hono/zod-openapi` `^1.4.0`, `@mailwoman/api-kit` (`serveNode`, `attachOpenAPIDocs`, `emitOpenAPIDocuments`), zod `^4.4.3`, vitest.
 
 ## Global Constraints
 
-- **Vendor wire shapes are immutable.** Error envelope is `{error: string}` (libpostal-style rather than photon's FeatureCollection+message). Exact bodies: 501s carry issue refs verbatim — `{"error":"search not implemented (see #802)"}`, `{"error":"reverse not implemented (see #803)"}`, `{"error":"lookup not implemented (see #805)"}`; 400s (reverse only): `{"error":"lat and lon are required"}`, `{"error":"lat must be in [-90, 90] and lon in [-180, 180]"}`; 500: `{"error":"internal error"}`. CORS methods `GET, OPTIONS`.
-- **`/status` special default:** engine method absent → 200 `{"status":0,"message":"OK"}` — NOT 501. The only endpoint with a non-501 absent-method answer.
-- **Format matrix:** `parseFormat` falls back to `"jsonv2"` for anything not in `{json, geojson, jsonld}`. `geojson` → `toFeatureCollection`; `jsonld` → schema.org projection on `/search` (array) and `/reverse` (single object or `null`); `/lookup` has no jsonld branch (jsonld falls through to raw results — a legacy quirk to preserve); `/reverse` with a null engine result serializes `null` (json body `null`, 200).
-- **`addressdetails` forcing:** `parseBool(q) || format === "jsonld"` on `/search` and `/reverse`; plain `parseBool` on `/lookup`.
-- **Param parsing verbatim:** `asString` (repeated param → array → undefined, silently treated as absent — pin it), `parseBool` (`"1"`/`"true"`), `countrycodes`/`osm_ids` comma-split, `limit` = `Number(x ?? 10) || 10` (DEFAULT 10 rather than photon's 15), `accept-language` kebab param. `/search` has no required params — bare `/search` reaches the engine with `q: undefined` (engine returns what it returns; pin with a fixture). `NominatimSearchParams.viewbox` exists on the interface but was never parsed and is not in the yaml — leave unparsed/undeclared (photon's bbox precedent).
-- **Engine + formatter exports move verbatim** (public API): `NominatimFormat`, `NominatimAddressDetails`, `NominatimResult`, `NominatimSearchParams`, `NominatimReverseParams`, `NominatimLookupParams`, `NominatimStatus`, `NominatimEngine`, `NominatimFeatureCollection`, `toFeatureCollection`, `ResolvedAddress`, `MAILWOMAN_LICENCE`, `toNominatimResult`, `nominatimResultToSchemaOrg` (module-private `stableID`, `DEFAULT_LIMIT`, `parseFormat`, `parseBool`, `asString` move with their consumers). `createNominatimRouter`/`NominatimRouterOptions` deleted, no shim.
-- **Adjudication consistency** with phases 1–2 (ledger `.superpowers/sdd/progress.md`): repeated single-valued params are never-interface-tolerated (legacy: `asString(array)` → undefined → param absent — that is the observable interface, pin it, no 400); the yaml uses `$ref`-shared `components.parameters` (limit/addressdetails/format/accept-language) — the parity test must dereference them (phase-2 lesson, resolver code included below).
-- `erasableSyntaxOnly`; `.ts` imports; acronym casing; both exports maps; lockfile deltas commit with their change; compile before `out/`; `yarn oxfmt` before commit; vitest takes one `--dir` per invocation; no raw `process.env`/argv.
-- No new workspace; registration checklist N/A; Task 6 runs `smoke-clean-install` as the receipt.
-- `nominatim/tsconfig.json` needs the phase-2 additions upfront: `"resolveJsonModule": true`, `"files": ["./package.json"]`, `../api-kit` reference.
-- Carry-forward while touching these files: export `registerNominatimRoutes` from the package root (phase-4 `mailwoman serve` needs it; photon/libpostal get theirs in phase 4).
+- **Vendor wire shapes must not change.** The error envelope is `{error: string}`, in the libpostal style rather than photon's FeatureCollection plus message. The exact bodies are:
+  - 501s carry issue refs verbatim: `{"error":"search not implemented (see #802)"}`, `{"error":"reverse not implemented (see #803)"}`, `{"error":"lookup not implemented (see #805)"}`.
+  - 400s (reverse only): `{"error":"lat and lon are required"}`, `{"error":"lat must be in [-90, 90] and lon in [-180, 180]"}`.
+  - 500: `{"error":"internal error"}`.
+  - CORS methods are `GET, OPTIONS`.
+- **`/status` has a special default.** When the engine method is absent, it returns 200 `{"status":0,"message":"OK"}`, not 501. It is the only endpoint whose absent-method answer is not 501.
+- **Format matrix:**
+  - `parseFormat` falls back to `"jsonv2"` for anything outside `{json, geojson, jsonld}`.
+  - `geojson` goes through `toFeatureCollection`.
+  - `jsonld` produces the schema.org projection on `/search` (an array) and `/reverse` (a single object or `null`).
+  - `/lookup` has no jsonld branch, so jsonld falls through to raw results. Preserve this legacy quirk.
+  - `/reverse` with a null engine result serializes `null` (json body `null`, status 200).
+- **`addressdetails` forcing:** `/search` and `/reverse` use `parseBool(q) || format === "jsonld"`. `/lookup` uses plain `parseBool`.
+- **Parse params exactly as before:**
+  - `asString` turns a repeated param into an array and then into undefined, so the param is silently treated as absent. Pin this behavior.
+  - `parseBool` accepts `"1"` and `"true"`.
+  - `countrycodes` and `osm_ids` are comma-split.
+  - `limit` is `Number(x ?? 10) || 10`, so the default is 10 rather than photon's 15.
+  - `accept-language` keeps its kebab-case name.
+  - `/search` has no required params. A bare `/search` reaches the engine with `q: undefined`, and the engine's answer is returned as is. Pin this with a fixture.
+  - `NominatimSearchParams.viewbox` exists on the interface but was never parsed and is not in the yaml. Leave it unparsed and undeclared, following photon's bbox precedent.
+- **Engine and formatter exports move verbatim** because they are public API: `NominatimFormat`, `NominatimAddressDetails`, `NominatimResult`, `NominatimSearchParams`, `NominatimReverseParams`, `NominatimLookupParams`, `NominatimStatus`, `NominatimEngine`, `NominatimFeatureCollection`, `toFeatureCollection`, `ResolvedAddress`, `MAILWOMAN_LICENCE`, `toNominatimResult`, `nominatimResultToSchemaOrg`. The module-private `stableID`, `DEFAULT_LIMIT`, `parseFormat`, `parseBool`, and `asString` move with their consumers. `createNominatimRouter` and `NominatimRouterOptions` are deleted without a shim.
+- **Adjudicate consistently** with phases 1–2 (ledger `.superpowers/sdd/progress.md`):
+  - The interface never tolerated repeated single-valued params. In the legacy code, `asString(array)` returns undefined and the param counts as absent. That is the observable interface, so pin it and do not return 400.
+  - The yaml shares `components.parameters` (limit, addressdetails, format, accept-language) through `$ref`. The parity test must dereference them, as learned in phase 2. The resolver code is included below.
+- House rules: `erasableSyntaxOnly`, `.ts` imports, acronym casing, both exports maps, lockfile changes committed with the change that caused them, compile before reading `out/`, `yarn oxfmt` before commit, one vitest `--dir` per invocation, and no raw `process.env` or argv reads.
+- This phase adds no workspace, so the registration checklist does not apply. Task 6 runs `smoke-clean-install` as the receipt.
+- `nominatim/tsconfig.json` needs the phase-2 additions from the start: `"resolveJsonModule": true`, `"files": ["./package.json"]`, and a `../api-kit` reference.
+- While touching these files, also export `registerNominatimRoutes` from the package root. The phase-4 `mailwoman serve` needs it, and photon and libpostal get theirs in phase 4.
 
 ---
 
@@ -235,7 +253,7 @@ git commit -m "refactor(nominatim): split engine, formatter, and zod wire schema
 - Consumes: Task 1's exports; api-kit's `attachOpenAPIDocs`, `serveNode`; photon's merged `routes.ts`/`app.ts` as the structural exemplar (read them first).
 - Produces: `createNominatimApp(engine: NominatimEngine, options?: NominatimAppOptions): OpenAPIHono` (`NominatimAppOptions = { cors?: boolean }`, default true); `registerNominatimRoutes(app, engine)` — BOTH re-exported from `index.ts` (registerNominatimRoutes is the phase-4 carry-forward). `createNominatimRouter`/`NominatimRouterOptions` gone.
 
-- [ ] **Step 1: `nominatim/routes.ts`.** Copy photon's structure: `legacyQuery` (verbatim from `photon/routes.ts`, null-prototype version), `asString`/`parseFormat`/`parseBool`/`DEFAULT_LIMIT` moved verbatim from old index.ts, `ROOT_HTML` moved verbatim. Route definitions: `rootRoute` (GET /, text/html 200), `searchRoute` (GET /search, query `searchQueryParams`, responses 200 `NominatimResultsSchema` + 500/501 `ErrorSchema`), `reverseRoute` (GET /reverse, query `reverseQueryParams`, responses 200 `NominatimResultSchema` + 400/500/501 `ErrorSchema`), `lookupRoute` (GET /lookup, query `lookupQueryParams`, responses 200 `NominatimResultsSchema` + 500/501 `ErrorSchema`), `statusRoute` (GET /status, responses 200 `NominatimStatusSchema` + 500 `ErrorSchema`). Handler bodies = the express handlers moved onto `legacyQuery(c)`, byte-parity: 501 issue-ref bodies, `/status` absent-method 200 default, the exact format-branch ladders (including `/lookup`'s missing jsonld branch and `/reverse`'s `null` serialization), `addressdetails: parseBool(...) || q["format"] === "jsonld"` on search/reverse only. jsonld/geojson/null response-shape unions: local casts per the photon note if typing fights — never change wire behavior. Sanity-check the exact status-code sets against the yaml's documented responses per operation while writing (the check will verify; look once now to avoid a check round-trip).
+- [ ] **Step 1: `nominatim/routes.ts`.** Copy photon's structure: `legacyQuery` (verbatim from `photon/routes.ts`, null-prototype version), `asString`/`parseFormat`/`parseBool`/`DEFAULT_LIMIT` moved verbatim from old index.ts, `ROOT_HTML` moved verbatim. Route definitions: `rootRoute` (GET /, text/html 200), `searchRoute` (GET /search, query `searchQueryParams`, responses 200 `NominatimResultsSchema` + 500/501 `ErrorSchema`), `reverseRoute` (GET /reverse, query `reverseQueryParams`, responses 200 `NominatimResultSchema` + 400/500/501 `ErrorSchema`), `lookupRoute` (GET /lookup, query `lookupQueryParams`, responses 200 `NominatimResultsSchema` + 500/501 `ErrorSchema`), `statusRoute` (GET /status, responses 200 `NominatimStatusSchema` + 500 `ErrorSchema`). The handler bodies are the express handlers moved onto `legacyQuery(c)` with byte parity. That covers the 501 issue-ref bodies, the `/status` absent-method 200 default, the exact format-branch ladders (including `/lookup`'s missing jsonld branch and `/reverse`'s `null` serialization), and `addressdetails: parseBool(...) || q["format"] === "jsonld"` on search and reverse only. If the jsonld/geojson/null response-shape unions do not type-check, use local casts as described in the photon note. Never change wire behavior. While writing, compare each operation's status-code set against the responses the yaml documents. The check will verify them, but looking once now avoids a second check run.
 
 - [ ] **Step 2: `nominatim/app.ts`** — photon's app.ts shape: cors `GET, OPTIONS` (`allowMethods: ["GET", "OPTIONS"]`, `allowHeaders: ["*"]`, `maxAge: 86400`) when `options.cors !== false`; `app.onError((_e, c) => c.json({ error: "internal error" }, 500))`; `registerNominatimRoutes(app, engine)`; `attachOpenAPIDocs(app, { title: packageJson.name, version: packageJson.version })` with the self-referencing `@mailwoman/nominatim/package.json` JSON import; `NominatimAppOptions.cors` carries the full #1017 rationale from the old options type.
 
@@ -504,7 +522,7 @@ Parity check adjudications: <real list>"
 
 - [ ] **Step 1:** Reconcile cli.ts against Task 2 Step 5 (report delta or "no delta" with evidence).
 - [ ] **Step 2:** README: swap express/`createNominatimRouter` snippets → `createNominatimApp` + `serveNode` (with `hostname` — phase-2 README lesson); document `GET /openapi.json`; curl examples byte-identical.
-- [ ] **Step 3:** Smoke (compile first; kill only the exact `$!` PID — production-incident rule; the hosted nominatim isn't a unit on this host but the rule is absolute):
+- [ ] **Step 3:** Smoke test. Compile first, and kill only the exact `$!` PID. That rule comes from a production incident. The hosted nominatim does not run as a unit on this host, but the rule applies anyway:
 
 ```bash
 yarn compile

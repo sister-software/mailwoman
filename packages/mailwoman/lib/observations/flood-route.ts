@@ -3,10 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Add an authority's flood designation as an observation after geocoding.
- *   The route never changes answer selection. It reports designated and designated-absence
- *   readings inside mapped coverage; unknown locations produce a named refusal.
- *   Observations describe the map, not individual property risk, and carry source limitations.
+ *   Attaches an authority's flood designation to a geocode answer as an observation. The route
+ *   never changes answer selection.
  */
 
 import {
@@ -29,44 +27,46 @@ import {
 } from "#observations/layer-record"
 
 /**
- * Authority designation, coverage, and provenance recorded beside an answer.
+ * An authority's flood designation for a coordinate, with its coverage and provenance.
+ *
+ * The observation describes the authority's map.
+ * It makes no claim about the risk to an individual property.
  */
 export interface AuthorityDesignationObservation {
 	/**
-	 * `designated` or `designated_absence`.
-	 *
-	 * Never `unknown`: that reading produces no observation.
+	 * Either `designated` or `designated_absence`.
+	 * An `unknown` reading produces a refusal instead.
 	 */
 	reading: FloodReadingKind
 	/**
 	 * The authority's code, verbatim.
 	 *
-	 * Absent on a designated absence, which the authority represents by publishing nothing.
+	 * It is absent on a designated absence, because the authority publishes no code for that case.
 	 */
 	code?: string
 	/**
-	 * The authority's own words for the answered code, and where they are published.
+	 * The authority's definition of the code and the URL where it is published.
 	 */
 	definition?: { code: string; label: string; definition: string; definitionURL: string }
 	/**
-	 * The polygon the ray cast matched, where one did.
+	 * The ID of the polygon that contains the point, when one does.
 	 */
 	areaID?: string
 	containment: FloodContainmentPath
 	/**
-	 * The coverage side of the claim, present whenever the location falls inside the authority's footprint.
+	 * The coverage record for the location inside the authority's footprint.
 	 */
 	coverage?: ObservationCoverageRecord
 	/**
-	 * The index cell probed.
+	 * The index cell that was probed.
 	 */
 	indexCellIndex: string
 	/**
-	 * The authority's own statement of what its map covers, and where it is published.
+	 * The authority's statement of what its map covers and the URL where it is published.
 	 */
 	extent: { authority: string; statement: string; statementURL: string }
 	/**
-	 * What the product excludes, in the authority's own words.
+	 * The product's exclusions, in the authority's own words.
 	 */
 	limits: ReadonlyArray<string>
 	layer: ObservationLayerRecord
@@ -75,56 +75,62 @@ export interface AuthorityDesignationObservation {
 }
 
 /**
- * Named reasons a coordinate produced no observation.
+ * The reasons a coordinate can produce no flood observation.
  */
 export const DESIGNATION_REFUSALS = [
 	/**
-	 * The geocode reached no coordinate, so there is nothing to ask the layer about.
+	 * The geocode produced no coordinate.
 	 */
 	"no_coordinate",
 	/**
-	 * The layer holds no coverage row for the location.
+	 * The layer has no coverage row for the location.
 	 *
-	 * Outside the authority's footprint, which is unknown and never a low-hazard reading.
+	 * The hazard there is unknown, which must never be reported as low.
 	 */
 	"outside_authority_footprint",
 ] as const
 
+/**
+ * One {@link DESIGNATION_REFUSALS} value.
+ */
 export type DesignationRefusal = (typeof DESIGNATION_REFUSALS)[number]
 
 /**
- * Observation or named refusal for one coordinate.
+ * The observation or refusal for one coordinate.
  */
 export type DesignationDecision =
 	| { fired: true; observation: AuthorityDesignationObservation }
 	| { fired: false; refusal: DesignationRefusal }
 
+/**
+ * Reads flood designations from one sealed layer.
+ */
 export interface AuthorityDesignationRoute extends Disposable {
 	identity: FloodLayerIdentity
 	/**
-	 * Read the layer for one coordinate; missing coordinates return a named refusal.
+	 * Reads the layer at one coordinate.
+	 * A missing coordinate returns the `no_coordinate` refusal.
 	 */
 	observe: (latitude: number | null | undefined, longitude: number | null | undefined) => DesignationDecision
 }
 
+/**
+ * Options for {@link createAuthorityDesignationRoute}.
+ */
 export interface AuthorityDesignationRouteOptions {
 	/**
 	 * The sealed layer to read.
-	 *
-	 * Required: there is no default layer, and a route that guessed one would report
-	 * a designation from an authority nobody asked about.
+	 * The route has no default layer.
 	 */
 	databasePath: PathBuilderLike
 }
 
 /**
- * Build the route against one sealed layer.
+ * Builds the route against one sealed layer.
  *
- * Everything that would make the route answer a well-formed wrong thing is
- * refused by the reader's own constructor — a manifest naming a different layer,
- * a coverage table with no rows, a missing footprint row.
- * Each of those would otherwise present as a route that simply never fires, which on a
- * receipt is indistinguishable from a region the authority genuinely has not mapped.
+ * The reader's constructor throws on a manifest for a different layer,
+ * an empty coverage table or a missing footprint row.
+ * Without that check, such a layer would never fire, and the silence would look like an unmapped region.
  */
 export function createAuthorityDesignationRoute(options: AuthorityDesignationRouteOptions): AuthorityDesignationRoute {
 	const lookup = new FloodZoneLookup({ databasePath: options.databasePath })
@@ -138,7 +144,7 @@ export function createAuthorityDesignationRoute(options: AuthorityDesignationRou
 }
 
 /**
- * Build the observation for a reading the refusal check let through.
+ * Builds the observation for a reading that passed the refusal check.
  */
 function toObservation(
 	reading: FloodZoneReading,
@@ -170,8 +176,9 @@ function toObservation(
 }
 
 /**
- * What the authority's map assigns, in one wording — shared by the one-line
- * description and the marker message.
+ * Returns the clause that states what the authority's map assigns.
+ *
+ * The one-line description and the marker message share this wording.
  */
 export function floodZoneAssignmentClause(observation: AuthorityDesignationObservation): string {
 	return observation.code
@@ -180,7 +187,8 @@ export function floodZoneAssignmentClause(observation: AuthorityDesignationObser
 }
 
 /**
- * One line a reader can check the claim from, with the authority and its vintage on it.
+ * Returns a one-line description of the observation, including the authority,
+ * coverage and layer provenance.
  */
 export function describeAuthorityDesignation(observation: AuthorityDesignationObservation): string {
 	return (

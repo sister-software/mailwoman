@@ -3,19 +3,12 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Register boundary repair — the char-path pass that closes an administrative span where a name register says it
- *   closes.
+ *   Extends an administrative span on the character path to the end of a name listed in a register.
  *
- *   A character model learns where a span ends from the names it saw, and a name it never saw closes early:
- *   `富山県中新川郡上市町北島` decodes as municipality `中新川郡上市` + district `町北島` (the six JP towns whose name carries
- *   市, `@mailwoman/codex`'s `JP_INNER_SHI_TOWNS`), and `부산광역시 해운대구 반송로 910-1` as subregion `해` + street
- *   `대구` (the Korean 시군구 the model never saw, `KR_SIGUNGU`). The register names the boundary outright, so this pass
- *   extends a run by exactly the characters a register name needs and re-opens the span that followed. It fires only
- *   when the extended surface is a register name, so a real city followed by a look-alike district is untouched.
- *
- *   A decode-time consumer of a positive attestation rather than a prior: it changes labels only where the register states
- *   the boundary. The character model emits a second `B-` for a continuation it is unsure of (`해:B 운:B`); the pass
- *   reads each `B-` run on its own and absorbs across that split, so both halves join the name.
+ *   A character model can close a span early inside an unfamiliar name. For example, `富山県中新川郡上市町北島` decodes
+ *   as municipality `中新川郡上市` plus district `町北島`. The pass extends the span only when the extended text is a
+ *   register name, and it reopens the following span. The model sometimes emits a second `B-` inside a name, so each
+ *   `B-` run is extended independently.
  */
 
 import { jpMunicipalityCompletion } from "@mailwoman/codex/jp"
@@ -24,21 +17,27 @@ import type { DecoderToken } from "@mailwoman/core/decoder"
 
 import { createLabelSetter, isTagLabel, type RepairResult, tagOf, tokenIndicesOverlapping } from "#span/repair"
 
+/**
+ * The result of a repair pass.
+ */
 export type { RepairResult } from "#span/repair"
 
+/**
+ * A tag and the register lookup that completes its spans.
+ */
 export interface RegisterBoundaryRepair {
 	/**
-	 * The tag whose runs the register closes (`municipality`, `subregion`).
+	 * The tag whose spans the register completes, such as `municipality` or `subregion`.
 	 */
 	tag: string
 	/**
-	 * The register's read: the characters `surface` must absorb from `following` to become a name, or null.
+	 * Returns the characters that `surface` must take from `following` to form a register name, or null.
 	 */
 	complete: (surface: string, following: string) => string | null
 }
 
 /**
- * Extend every run of `tag` whose surface a register name completes, and re-open the span that follows it.
+ * Extends every run of `tag` that a register name completes and reopens the span that follows it.
  */
 export function repairRegisterBoundaryLabels(
 	text: string,
@@ -72,8 +71,7 @@ export function repairRegisterBoundaryLabels(
 			const absorbed = tokenIndicesOverlapping(tokens, end, end + remainder.length)
 			const last = absorbed.at(-1)
 
-			// Every absorbed token must sit inside the remainder: a token straddling its end
-			// would carry characters the register did not name into the span.
+			// The absorbed tokens must end exactly at the remainder's end so no extra characters join the span.
 			if (last !== undefined && tokens[last]!.end === end + remainder.length) {
 				for (const k of absorbed) {
 					setLabel(k, inside)
@@ -97,14 +95,14 @@ export function repairRegisterBoundaryLabels(
 }
 
 /**
- * The six JP towns whose name carries 市 before its 町 / 村 (#2178).
+ * Repairs municipality spans for the Japanese towns whose name contains 市 before 町 or 村.
  */
 export function repairJPMunicipalityLabels(text: string, input: readonly DecoderToken[]): RepairResult {
 	return repairRegisterBoundaryLabels(text, input, { tag: "municipality", complete: jpMunicipalityCompletion })
 }
 
 /**
- * The Korean 시군구, every one of them: a `subregion` the model closed inside a name it never saw (#2184).
+ * Repairs subregion spans against the register of Korean 시군구 names.
  */
 export function repairKRSubregionLabels(text: string, input: readonly DecoderToken[]): RepairResult {
 	return repairRegisterBoundaryLabels(text, input, { tag: "subregion", complete: krSubregionCompletion })

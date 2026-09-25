@@ -3,9 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Define and audit NFC/NFD invariance: canonically equivalent text should produce equivalent results. Exclude
- *   compatibility, accent-removal, and case changes. Derive variants from their named transformations and report which
- *   directions the corpus supports.
+ *   Canonical-form invariance suite, which asserts that NFC and NFD spellings of an address parse equivalently.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -20,20 +18,20 @@ import {
 } from "#eval-harness/conformance/fixture"
 
 /**
- * Law identifier used by suite rows.
+ * Law identifier that every suite row carries.
  */
 export const CANONICAL_FORM_LAW = "canonical-form-invariance"
 
 /**
- * Supported canonical normalization forms.
- * Compatibility forms are excluded.
+ * Named canonical normalization forms.
+ * The suite excludes the compatibility forms NFKC and NFKD.
  */
 export const CANONICAL_FORMS = ["nfd", "nfc"] as const
 
 export type CanonicalFormName = (typeof CANONICAL_FORMS)[number]
 
 /**
- * Transformations used to derive suite variants.
+ * Implementation of each named transformation.
  */
 export const CANONICAL_TRANSFORMATION_BY_NAME: Record<CanonicalFormName, (text: string) => string> = {
 	nfd: (text) => text.normalize("NFD"),
@@ -41,28 +39,33 @@ export const CANONICAL_TRANSFORMATION_BY_NAME: Record<CanonicalFormName, (text: 
 }
 
 /**
- * NFD comparison key; equal keys indicate canonical equivalence.
+ * Returns the NFD form.
+ *
+ * Two strings are canonically equivalent when their keys are equal.
  */
 export function canonicalFormKey(text: string): string {
 	return text.normalize("NFD")
 }
 
 /**
- * Check whether NFC and NFD produce different text.
+ * Reports whether the NFC and NFD forms of the text differ.
  */
 export function canonicallyVariant(text: string): boolean {
 	return text.normalize("NFC") !== text.normalize("NFD")
 }
 
 /**
- * Current canonical form of a string; `mixed` means neither NFC nor NFD.
+ * Canonical form that a string is written in.
+ *
+ * The value `mixed` means the string is in neither NFC nor NFD.
  */
 export const CANONICAL_FORM_STATES = ["nfc", "nfd", "mixed"] as const
 
 export type CanonicalFormState = (typeof CANONICAL_FORM_STATES)[number]
 
 /**
- * Identify the string's canonical form.
+ * Returns the canonical form that the text is written in.
+ * Text with no decomposable character reports `nfc`.
  */
 export function canonicalFormState(text: string): CanonicalFormState {
 	if (text === text.normalize("NFC")) return "nfc"
@@ -73,7 +76,7 @@ export function canonicalFormState(text: string): CanonicalFormState {
 }
 
 /**
- * Identify the named transformation from `base` to `variant`, or return `null` if none applies.
+ * Returns the named form that maps `base` to `variant`, or `null` when neither form does.
  */
 export function classifyCanonicalTransformation(base: string, variant: string): CanonicalFormName | null {
 	if (base === variant || canonicalFormKey(base) !== canonicalFormKey(variant)) return null
@@ -86,28 +89,30 @@ export function classifyCanonicalTransformation(base: string, variant: string): 
 }
 
 /**
- * Reasons a canonical transformation is inapplicable: no canonical variance or already in the target form.
+ * Rules that exclude a transformation.
+ *
+ * The first applies when the text has identical NFC and NFD forms.
+ * The second applies when the text is already in the target form.
  */
 export const CANONICAL_APPLICABILITY_RULES = ["no-canonical-variance", "already-in-target-form"] as const
 
 export type CanonicalApplicabilityRule = (typeof CANONICAL_APPLICABILITY_RULES)[number]
 
 /**
- * Applicability result and explanation.
+ * Whether a form applies to a text, with an explanation.
  */
 export interface CanonicalApplicability {
 	applicable: boolean
 	/**
-	 * The rule that excluded it.
-	 *
-	 * Absent when `applicable`.
+	 * Rule that excluded the form.
+	 * It is absent when `applicable` is true.
 	 */
 	rule?: CanonicalApplicabilityRule
 	reason: string
 }
 
 /**
- * Check whether `form` can test this text's canonical variance.
+ * Checks whether normalizing the text to `form` changes it.
  */
 export function canonicalApplicability(text: string, form: CanonicalFormName): CanonicalApplicability {
 	if (!canonicallyVariant(text)) {
@@ -146,29 +151,29 @@ export const NFC_NFD_SUITE_PATH: string = resolvePackagePath(
 )
 
 /**
- * Counts describing suite coverage of the corpus population.
+ * Counts that compare the suite against a corpus.
  */
 export interface CanonicalFormCoverage {
 	/**
-	 * Board rows examined.
+	 * Number of corpus inputs read.
 	 */
 	read: number
 	/**
-	 * Rows with distinct NFC and NFD forms.
+	 * Number of inputs whose NFC and NFD forms differ.
 	 */
 	eligible: number
 	/**
-	 * Eligible rows with a byte-distinct fixture variant, counted once per source row.
+	 * Number of distinct source rows among fixtures whose variant differs from the base.
 	 */
 	transformed: number
 	/**
-	 * Eligible rows grouped by their current canonical form.
+	 * Eligible inputs grouped by the canonical form they are written in.
 	 */
 	eligibleByState: Record<CanonicalFormState, number>
 }
 
 /**
- * Measure suite coverage against caller-supplied corpus inputs.
+ * Measures how much of the corpus the suite covers.
  */
 export function canonicalFormCoverage(
 	fixtures: readonly ConformanceFixture[],
@@ -181,7 +186,7 @@ export function canonicalFormCoverage(
 		eligibleByState[canonicalFormState(input)] += 1
 	}
 
-	// Use fixture text as the fallback for hand-built rows without references.
+	// A hand-built fixture without a `rowRef` is identified by its base text.
 	const moved = fixtures.filter((fixture) => fixture.base !== fixture.variant)
 	const transformed = new Set(moved.map((fixture) => fixture.rowRef ?? fixture.base))
 
@@ -194,7 +199,7 @@ export function canonicalFormCoverage(
 }
 
 /**
- * Format coverage and the eligible rows' form breakdown.
+ * Formats the coverage counts as one line.
  */
 export function describeCanonicalFormCoverage(
 	fixtures: readonly ConformanceFixture[],
@@ -210,7 +215,9 @@ export function describeCanonicalFormCoverage(
 }
 
 /**
- * Audit law relation, source reference, country context, and named transformation.
+ * Audits suite rows.
+ *
+ * Each row needs a `rowRef`, a `caseCountry`, and a variant that a named form derives from the base.
  */
 export function auditCanonicalFormSuite(fixtures: readonly ConformanceFixture[]): string[] {
 	return auditCommonFixtureFields(fixtures, CANONICAL_FORM_LAW, (fixture, label, problems) => {
@@ -240,7 +247,7 @@ export function auditCanonicalFormSuite(fixtures: readonly ConformanceFixture[])
 }
 
 /**
- * Return the transformation label, or `?` for an invalid pair.
+ * Returns the fixture's form name, or `?` when neither form fits.
  */
 export function describeCanonicalTransformation(fixture: ConformanceFixture): string {
 	return classifyCanonicalTransformation(fixture.base, fixture.variant) ?? "?"

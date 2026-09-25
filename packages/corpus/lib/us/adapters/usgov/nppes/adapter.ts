@@ -3,22 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `usgov-nppes`: CMS National Plan and Provider Enumeration System (NPI registry) CSV consumer.
- *
- *   NPPES is the authoritative US healthcare provider registry, published monthly by CMS. Each row
- *   carries a provider's business practice location address together with their legal business name
- *   or individual name. At ~7M rows it is the single largest venue+address signal source
- *   available.
- *
- *   The adapter consumes the monthly full-replacement CSV (operator pre-downloads via
- *   `fetch-nppes.ts`). Column names match the canonical NPPES "Full Replacement Monthly NPI File"
- *   header published at `https://download.cms.gov/nppes/NPI_Files.html`.
- *
- *   Output: one row per CSV record where the practice location address is populated. Organization
- *   rows carry `venue` from the legal business name. individual rows compose `attention` from
- *   last+first name. Address quad goes on `(house_number, street, locality, region, postcode)`.
- *
- *   License: stamped `"Public Domain"` per CMS's federal government distribution terms.
+ *   Reads provider practice-location addresses from the monthly CMS NPPES full-replacement CSV.
  */
 
 import { formatAddressRow } from "@mailwoman/codex/address-format"
@@ -34,14 +19,11 @@ import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter
 import { lookupStateAbbreviation } from "#us/fips-state"
 
 /**
- * Registry id for this adapter.
- *
- * Stamped into every row it emits, so a corpus record can be traced back to the dataset it came from.
+ * The adapter id stamped on every emitted row.
  */
 export const USGOV_NPPES_ADAPTER_ID = "usgov-nppes"
 /**
- * License carried by this source (Public Domain), attached to each row so downstream
- * consumers inherit the terms rather than having to look them up.
+ * The license label on every emitted row, because CMS distributes NPPES as a federal public-domain work.
  */
 export const USGOV_NPPES_DEFAULT_LICENSE = "Public Domain"
 
@@ -55,19 +37,15 @@ interface NPPESRow {
 	"Provider Second Line Business Practice Location Address": string
 	"Provider Business Practice Location Address City Name": string
 	"Provider Business Practice Location Address State Name": string
-	// CMS's own column name, and the publisher's spelling is the correct one.
-	// A vocabulary sweep rewrote it to `Postcode` on 2026-09-11 (`f5a98e7b4`); `record[…]`
-	// then read `undefined` on every row, `if (!city || !postcode) continue` dropped all of them,
-	// and the adapter reported `yielded: 0` after reading 11.4 GB without raising.
+	// This is the publisher's exact column name, so it must keep the words "Postal Code".
 	"Provider Business Practice Location Address Postal Code": string
 }
 
 /**
- * The columns every emitted row needs, in CMS's own spelling.
+ * The columns that every emitted row needs, in the publisher's spelling.
  *
- * Each is read by name off a parsed record, so a column this file does not carry reads
- * `undefined` rather than raising, and the row filter below drops the row.
- * Silently, and for every row.
+ * A missing column reads as `undefined` on every record, and the row filter would
+ * then drop every row without an error.
  */
 const REQUIRED_COLUMNS = [
 	"Provider First Line Business Practice Location Address",
@@ -77,10 +55,10 @@ const REQUIRED_COLUMNS = [
 ] as const
 
 /**
- * Refuse a file whose practice-location columns this adapter cannot find.
+ * Throws when the first parsed record lacks a required practice-location column.
  *
- * Checked against the first parsed record rather than the header line, so it sees the
- * keys the reader produced rather than the bytes the file opened with.
+ * The check reads the parsed record's keys, so it sees the column names exactly
+ * as the CSV reader produced them.
  */
 function assertPracticeLocationColumns(record: NPPESRow, inputPath: PathBuilderLike): void {
 	const present = new Set(Object.keys(record))
@@ -95,6 +73,13 @@ function assertPracticeLocationColumns(record: NPPESRow, inputPath: PathBuilderL
 	)
 }
 
+/**
+ * Creates the NPPES adapter.
+ *
+ * Each row's `venue` is the organization's legal name or, for an individual provider,
+ * the formatted person name.
+ * The adapter skips records without a city, a postcode, a known state or a parseable street line.
+ */
 export function createUsgovNPPESAdapter(): CorpusAdapter {
 	return {
 		id: USGOV_NPPES_ADAPTER_ID,
@@ -133,9 +118,7 @@ export function createUsgovNPPESAdapter(): CorpusAdapter {
 				const stateRaw = (record["Provider Business Practice Location Address State Name"] ?? "").trim()
 				const postcode = (record["Provider Business Practice Location Address Postal Code"] ?? "").trim()
 
-				// A column this file does not carry reads `undefined` for every row, and the two
-				// `continue`s below then drop every row while the adapter reports a clean run.
-				// Checking the first record's keys turns a column rename into a refusal that names the column.
+				// The first record's keys reveal a renamed column before the filters below drop every row.
 				if (!checkedHeader) {
 					checkedHeader = true
 					assertPracticeLocationColumns(record, opts.inputPath)
@@ -191,6 +174,6 @@ export function createUsgovNPPESAdapter(): CorpusAdapter {
 }
 
 /**
- * The configured adapter instance registered with the corpus builder.
+ * The NPPES adapter instance that the corpus builder registers.
  */
 export const usgovNPPESAdapter = createUsgovNPPESAdapter()

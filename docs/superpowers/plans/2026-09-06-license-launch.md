@@ -2,7 +2,7 @@
 
 > **For agentic workers:** this plan is a runbook with an owner per step rather than a sequence of code tasks. The code steps use checkbox (`- [ ]`) syntax; the operator steps are marked and stay open until the operator reports them done.
 
-**Goal:** Sell the first self-service commercial license: the sandbox proves the whole path on Stripe test mode, then production issues under a key a released mailwoman trusts.
+**Goal:** Sell the first self-service commercial license: the sandbox runs the whole path on Stripe test mode, then production issues licenses signed by a key that a released mailwoman trusts.
 
 **Architecture:** Nothing new is built here. The worker (#2160), the site and CLI (#2162) and the shop registry (`mwops shop`) are complete; launch is provisioning, secrets, one release, one end-to-end run, and the drills the spec requires before `ISSUANCE_ENABLED` flips.
 
@@ -13,7 +13,7 @@
 | Prerequisite                                                    | Owner                                                                                                             | State on 2026-09-06                                                       |
 | --------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
 | Clickwrap terms page at `/license/terms/commercial-2026-10`     | operator (legal text)                                                                                             | not written                                                               |
-| Terms-of-service URL under the Stripe account's public details  | operator (dashboard, no API)                                                                                      | unset; test-mode Payment Links were still created with consent collection |
+| Terms-of-service URL under the Stripe account's public details  | operator, in the dashboard (the API cannot set it)                                                                | unset; test-mode Payment Links were still created with consent collection |
 | Stripe test-mode objects                                        | done: `mwops shop provision --mode test --apply` created six, a second run reads `exists`                         | done                                                                      |
 | Stripe live-mode objects                                        | `mwops shop provision --mode live --apply`, needs `MAILWOMAN_STRIPE_LIVE_SECRET_KEY`                              | waiting on the key                                                        |
 | Cloudflare token with Workers Scripts, D1 and rate-limit scopes | done: `CF_AUTH_TOKEN` in `.env` lists Workers and D1; the sandbox deployed with it                                | done                                                                      |
@@ -88,10 +88,10 @@ Expected within seconds of the redirect: `{"status":"issued","token":"mwl1.…",
 MAILWOMAN_LICENSE_URL=https://mailwoman-license-sandbox.<account>.workers.dev node packages/mailwoman/out/cli.js license verify --key "mwl1.…" --online
 ```
 
-Expected: `status: unknown_key` (the shipped register does not carry `v9-ac522cf3`) and `license lic_…: active`. That pair of lines is the spec's demonstration that trust is release-bound. Then, in a script, `verifyLicenseKey(token, { trustedKeys: { "v9-ac522cf3": <sandbox public PEM> } })` reads `valid` with `expires` = the period end plus 14 days.
+Expected: `status: unknown_key` (the shipped register does not carry `v9-ac522cf3`) and `license lic_…: active`. Those two lines show the spec's claim that trust is bound to the release. Then, in a script, `verifyLicenseKey(token, { trustedKeys: { "v9-ac522cf3": <sandbox public PEM> } })` reads `valid` with `expires` = the period end plus 14 days.
 
-- [x] **Step 3:** `mailwoman license refresh --lid lic_… --secret …` against the sandbox reads `Not written: this release does not trust key id v9-ac522cf3`, exit 1: the refusal is the CLI holding the same line.
-- [x] **Step 4:** a renewal under a Stripe test clock mints a second token with the next period's dates: `yarn mwops shop rehearse` prints a Checkout Session for a test-clock customer, pay it with the test card, then `yarn mwops shop rehearse-renewal --session cs_test_… --worker-origin https://mailwoman-license-sandbox.<account>.workers.dev` advances the clock and reports both tokens' dates with `agrees: true`. A full refund in the dashboard flips `/v1/license-status` to `revoked`; the reconciliation cron's log names the ids only.
+- [x] **Step 3:** `mailwoman license refresh --lid lic_… --secret …` against the sandbox reads `Not written: this release does not trust key id v9-ac522cf3`, and exits 1. The CLI refuses a token signed by a key that the release does not trust.
+- [x] **Step 4:** a renewal under a Stripe test clock mints a second token with the next period's dates: `yarn mwops shop rehearse` prints a Checkout Session for a test-clock customer, pay it with the test card, then `yarn mwops shop rehearse-renewal --session cs_test_… --worker-origin https://mailwoman-license-sandbox.<account>.workers.dev` advances the clock and reports both tokens' dates with `agrees: true`. A full refund in the dashboard flips `/v1/license-status` to `revoked`. The reconciliation cron logs only the ids.
 - [x] **Step 5:** the kill-switch drill: `ISSUANCE_ENABLED = "false"`, redeploy, pay again; the webhook answers 200 with `refused: issuance is disabled`, the claim reads `pending`, refresh still answers; flip back, and the next reconciliation mints the missed invoice.
 
 #### Receipt: the local run, 2026-09-06
@@ -119,9 +119,9 @@ worker re-read every object from Stripe by id, so only the delivery was simulate
 | The clock advanced 32 days; the renewal's `invoice.paid` (`in_1UCWH6ANyI6tE9Bzpz2zvOxh`) replayed                         | `minted`; the claim reads the second token, `issued 2026-10-06`, `expires 2026-11-20` (period end 2026-11-06 plus 14); the payload agrees; status `active`                                                                                                        |
 
 A Payment Link subscription cannot carry a test clock, so the renewal row used a Checkout Session created through the API
-for a test-clock customer, with the Link's price, custom field, consent and metadata. Two findings from the run. The live site answered 404 for `/.well-known/mailwoman/license-keys.json` although the file
+for a test-clock customer, with the Link's price, custom field, consent and metadata. The run produced two findings. First, the live site answered 404 for `/.well-known/mailwoman/license-keys.json` although the file
 is tracked and the local build emits it: `actions/upload-pages-artifact` excludes every dot-entry unless
-`include-hidden-files: true`, now set in `docs-build.yml`. And the email provider key was a placeholder, so each token's
+`include-hidden-files: true`, which is now set in `docs-build.yml`. Second, the email provider key was a placeholder, so each token's
 `email_state` read `failed` and every reconciliation retried it, which is the designed path.
 
 #### Receipt: the deployed sandbox, 2026-09-06
@@ -136,22 +136,22 @@ every event itself; nothing was replayed or signed by hand.
 | Issuance on, redeploy                                                              | `/health` reads `"issuance":true`                                                                                                                                                                                        |
 | Monthly Payment Link paid, claim read ten seconds after the redirect               | `issued`, `lic_sPBnGqLDGKzPkdejQ0vhvg`, `expires 2026-10-20`, `refresh_secret` once; the second claim includes no secret, `Access-Control-Allow-Origin: https://mailwoman.ai`                                            |
 | `license verify --key … --online` on the shipped register and the sandbox          | `unknown_key`; `mailwoman.ai: unlisted` from the live register; `license lic_…: active` from the sandbox                                                                                                                 |
-| `license refresh --lid … --secret …`                                               | `Not written: this release does not trust key id v9-ac522cf3`, exit 1, no key file                                                                                                                                       |
+| `license refresh --lid … --secret …`                                               | `Not written: this release does not trust key id v9-ac522cf3`, exit 1, and no key file written                                                                                                                           |
 | Wrong secret on the refresh route; status route                                    | 404; `{"status":"active"}`                                                                                                                                                                                               |
 | `mwops shop rehearse`, paid; `mwops shop rehearse-renewal --worker-origin …`       | first `expires 2026-10-20`; clock advanced to 2026-10-08; renewed `issued 2026-10-06, expires 2026-11-20`; `periodEnd 2026-11-06`, `agrees: true`                                                                        |
 | Full refund through the API                                                        | status `revoked` five seconds after the refund; claim reads `revoked`                                                                                                                                                    |
 | Kill switch: issuance off, redeploy, yearly Payment Link paid                      | claim `pending`; refresh for the revoked license still answers `revoked`; issuance back on at 11:53 UTC                                                                                                                  |
 | The 12:00 UTC cron, issuance back on                                               | `{"minted":["in_1UCeciANyI6tE9Bzy2ftHTLp","in_1UCW8sANyI6tE9BzoWT7iV4f","in_1UCW4vANyI6tE9BzaAvybZrc"],"resent":[],"refused":[],"corrected":[],"failed":[]}`; the kill-switch claim reads `issued`, `expires 2027-09-20` |
 
-A defect the cron surfaced: the two older invoices it minted were the local run's purchases, which this ledger had
+The cron surfaced a defect. The two older invoices it minted were the local run's purchases, which this ledger had
 never seen, and one of them (`in_1UCW4vANyI6tE9BzaAvybZrc`) had been fully refunded during that run. The drift sweep
 read only the subscription's status, which a refund leaves `active`. Therefore, the ledger issued `lic_cPAjF5Rawybt-3rDURvvMQ`
 for a refunded payment and reported nothing to correct. The sweep now reads the charge behind each active license's
-current token and revokes on a full refund, the same rule the `charge.refunded` handler applies; the deployed sandbox
+current token and revokes on a full refund, the same rule the `charge.refunded` handler applies. The deployed sandbox
 corrects that license at the next pass after the fix deploys.
 
-One edge finding: Cloudflare's browser integrity check on `workers.dev` refuses a request whose user agent is
-`Python-urllib` with error 1010 before the worker sees it; curl and the CLI's axios agent pass. The production zone
+The run also found that Cloudflare's browser integrity check on `workers.dev` refuses a request whose user agent is
+`Python-urllib` with error 1010 before the worker sees it. Requests from curl and the CLI's axios agent pass. The production zone
 owns that setting, so Task 7 confirms it does not refuse the CLI.
 
 ### Task 4: the production signing key and the trust release

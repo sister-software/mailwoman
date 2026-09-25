@@ -2,49 +2,28 @@
  * @copyright Sister Software.
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file Google Geocoding API client, built on {@linkcode APIClient}. Ported from
- *   `isp-nexus/universe/mailwoman/sdk/google/GoogleGeocoder.ts`, with the plumbing rewritten onto this
- *   repo's own implementation and three defects from the original fixed rather than carried.
+ * @file Google Geocoding API client built on {@linkcode APIClient}.
  *
- *   **the `@googlemaps/google-maps-services-js` dependency is dropped.** The original constructed the
- *   library's `Client` around this client's Axios instance (`axiosInstance: this.axios as any // Fixes
- *   outdated type definitions`) and then called `client.geocode(...)` — which dispatches through that
- *   instance directly, never through `APIClient.fetch`. The consequence was invisible and total: pacing
- *   and caching still applied (they live in the adapter and the interceptor chain), but the bounded
- *   retry loop and the entire `ResourceError` mapping did not, because both live in `fetch`. Every
- *   failure surfaced as a raw `AxiosError` wrapped in a message string. Talking to the plain rest
- *   endpoint through `fetch` restores all of it, and costs one hand-written response type
- *   (`./google-types.ts`) for three query-string shapes.
+ *   Every request goes through `APIClient.fetch`, which provides pacing, caching, retries and
+ *   {@linkcode ResourceError} mapping.
  *
- *   **google'S errors arrive under http 200.** `REQUEST_DENIED`, `OVER_QUERY_LIMIT`, `INVALID_REQUEST`
- *   and `UNKNOWN_ERROR` are all 200s carrying a `status` field, so nothing in the http layer — not
- *   Axios's `validateStatus` rather than `APIClient`'s retry classifier rather than the cache's status predicate —
- *   can see them. Two mechanisms handle that here, and both are the reason this file is longer than
- *   `sec-client.ts`: {@linkcode statusToResourceError} maps the in-band status onto the same
- *   `ResourceError` interface every other client in this repo throws, and {@linkcode isCacheableGoogleBody}
- *   refuses to persist any body that is not a real answer. Without the second one, a single
- *   `REQUEST_DENIED` from an unbilled key would be cached for thirty days and every subsequent run
- *   would report the same failure without issuing a request.
+ *   Google reports failures such as `REQUEST_DENIED` and `OVER_QUERY_LIMIT` in the body of an HTTP 200
+ *   response. {@linkcode statusToResourceError} maps each in-band status to a synthetic HTTP status, and
+ *   {@linkcode isCacheableGoogleBody} keeps failure bodies out of the cache.
  *
- *   **the API KEY never enters A LOG, A cache KEY, or A filename.** It is carried as an Axios
- *   instance-level `params` default rather than being concatenated into the request URL, so
- *   `APIClient`'s `logger.debug("GET: <url>")` and every `ResourceError` built off `error.config.url`
- *   see a key-free URL. {@linkcode geocodeCacheKey} then strips it back out before the cache key is
- *   built — belt and braces (the on-disk filename is already a SHA-256 of that key, and
- *   `axios-cache-interceptor` never persists `config`), but it also means rotating the KEY does not
- *   orphan the cache, which on a billed API is the difference between a free re-run and a paid one.
+ *   The API key travels as an Axios instance-level `params` default, so logged URLs and error messages
+ *   do not contain it. {@linkcode geocodeCacheKey} also excludes it, so rotating the key keeps the cache.
  *
- *   error interface. Every failure past construction is a {@linkcode ResourceError}, so a sweep branches
- *   on `status` plus {@linkcode isTransientResourceError} and never on message prose:
+ *   Callers branch on the error's `status` and {@linkcode isTransientResourceError}:
  *
- *   | Outcome                                    | Caller action    | Test                                       |
- *   | ------------------------------------------ | ---------------- | ------------------------------------------ |
- *   | `ZERO_RESULTS`                             | no match, move on| `error.status === 404`                      |
- *   | `REQUEST_DENIED`                           | abort the run    | `error.status === 403`                      |
- *   | `OVER_DAILY_LIMIT`                         | abort the run    | `error.status === 402`                      |
- *   | `INVALID_REQUEST`                          | programmer bug   | `error.status === 400`                      |
- *   | `OVER_QUERY_LIMIT` / `UNKNOWN_ERROR`       | retried, then requeue | `isTransientResourceError(error)`      |
- *   | exhausted http 429/5xx, network, timeout   | requeue          | `isTransientResourceError(error)`           |
+ *   | Outcome                                  | Caller action         | Test                              |
+ *   | ---------------------------------------- | --------------------- | --------------------------------- |
+ *   | `ZERO_RESULTS`                           | Record no match       | `error.status === 404`            |
+ *   | `REQUEST_DENIED`                         | Abort the run         | `error.status === 403`            |
+ *   | `OVER_DAILY_LIMIT`                       | Abort the run         | `error.status === 402`            |
+ *   | `INVALID_REQUEST`                        | Fix the caller        | `error.status === 400`            |
+ *   | `OVER_QUERY_LIMIT` / `UNKNOWN_ERROR`     | Requeue after retries | `isTransientResourceError(error)` |
+ *   | Exhausted HTTP 429/5xx, network, timeout | Requeue               | `isTransientResourceError(error)` |
  */
 
 import { APIClient, type APIClientConfig, type ClockLike, systemClock } from "@mailwoman/core/api"
@@ -66,88 +45,54 @@ import {
 } from "#sdk/google/types"
 
 /**
- * The Geocoding API endpoint every request in this file is issued against.
+ * The Geocoding API endpoint.
  *
- * Forward and reverse geocoding and place-ID lookup are all this one URL.
- * They differ only in which of `address` / `latlng` / `place_id` is supplied.
+ * Forward geocoding, reverse geocoding and Place ID lookup all use this URL.
+ * They differ only in whether the request sets `address`, `latlng` or `place_id`.
  */
 export const GOOGLE_GEOCODE_URL = "https://maps.googleapis.com/maps/api/geocode/json"
 
 /**
- * What this client paces at by default: **60 requests per minute**, one per second.
+ * Default request rate per minute.
  *
- * Google's published per-project ceiling for the Geocoding API is 3,000 requests
- * per minute — fifty times this.
- * The default is deliberately nowhere near it, because the constraint that actually
- * binds an oracle run is not the rate limit, it is the bill: every uncached request
- * is charged, and the intended workload is a few hundred addresses authored into
- * gauntlet cases by a human rather than a pipeline.
- *
- * One per second finishes 160 addresses in under three minutes on a cold cache
- * and costs nothing on a warm one.
- *
- * Raise it via {@linkcode CreateGoogleGeocoderClientOptions.requestsPerMinute} for a genuinely large sweep.
- * This is a default rather than a clamp.
- *
- * Unlike `SEC_DEFAULT_REQUESTS_PER_SECOND`, which clamps because SEC's limit is policed
- * and verifiable in fetchable html.
- *
- * Google's is enforced by returning `OVER_QUERY_LIMIT` under a 200, which this client already retries.
+ * Google allows 3,000 requests per minute, but every uncached request is billed
+ * and the intended workload is a few hundred hand-authored addresses.
+ * Callers can raise the rate through {@linkcode CreateGoogleGeocoderClientOptions.requestsPerMinute}.
  */
 export const GOOGLE_DEFAULT_REQUESTS_PER_MINUTE = 60
 
-/**
- * Milliseconds in a minute — the numerator when turning a requests/minute budget into a pacing interval.
- */
 const MS_PER_MINUTE = 60_000
 
 /**
- * How long a cached geocode stays fresh: **30 days**.
+ * Cache lifetime of 30 days.
  *
- * Chosen against what the cache is FOR.
- * A gauntlet case is authored once and then re-read on every subsequent run of the sweep
- * that produced it, so the re-read is the common access and each miss is a billed request.
- *
- * The underlying answer barely moves: a street address's rooftop coordinate is
- * stable over years, and the thing that genuinely does drift — Google's Place IDs,
- * which its own documentation warns to treat as stale after a few days — is carried on
- * the result for provenance and is not what any assertion is pinned to.
- *
- * Not permanent, either.
- * `sec-client.ts` warrants a century-long TTL because a filed SEC document is immutable by law.
- * Nothing here is.
- *
- * Thirty days bounds how long a re-authored case can disagree with a fresh geocode without
- * anyone noticing, and deleting the cache directory is always the override.
+ * Every cache miss is billed, and rooftop coordinates rarely change.
+ * The TTL still bounds how long a cached answer can disagree with a fresh geocode.
+ * Deleting the cache directory forces fresh requests.
  */
 const DEFAULT_CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000
 
 /**
- * Total attempts (including the first) before giving up on a transient failure — http 429/5xx
- * and network-class failures via `APIClient`'s retry loop, and Google's 200-wrapped
- * `OVER_QUERY_LIMIT`/`UNKNOWN_ERROR` via {@linkcode GoogleGeocoderClient.request}.
+ * Maximum attempts for a transient failure, including the first attempt.
+ *
+ * The limit applies both to HTTP-level failures in `APIClient` and to Google's in-band
+ * `OVER_QUERY_LIMIT` and `UNKNOWN_ERROR` statuses in {@linkcode GoogleGeocoderClient.request}.
  */
 const DEFAULT_MAX_ATTEMPTS = 3
 
 /**
- * Base delay for the exponential backoff between retry attempts, in milliseconds.
+ * Base delay of the exponential retry backoff, in milliseconds.
  */
 const DEFAULT_BASE_RETRY_DELAY_MS = 500
 
 /**
  * Per-attempt socket-inactivity timeout, in milliseconds.
- *
- * A geocode response is a few kilobytes.
- * Anything slower than this has stalled.
  */
 const DEFAULT_REQUEST_TIMEOUT_MS = 30_000
 
 /**
- * The synthetic http statuses Google's in-band failures are reported under.
- *
- * Chosen so the numbers a caller already branches on keep their usual meaning: 404 is "not
- * found", 403 is "your credentials were refused", 429 is "slow down", 402 is "this is a
- * billing problem", 400 is "the request was wrong", 500 is "their fault, try again".
+ * Synthetic HTTP statuses for Google's in-band failures.
+ * Each code keeps its usual HTTP meaning.
  */
 const HTTP_BAD_REQUEST = 400
 const HTTP_PAYMENT_REQUIRED = 402
@@ -157,11 +102,10 @@ const HTTP_TOO_MANY_REQUESTS = 429
 const HTTP_INTERNAL_SERVER_ERROR = 500
 
 /**
- * The shortest string {@linkcode GoogleGeocoderClient.geocode} will treat as
- * a Place ID rather than as an address.
+ * The minimum length at which {@linkcode GoogleGeocoderClient.geocode} treats a string as a Place ID.
  *
- * Google's own documentation describes the identifier as "generally a 27-character string";
- * nothing shorter than this has ever been one, and `"Paris"` must not be mistaken for one.
+ * Google documents Place IDs as generally 27 characters long.
+ * The threshold keeps short place names such as `"Paris"` in the address branch.
  */
 const GOOGLE_PLACE_ID_MIN_LENGTH = 20
 
@@ -171,48 +115,40 @@ const GOOGLE_PLACE_ID_MIN_LENGTH = 20
 export interface CreateGoogleGeocoderClientOptions {
 	/**
 	 * The Google Maps API key.
-	 *
-	 * Defaults to `$private.GOOGLE_MAPS_API_KEY` when omitted.
+	 * Defaults to `$private.GOOGLE_MAPS_API_KEY`.
 	 */
 	apiKey?: string
 	/**
-	 * Requests per minute this client will dispatch.
-	 *
-	 * Defaults to {@linkcode GOOGLE_DEFAULT_REQUESTS_PER_MINUTE}, which is far below
-	 * Google's published ceiling on purpose — see that constant.
+	 * Maximum requests per minute.
+	 * Defaults to {@linkcode GOOGLE_DEFAULT_REQUESTS_PER_MINUTE}.
 	 */
 	requestsPerMinute?: number
 	/**
-	 * Time source powering the pacer, the cooldown timer, and both retry backoffs.
-	 *
-	 * Defaults to the system clock.
-	 * Tests inject a fake one so no suite ever sleeps on the wall clock.
+	 * Clock for pacing and both retry backoffs.
+	 * Tests inject a fake clock.
 	 */
 	clock?: ClockLike
 	/**
-	 * On-disk cache root.
+	 * Cache directory.
 	 *
-	 * Defaults to `dataRootPath("geocode-oracle", "google")`, resolved once at construction —
-	 * construct the client after setting `$MAILWOMAN_DATA_ROOT` rather than before.
+	 * Defaults to `dataRootPath("geocode-oracle", "google")`, which the factory resolves
+	 * at construction, so `$MAILWOMAN_DATA_ROOT` must be set first.
 	 */
 	cacheDir?: PathBuilderLike
 	/**
-	 * How long a cached geocode stays fresh, in milliseconds.
-	 *
-	 * See {@linkcode DEFAULT_CACHE_TTL_MS}.
+	 * Cache lifetime in milliseconds.
+	 * Defaults to 30 days.
 	 */
 	cacheTTLMs?: number
 	/**
-	 * Total attempts (including the first) before giving up on a transient failure.
+	 * Maximum attempts for a transient failure.
 	 *
-	 * A stated ceiling rather than "until it works".
-	 * Never applies to `REQUEST_DENIED`, `INVALID_REQUEST`, `ZERO_RESULTS` or `OVER_DAILY_LIMIT`.
+	 * The client never retries `REQUEST_DENIED`, `INVALID_REQUEST`, `ZERO_RESULTS` or `OVER_DAILY_LIMIT`.
 	 */
 	maxAttempts?: number
 	/**
-	 * Base delay for the exponential backoff between retry attempts, in milliseconds. Attempt `n` waits `baseRetryDelayMs
-	 *
-	 * - 2^(n-1)`.
+	 * Base delay of the exponential retry backoff, in milliseconds.
+	 * Attempt `n` waits `baseRetryDelayMs * 2^(n-1)`.
 	 */
 	baseRetryDelayMs?: number
 	/**
@@ -220,119 +156,83 @@ export interface CreateGoogleGeocoderClientOptions {
 	 */
 	requestTimeoutMs?: number
 	/**
-	 * The BCP-47 language every response is rendered in, unless overridden per request.
+	 * Default BCP-47 response language.
 	 *
-	 * Left unset by default, which is not the same as `"en"`: with no `language`,
-	 * Google renders each result in the local language of the address, which is the form an
-	 * oracle for ~160 countries wants — a Japanese address in Japanese, a Greek one in Greek.
-	 * The isp-nexus original hardcoded `"en-US"` on every request, which is right
-	 * for a US pipeline and wrong here.
+	 * When it is unset, Google renders each result in the address's local language,
+	 * which suits a multi-country oracle.
 	 */
 	language?: string
 	/**
-	 * Axios overrides, merged over this client's own defaults.
+	 * Axios options merged over the defaults.
+	 * Tests inject an adapter here to avoid network calls.
 	 *
-	 * The test injection point: every test passes an `adapter` here, so no test in
-	 * this workspace performs a live network call.
-	 *
-	 * Overriding `params` wholesale would drop the API key, so don't.
+	 * Replacing `params` entirely would drop the API key.
 	 */
 	axios?: APIClientConfig["axios"]
 }
 
 /**
- * Per-request overrides.
- *
- * These are the biasing changes the isp-nexus original hardcoded.
- * See {@linkcode GeocodeRequestOptions.bounds} for the one that mattered.
+ * Per-request geocoding options.
  */
 export interface GeocodeRequestOptions {
 	/**
-	 * Restrict results to a country, as an ISO-3166 alpha-2 code.
+	 * ISO 3166-1 alpha-2 country code that restricts results.
 	 *
-	 * Sent as Google's `components=country:XX` filter, which is a hard restriction rather than a bias.
-	 * A match outside the country is not returned at all.
-	 *
-	 * This is the change a per-country oracle sweep wants: it stops `"Springfield"`
-	 * resolving to Illinois when the case under authorship is Neuseeland's.
+	 * The client sends it as `components=country:XX`, which excludes every match outside the country.
 	 */
 	country?: string
 	/**
-	 * The BCP-47 language for this response, overriding the client-wide default.
-	 *
-	 * See {@linkcode CreateGoogleGeocoderClientOptions.language}.
+	 * BCP-47 response language for this request.
+	 * It overrides the client default.
 	 */
 	language?: string
 	/**
-	 * The ccTLD region code (`"uk"`, `"es"`) whose interpretation Google should prefer.
-	 *
-	 * A soft bias, unlike {@linkcode GeocodeRequestOptions.country}.
+	 * ccTLD region code, such as `"uk"` or `"es"`, that biases interpretation toward a region.
 	 */
 	region?: string
 	/**
-	 * A viewport to bias results toward, as `southwest|northeast` latitude/longitude pairs.
-	 *
-	 * A soft bias.
-	 *
-	 * The original hardcoded one OF these on every forward geocode — a bounding box
-	 * around the contiguous United States, with no way to turn it off.
-	 * That was correct for the US-only broadband pipeline it lived in and is precisely wrong for this
-	 * package's stated purpose, so it is an opt-in per-request parameter here and there is no default.
+	 * Viewport that biases results, given as southwest and northeast corners.
+	 * The client sets no default viewport.
 	 */
 	bounds?: { southwest: GoogleLatLngLiteral; northeast: GoogleLatLngLiteral }
 }
 
 /**
- * {@linkcode APIClient} configuration plus the fields {@linkcode GoogleGeocoderClient}
- * reads back off `config`.
+ * {@linkcode APIClient} configuration plus the fields that {@linkcode GoogleGeocoderClient} reads.
  */
 export interface GoogleGeocoderClientConfig extends APIClientConfig {
 	/**
-	 * The client-wide response language, or `undefined` to let Google pick the address's local language.
+	 * Default response language.
+	 *
+	 * When it is `undefined`, Google uses the address's local language.
 	 */
 	language?: string
 	/**
-	 * Total attempts for Google's 200-wrapped transient statuses.
-	 *
-	 * Mirrors the http-level ceiling in `retry`, which cannot see them.
+	 * Maximum attempts for Google's in-band transient statuses, which the HTTP-level `retry` cannot see.
 	 */
 	maxAttempts: number
 	/**
-	 * Base delay for the in-band retry backoff, in milliseconds.
+	 * Base delay of the in-band retry backoff, in milliseconds.
 	 */
 	baseRetryDelayMs: number
 	/**
-	 * The clock the in-band retry backoff sleeps on.
+	 * Clock for the in-band retry backoff.
 	 *
-	 * `APIClient` keeps its own copy private, so this is a second reference to the same
-	 * instance — `createGoogleGeocoderClient` passes one value to both.
+	 * `APIClient` keeps its clock private, so the factory passes the same clock to both.
 	 */
 	clock: ClockLike
 }
 
 /**
- * The query-string parameters one geocode request carries.
- *
- * Google's wire keys, so `snake_case`.
+ * Query-string parameters for one geocode request, keyed by Google's `snake_case` names.
  */
 type GeocodeParams = Record<string, string>
 
 /**
- * Build the cache key for one request, with the API key removed.
+ * Builds the cache key for one request without the API key.
  *
- * Two things this provides, in order of how much they matter:
- *
- * 1. **The cache survives key rotation.** The key is an instance-level Axios `params` default,
- *    so the interceptor's stock key generator would fold it in and a rotated key would
- *    silently orphan every entry — on an API where a miss is a charge.
- * 2. **No key material is derivable from anything on disk.** Already true without this
- *    (`buildDiskStorage` names files by the SHA-256 of the key, and `axios-cache-interceptor`
- *    persists `data`/`ttl`/`createdAt`/`state`, never `config`), but a secret that is
- *    never put into the string in the first place cannot leak from it later.
- *
- * The remaining params are serialized through a sorted key list so two requests
- * differing only in property order share an entry.
- * `JSON.stringify`'s array replacer both filters and orders, which is exactly the primitive needed.
+ * Excluding the key keeps cache entries valid across key rotation.
+ * Sorting the parameter names makes two requests that differ only in property order share an entry.
  */
 export function geocodeCacheKey(config: { method?: string; url?: string; params?: unknown }): string {
 	const params = (config.params ?? {}) as Record<string, unknown>
@@ -345,18 +245,11 @@ export function geocodeCacheKey(config: { method?: string; url?: string; params?
 }
 
 /**
- * Whether a decoded response body is one worth persisting.
+ * Reports whether a decoded response body is safe to cache.
  *
- * Only `OK` and `ZERO_RESULTS` are.
- * `ZERO_RESULTS` is included deliberately.
- *
- * It is a real, stable answer ("this string does not geocode"), and re-asking it
- * tomorrow costs a charge to learn the same thing.
- *
- * Everything else describes the request or the account rather than the address:
- * a `REQUEST_DENIED` cached under a thirty-day TTL would make an unbilled key look like
- * a permanently broken address, self-healing only by hand-deleting a hash-named file.
- * That is the exact failure `core/api/disk-storage.ts` names as the reason `validate` exists.
+ * Only `OK` and `ZERO_RESULTS` bodies qualify, because they describe the address.
+ * Other statuses describe the request or the account, and caching one such as
+ * `REQUEST_DENIED` would repeat the failure for the whole TTL.
  */
 export function isCacheableGoogleBody(value: { data?: { data?: unknown } }): boolean {
 	const body = value.data?.data as GoogleGeocodeResponse | undefined
@@ -367,7 +260,7 @@ export function isCacheableGoogleBody(value: { data?: { data?: unknown } }): boo
 }
 
 /**
- * The synthetic http status and URN reason for one of Google's in-band statuses.
+ * Returns the synthetic HTTP status and URN reason for one of Google's in-band statuses.
  */
 function statusMapping(status: string): { httpStatus: number; reason: string } {
 	switch (status) {
@@ -389,17 +282,10 @@ function statusMapping(status: string): { httpStatus: number; reason: string } {
 }
 
 /**
- * Map a non-`OK` Google response onto the repo's standard {@linkcode ResourceError},
- * so `error.status` and `isTransientResourceError(error)` mean here what they mean
- * for every other client — even though the wire said 200.
+ * Converts a non-`OK` Google response into a {@linkcode ResourceError} with a synthetic HTTP status.
  *
- * `REQUEST_DENIED` gets the long explanation, for the same reason `sec-client.ts` explains a 403
- * and `bdc/sdk/client.ts` explains a 401: the bare status reads as "the address is bad"
- * and sends the reader down the wrong path, when the cause is almost always the key.
- * Google's own `error_message` is appended when present.
- *
- * It names the actual problem ("This API project is not authorized to use this API")
- * and never contains the key.
+ * A `REQUEST_DENIED` message explains that the API key is the likely cause.
+ * The message appends Google's `error_message` when the response includes one.
  */
 export function statusToResourceError(body: GoogleGeocodeResponse, description: string): ResourceError {
 	const { httpStatus, reason } = statusMapping(body.status)
@@ -420,16 +306,14 @@ export function statusToResourceError(body: GoogleGeocodeResponse, description: 
 /**
  * A Google Geocoding API client.
  *
- * Build one with {@linkcode createGoogleGeocoderClient}, which resolves the key,
- * the pacing, the cache and every default.
+ * Use {@linkcode createGoogleGeocoderClient} to construct one.
  */
 export class GoogleGeocoderClient extends APIClient<GoogleGeocoderClientConfig> {
 	/**
-	 * Forward-geocode a free-text address.
+	 * Forward-geocodes a free-text address.
 	 *
-	 * Results come back in Google's own relevance order; `[0]` is its best guess.
-	 * The whole array is returned rather than just the first because an oracle's most
-	 * useful signal is often that there were three plausible matches.
+	 * The method returns every result in Google's relevance order, because the number
+	 * of plausible matches is itself useful to an oracle.
 	 */
 	public async geocodeAddress(
 		address: string,
@@ -449,14 +333,10 @@ export class GoogleGeocoderClient extends APIClient<GoogleGeocoderClientConfig> 
 	}
 
 	/**
-	 * Reverse-geocode a coordinate.
+	 * Reverse-geocodes a coordinate.
 	 *
-	 * The input is validated through `GeoPoint.from`, which since #1487 is strict:
-	 * it neither transposes a `[latitude, longitude]` pair back into GeoJSON order
-	 * nor repairs an off-globe magnitude, and returns `null` for both.
-	 * A rejected coordinate raises here rather than being sent, because a silently
-	 * transposed pair produces a confident, wrong, billed answer, and the whole point
-	 * of an oracle is that its answers are trustworthy.
+	 * `GeoPoint.from` returns `null` for an out-of-range or transposed coordinate instead of repairing it.
+	 * The method throws in that case instead of sending a billed request.
 	 */
 	public async reverseGeocode(
 		input: GeoPointInput,
@@ -482,11 +362,9 @@ export class GoogleGeocoderClient extends APIClient<GoogleGeocoderClientConfig> 
 	}
 
 	/**
-	 * Look up a Google Place ID and return it as an address.
+	 * Looks up a Google Place ID.
 	 *
-	 * Google Place IDs are not permanent — Google's own documentation says to consider
-	 * one stale after a few days — so this is for resolving an ID captured moments ago
-	 * rather than for pinning a gauntlet case to.
+	 * Google advises treating a Place ID as stale after a few days, so a test case should not depend on one.
 	 */
 	public async geocodePlaceID(
 		placeID: string,
@@ -506,27 +384,11 @@ export class GoogleGeocoderClient extends APIClient<GoogleGeocoderClientConfig> 
 	}
 
 	/**
-	 * Dispatch on the shape of `input`: a coordinate object, a Place ID string, or free text.
+	 * Geocodes a coordinate object, a Place ID string or a free-text address, chosen by the input's shape.
 	 *
-	 * The original'S version OF this could not do its first two advertised jobs.
-	 * It declared overloads taking a `GeoPointInput` and an `H3Cell`, and then opened with
-	 * `if (typeof input !== "string") throw` — so every call matching the coordinate-object
-	 * overload threw a 400 before reaching the branch written to handle it.
-	 *
-	 * The H3 branch was reachable (an H3 cell is a string) but only after that guard,
-	 * which is why the bug survived: the paths anyone exercised were the string ones.
-	 * This version dispatches on the shape it was actually handed.
-	 *
-	 * A string is never read AS A coordinate here, and that is a deliberate narrowing of the original.
-	 * `"48.85, 2.29"` is ambiguous by construction: Google's own `latlng` parameter reads it
-	 * as latitude-then-longitude, GeoJSON reads the same pair as longitude-then-latitude,
-	 * and `GeoPoint.from` resolves the ambiguity as GeoJSON without a heuristic
-	 * (#1487 removed the transposition repair on purpose).
-	 *
-	 * Accepting the string form would therefore reverse- geocode a point in Somalia
-	 * for someone who typed Paris, confidently and for a fee.
-	 * Callers holding a coordinate pass an object or a `GeoPoint`, where the axis
-	 * order is stated rather than guessed.
+	 * The method always treats a string as a Place ID or an address.
+	 * A string such as `"48.85, 2.29"` has an ambiguous axis order, so a caller with
+	 * a coordinate passes an object or a `GeoPoint`.
 	 */
 	public async geocode(
 		input: string | GeoPointInput,
@@ -546,13 +408,9 @@ export class GoogleGeocoderClient extends APIClient<GoogleGeocoderClientConfig> 
 			)
 		}
 
-		// `isGooglePlaceID` only checks the character class (`[A-Za-z0-9_-]+`),
-		// which a one-word place name like "Paris" satisfies.
-		// A real Place ID is 27+ characters and always carries at least one `_` or `-`;
-		// requiring both is what keeps an address out of the place-ID branch.
-		// Anything that fails either test is free text, which is the safe default.
-		// A Place ID sent as an `address` still geocodes, while an address sent as
-		// a `place_id` is an INVALID_REQUEST.
+		// `isGooglePlaceID` checks only the character class, which a word like "Paris" also passes.
+		// The length and `_`/`-` tests keep addresses out of the Place ID branch.
+		// A misrouted Place ID still geocodes as an address, but a misrouted address fails as `INVALID_REQUEST`.
 		if (trimmed.length >= GOOGLE_PLACE_ID_MIN_LENGTH && /[_-]/.test(trimmed) && isGooglePlaceID(trimmed)) {
 			return this.geocodePlaceID(trimmed, options)
 		}
@@ -561,16 +419,11 @@ export class GoogleGeocoderClient extends APIClient<GoogleGeocoderClientConfig> 
 	}
 
 	/**
-	 * Issue one geocode request, retrying Google's 200-wrapped transient statuses, and parse the results.
+	 * Sends one geocode request and parses the results.
 	 *
-	 * The retry loop here is not redundant with `APIClient`'s.
-	 * That one is driven off the http layer — a status outside 2xx, or a transport
-	 * failure — and `OVER_QUERY_LIMIT` is neither: it is a 200 with a JSON body,
-	 * indistinguishable to every check between the socket and this method.
-	 *
-	 * Teaching `core/api` to peek inside a body would make one API's in-band protocol the
-	 * concern of every client in the repo, so the loop lives here, uses the same clock and the
-	 * same policy numbers, and re-enters `fetch` (and therefore the pacer) on every attempt.
+	 * `APIClient` retries only HTTP-level failures.
+	 * This loop retries Google's in-band `OVER_QUERY_LIMIT` and `UNKNOWN_ERROR` statuses,
+	 * and each attempt goes back through `fetch` and its pacer.
 	 *
 	 * @internal
 	 */
@@ -625,12 +478,9 @@ export class GoogleGeocoderClient extends APIClient<GoogleGeocoderClientConfig> 
 }
 
 /**
- * Create a Google Geocoding API client.
+ * Creates a Google Geocoding API client.
  *
- * See the file header for the full rationale.
- *
- * @throws immediately, before any request is made, when constructed without an
- * explicit `apiKey` and without `GOOGLE_MAPS_API_KEY` set.
+ * @throws {Error} When neither `apiKey` nor `GOOGLE_MAPS_API_KEY` provides a key.
  */
 export function createGoogleGeocoderClient(options: CreateGoogleGeocoderClientOptions = {}): GoogleGeocoderClient {
 	const apiKey = options.apiKey ?? $private.GOOGLE_MAPS_API_KEY
@@ -653,11 +503,8 @@ export function createGoogleGeocoderClient(options: CreateGoogleGeocoderClientOp
 		maxAttempts: options.maxAttempts ?? DEFAULT_MAX_ATTEMPTS,
 		baseRetryDelayMs: options.baseRetryDelayMs ?? DEFAULT_BASE_RETRY_DELAY_MS,
 		clock,
-		// both limits, and the interval is the one that holds the rate.
-		// `requestsPerMinute` alone is a budget whose cooldown is `60000/N` minus the gap
-		// since the last dispatch, so N requests go out back to back and the client
-		// then waits 60/N seconds — measured at 100/minute for a configured 10/minute.
-		// See `bdc/sdk/client.ts`, where that measurement was taken, for the full trace.
+		// The minimum interval spaces requests evenly.
+		// The per-minute budget alone would allow bursts.
 		requestsPerMinute,
 		minRequestIntervalMs: Math.ceil(MS_PER_MINUTE / requestsPerMinute),
 		retry: {
@@ -670,25 +517,17 @@ export function createGoogleGeocoderClient(options: CreateGoogleGeocoderClientOp
 				validate: isCacheableGoogleBody,
 			}),
 			ttl: options.cacheTTLMs ?? DEFAULT_CACHE_TTL_MS,
-			// Google sends its own `Cache-Control`.
-			// Honoring it would replace the reasoning behind DEFAULT_CACHE_TTL_MS with
-			// whatever the CDN in front of maps.googleapis.com happens to say.
+			// The configured TTL overrides Google's `Cache-Control` header.
 			interpretHeader: false,
 			generateKey: geocodeCacheKey,
 		},
 		axios: {
-			// the KEY lives here rather than IN the URL.
-			// An instance-level `params` default is merged into every request by Axios
-			// before the interceptor chain runs, so the key reaches the wire, while `config.url`,
-			// which is what `APIClient` logs and what `delegateAxiosError` interpolates
-			// into timeout/DNS messages, stays free of it.
+			// Axios merges this default into every request's query string.
+			// The key therefore stays out of `config.url`, which `APIClient` logs and error messages quote.
 			params: { key: apiKey },
 			timeout: options.requestTimeoutMs ?? DEFAULT_REQUEST_TIMEOUT_MS,
 			responseType: "json",
-			// `silentJSONParsing` defaults to true, which hands back the RAW string
-			// when a body fails to parse instead of raising.
-			// An html error page under a 200 would then be returned as a `GoogleGeocodeResponse`
-			// and read as `status === undefined`; parse failures must be errors.
+			// A malformed or HTML body raises a parse error instead of passing through as a typed response.
 			transitional: { silentJSONParsing: false },
 			...options.axios,
 		},

@@ -33,13 +33,11 @@ import type { WOFDatabase } from "#schema"
 import { normalizeLocalityForKey } from "#street/normalize"
 
 /**
- * Re-exports the country display-name staging pass, because this module path is the candidate build's
- * public interface and consumers should not need to know which pass under `./candidate/` owns a name.
+ * Re-exports the country display-name staging pass from the candidate build's public module.
  */
 export { stageCountryDisplayNames } from "#candidate/country-display-names"
 /**
- * Re-exports the gloss-detector settings, the placetypes it never flags and its default
- * key-count threshold, from the candidate build's public module.
+ * Re-exports the gloss detector's excluded placetypes and default key-count threshold.
  */
 export { GLOSS_EXCLUDED_PLACETYPES, GLOSS_KEY_THRESHOLD } from "#candidate/name-roles"
 /**
@@ -48,16 +46,13 @@ export { GLOSS_EXCLUDED_PLACETYPES, GLOSS_KEY_THRESHOLD } from "#candidate/name-
 export type { PlaceAttrs } from "#candidate/place-attrs"
 
 /**
- * Configures {@link buildCandidateTable}: the source WOF database, the candidate
- * database to overwrite, and optional postcode and locality extracts, importance scores,
- * capitals and currency backfill to fold in.
- *
- * Omitting `importance` leaves the `importance` column NULL on every row.
+ * Options for {@link buildCandidateTable}.
  */
 export interface BuildCandidateOptions {
 	/**
-	 * The source WOF admin database, which must carry `spr`, `place_population`,
-	 * `place_search`, `place_abbr` and `ancestors`.
+	 * The source WOF admin database.
+	 *
+	 * It must have the `spr`, `place_population`, `place_search`, `place_abbr` and `ancestors` tables.
 	 */
 	input: PathBuilderLike
 
@@ -67,7 +62,7 @@ export interface BuildCandidateOptions {
 	output: PathBuilderLike
 
 	/**
-	 * The capital-status reference entries to store in the artifact's `capital` table.
+	 * The capital reference entries to store in the artifact's `capital` table.
 	 *
 	 * The caller passes them because this published module must not read repo paths.
 	 * Without them the table is not created, and the capital loader falls back
@@ -78,8 +73,7 @@ export interface BuildCandidateOptions {
 	/**
 	 * Postcode extract databases whose located `spr` rows become `postalcode` candidate rows.
 	 *
-	 * Each extract's `names` table is folded in as aliases, which is where delivery-city
-	 * names such as "Brooklyn" for 11201 live.
+	 * Each extract's `names` table becomes aliases, such as the delivery city "Brooklyn" for 11201.
 	 */
 	postcodes?: readonly PathBuilderLike[]
 
@@ -87,26 +81,26 @@ export interface BuildCandidateOptions {
 	 * Locality extract databases whose located `spr` rows become `locality`
 	 * candidate rows with zero population.
 	 *
-	 * Their `names` tables fold in as non-primary aliases.
-	 * An extract whose `ancestors` table names a row's region gives that row the region's scope
-	 * and closure rows; otherwise the row stays unscoped.
+	 * Their `names` tables become non-primary aliases.
+	 * When an extract's `ancestors` table gives a row's region, the row gets
+	 * that region's scope and closure rows.
+	 * Other rows stay unscoped.
 	 */
 	localities?: readonly PathBuilderLike[]
 
 	/**
-	 * A WOF admin database with a `place_importance` table, the source of the `importance` column.
+	 * A WOF admin database with a `place_importance` table, which supplies the `importance` column.
 	 *
-	 * Rows join by name key, country and placetype plus nearest centroid, not by id.
-	 * Without it every row's `importance` stays NULL, which consumers treat as unmeasured
-	 * rather than substituting population.
+	 * Rows join on name key, country and placetype, then on the nearest centroid.
+	 * Without this option every row's `importance` is NULL, and consumers treat NULL as unmeasured.
 	 */
 	importance?: PathBuilderLike
 
 	/**
-	 * Settings for resurrecting deprecated WOF places that have no successor but a GeoNames attestation.
+	 * Settings for restoring deprecated WOF places that have no successor and have a GeoNames attestation.
 	 *
-	 * A dead place is restored only when no live same-name row lies within 10 km, and a GeoNames
-	 * populated place with the same folded name and at least 1,000 people lies within 10 km.
+	 * A deprecated place is restored only when no live row of the same name lies within 10 km and
+	 * a GeoNames populated place with the same folded name and at least 1,000 people lies within 10 km.
 	 * Countries without `<cc>.txt` under `geonamesDir` are skipped and reported.
 	 */
 	currencyBackfill?: {
@@ -114,26 +108,28 @@ export interface BuildCandidateOptions {
 		countries: readonly string[]
 
 		/**
-		 * The deprecated placetypes eligible for resurrection, default `locality`.
+		 * The deprecated placetypes eligible for restoration.
+		 * The default is `locality`.
 		 */
 		deadPlacetypes?: readonly string[]
 	}
 
 	/**
-	 * Receives a phase name and a human-readable message as each build step runs.
+	 * Receives a phase name and a message as each build step runs.
 	 */
 	onProgress?: (phase: string, message: string) => void
 
 	/**
-	 * The key-count threshold for the gloss anomaly detector, default {@link GLOSS_KEY_THRESHOLD}.
+	 * The key-count threshold for the gloss anomaly detector.
+	 * The default is {@link GLOSS_KEY_THRESHOLD}.
 	 *
-	 * Tests override it with a fixture-scale value.
+	 * Tests override it with a value sized for fixtures.
 	 */
 	glossKeyThreshold?: number
 }
 
 /**
- * Reports row and place counts from each stage of {@link buildCandidateTable}.
+ * Row and place counts from each stage of {@link buildCandidateTable}.
  */
 export interface BuildCandidateResult {
 	rows: number
@@ -142,80 +138,81 @@ export interface BuildCandidateResult {
 	aliases: number
 
 	/**
-	 * Region aliases refused because another region in the same country holds the name as its official name.
+	 * The count of region aliases dropped because another region in the same
+	 * country uses the name as its official name.
 	 *
-	 * Zero on a source without a `names` table means the rule had nothing to read,
-	 * not that no such pair exists.
+	 * The count is always zero for a source without a `names` table.
 	 */
 	regionOfficialRefused: number
 	abbrevs: number
 	postcodes: number
 
 	/**
-	 * Aliases folded onto postcode rows from the extracts' `names` tables.
+	 * The count of aliases added to postcode rows from the extracts' `names` tables.
 	 *
-	 * Zero means the extracts carried no alias names; an extract without a `names`
-	 * table is reported through `onProgress`.
+	 * An extract without a `names` table is reported through `onProgress`.
 	 */
 	postcodeAliases: number
 
 	/**
-	 * Closure rows written to the `candidate_ancestor` sidecar, including those from locality extracts.
+	 * The count of closure rows written to the `candidate_ancestor` sidecar,
+	 * including rows from locality extracts.
 	 */
 	ancestorRows: number
 
 	/**
-	 * Places with at least one closure row.
+	 * The count of places with at least one closure row.
 	 */
 	ancestorPlaces: number
 
 	/**
-	 * Places that received a pre/post interval label, which is the canonical-parent forest's node count.
+	 * The count of places that received a pre/post interval label, which equals
+	 * the node count of the canonical-parent forest.
 	 *
-	 * Containment against a place outside the forest is unverifiable, never false.
+	 * Containment against a place outside the forest is unknown.
 	 */
 	intervalPlaces: number
 
 	/**
-	 * Places that took an `importance` score from the join.
+	 * The count of places that received an `importance` score.
 	 *
-	 * `undefined` means no score source was given; `0` means the source matched nothing.
+	 * It is `undefined` when no score source was given.
 	 */
 	importanceScored?: number
 
 	/**
-	 * Places whose name key, country and placetype matched a scored group but whose
-	 * nearest scored centroid lay beyond {@link IMPORTANCE_JOIN_RADIUS_KM}.
+	 * The count of places that matched a scored group by name key, country and placetype
+	 * but whose nearest scored centroid lay beyond {@link IMPORTANCE_JOIN_RADIUS_KM}.
 	 *
-	 * A jump across rebuilds means the score source and the admin source have drifted apart.
+	 * A large change between rebuilds means the score source and the admin source have diverged.
 	 */
 	importanceFiltered?: number
 
 	/**
-	 * Alias rows stamped `name_role = 'gloss'` by the gloss anomaly detector.
+	 * The count of alias rows the gloss anomaly detector stamped `name_role = 'gloss'`.
 	 */
 	roleGloss: number
 
 	/**
-	 * Alias rows stamped `name_role = 'abbr'`, marking a variant in the official language.
+	 * The count of alias rows stamped `name_role = 'abbr'`, which marks a variant in the official language.
 	 */
 	roleAbbr: number
 
 	/**
-	 * Admin places whose staged key count reached the gloss key threshold,
-	 * the denominator for `keyTailWithRole`.
+	 * The count of admin places whose staged key count reached the gloss key threshold.
+	 * It is the denominator for `keyTailWithRole`.
 	 */
 	keyTailPlaces: number
 
 	/**
-	 * Places in `keyTailPlaces` that carry at least one stamped role row.
+	 * The count of places in `keyTailPlaces` with at least one stamped role row.
 	 */
 	keyTailWithRole: number
 }
 
 /**
  * Builds the candidate lookup database from a WOF admin database, replacing any
- * existing output, and bakes in its FTS5 trigram fuzzy index.
+ * existing output, and adds its FTS5 trigram index for fuzzy lookup.
  */
 export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<BuildCandidateResult> {
 	const progress = opts.onProgress ?? (() => {})

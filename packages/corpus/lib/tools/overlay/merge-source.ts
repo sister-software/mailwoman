@@ -2,20 +2,11 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file Merge one source's overlay parquet files into a single shuffled file.
+ * @file Merges one source's overlay parquet files into shuffled output files.
  *
- *   `buildCorpus` shuffles rows before writing them, so a base file's row-group is a sample of its
- *   source rather than a run of one country. An overlay parquet written by `jsonlToParquet` gets no
- *   such treatment, and a per-country recipe output is a single-country file by construction.
- *
- *   A training epoch draws a bounded number of rows per source, and that draw reads one row-group from
- *   one file. A source whose countries sit in separate files therefore reaches only the countries of
- *   whichever file the draw lands in. Measured on `v0.6.0-register-surface`: `overture-latam` held
- *   Brazil, Mexico, Canada and the earlier Latin American mix in four files, drew 29,489 rows, and
- *   every one of them was Mexican. Brazil's receipt read 0 against a floor of 1,000.
- *
- *   Merging the files and shuffling across them puts every country of the source in every output
- *   row-group, which is what makes a per-country receipt reachable.
+ *   The training sampler can read a whole per-source draw from one row group,
+ *   so a source split into per-country files would reach only one country per draw.
+ *   Shuffling across the inputs mixes the source's countries within each row group.
  */
 
 import { mulberry32 } from "@mailwoman/core/utils"
@@ -26,53 +17,53 @@ import { DEFAULT_SHUFFLE_SEED, DEFAULT_SHUFFLE_WINDOW, shuffleWithinWindow } fro
 import { openParquetRowStream } from "#parquet/streams"
 import { writeParquetFile } from "#parquet/writers"
 
+/**
+ * Options for {@link mergeSourceFiles}.
+ */
 export interface MergeSourceOptions {
 	/**
 	 * The parquet files to merge, read in the order given.
 	 */
 	inputs: readonly PathBuilderLike[]
+	/**
+	 * The output path, whose stem receives a five-digit index for each file written.
+	 */
 	output: PathBuilderLike
 	/**
-	 * Rows held in memory while shuffling.
-	 * Defaults to the corpus writer's own window.
+	 * The number of rows held in memory while shuffling, which defaults to the corpus writer's window.
 	 */
 	windowSize?: number
 	/**
-	 * Defaults to the corpus writer's seed, so a rebuild of this file reproduces it.
+	 * The shuffle seed.
+	 *
+	 * The default is the corpus writer's seed, which makes rebuilds reproducible.
 	 */
 	seed?: number
 	/**
-	 * Rows per output file.
+	 * The maximum rows per output file.
 	 *
-	 * `writeParquetFile` materializes one Arrow table, and Arrow's list builder overflows well
-	 * before a source's whole row count: 4,228,212 rows raised where 1,603,143 wrote.
-	 * The base corpus writer closes a file at `rowsPerFile` for the same reason, and this follows it.
-	 *
-	 * Several output files cost nothing here.
-	 * What the draw needs is each row-group to mix the source's countries,
-	 * and every output file is drawn from the shuffled stream.
+	 * `writeParquetFile` builds one Arrow table per file, and Arrow's list builder
+	 * overflows on very large tables.
 	 */
 	rowsPerFile?: number
 }
 
+/**
+ * The files that {@link mergeSourceFiles} wrote and the row counts they hold.
+ */
 export interface MergeSourceResult {
 	inputs: readonly string[]
 	/**
 	 * The files written, in order.
-	 *
-	 * One when the row count fits `rowsPerFile`, several otherwise.
 	 */
 	outputs: readonly string[]
 	rows: number
 	/**
-	 * Rows per `country` value, so a caller can state that the merge reached the countries it meant to.
+	 * Row counts per `country` value.
 	 */
 	byCountry: Record<string, number>
 	/**
-	 * Rows per `source` value.
-	 *
-	 * More than one entry means the inputs disagree about their source, which a single
-	 * merged file cannot represent: the manifest records one source label per file.
+	 * Row counts per `source` value, which has one entry after a successful merge.
 	 */
 	bySource: Record<string, number>
 }
@@ -84,10 +75,11 @@ async function* readAll(inputs: readonly PathBuilderLike[]): AsyncGenerator<Parq
 }
 
 /**
- * Merge the inputs into one shuffled parquet file, and report what it holds.
+ * Merges the inputs through a windowed shuffle into one or more parquet files and reports their contents.
  *
- * Raises when the inputs carry more than one `source`, because the manifest entry for the merged file
- * names a single source and a reader would then attribute rows to a source that did not produce them.
+ * @throws When the inputs carry more than one `source`, because a manifest
+ * entry records one source per file.
+ * The check runs after the stream ends, so files flushed before it remain on disk.
  */
 export async function mergeSourceFiles(options: MergeSourceOptions): Promise<MergeSourceResult> {
 	const inputs = options.inputs.map((input) => input.toString())

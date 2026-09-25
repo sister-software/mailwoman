@@ -3,14 +3,16 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Where a body's build lives and what it is called: the one place the artifact names are spelled, read by the
- *   build, the verify and the publish.
+ *   Output directory and artifact file names for a body's build. Build, verify and publish all read them here.
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
 
 import type { BuildableBodyID } from "#bodies"
 
+/**
+ * File names of a body's build artifacts.
+ */
 export interface BuildOutputNames {
 	nomenclature: string
 	hillshade: string
@@ -19,16 +21,13 @@ export interface BuildOutputNames {
 }
 
 /**
- * The artifact names a body's build writes, relative to its output directory.
+ * Return the file names that a body's build writes, relative to its output directory.
  *
- * The elevation archive is `<body>-terrain`, not `<body>-hillshade`,
- * and the rename is the point rather than a tidy-up.
- * Its content changed — from a shaded greyscale picture to terrarium-encoded height —
- * and the two are indistinguishable to a cache.
+ * The `hillshade` archive is named `<body>-terrain` because it holds terrarium-encoded elevation.
+ * An earlier archive with the `-hillshade` name held shaded images.
  *
- * Publishing the new bytes under the old name would leave the edge free to serve a cached picture to
- * a client that reads it as elevation, which renders as relief that is wrong rather than absent.
- * A new name also leaves the old archive in place to roll back to.
+ * A cache could serve those stale images to a client that reads elevation,
+ * so the new content needs a new name.
  */
 export function buildOutputs(body: BuildableBodyID): BuildOutputNames {
 	return {
@@ -40,7 +39,8 @@ export function buildOutputs(body: BuildableBodyID): BuildOutputNames {
 }
 
 /**
- * The output directory a body builds into, unless `--out` names another.
+ * The output directory for a body's build.
+ * The `--out` flag overrides the default.
  */
 export function buildDirectory(body: BuildableBodyID, out: string | undefined): string {
 	return out ?? dataRootPath("astrogeology", body, "build").toString()

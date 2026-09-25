@@ -2,48 +2,41 @@
  * @copyright Sister Software.
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file Match Exhibit 21 subsidiary names to Form 499 filers and score the strength of each canonical-name match.
- *   Canonicalization maps names such as `"American Broadband LLC"` and `"American Broadband, Inc."` to the same key.
- *   Keep all FRNs per key so callers can abstain on collisions; score how much the canonical form discarded.
+ * @file Matches Exhibit 21 subsidiary names to Form 499 filers by canonical name and scores each match.
  */
 
 import { canonicalizeOrganizationName } from "@mailwoman/record"
 
 /**
- * Maximum score for byte-identical raw names.
+ * Score for byte-identical raw names.
  *
- * It remains below 1 because name equality is evidence, not proof, of identity.
+ * It stays below 1 because two companies can share a name.
  */
 export const EDGAR_MATCH_SCORE_IDENTICAL_RAW_NAME = 0.9
 
 /**
- * Score for names differing only in formatting normalized by canonicalization,
- * with the same legal designations.
+ * Score for names that differ only in formatting and share the same legal designations.
  */
 export const EDGAR_MATCH_SCORE_NORMALIZATION_ONLY = 0.75
 
 /**
- * Score for names whose legal designations differ.
- *
- * Canonicalization removed the distinguishing token, so the match is ambiguous.
+ * Score for names whose legal designations differ, such as "LLC" and "Inc.".
  */
 export const EDGAR_MATCH_SCORE_DESIGNATION_DIFFERS = 0.5
 
 /**
- * Return a stable key for the legal designations removed during canonicalization.
+ * Returns a sorted key of the legal designations that canonicalization removes from a name.
  */
 export function strippedDesignationKey(name: string): string {
 	return (canonicalizeOrganizationName(name)?.designations ?? []).toSorted().join(" ")
 }
 
 /**
- * Score a subsidiary-name match from raw-name identity and the legal designations
- * removed by canonicalization.
+ * Scores a subsidiary-name match by comparing the raw names and their legal designations.
  *
- * String similarity is unsuitable: Jaro-Winkler scored the LLC/Inc. and LLC/Corp.
- * examples 0.9485 and 0.9557 despite the designation collision.
- * Use the canonicalizer's existing designation output and three discrete score levels;
- * interpolating would imply evidence this match does not provide.
+ * The score has three fixed levels.
+ * String similarity would rate "X LLC" and "X Inc." as near-identical even
+ * though the designations identify different entities.
  */
 export function scoreEdgarSubsidiaryMatch(subsidiaryName: string, legalName: string): number {
 	if (subsidiaryName === legalName) return EDGAR_MATCH_SCORE_IDENTICAL_RAW_NAME
@@ -54,7 +47,7 @@ export function scoreEdgarSubsidiaryMatch(subsidiaryName: string, legalName: str
 }
 
 /**
- * FRN and original legal name for one canonical-name bucket entry.
+ * One FRN and its original legal name within a canonical-name group.
  */
 export interface CanonicalNameCandidate {
 	frn: string
@@ -62,9 +55,9 @@ export interface CanonicalNameCandidate {
 }
 
 /**
- * Group FRNs by canonical legal name.
+ * Groups FRNs by canonical legal name.
  *
- * Return the full bucket so callers can abstain when distinct FRNs collide.
+ * Each group keeps every FRN so callers can skip a name that several filers share.
  */
 export function groupFRNsByCanonicalLegalName(
 	legalNameByFRN: ReadonlyMap<string, { name: string; filedAt: string }>

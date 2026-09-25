@@ -2,6 +2,8 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
+ *
+ *   Implements `mailwoman gazetteer pair-index`, which builds a per-country placetype-pair index.
  */
 
 import type { ComponentTag } from "@mailwoman/codex/component"
@@ -18,17 +20,16 @@ import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandT
 /**
  * The expected distinct-pair count for a GB build from the PPD CSV alone.
  *
- * A mismatch means the fold has changed, so investigate before trusting the artifact.
+ * A mismatch means the fold changed, so the artifact needs investigation before use.
  */
 const EXPECTED_GB_PAIR_COUNT = 19_209
 
 /**
- * The GB pair count before folding.
+ * The GB pair count before folding, printed for context only.
  *
- * It is higher than {@link EXPECTED_GB_PAIR_COUNT} because the fold merges
- * punctuation variants such as "St Helens" and "St.
+ * It exceeds {@link EXPECTED_GB_PAIR_COUNT} because the fold merges punctuation
+ * variants such as "St Helens" and "St.
  * Helens".
- * The command prints it for context only.
  */
 const RUNG3_PRE_FOLD_CENSUS_LINE_COUNT = 19_431
 
@@ -57,7 +58,7 @@ const PROBE_PAIRS_BY_COUNTRY: Readonly<Record<string, ReadonlyArray<readonly [ci
 		// NZ addresses can repeat the town as its own suburb, so the index holds identity pairs.
 		["Mangawhai", "Mangawhai"],
 	],
-	// The US pairs are WOF boroughs and neighbourhoods, not postal dependent localities.
+	// The US pairs come from WOF boroughs and neighbourhoods.
 	us: [
 		["Astoria", "Queens"],
 		["Park Slope", "Brooklyn"],
@@ -79,7 +80,7 @@ const PROBE_PAIRS_BY_COUNTRY: Readonly<Record<string, ReadonlyArray<readonly [ci
 		["Nippes", "Köln"],
 		["Schwabing", "München"],
 	],
-	// The FR pairs are BAN lieux-dits under their communes, not quartiers.
+	// The FR pairs are BAN lieux-dits under their communes.
 	fr: [
 		["Pinsonnac", "Montpeyroux"],
 		["Line", "Salignac-Eyvigues"],
@@ -138,6 +139,9 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
+/**
+ * Builds the pair index, verifies it and renders a summary.
+ */
 const GazetteerPairIndex: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { dataRootPath } = await import("@mailwoman/core/data-root")
@@ -152,7 +156,7 @@ const GazetteerPairIndex: CommandComponent<typeof spec> = ({ options }) => {
 		const country = options.country.toLowerCase()
 
 		// Only GB has a default CSV.
-		// Other countries can build from the secondary sources alone.
+		// Other countries build from the secondary sources.
 		const sourcePath =
 			options.source ?? (country === "gb" ? dataRootPath("ppd", "2026-07-22", "gb-tuples.csv") : undefined)
 
@@ -195,7 +199,7 @@ const GazetteerPairIndex: CommandComponent<typeof spec> = ({ options }) => {
 			}
 		}
 
-		// This counts distinct pairs from every source other than the CSV, for the GB cross-check.
+		// The GB cross-check adds this count of distinct secondary-source pairs to its baseline.
 		let secondaryPairsAdded = 0
 		let banFiles: readonly PathBuilderLike[] = []
 
@@ -211,7 +215,6 @@ const GazetteerPairIndex: CommandComponent<typeof spec> = ({ options }) => {
 			console.error(`pair-index: +${secondaryPairsAdded} distinct borough pairs (WOF admin DB)`)
 		}
 
-		// The BAN source streams about 26 million rows, so it is opt-in.
 		if (options.banDir) {
 			const before = builder.distinctCount
 			const { pairs, rowsWithLieuDit, filesRead, files } = await extractLieuDitPairs(options.banDir)
@@ -253,14 +256,14 @@ const GazetteerPairIndex: CommandComponent<typeof spec> = ({ options }) => {
 		const built = builder.finish()
 		const { rowsKept, rowsSkipped, distribution } = built
 
-		// The holdout withholds a deterministic fraction of pairs so an evaluation can test pairs the index lacks.
+		// The holdout deterministically withholds a fraction of pairs so an evaluation can test unseen pairs.
 		const { kept: entries, heldOut } = applyPairIndexHoldout(
 			built.entries,
 			options.holdoutFraction,
 			options.holdoutSeed
 		)
 
-		// The BAN directory is recorded as one digest over each département file's name and MD5.
+		// The header records the BAN directory as one MD5 over each département file's name and MD5.
 		const banFileDigests: string[] = []
 
 		for (const file of banFiles) {
@@ -275,7 +278,7 @@ const GazetteerPairIndex: CommandComponent<typeof spec> = ({ options }) => {
 		]
 
 		// An omitted flag writes no header key.
-		// The reader treats an absent key as off, which differs from zero.
+		// The reader treats an absent key as disabled, which differs from an explicit zero.
 		const pairIndexHeader: PairIndexHeaderInput = {
 			country,
 			delta: options.delta,
@@ -291,7 +294,7 @@ const GazetteerPairIndex: CommandComponent<typeof spec> = ({ options }) => {
 
 		await writeLocalFile(bytes, outPath)
 
-		// The probes read the serialized bytes, not the in-memory entries.
+		// The probes read the serialized bytes so they also verify serialization.
 		const resolver = new PairIndexResolver(bytes)
 		const countryProbePairs = PROBE_PAIRS_BY_COUNTRY[country]
 
@@ -307,7 +310,6 @@ const GazetteerPairIndex: CommandComponent<typeof spec> = ({ options }) => {
 			const parent = normalizeFSTToken(district)
 			const edge = resolver.probe(child, parent)
 
-			// The line prints the parent tag too, so a wrong parent tag is visible.
 			return edge
 				? `PROBE OK: fold("${city}")/fold("${district}") → "${child}"/"${parent}" → ${edge.tag} under ${edge.parentTag}`
 				: `PROBE MISS: fold("${city}")/fold("${district}") → "${child}"/"${parent}" → (no entry)`
@@ -321,7 +323,7 @@ const GazetteerPairIndex: CommandComponent<typeof spec> = ({ options }) => {
 			),
 		]
 
-		// The cross-check counts pairs before the holdout, and it is skipped when a holdout is set.
+		// The cross-check counts pairs before the holdout and is skipped when a holdout is set.
 		const preHoldoutCount = built.entries.length
 		const preFoldSuffix = ` (pre-fold rung-3 census: ${RUNG3_PRE_FOLD_CENSUS_LINE_COUNT.toLocaleString()} lines)`
 

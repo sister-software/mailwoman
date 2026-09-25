@@ -3,13 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Generate the published CLI reference from compiled command specifications. The docs prebuild
- *   runs this script, and a test compares its output with the committed page. Run `yarn compile`
- *   first because the command modules are TSX.
+ *   Generates the published CLI reference page from the compiled command specifications.
  *
- *   {@link DOCUMENTED_GROUPS} lists consumer-facing command groups. Other groups require a summary
- *   in {@link GROUP_NOTES}. Output order and formatting are deterministic; environment-specific
- *   absolute defaults are omitted to avoid publishing host paths.
+ *   The command modules are TSX, so run `yarn compile` first. A test compares the output with the committed page.
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
@@ -23,15 +19,15 @@ import { readCommands, type CommandNode, type OptionSpec } from "./cli-schema.ts
 // #region Scope policy
 
 /**
- * The command groups this page documents in full.
+ * The command groups that the page documents command by command.
  *
- * `""` denotes top-level commands.
- * Every command in these groups is included automatically.
+ * The empty string stands for the top-level commands.
  */
 export const DOCUMENTED_GROUPS: readonly string[] = ["", "data", "skill", "clients", "registry"]
 
 /**
- * Short descriptions for groups not documented command by command.
+ * One-line summaries for the groups outside {@link DOCUMENTED_GROUPS}.
+ * Every such group needs an entry.
  */
 export const GROUP_NOTES: Readonly<Record<string, string>> = {
 	corpus: "Builds and audits the BIO-labeled training corpus.",
@@ -54,31 +50,30 @@ export const GROUP_NOTES: Readonly<Record<string, string>> = {
 // #region Derived shapes
 
 /**
- * One flag row.
+ * A row in a command's flag table.
  */
 export interface CLIFlag {
 	/**
-	 * The rendered flag, e.g. `--format [format]` or `--no-admin-coherence`.
+	 * The rendered flag, such as `--format [format]` or `--no-admin-coherence`.
 	 */
 	flag: string
 	/**
-	 * The value the flag accepts: `boolean`, `string`, `number`, `string[]`, or the enum's members.
+	 * The accepted value type, or the enum members when the flag has choices.
 	 */
 	type: string
 	/**
-	 * The default, already rendered for the table.
-	 *
-	 * `—` when the flag has none.
+	 * The default as rendered for the table.
+	 * It is `—` when the flag has no default.
 	 */
 	default: string
 	/**
-	 * The flag's own help text from its command specification.
+	 * The help text from the command specification.
 	 */
 	description: string
 }
 
 /**
- * One positional-argument row.
+ * A row in a command's positional-argument table.
  */
 export interface CLIArgument {
 	name: string
@@ -87,19 +82,19 @@ export interface CLIArgument {
 }
 
 /**
- * One command.
+ * A command as the reference page renders it.
  */
 export interface CLICommand {
 	/**
-	 * The invocation without the binary, e.g. `data pull`.
+	 * The invocation without the binary name, such as `data pull`.
 	 */
 	path: string
 	/**
-	 * The synopsis line, e.g. `mailwoman data pull [options] <bundles...>`.
+	 * The synopsis line, such as `mailwoman data pull [options] <bundles...>`.
 	 */
 	synopsis: string
 	/**
-	 * The command's `export const description`, when it declares one.
+	 * The description from the command specification, if it has one.
 	 */
 	description?: string
 	args: CLIArgument[]
@@ -107,18 +102,18 @@ export interface CLICommand {
 }
 
 /**
- * One documented group and its commands.
+ * A documented command group and its commands.
  */
 export interface CLIGroup {
 	/**
-	 * The group name, or `""` for the root commands.
+	 * The group name, or `""` for the top-level commands.
 	 */
 	name: string
 	commands: CLICommand[]
 }
 
 /**
- * A group the page names but does not document.
+ * A command group that the page summarizes in one row.
  */
 export interface CLIGroupSummary {
 	name: string
@@ -127,13 +122,13 @@ export interface CLIGroupSummary {
 }
 
 /**
- * Everything the page renders from.
+ * The collected command tree that the page renders.
  */
 export interface CLISurface {
 	documented: CLIGroup[]
 	undocumented: CLIGroupSummary[]
 	/**
-	 * Every command the walk found, documented or not — the denominator the page states.
+	 * The number of commands in every group, documented or summarized.
 	 */
 	totalCommands: number
 }
@@ -156,9 +151,9 @@ function renderFlag(name: string, option: OptionSpec): string {
 }
 
 /**
- * The `Default` column.
+ * Render a value for the `Default` column.
  *
- * Hide absolute paths so generated documentation does not expose the build machine's filesystem.
+ * An absolute path renders as `environment-dependent` so the page does not publish host paths.
  */
 export function renderDefault(value: unknown): string {
 	if (value === undefined) return "—"
@@ -179,9 +174,9 @@ export function renderDefault(value: unknown): string {
 // #region MDX escaping + tables
 
 /**
- * Make a source-authored help string safe as MDX table-cell text.
+ * Escape a help string for use in an MDX table cell.
  *
- * Escape syntax characters that MDX, Markdown tables, or `oxfmt` would otherwise interpret.
+ * The escaped characters are those that MDX, Markdown tables or `oxfmt` would interpret.
  */
 export function escapeCell(text: string): string {
 	return text
@@ -197,7 +192,7 @@ export function escapeCell(text: string): string {
 }
 
 /**
- * Render a table with the column widths expected by `oxfmt`.
+ * Render a Markdown table padded to the column widths that `oxfmt` produces.
  */
 export function renderTable(headers: readonly string[], rows: readonly (readonly string[])[]): string {
 	const widths = headers.map((header, column) =>
@@ -215,7 +210,7 @@ export function renderTable(headers: readonly string[], rows: readonly (readonly
 // #region Collection
 
 /**
- * Flatten a command node and its path into {@link CLICommand} records.
+ * Append a {@link CLICommand} for this node and each of its descendants that is a command.
  */
 function collectCommands(node: CommandNode, prefix: readonly string[], into: CLICommand[]): void {
 	const path = [...prefix, node.name]
@@ -258,20 +253,20 @@ function collectCommands(node: CommandNode, prefix: readonly string[], into: CLI
 	}
 }
 
-// Resolve paths from the package root, not from the entry module under `lib/`.
+// Paths resolve from the `mailwoman` package root, which is independent of the working directory.
 const packagePath = resolvePackageDirectory("mailwoman")
 
 /**
- * Compiled command directory, resolved independently of the current working directory.
+ * The directory of compiled command modules.
  */
 export const COMMANDS_DIRECTORY = packagePath("out", "commands")
 /**
- * Compiled native commands merged into the command tree.
+ * The directory of compiled native commands, which are merged into the command tree.
  */
 export const NATIVE_COMMANDS_DIRECTORY = packagePath("out", "cli", "native", "commands")
 
 /**
- * Read compiled commands and divide them into documented and summarized groups.
+ * Read the compiled commands and split them into documented and summarized groups.
  *
  * @throws When a group outside {@link DOCUMENTED_GROUPS} has no {@link GROUP_NOTES} entry.
  */
@@ -287,7 +282,6 @@ export async function collectCLISurface(commandsDirectory = COMMANDS_DIRECTORY):
 	const undocumented: CLIGroupSummary[] = []
 	let totalCommands = 0
 
-	// Collect top-level commands separately from named groups.
 	const rootCommands: CLICommand[] = []
 	const groups = new Map<string, CommandNode>()
 
@@ -311,7 +305,7 @@ export async function collectCLISurface(commandsDirectory = COMMANDS_DIRECTORY):
 			collectCommands(child, [name], commands)
 		}
 
-		// Include a group entry point when it is itself a command.
+		// A group that is also a command gets its own entry.
 		if (node.component) {
 			collectCommands({ ...node, commands: undefined }, [], commands)
 		}
@@ -424,7 +418,8 @@ function renderCommand(command: CLICommand): string {
 }
 
 /**
- * Render a deterministic reference page from the command surface.
+ * Render the reference page.
+ * The same surface always produces the same text.
  */
 export function renderCLIReference(surface: CLISurface): string {
 	const documentedCount = surface.documented.reduce((total, group) => total + group.commands.length, 0)
@@ -532,14 +527,14 @@ export function renderCLIReference(surface: CLISurface): string {
 // #endregion
 
 /**
- * The page this generator owns.
+ * The path of the generated page.
  */
 export const OUTPUT_PATH = repoRootPath("docs", "articles", "developers", "reference", "cli.mdx")
 
 /**
- * Render the page and write it.
+ * Collect the command surface and render the page without writing it.
  *
- * @returns the rendered text so a caller can compare rather than write.
+ * @returns The rendered page text.
  */
 export async function generateCLIReference(): Promise<string> {
 	const surface = await collectCLISurface()

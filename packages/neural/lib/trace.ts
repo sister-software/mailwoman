@@ -11,10 +11,9 @@ import type { PlacetypeCensusObservation } from "#placetype/pair-prior"
 import type { SoftFeatureChannel } from "#soft-features"
 
 /**
- * Lists every prior kind the decode path records, in the order it produces them.
+ * Every prior kind the decode path records, in the order it records them.
  *
- * `"placetypeCensus"` is an observation rather than an emission prior,
- * so its record never reports `applied`.
+ * `"placetypeCensus"` only observes and adds no emission bias, so its record always has `applied: false`.
  */
 export const TRACE_PRIOR_KINDS = [
 	"queryShape",
@@ -27,15 +26,13 @@ export const TRACE_PRIOR_KINDS = [
 ] as const
 
 /**
- * Names one prior kind from {@linkcode TRACE_PRIOR_KINDS}.
+ * One prior kind from {@linkcode TRACE_PRIOR_KINDS}.
  */
 export type TracePriorKind = (typeof TRACE_PRIOR_KINDS)[number]
 
 /**
- * Records whether one prior took part in a decode; the trace carries one record for every kind.
- *
- * `applied` reports effect rather than configuration, so a configured prior
- * that matched nothing reports `false`.
+ * Whether one prior affected a decode.
+ * The trace has one record for every kind.
  */
 export interface TracePrior {
 	kind: TracePriorKind
@@ -43,29 +40,31 @@ export interface TracePrior {
 	/**
 	 * Whether this prior changed any emission.
 	 *
-	 * It is always `false` for `"placetypeCensus"`, which observes but writes no emissions.
+	 * A configured prior that matched nothing reports `false`.
 	 */
 	applied: boolean
 
 	/**
-	 * The probe path that produced the `placetypePair` bias: comma-delimited segments,
-	 * the comma-free adjacent pair, or the opt-in sliding window.
-	 * It is present only on an applied `placetypePair` record.
+	 * The probe path that produced the `placetypePair` bias.
+	 *
+	 * The paths are comma-delimited segments, the adjacent pair in comma-free text,
+	 * and the opt-in sliding window.
+	 * The field is present only on an applied `placetypePair` record.
 	 */
 	probePath?: "segment" | "anchored" | "window"
 
 	/**
-	 * What the census knew about each parent surface the pair probe looked up,
-	 * present on `placetypeCensus` only when a census is loaded.
+	 * The census entry for each parent name that the pair probe looked up.
+	 *
+	 * It is present on the `placetypeCensus` record only when a census is loaded.
 	 */
 	census?: PlacetypeCensusObservation[]
 
 	/**
-	 * The number of distinct parent surfaces probed against the census, hit or miss,
-	 * which is the denominator for {@link TracePrior.census}.
+	 * The number of distinct parent names probed against the census, which is the
+	 * denominator for {@link TracePrior.census}.
 	 *
-	 * An empty `census` with a positive count means the census knew none of those parents,
-	 * not that they have no children.
+	 * An empty `census` with a positive count means the census contained none of those parents.
 	 */
 	censusProbedParents?: number
 }
@@ -82,8 +81,9 @@ export type TraceRepairPass =
 	| "spanBridge"
 
 /**
- * Records one repair pass that changed labels, as per-piece BIO label sequences
- * before and after, index-aligned with `pieces`.
+ * One repair pass that changed labels, with the per-piece labels before and after.
+ *
+ * The label arrays are index-aligned with `pieces`.
  * Passes that changed nothing are omitted.
  */
 export interface TraceRepair {
@@ -93,7 +93,7 @@ export interface TraceRepair {
 }
 
 /**
- * A tokenizer piece as fed to the model — `TokenizedPiece`, kept structural for JSON.
+ * A tokenizer piece as fed to the model, in a JSON-serializable shape.
  */
 export interface TracePiece {
 	piece: string
@@ -103,8 +103,7 @@ export interface TracePiece {
 }
 
 /**
- * Holds the full trace of one `traceParse` call, from tokenizer pieces through
- * emissions, decode, and repairs.
+ * The full trace of one `traceParse` call, from tokenizer pieces through emissions, decoding and repairs.
  */
 export interface NeuralParseTrace {
 	/**
@@ -139,63 +138,65 @@ export interface NeuralParseTrace {
 	logits: number[][]
 
 	/**
-	 * The locale head's output, index-aligned with {@link NeuralParseTrace.localeCountries}
-	 * and absent on models without the head.
+	 * The locale head's output, index-aligned with {@link NeuralParseTrace.localeCountries}.
+	 *
+	 * It is absent for models without a locale head.
 	 */
 	localeLogits?: number[]
 
 	/**
-	 * The semi-Markov head's per-span type scores, indexed as `spanScores[token][length - 1][type]`,
-	 * and absent when the model exports none.
+	 * The semi-Markov head's per-span type scores, indexed as `spanScores[token][length - 1][type]`.
 	 *
-	 * The type axis comes from the weights bundle's `semi-crf-transitions.json`.
+	 * It is absent when the model exports none.
+	 * The type order comes from the bundle's `semi-crf-transitions.json`.
 	 */
 	spanScores?: number[][][]
 
 	/**
-	 * The country code for each {@link NeuralParseTrace.localeLogits} index,
-	 * copied from the producing model so consumers never hardcode the order.
-	 * It is present exactly when `localeLogits` is.
+	 * The country code for each {@link NeuralParseTrace.localeLogits} index.
+	 *
+	 * It is present if and only if `localeLogits` is present, so consumers never hardcode the order.
 	 */
 	localeCountries?: string[]
 
 	/**
 	 * The address system whose conventions applied, or null when conventions were off
-	 * or no system cleared the bar.
+	 * or no system was detected.
 	 */
 	detectedSystem: SystemCode | null
 
 	/**
 	 * How {@link NeuralParseTrace.detectedSystem} was chosen: conventions off,
-	 * locale-head detection, or a caller pin.
+	 * locale-head detection, or a pinned system.
 	 */
 	systemSource: "off" | "auto" | "pinned"
 	priors: TracePrior[]
 
 	/**
-	 * The matrix the decoder ran on, after priors and masks, which equals `logits` when nothing fired.
+	 * The matrix the decoder ran on, after priors and masks.
+	 * It equals `logits` when no prior applied.
 	 */
 	emissions: number[][]
 
 	/**
 	 * The label vocabulary, index-aligned with the inner dimension of `logits` and `emissions`.
 	 *
-	 * That dimension may be narrower than this list when an older-stage model emits
-	 * only a prefix of the labels, but never wider.
+	 * That dimension may be narrower than this list when an earlier-stage model
+	 * emits only a prefix of the labels.
 	 */
 	labels: string[]
 
 	/**
-	 * The decoder's label index per piece, captured before the word-consistency vote and every repair pass.
+	 * The decoder's label index per piece, captured before any repair pass.
 	 *
-	 * Those changes appear in `repairs`, and the final labels are on `tokens`.
+	 * Repair changes appear in `repairs`, and the final labels are on `tokens`.
 	 */
 	path: number[]
 	decode: "viterbi" | "argmax"
 	repairs: TraceRepair[]
 
 	/**
-	 * The final tokens, identical to what `parse()` builds its tree from.
+	 * The final tokens, which match the tokens that `parse()` builds its tree from.
 	 */
 	tokens: DecoderToken[]
 }

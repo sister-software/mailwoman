@@ -3,8 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Compare FST configurations on the hard-case board using one model, resolver, and input set. Run through the runtime
- *   pipeline so the FST prior is active. Report coordinate and expected-place outcomes separately, plus arm differences.
+ * Compares FST arms on the hard-case board through the runtime pipeline, holding the model and resolver fixed.
  */
 
 import { pathExists, readLocalBuffer } from "@mailwoman/core/fs/readers"
@@ -30,7 +29,7 @@ const { values } = parseArguments({
 		board: { type: "string" },
 		"out-json": { type: "string" },
 		/**
-		 * Optional per-row outcome dump.
+		 * Writes each row's outcomes as JSON lines to this path.
 		 */
 		"out-rows": { type: "string" },
 	},
@@ -71,9 +70,9 @@ for (const locale of locales) {
 }
 
 /**
- * Build one pipeline per arm and locale.
+ * Holds one pipeline per arm and locale.
  *
- * Missing locale-specific FST files disable the prior for that pair.
+ * When an arm has no FST file for a locale, that pair runs without the FST prior.
  */
 const pipelines = new Map<string, Map<string, ReturnType<typeof createRuntimePipeline>>>()
 
@@ -106,34 +105,32 @@ for (const arm of arms) {
 
 // #region Scoring
 
+/**
+ * Holds one row's outcome under one arm.
+ */
 interface Outcome {
 	/**
-	 * Coordinate within the declared tolerance.
-	 *
-	 * `null` = the row asserts no coordinate.
+	 * Reports whether the coordinate is within tolerance, or `null` when the row asserts no coordinate.
 	 */
 	coordOK: boolean | null
 	/**
-	 * `expectPlaceID`/`expectPlaceName` matched.
-	 *
-	 * `null` = not asserted.
+	 * Reports whether `expectPlaceID` or `expectPlaceName` matched, or `null` when the row asserts neither.
 	 */
 	placeOK: boolean | null
 	/**
-	 * Great-circle error (km), or `null` when nothing resolved / nothing asserted.
+	 * Holds the great-circle error in kilometers, or `null` when nothing resolved
+	 * or no coordinate is asserted.
 	 */
 	errKm: number | null
 	resolvedID: number | null
 	resolvedName: string | null
 	/**
-	 * The row's verdict — `coordOK` when asserted, else `placeOK`.
-	 *
-	 * Used for the flip inventory.
+	 * Holds the verdict, which is `coordOK` when asserted and `placeOK` otherwise.
 	 */
 	pass: boolean
 }
 
-// Match the board's case- and compatibility-folded place-name grading.
+// This matches the board's place-name grading, which folds case and compatibility forms and strips accents.
 const norm = (s: string): string =>
 	s
 		.toLowerCase()
@@ -154,7 +151,7 @@ function score(c: HardCase, resolved: Resolved[]): Outcome {
 			? null
 			: errKm !== null && errKm <= c.expectToleranceM / 1000
 
-	// Check the expected place against every resolved node; it may be an ancestor of the most-specific result.
+	// The expected place can be an ancestor of the most specific result, so every resolved node is checked.
 	let placeOK: boolean | null = null
 
 	if (c.expectPlaceID !== undefined) {
@@ -179,6 +176,9 @@ function score(c: HardCase, resolved: Resolved[]): Outcome {
 
 // #region Run
 
+/**
+ * Holds one board row and its outcome under each arm.
+ */
 interface RowResult {
 	id: string
 	class: string
@@ -231,7 +231,6 @@ function tally(rows: RowResult[], arm: string): { pass: number; total: number } 
 console.log(`\n## Hard-case board — three-arm FST comparison\n`)
 console.log(`Board: ${board.length} rows · arms: ${arms.join(" / ")}\n`)
 
-// Overall + per-class.
 const classes = [...new Set(results.map((r) => r.class))].toSorted()
 const header = ["class", "n", ...arms, `Δ ${arms.at(-1)}−${arms[1] ?? arms[0]}`]
 
@@ -271,7 +270,7 @@ emitRow(
 	results.filter((r) => r.fstReach === "out")
 )
 
-// Check whether the arms produce distinct verdict vectors.
+// Two arms tie when their pass/fail vectors over every row are identical.
 console.log(`\n### Discrimination\n`)
 
 const signatures = new Map<string, string>()
@@ -308,7 +307,6 @@ for (let i = 0; i < arms.length; i++) {
 	}
 }
 
-// List pass/fail flips between population and importance arms.
 if (arms.includes("pop") && arms.includes("imp")) {
 	const gained = results.filter((r) => !r.byArm["pop"]!.pass && r.byArm["imp"]!.pass)
 	const lost = results.filter((r) => r.byArm["pop"]!.pass && !r.byArm["imp"]!.pass)

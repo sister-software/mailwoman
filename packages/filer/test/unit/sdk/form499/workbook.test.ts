@@ -4,10 +4,9 @@
  * @author Teffen Ellis, et al.
  * @file Tests for the Form 499 xlsx reader.
  *
- *   The fixture is four real rows lifted verbatim from the FCC's 2025-12-07 filer database, with the
- *   workbook's own 122-column header — not a hand-authored sheet. They were chosen to cover the shapes the
- *   reader has to survive: a live single-state filer, a ceased filer with all three note columns and a
- *   successor, a filer whose USF flag is `No`, and a 53-jurisdiction national one.
+ *   The fixture holds four unedited rows from the FCC filer database with the full 122-column header. The rows
+ *   cover a live single-state filer, a ceased filer with a successor, a filer whose USF flag is `No` and a
+ *   national filer in 53 jurisdictions.
  */
 
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"
@@ -61,7 +60,7 @@ describe("parseForm499Workbook — real FCC rows", () => {
 		const rows = await readFixture()
 
 		expect(rows[0]?.hqAddress).toBe("505 Third Avenue East Oneonta AL 35121")
-		// This one has a Suite line, so address2 is present and address3 is not.
+		// This row has a suite line in address2 and a blank address3.
 		expect(rows[1]?.hqAddress).toBe("1018 Highland Colony Parkway Suite 330 Ridgeland MS 39157")
 	})
 
@@ -88,16 +87,15 @@ describe("parseForm499Workbook — lifecycle and footprint", () => {
 			unrecognized: 0,
 		})
 
-		// The successor is in this same sheet.
-		// The chain resolves rather than dangling.
+		// The successor is another row in the same sheet.
 		expect(rows.some((row) => row.form499ID === corr?.lifecycle?.replacedByForm499ID)).toBe(true)
 	})
 
 	it("distinguishes 'the FCC said nothing' from 'this source cannot say'", async () => {
 		const [otelco] = await readFixture()
 
-		// A workbook row with blank notes yields an empty lifecycle, never undefined.
-		// Undefined is reserved for the TSV path, which has no note columns at all.
+		// A workbook row with blank notes has an empty lifecycle.
+		// Only TSV rows leave it undefined.
 		expect(otelco?.lifecycle).toEqual({ notes: [], reasons: [], unrecognized: 0 })
 		expect(otelco?.lifecycle).toBeDefined()
 	})
@@ -122,8 +120,7 @@ describe("parseForm499Workbook — lifecycle and footprint", () => {
 
 describe("assertWorkbookHeader", () => {
 	it("accepts the real workbook's header", async () => {
-		// Reading the fixture at all exercises this.
-		// Asserted directly so a failure names the guard.
+		// Reading the fixture runs the header check.
 		await expect(readFixture()).resolves.toHaveLength(4)
 	})
 
@@ -143,7 +140,7 @@ describe("assertWorkbookHeader", () => {
 			for await (const _row of parseForm499Workbook(
 				resolvePackagePath("@mailwoman/filer", "lib", "sdk", "form499-workbook.ts")
 			)) {
-				// Not reached — the reader throws before yielding.
+				// The reader throws before yielding a row.
 			}
 		}).rejects.toThrow(/./)
 	})
@@ -160,8 +157,7 @@ describe("toISOFilingDate", () => {
 	})
 
 	it("returns empty for anything else rather than inventing a date", () => {
-		// Empty fails assertISODate loudly at write time.
-		// A guess would fail nothing.
+		// An empty result makes `assertISODate` throw when the builder writes the row.
 		expect(toISOFilingDate("")).toBe("")
 		expect(toISOFilingDate("2026-Q2")).toBe("")
 		expect(toISOFilingDate("April 1, 2025")).toBe("")
@@ -187,8 +183,7 @@ describe("readOperatingStates", () => {
 
 describe("the fixture itself", () => {
 	it("is a real workbook, not a hand-authored one", async () => {
-		// xlsx is a ZIP.
-		// The magic bytes are the cheapest proof the file was not stubbed out.
+		// An xlsx file is a ZIP archive, which starts with "PK".
 		expect((await readLocalBuffer(WORKBOOK_PATH)).subarray(0, 2).toString("latin1")).toBe("PK")
 	})
 })

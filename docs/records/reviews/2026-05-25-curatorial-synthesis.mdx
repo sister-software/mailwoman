@@ -6,7 +6,7 @@
 
 ## Where all five reviews agree
 
-Every review — from three different models across two dates — converges on the same assessment. The convergence is unusually tight for independent reviews:
+Every review, from three different models across two dates, reaches the same assessment. The agreement is unusually close for independent reviews:
 
 | Theme              | Verdict                                                                                                                                                                                                              |
 | ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -24,7 +24,7 @@ Every review — from three different models across two dates — converges on t
 
 ### Phase A — Curatorial cleanup (this week, zero GPU, zero code changes)
 
-These are docs-only changes the result status confusion immediately. They enable every subsequent phase by ensuring contributors and reviewers share a single picture of what's shipped.
+These docs-only changes resolve the status confusion immediately. They support every later phase by giving contributors and reviewers one shared picture of what has shipped.
 
 **Owner: human (docs track). Issues filed separately as needed.**
 
@@ -37,10 +37,10 @@ These are docs-only changes the result status confusion immediately. They enable
 | Packages & versions | `mailwoman` (CLI), `@mailwoman/core`, `@mailwoman/classifiers`, `@mailwoman/neural`, `@mailwoman/neural-weights-en-us` (v0.4.0), `@mailwoman/neural-weights-fr-fr` (v0.4.0), `@mailwoman/phrase-grouper`, `@mailwoman/normalize`, `@mailwoman/query-shape`, `@mailwoman/kind-classifier`, `@mailwoman/resolver-wof-wasm`, `@mailwoman/neural-web`, `@mailwoman/cartographer` |
 | Model weights       | v0.4.0 shipped. 21 BIO labels (7 coarse + 3 fine). Per-component F1 limits. Known regressions: postcode (0.69), coarse labels still rule-carried.                                                                                                                                                                                                                            |
 | Corpus              | corpus-v0.3.0 (677M rows). corpus-v0.4.0 (v0.3.0 + 4,771 kryptonite + ~73K transliteration pairs) exists but no stable classifier trained on it yet.                                                                                                                                                                                                                         |
-| Tokenizer           | v0.1.0 (16K vocab) — used by v0.4.0 weights. A1 (48K vocab, trained on corpus-v0.4.0) — trained rather than yet used in stable classifier.                                                                                                                                                                                                                                   |
+| Tokenizer           | v0.1.0 (16K vocab) — used by v0.4.0 weights. A1 (48K vocab, trained on corpus-v0.4.0) — trained but not yet used in a stable classifier.                                                                                                                                                                                                                                     |
 | Runtime stages      | Table: each of the 6 stages, status (✅ default / 🚩 opt-in / 🧪 scaffold / ❌ not built), and what model weights it works with.                                                                                                                                                                                                                                             |
 | Browser demo        | Runs v0.4.0 weights + WOF SQLite in-browser. ~60MB cold load. Joint decode is not active in the demo.                                                                                                                                                                                                                                                                        |
-| Training state      | CE-only smoke passed (val_macro_f1=0.444, no divergence past step 2000). Full 50K CE-only run in progress. Target: first v0.5.0 weights that train stably.                                                                                                                                                                                                                   |
+| Training state      | CE-only smoke passed with val_macro_f1=0.444 and without divergence past step 2000. Full 50K CE-only run in progress. Target: first v0.5.0 weights that train stably.                                                                                                                                                                                                        |
 | Known regressions   | Postcode F1 0.69 (down from 0.76 in v0.3.0). Coarse labels (country 0.21, region 0.19) remain rule-carried. Full-parse exact match ~0.08.                                                                                                                                                                                                                                    |
 | Not supported       | Rooftop/address-point geocoding. Multi-locale ensemble. Japanese addresses. PO boxes. Unit/apartment parsing.                                                                                                                                                                                                                                                                |
 
@@ -54,7 +54,7 @@ These are docs-only changes the result status confusion immediately. They enable
 - 5-line Node.js example (parse → inspect components → resolve → get coordinates)
 - 5-line browser example (dynamic import, same API surface)
 - CLI example (`mailwoman parse "350 5th Ave, New York, NY 10118" --neural --format json`)
-- direct caveats: model quality, resolver precision (admin/postcode-level rather than rooftop), browser load time
+- Direct caveats: model quality, resolver precision (admin/postcode-level rather than rooftop), browser load time
 - Link to demo, status page, API reference
 
 #### A3. Create `/docs/api`
@@ -80,14 +80,14 @@ These are docs-only changes the result status confusion immediately. They enable
 The five contradictions the Codex review identified as "now a docs bug class":
 
 1. **CRF runtime status**: `crf-decoder.md` says JS-side Viterbi is "not yet" — update to "shipped 2026-05-23"
-2. **Locale check default**: `how-it-works-now.md` says "factory default falls back to caller-trust" — `STAGES.md` says "wired as default" — reconcile to "workspace shipped rather than yet wired as factory default"
+2. **Locale check default**: `how-it-works-now.md` says "factory default falls back to caller-trust" — `STAGES.md` says "wired as default" — reconcile to "workspace shipped but not yet wired as factory default"
 3. **Candidate-list status**: `STAGES.md` says "scaffold-only/designed" then later says `AddressNode.alternatives` shipped — the alternatives field shipped, the top-K resolver API behind `--candidates` is in progress
 4. **ARCHITECTURE.md layout/label count**: add a dated block at the top: "⚠️ Written for Phase 2 planning (2026-05-18). Current shipped vocabulary: 21 BIO labels. See `/docs/status` for current state."
 5. **v0.5.0 B2 status**: `v0-5-0-shipped.md` still says B2 is "still cooking" — update to "landed; included in corpus-v0.4.0"
 
 #### A6. Add audience headers
 
-Add `:::info[Who this is for` blocks to:]
+Add `:::info[Who this is for]` blocks to:
 
 - `plan/README.md` — "Contributors and operators running training experiments"
 - `ARCHITECTURE.md` — "ML engineers evaluating the design; historical planning doc. See `/docs/status` for current shipped state."
@@ -124,7 +124,7 @@ In `the-90-percent-trap.md`, the geocoder accuracy table by housing type, and an
 
 **[→ #153](https://github.com/sister-software/mailwoman/issues/153)** — Wire joint-reconcile end-to-end with real model output
 
-This closes the integration gap. It proves (or disproves) the architectural thesis independently of training stability.
+This work closes the integration gap. It tests the architectural thesis independently of training stability.
 
 #### B1. Expose per-token logits in the TypeScript runtime
 
@@ -218,7 +218,7 @@ This report becomes the release check for any new weights.
 
 #### D2. Add resolver precision caveats
 
-Everywhere the docs say "geocoder" or show coordinates: add a note that the current WOF resolver returns administrative/postcode-level place candidates rather than rooftop/address-point coordinates. This is not a bug — it's the current resolver scope — but it must be explicit.
+Everywhere the docs say "geocoder" or show coordinates, add a note that the current WOF resolver returns administrative/postcode-level place candidates rather than rooftop/address-point coordinates. This is the current resolver scope rather than a bug, but the docs must state it explicitly.
 
 ---
 
@@ -249,7 +249,7 @@ Move `TRAINING_ENV.md`, `OPERATIONS.md`, `VERDICT_SMOKES.md`, and the phase file
 
 Add a note at the top of each: "This is operator documentation. If you want to use Mailwoman, see [Getting started](/docs/getting-started)."
 
-Update `ARCHITECTURE.md` with a dated status block and audience header. Do not rewrite it — preserve the historical design rationale, just make clear it's historical.
+Update `ARCHITECTURE.md` with a dated status block and audience header. Do not rewrite it. Preserve the historical design rationale and label it as historical.
 
 ---
 
@@ -287,4 +287,4 @@ Through all of this, guard the core architectural shape:
 4. **Joint coherence after candidate generation** — reconciler with WOF concordance scoring
 5. **World hierarchy from the gazetteer** — WOF SQLite rather than model memory
 
-That decomposition is the project's intellectual contribution. Nothing in any of the five reviews contradicts it. The work ahead is proving it end-to-end rather than redesigning it.
+That decomposition is the project's intellectual contribution, and none of the five reviews contradicts it. The work ahead is to demonstrate it end to end rather than redesign it.

@@ -3,17 +3,12 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The same-data panel builder (#2261) — the executable form of the frozen selection rules.
+ *   Tests the same-data panel builder.
  *
- *   The homograph gold is not always the largest bearer, which is the property most worth pinning: a panel
- *   whose gold is always the most populous bearer would be satisfied by a population prior alone, and that
- *   prior is under test.
+ *   The homograph gold alternates between the largest bearer and a smaller one. If the gold were
+ *   always the largest bearer, a population prior alone would pass the panel.
  *
- *   Each stratum checks its own gold. The homograph rule's gold is a bearer other than the row being
- *   iterated, so a gradeability check against the iterated row refuses rows whose real gold is fine.
- *
- *   Strata draw from disjoint pools: a geonameid used twice would put one place on both sides of a paired
- *   comparison.
+ *   Strata draw from disjoint pools, so no place appears on both sides of a paired comparison.
  */
 
 import { loadSameDataDefinition } from "mailwoman/eval-harness/same-data/definition"
@@ -33,8 +28,7 @@ function city(
 }
 
 /**
- * Two homograph bearers in different countries with a real contest, plus enough unique
- * names to fill the other four strata at the target the loaded definition registers.
+ * Builds two same-name places in different countries, plus `uniqueCount` places with unique names.
  */
 function corpus(uniqueCount: number): GeoNamesCity[] {
 	const rows: GeoNamesCity[] = [
@@ -84,13 +78,13 @@ describe("same-data panel builder (#2261)", () => {
 
 		expect(homographs).toHaveLength(1)
 
-		// With one eligible name the stratum yields one row at index 0, whose gold is the largest bearer.
+		// One eligible name yields one row at index 0, and its gold is the largest bearer.
 		expect(homographs[0]!.gold.geonameid).toBe("9000001")
 		expect(homographs[0]!.query).toBe("Springfield, United States")
 	})
 
 	it("builds a homograph row whose gold is a bearer other than the one being iterated", () => {
-		// Two eligible names put a row at index 1, where the rule names the smaller bearer.
+		// Two eligible names put a row at index 1, where the rule picks the smaller bearer.
 		const rows = [
 			...corpus(0),
 			city("9000003", "Rutland", "US", "VT", 90_000),

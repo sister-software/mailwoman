@@ -7,26 +7,26 @@ verified-with: mailwoman 8.7.0
 
 # Add place autocomplete
 
-**Outcome.** A search box returns ranked place completions as the user types, served from a file you
-already have, with a measured per-keystroke cost.
+**Outcome.** A search box returns ranked place completions as the user types. The completions come
+from a file you already have, and this page measures the cost of each keystroke.
 
-Autocomplete here completes **place names** — localities, boroughs, counties, neighborhoods — from a
+This autocomplete completes **place names** (localities, boroughs, counties, neighborhoods) from a
 finite-state transducer built over the gazetteer. It does not complete street addresses or house
-numbers, and it is a different index from the one forward geocoding uses.
+numbers, and it uses a different index from forward geocoding.
 
 ## Prerequisites
 
 - The library install from
   [Install and first parse](../get-started/install-and-first-parse.mdx). The FST ships inside
-  `@mailwoman/neural-weights-en-us` as `fst-en-us.bin`, 21.8 MB, so you already have it.
-- `@mailwoman/resolver-wof-sqlite` for the library path. The autocomplete functions live on deep
-  subpaths of that package rather than on its root — see step 2.
-- No gazetteer database. The FST is self-contained.
+  `@mailwoman/neural-weights-en-us` as `fst-en-us.bin` (21.8 MB), so you already have it.
+- `@mailwoman/resolver-wof-sqlite`, if you call autocomplete from code. The autocomplete functions
+  are on deep subpaths of that package instead of its root. Step 2 shows the imports.
+- You do not need a gazetteer database. The FST is self-contained.
 
 ## 1. Try it from the command line
 
-The CLI needs to be told where the FST is. Its built-in default is a staging path that will not exist on
-your machine, so pass `--fst` or set `$MAILWOMAN_FST_BIN`:
+Tell the CLI where the FST is. Its built-in default is a staging path that will not exist on your
+machine, so pass `--fst` or set `$MAILWOMAN_FST_BIN`:
 
 ```bash
 export MAILWOMAN_FST_BIN="$PWD/node_modules/@mailwoman/neural-weights-en-us/fst-en-us.bin"
@@ -42,19 +42,19 @@ npx mailwoman autocomplete "san franc" --limit 5
 ```
 
 `[+francisco]` is the completion the FST supplied for the partial token you typed. `imp` is the place's
-importance score, which is the ranking key — results come back importance-descending.
+importance score. Results are sorted by importance, highest first.
 
-`--json` emits the same list as an array of `{ name, placetype, wofID, importance, completionTokens }`,
-which is the shape to build a dropdown from.
+`--json` emits the same list as an array of `{ name, placetype, wofID, importance, completionTokens }`.
+Build a dropdown from that shape.
 
-One correction to the tool's own error text: if the FST is missing, it tells you to run
-`mailwoman fst build`. There is no such command. The builder is `mailwoman gazetteer build fst`, and
-you should not need it. The shipped file is the same artifact.
+The tool's error text is wrong in one place. If the FST is missing, it tells you to run
+`mailwoman fst build`, but that command does not exist. The builder is `mailwoman gazetteer build fst`,
+and you should not need it, because the shipped file is the same artifact.
 
 ## 2. Wire it into a search box
 
-Three functions, all on deep subpaths of `@mailwoman/resolver-wof-sqlite`. They are not re-exported from
-the package root, so import them by subpath:
+The code uses three functions from deep subpaths of `@mailwoman/resolver-wof-sqlite`. The package root
+does not re-export them, so import them by subpath:
 
 ```js
 import { readFile } from "node:fs/promises"
@@ -79,10 +79,10 @@ export function suggest(query) {
 ```
 
 `deserializeFST` returns the matcher directly. Wrapping its result in `new FSTMatcher(...)` produces an
-object that answers every query with zero suggestions and no error, which is a long afternoon.
+object that answers every query with zero suggestions and raises no error, which is hard to debug.
 
-`dedupeByName: true` is what a dropdown wants and is off by default. It collapses same-name places to
-the highest-importance one:
+A dropdown needs `dedupeByName: true`, which is off by default. It collapses places with the
+same name to the one with the highest importance:
 
 ```
 dedupeByName: false
@@ -99,13 +99,14 @@ dedupeByName: true
   Brookleigh (neighbourhood, imp 0.297)
 ```
 
-Five slots showing three distinct places, or five. The CLI leaves it off because a person auditing the
-gazetteer wants to see that New York is both a city and a county.
+Without deduplication, five slots show three distinct places. With it, they show five. The CLI leaves
+deduplication off because a person auditing the gazetteer wants to see that New York is both a city
+and a county.
 
 ## 3. Measure the keystroke cost
 
-Load is once and cheap. Queries are not uniformly cheap, and the spread between the cheapest and the
-dearest keystroke is three orders of magnitude. Measure it before you decide whether to debounce:
+Loading happens once and is cheap. Query cost varies, and the most expensive keystroke costs about
+three orders of magnitude more than the cheapest. Measure it before you decide whether to debounce:
 
 ```bash
 node autocomplete-bench.mjs
@@ -121,35 +122,35 @@ partial later token    400          6        19
 
 Measured on an AMD Ryzen 9 8945HS, 16 logical cores, Node.js 26.2.0, `mailwoman` 8.7.0, over every
 keystroke of four typed queries (`san francisco`, `brooklyn`, `washington dc`, `cambridge ma`), 40
-samples per prefix, after a warm-up pass. The machine was shared, so treat these absolutes as one
-host's figures: your numbers will differ, and the ratios below are what transfers. Resident set after
-load moved between 241 MB and 293 MB across runs, so read that one as a scale rather than a constant.
+samples per prefix, after a warm-up pass. The machine was shared, so treat the absolute values as one
+host's figures. Your numbers will differ, but the ratios below should carry over. Resident memory
+after load ranged from 241 MB to 293 MB across runs, so treat that figure as an order of magnitude.
 
-Three shapes, and the middle one is the whole story:
+The three keystroke shapes behave differently, and the partial first token dominates the cost:
 
-- **Complete token** — what you typed is a whole word the index knows (`san`, `brook`). The walk lands
-  on a state and reads its entries. 8 µs.
-- **Partial later token** — a complete first word plus a fragment (`san fr`, `washington d`). The walk
-  fails, so the code walks the complete prefix and prefix-filters that state's continuation edges. That
-  state has 100 of them. 6 µs.
-- **Partial first token** — a fragment and nothing else (`sa`, `br`, `brookl`). The same prefix-filter
-  runs, but the state is the root, and the root has 53,904 continuation edges. Every one is scanned.
+- **Complete token**: the input is a whole word the index knows (`san`, `brook`). The walk reaches a
+  state and reads its entries. 8 µs.
+- **Partial later token**: a complete first word plus a fragment (`san fr`, `washington d`). The full
+  walk fails, so the code walks the complete prefix and filters that state's continuation edges by
+  prefix. That state has 100 edges. 6 µs.
+- **Partial first token**: a fragment and nothing else (`sa`, `br`, `brookl`). The same prefix filter
+  runs, but on the root state, which has 53,904 continuation edges. The code scans every one of them.
   8.4 ms.
 
-So the expensive keystrokes are the first few of the first word, and the cost collapses the moment a
-space is typed.
+The expensive keystrokes are therefore the first few characters of the first word. The cost drops as
+soon as the user types a space.
 
-Size those two costs against a parse rather than against a clock, because the ratio is what survives a
-change of machine. `classifier.parse` over the same twenty addresses on the same host, same session,
-measured p50 6,086 µs. So a complete-token completion is **roughly three orders of magnitude cheaper
-than one parse**, and a partial-first-token completion **costs about as much as one parse**. Those two
-statements are the design input: the index is nearly free to query except at the root, where it is a
-model-sized cost.
+Compare these costs with a parse instead of with a clock, because the ratio carries over to other
+machines. `classifier.parse` over the same twenty addresses, on the same host in the same session,
+measured p50 6,086 µs. A complete-token completion is **roughly three orders of magnitude cheaper
+than one parse**, and a partial-first-token completion **costs about as much as one parse**. The
+index is nearly free to query except at the root, where one query costs about as much as a model
+call.
 
-Two consequences for the front end follow from the ratio rather than from the microseconds. Debounce input
-rather than querying on every keydown, since the root-scan keystrokes are the ones a fast typist
-generates most of. And keep the query off the main thread of a browser tab: on this host 8.4 ms is
-more than a frame at 60 Hz, and on a slower one the margin only widens.
+The ratio has two consequences for the front end. First, debounce input instead of querying on every
+keydown, because a fast typist generates mostly root-scan keystrokes. Second, keep the query off the
+main thread of a browser tab. On this host 8.4 ms is longer than a frame at 60 Hz, and a slower host
+exceeds the frame budget by more.
 
 ## Verify
 
@@ -189,23 +190,22 @@ npx mailwoman autocomplete "brookl" --limit 3 --json
 ]
 ```
 
-Every suggestion carries a `wofID`. That is the Who's On First identifier, so a selected suggestion can
-be resolved to coordinates and a hierarchy without a second text query — which is the point of building
-the dropdown on this index rather than on repeated geocodes.
+Every suggestion carries a `wofID`, the Who's On First identifier. Your code can resolve a selected
+suggestion to coordinates and a hierarchy without a second text query. That is the reason to build
+the dropdown on this index instead of on repeated geocodes.
 
 ## Limits
 
-- **Places only.** No streets, no house numbers, no points of interest. A user typing
-  `1275 Pennsylv` gets nothing useful from this index.
-- **One locale per file.** `fst-en-us.bin` ships with the en-US weights; `@mailwoman/neural-weights-fr-fr`
-  carries its own. There is no cross-locale merge, so a multi-market box loads several and merges the
-  result lists itself.
-- **Resident set is a few hundred megabytes after load** — 241 MB to 293 MB across the runs above — and
-  the file is memory-resident rather than memory-mapped. One process per locale is the budget to plan
-  against.
-- **Ranking is importance rather than proximity.** There is no `near` parameter. A user in Boston typing
-  `brookl` gets Brooklyn first because Brooklyn is more important rather than because it is closer. Re-rank on
-  your side with the coordinates the `wofID` resolves to.
+- **It completes places only.** It does not complete streets, house numbers or points of interest. A
+  user typing `1275 Pennsylv` gets nothing useful from this index.
+- **Each file covers one locale.** `fst-en-us.bin` ships with the en-US weights, and
+  `@mailwoman/neural-weights-fr-fr` carries its own file. The library does not merge locales, so a
+  search box that serves several markets loads several files and merges the result lists itself.
+- **Resident memory is a few hundred megabytes after load** (241 MB to 293 MB across the runs above).
+  The file is read fully into memory instead of being memory-mapped. Plan for that cost once per locale per process.
+- **Ranking uses importance and ignores proximity.** There is no `near` parameter. A user in Boston typing
+  `brookl` gets Brooklyn first because Brooklyn has higher importance, even though Brookline is
+  closer. Re-rank on your side with the coordinates that the `wofID` resolves to.
 - **The CLI's default FST path is a staging directory.** Set `$MAILWOMAN_FST_BIN` in any environment
   where you rely on the command.
 
@@ -213,5 +213,5 @@ the dropdown on this index rather than on repeated geocodes.
 
 - [Reverse geocode a coordinate](./reverse-geocode.mdx) — turning a selected suggestion's coordinate
   back into a hierarchy.
-- [Parse in the browser](../tutorials/parse-in-the-browser.mdx) — running the parser client-side, which
-  is the same decision this page's latency numbers feed.
+- [Parse in the browser](../tutorials/parse-in-the-browser.mdx) — running the parser client-side. The
+  latency numbers on this page also inform that decision.

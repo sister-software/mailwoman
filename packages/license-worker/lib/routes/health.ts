@@ -3,9 +3,11 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `GET /health` reports issuance, Stripe mode, signing, ledger availability, and prolonged email failures. It returns
- *   503 when the ledger is unreachable; email-provider failures remain a 200 with `email: failing`. No customer or key
- *   data is exposed.
+ *   Serves `GET /health`, which reports issuance, Stripe mode, signing, ledger reachability and
+ *   long-running email failures without exposing customer or key data.
+ *
+ *   The route returns 503 only when the ledger is unreachable. Email failures still return 200 with
+ *   `email: "failing"`.
  */
 
 import { createRoute, type OpenAPIHono, z } from "@hono/zod-openapi"
@@ -15,6 +17,9 @@ import type { LicenseWorkerEnv } from "#env"
 import type { Ledger } from "#ledger/client"
 import { countFailedEmailsBefore } from "#ledger/licenses"
 
+/**
+ * The result of the most recent signing self-test.
+ */
 export type SigningStatusReport = "ok" | "mismatch" | "unchecked"
 
 const HealthSchema = z.object({
@@ -42,7 +47,7 @@ const healthRoute = createRoute({
 })
 
 /**
- * Email failure duration that triggers a health warning.
+ * How long an email must stay failed before the report shows `email: "failing"`.
  */
 const EMAIL_FAILURE_GRACE_MS = 60 * 60 * 1000
 
@@ -62,6 +67,9 @@ async function emailReport(ledger: Ledger, now: () => number): Promise<"ok" | "f
 	return (await countFailedEmailsBefore(ledger, cutoff)) > 0 ? "failing" : "ok"
 }
 
+/**
+ * Registers `GET /health` on the app.
+ */
 export function registerHealthRoute(
 	app: OpenAPIHono,
 	env: LicenseWorkerEnv,

@@ -118,7 +118,7 @@ function scriptFamilyOf(char: string): string | null {
  * (`" / "`, `", "`, `" — "` all fall out the same way).
  *
  * A mono-script value yields exactly one rendering — the value itself, minus any
- * leading/trailing non-letters — so it can never satisfy a interface that lists two.
+ * leading/trailing non-letters — so it can never satisfy an interface that lists two.
  * That is the whole precision story: the splitter only ever speaks on a value written in two
  * or more scripts, and since 2026-08-11 it speaks only for the rows that OPT IN via
  * `expect_component_renderings` (see {@linkcode checkCase}) — ordinary component assertions never reach it.

@@ -3,8 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Compare labeled parse failures across model caches and report persistent failures, model-specific changes, and
- *   correlations with input structure. Write an MDX report and a machine-readable JSON summary.
+ * Compares labeled parse failures across model caches and writes an MDX report and a JSON summary.
  */
 
 import { tempRootPath } from "@mailwoman/core/data-root"
@@ -22,17 +21,17 @@ import { Globerator } from "spliterator/node/fs"
 import { PARITY_FIXTURES_PATH, PARITY_FLOORS, type ParityFixture } from "#eval-harness/parity-corpus"
 
 /**
- * Maximum token count for the short-query bucket.
+ * Sets the largest token count in the short-query bucket.
  */
 const SHORT_QUERY_TOKENS = 3
 
 /**
- * Failure-count increase that highlights a report cell.
+ * Sets the rise in failure count over the first model that bolds a label-table cell.
  */
 const NOTABLE_COUNT_GAP = 3
 
 /**
- * Shared shape for loaded fixtures.
+ * Holds one fixture from either corpus.
  */
 interface Fixture {
 	id: string
@@ -43,8 +42,9 @@ interface Fixture {
 }
 
 /**
- * Load the parity corpus or a golden JSONL directory.
- * Golden street labels use the flat, pre-split schema.
+ * Loads the parity corpus, or a golden JSONL directory when `spec` is `golden:<dir>[:<sampleN>]`.
+ *
+ * Golden street labels use the flat schema from before street was split into prefix, name and suffix.
  */
 async function loadCorpus(
 	spec: string | undefined
@@ -89,8 +89,14 @@ async function loadCorpus(
 	return { fixtures, kind: "parity", name: PARITY_FIXTURES_PATH.split("/").pop()! }
 }
 
+/**
+ * Holds the input-shape flags that bucket the failure rates.
+ */
 interface StructuralFlags {
-	whitespaceOnly: boolean // No separator punctuation between tokens.
+	/**
+	 * Reports that the input has no separator punctuation.
+	 */
+	whitespaceOnly: boolean
 	hasComma: boolean
 	hasNonAscii: boolean
 	tokenCount: number
@@ -109,13 +115,19 @@ function classify(fixture: Fixture): StructuralFlags {
 	}
 }
 
+/**
+ * Holds one fixture's failures under each graded model.
+ */
 interface FixtureFailures {
 	id: string
 	input: string
 	country: string
 	source: string
 	flags: StructuralFlags
-	// Model label to failed tags and values.
+	/**
+	 * Maps a model label to the labels it failed.
+	 * A model with no failure has no key.
+	 */
 	failsByModel: Record<string, { label: string; expected: string; got: string }[]>
 }
 
@@ -177,7 +189,8 @@ async function runFailureReport(): Promise<void> {
 			const byTag = await parseTags(cls, f.input)
 			const fails: { label: string; expected: string; got: string }[] = []
 
-			// Grade every label; street floors compare their tag family, other labels compare directly.
+			// A floor label compares its whole tag family.
+			// Every other label compares its own tag.
 			for (const [goldLabel, gold] of Object.entries(f.expect)) {
 				if (!gold?.length) continue
 				const tags = floorTags.get(goldLabel) ?? [goldLabel]
@@ -197,10 +210,9 @@ async function runFailureReport(): Promise<void> {
 	const all = [...records.values()]
 	const labels = specs.map((s) => s.label)
 	const anyFail = all.filter((r) => Object.keys(r.failsByModel).length)
-	// Fixtures failing on every model.
+	// A fixture is beyond reach when every model fails it.
 	const beyondReach = anyFail.filter((r) => labels.every((l) => r.failsByModel[l]))
 
-	// Count failures by label and model to expose class regressions.
 	const allLabels = [
 		...new Set(
 			all.flatMap((r) =>
@@ -215,7 +227,7 @@ async function runFailureReport(): Promise<void> {
 		return all.filter((r) => r.failsByModel[model]?.some((x) => x.label === label)).length
 	}
 
-	// Failure rate per structural bucket and model.
+	// This returns the failed count and pool size for one bucket and model.
 	function rate(pred: (r: FixtureFailures) => boolean, model: string): [number, number] {
 		const pool = all.filter(pred)
 		const failed = pool.filter((r) => r.failsByModel[model]).length
@@ -243,14 +255,11 @@ async function runFailureReport(): Promise<void> {
 		beyondReachCount: beyondReach.length,
 	}
 
-	// Render the MDX report.
-	// Escape dynamic cells so addresses cannot break MDX tables.
-
 	const outPath = flags.out || "docs/articles/evals/competitive-parity/failure-report.mdx"
 	const stamp = flags.date || isoDate()
 
+	// Addresses are escaped so a backtick or pipe cannot break an MDX table.
 	const cell = (s: string): string => "`" + (s || "∅").replaceAll("`", "ˋ").replaceAll("|", "\\|") + "`"
-	// Keep percentage rounding stable within this report.
 	const pct2 = (n: number, d: number): string => (d ? `${((n / d) * 100).toFixed(0)}%` : "—")
 	const mdRow = (cells: (string | number)[]): string => `| ${cells.join(" | ")} |`
 
@@ -259,7 +268,6 @@ async function runFailureReport(): Promise<void> {
 
 		if (!fails) return "✓"
 
-		// Keep table cells as plain Markdown.
 		return fails.map((f) => `${f.label}→${cell(f.got)}`).join(" · ")
 	}
 
@@ -307,7 +315,7 @@ async function runFailureReport(): Promise<void> {
 		),
 	].join("\n")
 
-	// Beyond-reach: per-country correlation summary (the shape the operator asked for) + a capped sample.
+	// The beyond-reach section prints counts per country and then a capped sample.
 	const byCountry = new Map<string, number>()
 
 	for (const r of beyondReach) {
@@ -332,7 +340,7 @@ async function runFailureReport(): Promise<void> {
 			.map((r) => mdRow([`\`${r.country}\``, cell(r.input), `\`${r.source}\``])),
 	].join("\n")
 
-	// Model-specific: failed on some but not all graded models — a fix or regression between candidates.
+	// A fixture that fails on some models but not all shows a fix or regression between candidates.
 	const diffs = anyFail.filter((r) => !beyondReach.includes(r))
 
 	const diffTable = [
@@ -395,7 +403,7 @@ ${diffTable}
 
 	await writeLocalFile(mdx, outPath)
 
-	// Write machine-readable output outside the repository.
+	// The JSON summary goes to the temp root, outside the repository.
 	const jsonPath = tempRootPath("failure-report.json")
 
 	await writeLocalJSONFile({ summary, records: all }, jsonPath)

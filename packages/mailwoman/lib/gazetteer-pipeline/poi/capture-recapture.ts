@@ -3,10 +3,10 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Estimate POI-layer completeness with two-source capture-recapture.
- *   Use Chapman's estimator, a pre-registered match-protocol grid, and the weakest
- *   lower confidence bound. Positive dependence between sources can still overstate coverage;
- *   this method bounds sampling error only.
+ *   Estimates POI-layer completeness from two inventories with Chapman's capture-recapture estimator.
+ *
+ *   The interval covers sampling error only. When the two sources tend to capture the same places,
+ *   the estimate overstates completeness.
  */
 
 import { foldName } from "@mailwoman/codex/normalize"
@@ -14,7 +14,7 @@ import { nameSimilarity } from "@mailwoman/match/comparators"
 import { haversineKm } from "@mailwoman/spatial"
 
 /**
- * A row from one of the two inventories, reduced to what the match protocol reads.
+ * The fields of an inventory row that the match protocol reads.
  */
 export interface CaptureRow {
 	name: string | null
@@ -28,22 +28,22 @@ export interface CaptureRow {
 export interface MatchProtocol {
 	label: string
 	/**
-	 * `[metres, minimum name similarity]` — the close band.
+	 * The near band as `[metres, minimum name similarity]`.
 	 */
 	near: readonly [number, number]
 	/**
-	 * `[metres, minimum name similarity]`.
-	 * The far band, tighter on names.
+	 * The far band as `[metres, minimum name similarity]`.
+	 * It usually requires closer names.
 	 */
 	far: readonly [number, number]
 	/**
-	 * Metres within which two rows match on position alone, used only when one of them carries no name.
+	 * The distance in metres within which two rows match by position when either row has no name.
 	 */
 	unnamedMetres: number
 }
 
 /**
- * Pre-registered matching protocols; `strict` is the conservative end.
+ * The pre-registered matching protocols, from strictest to loosest.
  */
 export const MATCH_PROTOCOL_GRID: readonly MatchProtocol[] = [
 	{ label: "strict", near: [25, 0.85], far: [25, 0.85], unnamedMetres: 25 },
@@ -52,33 +52,33 @@ export const MATCH_PROTOCOL_GRID: readonly MatchProtocol[] = [
 ]
 
 /**
- * Apply the shared codex match-key fold to nullable POI names.
+ * Folds a POI name with the shared codex fold.
+ * A null name becomes an empty string.
  */
 function foldPOIName(name: string | null): string {
 	return name ? foldName(name) : ""
 }
 
 /**
- * Metres between two rows.
+ * Returns the distance between two rows in metres.
  */
 function metresBetween(a: CaptureRow, b: CaptureRow): number {
 	return haversineKm(a.latitude, a.longitude, b.latitude, b.longitude) * 1000
 }
 
 /**
- * The widest distance any band of `protocol` accepts — past it no name can rescue a pair.
+ * Returns the widest distance that any band of `protocol` accepts.
  */
 function widestBand(protocol: MatchProtocol): number {
 	return Math.max(protocol.near[0], protocol.far[0], protocol.unnamedMetres)
 }
 
 /**
- * Whether `protocol` accepts this pair, and the name similarity it was judged on.
+ * Returns whether `protocol` accepts a pair, with the distance and name similarity it used.
  *
- * `similarity` is 0 both when a row is unnamed and when the pair is beyond {@link widestBand}.
- * No protocol can accept a pair at that distance, so the comparator is skipped
- * rather than run over every one of the O(n1·n2) candidates.
- * Read it only alongside `accepted`.
+ * `similarity` is 0 when a row is unnamed and also when the pair is beyond
+ * {@link widestBand}, where the name comparison is skipped.
+ * Interpret it only together with `accepted`.
  */
 export function evaluatePair(
 	a: CaptureRow,
@@ -102,6 +102,9 @@ export function evaluatePair(
 	return { accepted, metres, similarity }
 }
 
+/**
+ * A matched pair, identified by row index in each inventory.
+ */
 export interface CapturePair {
 	first: number
 	second: number
@@ -110,9 +113,9 @@ export interface CapturePair {
 }
 
 /**
- * Greedily assign accepted pairs one-to-one, preferring similarity then distance.
+ * Matches rows one-to-one, greedily taking accepted pairs by highest similarity and then shortest distance.
  *
- * Candidate generation is quadratic and intended for pilot-scale inputs.
+ * The candidate search is quadratic, so it suits pilot-scale inputs only.
  */
 export function matchInventories(
 	first: readonly CaptureRow[],
@@ -148,6 +151,9 @@ export function matchInventories(
 	return matched
 }
 
+/**
+ * A Chapman population estimate with its 95% interval.
+ */
 export interface ChapmanEstimate {
 	/**
 	 * Chapman's bias-corrected population estimate.
@@ -155,19 +161,20 @@ export interface ChapmanEstimate {
 	population: number
 	standardError: number
 	/**
-	 * 95% interval on {@link ChapmanEstimate.population}.
+	 * The bounds of the 95% normal-approximation interval on {@link ChapmanEstimate.population}.
 	 */
 	lower: number
 	upper: number
 }
 
 /**
- * Normal-approximation multiplier for a two-sided 95% interval.
+ * The normal-approximation multiplier for a two-sided 95% interval.
  */
 const Z_95 = 1.96
 
 /**
- * Compute Chapman's population estimate and variance.
+ * Computes Chapman's population estimate and its interval from the two inventory
+ * sizes and the matched count.
  */
 export function chapmanEstimate(n1: number, n2: number, m: number): ChapmanEstimate {
 	if (!Number.isSafeInteger(n1) || !Number.isSafeInteger(n2) || !Number.isSafeInteger(m) || n1 < 0 || n2 < 0 || m < 0) {
@@ -190,42 +197,46 @@ export function chapmanEstimate(n1: number, n2: number, m: number): ChapmanEstim
 	}
 }
 
+/**
+ * The completeness estimate under one matching protocol.
+ */
 export interface ProtocolCompleteness {
 	protocol: string
 	matched: number
 	estimate: ChapmanEstimate
 	/**
-	 * Point estimate of the second inventory's completeness — the one a pilot
-	 * layer built from `second` records.
+	 * The point estimate of the second inventory's completeness.
 	 */
 	completeness: number
 	/**
-	 * The conservative reading: `n2` over the upper end of the population interval.
+	 * The second inventory's size divided by the upper bound of the population interval, capped at 1.
 	 */
 	completenessLowerBound: number
 }
 
+/**
+ * The completeness estimates across the protocol grid.
+ */
 export interface CoverageCompleteness {
 	firstCount: number
 	secondCount: number
 	perProtocol: ProtocolCompleteness[]
 	/**
-	 * The value a coverage cell records: the weakest lower bound any protocol in the grid supports.
+	 * The smallest lower bound across the grid.
+	 * A coverage cell records this value.
 	 */
 	recorded: number
 	/**
-	 * Which protocol produced {@link CoverageCompleteness.recorded}.
+	 * The protocol that produced {@link CoverageCompleteness.recorded}.
 	 */
 	recordedFrom: string
 }
 
 /**
- * Run the whole grid and report the weakest lower bound it supports,
- * which is the value a `surveyed` cell records.
+ * Runs every protocol in the grid and reports the smallest completeness lower bound,
+ * which a `surveyed` cell records.
  *
- * Taking the minimum across the grid rather than a chosen protocol's value is what keeps
- * the threshold choice out of the claim: every protocol in the grid is a defensible
- * reading of "the same POI", so the claim is only as strong as the weakest of them.
+ * Using the minimum keeps the choice of matching thresholds from inflating the claim.
  */
 export function completenessAcrossProtocols(
 	first: readonly CaptureRow[],
@@ -243,8 +254,7 @@ export function completenessAcrossProtocols(
 			matched,
 			estimate,
 			completeness: second.length / estimate.population,
-			// A degenerate interval (upper <= 0) can only arise from an empty inventory.
-			// Read it as no evidence.
+			// An upper bound at or below zero comes only from an empty inventory and gives no evidence.
 			completenessLowerBound: estimate.upper > 0 ? Math.min(1, second.length / estimate.upper) : 0,
 		}
 	})

@@ -3,30 +3,11 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Build `soil.db` — the sealed polygon layer, from the survey areas nrcs publishes.
+ *   Builds the sealed `soil.db` polygon layer from NRCS soil survey areas.
  *
- *   the accumulation is IN SQL rather than IN A MAP. Classification is per delineation and shared with the
- *   resolution measurement, but where the touches GO differs on purpose: the measuring instrument holds
- *   them in memory because it is comparing candidate resolutions in one pass, and the builder streams them
- *   into a temporary table because memory has to stay flat in row count. A polygon layer's touches
- *   outnumber its features, and Iowa is 99 survey areas.
- *
- *   absence is no row, IN every table. Land outside a published survey area gets no `layer_coverage` row and
- *   no summary row — never a zero, never an empty histogram. Inside a published area the coverage row says
- *   `designated` at completeness 1.0, because nrcs declares its own mapping complete for those areas at its
- *   own scale. a coverage cell reached only by `notcom` and access-denied polygons gets no row either,
- *   because the polygon exists and the soil mapping behind it does not.
- *
- *   A coverage row licenses only that the authority mapped here. The reading is the class distribution, and
- *   a cell that is 100% `unrated_share` is `designated`-complete and carries no capability reading
- *   whatsoever. That pairing is not a corner case: 17.1% of national components carry no capability rating,
- *   and for the irrigated rating the figure is 85.1%.
- *
- *   the area cross-check uses the authority'S own published figure. `legend.areaacres` is what nrcs states
- *   the survey area covers — 378,800 acres for `IA153`, which is 1,532.9 km² against the 1,532.5 km² an
- *   independent projected measurement of the same shapefile reports. Comparing the spherical ring sum
- *   against it catches a hole read as an exterior ring, whose absence is silent: such a polygon is
- *   well-formed and simply answers "inside" for ground the authority did not map.
+ *   The builder streams cell touches into a temporary SQL table so that memory stays flat as the row
+ *   count grows. Absent data has no row in any table. Land outside a survey area, and coverage cells that
+ *   only `notcom` or access-denied polygons reach, get no coverage row.
  */
 
 import { readFileSize } from "@mailwoman/core/fs/readers"
@@ -73,125 +54,115 @@ import {
 } from "#vocabulary"
 
 /**
- * Schema version of the domain tables.
+ * The schema version of the domain tables.
  *
- * Bumped when a column changes meaning, never for an added column a reader can ignore.
+ * It changes when a column changes meaning.
+ * An added column that readers can ignore does not change it.
  */
 export const SOIL_SCHEMA_VERSION = 1
 
 /**
- * Delineation ids per chunk process.
+ * The number of delineation ids per chunk process.
  *
- * Sized against the ceiling the flood layer measured rather than guessed:
- * single-process runs over that product died after roughly 510,000 and 798,000
- * features as h3's wasm heap fragmented. 100,000 leaves five times that margin,
- * and the cost of a smaller number is one interpreter start per chunk.
- * Iowa's largest survey area holds well under it, so on this build the bound costs one
- * process per area, which is what makes an area's failure nameable.
+ * A single process over a large polygon layer fails after several hundred thousand
+ * features because the h3 wasm heap fragments.
+ * This size stays well below that limit.
  */
 export const DEFAULT_CHUNK_SIZE = 100_000
 
 /**
- * Square metres in an acre — the unit `legend.areaacres` publishes in.
+ * Square metres per acre, the unit of `legend.areaacres`.
  */
 const M2_PER_ACRE = 4046.8564224
 
 /**
- * The relative gap between the ring-area total and the authority's own published
- * acreage that fails the build.
+ * The relative gap between the ring-area total and the published acreage above which the build fails.
  *
- * Two percent.
- * The comparison is a spherical ring area against a figure nrcs itself warns "may
- * differ from that measured using GIS software due to different measuring techniques
- * and rounding practices, or due to the fact that the value has been adjusted so that the
- * sum total of all map units in the legend equals that listed for soil survey area".
- * So an exact test would be brittle.
- *
- * Two percent sits far above the 0.03% `IA153` measures and far below the error a hole-blind
- * read produces, which the zoning survey measured at 4.1% over a whole national layer.
+ * NRCS warns that its acreage can differ from a GIS measurement, so an exact
+ * comparison would fail on valid data.
+ * A hole read as an exterior ring produces a much larger gap than this tolerance.
  */
 const AREA_TOLERANCE = 0.02
 
 /**
- * One survey area, ready to build: where its geometry is, and what its tabular export said.
+ * One survey area ready to build, with its geometry and tabular attributes.
  */
 export interface SurveyAreaInput {
 	attributes: SurveyAreaAttributes
 	/**
-	 * The map-unit polygon shapefile.
+	 * The path of the map-unit polygon shapefile.
 	 */
 	shapefilePath?: string
 	/**
-	 * The survey area's own outline, already read.
+	 * The survey area's outline.
 	 */
 	outline: ParsedGeometry
 	/**
-	 * An in-process feature source.
+	 * An in-process feature source, used by fixtures.
 	 *
-	 * Correct for a fixture and for anything small.
-	 * The batched path builds one of these per chunk, so the two share one implementation.
+	 * The batched path builds one of these per chunk, so both paths share one implementation.
 	 */
 	source?: SoilFeatureSource
 	/**
-	 * The delineation count the shapefile declares, when the caller has already read it.
+	 * The delineation count that the shapefile declares, when the caller has already read it.
 	 */
 	declaredFeatureCount?: number
 }
 
+/**
+ * Options for {@link buildSoilDatabase}.
+ */
 export interface BuildSoilOptions {
 	/**
-	 * The survey areas to build, in the order they should be ingested.
+	 * The survey areas to build, in ingest order.
 	 */
 	areas: ReadonlyArray<SurveyAreaInput>
 	/**
-	 * The region the layer name carries.
-	 * The pilot's is `ia`.
+	 * The region code in the layer name, such as `ia`.
 	 */
 	region: string
 	/**
-	 * Where the sealed artifact lands.
+	 * The path of the sealed artifact.
 	 *
-	 * The build writes beside it and swaps.
+	 * The build writes a temporary file beside it and then swaps it in.
 	 */
 	out: PathBuilderLike
 	/**
-	 * The refresh the build ingested — `layer_manifest.version` and `source_vintage`.
+	 * The survey refresh date, written to `layer_manifest.version` and `source_vintage`.
 	 */
 	sourceVintage: string
 	buildCmd: string
 	buildSHA: string
 	/**
-	 * ISO-8601, supplied by the caller.
-	 *
-	 * Never generated here: the interface says so, and a library-generated timestamp
-	 * makes two builds of the same inputs differ.
+	 * The ISO-8601 creation time, supplied by the caller so that two builds of the same inputs are identical.
 	 */
 	createdAt: string
 	/**
-	 * The resolution the cell index and the reduction are built at — chosen from the measurement.
+	 * The H3 resolution of the cell index and the reduction.
 	 */
 	indexResolution: number
 	/**
-	 * The resolution `layer_coverage` rows are keyed at.
-	 *
-	 * Must be coarser than the index resolution.
+	 * The H3 resolution of the `layer_coverage` rows.
+	 * It must be coarser than the index resolution.
 	 */
 	coverageResolution: number
 	/**
-	 * Delineation ids per chunk process.
-	 *
+	 * The number of delineation ids per chunk process.
 	 * See {@link DEFAULT_CHUNK_SIZE}.
 	 */
 	chunkSize?: number
 	/**
-	 * Run the ingest IN this process rather than spawning chunk children.
+	 * Whether to run the ingest in this process instead of in chunk processes.
 	 *
-	 * Only for fixtures, which carry no shapefile for a child to open.
+	 * Only fixtures use it, because they have no shapefile for a child process to open.
 	 */
 	inProcess?: boolean
 	onProgress?: (message: string) => void
 }
 
+/**
+ * The counts and measurements that {@link buildSoilDatabase} reports.
+ */
 export interface BuildSoilResult {
 	out: string
 	region: string
@@ -204,32 +175,30 @@ export interface BuildSoilResult {
 	wholeCellRows: number
 	partialCellRows: number
 	/**
-	 * `partialCellRows / (wholeCellRows + partialCellRows)` over the stored index rows.
+	 * The value of `partialCellRows / (wholeCellRows + partialCellRows)` over the stored index rows.
 	 *
-	 * The whole side is compacted, so this is not the same number the resolution
-	 * was chosen on and is reported separately.
+	 * Whole cells are compacted, so this differs from the partial share used to choose the resolution.
 	 */
 	storedPartialShare: number
 	capabilityCells: number
 	/**
-	 * Cells the lattice was used for, rather than the whole-cell fast path.
+	 * The number of cells reduced with the sampling lattice instead of the whole-cell fast path.
 	 */
 	sampledCells: number
 	/**
-	 * Cells whose top class covers less than half the cell — the §4.7 number,
-	 * taken off the shipping artifact rather than out of a separate harness.
+	 * The number of cells whose top class covers less than half the cell.
 	 */
 	topClassUnderHalfCells: number
 	topClassUnderHalfShare: number
 	/**
-	 * Cells with no class at all: the survey mapped them and rated nothing there.
+	 * The number of cells that the survey mapped but did not rate.
 	 */
 	classlessCells: number
 	/**
-	 * Cells the index touched that no lattice point landed inside.
+	 * The number of indexed cells that no lattice point landed in.
 	 *
-	 * Dropped rather than stored as an all-zero distribution, and counted because a large
-	 * number would mean the lattice is too coarse for this geometry.
+	 * These cells are dropped.
+	 * A large count means the lattice is too coarse for the geometry.
 	 */
 	unsampledCells: number
 	meanDelineationsPerCell: number
@@ -237,28 +206,27 @@ export interface BuildSoilResult {
 	storedResolutions: number[]
 	coverageCells: number
 	/**
-	 * Coverage cells inside a survey-area outline that no delineation with soil mapping reached.
+	 * The number of coverage cells inside a survey-area outline that no mapped delineation reached.
 	 *
-	 * Reported rather than smoothed over: ssurgo is wall-to-wall inside a published area,
-	 * so a large number means the outline and the delineations disagree.
+	 * SSURGO covers every part of a published area, so a large count means the outline
+	 * and the delineations disagree.
 	 */
 	coverageCellsWithoutMapping: number
 	/**
-	 * The area readings in square kilometres against the authority's own published
-	 * figure, with the witness stated.
+	 * The ring-area totals in square kilometres, compared with the published acreage.
 	 *
-	 * The `known` count of areas that publish an acreage is what a receipt reads the absence against.
+	 * Its `known` count is the number of survey areas that publish an acreage.
 	 */
 	area: AreaAgreementReading
 	sizeBytes: number
 }
 
 /**
- * Build the layer.
+ * Builds the soil layer.
  *
- * @throws {Error} On a delineation the classifier refuses, a streamed count that disagrees
- * with the shapefile's own declaration, an area total that disagrees with the authority's
- * published acreage, or a set of outlines that yields no interior coverage cell at all.
+ * @throws {Error} When the classifier rejects a delineation, when a streamed count
+ * differs from the shapefile's declared count, when the area total differs from the
+ * published acreage, or when the outlines contain no interior coverage cell.
  */
 export async function buildSoilDatabase(options: BuildSoilOptions): Promise<BuildSoilResult> {
 	if (options.coverageResolution >= options.indexResolution) {
@@ -280,18 +248,16 @@ export async function buildSoilDatabase(options: BuildSoilOptions): Promise<Buil
 			await createLayerManifestTable(kdb)
 			await createLayerCoverageTable(kdb)
 
-			// The touch table exists only for this build and is dropped before the artifact is sealed.
-			// No primary key while loading: the resolution queries below read it through
-			// indexes created once the load is done, and a clustered key would sort every
-			// insert against an ingest order nothing controls.
+			// The touch table is dropped before the artifact is sealed.
+			// It has no primary key because a clustered key would sort every insert.
+			// The resolution queries use indexes that are created after the load.
 			kdb.exec(
 				"CREATE TABLE build_cell_touch (h3_cell INTEGER NOT NULL, resolution INTEGER NOT NULL, area_id TEXT NOT NULL, is_full INTEGER NOT NULL)"
 			)
 		},
 		ingest: async (kdb) => {
-			// Attributes first because the ingest needs one thing out of them — which map units have no
-			// soil mapping behind them — and because a delineation whose map unit is missing must fail
-			// while the artifact is still empty rather than after millions of geometry rows are written.
+			// The attributes are written first because the ingest needs the map units that have no soil mapping.
+			// Writing them first also makes a delineation with a missing map unit fail early.
 			writeAttributes(kdb, options.areas)
 
 			if (!options.inProcess) return undefined
@@ -322,11 +288,10 @@ export async function buildSoilDatabase(options: BuildSoilOptions): Promise<Buil
 			writeSurveyAreaRows(kdb, options, coverage.cellsByArea)
 			writeVocabularyRows(kdb, options.areas)
 
-			// the spine KEY names the table A consumer joins on, table-qualified, per the layer interface.
-			// For this layer that is the reduction rather than the containment index: `soil_capability_cell`
-			// holds one row per cell at one resolution, which `soil_map_unit_cell` does not.
-			// It is keyed `(cell, delineation)` and is mixed-resolution by construction.
-			// Therefore, it is a tier the reader walks rather than a key a consumer joins.
+			// The spine key is the column that consumers join on.
+			// It points at `soil_capability_cell`, which has one row per cell at one resolution.
+			// The `soil_map_unit_cell` table is keyed by cell and delineation at mixed
+			// resolutions, so consumers cannot join on it.
 			await writeLayerManifest(
 				kdb,
 				polygonLayerManifest(options, {
@@ -375,7 +340,7 @@ export async function buildSoilDatabase(options: BuildSoilOptions): Promise<Buil
 }
 
 /**
- * What the whole ingest produced, however many processes it took.
+ * The combined result of every ingest chunk.
  */
 interface StreamResult {
 	delineations: number
@@ -388,11 +353,9 @@ interface StreamResult {
 }
 
 /**
- * Add up what the chunks reported.
+ * Sums the results of the ingest chunks.
  *
- * Exported for its own test: the coverage-cell arithmetic is the one part of the batched
- * path a fixture build cannot reach, and getting it wrong produces a well-formed
- * artifact that under-reports how many delineations a cell holds.
+ * It is exported for a unit test because fixture builds do not exercise the batched path.
  */
 export function aggregateChunks(chunks: ReadonlyArray<SoilChunkResult>): StreamResult {
 	const byArea = new Map<string, number>()
@@ -412,8 +375,7 @@ export function aggregateChunks(chunks: ReadonlyArray<SoilChunkResult>): StreamR
 
 		byArea.set(chunk.areaSymbol, (byArea.get(chunk.areaSymbol) ?? 0) + chunk.delineations)
 
-		// A coverage cell straddles chunk boundaries — a range of feature ids is not a region,
-		// and a coverage cell can straddle two survey areas — so the counts ADD rather than replace.
+		// One coverage cell can appear in several chunks and in two survey areas, so the counts are summed.
 		mergeCountsInto(observedByCoverageCell, chunk.observedByCoverageCell)
 		mergeCountsInto(mappedByCoverageCell, chunk.mappedByCoverageCell)
 	}
@@ -422,9 +384,7 @@ export function aggregateChunks(chunks: ReadonlyArray<SoilChunkResult>): StreamR
 }
 
 /**
- * Refuse a build that streamed fewer delineations than a survey area declares.
- *
- * A short read builds a smaller county and reports success, which is the partial result that must throw.
+ * Throws when the streamed delineation count of a survey area differs from its declared count.
  */
 function assertDelineationCounts(areas: ReadonlyArray<SurveyAreaInput>, streamed: StreamResult): void {
 	for (const area of areas) {
@@ -443,13 +403,11 @@ function assertDelineationCounts(areas: ReadonlyArray<SurveyAreaInput>, streamed
 }
 
 /**
- * Refuse an artifact whose rings do not add up to the acreage the authority publishes.
+ * Throws when the ring-area total differs from the published acreage by more than {@link AREA_TOLERANCE}.
  *
- * The message carries the hole-blind total beside the nested one, because the gap between them
- * is the diagnosis: a hole read as an exterior ring answers "inside" for every point in it.
- * A build over survey areas that publish no acreage has no witness.
- *
- * The reading's own type says so, and the `known` count is what a receipt names.
+ * The error message includes the total with holes ignored, because a hole read
+ * as an exterior ring causes the gap.
+ * When no survey area publishes an acreage, the check is skipped.
  */
 function assertAreaAgreement(areas: ReadonlyArray<SurveyAreaInput>, streamed: StreamResult): AreaAgreementReading {
 	let publishedAcres = 0
@@ -480,7 +438,7 @@ function assertAreaAgreement(areas: ReadonlyArray<SurveyAreaInput>, streamed: St
 }
 
 /**
- * Write every survey area's map units, components and vocabulary before any geometry is streamed.
+ * Writes every survey area's map units and components.
  */
 function writeAttributes(database: DatabaseClient<SoilDatabase>, areas: ReadonlyArray<SurveyAreaInput>): void {
 	const insertMapUnit = database.prepare(
@@ -532,7 +490,7 @@ function writeAttributes(database: DatabaseClient<SoilDatabase>, areas: Readonly
 }
 
 /**
- * The map units with no soil mapping behind them, from what was just written.
+ * Returns the keys of the map units that have no soil mapping.
  */
 function noMappingMukeys(areas: ReadonlyArray<SurveyAreaInput>): Set<string> {
 	const mukeys = new Set<string>()
@@ -549,9 +507,8 @@ function noMappingMukeys(areas: ReadonlyArray<SurveyAreaInput>): Set<string> {
 }
 
 /**
- * The in-process ingest — one chunk per survey area, all in this interpreter.
- *
- * Fixtures only.
+ * Ingests one chunk per survey area in this process.
+ * Only fixtures use it.
  */
 async function ingestInProcess(
 	database: DatabaseClient<SoilDatabase>,
@@ -582,10 +539,9 @@ async function ingestInProcess(
 }
 
 /**
- * Run the ingest as a sequence of bounded child processes, one per range of one survey area's FIDs.
+ * Runs the ingest as a sequence of child processes, one per FID range of one survey area.
  *
- * The shared chunk interface — the parent's no-handle rule, and the fail-loud handling of a
- * chunk that dies or prints nothing — lives with `ingestChunkArguments` and `runChunkProcess`.
+ * The shared chunk protocol and its error handling live in `ingestChunkArguments` and `runChunkProcess`.
  */
 async function runBatchedIngest(tmpPath: string, options: BuildSoilOptions): Promise<SoilChunkResult[]> {
 	const chunkSize = options.chunkSize ?? DEFAULT_CHUNK_SIZE
@@ -638,31 +594,16 @@ async function runBatchedIngest(tmpPath: string, options: BuildSoilOptions): Pro
 }
 
 /**
- * The coverage rows: one per interior cell of the built footprint that soil
- * mapping actually reaches, and none outside.
+ * Returns one coverage row per interior cell of the built footprint that soil mapping reaches.
  *
- * The interior test runs once over the union OF every outline built rather than
- * PER survey area, and the difference is most of a state.
- * The test is conservative.
+ * The interior test keeps only cells that lie wholly inside the footprint.
+ * It runs once over the union of all outlines, because running it per survey area
+ * would drop every cell that crosses an internal county border.
  *
- * It keeps only cells lying wholly inside — so applied per area it drops every cell a county border crosses.
+ * Only cells on the outer border of the built set are dropped.
  *
- * Measured on Polk County alone at resolution 6: 20 interior cells against the
- * roughly 42 the county spans by area, so more than half of it would read `unknown`
- * while sitting inside a survey the build had ingested.
- * Run over the union, only the outer border of the built set is dropped, which is the
- * honest edge: beyond it lies ground this artifact does not hold.
- *
- * The conservatism itself stays.
- * A cell wrongly called interior would state that an authority determined a location
- * it never looked at, and a point in the dropped strip reading `unknown` is the
- * truthful answer for ground the built set may or may not reach.
- *
- * `observed_rows` counts the delineations reaching the cell, which is what the interface's column means.
- * A cell reached only by `notcom` and access-denied polygons gets no row.
- *
- * The polygon exists, the soil mapping behind it does not, and the survey's §3.2
- * puts that case with the absences rather than with the coverage.
+ * The `observed_rows` column counts the delineations that reach the cell.
+ * A cell that only `notcom` and access-denied polygons reach gets no row, because it has no soil mapping.
  */
 function buildCoverageCells(
 	options: BuildSoilOptions,
@@ -700,10 +641,8 @@ function buildCoverageCells(
 			continue
 		}
 
-		// Attributed by the cell's centre, so each row is counted for exactly one
-		// survey area even where the cell straddles two.
-		// The count is a per-area receipt rather than part of the coverage claim.
-		// The claim is the row set itself.
+		// The cell's centre decides its survey area, so each cell counts for one area only.
+		// This per-area count is informational and does not affect the coverage rows.
 		const [latitude, longitude] = cellToLatLng(cell)
 		const owner = options.areas.find((input) => geometryContains(input.outline, longitude, latitude))
 
@@ -718,11 +657,10 @@ function buildCoverageCells(
 }
 
 /**
- * One outline's polygons, in the `MultiPolygon` coordinate shape, whichever areal type it arrived as.
+ * Returns an outline's polygons in `MultiPolygon` coordinate form.
  *
- * @throws {TypeError} When the outline is not areal.
- * A survey area whose footprint cannot be read would silently contribute nothing to
- * the union, and the coverage over it would simply be absent.
+ * @throws {TypeError} When the outline is not a polygon or multipolygon.
+ * Skipping it would silently drop that survey area's coverage.
  */
 function outlinePolygons(outline: ParsedGeometry): MultiPolygonRings {
 	const polygons = arealPolygons(outline)
@@ -735,7 +673,7 @@ function outlinePolygons(outline: ParsedGeometry): MultiPolygonRings {
 }
 
 /**
- * Insert one row per survey area.
+ * Inserts one row per survey area.
  */
 function writeSurveyAreaRows(
 	database: DatabaseClient<SoilDatabase>,
@@ -802,10 +740,10 @@ function writeSurveyAreaRows(
 }
 
 /**
- * Insert the authority's declared domains, plus the weighting the shares were produced under.
+ * Inserts the authority's declared domains and the share weighting.
  *
- * The weighting rides in the vocabulary table as well as on every row: the row-level copy is what a
- * consumer reads, and this one carries the sentence that says what it means, which no column can.
+ * Every cell row stores the weighting code.
+ * The vocabulary row adds the description of that code.
  */
 function writeVocabularyRows(database: DatabaseClient<SoilDatabase>, areas: ReadonlyArray<SurveyAreaInput>): void {
 	const insert = database.prepare(

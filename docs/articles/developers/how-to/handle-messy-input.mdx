@@ -10,28 +10,28 @@ verified-with: mailwoman 8.7.0
 **Outcome.** You know which input defects the parser absorbs on its own, which ones the normalize stage
 removes before the model sees them, and when to call that stage yourself.
 
-The short answer for most callers: if you use `geocodeAddress`, preprocessing already ran. If you call
-`classifier.parse` directly, it did not, and this page is about the difference.
+For most callers the answer is short. If you use `geocodeAddress`, preprocessing already ran. If you
+call `classifier.parse` directly, it did not. This page explains the difference.
 
 ## Prerequisites
 
 - The library install from
   [Install and first parse](../get-started/install-and-first-parse.mdx). Add `@mailwoman/normalize` if
   you want to call the stage directly.
-- No data root. Nothing on this page needs a gazetteer.
+- You do not need a data root. Nothing on this page needs a gazetteer.
 
 ## What runs where
 
-Two entry points, two behaviors:
+The two entry points preprocess input differently:
 
 | Entry point                 | Deterministic preprocessing                                                       | Case normalization |
 | --------------------------- | --------------------------------------------------------------------------------- | ------------------ |
 | `geocodeAddress(raw, deps)` | Yes — `normalize()` with abbreviation expansion, `normalizeInput: false` opts out | Yes                |
 | `classifier.parse(raw)`     | No                                                                                | Yes                |
 
-Case normalization runs in both, because it lives inside the classifier rather than in the normalize
-stage. Everything else — Unicode form, punctuation, whitespace, abbreviation expansion — runs only on
-the geocode path.
+Case normalization runs in both, because it is part of the classifier instead of the normalize stage.
+The other steps (Unicode form, punctuation, whitespace, abbreviation expansion) run only on the
+geocode path.
 
 ## 1. Know what the parser absorbs unaided
 
@@ -55,24 +55,23 @@ input   1275 PENNSYLVANIA AVE NW, WASHINGTON, DC 20004
 ```
 
 `on` is the default. `off` is `classifier.parse(raw, { normalizeCase: false })`, and it shows what the
-model does with the raw register.
+model does with the input casing unchanged.
 
-The all-lowercase row is the one to look at. With case normalization off, `pennsylvania ave nw`
-fragments into two `street` spans with a `street_suffix` between them. With it on, the same input
-returns one street. Lowercase is a register real users type. It is what a map search box receives all
-day — so the fix is in the shipped path rather than in your code.
+Look at the all-lowercase row. With case normalization off, `pennsylvania ave nw` splits into two
+`street` spans with a `street_suffix` between them. With it on, the same input returns one street.
+Real users type in lowercase, and a map search box receives lowercase input constantly, so the fix is
+in the shipped path instead of in your code.
 
-Both directions are handled, and the mechanism is one function. `normalizeInputCase`
-(`neural/case-normalize.ts`) detects a pure-ASCII all-caps input and title-cases each run of three or
-more letters while leaving one- and two-letter runs shouting, so `DC` stays `DC` rather than becoming
-`Dc` and landing as a locality. For a pure-ASCII all-lowercase input it does the mirror: title-case the
-long runs, uppercase the short ones, so `dc` becomes `DC`. Both rewrites are length-preserving, and
-mixed-case or non-Latin input passes through byte-identically.
+One function handles both directions. `normalizeInputCase` (`neural/case-normalize.ts`) detects a
+pure-ASCII all-caps input and title-cases each run of three or more letters. It leaves one- and
+two-letter runs in capitals, so `DC` stays `DC` instead of becoming `Dc` and being labeled as a
+locality. For a pure-ASCII all-lowercase input it does the reverse: it title-cases the long runs and
+uppercases the short ones, so `dc` becomes `DC`. Both rewrites preserve length, and mixed-case or
+non-Latin input passes through byte-identical.
 
 ## 2. Read offsets against your string rather than against the tree's
 
-Case normalization has one consequence that surprises people, and it is worth ten seconds now rather
-than an afternoon later:
+Case normalization has one consequence that can surprise you:
 
 ```bash
 node offsets.mjs
@@ -88,15 +87,15 @@ tree.raw: "1275 Pennsylvania Ave NW, Washington, DC 20004"
 ```
 
 The input to that run was all lowercase. `tree.raw` and every `value` come back in the normalized
-casing rather than the casing you sent. Because the rewrite preserves length, `start` and `end` still index
-your original string — so `yourInput.slice(node.start, node.end)` gives you your bytes back whenever you
-need to echo the user's own text.
+casing instead of the casing you sent. Because the rewrite preserves length, `start` and `end` still index
+your original string. `yourInput.slice(node.start, node.end)` returns the user's original text
+whenever you need to echo it.
 
 ## 3. Call the normalize stage when you parse directly
 
-`@mailwoman/normalize` is Stage 1: pure functions, no model, no I/O. Four transforms run every time —
-Unicode NFC, a CJK fold, punctuation, whitespace — and each records itself only when it changed
-something. Two more are opt-in.
+`@mailwoman/normalize` is Stage 1. It consists of pure functions and uses neither a model nor I/O.
+Four transforms run every time (Unicode NFC, a CJK fold, punctuation and whitespace), and each one adds
+a record only when it changed something. Two more transforms are opt-in.
 
 Save this as `normalize-demo.mjs`:
 
@@ -111,10 +110,10 @@ console.log("normalized: ", JSON.stringify(out.normalized))
 console.log("transforms: ", JSON.stringify(out.transforms))
 ```
 
-The `transforms` array is a record of what changed, which makes it worth logging when a parse surprises
-you. Each entry identifies the step and its effect.
+The `transforms` array records what changed, so log it when a parse surprises you. Each entry
+identifies the step and its effect.
 
-What each step covers, measured one input at a time:
+This table shows what each step does, with one input per row:
 
 | Input                                     | Normalized                                | Step                    |
 | ----------------------------------------- | ----------------------------------------- | ----------------------- |
@@ -124,12 +123,12 @@ What each step covers, measured one input at a time:
 | `１２７５ Pennsylvania Ave`               | `1275 Pennsylvania Ave`                   | `normalize_cjk`         |
 | `〒150-0001 東京都`                       | `150-0001 東京都`                         | `normalize_cjk`         |
 
-The CJK step is not only for CJK text: it folds full-width ASCII, which is how a full-width digit run
-arrives from a Japanese form, and it strips the postal mark `〒`, which otherwise tokenizes as an
+The CJK step also affects non-CJK text. It folds full-width ASCII, such as the full-width digits a
+Japanese form produces. It also strips the postal mark `〒`, which would otherwise tokenize as an
 unknown byte sequence in front of the postcode.
 
-Two options are off by default. `expandAbbreviations` with `locale: "und"` applies the locale-unknown
-safe set — the abbreviations that mean one thing everywhere:
+Two options are off by default. `expandAbbreviations` with `locale: "und"` applies the safe set for an
+unknown locale, which contains abbreviations that mean the same thing everywhere:
 
 ```
 "12 Bd Saint-Germain, 75005 Paris" -> "12 Boulevard Saint-Germain, 75005 Paris"  Bd->Boulevard
@@ -137,14 +136,14 @@ safe set — the abbreviations that mean one thing everywhere:
 "1275 Pennsylvania Ave NW, Washington DC" -> unchanged
 ```
 
-`Ave` is left alone because it is unambiguous to the model already; the set targets the forms that are
-not. `caseFold` is the other opt-in, and you want it off. The classifier's own case handling is
-better-targeted, and folding first destroys the case signal that proper nouns and directionals carry.
+The stage leaves `Ave` alone because the model already reads it correctly. The set targets forms the
+model finds ambiguous. `caseFold` is the other opt-in, and you should leave it off. The classifier's
+own case handling is more precise, and folding first removes the case information that proper nouns
+and directionals carry.
 
 ## Verify
 
-Run the stage on a deliberately messy string and parse both forms, so you can see what the stage
-changed and what it did not:
+Run the stage on a deliberately messy string and parse both forms to see what the stage changed:
 
 ```bash
 node normalize-demo.mjs
@@ -158,26 +157,27 @@ raw         region="DC" locality="Washington" street="Pennsylvania Ave  NW" hous
 normalized  region="DC" locality="Washington" street="Pennsylvania Ave NW" house_number="1275" postcode="20004"
 ```
 
-Read the last two lines against each other. Both parses return the same five components — the stage
-did not change what the model found — and the difference is in one value: the raw parse keeps the
-double space in `street`, the normalized parse does not. So preprocessing is not what rescues this
-address; it is what makes the extracted value fit to store. If those values go into a database column
+Compare the last two lines. Both parses return the same five components, so the stage did not change
+what the model found. The only difference is one value: the raw parse keeps the double space in
+`street`, and the normalized parse removes it. For this address, preprocessing does not change the
+parse. It makes the extracted value clean enough to store. If those values go into a database column
 or a match key, run the stage first.
 
 ## Limits
 
-- **Zero-width characters survive.** A `U+200B` in the middle of the string is not whitespace by
-  `collapseWhitespace`'s definition and comes through the stage intact. The parse tolerated one in
-  testing, but a match key built from the result will carry it. Strip zero-width and bidirectional
-  control characters yourself if your source can emit them.
-- **Offsets are only trustworthy against the string you passed to that call.** `normalize` returns an
-  `offsetMap` that maps normalized positions back to raw positions for exactly this reason. If you
-  normalize and then parse, map through it rather than assuming the indexes line up.
-- **Case normalization is pure-ASCII only.** Accented and non-Latin input is left alone, because
-  changing case there can change length (`ß` becomes `SS`) and violate the offset requirement everything
-  above rests on. An all-caps French address does not get the all-caps fix.
-- **Abbreviation expansion is a small safe set at `locale: "und"`.** Passing a real locale widens it.
-  It is not a general address-standardization pass, and it is not USPS Publication 28.
+- **Zero-width characters pass through.** `collapseWhitespace` does not count `U+200B` as whitespace,
+  so a `U+200B` in the middle of the string passes through the stage unchanged. The parse handled one
+  in testing, but a match key built from the result will contain it. Strip zero-width and
+  bidirectional control characters yourself if your source can produce them.
+- **Offsets are reliable only against the string you passed to that call.** For this reason,
+  `normalize` returns an `offsetMap` that maps normalized positions back to raw positions. If you
+  normalize and then parse, map offsets through it instead of assuming the indexes line up.
+- **Case normalization applies to pure-ASCII input only.** Accented and non-Latin input is left
+  alone, because changing its case can change its length (`ß` becomes `SS`) and break the offset
+  guarantee described above. An all-caps French address does not get the all-caps fix.
+- **Abbreviation expansion uses a small safe set at `locale: "und"`.** Passing a real locale widens
+  the set. It is not a general address-standardization pass, and it does not implement USPS
+  Publication 28.
 
 ## Related
 

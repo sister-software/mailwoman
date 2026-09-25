@@ -7,47 +7,48 @@ audience: teams
 
 # Benchmarks
 
-Every number on these pages came out of a script published beside it, run on inputs published beside
-it, writing a result file published beside it. Our numbers ship with the code to re-run them, and the
-code is here rather than described.
+Each number on these pages comes from a script published next to it. The inputs and the result file
+are published there too, so you can re-run the code yourself.
 
-Two panels are published so far. Each is a panel rather than a national accuracy figure, and each says so.
+Two panels are published so far. Each page presents a small panel and states that its result is not
+a national accuracy figure.
 
 ## I want to see what a national register buys
 
-France has one — the Base Adresse Nationale — and the French rooftop tier is built from it. A hundred
-BAN addresses, rendered in two surface forms, graded against BAN's own coordinates: 96 of 100 land
-within a kilometer in the canonical order, 97 of 100 with the postcode moved to the front. Four rows
-lose part of the street name in the parse and two land on a same-named street in a neighboring
-commune.
+France has a national register, the Base Adresse Nationale (BAN), and the French rooftop tier is built
+from it. The panel renders a hundred BAN addresses in two surface forms and grades them against BAN's
+own coordinates. In the canonical order, 96 of 100 land within a kilometer. With the postcode moved to
+the front, 97 of 100 do. Four rows lose part of the street name in the parse, and two land on a
+same-named street in a neighboring commune.
 
-The page states the circularity in the same breath as the score, because grading a BAN-backed tier
-against BAN measures parsing and routing rather than coordinate accuracy.
+The page states next to the score that the test is circular. Grading a BAN-backed tier against BAN
+measures parsing and routing. It does not measure coordinate accuracy.
 
 [France — 100 addresses from the BAN](./france-ban.mdx)
 
 ## I want to see what happens without one
 
-Belgium has no rooftop register, no locale of its own, and no eval tier. Thirty bilingual Belgian
-address lines through the global candidate gazetteer, in three configurations: 24 of 30 land in Belgium
-out of the box, and 30 of 30 once the country is pinned. Six rows go wrong without the pin, five of
-them for one reason — a country prior that filters the right answer out before ranking runs.
+Belgium lacks a rooftop register, a locale of its own, and an eval tier. The panel runs thirty
+bilingual Belgian address lines through the global candidate gazetteer in three configurations. With
+default settings, 24 of 30 land in Belgium. With the country pinned, 30 of 30 do. Without the pin,
+six rows go wrong. Five of them fail because a country prior filters out the right answer before
+ranking runs.
 
 [Belgium — 30 addresses, three configurations](./belgium-panel.mdx)
 
 ## I want to know how to read a geocoding benchmark
 
-Four ways one reads better than it is: a resolve rate that counts fallbacks as successes, an
-evaluation set drawn from the reference data it is graded against, a panel quoted as a population,
-and a timing figure that does not survive a change of host. Each is illustrated with one of our own
-numbers.
+A geocoding benchmark can look better than it is in four ways. A resolve rate can count fallbacks as
+successes. An evaluation set can be drawn from the reference data it is graded against. A small panel
+can be quoted as if it represented a population. A timing figure can change on a different host. The
+page illustrates each case with one of our own numbers.
 
 [Reading our numbers](./reading-our-numbers.mdx)
 
 ## Running them yourself
 
-[`run-all.sh`](/benchmarks/run-all.sh) pulls the two data bundles the panels need — the 1.65 GB global
-gazetteer and the 6.95 GB French rooftop database — and runs both panels in one pass:
+[`run-all.sh`](/benchmarks/run-all.sh) pulls the two data bundles the panels need, the 1.65 GB global
+gazetteer and the 6.95 GB French rooftop database. It then runs both panels in one pass:
 
 ```bash
 npm install mailwoman @mailwoman/neural @mailwoman/neural-weights-en-us \
@@ -61,28 +62,27 @@ curl -fsSLO https://mailwoman.ai/benchmarks/be-panel.json
 bash run-all.sh ./benchmark-data
 ```
 
-The Belgian panel needs only the first bundle; run it alone with `node be-panel.mjs` if 6.95 GB of
-French rooftop data is not what you came for.
+The Belgian panel needs only the first bundle. To skip the 6.95 GB of French rooftop data, run the
+Belgian panel alone with `node be-panel.mjs`.
 
-Your numbers will differ from ours where the versions differ — a newer BAN release moves rows, a newer
-gazetteer moves rankings, and a newer model moves parses. Each result file records a `versions` block
-naming the Mailwoman version, the resolved model artifact and the gazetteer file it ran against, so a
-disagreement can be attributed rather than only observed. The French panel additionally records its
-BAN release, on the committed sample file; the Belgian panel records no data release, because there
-is no Belgian register for it to record one from.
+Your numbers will differ from ours where the versions differ. A newer BAN release moves rows, a newer
+gazetteer changes rankings, and a newer model changes parses. Each result file has a `versions` block
+that records the Mailwoman version, the resolved model artifact and the gazetteer file, so you can
+trace a difference to its version. The French panel also records its BAN release on the committed
+sample file. The Belgian panel records no data release, because Belgium has no register.
 
-Ours ran against Mailwoman 8.7.0, `model.onnx` from `neural-weights-en-us@7.0.0`, and
-`candidate-global-1026.db`. Note that npm currently serves 8.6.0, so an unpinned install is a version
-behind these pages.
+Our runs used Mailwoman 8.7.0, `model.onnx` from `neural-weights-en-us@7.0.0`, and
+`candidate-global-1026.db`. npm currently serves 8.6.0, so an unpinned install is one version behind
+these pages.
 
-Earlier versions of these pages named that model file `model-v401-base-step-060000-int8.onnx`. Same
-bytes — md5 `c968c24ad1a3e59658ff1d92c5720575` either way — but that name only ever existed on the
-machine that trained it, reaching the result files through a development symlink. `model.onnx` is what
-the weights package publishes and therefore what your own re-run will stamp.
+Earlier versions of these pages called that model file `model-v401-base-step-060000-int8.onnx`. The
+bytes are the same, with md5 `c968c24ad1a3e59658ff1d92c5720575` in both cases. That name existed only
+on the training machine and reached the result files through a development symlink. The weights
+package publishes the file as `model.onnx`, so your own re-run will record that name.
 
 ## What is not here
 
-No comparison against another geocoder's output. Benchmarking someone else's service means running it
-under terms we did not write, on a query mix we chose, and publishing an accuracy number for a system
-we do not maintain. [Compare](../compare/index.mdx) sets out what each of the alternatives is built
+These pages do not compare Mailwoman against another geocoder's output. Benchmarking someone else's
+service means running it under terms we did not write, on a query mix we chose, and publishing an
+accuracy number for a system we do not maintain. [Compare](../compare/index.mdx) sets out what each of the alternatives is built
 for and when to choose it, without claiming an accuracy figure on its behalf.

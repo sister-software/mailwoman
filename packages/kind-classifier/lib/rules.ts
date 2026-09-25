@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Rule-based `QueryKind` scorers using normalized input and QueryShape. They rely on structural patterns, not place-name
- *   dictionaries, and return confidence from 0 to 1.
+ *   Rule-based `QueryKind` scorers. Each scorer reads structural patterns in the normalized input and
+ *   its QueryShape and returns a confidence from 0 to 1.
  */
 
 import { NAME_PRONE_US_SUFFIXES, US_STREET_SUFFIX_LOOKUP } from "@mailwoman/codex/us/street-suffix"
@@ -17,17 +17,18 @@ import { isPostcodeFormat } from "@mailwoman/query-shape/known-formats"
 const MAX_LANDMARK_LENGTH = 50
 
 /**
- * Maximum length for a bare postcode with optional country prefix and separators.
+ * Maximum length for a bare postcode, including an optional country prefix and separators.
  */
 const MAX_POSTCODE_ONLY_LENGTH = 16
 
 /**
- * Minimum input fraction occupied by a postcode for `postcode_only`.
+ * Minimum fraction of the input that a postcode must cover for `postcode_only`.
  */
 const MIN_POSTCODE_COVERAGE = 0.7
 
 /**
- * Maximum length for a bare locality, shared with the `bare_toponym` intent rule.
+ * Maximum length for a bare locality.
+ * The `bare_toponym` intent rule uses the same limit.
  */
 export const MAX_LOCALITY_ONLY_LENGTH = 30
 
@@ -47,7 +48,7 @@ const VENUE_PHRASE_MAX_WORDS = 4
 const LONG_VENUE_PHRASE_MAX_WORDS = 6
 
 /**
- * Minimum length for a single-segment alphanumeric postcode.
+ * Length at which single-segment alphanumeric input scores as a likely structured address.
  */
 const ALPHANUMERIC_POSTCODE_MIN_LENGTH = 15
 
@@ -78,19 +79,19 @@ const INTERSECTION_PATTERNS = [
 ]
 
 /**
- * Score highly when QueryShape detects a PO Box format.
+ * Scores input in which QueryShape detected a PO Box format.
  */
 export function scorePoBox(_input: NormalizedInputLite, shape: QueryShapeLike): number {
 	const hit = shape.knownFormats.find((f) => f.format === "po_box")
 
 	if (!hit) return 0
 
-	// Prefer PO Box over structured-address on a tie.
+	// The bonus makes a PO Box win a tie with a structured address.
 	return Math.min(1, hit.confidence + 0.1)
 }
 
 /**
- * Score conventional street-intersection phrasing.
+ * Scores street-intersection phrasing.
  */
 export function scoreIntersection(input: NormalizedInputLite, _shape: QueryShapeLike): number {
 	const text = input.normalized
@@ -103,7 +104,7 @@ export function scoreIntersection(input: NormalizedInputLite, _shape: QueryShape
 }
 
 /**
- * Score inputs that begin with a relative-landmark phrase.
+ * Scores input that begins with a relative-landmark phrase.
  */
 export function scoreLandmark(input: NormalizedInputLite, _shape: QueryShapeLike): number {
 	const lc = input.normalized.toLowerCase().trim()
@@ -116,15 +117,14 @@ export function scoreLandmark(input: NormalizedInputLite, _shape: QueryShapeLike
 }
 
 /**
- * Split on whitespace and commas, removing empty tokens.
- * Shared with `intent-rules.ts`.
+ * Splits text on whitespace and commas and drops empty tokens.
  */
 export function wordsOf(text: string): string[] {
 	return text.split(/[\s,]+/).filter((word) => word.length)
 }
 
 /**
- * Check for an unambiguous USPS street suffix, excluding suffixes also common in place names.
+ * Reports whether a word is a USPS street suffix that rarely appears in place names.
  */
 export function isDisqualifyingStreetSuffix(word: string): boolean {
 	const canonical = US_STREET_SUFFIX_LOOKUP.get(word.trim().toLowerCase())
@@ -133,8 +133,7 @@ export function isDisqualifyingStreetSuffix(word: string): boolean {
 }
 
 /**
- * Remove postcode spans and normalize leftover separators.
- * Preserve other recognized formats.
+ * Removes postcode spans in the final segment and collapses the remaining separators.
  */
 export function withoutPostcodeSpans(text: string, shape: QueryShapeLike): string {
 	const merged = mergedPostcodeSpans(shape)
@@ -143,7 +142,7 @@ export function withoutPostcodeSpans(text: string, shape: QueryShapeLike): strin
 
 	let remainder = text
 
-	// Last-to-first, so an earlier removal cannot move a later span's offsets.
+	// Removing spans from last to first keeps the remaining offsets valid.
 	for (let index = merged.length - 1; index >= 0; index--) {
 		const span = merged[index]!
 
@@ -157,17 +156,19 @@ export function withoutPostcodeSpans(text: string, shape: QueryShapeLike): strin
 }
 
 /**
- * Check for at least one Unicode letter; an `alpha` class alone may represent punctuation-only input.
+ * Reports whether text contains a Unicode letter.
+ *
+ * The `alpha` character class alone can match punctuation-only input.
  */
 export function carriesLetter(text: string): boolean {
 	return /\p{L}/u.test(text)
 }
 
 /**
- * Merge overlapping postcode hits into sorted, disjoint spans.
+ * Merges overlapping postcode hits in the final segment into sorted, disjoint spans.
  */
 function mergedPostcodeSpans(shape: QueryShapeLike): Array<{ start: number; end: number }> {
-	// Restrict removal to the final segment to avoid speculative matches on leading house numbers.
+	// Postcode hits in earlier segments are often house numbers.
 	const tail = shape.segments?.at(-1)?.span
 
 	if (!tail) return []
@@ -204,7 +205,7 @@ function mergedPostcodeSpans(shape: QueryShapeLike): Array<{ start: number; end:
 }
 
 /**
- * Score short capitalized venue names without street suffixes or postcode hits.
+ * Scores short capitalized venue names that have no street suffix or recognized format.
  */
 export function scoreVenueLandmark(input: NormalizedInputLite, shape: QueryShapeLike): number {
 	const text = input.normalized.trim()
@@ -212,34 +213,28 @@ export function scoreVenueLandmark(input: NormalizedInputLite, shape: QueryShape
 
 	if (len === 0 || len > MAX_LANDMARK_LENGTH) return 0
 
-	// Require a capitalized word.
 	if (!/[A-Z]/.test(text)) return 0
 
-	// Reject postcode-like input.
 	if (shape.knownFormats.length) return 0
 
-	// Reject multi-segment address shapes.
 	const segCount = shape.segments?.length ?? 1
 
 	if (segCount > 2) return 0
 
-	// Reject unambiguous street suffixes.
 	const words = wordsOf(text)
 
 	for (const w of words) {
 		if (isDisqualifyingStreetSuffix(w)) return 0
 	}
 
-	// Reject house-number-leading input.
+	// A leading number usually is a house number.
 	if (/^\d+\s/.test(text)) return 0
 
-	// Numbers after the first token are common in venue names.
+	// Venue names often contain a number after the first word.
 	const hasInternalNumber = /\s\d+/.test(text) && !/^\d/.test(text)
 
-	// Check for proper-case words.
 	const allProperCase = words.length > 1 && words.every((w) => /^[A-Z]/.test(w))
 
-	// Score short, capitalized, single-segment phrases.
 	const wordCount = words.length
 
 	if (wordCount >= VENUE_PHRASE_MIN_WORDS && wordCount <= VENUE_PHRASE_MAX_WORDS && segCount === 1) {
@@ -250,7 +245,6 @@ export function scoreVenueLandmark(input: NormalizedInputLite, shape: QueryShape
 		return 0.65
 	}
 
-	// Give longer proper-case phrases a moderate score.
 	if (wordCount <= LONG_VENUE_PHRASE_MAX_WORDS && segCount === 1 && allProperCase) {
 		return 0.75
 	}
@@ -259,7 +253,7 @@ export function scoreVenueLandmark(input: NormalizedInputLite, shape: QueryShape
 }
 
 /**
- * Score short inputs where a postcode format covers most of the text.
+ * Scores short input in which a postcode covers most of the text.
  */
 export function scorePostcodeOnly(input: NormalizedInputLite, shape: QueryShapeLike): number {
 	const len = input.normalized.length
@@ -270,19 +264,16 @@ export function scorePostcodeOnly(input: NormalizedInputLite, shape: QueryShapeL
 	if (!postcodeHit) return 0
 	const hitLen = postcodeHit.span.end - postcodeHit.span.start
 
-	// Require the postcode to cover most of the input.
 	if (hitLen / len < MIN_POSTCODE_COVERAGE) return 0
 
-	// Scale by coverage and format confidence.
 	return Math.min(1, postcodeHit.confidence * (hitLen / len) + 0.1)
 }
 
 /**
- * Score place names with at most an administrative tail and no street material.
- * Ignore postcode spans when assessing the remaining text.
+ * Scores a place name with at most an administrative tail and an optional postcode.
  */
 export function scoreLocalityOnly(input: NormalizedInputLite, shape: QueryShapeLike): number {
-	// Other recognized formats indicate additional structure.
+	// Any recognized format other than a postcode rules out a bare locality.
 	let carriesPostcode = false
 
 	for (const hit of shape.knownFormats) {
@@ -295,7 +286,7 @@ export function scoreLocalityOnly(input: NormalizedInputLite, shape: QueryShapeL
 		return 0
 	}
 
-	// Require postcode hits to be removable from the final segment.
+	// Only postcode hits in the final segment can be removed.
 	const removable = carriesPostcode ? mergedPostcodeSpans(shape) : []
 
 	if (carriesPostcode && !removable.length) return 0
@@ -308,14 +299,14 @@ export function scoreLocalityOnly(input: NormalizedInputLite, shape: QueryShapeL
 	if (!carriesLetter(withoutPostcode)) return 0
 
 	// The remaining text must be alphabetic.
-	// Recompute its class only when removing a postcode changed the input.
+	// Its class is recomputed only after a postcode was removed.
 	if (shape.characterClass !== "alpha") {
 		if (!carriesPostcode) return 0
 
 		if (foldInputClass(classifyTokens(withoutPostcode)) !== "alpha") return 0
 	}
 
-	// Allow at most two segments for a locality and administrative tail.
+	// A locality and an administrative tail use at most two segments.
 	const segCount = shape.segments?.length ?? 1
 
 	if (segCount > 2) return 0
@@ -324,7 +315,7 @@ export function scoreLocalityOnly(input: NormalizedInputLite, shape: QueryShapeL
 }
 
 /**
- * Score multi-component address shapes.
+ * Scores multi-component address shapes.
  */
 export function scoreStructuredAddress(input: NormalizedInputLite, shape: QueryShapeLike): number {
 	const len = input.normalized.length
@@ -332,7 +323,7 @@ export function scoreStructuredAddress(input: NormalizedInputLite, shape: QueryS
 	if (len === 0) return 0
 	const segCount = shape.segments?.length ?? 1
 
-	// Require non-postcode digits so a postcode alone does not make an admin tail structured.
+	// Digits outside the postcode are required, so a locality with a postcode does not score here.
 	if (
 		segCount >= 2 &&
 		shape.characterClass === "alphanumeric" &&
@@ -341,20 +332,18 @@ export function scoreStructuredAddress(input: NormalizedInputLite, shape: QueryS
 		return 0.9
 	}
 
-	// Long, single-segment alphanumeric input gets a moderate score.
 	if (len >= ALPHANUMERIC_POSTCODE_MIN_LENGTH && shape.characterClass === "alphanumeric") return 0.75
 
-	// Multi-segment alphabetic input may be a multi-word locality.
+	// Multi-segment input without digits may still be a multi-word locality, so it scores lower.
 	if (segCount >= 2) return 0.6
 
-	// Short, single-segment alphanumeric input gets a weak score.
 	if (len < ALPHANUMERIC_POSTCODE_MIN_LENGTH && shape.characterClass === "alphanumeric") return 0.4
 
 	return 0
 }
 
 /**
- * Return a moderate fallback score for ambiguous inputs.
+ * Returns a low constant fallback score for ambiguous input.
  */
 export function scoreVague(_input: NormalizedInputLite, _shape: QueryShapeLike): number {
 	return 0.3

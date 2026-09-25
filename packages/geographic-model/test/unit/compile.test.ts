@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The compiler, its derivations, and the two determinism properties the artifact is a interface for:
+ *   The compiler, its derivations, and the two determinism properties the artifact is an interface for:
  *   the same document compiles to the same bytes, and a document whose tables and object keys are
  *   permuted compiles to the same bytes as the unpermuted one.
  *

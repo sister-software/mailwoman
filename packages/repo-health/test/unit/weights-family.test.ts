@@ -2,13 +2,10 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
+ * @file Tests the weights-family check against the current tree and against fixture manifests.
  *
- *   The current tree satisfies the check, and each manifest disagreement the check exists to catch produces a
- *   diagnostic.
- *
- *   The two duplicate-claim branches — one locale in two families, one script in two families — are not exercised
- *   here. They read `FAMILIES` itself rather than the checkout, and `FAMILIES` is a module constant, so reaching them
- *   would mean mutating the declaration under test. The registry's own test asserts the property they guard instead.
+ *   The duplicate-claim branches read the `FAMILIES` constant instead of the checkout, so the registry's own test
+ *   covers them.
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
@@ -18,12 +15,10 @@ import { weightsFamilyCheck } from "@mailwoman/repo-health/checks/weights/family
 import { expect, test } from "vitest"
 
 /**
- * A checkout holding only the `neural-weights-*` manifests this case needs, so a diagnostic
- * names the manifest the case wrote rather than one the repository happens to carry.
+ * Writes a temporary checkout that holds only the given `neural-weights-*` manifests, keyed by locale.
  *
- * The directory is moved out of this scope: the check reads it after this function returns,
- * and the returned context carries no handle a caller could dispose.
- * Each case writes a few hundred bytes under the configured temp root.
+ * The directory is moved out of the disposal scope because the check reads it after this function returns.
+ * Nothing deletes it afterwards.
  */
 async function fixtureContext(manifests: Record<string, unknown>): Promise<RepoContext> {
 	const temporary = (await temporaryDirectory("weights-family-")).move()
@@ -39,8 +34,7 @@ async function fixtureContext(manifests: Record<string, unknown>): Promise<RepoC
 }
 
 /**
- * The two families as the registry declares them, which every case below starts from
- * and then breaks in one place.
+ * These graph manifests match the registry, and each case below changes one field.
  */
 const LATIN_GRAPH = {
 	name: "@mailwoman/neural-weights-en-us",

@@ -3,24 +3,21 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- * Frontmatter validation for the six published-page roles. Guides and tutorials require
- * `verified-with`, references require `source-of-truth`, and landing pages require `audience`.
- * Explanations and evidence pages require only `role`. The legacy seven-role policy is enforced by
- * the structural check, not by this module.
+ * Validates the frontmatter fields that each published-page role requires.
  */
 
 /**
- * Roles accepted by the published documentation.
+ * The page roles that published documentation accepts.
  */
 export const PAGE_ROLES = ["tutorial", "guide", "reference", "explanation", "landing", "evidence"] as const
 
 /**
- * A supported published-page role.
+ * One of the published-page roles in `PAGE_ROLES`.
  */
 export type PageRole = (typeof PAGE_ROLES)[number]
 
 /**
- * Roles whose captured command output must name the version used.
+ * These roles must declare `verified-with`, the version their captured command output came from.
  */
 const VERIFIED_WITH_ROLES = new Set<PageRole>(["tutorial", "guide"])
 
@@ -38,7 +35,10 @@ function isDeclared(frontmatter: Record<string, unknown>, key: string): boolean 
 }
 
 /**
- * Validate one page and return path-prefixed errors, or an empty array when valid.
+ * Validate one page's frontmatter and return its errors, each prefixed with the page path.
+ *
+ * Tutorials and guides require `verified-with`.
+ * References require `source-of-truth`, and landing pages require `audience`.
  */
 export function validatePage(frontmatter: Record<string, unknown>, path: string): string[] {
 	if (!isDeclared(frontmatter, "role")) {

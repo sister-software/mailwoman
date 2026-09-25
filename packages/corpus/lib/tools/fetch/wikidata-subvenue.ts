@@ -3,20 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- * Fetch candidate sub-venue labels and airport-terminal examples from Wikidata Query Service.
- * Class labels require curation. Save the raw CC0 responses and a manifest.
- *
- *   Source : https://query.wikidata.org/sparql (the Wikidata Query Service).
- *   License: CC0. Wikidata's data is public-domain dedicated, so nothing rides on a derived recipe output.
- *            Tier A.
- *
- *   Labels and aliases suggest vocabulary; terminal instances show usage.
- *   Do not use class labels as address designators before curation.
- *
- *   `APIClient` provides pacing, caching, retries, and error mapping.
- *   Wikidata requires a descriptive `User-Agent`; see {@link WIKIDATA_USER_AGENT}.
- *
- *   Run `mailwoman corpus fetch wikidata-subvenue --out-root <path>`.
+ * Fetches CC0 sub-venue concept labels and airport-terminal names from the Wikidata Query Service.
+ * The labels are candidates that need curation before any recipe uses them as designators.
  */
 
 import { APIClient, type ClockLike } from "@mailwoman/core/api"
@@ -32,50 +20,39 @@ import { writeManifest } from "#tools/fetch/download/index"
 const SLUG = "wikidata-subvenue"
 
 /**
- * Public SPARQL endpoint; no credentials required.
+ * The public SPARQL endpoint of the Wikidata Query Service.
  */
 export const WDQS_ENDPOINT = "https://query.wikidata.org/sparql"
 
 /**
- * Required descriptive `User-Agent`, including tool name, URL, and contact address.
+ * The descriptive `User-Agent` that Wikidata requires, with the tool name, URL and contact address.
  */
 export const WIKIDATA_USER_AGENT =
 	"mailwoman/1.0 (https://github.com/sister-software/mailwoman; teffen@sister.software) corpus-subvenue-fetch"
 
-/**
- * Minimum interval between request dispatches.
- */
 const WDQS_MIN_REQUEST_INTERVAL_MS = 1000
 
-/**
- * Per-attempt timeout, longer than WDQS's 60-second query limit so server error responses are preserved.
- */
+// The timeout exceeds the service's 60-second query limit so that its own error response arrives first.
 const WDQS_REQUEST_TIMEOUT_MS = 90_000
 
-/**
- * Maximum attempts, including the first, for transient failures.
- */
 const WDQS_MAX_ATTEMPTS = 3
 
-/**
- * Cache lifetime; concept labels and aliases change infrequently.
- */
 const WDQS_CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000
 
 /**
- * Wikidata concept whose labels are collected for one sub-venue designator.
+ * A Wikidata concept whose labels are collected for one sub-venue designator.
  */
 export interface SubVenueConcept {
 	designatorID: string
 	qid: string
 	/**
-	 * English description used to verify the concept.
+	 * An English description that lets a reviewer confirm the QID.
 	 */
 	gloss: string
 }
 
 /**
- * Wikidata concepts queried for labels.
+ * The concepts whose labels and aliases the fetcher collects.
  */
 export const SUBVENUE_CONCEPTS: readonly SubVenueConcept[] = [
 	{ designatorID: "terminal", qid: "Q849706", gloss: "airport terminal — part of an airport" },
@@ -88,13 +65,10 @@ export const SUBVENUE_CONCEPTS: readonly SubVenueConcept[] = [
 	{ designatorID: "satellite", qid: "Q15990706", gloss: "satellite terminal — detached airport building" },
 ]
 
-/**
- * Wikidata class for airport-terminal instance labels.
- */
 const TERMINAL_CLASS_QID = "Q849706"
 
 /**
- * Build a query for concept labels and aliases in all available languages.
+ * Builds a query for the labels and aliases of the concepts in every language.
  */
 export function buildDesignatorLabelQuery(concepts: readonly SubVenueConcept[] = SUBVENUE_CONCEPTS): string {
 	const values = concepts.map((c) => `wd:${c.qid}`).join(" ")
@@ -109,8 +83,9 @@ export function buildDesignatorLabelQuery(concepts: readonly SubVenueConcept[] =
 }
 
 /**
- * Build a query for airport-terminal instances and subclasses.
- * Consumers filter unrelated results.
+ * Builds a query for the labels of instances of the class and its subclasses.
+ *
+ * The subclass walk returns some unrelated items, which consumers must filter.
  */
 export function buildTerminalInstanceQuery(classQID: string = TERMINAL_CLASS_QID): string {
 	return `SELECT ?item ?lang ?label WHERE {
@@ -121,7 +96,7 @@ export function buildTerminalInstanceQuery(classQID: string = TERMINAL_CLASS_QID
 }
 
 /**
- * Query response shape.
+ * The SPARQL JSON results shape.
  */
 export interface SPARQLResults {
 	results: {
@@ -130,33 +105,37 @@ export interface SPARQLResults {
 }
 
 /**
- * Check the SPARQL response shape before caching.
+ * Reports whether a value has the SPARQL JSON results shape.
  */
 export function isSPARQLResults(value: unknown): value is SPARQLResults {
 	return typeof value === "object" && value !== null && Array.isArray((value as SPARQLResults).results?.bindings)
 }
 
+/**
+ * Options for {@link createWikidataClient}.
+ */
 export interface CreateWikidataClientOptions {
 	/**
-	 * On-disk response-cache directory.
+	 * The directory of the on-disk response cache.
 	 */
 	cacheDir: PathBuilderLike
 	/**
-	 * Clock for pacing and retries; tests may inject a fake.
+	 * The clock for pacing and retries, which tests can replace.
 	 */
 	clock?: ClockLike
 	/**
-	 * Axios overrides; retain the required `User-Agent` when replacing headers.
+	 * Axios overrides.
+	 * Replacement headers must keep the required `User-Agent`.
 	 */
 	axios?: ConstructorParameters<typeof APIClient>[0]["axios"]
 }
 
 /**
- * Paced and cached Wikidata Query Service client.
+ * A paced, cached and retrying Wikidata Query Service client.
  */
 export class WikidataClient extends APIClient {
 	/**
-	 * Run one SPARQL query.
+	 * Runs one SPARQL query.
 	 */
 	public async query(sparql: string): Promise<SPARQLResults> {
 		const url = new URL(WDQS_ENDPOINT)
@@ -169,7 +148,7 @@ export class WikidataClient extends APIClient {
 }
 
 /**
- * Create a Wikidata client with the fetcher's defaults.
+ * Creates a Wikidata client with the fetcher's pacing, retry, cache and header defaults.
  */
 export function createWikidataClient(options: CreateWikidataClientOptions): WikidataClient {
 	return new WikidataClient({
@@ -180,11 +159,11 @@ export function createWikidataClient(options: CreateWikidataClientOptions): Wiki
 		caching: {
 			storage: buildDiskStorage({
 				directory: options.cacheDir,
-				// Validate the cached response body, not the response envelope.
+				// The validator checks the cached response body inside the envelope.
 				validate: (value) => isSPARQLResults(value.data?.data),
 			}),
 			ttl: WDQS_CACHE_TTL_MS,
-			// Use the configured TTL rather than a CDN cache header.
+			// The configured TTL overrides the CDN cache headers.
 			interpretHeader: false,
 		},
 		axios: {
@@ -194,13 +173,16 @@ export function createWikidataClient(options: CreateWikidataClientOptions): Wiki
 			},
 			timeout: WDQS_REQUEST_TIMEOUT_MS,
 			responseType: "json",
-			// Surface malformed or HTML error bodies as parse failures, not typed JSON responses.
+			// Malformed or HTML error bodies throw parse errors instead of passing as JSON.
 			transitional: { silentJSONParsing: false },
 			...options.axios,
 		},
 	})
 }
 
+/**
+ * Options for {@link fetchWikidataSubVenue}.
+ */
 export type FetchWikidataSubVenueOptions = BaseFetchOptions
 
 interface WikidataFileEntry {
@@ -222,7 +204,7 @@ interface WikidataManifest {
 }
 
 /**
- * Write a response and return its checksum and size.
+ * Writes a response as JSON and returns its manifest entry.
  */
 async function writePayload(
 	destDir: PathBuilder,
@@ -244,7 +226,7 @@ async function writePayload(
 }
 
 /**
- * Fetch both queries, save their raw JSON, and write a provenance manifest.
+ * Runs the label and terminal queries, saves their raw JSON, and writes a manifest.
  */
 export async function fetchWikidataSubVenue(
 	options: FetchWikidataSubVenueOptions,

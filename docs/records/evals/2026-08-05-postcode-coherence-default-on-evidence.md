@@ -268,7 +268,7 @@ universe:
 measured.
 
 **So the mechanism can speak for four countries on the production extract set and six on the candidate table.** The
-M5V 3L9 abstention the landing record recorded is the CA row here, and it is a extract-set fact: the FTS set carries zero
+M5V 3L9 abstention the landing record recorded is the CA row here, and it is an extract-set fact: the FTS set carries zero
 CA postcode rows while the candidate table carries 843,739. JP and NZ are unreachable on both — a codex module with no
 postcode data behind it.
 

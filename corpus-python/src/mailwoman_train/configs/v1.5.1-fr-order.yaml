@@ -1,22 +1,10 @@
-# === v1.5.1-fr-order (fr.house_number recovery — weight bump pass) ===============================
-# Same as v1.5.0-fr-order (one variable vs v4.5.0: the synth-fr-order source), with one change:
-# synth-fr-order weight 3.0 → 6.0 (matching the proven synth-german weight).
+# This recipe is v1.5.0-fr-order.yaml with the synth-fr-order weight raised from 3.0 to 6.0, which
+# matches the synth-german weight. The source renders FR addresses with the postcode first. At 3.0
+# the model still read a leading postcode as a house number, because the BAN rows in canonical order
+# outweighed it.
 #
-# why: v1.5.0 re-check (2026-06-13 ~04:30 UTC) showed:
-#   - fr.house_number: 87.4% (check floor 91, target ≥95) — miss
-#   - But: v4.5.0 scored only 54.5% on the same diversified golden → net +32.9pp improvement
-#   - All 93 FR house_number misses are "47110 Sainte-Livrade-sur-Lot, XX..." (postcode-first)
-#     — model still predicts the leading 47110 as house_number (BAN canonical-order prior too strong)
-#   - Recipe output is correct (0 oob spans, 199/199 reversed-order span check passed) — signal rather than quality
-#   - German synth at weight=6.0 fully works. the FR source needs equivalent signal strength
-#   - Bridge retirement held (po_box 90.3), DE order held (native 90.8%), all US/FR floors passed
-#
-# goal / check: same as v1.5.0 — fr.house_number ≥95 (actual-vs-v4.4.0 benchmark) and bridge
-# retirement holds (po_box ≥89.1) and all v4.4.0 floors hold and no new regression vs v4.5.0.
-#
-# corpus: same v0.5.0 + synth-fr-order (already on Modal volume, no re-upload needed).
-# known caveat: UTF-16 span offsets; ~0.06% astral rows skipped (#558 guard).
-# Launch: cd corpus-python && modal run -d -m launch.train_remote --config v1.5.1-fr-order.yaml --resume none
+# Launch it from corpus-python with:
+#   modal run -d -m launch.train_remote --config v1.5.1-fr-order.yaml --resume none
 data:
   corpus_dir: /data/corpus/versioned/v0.5.0/corpus-v0.5.0
   tokenizer_dir: /data/models/tokenizer/v0.6.0-a0
@@ -40,9 +28,6 @@ data:
     deepseek-kryptonite: 3.0
     synth-intersection: 1.0
     synth-german: 6.0
-    # the #560 recovery change: reversed-order (postcode-first) FR. Weight bumped 3.0 → 6.0 (matching
-    # synth-german) after v1.5.0 re-check showed +32.9pp improvement but still missed fr.house_number
-    # floor (87.4% vs 91 floor). Recipe output correct. BAN canonical-order prior dominates at 3.0 weight.
     synth-fr-order: 6.0
     synth-unit: 1.5
     synth-po-box-cedex: 1.5

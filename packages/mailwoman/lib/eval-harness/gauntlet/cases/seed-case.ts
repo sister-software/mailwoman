@@ -3,17 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The per-case interface for the curated regression corpus — the TS interface, the zod schema the jsonl
- *   rows are validated against on load, and the compile-time bridge that keeps the two from drifting.
- *
- *   `SeedCase` is the source OF truth; {@linkcode SeedCaseSchema} is its runtime shadow. The three `satisfies`
- *   bridges at the bottom fail `tsc` if a field reaches one and not the other, or never reaches
- *   {@linkcode SEED_CASE_KEY_ORDER}. That is the Database-interface/`createTable` idiom from agents.md applied
- *   to a file format instead of a table — and, as `SameShape`'s docstring records, the obvious one-line version
- *   of it does not work.
- *
- *   The schema is strict: an unknown key in a jsonl row is an error rather than ignored. A typo'd `expectLon` that
- *   parsed as "coordinate not asserted" is exactly the input-tail defect this file exists to make loud.
+ *   Regression-corpus case type, its zod schema, and compile-time checks that keep the type, the schema and
+ *   {@linkcode SEED_CASE_KEY_ORDER} in agreement.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -23,11 +14,9 @@ import type { AddressKind, CaseStatus, GauntletCaseTable, ResolutionTier } from 
 import type { MutuallyAssignable, SameShape } from "#eval-harness/shape-assertions"
 
 /**
- * One row of the curated regression corpus, as committed under `cases/<cc>/*.jsonl`.
+ * One row of the regression corpus, as committed under `cases/<cc>/*.jsonl`.
  *
- * The field order here is required twice over: {@linkcode SEED_CASE_KEY_ORDER} mirrors it
- * (so every emitted jsonl row keys identically and a diff shows content changes, never a re-shuffle),
- * and the migration that produced the corpus keyed its rows by it.
+ * The field order must match {@linkcode SEED_CASE_KEY_ORDER}.
  */
 export interface SeedCase {
 	id: string
@@ -37,34 +26,33 @@ export interface SeedCase {
 	country: string
 	status: CaseStatus
 	/**
-	 * Optional resolver country prior (ISO-3166 alpha-2), forwarded as geocodeAddress's `defaultCountry`.
+	 * Resolver country prior as an ISO 3166-1 alpha-2 code.
+	 * It is passed to `geocodeAddress` as `defaultCountry`.
 	 */
 	defaultCountry?: string
 	/**
-	 * The CLI locale this row runs under (`en-NZ`); the runner derives the weights overlay
-	 * from its region subtag, mirroring production's locale-hint routing.
+	 * CLI locale for the row, such as `en-NZ`.
 	 *
-	 * A locale hint, never a country constraint.
-	 * `country` above stays the truth's country, which for a locale row can differ
-	 * (`Paris` under `en-US` is an FR row run with the US overlay).
-	 * See #1585's interface.
+	 * The runner picks the weights overlay from its region subtag.
+	 *
+	 * The locale is a hint and does not constrain the country.
+	 * The `country` field keeps the expected country, so `Paris` under `en-US`
+	 * is an FR row run with the US overlay.
 	 */
 	locale?: string
 	/**
-	 * Asserted admin/parse fields, when relevant — `{ country?, region?, locality? }`
-	 * (matched case-insensitively).
+	 * Expected component values such as `country`, `region`, and `locality`.
+	 * The grader compares them case-insensitively.
 	 */
 	expectComponents?: Record<string, string>
 	/**
-	 * OPT-IN multi-script rendering interface, per component
-	 * key — `{ venue: ["Gandantegchinlen Monastery", "Гандантэгчинлэн хийд"] }`.
+	 * Expected renderings per component key for input that holds a span in two or more scripts,
+	 * for example `{ venue: ["Gandantegchinlen Monastery", "Гандантэгчинлэн хийд"] }`.
 	 *
-	 * For a listed key the grader asserts that `scriptRenderings(got)` contains every
-	 * listed rendering (case-folded), and the same key in {@linkcode expectComponents}
-	 * is superseded — see `check-case.ts`'s component check.
-	 * Only for a row whose input genuinely carries a span in two or more scripts.
-	 *
-	 * Every list must be non-empty (the schema refuses an empty one).
+	 * For each listed key, the grader requires `scriptRenderings(got)` to contain
+	 * every rendering after case folding.
+	 * The same key in {@linkcode expectComponents} is then ignored.
+	 * The schema rejects an empty list.
 	 */
 	expectComponentRenderings?: Record<string, string[]>
 	expectPlaceID?: string
@@ -72,45 +60,38 @@ export interface SeedCase {
 	expectLat?: number
 	expectLon?: number
 	/**
-	 * Great-circle tolerance (m).
-	 *
-	 * Defaults at runtime when absent.
+	 * Great-circle tolerance in meters.
+	 * The runner applies a default when it is absent.
 	 */
 	expectToleranceM?: number
 	expectTier?: ResolutionTier
 	/**
-	 * True = the expected outcome is no coordinate: the resolver abstains rather than answering, and any resolved
-	 * coordinate fails the row.
+	 * Whether the resolver must abstain.
+	 * Any resolved coordinate fails the row.
 	 *
-	 * Mutually exclusive with `expectLat`/`expectLon` (the schema refuses the combination).
-	 *
-	 * The #1585 fuzzy-scope interface: a scoped-empty typo correction abstains
-	 * instead of falling through world-fuzzy.
-	 * Such a row is re-pinned to real coordinates once coverage arrives (its note names the artifact).
+	 * The grader rejects a row that also sets `expectLat` or `expectLon`.
 	 */
 	expectAbstain?: boolean
 	addedAt: string
 	bugRef?: string
 	note?: string
 	/**
-	 * Ablation only: hand-pin the graceful-degradation rung this row's deletions should reach,
-	 * per deleted component — `{ country: "region" }`, `{ region: "abstain" }`.
+	 * Hand-pinned ablation rung per deleted component, such as `{ country: "region" }`
+	 * or `{ region: "abstain" }`.
 	 *
 	 * Values are `abstain`, `base`, or a WOF placetype.
-	 * Absent = the ablation layer's derived ladder decides, which is the default
-	 * and should stay the common case.
+	 * When it is absent, the derived ladder decides.
 	 *
-	 * See `schema.ts`'s `ablation_expect` for the two classes (territories, dual-role places) this exists for.
+	 * The `ablation_expect` column in `schema.ts` describes the cases that need it.
 	 */
 	ablationExpect?: Record<string, string>
 }
 
 /**
- * The canonical key order for an emitted jsonl row — {@linkcode SeedCase}'s declaration order.
+ * Key order for emitted JSONL rows, matching {@linkcode SeedCase}'s declaration order.
  *
- * Emission re-keys through this rather than trusting object literal order, because the corpus
- * was authored by hand over ~40 batches and the literals are not consistently ordered.
- * Re-keying makes a `git diff` of the corpus mean something.
+ * Emission re-keys each row through this list because hand-written rows do not share a key order.
+ * A stable order keeps corpus diffs limited to content changes.
  */
 export const SEED_CASE_KEY_ORDER = [
 	"id",
@@ -137,9 +118,10 @@ export const SEED_CASE_KEY_ORDER = [
 ] as const satisfies readonly (keyof SeedCase)[]
 
 /**
- * The runtime shadow of {@linkcode SeedCase}, applied per jsonl row on load.
+ * Runtime schema for {@linkcode SeedCase}, applied to each JSONL row on load.
  *
- * `strictObject`, not `object` — see the file header.
+ * The schema is strict so that a misspelled key such as `expectLon` fails the load
+ * instead of silently dropping an assertion.
  */
 export const SeedCaseSchema = zod.strictObject({
 	id: zod.string().min(1),
@@ -154,8 +136,7 @@ export const SeedCaseSchema = zod.strictObject({
 		.regex(/^[a-z]{2}-[A-Z]{2}$/)
 		.optional(),
 	expectComponents: zod.record(zod.string(), zod.string()).optional(),
-	// Non-empty string arrays only: an empty rendering list would assert nothing while looking
-	// asserted, and a non-array value is the `expectComponents` shape filed under the wrong key.
+	// An empty rendering list would assert nothing, so each list needs at least one non-empty string.
 	expectComponentRenderings: zod.record(zod.string(), zod.array(zod.string().min(1)).min(1)).optional(),
 	expectPlaceID: zod.string().optional(),
 	expectPlaceName: zod.string().optional(),
@@ -171,20 +152,17 @@ export const SeedCaseSchema = zod.strictObject({
 })
 
 /**
- * The compile-time bridge.
+ * Compile-time check that {@linkcode SeedCase} and {@linkcode SeedCaseSchema} have the same fields.
  *
- * If you add a field to {@linkcode SeedCase} and not to {@linkcode SeedCaseSchema}
- * (or the other way round), this line is where `tsc` stops you.
- * `true satisfies never` does not compile.
+ * A mismatch makes the type `never`, and `tsc` rejects this line.
  */
 export const SCHEMA_MATCHES_TYPE = true satisfies SameShape<zod.infer<typeof SeedCaseSchema>, SeedCase>
 
 /**
- * The third leg: {@linkcode SEED_CASE_KEY_ORDER} must list every key rather than merely valid ones.
+ * Compile-time check that {@linkcode SEED_CASE_KEY_ORDER} lists every {@linkcode SeedCase} key.
  *
- * Its `satisfies readonly (keyof SeedCase)[]` checks membership only, so a new field that never
- * reaches the array would be silently dropped from every emitted row and from the content hash.
- * This fails instead.
+ * The `satisfies` clause on the array only checks that each entry is a valid key.
+ * A missing key would drop that field from every emitted row and from the content hash.
  */
 export const KEY_ORDER_IS_EXHAUSTIVE = true satisfies MutuallyAssignable<
 	(typeof SEED_CASE_KEY_ORDER)[number],
@@ -192,10 +170,9 @@ export const KEY_ORDER_IS_EXHAUSTIVE = true satisfies MutuallyAssignable<
 >
 
 /**
- * Re-key a case into {@linkcode SEED_CASE_KEY_ORDER}, dropping absent optionals.
+ * Returns the case with keys in {@linkcode SEED_CASE_KEY_ORDER} and undefined fields removed.
  *
- * Used by the emitter and by the corpus content hash, so the hash is a function of content
- * and not of how a given authoring session happened to order its literals.
+ * The emitter and the corpus content hash both use it, so the hash depends only on content.
  */
 export function canonicalizeSeedCase(c: SeedCase): SeedCase {
 	const out: Partial<SeedCase> = {}
@@ -203,9 +180,7 @@ export function canonicalizeSeedCase(c: SeedCase): SeedCase {
 	for (const key of SEED_CASE_KEY_ORDER) {
 		const value = c[key]
 
-		// `Object.assign` rather than `out[key] = value`: a dynamic key widens the write
-		// target to the intersection of every field type, which nothing satisfies.
-		// The accumulator keeps its own type either way.
+		// TypeScript types a dynamic `out[key]` write as the intersection of all field types, so `Object.assign` is used.
 		if (value !== undefined) {
 			Object.assign(out, { [key]: value })
 		}
@@ -215,11 +190,12 @@ export function canonicalizeSeedCase(c: SeedCase): SeedCase {
 }
 
 /**
- * The `gauntlet_case` row a seed case becomes: the camelCase seed keys onto the snake_case columns,
- * every absent expectation an explicit `null`, the JSON-valued expectations serialized.
+ * Converts a seed case to a `gauntlet_case` table row.
  *
- * The regression-db builder inserts through this, and a board author grades a candidate row
- * through it before committing it, so the two cannot disagree about what a seed field means.
+ * Absent fields become `null`, and object-valued fields become JSON strings.
+ *
+ * The regression database builder and candidate-row grading both use this conversion,
+ * so they read seed fields the same way.
  */
 export function seedCaseToTableRow(c: SeedCase): GauntletCaseTable {
 	return {

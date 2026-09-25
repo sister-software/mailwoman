@@ -3,27 +3,17 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The authoring loader: a directory of JSON files in, one {@link GeographicModelDocument} out.
+ *   Loads a directory of JSON files into one {@link GeographicModelDocument}.
  *
- *   **The filesystem layout is authoring convenience and carries no meaning.** A concept means the
- *   same thing whichever file it was written in, and a file may hold any subset of the tables. What a
- *   directory does carry is one manifest — `model.json`, holding the document's `version` — because a
- *   version assembled from whichever fragment happened to declare one is a version nobody chose.
+ *   The file layout has no meaning. Any file may hold any subset of the tables, and only `model.json`
+ *   may declare the document's `version`.
  *
- *   Two properties make the loader safe to build an artifact from:
+ *   The loader sorts files by path before reading them, so directory enumeration order never affects
+ *   the output. It records the source file of every record and maps each validation issue back to that
+ *   file. A duplicate-identifier issue also reports the file that used the identifier first.
  *
- *   1. **Enumeration order cannot reach the output.** {@link mergeGeographicModelFiles} sorts the
- *      files it was handed before reading any of them, so the merged tables are a function of the file
- *      names and their contents. `readdir` order, and therefore the filesystem, is out of the answer.
- *   2. **Every issue names the file it came from.** The document validator addresses a record by its
- *      position in the merged table (`$.concepts[7].kind`), which is the one thing an author cannot
- *      see. the loader keeps a per-record origin and re-addresses each issue to its source file. A
- *      duplicate identifier names both files — the one that claimed it and the one that claimed it
- *      first — because "already used" is unactionable without the other half.
- *
- *   Validation itself is delegated whole to `./validate.ts`. What the loader checks on its own is only
- *   what the validator cannot see: whether a file parses, whether it is an object, and whether the
- *   keys it uses are tables.
+ *   `./validate.ts` performs document validation. The loader checks only that each file parses, holds
+ *   an object and uses known table keys.
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
@@ -43,14 +33,13 @@ import {
 	ValidationIssueCode,
 } from "#validation/issues"
 /**
- * The manifest every model directory carries: the document's `version`, and nothing else.
+ * The manifest file that every model directory contains.
+ * It holds only the document's `version`.
  */
 export const MODEL_MANIFEST_FILENAME = "model.json"
 
 /**
- * The keys a source file may use.
- *
- * They are the document's tables, minus the manifest's `version`.
+ * The table keys that a non-manifest source file may use.
  */
 const TABLE_FIELDS = ["relations", "concepts", "mappings", "observations", "derivedFacts"] as const
 
@@ -59,54 +48,49 @@ type TableField = (typeof TABLE_FIELDS)[number]
 const MANIFEST_FIELDS = ["version"] as const
 
 /**
- * The document path a record occupies, e.g. `$.concepts[7]` or `$.concepts[7].assertions[1]`.
- *
- * Group 3 is present only for an assertion, which is the one record that nests.
+ * Matches a record's path in the merged document, such as `$.concepts[7]` or `$.concepts[7].assertions[1]`.
+ * Group 3 matches only for a nested assertion.
  */
 const RECORD_PATH_PATTERN = /^\$\.([A-Za-z]+)\[(\d+)\](?:\.assertions\[(\d+)\])?/u
 
 /**
- * Every way loading can fail.
- *
- * The document validator's whole vocabulary, plus the one failure only a loader meets:
- * a file that is not JSON at all.
+ * Load issue codes: every validation code plus `MalformedJSON`.
  */
 export const LoadIssueCode = {
 	...ValidationIssueCode,
 	/**
-	 * A source file could not be parsed as JSON.
-	 *
-	 * Emitted by the loader alone.
-	 * The document validator is handed values, never text.
+	 * A source file is not valid JSON.
 	 */
 	MalformedJSON: "malformed_json",
 } as const
 
+/**
+ * A {@link LoadIssueCode} value.
+ */
 export type LoadIssueCode = (typeof LoadIssueCode)[keyof typeof LoadIssueCode]
 
 /**
- * One violation, addressed to the file an author can open.
+ * One load issue, attributed to its source file.
  */
 export interface SourcedIssue {
 	/**
-	 * The source file, relative to the model directory, with `/` separators on every platform.
+	 * The source file path relative to the model directory, with `/` separators on every platform.
 	 */
 	file: string
 	/**
-	 * The JSONPath-style address into the merged document, kept so a reader can
-	 * find the record in the table the validator saw.
+	 * The JSONPath-style location in the merged document.
 	 */
 	path: string
 	code: LoadIssueCode
 	message: string
 	/**
-	 * For a duplicate identifier: the file that claimed it first.
+	 * For a duplicate identifier, the file that used the identifier first.
 	 */
 	otherFile?: string
 }
 
 /**
- * One authoring file: its path relative to the model directory, and its text.
+ * One source file's path, relative to the model directory, and its text.
  */
 export interface GeographicModelSourceFile {
 	path: string
@@ -114,7 +98,7 @@ export interface GeographicModelSourceFile {
 }
 
 /**
- * Render every issue as one line, `file:path: message [code]`, in the order the loader produced them.
+ * Formats each issue as one `file:path: message [code]` line, in input order.
  */
 export function formatSourcedIssues(issues: readonly SourcedIssue[]): string {
 	return issues
@@ -127,10 +111,8 @@ export function formatSourcedIssues(issues: readonly SourcedIssue[]): string {
 }
 
 /**
- * Thrown when a model directory does not load.
- *
- * Carries every issue, and states them all in its message, so a caller that only
- * prints `error.message` still sees the whole list.
+ * The error thrown when a model directory does not load.
+ * Its message lists every issue.
  */
 export class GeographicModelLoadError extends Error {
 	readonly issues: readonly SourcedIssue[]
@@ -144,14 +126,13 @@ export class GeographicModelLoadError extends Error {
 }
 
 /**
- * Where one record came from, kept so a validation issue addressed to the merged
- * table can be re-addressed to a file.
+ * The source of one record in the merged document.
  */
 interface RecordOrigin {
 	file: string
 	/**
-	 * The table the record was appended to, or `assertions` for one nested inside a concept.
-	 * The namespace its identifier is unique within.
+	 * The record's table, or `assertions` for an assertion nested in a concept.
+	 * Identifiers are unique within a table.
 	 */
 	table: string
 	id?: string
@@ -162,9 +143,8 @@ interface MergeState {
 	tables: Record<TableField, unknown[]>
 	origins: Map<string, RecordOrigin>
 	/**
-	 * Table → identifier → the file that used it first.
-	 *
-	 * The validator reports the second claimant, so this is what names the other half of the pair.
+	 * Maps each table to its identifiers and the file that used each identifier first.
+	 * The validator reports only the second use.
 	 */
 	firstClaims: Map<string, Map<string, string>>
 	version?: string
@@ -175,15 +155,9 @@ function sourced(file: string, issues: readonly ValidationIssue[]): SourcedIssue
 }
 
 /**
- * Parse one source file, or report why it could not be parsed.
+ * Parses one source file, or records the parse failure and returns `undefined`.
  *
- * The house wrapper lives in `@mailwoman/core/objects`, and this package takes
- * no dependency on `@mailwoman/core`.
- * The boundary record keeps world semantics out of core, and a build-time
- * loader is not the reason to reverse it.
- *
- * The parser's own message is also the useful half of the report here,
- * which a wrapper returning a fallback discards.
+ * The loader calls `JSON.parse` directly because the report needs the parser's error message.
  */
 function readSourceJSON(file: GeographicModelSourceFile, issues: SourcedIssue[]): unknown {
 	try {
@@ -234,7 +208,7 @@ function readManifestFile(state: MergeState, file: GeographicModelSourceFile, va
 }
 
 /**
- * Append one file's tables to the merged document, recording where every record came from.
+ * Appends one file's tables to the merged document and records each record's origin.
  */
 function readTableFile(state: MergeState, file: GeographicModelSourceFile, value: unknown): void {
 	const issues: ValidationIssue[] = []
@@ -247,8 +221,7 @@ function readTableFile(state: MergeState, file: GeographicModelSourceFile, value
 		return
 	}
 
-	// `version` is admitted to the field check and then refused on its own, so the report names
-	// where a version belongs instead of only saying the field is unknown here.
+	// The field check allows `version` so that the specific error below can say where it belongs.
 	checkFieldNames(issues, "$", value, [...TABLE_FIELDS, ...MANIFEST_FIELDS])
 
 	if ("version" in value) {
@@ -292,8 +265,7 @@ function readTableFile(state: MergeState, file: GeographicModelSourceFile, value
 }
 
 /**
- * Re-address one validation issue from its position in the merged document to
- * the file the record was authored in.
+ * Attributes one validation issue to the file that contains the record.
  */
 function attribute(state: MergeState, issue: ValidationIssue): SourcedIssue {
 	const match = RECORD_PATH_PATTERN.exec(issue.path)
@@ -301,8 +273,7 @@ function attribute(state: MergeState, issue: ValidationIssue): SourcedIssue {
 	const key = match ? `${match[1]}[${match[2]}]${nested ? `.assertions[${nested}]` : ""}` : undefined
 	const origin = key ? state.origins.get(key) : undefined
 
-	// A document-level issue — `$.version`, or the root itself — is about the manifest,
-	// which is the only file that contributes anything outside a table.
+	// Only the manifest contributes fields outside the tables, so it owns document-level issues.
 	const file = origin?.file ?? MODEL_MANIFEST_FILENAME
 
 	const claimant =
@@ -320,12 +291,11 @@ function attribute(state: MergeState, issue: ValidationIssue): SourcedIssue {
 }
 
 /**
- * Merge authoring files into one document, then validate the merged document.
+ * Merges source files into one document and validates it.
  *
- * The files are sorted by path before anything is read, so any enumeration order
- * produces the same tables in the same order.
- * Throws {@link GeographicModelLoadError} with every issue, each addressed to its source file.
- * Returns nothing partial.
+ * The function sorts files by path first, so the input order never affects the result.
+ *
+ * @throws {GeographicModelLoadError} With every issue, each attributed to its source file.
  */
 export function mergeGeographicModelFiles(files: readonly GeographicModelSourceFile[]): GeographicModelDocument {
 	const state: MergeState = {
@@ -361,7 +331,7 @@ export function mergeGeographicModelFiles(files: readonly GeographicModelSourceF
 		readTableFile(state, file, value)
 	}
 
-	// A record issue cannot be addressed to a file that failed to parse, so the structural pass reports alone.
+	// Validation issues cannot be attributed reliably after a structural failure, so those failures stop here.
 	if (state.issues.length) throw new GeographicModelLoadError(state.issues)
 
 	const result = validateGeographicModelDocument({ version: state.version, ...state.tables })
@@ -374,12 +344,9 @@ export function mergeGeographicModelFiles(files: readonly GeographicModelSourceF
 }
 
 /**
- * Every `*.json` file under `root`, relative to it, in code-point order.
+ * Lists every `*.json` file under `root` as a relative path, sorted by code point at each level.
  *
- * Directory entries are sorted at each level rather than taken as `readdir` returns them,
- * so the list is a property of the tree and not of the filesystem that stored it.
- * Symbolic links are not followed: a model directory is source, and a link out
- * of it is a record whose home nobody can state.
+ * Symbolic links are skipped because only regular files and directories match.
  */
 async function listSourceFiles(root: string, prefix = ""): Promise<string[]> {
 	const entries = await Globerator.from("*", {
@@ -408,9 +375,9 @@ async function listSourceFiles(root: string, prefix = ""): Promise<string[]> {
 }
 
 /**
- * Load a model directory: read every `*.json` file under it, merge them, and validate the merged document.
+ * Reads every `*.json` file under `root`, merges the files and validates the merged document.
  *
- * @throws {@link GeographicModelLoadError} with every issue, each addressed to its source file.
+ * @throws {GeographicModelLoadError} With every issue, each attributed to its source file.
  */
 export async function loadGeographicModelDirectory(root: string): Promise<GeographicModelDocument> {
 	const paths = await listSourceFiles(root)

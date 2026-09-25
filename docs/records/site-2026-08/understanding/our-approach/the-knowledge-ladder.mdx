@@ -11,9 +11,9 @@ tags:
 
 # The knowledge ladder
 
-The staged pipeline is a interface for **decomposition by what each layer knows**. Every stage is the rightful home of a particular kind of information; pushing work to the wrong stage produces fragile systems that try to learn things from data that they could have looked up, or look up things that they could have learned. This article catalogues the layers, what each one knows, and the two layers we don't ship yet but should.
+The staged pipeline divides the work **by what each layer knows**. Each stage owns one kind of information. Pushing work to the wrong stage produces fragile systems that try to learn from data what they could have looked up, or look up what they could have learned. This article catalogues the layers, what each one knows, and the two layers we don't ship yet but should.
 
-Read [The pipeline interface](../../concepts/staged-pipeline-interface.mdx) first for the runtime mechanics. This article is the conceptual companion — _why_ the layers are arranged this way, and where the design has gaps.
+Read [The pipeline interface](../../concepts/staged-pipeline-interface.mdx) first for the runtime mechanics. This article is its conceptual companion. It explains _why_ the layers are arranged this way and where the design has gaps.
 
 ## The full ladder
 
@@ -34,25 +34,25 @@ Each layer adds one kind of knowledge the layers below it cannot easily derive:
 | **5. Reconcile**          | **joint-coherent interpretation across candidates**                                | Yes — default-on; resolver-backed concordance axes wired via `prefetchReconcileLookups` ([#478](https://github.com/sister-software/mailwoman/issues/478) step 2)                                                                  |
 | **6. Resolve**            | world hierarchy (gazetteer)                                                        | Yes (WOF SQLite, unified builder in [#176](https://github.com/sister-software/mailwoman/pull/176))                                                                                                                                |
 
-The two emphasized rows are the layers that v0.4.0's mixed result exposed as missing. They're complementary: the phrase grouper feeds cleaner spans IN to the classifier; the expanded reconciler picks coherent assignments OUT of the classifier's candidates.
+The two emphasized rows are the layers that v0.4.0's mixed result exposed as missing. The two layers complement each other. The phrase grouper feeds cleaner spans into the classifier, and the expanded reconciler picks coherent assignments out of the classifier's candidates.
 
 ## What each layer knows (and doesn't)
 
 ### Normalize — input preprocessing rules
 
-Unicode normalization, locale-aware case folding, whitespace collapsing. Knows nothing about address structure; it cleans bytes so downstream layers see canonical text. The right home for "the input might use NFD-decomposed accents" but not for "this string contains an address."
+This layer performs Unicode normalization, locale-aware case folding, and whitespace collapsing. It knows nothing about address structure. It cleans bytes so downstream layers see canonical text. It is the right place to handle NFD-decomposed accents and the wrong place to decide whether a string contains an address.
 
 ### Locale check — language / script family
 
-Detects whether input is en-US, fr-FR, ja-JP, etc. Two sources today: the rule-based scorer at Stage 2 (script-class + postcode-format hits with a caller-trust fallback), and — since v4.3.0 — the classifier's own locale head, exported as the `locale_logits` ONNX output (~98% held-out accuracy, threshold-conditional). The head was trained from PR3 onward but unreadable at inference until the conventions work needed it; now it drives the Stage 4.2 conventions mask. Knows enough to bias the kind classifier, resolver weighting, and per-system grammar; doesn't know about specific places.
+This layer detects whether input is en-US, fr-FR, ja-JP, and so on. It has two sources today. The first is the rule-based scorer at Stage 2, which uses script-class and postcode-format hits with a caller-trust fallback. The second, since v4.3.0, is the classifier's own locale head, exported as the `locale_logits` ONNX output (~98% held-out accuracy, threshold-conditional). The head was trained from PR3 onward, but inference could not read it until the conventions work needed it. It now drives the Stage 4.2 conventions mask. The layer knows enough to bias the kind classifier, resolver weighting, and per-system grammar, but it knows nothing about specific places.
 
 ### Kind classifier — overall query category
 
-Bare postcode? Single locality? Full structured address? PO box? Landmark? Intersection? This is a coarse taxonomy of input _shape_ — bitter-lesson-safe (purely structural cues, no place-name dictionaries). The kind decision enables the fast-path routing in the coordinator. Knows the high-level question being asked; doesn't know the answer.
+This layer decides whether the input is a bare postcode, a single locality, a full structured address, a PO box, a landmark, or an intersection. It is a coarse taxonomy of input _shape_. It is bitter-lesson-safe because it uses purely structural cues and no place-name dictionaries. The kind decision enables the fast-path routing in the coordinator. The layer knows the high-level question being asked but not the answer.
 
 ### Phrase grouper — coherent input units (boundary discovery) — SHIPPED (rule-based, v0.5.0)
 
-**Rule-based v1 shipped in v0.5.0 Thread E (`@mailwoman/phrase-grouper`); learned 1-2M-param span proposer scoped for v0.5.1. v0.4.0 made the cost of its absence visible — v0.5.0 closes that gap.**
+**The rule-based v1 shipped in v0.5.0 Thread E (`@mailwoman/phrase-grouper`). A learned 1-2M-param span proposer is scoped for v0.5.1. v0.4.0 showed the cost of lacking this layer, and v0.5.0 added it.**
 
 The neural classifier (Stage 3) is asked to learn three things simultaneously via BIO tagging:
 
@@ -60,7 +60,7 @@ The neural classifier (Stage 3) is asked to learn three things simultaneously vi
 2. **where** each span starts (boundary)
 3. **where** each span ends (boundary)
 
-These are coupled in BIO. A wrong boundary makes the type prediction wrong — even when the model "knew" the right type. v0.4.0's bio_slip cases (`", 22220"` for `22220`) are exactly this: type was right, boundary was off.
+BIO couples these three decisions. A wrong boundary makes the type prediction wrong even when the model "knew" the right type. v0.4.0's bio_slip cases (`", 22220"` for `22220`) show this: the type was right and the boundary was off.
 
 A phrase grouper proposes coherent units with confidence _before_ the classifier runs:
 
@@ -75,120 +75,117 @@ proposals: [
 ]
 ```
 
-The classifier then conditions on these proposals. Instead of discovering boundaries from scratch, it answers the simpler question "what type is this proposed span?" — and can override the grouper when it disagrees.
+The classifier then conditions on these proposals. Instead of discovering boundaries from scratch, it answers the simpler question "what type is this proposed span?" It can still override the grouper when it disagrees.
 
-The information at this layer is **purely structural**: token proximity, punctuation, capitalization, hyphenation, format-shape repetition. The same set of cues v1's rule-based parser used. A rule-based phrase grouper would be a port of v1's section/sub-section logic; a learned phrase grouper would be a small (1-2M param) span proposer trained on segment boundaries from corpus.
+The information at this layer is **purely structural**: token proximity, punctuation, capitalization, hyphenation, and format-shape repetition. v1's rule-based parser used the same set of cues. A rule-based phrase grouper would be a port of v1's section/sub-section logic. A learned phrase grouper would be a small (1-2M param) span proposer trained on segment boundaries from the corpus.
 
-This is a separate concern from "is this span a postcode?" The grouper's question is "do these tokens belong together?" — boundary-finding rather than typing.
+The grouper's question ("do these tokens belong together?") is separate from "is this span a postcode?" The grouper finds boundaries and leaves typing to the classifier.
 
 ### Token classify — per-token semantic type
 
-The neural classifier. Per-token BIO tagging today. Knows distributions of tokens to tag classes from training. Does **not** know the world (which countries contain which regions) and cannot easily learn the gazetteer from corpus statistics. Asking it to do so wastes capacity that could be spent on type discrimination.
+This layer is the neural classifier, which does per-token BIO tagging today. It learns from training how tokens distribute over tag classes. It does **not** know the world (which countries contain which regions), and it cannot easily learn the gazetteer from corpus statistics. Asking it to do so wastes capacity that could be spent on type discrimination.
 
-v0.5.0's classifier (Thread C) ships two architectural changes to fit the wider ladder. **Phrase-prior conditioning:** the input layer takes a per-token feature row (BIE markers + `PhraseKind` one-hot from the Stage 2.7 phrase grouper) concatenated onto the token+position embedding and projected back to `hidden_size`. Boundary discovery moves to Stage 2.7 where it belongs; the classifier conditions on those proposals and answers the simpler "what type is this proposed span?" — and is still free to disagree when its evidence outweighs the grouper's confidence. **Top-k inference (`predict_top_k`):** the inference path emits the K most-probable tag sequences with calibrated log-probability scores under the CRF distribution, rather than the single argmax. Stage 5 reconcile consumes these as the classifier's belief over candidate parses. Both are blocked behind config flags (`use_phrase_priors`, `predict_top_k(k=...)`) so the v0.4.0-style argmax-only encoder still works for ablation studies and back-compat.
+v0.5.0's classifier (Thread C) ships two architectural changes to fit the wider ladder. **Phrase-prior conditioning:** the input layer takes a per-token feature row (BIE markers + `PhraseKind` one-hot from the Stage 2.7 phrase grouper), concatenates it onto the token+position embedding, and projects the result back to `hidden_size`. Boundary discovery moves to Stage 2.7. The classifier conditions on those proposals and answers the simpler question "what type is this proposed span?" It can still disagree when its evidence outweighs the grouper's confidence. **Top-k inference (`predict_top_k`):** the inference path emits the K most-probable tag sequences with calibrated log-probability scores under the CRF distribution, rather than the single argmax. Stage 5 reconcile consumes these as the classifier's belief over candidate parses. Both sit behind config flags (`use_phrase_priors`, `predict_top_k(k=...)`) so the v0.4.0-style argmax-only encoder still works for ablation studies and back-compat.
 
 ### Gazetteer anchor — known-surface clues at the input layer
 
 The classifier's input layer already accepts per-token feature rows (the phrase-prior
-channel above, and the postcode anchor). The gazetteer anchor generalizes that channel:
-for each token, consult the gazetteer/codex and attach a **candidate-tag set** — a
-multi-hot `[country]`, `[country, region]`, `[po_box designator]` over the tag classes —
-as input features. The model still decides every tag; the gazetteer
-_informs_, it never _overrides_. Think of it as a caching layer of clues: RAG-shaped
-(retrieve external knowledge, augment the model), but the retrieval lands as a feature
-vector per token rather than text in a context window. The literature calls this
-**shallow fusion** / gazetteer-augmented NER; the [FST prior](../../concepts/fst-priors-as-shallow-fusion.mdx)
-is the same idea applied at the _emission_ layer, and this rung is its input-layer
-sibling.
+channel above, and the postcode anchor). The gazetteer anchor generalizes that channel.
+For each token, it consults the gazetteer/codex and attaches a **candidate-tag set** as input features.
+The set is a multi-hot vector over the tag classes, such as `[country]`, `[country, region]`, or `[po_box designator]`.
+The model still decides every tag, and the gazetteer only informs that decision.
+The design resembles RAG, since it retrieves external knowledge to augment the model,
+but the retrieval lands as a feature vector per token rather than as text in a context window.
+The literature calls this **shallow fusion** or gazetteer-augmented NER.
+The [FST prior](../../concepts/fst-priors-as-shallow-fusion.mdx) applies the same idea at the _emission_ layer,
+and this rung applies it at the input layer.
 
-Three properties make this the right home for "the model should know place names":
+Three properties make this the right place to give the model knowledge of place names:
 
-- **It is not overfitting — the knowledge lives outside the weights.** Add a place to
-  the gazetteer tomorrow and the clue fires with no retrain. The model learns to _use_
-  the clue rather than to memorize the list. (The same instinct aimed at the tokenizer — put
-  every country and city in the token vocabulary — fights the tokenizer's job: it
-  balloons the embedding table, destroys subword generalization on unseen places, and
-  a single vocab id still carries no disambiguating context. Keep the subword
-  tokenizer for generalization; attach membership as a feature for knowledge.)
-- **The multi-hot encoding gives homograph awareness for free.** A token whose
-  candidate set has more than one entry ("Georgia" → `[country, region]`) is _flagged as
-  ambiguous by construction_ — the model learns "context decides here."
-- **The over-reliance risk is handled by training rather than architecture.** The measured
-  failure mode of closed-vocab tags is a model that echoes a cheap correlation (the
-  country retrain that learned "trailing token ⇒ country"). Homograph-contrast
-  training rows — the same surface labeled `country` in one context and `region` in
-  another, clue firing both times — teach the model the clue is a hint rather than a verdict.
-  Measured on the country change: balanced contrast data alone took country from 0 to
-  alive at **perfect precision and zero over-fire**; the anchor's remaining job is
-  long-tail recall (the model can't recognize "Eswatini" from three training
-  sightings, but the gazetteer can). See
-  [closed-vocab fields: model-first](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/closed-vocab-fields-model-first.mdx).
+- **The knowledge lives outside the weights, so the model does not overfit to it.**
+  If you add a place to the gazetteer tomorrow, the clue fires without a retrain.
+  The model learns to _use_ the clue rather than to memorize the list.
+  (Putting every country and city in the token vocabulary would work against the tokenizer's job.
+  It balloons the embedding table and destroys subword generalization on unseen places,
+  and a single vocab id still carries no disambiguating context.
+  Keep the subword tokenizer for generalization, and attach membership as a feature for knowledge.)
+- **The multi-hot encoding gives homograph awareness for free.**
+  A token whose candidate set has more than one entry ("Georgia" → `[country, region]`) is marked as ambiguous by construction,
+  and the model learns that context decides the tag.
+- **Training, rather than architecture, handles the over-reliance risk.**
+  The measured failure mode of closed-vocab tags is a model that echoes a cheap correlation,
+  such as the country retrain that learned "trailing token ⇒ country."
+  Homograph-contrast training rows label the same surface `country` in one context and `region` in another, with the clue firing both times.
+  Those rows teach the model that the clue is a hint rather than a verdict.
+  In the country change, balanced contrast data alone took country from 0 to a working tag at **perfect precision and zero over-fire**.
+  The anchor's remaining job is long-tail recall.
+  The model can't recognize "Eswatini" from three training sightings, but the gazetteer can.
+  See [closed-vocab fields: model-first](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/closed-vocab-fields-model-first.mdx).
 
-The pattern mirrors the resolver: the ancestors table precomputes the
-hierarchy chain so the _resolver_ trades disk for speed; the gazetteer anchor
-precomputes surface-form membership so the _parser_ trades disk for clues. Same
-trade, both stages.
+The resolver uses the same pattern.
+The ancestors table precomputes the hierarchy chain, so the _resolver_ trades disk for speed.
+The gazetteer anchor precomputes surface-form membership, so the _parser_ trades disk for clues.
 
 ### Sequence correct — BIO sequence validity
 
-The CRF with frozen structural transition mask. Forbids orphan-`I-*` sequences (no `I-locality` without preceding `B-locality`), enforces the BIO grammar. Knows the structural rules of BIO; doesn't know about semantic coherence.
+This layer is the CRF with a frozen structural transition mask. It enforces the BIO grammar and forbids orphan-`I-*` sequences, such as an `I-locality` without a preceding `B-locality`. It knows the structural rules of BIO but not semantic coherence.
 
 ### Conventions mask — per-address-system grammar — SHIPPED (increment 1, v4.3.0)
 
-BIO validity is universal; addressing grammar is not. French street types are leading
-particles ("Rue de Rivoli"), so `street_suffix` is not a tag that can occur in a French
-parse — and RUE being an actual USPS Pub-28 suffix variant means a model trained on
-consistent US splits will emit it on French soil (measured: the v4.3.0 check's
-FAIL→corrective→PASS story). The conventions mask is the rung that makes the model's own
-address-system detection essential: detected system → the codex conventions row →
-forbidden tags removed from the Viterbi vocabulary outright, and the system's postcode
-shape arms the snap-only repair pass. Same knowledge-outside-the-weights property as the
-gazetteer anchor: add a `de` or `gb` row to `codex/address-system-conventions.ts` and the
-constraint applies with no retrain. Detection is threshold-conditional (0.8) — the mask never
-fires on a guess, and an undetected system parses exactly as before. The forward path
-([#478](https://github.com/sister-software/mailwoman/issues/478)): per-system _transition_
-masks, and eventually conventions as a second candidate emitter into Stage 5.
+BIO validity is universal, but addressing grammar varies by address system.
+French street types are leading particles ("Rue de Rivoli"), so `street_suffix` cannot occur in a French parse.
+RUE is also an actual USPS Pub-28 suffix variant, so a model trained on consistent US splits emits it on French input.
+The v4.3.0 check measured this: it failed, the corrective change went in, and it passed.
+The conventions mask makes the model's own address-system detection essential.
+The detected system selects a row in the codex conventions,
+that row's forbidden tags are removed from the Viterbi vocabulary outright,
+and the system's postcode shape enables the snap-only repair pass.
+Like the gazetteer anchor, this layer keeps its knowledge outside the weights.
+Adding a `de` or `gb` row to `codex/address-system-conventions.ts` applies the constraint without a retrain.
+Detection is threshold-conditional (0.8), so the mask never fires on a guess, and an undetected system parses exactly as before.
+The planned next steps ([#478](https://github.com/sister-software/mailwoman/issues/478)) are per-system _transition_ masks
+and, eventually, conventions as a second candidate emitter into Stage 5.
 
 ### Reconcile — joint-coherent interpretation — SHIPPED (joint-decoding path, v0.5.0)
 
-**Joint-decoding path shipped in v0.5.0 Thread D (`core/pipeline/reconcile.ts`). The fallback "sort spans by start" path is still wired as the default in `runtime-pipeline.ts` until Thread C-s lands the classifier top-k interface — at which point joint decoding becomes the default.**
+**The joint-decoding path shipped in v0.5.0 Thread D (`core/pipeline/reconcile.ts`). The fallback "sort spans by start" path stays wired as the default in `runtime-pipeline.ts` until Thread C-s lands the classifier top-k interface. Joint decoding becomes the default at that point.**
 
-Stage 5's purpose is cross-component reconciliation: take everything the upstream layers produced and pick the joint interpretation that maximizes coherence.
+Stage 5 reconciles across components. It takes everything the upstream layers produced and picks the joint interpretation that maximizes coherence.
 
 Stage 5's inputs in v0.5.0:
 
 - **Top-k tag interpretations** from the classifier (Thread C-s interface, mocked in tests until it lands)
 - **Top-k span proposals** from the phrase grouper (Thread E `PhraseProposal[]`, shipped)
 - **Top-k resolver candidates** per (span, tag) from Stage 6 (WOF SQLite, shipped)
-- **Concordance constraints** — country / region / locality / dependent_locality assignments are coherent iff their `parent_id` chain agrees in the gazetteer
+- **Concordance constraints**: country / region / locality / dependent_locality assignments are coherent iff their `parent_id` chain agrees in the gazetteer
 
-The implementation is beam search over `(span × tag × resolver)` with incremental concordance. The score per beam is `phrase_conf × classifier_score × resolver_score × concordance_bonus`; per-axis pruning (default `kSpan=3`, `kTag=3`, `kResolver=5`) keeps the search tight. A fully-consistent WOF parent chain contributes `+concordanceWeight` in log-space (default weight 1.0); an explicit contradiction is a hard veto.
+The implementation is beam search over `(span × tag × resolver)` with incremental concordance. The score per beam is `phrase_conf × classifier_score × resolver_score × concordance_bonus`. Per-axis pruning (default `kSpan=3`, `kTag=3`, `kResolver=5`) keeps the search tight. A fully-consistent WOF parent chain contributes `+concordanceWeight` in log-space (default weight 1.0); an explicit contradiction is a hard veto.
 
 Concrete cases this addresses:
 
-- **["NY-NY Steakhouse, Houston, TX"](../../concepts/joint-decoding-walkthrough.mdx)** — classifier tags NY twice as region (it appears twice in the venue brand). Resolver can't find a hierarchy where Houston, TX coexists with NY as a region. Stage 5 reweights the NY tokens toward `venue` (the classifier's second-best interpretation) because that's the only interpretation that's joint-coherent.
-- **"Paris, Texas"** vs **"Paris, France"** — same locality classifier output, different hierarchy resolution. Stage 5's concordance scoring picks the Texas reading because the joint TX-region assignment matches Paris-TX's parent chain.
-- **"Saint Petersburg, FL"** — CRF prevents the orphan-I split; Stage 5 ensures the joint span resolves to St Pete, FL (not the Russian city), because FL is in St-Pete-FL's parent chain and Russia is not.
+- **["NY-NY Steakhouse, Houston, TX"](../../concepts/joint-decoding-walkthrough.mdx)**: the classifier tags NY as a region twice, because it appears twice in the venue brand. The resolver can't find a hierarchy where Houston, TX coexists with NY as a region. Stage 5 reweights the NY tokens toward `venue` (the classifier's second-best interpretation) because that is the only joint-coherent interpretation.
+- **"Paris, Texas"** vs **"Paris, France"**: the classifier's locality output is the same, and the hierarchy resolution differs. Stage 5's concordance scoring picks the Texas reading because the joint TX-region assignment matches Paris-TX's parent chain.
+- **"Saint Petersburg, FL"**: the CRF prevents the orphan-I split. Stage 5 resolves the joint span to St Pete, FL rather than the Russian city, because FL is in St-Pete-FL's parent chain and Russia is not.
 
 Each case is asserted in `core/pipeline/reconcile.test.ts` (grep for `kryptonite catalogue —`).
 
 ### Resolve — world hierarchy
 
-WOF SQLite today (Phase 4.3). Knows place IDs, parent_id chains, placetypes, lat/lon. Returns candidates with scores. Does not know the input syntax; doesn't try.
+This layer is WOF SQLite today (Phase 4.3). It knows place IDs, parent_id chains, placetypes, and lat/lon, and it returns candidates with scores. It knows nothing about input syntax.
 
 ## Why this decomposition is bitter-lesson aligned
 
-Bitter lesson says "general methods that use computation" win in the long run. It does not say "make one model do everything." It says don't hand-engineer domain knowledge in places where the system could learn it from data.
+The bitter lesson says that "general methods that use computation" win in the long run. It does not say to make one model do everything. It says not to hand-engineer domain knowledge where the system could learn it from data.
 
-What we want to learn from data: per-token semantic type distribution (Stage 3), structural transition validity (Stage 4 if learned-CRF replaces structural-mask).
+We want to learn two things from data: the per-token semantic type distribution (Stage 3) and structural transition validity (Stage 4, if a learned CRF replaces the structural mask).
 
-What we should look up: the world's place hierarchy (Stage 6, the gazetteer). Forcing the model to memorize WOF wastes capacity.
+We should look up the world's place hierarchy (Stage 6, the gazetteer). Forcing the model to memorize WOF wastes capacity.
 
-What we should compose: input shape priors (Stages 2, 2.5, 2.7), output coherence (Stage 5). Decomposition + joint decoding > end-to-end-everything when the components have clean interfaces.
+We should compose input shape priors (Stages 2, 2.5, 2.7) and output coherence (Stage 5). When the components have clean interfaces, decomposition with joint decoding beats a single end-to-end model.
 
 ## What v0.4.0 taught us about the missing rungs
 
-The v0.4.0 ablation campaign's failure modes mapped almost directly to two missing information layers. v0.5.0 closed both:
+The v0.4.0 ablation campaign's failure modes mapped almost directly to two missing information layers. v0.5.0 added both:
 
 | v0.4.0 failure                                                              | Missing layer                                                      | v0.5.0 fix                                                                              |
 | --------------------------------------------------------------------------- | ------------------------------------------------------------------ | --------------------------------------------------------------------------------------- |
@@ -197,24 +194,23 @@ The v0.4.0 ablation campaign's failure modes mapped almost directly to two missi
 | **Kryptonite cases** (`NY-NY Steakhouse`, `Paris, Texas`, `St. Petersburg`) | Reconcile (Stage 5) — no joint-coherence check                     | `reconcile.ts` beam search with WOF concordance scoring catches joint-incoherent parses |
 | **92% adversarial transliteration** on country FN                           | Tokenizer (separate concern)                                       | A1 tokenizer halves byte-fallback on multi-script eval (36.7% → 18.2%)                  |
 
-The missing rungs were _information layers_. v0.4.0 wasn't doing the joint reasoning the architecture's interface implied it should. v0.5.0's scaffolding adds those rungs. The remaining work is training stable classifier weights that exercise them end-to-end.
+The missing rungs were _information layers_. v0.4.0 did not do the joint reasoning that the architecture's interface implied. v0.5.0's scaffolding adds those rungs. The remaining work is training stable classifier weights that exercise them end-to-end.
 
 ## What v0.5.0's training divergence is teaching us
 
-Both v0.4.0 and v0.5.0 training runs diverge in the same fingerprint: loss descends through warmup, bottoms out, then climbs catastrophically under sustained peak learning rate. The May 2026 diagnostic work identified that the **CRF-NLL gradient dominates the CE gradient by 8-20×** — the CRF is pulling the model toward a degenerate attractor that CE opposes.
+Both v0.4.0 and v0.5.0 training runs diverge the same way. Loss descends through warmup, bottoms out, then climbs catastrophically under sustained peak learning rate. The May 2026 diagnostic work found that the **CRF-NLL gradient dominates the CE gradient by 8-20×**. The CRF pulls the model toward a degenerate attractor that CE opposes.
 
-Resolution (answered): **CE-only training is the shipped recipe**. Every release since has
-trained CE-only with the CRF applied at inference over the frozen structural mask. The
-"sequence correct" rung moved permanently to "applied at inference only," which is also what
-made the conventions mask (rung 4.2) a zero-retrain layer: decode-time constraints compose
-freely when the decoder owns sequence structure.
+The question is now answered: **CE-only training is the shipped recipe**.
+Every release since has trained CE-only, with the CRF applied at inference over the frozen structural mask.
+The "sequence correct" rung now runs only at inference.
+That change also made the conventions mask (rung 4.2) a zero-retrain layer,
+because decode-time constraints compose freely when the decoder owns sequence structure.
 
-One later episode completes the story: when affix recall hit a hard ceiling at 29M params,
-the capacity hypothesis was probe-laddered and falsified (a 48M model landed at the
-identical equilibrium) — the cause was a 1,000:1 label contradiction in the corpus, fixed
-by relabeling rather than architecture ([#492](https://github.com/sister-software/mailwoman/issues/492) →
-[#511](https://github.com/sister-software/mailwoman/issues/511)). The ladder lesson
-generalizes: when a rung underperforms, audit what the data teaches it before resizing it.
+A later episode followed the same pattern. When affix recall hit a hard ceiling at 29M params,
+a probe ladder tested and falsified the capacity hypothesis: a 48M model landed at the identical equilibrium.
+The cause was a 1,000:1 label contradiction in the corpus, which relabeling fixed without an architecture change
+([#492](https://github.com/sister-software/mailwoman/issues/492) → [#511](https://github.com/sister-software/mailwoman/issues/511)).
+When a rung underperforms, audit what the data teaches it before resizing it.
 
 ## See also
 

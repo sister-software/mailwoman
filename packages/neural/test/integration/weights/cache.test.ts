@@ -3,13 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Cache-fallback resolution for the CLI weights guard (plan 3): when no
- *   `@mailwoman/neural-weights-<locale>` package resolves, `resolveWeights` probes the user-level
- *   npm-prefix cache (`~/.cache/mailwoman/weights` — `cacheRoot.path` injects a test root). Uses the
- *   `pt-BR` locale throughout because no workspace package exists for it, so the package branch
- *   (was `de-DE` until 2026-08-02, when campaign R9 shipped that package and made the locale resolvable — the
- *   negative control has to name a locale nobody has claimed yet)
- *   falls through to the cache on every host, lab or CI.
+ *   Tests the cache fallback that `resolveWeights` uses when no weights package resolves. The tests
+ *   use `pt-BR` because no workspace package exists for that locale, so resolution reaches the cache
+ *   on every host.
  */
 
 import { cacheRootPath } from "@mailwoman/core/data-root"
@@ -26,14 +22,12 @@ const PACKAGE_NAME = "@mailwoman/neural-weights-pt-br"
 let cacheRoot: TemporaryDirectory
 
 /**
- * This file spells the layout OUT BY hand on purpose (2026-08-06 triage).
+ * Writes a cached weights package with the given files.
  *
- * Everywhere else in the tree that literal moved to {@linkcode weightsCachePackageDir},
- * because a layout re-typed in eight places is a layout that can drift.
- * Here it is the oracle: this is the file that pins what `resolveWeights`' cache rung finds,
- * and a fixture built with the implementation's own helper cannot fail when the implementation is wrong.
+ * The path is spelled out by hand instead of using {@linkcode weightsCachePackageDir}.
+ * A fixture built with the implementation's helper cannot catch a wrong layout.
  *
- * The helper is tied back to the independent spelling by the last test in this file instead.
+ * The last test in this file checks the helper against this spelling.
  */
 async function layoutCachedPackage(files: string[]): Promise<PathBuilder> {
 	const packageDir = cacheRoot.path("node_modules", PACKAGE_NAME)
@@ -69,7 +63,7 @@ describe("resolveWeights cache fallback", () => {
 		expect(resolved.modelPath).toBe(packageDir("model.onnx").toString())
 		expect(resolved.tokenizerPath).toBe(packageDir("tokenizer.model").toString())
 		expect(resolved.modelCardPath).toBe(packageDir("model-card.json").toString())
-		// The PCB1 anchor binary resolves exactly as it would from an installed package (#718 soft-feed).
+		// The PCB1 anchor binary resolves as it would from an installed package.
 		expect(resolved.anchorLookupPath).toEqual({ path: packageDir("postcode-br.bin").toString(), binary: true })
 	})
 
@@ -94,7 +88,7 @@ describe("resolveWeights cache fallback", () => {
 			await writeLocalTextFile("stub", packageDir(file))
 		}
 
-		// The workspace package exists and resolves, but the explicit cacheRoot.path names the candidate.
+		// The en-US workspace package resolves too, but an explicit cache root takes precedence.
 		const resolved = await resolveWeights({ locale: "en-US", cacheRoot: cacheRoot.path })
 
 		expect(resolved.source).toBe("cache:@mailwoman/neural-weights-en-us")
@@ -164,10 +158,7 @@ describe("resolveWeights cache fallback", () => {
 		expect(weightsPackageName()).toBe("@mailwoman/neural-weights-en-us")
 	})
 
-	// The tie between the exported layout helper and the layout this file pins independently.
-	// Every other call site in the tree now builds the directory with `weightsCachePackageDir`;
-	// if it and the hand-spelled path ever disagree, they disagree here and not in
-	// an eval run that silently graded the wrong bundle.
+	// This test checks the exported layout helper against the hand-spelled path above.
 	test("weightsCachePackageDir builds exactly the layout this file pins", () => {
 		expect(weightsCachePackageDir(cacheRoot.path, LOCALE).toString()).toBe(
 			cacheRoot.path("node_modules", PACKAGE_NAME).toString()

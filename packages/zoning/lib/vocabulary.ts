@@ -5,42 +5,17 @@ import { stringifyJSON } from "@mailwoman/core/json"
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The Department's own words, as data: the product identity, the national generic-type domain it declares,
- *   the plan vocabulary, the exclusions it states, and the licence posture that holds this layer at
- *   `build-local`.
- *
- *   the local code is carried verbatim and the crosswalk sits beside IT, never instead OF IT. The Department
- *   publishes a national generic type over 30 local authorities' own zone codes and says in its own item
- *   description that the scheme "complements (rather than replaces) the existing statutory zoning used for
- *   each individual plan". So a row carries both: `local_code` as the authority spelled it, and
- *   `crosswalk_code` under {@link GZT_CROSSWALK_SCHEME} with its own provenance. Measured over the whole
- *   national set, 52 of 795 (authority, local code) pairs take more than one generic type, so the mapping is
- *   not a function of the pair and no code table can carry it — which is why `zoning_crosswalk_edge` ships
- *   empty and the mapping lives per polygon.
- *
- *   the declared domain is closed and the source already breaks IT. The service declares 54 generic types in
- *   its own coded-value domain. the data uses 55. `N/A` appears on 4 rows and in no domain. So the ingest
- *   carries the declared domain plus the values observed in the data and records the difference
- *   (`zoning_vocabulary.declared`) rather than coercing an undeclared value to a neighbour or to null —
- *   either of which turns "the source changed" into "there is nothing here".
- *
- *   `CURRENT_PLAN = 1` does not mean "IN force today". All 85,330 rows in the Current layer carry it, and the
- *   domain defines it as `Current plan` against `Expired and not replaced` and `Expired and replaced`. It
- *   means "not superseded". The plan's own `PLAN_FROM`/`PLAN_TO` window is a separate fact a consumer must
- *   read, and it is carried on `zoning_plan` for that reason.
- *
- *   `LA_CODE` is dirty and is never repaired. Fingal's code is `Fl` with a lowercase second letter against
- *   `CL`, `CO`, `DU` and the rest. It is the publisher's key. repairing it would put this package's spelling
- *   into an artifact that claims to repeat the authority's.
+ *   The Department's product identity, declared vocabularies, stated limits and licence status for the zoning layer.
  */
 
 /**
- * The layer name written into `layer_manifest.name`, and the only name the reader accepts.
+ * The layer name written to `layer_manifest.name`.
+ * The reader accepts no other name.
  */
 export const GZT_LAYER_NAME = "zoning-ie-gzt"
 
 /**
- * The ArcGIS Online item the product is published as, written into `layer_manifest.source`.
+ * The ArcGIS Online item id of the product, written to `layer_manifest.source`.
  */
 export const GZT_ITEM_ID = "5c2608ebedd84013aaeff8bf669e8596"
 
@@ -50,7 +25,7 @@ export const GZT_ITEM_ID = "5c2608ebedd84013aaeff8bf669e8596"
 export const GZT_ORG_ID = "NzlPQPKn5QF9v2US"
 
 /**
- * The feature layer the product is served from.
+ * The feature layer that serves the product.
  */
 export const GZT_SERVICE_URL = `https://services.arcgis.com/${GZT_ORG_ID}/arcgis/rest/services/GZT_Current_Plan/FeatureServer/0`
 
@@ -60,45 +35,34 @@ export const GZT_SERVICE_URL = `https://services.arcgis.com/${GZT_ORG_ID}/arcgis
 export const GZT_ITEM_URL = `https://www.arcgis.com/home/item.html?id=${GZT_ITEM_ID}`
 
 /**
- * The Department's own zoning map viewer, which is where its coverage detail is published,
- * and the reason `zoning_mapped_extent` ships empty (see {@link GZT_COVERAGE_LIMIT}).
+ * The Department's zoning map viewer, which is the only place it publishes coverage detail.
+ *
+ * This is why `zoning_mapped_extent` is empty.
+ * See {@link GZT_COVERAGE_LIMIT}.
  */
 export const GZT_MAP_VIEWER_URL = "https://www.myplan.ie/zoning-map-viewer/"
 
 /**
- * The attribution the item's `accessInformation` field carries, plus the licensor its `licenseInfo` names.
+ * The item's `accessInformation` credit line followed by the Tailte Éireann clause from its `licenseInfo`.
  *
- * Both halves ride, because the second is the half that holds this layer at `build-local`.
- * The Department's own credit line is the first.
- *
- * The all-rights-reserved clause naming Tailte Éireann as an upstream licensor is the second,
- * and a re-user who saw only the first would not know it exists.
+ * The second part must stay, because the all-rights-reserved clause for the upstream
+ * licensor is what keeps this layer at the `build-local` tier.
  */
 export const GZT_ATTRIBUTION =
 	"Department of Housing, Local Government, and Heritage (Generalised Zoning Types, MyPlan.ie). " +
 	"© Copyright 2011 DHLGH. All rights reserved. © Tailte Éireann. All rights reserved. Licence No. 2023/OSi_NMA_073"
 
 /**
- * The licence expression written into `layer_manifest.license`.
+ * The licence expression written to `layer_manifest.license`.
  *
- * `noassertion` is the honest value and IT is not A placeholder.
- * Three published statements disagree about the grant — see {@link GZT_LICENSE_CONTRADICTION} —
- * and the manifest column is a string a consumer reads as the terms it may rely on.
- *
- * Writing `CC-BY-4.0` there while an all-rights-reserved clause names a licensor
- * would be this program asserting a grant nobody made.
- * Leaving the column empty would read as a layer whose licence nobody looked at.
- *
- * `noassertion` is spdx's own token for a determination that has not been made, which is exactly the state.
- *
- * {@linkcode assertTierMatchesLicense} refuses a `shipped` build while this holds,
- * so moving the tier takes a deliberate edit at a guard that names the reason
- * rather than a manifest field nobody notices.
+ * `NOASSERTION` is the SPDX token for an undetermined licence.
+ * Three published statements disagree about the grant, as {@link GZT_LICENSE_CONTRADICTION}
+ * explains. {@link assertTierMatchesLicense} rejects a `shipped` build while this value is set.
  */
 export const GZT_LICENSE = "NOASSERTION"
 
 /**
- * Why the licence is unresolved, in one sentence a receipt can carry.
+ * The explanation of why the licence is unresolved, for build reports.
  */
 export const GZT_LICENSE_CONTRADICTION =
 	"Three published statements disagree about the grant: data.gov.ie declares CC-BY-4.0; the ArcGIS item's licenseInfo " +
@@ -109,78 +73,68 @@ export const GZT_LICENSE_CONTRADICTION =
 	"A shipped layer needs one grant it can quote, so this one is built locally and never redistributed."
 
 /**
- * The projected CRS the service and its bulk export both declare.
+ * The projected CRS that the service and its bulk export declare: IRENET95 /
+ * Irish Transverse Mercator, in metres.
  *
- * The source is not in WGS84.
- * It is IRENET95 / Irish Transverse Mercator, in metres — so the ingest reprojects
- * and refuses a source declaring anything else.
+ * The ingest reprojects from it and rejects a source that declares any other code.
  */
 export const GZT_SOURCE_EPSG = 2157
 
 /**
- * The extent the Department declares for the item, in CRS84 order `[minLon, minLat, maxLon, maxLat]` —
- * the Republic of Ireland, excluding Northern Ireland.
+ * The extent that the Department declares for the item, as `[minLon, minLat, maxLon, maxLat]` in CRS84.
  *
- * The ingest asserts every reprojected vertex lands inside this.
- * That is the check a projection check cannot make: the bulk export carries Irish Transverse Mercator
- * metres under a legacy `crs` member, so a reader that took the numbers as degrees would place
- * Ireland's zoning at latitude 735,435 — a well-formed set of coordinates in the Southern Ocean.
+ * The ingest checks that every reprojected vertex falls inside it.
+ * This catches a read that treats the source's projected metres as degrees,
+ * which the projection check misses.
  */
 export const GZT_DECLARED_BBOX: readonly [number, number, number, number] = [
 	-10.54553193079905, 51.452765583177616, -5.947766999109422, 54.47387941831219,
 ]
 
 /**
- * The feature count the service's own `returnCountOnly` and the bulk export agree on.
+ * The feature count reported by both the service's `returnCountOnly` query and the bulk export.
  */
 export const GZT_DECLARED_FEATURE_COUNT = 85_330
 
 /**
- * The crosswalk scheme the Department publishes — its national Generalised Zoning Type code.
+ * The crosswalk scheme of the Department's national Generalised Zoning Type codes.
  */
 export const GZT_CROSSWALK_SCHEME = "IE-GZT"
 
 /**
- * The Department's second, coarser national code (`SZO`, Standardised Zoning Objective).
+ * The scheme of the Department's coarser national code, `SZO` (Standardised Zoning Objective).
  *
- * Carried as published rather than derived.
- * Measured over the whole national set it is a strict coarsening of the generic type —
- * no generic type maps to more than one `SZO` — but the roll-up is the Department's to change,
- * so re-deriving it here would replace a published fact with this package's arithmetic.
+ * The roll-up is stored as published, because the Department may change it.
  */
 export const GZT_ROLLUP_SCHEME = "IE-SZO"
 
 /**
- * The vocabulary scheme one local authority's own zone codes belong to.
+ * Returns the vocabulary scheme for one local authority's zone codes.
  *
- * PER authority rather than one pooled local scheme, because the codes collide:
- * `Residential` means one thing in Cork County Council's plan and another in Westmeath's,
- * and pooling them would assert an equivalence no authority stated.
+ * Each authority has its own scheme because the same code, such as `Residential`,
+ * can mean different things in different plans.
  */
 export function localSchemeFor(authorityCode: string): string {
 	return `IE-LOCAL:${authorityCode}`
 }
 
 /**
- * One value a publisher declares, with the label it publishes for it.
+ * One value that a publisher declares, with its published label.
  */
 export interface ZoningTermDefinition {
 	/**
-	 * The code as the publisher spells it, never re-spelled, never normalized.
+	 * The code exactly as the publisher spells it.
 	 */
 	code: string
 	label: string
 }
 
 /**
- * The Department's declared generic-type domain, verbatim from the service's
- * own `GZT Code` coded-value domain.
+ * The Department's declared generic-type domain, copied verbatim from the
+ * service's `GZT Code` coded-value domain.
  *
- * Fifty-four declared against fifty-five used.
- * `N/A` appears on 4 of 85,330 rows and in no domain, so the ingest records it as
- * observed-but-undeclared rather than adding it here.
- *
- * A declaration this package wrote would be indistinguishable from one the Department made.
+ * The data also uses `N/A`, which no domain declares.
+ * The ingest records it as observed but undeclared, so it is left out of this list.
  */
 export const GZT_DECLARED_CODES: ReadonlyArray<ZoningTermDefinition> = [
 	{ code: "P1", label: "Agriculture" },
@@ -247,9 +201,7 @@ export const GZT_DECLARED_CODE_SET: ReadonlySet<string> = new Set(GZT_DECLARED_C
 /**
  * The `PLAN_LEVEL` domain, verbatim.
  *
- * `SDZ` is declared and used on no row of the current edition.
- * It is carried anyway, because the domain is the Department's statement of what
- * a plan may be rather than a census of what it is.
+ * It includes `SDZ` because the Department declares it, although no current row uses it.
  */
 export const GZT_PLAN_LEVELS: ReadonlyArray<ZoningTermDefinition> = [
 	{ code: "DP", label: "Development Plan" },
@@ -263,7 +215,10 @@ export const GZT_PLAN_LEVELS: ReadonlyArray<ZoningTermDefinition> = [
 export const GZT_PLAN_LEVEL_SET: ReadonlySet<string> = new Set(GZT_PLAN_LEVELS.map((term) => term.code))
 
 /**
- * The `CURRENT_PLAN` domain, verbatim, keyed by the integer the source publishes.
+ * The `CURRENT_PLAN` domain, verbatim, keyed by the published integer.
+ *
+ * The value 1 means the plan is not superseded.
+ * Its validity window is stored separately on `zoning_plan`.
  */
 export const GZT_CURRENT_PLAN_VALUES: ReadonlyMap<number, string> = new Map([
 	[1, "Current plan"],
@@ -272,55 +227,41 @@ export const GZT_CURRENT_PLAN_VALUES: ReadonlyMap<number, string> = new Map([
 ])
 
 /**
- * A zoning row has exactly one provenance grade: `authoritative` or `inferred`.
- * The two grades never merge.
+ * The provenance grade of a zoning row.
  *
- * `authoritative` is a planning or legislative authority for the land, or a government
- * body republishing that authority's own adopted records.
- * The Department republishing 30 local authorities' plans is one.
+ * An `authoritative` row comes from a planning authority for the land, or from a
+ * government body that republishes that authority's adopted records.
+ * An `inferred` row comes from observation, community mapping or research,
+ * such as OpenStreetMap `landuse` or Overture `base/land_use`.
  *
- * `inferred` is an observation, a community mapping project or a research assembly: OpenStreetMap
- * `landuse` is inferred, and so is Overture's `base/land_use`, because it is the same data.
+ * A caller must never present an `inferred` row as the authority's designation.
  *
- * Neither grade is better.
- * They answer different questions.
- *
- * The rule is that a query answered from an `inferred` row may never be presented
- * as the authority's designation.
- *
- * Measured in one jurisdiction on one day: of 1,652 OpenStreetMap `landuse=residential`
- * polygons in South Dublin, only 558 — 33.8% — sit on land the authority zones residential,
- * and the two largest wrong answers are agriculture (23.4%) and conservation (19.6%).
- *
- * Each artifact contains rows of one provenance grade only.
- * An observed land-use layer is a different database with a different `layer_manifest.name`,
- * because `layer_coverage.observed_rows` means "rows this layer actually holds in the cell"
- * and coverage measured over community-mapped polygons cannot describe an authority's zones.
- *
- * The licences make the separation compulsory anyway: OpenStreetMap and Overture `base`
- * are ODbL, and merging an ODbL row into this table would relicense it.
+ * Each artifact holds rows of one grade only.
+ * An inferred land-use layer needs its own database, and ODbL sources such as
+ * OpenStreetMap cannot be merged into this table without relicensing it.
  */
 export const ProvenanceGrade = {
 	Authoritative: "authoritative",
 	Inferred: "inferred",
 } as const
 
+/**
+ * One of the {@link ProvenanceGrade} values.
+ */
 export type ProvenanceGrade = (typeof ProvenanceGrade)[keyof typeof ProvenanceGrade]
 
 /**
- * The grade every row of this artifact carries.
- *
- * A government department republishing local authorities' adopted plans.
+ * The grade of every row in this artifact, because the Department republishes
+ * local authorities' adopted plans.
  */
 export const GZT_PROVENANCE_GRADE: ProvenanceGrade = ProvenanceGrade.Authoritative
 
 /**
- * What the product does not state, in the Department's own words.
+ * The Department's own statements of what the product does not state.
  *
- * Carried onto every reading, because a caller holding a zone code cannot see from it
- * that the answer is a generalised republication rather than the plan itself.
- * The first of these is the sharpest constraint the Department states, and it is why this
- * layer reports what a plan assigns at a location and never what may be built there.
+ * Every reading includes them, because a zone code alone does not show that it
+ * comes from a generalised republication.
+ * The layer reports what a plan assigns at a location, never what may be built there.
  */
 export const GZT_PRODUCT_LIMITS: ReadonlyArray<string> = [
 	"Myplan.ie data are not published here as legal definitions of the current actuality with regard to Local Authority zoning or their geographic extents.",
@@ -331,19 +272,11 @@ export const GZT_PRODUCT_LIMITS: ReadonlyArray<string> = [
 ]
 
 /**
- * Why this layer's coverage licenses no negative claim, in one sentence a receipt can carry.
+ * The explanation of why this layer's coverage supports no negative claim, for readings and reports.
  *
- * The meaning-OF-zero rule under its hardest case.
- * For flood zones the Environment Agency states England-wide coverage and the Planning Practice
- * Guidance defines Zone 1 as the absence, so a location with no polygon is a designation.
- *
- * No such definition exists anywhere for zoning.
- * A location with no zoning polygon is one of at least four different things: outside any
- * adopted plan area, inside a plan area on land the plan does not zone, in a jurisdiction
- * that has never adopted zoning, or in a jurisdiction whose records nobody has published.
- *
- * And the source can state one of them positively — `ZONE_ORIG = "UNZ - Unzoned"` appears on 4 of
- * 85,330 rows — which is what proves the other absences are absences rather than designations.
+ * Zoning has no official definition for land without a polygon.
+ * Such land may be outside every plan area, unzoned by a plan, in a jurisdiction
+ * without zoning, or in one whose records are unpublished.
  */
 export const GZT_COVERAGE_LIMIT =
 	"The Department publishes zoning polygons and states its coverage detail only inside a map viewer, so this layer " +
@@ -352,20 +285,19 @@ export const GZT_COVERAGE_LIMIT =
 	"not yet published — and the product cannot tell those apart, so nothing here supports a claim that no restriction applies."
 
 /**
- * The one local code that states unzoned land positively, and the reason the coverage rule
- * above is grounded rather than asserted: where the authority means "unzoned" it says
- * so on a row, so every other absence is a row that is not there.
+ * The local code with which an authority explicitly marks land as unzoned.
+ *
+ * Only a row with this code means unzoned.
+ * A location with no row says nothing about zoning.
  */
 export const GZT_UNZONED_LOCAL_CODE = "UNZ - Unzoned"
 
 /**
- * Refuse a manifest that would ship this layer under a licence nobody resolved.
+ * Throws when a build requests the `shipped` tier while the licence is unresolved.
  *
- * A guard rather than A convention, for the same reason the coverage basis is one: the tier is
- * a field, and a field can be edited without anyone reading the three statements that disagree.
- * Moving this layer to `shipped` has to go through a line that names what is unresolved.
+ * The check makes a tier change require an edit here, next to the explanation of the licence conflict.
  *
- * @throws {Error} When a `shipped` tier is asked for while the licence is unresolved.
+ * @throws {Error} When `tier` is `shipped` and `license` is {@link GZT_LICENSE}.
  */
 export function assertTierMatchesLicense(tier: string, license: string): void {
 	if (tier !== "shipped") return

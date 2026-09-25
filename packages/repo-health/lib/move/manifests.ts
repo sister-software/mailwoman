@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  * @file The half of a move that is not a module specifier: the `exports`/`imports` targets naming the file.
  *
- *   A subpath key is a interface and stays exactly as written — `@mailwoman/geocode-oracle/sdk/census-client` keeps
+ *   A subpath key is an interface and stays exactly as written — `@mailwoman/geocode-oracle/sdk/census-client` keeps
  *   its name whatever the file underneath is called. The target does not: it is a path, and a path that has moved
  *   names nothing. Rewriting the target and leaving the key is what lets a file move without a consumer noticing.
  *

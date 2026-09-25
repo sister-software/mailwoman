@@ -1,10 +1,11 @@
 # @mailwoman/normalize
 
-**Stage 1 of the Mailwoman runtime pipeline** — deterministic input preprocessing.
+This package is **stage 1 of the Mailwoman runtime pipeline**, which performs
+deterministic input preprocessing.
 
-Pure-function text normalization that prepares free-text address strings for
-downstream parsing stages. Every transform produces an essential `offsetMap`
-so downstream stages can map normalized-string spans back to raw-string character
+It provides pure-function text normalization that prepares free-text address
+strings for later parsing stages. Every transform produces an `offsetMap`, so
+later stages can map normalized-string spans back to raw-string character
 offsets.
 
 ```ts
@@ -22,7 +23,7 @@ const result = normalize("123  Main   St.")
 | **NFC normalization**         | Unicode canonical composition                                               |
 | **Punctuation normalization** | Smart-quotes → straight, fullwidth → ASCII, elision/apostrophe preservation |
 | **Whitespace collapse**       | Multi-space, tab, non-breaking → single space; leading/trailing trim        |
-| **Abbreviation expansion**    | Opt-in — `"St."` → `"Street"`, `"Ave"` → `"Avenue"` etc.                    |
+| **Abbreviation expansion**    | Opt-in: `"St."` → `"Street"`, `"Ave"` → `"Avenue"` etc.                     |
 | **CJK normalization**         | CJK-specific whitespace and punctuation handling                            |
 
 ## API
@@ -49,17 +50,17 @@ identityMap(length: number): OffsetMap
 raw string → normalize → query-shape → locale-hint → kind-classifier → phrase-grouper → ...
 ```
 
-Stage 1 in the [Staged Pipeline Interface](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/STAGES.mdx). No runtime dependencies.
+This package is stage 1 in the [Staged Pipeline Interface](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/STAGES.mdx). It has no runtime dependencies.
 
 ## Design
 
-- **Pure functions, no side effects, no ML.** The output is byte-for-byte deterministic for the same input.
-- **`offsetMap` is critical.** Every transform tracks how normalized positions map back to raw input positions. This is essential for the parser to report spans in the original string.
-- **Configurable via `NormalizeOpts`:** toggle `expandAbbreviations`, `normalizeCase`, and `cjk`.
+- **Pure functions without side effects or ML.** The output is byte-for-byte deterministic for the same input.
+- **Every transform maintains `offsetMap`.** Each transform tracks how normalized positions map back to raw input positions. The parser needs this map to report spans in the original string.
+- **Configurable through `NormalizeOpts`:** toggle `expandAbbreviations`, `normalizeCase`, and `cjk`.
 
 ## Related
 
-- [`@mailwoman/query-shape`](../query-shape) — Stage 1.5, structural priors that consume the normalized output
+- [`@mailwoman/query-shape`](../query-shape): stage 1.5, the structural priors that consume the normalized output.
 - [Staged Pipeline Interface](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/STAGES.mdx)
 - [Tokenization concepts](https://mailwoman.ai/articles/concepts/tokenization/)
 

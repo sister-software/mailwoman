@@ -32,9 +32,9 @@ import { fstFreshnessWarning } from "#fst/freshness"
 import { wofDatabasePath } from "#paths"
 
 /**
- * Replaces `dest` with a symlink to `src` atomically, via a temporary link renamed over it.
+ * Replaces `dest` with a symlink to `src` by renaming a temporary link over it.
  *
- * Unlink-then-symlink would leave a moment with no file that concurrent test workers can hit.
+ * The rename is atomic, so concurrent test workers never see `dest` missing.
  */
 export async function linkForce(src: PathBuilderLike, dest: PathBuilderLike): Promise<void> {
 	const tmp = `${dest.toString()}.tmp-link`
@@ -48,7 +48,7 @@ export async function linkForce(src: PathBuilderLike, dest: PathBuilderLike): Pr
 }
 
 /**
- * Removes a leftover file or symlink at `dest` so the runtime falls back to the base (en-us) weights for it.
+ * Removes a file or symlink at `dest` so that the runtime falls back to the base en-us weights.
  */
 export async function removeIfPresent(dest: PathBuilder): Promise<void> {
 	try {
@@ -63,10 +63,10 @@ export async function removeIfPresent(dest: PathBuilder): Promise<void> {
 }
 
 /**
- * Symlinks one optional soft-feed artifact into an overlay, and returns whether the source existed.
+ * Symlinks one optional soft-feed artifact into an overlay and returns whether the source existed.
  *
- * A missing source prints `consequenceIfMissing` rather than throwing,
- * because the runtime has a fallback for every such artifact.
+ * A missing source prints `consequenceIfMissing` and does not throw, because the
+ * runtime has a fallback for every soft-feed artifact.
  */
 export async function linkSoftFeedSibling(
 	source: PathBuilderLike,
@@ -87,79 +87,89 @@ export async function linkSoftFeedSibling(
 }
 
 /**
- * The calibrated pair-index emission bias (δ) that every shipped pair-index artifact is built with.
+ * The pair-index emission bias (δ) used by every shipped pair-index artifact.
  */
 export const PAIR_INDEX_DELTA = 10
 
 /**
- * The decoder transition-entry bonus (β), passed only by locales where it was measured (not en-nz).
+ * The decoder transition-entry bonus (β).
+ * Only locales that were calibrated with it pass it.
  */
 export const PAIR_INDEX_TRANSITION_BETA = 5
 
 /**
- * The whole-edge parent-bias magnitude, passed only by the locales where it was measured (us, gb, nz, fr).
+ * The whole-edge parent-bias magnitude.
+ * Only locales that were calibrated with it pass it.
  *
- * An unmeasured locale omits the flag rather than inheriting this value.
+ * Other locales omit the flag and do not inherit this value.
  */
 export const PAIR_INDEX_PARENT_DELTA = 5
 
 /**
- * Describes one locale's pair-index build; omitted `sources`, `inputs`
- * and `extraArgs` default to the shared WOF admin database.
+ * Describes one locale's pair-index build.
+ *
+ * When `sources`, `inputs` and `extraArgs` are omitted, the build reads the shared WOF admin database.
  */
 export interface PairIndexOverlay {
 	/**
-	 * The weights workspace directory name, such as `neural-weights-de-de`, from
-	 * which the overlay locale is derived.
+	 * The weights workspace directory name, such as `neural-weights-de-de`.
+	 * The overlay locale is derived from it.
 	 */
 	packageDir: string
 
 	/**
-	 * The ISO country code passed to `--country` and used in `pair-index-<country>.bin`,
-	 * which differs from the locale tag (`en-in` builds `pair-index-in.bin`).
+	 * The ISO country code passed to `--country` and used in `pair-index-<country>.bin`.
+	 *
+	 * It can differ from the locale tag.
+	 * For example, `en-in` builds `pair-index-in.bin`.
 	 */
 	country: string
 
 	/**
-	 * The child bias magnitude; with `transitionBeta` and `parentDelta` it is written
-	 * into the PIX1 header, where the freshness check compares it.
+	 * The child bias magnitude.
 	 *
-	 * An absent `transitionBeta` or `parentDelta` omits its flag, so the header
-	 * carries no such key, which differs from zero.
+	 * The build writes `delta`, `transitionBeta` and `parentDelta` into the PIX1 header,
+	 * and the freshness check compares them.
+	 * An absent `transitionBeta` or `parentDelta` leaves its key out of the header,
+	 * and the freshness check treats an absent key as distinct from zero.
 	 */
 	delta: number
 	transitionBeta?: number
 	parentDelta?: number
 
 	/**
-	 * The source files whose MD5s the build records, in the order `gazetteer pair-index`
-	 * records them; defaults to the WOF admin database.
+	 * The source files whose MD5s the build records, in the order that `gazetteer pair-index` records them.
+	 * The default is the WOF admin database.
 	 *
-	 * The freshness check compares every one against the header, and an empty list
-	 * means freshness rests on the magnitudes alone.
+	 * The freshness check compares each MD5 with the header.
+	 * An empty list makes the check compare the magnitudes only.
 	 */
 	sources?: PathBuilder[]
 
 	/**
-	 * Files that must exist before a build is attempted, defaulting to `sources`;
-	 * a missing one warns and skips the build.
+	 * Files that must exist before a build runs.
+	 *
+	 * The default is `sources`.
+	 * A missing file prints a warning and skips the build.
 	 */
 	inputs?: PathBuilder[]
 
 	/**
-	 * Extra CLI arguments naming the build's sources, defaulting to `--borough-db <admin db>`.
+	 * Extra CLI arguments that pass the build's sources.
+	 * The default is `--borough-db <admin db>`.
 	 */
 	extraArgs?: PathBuilderLike[]
 
 	/**
-	 * The byte size below which an existing artifact is rebuilt, because a wrong-source
-	 * build can carry matching header magnitudes.
+	 * The byte size below which an existing artifact is rebuilt.
+	 *
+	 * A build from the wrong source can have matching header magnitudes but a smaller size.
 	 */
 	minimumPlausibleBytes?: number
 }
 
 /**
- * The header fields a dev-weights freshness guard reads.
+ * The pair-index header fields that the dev-weights freshness check reads.
  */
 export interface PairIndexHeaderFields {
 	delta: number
@@ -168,7 +178,8 @@ export interface PairIndexHeaderFields {
 	schemaVersion: number
 
 	/**
-	 * One MD5 per source the build read, in recorded order; empty when the header recorded none.
+	 * One MD5 per source the build read, in recorded order.
+	 * The list is empty when the header has none.
 	 */
 	sourceMD5s: string[]
 }
@@ -176,7 +187,7 @@ export interface PairIndexHeaderFields {
 /**
  * Reads the calibration fields from a PIX1 pair-index header without depending on `@mailwoman/neural`.
  *
- * Its parse must follow the reader in `neural/lib/pair/index/resolver.ts`.
+ * The parse must match the reader in `neural/lib/pair/index/resolver.ts`.
  */
 export async function peekPairIndexHeaderFields(path: PathBuilderLike): Promise<PairIndexHeaderFields> {
 	const bytes = await readLocalBuffer(path)
@@ -209,10 +220,11 @@ export async function peekPairIndexHeaderFields(path: PathBuilderLike): Promise<
 
 const MD5_HEX_LENGTH = 32
 
-// repo-health-ignore export-name-affix -- the sidecar cache is the added behaviour; `md5File` hashes every time.
+// repo-health-ignore export-name-affix -- This variant caches the hash in a sidecar, and `md5File` hashes every time.
 /**
- * Returns the MD5 of `path`, cached in an `md5sum`-format `<path>.md5` sidecar that
- * is trusted only when it is at least as new as the source.
+ * Returns the MD5 of `path`, cached in a `<path>.md5` sidecar in `md5sum` format.
+ *
+ * The sidecar is used only when it is at least as new as the source.
  */
 export async function md5FileWithSidecar(path: PathBuilderLike): Promise<string> {
 	const sidecarPath = `${path.toString()}.md5`
@@ -237,9 +249,10 @@ export async function md5FileWithSidecar(path: PathBuilderLike): Promise<string>
 }
 
 /**
- * The calibrated magnitudes a linker bakes into its pair-index artifact.
+ * The calibrated magnitudes that a linker writes into its pair-index artifact.
  *
- * An `undefined` magnitude means the header has no such key, which is distinct from zero.
+ * An `undefined` magnitude means the header has no such key.
+ * It is distinct from zero.
  */
 export interface PairIndexCalibration {
 	delta: number
@@ -248,10 +261,10 @@ export interface PairIndexCalibration {
 }
 
 /**
- * Explains why a pair-index header is stale against `expected` (schema or any magnitude),
- * or returns `undefined` when it matches.
+ * Returns why a pair-index header's schema or magnitudes differ from `expected`,
+ * or `undefined` when they match.
  *
- * Source-MD5 freshness is left to the caller, which alone knows its sources.
+ * The caller checks the source MD5s because only the caller knows its sources.
  */
 export function pairIndexStaleReason(
 	header: PairIndexHeaderFields,
@@ -277,16 +290,16 @@ export function pairIndexStaleReason(
 /**
  * The PIX1 schema version the pair-index reader requires.
  *
- * It must equal `KNOWN_SCHEMA_VERSION` in `neural/lib/pair/index/resolver.ts`,
- * or dev checkouts rebuild-loop or serve an artifact the runtime refuses.
+ * It must equal `KNOWN_SCHEMA_VERSION` in `neural/lib/pair/index/resolver.ts`.
+ * A mismatch makes dev checkouts rebuild on every run or link an artifact that the runtime refuses.
  */
 export const REQUIRED_PAIR_INDEX_SCHEMA = 3
 
 /**
- * Warns when a linked per-locale FST was built from a different admin database than the one now on disk.
+ * Warns when a linked per-locale FST was built from a different admin database than the one on disk.
  *
- * It warns rather than rebuilds because an FST rebuild goes to a staging directory
- * and is swapped in only after measurement.
+ * It does not rebuild, because an FST rebuild writes to a staging directory
+ * and an operator swaps it in after evaluation.
  */
 export async function warnIfFSTStale(fstPath: PathBuilder, locale: string): Promise<void> {
 	const warning = await fstFreshnessWarning({
@@ -301,7 +314,7 @@ export async function warnIfFSTStale(fstPath: PathBuilder, locale: string): Prom
 }
 
 /**
- * Symlinks the per-locale FST gazetteer (`fst-<locale>.bin`) into an overlay
+ * Symlinks the per-locale FST gazetteer `fst-<locale>.bin` into an overlay
  * and checks it with {@link warnIfFSTStale}.
  */
 export async function linkLocaleFST(destDir: PathBuilder, locale: string): Promise<void> {
@@ -319,8 +332,8 @@ export async function linkLocaleFST(destDir: PathBuilder, locale: string): Promi
 }
 
 /**
- * Symlinks the prebuilt street-morphology FST into an overlay, so the street-context
- * check need not rebuild it from dictionaries.
+ * Symlinks the prebuilt street-morphology FST into an overlay so that the
+ * street-context check does not rebuild it from dictionaries.
  */
 export async function linkStreetMorphologyFST(destDir: PathBuilder): Promise<void> {
 	await linkSoftFeedSibling(
@@ -408,11 +421,11 @@ async function pairIndexIsFresh(
 }
 
 /**
- * Builds `pair-index-<country>.bin` into the overlay, unless the existing artifact
+ * Builds `pair-index-<country>.bin` into the overlay unless the existing artifact
  * already matches these magnitudes and sources.
  *
- * A failed build exits the process, while a missing CLI or input only warns,
- * because a fresh clone has neither.
+ * A failed build exits the process.
+ * A missing CLI or input only prints a warning, because a fresh clone has neither.
  */
 export async function buildPairIndexOverlay(overlay: PairIndexOverlay): Promise<void> {
 	const { packageDir, country, delta, transitionBeta, parentDelta } = overlay
@@ -487,7 +500,7 @@ export async function buildPairIndexOverlay(overlay: PairIndexOverlay): Promise<
 }
 
 /**
- * A soft-feed artifact an overlay links, with the warning printed when its source is missing.
+ * A soft-feed artifact that an overlay links, with the warning to print when its source is missing.
  */
 export interface SoftFeedLink {
 	source: string
@@ -496,8 +509,9 @@ export interface SoftFeedLink {
 }
 
 /**
- * Returns the committed soft-feed lexicons as links, with filenames read from
- * `release.config.json` so dev links match what the release ships.
+ * Returns the committed soft-feed lexicons as links.
+ *
+ * The filenames come from `release.config.json` so that dev links match the release.
  */
 export async function committedSoftFeedLinks(): Promise<{
 	anchor: SoftFeedLink
@@ -536,56 +550,63 @@ export interface WeightsCard {
 }
 
 /**
- * Declares what one locale's dev overlay contains, as a manifest for {@link materializeDevOverlay}.
- * Each named step runs in the order the fields are listed.
+ * Declares what one locale's dev overlay contains. {@link materializeDevOverlay}
+ * runs the steps in the order the fields are listed.
  */
 export interface DevOverlayManifest {
 	/**
-	 * The overlay's lowercase locale tag, which names the `neural-weights-<locale>` workspace.
+	 * The overlay's lowercase locale tag.
+	 * The workspace is `neural-weights-<locale>`.
 	 *
-	 * Artifacts land in the data root's `weights/<locale>/` overlay, never in the
-	 * tracked package, because the binaries are not in git.
+	 * Artifacts go to the data root's `weights/<locale>/` overlay because the binaries are kept out of git.
 	 */
 	locale: string
 
 	/**
-	 * How the overlay gets its model files; when omitted, `link-weights-overlay.ts`
-	 * in release-kit handles them.
+	 * How the overlay gets its model files.
 	 *
-	 * `link` symlinks `model.onnx` and `tokenizer.model` from the `release.config.json` weights
-	 * paths under the data root, which `$MAILWOMAN_DEV_MODEL` and `$MAILWOMAN_DEV_TOKENIZER` override.
-	 * With `digestCard`, the linked default bytes must match that workspace card's
-	 * `files_md5`, and an override skips the check.
+	 * When it is omitted, `link-weights-overlay.ts` in release-kit handles them.
 	 *
-	 * `inherit` removes any local pair, because the package declares `mailwoman.baseWeights`
-	 * and a stale local file would shadow the base.
-	 * `char` links the `charWeights.<family>` model, character vocabulary
+	 * The `link` kind symlinks `model.onnx` and `tokenizer.model` from the
+	 * `release.config.json` weights paths under the data root.
+	 * The `$MAILWOMAN_DEV_MODEL` and `$MAILWOMAN_DEV_TOKENIZER` variables override those paths.
+	 *
+	 * With `digestCard`, the linked default files must match the `files_md5` of that workspace's card.
+	 * An override skips this check.
+	 *
+	 * The `inherit` kind removes any local pair, because the package declares
+	 * `mailwoman.baseWeights` and a local file would shadow the base.
+	 *
+	 * The `char` kind links the `charWeights.<family>` model, character vocabulary
 	 * and model card, and removes any tokenizer.
 	 */
 	model?: { kind: "link"; digestCard?: string } | { kind: "inherit" } | { kind: "char"; family: string }
 
 	/**
-	 * Soft-feed siblings to link in order, where a missing source warns and continues.
+	 * Soft-feed siblings to link in order.
+	 * A missing source prints a warning and the step continues.
 	 */
 	softFeed?: ReadonlyArray<SoftFeedLink>
 
 	/**
-	 * Whether to link the evidence lexicons that the overlay's model card names under
-	 * `requires.<channel>.lexicon`, so a card bump moves the linked file with it.
+	 * Whether to link the evidence lexicons listed under `requires.<channel>.lexicon`
+	 * in the overlay's model card.
+	 * A card update then changes the linked file too.
 	 *
-	 * The street-type lexicon comes from the repo's `data/gazetteer/`,
-	 * and the locality-surface lexicon from the data root.
+	 * The street-type lexicon comes from the repo's `data/gazetteer/`.
+	 * The locality-surface lexicon comes from the data root.
 	 */
 	evidenceLexiconsFromCard?: boolean
 
 	/**
-	 * Builds `postcode-<country>.bin` from a WOF postcode extract with the compiled CLI,
-	 * skipped when the file already exists.
+	 * Builds `postcode-<country>.bin` from a WOF postcode extract with the compiled CLI.
+	 * The step is skipped when the file already exists.
 	 */
 	postcodeBinary?: { country: string; database: PathBuilder }
 
 	/**
-	 * The placetype-pair index build, whose `packageDir` is derived from `locale`.
+	 * The placetype-pair index build.
+	 * Its `packageDir` is derived from `locale`.
 	 */
 	pairIndex?: Omit<PairIndexOverlay, "packageDir">
 
@@ -601,8 +622,9 @@ export interface DevOverlayManifest {
 }
 
 /**
- * The overlay directory, CLI path and model card that {@link materializeDevOverlay}
- * returns for locale-specific steps a manifest cannot express.
+ * The overlay directory, CLI path and model card that {@link materializeDevOverlay} returns.
+ *
+ * Callers use them for locale-specific steps that a manifest cannot express.
  */
 export interface DevOverlay {
 	destDir: PathBuilder

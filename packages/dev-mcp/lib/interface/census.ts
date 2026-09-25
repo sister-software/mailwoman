@@ -3,58 +3,65 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Count structural violations in decoded trees. Illegal parent edges are builder defects; stranded
- *   dependent tags are model behavior, so their counts are reported alongside tag presence.
+ *   Counts structural violations and duplicate tags in decoded address trees.
+ *
+ *   An illegal parent edge is a tree-builder defect. A stranded dependent tag is model behavior, so its count
+ *   is reported beside the number of rows that produced the tag.
  */
 
 import type { ComponentTag } from "@mailwoman/codex/component"
 import { STRICT_DEPENDENTS, validateTree, type AddressTree, type TreeViolation } from "@mailwoman/core/decoder"
 
 /**
- * Return the grouping key for a violation.
+ * Returns the grouping key for a violation.
  */
 export function violationKey(violation: TreeViolation): string {
 	return `${violation.type}:${violation.tag}`
 }
 
-/**
- * Example rows retained per violation class.
- */
 const EXAMPLES_PER_CLASS = 5
 
+/**
+ * The count and examples for one violation type and tag.
+ */
 export interface ViolationClass {
 	type: TreeViolation["type"]
 	tag: string
 	n: number
-	/**
-	 * Example inputs and offending values for this class.
-	 */
 	examples: { id: string; input: string; value: string; detail: string }[]
 }
 
+/**
+ * How often one strict dependent tag was stranded.
+ */
 export interface StrandingReading {
 	tag: string
 	/**
-	 * Rows whose parse produced this tag; denominator for the stranding rate.
+	 * The number of rows whose parse produced this tag.
+	 * It is the denominator of the stranding rate.
 	 */
 	produced_on_rows: number
 	stranded: number
 	/**
-	 * `null` when the tag was never produced.
+	 * The stranding rate, or `null` when no row produced the tag.
 	 */
 	stranding_rate: number | null
 }
 
+/**
+ * The structural census of a set of decoded trees.
+ */
 export interface InterfaceCensus {
 	n_evaluated: number
 	rows_violating: number
 	classes: ViolationClass[]
 	/**
-	 * All strict dependent tags, including those never produced.
+	 * One reading for every strict dependent tag, including tags no row produced.
 	 */
 	stranding: StrandingReading[]
 	/**
-	 * Tags absent from all evaluated parses; their stranding rates are unmeasured.
+	 * The strict dependent tags that no row produced.
+	 * Their stranding rates are unmeasured.
 	 */
 	never_produced: string[]
 	illegal_edges: {
@@ -64,29 +71,38 @@ export interface InterfaceCensus {
 	duplicate_tags: DuplicateTagCensus
 }
 
+/**
+ * How two nodes with the same tag relate in the tree.
+ */
 export type DuplicateTagTopology = "sibling" | "nested" | "separate-branches"
 
+/**
+ * The count and examples for one duplicated tag and topology.
+ */
 export interface DuplicateTagClass {
 	tag: ComponentTag
 	topology: DuplicateTagTopology
 	/**
-	 * Number of rows containing this duplicate topology.
+	 * The number of rows with this tag duplicated in this topology.
 	 */
 	n: number
 	examples: { id: string; input: string; values: string[] }[]
 }
 
+/**
+ * The duplicate-tag part of the census.
+ */
 export interface DuplicateTagCensus {
 	/**
-	 * Rows containing duplicate component tags.
+	 * The number of rows with at least one duplicated tag.
 	 */
 	rows: number
 	/**
-	 * Fraction of evaluated rows with duplicate tags, or `null` when none were evaluated.
+	 * The fraction of rows with a duplicated tag, or `null` when no rows were evaluated.
 	 */
 	rate: number | null
 	/**
-	 * Counts for every topology, including zero counts.
+	 * The row count for every topology, including zero counts.
 	 */
 	topologies: { topology: DuplicateTagTopology; rows: number }[]
 	classes: DuplicateTagClass[]
@@ -94,6 +110,9 @@ export interface DuplicateTagCensus {
 
 const DUPLICATE_TAG_TOPOLOGIES = ["sibling", "nested", "separate-branches"] as const
 
+/**
+ * One decoded row for the census.
+ */
 export interface InterfaceRow {
 	id: string
 	input: string
@@ -101,7 +120,7 @@ export interface InterfaceRow {
 }
 
 /**
- * Tally violations and duplicate tags across pre-parsed rows.
+ * Counts violations and duplicate tags across decoded rows.
  */
 export function censusTrees(rows: readonly InterfaceRow[]): InterfaceCensus {
 	const classes = new Map<string, ViolationClass>()
@@ -228,7 +247,7 @@ interface TaggedNode {
 }
 
 /**
- * Classify repeated tags by sibling, nested, or separate-branch relationships.
+ * Groups the values of each repeated tag by how each pair of its nodes relates.
  */
 function duplicateTagTopologies(tree: AddressTree): Map<ComponentTag, Map<DuplicateTagTopology, string[]>> {
 	const nodes: TaggedNode[] = []
@@ -290,7 +309,6 @@ function tagsPresent(tree: AddressTree): ComponentTag[] {
 
 	walk(tree.roots)
 
-	// Distinct per row: a parse with two stranded `unit` nodes still produced `unit` on one row,
-	// and counting it twice would let a single pathological row look like broad coverage.
+	// Each tag counts once per row, so one row with two `unit` nodes cannot look like two rows.
 	return [...new Set(tags)]
 }

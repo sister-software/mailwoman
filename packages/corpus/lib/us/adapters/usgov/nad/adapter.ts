@@ -3,23 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Adapter for the US DOT National Address Database (NAD), a federal collection of structured address points.
- *
- *   Reads NDJSON files produced by `fetch-nad.ts` featureserver mode. Files are grouped by OID range; legacy
- *   quarantined files are kept outside the input directory.
- *
- *   NAD v9 field mapping:
- *
- *   - House number: `AddNo_Full`, or `AddNum_Pre` + `Add_Number` + `AddNum_Suf`.
- *   - Street: `StNam_Full`, or the structured street fields.
- *
- *   - Structured street fields provide prefix, name, and suffix where available.
- *   - Locality: first non-empty of `Post_City`, `Inc_Muni`, `Census_Plc`, and `Uninc_Comm`.
- *   - Region: USPS state or territory code.
- *   - Postcode: `Zip_Code`, with `Plus_4` appended when present.
- *   - Venue: `LandmkName`, when present.
- *
- *   License: stamped `"Public Domain"` per 17 U.S.C. § 105 (US federal works).
+ *   Reads the US DOT National Address Database from a directory of NDJSON files written by the NAD fetcher.
  */
 
 import { formatAddressRow } from "@mailwoman/codex/address-format"
@@ -33,23 +17,21 @@ import { SourceRegister } from "#registers"
 import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter, SurfaceOrigin } from "#types"
 
 /**
- * Adapter id stamped on every emitted row.
+ * The adapter id stamped on every emitted row.
  */
 export const USGOV_NAD_ADAPTER_ID = "usgov-nad"
 /**
- * Public-domain license attached to each emitted row.
+ * The license label on every emitted row, because US federal works are public domain under 17 U.S.C. § 105.
  */
 export const USGOV_NAD_DEFAULT_LICENSE = "Public Domain"
 
 interface NADRecord {
 	OBJECTID?: number
 	UUID?: string | null
-	// House number
 	AddNum_Pre?: string | null
 	Add_Number?: number | string | null
 	AddNum_Suf?: string | null
 	AddNo_Full?: string | null
-	// Street parts
 	St_PreMod?: string | null
 	St_PreDir?: string | null
 	St_PreTyp?: string | null
@@ -59,7 +41,6 @@ interface NADRecord {
 	St_PosDir?: string | null
 	St_PosMod?: string | null
 	StNam_Full?: string | null
-	// Sub-address (carried as part of street for now. Phase 1 has no unit/floor labels)
 	Building?: string | null
 	Floor?: string | null
 	Unit?: string | null
@@ -67,9 +48,7 @@ interface NADRecord {
 	Seat?: string | null
 	Addtl_Loc?: string | null
 	SubAddress?: string | null
-	// Landmark / venue
 	LandmkName?: string | null
-	// Locality alternates (we prefer Post_City for what a human would type)
 	County?: string | null
 	Inc_Muni?: string | null
 	Post_City?: string | null
@@ -81,7 +60,6 @@ interface NADRecord {
 	Urbnztn_PR?: string | null
 	PlaceOther?: string | null
 	PlaceNmTyp?: string | null
-	// State + ZIP
 	State?: string | null
 	Zip_Code?: string | null
 	Plus_4?: string | null
@@ -139,7 +117,7 @@ const US_STATES_SET = new Set([
 	"WV",
 	"WI",
 	"WY",
-	// Territories that ship in NAD
+	// NAD also covers these territories.
 	"PR",
 	"GU",
 	"VI",
@@ -177,6 +155,7 @@ interface DecomposedNADStreet {
 	full: string
 }
 
+// The structured street fields take precedence, and `StNam_Full` becomes the whole street when they are empty.
 function decomposeNADStreet(r: NADRecord): DecomposedNADStreet | undefined {
 	const name = (r.St_Name ?? "").toString().trim()
 
@@ -200,6 +179,7 @@ function decomposeNADStreet(r: NADRecord): DecomposedNADStreet | undefined {
 	return undefined
 }
 
+// The postal city comes first because it is the name that people write on mail.
 function composeLocality(r: NADRecord): string | undefined {
 	return nonEmpty(r.Post_City, r.Inc_Muni, r.Census_Plc, r.Uninc_Comm)
 }
@@ -213,6 +193,12 @@ function composePostcode(r: NADRecord): string | undefined {
 	return plus4 ? `${zip}-${plus4}` : zip
 }
 
+/**
+ * Creates the NAD adapter.
+ *
+ * The adapter skips records without a US state code, a locality or a ZIP code,
+ * and rows whose rendering keeps two or fewer components.
+ */
 export function createUsgovNADAdapter(): CorpusAdapter {
 	return {
 		id: USGOV_NAD_ADAPTER_ID,
@@ -228,7 +214,7 @@ export function createUsgovNADAdapter(): CorpusAdapter {
 				throw new Error(`usgov-nad adapter: only US supported, got country=${opts.country}`)
 			}
 
-			// Input is a directory of NDJSON files; single-file inputs are unsupported.
+			// The input must be a directory of NDJSON files.
 			const files = await Globerator.files("ndjson", {
 				cwd: opts.inputPath,
 				absolute: false,
@@ -238,7 +224,7 @@ export function createUsgovNADAdapter(): CorpusAdapter {
 			let emitted = 0
 			outer: for (const file of files) {
 				if (opts.signal?.aborted) break
-				// Stream lines so malformed JSON can be skipped; the spliterator closes the file on early exit.
+				// The spliterator closes the file when the loop exits early.
 				const lines = TextSpliterator.fromAsync(resolvePathBuilder(opts.inputPath, file))
 
 				for await (const line of lines) {
@@ -250,7 +236,7 @@ export function createUsgovNADAdapter(): CorpusAdapter {
 
 					const record = tryParsingJSON<NADRecord>(line)
 
-					if (record === null) continue // malformed line — skip silently
+					if (record === null) continue
 
 					const state = (record.State ?? "").toString().trim().toUpperCase()
 
@@ -312,6 +298,6 @@ export function createUsgovNADAdapter(): CorpusAdapter {
 }
 
 /**
- * The configured adapter instance registered with the corpus builder.
+ * The NAD adapter instance that the corpus builder registers.
  */
 export const usgovNADAdapter = createUsgovNADAdapter()

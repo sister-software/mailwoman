@@ -7,22 +7,22 @@ verified-with: mailwoman 8.7.0
 
 # Your first ten minutes
 
-Mailwoman arrives in two halves, and they become available at different times. Parsing works as soon
-as `npm install` finishes, because the model travels with the package. Geocoding does not, because
-the reference data it resolves against is far too large to ship on npm. By the end of this page
-you'll have run both checks, pulled that reference data, and geocoded a US address and a French one.
-About ten minutes rather than counting the one-time gazetteer download.
+Mailwoman has two halves, and they become available at different times. Parsing works as soon as
+`npm install` finishes, because the model ships inside a package. Geocoding needs reference data that
+is too large to ship on npm, so it requires a separate download. By the end of this page you will
+have run both checks, pulled that reference data, and geocoded a US address and a French one. The
+steps take about ten minutes, plus the time for the one-time gazetteer download.
 
 ## Prerequisites
 
-- Node.js 24.18.0 or later, and roughly 750 MB of free disk for the install. The full
-  reasoning is in [Install and first parse](./install-and-first-parse.mdx#prerequisites).
-- About 1.65 GB more disk and a few minutes on your connection once you reach
-  [Geocode it](#5-geocode-it) below — the gazetteer database, pulled once and kept for every geocode
-  after.
-- `mailwoman data pull`, the command that gazetteer step runs, ships in `8.7.0`. Check
-  `npm view mailwoman version` first: if it still prints `8.6.0` for you, steps 1 through 4 already
-  work, and step 5 is the one still on its way to npm.
+- Node.js 24.18.0 or later, and roughly 750 MB of free disk for the install.
+  [Install and first parse](./install-and-first-parse.mdx#prerequisites) explains both numbers.
+- About 1.65 GB more disk and a few minutes of download time when you reach
+  [Geocode it](#5-geocode-it) below. That space holds the gazetteer database, which you pull once and
+  keep for every later geocode.
+- `mailwoman data pull`, the command the gazetteer step runs, ships in `8.7.0`. Check
+  `npm view mailwoman version` first. If it still prints `8.6.0`, steps 1 through 4 work, and step 5
+  needs the next npm release.
 
 ## 1. Install
 
@@ -32,9 +32,9 @@ npm install mailwoman @mailwoman/neural @mailwoman/neural-weights-en-us
 
 ## 2. Ask it what it has
 
-`doctor` is the diagnostic to run before you debug anything else. It checks seven things and, for each
-gap, prints the one command that closes it. Point it at a data root — the rest of this page reuses
-the same one.
+Run `doctor` before you debug anything else. It runs seven checks, and for each missing piece it
+prints the command that installs it. Point it at a data root. The rest of this page reuses the same
+data root.
 
 ```bash
 export MAILWOMAN_DATA_ROOT=/tmp/mw-trial/mailwoman-data
@@ -61,16 +61,16 @@ mailwoman doctor
 PASS — core checks ok (weights + runtime); parse is ready
 ```
 
-Four red crosses and it still exits `0`. That is the interface rather than a bug: the exit code tracks the
-two core checks, weights and runtime. Everything marked `(optional)` is a data layer that parsing
-does not need, so a gap there is reported and costed rather than treated as a failure. The paths in
-your own output will name `$MAILWOMAN_DATA_ROOT`, which is wherever you point it.
+The output shows four failed checks, and the command still exits `0`. This is intended. The exit code
+reflects only the two core checks, weights and runtime. Everything marked `(optional)` is a data
+layer that parsing does not need, so `doctor` reports a missing layer and its fix instead of failing.
+The paths in your own output use your `$MAILWOMAN_DATA_ROOT`.
 
 ## 3. Parse something
 
-The green half is ready now. Follow
-[Install and first parse](./install-and-first-parse.mdx) for a ten-line script that turns
-`apt 4b 350 5th ave new york ny 10118` into a labeled tree, or check it from the shell:
+Parsing is ready now. Follow [Install and first parse](./install-and-first-parse.mdx) for a
+ten-line script that turns `apt 4b 350 5th ave new york ny 10118` into a labeled tree, or check it
+from the shell:
 
 ```bash
 npx mailwoman parse "350 5th Ave, New York, NY 10118"
@@ -87,28 +87,29 @@ npx mailwoman parse "350 5th Ave, New York, NY 10118"
 }
 ```
 
-No coordinates in that output. Components, and no coordinates, is exactly the shape of a parser that
-has its model and not its gazetteer.
+The output has components and no coordinates, because the parser has its model but not its
+gazetteer.
 
 ## 4. Know which half you have
 
-**Parsing works out of the box.** Free text in, tagged components out — house number, street, unit,
-locality, region, postcode, and the rest. The model file travels inside
-`@mailwoman/neural-weights-en-us`, so there is nothing further to fetch and nothing to configure.
-French is one more package (`@mailwoman/neural-weights-fr-fr`) and no other change.
+**Parsing works out of the box.** It takes free text and returns tagged components: house number,
+street, unit, locality, region, postcode, and the rest. The model file ships inside
+`@mailwoman/neural-weights-en-us`, so there is nothing more to fetch or configure. French support
+needs one more package (`@mailwoman/neural-weights-fr-fr`) and no other change.
 
-**Geocoding needs the resolver database.** Turning `New York` into a
-latitude/longitude means looking it up, and the gazetteer that answers is a file you download once
-and keep. At the `2026-07-07a` build the candidate gazetteer, `candidate.db`, is 1.65 GB. Your `doctor`
-output prints the exact command that fetches it — one line, and it is generated from the build the CLI
-you installed knows about, so prefer it over any command copied from a page. Run it next.
+**Geocoding needs the resolver database.** Turning `New York` into a latitude and longitude requires a
+lookup in the gazetteer, which is a file you download once and keep. At the `2026-07-07a` build, the
+candidate gazetteer `candidate.db` is 1.65 GB. Your `doctor` output prints the exact one-line command
+that fetches it. The CLI generates that command from the build it knows about, so prefer it over a
+command copied from a web page. Run it next.
 
-Point-of-interest search ("coffee near Honolulu") is a third layer with its own database, also
-optional, also reported by `doctor`.
+Point-of-interest search ("coffee near Honolulu") is a third layer with its own database. It is also
+optional, and `doctor` also reports it.
 
 ## 5. Geocode it
 
-Run the fix line `doctor` printed above, in the same shell so `$MAILWOMAN_DATA_ROOT` is still set:
+Run the fix line that `doctor` printed above. Use the same shell so that `$MAILWOMAN_DATA_ROOT` is
+still set:
 
 ```bash
 npx mailwoman data pull candidate
@@ -124,14 +125,15 @@ export MAILWOMAN_CANDIDATE_DB=/tmp/mw-trial/mailwoman-data/wof/candidate.db
 PASS (1/1 checks)
 ```
 
-Took about four minutes on this connection. The two `[DEBUG]` lines are the download client checking
-the remote file's size before it starts; harmless.
+The download took about four minutes on the connection used for this page. The two `[DEBUG]` lines
+show the download client checking the remote file's size before it starts. They do not indicate a
+problem.
 
-Ignore the `export` line. The file landed at `<data-root>/db/wof/candidate.db`, and that path is where
-every entry point looks when nothing points it elsewhere, so the download is the whole setup. The
-line is a leftover from when the variable was required; setting it changes nothing here. What the
-variable is still for is on [Runtime flags](../reference/runtime-flags.mdx#environment-variables) —
-a copy that lives somewhere else, or `none` to pin the older backend.
+Ignore the `export` line. The file is saved at `<data-root>/db/wof/candidate.db`, which is the
+default path every entry point checks, so the download completes the setup. The CLI still prints the
+line from a time when the variable was required. Setting it changes nothing here.
+[Runtime flags](../reference/runtime-flags.mdx#environment-variables) describes what the variable is
+still used for: pointing at a copy stored elsewhere, or `none` to pin the older backend.
 
 Geocode a US address:
 
@@ -186,12 +188,12 @@ npx mailwoman geocode "350 5th Ave, New York, NY 10118"
 }
 ```
 
-`resolution_tier: "admin"` is what `candidate.db` alone can answer: it carries locality and region
-centroids, so the coordinate is New York's rather than this specific rooftop. Street-level precision
-(`resolution_tier: "address_point"` or `"interpolated"`) is a further, per-country download —
-`mailwoman data pull us` or `mailwoman data pull fr` — outside what this page covers.
+`candidate.db` alone can answer only at `resolution_tier: "admin"`. It carries locality and region
+centroids, so the coordinate is New York's centroid instead of this building's rooftop. Street-level
+precision (`resolution_tier: "address_point"` or `"interpolated"`) needs a further per-country
+download (`mailwoman data pull us` or `mailwoman data pull fr`), which this page does not cover.
 
-Now a French address, no other change:
+Now geocode a French address without changing anything else:
 
 ```bash
 npx mailwoman geocode "12 Rue de Rivoli, 75001 Paris"
@@ -244,13 +246,14 @@ npx mailwoman geocode "12 Rue de Rivoli, 75001 Paris"
 }
 ```
 
-Right country, right city, and no flag asked for either. That is worth a paragraph, because it is
-recent: the file you downloaded is the default backend as of `8.7.0`, and before that it was
-opt-in behind the variable you were told to ignore above.
+The result has the right country and the right city, and no flag was needed. This behavior is recent.
+The file you downloaded became the default backend in `8.7.0`. Before that release, it was opt-in
+behind the variable you were told to ignore above.
 
-You can still run the older path. `--candidate-db none` pins it, and it needs a full admin database —
-a separate, locally-built file `data pull` does not publish, so this is a comparison you read here
-rather than reproduce. Same input, same machine:
+You can still run the older backend. `--candidate-db none` pins it. It needs a full admin database,
+which is a separate, locally built file that `data pull` does not publish. You can read the
+comparison below, but you cannot reproduce it with the downloads on this page. Same input, same
+machine:
 
 ```json
 {
@@ -261,28 +264,28 @@ rather than reproduce. Same input, same machine:
 }
 ```
 
-Paris, Texas. The tempting reading is that the older backend ranks worse, and it is wrong. What
-produced Texas is the **country filter** rather than the ranking: `--locale` defaults to `en-US`, `en-US`
-implies `--default-country US`, and that filter is applied on the older backend and not on this one.
-Cross the two changes and the confound comes apart (measured 2026-08-04, this gazetteer, this model):
+The older backend returns Paris, Texas. The ranking does not cause this. The **country filter**
+does. `--locale` defaults to `en-US`, `en-US` implies `--default-country US`, and the older backend
+applies that filter while the candidate backend does not. Testing each backend with and without the
+filter separates the two effects (measured 2026-08-04, with this gazetteer and this model):
 
 | backend             | country filter US                      | no country filter |
 | ------------------- | -------------------------------------- | ----------------- |
 | candidate.db        | `Paris Township`, TX (32.960, −96.838) | **Paris, France** |
 | full admin (`none`) | `Paris`, TX (33.669, −95.544)          | **Paris, France** |
 
-Both backends are right when nothing filters them to the United States, and both are wrong when
-something does. So the claim this page makes is the narrow one: `candidate.db` is the default,
-and the default does not apply a country filter, which is why a French address geocoded correctly
-without you configuring anything. `--country-scope locale|none` (on `parse` and `geocode`) is the
-switch that holds the filter fixed if you ever need to compare the two backends yourself.
+Both backends return Paris, France without the US filter, and both return a Texas result with it.
+This page therefore makes a narrow claim. `candidate.db` is the default, and the default does not
+apply a country filter, so the French address geocoded correctly without any configuration. To
+compare the two backends yourself, use `--country-scope locale|none` (on `parse` and `geocode`) to
+set the filter the same way for both.
 
 ## What you have now
 
-A parser and a geocoder, both running against your own disk. `mailwoman parse` (or
-`createRuntimePipeline`) gives you tagged components; `mailwoman geocode` gives you a coordinate, once
-`candidate.db` is on disk at `<data-root>/db/wof/candidate.db`. You also have the command that will
-answer the "which half do I have" question again after any change to your install.
+You have a parser and a geocoder, both reading from your own disk. `mailwoman parse` (or
+`createRuntimePipeline`) returns tagged components. `mailwoman geocode` returns a coordinate once
+`candidate.db` is on disk at `<data-root>/db/wof/candidate.db`. After any change to your install,
+`mailwoman doctor` shows again which halves are available.
 
 ## Next
 

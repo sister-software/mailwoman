@@ -10,11 +10,11 @@
 
 The rule-based v1 covers the common shapes (NUMERIC, STREET_PHRASE, LOCALITY_PHRASE, REGION_ABBREVIATION, POSTCODE, VENUE_PHRASE, HYPHENATED_COMPOUND) at predictable, explainable cost. Its blind spots are:
 
-- **Inputs without capitalization cues** — all-lowercase OCR output, voice-to-text, autocomplete mid-typed input. The rule pack leans heavily on capitalization as the LOCALITY_PHRASE / VENUE_PHRASE signal.
-- **Non-Latin scripts** — CJK / Cyrillic / Arabic don't have a capitalization signal at all. Rule packs would need per-script hand-crafted alternatives; a learned model trained on a multi-script corpus generalizes for free.
-- **Compositional novelty** — `NY-NY Steakhouse` works because both `NY-NY` (hyphen-compound) and `Steakhouse` (venue marker) are explicit cues. `Lou's Backyard BBQ Pit Stop` works only if `BBQ` is in the venue-marker list — and that list is unbounded.
+- **Inputs without capitalization cues:** all-lowercase OCR output, voice-to-text, and partially typed autocomplete input. The rule pack relies heavily on capitalization as the LOCALITY_PHRASE / VENUE_PHRASE signal.
+- **Non-Latin scripts:** CJK / Cyrillic / Arabic have no capitalization signal at all. Rule packs would need hand-crafted per-script alternatives, while a learned model trained on a multi-script corpus can generalize without them.
+- **Compositional novelty:** `NY-NY Steakhouse` works because both `NY-NY` (hyphen-compound) and `Steakhouse` (venue marker) are explicit cues. `Lou's Backyard BBQ Pit Stop` works only if `BBQ` is in the venue-marker list, and that list is unbounded.
 
-A learned proposer is the bitter-lesson-safe answer: train a small (1-2M parameter) span-prediction model on the corpus's segment-boundary labels and let it discover the joint cues the rule pack approximates manually.
+A learned proposer is the bitter-lesson-safe approach: train a small (1-2M parameter) span-prediction model on the corpus's segment-boundary labels and let it discover the joint cues the rule pack approximates manually.
 
 ## Architecture sketch
 
@@ -24,36 +24,36 @@ A learned proposer is the bitter-lesson-safe answer: train a small (1-2M paramet
 
 **Model:** small encoder-only transformer.
 
-- **Tokenizer:** the v0.5.0 multi-script sentencepiece tokenizer (Thread A). Shared with the main classifier — no separate vocab.
+- **Tokenizer:** the v0.5.0 multi-script sentencepiece tokenizer (Thread A). It is shared with the main classifier, without a separate vocab.
 - **Embedding:** ~256-dim per token. Reused from the main classifier as a starting point (LoRA / linear adapter on top), or trained from scratch with a tied vocabulary.
 - **Encoder:** 3-4 transformer blocks, hidden 256, 4 attention heads. Total ~1-2M params (a fraction of the main classifier's ~10M).
-- **Heads:** two parallel heads —
+- **Heads:** two parallel heads:
   - **Boundary head:** per-token binary classifier "is this token a phrase boundary?" (BIO-shaped: begin, inside, outside).
   - **Kind head:** per-token 7-way softmax over the `PhraseKind` taxonomy. Predicted at the begin-token of each proposed phrase.
 - **Decoding:** Viterbi over the boundary head emissions, then read off `kindHypothesis` at each phrase's begin token. Top-k proposals (configurable, default k=5) emitted with calibrated confidence.
 
 ## Training data
 
-Comes from Thread B (corpus-v0.4.0). Two sources:
+Training data comes from Thread B (corpus-v0.4.0) in two forms:
 
-1. **Derived labels from the existing BIO corpus.** Each contiguous run of same-tag tokens is one phrase; map the BIO tag to a `PhraseKind` via a lookup table (e.g. `B-locality ... I-locality` → LOCALITY_PHRASE). Free at training time, no new labeling required. The mapping is lossy at the edges (POI tags collapse to VENUE_PHRASE) but the lossy direction is in the structural-shape vocabulary, which is exactly what we want here.
+1. **Derived labels from the existing BIO corpus.** Each contiguous run of same-tag tokens is one phrase; map the BIO tag to a `PhraseKind` via a lookup table (e.g. `B-locality ... I-locality` → LOCALITY_PHRASE). These labels cost nothing at training time and need no new labeling. The mapping is lossy at the edges (POI tags collapse to VENUE_PHRASE), but the loss falls in the structural-shape vocabulary, which this model does not need to distinguish.
 2. **Synthetic adversarial expansion.** The kryptonite-catalogue generation pipeline (Thread B) prompt-engineers DeepSeek to produce inputs where the rule-based grouper systematically gets boundaries wrong. The learned model trains on those cases as hard negatives.
 
-Validation: held-out subset of the kryptonite catalogue + the v0.4.0 bio_slip class (the 6% of cases where boundaries were demonstrably wrong in production).
+Validation uses a held-out subset of the kryptonite catalogue plus the v0.4.0 bio_slip class (the 6% of cases where boundaries were demonstrably wrong in production).
 
 ## Calibration
 
-The reconciler weighs phrase proposals against classifier proposals against resolver candidates — confidence calibration matters more here than in the rule version, because the reconciler will multiply scores. Training-time temperature scaling against the held-out kryptonite subset; report ECE on the model card alongside accuracy.
+The reconciler weighs phrase proposals against classifier proposals and resolver candidates. Confidence calibration matters more here than in the rule version, because the reconciler multiplies scores. Apply training-time temperature scaling against the held-out kryptonite subset, and report ECE on the model card alongside accuracy.
 
 ## When to ship
 
-- **v0.5.0 stretch:** if Thread C (classifier retrain) finishes inside the GPU budget and the rule-based grouper proves to need the assist on a meaningful share of the eval (e.g. non-Latin queries show poor proposals). Triggered by the v0.5.0 eval rather than pre-committed.
+- **v0.5.0 stretch:** if Thread C (classifier retrain) finishes inside the GPU budget and the rule-based grouper needs help on a meaningful share of the eval (e.g. non-Latin queries show poor proposals). The v0.5.0 eval decides this, rather than a prior commitment.
 - **v0.5.1 fallback:** if v0.5.0 ships on the rule version alone. Allocate ~3-5 days of compute + engineering for the learned version once the corpus is in place.
 
 ## Out of scope for this doc
 
-- **Multi-locale ensembling** — one model per locale vs one model handling all locales. Pre-evaluation, lean toward one shared model trained on the full multi-script corpus; the tokenizer + the encoder already do the locale-aware work.
-- **Joint training with the main classifier** — could pass phrase-proposer embeddings into the classifier as conditioning. Mentioned in Thread C as the eventual integration; whether the proposer trains jointly or stays a frozen feature extractor is a v0.6.0+ question.
+- **Multi-locale ensembling:** one model per locale vs one model handling all locales. Before evaluation, lean toward one shared model trained on the full multi-script corpus, because the tokenizer and the encoder already do the locale-aware work.
+- **Joint training with the main classifier:** phrase-proposer embeddings could pass into the classifier as conditioning. Thread C mentions this as the eventual integration. Whether the proposer trains jointly or stays a frozen feature extractor is a v0.6.0+ question.
 - **Replacing the rule version.** The rule version stays in tree as the explainable fallback + the test oracle. The learned version is additive. Both can coexist behind a runtime flag, and the reconciler can consume proposals from either (or both, with source attribution).
 
 ## See also

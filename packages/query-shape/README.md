@@ -1,11 +1,13 @@
 # @mailwoman/query-shape
 
-**Stage 1.5 of the Mailwoman runtime pipeline** — cheap structural priors.
+This package is **stage 1.5 of the Mailwoman runtime pipeline**, which computes
+cheap structural priors.
 
-Pure functions that compute a structural fingerprint of an address string in
-microseconds — character class, segmentation, known-format detection — without
-any ML or place-name dictionaries. The `QueryShape` result informs later
-pipeline stages (locale detection, kind classification, phrase grouping).
+Its pure functions compute a structural fingerprint of an address string in
+microseconds. The fingerprint covers character class, segmentation, and
+known-format detection, and it uses no ML or place-name dictionaries. Later
+pipeline stages (locale detection, kind classification, phrase grouping) read
+the `QueryShape` result.
 
 ```ts
 import { computeQueryShape } from "@mailwoman/query-shape"
@@ -48,16 +50,17 @@ normalize → query-shape → locale-hint → kind-classifier → phrase-grouper
 
 ## Design
 
-- **Pure, zero-dependency, microseconds-cheap.** No ML inference, no I/O, no place-name dictionaries.
-- **Bitter-lesson-safe:** only universal structural cues — script class, format regexes, segmentation
-  punctuation. Never memorizes locale-specific place names.
-- Accepts a minimal `NormalizedInputLite` (just `{raw, normalized}` strings) from Stage 1.
+- **Pure, dependency-free, and fast.** Each call takes microseconds and uses no ML inference, I/O, or
+  place-name dictionaries.
+- **Universal cues only.** The package uses only universal structural cues: script class, format
+  regexes, and segmentation punctuation. It never memorizes locale-specific place names.
+- It accepts a minimal `NormalizedInputLite` (only the `{raw, normalized}` strings) from stage 1.
 
 ## Related
 
-- [`@mailwoman/normalize`](../normalize) — Stage 1, feeds into this stage
-- [`@mailwoman/locale-hint`](../locale-hint) — Stage 2, consumes `QueryShape` for locale detection
-- [`@mailwoman/kind-classifier`](../kind-classifier) — Stage 2.5, consumes `QueryShape` for kind classification
+- [`@mailwoman/normalize`](../normalize): stage 1, which feeds this stage.
+- [`@mailwoman/locale-hint`](../locale-hint): stage 2, which reads `QueryShape` for locale detection.
+- [`@mailwoman/kind-classifier`](../kind-classifier): stage 2.5, which reads `QueryShape` for kind classification.
 - [Query Shape design rationale](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/QUERY_SHAPE.mdx)
 
 ## License

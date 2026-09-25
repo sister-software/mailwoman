@@ -1,23 +1,9 @@
-# v0.6.0 classifier — Stage 3 labels + learned CRF transitions.
+# The v0.6.0 classifier trains on the Stage 3 label set with the v0.5.1 settings.
+# Stage 3 adds street_prefix, street_suffix, unit, po_box, intersection_a and intersection_b,
+# which gives 16 tags and 33 BIO labels. It requires ACTIVE_TAGS = STAGE3_TAGS in labels.py.
 #
-# Key changes from v0.5.4:
-#   1. Stage 3 labels: adds street_prefix, street_suffix, unit, po_box,
-#      intersection_a, intersection_b (16 tags, 33 BIO labels, up from 10/21).
-#      Requires ACTIVE_TAGS = STAGE3_TAGS in labels.py before training.
-#   2. CRF loss weight: 0.0 → 0.5 (trains actual learned transitions for
-#      export via crf-transitions.json pipeline, PR #187).
-#   3. Class weights expanded for new tags.
-#
-# Recipe base: v0.5.1 proven settings (constant LR, no smoothing, wof-admin: 2.0).
-# Tokenizer: v0.6.0-a0 (multi-script, 0% CJK byte-fallback).
-#
-# Prerequisites:
-#   - ACTIVE_TAGS bumped to STAGE3_TAGS in labels.py
-#   - Corpus adapters emitting street_prefix/suffix/unit/po_box/intersection
-#   - Golden eval expanded with Stage 3 entries
-#
-# Launch:
-#   cd corpus-python && modal run -d -m launch.train_remote --config v0_6_0-stage3.yaml
+# Launch it from corpus-python with:
+#   modal run -d -m launch.train_remote --config v0_6_0-stage3.yaml
 
 data:
   corpus_dir: /data/corpus/versioned/v0.4.0/corpus-v0.4.0
@@ -63,16 +49,9 @@ model:
   use_crf: true
   label_smoothing: 0.0
   crf_normalization: per_sequence
-  # crf_loss_weight: 0.0 after three divergence attempts:
-  # - attempt 1 (lr=1.5e-4, crf=0.5): NaN at step 950
-  # - attempt 2 (lr=1.0e-4, crf=0.1): NaN at step 1700
-  # Both NaN'd post-warmup. PO box rows validated clean (no malformed BIO).
-  # The CRF transition table is 33x33 in STAGE3 (was 21x21 in STAGE2), and
-  # bf16 + masked -inf transitions appear numerically unstable when training.
-  # v0.5.4 used crf_loss_weight=0.0 (CE-only) and trained fine — match that.
-  # CRF is still active at inference (Viterbi with the structural mask).
-  # Defer learned-transition training to v0.6.1+ with a fp32 or grad-clip
-  # investigation.
+  # Training with a nonzero CRF loss weight produced NaN losses after warmup under bf16.
+  # The loss is therefore cross-entropy only. Viterbi decoding with the structural mask still runs
+  # at inference.
   crf_loss_weight: 0.0
   class_weights:
     O: 0.5

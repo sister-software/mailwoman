@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Verify that CLI configuration keys map to the effective session options used by confound checks.
+ *   Tests that CLI configuration keys map to the session option names that confound checks read.
  */
 
 import { EFFECTIVE_KEY_FOR, effectiveKeyFor, resolveConfig } from "@mailwoman/dev-mcp/engine/registry"
@@ -12,7 +12,7 @@ import { describe, expect, it } from "vitest"
 
 describe("EFFECTIVE_KEY_FOR", () => {
 	it("covers every key the tool schema accepts", () => {
-		// Check the user-facing schema, not only the TypeScript interface.
+		// The tool schema is what callers validate against, so the check reads it directly.
 		const schemaKeys = Object.keys(ENGINE_CONFIG_SCHEMA.shape).toSorted()
 		const mapped = Object.keys(EFFECTIVE_KEY_FOR)
 
@@ -20,7 +20,7 @@ describe("EFFECTIVE_KEY_FOR", () => {
 	})
 
 	it("maps onto keys resolveConfig actually produces", () => {
-		// Set every optional key to a non-default value so conditional fields are included.
+		// Every key gets a non-default value, so `resolveConfig` emits its conditional fields too.
 		const resolved = resolveConfig({
 			locale: "en-GB",
 			country_scope: "none",
@@ -53,13 +53,13 @@ describe("EFFECTIVE_KEY_FOR", () => {
 	})
 
 	it("keeps `diagnose_unreachable` OUT of the tool schema on purpose", () => {
-		// This diagnostic does not change answers and must remain outside comparison pins.
+		// This diagnostic never changes answers, so it stays out of the comparison pins.
 		expect(Object.keys(ENGINE_CONFIG_SCHEMA.shape)).not.toContain("diagnose_unreachable")
 		expect(Object.keys(EFFECTIVE_KEY_FOR)).toContain("diagnose_unreachable")
 	})
 
 	it("passes through a declaration that is not a config key at all", () => {
-		// Cross-engine comparisons declare `engine`, which is not an EngineConfig key.
+		// A cross-engine comparison declares `engine`, which has no `EngineConfig` mapping.
 		expect(effectiveKeyFor("engine")).toBe("engine")
 		expect(effectiveKeyFor("tree_fingerprint")).toBe("tree_fingerprint")
 	})

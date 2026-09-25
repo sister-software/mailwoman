@@ -5,21 +5,21 @@ title: v0.5.0 — as shipped
 
 # v0.5.0 — as shipped
 
-A single landing page for anyone catching up on the v0.5.0 fresh-slate work.
+This page summarizes the v0.5.0 fresh-slate work for readers catching up on it.
 
-The v0.5.0 plan ([`PHASE_8_v0_5_0_fresh_slate.md`](./phases/PHASE_8_v0_5_0_fresh_slate.mdx)) split the work into six threads (A through F). All six landed in `main` by 2026-05-24. This article catalogues what is now in the tree, how the pieces fit together, and what is still cooking on the training side.
+The v0.5.0 plan ([`PHASE_8_v0_5_0_fresh_slate.md`](./phases/PHASE_8_v0_5_0_fresh_slate.mdx)) split the work into six threads (A through F). All six landed in `main` by 2026-05-24. This article lists what is now in the tree, how the pieces fit together, and what training work remains.
 
 ## Why v0.5.0 exists
 
 The [v0.4.0 ablation campaign retrospective](../retrospectives/v0-4-0-ablation-campaign.mdx) ended with three structural ceilings that small recipe tweaks could not clear:
 
-1. The v0.1.0 tokenizer's byte-fallback rate on non-Latin scripts (the cause of 92% of country FN in the golden eval).
-2. The classifier doing boundary discovery and type classification at the same time via BIO labels (the cause of the bio_slip class on `", 22220"` for `22220`).
-3. Stage 5 reconcile only sorting spans — it could not catch joint-incoherent parses like `NY-NY Steakhouse, Houston, TX`.
+1. The v0.1.0 tokenizer's byte-fallback rate on non-Latin scripts caused 92% of country FN in the golden eval.
+2. The classifier did boundary discovery and type classification at the same time via BIO labels. This caused the bio_slip class on `", 22220"` for `22220`.
+3. Stage 5 reconcile only sorted spans. It could not catch joint-incoherent parses like `NY-NY Steakhouse, Houston, TX`.
 
-Patching each ceiling individually meant three medium iterations. v0.5.0 bundles them into one **fresh-slate** ship — pay the cost once, clear all three at once.
+Patching each ceiling individually would have taken three medium iterations. v0.5.0 bundles them into one **fresh-slate** release, which pays the retraining cost once and addresses all three.
 
-The "fresh-slate" framing is described in the operator's [sharpen-the-axe note](../site-2026-08/understanding/our-approach/the-knowledge-ladder.mdx#what-v040-taught-us-about-the-missing-rungs). It is the right shape when several improvements share a common cost (a retrain, an interface change) and bundling avoids paying that cost three times.
+The operator's [sharpen-the-axe note](../site-2026-08/understanding/our-approach/the-knowledge-ladder.mdx#what-v040-taught-us-about-the-missing-rungs) describes the fresh-slate approach. It fits when several improvements share a common cost, such as a retrain or an interface change, and bundling avoids paying that cost three times.
 
 ## The six threads
 
@@ -28,7 +28,7 @@ The "fresh-slate" framing is described in the operator's [sharpen-the-axe note](
 | **A0**  | Tokenizer harness + A0 weights | SentencePiece training pipeline; A0 trained on `corpus-v0.3.0` as a byte-fallback baseline. **A1** will retrain on `corpus-v0.4.0` once B + B2 are both in.                                                                                                       | [#129](https://github.com/sister-software/mailwoman/pull/129)   |
 | **B**   | Kryptonite catalogue           | 4,771 adversarial address rows generated via DeepSeek — `NY-NY Steakhouse`, `Paris, Texas`, `Saint Petersburg, FL`, etc. Each annotated with the correct parse.                                                                                                   | [#130](https://github.com/sister-software/mailwoman/pull/130)   |
 | **B2**  | Transliteration pairs          | ~73K US/FR addresses transliterated into CJK / Cyrillic / Hangul / Han / Armenian script via DeepSeek. Validated by substring-match aligner (~1.1% reject rate). Included in corpus-v0.4.0.                                                                       | [#119](https://github.com/sister-software/mailwoman/issues/119) |
-| **C-s** | Classifier code path           | Top-k inference (returns ranked sequences, notargmax) + phrase-prior input features that condition on Stage 2.7's proposed spans. **No training run** in this PR — that lands once A1 + corpus-v0.4.0 are ready.                                                  | [#128](https://github.com/sister-software/mailwoman/pull/128)   |
+| **C-s** | Classifier code path           | Top-k inference (returns ranked sequences rather than argmax) + phrase-prior input features that condition on Stage 2.7's proposed spans. **No training run** in this PR — that lands once A1 + corpus-v0.4.0 are ready.                                          | [#128](https://github.com/sister-software/mailwoman/pull/128)   |
 | **D-s** | Stage 5 reconcile              | `reconcile.ts` joint decoder — beam search over (span × tag × resolver candidate) with concordance scoring via WOF parent-id chains. Catches the kryptonite cases at runtime.                                                                                     | [#131](https://github.com/sister-software/mailwoman/pull/131)   |
 | **E**   | Phrase grouper                 | New `@mailwoman/phrase-grouper` workspace — Stage 2.7 proposes coherent input spans (street, postcode, locality, …) before Stage 3 runs. Rule-based v1 only; learned span proposer scoped for v0.5.1 ([PHASE_8_E](./phases/PHASE_8_E_learned_span_proposer.mdx)). | [#126](https://github.com/sister-software/mailwoman/pull/126)   |
 | **F**   | Verdict-smoke discipline       | New [`VERDICT_SMOKES.md`](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/VERDICT_SMOKES.mdx) + `--smoke-mode {constant,long-tail}` flag, so the cosine-LR mask that hid v0.4.0's divergence cannot reoccur.                    | [#125](https://github.com/sister-software/mailwoman/pull/125)   |
@@ -64,37 +64,37 @@ flowchart LR
     style Ct stroke-dasharray: 4 2
 ```
 
-Solid boxes are merged. The A1 tokenizer was retrained on corpus-v0.4.0 and halved byte-fallback (36.7% → 18.2%). The C-train (full classifier training run) is the remaining item — CE-only training in progress as of 2026-05-25.
+Solid boxes are merged. The A1 tokenizer was retrained on corpus-v0.4.0 and halved byte-fallback (36.7% → 18.2%). The C-train (full classifier training run) is the remaining item. CE-only training was in progress as of 2026-05-25.
 
-The single biggest schedule reframe was **A0**. The plan originally said "A is blocked by B" because the tokenizer trains on the same corpus as the classifier. We split that into:
+The largest schedule change was **A0**. The plan originally said "A is blocked by B" because the tokenizer trains on the same corpus as the classifier. We split thread A into two parts:
 
 - **A0** trains on `corpus-v0.3.0` immediately to validate the harness and establish a byte-fallback baseline.
 - **A1** retrains on `corpus-v0.4.0` (= v0.3.0 + B + B2) when the corpus is complete.
 
-That way A0 could ship in parallel with B + E + the scaffolds, instead of waiting for B + B2 to finish.
+A0 could then ship in parallel with B, E, and the scaffolds instead of waiting for B and B2 to finish.
 
-The other parallel-friendly move was **C-s and D-s as scaffolds**. The plan had C and D as serial training/integration work that needed real classifier output to validate. We pulled the _code_ portion to t0 (forward-pass tests against stub data, mocked top-k for Stage 5) and deferred only the actual training run. That left the only mandatory serial portion as `B → A1 → C-train`.
+The other parallelizing change was to build **C-s and D-s as scaffolds**. The plan had C and D as serial training and integration work that needed real classifier output to validate. We moved the _code_ portion to t0 (forward-pass tests against stub data, mocked top-k for Stage 5) and deferred only the training run. The only mandatory serial chain left was `B → A1 → C-train`.
 
 ## What is still cooking
 
-| Item                            | State                                                                                                                            | ETA                |
-| ------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- | ------------------ |
-| **CE-only full 50K C-train**    | In progress. Smoke passed: val_macro_f1=0.444, no divergence past step 2000. Full 50K run targeting first stable v0.5.0 weights. | ~6-8h from launch. |
-| **C-train full classifier run** | Blocked on A1 + `corpus-v0.4.0`. Estimated single H100-day on rented compute per the plan.                                       | After A1 lands.    |
+| Item                            | State                                                                                                                                        | ETA                |
+| ------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- | ------------------ |
+| **CE-only full 50K C-train**    | In progress. Smoke passed with val_macro_f1=0.444 and without divergence past step 2000. Full 50K run targeting first stable v0.5.0 weights. | ~6-8h from launch. |
+| **C-train full classifier run** | Blocked on A1 + `corpus-v0.4.0`. Estimated single H100-day on rented compute per the plan.                                                   | After A1 lands.    |
 
 Three smaller follow-ups carried over from postmortems:
 
-- **Wire `reconcileSpans` as the default Stage 5** in `runPipeline` (currently behind an explicit call). Lands once the classifier emits real top-k. Tracked in D-s's PR body.
-- **Learned phrase-grouper variant** (1-2M-param span proposer). Scope written in [`PHASE_8_E_learned_span_proposer.md`](./phases/PHASE_8_E_learned_span_proposer.mdx). v0.5.1 stretch.
-- **Reservoir-sampling parallelisation** in the tokenizer harness (~5× speedup possible per A0's session notes). Out-of-scope until A1 turnaround time becomes a real cost.
+- **Wire `reconcileSpans` as the default Stage 5** in `runPipeline`. It currently requires an explicit call. This lands once the classifier emits real top-k, and D-s's PR body tracks it.
+- **Learned phrase-grouper variant** (1-2M-param span proposer). [`PHASE_8_E_learned_span_proposer.md`](./phases/PHASE_8_E_learned_span_proposer.mdx) describes the scope. It is a stretch goal for v0.5.1.
+- **Reservoir-sampling parallelisation** in the tokenizer harness. A0's session notes estimate a ~5× speedup. It is out of scope until A1 turnaround time becomes a real cost.
 
 ## Where to read next
 
 If you are catching up on the architecture, read in this order:
 
-1. [The knowledge ladder](../site-2026-08/understanding/our-approach/the-knowledge-ladder.mdx) — the conceptual framing for why the two new layers (Stage 2.7 phrase grouper, expanded Stage 5 reconcile) exist.
-2. [The staged pipeline](../site-2026-08/understanding/our-approach/the-staged-pipeline.mdx) — the runtime composition end-to-end.
-3. [`STAGES.md`](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/STAGES.mdx) — formal per-stage type interfaces.
-4. [`VERDICT_SMOKES.md`](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/VERDICT_SMOKES.mdx) — the process discipline that kept v0.5.0 from repeating v0.4.0's cosine-LR mask bug.
+1. [The knowledge ladder](../site-2026-08/understanding/our-approach/the-knowledge-ladder.mdx) explains why the two new layers (Stage 2.7 phrase grouper, expanded Stage 5 reconcile) exist.
+2. [The staged pipeline](../site-2026-08/understanding/our-approach/the-staged-pipeline.mdx) describes the runtime composition end to end.
+3. [`STAGES.md`](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/STAGES.mdx) defines the per-stage type interfaces.
+4. [`VERDICT_SMOKES.md`](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/VERDICT_SMOKES.mdx) describes the smoke-test process that kept v0.5.0 from repeating v0.4.0's cosine-LR mask bug.
 
-If you want the line-by-line technical history, the v0.4.0 retrospective ([`retrospectives/v0-4-0-ablation-campaign.md`](../retrospectives/v0-4-0-ablation-campaign.mdx)) is what motivated v0.5.0; this article is the bookend.
+For the detailed technical history, read the v0.4.0 retrospective ([`retrospectives/v0-4-0-ablation-campaign.md`](../retrospectives/v0-4-0-ablation-campaign.mdx)). It motivated v0.5.0, and this article records the outcome.

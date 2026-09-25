@@ -53,7 +53,7 @@ _(Living document — sketched as the shift runs; final numbers + verdict at the
   locality **+5.1** (74.9→80.0), **fr.house_number +10.2** (`84.7→94.9` — v1.5.1 was _failing_ its own 87 floor),
   fr.region +7.1, fr.cedex +2.5, unit +1.5, micro/region +~0.7; us.street **−4.3** (80.0→75.7, above floor —
   a locality/street tradeoff), street_suffix −1.6, de −1.0; country **±0.0**. **v1.7.0 is a NET IMPROVEMENT
-  over v1.5.1**, nota regression-fix. The check FAILs only on (a) a stale country floor v1.5.1 also
+  over v1.5.1**, not just a regression-fix. The check FAILs only on (a) a stale country floor v1.5.1 also
   fails, and (b) the capacity-bound 4-target boundary check. Candidate shipped beside the canonical
   (`./out/v170/model.onnx`); not auto-promoted (the wall). The diagnostic arc is validated and v1.7.0 beats
   the current ship — a stronger outcome than "the fix worked."
@@ -225,7 +225,7 @@ won't change the coordinate picture and isn't worth the GPU.
 
 **Process lesson:** confirm the production default by md5 against the shipped artifact before using it
 as a baseline — don't assume the latest training run is the default. And grade the assembled
-coordinate, notthe assembled per-locale F1. The shift fell into a one-level-deeper version of
+coordinate, not just the assembled per-locale F1. The shift fell into a one-level-deeper version of
 the same trap the blog post warns about.
 
 ## Day session (2026-06-18 → 06-19) — the measurement-integrity campaign

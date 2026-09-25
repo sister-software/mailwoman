@@ -3,9 +3,10 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Read populated-place rows from GeoNames country dumps and emit locality variants. Optional
- *   `admin1CodesASCII.txt` and `countryInfo.txt` files provide region and country names. Missing
- *   references omit their corresponding components. Output rows carry CC-BY-4.0 attribution.
+ *   Reads populated places from a GeoNames country dump and emits locality rows.
+ *
+ *   Region and country names come from `admin1CodesASCII.txt` and `countryInfo.txt` in the same directory. When a
+ *   file is missing, rows omit that component.
  */
 
 import { componentsPresentIn } from "@mailwoman/codex/address-format"
@@ -18,16 +19,16 @@ import { SourceRegister } from "#registers"
 import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter, SurfaceOrigin } from "#types"
 
 /**
- * Registry ID stamped on rows from this source.
+ * The source ID on rows from this adapter.
  */
 export const GEONAMES_ADAPTER_ID = "geonames"
 /**
- * License attached to emitted rows.
+ * The license on rows from this adapter.
  */
 export const GEONAMES_DEFAULT_LICENSE = "CC-BY-4.0"
 
 /**
- * Zero-based column indices for GeoNames main-table dumps, shared with the same-data benchmark.
+ * Zero-based column indices in a GeoNames main-table dump.
  */
 export const GEONAMES_MAIN_COLUMNS = {
 	geonameid: 0,
@@ -46,12 +47,13 @@ export const GEONAMES_MAIN_COLUMNS = {
 const COL = GEONAMES_MAIN_COLUMNS
 
 /**
- * Historical or otherwise non-current populated-place feature codes.
+ * Feature codes for historical, abandoned or destroyed populated places, which the adapter skips.
  */
 const NON_CURRENT_PPL = new Set(["PPLH", "PPLQ", "PPLW", "PPLCH"])
 
 /**
- * Load region names keyed by `<CC>.<admin1>`; return an empty map when the file is absent.
+ * Loads region names keyed by `<CC>.<admin1>`.
+ * Returns an empty map when the file is missing.
  */
 async function loadAdmin1(dir: PathBuilder): Promise<Map<string, string>> {
 	const map = new Map<string, string>()
@@ -59,7 +61,6 @@ async function loadAdmin1(dir: PathBuilder): Promise<Map<string, string>> {
 
 	if (!(await pathExists(fp))) return map
 
-	// This file has no header row.
 	for await (const cols of readUnquotedTSV(fp)) {
 		if (cols[0] && cols[1]) {
 			map.set(cols[0], cols[1])
@@ -70,7 +71,8 @@ async function loadAdmin1(dir: PathBuilder): Promise<Map<string, string>> {
 }
 
 /**
- * Load country names keyed by ISO code; return an empty map when the file is absent.
+ * Loads country names keyed by ISO code.
+ * Returns an empty map when the file is missing.
  */
 async function loadCountries(dir: PathBuilder): Promise<Map<string, string>> {
 	const map = new Map<string, string>()
@@ -78,11 +80,10 @@ async function loadCountries(dir: PathBuilder): Promise<Map<string, string>> {
 
 	if (!(await pathExists(fp))) return map
 
-	// The file begins with comment lines rather than a header.
 	for await (const cols of readUnquotedTSV(fp)) {
 		if (cols[0]?.startsWith("#")) continue
 
-		// Read ISO code and country name columns.
+		// Column 0 holds the ISO code and column 4 the country name.
 		if (cols[0] && cols[4]) {
 			map.set(cols[0], cols[4])
 		}
@@ -91,6 +92,9 @@ async function loadCountries(dir: PathBuilder): Promise<Map<string, string>> {
 	return map
 }
 
+/**
+ * Creates the GeoNames populated-place adapter.
+ */
 export function createGeonamesAdapter(): CorpusAdapter {
 	return {
 		id: GEONAMES_ADAPTER_ID,
@@ -106,7 +110,6 @@ export function createGeonamesAdapter(): CorpusAdapter {
 			const admin1 = await loadAdmin1(dir)
 			const countries = await loadCountries(dir)
 
-			// The per-country dump has no header row.
 			const rows = readUnquotedTSV(opts.inputPath)
 
 			let emitted = 0
@@ -133,7 +136,8 @@ export function createGeonamesAdapter(): CorpusAdapter {
 				const region = admin1.get(`${cc}.${(rec[COL.admin1] ?? "").trim()}`)
 				const country = countries.get(cc)
 
-				// Emit the available locality, region, and country combinations.
+				// With a region, the adapter emits locality-region and locality-region-country rows.
+				// Without one, it emits a single row with the country when known.
 				const variants: Array<{ slot: string; comp: CanonicalRow["components"]; raw: string }> = []
 
 				if (region) {
@@ -180,6 +184,6 @@ export function createGeonamesAdapter(): CorpusAdapter {
 }
 
 /**
- * Adapter instance registered with the corpus builder.
+ * The adapter instance registered with the corpus builder.
  */
 export const geonamesAdapter = createGeonamesAdapter()

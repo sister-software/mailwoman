@@ -3,37 +3,16 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Generator for `data/venue-word-hints.json` — the mined single-token venue-class hint table, the
- *   narrow subset of the f6 venue-word survey that earned committing. One derived input (the f6
- *   lexicon artifact under the data root), one committed output. the subset is a pure filter, so a
- *   regenerate against the same input is byte-identical.
+ *   Generates `data/venue-word-hints.json` from the venue-word lexicon under the data root. The
+ *   output is a deterministic filter of the input, so regenerating from the same input gives the
+ *   same bytes. The output records the source md5, and `data/provenance.md` describes the source.
  *
- *   ── Why a composed measure rather than the venue ratio alone ────────────────────────────────────────────
- *   The survey's headline finding is that venue-frequency alone is toponym-saturated: famous-place
- *   tokens appear 35–60× denser in venue names than in place names ("Café de Paris", "Hotel México"),
- *   so `paris` scores a venue ratio of 0.973 — higher than `comer`'s 0.954 — while meaning nothing
- *   venue-like. Three bars compose the filter, and each kills a distinct false-positive family:
+ *   The filter combines several thresholds because the venue ratio alone favors famous place
+ *   names. Tokens such as `paris` appear often in venue names ("Café de Paris") and score a high
+ *   venue ratio without being venue words.
  *
- *   • {@linkcode VENUE_RATIO_MIN} + {@linkcode POI_FREQ_MIN} — the token is attested in venue names
- *     at rate rather than by accident of a small denominator.
- *   • {@linkcode TOP_CLASS_SHARE_MIN} (and `top_class ≠ "other"`) — the token predicts a class rather than
- *     just "venues generally". This is what makes an entry a hint a consumer can act on.
- *   • {@linkcode PLACE_RATE_PPM_MAX} — the toponym suppressor. The falsifier's named street-fork
- *     false positives sit at 6.8–17.4 ppm in place names (catherine 6.8, augusta 11.2, mexico 12.2,
- *     paris 17.4); genuine venue words sit at ≤ ~2 (comer 0.8, kfc 0.0, cemetery 2.04). The bar
- *     sits in the measured gap.
- *
- *   Measured at these bars: 2,249 tokens (food 997, retail 904, civic 187, health 52, lodging 48,
- *   transit 45, burial 16), zero of the falsifier's street-fork false positives ('augusta',
- *   'catherine', 'savile', …) and none of the toponym family ('paris', 'mexico'). `comer` — the
- *   torture entry that motivated the survey — does not pass: its category mass splits across
- *   food/retail/other (top class share 0.46), which is exactly the composed-measure honesty the
- *   trained-channel design needs. it stays with that deferred change rather than in this table.
- *
- *   Run: `node poi-taxonomy/scripts/build-venue-word-hints.ts && npx oxfmt poi-taxonomy/data/venue-word-hints.json`
- *   (committed JSON is oxfmt-clean, the repo law). The source artifact is data-root local (built by
- *   the f6 survey against the Overture poi corpus + the candidate gazetteer's primary names); its
- *   md5 is recorded in the output's provenance block, and `data/provenance.md` carries the rest.
+ *   Run `node packages/poi-taxonomy/lib/scripts/build-venue-word-hints.ts`, then format the output
+ *   with `npx oxfmt packages/poi-taxonomy/data/venue-word-hints.json`.
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
@@ -48,28 +27,29 @@ import { compareByCodePoint } from "@mailwoman/core/strings/compare"
 import type { VenueWordHint, VenueWordHintTable } from "#venue-word-hints"
 
 /**
- * Minimum share of the token's venue-vs-place per-million rate mass (`poi_rate / (poi_rate + place_rate)`).
+ * The minimum venue ratio, `poi_rate / (poi_rate + place_rate)`, with both rates per million.
  */
 export const VENUE_RATIO_MIN = 0.9
 
 /**
- * Minimum absolute occurrences in the poi-name corpus — below this the ratio
- * is a small-denominator artifact.
+ * The minimum number of occurrences in POI names.
+ * Below this count the venue ratio is unreliable.
  */
 export const POI_FREQ_MIN = 100
 
 /**
- * Minimum share of the token's poi occurrences held by its top category class.
+ * The minimum share of the token's POI occurrences that fall in its top category class.
  *
- * The class grain (food, retail, civic, …) is deliberate: single-token evidence rarely
- * separates `mexican_restaurant` from `taco_restaurant`, but reliably separates
- * "this names a food venue" from "this names a place".
+ * The filter uses classes such as food or retail because a single token can separate a
+ * food venue from a place name but rarely separates two restaurant categories.
  */
 export const TOP_CLASS_SHARE_MIN = 0.7
 
 /**
- * Maximum per-million rate in primary place names — the toponym suppressor
- * (see the header for the measured gap).
+ * The maximum rate per million in primary place names.
+ *
+ * This threshold removes place names such as `paris`, which score above 6 ppm,
+ * while venue words such as `cemetery` score near 2 ppm or below.
  */
 export const PLACE_RATE_PPM_MAX = 5
 
@@ -90,9 +70,7 @@ interface SourceLexicon {
 }
 
 /**
- * Apply the composed bars.
- *
- * Pure, deterministic, sorted by token — the byte-identity interface.
+ * Filters the source lexicon by the thresholds above and returns the hint table sorted by token.
  */
 export function buildVenueWordHintTable(source: SourceLexicon, sourceMD5: string): VenueWordHintTable {
 	const hints: Record<string, VenueWordHint> = {}

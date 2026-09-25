@@ -3,20 +3,14 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The scorer for the same-data benchmark (#2261): the registered metrics per stratum and pooled, the
- *   exact McNemar decision, and the paired bootstrap interval.
+ *   Scores the same-data benchmark with per-stratum and pooled metrics, an exact McNemar test, and a
+ *   paired bootstrap interval.
  *
- *   The test is paired because the design is: every arm answers the same rows from the same evidence, so the
- *   informative quantity is the discordant pairs — rows one arm got right and the other did not. An unpaired
- *   proportion test would discard that pairing and widen the interval for nothing.
+ *   Every arm answers the same rows, so the tests are paired. The decision uses the pooled comparison,
+ *   and the per-stratum tables are descriptive.
  *
- *   The decision is pooled and the per-stratum tables are descriptive. Exact power at alpha 0.05 two-sided:
- *   100 rows gives 0.74 against a true 12-point margin and 0.90 against 18 points. 50 rows gives 0.36 and
- *   0.58. Five per-stratum significance decisions at that power are five chances to find a win, so the power
- *   is spent once, pooled, at the registered 8-point margin.
- *
- *   A row whose arm raised is excluded from every metric and counted separately. Folding it into abstention
- *   would let a harness failure read as a resolver refusing, which is what the abstention strata measure.
+ *   A row whose arm threw an error is excluded from every metric and counted in `errors`. Counting it as
+ *   an abstention would make a harness failure look like a resolver refusal.
  */
 
 import { mulberry32 } from "@mailwoman/core/random"
@@ -26,33 +20,32 @@ import type { ArmRowResult } from "#eval-harness/same-data/arms"
 import type { SameDataPanelRow } from "#eval-harness/same-data/fixture"
 
 /**
- * The registered confidence bins for the reliability table, low edge inclusive
- * and high edge exclusive except the last.
+ * The registered confidence bin edges for the reliability table.
+ *
+ * Each bin includes its low edge and excludes its high edge, except the last bin, which includes both.
  */
 export const CONFIDENCE_BINS = [0, 0.2, 0.4, 0.6, 0.8, 1] as const
 
 /**
  * The largest discordant-pair count the exact test computes.
  *
- * The first term is `2 ** -n`, which is representable down to about n = 1074.
- * The bound is well inside that and refusing past it beats returning a silent zero.
+ * The first term is `2 ** -n`, which underflows to zero near n = 1075.
+ * The test throws past this bound instead of returning a wrong p-value.
  */
 const MAX_EXACT_N = 1000
 
 /**
  * The registered two-sided significance level.
- *
- * Frozen with the rest of the decision rule, because a level chosen after a
- * p-value is visible is the decision rule moving.
+ * It is part of the frozen decision rule.
  */
 export const SIGNIFICANCE_ALPHA = 0.05
 
 /**
- * The two-sided exact McNemar p-value for `b` rows the first arm won and `c` rows the second won.
+ * Returns the two-sided exact McNemar p-value for `b` rows the first arm won and `c` rows the second won.
  *
- * Computed as a two-sided exact binomial test at p = 0.5 over the discordant pairs.
- * The terms are built by the ratio `C(n, i+1) = C(n, i) * (n - i) / (i + 1)` starting
- * from `2 ** -n`, so no factorial is formed and nothing overflows.
+ * The function runs an exact binomial test at p = 0.5 over the discordant pairs.
+ * It builds each term from the previous one with `C(n, i+1) = C(n, i) * (n - i) / (i + 1)`,
+ * starting from `2 ** -n`, so it never computes a factorial.
  */
 export function mcnemarExactP(b: number, c: number): number {
 	const n = b + c
@@ -76,20 +69,17 @@ export function mcnemarExactP(b: number, c: number): number {
 }
 
 /**
- * A rate together with the two counts that produced it.
+ * A rate with the numerator and denominator that produced it.
  *
- * The counts travel with the value because a renderer that is handed only the rate has to recover
- * the numerator by multiplying, and it can only multiply by the denominator it happens to hold.
- * Pooled selection accuracy is measured over the gold-present rows while the table's
- * `n` column counts every scored row, so that reconstruction printed a numerator
- * no arm ever produced beside a rate that was correct.
+ * Renderers print these counts directly.
+ * A rate's denominator often differs from the row count `n`, so the counts
+ * cannot be recovered from the rate.
  */
 export interface Ratio {
 	numerator: number
 	denominator: number
 	/**
-	 * Null when the denominator is zero.
-	 * An unmeasured rate, never zero.
+	 * The rate, or null when the denominator is zero.
 	 */
 	value: number | null
 }
@@ -99,33 +89,30 @@ function ratio(numerator: number, denominator: number): Ratio {
 }
 
 /**
- * One arm's counts within one denominator.
+ * One arm's metrics over one stratum or the pooled rows.
  */
 export interface ArmMetrics {
 	arm: string
 	stratum: string
 	/**
-	 * Rows scored — after errored rows are removed.
-	 *
-	 * This is the row count rather than the denominator of any rate below.
-	 * Each rate carries its own.
+	 * The number of rows scored, excluding errored rows.
+	 * Each rate carries its own denominator.
 	 */
 	n: number
 	errors: number
 	selections: number
 	abstentions: number
 	/**
-	 * Correct over the rows whose gold is present.
-	 *
-	 * Unmeasured in the withheld-gold stratum, which has no correct answer by construction.
+	 * Correct selections over the rows whose gold is present.
+	 * It is unmeasured in the withheld-gold stratum.
 	 */
 	selectionAccuracy: Ratio
 	/**
-	 * Wrong-area selections over the selections that carried a coordinate.
+	 * Wrong-area selections over the gold-present selections that carried a coordinate.
 	 */
 	wrongArea: Ratio
 	/**
-	 * Both measured over the withheld-gold rows, so both are unmeasured everywhere else.
+	 * Abstention precision and false selection are measured over withheld-gold rows only.
 	 */
 	abstentionPrecision: Ratio
 	falseSelection: Ratio
@@ -133,7 +120,7 @@ export interface ArmMetrics {
 }
 
 /**
- * One arm's metrics over one row set.
+ * Computes one arm's metrics over a set of row results.
  */
 export function armMetrics(
 	arm: string,
@@ -175,7 +162,7 @@ export interface ReliabilityBin {
 }
 
 /**
- * The reliability table over one arm's non-abstained selections.
+ * Computes the reliability table over one arm's error-free selections.
  */
 export function reliabilityTable(results: readonly ArmRowResult[]): ReliabilityBin[] {
 	const selections = results.filter((result) => !result.error && result.selection !== null)
@@ -230,10 +217,10 @@ export interface PairedComparison {
 }
 
 /**
- * Compare two arms over the rows both scored, paired row by row.
+ * Compares two arms row by row over the gold-present rows that both scored without error.
  *
- * The bootstrap resamples rows rather than arms: a resample draws row indices with replacement
- * and recomputes both arms' accuracy on the same draw, which is what makes the interval a paired one.
+ * Each bootstrap resample draws row pairs with replacement and recomputes both arms'
+ * accuracy on the same draw, which makes the interval paired.
  */
 export function comparePaired(
 	first: readonly ArmRowResult[],
@@ -300,10 +287,7 @@ export function comparePaired(
 }
 
 /**
- * The registered decision, evaluated.
- *
- * Both conditions must hold.
- * Each is reported with what it read, so a refusal names the quantity that refused it.
+ * The evaluated decision rule, with the observed value behind each condition.
  */
 export interface BenchmarkVerdict {
 	marginPoints: number
@@ -313,17 +297,17 @@ export interface BenchmarkVerdict {
 	significanceMet: boolean
 	/**
 	 * Strata where Mailwoman's wrong-area rate or false-selection rate exceeds the baseline's.
-	 *
-	 * Empty means the secondary condition held.
 	 */
 	regressions: string[]
 	passed: boolean
 }
 
 /**
- * Evaluate the frozen decision rule: an 8-point pooled margin and an exact
- * McNemar rejection at alpha 0.05, with no stratum where Mailwoman's wrong-area
- * or false-selection rate is higher than the baseline's.
+ * Evaluates the frozen decision rule.
+ *
+ * The rule passes when the pooled margin reaches `requiredMarginPoints`, the exact McNemar
+ * p-value is at most {@link SIGNIFICANCE_ALPHA}, and no stratum shows a higher wrong-area
+ * or false-selection rate for Mailwoman than for the baseline.
  */
 export function evaluateVerdict(
 	pooled: PairedComparison,

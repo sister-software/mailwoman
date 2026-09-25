@@ -58,7 +58,7 @@ Three measurements, one mechanism:
 | B0   | the model reproduces it: B-hn first, I-pc continuations         | model, per piece (Norwegian) |
 | this | same on correctly-parsed, in-corpus Polish — not coverage       | model, per piece (Polish)    |
 
-## Why B4 barely moved — this is the reason, notthe ratio
+## Why B4 barely moved — this is the reason, not just the ratio
 
 B4's verdict named `--bare-street-prob 0.30` as the likely reason its target moved only +1.7pp. This
 probe adds the deeper reason: **a fragment extract is fighting a real, strong, length-conditioned
@@ -70,12 +70,12 @@ each other on the same pieces.
 **Two implications for B4b, both to be pre-registered not spun tonight:**
 
 1. **Oversample long house numbers.** The defect is worst at 3+ digits, where the postcode prior is
-   strongest. A extract drawn from real NO/PL numbers is mostly 2–3 digits; deliberately weighting
+   strongest. An extract drawn from real NO/PL numbers is mostly 2–3 digits; deliberately weighting
    3–4-digit house numbers aims the signal where the prior is hardest to beat.
 2. **The representation direction is the real change.** The #727 research says a lower-fertility vocab
    is upstream of any head, and this is the digit-specific evidence: a 3-digit number is 3 pieces
    with 2 postcode-leaning continuations _because_ digits tokenize one-per-character. A vocab where
-   `178` is one piece removes the continuation-postcode mass entirely. That is a bigger change than a
+   `178` is one piece removes the continuation-postcode mass entirely. That is a bigger change than an
    extract, and it is the operator's call whether Track B justifies re-opening the vocab work.
 
 ## The vocab change, quantified
@@ -106,12 +106,12 @@ continuation-count as its only length discriminator.
 
 **Cost, stated directly:** a splice grows the vocab and the embedding table; the new rows need
 gradient (the init_from fine-tune path the multisplice used). It is a bigger, coordinated change than
-a extract — a tokenizer + model bump rather than a corpus edit — so whether Track B justifies it is squarely
+an extract — a tokenizer + model bump rather than a corpus edit — so whether Track B justifies it is squarely
 the operator's call. But it attacks the root the extract only dents.
 
 ## What this does not change
 
-- **The fix is still a extract or the vocab — not a validator.** The house condition is true: this is
+- **The fix is still an extract or the vocab — not a validator.** The house condition is true: this is
   positive evidence and representation, never a hard postcode veto. The model's first-piece
   `B-house_number` is typically _right_; the fix is to stop the continuations from overriding it rather than
   to forbid postcodes.

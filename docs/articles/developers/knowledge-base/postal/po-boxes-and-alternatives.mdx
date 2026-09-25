@@ -8,76 +8,77 @@ role: explanation
 
 ## The question
 
-`PO Box 1234, San Francisco, CA 94119` parses without complaint and then geocodes to the middle of San
-Francisco. Nothing failed, and the answer is not the box. What class of address is this, which other
-shapes belong to it, and what is the right thing for a geocoder to return?
+`PO Box 1234, San Francisco, CA 94119` parses without errors and then geocodes to the middle of San
+Francisco. Nothing failed, but the coordinate is not the box's location. This page explains what kind
+of address this is, which other address shapes behave the same way, and what a geocoder should return
+for them.
 
 ## The analog
 
-A box is a shelf behind a counter. The postal service carries the item to the shelf and stops; the
-recipient comes and collects it. That is a complete delivery, and the address that describes it is a
+A PO box is a shelf behind a counter. The postal service carries the item to the shelf and stops, and
+the recipient comes to collect it. That is a complete delivery, and the address that describes it is a
 complete address.
 
-What it is not is a description of where the recipient is. The person renting the box can live twenty
-miles away, in a different town, in a different county — which is the point of renting one. A box is a
-delivery point deliberately decoupled from a location, and asking where it is returns the post office
-every time, along with every other box at that office.
+The address does not say where the recipient is. The person renting the box can live twenty miles away,
+in a different town or county, and that separation can be the reason for renting one. A box is a delivery point
+deliberately separated from a location. Asking where it is always returns the post office, the same
+answer as for every other box at that office.
 
 ## The family
 
-Several address shapes share that property, and it is worth recognizing them as one class.
+Several address shapes share that property, so treat them as one class.
 
-**Post office boxes**, under whichever name the local service uses: `BP` in France, `Apartado` in
-Spain, `GPO Box` and `Locked Bag` in Australia. The leader word and the number belong together and the
+**Post office boxes**, under whatever name the local service uses: `BP` in France, `Apartado` in
+Spain, `GPO Box` and `Locked Bag` in Australia. The leader word and the number belong together, and the
 whole phrase sits beside the town, never inside a street.
 
-**General delivery**, called poste restante outside the US: mail held at a named office for a
-recipient with no box and no fixed address there, collected in person at that office. The
-address names an office and a person, and nothing else.
+**General delivery**, called poste restante outside the US. The office holds mail for a recipient who
+has no box and no fixed address there, and the recipient collects it in person. The address contains
+only an office and a person.
 
 **Private mailboxes** at a commercial mail receiving agency. These look like street addresses because
-they are street addresses — the agency's. The US Postal Service requires the box to be marked, with
-`PMB` and a number or the alternative `#` and a number, on its own line or appended to the street line
+they are street addresses: the agency's. The US Postal Service requires the box to be marked with `PMB`
+and a number, or alternatively `#` and a number, on its own line or appended to the street line
 ([Domestic Mail Manual 508](https://pe.usps.com/text/dmm300/508.htm)). Without that marking, a mail
-drop is indistinguishable from a suite in an office building, and it will geocode to a storefront that
-is a real place and the wrong one.
+drop looks the same as a suite in an office building, and it geocodes to a storefront that is a real
+place but the wrong one.
 
-**Rural route boxes**, where the address names a route and a box along it rather than a street and a
+**Rural route boxes**, where the address gives a route and a box along it instead of a street and a
 number.
 
-**Military addresses** routed through APO and FPO channels, where the code names an entry point into a
-military postal network rather than a location on the ground.
+**Military addresses** routed through APO and FPO channels, where the code identifies an entry point
+into a military postal network instead of a location on the ground.
 
 ## What Mailwoman does with them
 
 The pipeline recognizes this class in two places. The kind classifier reports the input's shape before
-the model runs, so a PO box arrives labeled as one, and the parse assigns the whole phrase to a
-single `po_box` component that sits beside the locality rather than under the street.
+the model runs, so a PO box is labeled as one. The parse then assigns the whole phrase to a single
+`po_box` component that sits beside the locality instead of under the street.
 
-There is no box resolver, and there could not be a useful one, since every box at an office would
-share a coordinate. So a geocode of a box address resolves whatever else the string contains — the
-town, the region, the postcode — and reports the administrative tier it answered from.
+There is no box resolver, and a resolver would not be useful, because every box at an office would
+share one coordinate. A geocode of a box address therefore resolves the other parts of the string (the
+town, the region, the postcode) and reports the administrative tier it used.
 [Handle PO boxes and other edge kinds](../../how-to/handle-po-boxes-and-edge-kinds.mdx) has the
-transcripts, the regional forms it covers, and the same treatment for intersections, bare postcodes
-and landmark queries.
+transcripts and the regional forms, and it covers intersections, bare postcodes and landmark queries
+the same way.
 
 ## What it costs
 
-Three things to plan for.
+Plan for three consequences.
 
-A coordinate for a box address is a coordinate for the town. It is the correct answer to the question
-the string can support, and it is unusable for routing a driver. Read the resolution tier rather than
-the coordinate.
+A coordinate for a box address is the town's coordinate. It is the most the string can support, but it
+is unusable for routing a driver. Check the resolution tier instead of trusting the coordinate.
 
-Parsing tells you the shape and not the truth of it. A well-formed box address parses whether or not
-the box is rented, and a private mailbox marked as a suite parses as a suite. Deliverability is a
-question for a postal authority's address file
-([Validate an address before you use it](../../how-to/validate-addresses.mdx) draws the line).
+Parsing identifies the shape of an address. It cannot tell you whether the address is real. A well-formed box address parses
+whether or not the box is rented, and a private mailbox marked as a suite parses as a suite. Only a
+postal authority's address file can confirm deliverability.
+[Validate an address before you use it](../../how-to/validate-addresses.mdx) explains where parsing
+stops and deliverability checks begin.
 
-And a person can hold several of these at once — a street address where they live, a box where they
-receive mail, a mail drop for a business — with no component in common between them. Record matching
-on address text alone will treat them as three people. Matching on resolved components with a
-deliberate rule for box addresses will not
+A person can also have several of these addresses at once: a street address where they live, a box
+where they receive mail, and a mail drop for a business, with no component shared between them. Record
+matching on address text alone treats them as three people. Matching on resolved components with an
+explicit rule for box addresses avoids that
 ([Match messy records](../../how-to/match-messy-records.mdx)).
 
 ## Related

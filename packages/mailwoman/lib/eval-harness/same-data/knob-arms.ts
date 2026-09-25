@@ -3,11 +3,10 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The `ResolveOpts` arms the same-data `knob` phase replays, read from a JSON file.
+ *   Reads the `ResolveOpts` arms that the same-data `knob` phase replays from a JSON file.
  *
- *   A resolver option that the fixture replay ignores produces a column identical to the production arm, and so does
- *   a misspelled option name. The reader rejects an unknown key and a value of the wrong type, so an identical column
- *   means the option had no effect on this panel.
+ *   The reader rejects unknown keys and mistyped values. Otherwise a misspelled option would produce a
+ *   column identical to the production arm and look like an option with no effect.
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
@@ -15,16 +14,16 @@ import { stringifyJSON } from "@mailwoman/core/json"
 import type { ResolveOpts } from "@mailwoman/core/resolver"
 
 /**
- * A JSON value type a knob arm may set, or `null` for an option JSON cannot
- * express (a function, a lookup, a map).
+ * The JSON value type a knob arm may set for an option.
+ *
+ * `null` marks an option that JSON cannot express, such as a function or a map.
  */
 type KnobOptionKind = "number" | "boolean" | "string" | "string[]" | "weak-resolution" | null
 
 /**
  * The JSON type of every `ResolveOpts` field.
  *
- * `satisfies` over the required form of `ResolveOpts` makes a new resolver option a compile
- * error here until it is classified, so the key list cannot fall behind the interface.
+ * The `satisfies` clause makes a new `ResolveOpts` field a compile error until it is added here.
  */
 const KNOB_OPTION_KINDS = {
 	maxLookups: "number",
@@ -75,7 +74,7 @@ const KNOB_OPTION_KINDS = {
 const WEAK_RESOLUTION_READINGS = new Set(["score", "containment", "either"])
 
 /**
- * One knob arm: the column label and the options it replays with.
+ * One knob arm, with its column label and the options it replays with.
  */
 export interface KnobArm {
 	label: string
@@ -98,11 +97,13 @@ function matchesKind(value: unknown, kind: Exclude<KnobOptionKind, null>): boole
 }
 
 /**
- * Validate a parsed arms file: a non-empty array of `{ "label": string, "opts": { … } }` with distinct labels.
+ * Validates a parsed arms file.
  *
- * @throws When an entry is malformed, a label repeats, an option name is not a `ResolveOpts`
- * field, an option cannot be expressed in JSON, or a value has the wrong type.
- * The message names the arm and the option.
+ * The file must be a non-empty array of `{ "label": string, "opts": { … } }` entries with distinct labels.
+ *
+ * @throws When an entry is malformed, a label repeats, an option is unknown
+ * or inexpressible in JSON, or a value has the wrong type.
+ * The message identifies the arm and the option.
  */
 export function parseKnobArms(value: unknown, source = "arms file"): KnobArm[] {
 	if (!Array.isArray(value) || !value.length) {
@@ -151,7 +152,7 @@ export function parseKnobArms(value: unknown, source = "arms file"): KnobArm[] {
 }
 
 /**
- * Read and validate a knob arms file.
+ * Reads and validates a knob arms file.
  */
 export async function readKnobArms(path: string): Promise<KnobArm[]> {
 	return parseKnobArms(await readLocalJSONFile<unknown>(path), path)

@@ -4,38 +4,33 @@ import { stringifyJSON } from "@mailwoman/core/json"
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file Replacing strings at known offsets, shared by the planner and the writer.
- *
- *   The planner needs the result in memory. A resolver proving a replacement has to read the manifest as the plan
- *   will leave it rather than as it stands — and the writer needs it on disk. One function serves both, because two
- *   implementations of "splice these strings" would agree on every case anyone tested and differ on the one nobody
- *   did.
+ * @file Replaces strings at known offsets for both the move planner and the move writer.
  */
 
+/**
+ * A replacement of the text between two offsets.
+ */
 export interface TextEdit {
 	/**
-	 * What must sit at these offsets.
+	 * The text that must appear between the offsets.
 	 *
-	 * A mismatch throws rather than writing: an offset that has drifted names a different
-	 * string with exactly the same confidence as the right one.
+	 * A mismatch throws, because it means the offsets have drifted.
 	 */
 	expected: string
 	replacement: string
 	start: number
 	end: number
 	/**
-	 * Whether the offsets bracket a quote pair.
-	 *
-	 * A module specifier and a manifest target are quoted, so the quote character
-	 * is read from the text and written back.
-	 * A single-quoted specifier stays single-quoted and the formatter has nothing to undo.
-	 * A path in a shell command or a sentence is not.
+	 * Whether the offsets include a pair of quotes.
+	 * The edit keeps the original quote character.
 	 */
 	quoted: boolean
 }
 
 /**
- * `text` with every edit applied, spliced from the end so no offset shifts under a later one.
+ * Applies every edit to `text`, starting from the end so earlier offsets stay valid.
+ *
+ * `label` identifies the file in the error message.
  */
 export function spliceText(label: string, text: string, edits: readonly TextEdit[]): string {
 	let spliced = text

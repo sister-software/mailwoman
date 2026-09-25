@@ -216,7 +216,7 @@ node packages/mailwoman/lib/dev-tools/corpus/jurisdiction-coverage.run.ts --refr
 \`\`\`
 
 Corpus counts were taken over \`${report.corpusVersion}\`${report.corpusCensusTakenAt ? `, cached ${report.corpusCensusTakenAt}` : ", counted in this run"}, ${report.corpusRowsTotal.toLocaleString()} rows.
-**Admitted by** names the shipped graph whose training config admits the jurisdiction. Admission is per
+**Admitted by** shows the shipped graph whose training config admits the jurisdiction. Admission is per
 graph and the two shipped graphs partition the world between them, so the column reads the union of
 \`scope.config.json\`'s registered configs rather than any one of them. \`${relativeToRepo(report.configPath)}\`
 is the one \`censusCoverage\` read for its own mismatch findings.${

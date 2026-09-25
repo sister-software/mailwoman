@@ -3,24 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `sg-register` recipe — the forms a person in Singapore types, rendered over the Overture-SG register rows
- *   (#2204 §4). The base `overture` source carries the register's own shape, `990 old choa CHU kang road, 699814,
- *   Singapore`, and the Latin model has no register for the three forms that dominate typed Singapore addresses:
- *
- *   - the HDB block line, `Blk 123 Ang Mo Kio Ave 3 #05-67 Singapore 560123` — `Blk` in front of the block number (the
- *     register's `number`), a floor-unit `#NN-NN` after the street, the country name as the locality;
- *   - the bracketed postcode, `123 Ang Mo Kio Ave 3 S(560123)` — the form the postal service prints;
- *   - the building-led line, `National Shooting Centre, 990 Old Choa Chu Kang Road, Singapore 699814` — the register's
- *     `unit` field holds the building or estate name on 91,818 of 142,210 rows, which the adapter refuses as a unit and
- *     this recipe renders as a `venue` when it reads as a building rather than an estate.
- *
- *   Every value in `components` is a verbatim substring of `raw`, aligned by {@link alignAndWrite}. The floor-unit is
- *   synthesized (the register carries one on a single row): floor 01–30, unit 01–399, zero-padded — the shape rather than a
- *   real occupancy. `Blk` and the `S(` `)` around a postcode are untagged, as the board's `sg-cs-blk-12-kallang-ave`
- *   row expects (`house_number: "12"`). Streets arrive upper-case and are rendered title-cased. a third abbreviate the
- *   generic (`Avenue` → `Ave`, `Road` → `Rd`, …) the way a typed line does.
- *
- *   Run: mailwoman corpus slice sg-register --input <overture-sg.corpus.jsonl> --count N --seed S
+ *   Renders Overture Singapore address rows in the forms that people type, such as HDB block lines and `S(560123)` postcodes.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -34,7 +17,7 @@ import { SurfaceOrigin } from "#types"
 const SOURCE = "synth-sg-register"
 
 /**
- * The register's generics and the abbreviation a typed line uses for each.
+ * Street generics and their typed abbreviations.
  */
 const GENERIC_ABBREVIATIONS: ReadonlyArray<readonly [full: string, short: string]> = [
 	["Avenue", "Ave"],
@@ -51,30 +34,26 @@ const GENERIC_ABBREVIATIONS: ReadonlyArray<readonly [full: string, short: string
 ]
 
 /**
- * Estate and area names the register's `unit` field carries beside building names.
+ * Name endings that mark an estate or area in the source `unit` field.
  *
- * A name ending in one of these is an estate, which no one writes in front of an address line.
- * A name without one reads as a building and is rendered as a `venue`.
+ * People do not write an estate name before an address line, so the recipe
+ * renders only building names as a `venue`.
  */
 const ESTATE_TAILS = ["ESTATE", "CONSERVATION AREA", "HILLS", "PARK", "GARDENS", "GARDEN", "HEIGHTS", "GROVE", "VILLE"]
 
-/**
- * Share of rows per register.
- *
- * The block line and the bracketed postcode are the two the Latin model has never seen.
- * The official line keeps the register's own shape in the mix so the block forms train beside it.
- */
+// The official form receives the probability left after the block, bracketed-postcode and building-led forms.
 const P_BLOCK = 0.4
 const P_BRACKET_POSTCODE = 0.25
 const P_BUILDING_LED = 0.15
 const P_ABBREVIATE = 0.35
 const P_UPPER = 0.1
 
+// The source rarely carries a floor-unit, so the recipe synthesizes one within these bounds.
 const FLOOR_MAX = 30
 const UNIT_MAX = 399
 
 /**
- * The draw value that lands each register in the branch order below, for a caller that names the form.
+ * The draw value that selects each form in {@link renderSGRegister} when a caller requests that form.
  */
 const REGISTER_DRAW: Record<SGRegister, number> = {
 	block: 0,
@@ -84,17 +63,17 @@ const REGISTER_DRAW: Record<SGRegister, number> = {
 }
 
 /**
- * `old choa CHU kang road` → `Old Choa Chu Kang Road`; an already-mixed value is returned as it is.
+ * Title-cases an all-uppercase name and returns any other name unchanged.
  *
- * The register writes every street and building name upper-case, the same convention
- * as G-NAF, so the G-NAF title-caser serves both.
+ * The source writes names in uppercase like G-NAF, so the function reuses the G-NAF title-caser.
  */
 export function titleCaseSGName(name: string): string {
 	return name === name.toUpperCase() ? titlecase(name) : name
 }
 
 /**
- * Abbreviate the street's generic, wherever it sits (`Ang Mo Kio Avenue 3` → `Ang Mo Kio Ave 3`).
+ * Abbreviates the first street generic that the street contains, such as
+ * `Ang Mo Kio Avenue 3` to `Ang Mo Kio Ave 3`.
  */
 export function abbreviateSGStreet(street: string): string {
 	for (const [full, short] of GENERIC_ABBREVIATIONS) {
@@ -107,11 +86,9 @@ export function abbreviateSGStreet(street: string): string {
 }
 
 /**
- * Whether the register's `unit` value names a building rather than an estate —
- * the building-led register's lead.
+ * Reports whether the source `unit` value looks like a building name that can lead a line.
  *
- * A name carrying a digit, a parenthesized abbreviation (`diabetes & metabolism centre (DMC)`)
- * or one word only is not one.
+ * The check rejects `NIL`, single words, values with a digit or parenthesis, and estate names.
  */
 export function isBuildingName(unit: string): boolean {
 	const value = unit.trim().toUpperCase()
@@ -129,12 +106,12 @@ interface SGRow {
 }
 
 /**
- * The four typed forms this recipe renders.
+ * The four typed forms that this recipe renders.
  */
 export type SGRegister = "official" | "block" | "bracket_postcode" | "building_led"
 
 /**
- * One rendered register: the raw line plus the components it carries, every value a substring of the line.
+ * One rendered line with its components, each of which is a substring of `raw`.
  */
 export interface SGRegisterRendering {
 	raw: string
@@ -143,11 +120,13 @@ export interface SGRegisterRendering {
 }
 
 /**
- * Render one register form for one register row.
+ * Renders one source row in a sampled or requested form.
  *
- * Pure: every random draw comes through `random`.
- * A `register` names the form to render instead of drawing one, for a board that wants a balanced spread;
- * `building_led` still needs a building-shaped `unit` and falls back to `official` without one.
+ * All randomness comes from `random`.
+ * A requested `building_led` form falls back to `official` when the row's `unit` is not a building name.
+ *
+ * A requested `block` form falls back to `bracket_postcode` when the row's number is not a block number.
+ * `Blk` and the `S(` and `)` around a postcode stay untagged.
  */
 export function renderSGRegister(row: SGRow, random: () => number, register?: SGRegister): SGRegisterRendering {
 	const street0 = titleCaseSGName(row.street)
@@ -195,8 +174,9 @@ export function renderSGRegister(row: SGRow, random: () => number, register?: SG
 }
 
 /**
- * Recipe registered with the corpus builder.
- * See the file header for the registers and why each is here.
+ * Renders each Overture Singapore corpus row from `--input` once in a sampled typed form.
+ *
+ * The recipe skips rows without a street, a block-style number, or a six-digit postcode.
  */
 export const sgRegisterRecipe: CorpusRecipe = {
 	name: "sg-register",
@@ -263,8 +243,7 @@ export const sgRegisterRecipe: CorpusRecipe = {
 						"CDLA-Permissive-2.0 — Overture Maps addresses over the Singapore Open Data Licence 1.0 (OneMap / Singapore Land Authority)",
 				},
 				`sg-register:${rendering.register}`,
-				// The block number, street and postcode are the Overture-SG register's own values,
-				// re-ordered into the three forms a person in Singapore types.
+				// The values come from Overture, and only their arrangement is synthetic.
 				{ register: SourceRegister.Overture, surface: SurfaceOrigin.Composed }
 			)
 

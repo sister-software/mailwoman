@@ -3,16 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The interface every map app's floating chrome answers, as assertions a browser test can run.
- *
- *   It lives here rather than in either app's `test/e2e/` because both apps make the same promises about the same
- *   components, and the defects it exists to catch were found by hand on one app while the other carried them too: a
- *   side sheet that opened over the control that opened it, a footer strip that covered the bottom sheet's last rows,
- *   a compass mounted nowhere, two panels sharing an edge.
- *
- *   IT asserts geometry and reachability rather than appearance. Whether the glass is the right colour is a judgement. that
- *   two controls do not occupy the same pixels, and that every panel can be closed by someone holding a phone, are
- *   facts a machine can hold.
+ *   Playwright assertions on the geometry and reachability of the floating chrome shared by the map apps.
  */
 
 import { expect, type Locator, type Page } from "@playwright/test"
@@ -28,26 +19,23 @@ export interface Box {
 }
 
 /**
- * How far off north the compass check turns the map.
+ * The bearing in degrees that the compass check rotates the map to.
  *
- * Any direction past the control's own dead zone would do.
- * This one is far enough that a needle drawn at the wrong angle is visible in a failure screenshot.
+ * Any bearing outside the compass's dead zone works.
  */
 const BEARING_OFF_NORTH = 42
 
 /**
- * How many pointer moves the scoped-query check drives.
+ * The number of pointer moves in the scoped-query check.
  *
- * Enough that the hook's per-frame throttle lets several through, and few enough
- * that the walk stays inside one test's budget.
+ * The hover hook throttles to one query per frame, so the check needs several moves to see several queries.
  */
 const POINTER_MOVES = 8
 
 /**
- * The chrome pieces that float over a map, by selector.
+ * Selectors for the chrome pieces that float over a map.
  *
- * A missing one is skipped rather than failed: the planetary apps carry no chip row on
- * every route, and a test for one app must not fail on the other's absences.
+ * The checks skip a missing piece, because not every app mounts every piece on every route.
  */
 export const CHROME_SELECTORS = [
 	".mw-map-panel",
@@ -59,11 +47,9 @@ export const CHROME_SELECTORS = [
 ] as const
 
 /**
- * Two boxes overlap when they share any area.
+ * Returns whether two boxes share any area.
  *
- * Touching edges do not count.
- * A sheet ending exactly on the footer's top edge is correct, and the sub-pixel
- * rounding a browser reports would otherwise make that a failure.
+ * The `tolerance` in pixels lets touching edges pass despite the browser's sub-pixel rounding.
  */
 export function boxesOverlap(a: Box, b: Box, tolerance = 1): boolean {
 	return (
@@ -95,11 +81,9 @@ async function visibleBoxes(page: Page): Promise<Map<string, Box>> {
 }
 
 /**
- * No two floating pieces of chrome occupy the same pixels.
+ * Asserts that no two floating chrome pieces overlap.
  *
- * A side sheet is exempt, because on a phone it is deliberately the whole panel laid over everything else.
- * The overlap there is the design.
- * Every other pair has to clear.
+ * The side sheet is exempt because on a phone it covers the other chrome by design.
  */
 export async function expectNoChromeOverlap(page: Page): Promise<void> {
 	const boxes = [...(await visibleBoxes(page))].filter(([selector]) => selector !== ".mw-map-sheet--side")
@@ -110,7 +94,7 @@ export async function expectNoChromeOverlap(page: Page): Promise<void> {
 			const [leftSelector, left] = boxes[i]!
 			const [rightSelector, right] = boxes[j]!
 
-			// The panel contains the search field and the chips, so a nested pair is not a collision.
+			// The panel and the search slot contain other chrome, so their pairs are skipped.
 			if (leftSelector === ".mw-map-panel" || leftSelector === ".search-slot") continue
 
 			if (boxesOverlap(left, right)) {
@@ -125,8 +109,7 @@ export async function expectNoChromeOverlap(page: Page): Promise<void> {
 }
 
 /**
- * Nothing that carries content ends underneath the footer strip, which is the defect
- * that hid a feature's diameter and its source line on a phone.
+ * Asserts that the map panel and the feature panel end above the footer strip's top edge.
  */
 export async function expectNothingUnderTheFooter(page: Page): Promise<void> {
 	const footer = await page.locator(".mw-map-footer").boundingBox()
@@ -149,12 +132,10 @@ export async function expectNothingUnderTheFooter(page: Page): Promise<void> {
 }
 
 /**
- * A control that opens a sheet closes it again, and the sheet carries its own close.
+ * Asserts that `opener` opens one side sheet, and that both the sheet's close button and `opener` close it.
  *
- * Both halves matter and for different reasons: on a wide screen the opening control
- * stays beside the sheet, and on a phone the sheet covers it.
- * So a sheet without its own close is one a phone cannot dismiss, and a control
- * that cannot toggle is one a pointer cannot undo.
+ * On a phone the sheet covers its opener, so the sheet needs its own close button.
+ * On a wide screen the opener stays visible, so it must also toggle the sheet closed.
  */
 export async function expectSheetOpensAndCloses(page: Page, opener: Locator): Promise<void> {
 	const sheet = page.locator(".mw-map-sheet--side")
@@ -164,11 +145,9 @@ export async function expectSheetOpensAndCloses(page: Page, opener: Locator): Pr
 	await expect(sheet, "one side sheet at a time").toHaveCount(1)
 	await expect(sheet.locator(".mw-map-sheet__close"), "the sheet carries its own close").toHaveCount(1)
 
-	// Its own close dismisses it.
 	await sheet.locator(".mw-map-sheet__close").click()
 	await expect(sheet).toHaveCount(0)
 
-	// And so does the control that opened it, which is the path a pointer on a wide screen takes.
 	await opener.click()
 	await expect(sheet).toBeVisible()
 	await opener.click()
@@ -176,14 +155,12 @@ export async function expectSheetOpensAndCloses(page: Page, opener: Locator): Pr
 }
 
 /**
- * Every control in the map's column that opens a sheet opens exactly one, and closes it both ways.
+ * Runs {@link expectSheetOpensAndCloses} on every control in the map's control stack that opens a sheet.
  *
- * The controls are read off the page rather than named here, so an app that mounts a different
- * set is held to the same interface and a control added later is covered without this file changing.
- * A control that opens no sheet — a compass, a zoom button — is skipped,
- * which is what keeps the walk honest about what it actually checked.
+ * The controls are discovered from the page, so a newly added control is checked automatically.
+ * A control that opens no sheet, such as a zoom button, is skipped.
  *
- * @returns The accessible names of the controls that were exercised.
+ * @returns The accessible names of the controls that were checked.
  */
 export async function expectEverySheetControlCloses(page: Page): Promise<string[]> {
 	const controls = page.locator(".mw-map-control-stack .mw-map-control")
@@ -198,8 +175,7 @@ export async function expectEverySheetControlCloses(page: Page): Promise<string[
 		const opened = await page.locator(".mw-map-sheet--side").count()
 
 		if (opened === 0) {
-			// Nothing opened, so there is nothing to close.
-			// Leave the control as it was found.
+			// The second click restores the control's original state.
 			await control.click()
 
 			continue
@@ -216,14 +192,10 @@ export async function expectEverySheetControlCloses(page: Page): Promise<string[
 }
 
 /**
- * The element is not merely in the layout but actually reachable at its own centre.
+ * Asserts that a hit test at the element's centre reaches the element.
  *
- * `toBeVisible` is not this assertion and cannot be: it means a non-empty box and no
- * `visibility: hidden`, and an element clipped away by an ancestor's `overflow` keeps both.
- * The sources popover shipped exactly that way — present, carrying the right credits,
- * and erased by the footer strip's own `overflow-x` — and a `toBeVisible` test passed over it.
- *
- * Hit-testing is what tells the difference, because a clipped element receives no hits.
+ * Playwright's `toBeVisible` passes for an element that an ancestor's `overflow` clips away.
+ * A hit test fails for that element because a clipped element receives no hits.
  */
 export async function expectReachable(page: Page, selector: string): Promise<void> {
 	const locator = page.locator(selector)
@@ -244,16 +216,12 @@ export async function expectReachable(page: Page, selector: string): Promise<voi
 }
 
 /**
- * Every `queryRenderedFeatures` the page runs while the pointer moves names the layers it wants.
+ * Asserts that every `queryRenderedFeatures` call made during pointer moves passes a `layers` list.
  *
- * Unscoped, that call walks the whole style: measured at 64.3 ms returning 4,819
- * features over the 79-layer basemap at zoom 14 in Manhattan, against 5.7 ms
- * and 44 features scoped to the 11 label layers.
- * One per pointer move is the map's entire frame budget, and nothing about the page looks
- * wrong when it happens, which is why it is a interface rather than a timing assertion,
- * and why a timing assertion would be the flaky way to write this.
+ * An unscoped call walks every layer in the style and can use a whole frame per pointer move.
+ * The check inspects the call arguments because a timing assertion would be flaky.
  *
- * @param handle The global the app republishes its map instance under.
+ * @param handle The global under which the app publishes its map instance.
  */
 export async function expectPointerQueriesStayScoped(page: Page, handle: string): Promise<void> {
 	await page.evaluate((name) => {
@@ -285,7 +253,7 @@ export async function expectPointerQueriesStayScoped(page: Page, handle: string)
 		await page.mouse.move(box.x + box.width / 2 + step * 7, box.y + box.height / 2 + step * 5)
 	}
 
-	// The hover query runs on an animation frame, so the moves are given one to land in.
+	// The hover query runs on an animation frame, so the check waits for one.
 	await page.waitForTimeout(300)
 
 	const scopes = await page.evaluate(() => (Reflect.get(globalThis, "__mailwomanQueryScopes") as boolean[]) ?? [])
@@ -299,11 +267,9 @@ export async function expectPointerQueriesStayScoped(page: Page, handle: string)
 }
 
 /**
- * The compass appears once the map leaves north and hides again when it returns,
- * and pressing it is what returns it.
+ * Asserts that the compass appears when the map is rotated off north and that clicking it hides it.
  *
- * `setBearing` drives the map directly rather than synthesising a rotate gesture: the gesture
- * is MapLibre's to test, and what this asserts is the chrome's response to a direction.
+ * The check calls `setBearing` directly because the rotate gesture belongs to MapLibre.
  */
 export async function expectCompassFollowsBearing(page: Page, handle: string): Promise<void> {
 	const compass = page.locator(".mw-map-compass")
@@ -311,13 +277,10 @@ export async function expectCompassFollowsBearing(page: Page, handle: string): P
 	await expect(compass, "a compass is mounted").toHaveCount(1)
 	await expect(compass).toBeHidden()
 
-	// The callback is serialized and runs in the browser, so it closes over nothing from this module.
-	// Every value it needs is an argument.
+	// The callback is serialized into the browser, so every value it uses must be passed as an argument.
 	await page.evaluate(
 		({ name, degrees }) => {
-			// The app republishes its map instance under a well-known global for exactly this kind of driving.
-			// `Reflect.get` reads it without asserting anything about `globalThis`,
-			// which carries no index signature.
+			// `Reflect.get` reads the global because `globalThis` has no index signature.
 			const published = Reflect.get(globalThis, name) as { setBearing(value: number): void } | undefined
 
 			published?.setBearing(degrees)

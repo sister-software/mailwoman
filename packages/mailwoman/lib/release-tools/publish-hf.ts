@@ -55,10 +55,8 @@ async function servedOnDemoPath(_name: string, _locale: string, _version: string
 const BUCKET_RESOLVE = "https://huggingface.co/buckets/sister-software/mailwoman/resolve"
 
 /**
- * Configures {@linkcode publishReleaseToHF} with the release identity
+ * Options for {@linkcode publishReleaseToHF}: the release identity
  * and the local paths of the artifacts to upload.
- *
- * The retired `wofHot` option is still accepted and is ignored.
  */
 export interface PublishHFOptions {
 	version?: string
@@ -69,8 +67,9 @@ export interface PublishHFOptions {
 	tokenizer?: string
 
 	/**
-	 * Points to the sealed character vocabulary of a character-path model; when it is set,
-	 * no tokenizer is required and the release gets no `releases.json` entry.
+	 * The sealed character vocabulary of a character-path model.
+	 *
+	 * When it is set, the tokenizer is not required and the release gets no `releases.json` entry.
 	 */
 	charVocab?: string
 	modelCard?: string
@@ -89,7 +88,9 @@ export interface PublishHFOptions {
 	setDefault?: boolean
 
 	/**
-	 * Is a retired option that is accepted and ignored so existing invocations do not fail.
+	 * A retired option.
+	 *
+	 * It is accepted so existing invocations keep working, and it is ignored.
 	 */
 	wofHot?: string
 }
@@ -187,11 +188,9 @@ async function verifyRequiredFiles(args: PublishHFOptions): Promise<void> {
 }
 
 /**
- * Refuses to publish a model whose card records no training attribution,
- * and prints any recorded source that names no licence.
+ * Fails when the model card records no training attribution, and warns about each source without a licence.
  *
- * Only a missing attribution list is fatal, because a source without a named licence
- * is a gap to record rather than a finding against it.
+ * Only a missing attribution list is fatal.
  */
 export async function verifyTrainingProvenance(cardPath: PathBuilderLike): Promise<void> {
 	const card = await readLocalJSONFile<{ attribution?: unknown; training?: { data_attribution?: unknown } }>(cardPath)
@@ -223,10 +222,11 @@ export async function verifyTrainingProvenance(cardPath: PathBuilderLike): Promi
 }
 
 /**
- * Uploads a model release and its optional artifacts to the Hugging Face bucket, checks that
- * each required file is reachable, and adds the release to the locale's `releases.json`.
+ * Uploads a model release and its optional artifacts to the Hugging Face bucket.
  *
- * A character-encoder release (one with `charVocab`) is uploaded but not added to `releases.json`.
+ * The function checks that each required file is reachable, then adds the
+ * release to the locale's `releases.json`.
+ * A release with `charVocab` is uploaded and left out of `releases.json`.
  */
 export async function publishReleaseToHF(args: PublishHFOptions): Promise<void> {
 	if (!args.version) {

@@ -94,7 +94,7 @@ export interface AddressPointDatabase {
  * The parameter type its builders take.
  *
  * Kysely is invariant in its schema parameter (the incompatibility is in `transaction()`),
- * so a extract that extends `AddressPointTable` — OSM adds `h3_cell` — cannot pass
+ * so an extract that extends `AddressPointTable` — OSM adds `h3_cell` — cannot pass
  * its own handle to a `Kysely<AddressPointDatabase>` parameter.
  * Naming only `schema` lets it, and the DDL below needs nothing else.
  */

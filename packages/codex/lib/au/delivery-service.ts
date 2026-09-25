@@ -3,10 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Australia Post delivery-service designators, including current PO/GPO boxes and bags plus
- *   legacy rural and community services. The designator table and number requirements come from
- *   Australia Post's barcode addressing booklet; `legacy` marks types absent from current product
- *   pages. Sources were checked on 2026-06-11.
+ *   Australia Post delivery-service designators, from the Postal Delivery Type table in the barcode addressing
+ *   booklet.
  *
  * @see {@link https://auspost.com.au/content/dam/auspost_corp/media/documents/Barcode_hints_tips.pdf Australia Post barcode addressing booklet (Postal Delivery Type table)}
  * @see {@link https://auspost.com.au/sending/guidelines/addressing-guidelines Australia Post addressing guidelines}
@@ -20,23 +18,22 @@
  */
 export interface AuDeliveryServiceDesignator {
 	/**
-	 * Full type name as published.
+	 * The published type name.
 	 */
 	name: string
 	/**
-	 * Standard abbreviation used on mail.
+	 * The abbreviation used on mail.
 	 */
 	abbreviation: string
 	/**
-	 * Whether a number is required.
-	 * Care of Post Office, CMA, CPA, and CMB are exceptions.
+	 * Whether the designator must be followed by a number.
 	 */
 	requiresNumber: boolean
 	/**
-	 * True for types found in the Postal Delivery Type table but absent from
-	 * current Australia Post product pages.
+	 * Whether the type is missing from current Australia Post product pages.
 	 *
-	 * Parsers recognize them; synthesis should use them sparingly.
+	 * Parsers still recognize legacy types.
+	 * Synthesis should use them rarely.
 	 */
 	legacy: boolean
 }
@@ -68,9 +65,9 @@ export const AU_DELIVERY_SERVICE_DESIGNATORS = [
 export type AuDeliveryServiceAbbreviation = (typeof AU_DELIVERY_SERVICE_DESIGNATORS)[number]["abbreviation"]
 
 /**
- * Ordered designator patterns.
+ * Designator patterns in match order.
  *
- * `MS` requires a digit-leading identifier to avoid matching "Ms Smith".
+ * `MS` requires an identifier that starts with a digit, so "Ms Smith" does not match.
  */
 const DESIGNATOR_PATTERNS: ReadonlyArray<readonly [AuDeliveryServiceAbbreviation, string]> = [
 	["GPO BOX", String.raw`general\s+post\s+office\s+box|g\.?\s*p\.?\s*o\.?\s*box`],
@@ -92,7 +89,7 @@ const DESIGNATOR_INFO = new Map<AuDeliveryServiceAbbreviation, { requiresNumber:
 )
 
 /**
- * Anchored matcher for each designator and its identifier rule.
+ * An anchored regular expression for each designator and its identifier.
  */
 const MATCHERS: ReadonlyArray<{ abbreviation: AuDeliveryServiceAbbreviation; re: RegExp }> = DESIGNATOR_PATTERNS.map(
 	([abbreviation, src]) => {
@@ -105,34 +102,33 @@ const MATCHERS: ReadonlyArray<{ abbreviation: AuDeliveryServiceAbbreviation; re:
 )
 
 /**
- * Parsed Australian delivery-service line.
+ * A parsed Australian delivery-service line.
  */
 export interface AuDeliveryServiceMatch {
 	/**
-	 * The designator phrase as it appeared ("G.P.O. Box", "Locked Bag").
+	 * The designator phrase as written, such as "G.P.O.
+	 * Box".
 	 */
 	matched: string
 	/**
-	 * The canonical Postal Delivery Type abbreviation ("GPO BOX", "locked BAG").
+	 * The canonical abbreviation, such as "GPO BOX" or "LOCKED BAG".
 	 */
 	designator: AuDeliveryServiceAbbreviation
 	/**
-	 * The delivery-service number when present ("9999", "4600").
+	 * The delivery-service number, when present.
 	 */
 	id?: string
 	/**
-	 * True when the designator is an amas-only legacy form (see the table).
+	 * Whether the designator is a legacy type.
 	 */
 	legacy: boolean
 }
 
 /**
- * If `input` is a standalone Australia Post delivery-service phrase
- * ("GPO Box 2890", "Locked Bag 1797", "RMB 4600", bare "CMB"), return the canonical
- * designator, the id, and the legacy flag.
+ * Parses a standalone Australia Post delivery-service line, such as "GPO Box 2890" or a bare "CMB".
  *
- * Null otherwise — including for "Private Box", which Australia Post explicitly
- * calls out as not a valid type.
+ * Returns null for any other input.
+ * Australia Post lists "Private Box" as invalid, and it returns null.
  */
 export function matchAuDeliveryService(input: unknown): AuDeliveryServiceMatch | null {
 	if (typeof input !== "string") return null
@@ -155,17 +151,16 @@ export function matchAuDeliveryService(input: unknown): AuDeliveryServiceMatch |
 }
 
 /**
- * Type-predicate: does the input look like a standalone AU delivery-service address line?
+ * Returns whether the input is a standalone Australian delivery-service line.
  */
 export function isAuDeliveryService(input: unknown): boolean {
 	return matchAuDeliveryService(input) !== null
 }
 
 /**
- * Normalize a recognized delivery-service phrase to the canonical amas form
- * (`"g.p.o. Box 123"` → `"GPO BOX 123"`).
+ * Normalizes a delivery-service line to its canonical form, so `"g.p.o. Box 123"` becomes `"GPO BOX 123"`.
  *
- * @returns The input unchanged if it isn't one.
+ * @returns The input unchanged when it is not a delivery-service line.
  */
 export function normalizeAuDeliveryService(input: string): string {
 	const m = matchAuDeliveryService(input)

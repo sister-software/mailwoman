@@ -3,8 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Public exports for coarse-placer operator tools. Tool modules handle their own arguments and
- *   output; heavy dependencies are loaded only when needed.
+ *   Re-exports the coarse-placer operator tools. Each tool loads its heavy dependencies only when it runs.
  */
 
 export * from "#coarse-placer/tools/build/dataset"

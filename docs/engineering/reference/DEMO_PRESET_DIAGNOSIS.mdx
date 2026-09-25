@@ -9,50 +9,50 @@ title: Demo preset diagnosis
 
 - **"New York, NY"**: Fixed by the region-aware locality bias guard ([#174](https://github.com/sister-software/mailwoman/pull/174)). The QueryShape prior now skips locality bias when the preceding text matches the region's full name.
 - **FST importance weighting**: Washington DC locality (0.815) correctly outranks Washington state (0.764) via Wikipedia importance ([#173](https://github.com/sister-software/mailwoman/pull/173)).
-- **"Washington, DC"**: Partially improved — FST biases toward locality, but the model's high B-street confidence after street phrases resists the prior. Remaining fix is in training data quality.
-- **"San Francisco"**: Fixed in v0.5.2 model — correctly labeled as locality.
+- **"Washington, DC"**: Partially improved. The FST biases toward locality, but the model's high B-street confidence after street phrases overrides the prior. The remaining fix depends on training data quality.
+- **"San Francisco"**: Fixed in the v0.5.2 model, which labels it as a locality.
   :::
 
-Documents the root-cause analysis of v0.5.1's demo preset failures and the fix plan. Derived from an 8-turn DeepSeek consultation (2026-05-25).
+This page records the root-cause analysis of v0.5.1's demo preset failures and the fix plan. The analysis came from an 8-turn DeepSeek consultation (2026-05-25).
 
 ## The failures
 
-Six demo presets tested against v0.5.1 (`h384`, `val_macro_f1=0.638`). Two systematic failures:
+Six demo presets were tested against v0.5.1 (`h384`, `val_macro_f1=0.638`). Two of them failed systematically:
 
 | Preset | Input                                               | Expected                       | Got                          |
 | ------ | --------------------------------------------------- | ------------------------------ | ---------------------------- |
 | #1     | `1600 Pennsylvania Avenue NW, Washington, DC 20500` | Washington=locality, DC=region | Washington=region, DC=region |
 | #2     | `350 5th Ave, New York, NY 10118`                   | New York=locality, NY=region   | New York=region, NY=region   |
 
-Other failures (#3 venue, #4 directional, #6 postcode) are unrelated — covered separately below.
+The other failures (#3 venue, #4 directional, #6 postcode) have different causes, covered separately below.
 
 ## Root cause: WOF bare-name frequency dominance
 
-The model receives no positional signal about where a token appears in an address structure. v0's rule-based solvers had explicit positional penalties (`HouseNumberPositionPenalty`, `PostcodePositionPenalty`) that the neural pipeline does not replicate.
+The model receives no explicit signal about where a token sits in the address structure. v0's rule-based solvers had explicit positional penalties (`HouseNumberPositionPenalty`, `PostcodePositionPenalty`) that the neural pipeline does not replicate.
 
-The transformer backbone has positional encodings and can learn "token after street, before region abbreviation → locality." But:
+The transformer backbone has positional encodings and can learn "token after street, before region abbreviation → locality." The training data works against that pattern:
 
-- **WOF entries are bare place names** — "Washington" → `B-region` with no surrounding context
-- **OSM entries are full addresses** — "Washington" → `B-locality` between a street and a region abbreviation
-- **WOF bare-name entries outnumber OSM positional-context entries** for ambiguous place names
+- **WOF entries are bare place names**: "Washington" → `B-region` without surrounding context.
+- **OSM entries are full addresses**: "Washington" → `B-locality` between a street and a region abbreviation.
+- **WOF bare-name entries outnumber OSM positional-context entries** for ambiguous place names.
 
-The model learns the frequency-dominant pattern (Washington = region) because the region label appears more frequently in isolation. The positional signal from OSM full-address rows exists but is diluted.
+The model learns the more frequent pattern (Washington = region) because the region label dominates the bare-name rows. The OSM full-address rows provide a positional signal, but the WOF rows dilute it.
 
 ## BIO boundaries are correct
 
-The model emits `B-region` for "Washington" and a separate `B-region` for "DC" (not `I-region`). This is structurally correct. They are separate entities separated by comma+space (O-tokens). The CRF transition mask is working. The problem is tag assignment on the first entity rather than boundary detection.
+The model emits `B-region` for "Washington" and a separate `B-region` for "DC" (not `I-region`). This structure is correct, because the two entities are separated by a comma and a space (O-tokens). The CRF transition mask works. The error is in the tag assigned to the first entity, and boundary detection is correct.
 
 ## Fix plan (priority order)
 
-### 1. QueryShape locality soft prior (inference-time, no retraining)
+### 1. QueryShape locality soft prior (inference-time, without retraining)
 
-Detect unambiguous 2-letter region abbreviation (e.g., `DC`, `NY`, `CA`) → bias preceding place-name tokens toward `B-locality` / `I-locality` via emission prior.
+Detect an unambiguous 2-letter region abbreviation (e.g., `DC`, `NY`, `CA`) and bias the preceding place-name tokens toward `B-locality` / `I-locality` through an emission prior.
 
-- **Where:** Between classifier forward pass and CRF Viterbi decode (existing `buildEmissionPriors` path)
-- **Magnitude:** `+2.0` logit boost (same as existing format-hit priors; ~7.4× odds multiplier at softmax)
-- **Safety constraint:** Only bias tokens verified against WOF locality entries at the detected locale. "Pennsylvania" preceding DC stays as street because it's not a WOF locality in the relevant context.
-- **Effort:** ~20 lines. Zero retraining.
-- **Test:** Demo presets #1 and #2. If still fails, bump to +3.0. If overcorrects on "Washington state" inputs, pull back.
+- **Where:** Between the classifier forward pass and the CRF Viterbi decode (the existing `buildEmissionPriors` path).
+- **Magnitude:** `+2.0` logit boost, the same as the existing format-hit priors (~7.4× odds multiplier at softmax).
+- **Safety constraint:** Bias only tokens verified against WOF locality entries at the detected locale. "Pennsylvania" before DC stays a street because it is not a WOF locality in that context.
+- **Effort:** ~20 lines, without retraining.
+- **Test:** Demo presets #1 and #2. If they still fail, raise the boost to +3.0. If the prior overcorrects on "Washington state" inputs, lower it.
 
 ### 2. Source weight rebalance (training-time)
 
@@ -62,23 +62,23 @@ source_weights:
   wof: 0.3
 ```
 
-Reduces WOF bare-name frequency dominance. OSM positional signal becomes the primary teacher for ambiguous place names. One config line.
+This change reduces the dominance of WOF bare-name rows, so the OSM positional signal becomes the main source of labels for ambiguous place names. It takes one config line.
 
 ### 3. Training augmentation — directional + region-abbreviation expansion
 
-Two independent augmentations:
+The plan adds two independent augmentations:
 
-- **Directional:** Train on both "350 5th Ave NW" and "350 5th Ave Northwest" with identical BIO labels
-- **Region abbreviation:** Train on both "NY" → `B-region` and "New York" → `B-region` `I-region`
+- **Directional:** Train on both "350 5th Ave NW" and "350 5th Ave Northwest" with identical BIO labels.
+- **Region abbreviation:** Train on both "NY" → `B-region` and "New York" → `B-region` `I-region`.
 
-Both scoped to unambiguous expansions only. ~60 lines total in corpus pipeline.
+Both apply only to unambiguous expansions and take ~60 lines in total in the corpus pipeline.
 
-**Do not normalize at inference time.** SentencePiece vocabulary was learned from raw corpus distribution; feeding normalized forms at inference creates a train/test distribution mismatch. Normalize at training time only.
+**Do not normalize at inference time.** The SentencePiece vocabulary was learned from the raw corpus distribution, so feeding normalized forms at inference creates a train/test distribution mismatch. Normalize at training time only.
 
 ### 4. Reconciler as default path (architecture)
 
-- Graceful degradation: no WOF data = Viterbi-only (current behavior). Emit `{ reconciled: false, reason: "wof-missing" }` on result.
-- Optional `@mailwoman/reconciler-data-en-us` package (~5 MB): locality rows `{ id, name, parent_id }` + region rows `{ id, name }`. Enables concordance scoring for npm users.
+- Graceful degradation: without WOF data, the pipeline runs Viterbi only (current behavior) and emits `{ reconciled: false, reason: "wof-missing" }` on the result.
+- An optional `@mailwoman/reconciler-data-en-us` package (~5 MB) holds locality rows `{ id, name, parent_id }` and region rows `{ id, name }`. It enables concordance scoring for npm users.
 - Full WOF (~2 GB) remains the high-accuracy path for self-hosted deployments.
 
 ## Other preset failures (different root causes)
@@ -92,7 +92,7 @@ Both scoped to unambiguous expansions only. ~60 lines total in corpus pipeline.
 
 ## Key insight: switch demo to hybrid mode
 
-If the demo currently runs neural-only, switching to hybrid mode immediately fixes presets #3, #4, and #6 via rule fallback — zero code changes beyond the mode flag.
+If the demo currently runs neural-only, switching to hybrid mode fixes presets #3, #4, and #6 through the rule fallback. The only code change is the mode flag.
 
 ## Pre-tokenization normalization — decision: NO
 
@@ -105,15 +105,15 @@ If the demo currently runs neural-only, switching to hybrid mode immediately fix
 
 ## Relationship to QueryShape
 
-The locality soft prior extends the existing QueryShape emission-prior system. New field on the QueryShape result:
+The locality soft prior extends the existing QueryShape emission-prior system. It adds a new field to the QueryShape result:
 
 ```ts
 regionAbbreviations?: Array<{ start: number; span: string }>
 ```
 
-Detected at Stage 2.5 alongside format-hit scorers (regex: `/,\s*[A-Z]{2}\b/` for en-us). In `buildEmissionPriors`, for each detected abbreviation, bias preceding WOF-verified locality tokens toward `B-locality` / `I-locality`.
+Stage 2.5 detects abbreviations alongside the format-hit scorers (regex: `/,\s*[A-Z]{2}\b/` for en-us). For each detected abbreviation, `buildEmissionPriors` biases the preceding WOF-verified locality tokens toward `B-locality` / `I-locality`.
 
-This fits the bitter-lesson framing test: the regex is locale-bounded (one pattern per locale's abbreviation convention) rather than a gazetteer lookup. The WOF verification is a safety rail rather than the primary signal.
+This design passes the bitter-lesson framing test. The regex is locale-bounded (one pattern per locale's abbreviation convention) rather than a gazetteer lookup, and the WOF verification serves as a safety check behind the primary signal.
 
 ## See also
 

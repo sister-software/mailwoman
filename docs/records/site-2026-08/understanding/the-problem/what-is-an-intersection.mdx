@@ -12,15 +12,15 @@ tags:
 
 # What is an intersection address?
 
-An intersection address names a location by the crossing of two streets. Unlike a conventional street address ("350 5th Ave"), it does not specify a building number. It says "find where these two streets meet." This is common in urban navigation, emergency dispatch, and some countries (notably Japan) where the street-address system is entirely different.
+An intersection address identifies a location by the crossing of two streets. Unlike a conventional street address ("350 5th Ave"), it does not specify a building number. It tells the reader to find where the two streets meet. This form is common in urban navigation, emergency dispatch, and some countries (notably Japan) where the street-address system is entirely different.
 
 ## Why intersections exist
 
-Intersections predate street numbering. Before municipalities assigned sequential numbers to buildings, people described locations by near landmarks and crossroads. "Meet me at the corner of Main and Elm" was a precise location description before "meet me at 123 Main St" existed.
+Intersections predate street numbering. Before municipalities assigned sequential numbers to buildings, people described locations by landmarks and crossroads. "Meet me at the corner of Main and Elm" was a precise location description before "meet me at 123 Main St" existed.
 
 Today, intersections persist for three reasons:
 
-1. **Navigation.** "Broadway and 42nd" is more recognizable to a New Yorker than "1501 Broadway" — even though they describe the same block.
+1. **Navigation.** "Broadway and 42nd" is more recognizable to a New Yorker than "1501 Broadway," even though they describe the same block.
 2. **Emergency dispatch.** 911 operators use intersections as fallback locations when the caller does not know the exact address. "I'm at the corner of 5th and Main" is a valid location for a dispatcher.
 3. **Countries without street numbers.** Japan, Korea, and some other East Asian addressing systems do not use building numbers along named streets. Japanese addresses use block-based numbering (chōme/banchi/gō). Intersection-based routing is the closest analogue to "cross streets" navigation.
 
@@ -34,7 +34,7 @@ Broadway and 42nd Street
 Main St at Elm St
 ```
 
-The address names both streets explicitly, joined by `&`, `and`, `at`, or (in some formats) `+`. The parser's job is to recognize the conjunction, split the street tokens into two groups, and tag them as `intersection_a` and `intersection_b`.
+The address states both streets explicitly, joined by `&`, `and`, `at`, or (in some formats) `+`. The parser must recognize the conjunction, split the street tokens into two groups, and tag them as `intersection_a` and `intersection_b`.
 
 ### Implicit intersection (cross streets)
 
@@ -53,13 +53,13 @@ The address gives the primary street and building number, then adds cross-street
 Main St & Elm St
 ```
 
-The tokenizer splits on `&`, producing `[Main] [St] [&] [Elm] [St]`. The classifier sees two `St` tokens — both are street suffixes. The parser must:
+The tokenizer splits on `&`, producing `[Main] [St] [&] [Elm] [St]`. The classifier sees two `St` tokens, and both are street suffixes. The parser must:
 
 1. Recognize that `&` is an intersection conjunction rather than a spacing artifact.
 2. Group `[Main] [St]` as one street name and `[Elm] [St]` as another.
 3. Assign `intersection_a` to the first and `intersection_b` to the second.
 
-If the parser treats `&` as a delimiter and classifies both street phrases independently, it produces duplicate `street` components — structurally invalid (two streets in one address) unless the schema supports intersections.
+If the parser treats `&` as a delimiter and classifies both street phrases independently, it produces duplicate `street` components. Two streets in one address are structurally invalid unless the schema supports intersections.
 
 ### The "Street as venue" confusion
 
@@ -67,7 +67,7 @@ If the parser treats `&` as a delimiter and classifies both street phrases indep
 New York & Company, 5th Ave, New York, NY
 ```
 
-"New York & Company" is a clothing retailer — not an intersection. The parser must distinguish `New York & Company` (venue with an ampersand) from `5th Ave & 42nd St` (intersection with an ampersand). Position and context are the only signals: a venue name before a comma-separated address vs an intersection embedded in the street portion.
+"New York & Company" is a clothing retailer rather than an intersection. The parser must distinguish `New York & Company` (venue with an ampersand) from `5th Ave & 42nd St` (intersection with an ampersand). Position and context are the only signals. A venue name comes before a comma-separated address, and an intersection is embedded in the street portion.
 
 ### The "double street name" ambiguity
 
@@ -75,7 +75,7 @@ New York & Company, 5th Ave, New York, NY
 Martin Luther King Jr Blvd & Malcolm X Blvd
 ```
 
-Both street names are multi-word. The parser must find the boundary between them — is the split at `Jr Blvd &`? At `Blvd &`? The phrase grouper (Stage 2.7) is essential here: it proposes span boundaries based on structural cues (capitalization, punctuation, suffix patterns), giving the classifier clean spans to type rather than forcing it to discover boundaries from tokens.
+Both street names are multi-word. The parser must decide where one name ends and the next begins, for example at `Jr Blvd &` or at `Blvd &`. The phrase grouper (Stage 2.7) is essential here. It proposes span boundaries from structural cues (capitalization, punctuation, suffix patterns), so the classifier types clean spans instead of discovering boundaries from tokens.
 
 ### The Japanese problem
 
@@ -99,18 +99,18 @@ Mailwoman's schema includes two dedicated tags:
 
 In the staged pipeline:
 
-1. **QueryShape** (Stage 2.5) detects intersection-shaped queries — the presence of `&`, `and`, `at` between street-like tokens — and flags the input as `kind=intersection`.
+1. **QueryShape** (Stage 2.5) detects intersection-shaped queries by the presence of `&`, `and`, or `at` between street-like tokens, and flags the input as `kind=intersection`.
 2. **Phrase grouper** (Stage 2.7) proposes spans on either side of the conjunction.
-3. **Classifier** (Stage 3) types each span. The `intersection_a` / `intersection_b` tags tell the downstream resolver "this is not a conventional street address — look up the intersection coordinates."
-4. **Resolver** (Stage 6) treats intersection queries differently: instead of resolving a building number on a street, it finds the geographic intersection of two street centerlines.
+3. **Classifier** (Stage 3) types each span. The `intersection_a` / `intersection_b` tags tell the downstream resolver to look up intersection coordinates instead of a conventional street address.
+4. **Resolver** (Stage 6) treats intersection queries differently. Instead of resolving a building number on a street, it finds the geographic intersection of two street centerlines.
 
-The intersection tags are part of the schema but the resolver path for intersection queries is deferred until the parser's core components are stable.
+The intersection tags are part of the schema, but the resolver path for intersection queries is deferred until the parser's core components are stable.
 
 ## What intersections tell us about address structure
 
 Intersection addresses show that **the "housenumber + street" format is one convention among several** rather than a universal requirement. A parser that assumes every address has a building number will fail on intersection queries. A parser that treats `intersection_a` and `intersection_b` as first-class components can handle both conventional and intersection addresses without architectural change.
 
-This is the same principle behind the Japanese street-free addressing system (Phase 6 of the implementation plan): the schema must accommodate address formats that do not fit the Anglophone "number + street + city" template. Intersections are the mildest version of this; block-based addressing (Japan) and informal addressing (rural areas, developing economies) are harder versions of the same problem. A schema that handles intersections without an architectural change is better positioned to handle those harder cases too.
+The same principle applies to Japan's street-free addressing system (Phase 6 of the implementation plan). The schema must accommodate address formats that do not fit the Anglophone "number + street + city" template. Intersections are the mildest case. Block-based addressing (Japan) and informal addressing (rural areas, developing economies) are harder versions of the same problem. A schema that handles intersections without an architectural change is better positioned to handle those harder cases too.
 
 ## See also
 

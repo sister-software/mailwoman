@@ -11,10 +11,10 @@
 
 Mailwoman currently distributes three kinds of consumer artifact through two mechanisms. npm carries
 the engine and model packages. `mailwoman data pull` downloads SQLite databases named `candidate`,
-`us`, `fr`, and `poi`. The downloader is sound, but those four names mix an implementation detail, two
+`us`, `fr`, and `poi`. The downloader works, but those four names mix an implementation detail, two
 territories, and a semantic layer.
 
-The knowledge graph makes that naming problem structural. We need answers to four questions before
+The knowledge graph turns that naming problem into a structural one. We need answers to four questions before
 adding more databases:
 
 1. What is installed with the engine, the model, and the atlas?
@@ -72,7 +72,7 @@ coupled to runtime versions and belong in the application's dependency lockfile.
 Country is a strong address-system prior. Language is a separate observation. Multilingual
 countries, exonyms, native-script venue names, and transliterated queries all require a several-to-several
 relationship between country, script, locale, and address system. A future `AddressSystemID` may
-make that relationship explicit; an ISO country code alone should never become a claim that the
+make that relationship explicit. An ISO country code alone should never imply that the
 country has one language.
 
 The CLI diagnoses model availability and prints a package-manager command. `mailwoman data pull`
@@ -106,7 +106,7 @@ source absence remain different states. The `layer_coverage` interface decides w
 
 The current `candidate.db` is a denormalized serving projection. Each alias row repeats the place
 name, coordinates, bounding box, population, placetype, country, and WOF ID so the reader can answer
-with one clustered probe. That is useful for HTTP byte-range access and expensive as a general local
+with one clustered probe. That layout suits HTTP byte-range access but is expensive as a general local
 distribution format.
 
 The progressive atlas separates lookup keys from entity facts:
@@ -124,7 +124,7 @@ atlas-locality.db         primary/local locality names + locality facts
 atlas-aliases-basic.db    reviewed native/English exonyms and common transliterations
 ```
 
-Further alias packs may be selected by language or script. WOF already supplies multilingual names;
+Further alias packs may be selected by language or script. WOF already supplies multilingual names, and
 the build must preserve their language and name-kind metadata instead of flattening them into an
 untyped string pile.
 
@@ -184,10 +184,10 @@ named administrative entity after the global core is installed
 
 The catalog expands an area selector into immutable spatial artifacts. A fixed coarse global grid is
 the leading physical layout because every spatial layer already declares an H3 spine. The exact
-resolution remains a prototype decision: dense cities and sparse rural regions need measured extract
-size and open-file behavior before we freeze it.
+resolution remains a prototype decision. Extract size and open-file behavior need to be measured for dense
+cities and sparse rural regions before we fix it.
 
-A country request remains pleasant:
+A country request stays simple:
 
 ```bash
 mw data pull --area nz --detail address
@@ -197,10 +197,10 @@ Internally it selects the intersecting address artifacts. A border query may sel
 countries without inventing a special cross-border database.
 
 The build assigns an entity to one canonical home extract and records cross-extract references by stable
-ID. Geometry that crosses extract boundaries needs an explicit fragmentation or indirection rule; the
+ID. Geometry that crosses extract boundaries needs an explicit fragmentation or indirection rule, and the
 prototype must test that rule before publication.
 
-SQLite's attachment limit rules out attaching a planet of tiny files. The runtime needs a extract
+SQLite's attachment limit rules out attaching a planet of tiny files. The runtime needs an extract
 broker that:
 
 1. maps the query or candidate region to artifact IDs;
@@ -272,8 +272,8 @@ mw doctor --verbose
 Mailwoman config file. Enterprise and air-gapped installations use the same catalog schema as the
 public registry.
 
-`doctor` orders runtime checks before optional data. Each missing layer names the consequence and
-the smallest command that changes it. Verbose mode prints resolved model packages, address-system
+`doctor` runs runtime checks before optional-data checks. For each missing layer, it prints the consequence and
+the smallest command that installs the layer. Verbose mode prints resolved model packages, address-system
 profiles, data/config/cache paths, registries, installed catalog receipts, layers, vintages, and
 coverage.
 
@@ -329,7 +329,7 @@ into an unexplained winner.
 
 ## Compatibility and migration
 
-The existing commands remain valid through at least one migration window:
+The existing commands remain valid for at least one migration window:
 
 ```text
 data pull candidate  → starter-compatible global projections
@@ -340,7 +340,7 @@ data pull poi        → layer=poi at its published coverage
 
 The old conventional paths continue to resolve while the extract broker lands. `doctor --verbose`
 reports legacy artifacts and the equivalent catalog request. Migration never rewrites or deletes a
-legacy database automatically; `data prune` requires an explicit selection and prints what becomes
+legacy database automatically. `data prune` requires an explicit selection and prints what becomes
 unavailable.
 
 ## Prototype checks
@@ -364,7 +364,7 @@ No distribution migration begins until a prototype answers these with receipts:
 1. Build a read-only projection census from the current WOF/candidate inputs. Measure the size tied
    to entity facts, primary names, aliases, bounding boxes, and side indexes.
 2. Produce normalized global-core and locality prototypes beside the current candidate artifact.
-3. Add a catalog schema and `data plan`; keep `data pull` on the current registry during this step.
+3. Add a catalog schema and `data plan`. Keep `data pull` on the current registry during this step.
 4. Implement path resolution and env-path defaults from issue #1577.
 5. Build the extract broker over a small two-region address pilot, including a border case.
 6. Re-run candidate parity, the geocoder panel, and cold-start documentation tests.
@@ -373,6 +373,6 @@ No distribution migration begins until a prototype answers these with receipts:
 8. Move the ten-minute guide after the profile is available from the public host and verified from a
    clean consumer project.
 
-The architecture can grow one layer at a time. The first implementation increment is the census and
-catalog plan, because both are read-only and tell us whether the proposed starter is small
+The architecture can grow one layer at a time. The first implementation step is the census and
+the catalog plan. Both are read-only, and they show whether the proposed starter is small
 before we ask consumers to depend on it.

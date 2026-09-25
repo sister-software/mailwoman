@@ -3,34 +3,36 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Remove overlapping proposals before building a flat address tree. Proposals are ranked by
- *   confidence, then shorter span, then earlier start; a greedy pass keeps non-overlapping spans.
+ *   Removes overlapping proposals before a flat address tree is built.
  */
 
 import type { ClassificationProposal } from "#types/index"
 
 /**
- * Return whether two half-open spans overlap.
+ * Returns whether two half-open spans overlap.
  */
 function spansOverlap(a: ClassificationProposal["span"], b: ClassificationProposal["span"]): boolean {
 	return a.start < b.end && b.start < a.end
 }
 
 /**
- * Select non-overlapping proposals and return them in span order without mutating the input.
+ * Selects non-overlapping proposals and returns them in span order.
+ * The input array is left unchanged.
+ *
+ * Proposals are ranked by higher confidence, then shorter span, then earlier start.
+ * A greedy pass keeps each proposal that overlaps none already kept.
  */
 export function resolveProposalOverlaps(proposals: readonly ClassificationProposal[]): ClassificationProposal[] {
 	if (proposals.length <= 1) return [...proposals]
 
 	// oxlint-disable-next-line unicorn/no-array-sort -- sorts a freshly-built array. toSorted would double-allocate on a hot path
 	const ranked = [...proposals].sort((a, b) => {
-		if (b.confidence !== a.confidence) return b.confidence - a.confidence // Prefer higher confidence.
+		if (b.confidence !== a.confidence) return b.confidence - a.confidence
 		const lenA = a.span.end - a.span.start
 		const lenB = b.span.end - b.span.start
 
 		if (lenA !== lenB) return lenA - lenB
 
-		// Prefer finer spans, then earlier starts.
 		return a.span.start - b.span.start
 	})
 

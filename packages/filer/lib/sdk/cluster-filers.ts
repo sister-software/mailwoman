@@ -3,11 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Build authoritative and inferred clusters from `filer.db`. Authoritative clusters use only `same_entity` edges;
- *   inferred links require an exact canonical-name block and a shared FRN, Form 499 ID, or provider ID.
- *
- *   Each pass transactionally replaces its cluster assignments. Inferred edges refresh for the current vintage and
- *   close earlier open edges. `sourceVintage` identifies the run; ISO `validFrom` records its effective date.
+ *   Builds authoritative and inferred filer clusters in `filer.db`.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -26,28 +22,29 @@ import {
 import { assertISODate } from "#sdk/guards"
 
 /**
- * Source value for inferred edges written by this module.
+ * The `source` value on inferred edges that this module writes.
  */
 export const CLUSTER_FILERS_SOURCE = "cluster-filers"
 
-/**
- * Attribute key used to name-match Form 499 nodes.
- */
 const LEGAL_NAME_ATTRIBUTE_KEY = "legal_name"
 
 /**
- * Fellegi-Sunter cutoff for inferred links; revisit if model weights change.
+ * Fellegi-Sunter weight cutoff for inferred links.
+ *
+ * The value depends on the model weights and needs review if they change.
  */
 export const INFERRED_LINK_THRESHOLD = -13
 
 /**
- * Identifier attributes used for veto and scoring.
+ * Identifier attributes.
+ * A candidate pair must share at least one of them.
  */
 const IDENTIFIER_VETO_KEYS = ["frn", "form499ID", "providerID"] as const
 
 /**
- * Check whether records share an authoritative identifier.
- * Missing values are unknown, not evidence of a mismatch.
+ * Returns whether two records share any FRN, Form 499 ID or provider ID.
+ *
+ * A missing value on either side counts as unknown and never as a mismatch.
  */
 export function hasSharedIdentifier(a: SourceRecord, b: SourceRecord): boolean {
 	for (const key of IDENTIFIER_VETO_KEYS) {
@@ -66,16 +63,15 @@ export function hasSharedIdentifier(a: SourceRecord, b: SourceRecord): boolean {
 	return false
 }
 
-/**
- * Fixed Fellegi-Sunter model used by the inferred-link scorer.
- */
 const INFERRED_SCORING_MODEL = buildDefaultModel({
 	collapseSpatial: true,
 	exactDiscriminators: [...IDENTIFIER_VETO_KEYS],
 })
 
 /**
- * Reject pairs without a shared identifier; otherwise return their Fellegi-Sunter score.
+ * Scores a pair with the Fellegi-Sunter model.
+ *
+ * A pair without a shared identifier scores negative infinity.
  */
 function scoreWithIdentifierVeto(a: SourceRecord, b: SourceRecord): number {
 	if (!hasSharedIdentifier(a, b)) return Number.NEGATIVE_INFINITY
@@ -84,7 +80,9 @@ function scoreWithIdentifierVeto(a: SourceRecord, b: SourceRecord): number {
 }
 
 /**
- * Rows per `filer_cluster` insert batch, below SQLite's parameter limit.
+ * Rows per `filer_cluster` insert.
+ *
+ * The size keeps each statement under SQLite's parameter limit.
  */
 const CLUSTER_INSERT_BATCH_SIZE = 500
 
@@ -93,11 +91,11 @@ const CLUSTER_INSERT_BATCH_SIZE = 500
  */
 export interface AuthoritativeClusterResult {
 	/**
-	 * Connected components, including singletons.
+	 * Count of connected components, including singletons.
 	 */
 	clusters: number
 	/**
-	 * Nodes assigned to authoritative clusters.
+	 * Count of nodes assigned to a cluster.
 	 */
 	nodes: number
 }
@@ -107,37 +105,39 @@ export interface AuthoritativeClusterResult {
  */
 export interface InferredClusterResult {
 	/**
-	 * Form 499 nodes with legal names that canonicalized to a non-empty organization.
+	 * Count of Form 499 nodes whose legal name has a non-empty canonical form.
 	 */
 	recordsConsidered: number
 	/**
-	 * Multi-record entities returned by `resolveEntities`.
+	 * Count of entities with more than one record.
 	 */
 	linkedClusters: number
 	/**
-	 * Inferred edges written, one per non-representative member.
+	 * Count of inferred edges written.
+	 * Each member other than the representative gets one edge.
 	 */
 	links: number
 }
 
 /**
- * Options for inferred clustering and the combined clustering pass.
+ * Options for {@linkcode clusterInferredLinks} and {@linkcode clusterFilers}.
  */
 export interface ClusterFilersOptions {
 	/**
-	 * Run label written to `source_vintage` and used to identify same-vintage rebuilds.
-	 * It is not a temporal date; see `validFrom`.
+	 * Run label written to `source_vintage`.
+	 *
+	 * A rerun with the same label replaces that run's inferred edges.
 	 */
 	sourceVintage: string
 	/**
-	 * ISO effective date for temporal fields, separate from the run label.
+	 * ISO effective date written to `valid_from`.
 	 */
 	validFrom: string
 	onProgress?: (message: string) => void
 }
 
 /**
- * The combined result of {@linkcode clusterFilers}.
+ * Result of {@linkcode clusterFilers}.
  */
 export interface ClusterFilersResult {
 	authoritative: AuthoritativeClusterResult
@@ -155,15 +155,13 @@ function chunk<T>(items: readonly T[], size: number): T[][] {
 }
 
 /**
- * Deduplicate, sort, and join codes for `resolveEntities`; return an empty string when no codes exist.
+ * Joins the distinct codes in sorted order.
+ * The result is empty when there are no codes.
  */
 function codeSetString(values: Iterable<string>): string {
 	return [...new Set(values)].toSorted().join(" ")
 }
 
-/**
- * Read node identifiers keyed by `node_id`.
- */
 async function readNodeInfo(
 	db: Kysely<FilerDatabase>
 ): Promise<Map<string, { identifierType: string; identifierValue: string }>> {
@@ -179,7 +177,7 @@ async function readNodeInfo(
 }
 
 /**
- * Cluster nodes using only authoritative identity edges.
+ * Groups nodes into connected components over authoritative `same_entity` edges.
  */
 async function readAuthoritativeGroups(db: Kysely<FilerDatabase>): Promise<string[][]> {
 	const nodeRows = await db.selectFrom("filer_node").select(["node_id"]).orderBy("node_id").execute()
@@ -198,18 +196,18 @@ async function readAuthoritativeGroups(db: Kysely<FilerDatabase>): Promise<strin
 		weight: Number.POSITIVE_INFINITY,
 	}))
 
-	// Every edge has infinite weight, so any finite threshold includes it.
+	// Every edge has infinite weight, so the threshold admits all of them.
 	return cluster(nodeIDs, links, { threshold: 0 })
 }
 
 /**
- * Cluster authoritative edges and replace authoritative `filer_cluster` rows transactionally.
+ * Replaces the authoritative `filer_cluster` rows in one transaction.
  */
 export async function clusterAuthoritativeComponents(db: Kysely<FilerDatabase>): Promise<AuthoritativeClusterResult> {
 	const groups = await readAuthoritativeGroups(db)
 
 	const rows: FilerClusterTable[] = groups.flatMap((group) => {
-		// Derive IDs from cluster contents for stable reruns.
+		// The cluster ID comes from the smallest member ID, so reruns produce the same ID.
 		const clusterID = `${FilerEdgeAssertion.Authoritative}:${[...group].toSorted()[0]}`
 
 		return group.map((nodeID) => ({
@@ -233,7 +231,7 @@ export async function clusterAuthoritativeComponents(db: Kysely<FilerDatabase>):
 }
 
 /**
- * Read each node's latest Form 499 legal name by ISO vintage.
+ * Reads each node's legal name from its latest source vintage.
  */
 async function readLatestLegalNames(db: Kysely<FilerDatabase>): Promise<Map<string, string>> {
 	const rows = await db
@@ -256,7 +254,9 @@ async function readLatestLegalNames(db: Kysely<FilerDatabase>): Promise<Map<stri
 }
 
 /**
- * Build candidate records for Form 499 nodes with non-empty canonical legal names.
+ * Builds a candidate record for each Form 499 node whose legal name has a non-empty canonical form.
+ *
+ * Each record carries the identifiers of its whole authoritative cluster.
  */
 async function buildInferredRecords(db: Kysely<FilerDatabase>): Promise<SourceRecord[]> {
 	const nodeInfo = await readNodeInfo(db)
@@ -289,7 +289,7 @@ async function buildInferredRecords(db: Kysely<FilerDatabase>): Promise<SourceRe
 
 		const organization = canonicalizeOrganizationName(legalName)
 
-		// Reject names that canonicalize to an empty string; they cannot form a blocking key.
+		// An empty canonical name cannot serve as a blocking key.
 		if (!organization || !organization.canonical) continue
 
 		const group = groupOfNode.get(nodeID) ?? [nodeID]
@@ -299,7 +299,7 @@ async function buildInferredRecords(db: Kysely<FilerDatabase>): Promise<SourceRe
 		const form499Codes = codesByType(group, FilerIdentifierType.Form499ID)
 		const providerCodes = codesByType(group, FilerIdentifierType.BDCProviderID)
 
-		// Omit absent codes so the scorer treats them as missing evidence, not as mismatches.
+		// Absent codes are left out so the scorer treats them as missing evidence.
 		if (frnCodes) {
 			attributes.frn = frnCodes
 		}
@@ -319,7 +319,10 @@ async function buildInferredRecords(db: Kysely<FilerDatabase>): Promise<SourceRe
 }
 
 /**
- * Infer Form 499 links and refresh inferred clusters and edges.
+ * Links Form 499 nodes that share a canonical legal name and an identifier,
+ * then rewrites the inferred clusters and edges.
+ *
+ * The pass deletes this vintage's earlier inferred edges and closes open edges from earlier effective dates.
  */
 export async function clusterInferredLinks(
 	db: Kysely<FilerDatabase>,
@@ -327,7 +330,6 @@ export async function clusterInferredLinks(
 ): Promise<InferredClusterResult> {
 	const progress = options.onProgress ?? (() => {})
 
-	// Validate the temporal date before querying or writing.
 	const validFrom = assertISODate(options.validFrom, "options.validFrom", "clusterInferredLinks")
 
 	const records = await buildInferredRecords(db)
@@ -335,13 +337,11 @@ export async function clusterInferredLinks(
 	progress(`pass (b): scoring ${records.length.toLocaleString()} form499_id record(s) with a legal name`)
 
 	const { entities } = resolveEntities(records, {
-		// filer.db has no default geo/contact blocking fields; block on canonical organization name.
+		// Filer records have no geographic or contact fields, so blocking uses the canonical name.
 		blockingKeys: [exactKey((record: SourceRecord) => record.organization?.canonical)],
-		// Keep identifier comparisons explicit; the custom scorer below determines pair weights.
 		exactDiscriminators: [...IDENTIFIER_VETO_KEYS],
-		// The bundled learned scorer targets NPPES data, not corporate legal names.
+		// The bundled learned scorer was trained on NPPES data.
 		learnedScorer: false,
-		// Require a shared FRN, Form 499 ID, or provider ID before scoring names.
 		scorer: scoreWithIdentifierVeto,
 		threshold: INFERRED_LINK_THRESHOLD,
 	})
@@ -351,7 +351,6 @@ export async function clusterInferredLinks(
 	let links = 0
 
 	await db.transaction().execute(async (trx) => {
-		// Delete prior output for this source vintage; close still-open edges from earlier effective dates.
 		await trx
 			.deleteFrom("filer_edge")
 			.where("assertion", "=", FilerEdgeAssertion.Inferred)
@@ -372,7 +371,6 @@ export async function clusterInferredLinks(
 
 		for (const entity of entities) {
 			const memberNodeIDs = entity.records.map((record) => record.id).toSorted()
-			// Derive IDs from cluster contents for stable reruns.
 			const clusterID = `${FilerEdgeAssertion.Inferred}:${memberNodeIDs[0]}`
 
 			for (const nodeID of memberNodeIDs) {
@@ -393,7 +391,6 @@ export async function clusterInferredLinks(
 						from_node_id: nodeID,
 						to_node_id: representativeID,
 						assertion: FilerEdgeAssertion.Inferred,
-						// The inferred link asserts that both Form 499 IDs identify the same filer.
 						relationship: FilerRelationship.SameEntity,
 						source: CLUSTER_FILERS_SOURCE,
 						source_vintage: options.sourceVintage,
@@ -402,7 +399,7 @@ export async function clusterInferredLinks(
 						match_score: entity.cohesion,
 						evidence: stringifyJSON({ memberNodeIDs }),
 					})
-					// Earlier vintages were closed and this vintage was cleared above; retain conflict safety.
+					// The deletes above should prevent conflicts. The clause is a safeguard.
 					.onConflict((oc) => oc.doNothing())
 					.execute()
 
@@ -425,7 +422,7 @@ export async function clusterInferredLinks(
 }
 
 /**
- * Run authoritative and inferred clustering passes in sequence.
+ * Runs the authoritative pass and then the inferred pass.
  */
 export async function clusterFilers(
 	db: Kysely<FilerDatabase>,

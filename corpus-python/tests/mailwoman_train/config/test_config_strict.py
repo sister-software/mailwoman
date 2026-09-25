@@ -1,10 +1,7 @@
-"""Strict-merge tests for #1248.
+"""Tests that config loading rejects unknown keys and malformed typed sections.
 
-The 2026-07-22 en-GB probe run A burned a launch cycle on a YAML whose
-``train.reinit_label_rows`` + ``train.classifier_learning_rate`` keys were silently
-dropped by a volume-side config that predated them — the run proceeded as a plain
-fine-tune with zero signal that its settings were inert. Config guards RAISE (same
-discipline as the YAML-Norway guard in ``DataConfig.__post_init__``).
+Strict mode raises on an unknown key so that a misspelled or outdated setting cannot be dropped
+without notice.
 """
 
 from __future__ import annotations
@@ -25,9 +22,8 @@ def test_unknown_nested_key_raises_with_dotted_path_and_file(tmp_path):
     with pytest.raises(KeyError) as excinfo:
         load_config(path)
     message = str(excinfo.value)
-    # The full dotted path, so the offender is findable in a 100-line YAML…
+    # The message carries the full dotted key and the config file name.
     assert "train.reinit_label_rowz" in message
-    # …and the config file it came from.
     assert "probe.yaml" in message
 
 
@@ -123,8 +119,7 @@ def test_lenient_config_skips_unknown_nested_receipt_keys(tmp_path):
 
 
 def test_lenient_mode_preserves_the_silent_skip(tmp_path):
-    # strict=False is the override for tooling that intentionally consumes a
-    # partial view of a config: unknown keys are skipped, known keys still merge.
+    # With strict=False, unknown keys are skipped and known keys still merge.
     path = _write(tmp_path, "train:\n  not_a_setting: 1\n  max_steps: 7\n")
     cfg = load_config(path, strict=False)
     assert cfg.train.max_steps == 7
@@ -160,7 +155,7 @@ def test_validation_coverage_defaults_to_the_val_split_and_no_street_floor(tmp_p
 
 
 def test_validation_coverage_rejects_a_split_that_is_not_held_out(tmp_path):
-    # `train` is not a holdout, so a floor over it would pass by measuring the rows the run trains on.
+    # A coverage floor must measure held-out rows, and the run trains on the `train` split.
     path = _write(tmp_path, "data:\n  required_validation_coverage:\n    - {country: GB, split: train, min_rows: 1}\n")
 
     with pytest.raises(ValueError, match="only 'val' and 'test' are held out"):
@@ -168,8 +163,7 @@ def test_validation_coverage_rejects_a_split_that_is_not_held_out(tmp_path):
 
 
 def test_validation_coverage_rejects_more_street_rows_than_rows(tmp_path):
-    # A street row is a row. This floor can never pass, and failing here names the typo rather than
-    # blaming a corpus.
+    # Street rows are a subset of rows, so this floor is unsatisfiable and loading reports it as a config error.
     path = _write(
         tmp_path,
         "data:\n  required_validation_coverage:\n    - {country: FR, min_rows: 100, min_street_rows: 500}\n",
@@ -200,13 +194,11 @@ def test_lenient_merge_skips_unknown_keys():
 
 
 def test_shipped_configs_all_load_under_strict():
-    # The #1248 audit: every historical config in the repo must pass strict mode —
-    # no grandfathering allowlist exists, so a junk key landing in any shipped YAML
-    # fails here instead of at a Modal launch.
+    # Every shipped config must load in strict mode, so an unknown key fails here before a launch.
     from tests import paths as roots
 
     configs_dir = roots.CONFIGS
     paths = sorted(configs_dir.glob("*.yaml"))
     assert paths, f"no configs found under {configs_dir}"
     for path in paths:
-        load_config(path)  # strict=True — raises on the first unknown key
+        load_config(path)

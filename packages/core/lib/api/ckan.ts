@@ -3,80 +3,79 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The data.gov.uk ckan catalogue read the Environment Agency layer products share.
+ *   Reads Environment Agency product entries from the data.gov.uk CKAN catalogue.
  *
- *   A catalogue entry is the readable primary source for a product's ISO reference dates, its licence field
- *   and its direct file URLs — the EA's own dataset landing pages are client-side applications that return
- *   only their shell to a fetch. The download URL is read from here rather than assembled, because the EA's
- *   file service keys on an opaque `fileDataSetId` that has no relationship to the dataset id: a hard-coded
- *   URL survives a republish by pointing at a file that is no longer the product.
+ *   The catalogue provides ISO reference dates, the licence and direct file URLs. The EA landing pages render
+ *   client-side and return no data to a fetch. Download URLs must come from the catalogue because the EA file
+ *   service uses a `fileDataSetId` that is unrelated to the dataset ID and changes on republish.
  */
 
 import type { APIClient } from "#api/APIClient"
 import { parseJSONArray, stringifyJSON } from "#json"
 
 /**
- * The catalogue API a package entry is read from.
+ * The CKAN catalogue API base URL.
  */
 export const CKAN_CATALOGUE_API_BASE_URL = "https://ckan.publishing.service.gov.uk/api/3/action"
 
 /**
- * What a catalogue entry says about a product.
+ * The fields read from a catalogue entry.
  */
 export interface CKANPackageRecord {
 	/**
-	 * The dataset's own identifier, asserted against the caller's expectation.
+	 * The dataset GUID, checked against the caller's expected value.
 	 */
 	datasetID: string
 	/**
-	 * The ISO `revision` reference date — the product vintage, and the freshness signal.
+	 * The ISO `revision` reference date, which identifies the product version.
 	 */
 	revisionDate: string
 	publicationDate: string | null
 	creationDate: string | null
 	/**
-	 * The licence the catalogue names.
+	 * The licence listed by the catalogue.
 	 */
 	licence: string
 	/**
-	 * Direct file URLs by resource name.
+	 * Direct file URLs keyed by resource name.
 	 */
 	files: Record<string, string>
 }
 
+/**
+ * Options for {@linkcode readCKANPackageRecord}.
+ */
 export interface ReadCKANPackageRecordOptions {
 	/**
-	 * The catalogue package id the entry lives under.
+	 * The catalogue package ID.
 	 */
 	packageID: string
 	/**
-	 * The dataset guid the entry must name.
+	 * The dataset GUID that the entry must contain.
 	 */
 	expectDatasetID: string
 	/**
-	 * The licence value the entry must carry.
+	 * The licence that the entry must list.
 	 *
-	 * A different value is a licence change, and a build that absorbed one would
-	 * ship an artifact under terms nobody checked.
+	 * Any other value means the licence changed, and the read throws.
 	 */
 	expectLicence: string
 	/**
-	 * Names the caller in every refusal, e.g. `flood client`.
+	 * The caller label used as the error message prefix, such as `flood client`.
 	 */
 	context: string
 	/**
-	 * The catalogue API root.
-	 *
-	 * Defaults to {@link CKAN_CATALOGUE_API_BASE_URL}.
+	 * The catalogue API base URL.
+	 * The default is {@link CKAN_CATALOGUE_API_BASE_URL}.
 	 */
 	baseURL?: string
 }
 
 /**
- * Read one product's catalogue entry: reference dates, licence, and the direct file URLs.
+ * Reads one product's catalogue entry: reference dates, licence and direct file URLs.
  *
- * @throws {Error} When the entry is missing, names a different dataset, carries no
- * `revision` reference date, or names a licence other than the expected one.
+ * @throws {Error} When the entry is missing, contains a different dataset,
+ * has no `revision` reference date, or lists a different licence.
  */
 export async function readCKANPackageRecord(
 	client: Pick<APIClient, "fetch">,

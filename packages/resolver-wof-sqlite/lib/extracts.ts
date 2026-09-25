@@ -80,7 +80,7 @@ export interface ExtractConfig {
 	 * Optional explicit list of placetypes this extract serves.
 	 *
 	 * When set, queries against any listed placetype are routed to this extract.
-	 * When omitted, routing falls back to a name-match heuristic: a extract whose `schemaName`
+	 * When omitted, routing falls back to a name-match heuristic: an extract whose `schemaName`
 	 * contains the placetype as a substring (e.g. `postalcode_us` for `postalcode` queries)
 	 * is preferred for that placetype.
 	 */

@@ -3,32 +3,23 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mailwoman gazetteer conventions` — build the **convention asset** (#290, Direction E) from
- *   source: compile the authored convention profiles in `data/conventions/conventions.json` into a
- *   read-only, provenance-stamped sqlite asset (`address_convention` keyed by WOF polygon id + a
- *   `meta` row), the same distributable-asset shape as `postcode-locality-intl.db`.
+ *   Implements `mailwoman gazetteer conventions`, which compiles the authored convention profiles in
+ *   `data/conventions/conventions.json` into a read-only SQLite asset.
  *
- *   The authored JSON is the human-editable source of truth (diffable, code-reviewed); the `.db` is
- *   the queryable, immutable compiled form the resolver reads on demand (one indexed lookup per id rather than the whole table paged into memory). Per the provenance-first design value: every row
- *   carries `source` provenance, and a convention that names a strategy this build doesn't register
- *   is rejected here, loudly, rather than silently no-opping at runtime.
+ *   The asset holds an `address_convention` table keyed by WOF polygon ID and a `meta` table. The
+ *   resolver reads it with one indexed lookup per ID.
  *
- *   Authored entry shape (each element of the JSON array): { "wof_id": 85633111, "source": "…why this
- *   row exists…", "convention": { …Convention… } }
- *
- *   The build writes the asset directly to `--output` (the original `scripts/build-conventions.ts`
- *   behavior); it then VACUUMs + integrity-checks before returning. Progress is quiet — only the
- *   final summary lands on stdout.
+ *   Each authored entry has the shape `{ "wof_id": number, "source": string, "convention": Convention }`.
+ *   The build rejects a row without `source` provenance or with an unregistered strategy, so these
+ *   errors surface at build time instead of at runtime.
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { CommandError } from "@mailwoman/core/scripting/command"
-// resolver-wof-sqlite is an optional peer dep of mailwoman.
-// Its runtime value `BUILTIN_STRATEGY_NAMES` is imported dynamically inside the
-// command (the gazetteer-pipeline convention) so merely loading the commands
-// (e.g. `mailwoman --help`) doesn't fault when the peer is absent.
-// `Convention` is type-only.
+// `@mailwoman/resolver-wof-sqlite` is an optional peer dependency.
+// Runtime values from its root module are imported inside the command,
+// so loading the command list works without it.
 import type { Convention } from "@mailwoman/resolver-wof-sqlite"
 import {
 	createAddressConventionTable,
@@ -41,7 +32,7 @@ import { resolvePath } from "path-ts"
 import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 
 /**
- * Native command-line interface consumed by the filesystem command router.
+ * The command specification for `mailwoman gazetteer conventions`.
  */
 export const spec = {
 	name: "conventions",
@@ -61,7 +52,7 @@ interface AuthoredConvention {
 const WEIGHT_KEYS = new Set(["pc", "name", "pop"])
 
 /**
- * Reject malformed or code-incoherent conventions at build time (loud), so the runtime never has to.
+ * Validates the authored rows and throws a {@link CommandError} that lists every problem.
  */
 function validate(rows: AuthoredConvention[], known: Set<string>): void {
 	const errors: string[] = []
@@ -104,6 +95,9 @@ function validate(rows: AuthoredConvention[], known: Set<string>): void {
 	if (errors.length) throw new CommandError(`convention validation failed:\n  - ${errors.join("\n  - ")}`)
 }
 
+/**
+ * Compiles the convention profiles and renders a summary.
+ */
 const GazetteerConventions: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { DatabaseClient } = await import("@mailwoman/sqlite/client")
@@ -122,8 +116,6 @@ const GazetteerConventions: CommandComponent<typeof spec> = ({ options }) => {
 		validate(rows, KNOWN)
 
 		const kdb = new DatabaseClient<ConventionDatabase>(output)
-		// DDL via the Kysely schema-builder.
-		// The row INSERTs below stay on the raw `kdb` handle.
 		await kdb.schema.dropTable("address_convention").ifExists().execute()
 		await kdb.schema.dropTable("meta").ifExists().execute()
 
@@ -135,7 +127,6 @@ const GazetteerConventions: CommandComponent<typeof spec> = ({ options }) => {
 			ins.run(r.wof_id, stringifyJSON(r.convention), r.source)
 		}
 
-		// Freeze into the read-only distributable asset — same discipline as our other WOF tables.
 		await createConventionMetaTable(kdb)
 
 		const meta: Record<string, string> = {
@@ -154,11 +145,12 @@ const GazetteerConventions: CommandComponent<typeof spec> = ({ options }) => {
 			insMeta.run(k, v)
 		}
 
-		kdb.exec("PRAGMA journal_mode = DELETE") // no -wal/-shm sidecar. the .db is self-contained
+		// Rollback journaling leaves no WAL sidecar files, so the database file is self-contained.
+		kdb.exec("PRAGMA journal_mode = DELETE")
 		kdb.exec("ANALYZE")
 		assertDatabaseIntegrity(kdb, output)
 		kdb.exec("VACUUM")
-		await kdb.destroy() // closes the underlying `db` handle
+		await kdb.destroy()
 
 		const summary = [`conventions: ${output}`, `${rows.length} convention(s) compiled, integrity=ok`]
 
@@ -180,7 +172,7 @@ const GazetteerConventions: CommandComponent<typeof spec> = ({ options }) => {
 		)
 	}
 
-	return null // the build is quiet until the summary lands
+	return null
 }
 
 export default GazetteerConventions

@@ -143,14 +143,14 @@ The mixed-script case is the hardest: the human typed the city in the script the
 
 ### Administrative hierarchy confusion
 
-| What they type | What they mean       | What the the system                             |
+| What they type | What they mean       | What the parser thinks                          |
 | -------------- | -------------------- | ----------------------------------------------- |
 | `Washington`   | Washington, DC       | Washington state? George Washington University? |
 | `Paris`        | Paris, France        | Paris, Texas? Paris, Ontario?                   |
 | `Quebec`       | Province of Quebec   | Quebec City?                                    |
 | `Mexico`       | Mexico (the country) | Mexico City?                                    |
 
-The human assumes context the parser doesn't have. The human means "the Washington everyone knows" — the capital rather than the state rather than the university. The parser has to guess from statistical priors. The correct answer is "it depends on what the rest of the address says, and sometimes you need to ask."
+The human assumes context the parser doesn't have. The human means "the Washington everyone knows" — the capital, as opposed to the state or the university. The parser has to guess from statistical priors. The correct answer is "it depends on what the rest of the address says, and sometimes you need to ask."
 
 ### Crossing metro areas / border cities
 

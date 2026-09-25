@@ -8,30 +8,30 @@ tags:
 
 # Who's On First — data model and gotchas
 
-Who's On First (WOF) is the best open gazetteer available. It's also one of the strangest datasets you'll encounter as a developer. This article documents the gotchas — the structural quirks that trip up new consumers — and the tooling Mailwoman built to work around them.
+Who's On First (WOF) is the best open gazetteer available, and it is also an unusual dataset to work with. This article documents the structural quirks that catch new consumers, and the tooling Mailwoman built to work around them.
 
-If youwant to understand how Mailwoman's resolver queries WOF at runtime, see [Resolver and Who's On First](./resolver-and-wof.mdx). For the build-time ingest pipeline, see [WOF data pipeline](./wof-data-pipeline.mdx). This article is about the data model itself.
+For how Mailwoman's resolver queries WOF at runtime, see [Resolver and Who's On First](./resolver-and-wof.mdx). For the build-time ingest pipeline, see [WOF data pipeline](./wof-data-pipeline.mdx). This article covers the data model itself.
 
 ## What WOF is
 
-WOF is a gazetteer — a structured database of **places**. Not addresses rather than roads rather than buildings. _Places_: countries, regions, counties, cities, neighborhoods, venues. Each record gets:
+WOF is a gazetteer, a structured database of **places**. It does not contain addresses, roads, or buildings. Its _places_ are countries, regions, counties, cities, neighborhoods, and venues. Each record has:
 
 - A stable numeric ID
 - A parent-child hierarchy
 - Multilingual name variants
 - A polygon geometry (bounding box)
 
-It was created by [Mapzen](https://en.wikipedia.org/wiki/Mapzen) (2018) as the successor to GeoPlanet (Yahoo's gazetteer). The data lives on GitHub as approximately 100 repositories under the [`whosonfirst-data`](https://github.com/whosonfirst-data) org — several million individual GeoJSON files. [Geocode Earth](https://data.geocode.earth/wof/dist/sqlite/) maintains the canonical SQLite distributions.
+[Mapzen](https://en.wikipedia.org/wiki/Mapzen) created it (2018) as the successor to GeoPlanet, Yahoo's gazetteer. The data lives on GitHub in approximately 100 repositories under the [`whosonfirst-data`](https://github.com/whosonfirst-data) org, as several million individual GeoJSON files. [Geocode Earth](https://data.geocode.earth/wof/dist/sqlite/) maintains the canonical SQLite distributions.
 
-The key thing WOF gives you that no other open dataset provides: **a consistent hierarchy with stable IDs**. You can take a locality (`Houston`, id `85922029`), follow its `parent_id` to a region (`Texas`, id `85688753`), follow _that_ to a country (`United States`, id `85633793`), and know the chain is consistent. OpenStreetMap doesn't give you this. GeoNames gives you a partial version. WOF gives you the whole thing, with an opinion on how the world's administrative boundaries nest.
+WOF provides something no other open dataset does: **a consistent hierarchy with stable IDs**. You can take a locality (`Houston`, id `85922029`), follow its `parent_id` to a region (`Texas`, id `85688753`), follow _that_ to a country (`United States`, id `85633793`), and rely on the chain being consistent. OpenStreetMap does not provide this, and GeoNames provides only part of it. WOF provides the full hierarchy, with its own decisions about how the world's administrative boundaries nest.
 
 ## The gotchas
 
 ### One file per place
 
-WOF's canonical storage is one `.geojson` file per place, organized in a directory tree. A US admin subset has roughly 120,000 individual files. The French equivalent has about 80,000. Opening, parsing, and indexing 200,000 JSON files is a meaningful engineering problem before you've asked a single query.
+WOF's canonical storage is one `.geojson` file per place, organized in a directory tree. A US admin subset has roughly 120,000 individual files, and the French equivalent has about 80,000. Opening, parsing, and indexing 200,000 JSON files is a substantial engineering task before you can run a single query.
 
-This layout made sense for WOF's original use case — git-trackable changes to individual places. But for a geocoder that needs to query "all localities named Houston" across 120K files, it's the wrong access pattern. The SQLite distributions from Geocode Earth exist precisely to solve this.
+This layout suited WOF's original use case, which was tracking changes to individual places in git. A geocoder that needs to find all localities named Houston across 120K files needs a different access pattern. The SQLite distributions from Geocode Earth exist to provide it.
 
 ### The property namespace explosion
 
@@ -68,44 +68,44 @@ A WOF GeoJSON feature's `properties` object uses namespaced keys:
 
 Key observations:
 
-- **Namespaced keys everywhere.** `wof:`, `name:`, `src:`, `edtf:`, `geom:`, `mz:` — each prefix is a different source or concern. The schema is flat (one object, no nesting) with meaning encoded in the key name.
-- **Name variants are language-coded.** `name:eng_x_preferred` is the preferred English name. `name:fra_x_preferred` is French. `name:zho_x_preferred` is Chinese. The `_x_` separator splits the language code from the name kind.
-- **Name kinds vary.** `preferred`, `variant`, `colloquial`, `abbr`, `short`. A single place can have entries for several of these per language. A major city like Paris has `name:` entries in 50+ languages; a rural US neighborhood might have only one.
-- **The hierarchy is pre-computed.** Instead of walking `parent_id` up the tree at query time, WOF bakes the full ancestry chain into each record. Convenient for display; redundant for storage; occasionally stale when a parent is reclassified.
+- **Every key is namespaced.** Each prefix (`wof:`, `name:`, `src:`, `edtf:`, `geom:`, `mz:`) marks a different source or concern. The schema is a single flat object without nesting, and the key name carries the meaning.
+- **Name variants are language-coded.** `name:eng_x_preferred` is the preferred English name, `name:fra_x_preferred` is French, and `name:zho_x_preferred` is Chinese. The `_x_` separator divides the language code from the name kind.
+- **Name kinds vary.** The kinds are `preferred`, `variant`, `colloquial`, `abbr`, and `short`, and a place can have entries for several of them per language. A major city like Paris has `name:` entries in 50+ languages, while a rural US neighborhood might have only one.
+- **The hierarchy is precomputed.** WOF stores the full ancestry chain in each record, so a query does not need to walk `parent_id` up the tree. This is convenient for display, redundant for storage, and occasionally stale when a parent is reclassified.
 
 ### Brooklyn Integers
 
-WOF IDs are issued by a service called [Brooklyn Integers](https://brooklynintegers.com/) — a distributed ID generator that guarantees uniqueness across the dataset. The IDs are not sequential rather than geographically meaningful, and not sortable. They'reunique numbers. This is fine for lookup but means you can't reason about "near" places by ID proximity or infer anything from the numeric value.
+WOF IDs come from [Brooklyn Integers](https://brooklynintegers.com/), a distributed ID generator that guarantees uniqueness across the dataset. The IDs are only unique numbers. Their order carries no sequence, geography, or sort meaning. That works for lookup, but you cannot find nearby places by ID proximity or infer anything from the numeric value.
 
 ### Supersession chains
 
-Places get deprecated: a neighborhood is absorbed by a neighboring one, a county boundary changes, a locality is merged. WOF tracks this via `wof:superseded_by` arrays. A query that doesn't check supersession may return a place that hasn't existed since 2015. Every consumer needs to follow the supersession chain to the current record.
+Places get deprecated. A neighborhood is absorbed by its neighbor, a county boundary changes, or a locality is merged. WOF records this in `wof:superseded_by` arrays. A query that ignores supersession may return a place that has not existed since 2015. Every consumer must follow the supersession chain to the current record.
 
 ### Parent ID holes
 
-- `parent_id: -1` — "we don't know the parent." The first French postalcode dataset was ingested with `parent_id: -1` for every record, making hierarchy traversal useless until someone manually assigned parents. Some records still have `-1`.
-- `parent_id: 0` — "no parent (this is a continent or Earth itself)."
-- `parent_id: 1` — Earth (the root of all hierarchy).
+- `parent_id: -1` means the parent is unknown. The first French postalcode dataset was ingested with `parent_id: -1` on every record, so hierarchy traversal failed until someone assigned parents manually. Some records still have `-1`.
+- `parent_id: 0` means the record has no parent, because it is a continent or Earth itself.
+- `parent_id: 1` is Earth, the root of the hierarchy.
 
-A query that assumes every record has a valid parent chain will fail silently on these cases.
+A query that assumes every record has a valid parent chain fails silently on these records.
 
 ### Name normalization is critical
 
-WOF stores "São Paulo" with the accent. User input might arrive as "Sao Paulo" or "SAO PAULO". Case folding and accent stripping are not optional. They are required for matching. The resolver's placename index normalizes all names to a canonical form (NFC, lowercase, accent-stripped) before insertion.
+WOF stores "São Paulo" with the accent, and user input might arrive as "Sao Paulo" or "SAO PAULO". Matching requires case folding and accent stripping. The resolver's placename index normalizes every name to a canonical form (NFC, lowercase, accent-stripped) before insertion.
 
 ## How Mailwoman uses WOF
 
-Mailwoman needs WOF for two distinct access patterns:
+Mailwoman reads WOF with two different access patterns:
 
 ### 1. Rule classifiers — "is this token a known place name?"
 
-The `whos_on_first` rule classifier answers "is this string a locality/region/country name in any language?" It doesn't need coordinates, hierarchy, or geometry — just the normalized string and which languages it's valid in.
+The `whos_on_first` rule classifier checks whether a string is a locality, region, or country name in any language. It needs only the normalized string and the languages it is valid in, without coordinates, hierarchy, or geometry.
 
-**`WOFPlacenameCache`** builds this index by streaming GeoJSON files, extracting `name:*` properties, normalizing them, and inserting into an in-memory `Map<string, Set<language>>` keyed by the normalized form.
+**`WOFPlacenameCache`** builds this index. It streams GeoJSON files, extracts the `name:*` properties, normalizes them, and inserts them into an in-memory `Map<string, Set<language>>` keyed by the normalized form.
 
 ### 2. Reconcile concordance — "do these components form a valid parent chain?"
 
-Stage 5 joint decoding scores parse candidates against the gazetteer's hierarchy. The reconciler needs richer queries: "give me all localities named Houston with their parent_id chains" and "walk this locality's parent_id up to region — does it reach Texas?"
+Stage 5 joint decoding scores parse candidates against the gazetteer's hierarchy. The reconciler needs richer queries, such as "give me all localities named Houston with their parent_id chains" and "walk this locality's parent_id up to region — does it reach Texas?"
 
 **`PlacetypeDataSource`** is a SQLite database per (placetype, language) pair:
 
@@ -124,13 +124,13 @@ CREATE TABLE records (
 );
 ```
 
-One row per name variant. "Saint Petersburg", "St. Petersburg", and "St Petersburg" are three rows for the same `id` in different `name`/`variant`/`short` columns. The reconciler can match any variant form and get the same `parent_id` chain.
+Each name variant gets its own row. "Saint Petersburg", "St. Petersburg", and "St Petersburg" are three rows for the same `id`, in different `name`/`variant`/`short` columns. The reconciler can match any variant and get the same `parent_id` chain.
 
 ### Ingest tooling
 
-Processing 120K GeoJSON files is an embarrassingly-parallel problem. Mailwoman's WOF ingest pipeline uses [Piscina](https://github.com/piscinajs/piscina) (a Node.js worker-thread pool) to dispatch files across all available CPU cores. Each worker reads a GeoJSON file, calls `pluckPlacetypeSpec` to extract structured fields and name variants, and upserts into the appropriate `PlacetypeDataSource`.
+Each of the 120K GeoJSON files can be processed independently, so the work parallelizes easily. Mailwoman's WOF ingest pipeline uses [Piscina](https://github.com/piscinajs/piscina), a Node.js worker-thread pool, to spread files across all available CPU cores. Each worker reads a GeoJSON file, calls `pluckPlacetypeSpec` to extract structured fields and name variants, and upserts them into the matching `PlacetypeDataSource`.
 
-When the data arrives as a single bulk NDJSON dump rather than individual files, `AsyncSpliterator.asMany(source, delimiter, concurrency)` splits the file into N byte-range chunks, snaps to delimiter boundaries, and returns N independent async iterators for parallel processing. It's built but not yet exercised at scale.
+When the data arrives as a single bulk NDJSON dump instead of individual files, `AsyncSpliterator.asMany(source, delimiter, concurrency)` splits the file into N byte-range chunks aligned to delimiter boundaries. It returns N independent async iterators for parallel processing. It is built but has not yet run at scale.
 
 For full details on the ingest pipeline, see [WOF data pipeline](./wof-data-pipeline.mdx).
 
@@ -138,17 +138,17 @@ For full details on the ingest pipeline, see [WOF data pipeline](./wof-data-pipe
 
 Every geocoder needs a gazetteer. The options are:
 
-- **Pay for one** — Google, here, Mapbox
-- **Use an open one** — WOF, GeoNames, OSM Nominatim
-- **Build your own** — BAN (France), NAD (US), TIGER (US)
+- **Pay for one**: Google, here, Mapbox
+- **Use an open one**: WOF, GeoNames, OSM Nominatim
+- **Build your own**: BAN (France), NAD (US), TIGER (US)
 
-WOF is the best open option for hierarchy and multilingual names. But it's hard to use raw. The per-file layout, flat namespace, supersession chains, and `parent_id: -1` holes are each a trap for a naive consumer. The tooling Mailwoman built — `WOFPlacenameCache`, `PlacetypeDataSource`, the Piscina pipeline, `AsyncSpliterator.asMany` — closes the gap between "WOF exists" and "WOF is usable as a geocoder component."
+WOF is the best open option for hierarchy and multilingual names, but it is hard to use in raw form. The per-file layout, flat namespace, supersession chains, and `parent_id: -1` holes can each break a consumer that does not account for them. Mailwoman's tooling (`WOFPlacenameCache`, `PlacetypeDataSource`, the Piscina pipeline, and `AsyncSpliterator.asMany`) turns the raw WOF data into a usable geocoder component.
 
 ## See also
 
-- [Who's On First on GitHub](https://github.com/whosonfirst-data) — the source repos
-- [Geocode Earth WOF distributions](https://data.geocode.earth/wof/dist/sqlite/) — pre-built SQLite files
-- [Spelunker](https://spelunker.whosonfirst.org/) — the official WOF browser
-- [Resolver and Who's On First](./resolver-and-wof.mdx) — how the runtime resolver queries WOF
-- [WOF data pipeline](./wof-data-pipeline.mdx) — build-time ingest architecture
-- [Taming Who's On First](/research/taming-whosonfirst) — the narrative version of this article
+- [Who's On First on GitHub](https://github.com/whosonfirst-data): the source repos
+- [Geocode Earth WOF distributions](https://data.geocode.earth/wof/dist/sqlite/): prebuilt SQLite files
+- [Spelunker](https://spelunker.whosonfirst.org/): the official WOF browser
+- [Resolver and Who's On First](./resolver-and-wof.mdx): how the runtime resolver queries WOF
+- [WOF data pipeline](./wof-data-pipeline.mdx): build-time ingest architecture
+- [Taming Who's On First](/research/taming-whosonfirst): the narrative version of this article

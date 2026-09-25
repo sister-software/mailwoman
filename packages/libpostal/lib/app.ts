@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Engine-agnostic libpostal-compatible Hono app with routes, CORS, error handling, and OpenAPI docs.
+ *   Builds the libpostal-compatible Hono app around an injected engine.
  */
 
 import { OpenAPIHono } from "@hono/zod-openapi"
@@ -16,7 +16,7 @@ import type { LibpostalEngine } from "#engine"
 import { registerLibpostalRoutes } from "#routes"
 
 /**
- * Request-body limit, matching the common 100 KiB JSON parser default.
+ * Request-body limit of 100 KiB, which matches the usual JSON parser default.
  */
 const MAX_BODY_BYTES = 102_400
 
@@ -25,19 +25,22 @@ const MAX_BODY_BYTES = 102_400
  */
 export interface LibpostalAppOptions {
 	/**
-	 * Enable permissive CORS by default; disable when a reverse proxy supplies these headers.
+	 * Enables permissive CORS.
+	 *
+	 * It defaults to `true`.
+	 * Set it to `false` when a reverse proxy adds the CORS headers.
 	 */
 	cors?: boolean
 
 	/**
 	 * Engine stamp for response headers.
-	 * Optional for embedding applications; the CLI provides it.
+	 * The CLI always provides it.
 	 */
 	engine?: EngineStamp
 }
 
 /**
- * Shared metadata for the mounted OpenAPI document and CLI-generated documents.
+ * OpenAPI metadata shared by the served document and CLI-generated documents.
  */
 export const LIBPOSTAL_DOC_INFO: OpenAPIDocInfo = {
 	...(await readServedDocumentInfo(import.meta.url, "@mailwoman/libpostal")),
@@ -61,7 +64,7 @@ export const LIBPOSTAL_DOC_INFO: OpenAPIDocInfo = {
 }
 
 /**
- * Create the app around an injected {@link LibpostalEngine}.
+ * Creates the app around an injected {@link LibpostalEngine}.
  */
 export function createLibpostalApp(engine: LibpostalEngine, options: LibpostalAppOptions = {}): OpenAPIHono {
 	const app = new OpenAPIHono()
@@ -74,10 +77,10 @@ export function createLibpostalApp(engine: LibpostalEngine, options: LibpostalAp
 		app.use(engineHeaders(options.engine))
 	}
 
-	// Return a stable JSON error when the engine throws.
+	// The handler hides engine error details from clients.
 	app.onError((_error, c) => c.json({ error: "internal error" }, 500))
 
-	// Reject oversized bodies before the route buffers them.
+	// The limit rejects an oversized body before the route buffers it.
 	const guardBodySize = bodyLimit({
 		maxSize: MAX_BODY_BYTES,
 		onError: (c) => c.json({ error: "request body too large" }, 413),

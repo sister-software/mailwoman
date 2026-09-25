@@ -4,17 +4,10 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   SessionStart hook: which workspace owns which concern, and what each one exports, as one listing at the top of a
- *   session.
+ *   SessionStart hook that lists each workspace and its export subpaths.
  *
- *   why this and not more. An agent that does not know a package exists cannot ask `mwdev_symbol` about it, and the map
- *   from a concern to a workspace is the part agents.md spends a table on and a session forgets first. The listing is
- *   the workspace names and their export subpaths — an index of where to look rather than what is there. The signatures were
- *   measured at roughly 88,000 tokens for this repository, which would displace the work it is meant to serve and
- *   would not survive a compaction. the names cost a fraction of that and point at a tool that answers the rest.
- *
- *   It fails silent and exits 0 on every error path. A session that cannot start because its orientation hook threw is
- *   a worse trade than a session that starts without orientation.
+ *   The listing omits signatures to stay small, and `mwdev_symbol` answers the details. The hook swallows every
+ *   error so a failure never blocks a session from starting.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -24,17 +17,13 @@ import { readWorkspaceDirectories } from "@mailwoman/core/workspaces"
 import { type PathBuilderLike, resolvePath } from "path-ts"
 
 /**
- * How many subpaths a workspace contributes before the rest are counted instead.
- *
- * A handful names the concerns.
- * The full list of a large package is what `mwdev_symbol` is for, and the listing
- * has to stay small enough to survive at the top of a session.
+ * The number of subpaths listed per workspace.
+ * The listing counts the rest.
  */
 const SUBPATH_LIMIT = 12
 
 /**
- * The subpaths a manifest's `exports` map declares, without the `./package.json` entry every
- * workspace carries and without the wildcard patterns, which name a shape rather than a concern.
+ * Returns the subpaths in a manifest's `exports` map, excluding `./package.json` and wildcard patterns.
  */
 function exportedSubpaths(exports: unknown): string[] {
 	if (typeof exports !== "object" || exports === null) return []
@@ -45,7 +34,9 @@ function exportedSubpaths(exports: unknown): string[] {
 }
 
 /**
- * One line per workspace: its package name, then the subpaths a consumer may import.
+ * Builds the listing, with one line per workspace giving its package name and export subpaths.
+ *
+ * Returns an empty string when no workspace has a named manifest.
  */
 export async function orientationListing(repoRoot: PathBuilderLike): Promise<string> {
 	const lines: string[] = []
@@ -85,5 +76,5 @@ async function main(): Promise<void> {
 try {
 	await main()
 } catch {
-	// See the header: orientation is worth less than a session that starts.
+	// A session without orientation is better than one that fails to start.
 }

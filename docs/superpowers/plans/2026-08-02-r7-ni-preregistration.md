@@ -40,7 +40,7 @@ Newtownabbey 4, Londonderry/Derry 3, Lisburn 2). Fold-collision audit against th
 - **B-R7.3 (positive side).** The fresh pairs extract as `dependent_locality` in a real NI address
   shape (`<house> <street>, <neighbourhood>, Belfast, BT<n> <n><aa>`). Bar: **≥70% tag-correct** on
   a sampled positive board.
-- **D-R7.4 (disclosure).** Report how several of the 84 survive the fold as distinct entries, and name
+- **D-R7.4 (disclosure).** Report the count of the 84 that survive the fold as distinct entries, and name
   any that collapse — an artifact whose count silently differs from its source's is how a fold bug
   hides.
 

@@ -2,14 +2,7 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file The notice guard over a planted tree: three copies that agree, one that omits a module, one that names a
- *   module the others do not, a named module that no longer exists, and a shipped copy that links to the MIT
- *   permission notice instead of reproducing it.
- *
- *   The two cases the check was written for are `reports a copy that omits a module the others name` and `reports a
- *   named module whose header does not record the derivation`. Their live instances were the documentation page and
- *   the `@mailwoman/core` copy naming rule-based classifiers and a solver deleted in v7.0.0, and the three surviving
- *   tokenization modules carrying an AGPL-only header.
+ * @file Tests the third-party notices check against temporary trees of notice copies and derived modules.
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
@@ -22,9 +15,9 @@ const fixtures = new AsyncDisposableStack()
 afterAll(() => fixtures.disposeAsync())
 
 /**
- * The MIT sentence the shipped copy has to carry, wrapped as the repository formatter wraps a blockquote.
+ * The MIT permission sentence that a shipped copy must carry.
  *
- * So a passing case also establishes that the check reads through a reflow.
+ * The sentence is wrapped across two blockquote lines to test that the check matches through a line break.
  */
 const PERMISSION_NOTICE = [
 	"> The above copyright notice and this permission notice shall be included in all copies",
@@ -32,14 +25,14 @@ const PERMISSION_NOTICE = [
 ].join("\n")
 
 /**
- * A notice naming the given module paths, with the permission notice appended.
+ * Builds a notice that lists the given module paths and ends with the permission notice.
  */
 function notice(modules: readonly string[]): string {
 	return `# Third-Party Notices\n\nDerived: ${modules.join(", ")}.\n\n${PERMISSION_NOTICE}\n`
 }
 
 /**
- * A module whose header records the Pelias derivation.
+ * This module header records the Pelias derivation.
  */
 const DERIVED_SOURCE = `/**
  * @copyright Sister Software
@@ -50,7 +43,7 @@ export const x = 1
 `
 
 /**
- * A module whose header records only the first-party license.
+ * This module header records only the first-party copyright.
  */
 const UNMARKED_SOURCE = `/**
  * @copyright Sister Software
@@ -69,7 +62,7 @@ async function plant(files: Record<string, string>) {
 }
 
 /**
- * A tree whose three copies agree on one module, with that module's header recording the derivation.
+ * Builds a valid tree in which all three notice copies list one module whose header records the derivation.
  */
 function agreeingTree(overrides: Record<string, string> = {}) {
 	return {

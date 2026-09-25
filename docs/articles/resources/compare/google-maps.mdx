@@ -8,10 +8,10 @@ role: explanation
 
 ## The question
 
-You can be geocoding this afternoon with an API key and a fetch call, or you can install a package,
-download a gazetteer, and geocode in a process you already run. Both work. They are built for
-different situations, and the difference is not quality. It is where the data lives and who operates
-it.
+You can start geocoding this afternoon with an API key and a fetch call. Alternatively, you can
+install a package, download a gazetteer, and geocode in a process you already run. Both approaches
+work. They are built for different situations, and they differ mainly in where the data lives and who
+operates it.
 
 ## What Google Maps Platform is
 
@@ -28,17 +28,16 @@ The same page describes forward geocoding, reverse geocoding, and geocoding by P
 Address Descriptors feature. It notes that developers in the European Economic Area are covered by
 different terms with effect from 8 July 2025.
 
-The Place ID is worth understanding before you compare anything else, because it is the design
-center. A Place ID is a stable identifier into Google's own place graph, and once your records carry
-one you are holding a key that resolves in one system. That is a real capability. It is what makes
-the geocoder, the Places data, and the map rendering line up — and it is also the thing that does not
-travel.
+Understand the Place ID before you compare anything else, because the service is designed around it.
+A Place ID is a stable identifier into Google's own place graph. Once your records carry Place IDs,
+they hold keys that resolve only in Google's system. That link is useful, because it keeps the
+geocoder, the Places data and the map rendering consistent. It also means the IDs cannot be used
+with another provider.
 
 For what the service costs and what the terms permit, read
 [Google's pricing](https://developers.google.com/maps/billing-and-pricing/pricing) and
-[terms](https://cloud.google.com/maps-platform/terms). Those are the pages that change, they are
-specific to your usage, and quoting them in someone else's documentation is how a reader ends up
-planning against a stale number.
+[terms](https://cloud.google.com/maps-platform/terms). Those pages change and depend on your usage.
+A copy quoted in another project's documentation can go stale, so read the originals.
 
 ## What each one is built to do
 
@@ -46,65 +45,65 @@ planning against a stale number.
 | -------------------- | ----------------------------------- | ---------------------------------------------------------- |
 | Shape                | Hosted HTTP service                 | npm package, in-process; HTTP servers optional             |
 | Where the query goes | Google's infrastructure             | Your process                                               |
-| Coverage             | Global, uniform, no setup           | Per-locale, measured where claimed; a download per country |
+| Coverage             | Global and uniform, without setup   | Per-locale, measured where claimed; a download per country |
 | Reference data       | Google's, maintained by Google      | Public registers on your disk, refreshed by you            |
 | Identifier           | Place ID into Google's place graph  | A component decomposition, plus an address key you compute |
 | Non-address queries  | Landmarks, business names, partials | Not the design; the parser needs an address                |
 | What arrives         | A matched place                     | Labeled spans with offsets, plus a coordinate and a tier   |
 | Operating cost       | Per request                         | Infrastructure and disk                                    |
 
-Two rows carry most of the decision.
+Two rows account for most of the decision.
 
-**"Where the query goes"** is the one that ends evaluations early in either direction. If your
-addresses are patient records, employee home addresses, or anything your compliance function has an
-opinion about, an in-process library removes the conversation rather than winning it. If they are
-public business addresses, the conversation never starts and this row is not interesting.
+**"Where the query goes"** can settle an evaluation early, in either direction. If your addresses
+are patient records, employee home addresses, or other data your compliance team regulates, an
+in-process library keeps the data inside your systems, so the compliance question does not arise. If
+they are public business addresses, compliance is not a concern and this row does not matter.
 
 **"What arrives"** decides how much of your own code you write. A hosted geocoder returns a matched
-place, and if you needed to know which characters of your input were the street, you get to work that
-out downstream. A label-then-look-up parser returns the decomposition as the primary product, which
-is what deduplication, validation, formatting and record matching all need. If a coordinate is the
-whole requirement, this row costs you nothing either way.
+place. If you need to know which characters of your input were the street, you must work that out
+downstream. A label-then-look-up parser returns the decomposition as its primary output, and
+deduplication, validation, formatting and record matching all need that decomposition. If you need
+only a coordinate, this row makes no difference.
 
 ## When to choose Google Maps Platform
 
-Take this section at face value. There are situations where a hosted geocoder is the correct
-engineering decision and installing ours would be a mistake.
+In the situations below, a hosted geocoder is the correct engineering decision, and installing
+Mailwoman would be a mistake.
 
-- **Your queries are not addresses.** "Starbucks near Union Station", a business name with no street,
-  a half-typed landmark. That is a place-search problem over a business graph, and a parser has
-  nothing to label. Mailwoman will parse it into something and the something will be wrong.
-- **You need global coverage today, uniformly.** A hosted API covers every country the day you sign
-  up. Ours covers the locales where a coordinate-graded evaluation exists, and the rest is unverified
-  rather than merely thin — see [Locales and tiers](../../developers/reference/locales-and-tiers.mdx).
-  If your file spans 40 countries and you cannot wait for tiers, this is decisive.
-- **You are already inside the ecosystem.** If you render Google maps, use Places, and store Place
-  IDs, a second geocoder means two place graphs to reconcile. Consistency within one system is worth
-  more than the marginal properties of another one.
-- **Volume is low and engineering time is the scarce resource.** Below the volume where per-request
-  pricing becomes material, sourcing and refreshing reference data is a standing job you would be
-  taking on for no return.
-- **You have no place to put 1.65 GB.** The gazetteer has to live somewhere with a disk. A serverless
-  function with a small bundle limit and no attached volume is a poor host for this design, and
-  [Deploy serverless](../../developers/how-to/deploy-serverless.mdx) is upfront about the shapes that
-  work.
+- **Your queries are not addresses.** Examples include "Starbucks near Union Station", a business name
+  without a street, or a half-typed landmark. These are place-search problems over a business graph,
+  and a parser has nothing to label. Mailwoman will still parse the input, and the result will be
+  wrong.
+- **You need uniform global coverage today.** A hosted API covers every country the day you sign up.
+  Mailwoman covers the locales where a coordinate-graded evaluation exists, and results elsewhere are
+  unverified. See [Locales and tiers](../../developers/reference/locales-and-tiers.mdx). If your file
+  spans 40 countries and you cannot wait for tiers, choose the hosted service.
+- **You already use the Google ecosystem.** If you render Google maps, use Places, and store Place
+  IDs, a second geocoder gives you two place graphs to reconcile. Consistency within one system is
+  worth more than the marginal benefits of another one.
+- **Your volume is low and engineering time is scarce.** Below the volume where per-request pricing
+  becomes a material cost, sourcing and refreshing reference data is ongoing work that gains you nothing.
+- **You have no place to put 1.65 GB.** The gazetteer needs a disk. A serverless function with a
+  small bundle limit and no attached volume is a poor host for this design.
+  [Deploy serverless](../../developers/how-to/deploy-serverless.mdx) describes the shapes that work.
 
 ## When to choose Mailwoman
 
-- **The addresses cannot leave.** No egress is the property; everything else follows from it.
-- **You need fields rather than only a point.** Spans with offsets into your original string, so
-  deduplication and validation have something to work with.
-- **The volume makes per-request pricing the largest line item.** The trade is infrastructure and
-  disk, which have different curves.
+- **The addresses cannot leave your systems.** Mailwoman sends no query data out of your process, and
+  the other benefits follow from that.
+- **You need fields rather than only a point.** Mailwoman returns spans with offsets into your
+  original string, which deduplication and validation can use.
+- **The volume makes per-request pricing your largest line item.** Mailwoman replaces that cost with
+  infrastructure and disk, which grow differently with volume.
 - **You want to store the results indefinitely.** Reference data on your disk carries whatever the
-  source license permits, and you are reading that license rather than a service agreement.
+  source license permits, and you read that license instead of a service agreement.
 - **You need to inspect or override a wrong answer.** Every resolved span identifies the gazetteer record
-  it landed on, so a bad result has a stage to examine.
+  it landed on, so you can trace a bad result to the stage that produced it.
 
 ## Run it yourself
 
-Both claims above are checkable on your own file rather than on ours. Our published numbers are two
-panels with their scripts:
+You can check both claims above on your own file. Our published numbers come from two panels, and
+their scripts are public:
 
 ```bash
 curl -fsSLO https://mailwoman.ai/benchmarks/be-panel.mjs
@@ -113,9 +112,8 @@ mailwoman data pull candidate
 node be-panel.mjs --data-root <DATA_ROOT>
 ```
 
-[Benchmarks](../benchmarks/index.mdx) carries the results and the method. The panel to run against
-_your_ addresses is the one you write from `be-panel.mjs` — swap the panel file for your own rows and
-the same script grades them.
+[Benchmarks](../benchmarks/index.mdx) has the results and the method. To test _your_ addresses,
+replace the panel file with your own rows, and `be-panel.mjs` grades them.
 
 ## Related
 

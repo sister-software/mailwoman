@@ -65,13 +65,13 @@ useful negative result — the eval check stopped a plausible-but-wrong revival.
 | class                        | measured                                                                              | engine   | status         | change / root cause                                                                     | source                                  |
 | ---------------------------- | ------------------------------------------------------------------------------------- | -------- | -------------- | --------------------------------------------------------------------------------------- | --------------------------------------- |
 | admin-centroid fallback      | ~40% of TX facilities fall back (p50 3.4 km, p99 catastrophic)                        | resolver | open           | **coverage** rather than precision — no rooftop/interp extract hit on the parsed street | 2026-06-17-geocoder-vs-provided-coords  |
-| rooftop (address_point) tier | fires 47%; **0.7 km** p50 where it fires                                              | resolver | open           | coverage is the frontier — accuracy is solved when a extract has the point              | 2026-06-17-geocoder-vs-provided-coords  |
+| rooftop (address_point) tier | fires 47%; **0.7 km** p50 where it fires                                              | resolver | open           | coverage is the frontier — accuracy is solved when an extract has the point             | 2026-06-17-geocoder-vs-provided-coords  |
 | interpolation (street) tier  | fires 12.5%; **0.1 km** p50; raw radius covered only 72% → ×1.70 for a true 90% bound | resolver | fixed (radius) | a radius is decoration unless calibrated (#374)                                         | 2026-06-14-interp-radius-calibration    |
 | off-map country routing      | 88→ clears 90/90 (decision rule, no retrain)                                          | resolver | fixed          | `1 − P(OTHER)` in-map mass beats softmax argmax                                         | 2026-06-14-coarse-placer-arc-postmortem |
 | in-map wrong-region misroute | **0 / 2000** across 10 countries                                                      | resolver | fixed          | the soft prior re-rank never misroutes (tier-safe)                                      | 2026-06-14-coarse-placer-arc-postmortem |
 
 The headline: where the finer tiers fire, the geocoder is rooftop-accurate (0.1–0.7 km, calibrated). The
-open problem is **coverage** — ~40% fall back to a city centroid for lack of a extract. That's a data change
+open problem is **coverage** — ~40% fall back to a city centroid for lack of an extract. That's a data change
 (more situs/interpolation extracts) rather than a model one. See the companion concept note on coordinate
 sufficiency ("How close is close enough?") for what these tiers are _worth_ per use-case.
 
@@ -112,8 +112,8 @@ gap.
 
 ## What the table says about the roadmap
 
-1. **Boundary instability is the highest-changeage parser change** — it's one family (§1 dotted, §5 street/glue, §6 within-token) under several names; a boundary-aware decode would move several rows at once.
-2. **Geocoder accuracy is solved; coverage is the frontier**. The ~40% admin fallback is a extract-data problem rather than a model one (§4).
+1. **Boundary instability is the highest-leverage parser change** — it's one family (§1 dotted, §5 street/glue, §6 within-token) under many names; a boundary-aware decode would move several rows at once.
+2. **Geocoder accuracy is solved; coverage is the frontier**. The ~40% admin fallback is an extract-data problem, not a model one (§4).
 3. **Locale is a data problem rather than a weight problem** — fr.house_number falsified weight tuning; real reordered/native data is the only remaining change (§2).
 4. **The eval check warrants its keep** — the rejected paired-delimiter proposer (§3) and the deferred geocoder wiring (§4, #694) are both cases where a plausible change was stopped by a measured regression. Keep grading the assembled output rather than label-F1 (the #566 discipline).
 

@@ -16,11 +16,11 @@
   <img alt="node version" src="https://img.shields.io/node/v/@mailwoman/codex?color=339933">
 </p>
 
-Printing an address is not string concatenation. Germany puts the house number after the
-street and the postcode before the city. Spain separates the street from the number with a
-comma. Japan writes largest unit first, opens with a postal mark, and joins the whole admin
-run without spaces. Get any of it wrong and you have produced a plausible address from
-somewhere else.
+Printing an address takes more than string concatenation. Germany puts the house number after
+the street and the postcode before the city. Spain separates the street from the number with a
+comma. Japan writes the largest unit first, opens with a postal mark, and joins the whole admin
+run without spaces. A formatter that gets any of these wrong produces a plausible address from
+another country.
 
 ```ts
 import { formatAddress } from "@mailwoman/codex/address-format"
@@ -55,8 +55,8 @@ formatAddress(
 // → "〒100-0005 東京都千代田区丸の内1-9-1"
 ```
 
-**197 countries**, no dependencies, no network, no database. It runs in Node, the browser and
-on an edge worker.
+The package covers **197 countries** and needs no dependencies, network, or database. It runs in
+Node, the browser, and on an edge worker.
 
 ## Installation
 
@@ -73,27 +73,29 @@ yarn add @mailwoman/codex
 
 ### `formatAddress(components, countryCode, options?)`
 
-Takes a partial map of component tags and a country code. Returns the envelope form by
-default; `singleLine: true` joins the lines the way that country joins them — `", "` for
-most, `" "` for Japan and Korea, nothing at all for the Chinese-script systems.
+`formatAddress` takes a partial map of component tags and a country code, and returns the
+envelope form by default. `singleLine: true` joins the lines the way that country joins them:
+`", "` for most countries, `" "` for Japan and Korea, and no separator for the Chinese-script
+systems.
 
-A missing value never leaves a dangling separator behind it, because a connector renders
-only when something rendered on both sides of it:
+A missing value never leaves a dangling separator, because a connector renders only when
+something rendered on both sides of it:
 
 ```ts
 formatAddress({ locality: "New York", postcode: "10118" }, "US", { singleLine: true })
 // → "New York, 10118"   — not "New York, , 10118"
 ```
 
-An unknown country returns `""` rather than guessing an order. 55 of the 252 shipped country
-records carry no usable layout, and saying nothing for one of those reports the absence.
+An unknown country returns `""` instead of a guessed order. 55 of the 252 shipped country
+records carry no usable layout, and the empty string reports that absence.
 
 ### `formatAddressRow(components, countryCode, options?)`
 
-The same render, plus **which tags it printed and which it could not**. That second half is
-the reason this function exists: a country's layout legitimately drops components, and
-searching the output string for each value cannot tell a dropped component from one whose
-text happens to sit inside another (`Paris` inside `Rue de Paris`).
+`formatAddressRow` performs the same render and also reports **which tags it printed and which
+it could not place**. The second part is the reason this function exists. A country's layout
+can legitimately drop components, and searching the output string for each value cannot
+distinguish a dropped component from one whose text happens to appear inside another (`Paris`
+inside `Rue de Paris`).
 
 ```ts
 formatAddressRow({ locality: "Paris", region: "Île-de-France", postcode: "75008" }, "FR", { singleLine: true })
@@ -104,13 +106,13 @@ formatAddressRow({ locality: "Paris", region: "Île-de-France", postcode: "75008
 //   }
 ```
 
-Returns `null` when nothing rendered at all.
+It returns `null` when nothing rendered.
 
 ### `canonicalKey(components, options?)`
 
-A deterministic match key for record linkage — lowercased, diacritic-stripped,
-punctuation-flattened, fields in a fixed order. Two records for the same address that differ
-only in spelling produce the same key.
+`canonicalKey` builds a deterministic match key for record linkage. The key is lowercased,
+stripped of diacritics and punctuation, and lists fields in a fixed order. Two records for the
+same address that differ only in spelling produce the same key.
 
 ```ts
 import { canonicalKey } from "@mailwoman/codex/address-key"
@@ -126,15 +128,15 @@ canonicalKey({
 // → "123|main|st|portland|or|97201"
 ```
 
-Venue and attention are excluded on purpose: those carry organization identity rather than address
-identity.
+The key excludes venue and attention, because those fields identify an organization and not an
+address.
 
 ### `renderAddress(layout, components)`
 
-The layer under `formatAddress`, for callers that need the pieces rather than a string — a
-syntax highlighter, a template that wraps each component in its own element, an aligner
-turning a render into labeled spans. It returns `AddressPiece[]`, each piece carrying the
-tag that produced it (or `null` for a separator).
+`renderAddress` is the layer under `formatAddress`. It serves callers that need the pieces
+instead of a string, such as a syntax highlighter, a template that wraps each component in its
+own element, or an aligner that turns a render into labeled spans. It returns `AddressPiece[]`,
+and each piece carries the tag that produced it (or `null` for a separator).
 
 ## Where the order comes from
 
@@ -150,25 +152,25 @@ ${locality}, ${region} ${postcode}
 ${country}`,
 ```
 
-Checking a country means looking at the shape of an address from there rather than at a nested call.
-The line skeletons are derived from [libaddressinput](https://github.com/google/libaddressinput),
-Google's address metadata (Apache-2.0); 186 countries are generated from it and the 11 locales
-this project publishes models for are hand-authored and checked against real addresses on a
-committed board.
+To check a country, a reviewer reads the shape of an address from that country instead of a
+nested call. The line skeletons are derived from
+[libaddressinput](https://github.com/google/libaddressinput), Google's address metadata
+(Apache-2.0). 186 countries are generated from it. The 11 locales that this project publishes
+models for are hand-authored and checked against real addresses on a committed board.
 
 **One rule governs rendering:**
 
 > A node that renders nothing removes itself, and its connector goes with it.
 
 A connector between two slots needs a rendered slot on each side. A connector at a line's edge
-has only one side, so it binds to the single slot it touches — which is how Japan's 〒
-disappears along with an absent postcode while an interior space does not. Where several
-connectors survive in a row, the strongest wins: punctuation outranks whitespace, so
-`Calle Mayor, 12` keeps its comma when the street suffix is absent.
+has only one side, so it binds to the single slot it touches. That is how Japan's 〒 disappears
+with an absent postcode while an interior space does not. When several connectors survive in a
+row, the strongest one wins. Punctuation outranks whitespace, so `Calle Mayor, 12` keeps its
+comma when the street suffix is absent.
 
-Four things libaddressinput does not model are authored here, each from a measurement rather
-than a guess: the street line's spelling (183 countries space-join the number and the name, 22
-comma-join), the post-office box line, the country line, and the sub-locality line.
+This package authors four things that libaddressinput does not model, each based on a
+measurement: the street line's spelling (183 countries space-join the number and the name, and
+22 comma-join them), the post-office box line, the country line, and the sub-locality line.
 
 ## Reference data
 
@@ -201,19 +203,19 @@ candidateSystemsForPostcode("94043") // → ["us", "de", "fr"]
 candidateSystemsForPostcode("SW1A 1AA") // → ["gb"]
 ```
 
-Note the first answer. This is a **shape** test rather than a gazetteer membership test, and
-returning all three is the correct answer rather than a hedge. The caller's country scope is
-what narrows it. Picking one locale here would be a guess wearing a fact's clothes.
+The first call returns three systems. This function tests the code's **shape** and does not
+check gazetteer membership, so returning all three is correct. The caller's country scope
+narrows the list. Picking one locale here would present a guess as a fact.
 
 ### Postcode granularity: three tiers, each earned by measurement
 
-One `postalcode` placetype covers systems that are not comparable. An Irish Eircode names a
-single address; an Australian postcode names a locality. Between them sit most of the world,
-and the distinction that changes an answer is narrower: **is this code finer than the locality
-that contains it?**
+One `postalcode` placetype covers systems that are not comparable. An Irish Eircode identifies
+a single address, and an Australian postcode identifies a locality. Most of the world sits
+between them, and the question that changes an answer is narrower: **is this code finer than
+the locality that contains it?**
 
-That is a fact about a country's _administrative_ geography rather than its postal system, and code
-length does not predict it. France and Germany are both five digits and land on opposite
+The answer depends on a country's _administrative_ geography and not its postal system, and
+code length does not predict it. France and Germany both use five digits and land on opposite
 sides.
 
 ```ts
@@ -231,17 +233,17 @@ areaPostcodeLeadsLocality("FR") // → false (one code postal often spans severa
 | **area, but still finer than the locality** (`AREA_POSTCODE_FINER_THAN_LOCALITY`) | DE                                | full-panel measurement: 5.84 km → 1.24 km p50, better on every percentile |
 | **area** (the default)                                                            | everything else                   | the locality-first convention                                             |
 
-Membership is earned by a measurement, never by a shape that looks tight. Canada is the case
-that shows why: its urban LDU is unit-grade, its **rural** LDU measures 2.08 km against the
-locality's 929 m and is excluded — and Canada Post already marks the difference with a `0` in
-the second character, so the code says which before any lookup runs. The pooled Canadian
-number reads 0.10 km and looks like a uniform win; it is two populations, and a tier claim
-that averages two granularities is exactly what these tables exist to prevent.
+A system joins a tier only after a measurement, never because its codes look precise. Canada
+shows why. Its urban LDU is unit-grade. Its **rural** LDU measures 2.08 km against the
+locality's 929 m and is excluded. Canada Post already marks the difference with a `0` in the
+second character, so the code itself identifies its type before any lookup runs. The pooled
+Canadian number reads 0.10 km and looks like a uniform improvement, but it mixes two
+populations. These tables exist to prevent a tier claim that averages two granularities.
 
 ## Layout and convention coverage
 
-The layouts and the parsing conventions cover different numbers of places, and the gap is
-deliberate rather than a backlog.
+The layouts and the parsing conventions cover different numbers of places. The difference is
+intentional and does not represent a backlog.
 
 | Table                                                         | Keyed by     | Coverage                                         |
 | ------------------------------------------------------------- | ------------ | ------------------------------------------------ |
@@ -249,77 +251,81 @@ deliberate rather than a backlog.
 | `ADDRESS_SYSTEM_CONVENTIONS` (`./address-system-conventions`) | `SystemCode` | two rows: `fr`, `gb`                             |
 | `SystemCode` (`./postcode-systems`)                           | —            | ten: `us de fr es it ca gb jp au nz`             |
 
-A layout says how to print an address, so a country needs one to be served at all. A conventions
-row says what is ungrammatical in that system, and the decoder applies it as a hard mask before
-Viterbi — so a wrong row destroys parses that currently work. Each row therefore carries the
-measurement that earned it, and an absent row means "no constraints known", never "no constraints
-exist". Adding a country to the layouts is ordinary work; adding a conventions row requires a
-measured receipt.
+A layout says how to print an address, so a country needs one before it can be served. A
+conventions row says what is ungrammatical in that system, and the decoder applies it as a hard
+mask before Viterbi. A wrong row therefore breaks parses that currently work. Each row carries
+the measurement that justified it. An absent row means "no constraints known" and never "no
+constraints exist". Adding a country to the layouts is ordinary work, but adding a conventions
+row requires a measured receipt.
 
 ### Postal regimes the country code does not name
 
-Three families need a unit finer or other than the ISO country code. codex cannot express any of
-them today ([#2323](https://github.com/sister-software/mailwoman/issues/2323)):
+Three families of addresses need a unit that is finer than, or different from, the ISO country
+code. codex cannot express any of them today
+([#2323](https://github.com/sister-software/mailwoman/issues/2323)):
 
 - **One code, several postal regimes.** `SH` covers Saint Helena, Ascension Island and Tristan da
-  Cunha, which address differently.
-- **Routing that is not geography.** BFPO identifiers are routing instructions rather than a GB locality
-  plus postcode. The American half of this family is modeled — see `lib/us/military-address.ts`
-  for APO/FPO/DPO and the `AA`/`AE`/`AP` pseudo-states — and the British half is not.
+  Cunha, which format addresses differently.
+- **Routing that is not geography.** BFPO identifiers are routing instructions and not a GB
+  locality plus postcode. The American half of this family is modeled in
+  `lib/us/military-address.ts`, which covers APO/FPO/DPO and the `AA`/`AE`/`AP` pseudo-states. The
+  British half is not modeled.
 - **Narrative addresses.** Costa Rica, Nicaragua and parts of Panama and the Caribbean build an
-  address from landmark, direction and distance. That is a different grammar rather than a variant of the
-  street grammar the layouts assume.
+  address from a landmark, a direction and a distance. That is a separate grammar and not a
+  variant of the street grammar the layouts assume.
 
 ### Out of scope
 
-Research state, source URLs and license terms for address data do not belong here. Whether this
-project has verified an open national address register for Chile is a fact about the data backlog rather than about how Chileans write an address. That register lives in
+Research state, source URLs and license terms for address data belong elsewhere. Whether this
+project has verified an open national address register for Chile is a fact about the data
+backlog and not about how Chileans write an address. That information lives in
 [`@mailwoman/corpus`](../corpus#source-provenance).
 
 ## What this package does not do
 
-It does not **parse**. Turning `"1600 Amphitheatre Pkwy, Mountain View CA"` into components is
-a sequence-labeling problem, and that is [`mailwoman`](https://www.npmjs.com/package/mailwoman)
-— a small transformer encoder, installed separately. It does not geocode either. This package
-is the inverse direction and the reference tables, and it stays dependency-free so a consumer
-who only wants to print an address does not pull a model down.
+This package does not **parse**. Turning `"1600 Amphitheatre Pkwy, Mountain View CA"` into
+components is a sequence-labeling problem, which [`mailwoman`](https://www.npmjs.com/package/mailwoman)
+solves with a small transformer encoder that is installed separately. This package does not
+geocode either. It covers the inverse direction and the reference tables, and it stays
+dependency-free so that a consumer who only wants to print an address does not download a model.
 
 ## Design
 
-- **Zero runtime dependencies.** Pure TypeScript data and a small evaluator — no database, no
-  I/O, no network. Suitable for bundling into browser and edge environments.
+- **Zero runtime dependencies.** The package is pure TypeScript data and a small evaluator, with
+  no database, I/O, or network access. It is suitable for bundling into browser and edge
+  environments.
 - **Branded types.** ZIP codes, postcodes and abbreviations carry nominal types, so the type
   system catches locale mismatches at compile time.
-- **An absence is reported, never invented.** A country with no layout returns `""`; a
-  component the layout has no slot for is named in `unplaced`.
+- **An absence is reported, never invented.** A country with no layout returns `""`, and a
+  component that the layout has no slot for is listed in `unplaced`.
 - **One definition.** The parser, the resolver, the corpus synthesis layer and the matcher all
-  import these tables rather than each carrying a copy.
+  import these tables instead of each keeping a copy.
 
 ## The normative tier (codex vs the libpostal dictionaries)
 
-Mailwoman carries two closed-class vocabularies that overlap on purpose and must not be
-merged:
+Mailwoman carries two closed-class vocabularies that overlap intentionally and must stay
+separate:
 
-- **Codex is normative.** USPS Pub-28 (and each system's equivalent) verbatim: the canonical
-  word, every _recognized_ variant, and the one _preferred_ abbreviation. Its consumers are
-  precision-shaped — corpus synthesis recipes, the eval harness's invariance transforms, and
-  formatting (rendering `N` vs `North` requires knowing which form the authority prints).
+- **Codex is normative.** It reproduces USPS Pub-28 (and each system's equivalent) verbatim: the
+  canonical word, every _recognized_ variant, and the one _preferred_ abbreviation. Its consumers
+  need precision. They are corpus synthesis recipes, the eval harness's invariance transforms, and
+  formatting, since rendering `N` or `North` requires knowing which form the authority prints.
 - **The libpostal dictionaries** (`core/data/libpostal/dictionaries/`, Pelias lineage) **are
-  descriptive**: everything people write, including forms no authority recognizes
-  (`en/directionals.txt` lists `lower`/`upper`/`central`). Their consumers are recall-shaped —
-  evidence-lexicon curation laws, street decomposition for training gold, the street-morphology
+  descriptive.** They list everything people write, including forms that no authority recognizes
+  (`en/directionals.txt` lists `lower`/`upper`/`central`). Their consumers need recall. They are
+  evidence-lexicon curation laws, street decomposition for training gold, and the street-morphology
   FST.
 
-Broadening codex with descriptive forms would corrupt formatting; narrowing the descriptive
-lists to normative forms would weaken the evidence guards. Different questions, different
-tables.
+Adding descriptive forms to codex would corrupt formatting. Narrowing the descriptive lists to
+normative forms would weaken the evidence guards. The two vocabularies answer different
+questions, so they stay in different tables.
 
 ## Related
 
-- [`mailwoman`](https://www.npmjs.com/package/mailwoman) — the parser: free text → components
-- [`@mailwoman/record`](../record) — record schema and per-field normalizers for entity matching
-- [`@mailwoman/address-id`](../address-id) — stable address primary keys, built on these tables
-- [`@mailwoman/resolver`](../resolver) — consumes the granularity tiers to order a resolved tree
+- [`mailwoman`](https://www.npmjs.com/package/mailwoman): the parser, which turns free text into components.
+- [`@mailwoman/record`](../record): the record schema and per-field normalizers for entity matching.
+- [`@mailwoman/address-id`](../address-id): stable address primary keys, built on these tables.
+- [`@mailwoman/resolver`](../resolver): uses the granularity tiers to order a resolved tree.
 
 ## License
 

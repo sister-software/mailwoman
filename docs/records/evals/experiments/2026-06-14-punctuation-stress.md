@@ -61,7 +61,7 @@ classes it was built for:
   of stripping it.
 
 So the abandoned Chevrotain-style proposer isn't a drop-in win waiting to be switched on. Its annotation
-semantics need a **fix** (the bias has the wrong sign, so it should suppress rather than absorb) rather than a parameter
+semantics need a **fix** (the bias has the wrong sign — it should suppress, not absorb), not a parameter
 sweep. Reviving it as-is would regress the very class it targets. **Recommendation: do not revive on these
 numbers; if pursued, treat it as new design work rather than a flag flip.** (Caveat: three bias configs are not an
 exhaustive sweep — but a feature that's a no-op at default and net-negative at the two non-trivial settings
@@ -84,7 +84,7 @@ The head-to-head is the real takeaway:
   (86.9 vs 80.8), slash (71.8 vs 61.5). Its rules handle `123 1/2`, `O'Brien`, `St.` precisely; neural
   wobbles on fractional house numbers and absorbs trailing tokens.
 
-The implication for the roadmap: the highest-changeage punctuation-stress change is **not** a new span
+The implication for the roadmap: the highest-leverage punctuation-stress change is **not** a new span
 proposer — it's reducing neural's span **over-extension at delimiters** (a boundary/decode problem, kin to
 the Saint-Albans fragmentation and the #555 `locateSpan` over-run). That's where the paired-delimiter rows
 break, and it's a sharper, cheaper target than reviving Stage 2.7.

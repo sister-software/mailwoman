@@ -3,14 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Address-system detection from the model's locale head (#511 Tier A — the consumer the head never
- *   had). The PR3 self-conditioning head predicts which country an address belongs to from the
- *   pooled sequence. v1.1.0+ exports surface it as the `locale_logits` ONNX output. This module
- *   turns that posterior into a `SystemCode` the conventions layer can act on.
- *
- *   Conservative by interface: below the confidence threshold, or for locales without a codex address
- *   system, detection returns null and the parse proceeds exactly as before. The mask must never
- *   fire on a guess.
+ *   Detects the address system from the model's `locale_logits` output. Detection returns null below the confidence
+ *   threshold, so a low-confidence parse applies no conventions.
  */
 
 import type { SystemCode } from "@mailwoman/codex"
@@ -18,13 +12,13 @@ import type { SystemCode } from "@mailwoman/codex"
 import { LOCALE_COUNTRIES } from "#labels"
 import { softmax } from "#viterbi"
 
-// The pinned array lives in labels.ts beside the label vocabulary it mirrors.
-// This module keeps its historical export name.
+/**
+ * The locale head's country order, re-exported from `#labels`.
+ */
 export { LOCALE_COUNTRIES } from "#labels"
 
 /**
- * The locale head's confident argmax over {@link LOCALE_COUNTRIES}, or null below the threshold —
- * the shared core of {@link detectAddressSystem} and {@link confidentLocaleCountry}.
+ * Returns the locale head's argmax country, or null when its probability is below the threshold.
  */
 function localeVerdict(
 	localeLogits: readonly number[] | undefined,
@@ -47,9 +41,9 @@ function localeVerdict(
 }
 
 /**
- * ISO-2 country → codex address system.
+ * Maps an ISO 3166-1 alpha-2 country to its codex address system.
  *
- * Unmapped locales have no conventions yet.
+ * Locales without an entry have no conventions.
  */
 const COUNTRY_TO_SYSTEM: Partial<Record<(typeof LOCALE_COUNTRIES)[number], SystemCode>> = {
 	US: "us",
@@ -60,6 +54,9 @@ const COUNTRY_TO_SYSTEM: Partial<Record<(typeof LOCALE_COUNTRIES)[number], Syste
 	JP: "jp",
 }
 
+/**
+ * An address system detected from the locale head, with its country and probability.
+ */
 export interface DetectedSystem {
 	system: SystemCode
 	country: (typeof LOCALE_COUNTRIES)[number]
@@ -67,11 +64,10 @@ export interface DetectedSystem {
 }
 
 /**
- * Read the locale head's posterior into a confident `SystemCode`, or null.
+ * Returns the address system for the locale head's confident country, or null.
  *
- * @param localeLogits The raw `locale_logits` output (LOCALE_COUNTRIES order).
- * @param threshold Minimum softmax probability to act on (default 0.8 — the head's held-out
- * accuracy is ~0.98, so 0.8 trades a little recall for never masking on a coin flip).
+ * @param localeLogits The raw `locale_logits` output, in {@link LOCALE_COUNTRIES} order.
+ * @param threshold The minimum softmax probability to act on.
  */
 export function detectAddressSystem(
 	localeLogits: readonly number[] | undefined,
@@ -88,14 +84,11 @@ export function detectAddressSystem(
 }
 
 /**
- * The locale head's confident country verdict, or null — {@link detectAddressSystem} minus the system
- * mapping, so the three head countries without a `SystemCode` (ES/IT/NL) still yield a verdict.
+ * Returns the locale head's confident country, or null below the threshold.
  *
- * Same threshold posture: below it the head abstains rather than acting on a coin flip.
- * The head is a 9-way classifier.
- *
- * Its verdict is evidence that the text is shaped like that country's addressing, never a resolved
- * country (a Chinese address may read GB: right about "not the locale's country", wrong about which).
+ * Unlike {@link detectAddressSystem}, it also returns countries without a `SystemCode`.
+ * The country says that the text resembles that country's address format.
+ * It does not resolve the address's actual country.
  */
 export function confidentLocaleCountry(
 	localeLogits: readonly number[] | undefined,
@@ -105,10 +98,12 @@ export function confidentLocaleCountry(
 }
 
 /**
- * Resolve which addressing system's conventions apply for one parse (#511 Tier A):
- * a caller-pinned `SystemCode` wins; `"auto"` reads the locale head under
- * {@link detectAddressSystem}'s confidence bar; `undefined` = conventions off — null system,
- * no constraints, and the parse stays byte-identical to the pre-conventions path.
+ * Resolves which address system's conventions apply to one parse.
+ *
+ * A pinned `SystemCode` is used as given.
+ * The value `"auto"` uses {@link detectAddressSystem}.
+ *
+ * An `undefined` value turns conventions off and yields a null system.
  */
 export function resolveSystemVerdict(
 	conventionsOpt: SystemCode | "auto" | undefined,

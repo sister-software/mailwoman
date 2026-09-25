@@ -64,17 +64,17 @@ function buildSyncReverseGeocode(
 }
 
 /**
- * Configures {@link createRuntimePipeline}'s stages and run defaults.
+ * Options for {@link createRuntimePipeline}.
  *
- * For `placeCountry`, `streetEvidence`, `fst` and `streetMorphology`, leaving the option
- * undefined loads the bundled default on first parse and `false` disables the stage.
+ * For `placeCountry`, `streetEvidence`, `fst` and `streetMorphology`, an undefined option
+ * loads the bundled default on the first parse, and `false` disables the stage.
  */
 export interface CreateRuntimePipelineOpts {
 	/**
-	 * The host locale preferences used only when neither the caller nor the input identifies a locale.
+	 * Host locale preferences, used only when neither the caller nor the input identifies a locale.
 	 *
-	 * `undefined` reads the current `Intl` defaults, `false` disables host inference,
-	 * and `MW_LOCALE` overrides both.
+	 * `undefined` reads the current `Intl` defaults and `false` disables host inference.
+	 * `MW_LOCALE` overrides both.
 	 */
 	machinePreferences?: MachinePreferences | false
 
@@ -89,89 +89,88 @@ export interface CreateRuntimePipelineOpts {
 	resolver?: RuntimePipelineStages["resolver"]
 
 	/**
-	 * The FST gazetteer matcher that adds emission biases during classification.
+	 * The FST gazetteer matcher that biases emissions during classification.
 	 *
-	 * When omitted, the pipeline loads the classifier's `fstPath` sibling if it exists;
-	 * `false` disables the matcher.
+	 * When it is omitted, the pipeline loads the classifier's `fstPath` if one exists.
 	 */
 	fst?: RuntimePipelineStages["fst"] | false
 
 	/**
-	 * The street-morphology matcher behind the FST street-context check.
+	 * The street-morphology matcher for the FST street-context check.
 	 *
-	 * When omitted and an FST matcher is active, the pipeline loads the sealed artifact
-	 * or builds one from the bundled dictionaries; `false` disables it.
+	 * When it is omitted and an FST matcher is active, the pipeline loads the sealed artifact
+	 * or builds one from the bundled dictionaries.
 	 */
 	streetMorphology?: RuntimePipelineStages["streetMorphology"] | false
 
 	/**
-	 * Replaces the default locale detector, which combines input structure,
+	 * A replacement for the default locale detector, which combines input structure,
 	 * `MW_LOCALE` and the machine preferences.
 	 */
 	detectLocale?: RuntimePipelineStages["detectLocale"]
 
 	/**
-	 * Replaces the default kind classifier, including the POI-aware one that `poiQueryKind` would install.
+	 * A replacement for the default kind classifier, including the POI-aware one from `poiQueryKind`.
 	 */
 	classifyKind?: RuntimePipelineStages["classifyKind"]
 
 	/**
-	 * Replaces the default rule-based phrase grouper.
+	 * A replacement for the default rule-based phrase grouper.
 	 */
 	groupPhrases?: RuntimePipelineStages["groupPhrases"]
 
 	/**
-	 * The coarse country placer whose confident guess becomes a soft country prior for the resolver.
+	 * The coarse country placer.
 	 *
-	 * When omitted, the bundled placer loads on the first call; `false` disables the prior.
+	 * Its confident guess becomes a soft country prior for the resolver.
 	 */
 	placeCountry?: RuntimePipelineStages["placeCountry"] | false
 
 	/**
 	 * The default for each call's `normalizeCase`, which title-cases all-caps input before the model.
 	 *
-	 * The classifier normalizes when this is unset, and a per-call value overrides it.
+	 * When it is unset, the classifier decides.
+	 * A per-call value overrides it.
 	 */
 	normalizeCase?: boolean
 
 	/**
-	 * The default for each call's `hardPlaceCountry`, which promotes a confident
-	 * placer guess from a soft prior to a hard country filter.
+	 * The default for each call's `hardPlaceCountry`, which turns a confident placer
+	 * guess into a hard country filter for safelisted countries.
 	 *
-	 * It defaults to `true`, applies only to safelisted countries, and a per-call value overrides it.
+	 * It defaults to `true`.
+	 * A per-call value overrides it.
 	 */
 	hardPlaceCountry?: boolean
 
 	/**
-	 * The default for each call's `hardCountrySafelist`; when unset, the resolver artifact's
-	 * safelist applies, then the built-in `HARD_PLACE_COUNTRY_SAFELIST`.
+	 * The default for each call's `hardCountrySafelist`.
+	 *
+	 * When it is unset, the resolver artifact's safelist applies, then `HARD_PLACE_COUNTRY_SAFELIST`.
 	 */
 	hardCountrySafelist?: ReadonlySet<string>
 
 	/**
-	 * The street-name evidence index for the classifier's k-best street rerank,
-	 * which can add an index-confirmed street but never remove one.
+	 * The street-name index for the classifier's k-best street rerank.
 	 *
-	 * When omitted and the classifier has a span grammar, the bundled FR index loads
-	 * on the first call; `false` disables the rerank.
+	 * The rerank can add a confirmed street but never removes one.
+	 *
+	 * When it is omitted and the classifier has a span grammar, the bundled
+	 * French index loads on the first call.
 	 */
 	streetEvidence?: StreetLocalityEvidence | false
 
 	/**
-	 * Enables POI-query detection and intent extraction, defaulting to `true`,
-	 * which extracts intents without executing them.
+	 * Controls POI-query detection and intent extraction.
 	 *
-	 * `{ poiDatabasePath }` also executes intents against a lookup opened on the
-	 * first call, and `false` removes the POI stage.
+	 * The default `true` extracts intents without executing them.
+	 * `{ poiDatabasePath }` also executes them against a lookup opened on the first call.
+	 * `false` removes the POI stage.
 	 */
 	poiQueryKind?: boolean | { poiDatabasePath?: PathBuilderLike }
 
 	/**
-	 * A last-resort phrase lookup consulted only after the category lexicon
-	 * and the POI name lookup both miss, so it can never displace their hits.
-	 *
-	 * Its presence is the switch; if the pipeline ever builds one by default,
-	 * this option must also accept `false`.
+	 * A fallback phrase lookup, consulted only when the category lexicon and the POI name lookup both miss.
 	 */
 	poiSemanticLookup?: POIPhraseLookup
 }
@@ -237,7 +236,7 @@ async function autoLoadStreetMorphology(
 }
 
 /**
- * Read the JavaScript host's language and timezone as independent, diagnostic preference signals.
+ * Returns the host's locale and time zone from `Intl`, or an empty object when `Intl` fails.
  */
 export function getMachinePreferences(): MachinePreferences {
 	try {
@@ -253,11 +252,10 @@ export function getMachinePreferences(): MachinePreferences {
 }
 
 /**
- * Creates the production parse function, which runs the full pipeline with the given stages
- * and fills omitted ones with bundled defaults.
+ * Creates the production parse function, which runs the full pipeline with the given stages.
  *
- * Default artifacts load lazily on the first call, and `hardPlaceCountry` is on
- * unless the options or the call turn it off.
+ * Omitted stages use bundled defaults that load on the first call.
+ * `hardPlaceCountry` is on unless the options or the call turn it off.
  */
 export function createRuntimePipeline(
 	opts: CreateRuntimePipelineOpts = {}

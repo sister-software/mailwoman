@@ -3,16 +3,13 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Locate a package from the caller's location: every helper takes `base`, the caller's `import.meta.url`, so a
- *   package resolves through the graph of the workspace that declares it rather than through `@mailwoman/core`'s. The
- *   sibling `resolvers.ts` anchors on this module instead, which is the right answer for core's own files and for
- *   anything visible from core, and the wrong one for a dependency only a docs plugin or a hook carries.
+ *   Resolves packages relative to the caller. Every helper takes `base`, the caller's `import.meta.url`, so a package
+ *   resolves through the dependency graph of the calling workspace. The sibling `resolvers.ts` resolves from
+ *   `@mailwoman/core` instead, which cannot see a dependency that only a docs plugin or a hook declares.
  *
- *   Two constructs are kept out of this module on purpose, because the Docusaurus config loader evaluates a plugin and
- *   everything it imports through jiti's CommonJS transform, which rewrites `import.meta.url` in the plugin and refuses
- *   two things it meets elsewhere: a bare `import.meta`, which `resolvers.ts` carries as `import.meta.resolve`, and an
- *   `import … with { type: "json" }`, which it reports as a template-literal error. The manifest is therefore read
- *   through `#fs/readers`, and a plugin imports this module and never `resolvers.ts`.
+ *   Docusaurus loads plugins through jiti's CommonJS transform, which rejects a bare `import.meta` and
+ *   `import … with { type: "json" }`. This module therefore avoids both constructs, and Docusaurus plugins must import
+ *   it instead of `resolvers.ts`.
  */
 
 import { createRequire, findPackageJSON } from "node:module"
@@ -23,10 +20,10 @@ import type { PackageJson } from "type-fest"
 import { readLocalJSONFile } from "#fs/readers"
 
 /**
- * The path to a package's `package.json`.
+ * Returns the path to a package's `package.json`.
  *
  * @param base The caller's `import.meta.url`.
- * @throws `ERR_MODULE_NOT_FOUND` when the package is not installed where `base` can see it.
+ * @throws When the package is not installed where `base` can see it.
  */
 export function resolvePackageJSON(base: string, packageName: string): string {
 	const manifestPath = findPackageJSON(packageName, base)
@@ -39,7 +36,7 @@ export function resolvePackageJSON(base: string, packageName: string): string {
 }
 
 /**
- * A file under a package's directory, by segments from its root.
+ * Returns the path of a file under a package's root directory.
  *
  * @param base The caller's `import.meta.url`.
  */
@@ -48,10 +45,11 @@ export function resolvePackagePathFrom(base: string, packageName: string, ...seg
 }
 
 /**
- * The `mailwoman` block this repository's own manifests may carry.
+ * The optional `mailwoman` block in this repository's package manifests.
  *
- * A data-only weights overlay names the base package it shares `model.onnx`
- * and `tokenizer.model` with, which is the field `@mailwoman/neural` follows to find them.
+ * `baseWeights` appears in a data-only weights overlay.
+ * It holds the base package that provides the shared `model.onnx` and `tokenizer.model`,
+ * and `@mailwoman/neural` reads it to locate those files.
  */
 export interface MailwomanManifestFields {
 	mailwoman?: {
@@ -59,17 +57,20 @@ export interface MailwomanManifestFields {
 	}
 }
 
+/**
+ * A parsed `package.json` with extra repository-specific fields.
+ */
 export type PackageJSONLike<D extends object = MailwomanManifestFields> = PackageJson & D
 
 /**
- * Read and parse a package's `package.json`, given its path from {@link resolvePackageJSON}.
+ * Reads and parses a `package.json` at the given path.
  */
 export async function readPackageJSON<D extends object = MailwomanManifestFields>(
 	manifestPath: PathBuilderLike
 ): Promise<PackageJSONLike<D>>
 
 /**
- * Read and parse a package's `package.json`, resolving the package from the caller's `import.meta.url`.
+ * Reads and parses a package's `package.json`, resolving the package from the caller's `import.meta.url`.
  */
 export async function readPackageJSON<D extends object = MailwomanManifestFields>(
 	base: string,
@@ -86,8 +87,7 @@ export async function readPackageJSON<D extends object = MailwomanManifestFields
 }
 
 /**
- * A package subpath as a filesystem path, resolved through the package's `exports` map,
- * so a caller can read or spawn a file the package publishes.
+ * Resolves a package subpath to a filesystem path through the package's `exports` map.
  *
  * @param base The caller's `import.meta.url`.
  * @throws `ERR_MODULE_NOT_FOUND` when the specifier does not resolve.
@@ -99,8 +99,7 @@ export function resolvePackageSpecifier(base: string, packageName: string, ...su
 }
 
 /**
- * {@link resolvePackageSpecifier}, answering `null` instead of throwing for
- * a specifier that does not resolve.
+ * Behaves like {@link resolvePackageSpecifier} but returns `null` when the specifier does not resolve.
  */
 export function tryResolvePackageSpecifier(
 	base: string,

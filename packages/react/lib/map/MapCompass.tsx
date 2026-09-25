@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Show a counter-rotating compass when the map is not facing north.
- *   Pressing the button resets the map; the host supplies its bearing.
+ *   Shows a compass that rotates with the map bearing and hides when the map faces north. Pressing
+ *   it asks the host to reset the bearing.
  */
 
 import type { ReactNode } from "react"
@@ -12,17 +12,21 @@ import type { ReactNode } from "react"
 import { cx } from "#common/cx"
 
 /**
- * Below this many degrees off north the compass is treated as pointing north and fades out.
+ * The compass counts as facing north, and fades out, below this many degrees of bearing.
  */
 const HIDE_BELOW_DEGREES = 0.5
 
+/**
+ * Props for {@link MapCompass}.
+ */
 export interface MapCompassProps {
 	/**
-	 * The map's bearing in degrees, as MapLibre reports it: 0 is north, positive is counter-clockwise.
+	 * The map's bearing in degrees as MapLibre reports it, where 0 is north.
 	 */
 	bearing: number
 	/**
-	 * Fired when the compass is pressed — the host resets its map to north.
+	 * Called when the compass is pressed.
+	 * The host should reset its map to north.
 	 */
 	onResetNorth: () => void
 	/**
@@ -32,6 +36,9 @@ export interface MapCompassProps {
 	className?: string
 }
 
+/**
+ * Renders the compass button.
+ */
 export function MapCompass({ bearing, onResetNorth, label, className }: MapCompassProps): ReactNode {
 	const facingNorth = Math.abs(bearing) < HIDE_BELOW_DEGREES
 
@@ -41,8 +48,7 @@ export function MapCompass({ bearing, onResetNorth, label, className }: MapCompa
 			className={cx("mw-map-compass", facingNorth && "mw-map-compass--north", className)}
 			aria-label={label ?? "Reset bearing to north"}
 			title={label ?? "Reset bearing to north"}
-			// Out of the tab order and out of the accessibility tree while it is invisible,
-			// so a keyboard reaches only the controls a pointer can see.
+			// The hidden compass leaves the tab order and the accessibility tree.
 			aria-hidden={facingNorth}
 			tabIndex={facingNorth ? -1 : 0}
 			onClick={onResetNorth}
@@ -51,11 +57,7 @@ export function MapCompass({ bearing, onResetNorth, label, className }: MapCompa
 				<g style={{ transform: `rotate(${-bearing}deg)`, transformOrigin: "16px 16px" }}>
 					<circle cx="16" cy="16" r="12.5" className="mw-map-compass__dial" />
 
-					{/*
-					 * North, then south.
-					 *
-					 * Two triangles meeting at the hub rather than one arrow through it.
-					 */}
+					{/* The north needle, then the south needle. */}
 					<path d="M16 5.5 L20.5 16 L16 16 Z M16 5.5 L11.5 16 L16 16 Z" className="mw-map-compass__north" />
 					<path d="M16 26.5 L20.5 16 L16 16 Z M16 26.5 L11.5 16 L16 16 Z" className="mw-map-compass__south" />
 				</g>

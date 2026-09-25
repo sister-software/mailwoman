@@ -11,28 +11,28 @@ tags: [training, retrospective]
 
 :::
 
-`@mailwoman/neural-weights-en-us@v0.4.0` (and the fr-fr sibling) shipped today as packaged artifacts (the npm publish is a separate step we do by hand). It is a mixed-result release: one clear win on fine-grained labels, two regressions on coarse labels that turned out to be mostly artifacts of how we measured. Almost everything we set out to do — combine three orthogonal training improvements into one ship — was empirically falsified by a divergence pattern we hadn't seen before.
+`@mailwoman/neural-weights-en-us@v0.4.0` and its fr-fr sibling shipped today as packaged artifacts. The npm publish is a separate manual step. The release has mixed results. It improves fine-grained labels and regresses two coarse labels, and those regressions turned out to be mostly artifacts of how we measured. We set out to combine three orthogonal training improvements into one release, and a divergence pattern we hadn't seen before ruled out almost all of that plan.
 
-This is a writeup of how the campaign went. We're publishing it for two reasons: to be clear about what the headline numbers mean, and because the way the failures stacked up is worth thinking about if you train your own NER-style models.
+This post describes how the campaign went. We're publishing it to explain what the headline numbers mean, and because the way the failures stacked up is relevant if you train your own NER-style models.
 
 {/* truncate */}
 
 ## What v0.4.0 was supposed to do
 
-v0.3.0 had shipped with a known regression on coarse labels (country, region, locality) — the cost of expanding the label vocabulary from 15 to 21 BIO classes without enough training steps. [Issue #116](https://github.com/sister-software/mailwoman/issues/116) named six work areas for v0.4.0:
+v0.3.0 had shipped with a known regression on coarse labels (country, region, locality). That regression came from expanding the label vocabulary from 15 to 21 BIO classes without enough training steps. [Issue #116](https://github.com/sister-software/mailwoman/issues/116) listed six work areas for v0.4.0:
 
-1. **Per-token CRF NLL normalization** — eliminate the hand-tuned `crf_loss_weight=0.05` knob by scaling the CRF loss to per-token magnitude so it sums directly with cross-entropy.
-2. **Longer training** — v0.3.0 early-stopped at step 1800 of 50K; the v0.4.0 floor was step 5000.
-3. **Class-weighted cross-entropy** — pull softmax mass back onto the coarse classes the 21-label expansion had diluted.
-4. **Source-weight rebalance** — drop NAD's per-sample weight (it had ended up at ~52% of the sampled corpus); promote the WOF admin sources to compensate.
-5. **JS-side Viterbi decoder** + label vocabulary loading from `model-card.json` — runtime cleanup.
-6. **Reuse `corpus-v0.3.0`** — no rebuild needed.
+1. **Per-token CRF NLL normalization.** Eliminate the hand-tuned `crf_loss_weight=0.05` knob by scaling the CRF loss to per-token magnitude, so it sums directly with cross-entropy.
+2. **Longer training.** v0.3.0 early-stopped at step 1800 of 50K. The v0.4.0 floor was step 5000.
+3. **Class-weighted cross-entropy.** Pull softmax mass back onto the coarse classes that the 21-label expansion had diluted.
+4. **Source-weight rebalance.** Drop NAD's per-sample weight, which had grown to ~52% of the sampled corpus, and promote the WOF admin sources to compensate.
+5. **JS-side Viterbi decoder** and label vocabulary loading from `model-card.json`, as runtime cleanup.
+6. **Reuse `corpus-v0.3.0`**, which needed no rebuild.
 
-Items 5 and 6 were pure engineering; they landed directly the day before training started. The contested ones were 1, 3, and 4: the recipe changes that touch the loss surface.
+Items 5 and 6 were pure engineering and landed the day before training started. The contested items were 1, 3, and 4, the recipe changes that touch the loss surface.
 
 ## What happened
 
-Five training runs. Three of them on different learning rates with the same full recipe; two of them as ablations dropping one item at a time. All five diverged. The fingerprint was distinctive: training loss dropped monotonically through a long warmup, plateaued at the bottom for several hundred steps, then spiked back up to its starting magnitude over 50-150 steps. Validation macro-F1 mirrored the train loss: it climbed to a peak around the LR's peak step, then collapsed to roughly the random-output baseline.
+We ran five training runs. Three used the same full recipe at different learning rates, and two were ablations that each dropped one item. All five diverged in the same distinctive way. Training loss dropped monotonically through a long warmup, plateaued at the bottom for several hundred steps, then spiked back up to its starting magnitude over 50-150 steps. Validation macro-F1 mirrored the train loss: it climbed to a peak around the LR's peak step, then collapsed to roughly the random-output baseline.
 
 The collapse step shifted with the learning rate:
 
@@ -42,16 +42,16 @@ The collapse step shifted with the learning rate:
 | 3e-4               |              1000 |
 | 1.5e-4 (v0.3.0 LR) |              2000 |
 
-Three runs each at a different LR, each diverging in the same shape, with the divergence delayed proportionally — but only roughly. A factor-2 LR drop bought a factor-1.3 step delay rather than factor-2. That ruled out "wepicked too high an LR" as the explanation. The destabilizer was in the recipe rather than the learning rate.
+All three runs diverged in the same shape, and a lower LR delayed the divergence only partly. Halving the LR delayed the collapse by a factor of 1.3 rather than 2. That ruled out "we picked too high an LR" as the explanation. The destabilizer was in the recipe rather than the learning rate.
 
-So we ran the ablations the issue had prescribed:
+We then ran the ablations the issue had prescribed:
 
 | Ablation                | LR   | Result             |
 | ----------------------- | ---- | ------------------ |
 | Drop §1 (CRF norm)      | 5e-4 | Diverged step 1000 |
 | Drop §3 (class weights) | 5e-4 | Diverged step 1000 |
 
-Identical failures. At lr=5e-4 neither single-knob revert was enough, meaning lr=5e-4 was structurally unreachable for the codebase's dual-loss landscape regardless of which knob we touched.
+Both failed identically. At lr=5e-4, neither single-knob revert was enough, so lr=5e-4 was structurally unreachable for the codebase's dual-loss landscape regardless of which knob we touched.
 
 We dropped back to the safe LR (1.5e-4, the same lr v0.3.0 had been forced down to) and ran a three-cell orthogonal matrix:
 
@@ -61,23 +61,23 @@ We dropped back to the safe LR (1.5e-4, the same lr v0.3.0 had been forced down 
 | §3 + §4 (class weights + source) |         0.428 | **Best** — pass |
 | §1 + §4 (CRF norm + source)      |             — | Fail            |
 
-The §3+§4 verdict-smoke peaked at 0.428 — better than v0.3.0's final 0.36 by a comfortable margin. So we promoted that recipe to the full 50K-step run.
+The §3+§4 verdict-smoke peaked at 0.428, well above v0.3.0's final 0.36, so we promoted that recipe to the full 50K-step run.
 
-It diverged at step 2250. Same fingerprint as the full §1+§3+§4 recipe at the same LR.
+It diverged at step 2250, with the same loss curve as the full §1+§3+§4 recipe at the same LR.
 
 ## The meta-bug in the smoke framework
 
-The verdict-smoke ran each ablation for 3000 steps with a cosine learning-rate schedule. With `max_steps=3000` and `warmup_steps=1000`, the LR peaks around step 1000 and is back near zero by step 2750. The smoke's "pass" criterion (macro-F1 stable across the last three evals past step 2000) was measuring stability _under a near-zero learning rate_. The full 50K run kept the LR near its peak for thousands of steps. That sustained-peak exposure was where the destabilization happened.
+The verdict-smoke ran each ablation for 3000 steps with a cosine learning-rate schedule. With `max_steps=3000` and `warmup_steps=1000`, the LR peaks around step 1000 and is back near zero by step 2750. The smoke's "pass" criterion (macro-F1 stable across the last three evals past step 2000) was measuring stability _under a near-zero learning rate_. The full 50K run kept the LR near its peak for thousands of steps, and the destabilization happened during that sustained peak.
 
-The smoke wasn't testing what we thought it was testing. By the time it would have noticed the divergence, its own LR schedule had already saved it.
+The smoke was testing stability at low LR rather than at peak LR. By the step where divergence would have appeared, the smoke's own LR schedule had already dropped the LR near zero.
 
-We didn't see this coming. The fix for future smokes is to use a constant LR for the verdict window, or to set max_steps large enough that the cosine tail doesn't dominate (something like 10000 keeps LR > 60% of peak through the relevant range).
+We had not anticipated this. Future smokes should use a constant LR for the verdict window, or set max_steps large enough that the cosine tail doesn't dominate. For example, max_steps=10000 keeps LR > 60% of peak through the relevant range.
 
 ## What we shipped
 
-The §4-only recipe. Source rebalance layered on top of v0.3.0's existing dual-loss recipe, at v0.3.0's safe LR. It's the only thing that stayed clean through both a verdict smoke and a full 50K run.
+We shipped the §4-only recipe, which layers the source rebalance on top of v0.3.0's existing dual-loss recipe at v0.3.0's safe LR. It was the only recipe that stayed stable through both a verdict smoke and a full 50K run.
 
-The shipped checkpoint is `v0_4_0-stableLR-source-only/step-002200`. Architecture is unchanged from v0.3.0 (256-dim, 6 layers, 9M params). The label vocabulary is unchanged (the same 21 BIO classes). The only thing that's different is which extracts the training loader oversamples.
+The shipped checkpoint is `v0_4_0-stableLR-source-only/step-002200`. The architecture is unchanged from v0.3.0 (256-dim, 6 layers, 9M params), and so is the label vocabulary (the same 21 BIO classes). Only the choice of extracts that the training loader oversamples differs.
 
 ## Reading the eval numbers
 
@@ -95,11 +95,11 @@ Per-tag F1 on golden v0.1.2 (4535 entries):
 
 Macro raw average: 0.357 vs 0.293. Two regressions on coarse labels, two small improvements on fine labels.
 
-This is where it would have been easy to ship the headline as "v0.4.0 mostly regressed" and walk away. We instead bucketed the 1217 postcode false-negatives and 194 country false-negatives into categories, by manually inspecting the differences between gold and prediction.
+We could have reported "v0.4.0 mostly regressed" and stopped there. Instead, we manually inspected the differences between gold and prediction and sorted the 1217 postcode false-negatives and 194 country false-negatives into categories.
 
-The picture changes meaningfully:
+The categories change the interpretation:
 
-**Country false-negatives**: **92%** are adversarial transliteration entries — golden has English country names but the raw input is mixed-script. Examples:
+**Country false-negatives**: **92%** are adversarial transliteration entries, where the golden set has English country names and the raw input is mixed-script. Examples:
 
 ```
 بار نون وایومینگ, Wyoming, United States of America   →  pred: "yoming, United Sta"
@@ -107,7 +107,7 @@ The picture changes meaningfully:
 France, Lozère, ՍԵՆՏ-ԱԼԲԱՆ-ՍՅՈՒՐ-ԼԻՄԱՆՅՈԼ              →  pred: "" (empty)
 ```
 
-These are v0.3.0's documented known-failure modes. The bytefallback tokenizer treats non-Latin scripts as the same opaque sequence, and the the system on the prefix. We have known v0.3.0 was bad at these. The v0.4.0 weights didn't change anything about this adversarial set, so it isn't a real recipe regression. After excluding adversarial inputs, country FN drops from 194 to roughly 16. The −0.07 country regression is mostly a golden-set adversarial-weighting artifact.
+These are v0.3.0's documented known-failure modes. The bytefallback tokenizer treats non-Latin scripts as the same opaque sequence, and the model returns a truncated or empty span for the prefix. We already knew v0.3.0 was bad at these. The v0.4.0 weights didn't change anything about this adversarial set, so it isn't a real recipe regression. After excluding adversarial inputs, country FN drops from 194 to roughly 16. The −0.07 country regression is mostly a golden-set adversarial-weighting artifact.
 
 **Postcode false-negatives** split into four buckets:
 
@@ -118,15 +118,15 @@ These are v0.3.0's documented known-failure modes. The bytefallback tokenizer tr
 | House number confused for postcode |     11% | `47110 Sainte-Livrade-sur-Lot, 22 Rue Jasmin` → predicts `22` |
 | BIO span boundary slip             |      6% | `LE TRÉPORT, 76470` → predicts `", 7647"`                     |
 
-The empty-prediction class is the one worth acting on. NAD's downweight was the most aggressive change in the §4 source rebalance: it carried several "postcode comes first" patterns (`47110 Sainte-Livrade-sur-Lot`, `ND 58701, 44th Ave`) and reducing its share removed that positional exposure. The model now defaults to tagging mid-position numeric tokens as house_number instead of postcode.
+The empty-prediction class is the one worth acting on. NAD's downweight was the most aggressive change in the §4 source rebalance. NAD carried several "postcode comes first" patterns (`47110 Sainte-Livrade-sur-Lot`, `ND 58701, 44th Ave`), and reducing its share removed that positional exposure. The model now defaults to tagging mid-position numeric tokens as house_number instead of postcode.
 
-That's a fix v0.4.1 should target. It is not the same problem as the headline regression number suggests. The 6% boundary-slip class is a different bug — the model gets the tag right but emits a span that includes the preceding comma+space. That's a decoder fix, no retraining required, and it has already landed on `main` as commit `c72ab4c`. The decoder now trims spans past leading/trailing non-word characters.
+v0.4.1 should target that fix. The problem is narrower than the headline regression number suggests. The 6% boundary-slip class is a different bug. The model gets the tag right but emits a span that includes the preceding comma and space. The fix is in the decoder, requires no retraining, and has already landed on `main` as commit `c72ab4c`. The decoder now trims spans past leading/trailing non-word characters.
 
 ## What didn't get fixed (the v0.4.1 list)
 
-The two destabilizers — §1 per-token CRF normalization and §3 class-weighted cross-entropy — are deferred. Both individually look like reasonable training-side improvements; both, at this LR + this loss landscape, made the model find a confident-wrong degenerate minimum after several hundred post-warmup steps. The sanity-check pass over `model.py` and `crf.py` ruled out implementation bugs: the `per_token` reduction is mathematically `nll.sum() / total_tokens.clamp(min=1)`, and class_weights enters via PyTorch-standard `cross_entropy(weight=...)`. The destabilization is a real recipe interaction.
+The two destabilizers, §1 per-token CRF normalization and §3 class-weighted cross-entropy, are deferred. Each looks like a reasonable training-side improvement on its own. At this LR and with this loss landscape, both made the model settle into a confident but wrong degenerate minimum after several hundred post-warmup steps. A sanity-check pass over `model.py` and `crf.py` ruled out implementation bugs. The `per_token` reduction is mathematically `nll.sum() / total_tokens.clamp(min=1)`, and class_weights enters via PyTorch-standard `cross_entropy(weight=...)`. The destabilization is a real recipe interaction.
 
-The leading hypothesis at the v0.4.0 boundary is that some adapter source in `corpus-v0.3.0` is producing high-variance gradients that the per-token-normalized CRF still can't dampen. We built the `corpus-audit` tool during the campaign (it measures per-source extract distribution against the training config's source_weights, with concentration warnings), and the v0.4.1 starting point will be running gradient-norm probes per adapter to find what's causing the spike.
+The leading hypothesis at the v0.4.0 boundary is that some adapter source in `corpus-v0.3.0` is producing high-variance gradients that the per-token-normalized CRF still can't dampen. We built the `corpus-audit` tool during the campaign. It measures the per-source extract distribution against the training config's source_weights and warns about concentration. v0.4.1 will start by running gradient-norm probes per adapter to find what's causing the spike.
 
 Three orthogonal threads for v0.4.1:
 
@@ -136,12 +136,12 @@ Three orthogonal threads for v0.4.1:
 
 ## What we'd tell a future ourselves
 
-A few things this campaign made obvious that we'd want to put on the shelf for the next iteration:
+This campaign produced a few lessons for the next iteration:
 
-1. **Verdict smokes need to test the same conditions as the full run.** If the full run will spend thousands of steps near peak LR, the smoke needs to spend several thousand steps near peak LR too. Cosine decay is a perfectly reasonable training schedule and a terrible verdict schedule.
-2. **Look at failure modes before trusting the F1 delta.** The country regression looked real until we bucketed the failures. 92% of the "regression" was the golden set holding v0.4.0 accountable for v0.3.0's known failure modes. Always categorize before reporting.
-3. **One change at a time.** v0.4.0 stacked three orthogonal training changes — per-token CRF, class weights, source rebalance — and shipped them together. The campaign spent most of its time un-stacking them. Next time, ship one per release. The risk asymmetry (one change destabilizing, vs three changes each needing isolation) isn't worth it.
-4. **Diagnostic tooling early.** The `corpus-audit` and `diagnose_regression.py` tools we built during the campaign would have saved most of v0.3.0's investigation time if they'd existed earlier. We're keeping them in the tree.
+1. **Verdict smokes need to test the same conditions as the full run.** If the full run will spend thousands of steps near peak LR, the smoke needs to spend several thousand steps near peak LR too. Cosine decay is a reasonable training schedule and a poor verdict schedule.
+2. **Look at failure modes before trusting the F1 delta.** The country regression looked real until we bucketed the failures. 92% of the "regression" came from the golden set counting v0.3.0's known failure modes against v0.4.0. Categorize failures before reporting.
+3. **Make one change at a time.** v0.4.0 stacked three orthogonal training changes (per-token CRF, class weights, source rebalance) and shipped them together. The campaign spent most of its time separating them. Next time, ship one per release. When one change destabilizes training, three stacked changes each need isolation, and that cost is not worth the time saved.
+4. **Build diagnostic tooling early.** The `corpus-audit` and `diagnose_regression.py` tools we built during the campaign would have saved most of v0.3.0's investigation time if they'd existed earlier. We're keeping them in the tree.
 
 ## Where to look
 
@@ -150,4 +150,4 @@ A few things this campaign made obvious that we'd want to put on the shelf for t
 - [`docs/articles/plan/phases/PHASE_2_training.md`](https://github.com/sister-software/mailwoman/blob/main/docs/records/plan/phases/PHASE_2_training.mdx) — the canonical iteration log with the full campaign narrative
 - `corpus-python/scripts/diagnose_regression.py` — the per-tag FN/FP bucketer
 
-Next: v0.4.1 scope discussion. The empty-pred class on postcodes is the highest-confidence single-target fix. The §1 CRF investigation is the higher-risk, higher-reward thread. We'll likely run both in parallel.
+The next step is the v0.4.1 scope discussion. The empty-pred class on postcodes is the highest-confidence single-target fix. The §1 CRF investigation is the higher-risk, higher-reward thread. We'll likely run both in parallel.

@@ -94,7 +94,7 @@ flat buffer must produce the same nested array on both sides.
 | **delta**                      | **+0.08 ms (+0.5%)** |            |
 
 That is the **full** cost — this runner unflattens the span tensor on _every_ inference, so it
-includes the decode-side marshalling, notthe graph. Reproducible via
+includes the decode-side marshalling, not just the graph. Reproducible via
 `neural-web/span-slo.bench.test.ts` (reported, never asserted — a wall-clock threshold in CI is a
 flake generator).
 

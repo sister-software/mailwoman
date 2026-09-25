@@ -20,7 +20,7 @@ NPM-promote bar); the full gauntlet.
 
 The oscillation — twins fix bare-locality robustness and erode US admin recall; the counterweight
 repairs US recall and re-breaks bare-locality — is a capacity/stability constraint at 29M params
-under the 5e-5/8k fine-tune idiom rather than a extract-composition problem. Per the treadmill guard: no
+under the 5e-5/8k fine-tune idiom, not an extract-composition problem. Per the treadmill guard: no
 seventh solo run; the fork goes to the operator (documented on #1102):
 (a) dynamics probe (v255 composition, gentler LR/warmup, 2k steps), (b) ship v254 experimental
 (the only gauntlet-green candidate; default blocked by the 2pp check), (c) the #727 span-head arc,
@@ -73,7 +73,7 @@ path or a destructive package swap, a `--weights-cache` path was added to the ga
 e0ab8b32; mirrors `eval parity --weights-cache`, resolves the candidate package-shaped). v256
 graded through it (md5-confirmed the cache model loaded rather than the shipped one) and **PASSED the
 regression layer 30/30 counted cases — including the Dublin bare-city coordinate pin** that broke
-v255. The schedule verdict is now confirmed at the coordinate level, notthe parse level.
+v255. The schedule verdict is now confirmed at the coordinate level, not just the parse level.
 
 **Next (operator greenlight):** `v2.5.7-fragment-v5-gentle-full` staged and committed but not
 launched — the full 8k run at v256's gentle schedule. Expected to recover street toward 0.55–0.60

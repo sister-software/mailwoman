@@ -2,20 +2,10 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file Every document that grants first-party rights names the same party as granting them.
+ * @file Checks that every document granting first-party rights mentions the licensor.
  *
- *   A licensee tracing who they contracted with reads five documents written at different times: the open-source
- *   license, the commercial reference template, the versioned checkout agreement, the contributor grant, and the public
- *   license page. A party named in four of them and absent from the fifth is the shape a rights chain breaks in, and
- *   nothing compared them.
- *
- *   The check is presence rather than prose. It does not read what each document grants, which differs by document and
- *   is the point of having five. It refuses a rights document that never names the licensor, since a grant with no
- *   named grantor is one a licensee cannot trace.
- *
- *   The services operator is deliberately not checked here. `Nirrus LLC` appears in the website Terms and Privacy
- *   Policy and in no rights document, which is correct: operating the services does not make it the copyright holder,
- *   and requiring it here would assert the opposite.
+ *   The check tests only that the licensor's name appears in each document. It does not compare what each document
+ *   grants. The services operator, `Nirrus LLC`, is not the copyright holder and is intentionally left out.
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
@@ -24,15 +14,14 @@ import { resolvePath } from "path-ts"
 import { type Diagnostic, DiagnosticSeverity, type RepoCheck } from "#check"
 
 /**
- * The party every first-party grant flows from, as the rights documents spell it.
+ * The licensor's name as the rights documents spell it.
  */
 const LICENSOR = "Sister Software"
 
 /**
- * The documents that grant, receive or describe first-party rights, each with what it is for.
+ * The documents that grant, receive or describe first-party rights, each with its role.
  *
- * A generated per-package `LICENSE.md` is checked by `weights-rights` against its generator
- * instead, so it is absent here — one document, one owning check.
+ * The `weights-rights` check covers the generated per-package `LICENSE.md` files.
  */
 const RIGHTS_DOCUMENTS: ReadonlyArray<readonly [path: string, role: string]> = [
 	["LICENSE.md", "the open-source grant"],
@@ -43,7 +32,9 @@ const RIGHTS_DOCUMENTS: ReadonlyArray<readonly [path: string, role: string]> = [
 ]
 
 /**
- * The `rights-chain` check: one error per rights document that does not name the licensor.
+ * The `rights-chain` check.
+ *
+ * It reports one error for each rights document that is unreadable or lacks the licensor's name.
  */
 export const rightsChainCheck: RepoCheck = {
 	id: "rights-chain",

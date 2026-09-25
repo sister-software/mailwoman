@@ -2,21 +2,14 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file What the locale hint's `script` field says over three committed boards, and what `locale` says beside it.
+ * @file Tests the locale hint's `script` and `locale` fields over committed Korean, Chinese and Japanese sets.
  *
- *   The Korean case is the whole argument for the field. Every row of the Korean reference set is Hangul, every row
- *   reports `locale: "ja-JP"`, and that is not a routing error. The character path is one weights family for Japanese,
- *   Korean and Chinese, so the model loaded is the same whichever tag stands there. It is a reporting error, and until
- *   `script` existed the hint had nowhere to put the thing it could see.
+ *   Korean addresses report `locale: "ja-JP"` because Japanese, Korean and Chinese share one character-path
+ *   weights family. The `script` field reports Hangul for them, and `locale` must stay unchanged so that
+ *   consumers mapping it to a weights package keep working.
  *
- *   `locale` is asserted here too, unchanged, because the change is worthless if it moved. A consumer mapping the hint
- *   to a weights package would go from a wrong-but-present label to nothing at all.
- *
- *   the chinese board is why the field is A ranked list and not A value. Its rows are a Han organizational unit beside
- *   a romanized province and country — `逊克二分场四队, heilongjiang, china` — so Latin writes more of the row than Han
- *   does and `script[0]` is `Latn` on most of them. Han is present on every row and is what a router would want. A
- *   consumer that reads the head of the list gets the majority script. one that asks whether a script is present gets
- *   the answer this board exists to give.
+ *   `script` is a ranked list. Many Chinese rows put Latin first because a romanized province and country
+ *   follow the Han unit, so a consumer should check whether a script is present rather than read only the head.
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
@@ -32,9 +25,7 @@ const CHINESE_BOARD = "packages/mailwoman/lib/eval-harness/gauntlet/cases/cn/org
 const JAPANESE_GOLD = "data/eval/external/jp-overture-gold.jsonl"
 
 /**
- * The four keys of the Korean reference file that carry addresses.
- *
- * `centroids` and `report` carry neither a `raw` nor an input, and `readme` is prose.
+ * The keys of the Korean reference file that hold address rows.
  */
 const KOREAN_ROW_KEYS = ["label", "board", "registry", "registry_board"] as const
 
@@ -70,10 +61,7 @@ beforeAll(async () => {
 
 describe("the Korean reference set", () => {
 	it("reports Hangul on every row, while locale reports Japanese on every row", () => {
-		// The two halves of one assertion on purpose.
-		// Splitting them would let the second pass for the wrong reason: a change that moved
-		// `locale` to `ko-KR` would break a consumer resolving it to a weights package,
-		// and this row is what would catch it.
+		// Changing `locale` to `ko-KR` would break consumers that map it to a weights package.
 		expect(koreanRows).toHaveLength(20)
 		expect(koreanRows.map(topScript)).toEqual(Array.from({ length: 20 }, () => "Hang"))
 		expect([...new Set(koreanRows.map((row) => hintFor(row).locale))]).toEqual(["ja-JP"])
@@ -88,9 +76,7 @@ describe("the Korean reference set", () => {
 
 describe("the Chinese organizational-units board", () => {
 	it("finds Han on every row, and Latin at the head of most of them", () => {
-		// `逊克二分场四队, heilongjiang, china`.
-		// The unit is Han, the province and country are romanized, and Latin writes more of the row.
-		// A predicate over `script[0]` alone would read this board as Latin.
+		// In `逊克二分场四队, heilongjiang, china`, the romanized province and country outweigh the Han unit.
 		expect(chineseRows).toHaveLength(21)
 
 		for (const row of chineseRows) {
@@ -102,17 +88,14 @@ describe("the Chinese organizational-units board", () => {
 	})
 
 	it("is the case the folded character class cannot express", () => {
-		// Eighteen of the rows fold to `mixed`, and `mixed` names no script at all.
-		// So a router reading the fold sees nothing to route on and the Han unit goes to the Latin model.
-		// The other three carry no romanized province (`三分场八队`) and fold to `cjk`,
-		// which is the bucket that cannot tell them from Korean.
+		// Rows with a romanized province fold to `mixed`.
+		// The rest fold to `cjk`, which cannot distinguish Chinese from Korean.
+		// Neither class identifies a script.
 		const classes = chineseRows.map((row) => computeQueryShape(row).characterClass)
 
 		expect(classes.filter((value) => value === "mixed")).toHaveLength(18)
 		expect(classes.filter((value) => value === "cjk")).toHaveLength(3)
 
-		// Neither bucket names a script, which is the whole point: 21 rows, two classes,
-		// and no way to ask either of them which writing system is on the page.
 		expect([...new Set(classes)].toSorted()).toEqual(["cjk", "mixed"])
 	})
 })
@@ -126,13 +109,9 @@ describe("the Japanese Overture gold set", () => {
 	})
 
 	it("carries kana on 178 rows, which is why kana cannot decide Japanese here", () => {
-		// The measurement the script rule rests on.
-		// Kana is diagnostic of Japanese and Han is not — 県/市/区/郡/町 and most place names are Han —
-		// so a rule that waits for kana abstains on 95.5% of this set.
-		//
-		// It is a floor rather than a rate: these rows carry a postcode, a prefecture
-		// and a municipality and nothing finer.
-		// A set with building lines would carry more kana.
+		// Kana identifies Japanese and Han does not, but most Japanese place names are written in Han.
+		// A rule that required kana would abstain on most of this set.
+		// These rows stop at the municipality, so fuller addresses would contain more kana.
 		const kanaRowCount = japaneseRows.filter((row) => {
 			const scripts = scriptsOf(row)
 
@@ -145,12 +124,7 @@ describe("the Japanese Overture gold set", () => {
 })
 
 describe("the regression board", () => {
-	/**
-	 * The three sets above are chosen for the scripts they carry.
-	 *
-	 * This one is the board every other check runs against, so it says what the hint reports
-	 * over the rows the product is actually graded on, and what it has none of.
-	 */
+	// The regression board is the set that the product is graded on.
 	it("reads Han off thirteen rows across CN, JP and SG, and leaves their locale alone", async () => {
 		const cases = await loadRegressionCases()
 		const hanLed = cases.filter((row) => topScript(row.input) === "Hani")
@@ -164,22 +138,14 @@ describe("the regression board", () => {
 	})
 
 	it("holds no Hangul-led row, which is the board's gap rather than the hint's", () => {
-		// `cases/kr/` is an open box on #2277.
-		// Stating the absence beats asserting a count that would silently become wrong,
-		// and the Korean reference set above is what covers Hangul until that directory exists.
+		// The regression board has no Korean cases, so the Korean reference set covers Hangul.
 		expect(koreanRows.map(topScript)).toContain("Hang")
 	})
 })
 
 describe("what reaches the parse surface", () => {
-	/**
-	 * Both fields reach `mailwoman parse --debug` and `mwdev_trace` by pass-through — the pipeline
-	 * threads the query shape and the hint whole, and neither surface rebuilds them field by field.
-	 *
-	 * Pass-through is invisible, which is why it is pinned here: a projection
-	 * added between the stage and the serializer would drop the script silently
-	 * and every other assertion in this file would still pass.
-	 */
+	// The pipeline passes the query shape and the locale hint through whole.
+	// These tests catch a projection that would drop the script fields on the way out.
 	it("carries the ranked scripts and the per-token script through the whole pipeline", async () => {
 		const { createRuntimePipeline } = await import("mailwoman")
 		const pipeline = createRuntimePipeline({})
@@ -188,9 +154,7 @@ describe("what reaches the parse surface", () => {
 		expect(result.queryShape?.scripts?.map((entry) => entry.script)).toEqual(["Latn", "Hani"])
 		expect(result.locale?.script?.map((entry) => entry.script)).toEqual(["Latn", "Hani"])
 
-		// The Han venue, which is the span the fold made invisible: `characterClass`
-		// reads `mixed` for this input and `mixed` names no script.
-		// Therefore, nothing downstream could see that 金龍酒家 is written in Han.
+		// The input's `characterClass` is `mixed`, so only the per-token script shows that the venue is Han.
 		expect(result.queryShape?.tokenClasses?.[0]).toMatchObject({
 			span: { body: "金龍酒家" },
 			class: "cjk",

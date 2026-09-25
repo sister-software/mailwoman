@@ -1,7 +1,7 @@
 # Template: explanation
 
-An `explanation` page answers a why question. It has no steps and no interface tables, and a reader should be
-able to close it having changed their mental model rather than their filesystem. Register rules are in
+An `explanation` page answers a why question. It has no steps and no interface tables. After reading it, a
+reader should understand the system differently, without having changed anything on disk. Register rules are in
 [`../writing-system.md`](../writing-system.md) under Register by role.
 
 ## Frontmatter skeleton
@@ -18,7 +18,7 @@ role: explanation
 
 ## Section order
 
-1. `# Title` — the question, or the claim the page argues.
+1. `# Title`: the question, or the claim the page argues.
 2. **The question.** Two or three sentences, phrased the way a reader would ask it.
 3. **The analog.** The rule-world concept, before any statistical term.
 4. **The mechanism.** What the system does, in the order it does it.
@@ -32,9 +32,9 @@ than the last.
 
 ## Exemplar paragraph
 
-> Reading an address by hand is two questions rather than one. First you decide where the pieces start and stop —
-> `1600 Amphitheatre Parkway` is one piece, `Mountain View` is another — and only then do you decide what
-> each piece is. The phrase grouper (stage 2.7) is the first of those questions on its own. It proposes
+> Reading an address by hand involves two questions. First you decide where the pieces start and stop. For
+> example, `1600 Amphitheatre Parkway` is one piece and `Mountain View` is another. Only then do you decide
+> what each piece is. The phrase grouper (stage 2.7) is the first of those questions on its own. It proposes
 > spans with a kind hypothesis and a confidence, so the model at stage 3 answers "what type is this proposed
 > span?" instead of discovering boundaries and types at once. Splitting the two costs a page of plumbing and
 > provides a smaller question at the point where errors are expensive, because a boundary the grouper proposes
@@ -57,5 +57,6 @@ groupPhrases("1600 Amphitheatre Parkway, Mountain View, CA 94043", shape, locale
 - The rule-world analog appears before the statistical term rather than after it.
 - Each term is defined in one sentence at first use, and the registry link carries the rest.
 - The page states what the design gives up rather than only what it gains.
-- No steps, no interface tables. Those belong on a `guide` or a `reference` page, linked from Related.
+- The page contains no steps or interface tables. Those belong on a `guide` or a `reference` page, linked
+  from Related.
 - The audit checklist in [`../writing-system.md`](../writing-system.md) has been run over the draft.

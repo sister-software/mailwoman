@@ -3,33 +3,11 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Australia Post amas floor/level designators — the sub-premise vocabulary that names a floor of a
- *   building rather than a numbered unit on that floor: `Level 3`, `L 12`, `Ground Floor`,
- *   `Mezzanine`.
+ *   Australian floor designators such as `Level 3`, `L 12`, `Ground Floor` and `Mezzanine`.
  *
- *   Sourcing (accessed 2026-06-12):
- *
- *   - **Australia Post amas** (Address Matching Approval System) defines the Level Designator type and
- *       its approved abbreviation. The verbatim amas description: "level" is the full word; "L" is
- *       the approved abbreviation. The standard phrase format is `level <number>`, e.g. "level 3"
- *       or "L 3" (abbreviation always uppercase in amas output). Australia Post's own barcode
- *       addressing booklet (SAP 8838883) lists "level" and "L" as the level type. the Correct
- *       Addressing brochure (SAP 8833878, Nov 2022) gives the example `level 3 / 60 margaret ST /
- *       sydney NSW 2000`. The amas Data Extract Format document (v4.2) confirms "level" → "L" as
- *       the sole level abbreviation pair.
- *   - **Ground floor** is treated by amas as `level G` (with the identifier "G"). Australia Post's
- *       addressing guidelines state that ground floor should be written as "level G"; the full word
- *       "ground" is a recognized alias for the identifier rather than a separate designator type.
- *   - **Mezzanine**, **Lower Ground**, and **Upper Ground** appear in AS 4590.1-2017 (the Australian
- *       Standard for interchange of client information) as recognized level-type values alongside
- *       level and ground. AS 4590.1-2017 Table 3 "Level type": B (Basement), G (Ground), mezzanine
- *       (M), LG (Lower Ground), UG (Upper Ground), L (Level), OD (Observation Deck), P (Parking /
- *       Podium), RT (Rooftop). These are the values a Geocoded National Address File (gnaf) record
- *       may carry in the LEVEL_TYPE_CODE column, which mirrors the AP amas level-type vocabulary.
- *   - "LVL" and "LG" appear as widely-recognized surface variants in real AU addresses (Open Addresses
- *       AU export, accessed via OpenAddresses) though AS 4590.1-2017 and amas canonicalize to "L"
- *       and "LG" respectively. the variants are included in {@link AU_LEVEL_DESIGNATOR_VARIANTS} so
- *       the parser can recognize them without synthesizing them.
+ *   The codes come from the level-type table in AS 4590.1-2017, which is also the vocabulary of the GNAF
+ *   `LEVEL_TYPE_CODE` column. Australia Post AMAS approves `L` as the abbreviation for `Level`. Informal
+ *   variants such as `LVL` come from OpenAddresses data, and the parser recognizes them.
  *
  * @see {@link https://auspost.com.au/sending/guidelines/addressing-guidelines Australia Post addressing guidelines}
  * @see {@link https://auspost.com.au/content/dam/auspost_corp/media/documents/correct-addressing.pdf Australia Post Correct Addressing brochure (Nov 2022)}
@@ -38,42 +16,33 @@
  */
 
 /**
- * One amas / AS 4590.1 level-type row.
- *
- * The `type` is the AS 4590.1 LEVEL_TYPE_CODE value (what gnaf and amas use internally);
- * the `abbreviation` is the approved surface form used in formatted mail.
- * The `requiresNumber` flag distinguishes designators that take a floor identifier from standalone ones.
+ * One AS 4590.1 level-type row.
  */
 export interface AuLevelDesignator {
 	/**
-	 * AS 4590.1 LEVEL_TYPE_CODE (the gnaf / amas internal code).
+	 * The AS 4590.1 `LEVEL_TYPE_CODE`.
 	 */
 	code: string
 	/**
-	 * Full descriptive name (amas table label).
+	 * The full type name.
 	 */
 	name: string
 	/**
-	 * The approved amas surface abbreviation written on mail ("L", "B", "M").
+	 * The abbreviation written on mail, such as "L".
 	 */
 	abbreviation: string
 	/**
-	 * True when the designator takes a numeric or alphanumeric floor identifier
-	 * after it (`level 3`, `basement 2`).
+	 * Whether the designator must be followed by a floor identifier, as in `level 3`.
 	 *
-	 * False for standalone types (`ground`, `mezzanine`, `rooftop`) that name a
-	 * specific well-known floor by vocabulary alone.
+	 * Types such as `ground` and `rooftop` stand alone.
 	 */
 	requiresNumber: boolean
 }
 
 /**
- * Amas / AS 4590.1-2017 level-type table (Table 3).
+ * The AS 4590.1-2017 level-type table.
  *
- * Verbatim codes.
- * See the module header for provenance.
- *
- * Ordered with the most-common forms first for match priority.
+ * Matching tries rows in this order, so the most common types come first.
  */
 export const AU_LEVEL_DESIGNATORS = [
 	{ code: "L", name: "LEVEL", abbreviation: "L", requiresNumber: true },
@@ -88,19 +57,15 @@ export const AU_LEVEL_DESIGNATORS = [
 ] as const satisfies readonly AuLevelDesignator[]
 
 /**
- * A canonical AS 4590.1 LEVEL_TYPE_CODE.
+ * An AS 4590.1 `LEVEL_TYPE_CODE`.
  */
 export type AuLevelCode = (typeof AU_LEVEL_DESIGNATORS)[number]["code"]
 
 /**
- * Recognized surface variants for each amas level code.
+ * The spellings recognized for each level code.
  *
- * The canonical code/abbreviation pair plus additional forms found in real AU
- * addresses (Open Addresses export) that the parser must recognize but the synthesis
- * layer should not favor over the canonical form.
- *
- * Synthesis uses only the first element (the amas canonical surface).
- * Recognition accepts all.
+ * The first entry is the canonical abbreviation and is the only one synthesis should use.
+ * Recognition accepts every entry.
  */
 export const AU_LEVEL_DESIGNATOR_VARIANTS: Readonly<Record<AuLevelCode, readonly string[]>> = {
 	L: ["L", "LEVEL", "LVL", "LEVL", "LEV"],
@@ -115,14 +80,10 @@ export const AU_LEVEL_DESIGNATOR_VARIANTS: Readonly<Record<AuLevelCode, readonly
 }
 
 /**
- * Inverse lookup: every variant (abbreviation or surface form) → the canonical amas code.
- *
- * Lowercase-keyed for case-insensitive matching (`"level"` → `"L"`, `"bsmt"` → `"B"`).
+ * Maps each lowercased variant to its level code, so `"bsmt"` maps to `"B"`.
  */
 export const AU_LEVEL_DESIGNATOR_LOOKUP: ReadonlyMap<string, AuLevelCode> = (() => {
-	// Structural integrity check: every code must have at least one non-empty variant.
-	// Throw at module load time so a malformed table entry fails loud rather than silently
-	// producing an empty lexicon (the "builder must round-trip loud" rule from the task interface).
+	// A code with no variants or a blank variant throws at module load.
 	for (const { code } of AU_LEVEL_DESIGNATORS) {
 		const variants = AU_LEVEL_DESIGNATOR_VARIANTS[code]
 
@@ -155,28 +116,27 @@ export const AU_LEVEL_DESIGNATOR_LOOKUP: ReadonlyMap<string, AuLevelCode> = (() 
 })()
 
 /**
- * Result of an AU level designator parse.
+ * A parsed Australian level designator.
  */
 export interface AuLevelDesignatorMatch {
 	/**
-	 * The code as it appeared in the input ("Level", "L", "lvl").
+	 * The designator as written, such as "lvl".
 	 */
 	matched: string
 	/**
-	 * The canonical AS 4590.1 LEVEL_TYPE_CODE ("L", "B", "M").
+	 * The level code, such as "L".
 	 */
 	code: AuLevelCode
 	/**
-	 * The floor identifier when present ("3", "G", "B2").
+	 * The floor identifier, when present, such as "3" or "B2".
 	 */
 	identifier?: string
 }
 
 /**
- * One regex per level code.
+ * One regular expression per level code.
  *
- * Multi-word variants ("lower ground", "ground floor") are matched before their shorter
- * constituents by ordering the variant list longest-first within each code.
+ * Variants are sorted longest first so that "ground floor" matches before "ground".
  */
 const LEVEL_MATCHERS: ReadonlyArray<{ code: AuLevelCode; requiresNumber: boolean; re: RegExp }> = (() => {
 	const rows: Array<{ code: AuLevelCode; requiresNumber: boolean; re: RegExp }> = []
@@ -188,7 +148,8 @@ const LEVEL_MATCHERS: ReadonlyArray<{ code: AuLevelCode; requiresNumber: boolean
 
 		const alts = variants.join("|")
 
-		// Identifier: optional alphanumeric (B2, 12, G). requiresNumber=true → identifier required.
+		// The identifier must contain a digit.
+		// It is optional unless the type requires a number.
 		const tail = requiresNumber
 			? String.raw`\s+([A-Za-z]?\d[\dA-Za-z-]*|\d[\dA-Za-z-]*)`
 			: String.raw`(?:\s+([A-Za-z]?\d[\dA-Za-z-]*|\d[\dA-Za-z-]*))?`
@@ -200,12 +161,10 @@ const LEVEL_MATCHERS: ReadonlyArray<{ code: AuLevelCode; requiresNumber: boolean
 })()
 
 /**
- * If `input` is a standalone AU level designator phrase ("Level 3", "L 12", "Ground Floor",
- * "Mezzanine", "B 2"), return the canonical code and identifier.
+ * Parses a standalone Australian level designator, such as "Level 3", "Ground Floor" or "B 2".
  *
- * Null otherwise.
- * Malformed entries (a requires-number designator with no identifier, e.g. bare "Level")
- * return null — the builder throws loudly when a row in a table violates this constraint.
+ * Returns null for any other input, including a type that requires a number
+ * but has none, such as a bare "Level".
  */
 export function matchAuLevelDesignator(input: unknown): AuLevelDesignatorMatch | null {
 	if (typeof input !== "string") return null
@@ -226,20 +185,16 @@ export function matchAuLevelDesignator(input: unknown): AuLevelDesignatorMatch |
 }
 
 /**
- * Type-predicate: does the input look like a standalone AU level designator phrase?
+ * Returns whether the input is a standalone Australian level designator.
  */
 export function isAuLevelDesignator(input: unknown): boolean {
 	return matchAuLevelDesignator(input) !== null
 }
 
 /**
- * Normalize a recognized level phrase to the amas canonical form
- * (`"level 3"` → `"L 3"`, `"ground floor"` → `"G"`).
+ * Normalizes a level designator to its canonical abbreviation, so `"level 3"` becomes `"L 3"`.
  *
- * @returns The input unchanged if it isn't a level designator phrase.
- * Throws if a row in {@link AU_LEVEL_DESIGNATORS} is malformed
- * (requires-number entry with no abbreviation or empty name).
- * The builder must surface structural defects loudly.
+ * @returns The input unchanged when it is not a level designator.
  */
 export function normalizeAuLevelDesignator(input: string): string {
 	const m = matchAuLevelDesignator(input)

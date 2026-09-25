@@ -3,18 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   #1989: the authority-designation route on the geocode path, exercised through `geocodeAddress` with
- *   mock classifier/resolver deps and a fixture-built flood layer.
- *
- *   the first test is the one that matters. With the layer absent — which is every default construction.
- *   the geocode result must be identical to a run against a build without the field existing. That is a
- *   statement about construction rather than about a measurement, and it is what makes the option safe to
- *   configure: rollback is removing the argument.
- *
- *   The remaining tests pin the three readings' journey to a caller: a designation becomes one additive
- *   marker naming the verdict's own top kind, a designated absence becomes the same marker carrying Zone 1,
- *   and a location outside the authority's footprint raises nothing — an advisory there would report a
- *   determination nobody made.
+ *   Tests the authority-designation route through `geocodeAddress` with mock dependencies and a fixture flood
+ *   layer. Attaching the route must add at most one marker and leave the rest of the result unchanged.
  */
 
 import type { AddressNode } from "@mailwoman/core/decoder"
@@ -41,8 +31,7 @@ function node(partial: Partial<AddressNode> & Pick<AddressNode, "tag" | "value">
 }
 
 /**
- * A minimal always-resolves engine that answers at `latitude`/`longitude`,
- * so the coordinate the route is handed is the one this test chose.
+ * Builds geocode dependencies that always resolve to the given coordinate.
  */
 function testDeps(latitude: number, longitude: number): GeocodeDeps {
 	const classifier: GeocodeClassifier = {
@@ -65,8 +54,7 @@ function testDeps(latitude: number, longitude: number): GeocodeDeps {
 		}),
 	}
 
-	// An explicit verdict, so the assertion below compares the marker's `kind` against a kind
-	// this test chose rather than against whatever the built-in classifier happened to reach.
+	// A fixed verdict lets the tests assert the marker's `kind` exactly.
 	return {
 		classifier,
 		resolver,
@@ -78,15 +66,14 @@ function testDeps(latitude: number, longitude: number): GeocodeDeps {
 const INPUT = "Testtown"
 
 /**
- * The kind the mock classifier reports.
+ * The query kind the mock classifier reports.
  *
- * A designation marker must name it — the verdict's own top kind — because a
- * designation is not raised by intent and has no kind of its own.
+ * A designation marker carries the verdict's top kind because a designation has no kind of its own.
  */
 const TEST_VERDICT_KIND: QueryKind = "locality_only"
 
 /**
- * Inside the FZ3 square, well away from its edges.
+ * A point at the centre of the FZ3 fixture square.
  */
 const INSIDE_ZONE = {
 	latitude: FIXTURE_ORIGIN.lat + FIXTURE_SIDE / 2,
@@ -94,12 +81,12 @@ const INSIDE_ZONE = {
 }
 
 /**
- * Inside the footprint and outside every polygon — the designated Zone 1 absence.
+ * A point inside the authority footprint and outside every polygon, which reads as Zone 1.
  */
 const DESIGNATED_ABSENCE = { latitude: FIXTURE_ORIGIN.lat + 0.2, longitude: FIXTURE_ORIGIN.lon + 0.2 }
 
 /**
- * Outside the authority's footprint entirely.
+ * A point outside the authority footprint.
  */
 const OUTSIDE_FOOTPRINT = { latitude: FIXTURE_ORIGIN.lat + 5, longitude: FIXTURE_ORIGIN.lon + 5 }
 
@@ -170,16 +157,14 @@ describe("#1989: the authority-designation route on the geocode path", () => {
 
 			expect(marker.code).toBe("authority_designation")
 			expect(marker.mechanism).toBe("layer:flood_zone")
-			// The settled answer to the survey's open question: the marker names the verdict's own top kind,
-			// because a designation is not raised by intent and has no kind of its own to name.
 			expect(marker.kind).toBe(TEST_VERDICT_KIND)
 			const evidence = marker.evidence!
 
 			expect(evidence.code).toBe("FZ3")
 			expect(evidence.reading).toBe("designated")
-			// The wording is about the MAP, never about the property — the authority declines the second statement.
+			// The message describes the map designation because the authority makes no claim about individual properties.
 			expect(marker.message).toMatch(/not whether a property will flood/u)
-			// The licence condition rides with the claim.
+			// The licence requires the attribution to accompany the designation.
 			expect((evidence.layer as { attribution?: string }).attribution).toMatch(/Environment Agency copyright/u)
 		} finally {
 			route[Symbol.dispose]()

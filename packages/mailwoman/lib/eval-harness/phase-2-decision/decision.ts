@@ -3,10 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Define and evaluate the frozen phase-2 decision ruler without loading an engine.
- *   Registered measurements use whole-row counts and explicit baselines.
- *   Blocked lanes remain visible but are not scored; verdicts report coverage and comparability.
- *   This module computes the decision but does not record the operator's receipt.
+ *   Frozen phase-2 decision definition, its audit, and the decision rule. The module loads no engine and writes no
+ *   receipt.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -22,7 +20,7 @@ export {
 } from "#eval-harness/phase-2-decision/outcomes"
 
 /**
- * Instruments that may produce registered measurements.
+ * Instruments that produce registered measurements.
  */
 export const PHASE2_INSTRUMENTS = [
 	"semantic_utility_probe",
@@ -37,7 +35,7 @@ export const PHASE2_INSTRUMENTS = [
 export type Phase2Instrument = (typeof PHASE2_INSTRUMENTS)[number]
 
 /**
- * Registered measurements and their producing instruments.
+ * Registered measurements, each mapped to the instrument that produces it.
  */
 export const PHASE2_MEASUREMENTS = {
 	"semantic_utility.baseline.primary_passes": "semantic_utility_probe",
@@ -72,77 +70,84 @@ export const PHASE2_MEASUREMENTS = {
 export type Phase2Measurement = keyof typeof PHASE2_MEASUREMENTS
 
 /**
- * The instrument a measurement belongs to.
+ * Returns the instrument that produces a measurement.
  */
 export function instrumentFor(measurement: Phase2Measurement): Phase2Instrument {
 	return PHASE2_MEASUREMENTS[measurement]
 }
 
 /**
- * A lane is measurable or blocked; an unrun instrument is a harness error.
+ * Lane statuses.
+ *
+ * A blocked lane is described in the definition and has no scored checks.
  */
 export const PHASE2_LANE_STATUSES = ["measurable", "blocked"] as const
 
 export type Phase2LaneStatus = (typeof PHASE2_LANE_STATUSES)[number]
 
 /**
- * What a check decides.
+ * Check roles.
  *
- * `control` checks assert nothing moved; `target` checks assert a capability.
+ * A `control` check asserts that existing behavior did not regress.
+ * A `target` check asserts a new capability.
  */
 export const PHASE2_CHECK_ROLES = ["target", "control"] as const
 
 export type Phase2CheckRole = (typeof PHASE2_CHECK_ROLES)[number]
 
 /**
- * Target tier: recognition capability (`resolution`) or observation surface (`evidence`).
+ * Target tiers.
+ *
+ * A `resolution` check measures recognition capability, and an `evidence` check
+ * measures what the caller can observe.
  */
 export const PHASE2_TARGET_TIERS = ["resolution", "evidence"] as const
 
 export type Phase2TargetTier = (typeof PHASE2_TARGET_TIERS)[number]
 
 /**
- * How an observation is compared against its bar.
- *
- * All three take a whole row count.
+ * Comparisons between an observed row count and a bar value.
  */
 export const PHASE2_BAR_KINDS = ["at_least", "at_most", "exactly"] as const
 
 export type Phase2BarKind = (typeof PHASE2_BAR_KINDS)[number]
 
 /**
- * Source type for a check's baseline number.
+ * Kinds of source that a check's baseline value can cite.
  */
 export const PHASE2_BASELINE_SOURCES = ["merged-pr-receipt", "committed-receipt", "committed-artifact"] as const
 
 export type Phase2BaselineSource = (typeof PHASE2_BASELINE_SOURCES)[number]
 
 /**
- * The three decisions this ruler admits, in the order {@linkcode decidePhase2} checks them.
+ * Possible decisions, from most to least permissive.
  */
 export const PHASE2_DECISIONS = ["PROCEED-AS-AUTHORIZED", "EVIDENCE-ONLY", "STOP-REDESIGN"] as const
 
 export type Phase2Decision = (typeof PHASE2_DECISIONS)[number]
 
 /**
- * Current status of one integration-record default-change requirement.
+ * States of a default-change requirement from the integration record.
  */
 export const PHASE2_DEFAULT_BAR_STATES = ["met", "unmet", "no_committed_instrument", "not_measured_here"] as const
 
 export type Phase2DefaultBarState = (typeof PHASE2_DEFAULT_BAR_STATES)[number]
 
+/**
+ * Pass condition for a check, as a comparison against a whole row count.
+ */
 export interface Phase2Bar {
 	kind: Phase2BarKind
 	value: number
 }
 
 /**
- * Baseline value and its source receipt.
+ * Baseline value and the source it was read from.
  */
 export interface Phase2Baseline {
 	source: Phase2BaselineSource
 	/**
-	 * The PR, the committed receipt file, or the committed artifact the number was read from.
+	 * PR, committed receipt file, or committed artifact that holds the value.
 	 */
 	reference: string
 	value: number
@@ -150,61 +155,69 @@ export interface Phase2Baseline {
 }
 
 /**
- * One registered measurement check.
+ * One registered check.
  */
 export interface Phase2Check {
 	id: string
 	/**
-	 * Owning lane; blocked lanes cannot have checks.
+	 * ID of the owning lane, which must be measurable.
 	 */
 	lane: string
 	role: Phase2CheckRole
 	/**
-	 * Required for target checks and disallowed for controls.
+	 * Tier of a target check.
+	 * Control checks must omit it.
 	 */
 	tier?: Phase2TargetTier
 	measurement: Phase2Measurement
 	/**
-	 * Description of the counted numerator.
+	 * Description of what the numerator counts.
 	 */
 	numerator: string
 	/**
-	 * Fixed denominator; unread rows reduce the numerator rather than the board size.
+	 * Fixed row count.
+	 *
+	 * Unread rows lower the numerator and leave the denominator unchanged.
 	 */
 	denominator: number
 	baseline: Phase2Baseline
 	bar: Phase2Bar
 	/**
-	 * Failure this check is intended to catch.
+	 * Failure that this check guards against.
 	 */
 	guards: string
 }
 
 /**
- * Planned measurement for a blocked lane; documented but not scored.
+ * Planned check for a blocked lane.
+ * It is recorded and not scored.
  */
 export interface Phase2PlannedCheck {
 	id: string
 	measures: string
 	/**
-	 * What the same reading gives today, so the unblocking is a comparison rather than a fresh claim.
+	 * Current value of the same reading, which the check will be compared against once the lane unblocks.
 	 */
 	todayReads: string
 }
 
+/**
+ * One work lane in the phase.
+ */
 export interface Phase2Lane {
 	id: string
 	status: Phase2LaneStatus
 	issue: string
 	claim: string
 	/**
-	 * What merged for this lane regardless of its status.
-	 * A blocked lane is rarely blocked in whole.
+	 * Work that has merged for the lane.
+	 * A blocked lane usually has some.
 	 */
 	landed: string
 	note: string
 	/**
-	 * Required on a `blocked` lane: the issue that must land first.
+	 * Issue that must land before a blocked lane can be measured.
+	 * The audit requires it on a blocked lane.
 	 */
 	blockedBy?: string
 	blockedReason?: string
@@ -212,45 +225,48 @@ export interface Phase2Lane {
 }
 
 /**
- * Integration-record default-change requirement and its current reading.
+ * Default-change requirement from the integration record and its current state.
  *
- * This register is reported but does not affect {@linkcode decidePhase2}.
+ * The verdict reports these rows, and they do not affect {@linkcode decidePhase2}'s decision.
  */
 export interface Phase2DefaultBarRow {
 	row: number
 	check: string
 	state: Phase2DefaultBarState
 	/**
-	 * Check ids that satisfy this row.
-	 *
-	 * Required non-empty on a `met` row: a row asserting itself satisfied without
-	 * naming the measurement that satisfied it is prose.
+	 * IDs of the checks that satisfy the row.
+	 * A `met` row must list at least one.
 	 */
 	satisfiedBy: string[]
 	note: string
 }
 
+/**
+ * Frozen decision thresholds, all whole check counts.
+ */
 export interface Phase2Thresholds {
 	/**
-	 * Allowed control misses; zero regressions are permitted.
+	 * Number of control misses allowed.
 	 */
 	controlRegressionTolerance: number
 	/**
-	 * Minimum resolution checks required to proceed.
+	 * Number of resolution checks that must pass for `PROCEED-AS-AUTHORIZED`.
 	 */
 	minimumResolutionChecks: number
 	/**
-	 * Minimum evidence checks required by either positive decision.
+	 * Number of evidence checks that must pass for either positive decision.
 	 */
 	minimumEvidenceChecks: number
 	/**
-	 * Required number of measurable lanes reporting.
+	 * Number of measurable lanes that must report.
+	 * The audit requires it to equal the measurable lane count.
 	 */
 	requiredMeasurableLanes: number
 }
 
 /**
- * Artifact versions used for comparability reporting; not decision inputs.
+ * Artifact versions used to report comparability.
+ * They are not decision inputs.
  */
 export interface Phase2ArtifactPins {
 	poiLayerManifestVersion: string
@@ -269,7 +285,7 @@ export interface Phase2ArtifactPins {
 }
 
 /**
- * Marker probe input, frozen in the definition.
+ * Query and expected result for the observation-marker probe.
  */
 export interface Phase2MarkerProbe {
 	query: string
@@ -280,7 +296,7 @@ export interface Phase2MarkerProbe {
 }
 
 /**
- * Complete phase-2 pre-registration.
+ * Complete phase-2 preregistration.
  */
 export interface Phase2DecisionDefinition {
 	decisionID: string
@@ -306,7 +322,7 @@ export interface Phase2DecisionDefinition {
 }
 
 /**
- * Definition identity and frozen content hash.
+ * Freeze record that pins the definition by ID, version, and content hash.
  */
 export interface Phase2FreezeRecord {
 	definition: string
@@ -318,12 +334,12 @@ export interface Phase2FreezeRecord {
 }
 
 /**
- * Path to the committed pre-registration.
+ * Path to the committed preregistration.
  */
 export const PHASE2_DEFINITION_PATH = preregistrationPath("phase-2-decision", "decision-definition.json")
 
 /**
- * Path to its committed freeze record.
+ * Path to the committed freeze record.
  */
 export const PHASE2_FREEZE_PATH = preregistrationPath("phase-2-decision", "decision-freeze.json")
 
@@ -333,12 +349,15 @@ export const PHASE2_FREEZE_PATH = preregistrationPath("phase-2-decision", "decis
 export const PHASE2_RECEIPT_PATH = preregistrationPath("phase-2-decision", "decision-receipt.json")
 
 /**
- * The content hash of one definition.
+ * Returns the content hash that the freeze record pins.
  */
 export function phase2DefinitionHash(definition: Phase2DecisionDefinition): string {
 	return definitionContentHash(definition)
 }
 
+/**
+ * Audits lane IDs and statuses, the checks a lane may own, and the details a blocked lane must record.
+ */
 function auditLanes(definition: Phase2DecisionDefinition): string[] {
 	const problems: string[] = []
 	const seen = new Set<string>()
@@ -424,6 +443,9 @@ function auditLanes(definition: Phase2DecisionDefinition): string[] {
 	return problems
 }
 
+/**
+ * Audits each check's ID, role, tier, measurement, bar, and baseline.
+ */
 function auditChecks(definition: Phase2DecisionDefinition): string[] {
 	const problems: string[] = []
 	const seen = new Set<string>()
@@ -501,6 +523,9 @@ function auditChecks(definition: Phase2DecisionDefinition): string[] {
 	return problems
 }
 
+/**
+ * Audits the thresholds against the registered check and lane counts.
+ */
 function auditThresholds(definition: Phase2DecisionDefinition): string[] {
 	const problems: string[] = []
 	const thresholds = definition.thresholds
@@ -551,6 +576,9 @@ function auditThresholds(definition: Phase2DecisionDefinition): string[] {
 	return problems
 }
 
+/**
+ * Audits the default-change rows for order, state, and references to registered checks.
+ */
 function auditDefaultChangeBar(definition: Phase2DecisionDefinition): string[] {
 	const problems: string[] = []
 	const ids = new Set(definition.checks.map((check) => check.id))
@@ -589,10 +617,9 @@ function auditDefaultChangeBar(definition: Phase2DecisionDefinition): string[] {
 }
 
 /**
- * Everything that must be true of a definition, checked without running anything.
+ * Audits a definition without running any instrument.
  *
- * One message per problem, each naming the field, lane or check id.
- * Empty means the definition is executable.
+ * It returns one message per problem, and an empty list means the definition can run.
  */
 export function auditPhase2Definition(definition: Phase2DecisionDefinition): string[] {
 	const problems: string[] = []
@@ -626,11 +653,10 @@ export function auditPhase2Definition(definition: Phase2DecisionDefinition): str
 }
 
 /**
- * Load the frozen pre-registration, refusing anything that would let the ruler move.
+ * Loads the frozen preregistration.
  *
- * Three refusals, in order: the freeze record must name this definition and version,
- * the definition's content hash must equal the frozen hash, and the audit must be clean.
- * A caller never receives a definition it may only partly trust.
+ * It throws unless the freeze record matches the definition's ID and version,
+ * the content hash matches the frozen hash, and the audit is clean.
  */
 export async function loadPhase2Definition(
 	definitionPath: PathBuilderLike = PHASE2_DEFINITION_PATH,
@@ -646,20 +672,20 @@ export async function loadPhase2Definition(
 }
 
 /**
- * One instrument reading, addressed to the measurement it answers.
+ * Instrument reading for one measurement.
  */
 export interface Phase2Reading {
 	measurement: Phase2Measurement
 	observed: number
 	/**
-	 * What produced the number, in the instrument's own words — carried so a check's
-	 * outcome names the thing it read and not only the count.
+	 * Instrument's description of what it counted.
+	 * The check outcome repeats it next to the number.
 	 */
 	detail: string
 }
 
 /**
- * One check, measured.
+ * Result of evaluating one check against its reading.
  */
 export interface Phase2CheckOutcome {
 	id: string
@@ -684,7 +710,7 @@ function barHolds(bar: Phase2Bar, observed: number): boolean {
 }
 
 /**
- * Render one bar as the reader sees it beside the measurement.
+ * Formats a bar as a comparison such as `≥ 3`.
  */
 export function describeBar(bar: Phase2Bar): string {
 	if (bar.kind === "at_least") return `≥ ${bar.value}`
@@ -695,7 +721,10 @@ export function describeBar(bar: Phase2Bar): string {
 }
 
 /**
- * Evaluate registered checks; missing readings are errors, not zeroes.
+ * Evaluates every registered check against the readings.
+ *
+ * @throws When a check's measurement has no reading.
+ * A missing reading means an instrument failed to run.
  */
 export function evaluatePhase2Checks(
 	definition: Phase2DecisionDefinition,
@@ -727,7 +756,9 @@ export function evaluatePhase2Checks(
 }
 
 /**
- * Count one run using registered check counts as denominators.
+ * Counts passing checks per tier and role.
+ *
+ * The totals come from the definition, so a missing outcome counts as a miss.
  */
 export function computePhase2Counts(
 	definition: Phase2DecisionDefinition,
@@ -749,9 +780,12 @@ export function computePhase2Counts(
 }
 
 /**
- * Apply frozen thresholds in order: controls, complete reporting, proceed, evidence-only, stop.
+ * Applies the frozen thresholds.
  *
- * Blocked lanes affect coverage reporting, not the check arithmetic.
+ * Too many control misses or a missing measurable lane stops the phase.
+ * Otherwise the evidence and resolution bars choose between the three decisions.
+ *
+ * Blocked lanes appear in the coverage report and do not change the counts.
  */
 export function decidePhase2(
 	definition: Phase2DecisionDefinition,

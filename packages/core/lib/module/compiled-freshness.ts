@@ -2,21 +2,13 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file Whether a workspace's `out/` predates the source it was emitted from.
+ * @file Checks whether a workspace's compiled `out/` tree is older than its source.
  *
- *   Anything that spawns or imports the COMPILED tree needs this, and the failure mode is silence: a stale `out/`
- *   produces a verdict rather than an error. Two callers had their own copy and they did not agree — the dev-MCP's
- *   refused correctly, and the promotion battery's compared every source against the mtime of the `out/` DIRECTORY.
+ *   The check compares against the newest emitted `.js` file. The `out/` directory's own mtime is unreliable because
+ *   `tsc` overwrites files in place, and the directory mtime changes only when an entry is added or removed.
  *
- *   A directory's mtime moves when an entry is added or removed. `tsc` overwrites existing files in place, so after a
- *   recompile that emits no new filenames the directory keeps the mtime of the last file creation while every `.js`
- *   inside it is current. Measured on `packages/core` at 2026-09-19: the directory read `2026-09-14T17:36:04Z` against
- *   a newest emit of `2026-09-19T02:33:12Z`, so the battery warned after every successful compile and separated
- *   nothing. The reference here is the newest EMITTED FILE.
- *
- *   The second trap is what counts as source. An emitted `.d.ts` sits under `out/` and ends in `.ts`, so a glob that
- *   takes it as source compares the emit against itself and the check can never be satisfied. Excluded by extension
- *   and by path.
+ *   Emitted `.d.ts` files end in `.ts` and live under `out/`, so the source scan excludes them by extension and by path.
+ *   Otherwise the emit would be compared against itself.
  */
 
 import { basename, PathBuilder, type PathBuilderLike, relative, sep } from "path-ts"
@@ -25,12 +17,12 @@ import { Globerator } from "spliterator/node/fs"
 import { statPath } from "#fs/readers"
 
 /**
- * Directories that hold no emitting source and would cost a full walk.
+ * The walk skips these directories because they hold no emitting source.
  */
 const SKIP_DIRECTORIES = new Set(["node_modules", ".git", "__pycache__"])
 
 /**
- * One file and when it changed.
+ * A file path with its modification time in milliseconds.
  */
 export interface TimestampedFile {
 	mtimeMs: number
@@ -38,11 +30,12 @@ export interface TimestampedFile {
 }
 
 /**
- * Whether a TypeScript source can contribute to a workspace's compiled output.
+ * Reports whether a TypeScript source file contributes to a workspace's compiled output.
  *
- * Mirrors the workspace tsconfig exclusions without treating every directory named
- * `test` as non-emitting: production modules such as `debug-view/test/input-probe.ts`
- * compile and must still make the check stale.
+ * The function mirrors the workspace tsconfig exclusions.
+ * It excludes `*.test.ts(x)` files and the top-level `test/` directory only.
+ *
+ * Nested `test` directories such as `debug-view/test/` hold production modules that compile.
  */
 function isEmittingSource(workspaceRoot: PathBuilder, path: string): boolean {
 	const name = basename(path)
@@ -55,10 +48,10 @@ function isEmittingSource(workspaceRoot: PathBuilder, path: string): boolean {
 }
 
 /**
- * Newest mtime under a directory, restricted to files matching a predicate.
+ * Finds the most recently modified file under a directory that passes both predicates.
  *
- * Answers `null` when the directory does not exist, which a caller must tell apart from "old".
- * A missing `out/` means never compiled rather than stale.
+ * The function returns `null` when the directory is missing or holds no matching file.
+ * For `out/`, that result means the workspace was never compiled.
  */
 async function newestMtime(
 	root: PathBuilder,
@@ -105,27 +98,26 @@ async function newestMtime(
 }
 
 /**
- * The reading, with both endpoints so a caller can report which files decided it.
+ * The freshness result, with the newest source and compiled files so a caller
+ * can report which files decided it.
  */
 export interface CompiledFreshness {
 	fresh: boolean
 	newestSource: TimestampedFile | null
 	newestCompiled: TimestampedFile | null
 	/**
-	 * Why it is not fresh, or `null` when it is.
-	 *
-	 * Written as the action, because that is what the reader needs.
+	 * A message that tells the reader what to run, or `null` when the output is fresh.
 	 */
 	reason: string | null
 }
 
 /**
- * Compare the newest source file against the newest compiled output across the named workspaces.
+ * Compares the newest source file against the newest compiled `.js` file across the given workspaces.
  *
- * `workspaces` are repo-relative directories, and each caller states its own set: the dev-MCP names
- * the workspaces a spawned CLI will load, while a battery names the ones its harness imports.
- * A caller that names too few gets a `fresh` it has not earned, so the set belongs
- * with the caller that knows what it loads.
+ * `workspaces` are repo-relative directories.
+ * Each caller passes the workspaces it actually loads.
+ *
+ * A set that omits a loaded workspace can report `fresh` while that workspace is stale.
  */
 export async function checkCompiledFreshness(
 	repoRoot: PathBuilderLike,

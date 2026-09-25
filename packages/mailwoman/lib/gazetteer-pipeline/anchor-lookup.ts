@@ -2,6 +2,8 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
+ *
+ *   Builds the postcode anchor lookup that maps each postcode to its countries and a centroid.
  */
 
 import { readUnquotedTSVText } from "@mailwoman/core/fs/delimited"
@@ -177,6 +179,8 @@ async function loadZCTA(path: string): Promise<Map<string, [number, number]>> {
 	return out
 }
 
+// The pyJSON helpers write JSON in Python's `json.dumps` style, with `, `
+// and `: ` separators and integral floats written with `.0`.
 function pyJSONStr(s: string): string {
 	let out = '"'
 
@@ -229,17 +233,17 @@ function pyJSONValue(v: unknown): string {
 type LookupRow = [Record<string, number>, number, number, string | null]
 
 /**
- * Lists the pilot anchor-lookup countries, all with five-digit postcodes, which
- * {@link buildAnchorLookup} uses by default so an argument-free build matches the shipped pilot lookup.
+ * The pilot anchor-lookup countries, all of which use five-digit postcodes.
+ *
+ * {@link buildAnchorLookup} uses this list by default.
  */
 export const ANCHOR_PILOT_COUNTRIES = ["DE", "FR", "US"] as const
 
 /**
- * Lists the v2 anchor-lookup countries: the pilot set plus the countries with
- * licence-clean postcode sources.
+ * The v2 anchor-lookup countries, which add countries with licence-clean postcode sources to the pilot set.
  *
- * Order sets centroid priority, and the pilot countries lead so a code they
- * already covered keeps its centroid.
+ * The order sets centroid priority.
+ * The pilot countries come first so their codes keep their centroids.
  */
 export const ANCHOR_V2_COUNTRIES = ["DE", "FR", "US", "GB", "NL", "ES", "IT"] as const
 
@@ -256,72 +260,81 @@ const COUNTRY_LOADERS: Record<string, () => Map<string, Centroid>> = {
 const WRITE_FLUSH_ENTRIES = 4096
 
 /**
- * Configures {@link buildAnchorLookup}: the output path, an optional ZCTA gazetteer file for
- * filling US centroids, the countries to include, and whether to add GB outward-code keys.
+ * Options for {@link buildAnchorLookup}.
  */
 export interface AnchorLookupOptions {
+	/**
+	 * The output JSON path.
+	 */
 	output: string
+	/**
+	 * An optional Census ZCTA gazetteer file that fills missing US centroids.
+	 */
 	zcta?: string
 
 	/**
-	 * Lists the country codes to include in centroid-priority order, defaulting
-	 * to {@linkcode ANCHOR_PILOT_COUNTRIES}.
+	 * The country codes to include, in centroid-priority order.
+	 * Defaults to {@linkcode ANCHOR_PILOT_COUNTRIES}.
 	 *
-	 * Every code must have a loader, which all of {@linkcode ANCHOR_V2_COUNTRIES} do.
+	 * Every code must have a loader.
+	 * All of {@linkcode ANCHOR_V2_COUNTRIES} have one.
 	 */
 	include?: readonly string[]
 
 	/**
-	 * Adds GB outward-district keys beside the unit keys; it defaults to `true`
-	 * and is ignored unless GB is included.
+	 * Whether to add GB outward-district keys beside the unit keys.
+	 * Defaults to `true` and applies only when GB is included.
 	 */
 	gbOutward?: boolean
 }
 
 /**
- * Summarizes an anchor-lookup build so callers can assert on its counts instead of parsing the log line.
+ * Counts from an anchor-lookup build.
  */
 export interface AnchorLookupStats {
 	total: number
 
 	/**
-	 * Counts the keys whose posterior names each country, so a colliding key counts in every member country.
+	 * The number of keys whose posterior includes each country.
+	 * A colliding key counts once for every country it includes.
 	 */
 	byCountry: Record<string, number>
 
 	/**
-	 * Counts the keys that contain at least one `A-Z` letter.
+	 * The number of keys that contain at least one letter.
 	 */
 	letterKeyCount: number
 
 	/**
-	 * Counts the keys whose posterior names more than one country.
+	 * The number of keys whose posterior includes more than one country.
 	 */
 	collisions: number
 
 	/**
-	 * Counts the GB outward-district keys, which `total` already includes; it is 0
-	 * when GB is excluded or `gbOutward` is false.
+	 * The number of GB outward-district keys, which `total` already includes.
 	 */
 	gbOutwardKeys: number
 
 	/**
-	 * Counts keys per centroid-source label, where the `null` label counts placeholder
-	 * keys that carry membership but no centroid.
+	 * The number of keys per centroid source.
+	 *
+	 * The `null` source counts keys that have country membership but no centroid.
 	 */
 	bySource: Map<string | null, number>
 
 	/**
-	 * Counts the US keys whose centroid came from the ZCTA file in this build.
+	 * The number of US keys whose centroid came from the ZCTA file.
 	 */
 	zctaFilled: number
 }
 
 /**
- * Builds the postcode anchor lookup JSON, mapping each postcode to a uniform country posterior
- * and the first available centroid, and returns build statistics.
+ * Builds the postcode anchor lookup JSON and returns build counts.
  *
- * @throws If `include` names a country with no loader.
+ * Each postcode maps to a uniform posterior over the countries that have it
+ * and to the first available centroid in country order.
+ *
+ * @throws If `include` contains a country with no loader.
  */
 export async function buildAnchorLookup(args: AnchorLookupOptions): Promise<AnchorLookupStats> {
 	const countries = (args.include?.length ? args.include : ANCHOR_PILOT_COUNTRIES).map((c) => c.toUpperCase())

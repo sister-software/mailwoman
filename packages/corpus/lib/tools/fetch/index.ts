@@ -3,27 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- * Register reproducible downloads for corpus sources. Fetchers write raw files and manifests; adapters consume those
- * files separately. Operators download data before building a corpus and can use these commands for refreshes,
- * recovery, or new-environment setup.
- *
- * Source and license details belong with each fetcher and adapter. OpenAddresses is license-mixed: its adapter filters
- * out restricted rows by default. See `docs/licensing-strategy.md` for tier definitions.
- *
- * OpenAddresses bulk downloads require a free account. `fetchOpenAddresses` reads `OA_BATCH_TOKEN`; without it, the
- * command prints setup instructions. Register at `https://batch.openaddresses.io/register` and provide the token via
- * the environment.
- *
- * To add a source, register its slug, filename, and URL; verify the URL and manifest with a scratch output directory;
- * then add or update its corpus adapter.
- *
- * Usage:
- *
- * ```sh
- * mailwoman corpus fetch state-sources
- * mailwoman corpus fetch hrsa --out-root /data/corpus/sources
- * mailwoman corpus fetch openaddresses --country ca --out-root "$MAILWOMAN_DATA_ROOT/corpus/sources"
- * ```
+ * Registers the corpus source fetchers, which download raw files and manifests for the adapters to read.
  */
 
 import { fetchBan } from "#fr/tools/fetch/ban"
@@ -65,7 +45,7 @@ export * from "#us/tools/fetch/tiger-full"
 export * from "#tools/fetch/wikidata-subvenue"
 
 /**
- * Map source IDs to their fetcher entry points.
+ * The fetcher for each source id that `mailwoman corpus fetch` accepts.
  */
 export const FETCH_SOURCES = {
 	"acra-sg": fetchACRASG,
@@ -88,4 +68,7 @@ export const FETCH_SOURCES = {
 	"wikidata-subvenue": fetchWikidataSubVenue,
 } as const
 
+/**
+ * A source id in {@link FETCH_SOURCES}.
+ */
 export type FetchSourceID = keyof typeof FETCH_SOURCES

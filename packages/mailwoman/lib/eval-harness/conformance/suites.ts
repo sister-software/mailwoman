@@ -3,9 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Register committed conformance suites without importing an engine.
- *   Unregistered suite files never run; `conformance-suites.test.ts` checks the directory.
- *   This module stays separate from `command.ts` to avoid loading its runtime dependencies.
+ *   Registry of committed conformance suites. It lives apart from `command.ts` so that importing it does not load an
+ *   engine. The `conformance-suites.test.ts` test fails when a suite file in this directory is unregistered.
  */
 
 import { dirname } from "path-ts"
@@ -45,27 +44,28 @@ import {
 } from "#eval-harness/conformance/whitespace"
 
 /**
- * A committed law suite and its audit and reporting functions.
+ * Committed law suite with its audit and report functions.
  */
 export interface ConformanceSuite {
 	law: string
 	path: string
 	/**
-	 * Check suite rows before loading the engine; return one message per problem.
+	 * Checks suite rows before the engine loads.
+	 * It returns one message per problem.
 	 */
 	audit: (fixtures: readonly ConformanceFixture[]) => string[]
 	/**
-	 * Format the law-specific detail shown with each finding.
+	 * Formats the law-specific line shown with each finding.
 	 */
 	detail: (fixture: ConformanceFixture) => string
 	/**
-	 * Optionally report coverage against the corpus inputs supplied by the runner.
+	 * Formats coverage against the corpus inputs that the runner supplies.
 	 */
 	coverage?: (fixtures: readonly ConformanceFixture[], corpusInputs: readonly string[]) => string
 }
 
 /**
- * The committed law suites, in the order a default run reports them.
+ * Committed law suites in the order that a default run reports them.
  */
 export const CONFORMANCE_SUITES: readonly ConformanceSuite[] = [
 	{
@@ -97,7 +97,7 @@ export const CONFORMANCE_SUITES: readonly ConformanceSuite[] = [
 		law: REFINEMENT_MONOTONICITY_LAW,
 		path: REFINEMENT_MONOTONICITY_SUITE_PATH,
 		audit: auditRefinementSuite,
-		// Derivation runs from the fuller query to the coarser one.
+		// The step derives the coarser base from the finer variant.
 		detail: (fixture) => `    xform   : variant −${describeRefinementStep(fixture)} → base`,
 		coverage: describeRefinementCoverage,
 	},
@@ -106,23 +106,22 @@ export const CONFORMANCE_SUITES: readonly ConformanceSuite[] = [
 const SUITE_BY_LAW = new Map(CONFORMANCE_SUITES.map((suite) => [suite.law, suite]))
 
 /**
- * The registered suite for a law, or `undefined` when the law declares none.
- *
- * A fixture file passed to `--suite` may state a law nobody has registered,
- * and the runner says so rather than defaulting it to another law's audit.
+ * Returns the registered suite for a law, or `undefined` when no suite is registered for it.
  */
 export function suiteForLaw(law: string): ConformanceSuite | undefined {
 	return SUITE_BY_LAW.get(law)
 }
 
 /**
- * Law-specific detail appended to a finding's head line, or `""` for an unregistered law.
+ * Returns the law-specific detail line for a finding, or `""` for an unregistered law.
  */
 export function describeLaw(fixture: ConformanceFixture): string {
 	return SUITE_BY_LAW.get(fixture.law)?.detail(fixture) ?? ""
 }
 
 /**
- * Directory of committed suites, derived from a suite path rather than compiled `import.meta.url`.
+ * Directory of the committed suites.
+ *
+ * It comes from a suite path because `import.meta.url` points at compiled output.
  */
 export const CONFORMANCE_SUITE_DIR = dirname(CASE_FOLDING_SUITE_PATH)

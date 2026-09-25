@@ -3,31 +3,20 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The hard-case board's sweep-derived rows — the half that is lifted rather than authored.
- *
- *   Separate from `rows/index.ts` because the editorial responsibility is different. Those rows are
- *   written. these are citations. Each entry names a case id in `gauntlet/cases/<cc>/regression.jsonl`
- *   and the builder copies that row's input, coordinate and tolerance verbatim, so the board and the
- *   corpus cannot disagree about a row they share. The only things curated here are the class the row
- *   belongs to and the surface worth probing. changing an input means changing the corpus row rather than this
- *   file.
- *
- *   Two classes live here, and both are outside the four FST countries:
- *
- *   - `country_structure` — the 2026-08-05 sweep's highest-hit class (13/31 = 42%): the addressing
- *       structures nothing in the corpus had ever exercised.
- *   - `fst_out_of_reach` — family-C namesake rows whose answer no FST covers, though their query surface
- *       is usually in the en-us gazetteer. See `eval-harness/hard-case-board.ts` on why that is the interesting part.
+ * Lists the hard-case board rows copied from regression cases instead of written by hand.
  */
 
 import type { HardCaseClass } from "#eval-harness/hard-case-board"
 
 /**
- * Sweep rows lifted verbatim.
+ * Lists regression cases that the hard-case board copies.
  *
- * `class` is assigned by the curator.
- * Everything else — input, coordinate, tolerance — comes from the corpus row
- * so the two artifacts cannot disagree.
+ * Each entry points at a case id in `gauntlet/cases/<cc>/regression.jsonl`.
+ * The builder copies that case's input, coordinate and tolerance, so the board
+ * and the corpus cannot disagree.
+ *
+ * This file sets only the class and the probe surface.
+ * To change an input, change the regression case.
  */
 export const SWEEP_ROWS: Array<{
 	cc: string
@@ -36,9 +25,8 @@ export const SWEEP_ROWS: Array<{
 	probeSurface: string
 	note: string
 }> = [
-	// country_structure — the sweep's highest-hit class
-	// (13/31 = 42%, the addressing structures nothing in the corpus had ever exercised).
-	// All outside the four FST countries, so they also carry reach evidence.
+	// `country_structure` rows use national addressing structures that the corpus does not cover.
+	// Every one lies outside the FST countries.
 	{
 		cc: "br",
 		caseID: "br-cs-rua-augusta-1000-cerqueira",
@@ -110,9 +98,8 @@ export const SWEEP_ROWS: Array<{
 		note: "PH barangay structure — 'San Antonio' is also a major US city, and the sweep landed 13,532 km away on it.",
 	},
 
-	// fst_out_of_reach — family-C namesake rows whose country no shipped FST covers.
-	// These pin the reach limit itself: they cannot discriminate, and reporting them
-	// separately is what stops "the arms tied" from being read as "the change is harmless".
+	// `fst_out_of_reach` rows are namesakes in countries that no shipped FST covers.
+	// No arm can win them, so they are reported apart to keep a tie from reading as a harmless change.
 	{
 		cc: "bw",
 		caseID: "bw-cs-gaborone",

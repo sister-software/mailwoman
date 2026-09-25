@@ -2,35 +2,23 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
+ * @file Binary serialization for the FST gazetteer.
  *
- *   Binary serialization for the FST gazetteer. Format:
+ *   All integers are little-endian. The writer emits the current version, and the reader accepts every earlier one.
  *
- *   header (32 bytes) magic [u8. 4] "FST\0" version u16 1 flags u16 0 (reserved) stateCount u32
- *   edgeCount u32 total edges across all states placeCount u32 total place entries across all
- *   states stringCount u32 unique strings in string table stringBytes u32 total bytes of string
- *   data _reserved u32
+ *   - Header, 32 bytes: magic `FST\0`, version u16, flags u16 (bit 0 means `crossCountryBranches` is present),
+ *     stateCount u32, edgeCount u32, placeCount u32, stringCount u32, stringBytes u32, and the provenance offset u32
+ *     (0 when absent).
+ *   - String table: `stringCount + 1` u32 offsets, the last being a sentinel, followed by the UTF-8 data.
+ *   - State table, 16 bytes per state: edgeStart u32, placeStart u32, edgeCount u32, placeCount u32. Before version
+ *     4 the entry is 12 bytes with u16 counts.
+ *   - Edge table, 8 bytes per edge: stringIdx u32, targetState u32.
+ *   - Place table, 60 bytes per place: wofID u32, placetypeIdx u8, chainLen u8, crossCountryBranches u8,
+ *     placeFlags u8 (bit 0 means `encyclopedic` is present), nameIdx u32, referential f32, lat f32, lon f32, eight
+ *     u32 parent ids, and encyclopedic f32. Before version 5 the entry is 56 bytes without the encyclopedic score.
+ *   - Provenance trailer: a u32 length followed by JSON.
  *
- *   string table offsets [u32. stringCount + 1] byte offset into data (last = sentinel) data [u8.
- *   stringBytes] concatenated UTF-8
- *
- *   state table [stateCount × 12 bytes] edgeStart u32 index into edge table placeStart u32 index into
- *   place table edgeCount u16 placeCount u16
- *
- *   edge table [edgeCount × 8 bytes] stringIdx u32 index into string table targetState u32
- *
- *   place table [placeCount × 60 bytes at V5, 56 below] wofID u32 placetypeIdx u8 index into
- *   PLACETYPE_ORDER chainLen u8 0..8 crossCountryBranches u8 (header flags bit0 enables the read)
- *   placeFlags u8 (V5. bit0 = encyclopedic present) nameIdx u32 index into string table referential f32
- *   population-anchored likelihood [0,1] — was the conflated `importance` (V2–V4), was population u32
- *   (V1) lat f32 lon f32 chain [u32. 8] parent chain (unused slots = 0) encyclopedic f32 (V5 only.
- *   read only when placeFlags bit0 is set)
- *
- *   the V5 bump is the two-score split (ROAD_TO_V9 §2 R1). Through V4 one float carried whichever score
- *   the source database held, and nothing in the bytes said which — so a reader could not tell a
- *   population proxy from a Wikipedia score. V5 names the ranking score `referential` and gives the
- *   encyclopedic signal its own slot plus a PER-place presence bit, because most places have no
- *   Wikipedia article and a 0 there would be a fact nobody recorded. `fst-freshness.ts` reports every
- *   V4-and-below artifact as format-stale for exactly this reason: its single float is unattributable.
+ *   Presence bits keep a missing value distinct from a stored zero.
  */
 
 import { tryParsingJSON, stringifyJSON } from "@mailwoman/core/json"
@@ -55,18 +43,17 @@ import type { FSTNode } from "#fst/matcher"
 import { FSTMatcher } from "#fst/matcher"
 import type { FSTProvenance, PlaceEntry } from "#fst/types"
 
+/**
+ * Re-exports the format version that {@link serializeFST} writes.
+ */
 export { FST_FORMAT_VERSION } from "#fst/format"
 
-/**
- * File magic as a Buffer, for the Node-side prefix comparison.
- */
 const MAGIC = Buffer.from(FST_MAGIC_BYTES)
 
 /**
- * Longest ancestry chain stored per place.
+ * The longest parent chain stored per place.
  *
- * Deeper hierarchies are truncated at the leaf end, since the specific end of the chain
- * is what disambiguates and the country end is recoverable anyway.
+ * The writer keeps the first eight valid parent ids and drops the rest.
  */
 const MAX_CHAIN_LEN = 8
 
@@ -76,10 +63,12 @@ for (let i = 0; i < PLACETYPE_ORDER.length; i++) {
 	placetypeToIdx.set(PLACETYPE_ORDER[i]!, i)
 }
 
+/**
+ * Serializes a matcher, with optional provenance, into the current FST binary format.
+ */
 export function serializeFST(matcher: FSTMatcher, provenance?: FSTProvenance): Buffer {
 	const nodes = matcher.toNodes() as FSTNode[]
 
-	// Intern state-edge strings before serializing their table.
 	const stringMap = new Map<string, number>()
 	const strings: string[] = []
 
@@ -108,7 +97,6 @@ export function serializeFST(matcher: FSTMatcher, provenance?: FSTProvenance): B
 	const encodedStrings = strings.map((s) => Buffer.from(s, "utf8"))
 	const stringBytes = encodedStrings.reduce((sum, b) => sum + b.length, 0)
 
-	// Count each serialized record class.
 	let totalEdges = 0
 	let totalPlaces = 0
 
@@ -117,7 +105,6 @@ export function serializeFST(matcher: FSTMatcher, provenance?: FSTProvenance): B
 		totalPlaces += node.places.length
 	}
 
-	// Allocate the complete binary buffer.
 	const stringTableSize = (strings.length + 1) * 4 + stringBytes
 	const stateTableSize = nodes.length * WIDE_STATE_ENTRY_SIZE
 	const edgeTableSize = totalEdges * EDGE_ENTRY_SIZE
@@ -129,11 +116,8 @@ export function serializeFST(matcher: FSTMatcher, provenance?: FSTProvenance): B
 	const buf = Buffer.alloc(totalSize)
 	let pos = 0
 
-	// Read the versioned binary header.
-	// Flags bit0 (survey #4, 2026-07-27): place rows carry surface-ambiguity data in the
-	// former _pad byte (pp+6 = crossCountryBranches u8, pp+7 reserved).
-	// Presence-signaled here so version stays put: pre-ambiguity artifacts read
-	// flags=0 → readers expose `undefined`, never a fake 0.
+	// Flag bit 0 marks that place rows carry `crossCountryBranches`.
+	// Readers of a file without it report `undefined`.
 	const hasAmbiguity = nodes.some((n) => n.places.some((p) => p.crossCountryBranches !== undefined))
 	MAGIC.copy(buf, pos)
 	pos += 4
@@ -154,7 +138,6 @@ export function serializeFST(matcher: FSTMatcher, provenance?: FSTProvenance): B
 	buf.writeUInt32LE(provenanceJson ? binarySize : 0, pos)
 	pos += 4
 
-	// Read the interned string table.
 	let strOffset = 0
 
 	for (const encoded of encodedStrings) {
@@ -163,17 +146,15 @@ export function serializeFST(matcher: FSTMatcher, provenance?: FSTProvenance): B
 		strOffset += encoded.length
 	}
 
+	// The final offset is the sentinel that ends the last string.
 	buf.writeUInt32LE(strOffset, pos)
 	pos += 4
-
-	// sentinel
 
 	for (const encoded of encodedStrings) {
 		encoded.copy(buf, pos)
 		pos += encoded.length
 	}
 
-	// Read state, edge, and place tables.
 	const stateTableStart = pos
 	const edgeTableStart = stateTableStart + stateTableSize
 	const placeTableStart = edgeTableStart + edgeTableSize
@@ -200,17 +181,14 @@ export function serializeFST(matcher: FSTMatcher, provenance?: FSTProvenance): B
 
 		for (const place of node.places) {
 			const pp = placeTableStart + placeIdx * SPLIT_PLACE_ENTRY_SIZE
-			// Filter out WOF sentinel parent IDs (negative values like -1, -4).
+			// WOF uses negative parent ids such as -1 as sentinels.
 			const validChain = place.parentChain.filter((id) => id > 0)
 			const chainLen = Math.min(validChain.length, MAX_CHAIN_LEN)
 			buf.writeUInt32LE(place.wofID, pp)
 			buf.writeUInt8(placetypeToIdx.get(place.placetype) ?? 0, pp + 4)
 			buf.writeUInt8(chainLen, pp + 5)
-			// Former _pad: byte 0 = crossCountryBranches (header flags bit0 enables the read), byte 1 = v5 placeFlags.
 			buf.writeUInt8(hasAmbiguity ? Math.min(place.crossCountryBranches ?? 0, 255) : 0, pp + 6)
-			// An absent encyclopedic score writes flag 0 and a 0.0 float.
-			// The float is unread in that state, so absence can never surface as a score —
-			// the meaning-of-zero rule, in bytes.
+			// An absent encyclopedic score writes flag 0 and a 0.0 float, and readers skip the float when the flag is 0.
 			const hasEncyclopedic = place.encyclopedic !== undefined
 			buf.writeUInt8(hasEncyclopedic ? PLACE_FLAG_HAS_ENCYCLOPEDIC : 0, pp + 7)
 			buf.writeUInt32LE(intern(place.name), pp + 8)
@@ -237,8 +215,12 @@ export function serializeFST(matcher: FSTMatcher, provenance?: FSTProvenance): B
 	return buf
 }
 
+/**
+ * Deserializes an FST binary of any supported version into a matcher.
+ *
+ * @throws When the buffer is too small, has the wrong magic, or has an unsupported version.
+ */
 export function deserializeFST(buf: Buffer): FSTMatcher {
-	// Verify the versioned binary header.
 	if (buf.length < HEADER_SIZE) throw new Error("FST buffer too small for header")
 
 	if (!buf.subarray(0, 4).equals(MAGIC)) throw new Error("FST magic mismatch")
@@ -250,7 +232,6 @@ export function deserializeFST(buf: Buffer): FSTMatcher {
 
 	const isV2 = version >= 2
 	const isSplit = version >= VERSION_TWO_SCORE_SPLIT
-	// flags bit0 (survey #4): place rows carry surface-ambiguity data in the former _pad byte.
 	const hasAmbiguity = (buf.readUInt16LE(6) & 1) === 1
 
 	const stateCount = buf.readUInt32LE(8)
@@ -261,7 +242,6 @@ export function deserializeFST(buf: Buffer): FSTMatcher {
 
 	let pos = HEADER_SIZE
 
-	// Verify string-table offsets and contents.
 	const strOffsets = new Uint32Array(stringCount + 1)
 
 	for (let i = 0; i <= stringCount; i++) {
@@ -280,9 +260,7 @@ export function deserializeFST(buf: Buffer): FSTMatcher {
 
 	pos += stringBytes
 
-	// Verify state-table offsets and transitions.
 	const stateEntrySize = version >= VERSION_WIDE_STATE_COUNTERS ? WIDE_STATE_ENTRY_SIZE : NARROW_STATE_ENTRY_SIZE
-	// v5 grew the place entry by the encyclopedic float. v4-and-below files are read at the old stride.
 	const placeEntrySize = version >= VERSION_TWO_SCORE_SPLIT ? SPLIT_PLACE_ENTRY_SIZE : LEGACY_PLACE_ENTRY_SIZE
 	const stateTableStart = pos
 	const edgeTableStart = stateTableStart + stateCount * stateEntrySize
@@ -321,18 +299,14 @@ export function deserializeFST(buf: Buffer): FSTMatcher {
 				parentChain.push(buf.readUInt32LE(pp + 24 + ci * 4))
 			}
 
-			// v1 stored a raw population u32 here. v2–v4 the conflated `importance`
-			// float. v5 the referential score.
-			// A v1 file's population is mapped through the same curve `referentialFromPopulation`
-			// uses, so its value is genuinely referential.
-			// The only generation of this format for which that can be said without reading the source database.
+			// Version 1 stored a raw population u32 here, which this maps through the
+			// `referentialFromPopulation` curve.
+			// Later versions store an f32 score.
 			const referential = isV2
 				? buf.readFloatLE(pp + 12)
 				: Math.min(1, Math.log2(1 + buf.readUInt32LE(pp + 12) / 1000) / 14)
 
-			// Per-place presence bit (v5+).
-			// A v4-and-below file has no encyclopedic channel at all, so the field stays undefined
-			// rather than reading the reserved byte as a flag.
+			// Files before version 5 have no encyclopedic score, so their reserved byte is not read as a flag.
 			const hasEncyclopedic =
 				isSplit && (buf.readUInt8(pp + 7) & PLACE_FLAG_HAS_ENCYCLOPEDIC) === PLACE_FLAG_HAS_ENCYCLOPEDIC
 
@@ -344,7 +318,6 @@ export function deserializeFST(buf: Buffer): FSTMatcher {
 				lat: buf.readFloatLE(pp + 16),
 				lon: buf.readFloatLE(pp + 20),
 				parentChain,
-				// Header flags bit0 enables the read (survey #4): pre-ambiguity artifacts expose undefined.
 				...(hasAmbiguity ? { crossCountryBranches: buf.readUInt8(pp + 6) } : {}),
 				...(hasEncyclopedic ? { encyclopedic: buf.readFloatLE(pp + ENCYCLOPEDIC_OFFSET) } : {}),
 			}
@@ -356,6 +329,10 @@ export function deserializeFST(buf: Buffer): FSTMatcher {
 	return FSTMatcher.fromNodes(nodes)
 }
 
+/**
+ * Reads the provenance trailer from an FST binary, or returns `undefined`
+ * when the file has none or it cannot be parsed.
+ */
 export function readFSTProvenance(buf: Buffer): FSTProvenance | undefined {
 	if (buf.length < HEADER_SIZE) return undefined
 

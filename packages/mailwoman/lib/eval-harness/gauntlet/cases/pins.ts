@@ -3,9 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Measure, check, and update the committed corpus pins without loading a model or gazetteer.
- *   Check mode compares corpus measurements with committed constants; update mode changes only
- *   those constants, preserving the pin test's history comments.
+ *   Measures, checks, and updates the regression-corpus pins in `load.test.ts` without loading a model or gazetteer.
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
@@ -18,7 +16,7 @@ import { ablationBoardID } from "#eval-harness/gauntlet/ablation"
 import { loadRegressionCases, regressionCorpusHash } from "#eval-harness/gauntlet/cases/load"
 
 /**
- * The three values `load.test.ts` pins, under the names it pins them as.
+ * Values that `load.test.ts` pins, keyed by the constant names in that file.
  */
 export interface BoardPins {
 	CORPUS_SIZE: number
@@ -27,12 +25,12 @@ export interface BoardPins {
 }
 
 /**
- * Where the committed pins live — the pin test itself.
+ * Repository-relative path of the test file that holds the pinned constants.
  */
 export const PIN_TEST_PATH = "packages/mailwoman/test/unit/eval-harness/gauntlet/cases/load.test.ts"
 
 /**
- * Measure the pins from the committed corpus — the same loaders the pin test asserts with.
+ * Measures the pins from the committed corpus with the same loaders that the pin test uses.
  */
 export async function measureBoardPins(): Promise<BoardPins> {
 	const cases = await loadRegressionCases()
@@ -51,10 +49,9 @@ const PIN_PATTERNS: Record<keyof BoardPins, RegExp> = {
 }
 
 /**
- * Read the committed constants out of the pin test's source.
+ * Reads the pinned constants from the test file's source.
  *
- * @throws When a constant is missing or duplicated.
- * A reshaped test file needs a human rather than a guess.
+ * @throws When a constant is missing or appears more than once.
  */
 export function readCommittedPins(testText: string): BoardPins {
 	const read = (key: keyof BoardPins): string => {
@@ -75,11 +72,10 @@ export function readCommittedPins(testText: string): BoardPins {
 }
 
 /**
- * Rewrite exactly the three constant lines to `pins`, leaving every other byte —
- * the dated history comments above each constant included — untouched.
+ * Returns the test source with the three constant lines set to `pins` and every other byte unchanged.
  *
- * Validates via {@link readCommittedPins} first, so a reshaped file refuses
- * instead of being partially rewritten.
+ * It calls {@link readCommittedPins} first, so it throws on a malformed file
+ * instead of rewriting part of it.
  */
 export function writeCommittedPins(testText: string, pins: BoardPins): string {
 	readCommittedPins(testText)
@@ -90,19 +86,21 @@ export function writeCommittedPins(testText: string, pins: BoardPins): string {
 		.replace(PIN_PATTERNS.BOARD_ID, `const BOARD_ID = ${stringifyJSON(pins.BOARD_ID)}`)
 }
 
+/**
+ * Measured and committed pins with the names of those that differ.
+ */
 export interface PinCheck {
 	measured: BoardPins
 	committed: BoardPins
 	/**
-	 * The pin names whose measured and committed values differ.
-	 *
-	 * Empty = the pins hold.
+	 * Names of the pins whose measured and committed values differ.
+	 * It is empty when every pin matches.
 	 */
 	stale: Array<keyof BoardPins>
 }
 
 /**
- * Compare the measured pins against the committed constants.
+ * Compares the measured pins against the committed constants.
  */
 export async function checkBoardPins(): Promise<PinCheck> {
 	const measured = await measureBoardPins()
@@ -114,10 +112,10 @@ export async function checkBoardPins(): Promise<PinCheck> {
 }
 
 /**
- * Rewrite the committed constants to the measured values, then re-check.
+ * Writes the measured values into the committed constants and then checks them again.
  *
- * @returns The verifying check, whose `stale` must be empty.
- * A non-empty result after an update means the file reshaped under us.
+ * @returns The follow-up check.
+ * A non-empty `stale` list means the file changed during the update.
  */
 export async function updateBoardPins(): Promise<PinCheck> {
 	const path = resolvePath(repoRootPath(), PIN_TEST_PATH)

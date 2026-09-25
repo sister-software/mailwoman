@@ -3,12 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Structural render baseline for the geocoder page: the map container is sized, the address field and its example
- *   chips are present, and the About control opens a sheet carrying the in-browser claim. A deterministic "the page
- *   renders correctly" guard, distinct from the cold-load spec, which asserts what the page does once the model lands.
- *
- *   The About copy is asserted through its control rather than on load: the chrome restructure moved that explainer
- *   into a sheet, so it mounts when the sheet opens rather than with the shell.
+ *   Checks that the geocoder page renders its map, address field, example chips and About sheet.
  */
 
 import { expect, test } from "../e2e/index.ts"
@@ -17,30 +12,21 @@ test.describe("Demo — structural render", () => {
 	test("paints the page shell, map, about box, and form on load", async ({ demo, page }) => {
 		await demo.goto()
 
-		// The full-viewport map container is present and sized.
 		const mapBox = await page.locator(".maplibregl-map").boundingBox()
 		expect(mapBox?.width ?? 0).toBeGreaterThan(0)
 		expect(mapBox?.height ?? 0).toBeGreaterThan(0)
 
-		// Address form: label and field.
-		// The pill carries no submit control — a `type="search"` field submits on Enter.
-		// `exact` is required: `getByLabel` matches by substring, and the chrome names
-		// the search wrapper "Search addresses" and the chip row "Example addresses",
-		// so a bare "Address" resolves to three elements.
+		// The label needs `exact` because `getByLabel` matches substrings.
+		// "Search addresses" and "Example addresses" would also match a bare "Address".
 		await expect(page.getByLabel("Address", { exact: true })).toBeVisible()
 		await expect(page.locator("#mw-pipeline-input")).toBeVisible()
 
-		// Example chips row.
-		// `MapChipRow` renders no caption — the row carries its name as `aria-label` where the
-		// pre-chrome `PresetChips` wrote a visible "Try:" span, so the row is read by role and name.
+		// The chip row has no visible caption, so the test finds it by its `aria-label`.
 		await expect(page.getByRole("group", { name: "Example addresses" })).toBeVisible()
 		await expect(page.getByRole("button", { name: "Space Needle" })).toBeVisible()
 
-		// The About explainer is a control in the map chrome, and its copy renders
-		// in the sheet that control opens.
-		// `MapControlButton` carries its name as `aria-label` on an icon button,
-		// so the name is a label and not text.
-		// Asserted last: the sheet it opens overlays the chrome the assertions above read.
+		// The About button is an icon button with an `aria-label`.
+		// The test opens it last because its sheet covers the elements checked above.
 		await expect(page.getByLabel("About this geocoder")).toBeVisible()
 		await page.getByLabel("About this geocoder").click()
 		await expect(page.getByText(/runs entirely in your browser/i)).toBeVisible()

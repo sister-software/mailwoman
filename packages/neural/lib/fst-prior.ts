@@ -27,8 +27,9 @@ function hasWordContent(piece: string): boolean {
 }
 
 /**
- * Represents a position reached by walking tokens through a gazetteer FST,
- * where `accepted` means the walked tokens form a complete indexed name.
+ * A state reached by walking tokens through a gazetteer FST.
+ *
+ * `accepted` is true when the walked tokens form a complete indexed name.
  */
 export interface FSTMatchLike {
 	stateID: number
@@ -37,25 +38,24 @@ export interface FSTMatchLike {
 }
 
 /**
- * Describes a place stored at an accepting FST state, whose `referential`
- * likelihood scales the positive emission bias.
+ * A place stored at an accepting FST state.
  */
 export interface FSTPlaceEntryLike {
 	wofID: number
 	placetype: string
 
 	/**
-	 * The population-anchored referential likelihood in [0, 1], the only score the decoder bias reads.
+	 * The population-based referential likelihood in [0, 1], which scales the positive emission bias.
 	 *
-	 * The type deliberately omits the entries' `encyclopedic` score, so the bias cannot
-	 * start using article fame as the probability that the user means this place.
+	 * The type omits the entries' `encyclopedic` score so the bias cannot use article
+	 * fame as the likelihood that the user means this place.
 	 */
 	referential: number
 }
 
 /**
- * Declares the structural FST interface the prior walks, which keeps this package
- * independent of any concrete FST implementation.
+ * The structural FST interface the prior walks, which keeps this package
+ * independent of any FST implementation.
  */
 export interface FSTMatcherLike {
 	walk(tokens: string[]): FSTMatchLike | null
@@ -64,11 +64,11 @@ export interface FSTMatcherLike {
 }
 
 /**
- * Maps each FST placetype that biases the decoder to its BIO tag; any other placetype,
- * such as `county`, never touches the emission matrix.
+ * Maps each FST placetype that biases the decoder to its BIO tag.
  *
- * `localadmin` and `neighbourhood` map to `locality` so covering surfaces like "Biggin Hill"
- * still draw locality bias, except on a street-shaped surface ({@link isStreetShapedSurface}).
+ * Other placetypes, such as `county`, add no bias.
+ * `localadmin` and `neighbourhood` map to `locality` so that names such as "Biggin Hill"
+ * still get locality bias, except on a street-shaped surface ({@link isStreetShapedSurface}).
  */
 export const PLACETYPE_TO_BIO: ReadonlyMap<string, string> = new Map([
 	["country", "country"],
@@ -82,11 +82,12 @@ export const PLACETYPE_TO_BIO: ReadonlyMap<string, string> = new Map([
 const MAPPED_TIER_PLACETYPES: ReadonlySet<string> = new Set(["localadmin", "neighbourhood"])
 
 /**
- * Reports whether FST-normalized tokens end in a hard street generic
- * (`street`, `road`, `avenue`, `boulevard`, `square`), optionally followed by one directional.
+ * Reports whether FST-normalized tokens end in a strong street generic,
+ * optionally followed by one directional.
  *
- * Softer generics such as `hill` are deliberately excluded, because "Biggin
- * Hill"-style neighbourhoods must keep their locality bias.
+ * The generics are `street`, `road`, `avenue`, `boulevard` and `square`.
+ * Weaker generics such as `hill` are excluded so that neighbourhoods such as
+ * "Biggin Hill" keep their locality bias.
  */
 export function isStreetShapedSurface(tokens: readonly string[]): boolean {
 	if (!tokens.length) return false
@@ -105,24 +106,23 @@ const STREET_SHAPE_GENERICS: ReadonlySet<string> = new Set(["street", "road", "a
 const STREET_SHAPE_DIRECTIONALS: ReadonlySet<string> = new Set(["east", "west", "north", "south", "upper", "lower"])
 
 /**
- * An FST entry as both the decoder and the probes read it.
+ * An FST entry reduced to the fields that {@link collapseFSTBias} reads.
  */
 export interface FSTEntryLike {
 	placetype: string
 
 	/**
-	 * The entry's referential score, under a generic name because the callers
-	 * read it from differently named fields.
+	 * The entry's referential score.
+	 * Callers map it from differently named source fields.
 	 */
 	importance: number
 }
 
 /**
- * Collapses accepting FST entries to the maximum importance per BIO tag, the only granularity
- * the decoder acts on, applying the same street-shape exclusion as the decoder.
+ * Collapses accepting FST entries to the maximum importance per BIO tag,
+ * with the same street-shape exclusion as the decoder.
  *
- * An empty map means the surface was accepted but has no BIO-mapped placetype,
- * which differs from not being accepted at all.
+ * An empty map means the surface was accepted but has no BIO-mapped placetype.
  */
 export function collapseFSTBias(
 	entries: ReadonlyArray<FSTEntryLike>,
@@ -145,8 +145,9 @@ export function collapseFSTBias(
 }
 
 /**
- * Represents a whitespace-delimited word reconstructed from SentencePiece pieces,
- * where an empty `fstToken` marks a placeholder holding only spacing or punctuation.
+ * A whitespace-delimited word rebuilt from SentencePiece pieces.
+ *
+ * An empty `fstToken` marks a placeholder that holds only spacing or punctuation.
  */
 export interface WordGroup {
 	fstToken: string
@@ -154,8 +155,9 @@ export interface WordGroup {
 }
 
 /**
- * Describes one accepting contiguous FST path, reported for observability without
- * deduplication, ranking or bias policy; `endPiece` and `endWord` are exclusive.
+ * One accepting contiguous FST path, reported without deduplication or ranking.
+ *
+ * `endPiece` and `endWord` are exclusive.
  */
 export interface FSTAcceptedMatch {
 	startPiece: number
@@ -230,26 +232,28 @@ function acceptedMatch(
 const SUPPRESS_WHEN_PLACE: readonly string[] = ["B-street", "I-street", "B-house_number", "I-house_number", "B-venue"]
 
 /**
- * Selects whether short, weak-evidence FST matches scale down both the positive place bias
- * and the street suppression (`both`), only the suppression (`suppression`), or neither (`off`).
+ * Selects which biases a short FST match scales down.
+ *
+ * `both` scales the positive place bias and the street suppression.
+ * `suppression` scales only the suppression, and `off` scales neither.
  */
 export type ImportanceLengthScaleMode = "off" | "suppression" | "both"
 
 /**
- * Configures the check that scales the positive FST bias by `positiveScale` (default `0.25`)
- * when a match is adjacent to a street-type word or follows a house number.
+ * Configures the street-context check, which scales the positive FST bias
+ * when a match is next to a street-type word or follows a house number.
  *
- * `fst` is the street-morphology FST, whose `street_affix` entries also cover
- * prefix locales such as French "Rue de Rivoli".
+ * The street-morphology FST's `street_affix` entries also cover prefix locales,
+ * as in French "Rue de Rivoli".
  */
 export interface StreetContextRequirementOpts {
 	/**
-	 * The street-morphology FST matcher, the same instance the street-morphology prior uses.
+	 * The street-morphology FST matcher.
 	 */
 	fst: FSTMatcherLike
 
 	/**
-	 * The multiplier on the positive importance bias when the check fires, default 0.25.
+	 * The multiplier on the positive bias when the check fires, which defaults to 0.25.
 	 */
 	positiveScale?: number
 }
@@ -261,19 +265,20 @@ export interface FSTPriorOpts {
 	biasScale?: number
 
 	/**
-	 * The maximum bias magnitude in logits, default 3, which keeps a high-population
-	 * place from overriding the model.
+	 * The maximum bias magnitude in logits, which defaults to 3.
+	 *
+	 * The cap keeps a high-population place from overriding the model.
 	 */
 	maxBias?: number
 	suppressionScale?: number
 
 	/**
-	 * How match length scales the importance bias, default `suppression`.
+	 * How match length scales the bias, which defaults to `suppression`.
 	 */
 	importanceLengthScaleMode?: ImportanceLengthScaleMode
 
 	/**
-	 * The street-context check; when absent, the check does not run.
+	 * The street-context check, which runs only when this is set.
 	 */
 	streetContext?: StreetContextRequirementOpts
 }
@@ -370,12 +375,11 @@ export function buildFSTEmissionPriors(
 }
 
 /**
- * Groups SentencePiece pieces into FST-normalized whitespace words,
- * splitting only at the `▁` space sentinel.
+ * Groups SentencePiece pieces into FST-normalized words, splitting at the `▁` space sentinel.
  *
- * A non-`▁` alphanumeric piece opens a new word when none is open, because short
- * words often lack a merged `▁word` token; punctuation-only pieces become empty
- * placeholder groups so separated words never fuse.
+ * An alphanumeric piece without `▁` opens a new word when none is open,
+ * because short words often lack a merged `▁word` piece.
+ * Punctuation-only pieces become empty placeholder groups so that separated words never merge.
  */
 export function groupPiecesIntoWords(pieces: ReadonlyArray<{ piece: string }>): WordGroup[] {
 	const groups: WordGroup[] = []
@@ -428,10 +432,10 @@ export function groupPiecesIntoWords(pieces: ReadonlyArray<{ piece: string }>): 
 }
 
 /**
- * Normalizes a word to FST-index form by applying NFKC, lowercasing and stripping
- * Unicode punctuation and symbols, keeping diacritics and spaces.
+ * Normalizes a word to FST-index form with NFKC, lowercasing and removal of Unicode punctuation and symbols.
  *
- * The FST builder uses the same pipeline, so indexed and query surfaces always agree.
+ * Diacritics and spaces are kept.
+ * The FST builder must apply the same normalization.
  */
 export function normalizeFSTToken(s: string): string {
 	const cleaned = s

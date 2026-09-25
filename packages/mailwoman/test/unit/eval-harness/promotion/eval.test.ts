@@ -3,12 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Tests for `promotion-eval.ts`'s spec resolution.
- *
- *   The `--spec` help has always said "a path, or a spec name resolved against eval-harness/specs/".
- *   The resolver never appended `.json`, so `--spec v5.3.0-family` — the spec name, exactly as
- *   advertised — fell through to `readFileSync("v5.3.0-family")` and died on a bare enoent naming a
- *   file nobody asked for. Cost: one confused re-run on 2026-07-16, mid eval battery.
+ *   Tests the promotion eval's spec resolution, spec packaging and paired weights-cache guards.
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers"
@@ -24,11 +19,9 @@ const fixtures = new AsyncDisposableStack()
 afterAll(() => fixtures.disposeAsync())
 
 /**
- * Minimal npm-`files`-glob matcher (`**` crosses directories, `*` stays in one),
- * segment-based so no dynamic RegExp is ever constructed.
+ * Matches a path against an npm `files` glob, where `**` spans directories and `*` stays within one.
  *
- * The package.json globs use no character classes or braces, so this covers the whole array.
- * A fuller matcher would be a dependency for nothing.
+ * The package.json globs use no character classes or braces, so this subset is enough.
  */
 function filesGlobMatches(pattern: string, path: string): boolean {
 	const segments = pattern.split("/")
@@ -39,8 +32,7 @@ function filesGlobMatches(pattern: string, path: string): boolean {
 			const segment = segments[s]
 
 			if (segment === "**") {
-				// `**` consumes zero or more whole path segments.
-				// Try every split.
+				// `**` consumes zero or more whole path segments, so every split is tried.
 				for (let skip = p; skip <= parts.length; skip++) {
 					if (matchFrom(s + 1, skip)) return true
 				}
@@ -58,8 +50,9 @@ function filesGlobMatches(pattern: string, path: string): boolean {
 }
 
 /**
- * One path segment against one glob segment.
- * `*` matches any in-segment run, everything else is literal.
+ * Matches one path segment against one glob segment.
+ *
+ * `*` matches any run of characters, and all other characters are literal.
  */
 function segmentMatches(glob: string, segment: string): boolean {
 	const pieces = glob.split("*")
@@ -73,21 +66,22 @@ function segmentMatches(glob: string, segment: string): boolean {
 
 		if (found === -1) return false
 
-		// A literal after the leading `*` may start anywhere.
-		// A leading literal must anchor at 0.
+		// A leading literal must start at 0.
+		// Later literals may start anywhere.
 		if (i === 0 && found !== 0) return false
 		at = found + piece.length
 	}
 
-	// A trailing literal must anchor the end ("*.json" matches "a.json", not "a.json.bak").
+	// A trailing literal must end the segment, so "*.json" rejects "a.json.bak".
 	const last = pieces.at(-1)!
 
 	return last === "" || segment.endsWith(last)
 }
 
 /**
- * Whether `path` (package-root-relative) ships in the tarball per package.json
- * `files` (negations applied in order).
+ * Returns whether a package-relative `path` ships in the tarball under the given `files` patterns.
+ *
+ * Negated patterns apply in order.
  */
 function shipsInPackage(files: string[], path: string): boolean {
 	let included = false
@@ -145,43 +139,37 @@ describe("resolveThresholdSpecPath", () => {
 	})
 
 	it("throws a USEFUL error naming the known specs, not a bare ENOENT", async () => {
-		// The old behaviour returned the string and let readFileSync throw, which told
-		// the operator nothing about what they could have typed instead.
 		await expect(resolveThresholdSpecPath("v9.9.9-nope")).rejects.toThrow(
 			/Check spec not found.*Known specs.*v5\.3\.0-family/s
 		)
 	})
 
 	it("SHIPS every resolvable spec in the npm tarball — an installed CLI resolves the shorthand too (#1056)", async () => {
-		// The source-tree fix alone left the packaged CLI broken: `files` covered only `**/*.ts` +
-		// `out/**`, and tsc does not emit readFileSync'd JSON, so the tarball carried zero eval specs
-		// and the installed `mailwoman eval promote --spec <name>` found an empty checks dir.
+		// tsc does not emit the spec JSON files, so package.json `files` must include them.
 		const pkg = await readPackageJSON(import.meta.url, "mailwoman")
 		const { files } = pkg
 
 		expect(files, "mailwoman/package.json declares no files array").toBeDefined()
 
-		// Package-relative, so it names the path inside the tarball: source lives under `lib/`,
-		// and these JSON files ride along with it rather than being emitted into `out/`.
+		// The paths are package-relative.
+		// The JSON files ship under `lib/`.
 		for (const spec of await listEvalSpecs()) {
 			const rel = `lib/eval-harness/specs/${spec}`
 			expect(shipsInPackage(files!, rel), `${rel} must be covered by package.json files`).toBe(true)
 		}
 
-		// baselines.json resolves through the same source-tree-fallback pattern (baseline-assert.ts).
+		// `baseline-assert.ts` reads baselines.json from the source tree in the same way.
 		expect(shipsInPackage(files!, "lib/eval-harness/baselines.json")).toBe(true)
 	})
 })
 
 describe("paired weights-caches (#47)", () => {
 	/**
-	 * Lay out a fake package-shaped weights cache with a model.onnx whose bytes do (int8)
-	 * or don't (fp32) carry the DynamicQuantizeLinear needle the provenance guard scans for,
-	 * plus the tokenizer + card the pre-battery reads touch.
+	 * Creates a fake weights cache with a model, tokenizer and model card.
 	 *
-	 * The package dir comes from `weightsCachePackageDir` — the resolver's own layout function,
-	 * so the fixture cannot drift from what the check resolves.
-	 * Every guard under test returns exit 2 before any battery, so no real ONNX is ever loaded.
+	 * The int8 model's bytes contain `DynamicQuantizeLinear`, which the provenance guard scans for.
+	 * The package directory comes from `weightsCachePackageDir`, the resolver's own layout function.
+	 * Every guard under test exits with 2 before loading a model.
 	 */
 	async function stageFakeCache(kind: "fp32" | "int8", salt: string): Promise<string> {
 		const root = fixtures.use(await temporaryDirectory(`check-pair-${kind}-`)).path
@@ -239,7 +227,7 @@ describe("paired weights-caches (#47)", () => {
 		await using outDirDirectory = await temporaryDirectory("check-pair-out-")
 		const outDir = outDirDirectory.path
 
-		// Same salt, same bytes: dql alone cannot tell them apart, the md5 identity check must.
+		// Both arms have the same bytes, so only the MD5 identity check can reject them.
 		const swapped = await runPromotionEval({ check: "v9.0.0-base", weightsCache: wc, int8WeightsCache: int8, outDir })
 
 		expect(swapped).toBe(2)

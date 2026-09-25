@@ -3,12 +3,14 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   A rehearsal purchase against a deployed worker, in Stripe's test mode: a customer on a test clock, a Checkout
- *   Session shaped as the Payment Link is (the same `checkoutCollection`), paid by a person in a browser with the test
- *   card. then the clock advances past the period end, Stripe raises and pays the renewal invoice, delivers its
- *   `invoice.paid` to the worker, and the claim route hands back the second token. A Payment Link cannot carry a test
- *   clock, which is why the session is built here. Nothing is replayed or signed: the worker is exercised as a customer
- *   would exercise it, delivery included.
+ *   Runs a rehearsal purchase and renewal against a deployed worker in Stripe test mode.
+ *
+ *   The rehearsal creates a customer on a Stripe test clock and a Checkout Session with the same
+ *   `checkoutCollection` settings as the Payment Link. A person pays in a browser with the test card.
+ *   The rehearsal then advances the clock past the period end, and Stripe delivers the renewal's
+ *   `invoice.paid` event to the worker. The claim route should then return the renewed token.
+ *
+ *   Payment Links cannot use a test clock, so the rehearsal creates its own Checkout Session.
  */
 
 import type Stripe from "stripe"
@@ -19,32 +21,39 @@ import { GRACE_DAYS } from "#plans"
 import { checkoutCollection, type ShopPlan, shopURLs } from "#shop/catalog"
 import { idOf } from "#stripe/shapes"
 
+/**
+ * The Stripe objects created by {@link startRehearsal}.
+ */
 export interface RehearsalStart {
 	clock: string
 	customer: string
 	session: string
 	/**
-	 * Where the person pays.
+	 * The Checkout URL where the person pays.
 	 */
 	url: string
 }
 
+/**
+ * Options for {@link startRehearsal}.
+ */
 export interface StartRehearsalInput {
 	siteOrigin: string
 	plan: ShopPlan["code"]
 	licensee: string
 	email: string
 	/**
-	 * The clock's frozen time, in unix seconds; `Date.now` unless a test injects one.
+	 * Returns the current time in milliseconds, which becomes the clock's frozen time.
+	 * Defaults to `Date.now`.
 	 */
 	now?: () => number
 }
 
 /**
- * The first half: the objects, and the URL to pay.
+ * Creates the test clock, customer and Checkout Session, and returns the payment URL.
  *
- * The Price is the provisioned one, found by lookup key as `provisionShop` finds it.
- * A missing Price means the shop was never provisioned in this mode.
+ * The function looks up the provisioned Price by lookup key.
+ * It throws when no such Price exists in the current mode.
  */
 export async function startRehearsal(stripe: Stripe, input: StartRehearsalInput): Promise<RehearsalStart> {
 	const listed = await stripe.prices.list({ lookup_keys: [input.plan], active: true, limit: 1 })
@@ -71,11 +80,17 @@ export async function startRehearsal(stripe: Stripe, input: StartRehearsalInput)
 	return { clock: clock.id, customer: customer.id, session: session.id, url: session.url }
 }
 
+/**
+ * The issue and expiry dates of one license token.
+ */
 export interface TokenDates {
 	issued: string
 	expires: string
 }
 
+/**
+ * The result of {@link advanceRehearsal}.
+ */
 export interface RehearsalRenewal {
 	subscription: string
 	clock: string
@@ -86,30 +101,33 @@ export interface RehearsalRenewal {
 	 */
 	periodEnd: string
 	/**
-	 * `periodEnd` plus the grace: what the renewed token's `expires` must read.
+	 * The expected `expires` of the renewed token, which is `periodEnd` plus the grace period.
 	 */
 	expected: string
 	agrees: boolean
 }
 
+/**
+ * Options for {@link advanceRehearsal}.
+ */
 export interface AdvanceRehearsalInput {
 	session: string
 	workerOrigin: string
 	/**
-	 * How far past the clock's frozen time to advance.
+	 * Number of days to advance the clock.
 	 *
-	 * Past one monthly period, with room for Stripe's renewal window.
+	 * It must pass one billing period plus Stripe's renewal window.
 	 */
 	days: number
 	fetch?: typeof fetch
 	/**
 	 * Waits between polls.
-	 * A test passes one that does not wait.
+	 * Tests pass a function that returns immediately.
 	 */
 	sleep?: (ms: number) => Promise<void>
 	pollMs?: number
 	/**
-	 * Polls per wait before the rehearsal gives up on the worker or the clock.
+	 * Maximum polls per wait before the rehearsal gives up.
 	 */
 	attempts?: number
 	log?: (line: string) => void
@@ -139,10 +157,10 @@ async function readClaim(fetchFn: typeof fetch, workerOrigin: string, session: s
 }
 
 /**
- * The second half: wait for the first token, advance the clock, wait for the second.
+ * Waits for the first token, advances the test clock and waits for the renewed token.
  *
- * The wait on the worker is a wait on Stripe's delivery, so a timeout here names
- * the webhook destination before anything else.
+ * The worker issues tokens only after Stripe delivers a webhook, so a timeout
+ * usually points to the webhook destination.
  */
 export async function advanceRehearsal(stripe: Stripe, input: AdvanceRehearsalInput): Promise<RehearsalRenewal> {
 	const fetchFn = input.fetch ?? fetch

@@ -3,17 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Write a `layer_manifest` into a freshly built database — the one place every builder does it.
- *
- *   Phase 3 of the lab-reproducibility sequence rolls the layer interface out across the builders
- *   `mailwoman data inventory` reported as unprovenanced. Four of them would otherwise repeat the same
- *   twenty-five lines of open/create/write/destroy, which is the shape agents.md names a defect generator:
- *   the code gets copied correctly and the reasoning does not travel with it.
- *
- *   the ordering is the whole interface. This must run before `sealDatabase`, because a sealed artifact is
- *   `0444` and a manifest written afterwards needs the database reopened read-write — the one thing
- *   `openBuiltClient` exists to refuse. Calling it after the seal does not fail quietly. it fails
- *   loudly, which is the correct half. What it would cost is the build, at its very end.
+ *   Writes a `layer_manifest` into a freshly built database. Call it before `sealDatabase`, because a
+ *   sealed database is read-only.
  */
 
 import {
@@ -27,14 +18,12 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { PathBuilderLike } from "path-ts"
 
 /**
- * Open `path`, write `manifest`, and close.
+ * Opens `path`, writes `manifest` into it, and closes the connection.
  *
- * Opens its own connection rather than taking the builder's: every caller reaches this point
- * after its own handle is closed and before the seal, and threading a live handle through
- * would make the ordering above depend on each builder's cleanup rather than on this function.
+ * The function opens its own connection.
+ * Callers reach it after closing their build handle and before sealing the database.
  *
- * @throws When the database is already sealed, which is the ordering mistake
- * this function exists to make loud.
+ * @throws When the database is already sealed.
  */
 export async function stampLayerManifest(path: PathBuilderLike, manifest: LayerManifest): Promise<void> {
 	using kdb = new DatabaseClient<layerschemadatabase>(path)
@@ -44,12 +33,9 @@ export async function stampLayerManifest(path: PathBuilderLike, manifest: LayerM
 }
 
 /**
- * The git sha of the tree that ran a build, for `layer_manifest.build_sha`.
+ * Returns the short git SHA of `repoRoot` for `layer_manifest.build_sha`.
  *
- * Degrades to `unknown` rather than throwing.
- * A build run outside a checkout — a container, an unpacked tarball — is a legitimate build,
- * and refusing to stamp a manifest over a missing git binary would leave the artifact
- * with no provenance at all, which is the state this phase exists to reduce.
+ * It returns `unknown` when git fails, so a build outside a checkout still gets a manifest.
  */
 export function buildSHA(repoRoot: PathBuilderLike): string {
 	try {

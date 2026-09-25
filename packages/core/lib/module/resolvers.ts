@@ -3,8 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Locate an installed package on disk through module resolution, so a caller never hand-assembles a
- *   `node_modules/...` path.
+ *   Locates installed packages on disk through module resolution from `@mailwoman/core`.
  */
 
 import { fileURLToPath } from "node:url"
@@ -12,16 +11,16 @@ import { fileURLToPath } from "node:url"
 import { dirname, PathBuilder, resolvePath } from "path-ts"
 
 /**
- * The directory of an installed package, located by resolving its `package.json` subpath.
+ * Returns the directory of an installed package.
  *
- * Resolving `<package>/package.json` rather than the bare specifier answers for
- * data-only packages that have no `main`.
- * `import.meta.resolve` realpaths through a workspace symlink to the workspace
- * directory, and that string is not internal — it lands in resolved artifact paths,
- * error messages and `mailwoman doctor` output.
+ * The function resolves `<package>/package.json` so that data-only packages
+ * without a `main` entry still resolve.
+ * The package must expose `./package.json` in its `exports` map.
+ *
+ * For a workspace package, the result is the real workspace directory
+ * because `import.meta.resolve` follows the symlink.
  *
  * @throws `ERR_MODULE_NOT_FOUND` when the package is not installed.
- * Every package must expose `./package.json` in its `exports` map for this to resolve.
  */
 export function resolvePackageDirectory<Name extends string = string>(packageName: Name): PathBuilder<Name> {
 	const manifestPath = fileURLToPath(import.meta.resolve(`${packageName}/package.json`))
@@ -30,13 +29,11 @@ export function resolvePackageDirectory<Name extends string = string>(packageNam
 }
 
 /**
- * A path inside an installed package, anchored at the package root rather than at the calling module.
+ * Returns a path inside an installed package, relative to the package root.
  *
- * So it answers the same file from the source tree, the compiled `out/` tree and a published tarball.
- *
- * This is how a package reaches its own data files
- * (`resolvePackagePath("mailwoman", "lib", "eval-harness", "baselines.json")`)
- * and how a test names a fixture without walking `..` up from wherever the test sits.
+ * Anchoring at the package root gives the same path from the source tree,
+ * the compiled `out/` tree and a published tarball.
+ * For example, `resolvePackagePath("mailwoman", "lib", "eval-harness", "baselines.json")`.
  *
  * @throws `ERR_MODULE_NOT_FOUND` when the package is not installed.
  */
@@ -45,18 +42,14 @@ export function resolvePackagePath(packageName: string, ...segments: string[]): 
 }
 
 /**
- * The file a module specifier names, as a filesystem path — a bare package subpath
- * (`@mailwoman/coastal/scripts/ingest-chunk`, `onnxruntime-web`) resolved through
- * its package's `exports` map under this runtime's conditions.
+ * Resolves a bare module specifier, such as `onnxruntime-web`, to a filesystem
+ * path through its package's `exports` map.
  *
- * Resolution starts from this module, so it answers for anything visible from
- * `@mailwoman/core` — every workspace package and every hoisted dependency.
- * A package that only a nested `node_modules` can see is out of reach.
+ * Resolution starts from this module.
+ * It finds every workspace package and every hoisted dependency.
  *
- * That is the one case where a caller's own `import.meta.resolve` says something this cannot.
- *
- * A relative specifier has no business here: a module's own neighbours
- * are `resolvePath(import.meta.dirname, …)`.
+ * It cannot find a package installed only in a nested `node_modules`.
+ * Use `resolve-from.ts` for that case.
  *
  * @throws `ERR_MODULE_NOT_FOUND` when the specifier does not resolve.
  */
@@ -65,7 +58,7 @@ export function resolveModulePath(specifier: string): string {
 }
 
 /**
- * {@link resolveModulePath}, answering `null` instead of throwing for a specifier that does not resolve.
+ * Behaves like {@link resolveModulePath} but returns `null` when the specifier does not resolve.
  */
 export function tryResolveModulePath(specifier: string): string | null {
 	try {
@@ -76,7 +69,7 @@ export function tryResolveModulePath(specifier: string): string | null {
 }
 
 /**
- * {@link resolvePackageDirectory}, answering `null` instead of throwing for a package that is not installed.
+ * Behaves like {@link resolvePackageDirectory} but returns `null` when the package is not installed.
  */
 export function tryResolvePackageDirectory<Name extends string = string>(packageName: Name): PathBuilder<Name> | null {
 	try {

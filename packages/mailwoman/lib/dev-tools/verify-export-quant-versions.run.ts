@@ -3,8 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Compare locally installed export/quant packages with the training-image pins in `corpus-python/launch/app.py`.
- *   Run before local quantization; version changes require end-to-end validation of the Safari int8 graph.
+ * Checks the local export and quantization packages against the training-image pins before local quantization.
  */
 
 import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
@@ -22,13 +21,13 @@ if (!(await pathExists(PYTHON))) {
 }
 
 /**
- * Packages required for local quantization.
- * Other export packages may be absent locally.
+ * Lists the packages local quantization requires.
+ * Other pinned packages may be absent locally.
  */
 const QUANT_PKGS = new Set(["onnx", "onnxruntime"])
 
 /**
- * Read pinned package versions from the training-image source.
+ * Reads the pinned package versions from the training-image source.
  */
 async function pinnedVersions(): Promise<Array<[string, string]>> {
 	const src = await readLocalTextFile(TRAIN_REMOTE)
@@ -37,9 +36,12 @@ async function pinnedVersions(): Promise<Array<[string, string]>> {
 	return [...matches].map((m) => [m[1], m[2]] as [string, string])
 }
 
+/**
+ * Returns the installed version of a Python package, or `MISSING` when it is not installed.
+ */
 function installedVersion(pkg: string): string {
 	try {
-		// Suppress missing-package tracebacks and report the package as absent.
+		// Stderr is ignored so a missing package prints no traceback.
 		return runFileSync(PYTHON, ["-c", `import importlib.metadata as m; print(m.version('${pkg}'))`], {
 			encoding: "utf8",
 			stdio: ["ignore", "pipe", "ignore"],

@@ -10,37 +10,40 @@ import { useDebouncedValue } from "#common/useDebouncedValue"
 import type { Suggestion } from "#map/types"
 
 /**
- * Configures {@linkcode usePlaceAutocomplete} with the controlled input text and the suggestion source.
+ * Options for {@linkcode usePlaceAutocomplete}.
  */
 export interface UsePlaceAutocompleteOptions {
 	/**
-	 * The controlled input text, whose segment after the last comma is the query.
+	 * The controlled input text.
+	 * The text after the last comma is the query.
 	 */
 	text: string
 
 	/**
-	 * The input text setter, which a pick calls with the last segment replaced.
+	 * Sets the input text.
+	 * A pick calls it with the last segment replaced.
 	 */
 	setText: (text: string) => void
 
 	/**
-	 * The host's suggestion fetcher; when absent, the combobox never suggests anything.
+	 * Fetches suggestions for a query.
+	 * Without it, the hook never suggests anything.
 	 */
 	autocomplete?: (query: string) => Promise<Suggestion[]>
 
 	/**
-	 * The minimum query length before suggesting, defaulting to 2.
+	 * The minimum query length for suggestions. @default 2
 	 */
 	minChars?: number
 
 	/**
-	 * The debounce delay in milliseconds before the fetcher runs, defaulting to 150.
+	 * The debounce delay in milliseconds before a fetch. @default 150
 	 */
 	debounceMs?: number
 }
 
 /**
- * The combobox aria props to spread onto the input the suggestions describe.
+ * The combobox ARIA props to spread onto the input.
  */
 export interface AutocompleteInputProps {
 	role: "combobox"
@@ -52,17 +55,18 @@ export interface AutocompleteInputProps {
 }
 
 /**
- * Holds the suggestion list, keyboard and selection handlers, and combobox ARIA
- * props that {@linkcode usePlaceAutocomplete} returns.
+ * The state and handlers that {@linkcode usePlaceAutocomplete} returns.
  */
 export interface UsePlaceAutocomplete {
 	/**
-	 * The current suggestions, empty when nothing matches or the list was dismissed.
+	 * The current suggestions.
+	 *
+	 * The list is empty when nothing matches or the visitor dismissed it.
 	 */
 	suggestions: Suggestion[]
 
 	/**
-	 * The keyboard-highlighted suggestion index, or `-1` when none is highlighted.
+	 * The index highlighted by the keyboard, or `-1` for none.
 	 */
 	activeIndex: number
 
@@ -72,18 +76,21 @@ export interface UsePlaceAutocomplete {
 	setActiveIndex: (index: number) => void
 
 	/**
-	 * Handles input keys: arrows move the highlight, Enter picks it and suppresses
-	 * form submission, and Escape dismisses the list.
+	 * Handles input keys.
+	 *
+	 * The arrow keys move the highlight, Enter picks the highlighted suggestion
+	 * instead of submitting the form, and Escape dismisses the list.
 	 */
 	onInputKeyDown: (event: KeyboardEvent<HTMLInputElement>) => void
 
 	/**
-	 * Accepts a suggestion value by replacing the last comma segment and closing the list.
+	 * Replaces the text after the last comma with the suggestion and closes the list.
 	 */
 	pick: (value: string) => void
 
 	/**
-	 * Closes the list without picking, keeping it closed until the query changes.
+	 * Closes the list without picking.
+	 * The list stays closed until the query changes.
 	 */
 	dismiss: () => void
 
@@ -117,8 +124,8 @@ function replaceSegment(current: string, name: string): string {
 }
 
 /**
- * Fetches debounced place suggestions for the text after the input's last comma,
- * and replaces only that segment when a suggestion is picked.
+ * Fetches debounced place suggestions for the text after the input's last comma.
+ * A pick replaces only that segment.
  *
  * A segment that starts with a digit gets no suggestions, so house numbers
  * and postcodes never reach `autocomplete`.

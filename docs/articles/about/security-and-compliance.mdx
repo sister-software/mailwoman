@@ -7,86 +7,88 @@ audience: teams
 
 # Security and compliance
 
-Mailwoman runs inside your infrastructure. The addresses you process stay there, because there is no
-step in a parse or a geocode that would move them anywhere else. This page states that precisely
-enough to check, and points at the artifacts your review will ask for.
+Mailwoman runs inside your infrastructure. The addresses you process stay there, because no step in
+a parse or a geocode sends them anywhere else. This page describes that behavior precisely enough for
+you to check it, and links the artifacts a security review asks for.
 
 ## What the library sends over the network
 
-Nothing, during a parse or a geocode. Those calls read model weights and gazetteer files from local
-disk and return. There is no telemetry, no analytics, no crash reporting, no version check and no
-usage ping in any published package, and installing Mailwoman runs no lifecycle scripts of ours —
+A parse or a geocode sends nothing over the network. Those calls read model weights and gazetteer
+files from local disk and return. No published package contains telemetry, analytics, crash
+reporting, a version check or a usage ping. Installing Mailwoman runs none of our lifecycle scripts:
 `npm install` fetches tarballs and stops.
 
-Four boundaries make that statement literally true rather than roughly true:
+The network behavior has four boundaries:
 
-- **`RemoteResolver` is opt-in and you own the endpoint.** It splits parser nodes from a gazetteer
-  service inside your own network, throws unless you construct it with an endpoint URL, is never a
-  default, and is not a service we operate.
-- **Building datasets downloads datasets.** `mailwoman gazetteer build` and its siblings fetch from
-  the US Census, Geofabrik, `adresse.data.gouv.fr` and the FCC. These are commands you run
-  deliberately, at build time, separate from parsing.
+- **`RemoteResolver` is opt-in, and you own the endpoint.** It separates parser nodes from a
+  gazetteer service inside your own network. It throws unless you construct it with an endpoint URL.
+  It is never a default, and we do not operate the service.
+- **Building datasets downloads datasets.** `mailwoman gazetteer build` and related commands fetch
+  from the US Census, Geofabrik, `adresse.data.gouv.fr` and the FCC. You run these commands
+  deliberately, at build time, separately from parsing.
 - **Pulling reference data downloads reference data.** `mailwoman data pull` fetches prebuilt
-  gazetteer, POI and locale bundles from `public.mailwoman.ai` — a HEAD request checks the
-  remote size, then a GET streams the file to disk. It runs only when you invoke it, and the exchange
-  is shown line by line in
-  [Your first ten minutes](../developers/get-started/ten-minute-trial.mdx#5-geocode-it).
+  gazetteer, POI and locale bundles from `public.mailwoman.ai`. A HEAD request checks the remote
+  size, and then a GET streams the file to disk. The command runs only when you invoke it.
+  [Your first ten minutes](../developers/get-started/ten-minute-trial.mdx#5-geocode-it) shows the
+  exchange line by line.
 - **The browser runtime downloads its model.** `@mailwoman/neural/web-loader` fetches model and data
-  artifacts from a URL your application supplies, once. The query text stays in the page. Our hosted
-  [Earth](https://earth.mailwoman.ai/) is a deployment of that runtime, and it serves those artifacts from
-  `public.mailwoman.ai` and calls `tiles.mailwoman.ai` for coarse map centring — both of which
-  are properties of the demo rather than of the library you install.
+  artifacts once, from a URL your application supplies. The query text stays in the page. Our hosted
+  [Earth](https://earth.mailwoman.ai/) demo is a deployment of that runtime. It serves those
+  artifacts from `public.mailwoman.ai` and calls `tiles.mailwoman.ai` for coarse map centring. The
+  demo makes both of those requests. The library you install makes neither.
 
 ## How it is licensed
 
-Two options, one codebase:
+One codebase is available under two licenses:
 
 - **AGPL-3.0-only.** The full text and the dual-license header are in
-  [`LICENSE.md`](https://github.com/sister-software/mailwoman/blob/main/LICENSE.md). Its one
-  condition: distribute software built on Mailwoman, or run it as a network service others use, and
-  those users are entitled to your corresponding source under the same license.
+  [`LICENSE.md`](https://github.com/sister-software/mailwoman/blob/main/LICENSE.md). The license has
+  one condition. If you distribute software built on Mailwoman, or run it as a network service that
+  others use, those users are entitled to your corresponding source under the same license.
 - **A commercial license**, which releases you from that condition. The reference terms are in
-  [`COMMERCIAL-LICENSE.md`](https://github.com/sister-software/mailwoman/blob/main/COMMERCIAL-LICENSE.md);
-  that document is a template rather than a grant, and the executed agreement is what binds. Rates
-  are on [Pricing](../pricing.mdx).
+  [`COMMERCIAL-LICENSE.md`](https://github.com/sister-software/mailwoman/blob/main/COMMERCIAL-LICENSE.md).
+  That document is a template and grants nothing. Only the executed agreement is binding. Rates are on
+  [Pricing](../pricing.mdx).
 
-The code license and the data license are separate questions. Ours is the code — see Data provenance
-below for what the reference data carries.
+The code license and the data license are separate. Our license covers the code. Data provenance,
+below, describes the terms that the reference data carries.
 
 ## Software bill of materials
 
-We publish an SBOM for the `mailwoman` package in both open standards — SPDX 2.3 and CycloneDX 1.5 —
-generated by the built-in `npm sbom` command with no third-party tooling in the trust path, from the
-published tarball rather than the working tree — so they describe what a consumer installs, with
-development-only dependencies excluded.
+We publish an SBOM for the `mailwoman` package in two open standards: SPDX 2.3 and CycloneDX 1.5.
+The built-in `npm sbom` command generates both, without third-party tooling in the trust path. It
+runs against the published tarball instead of the working tree, so the SBOMs describe what a consumer
+installs and exclude development-only dependencies.
 
 The files are served under
 [`/sbom/`](https://mailwoman.ai/sbom/mailwoman-8.2.0.cdx.json) and committed to the
-repository. Generation is a release-time step run on demand rather than a CI job, so the newest
-published SBOM can trail the newest release; check the version in the filename before you scan it.
+repository. Generation is a release-time step that runs on demand instead of in CI, so the newest
+published SBOM can lag behind the newest release. Check the version in the filename before you scan
+it.
 
-Publishing itself uses npm Trusted Publishing over GitHub OIDC, so no long-lived registry token
-exists to leak. Packages do not currently carry a sigstore provenance attestation.
+Publishing uses npm Trusted Publishing over GitHub OIDC, so there is no long-lived registry token
+that could leak. Packages do not currently carry a sigstore provenance attestation.
 
 ## Data provenance
 
-Every source is recorded with its license at the point it enters the pipeline, the legal notices
+The pipeline records each source with its license at the point the source enters. The legal notices
 ship as
 [`THIRD_PARTY_NOTICES.md`](https://github.com/sister-software/mailwoman/blob/main/THIRD_PARTY_NOTICES.md)
-in the source distribution, and each built data artifact carries its own `ATTRIBUTION.json` naming
-the source, release and license it was built from. The catalog of sources and their terms is
+in the source distribution. Each built data artifact carries its own `ATTRIBUTION.json`, which
+records the source, release and license it was built from. The catalog of sources and their terms is
 [data licensing and provenance](https://github.com/sister-software/mailwoman/blob/main/docs/records/site-2026-08/licensing/data-provenance.md).
 
 Two items on that page matter to a review, and we would rather you heard them from us:
 
-- **The OpenStreetMap precision tier is built but not enabled** in any published artifact — not on
-  npm rather than in the demo. It is share-alike, and turning it on is waiting on legal review. Nothing you
-  install today carries an ODbL obligation from it.
+- **The OpenStreetMap precision tier is built but not enabled** in any published artifact, either
+  on npm or in the demo. OSM data is share-alike, and enabling the tier is waiting on legal review.
+  Nothing you install today carries an ODbL obligation from it.
 - **One source's license is recorded inconsistently in our own files.** Who's On First appears as
   CC0 in the provenance catalog and as CC-BY 4.0 in the resolver package's own notes. Until that is
   settled, attribute Who's On First.
 
 ## Reporting a vulnerability
 
-Privately, by email rather than as a public issue. The policy, scope and what to include are in
+Report vulnerabilities privately by email instead of in a public issue. The policy, the scope and
+what to include are in
 [`SECURITY.md`](https://github.com/sister-software/mailwoman/blob/main/SECURITY.md).

@@ -1,7 +1,7 @@
 /**
  * @copyright Sister Software
  * @license AGPL-3.0
- * @file POI board runtime construction.
+ * @file Builds the runtime pipeline that the POI board and its probes grade against.
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers"
@@ -16,66 +16,63 @@ import { resolvePath, type PathBuilderLike } from "path-ts"
 import { createRuntimePipeline } from "#index"
 import { createResolverBackend } from "#resolver-backend"
 
+/**
+ * Options for the POI board and its pipeline.
+ */
 export interface POIBoardOptions {
 	locale?: string
 	weightsCacheRoot?: string
 	fixturesPath?: string
 	/**
-	 * Sealed poi.db to query.
-	 *
-	 * Defaults to the standard data-root layer path.
-	 * See `gazetteer build poi`'s own default.
+	 * Sealed `poi.db` to query.
+	 * It defaults to the data-root POI layer path.
 	 */
 	db?: PathBuilderLike
 	/**
-	 * WOF admin database path(s) for anchor resolution — same semantics as `mailwoman poi --resolve-db`.
+	 * Comma-separated WOF admin database paths for anchor resolution, as in `mailwoman poi --resolve-db`.
 	 */
 	resolveDB?: string
 	/**
-	 * Byte-range candidate.db for anchor resolution (demo-parity backend) —
-	 * same semantics as `mailwoman poi --candidate-db`.
+	 * Candidate-table database for anchor resolution, as in `mailwoman poi --candidate-db`.
 	 */
 	candidateDB?: string
 	/**
-	 * Suppress the human-readable table (the CLI's `--json` mode prints the full report instead).
+	 * Whether to suppress the human-readable table.
+	 * The CLI's `--json` mode sets it.
 	 */
 	quiet?: boolean
 	/**
-	 * Enforce the pre-registered floors: return a non-zero exit code on any
-	 * breach (floors are always printed).
+	 * Whether a floor breach returns a non-zero exit code.
+	 * The floors print either way.
 	 */
 	enforce?: boolean
 	/**
-	 * An additional positive-evidence phrase rung for the constructed pipeline,
-	 * consulted only after the committed lexicon and the POI name lookup have both
-	 * returned nothing (`CreateRuntimePipelineOpts.poiSemanticLookup`).
+	 * Extra phrase lookup that the pipeline consults after the committed lexicon
+	 * and the POI name lookup both find nothing.
 	 *
-	 * Carried on the board's own options so a probe measuring an injected route runs
-	 * through the same construction the board does.
-	 * Absent — the default — constructs the pipeline the board has always constructed.
+	 * It is passed through as `CreateRuntimePipelineOpts.poiSemanticLookup`.
+	 *
+	 * A probe sets it so the injected route runs through the board's own pipeline construction.
 	 */
 	poiSemanticLookup?: POIPhraseLookup
 	/**
-	 * Build `mailwoman/observations`' semantic route and inject it as {@linkcode poiSemanticLookup}.
+	 * Whether to build the semantic observation route and use it as {@linkcode poiSemanticLookup}.
+	 * It is ignored when `poiSemanticLookup` is set.
 	 *
-	 * Default off, and the floors are registered against the off arm: the board grades the construction
-	 * that ships, and a floor measured under an opt-in rung would describe a pipeline no caller runs.
-	 * On, it measures the activity-phrase family.
-	 *
-	 * The rows whose subject reaches no committed lexicon entry, and which therefore
-	 * take no POI branch at all with the rung absent.
-	 *
-	 * Ignored when {@linkcode poiSemanticLookup} is supplied directly.
+	 * It defaults to off, and the registered floors assume it is off because the
+	 * shipped pipeline omits the route.
+	 * Turning it on measures rows whose subject matches no committed lexicon entry.
 	 */
 	semanticObservation?: boolean
 }
 
 /**
- * Build the WOF resolver, mirroring `commands/poi.tsx`'s `tryLoadResolver`: candidate-table
- * backend when configured, else the FTS admin database set, else no resolver at all
- * (anchored category cases then abstain `anchor_required`, exactly like the CLI probe degrades).
+ * Builds the anchor resolver the same way as `tryLoadResolver` in `commands/poi.tsx`.
  *
- * Caller owns closing the returned handle.
+ * It prefers the candidate-table backend, then the WOF FTS databases.
+ * With neither available it returns `undefined`, and anchored cases abstain with `anchor_required`.
+ *
+ * The caller must dispose the returned handle.
  */
 async function loadResolver(
 	options: POIBoardOptions
@@ -116,36 +113,35 @@ async function loadResolver(
 }
 
 /**
- * Which lookup answered anchor resolution.
+ * Backend that answered anchor resolution.
  *
- * Reported rather than re-derived: `createResolverBackend` falls back to the convention candidate path,
- * so a caller that reads only its own options names the wrong backend on any box where that file exists.
+ * The handle reports the backend that was built.
+ * `createResolverBackend` can fall back to the default candidate path,
+ * so the caller's options alone do not determine it.
  */
 export type POIBoardResolverBackend = "candidate" | "wof-fts" | "none"
 
+/**
+ * Board pipeline with the artifacts it opened.
+ */
 export interface POIBoardPipelineHandle extends Disposable {
 	pipeline: (raw: string, runOpts?: PipelineOpts) => Promise<PipelineResult>
 	/**
-	 * The sealed poi.db the executor queries — carried here so a caller reporting artifact
-	 * identity reads the path the pipeline actually opened rather than re-deriving the default.
+	 * Path of the `poi.db` that the pipeline opened.
 	 */
 	db: string
 	/**
-	 * Which lookup answered anchor resolution, as built rather than as requested.
+	 * Backend that was built for anchor resolution.
 	 */
 	backend: POIBoardResolverBackend
 }
 
 /**
- * Construct the board's pipeline: classifier + resolver + poi executor, exactly as
- * `commands/poi.tsx` builds it (`NeuralAddressClassifier.loadFromWeights` + the shared
- * resolver-backend selector + `createRuntimePipeline({ poiQueryKind: { poiDatabasePath } })`).
+ * Builds the board's pipeline from the classifier, the anchor resolver,
+ * and the POI executor, the same way `commands/poi.tsx` does.
  *
- * Extracted so a probe that grades with {@link gradeCase} runs against the same construction the board does.
- * A second copy of these four calls would let the two drift.
- *
- * A different backend or a different weights locale would change what the probe measures
- * while the grader stayed identical, and the difference would read as a pipeline result.
+ * Probes that grade with {@link gradeCase} call this too, so their results use
+ * the same backend and weights locale as the board.
  */
 export async function createPOIBoardPipeline(options: POIBoardOptions = {}): Promise<POIBoardPipelineHandle> {
 	const db = resolvePath(options.db ?? poiDatabasePath("poi.db"))
@@ -156,8 +152,7 @@ export async function createPOIBoardPipeline(options: POIBoardOptions = {}): Pro
 	})
 
 	const resolverHandle = await loadResolver(options)
-	// A caller-supplied rung wins: the probe hands one in and drains it afterwards,
-	// so building a second here would give it a route whose firings nobody reads.
+	// A probe that passes its own lookup reads that lookup's firings afterwards, so a supplied lookup takes precedence.
 	const semanticLookup = options.poiSemanticLookup ?? (await buildBoardSemanticLookup(options.semanticObservation))
 
 	const pipeline = createRuntimePipeline({
@@ -176,11 +171,10 @@ export async function createPOIBoardPipeline(options: POIBoardOptions = {}): Pro
 }
 
 /**
- * The semantic route as a phrase rung, or nothing when the arm was not asked for.
+ * Returns the semantic observation route's lookup, or `undefined` when `semanticObservation` is off.
  *
- * Dynamically imported so a board run with the arm off never loads the compiled
- * artifact reader — the same containment `createRuntimePipeline` gets from taking
- * the rung as an argument rather than constructing one.
+ * The route module is imported dynamically so that a run with the option off
+ * never loads its compiled artifact.
  */
 async function buildBoardSemanticLookup(semanticObservation?: boolean): Promise<POIPhraseLookup | undefined> {
 	if (!semanticObservation) return undefined
@@ -189,8 +183,3 @@ async function buildBoardSemanticLookup(semanticObservation?: boolean): Promise<
 
 	return (await createSemanticObservationRoute()).lookup
 }
-
-/**
- * Build the runtime pipeline once (classifier + resolver + poi executor),
- * run every fixture through it, grade, and aggregate.
- */

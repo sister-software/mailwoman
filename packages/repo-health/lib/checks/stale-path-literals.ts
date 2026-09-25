@@ -2,34 +2,15 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file A quoted repository path naming a file that moved.
+ * @file Reports quoted repository paths in source that refer to a file that has moved.
  *
- *   A moved file leaves two kinds of reference behind. The compiler reads one of them — an import specifier — and
- *   reports it. The other is a string: a registry entry, a `run:` block, a CLI flag default, a docstring, a
- *   provenance line written into a generated artifact. Nothing reads those until something runs, and each is read
- *   by code that treats absence as a negative answer rather than an error, so the failure is a well-formed wrong
- *   result rather than a crash. `mwops health fix prefix-directories` rewrites a moved file's references from
- *   other files and not a file's references to itself, so the tool built for this class shares the blind spot.
+ *   The compiler catches a stale import specifier, but a path in a string is read only at run time, and the code that
+ *   reads it often treats a missing file as a valid negative answer.
  *
- *   two tests, and the second is the one that makes IT usable. A literal must look like a repository path — first
- *   segment a repository directory, last segment carrying a file extension — and name a path this repository once
- *   tracked. The shape test alone reported 93 literals over this tree, almost all of them correct: a path a
- *   `.run.ts` writes does not exist until it runs, `packages/neural-weights-en-us/model.onnx` is materialized and
- *   deliberately uncommitted, and a symbol test plants `packages/foo/new.ts` as fixture data. Requiring the path
- *   to have existed once leaves 20 of those 93, and what remains is a reference to something real that moved —
- *   which is what the check is for. A typo naming a path that never existed is a different defect, and the tool
- *   reading it fails immediately rather than answering wrongly.
- *
- *   test sources are OUT OF scope. All 20 survivors are in tests OF the path machinery itself — the symbol
- *   index's fixtures, `manifest-targets`, `move/specifiers` — which necessarily name paths that no longer exist.
- *   A test plants trees, so a path there is fixture data as often as a reference, and the two are not separable
- *   by inspection.
- *
- *   what IT cannot SEE, stated because silence is otherwise read as a clean tree: a path assembled from segments,
- *   a path behind a variable, a template literal that interpolates, and a browser selector, which is not a path at
- *   all. Those are `yarn test`'s to catch.
- *
- *   The history read costs 205 ms over 4,398 commits, measured on this repository.
+ *   A literal is reported when it has the shape of a repository path and git history shows that the repository once
+ *   tracked it. The history test excludes paths that a script writes, uncommitted build artifacts and fixture paths.
+ *   Test sources are skipped because they plant fixture trees. The check cannot see a path assembled from segments,
+ *   held in a variable, or built by an interpolating template literal.
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
@@ -41,29 +22,26 @@ import { type Diagnostic, DiagnosticSeverity, type RepoCheck } from "#check"
 import { trackedSourcePaths } from "#tracked-sources"
 
 /**
- * First segments that make a literal a repository path rather than a package specifier or a bare filename.
- *
- * `mailwoman/gazetteer-pipeline` is a subpath export and belongs to none of them.
+ * The first segments that mark a literal as a repository path instead of a package specifier.
  */
 const REPOSITORY_ROOTS = ["packages/", "docs/", "data/", "evals/", "corpus-python/", "docker/", "hf-publish/"]
 
 /**
- * Dated records name paths as they were, by design.
+ * Path prefixes that the check skips.
+ * Dated records keep the paths as they were when written.
  */
 const SKIPPED_PREFIXES = ["docs/records/"]
 
 /**
- * Segments marking derived output — absent on a clean checkout, present after a build.
- *
- * A literal naming one is answering a question about the build rather than about a tracked file.
+ * Path segments that mark build output, which a clean checkout lacks.
  */
 const DERIVED_SEGMENTS = ["/out/", "/dist/", "/node_modules/", "/build/", "/.yarn/", "/coverage/"]
 
 /**
- * A literal that is a repository path by shape.
+ * Returns whether a literal has the shape of a repository path.
  *
- * Rejects a glob, an interpolation placeholder, a URL, and anything carrying whitespace.
- * A sentence naming a directory is prose rather than a path.
+ * It rejects globs, interpolation placeholders, URLs, whitespace, skipped prefixes and build output.
+ * The last segment must carry a file extension.
  */
 export function isRepositoryPathLiteral(text: string): boolean {
 	if (!REPOSITORY_ROOTS.some((root) => text.startsWith(root))) return false
@@ -81,6 +59,9 @@ export function isRepositoryPathLiteral(text: string): boolean {
 	return /\.[a-z0-9]{1,8}$/iu.test(last) && !last.endsWith(".tsbuildinfo")
 }
 
+/**
+ * One stale path literal and its location.
+ */
 export interface StalePathLiteral {
 	file: string
 	line: number
@@ -88,8 +69,8 @@ export interface StalePathLiteral {
 }
 
 /**
- * Every quoted repository path in the tracked non-test TypeScript sources that
- * names a path the tree once had and no longer does.
+ * Returns every quoted repository path in tracked non-test TypeScript sources
+ * that the tree once tracked and no longer does.
  */
 export async function findStalePathLiterals(context: {
 	repoRoot: string
@@ -97,11 +78,9 @@ export async function findStalePathLiterals(context: {
 }): Promise<StalePathLiteral[]> {
 	const tracked = new Set(context.trackedFiles)
 
-	// `existingOnly`: the index can name a file the working tree no longer has.
-	// A rename staged and not committed is enough — and this walk opens every path it is given, so the
-	// absent one throws enoent and the check fails for a reason that has nothing to do with path literals.
-	// `tracked` above keeps the full index, because a literal naming a staged-for-deletion
-	// file is still a literal naming a tracked file.
+	// The index can list a file that the working tree lacks, such as after an uncommitted rename.
+	// The walk reads every path, so `existingOnly` prevents an ENOENT failure.
+	// `tracked` keeps the full index, because a file staged for deletion is still tracked.
 	const sources = (await trackedSourcePaths(context, { existingOnly: true }))
 		.map((path) => relative(context.repoRoot, path))
 		.filter((file) => !/\/test\/|\.test\.tsx?$/u.test(file))
@@ -112,15 +91,14 @@ export async function findStalePathLiterals(context: {
 	for (const file of sources) {
 		const text = await readLocalTextFile(resolvePath(context.repoRoot, file))
 
-		// Cheap reject before parsing: most files name no repository path at all.
+		// Most files contain no repository path, so a text search skips them before parsing.
 		if (!REPOSITORY_ROOTS.some((root) => text.includes(root))) continue
 
 		const source = ts.createSourceFile(file, text, ts.ScriptTarget.ESNext, true, ts.ScriptKind.TSX)
 		const lineOf = (position: number) => source.getLineAndCharacterOfPosition(position).line + 1
 
 		const visit = (node: ts.Node): void => {
-			// A no-substitution template literal resolves exactly as a quoted string does.
-			// One with substitutions cannot be resolved and is out of this check's reach by construction.
+			// A template literal without substitutions has a fixed value, so the check treats it as a string.
 			if (ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node)) {
 				const literal = node.text
 
@@ -139,7 +117,8 @@ export async function findStalePathLiterals(context: {
 }
 
 /**
- * The `stale-path-literals` check: one error per quoted repository path naming a file that moved.
+ * The `stale-path-literals` check.
+ * It reports one error for each stale path literal.
  */
 export const stalePathLiteralsCheck: RepoCheck = {
 	id: "stale-path-literals",

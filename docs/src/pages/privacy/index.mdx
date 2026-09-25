@@ -35,7 +35,7 @@ If information never leaves your infrastructure, Sister Software is neither rece
 Four activities send a request to a server. Each one carries the request metadata any web request carries, such as an IP address, a request time, and a requested URL. None of them carries the content of a parse or geocode request.
 
 - **Installing from a package registry.** npm, or whichever registry you configure, receives the request. Its operator's policy governs it.
-- **Downloading a reference-data bundle.** `mailwoman data pull` requests the bundle's objects from `public.mailwoman.ai`, which is served through Cloudflare R2. Nothing downloads a bundle without that command: a Mailwoman server started without a gazetteer prints the command and stops.
+- **Downloading a reference-data bundle.** `mailwoman data pull` requests the bundle's objects from `public.mailwoman.ai`, which is served through Cloudflare R2. Only that command downloads a bundle. A Mailwoman server started without a gazetteer prints the command and stops.
 - **Running the browser engine or a map surface.** A page that loads the browser engine requests its model and database assets from `public.mailwoman.ai` as it starts, and a map surface requests fonts and sprites from the same origin. These requests happen without a prompt, and they identify which assets a visitor's page loaded.
 - **Optional online license actions.** `mailwoman license verify --online` and `mailwoman license refresh` contact Sister Software infrastructure and send the license information the request needs. A key verifies offline without them.
 
@@ -45,13 +45,13 @@ A third-party network provider or content-delivery network in front of any of th
 
 The records Mailwoman is trained on are separate from anything you send us, and this section is about the former.
 
-We obtain address records from public and third-party sources to build training corpora and the pretrained models we publish. Those records are not customer queries: ordinary self-hosted use transmits no query to us, so no customer query can reach a corpus. Saying that does not establish that a corpus contains no personal data, and the two claims are recorded separately here for that reason.
+We obtain address records from public and third-party sources to build training corpora and the pretrained models we publish. Those records are not customer queries. Ordinary self-hosted use transmits no query to us, so no customer query can reach a corpus. That fact does not establish that a corpus contains no personal data, so this section states the two claims separately.
 
-The register of candidate sources is public, at `packages/corpus/data/address-source-register.json`. It holds 389 sources. As of this update, no license decision has been recorded for any of them and none of the 389 is eligible for ingest, so no source in that register has contributed to a published model.
+The register of candidate sources is public, at `packages/corpus/data/address-source-register.json`. It holds 389 sources. As of this update, the register records a license decision for none of them and marks none of the 389 as eligible for ingest, so no source in that register has contributed to a published model.
 
 The assessment of personal data in training sources is incomplete. Some candidate registers, such as the French SIRENE enterprise register, carry records about sole traders that identify a natural person at a business address. We have not completed a purpose, category, role, lawful-basis, retention, and individual-rights analysis for that class of source, and this Policy does not assert one.
 
-That incompleteness is a control rather than a note. Each source in the register carries a personal-data review with three readings: a review that found no record about an identifiable person, a review that found such records, and a completed analysis that names where it is recorded. The first and third admit a source for ingest. The second refuses it, and so does the absence of a review, because a publication nobody examined is not one found clear. All 389 sources are refused on that ground today. This is what keeps such a source out of a corpus that has not been built; it is not a statement about a model already published.
+The ingest process enforces that incompleteness. Each source in the register carries a personal-data review with one of three outcomes: a review that found no record about an identifiable person, a review that found such records, or a completed analysis that states where it is recorded. The first and third outcomes admit a source for ingest. The second refuses it, and so does a missing review, because an unexamined publication has not been found clear. All 389 sources are refused on that ground today. This rule keeps such a source out of any corpus built from now on. It makes no statement about a model already published.
 
 Where a published model was trained on address records, we cannot at present recover an individual record from the trained weights, and we do not claim that the weights are anonymous within the meaning of any particular law.
 
@@ -153,7 +153,7 @@ Depending on applicable law, you may have rights to access, correct, delete, res
 
 These rights apply only to information we hold.
 
-Because Mailwoman normally processes your workload locally, we cannot access, export, correct, or delete addresses or queries that were never transmitted to us. Data held inside an installation you operate is yours to act on; we have no access to it and cannot act on it for you.
+Because Mailwoman normally processes your workload locally, we cannot access, export, correct, or delete addresses or queries that were never transmitted to us. Data held inside an installation you operate is yours to act on. We have no access to it and cannot act on it for you.
 
 For a record in a public source we used to build a corpus, write to the address under "Contact". We will identify what we hold, what we can remove from a corpus we still hold, and what a published model retains. We do not claim an ability to delete a record from weights that are already published.
 

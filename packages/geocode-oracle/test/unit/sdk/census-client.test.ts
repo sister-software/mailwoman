@@ -2,8 +2,7 @@
  * @copyright Sister Software.
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file Test Census geocoder requests and component mapping with stubbed transports and an injected clock.
- *   The fixture is the Census documentation example for 4600 Silver Hill Rd.
+ * @file Tests the Census geocoder client and parser with stubbed transports and a fake clock.
  */
 
 import { isTransientResourceError } from "@mailwoman/core/api"
@@ -56,11 +55,8 @@ const OK_BODY = { result: { addressMatches: [match()] } }
 const NO_MATCH_BODY = { result: { addressMatches: [] } }
 
 /**
- * Await a call that must reject and hand back its {@linkcode ResourceError}.
- *
- * Fails loudly if it resolves.
- * A `.catch(error => error)` inline would silently turn "it did not throw"
- * into an assertion against `undefined`.
+ * Awaits a promise that must reject and returns its {@linkcode ResourceError}.
+ * It throws when the promise resolves.
  */
 async function captureError(promise: Promise<unknown>): Promise<ResourceErrorShape> {
 	try {
@@ -123,7 +119,7 @@ describe("buildStreetComponents", () => {
 
 describe("buildCensusComponents", () => {
 	it("recovers the house number from matchedAddress", () => {
-		// Recover the matched number because the component range omits it.
+		// The address components carry only a number range.
 		expect(buildCensusComponents(match()).house_number).toBe("4600")
 	})
 
@@ -147,7 +143,7 @@ describe("parseCensusAddressMatch", () => {
 	})
 
 	it("always reports the interpolated tier", () => {
-		// Census uses address ranges, not parcel or building locations.
+		// Census interpolates positions along address ranges.
 		expect(parseCensusAddressMatch(match()).address.geocode?.tier).toBe(CENSUS_RESOLUTION_TIER)
 		expect(CENSUS_RESOLUTION_TIER).toBe("interpolated")
 	})
@@ -178,7 +174,7 @@ describe("createCensusGeocoderClient", () => {
 
 		expect(params?.address).toBe("4600 Silver Hill Rd, Washington, DC 20233")
 		expect(params?.benchmark).toBe("Public_AR_Current")
-		// `vintage` applies only to `geographies/*`.
+		// Only `geographies/*` requests take a vintage.
 		expect(params?.vintage).toBeUndefined()
 	})
 
@@ -225,7 +221,7 @@ describe("createCensusGeocoderClient", () => {
 	})
 
 	it("issues no request at all for a PO Box", async () => {
-		// PO Boxes use the normal provider path and return its no-match response.
+		// A PO Box goes to the provider like any other address.
 		const transport = stubTransport([{ body: NO_MATCH_BODY }])
 
 		await using client = createCensusGeocoderClient({ cacheDir, axios: transport.axios })

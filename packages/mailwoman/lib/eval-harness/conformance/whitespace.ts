@@ -3,10 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Define and audit pipeline invariance under whitespace changes.
- *   Transformations cover boundaries, safe internal runs, and comma spacing.
- *   Newlines and structured-identifier spaces are excluded; variants are derived by name.
- *   The blind key rejects non-whitespace edits, and applicability rejects unsafe rows.
+ *   Whitespace invariance suite, which asserts that edge spaces, internal runs and comma spacing do not change a parse.
+ *   The space inside a structured postcode such as `SW1A 1AA` is never rewritten.
  */
 
 import { candidateSystemsForPostcode, UNIT_GRADE_POSTCODE } from "@mailwoman/codex"
@@ -22,23 +20,21 @@ import {
 } from "#eval-harness/conformance/fixture"
 
 /**
- * The law name every row in this suite carries.
+ * Law identifier that every suite row carries.
  */
 export const WHITESPACE_LAW = "whitespace-invariance"
 
 /**
- * The only whitespace transformations allowed in this suite.
+ * Named whitespace transformations.
  *
- * - `leading` / `trailing` — the pasted-cell registers: one ascii space bolted onto an end.
- *   Separate names because Stage 1 reaches them through separate code.
- *   The leading trim takes whitespace only, the trailing trim takes whitespace
- *   and the sentence punctuation a user appends — so one can regress without the other.
- * - `repeated` — every safe internal run doubled: the concatenated-column register.
- * - `tabbed` — every safe internal run replaced by one tab: the TSV-export register, and the arm
- *   that states the collapse still shields the segmentation grammar (see the module docstring).
- * - `separator-tightened` — the whitespace after each comma deleted (`Portland, or` → `Portland,or`).
- *   The comma survives, so the fields stay separated and the token order is untouched.
- * - `separator-loosened` — one space inserted before each comma (`Portland, or` → `Portland , or`).
+ * - `leading` and `trailing` add one ASCII space at the start or end.
+ *   They have separate names because the pipeline trims the two ends with separate code.
+ * - `repeated` doubles every safe internal whitespace run.
+ * - `tabbed` replaces every safe internal whitespace run with one tab.
+ * - `separator-tightened` deletes spaces and tabs after each comma (`Portland, or` → `Portland,or`).
+ * - `separator-loosened` inserts one space before each comma (`Portland, or` → `Portland , or`).
+ *
+ * A run is safe unless it sits inside a structured postcode.
  */
 export const WHITESPACE_TRANSFORMATIONS = [
 	"leading",
@@ -52,12 +48,12 @@ export const WHITESPACE_TRANSFORMATIONS = [
 export type WhitespaceTransformationName = (typeof WHITESPACE_TRANSFORMATIONS)[number]
 
 /**
- * Whether a transformation changes a boundary, run, or separator.
+ * Whether a transformation changes an end of the text, an internal run, or comma spacing.
  */
 export type WhitespaceScope = "boundary" | "run" | "separator"
 
 /**
- * Scope for each transformation, shared with applicability checks.
+ * Scope of each named transformation.
  */
 export const WHITESPACE_TRANSFORMATION_SCOPE: Record<WhitespaceTransformationName, WhitespaceScope> = {
 	leading: "boundary",
@@ -69,14 +65,15 @@ export const WHITESPACE_TRANSFORMATION_SCOPE: Record<WhitespaceTransformationNam
 }
 
 /**
- * Split text into alternating tokens and whitespace runs.
+ * Splits text into tokens and whitespace runs.
+ * Runs sit at the odd indices.
  */
 function splitOnWhitespaceRuns(text: string): string[] {
 	return text.split(/(\s+)/)
 }
 
 /**
- * Check postcode shapes using codex formats, including unit-grade forms.
+ * Reports whether the candidate matches a codex postcode format or a unit-grade postcode pattern.
  */
 function isPostcodeShape(candidate: string): boolean {
 	if (candidateSystemsForPostcode(candidate).length) return true
@@ -85,7 +82,7 @@ function isPostcodeShape(candidate: string): boolean {
 }
 
 /**
- * Return whitespace-run indices whose adjacent tokens form a structured postcode.
+ * Returns the indices of whitespace runs whose neighboring tokens, joined by one space, form a postcode.
  */
 function structuralRunIndices(parts: readonly string[]): Set<number> {
 	const structural = new Set<number>()
@@ -102,7 +99,7 @@ function structuralRunIndices(parts: readonly string[]): Set<number> {
 }
 
 /**
- * Return structured identifiers whose internal spaces cannot be changed.
+ * Returns each postcode in the text whose internal space the transformations must keep.
  */
 export function structuralIdentifierSpaces(text: string): string[] {
 	const parts = splitOnWhitespaceRuns(text)
@@ -111,14 +108,14 @@ export function structuralIdentifierSpaces(text: string): string[] {
 }
 
 /**
- * How many whitespace runs `text` holds, structural ones included.
+ * Counts the whitespace runs in the text, including runs inside postcodes.
  */
 function whitespaceRunCount(text: string): number {
 	return (splitOnWhitespaceRuns(text).length - 1) / 2
 }
 
 /**
- * Rewrite every safe whitespace run and leave the structural ones byte-identical.
+ * Rewrites every whitespace run except the runs inside postcodes.
  */
 function rewriteSafeRuns(text: string, rewrite: (run: string) => string): string {
 	const parts = splitOnWhitespaceRuns(text)
@@ -134,7 +131,7 @@ function rewriteSafeRuns(text: string, rewrite: (run: string) => string): string
 }
 
 /**
- * Apply a named transformation; suite variants are derived from this table.
+ * Implementation of each named transformation.
  */
 export const WHITESPACE_TRANSFORMATION_BY_NAME: Record<WhitespaceTransformationName, (text: string) => string> = {
 	leading: (text) => ` ${text}`,
@@ -146,14 +143,15 @@ export const WHITESPACE_TRANSFORMATION_BY_NAME: Record<WhitespaceTransformationN
 }
 
 /**
- * Remove whitespace for comparison; equal keys differ only in whitespace.
+ * Returns the text with all whitespace removed.
+ * Two strings with equal keys differ only in whitespace.
  */
 export function whitespaceBlindKey(text: string): string {
 	return text.replaceAll(/\s+/gu, "")
 }
 
 /**
- * Identify the named transformation from `base` to `variant`, or return `null`.
+ * Returns the named transformation that maps `base` to `variant`, or `null` when none does.
  */
 export function classifyWhitespaceTransformation(base: string, variant: string): WhitespaceTransformationName | null {
 	if (base === variant || whitespaceBlindKey(base) !== whitespaceBlindKey(variant)) return null
@@ -166,28 +164,30 @@ export function classifyWhitespaceTransformation(base: string, variant: string):
 }
 
 /**
- * Reasons a transformation cannot apply: identity or only structural identifier spaces.
+ * Rules that exclude a transformation.
+ *
+ * The first applies when the text does not change.
+ * The second applies when every internal run sits inside a postcode.
  */
 export const WHITESPACE_APPLICABILITY_RULES = ["identity-transformation", "structural-identifier-space"] as const
 
 export type WhitespaceApplicabilityRule = (typeof WHITESPACE_APPLICABILITY_RULES)[number]
 
 /**
- * Applicability result and explanation.
+ * Whether a transformation applies to a text, with an explanation.
  */
 export interface WhitespaceApplicability {
 	applicable: boolean
 	/**
-	 * The rule that excluded it.
-	 *
-	 * Absent when `applicable`.
+	 * Rule that excluded the transformation.
+	 * It is absent when `applicable` is true.
 	 */
 	rule?: WhitespaceApplicabilityRule
 	reason: string
 }
 
 /**
- * Check whether this transformation can test the text's whitespace.
+ * Checks whether a transformation changes the text.
  */
 export function whitespaceApplicability(
 	text: string,
@@ -244,7 +244,10 @@ export const WHITESPACE_SUITE_PATH: string = resolvePackagePath(
 )
 
 /**
- * Audit fixture fields, country context, and named transformations.
+ * Audits suite rows.
+ *
+ * Each row needs a `rowRef`, a `caseCountry`, and a variant that a named
+ * transformation derives from the base.
  */
 export function auditWhitespaceSuite(fixtures: readonly ConformanceFixture[]): string[] {
 	return auditCommonFixtureFields(fixtures, WHITESPACE_LAW, (fixture, label, problems) => {
@@ -274,7 +277,7 @@ export function auditWhitespaceSuite(fixtures: readonly ConformanceFixture[]): s
 }
 
 /**
- * Return the transformation label, or `?` for an invalid pair.
+ * Returns the fixture's transformation name, or `?` when no named transformation fits.
  */
 export function describeWhitespaceTransformation(fixture: ConformanceFixture): string {
 	return classifyWhitespaceTransformation(fixture.base, fixture.variant) ?? "?"

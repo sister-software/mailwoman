@@ -57,7 +57,7 @@ recoverable with no new data, and two fixes from this diagnostic's follow-up lan
 verified `fr.house_number` flat). Re-measured: **address_point 79.8 → 83.5%, interpolated 8.2 →
 9.7%, admin 12.0 → 6.8%; within 100 m 85.9 → 90.0%, within 1 km 90.0 → 94.8%, cascade p99 18.3 →
 10.9 km.** The admin tail is now under 7%, and the remaining bulk is a situs extract theme-reselect
-(the SD/IL holes are in Overture's OpenAddresses theme rather than the sparser NAD theme we ingested) rather than
+(the SD/IL holes are in Overture's OpenAddresses theme, not the sparser NAD theme we ingested), not
 a coverage gap — #723.
 
 ## Why this matters
@@ -89,7 +89,7 @@ retrain and not more gazetteer breadth.
   not yet feed the gazetteer/conventions channels. Routing it through the canonical `createScorer`
   for full ship-config parity is a tracked follow-up; it does not affect the coordinate result here.
 - **Locality-match residual is separate.** The ~2% locality miss is mostly civic-suffix /
-  coincident-municipality naming rather than absent places — a metric-fairness item rather than a coverage hole.
+  coincident-municipality naming, not absent places — a metric-fairness item, not a coverage hole.
 
 Raw report: `oa-resolver-eval --cascade` self-emitted via `--out-md`. Reproduces the situs-cascade
 diagnostic run independently through `geocodeAddress` over the same rows (p50 0.0 / p90 1.0 / 85.9%

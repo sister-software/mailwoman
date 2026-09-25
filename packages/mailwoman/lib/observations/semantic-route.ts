@@ -3,11 +3,11 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Resolve activity phrases through the compiled geographic model when ordinary POI lookup misses.
- *   The artifact supplies affordance assertions and category mappings; the activity lexicon supplies
- *   attested phrases. The route is opt-in, preserves anchor splitting, and records its evidence.
- *   It returns all mapped kinds without ranking them; the resolver selects among results.
- *   Phrase locale scope applies to the caller, while assertion country scope applies to the resolved anchor.
+ *   Resolves activity phrases to POI categories through the compiled geographic model.
+ *
+ *   The activity lexicon supplies the phrases. The model supplies `affords` assertions and the
+ *   mappings into POI categories. The route returns every reachable category without ranking them
+ *   and records an observation for each.
  */
 
 import {
@@ -35,69 +35,59 @@ import { localeToCountry } from "#country-scope"
 import { readCommittedModel } from "#observations/committed-model"
 
 /**
- * The relation the frozen vertical defines, and the only one this route reads.
+ * The only relation this route reads.
  *
- * An assertion under any other relation is not an affordance, and the route refuses an
- * artifact that does not define this one rather than answering "no kinds afford it".
- * An unreadable relation and an unasserted one are different findings.
+ * Construction fails when the model does not define it, so a missing relation is
+ * never reported as "nothing affords this activity".
  */
 const AFFORDS_RELATION = "affords"
 
 /**
- * The external vocabulary a mapping must translate into for the executor to be able to use it.
- *
- * A concept that affords the activity but maps into no POI category cannot be searched for,
- * which the route reports rather than hides.
+ * The external vocabulary that a mapping must target for the POI executor to search it.
  */
 const POI_TAXONOMY_VOCABULARY = "poi-taxonomy"
 
 /**
- * One firing of the route, recorded beside the answer rather than inside it.
+ * One firing of the route, recorded beside the answer.
  *
- * Everything a reader needs to say on whose authority the category was chosen is here:
- * the declared phrase, the lexicon that declared it and the record that attests the phrase
- * itself, the activity it names, the concept whose assertion carries the affordance,
- * that assertion's own modality and provenance, and the external mapping —
- * with its provenance — that translated the concept into a POI category id.
+ * It holds the provenance of each link from the phrase to the POI category: the lexicon entry
+ * and its attestation, the activity, the concept's `affords` assertion, and the external mapping.
  */
 export interface SemanticObservation {
 	/**
-	 * The candidate subject phrase the rung was asked about, as `matchPOISubject` handed it over.
+	 * The candidate subject phrase passed to the lookup by `matchPOISubject`.
 	 */
 	phrase: string
 	/**
-	 * The declared surface form that matched it.
+	 * The declared lexicon phrase that matched.
 	 */
 	matchedPhrase: string
 	phraseLexiconID: string
 	phraseLexiconVersion: string
 	phraseProvenance: SourceProvenance
 	/**
-	 * What attests the surface form itself — the class of record and the record.
+	 * The record that attests the phrase itself.
 	 *
-	 * A category chosen from a phrase nobody can trace is the failure this program exists
-	 * to avoid, and the assertion's provenance does not cover it: that one says why a
-	 * pharmacy affords the activity rather than why this string names it.
+	 * The assertion's provenance explains why a concept affords the activity.
+	 * This field explains why the phrase refers to the activity.
 	 */
 	phraseAttestation: {
 		kind: string
 		reference: string
 	}
 	/**
-	 * How the entry's locale scope met the locale the query was read under.
+	 * How the entry's locale scope matched the query's locale.
 	 */
 	localeScope: ActivityPhraseLocaleScope
 	/**
-	 * The tags the entry declares, or `null` when it is unscoped.
+	 * The locale tags that the entry declares, or `null` when the entry is unscoped.
 	 */
 	declaredLocales: string[] | null
 	/**
-	 * The country the caller's locale named, or `null` when it named none.
-	 * The lens the phrase was read through.
+	 * The country from the caller's locale, or `null`.
 	 *
-	 * It is not what the assertion's country scope was tested against: that is the resolved
-	 * anchor's country, which the POI intent stage binds after this observation is recorded
-	 * and reports on the intent's `countryBinding`.
+	 * The assertion's country scope is tested against the resolved anchor's country instead.
+	 * The POI intent stage binds that country later and reports it on the intent's `countryBinding`.
 	 */
 	localeCountry: string | null
 	activity: string
@@ -107,7 +97,7 @@ export interface SemanticObservation {
 		relation: string
 		modality: string
 		/**
-		 * The countries the assertion scopes its claim to, or `null` when it scopes it to none in particular.
+		 * The countries that the assertion is scoped to, or `null` when it is unscoped.
 		 */
 		countries: string[] | null
 		provenance: SourceProvenance
@@ -119,28 +109,23 @@ export interface SemanticObservation {
 		provenance: SourceProvenance
 	}
 	/**
-	 * The POI category id handed back to the pipeline — the mapping's `externalID`.
+	 * The POI category ID returned to the pipeline, equal to the mapping's `externalID`.
 	 */
 	categoryID: string
 	/**
-	 * How many mapped entity kinds the activity reached on this firing.
+	 * The number of mapped entity kinds that the activity reached on this firing.
 	 *
-	 * The set handed to the POI branch before the anchor's country was bound.
-	 *
-	 * One observation is recorded per member, each naming its own assertion and mapping,
-	 * and every one of them carries this same count.
-	 * A receipt showing it is what distinguishes a genuinely singular reach from a set that collapsed quietly.
+	 * Each reached kind gets its own observation, and all of them carry the same count.
 	 */
 	mappedKindCount: number
 	modelVersion: string
 }
 
 /**
- * What the route is, stated for a receipt: which artifact and which lexicon it
- * was built from, and what it can reach.
+ * Identifies the model and lexicon a route was built from, and the categories it can reach.
  *
- * A receipt that recorded only an arm label would be unable to tell a run with the route from a
- * run whose route was dropped on the way in, and those produce the same numbers for opposite reasons.
+ * Receipts record it so that a run with the route can be told apart from a run
+ * where the route was silently missing.
  */
 export interface SemanticRouteIdentity {
 	phraseLexiconID: string
@@ -148,49 +133,47 @@ export interface SemanticRouteIdentity {
 	declaredPhrases: number
 	modelVersion: string
 	/**
-	 * Every POI category id the declared activities can reach through the artifact, in code-point order.
+	 * Every POI category ID that the declared activities can reach, in code-point order.
 	 */
 	reachableCategoryIDs: string[]
 }
 
 /**
- * The injectable route.
+ * A semantic observation route that the pipeline receives as a POI phrase lookup.
  */
 export interface SemanticObservationRoute {
 	/**
-	 * The lexicon rung.
+	 * Matches a phrase against the lexicon.
 	 *
-	 * @returns `[]` for every phrase that does not end in a declared activity form the locale admits.
+	 * @returns `[]` for a phrase that does not end in a declared phrase admitted by the locale.
 	 */
 	lookup: POIPhraseLookup
 	identity: SemanticRouteIdentity
 	/**
-	 * Drain the observations recorded since the last drain, deduplicated.
+	 * Returns the observations recorded since the last call, deduplicated, and clears them.
 	 *
-	 * A single query drives the rung several times — the kind scorers probe it, then the intent stage
-	 * probes it again, each over the whole input and every anchor prefix — so an undeduplicated
-	 * drain reports the same authority four or five times and reads as four or five decisions.
+	 * One query calls the lookup several times over the input and its anchor prefixes,
+	 * so the raw record repeats the same observation.
 	 */
 	takeObservations: () => SemanticObservation[]
 }
 
+/**
+ * Options for {@link createSemanticObservationRoute}.
+ */
 export interface SemanticObservationRouteOptions {
 	/**
-	 * Override the compiled artifact, for a test that wants a synthetic model.
-	 *
-	 * Absent reads the committed one.
+	 * A compiled model to use in place of the committed one, such as a synthetic test model.
 	 */
 	model?: CompiledGeographicModel
 	/**
-	 * Override the declared lexicon.
-	 *
-	 * Absent reads the committed one.
+	 * A lexicon to use in place of the committed one.
 	 */
 	lexicon?: ActivityPhraseLexicon
 }
 
 /**
- * One declared phrase, resolved all the way to the categories it can reach.
+ * One declared phrase with the categories it can reach.
  */
 interface ResolvedPhrase {
 	entry: ActivityPhraseEntry
@@ -199,7 +182,7 @@ interface ResolvedPhrase {
 }
 
 /**
- * One entity kind that affords a declared activity, and the mapping that makes it searchable.
+ * One entity kind that affords a declared activity, with the mapping that makes it searchable.
  */
 interface ReachedKind {
 	concept: ConceptRecord
@@ -208,17 +191,12 @@ interface ReachedKind {
 }
 
 /**
- * Which entity kinds assert `affords` against this activity and map into a POI
- * category, in concept code-point order.
+ * Returns the entity kinds that assert `affords` for the activity and map into a POI category.
  *
- * The order is a stable enumeration and not a preference, and it is never used to choose:
- * every member is returned and the POI branch searches their union.
- * Deciding which of several kinds answers best would be the candidate ordering this program does not author.
+ * The result is sorted by concept ID for stability only.
+ * The POI branch searches the union of all kinds.
  *
- * Country scope is not applied here, or anywhere in this route: the assertion's scope is met by
- * the country of the resolved anchor, which exists only after the intent stage has parsed the anchor.
- * This enumeration is what construction audits, and the audit has to see the whole set,
- * or a phrase would be audited against one country's reach and used in another's.
+ * Country scope is applied later by the intent stage, after the anchor's country is known.
  */
 function reachKinds(model: CompiledGeographicModel, activity: string): ReachedKind[] {
 	const mappings = new Map<string, ExternalMappingRecord>()
@@ -249,15 +227,10 @@ function reachKinds(model: CompiledGeographicModel, activity: string): ReachedKi
 }
 
 /**
- * Everything wrong with a lexicon read against an artifact, one message per problem.
+ * Returns one message per problem found when checking a lexicon against a model.
  *
- * Each of these is a route that would answer nothing while looking like a route that found
- * nothing, which is the shape of failure a probe cannot distinguish from a real absence.
- * So they refuse at construction rather than at query time.
- *
- * The vocabulary's own audit runs first and is not restated here: an injected lexicon
- * never passed through `readActivityLexicon`, so a route built from one would otherwise
- * accept a duplicate, an empty list or a phrase that normalizes away.
+ * Each problem would make a phrase match silently and answer nothing, so construction fails on any.
+ * The lexicon's own audit runs first because an injected lexicon skipped `readActivityLexicon`.
  */
 function auditRoute(
 	model: CompiledGeographicModel,
@@ -304,17 +277,16 @@ function auditRoute(
 }
 
 /**
- * The observation key a drain deduplicates on: one authority reached from one candidate phrase.
+ * Returns the key that `takeObservations` deduplicates on.
  */
 function observationKey(observation: SemanticObservation): string {
 	return [observation.phrase, observation.matchedPhrase, observation.assertion.id, observation.categoryID].join(" ")
 }
 
 /**
- * The record that attests one declared phrase, flattened to the two fields a receipt reads.
+ * Returns the attestation kind and reference for a declared phrase.
  *
- * `derived-form` points at another entry rather than at an outside record, so its
- * reference is that base, which is what a reader following the chain needs next.
+ * A `derived-form` attestation refers to its base entry, so the reference is that base.
  */
 function attestationOf(entry: ActivityPhraseEntry): { kind: string; reference: string } {
 	const { attestation } = entry
@@ -326,10 +298,11 @@ function attestationOf(entry: ActivityPhraseEntry): { kind: string; reference: s
 }
 
 /**
- * Build the route from the committed artifact and the committed activity lexicon.
+ * Builds the route from the committed model and activity lexicon, or from the injected ones.
  *
- * Asynchronous because the artifact reader is reached by dynamic import,
- * which keeps it off the load path of a caller who never builds a route.
+ * The function is async because the committed model reader loads through a dynamic import.
+ *
+ * @throws When the lexicon does not resolve against the model.
  */
 export async function createSemanticObservationRoute(
 	options: SemanticObservationRouteOptions = {}
@@ -353,9 +326,8 @@ export async function createSemanticObservationRoute(
 		)
 	}
 
-	// Longest declared phrase first, so `pick up a prescription` beats the bare `prescription` it ends with.
-	// Ties break on the phrase itself, so the winner is a property of the lexicon
-	// rather than of the order it was written in.
+	// Longer phrases match first, so `pick up a prescription` wins over `prescription`.
+	// Ties break on the phrase text so that lexicon order does not matter.
 	const ordered = resolved.toSorted(
 		(left, right) =>
 			right.normalized.length - left.normalized.length || compareByCodePoint(left.normalized, right.normalized)
@@ -364,7 +336,7 @@ export async function createSemanticObservationRoute(
 	const recorded: SemanticObservation[] = []
 
 	/**
-	 * Record one firing and hand back what the pipeline is told about it.
+	 * Records one observation per reached kind and returns the matching POI phrase matches.
 	 */
 	const claim = (
 		declared: ResolvedPhrase,
@@ -410,18 +382,13 @@ export async function createSemanticObservationRoute(
 				kind: "category",
 				categoryID: String(mapping.externalID),
 				matchedPhrase: declared.entry.phrase,
-				// The confidence the committed exact-phrase rung reports for the same kind of hit:
-				// `1` for a phrase used everywhere or one the locale names outright, and the halved
-				// value `@mailwoman/variant-aliases` reports when only the language agrees.
-				// It selects a query kind.
-				// It orders no candidate, and no number here was chosen to make one win.
-				// Every member of a set carries the same value, so the set cannot be ranked by it either.
+				// The confidence is 1 for an unscoped phrase or an exact locale match,
+				// and half that when only the language matches.
+				// It selects a query kind and never orders candidates.
 				confidence: localeMatch.confidence,
-				// These matches are one afforded set rather than a preference list: the POI branch searches their union.
+				// The POI branch searches the union of these matches.
 				searchAsSet: true,
-				// The assertion's claim rides with the match for the intent stage to
-				// bind against the anchor's country.
-				// It is not applied here: the anchor has not been parsed yet when this runs.
+				// The intent stage applies the country scope after it parses the anchor.
 				...(assertion.countries?.length
 					? { countryScope: assertion.countries.map((scoped) => scoped.toUpperCase()) }
 					: {}),
@@ -438,9 +405,8 @@ export async function createSemanticObservationRoute(
 
 		const country = localeToCountry(locale)
 
-		// The locale scope is read inside the search rather than after it:
-		// a longer phrase it refuses must not stand in front of a shorter one it admits,
-		// or the scope would silence a phrase it does not cover.
+		// The locale check runs inside the loop, so a longer phrase that the locale
+		// rejects cannot hide a shorter phrase that it admits.
 		for (const declared of ordered) {
 			if (candidate !== declared.normalized && !candidate.endsWith(` ${declared.normalized}`)) continue
 

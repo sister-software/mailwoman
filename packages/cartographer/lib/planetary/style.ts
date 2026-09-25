@@ -22,6 +22,9 @@ import {
 	PlanetaryNomenclatureSourceID,
 } from "#planetary/sources"
 
+/**
+ * Options for {@link createPlanetaryStyle}.
+ */
 export interface PlanetaryStyleOptions {
 	body: PlanetaryStyleBody
 	/**
@@ -29,8 +32,8 @@ export interface PlanetaryStyleOptions {
 	 */
 	nomenclatureTileJSONURL: string
 	/**
-	 * Optional hillshade TileJSON URL.
-	 * Without it, the style omits terrain shading.
+	 * TileJSON URL for hillshade tiles.
+	 * The style omits terrain shading when it is absent.
 	 */
 	hillshadeTileJSONURL?: string
 }
@@ -64,6 +67,6 @@ export function createPlanetaryStyle(options: PlanetaryStyleOptions): StyleSpeci
 		sky: { "sky-color": palette.space, "horizon-color": palette.space },
 	}).toJSON()
 
-	// MapLibre 6 reads globe projection from the style, not the map options.
+	// MapLibre 6 reads the globe projection from the style.
 	return { ...style, projection: { type: "globe" } }
 }

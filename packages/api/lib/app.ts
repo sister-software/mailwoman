@@ -3,9 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The native Mailwoman Hono app: cors + a request-body-size guard + the strict-validation error
- *   envelope + the `/v1` routes + the emitted OpenAPI document. Engine-agnostic — the `mailwoman`
- *   CLI wires the real parse/geocode/resolve stack (phase 4b); tests inject fixtures.
+ *   The native Mailwoman Hono app with the `/v1` routes and their OpenAPI document.
  */
 
 import { OpenAPIHono } from "@hono/zod-openapi"
@@ -25,7 +23,7 @@ import { DEFAULT_BATCH_MAX, registerMailwomanAPIRoutes } from "#routes"
 import type { GeocodeOutcomeLike } from "#schema"
 
 /**
- * Maximum request body size, matching the former Express server.
+ * Default maximum request body size in bytes.
  */
 const DEFAULT_BODY_LIMIT_BYTES = 2 * 1024 * 1024
 
@@ -34,35 +32,30 @@ const DEFAULT_BODY_LIMIT_BYTES = 2 * 1024 * 1024
  */
 export interface MailwomanAPIOptions {
 	/**
-	 * Emit permissive cors headers (`Access-Control-Allow-Origin: *`) on every response
-	 * and answer preflight `options` with `204`.
+	 * Whether to send `Access-Control-Allow-Origin: *` and answer CORS preflights.
 	 *
-	 * Default `true` — browser-embedded clients (the demo, a map widget) need it:
-	 * a cross-origin XHR (including the `post` preflight) is blocked without it (#1017).
-	 * Set `false` when a reverse proxy already owns the cors headers.
+	 * Defaults to `true` because browser clients such as the demo need it.
+	 * Set it to `false` when a reverse proxy sets the CORS headers.
 	 */
 	cors?: boolean
 
 	/**
-	 * Max request body size in bytes, enforced ahead of every `/v1/*` handler.
-	 *
-	 * Default 2 MiB.
+	 * Maximum request body size in bytes for every `/v1/*` route.
+	 * Defaults to 2 MiB.
 	 */
 	bodyLimitBytes?: number
 
 	/**
-	 * Max `addresses` rows accepted by `post /v1/batch`.
-	 *
-	 * Default 500 (see `routes.ts`'s `DEFAULT_BATCH_MAX`).
+	 * Maximum number of `addresses` rows that `POST /v1/batch` accepts.
+	 * Defaults to `DEFAULT_BATCH_MAX`.
 	 */
 	batchMax?: number
 
 	/**
-	 * The engine stamp to carry on every response: `engine` in each `/v1` body
-	 * and the `Server` + `Link: rel="license"` headers everywhere.
+	 * Engine stamp added to every `/v1` body and to the `Server` and `Link: rel="license"` headers.
 	 *
-	 * Absent when an embedding application builds the app without the `mailwoman` package.
-	 * The `mailwoman serve` command always passes one.
+	 * `mailwoman serve` always passes one.
+	 * An embedding app may omit it.
 	 */
 	engine?: EngineStamp
 }
@@ -99,14 +92,16 @@ export const MAILWOMAN_API_DOC_INFO: OpenAPIDocInfo = {
 
 /**
  * Build the native Mailwoman app around an injected {@link MailwomanAPIEngine}.
+ *
+ * The CLI passes the real parse and geocode stack.
+ * Tests pass fixtures.
  */
 export function createMailwomanAPI<T extends Partial<GeocodeOutcomeLike> = GeocodeOutcomeLike>(
 	engine: MailwomanAPIEngine<T>,
 	options: MailwomanAPIOptions = {}
 ): OpenAPIHono {
 	const app = new OpenAPIHono({
-		// Validate declared schemas and format failures with the shared API envelope.
-		// Routes can override this fallback with endpoint-specific messages.
+		// Routes may override this fallback with their own validation messages.
 		defaultHook: (result, c) => {
 			if (!result.success) {
 				return errorResponse(c, 400, "invalid request body", summarizeValidationError(result.error))
@@ -116,7 +111,6 @@ export function createMailwomanAPI<T extends Partial<GeocodeOutcomeLike> = Geoco
 		},
 	})
 
-	// Browser clients need CORS for cross-origin requests and POST preflights.
 	if (options.cors !== false) {
 		app.use(cors({ origin: "*", allowMethods: ["GET", "POST", "OPTIONS"], allowHeaders: ["*"], maxAge: 86_400 }))
 	}
@@ -125,10 +119,9 @@ export function createMailwomanAPI<T extends Partial<GeocodeOutcomeLike> = Geoco
 		app.use(engineHeaders(options.engine))
 	}
 
-	// Return engine failures in the API's error envelope, including the message in `detail`.
 	app.onError((error, c) => {
-		// Hono rejects malformed JSON before route-level validation hooks run.
-		// Treat that client syntax error as 400; reserve 500 for engine faults.
+		// Hono rejects malformed JSON before the validation hook runs.
+		// That is a client error.
 		if (error instanceof Error && error.message.includes("Malformed JSON")) {
 			return errorResponse(c, 400, "invalid request body", "malformed JSON")
 		}
@@ -136,7 +129,6 @@ export function createMailwomanAPI<T extends Partial<GeocodeOutcomeLike> = Geoco
 		return errorResponse(c, 500, "internal error", error instanceof Error ? error.message : String(error))
 	})
 
-	// Enforce the limit before handlers buffer request bodies.
 	app.use(
 		"/v1/*",
 		bodyLimit({

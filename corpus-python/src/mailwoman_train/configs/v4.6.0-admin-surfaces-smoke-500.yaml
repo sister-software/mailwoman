@@ -1,53 +1,7 @@
-# 500-step feed smoke for v4.6.0 — validates the v0.23.0 overlay reads + loss descends. Not a capability probe.
-# v4.6.0-admin-surfaces — the first-refusal-era from-scratch base (2026-08-15).
+# v4.6.0-admin-surfaces-smoke-500 is a 500-step feed smoke for v4.6.0-admin-surfaces.
 #
-# The v4.4.0 suffix-boundary-v2 recipe verbatim (from scratch, 60k cosine, s42) over the
-# v0.23.0-admin-surfaces overlay. Four corpus deltas, each carrying a standing board failure:
-#   1. cz-pcfirst v21 + fr-bare-street v22 — the v4.5.x counter-form sources, weights held at their
-#      probe-verified values (fr 6.0 / cz 12.0). The fine-tune arc proved these classes need a
-#      base run (three cycles, Fisher brake blind to rare classes — scratchpad/v45x-final-verdict.md).
-#   2. bare-country v23 (277 rows, weight 1.0 — per-source draw share, so a small weight still
-#      repeats each row ~20x/epoch. the Japan-parses-as-locality class, #1651's parse half).
-#   3. trailing-region es v23 (Portopetro: '«locality», «region», Spain' tails from WOF pairs).
-#   4. trailing-region gb v23 (St Margaret's Hope: venue-looking locality names, 8x extraction
-#      weight on the venue-ish subset).
-# Checks: the 500-step feed smoke precedes the launch. the full battery + the 349-row regression
-# board grade the result. the two standing board rows (es-op3-southeast-portopetro,
-# gb-op2-st-margarets-hope) are the acceptance tests. promote is the operator'S.
-#
-# === v4.4.0-suffix-boundary-v2-base-60k — #1569 corrected-interface base (five-whys countermeasures) ===
-#
-# hypothesis: the v4.3.3 B1 plateau (72-85/128 across 5k-46k incl. the completed-schedule
-# cooldown branch) was caused by a contradictory feed — ~78% of ordinary-source terminal-only
-# carriers taught "absorb the suffix" (the relabel guard refused name-prone splits) while the
-# synthetic source taught "split", and the model learned the context discrimination instead
-# (rich rows 5/43 vs bare 53/65). This run trains the same geometry from scratch with the
-# contradiction removed and the exposure/diversity changes corrected.
-#
-# effective deltas vs v4.3.3 (each carries its own receipt in scratchpad/SUFFIX_BOUNDARY_TRAINING.md):
-#   1. affix lexicon v2 — positional licensing: ordinary terminal-only carriers 21.0% -> 94.0%
-#      correct (250k feed audit, contrast classes unchanged). The absorb signal is gone.
-#   2. corpus v0.19.0 — suffix-boundary recipe v2: real 16,432-name venue shell at 30% (was 6 template
-#      strings. the failing context), 3,694 stem-pair hard negatives ('Menlo Park Road' +
-#      'Menlo Park' sharing a stem), A/B byte-identical at seed 1569 (sha256 d939a762...).
-#   3. exposure: source weight 12.0 -> 2.5 = ~1.55% of draws = ~4.0 effective passes over the 30k
-#      rows per 60k run (the published repetition knee. was ~18 passes/row, ~140 per unique span).
-#   4. augment_exclude_sources: the source bypasses augmentation (copies of an oversampled
-#      template source compound repetition without adding diversity. augmented rows measured at
-#      25.5% of the emitted budget).
-# training semantics otherwise verbatim v4.3.3: from scratch, no init_from, no EWC, LR 5e-4,
-# warmup 1,000, 60k cosine, batch 128, bf16, Fisher capture over the final 2k steps, seed 42.
-# The loader is the repaired substrate (stationary sampler, clean val, atomic checkpoints).
-#
-# checks (fp32, unchanged):
-#   B1 terminal-only >=116/128
-#   B2 terminal-contrast >=34/48
-#   B4 locality-token retention >=3/7 (exact locality is an upside watch)
-#   B3 `mailwoman eval promote --spec v9.0.0-base`, zero known tier-1 regression, only after B1/B2/B4
-# Grade 5k/10k/20k/40k/60k fp32. grade discipline: mid-cosine reads understate the finished
-# model (the 40k cooldown branch measured the tail worth +3 B1) — interim grades are curve
-# telemetry, the 60k grade is the verdict. If 60k misses B1, stop this change. the next moves
-# are the street-type channel position-encoding and decode-time span scoring rather than a re-weighting.
+# It checks that the v0.23.0-admin-surfaces overlay loads and that the loss falls. It does not measure
+# capability. Apart from the step count, warmup, Fisher capture and run names, it matches the 60k config.
 
 data:
   corpus_dir: /data/corpus/versioned/v0.23.0-admin-surfaces/corpus-v0.23.0-admin-surfaces
@@ -103,10 +57,12 @@ data:
     overture: 3.0
     gnaf: 6.0
     synth-anchor-absorption: 6.0
-    synth-fr-bare-street: 0.0 # v0.9.4 vintage SUPERSEDED by -v22
+    # The loader refuses a source missing from this map, so each superseded generation stays listed at 0.0.
+    synth-fr-bare-street: 0.0
     synth-si-bare-village: 12.0
+    # The on-disk synth-no-street-led part predates --exclude-surfaces and contains Norway board surfaces.
     synth-no-street-led: 0.0
-    synth-cz-pcfirst-preposition: 0.0 # SUPERSEDED by -v21
+    synth-cz-pcfirst-preposition: 0.0
     synth-nl-postcode: 6.0
     synth-fragment: 6.0
     synth-fr-fragment: 12.0
@@ -114,13 +70,12 @@ data:
     synth-gb: 6.0
     synth-sub-venue: 12.0
     synth-suffix-boundary: 2.5
-    # The v4.5.x counter-form vintages (see the header). Superseded vintages never co-feed.
-    synth-fr-bare-street-v20: 0.0 # SUPERSEDED by -v22
-    synth-fr-bare-street-v21: 0.0 # SUPERSEDED by -v22
+    # Only the newest generation of each counter-form source trains.
+    synth-fr-bare-street-v20: 0.0
+    synth-fr-bare-street-v21: 0.0
     synth-fr-bare-street-v22: 6.0
-    synth-cz-pcfirst-preposition-v20: 0.0 # SUPERSEDED by -v21
+    synth-cz-pcfirst-preposition-v20: 0.0
     synth-cz-pcfirst-preposition-v21: 12.0
-    # The v0.23.0 admin-surface sources (the header's deltas 2-4).
     synth-bare-country-v23: 1.0
     synth-trailing-region-es-v23: 6.0
     synth-trailing-region-gb-v23: 6.0

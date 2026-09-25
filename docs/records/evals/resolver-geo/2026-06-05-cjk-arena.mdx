@@ -24,7 +24,7 @@ The level a postcode resolves to — the municipality — is essentially all poi
 
 If you can't ask "which polygon contains this point," you ask the postal authority "what's the municipality for this postcode," and then you find that municipality in WOF. Japan's postal authority publishes exactly that — **KEN_ALL**, from Japan Post, and crucially a _romanized_ edition whose municipality column reads `SAPPORO SHI CHUO KU`, in the same alphabet as WOF's romanized place names. Authoritative, and matchable.
 
-Getting it was its own small saga: every KEN_ALL download URL we knew was a 404, the new ones are blocked behind JavaScript and a Japan-only fetch, and the file when it finally arrives is CP932/Shift-JIS from 2025. But it arrives, and it carries the one thing WOF's own postcode hierarchy doesn't — the municipality, notthe prefecture (WOF's postcode→admin chain stops at the prefecture, far too coarse).
+Getting it was its own small saga: every KEN_ALL download URL we knew was a 404, the new ones are blocked behind JavaScript and a Japan-only fetch, and the file when it finally arrives is CP932/Shift-JIS from 2025. But it arrives, and it carries the one thing WOF's own postcode hierarchy doesn't — the municipality, not just the prefecture (WOF's postcode→admin chain stops at the prefecture, far too coarse).
 
 The build is then a different shape feeding the _same_ implementation:
 

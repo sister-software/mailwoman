@@ -7,43 +7,43 @@ audience: teams
 
 # Eliminate the per-request bill
 
-Metered geocoding prices one lookup at a time, which makes the line item a function of address
-volume — and address volume is the input your team controls least. A migration reprocesses the book.
-A campaign lands. An integration retries a queue. Budgeting the year means forecasting query counts
-twelve months out, then defending a number that moves for reasons nobody in the room set.
+Metered geocoding charges for each lookup, so the line item grows with address volume. Your team has
+little control over that volume. A migration reprocesses the address book, a campaign launches, or an
+integration retries a queue. To budget for the year, you have to forecast query counts twelve months
+ahead and then defend a number that changes for reasons outside your control.
 
 ## What changes
 
-Mailwoman runs where your code runs. There is no meter, because the software executes on your
-machines and no request crosses a boundary anyone could count. The AGPL-3.0 release is free at any
-volume. The commercial license, which releases you from the AGPL's source-sharing condition, is a
-flat $250 a month per legal entity for a company under 250 employees and under $10M in annual
-revenue; past either line the tier is Enterprise, scoped with you from $15,000 a year. Both are flat,
-and your rate is fixed at signup.
+Mailwoman runs where your code runs. Nothing meters usage, because the software executes on your
+machines and sends no requests that anyone could count. The AGPL-3.0 release is free at any volume.
+The commercial license releases you from the AGPL's source-sharing condition. It costs a flat $250 a
+month per legal entity for a company under 250 employees and under $10M in annual revenue. A company
+above either limit uses the Enterprise tier, which is scoped with you and starts at $15,000 a year.
+Both tiers are flat, and your rate is fixed at signup.
 
-Disk replaces the meter. A full install of the entry package with the `en-us` weights measures
-707 MB, of which 523 MB is the ONNX runtime, and the global candidate gazetteer is a 1.65 GB download
-pulled once and kept. Both figures are measured, and the page carrying them prints the commands that
-produced them so you can re-run them rather than take our word:
-[Footprints](../developers/reference/footprints.mdx).
+Disk space replaces the meter. A full install of the entry package with the `en-us` weights measures
+707 MB, of which 523 MB is the ONNX runtime. The global candidate gazetteer is a 1.65 GB download
+that you pull once and keep. Both figures are measured.
+[Footprints](../developers/reference/footprints.mdx) prints the commands that produced them, so you
+can re-run them yourself.
 
 ## A book that grows
 
-Take a fulfillment back office geocoding 500,000 addresses a month, and the same product at
-5 million a month eighteen months later. Rates are the providers' to publish and this page quotes
-none of them, so take an illustrative $1 per 1,000 to see the shape: the metered line goes from $500
-a month to $5,000 a month. Inside the size fence above, the commercial license is $250 a month at
-500,000 addresses and $250 a month at 5 million, because nothing in the deployment reports a count
-back to us. Growth appears in one of those two lines and stays out of the other.
+Consider a fulfillment back office that geocodes 500,000 addresses a month and grows to 5 million a
+month eighteen months later. Providers publish their own rates, and this page quotes none of them.
+At an illustrative $1 per 1,000 lookups, the metered cost grows from $500 a month to $5,000 a month.
+Within the size limits above, the commercial license costs $250 a month at 500,000 addresses and $250
+a month at 5 million, because the deployment reports no counts back to us. Growth raises the metered
+cost and leaves the license cost unchanged.
 
 ## What you still carry
 
-The price covers the code. Reference data is a separate question: the gazetteer and layer artifacts
-come from open sources with their own terms, and some of those terms follow the data into your
-product — [Security and compliance](../about/security-and-compliance.mdx) draws that line and names
-the two cases worth reading before a review. You also carry the operations, which is a process to
-run, a disk to fill, and a decision about when to refresh. Those costs are flat in address volume,
-which is the property the meter did not have.
+The price covers the code. Reference data has its own terms. The gazetteer and layer artifacts come
+from open sources, and some of their terms follow the data into your product.
+[Security and compliance](../about/security-and-compliance.mdx) explains where those terms apply and
+identifies the two cases to read before a review. You also carry the operations: a process to run, a
+disk to fill, and a decision about when to refresh. Those costs do not grow with address volume,
+unlike a metered bill.
 
 ## Next
 

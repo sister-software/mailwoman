@@ -14,31 +14,31 @@ tags:
 
 # Joint decoding — a walkthrough
 
-[The knowledge ladder](../understanding/our-approach/the-knowledge-ladder.mdx) explains _why_ the v0.5.0 pipeline grew two new information layers (Stage 2.7 phrase grouper, expanded Stage 5 reconcile). This article walks through _what they do_ on one concrete input, end-to-end.
+[The knowledge ladder](../understanding/our-approach/the-knowledge-ladder.mdx) explains _why_ the v0.5.0 pipeline added two information layers: the Stage 2.7 phrase grouper and an expanded Stage 5 reconcile. This article follows one concrete input through the pipeline to show _what they do_.
 
-We use the operator's kryptonite case:
+The input is the operator's hardest test case:
 
 > `NY-NY Steakhouse, Houston, TX`
 
-This string breaks every previous version of Mailwoman. The token `NY` looks exactly like the abbreviation for New York (which is what a per-token classifier reads it as on its own), but the only interpretation that makes sense for the whole string is that `NY-NY` is part of a venue name, the city is Houston, and the region is Texas. No single layer can reach that conclusion alone. Joint decoding is the layer that can.
+Every earlier version of Mailwoman parsed this string wrong. On its own, the token `NY` looks exactly like the abbreviation for New York, and a per-token classifier reads it that way. The only reading that makes sense for the whole string is that `NY-NY` is part of a venue name, the city is Houston, and the region is Texas. No single layer can reach that conclusion alone, and joint decoding is the layer that combines their evidence.
 
-If you have not read [The staged pipeline](../understanding/our-approach/the-staged-pipeline.mdx), do that first — this article assumes you know the six stages by name.
+Read [The staged pipeline](../understanding/our-approach/the-staged-pipeline.mdx) first. This article assumes you know the six stages by name.
 
 ## Stage 1 + 2 + 2.5 (warm-up)
 
-Stage 1 normalizes the bytes. Nothing interesting happens here for our input — no NFC fix-ups, no abbreviation expansion. The string passes through unchanged.
+Stage 1 normalizes the bytes. For this input it makes no NFC fixes and expands no abbreviations, so the string passes through unchanged.
 
-Stage 2 is the locale check. For Latin-only input like this, the default is `en-US` with a moderate confidence. The downstream resolver weights will tilt toward US gazetteer hits.
+Stage 2 is the locale check. For Latin-only input like this, the default is `en-US` with moderate confidence. The downstream resolver weights therefore favor US gazetteer matches.
 
-Stage 2.5 is the kind classifier. It looks at the shape of the string (commas, capitalization, the trailing two-letter token after a final comma) and decides this is a `structured_address` — not a bare postcode rather than a single locality. The full pipeline runs.
+Stage 2.5 is the kind classifier. It looks at the shape of the string (commas, capitalization, the trailing two-letter token after a final comma) and classifies it as a `structured_address`, rather than a bare postcode or a single locality. The full pipeline runs.
 
-These three stages are not the interesting part for this example. Skip ahead.
+These three stages do nothing notable for this example.
 
 ## Stage 2.7 — phrase grouper proposes spans
 
-The phrase grouper is the new layer at the top. Its job is **boundary discovery only**. It does not decide what type each span is, only "which tokens belong together". It emits a list of proposals with confidence scores.
+The phrase grouper is the new layer at the top. It **only discovers boundaries**. It decides which tokens belong together, but not what type each span is. It emits a list of proposals with confidence scores.
 
-For our input it produces (the actual scores come from [`phrase-grouper/kryptonite.test.ts`](https://github.com/sister-software/mailwoman/blob/main/phrase-grouper/kryptonite.test.ts)):
+For our input it produces these proposals. The scores come from [`phrase-grouper/kryptonite.test.ts`](https://github.com/sister-software/mailwoman/blob/main/phrase-grouper/kryptonite.test.ts):
 
 | Span   | Body               | Hypothesis            | Confidence |
 | ------ | ------------------ | --------------------- | ---------- |
@@ -47,17 +47,17 @@ For our input it produces (the actual scores come from [`phrase-grouper/kryptoni
 | 18..25 | `Houston`          | `LOCALITY_PHRASE`     | 0.65       |
 | 27..29 | `TX`               | `REGION_ABBREVIATION` | 0.95       |
 
-Three things to notice here:
+Three details in this output matter:
 
-1. **`NY-NY` and `NY-NY Steakhouse` both appear**, with overlapping start positions. The grouper does not pick. It proposes both and lets Stage 5 decide. A `HYPHENATED_COMPOUND` is one structural unit; a `VENUE_PHRASE` ending in a known venue marker (`Steakhouse`) is another. Both are coherent ways to read the same prefix.
-2. **`Houston` gets a lower confidence (0.65) than `TX` (0.95)**. The grouper sees `TX` at the very tail after a comma, which is a strong structural signal for a region abbreviation. `Houston` is a capitalized word that _could_ be a locality but the grouper has no dictionary — it only knows it looks like a `LOCALITY_PHRASE` structurally.
-3. **No span covers `,` or whitespace.** The grouper proposes only over real input tokens. The character offsets in the body column refer to the original input string.
+1. **`NY-NY` and `NY-NY Steakhouse` both appear**, with the same start position. The grouper does not choose between them. It proposes both and leaves the decision to Stage 5. A `HYPHENATED_COMPOUND` is one structural unit, and a `VENUE_PHRASE` ending in a known venue marker (`Steakhouse`) is another. Both are coherent readings of the same prefix.
+2. **`Houston` gets a lower confidence (0.65) than `TX` (0.95)**. `TX` sits at the end of the string after a comma, which is a strong structural signal for a region abbreviation. `Houston` is a capitalized word that _could_ be a locality, but the grouper has no dictionary. It only knows that the word has the structure of a `LOCALITY_PHRASE`.
+3. **No span covers `,` or whitespace.** The grouper proposes spans only over real input tokens. The character offsets in the span column refer to the original input string.
 
-What the grouper does _not_ know: that `NY` is the abbreviation for New York, that Houston is in Texas, that "Steakhouse" suggests a venue. All of those are world knowledge, and the grouper deliberately stays away. It supplies structural priors only — this is the [bitter-lesson safety](../understanding/our-approach/the-knowledge-ladder.mdx#why-this-decomposition-is-bitter-lesson-aligned) we want at this layer.
+The grouper does _not_ know that `NY` abbreviates New York, that Houston is in Texas, or that "Steakhouse" suggests a venue. That is world knowledge, and the grouper deliberately avoids it. It supplies only structural priors, which keeps this layer consistent with the [bitter lesson](../understanding/our-approach/the-knowledge-ladder.mdx#why-this-decomposition-is-bitter-lesson-aligned).
 
 ## Stage 3 — classifier emits top-k tag sequences
 
-Stage 3 is the neural classifier. Before v0.5.0 it returned a single best tag for each token (the argmax). After v0.5.0 it returns **top-k** — a ranked list of plausible interpretations per span, with calibrated scores.
+Stage 3 is the neural classifier. Before v0.5.0 it returned a single best tag for each token (the argmax). Since v0.5.0 it returns the **top-k**: a ranked list of plausible interpretations per span, with calibrated scores.
 
 For the spans the phrase grouper proposed, Stage 3 returns:
 
@@ -69,29 +69,29 @@ For the spans the phrase grouper proposed, Stage 3 returns:
 | 18..25 | `Houston`          | `locality` | 0.85             |
 | 27..29 | `TX`               | `region`   | 0.95             |
 
-This is the moment where everything goes wrong if we stop here. The classifier's **argmax** for `NY-NY` is `region` (score 0.70) — because in the training data, `NY` is overwhelmingly the abbreviation for the New York region. The `venue` reading is second-best (0.60). A pre-v0.5.0 system would emit `region: NY-NY, region: TX` and the resolver would have no idea what to do.
+A pipeline that stopped here would produce the wrong answer. The classifier's **argmax** for `NY-NY` is `region` (score 0.70), because `NY` is overwhelmingly the New York region abbreviation in the training data. The `venue` reading is second (0.60). A pre-v0.5.0 system would emit `region: NY-NY, region: TX`, and the resolver could not make sense of it.
 
-Notice though that the `venue` interpretation is _not_ far behind. The classifier knows it could be a venue; itthinks region is slightly more likely _in isolation_. The top-k output preserves that information so Stage 5 can use it.
+The `venue` interpretation is close behind. The classifier considers a venue plausible and rates region only slightly higher when it sees the span _in isolation_. The top-k output keeps that information for Stage 5.
 
 ## Stage 4 — sequence corrector
 
-Stage 4 is the CRF decoder. It enforces the BIO grammar (no orphan `I-*` without a preceding `B-*`) on the tag sequence. For our top-k input, the CRF passes the candidates through unchanged — there are no orphan BIO labels to fix in this example. (See [CRF decoder](./crf-decoder.mdx) for a case where Stage 4 _does_ change the output, e.g. `Saint Petersburg` → `Petersburg`.)
+Stage 4 is the CRF decoder. It enforces the BIO grammar on the tag sequence, which forbids an `I-*` tag without a preceding `B-*`. This example has no orphan BIO labels, so the CRF passes the top-k candidates through unchanged. [CRF decoder](./crf-decoder.mdx) shows a case where Stage 4 _does_ change the output, `Saint Petersburg` → `Petersburg`.
 
 ## Stage 5 — reconcile picks the joint-coherent interpretation
 
-This is where the new joint decoder warrants its keep. Stage 5 receives:
+The new joint decoder does its work in Stage 5. Stage 5 receives:
 
 - **Phrase proposals from Stage 2.7** (the table from §3 above).
 - **Top-k tags from Stage 3** (the table from §4 above).
-- **Resolver candidates from Stage 6**, queried per-span — we will see them in a moment.
+- **Resolver candidates from Stage 6**, queried per span, as shown below.
 
-Stage 5's job is to pick **one** parse tree that maximises joint coherence — not the per-span argmax, but the combination that is internally consistent.
+Stage 5 picks **one** parse tree that maximizes joint coherence. Instead of taking each span's argmax, it picks the combination that is internally consistent.
 
 ### What "joint-coherent" means
 
-For our input there are two candidate interpretations on the table:
+Our input has two candidate interpretations.
 
-**Interpretation X** — take every span's argmax:
+**Interpretation X** takes every span's argmax:
 
 ```
 NY-NY     →  region   (0.70 × ?)
@@ -99,9 +99,9 @@ Houston   →  locality (0.85 × ?)
 TX        →  region   (0.95 × ?)
 ```
 
-This is what every Mailwoman version before v0.5.0 returned. Two regions in one address (`NY` and `TX`), one locality. The the system satisfy this and fails — it cannot find a `parent_id` chain where Houston is a locality in both New York and Texas. The output is incoherent.
+Every Mailwoman version before v0.5.0 returned this reading. It has two regions in one address (`NY` and `TX`) and one locality. The resolver tries to satisfy it and fails, because no `parent_id` chain places Houston in both New York and Texas. The output is incoherent.
 
-**Interpretation Y** — take the `venue` reading for `NY-NY`:
+**Interpretation Y** takes the `venue` reading for `NY-NY`:
 
 ```
 NY-NY Steakhouse → venue    (0.55 × ?)
@@ -109,32 +109,32 @@ Houston          → locality (0.85 × ?)
 TX               → region   (0.95 × ?)
 ```
 
-This has one venue, one locality, one region. The resolver _can_ satisfy this: `parent_id(Houston) = Texas`, and the venue does not need to be in the gazetteer because venues are user-supplied free text.
+This reading has one venue, one locality, and one region. The resolver _can_ satisfy it: `parent_id(Houston) = Texas`. The venue does not need to be in the gazetteer, because venues are user-supplied free text.
 
-Interpretation Y is **joint-coherent**. Interpretation X is not. The classifier alone cannot tell them apart, because the classifier sees each span in isolation. Stage 5 sees the whole picture.
+Interpretation Y is **joint-coherent**, and Interpretation X is not. The classifier alone cannot tell them apart, because it scores each span in isolation. Stage 5 sees all the spans together.
 
 ### How the scoring works
 
-Stage 5 does a beam search over `(span × tag × resolver candidate)` and scores each combination with:
+Stage 5 runs a beam search over `(span × tag × resolver candidate)` and scores each combination with:
 
 ```
 score = phrase_confidence × classifier_confidence × resolver_score × concordance_bonus
 ```
 
-The `concordance_bonus` is the new piece. For each candidate parse tree, Stage 5 looks up the `parent_id` chain in the Who's On First gazetteer (see [Resolver and WOF](./resolver-and-wof.mdx)) and asks: does the chain agree? Concretely:
+The `concordance_bonus` is the new factor. For each candidate parse tree, Stage 5 looks up the `parent_id` chain in the Who's On First gazetteer (see [Resolver and WOF](./resolver-and-wof.mdx)) and checks whether the chain agrees with the tags:
 
-- Interpretation X says `region: NY` and `locality: Houston`. WOF says `Houston → Texas` rather than `Houston → New York`. The chain disagrees. The bonus drops to ~0 (a near-fatal penalty).
-- Interpretation Y says `venue: NY-NY Steakhouse, locality: Houston, region: TX`. The chain `Houston → Texas → United States` is intact. Bonus is ~1.0.
+- Interpretation X says `region: NY` and `locality: Houston`. WOF records `Houston → Texas`, not `Houston → New York`, so the chain disagrees. The bonus drops to ~0, which nearly eliminates the interpretation.
+- Interpretation Y says `venue: NY-NY Steakhouse, locality: Houston, region: TX`. The chain `Houston → Texas → United States` is intact, so the bonus is ~1.0.
 
-The product favours Y by a wide margin, even though individual span scores are lower. The internal-consistency check dominates because incoherent parses are useless to downstream consumers.
+The product favors Y by a wide margin, even though its individual span scores are lower. The consistency check dominates because downstream consumers cannot use an incoherent parse.
 
 ### The empty-parse trap
 
-One subtlety. The first version of the reconciler used a pure multiplicative score and discovered, empirically, that the score is _maximised_ by emitting **no spans at all** — because every factor is in `[0, 1]`, fewer factors means a higher product. The "empty parse" wins every comparison. Stage 5 fixes this by adding a fixed log-bonus for each accepted slot, so accepting a high-confidence span is net-positive. See [`reconcile-empty-parse-bonus.md`](./reconcile-empty-parse-bonus.mdx) for the full failure mode — this is the only non-obvious knob in the joint decoder.
+The first version of the reconciler used a purely multiplicative score. In testing, the score was _maximized_ by emitting **no spans**. Every factor is in `[0, 1]`, so fewer factors produce a higher product, and the empty parse won every comparison. Stage 5 fixes this by adding a fixed log-bonus for each accepted slot, which makes accepting a high-confidence span a net gain. See [`reconcile-empty-parse-bonus.md`](./reconcile-empty-parse-bonus.mdx) for the full failure. This bonus is the only non-obvious setting in the joint decoder.
 
 ## Stage 6 — resolver looks up coordinates
 
-Stage 6 takes the winning parse tree from Stage 5 and converts each typed span into a place row in WOF. For Interpretation Y:
+Stage 6 takes the winning parse tree from Stage 5 and matches each typed span to a place row in WOF. For Interpretation Y:
 
 | Span               | Tag      | WOF lookup                            | Result                                 |
 | ------------------ | -------- | ------------------------------------- | -------------------------------------- |
@@ -159,24 +159,24 @@ The full v0.5.0 output for `NY-NY Steakhouse, Houston, TX` is:
 }
 ```
 
-The confidence is the product of the winning interpretation's per-stage scores. It is modest (0.42) because the underlying signals are modest — `Houston` only had 0.65 from the phrase grouper, the venue tag was a second-best from the classifier, etc. But the parse is _correct_, which is the result for v0.5.0.
+The confidence is the product of the winning interpretation's per-stage scores. It is modest (0.42) because the underlying signals are modest. For example, `Houston` got only 0.65 from the phrase grouper, and the venue tag was the classifier's second choice. The parse is still _correct_, which was the v0.5.0 goal for this input.
 
 ## Why this was impossible before v0.5.0
 
-The previous pipeline (v0.4.0 and earlier) had:
+The previous pipeline (v0.4.0 and earlier) had three limits:
 
-- No phrase grouper. Stage 3 had to guess boundaries _and_ types simultaneously from BIO labels.
-- An argmax classifier — no top-k.
-- A Stage 5 that only sorted spans by position and emitted them in order.
+- It had no phrase grouper, so Stage 3 had to infer boundaries _and_ types at once from BIO labels.
+- The classifier returned only the argmax, without top-k.
+- Stage 5 only sorted spans by position and emitted them in order.
 
-Given those three constraints, `NY-NY Steakhouse, Houston, TX` returned `region: NY, locality: Houston, region: TX` and downstream code crashed trying to make sense of two regions. The fix had to live at the reconciler layer because none of the upstream stages can see the joint picture by design — they each look at their own part of it.
+With those limits, `NY-NY Steakhouse, Houston, TX` returned `region: NY, locality: Houston, region: TX`, and downstream code crashed on the two regions. The fix had to go in the reconciler, because by design each upstream stage sees only its own part of the input.
 
-This is the [knowledge-ladder](../understanding/our-approach/the-knowledge-ladder.mdx) point made concrete. Each stage knows its own kind of information; the joint decoder is what composes them. Removing the joint decoder is what makes geocoders fail on adversarial inputs. Adding it back is most of what v0.5.0 set out to do.
+This example illustrates the [knowledge-ladder](../understanding/our-approach/the-knowledge-ladder.mdx) argument. Each stage contributes one kind of information, and the joint decoder combines them. Without a joint decoder, geocoders fail on adversarial inputs like this one. Adding it was most of the v0.5.0 work.
 
 ## See also
 
-- [The knowledge ladder](../understanding/our-approach/the-knowledge-ladder.mdx) — the conceptual frame for why these layers exist
-- [The staged pipeline](../understanding/our-approach/the-staged-pipeline.mdx) — the six-stage runtime composition
-- [`STAGES.md`](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/STAGES.mdx) — formal per-stage type interfaces
-- [`reconcile-empty-parse-bonus.md`](./reconcile-empty-parse-bonus.mdx) — the multiplicative-score failure mode (link will resolve once Doc D lands)
-- [v0.5.0 — as shipped](https://github.com/sister-software/mailwoman/blob/main/docs/records/plan/v0-5-0-shipped.mdx) — what landed and when
+- [The knowledge ladder](../understanding/our-approach/the-knowledge-ladder.mdx): the reasoning behind these layers
+- [The staged pipeline](../understanding/our-approach/the-staged-pipeline.mdx): the six-stage runtime composition
+- [`STAGES.md`](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/STAGES.mdx): formal per-stage type interfaces
+- [`reconcile-empty-parse-bonus.md`](./reconcile-empty-parse-bonus.mdx): the multiplicative-score failure (the link will resolve once Doc D lands)
+- [v0.5.0 — as shipped](https://github.com/sister-software/mailwoman/blob/main/docs/records/plan/v0-5-0-shipped.mdx): what landed and when

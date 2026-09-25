@@ -5,13 +5,13 @@ title: Start here
 
 # Understanding Mailwoman
 
-This track is for readers who want to understand **why** Mailwoman exists, **what problem** it solves, **what it parses**, and **how** it works — in that order. The articles are grouped into five sections that match the sidebar, and build on each other within each section — but each article is self-contained enough to be read independently.
+This track is for readers who want to understand **why** Mailwoman exists, **what problem** it solves, **what it parses**, and **how** it works, in that order. The articles are grouped into five sections that match the sidebar. Articles within a section build on each other, but each article can also be read on its own.
 
 ## The five sections
 
 ### The Problem (articles 1–7)
 
-The fundamentals of postal addressing — the things a parser parses and a resolver resolves.
+These articles cover the fundamentals of postal addressing: the things a parser parses and a resolver resolves.
 
 1. **[What is an address?](./the-problem/what-is-an-address.mdx)** — the data model, moved from concepts.
 2. **[How mail delivery works](./the-problem/how-mail-delivery-works.mdx)** — the postal system is already fuzzy. It tolerates ambiguity through human intervention.
@@ -37,12 +37,12 @@ _Inspired by and citing Michael Tandy's [original catalogue](https://www.mjt.me.
 
 13. **[Overview](./why-its-hard/falsehoods/falsehoods-about-addresses.mdx)** — the taxonomy and why it matters for Mailwoman.
 14. **[Address format](./why-its-hard/falsehoods/falsehoods-format.mdx)** — non-ASCII, variable ordering, special characters, changing addresses.
-15. **[Street names](./why-its-hard/falsehoods/falsehoods-streets.mdx)** — missing suffixes, numbered streets, recurring names, no streets at all.
+15. **[Street names](./why-its-hard/falsehoods/falsehoods-streets.mdx)** — missing suffixes, numbered streets, recurring names, and places without streets.
 16. **[Numbers in addresses](./why-its-hard/falsehoods/falsehoods-numbers.mdx)** — zero, negative, fractions, duplicates, ranges.
 17. **[Postcodes](./why-its-hard/falsehoods/falsehoods-postcodes.mdx)** — leading zeros, multi-city, per-building, missing postcodes.
-18. **[Administrative hierarchy](./why-its-hard/falsehoods/falsehoods-hierarchy.mdx)** — no states, no counties, duplicate cities, city-states.
-19. **[Shapes and dimensions](./why-its-hard/falsehoods/falsehoods-shapes.mdx)** — not a point rather than a polygon rather than a building rather than at ground level rather than unique per coordinate.
-20. **[Precision and frontages](./why-its-hard/falsehoods/falsehoods-proximity.mdx)** — not one correct coordinate rather than always "close enough," not necessarily the front door.
+18. **[Administrative hierarchy](./why-its-hard/falsehoods/falsehoods-hierarchy.mdx)** — countries without states or counties, duplicate cities, city-states.
+19. **[Shapes and dimensions](./why-its-hard/falsehoods/falsehoods-shapes.mdx)** — an address is not necessarily a point, a polygon, or a building, and it is not necessarily at ground level or unique per coordinate.
+20. **[Precision and frontages](./why-its-hard/falsehoods/falsehoods-proximity.mdx)** — an address has more than one correct coordinate, "close enough" is not always close enough, and the right point is not necessarily the front door.
 
 ### Alternatives (articles 21–30)
 
@@ -60,12 +60,12 @@ _Steel-manning the reasonably defensible compromises that work for most applicat
 27. **[Close-enough](./alternatives/simple/simple-close-enough.mdx)** — define your precision requirement, pick the cheapest approach, stop.
 28. **[Human-in-the-loop](./alternatives/simple/simple-human-in-the-loop.mdx)** — don't parse, suggest, let the user confirm.
 
-29. **[Why notuse Google's API?](./alternatives/why-not-google-api.mdx)** — pricing, terms, lock-in, and when renting is the right choice.
+29. **[Why not use Google's API?](./alternatives/why-not-google-api.mdx)** — pricing, terms, lock-in, and when renting is the right choice.
 30. **[Why not use geocode.earth?](./alternatives/why-not-geocode-earth.mdx)** — the open-source hosted alternative and its Pelias parser ceiling.
 
 ### Our Approach (articles 31–39)
 
-Mailwoman's design, and how it got here.
+These articles describe Mailwoman's design and how it developed.
 
 31. **[Why a neural parser?](./our-approach/why-a-neural-parser.mdx)** — the bitter-lesson argument applied to address parsing. Opens the case for everything that follows.
 32. **[The knowledge ladder](./our-approach/the-knowledge-ladder.mdx)** — the decomposition principle behind the staged pipeline.
@@ -79,13 +79,13 @@ Mailwoman's design, and how it got here.
 
 ### Exotic point-of-interest queries (articles 40–45)
 
-_Not every geocoder query is an address. A large fraction of real-world searches ask for points of interest — named places, categories, brands, landmarks, and transit infrastructure._
+_A large fraction of real-world geocoder searches ask for points of interest instead of addresses. These include named places, categories, brands, landmarks, and transit infrastructure._
 
 40. **[Overview](./exotic-poi/exotic-point-of-interest-queries.mdx)** — what counts as a POI query vs an address query.
 41. **[Amenity queries](./exotic-poi/amenity-queries.mdx)** — water fountain, gas station, ATM, pharmacy.
 42. **[Franchise and brand queries](./exotic-poi/franchise-queries.mdx)** — Walmart, McDonalds, Hilton, Starbucks.
 43. **[Regional variants](./exotic-poi/regional-variant-queries.mdx)** — servo, bodega, マクド, off-license, chemist.
-44. **[Landmark queries](./exotic-poi/landmark-queries.mdx)** — Eiffel Tower, Golden Check Bridge, Empire State Building.
+44. **[Landmark queries](./exotic-poi/landmark-queries.mdx)** — Eiffel Tower, Golden Gate Bridge, Empire State Building.
 45. **[Transit queries](./exotic-poi/transit-queries.mdx)** — subway station, bus stop, airport, train station.
 
 ### Reference
@@ -94,17 +94,17 @@ _Not every geocoder query is an address. A large fraction of real-world searches
 
 ## Reading order
 
-If you are **sceptical about the whole project**, read The Problem and the first five entries of Why It's Hard in order (articles 1–12), then jump to [Why a neural parser?](./our-approach/why-a-neural-parser.mdx) (article 31). That's the domain case, the failure case, and the pitch, in under an hour. If you are still sceptical after that, the project has failed to make its case — open an issue.
+If you are **sceptical about the whole project**, read The Problem and the first five entries of Why It's Hard in order (articles 1–12), then jump to [Why a neural parser?](./our-approach/why-a-neural-parser.mdx) (article 31). Those articles cover the domain, the failures, and the proposed design in under an hour. If you are still sceptical after that, the project has failed to make its case, so please open an issue.
 
 If you are **new to geocoding but curious**, start with The Problem (articles 1–7) in order. It grounds the domain vocabulary everything after it assumes.
 
 If you are **from the Pelias world**, read [From Pelias to Mailwoman](./our-approach/from-pelias-to-mailwoman.mdx) (article 35), then [How it works now](./our-approach/how-it-works-now.mdx) (article 33). Those two articles bridge your existing knowledge to the current system.
 
-If you want to **go deeper**, see the [`concepts/`](../concepts/README.mdx) track — per-topic deep dives into tokenization, BIO labels, the CRF decoder, ONNX runtime, training pipeline, corpus construction, and more.
+If you want to **go deeper**, see the [`concepts/`](../concepts/README.mdx) track. It has per-topic deep dives into tokenization, BIO labels, the CRF decoder, ONNX runtime, training pipeline, corpus construction, and more.
 
 ## A note on language
 
-The team behind Mailwoman speaks several languages, and English is a second language for several readers. Our goal in these docs is **plain English with technical terms defined on first use**. If a sentence is hard to follow, that is a documentation bug — please open an issue.
+The team behind Mailwoman speaks several languages, and English is a second language for several readers. Our goal in these docs is **plain English with technical terms defined on first use**. If a sentence is hard to follow, that is a documentation bug, so please open an issue.
 
 ## Where this lives in the repo
 

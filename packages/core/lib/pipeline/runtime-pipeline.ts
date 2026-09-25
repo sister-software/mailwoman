@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Coordinate normalization, query-shape analysis, locale and kind detection, parsing, and resolution.
+ *   Runs the parse pipeline: normalization, query shape, locale and kind detection, classification and resolution.
  */
 
 import type { ComponentTag } from "@mailwoman/codex/component"
@@ -30,37 +30,37 @@ import type {
 } from "#pipeline/types"
 
 /**
- * Minimum kind confidence required for a fast path.
+ * A query kind needs at least this confidence to take the fast path.
  */
 const SHORT_CIRCUIT_MIN_CONFIDENCE = 0.95
 
 /**
- * Maximum length of a locality-only input eligible for a fast path.
+ * A locality-only input longer than this many characters takes the full pipeline.
  */
 const SHORT_CIRCUIT_MAX_LOCALITY_LENGTH = 30
 
 /**
- * Recognize postcode format names without importing the query-shape format table.
+ * Reports whether a query-shape format name denotes a postcode.
  */
 function isPostcodeFormat(format: string): boolean {
 	return format === "us_zip" || format === "us_zip4" || format.endsWith("_postcode")
 }
 
 /**
- * Default resolver weight for the coarse-placer country prior.
+ * The default resolver weight for the coarse-placer country prior.
  */
 export const COARSE_PLACER_ANCHOR_WEIGHT = 1
 
 /**
- * Minimum placer confidence for converting a soft country prior to a hard filter.
+ * The placer needs at least this confidence to turn its country prior into a hard filter.
  */
 const HARD_PLACE_COUNTRY_MIN_CONF = 0.9
 
 /**
- * Fallback countries for artifacts without a coverage manifest.
+ * The countries eligible for a hard country filter when the artifact has no coverage manifest.
  *
  * A per-call override or the loaded artifact's safelist takes precedence.
- * Countries outside this set keep a soft prior.
+ * Countries outside the set keep a soft prior.
  */
 export const HARD_PLACE_COUNTRY_SAFELIST: ReadonlySet<string> = new Set([
 	"US",
@@ -71,28 +71,26 @@ export const HARD_PLACE_COUNTRY_SAFELIST: ReadonlySet<string> = new Set([
 	"FR",
 	"GB",
 	"CA",
-	// AU added with the #244 AU placer class (2026-07-06): 150k-row G-NAF training → AU test-acc 100%,
-	// and the hard filter is recall-safe on the AU panel (unresolved 4→2 while abroad 43→20).
 	"AU",
 ])
 
 /**
- * Return whether the tree contains only a locality.
+ * Reports whether the tree contains only a locality.
  */
 export function isBareLocalityTree(tree: AddressTree): boolean {
 	return isBareTreeOf(tree, "locality")
 }
 
 /**
- * Return whether the tree contains only a postcode.
- * Its format can outweigh inferred locale scope.
+ * Reports whether the tree contains only a postcode.
  */
 export function isBarePostcodeTree(tree: AddressTree): boolean {
 	return isBareTreeOf(tree, "postcode")
 }
 
 /**
- * Return a hard country filter only when confidence and coverage qualify and the caller supplied none.
+ * Returns the placed country as a hard filter, or `undefined` when the option is off,
+ * confidence is too low, the country is outside the safelist, or the caller already set a country.
  */
 export function hardCountryFor(
 	placedCountry: string,
@@ -117,21 +115,24 @@ function isPostcodeFormatHit(hit: { format: string }): boolean {
 }
 
 /**
- * Return the input unchanged when no normalizer is configured.
+ * Returns the input unchanged.
+ * The pipeline uses it when no normalizer is configured.
  */
 function identityNormalize(raw: string, opts?: { locale?: string }): NormalizedInputLite {
 	return { raw, normalized: raw, appliedLocale: opts?.locale }
 }
 
 /**
- * Return an empty shape when no query-shape stage is configured.
+ * Returns an empty query shape.
+ *
+ * The pipeline uses it when no query-shape stage is configured.
  */
 function emptyQueryShape(): QueryShapeLite {
 	return { knownFormats: [] }
 }
 
 /**
- * Use the caller's locale hint, or `und` when absent.
+ * Returns the caller's locale hint, or `und` when the caller gave none.
  */
 async function defaultDetectLocale(
 	_input: NormalizedInputLite,
@@ -149,7 +150,7 @@ async function defaultDetectLocale(
 }
 
 /**
- * Default to `structured_address` without enabling a fast path.
+ * Returns `structured_address` with zero confidence, so the fast path never applies.
  */
 async function defaultClassifyKind(
 	_input: NormalizedInputLite,
@@ -164,7 +165,7 @@ async function defaultClassifyKind(
 }
 
 /**
- * Decide whether a confident postcode or short locality query can skip classification.
+ * Reports whether a confident postcode or short alphabetic locality query can skip classification.
  */
 function canShortCircuit(kind: QueryKindResult, shape: QueryShapeLite, opts?: PipelineOpts): boolean {
 	if (opts?.forceFullPipeline) return false
@@ -183,7 +184,7 @@ function canShortCircuit(kind: QueryKindResult, shape: QueryShapeLite, opts?: Pi
 }
 
 /**
- * Build a one-node tree for an eligible postcode or locality query.
+ * Builds a one-node tree for a fast-path postcode or locality query.
  */
 function buildFastPathTree(text: string, kind: QueryKindResult, shape: QueryShapeLite): AddressTree {
 	if (kind.kind === "postcode_only") {
@@ -230,7 +231,10 @@ function buildFastPathTree(text: string, kind: QueryKindResult, shape: QueryShap
 }
 
 /**
- * Run configured stages in order and return timings, faults, and the decoded tree.
+ * Runs the configured stages in order and returns the decoded tree with per-stage timings and faults.
+ *
+ * A failing classifier, grouper or resolver records a fault and the run continues.
+ * An aborted signal throws between stages.
  */
 export async function runPipeline(
 	raw: string,
@@ -238,7 +242,6 @@ export async function runPipeline(
 	opts?: PipelineOpts
 ): Promise<PipelineResult> {
 	const timing: Record<string, number> = {}
-	// Collect stage failures for the result.
 	const faults: PipelineFault[] = []
 	const t0 = performance.now()
 
@@ -251,9 +254,8 @@ export async function runPipeline(
 	const normalized = normalize(raw, { locale: opts?.locale })
 	timing["normalize"] = performance.now() - t0
 
-	// Add a soft country prior unless the caller already supplied one.
+	// The coarse placer adds a country prior unless the caller already supplied one.
 	let effectiveOpts = opts
-	// Track whether the placer supplied the posterior so bare queries can omit it.
 	let placerAnchorApplied = false
 
 	if (stages.placeCountry) {
@@ -262,7 +264,6 @@ export async function runPipeline(
 		timing["place-country"] = performance.now() - tPlace
 
 		if (placed.country && placed.country !== "OTHER" && !opts?.resolveOpts?.anchorPosterior) {
-			// Promote to a hard filter only when confidence, coverage, and caller settings allow it.
 			const hardCountry = hardCountryFor(
 				placed.country,
 				placed.confidence,
@@ -277,8 +278,7 @@ export async function runPipeline(
 				...opts,
 				resolveOpts: {
 					...opts?.resolveOpts,
-					// The full in-map distribution when the placer supplies it (resolver breaks ties);
-					// else the one-hot argmax (the M2 behavior).
+					// The resolver uses the full posterior when the placer supplies one, and a one-hot argmax otherwise.
 					anchorPosterior: placed.posterior ?? { [placed.country]: placed.confidence },
 					anchorWeight: opts?.resolveOpts?.anchorWeight ?? COARSE_PLACER_ANCHOR_WEIGHT,
 					...(hardCountry ? { hardCountry } : {}),
@@ -302,12 +302,10 @@ export async function runPipeline(
 	const kind = await classifyKind(normalized, queryShape, locale)
 	timing["kind-classifier"] = performance.now() - tKind
 
-	// Normalize optional classifier markers to an array.
-	// Resolve-time markers are added later.
 	const intentMarkers: QueryIntentMarker[] = kind.intentMarkers ? [...kind.intentMarkers] : []
 
-	// Route POI-shaped queries through the intent stage when configured.
-	// A null result falls back to parsing.
+	// A POI-shaped query goes to the intent stage first.
+	// A null outcome falls through to parsing.
 	if ((kind.kind === "poi_query" || kind.kind === "poi_category") && stages.poiIntent) {
 		throwIfAborted(opts)
 		const tPoi = performance.now()
@@ -335,7 +333,6 @@ export async function runPipeline(
 		}
 	}
 
-	// Build a tree directly from query-shape data for eligible simple inputs.
 	if (canShortCircuit(kind, queryShape, opts)) {
 		let tree = buildFastPathTree(normalized.normalized, kind, queryShape)
 
@@ -361,7 +358,6 @@ export async function runPipeline(
 		}
 	}
 
-	// Collect phrase proposals when the optional grouper is configured.
 	let phraseProposals: PhraseProposal[] = []
 
 	if (stages.groupPhrases) {
@@ -382,7 +378,6 @@ export async function runPipeline(
 			normalizeCase: opts?.normalizeCase,
 			placetypePair: opts?.placetypePair,
 			streetMorphology: stages.streetMorphology,
-			// Use the caller's register, or derive one from the query kind.
 			inputMode: opts?.inputMode ?? deriveInputMode(kind.kind),
 		})
 
@@ -399,7 +394,7 @@ export async function runPipeline(
 		throwIfAborted(opts)
 		const tResolve = performance.now()
 
-		// Omit the placer prior for bare locality and postcode queries.
+		// A bare locality or postcode query resolves without the placer's prior.
 		if (placerAnchorApplied && (isBareLocalityTree(tree) || isBarePostcodeTree(tree))) {
 			effectiveOpts = opts
 		}
@@ -424,8 +419,9 @@ export async function runPipeline(
 }
 
 /**
- * Throw the abort reason between stages.
- * In-flight stages run to completion.
+ * Throws the signal's abort reason.
+ *
+ * The pipeline checks between stages, so a running stage finishes first.
  */
 function throwIfAborted(opts?: PipelineOpts): void {
 	if (opts?.signal?.aborted) {
@@ -434,7 +430,7 @@ function throwIfAborted(opts?: PipelineOpts): void {
 }
 
 /**
- * Record a stage failure so callers can distinguish degraded output from a clean result.
+ * Records a stage failure so callers can tell degraded output from a clean result.
  */
 function recordFault(faults: PipelineFault[], stage: PipelineFaultStage, cause: unknown): void {
 	faults.push({
@@ -446,7 +442,8 @@ function recordFault(faults: PipelineFault[], stage: PipelineFaultStage, cause: 
 }
 
 /**
- * Return an empty tree on classifier failure and record the failure.
+ * Runs the classifier.
+ * On failure it records a fault and returns an empty tree.
  */
 async function safeClassify(
 	faults: PipelineFault[],
@@ -464,7 +461,7 @@ async function safeClassify(
 	const { fst, normalizeCase, placetypePair, streetMorphology, inputMode } = knobs
 
 	try {
-		// Forward parser options; preserve classifier defaults when optional values are absent.
+		// The spreads omit unset options so the classifier keeps its own defaults.
 		return await classifier.parse(text, {
 			queryShape,
 			inputMode,
@@ -483,15 +480,21 @@ async function safeClassify(
 }
 
 /**
- * Enable street-context checks only when both matchers are available.
+ * The street-morphology options the pipeline passes to the classifier.
+ * Both weights are zero.
  */
 export const ZEROED_MORPHOLOGY_OPTS = { biasScale: 0, dependentLocalityPenalty: 0 } as const
 
 /**
- * Scale for positive street-context emissions.
+ * The scale for positive street-context emissions.
+ * Zero disables the positive boost.
  */
 export const STREET_CONTEXT_POSITIVE_SCALE = 0
 
+/**
+ * Returns the street-context classifier options, or an empty object unless both the FST
+ * and the street-morphology matcher are available.
+ */
 export function streetContextRequirementFor(stages: { fst?: FSTMatcherLike; streetMorphology?: FSTMatcherLike }): {
 	fstStreetMorphology?: FSTMatcherLike
 	fstStreetMorphologyOpts?: { biasScale: number; dependentLocalityPenalty: number }
@@ -507,7 +510,8 @@ export function streetContextRequirementFor(stages: { fst?: FSTMatcherLike; stre
 }
 
 /**
- * Return no phrase proposals on grouper failure and record the error.
+ * Runs the phrase grouper.
+ * On failure it records a fault and returns no proposals.
  */
 async function safeGroupPhrases(
 	faults: PipelineFault[],
@@ -527,8 +531,15 @@ async function safeGroupPhrases(
 
 // MARK: Grouper-audit pass
 
+/**
+ * The factor applied to a grouper proposal's confidence when it becomes a provisional node.
+ */
 const GROUPER_TYPING_PENALTY = 0.55
 
+/**
+ * Maps phrase-grouper kinds to component tags.
+ * The audit ignores kinds absent from the map.
+ */
 const PHRASE_KIND_TO_TAG: ReadonlyMap<string, ComponentTag> = new Map([
 	["VENUE_PHRASE", "venue"],
 	["LOCALITY_PHRASE", "locality"],
@@ -539,7 +550,7 @@ const PHRASE_KIND_TO_TAG: ReadonlyMap<string, ComponentTag> = new Map([
 ])
 
 /**
- * Add a provisional node for each uncovered phrase proposal.
+ * Adds a provisional root node for each phrase proposal that no existing node overlaps.
  */
 export function grouperAudit(tree: AddressTree, proposals: PhraseProposal[], text: string): AddressTree {
 	if (!proposals.length) return tree
@@ -594,7 +605,9 @@ export function grouperAudit(tree: AddressTree, proposals: PhraseProposal[], tex
 }
 
 /**
- * Preserve the classifier tree and record the error when resolution fails.
+ * Runs the resolver.
+ *
+ * On failure it records a fault and returns the unresolved tree.
  */
 async function safeResolve(
 	faults: PipelineFault[],

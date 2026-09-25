@@ -5,8 +5,8 @@
  * @file `mwdev_sources` — what data we hold, per country, per artifact.
  *
  *   The tests that matter are the ones about absence, because every one of them corresponds to a wrong conclusion
- *   somebody could draw from a row count: a extract with rows but no join tables reads as usable and is not. a country
- *   asked for and missing must come back as a zero rather than as a missing key. and an unreadable file is a finding,
+ *   somebody could draw from a row count: an extract with rows but no join tables reads as usable and is not. A country
+ *   asked for and missing must come back as a zero rather than as a missing key. And an unreadable file is a finding,
  *   never an exception that takes the whole census down with it.
  */
 
@@ -32,7 +32,7 @@ function extract(name: string): string {
 }
 
 /**
- * A extract with `spr` and the ancestry tables.
+ * An extract with `spr` and the ancestry tables.
  * The shape a corpus builder can extract triples from.
  */
 function writeJoinable(path: string, rows: ReadonlyArray<[string, number]>): void {
@@ -54,8 +54,7 @@ function writeJoinable(path: string, rows: ReadonlyArray<[string, number]>): voi
 }
 
 /**
- * `spr` only, and every `parent_id` is the -1 sentinel — countable
- * rather than joinable rather than walkable.
+ * `spr` only, and every `parent_id` is the -1 sentinel — countable but neither joinable nor walkable.
  */
 function writeCountOnly(path: string, country: string, n: number): void {
 	using db = new DatabaseClient<WOFDatabase>(path)
@@ -95,7 +94,7 @@ describe("censusArtifact", () => {
 	})
 
 	it("separates COUNTABLE from JOINABLE — the distinction a row count hides", async () => {
-		// 395,544 PT postcodes in a extract with no ancestry table is not 395,544 usable triples.
+		// 395,544 PT postcodes in an extract with no ancestry table is not 395,544 usable triples.
 		// This is the exact shape that made a real config declare PT unbuildable
 		// while the rows were sitting there.
 		const row = await censusArtifact(extract("postalcode-geonames-intl.db"))

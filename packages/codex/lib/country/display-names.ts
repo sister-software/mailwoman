@@ -3,9 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Enumerate multilingual country-name surfaces from the runtime's ICU data with `Intl.DisplayNames`.
- *   This module supplies candidate names; the gazetteer build decides which names to store. A surface is not an
- *   official designation.
+ *   Lists country names in many languages from the runtime's ICU data through `Intl.DisplayNames`. The gazetteer
+ *   build decides which of these candidate names to store.
  */
 
 /**
@@ -39,43 +38,49 @@ export const DISPLAY_NAME_LOCALES: readonly Intl.UnicodeBCP47LocaleIdentifier[] 
 ]
 
 /**
- * Enumerate all ICU styles because users may enter full, abbreviated, or narrow forms.
+ * The ICU display styles to list.
+ * Users type full, abbreviated and narrow forms.
  */
 export const DISPLAY_NAME_STYLES = ["long", "short", "narrow"] as const
 
 /**
- * Country-name surface and its ICU locale provenance.
+ * A country name and the ICU locale that produced it.
  */
 export interface CountryDisplayName {
 	/**
-	 * ISO 3166-1 alpha-2 code.
+	 * The ISO 3166-1 alpha-2 code.
 	 */
 	iso2: string
 	/**
-	 * Raw ICU surface; consumers handle normalization.
+	 * The name exactly as ICU returns it.
+	 * Consumers normalize it.
 	 */
 	name: string
 	/**
-	 * BCP-47 locale that produced this surface.
+	 * The BCP-47 locale that produced this name.
 	 */
 	locale: string
 }
 
 /**
- * Bounds for the AA–ZZ sweep.
+ * Character codes for the AA to ZZ sweep.
  *
- * ICU echoes unknown codes, so no separate region list is needed.
+ * ICU returns an unknown code unchanged, so the sweep needs no separate region list.
  */
 const ASCII_A = 65
 const ASCII_Z = 90
 
+/**
+ * Returns whether ICU echoed the code back, which means it does not know the region.
+ */
 function isEcho(code: string, rendered: string | undefined): boolean {
 	return !rendered || rendered === code
 }
 
 /**
- * Enumerate recognized AA–ZZ country codes and deduplicate surfaces,
- * preserving the first locale that produces each.
+ * Yields each distinct name for every code from AA to ZZ that ICU recognizes.
+ *
+ * Each name is attributed to the first locale that produced it.
  */
 export function* enumerateCountryDisplayNames(
 	locales: readonly string[] = DISPLAY_NAME_LOCALES
@@ -85,7 +90,7 @@ export function* enumerateCountryDisplayNames(
 			try {
 				return { locale, formatter: new Intl.DisplayNames([locale], { type: "region", style }) }
 			} catch {
-				// Skip unsupported locales and retain surfaces from the remaining locales.
+				// The runtime does not support this locale.
 				return undefined
 			}
 		}).filter((f) => f !== null && f !== undefined)
@@ -115,7 +120,7 @@ export function* enumerateCountryDisplayNames(
 }
 
 /**
- * Return all enumerated surfaces for one country.
+ * Returns every listed name for one country.
  */
 export function countryDisplayNames(iso2: string, locales?: readonly string[]): string[] {
 	const upper = iso2.toUpperCase()

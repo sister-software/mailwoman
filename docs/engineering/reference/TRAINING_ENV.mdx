@@ -13,7 +13,7 @@ title: Training environment — lab container setup
 
 # Training environment — lab container setup
 
-How to bring a fresh lab container to the point where it can train a classifier or run a tokenizer build. Captures the gap that bit v0.5.0 Thread C-train.
+This page describes how to prepare a fresh lab container to train a classifier or run a tokenizer build. It documents the setup steps that v0.5.0 Thread C-train was missing.
 
 ## What you start with
 
@@ -26,7 +26,7 @@ A `playpen-mailwoman` container has:
 - **No GPU device passthrough**
 - **No `~/training-venv`**
 
-The first two facts together are the blocker. Tokenizer training (A0, A1) needed neither — it's pure CPU SentencePiece. Classifier training (C-train) needs both.
+The last two items block classifier training. Tokenizer training (A0, A1) needed neither, because it runs SentencePiece on the CPU only. Classifier training (C-train) needs both.
 
 ## Step 1 — GPU passthrough
 
@@ -37,7 +37,7 @@ incus config device add <container> gpu gpu
 incus config device add <container> kfd unix-char source=/dev/kfd
 ```
 
-The first line passes through `/dev/dri/card0` + `/dev/dri/renderD128` (graphics + render nodes). The second adds `/dev/kfd` (AMD compute device — ROCm's entry point). Both are live changes; no container restart needed.
+The first line passes through `/dev/dri/card0` + `/dev/dri/renderD128` (graphics + render nodes). The second adds `/dev/kfd` (the AMD compute device and ROCm's entry point). Both changes apply live without a container restart.
 
 Verify in-container:
 
@@ -49,7 +49,7 @@ Expect to see `kfd`, `card0`, `renderD128` all present with `crw-rw-...` permiss
 
 ## Step 2 — Bootstrap `~/training-venv`
 
-The mailwoman `corpus-python` package splits dependencies — heavy ML deps (PyTorch, Transformers, Datasets, ONNX) live under the `[train]` extras so tokenizer-only work doesn't pull them. Make a dedicated venv:
+The mailwoman `corpus-python` package splits its dependencies. The heavy ML dependencies (PyTorch, Transformers, Datasets, ONNX) live under the `[train]` extras, so tokenizer-only work does not install them. Create a dedicated venv:
 
 ```bash
 uv venv ~/training-venv --python=3.12
@@ -58,7 +58,7 @@ source ~/training-venv/bin/activate
 
 ### Step 2a — Install PyTorch with the ROCm wheel FIRST
 
-Critical ordering: install the ROCm-built PyTorch wheel before `pip install -e .[train]`. The generic resolver picks CUDA wheels by default on x86_64 even though they won't run on AMD GPUs.
+Install the ROCm-built PyTorch wheel before `pip install -e .[train]`. On x86_64 the generic resolver picks CUDA wheels by default, and those wheels do not run on AMD GPUs.
 
 For the lab's Radeon 780M (gfx1103, RDNA 3 iGPU):
 
@@ -66,7 +66,7 @@ For the lab's Radeon 780M (gfx1103, RDNA 3 iGPU):
 pip install torch --index-url https://download.pytorch.org/whl/rocm6.2
 ```
 
-Download is ~3 GB. Takes 5-10 min on home upstream.
+The download is ~3 GB and takes 5-10 min on the home uplink.
 
 ### Step 2b — Install corpus-python + train extras
 
@@ -75,7 +75,7 @@ cd ~/workspace/mailwoman/corpus-python
 pip install -e .[train]
 ```
 
-This adds `transformers>=4.41`, `datasets>=2.19`, `onnx>=1.16`, `onnxruntime>=1.18`, `tqdm` on top of the always-installed `sentencepiece`, `pyarrow`, `pyyaml`, `numpy`. Another ~1 GB. ~3-5 min.
+This adds `transformers>=4.41`, `datasets>=2.19`, `onnx>=1.16`, `onnxruntime>=1.18`, `tqdm` on top of the always-installed `sentencepiece`, `pyarrow`, `pyyaml`, `numpy`. This step downloads another ~1 GB and takes ~3-5 min.
 
 ## Step 3 — Verify GPU detected
 
@@ -107,36 +107,36 @@ The Radeon 780M reports itself as `gfx1103` but ROCm's compute kernels target `g
 export HSA_OVERRIDE_GFX_VERSION=11.0.0
 ```
 
-Without the override, kernel launches will fail with cryptic GPU errors. Persist it in `~/.bashrc` or prefix every training invocation.
+Without the override, kernel launches fail with opaque GPU errors. Persist it in `~/.bashrc` or prefix every training invocation with it.
 
 ## Step 5 — Other env quirks
 
-- **`hipBLASLt unsupported`**: PyTorch emits a `UserWarning: Attempting to use hipBLASLt on an unsupported architecture! Overriding blas backend to hipblas` on every Linear layer call. Harmless — the `hipblas` fallback works correctly on gfx1103. Future PyTorch versions may stop logging this.
-- **`amdgpu.ids: No such file or directory`**: also harmless. The file is shipped with `mesa-amdgpu-vulkan-drivers` which isn't installed in the lab base image. Nothing fails as a result.
+- **`hipBLASLt unsupported`**: PyTorch emits a `UserWarning: Attempting to use hipBLASLt on an unsupported architecture! Overriding blas backend to hipblas` on every Linear layer call. The warning is harmless because the `hipblas` fallback works correctly on gfx1103. Future PyTorch versions may stop logging it.
+- **`amdgpu.ids: No such file or directory`**: this warning is also harmless. The file ships with `mesa-amdgpu-vulkan-drivers`, which the lab base image does not install. Nothing fails as a result.
 - **Math SDPA**: per [the lab GPU notes](https://github.com/sister-software/mailwoman/blob/main/docs/articles/concepts/training-pipeline.mdx), set `torch.backends.cuda.enable_flash_sdp(False)` and use `math` SDPA backend if attention kernels misbehave. The current corpus-python configs already do this.
 
 ## Cost summary
 
-| Step                      | Time        | Notes                           |
-| ------------------------- | ----------- | ------------------------------- |
-| GPU passthrough           | < 1 min     | Host-side, no container restart |
-| `uv venv`                 | < 5 sec     |                                 |
-| ROCm PyTorch wheel        | 5-10 min    | ~3 GB download                  |
-| `pip install -e .[train]` | 3-5 min     | ~1 GB                           |
-| Verify GPU                | < 5 sec     |                                 |
-| **Total**                 | **~15 min** |                                 |
+| Step                      | Time        | Notes                        |
+| ------------------------- | ----------- | ---------------------------- |
+| GPU passthrough           | < 1 min     | Host-side, without a restart |
+| `uv venv`                 | < 5 sec     |                              |
+| ROCm PyTorch wheel        | 5-10 min    | ~3 GB download               |
+| `pip install -e .[train]` | 3-5 min     | ~1 GB                        |
+| Verify GPU                | < 5 sec     |                              |
+| **Total**                 | **~15 min** |                              |
 
 ## Why this isn't pre-baked
 
 Two reasons the mailwoman container template doesn't ship a training-venv:
 
-1. **Image size**: torch + transformers + onnxruntime add ~5 GB to the container image. Multiplied across every lab container (most of which never train), this is wasteful.
-2. **Use-case split**: tokenizer training and corpus utility scripts use only the lighter `sentencepiece` + `pyarrow` deps. They don't want or need torch. Splitting via `[train]` extras keeps the common case small.
+1. **Image size**: torch, transformers, and onnxruntime add ~5 GB to the container image. Most lab containers never train, so that space would be wasted in every one of them.
+2. **Use-case split**: tokenizer training and corpus utility scripts use only the lighter `sentencepiece` + `pyarrow` dependencies and do not need torch. The `[train]` extras keep the common case small.
 
-The right time to bake it in is when classifier-training becomes a routine container spawn (multiple times per week). Until then the 15-min one-time setup is cheaper than the per-container image bloat.
+Bake the venv into the image once classifier training becomes a routine container spawn (multiple times per week). Until then, the 15-min one-time setup costs less than the larger image in every container.
 
 ## See also
 
 - [`VERDICT_SMOKES.md`](./VERDICT_SMOKES.mdx) — what to run once the environment is up
 - [PHASE_2_training.md](../../records/plan/phases/PHASE_2_training.mdx) — the training loop's expected configuration
-- [`tokenizer-a0-baseline.md`](./tokenizer-a0-baseline.mdx) — the lighter-weight alternative path (CPU-only, no torch needed)
+- [`tokenizer-a0-baseline.md`](./tokenizer-a0-baseline.mdx) — the lighter-weight alternative path (CPU-only, without torch)

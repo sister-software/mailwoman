@@ -17,7 +17,7 @@ const COORDINATE_PRECISION = 9
 const BBOX_MARGIN_DEGREES = 0.1
 
 /**
- * The shapefile holding a survey area's map-unit polygons — the delineations this layer stores.
+ * Returns the path of the shapefile that holds a survey area's map-unit polygons.
  */
 export function mapUnitShapefile(spatialDirectory: PathBuilderLike, areaSymbol: string): string {
 	return PathBuilder.from(spatialDirectory)(`soilmu_a_${areaSymbol.toLowerCase()}.shp`).toString()
@@ -26,8 +26,8 @@ export function mapUnitShapefile(spatialDirectory: PathBuilderLike, areaSymbol: 
 /**
  * Returns the path of the shapefile holding a survey area's outline.
  *
- * The footprint comes from this outline rather than from the union of rated polygons, because
- * unrated map units such as `notcom` lie inside the footprint and would otherwise read as unmapped.
+ * The build takes the footprint from this outline because unrated map units such as `notcom` lie inside it.
+ * A union of rated polygons would leave them out.
  */
 export function surveyAreaShapefile(spatialDirectory: PathBuilderLike, areaSymbol: string): PathBuilder {
 	return PathBuilder.from(spatialDirectory)(`soilsa_a_${areaSymbol.toLowerCase()}.shp`)
@@ -47,7 +47,7 @@ export interface SoilDelineation {
 }
 
 /**
- * What a shapefile says about itself, read before any feature is.
+ * The metadata that a shapefile declares, read before any feature.
  */
 export interface SoilSourceIdentity {
 	epsg: number
@@ -61,39 +61,41 @@ export interface SoilSourceIdentity {
 }
 
 /**
- * Options for reading one SSURGO map-unit shapefile, with optional FID bounds
- * and a feature limit for partial reads.
+ * Options for reading one SSURGO map-unit shapefile.
  */
 export interface SoilIngestOptions {
 	shapefilePath: string
 
 	/**
-	 * The layer inside the shapefile, defaulting to the file's base name,
-	 * which is what the ESRI driver reports.
+	 * The layer inside the shapefile.
+	 *
+	 * The default is the file's base name, which the ESRI driver reports.
 	 */
 	layer?: string
 
 	/**
-	 * The EPSG code the source must declare, defaulting to the SSURGO source projection.
+	 * The EPSG code that the source must declare.
+	 * The default is the SSURGO source projection.
 	 */
 	expectEPSG?: number
 
 	/**
-	 * The lower bound of an inclusive `[fidFrom, fidTo]` range of the shapefile's own FIDs,
-	 * which lets a build read a bounded chunk.
+	 * The inclusive range of shapefile FIDs to read, which lets a build read one chunk.
 	 */
 	fidFrom?: number
 	fidTo?: number
 
 	/**
-	 * The maximum number of features to read, used by fixture and smoke runs but not by a full build.
+	 * The maximum number of features to read.
+	 * Fixture and smoke runs use it.
 	 */
 	limit?: number
 }
 
 /**
- * Reads the projection, feature count, layer name and extent that a shapefile declares,
- * throwing when it declares a projection other than `expectEPSG`.
+ * Reads the projection, feature count, layer name and extent that a shapefile declares.
+ *
+ * It throws when the shapefile declares a projection other than `expectEPSG`.
  */
 export async function readSoilSourceIdentity(options: SoilIngestOptions): Promise<SoilSourceIdentity> {
 	const identity = await readOGRLayerIdentity({
@@ -133,10 +135,10 @@ interface RawFeature {
 }
 
 /**
- * Streams a shapefile's map-unit delineations reprojected to WGS84, throwing on a feature
- * with no geometry or `mukey` or with a vertex outside the declared extent.
+ * Streams a shapefile's map-unit delineations reprojected to WGS84.
  *
- * The extent check catches swapped coordinate axes, which a projection check alone would not.
+ * It throws on a feature that has no geometry or `mukey`, or that has a vertex outside the declared extent.
+ * The extent check catches swapped coordinate axes, which the projection check misses.
  */
 export async function* readSoilDelineations(
 	options: SoilIngestOptions & { bbox: readonly [number, number, number, number] }
@@ -199,15 +201,16 @@ function toDelineation(
 /**
  * Supplies a soil build with its delineations and the source's declared identity.
  *
- * The builder takes this instead of a path, so fixtures can exercise the whole
- * database half without network access or GDAL.
+ * The builder takes this instead of a path so that fixtures can run the database
+ * build without network access or GDAL.
  */
 export interface SoilFeatureSource {
 	areaSymbol: string
 
 	/**
-	 * The feature count the source declares, which the build compares with its
-	 * streamed total so that a short read throws.
+	 * The feature count that the source declares.
+	 *
+	 * The build throws when its streamed total differs from this count.
 	 */
 	declaredFeatureCount: number
 	layer: string
@@ -221,8 +224,9 @@ export interface SoilFeatureSource {
 }
 
 /**
- * Creates a {@link SoilFeatureSource} for one survey area's shapefile, reading its
- * identity immediately and streaming features on demand.
+ * Creates a {@link SoilFeatureSource} for one survey area's shapefile.
+ *
+ * It reads the shapefile's identity immediately and streams features when asked.
  */
 export async function createShapefileFeatureSource(
 	options: SoilIngestOptions & { areaSymbol: string; declaredFeatureCount?: number }

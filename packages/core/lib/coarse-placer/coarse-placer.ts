@@ -3,9 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Lightweight country/region classifier using hashed character n-gram and script features.
- *   Confidence is temperature-calibrated; low-confidence predictions can abstain. The module runs
- *   in Node and browsers.
+ *   A linear country classifier over hashed character n-gram and script features. Confidence is
+ *   temperature-calibrated, and a prediction below the threshold abstains. The module runs in Node and browsers.
  */
 
 import type { PathBuilderLike } from "path-ts"
@@ -16,31 +15,34 @@ import { readLocalBuffer, readLocalJSONFile } from "#fs/readers"
 
 export { COARSE_CLASSES, FEATURE_DIM, featurize } from "#coarse-placer/featurize"
 
+/**
+ * The loaded model: class labels, calibration and fp32 weights.
+ */
 export interface CoarsePlacerArtifact {
 	/**
-	 * Country or region labels predicted by the model.
+	 * The class labels, including `OTHER`.
 	 */
 	classes: readonly string[]
 	featureDim: number
 	/**
-	 * Calibration temperature applied to logits before softmax.
+	 * The temperature that divides logits before softmax.
 	 */
 	temperature: number
 	/**
-	 * Per-class bias added to the feature scores before softmax.
+	 * The per-class bias added to the feature scores.
 	 */
 	bias: number[]
 	/**
-	 * Flat row-major weight matrix, length `classes.length * featureDim`.
+	 * The row-major weight matrix, with length `classes.length * featureDim`.
 	 */
 	weights: Float32Array
 }
 
 /**
- * Metadata stored beside model weights.
+ * The `meta.json` stored beside the model weights.
  *
- * Int8 artifacts specify per-class scales and `quantization: "int8-per-row"`;
- * fp32 artifacts omit those fields.
+ * Int8 artifacts set `quantization: "int8-per-row"` and `scales`.
+ * Fp32 artifacts omit both.
  */
 export interface CoarsePlacerMeta {
 	classes: string[]
@@ -49,13 +51,13 @@ export interface CoarsePlacerMeta {
 	bias: number[]
 	quantization?: "int8-per-row"
 	/**
-	 * Per-class scale, present for int8 weights.
+	 * The per-class scale for int8 weights.
 	 */
 	scales?: number[]
 }
 
 /**
- * Convert per-class int8 weights to fp32 using the class's scale.
+ * Converts per-class int8 weights to fp32 by multiplying each row by its class scale.
  */
 export function dequantizeInt8Weights(
 	int8: Int8Array,
@@ -83,7 +85,9 @@ export function dequantizeInt8Weights(
 }
 
 /**
- * Read `weights.bin` into a buffer with the correct byte offset and length.
+ * Reads `weights.bin` into an array buffer that covers exactly the file's bytes.
+ *
+ * A Node `Buffer` can share a larger pooled buffer, so the result is sliced to the buffer's own range.
  */
 export async function readWeightsBin(dir: PathBuilderLike): Promise<ArrayBufferLike> {
 	const { PathBuilder } = await import("path-ts")
@@ -92,43 +96,52 @@ export async function readWeightsBin(dir: PathBuilderLike): Promise<ArrayBufferL
 	return buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength)
 }
 
+/**
+ * One classifier prediction.
+ */
 export interface CoarsePrediction {
 	/**
-	 * Predicted class, or `null` when confidence is below the threshold.
+	 * The predicted class, or `null` when the prediction abstains.
 	 */
 	country: string | null
 	/**
-	 * Calibrated confidence used by the abstention rule.
+	 * The calibrated confidence that the abstention rule compares with the threshold.
 	 */
 	confidence: number
 	abstained: boolean
 	/**
-	 * The full calibrated class distribution.
+	 * The calibrated probability of every class.
 	 */
 	probs: Record<string, number>
 }
 
 /**
- * Return whether an off-map input was routed to `OTHER` or rejected.
+ * Returns whether a prediction abstained or chose `OTHER`.
  */
 export function isOffMapHandled(prediction: CoarsePrediction): boolean {
 	return prediction.abstained || prediction.country === "OTHER"
 }
 
+/**
+ * Options for {@linkcode CoarsePlacer}.
+ */
 export interface CoarsePlacerOpts {
 	/**
-	 * Minimum confidence required to return a prediction.
-	 * Defaults to `0.5`.
+	 * The minimum confidence for a prediction.
+	 * The default is `0.5`.
 	 */
 	abstainBelow?: number
 	/**
-	 * Reject using total in-map probability rather than the top-class probability,
-	 * then route to the highest-probability in-map class.
-	 * Defaults to `false`.
+	 * Abstains on the total probability of in-map classes and otherwise returns the top in-map class.
+	 *
+	 * The default is `false`, which abstains on the top-class probability.
 	 */
 	openSet?: boolean
 }
 
+/**
+ * The coarse country classifier.
+ */
 export class CoarsePlacer {
 	readonly #classes: readonly string[]
 	readonly #dim: number
@@ -154,8 +167,8 @@ export class CoarsePlacer {
 	}
 
 	/**
-	 * Load fp32 or per-row int8 weights from an artifact directory.
-	 * This method is Node-only.
+	 * Loads fp32 or per-row int8 weights from an artifact directory.
+	 * This method requires Node.
 	 */
 	static async fromArtifactDir(dir: PathBuilderLike, opts?: CoarsePlacerOpts): Promise<CoarsePlacer> {
 		const { PathBuilder } = await import("path-ts")
@@ -177,7 +190,7 @@ export class CoarsePlacer {
 	}
 
 	/**
-	 * Load the bundled model, or use `$MAILWOMAN_COARSE_PLACER_DIR` to select another artifact.
+	 * Loads the bundled model, or the artifact in `$MAILWOMAN_COARSE_PLACER_DIR` when it is set.
 	 */
 	static async fromBundled(opts?: CoarsePlacerOpts): Promise<CoarsePlacer> {
 		const dir = $public.MAILWOMAN_COARSE_PLACER_DIR
@@ -188,6 +201,9 @@ export class CoarsePlacer {
 		return CoarsePlacer.fromArtifactDir(corePackagePath("data", "coarse-placer"), opts)
 	}
 
+	/**
+	 * Classifies one address string.
+	 */
 	predict(text: string): CoarsePrediction {
 		const feats = featurize(text)
 		const C = this.#classes.length
@@ -204,7 +220,7 @@ export class CoarsePlacer {
 			logits[c] = s / this.#temp
 		}
 
-		// Preserve the fp32 exponent rounding used by the inference path.
+		// Subtracting the largest logit keeps `Math.exp` from overflowing.
 		let maxLogit = -Infinity
 
 		for (let c = 0; c < C; c++)
@@ -224,7 +240,7 @@ export class CoarsePlacer {
 		let topIdx = 0
 		let topProb = -1
 		let otherProb = 0
-		// Track the highest-probability class other than `OTHER`.
+		// The in-map values track the most probable class other than `OTHER`.
 		let inMapIdx = -1
 		let inMapProb = -1
 		const distribution: Record<string, number> = {}
@@ -246,7 +262,7 @@ export class CoarsePlacer {
 			}
 		}
 
-		// Open-set mode rejects on total in-map mass and routes to the in-map argmax.
+		// Open-set mode abstains on total in-map probability and returns the top in-map class.
 		if (this.#openSet) {
 			const inMapMass = 1 - otherProb
 			const abstained = inMapMass < this.#threshold
@@ -271,17 +287,17 @@ export class CoarsePlacer {
 }
 
 /**
- * Return the unnormalized probabilities for all in-map classes, or `null`
- * when prediction abstains or selects `OTHER`.
+ * Returns the probabilities of the in-map classes without renormalizing them.
  *
- * The resolver can use the distribution to rank candidates across countries.
+ * Returns `null` when the prediction abstained or chose `OTHER`.
+ * The resolver uses the result to rank candidates across countries.
  */
 export function inMapPosterior(
 	prediction: CoarsePrediction,
 	opts?: {
 		/**
-		 * Exclude classes below this probability.
-		 * Defaults to `0`, which preserves the full distribution.
+		 * Classes below this probability are dropped.
+		 * The default of `0` keeps every class.
 		 */
 		epsilonFloor?: number
 	}
@@ -296,7 +312,7 @@ export function inMapPosterior(
 		}
 	}
 
-	// Preserve a non-empty result if all classes were filtered.
+	// When the floor removes every class, the predicted class is kept so the result is never empty.
 	if (!Object.keys(posterior).length) {
 		posterior[prediction.country] = prediction.confidence
 	}
@@ -305,7 +321,7 @@ export function inMapPosterior(
 }
 
 /**
- * Build a coarse placer from metadata and fp32 weights.
+ * Builds a coarse placer from metadata and fp32 weights.
  */
 export async function loadCoarsePlacer(
 	metaJson: { classes: string[]; featureDim: number; temperature: number; bias: number[] },

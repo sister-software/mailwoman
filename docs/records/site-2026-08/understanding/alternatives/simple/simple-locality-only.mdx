@@ -11,39 +11,39 @@ tags:
 
 # Locality-only geocoding
 
-Parse only the locality — the city, town, or village. Everything else is supplementary. Geocode to city-level accuracy. This is sufficient for statistical aggregation, market analysis, regional routing, and most applications that don't need to find a specific building.
+A locality-only geocoder parses only the locality (the city, town, or village) and treats everything else as supplementary. It geocodes to city-level accuracy. That accuracy is sufficient for statistical aggregation, market analysis, regional routing, and most applications that don't need to find a specific building.
 
 ## The approach
 
-1. **Find the locality.** Tokenize the input. Try each token and bigram against a gazetteer of locality names. "Springfield" matches. "New York" matches as a bigram. "West 26th" does not match and is ignored. The approach is a targeted version of gazetteer-first geocoding: skip everything except locality names.
+1. **Find the locality.** Tokenize the input. Try each token and bigram against a gazetteer of locality names. "Springfield" matches. "New York" matches as a bigram. "West 26th" does not match and is ignored. The approach is a targeted version of gazetteer-first geocoding that skips everything except locality names.
 2. **Disambiguate if possible.** If the input also contains a state abbreviation or postcode, use it to filter candidates. `Springfield, IL` → Springfield, IL. `Springfield` alone → 34 candidates, ranked by population.
-3. **Return the locality centroid.** The geographic center of the city. Off by up to several miles for large cities (Los Angeles is 500 square miles), within a few hundred meters for small towns.
-4. **Ignore the rest.** The street, building number, apartment, and venue are not needed for city-level geocoding. They are preserved in the raw input for display purposes.
+3. **Return the locality centroid.** The centroid is the geographic center of the city. It is off by up to several miles for large cities (Los Angeles is 500 square miles) and within a few hundred meters for small towns.
+4. **Ignore the rest.** City-level geocoding does not need the street, building number, apartment, or venue. The raw input keeps them for display.
 
-This is the minimum viable geocoder: city-level accuracy from a gazetteer lookup. It handles every country with a gazetteer. It handles ambiguous names (Springfield) by surfacing the ambiguity rather than picking wrong. It handles every script the gazetteer supports.
+This is the minimum viable geocoder: city-level accuracy from a gazetteer lookup. It handles every country and every script that the gazetteer covers. It handles ambiguous names such as Springfield by surfacing the ambiguity rather than picking the wrong candidate.
 
 ## When it works
 
-- **Statistical aggregation.** Customer distribution by city. Sales by metropolitan area. Disease incidence by municipality. City-level accuracy is the unit of analysis for most public health, marketing, and demographic applications.
-- **Regional routing.** "Route this delivery to the Los Angeles warehouse" — you need to know it's in Los Angeles rather than which building. The street address is for the last mile; the locality is for the regional sort.
-- **Market analysis.** "How several customers do we have in the Bay Area?" — city-level geocoding places customers in San Francisco, Oakland, San Jose, etc. Street-level accuracy adds detail but doesn't change the regional answer.
+- **Statistical aggregation.** Customer distribution by city, sales by metropolitan area, and disease incidence by municipality all aggregate at the city level. City-level accuracy is the unit of analysis for most public health, marketing, and demographic applications.
+- **Regional routing.** To route a delivery to the Los Angeles warehouse, you need to know that the address is in Los Angeles, and the building does not matter. The street address serves the last mile, and the locality serves the regional sort.
+- **Market analysis.** To count the customers in the Bay Area, city-level geocoding places customers in San Francisco, Oakland, San Jose, and other cities. Street-level accuracy adds detail but doesn't change the regional answer.
 - **Gazetteer coverage is good for localities.** WOF has ~200,000 locality records globally. OSM has millions of place nodes. GeoNames has ~12 million populated places. For most of the world's population, the locality they live in is in a gazetteer.
 - **You serve countries without street-level addressing.** Japan uses block-based addressing without named streets. Rural India, sub-Saharan Africa, and informal settlements use descriptive addresses without standard street names. Locality-only geocoding works where street-level geocoding has nothing to work with.
-- **You need global coverage fast.** One gazetteer, one lookup strategy, every country. No per-country regexes, no per-locale rules. Add a country by adding its gazetteer data.
+- **You need global coverage fast.** One gazetteer and one lookup strategy cover every country without per-country regexes or per-locale rules. You add a country by adding its gazetteer data.
 
 ## What you lose
 
-- **Everything finer than city-level.** The building, the street, the neighborhood. A geocode at the city centroid is correct at the city level but wrong for any specific address within the city. A delivery to "123 Main St, Springfield" routed to the Springfield centroid is off by up to several miles.
-- **Large cities.** Los Angeles, New York, Tokyo, London — a centroid in a 500-square-mile city is off by up to 15 miles from the actual address. City-level accuracy in a large city is approximately county-level accuracy.
-- **Duplicate locality names.** 34 Springfields. Three Newports (UK). Two Eursinges (Netherlands, same province). Without a state or postcode, the gazetteer returns all candidates and the ranker picks by population. The largest Springfield is in Illinois. If the user meant Springfield, MA, the geocoder returns a confident wrong answer.
-- **Postal city vs. legal city.** USPS accepts "Los Angeles" as the mailing city for addresses in Beverly Hills and West Hollywood. The gazetteer places Beverly Hills as a separate city. A locality-only geocoder that looks up "Los Angeles" in the gazetteer returns the Los Angeles centroid — 5 miles from the actual address in Beverly Hills.
-- **Neighborhoods as cities.** `Brooklyn, NY` — USPS accepts Brooklyn as a mailing city for several NYC ZIP codes. The gazetteer may have Brooklyn as a neighborhood of New York City, or may not have it as a locality at all. A locality-only geocoder that doesn't find "Brooklyn" in the locality index returns nothing for a real address.
+- **Everything finer than city-level.** The geocoder loses the building, the street, and the neighborhood. A geocode at the city centroid is correct at the city level but wrong for any specific address within the city. A delivery to "123 Main St, Springfield" routed to the Springfield centroid is off by up to several miles.
+- **Large cities.** In cities such as Los Angeles, New York, Tokyo, and London, a centroid in a 500-square-mile city is off by up to 15 miles from the actual address. City-level accuracy in a large city is approximately county-level accuracy.
+- **Duplicate locality names.** The US has 34 Springfields, the UK has three Newports, and the Netherlands has two Eursinges in the same province. Without a state or postcode, the gazetteer returns all candidates and the ranker picks by population. The largest Springfield is in Illinois. If the user meant Springfield, MA, the geocoder returns a confident wrong answer.
+- **Postal city vs. legal city.** USPS accepts "Los Angeles" as the mailing city for addresses in Beverly Hills and West Hollywood. The gazetteer places Beverly Hills as a separate city. A locality-only geocoder that looks up "Los Angeles" in the gazetteer returns the Los Angeles centroid, 5 miles from the actual address in Beverly Hills.
+- **Neighborhoods as cities.** For `Brooklyn, NY`, USPS accepts Brooklyn as a mailing city for several NYC ZIP codes. The gazetteer may have Brooklyn as a neighborhood of New York City, or may not have it as a locality at all. A locality-only geocoder that doesn't find "Brooklyn" in the locality index returns nothing for a real address.
 
 ## Where Mailwoman fits
 
-Mailwoman's resolver uses locality as the primary search key, constrained by region and postcode. The resolver returns top-K candidates per administrative span. The reconciler picks the coherent candidate from the joint parse. This is locality-only geocoding with more constraints: the the system the region and postcode from the parser, so it doesn't need to disambiguate 34 Springfields from population alone.
+Mailwoman's resolver uses locality as the primary search key, constrained by region and postcode. The resolver returns top-K candidates per administrative span. The reconciler picks the coherent candidate from the joint parse. This is locality-only geocoding with more constraints. The system takes the region and postcode from the parser, so it doesn't need to disambiguate 34 Springfields from population alone.
 
-A system that starts with locality-only geocoding can add Mailwoman as a **refinement pass.** Locality-only gives you city-level accuracy. Mailwoman gives you the street and building number, feeding a more precise resolver query. The two approaches share the same gazetteer infrastructure — the resolver is the same code, queried with more or fewer constraints.
+A system that starts with locality-only geocoding can add Mailwoman as a **refinement pass.** Locality-only geocoding gives you city-level accuracy. Mailwoman adds the street and building number, which feed a more precise resolver query. The two approaches share the same gazetteer infrastructure, and the resolver is the same code queried with more or fewer constraints.
 
 ## See also
 

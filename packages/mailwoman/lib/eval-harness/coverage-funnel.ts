@@ -3,12 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Present source-register jurisdictions across twelve distinct coverage stages.
- *   Census data supplies corpus, admission, board, gazetteer, and package readings;
- *   the register supplies the denominator, including jurisdictions absent from the census.
- *   `absent` is measured absence; `unknown` means this checkout cannot answer.
- *   Stages describe different source populations and must not be read as one pipeline.
- *   Opportunity candidates use source research and corpus presence, not existing coverage.
+ *   Coverage funnel that reads every source-register jurisdiction at each coverage stage. The register supplies the
+ *   denominator, so jurisdictions missing from the census still appear. The stages measure different populations, so
+ *   a later stage can be reached while an earlier one is absent.
  */
 
 import {
@@ -22,18 +19,17 @@ import type { CountryCoverage } from "#coverage/census"
 
 /**
  * State of a jurisdiction at one stage.
- *
- * `absent` is measured; `unknown` means the stage could not be measured.
+ * The state `absent` is a measured absence.
  */
 export const StageState = {
 	Reached: "reached",
 	Absent: "absent",
 	/**
-	 * Reached, but a measured condition blocks progress.
+	 * The jurisdiction has inputs for the stage, and a measured condition blocks it.
 	 */
 	Blocked: "blocked",
 	/**
-	 * This instrument cannot measure the stage from a checkout.
+	 * The stage cannot be measured from the supplied inputs.
 	 */
 	Unknown: "unknown",
 } as const
@@ -41,9 +37,9 @@ export const StageState = {
 export type StageState = (typeof StageState)[keyof typeof StageState]
 
 /**
- * Twelve coverage stages; source-register, corpus, and evaluation stages are distinct populations.
+ * Coverage stages in report order.
  *
- * Ingestion requires license, address role, and measured coverage.
+ * The `licensed`, `addressRole`, and `coverage` stages are all required for ingestion.
  */
 export const FUNNEL_STAGES = [
 	"researched",
@@ -62,16 +58,21 @@ export const FUNNEL_STAGES = [
 
 export type FunnelStage = (typeof FUNNEL_STAGES)[number]
 
+/**
+ * State of one jurisdiction at one stage.
+ */
 export interface StageReading {
 	state: StageState
 	/**
-	 * What the reading rests on, or what would make an `unknown` answerable.
-	 *
-	 * Always present: a bare state invites the reader to supply a reason of their own.
+	 * Evidence for the state.
+	 * For `unknown`, it says which input would answer the stage.
 	 */
 	detail: string
 }
 
+/**
+ * Funnel readings for one jurisdiction.
+ */
 export interface JurisdictionFunnelRow {
 	iso2: string
 	name: string
@@ -86,50 +87,59 @@ export interface JurisdictionFunnelRow {
 	reached: number
 }
 
+/**
+ * Funnel for every jurisdiction in the source register.
+ */
 export interface CoverageFunnel {
 	rows: readonly JurisdictionFunnelRow[]
 	/**
-	 * Jurisdiction counts by stage state, using the register denominator.
+	 * Number of jurisdictions in each state at each stage.
 	 */
 	byStage: Record<FunnelStage, Record<StageState, number>>
 	provenance: {
 		registerVersion: string
 		jurisdictions: number
 		/**
-		 * Countries represented in the census report.
+		 * Number of countries in the census report.
 		 */
 		censusCountries: number
 		mixtureAudit: string | null
 	}
 }
 
+/**
+ * Inputs for {@link readCoverageFunnel}.
+ */
 export interface CoverageFunnelInput {
 	/**
-	 * Per-country rows from `censusCoverage`, keyed here by ISO-2.
+	 * Per-country rows from `censusCoverage`.
 	 */
 	coverage: readonly CountryCoverage[]
 	register?: AddressSourceRegister
 	/**
-	 * Countries any `scope.config.json` tier names.
+	 * Countries that any `scope.config.json` tier lists.
 	 */
 	tieredCountries: readonly string[]
 	/**
-	 * Countries a named release check fails a regression on: tier 1 plus `dRuleProtected`.
+	 * Countries where a named release check fails on regression.
+	 * These are tier 1 and `dRuleProtected` countries.
 	 */
 	protectedCountries: readonly string[]
 	/**
-	 * `audit_epoch_mixture` output path; without it, sampling is unknown.
+	 * Path of the `audit_epoch_mixture` output, recorded in the provenance.
 	 */
 	mixtureAudit?: string
 	/**
-	 * Per-country rows sampled and the audit's denominator.
+	 * Rows sampled per country and the audit's total.
+	 *
+	 * The `sampled` stage is `unknown` when `sampledRows` is absent.
 	 */
 	sampledRows?: ReadonlyMap<string, number>
 	sampledTotal?: number
 }
 
 /**
- * Read all coverage stages for jurisdictions in the source register.
+ * Reads every coverage stage for each jurisdiction in the source register.
  */
 export async function readCoverageFunnel(input: CoverageFunnelInput): Promise<CoverageFunnel> {
 	const register = input.register ?? (await readAddressSourceRegister())
@@ -169,8 +179,8 @@ export async function readCoverageFunnel(input: CoverageFunnelInput): Promise<Co
 					}
 				: { state: StageState.Absent, detail: "no source to license" }
 
-		// Ingestion also requires each source to declare its address role and coverage.
-		// `upstreamLineage` affects linkage correctness, not admission.
+		// Ingestion requires a declared address role and measured coverage.
+		// The `upstreamLineage` field affects linkage and plays no part in admission.
 		const withRole = sources.filter((source) => source.addressRole !== undefined)
 		const withCoverage = sources.filter((source) => source.coverage !== undefined)
 
@@ -195,7 +205,7 @@ export async function readCoverageFunnel(input: CoverageFunnelInput): Promise<Co
 						detail: `${sources.length} source(s), none with measured coverage`,
 					}
 
-		// The corpus manifest is one of the census registers, so zero is measured absence.
+		// The census reads the corpus manifest, so zero rows is a measured absence.
 		const corpusRows: StageReading = country?.corpusRows
 			? {
 					state: StageState.Reached,
@@ -207,8 +217,8 @@ export async function readCoverageFunnel(input: CoverageFunnelInput): Promise<Co
 			? { state: StageState.Reached, detail: "named in the training config's country_weights" }
 			: { state: StageState.Absent, detail: "absent from the training config's country_weights" }
 
-		// Sampling is run-specific: admitted countries absent from the audit drew zero;
-		// countries not admitted are absent, not sampler failures.
+		// An admitted country missing from the audit drew zero rows and is blocked.
+		// A country that is not admitted is absent because the sampler had nothing to draw.
 		const sampledCount = input.sampledRows?.get(iso2)
 
 		const sampled: StageReading = !input.sampledRows
@@ -231,8 +241,8 @@ export async function readCoverageFunnel(input: CoverageFunnelInput): Promise<Co
 							detail: "not admitted by the training config, so it has nothing to draw",
 						}
 
-		// Both stages count gauntlet rows only, not golden, panel, or locale-probe sets.
-		// `absent` therefore means no gauntlet row names this country.
+		// Both stages count gauntlet board rows only.
+		// Golden, panel, and locale-probe sets are excluded.
 		const boardRows = country?.boardRows ?? 0
 		const checkingRows = country?.boardPassedRows ?? 0
 
@@ -309,16 +319,19 @@ export async function readCoverageFunnel(input: CoverageFunnelInput): Promise<Co
 	}
 }
 
+/**
+ * Jurisdictions that reached the same number of stages.
+ */
 export interface IncumbencyGroup {
 	/**
-	 * Number of stages reached by each jurisdiction in the group.
+	 * Number of stages that each jurisdiction in the group reached.
 	 */
 	reached: number
 	jurisdictions: readonly string[]
 }
 
 /**
- * Group jurisdictions by stages reached, deepest first.
+ * Groups jurisdictions by the number of stages reached, highest first.
  */
 export function incumbencyGroups(funnel: CoverageFunnel): readonly IncumbencyGroup[] {
 	const byDepth = new Map<number, string[]>()
@@ -332,6 +345,9 @@ export function incumbencyGroups(funnel: CoverageFunnel): readonly IncumbencyGro
 		.map(([reached, jurisdictions]) => ({ reached, jurisdictions: jurisdictions.toSorted() }))
 }
 
+/**
+ * Jurisdiction with a researched address backbone and no corpus rows.
+ */
 export interface OpportunityCandidate {
 	iso2: string
 	name: string
@@ -347,10 +363,10 @@ export interface OpportunityCandidate {
 }
 
 /**
- * Filter for researched backbones with no corpus rows; this is not a ranking.
+ * Lists jurisdictions whose backbone state is in `backboneStates` and that have no corpus rows.
  *
- * Callers supply other opportunity inputs.
- * Existing packages, boards, and tiers are excluded.
+ * The result is sorted by the order of `backboneStates` and then by ISO code.
+ * The sort order carries no priority.
  */
 export function opportunityCandidates(
 	funnel: CoverageFunnel,
@@ -375,9 +391,7 @@ export function opportunityCandidates(
 }
 
 /**
- * Work-selection inputs and whether this instrument supplies them.
- *
- * Existing package and board coverage is excluded because it measures cost, not need.
+ * Inputs for choosing coverage work, and whether the funnel supplies each one.
  */
 export const OPPORTUNITY_INPUTS = [
 	{

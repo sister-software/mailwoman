@@ -94,7 +94,7 @@ Almost nobody, and nothing blocks on it by default.
   Because both real backends routinely return scores above 1, this **saturates almost every candidate to exactly 1**,
   contributing "was there a match at all" and nothing else. It is on the joint-reconcile path, which is
   **default-OFF** (`runtime-pipeline.ts:479`, `jointReconcile ?? false`, retired as default 2026-06-14), so this is
-  latent rather than live — but it is a trap waiting for whoever re-promotes that path.
+  latent rather than live. Anyone who re-promotes that path will inherit the saturation.
 - `mailwoman/geocode-core.ts` reads `primaryNode.alternatives` to build the geocode `candidates` array, and never
   reads the score. The API-facing `confidence` field comes from the coarse-country placer rather than the resolver.
 
@@ -183,7 +183,7 @@ scores on that backend (5.31–7.59, vs 0.00–6.44 for localities and a flat 0.
 is therefore **dominated by tag rather than by correctness** — 6.43 is close to the 6.52 in the original claim, which makes
 this the likely mechanism behind it.
 
-That is not a correction that rescues the score. It is a second, independent reason not to threshold on it:
+This correction does not make the score usable. It gives a second, independent reason to avoid thresholding on it:
 `resolver_score` is not comparable across tags _within_ one backend, let alone across backends. Any pooled mean over
 this field is measuring composition.
 
@@ -221,9 +221,9 @@ At a 0.918 threshold, 13 of 14 violations drop and no correct control locality i
 `+1 (555) 867-5309` → `1` → Zona 1 at **0.964**, the highest-confidence violation in the set — a phone number that
 the model is more sure about than any real address it read.
 
-**Three caveats, because the numbers above are seductive:**
+**Three caveats limit how far the numbers above can be trusted:**
 
-1. The correct-control confidence band is _absurdly_ tight (0.918–0.945 across 149 addresses). A signal that
+1. The correct-control confidence band is very tight (0.918–0.945 across 149 addresses). A signal that
    near-constant on clean structured US input will spread on a harder control, and the 0.918 threshold is nothing more than
    the minimum of that cluster. Any threshold work must re-derive this on a multi-locale, fragment-shaped control
    before it means anything.
@@ -253,7 +253,7 @@ caller: a `scoreProfile` on the `PlaceLookup`/`ResolverBackend` interface declar
 "unit", abstainBelow: number }`, which `resolveTree` reads instead of the current `opts.minWinningScore ?? 0`.
 
 - **Cost.** Small and contained: one optional interface field, one line in `resolve.ts:1076`, two backend
-  implementations. No new features, no model work, no artifact rebuild.
+  implementations. It adds no new features and needs neither model work nor an artifact rebuild.
 - **What it buys.** At the measured optimum it drops 36% (FTS) / 83% (candidate) of `no-resolve` violations. The
   candidate number is decent; the FTS number is not.
 - **What it does not buy.** It cannot fix the tag-incomparability — `5.31` is a plausible region and an implausible
@@ -262,8 +262,8 @@ caller: a `scoreProfile` on the `PlaceLookup`/`ResolverBackend` interface declar
 - **Evidence required to promote.** A per-backend, per-placetype threshold sweep on a violation set 10× this one,
   plus a no-regression run on the fragment boards and the gauntlet (the bare-locality and homonym rows are exactly
   what a score floor kills). The D-rule applies: default-on with a known tier-1 regression is not shippable.
-- **Assessment.** This is the cheapest thing that could work and the one most likely to be re-tuned forever. The
-  measurement above says the ceiling is low on the FTS backend.
+- **Assessment.** This is the cheapest option that could work, and it is the one most likely to need repeated
+  re-tuning. The measurement above shows that its ceiling is low on the FTS backend.
 
 ### Design B — abstain on a separate, backend-independent feature set (do not touch scoring)
 
@@ -277,7 +277,7 @@ the `postcode_city_mismatch` / `resolution_quality` idiom already in `decorateNo
 
 - **Cost.** Medium. A new decision function in `@mailwoman/resolver` plus plumbing for two features the resolver
   cannot currently see (the classifier's span confidence is on the node, so that one is free; corroboration needs the
-  whole tree, which `resolveTree` already walks). No model retrain, no artifact rebuild, no backend change.
+  whole tree, which `resolveTree` already walks). It needs neither a model retrain nor an artifact rebuild, and it leaves the backends unchanged.
 - **What it buys.** On the measured signals, confidence alone separates at J ≈ 0.92 on both backends with a single
   shared threshold — an order of magnitude better than any score threshold, and it works identically on both
   backends because the feature is upstream of them.
@@ -304,8 +304,8 @@ one preserved beside it as `resolver_score_raw`.
   change to a shipped interface, so it wants a major.
 - **What it buys.** One threshold that means the same thing everywhere, and it repairs `normalizeResolverScore`'s
   saturation as a side effect (a calibrated `[0, 1]` score is exactly what that combiner was written expecting).
-- **What it does not buy.** Calibration does not create separation. On the measured data the _ordering_ is barely
-  separating; a monotone remap of a barely-separating signal is a barely-separating signal in nicer units. Design C
+- **What it does not buy.** Calibration does not create separation. On the measured data the _ordering_ barely
+  separates the populations, and a monotone remap of that signal separates them no better. Design C
   is a prerequisite for cross-backend comparison rather than a solution to abstention.
 - **Evidence required to promote.** A held-out calibration set per backend (score → observed correctness rate), a
   reliability curve showing the calibrated value is a probability, and a demonstration that the ordering
@@ -321,12 +321,12 @@ well-calibrated number that still cannot abstain.
 
 - **One locale.** `en-US` weights, US control set. The confidence distribution is a model property and will differ
   per locale; the score scales are backend properties and will not.
-- **One control shape.** All 150 control rows are full US street addresses. No bare localities, no fragments, no
-  non-Latin script in the _control_ (there is some in the garbage set). The corroboration signal's zero measured cost
+- **One control shape.** All 150 control rows are full US street addresses. The _control_ contains no bare localities,
+  fragments, or non-Latin script (the garbage set contains some non-Latin script). The corroboration signal's zero measured cost
   is an artifact of that shape and should not be quoted without this caveat.
 - **No FTS postcode database.** The FTS leg ran against the admin database alone, so it produced no postcode nodes and
   never exercised the coordinate-first Regime B scorer. The `[0, 1]` regime is read from source rather than measured.
-- **No calibration fitting.** Design C's mappings are sketches. No logistic was fitted, no reliability curve drawn.
+- **No calibration fitting.** Design C's mappings are sketches. No logistic was fitted and no reliability curve was drawn.
 - **No `prominence` measurement.** It is argued for on the strength of its definition (bounded, same meaning on both
   backends) rather than a measured separation — it was not captured in these runs. That is a one-line probe change
   and should be the first thing anyone does before adopting Design A or B.

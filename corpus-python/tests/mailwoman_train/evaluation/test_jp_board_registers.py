@@ -1,26 +1,12 @@
-"""Per-register acceptability on the JP board — and proof the pre-registered eval is untouched.
+"""Tests the per-register breakdown of the JP board score.
 
-The full JP corpus (#1458) writes a ``register`` column on every board row (``native`` /
-``arabic_chome`` / ``compact_folded`` / ``designator``). Two of those four surfaces appear in zero
-source rows and exist only because the JP corpus builder synthesizes them, and they are a small
-minority of the board — so a blended average is exactly the statistic that would hide them failing.
-``score_jp_probe_board.score_board`` splits the same per-row outcomes by that column.
+The pass check is ``acceptable / rows`` over the whole board against a 0.70 bar, and an unresolved
+pair counts as unacceptable. The per-register split is a diagnostic. It must partition the same
+outcomes and must never change the check. A board without a ``register`` column scores the same
+and gets no breakdown.
 
-What these tests pin, in order of how badly a regression would hurt:
-
-1. The CHECK. ``fraction`` is ``acceptable / rows`` over the whole board, an unresolved pair counts
-   as unacceptable, and the bar is 0.70 — the 2026-07-18 pre-registration, unchanged. The
-   per-register split is diagnostic and must not be able to move it: the board in
-   ``test_check_is_the_blended_number_even_when_a_register_is_wiped_out`` has one register at 0.0000
-   and still reads pass, because the blend clears 0.70.
-2. The split is a partition of those same outcomes — per-register rows/acceptable/unresolved sum
-   back to the blended totals. A bucketing bug that double-counted or dropped rows would otherwise
-   be invisible in a report that prints both.
-3. Boards with no ``register`` column (the Leg-1 probe board) still score identically, with no
-   breakdown. This is the backward-compatibility guarantee that lets one script read both boards.
-
-``score_board`` takes an injected ``predict``, so all of this runs on a synthetic board with no
-checkpoint and no torch.
+``score_board`` takes an injected ``predict``, so these tests run on a synthetic board without a
+checkpoint or torch.
 """
 
 from __future__ import annotations
@@ -31,13 +17,13 @@ from mailwoman_train.evaluation import jp_probe_board as scorer
 from mailwoman_train.labels import resolve_label_set
 
 JP = resolve_label_set("stage3-jp")
-# A tiny stand-in centroid table. The real one is keyed on raw kanji `pref|muni`; the key is opaque
-# to the scorer (norm_key just strips whitespace), so ascii keeps the fixtures readable.
+# The real centroid table is keyed on kanji `pref|muni`. The scorer treats the key as opaque, so ASCII
+# keys keep the fixtures readable.
 CENTROIDS = {"TOKYO|CHIYODA": [139.75, 35.68, 1], "OSAKA|KITA": [135.50, 34.70, 1]}
 
 
 def _row(pref: str, muni: str, tail: str, register: str | None, lon: float, lat: float) -> dict:
-    """A board row whose raw is pref+muni+tail, with spans recorded by construction."""
+    """Build a board row from prefecture, municipality and tail, with prefecture and municipality spans."""
     raw = pref + muni + tail
     row = {
         "raw": raw,
@@ -53,7 +39,7 @@ def _row(pref: str, muni: str, tail: str, register: str | None, lon: float, lat:
 
 
 def _labels_from_spans(row: dict) -> list[int]:
-    """Gold per-char BIO ids for a row — what a perfect model would emit."""
+    """Return the gold per-character BIO label ids for a row."""
     ids = [JP.label_to_id["O"]] * len(row["raw"])
     for start, end, tag in zip(row["span_starts"], row["span_ends"], row["span_tags"], strict=True):
         ids[start] = JP.label_to_id[f"B-{tag}"]
@@ -63,7 +49,7 @@ def _labels_from_spans(row: dict) -> list[int]:
 
 
 def _predictor(correct_raws: set[str]):
-    """Emit gold labels for the named rows and all-``O`` for the rest (which then fail to resolve)."""
+    """Return a predictor that emits gold labels for ``correct_raws`` and all ``O`` for other rows."""
 
     def predict(raw: str) -> list[int]:
         for row in ALL_ROWS:
@@ -74,7 +60,7 @@ def _predictor(correct_raws: set[str]):
     return predict
 
 
-# Four registers. `native` dominates the board the way it dominates the real one (68% there).
+# The board has four registers, and `native` holds the most rows, as on the real board.
 ALL_ROWS = [
     _row("TOKYO", "CHIYODA", "1-2-3", "native", 139.75, 35.68),
     _row("TOKYO", "CHIYODA", "4-5-6", "native", 139.76, 35.69),
@@ -97,7 +83,7 @@ def _score(correct: set[str], rows=None):
 
 
 def test_per_register_fractions_are_computed_over_that_register_only():
-    # Everything right except the single compact_folded row.
+    # Every row is correct except the compact_folded row.
     correct = {r["raw"] for r in ALL_ROWS} - {"OSAKAKITA3-4-5"}
     result = _score(correct)
 
@@ -110,7 +96,6 @@ def test_per_register_fractions_are_computed_over_that_register_only():
     assert per["native"] == {"rows": 3, "acceptable": 3, "unresolved": 0, "gold_exact": 0, "fraction": 1.0}
     assert per["arabic_chome"] == {"rows": 1, "acceptable": 1, "unresolved": 0, "gold_exact": 0, "fraction": 1.0}
     assert per["designator"] == {"rows": 1, "acceptable": 1, "unresolved": 0, "gold_exact": 0, "fraction": 1.0}
-    # The one that failed reads 0.0000 on its own, where the blended 0.83 would have hidden it.
     assert per["compact_folded"] == {"rows": 1, "acceptable": 0, "unresolved": 1, "gold_exact": 0, "fraction": 0.0}
 
 
@@ -125,8 +110,8 @@ def test_per_register_totals_partition_the_blended_totals():
 
 
 def test_check_is_the_blended_number_even_when_a_register_is_wiped_out():
-    """The pre-registered bar reads the blend. A dead minority register cannot flip it, by design."""
-    # 5 of 6 acceptable = 0.8333 >= 0.70, with designator at 0.0000.
+    """Pass the check on the blended fraction even when one register scores zero."""
+    # Five of six rows are acceptable (0.8333), and the designator register scores 0.
     correct = {r["raw"] for r in ALL_ROWS} - {"TOKYOCHIYODA3BAN16GO"}
     result = _score(correct)
 
@@ -134,7 +119,7 @@ def test_check_is_the_blended_number_even_when_a_register_is_wiped_out():
     assert result["fraction"] == pytest.approx(5 / 6)
     report = scorer.format_report(result)
     assert "CHECK >= 0.70: PASS" in report
-    # …and the diagnostic is labeled as one, so nobody quotes it as a bar.
+    # The report labels the per-register split as a diagnostic.
     assert "DIAGNOSTIC, not the check" in report
 
 
@@ -146,7 +131,7 @@ def test_check_still_fails_on_a_bad_blend():
 
 
 def test_board_without_a_register_column_scores_identically_and_gets_no_breakdown():
-    """The Leg-1 probe board has eight columns and no `register`. It must still read the same."""
+    """Score a board without a `register` column the same and omit the breakdown."""
     plain = [{k: v for k, v in row.items() if k != "register"} for row in ALL_ROWS]
     correct = {r["raw"] for r in ALL_ROWS} - {"OSAKAKITA3-4-5"}
 
@@ -166,8 +151,8 @@ def test_board_without_a_register_column_scores_identically_and_gets_no_breakdow
 
 
 def test_unresolved_rows_are_unacceptable_and_land_in_their_own_register_bucket():
-    """A predicted pair absent from the centroid table is UNACCEPTABLE — the pre-registered rule."""
-    result = _score(set())  # every row decodes to all-O, so every key is "|"
+    """Count a predicted pair that is absent from the centroid table as unacceptable."""
+    result = _score(set())  # Every row decodes to all `O`, so every key is "|".
     assert result["unresolved"] == 6
     assert result["acceptable"] == 0
     assert result["fraction"] == 0.0
@@ -175,7 +160,7 @@ def test_unresolved_rows_are_unacceptable_and_land_in_their_own_register_bucket(
 
 
 def test_resolve_tags_select_which_spans_form_the_centroid_key():
-    """stage3-jp resolves prefecture|municipality. the STAGE3 (region|locality) pair finds nothing."""
+    """Resolve stage3-jp rows by prefecture and municipality. The stage3 region and locality pair finds nothing."""
     correct = {r["raw"] for r in ALL_ROWS}
     assert _score(correct)["acceptable"] == 6
 
@@ -196,9 +181,8 @@ def test_resolve_tag_defaults_track_the_label_set():
 
 
 def test_every_same_tag_gold_span_is_scored_against_every_predicted_run():
-    # `tokyo chiyoda kanda`: the KR ladder's shape, where 읍/면 and the 리 below it share `dependent_locality`.
-    # The row carries two `municipality` spans. a model that labels both must read 2/2, and the first span
-    # is still what forms the centroid key.
+    # The row has two `municipality` spans, as a KR address can have two `dependent_locality` spans. A model
+    # that labels both scores 2 of 2, and the first span still forms the centroid key.
     raw = "TOKYO CHIYODA KANDA"
     row = {
         "raw": raw,
@@ -214,8 +198,7 @@ def test_every_same_tag_gold_span_is_scored_against_every_predicted_run():
         for i in range(start + 1, end):
             ids[i] = JP.label_to_id[f"I-{tag}"]
 
-    # The two municipality runs are one space apart, so their joined surface is readable too (the served projection
-    # joins adjacent same-tag runs with the raw's whitespace).
+    # The served projection joins same-tag runs separated only by whitespace, so the joined surface is also decoded.
     assert scorer.decode_all_spans(raw, ids, JP.id_to_label) == {
         "prefecture": ["TOKYO"],
         "municipality": ["CHIYODA", "KANDA", "CHIYODA KANDA"],
@@ -228,7 +211,7 @@ def test_every_same_tag_gold_span_is_scored_against_every_predicted_run():
     assert result["fraction"] == 1.0
     assert result["per_municipality"]["CHIYODA"]["rows"] == 1
 
-    # Label only the second run and the first gold span misses while the second still hits.
+    # When only the second run is labeled, the first gold span misses and the second hits.
     partial = list(ids)
     for i in range(6, 13):
         partial[i] = JP.label_to_id["O"]
@@ -240,9 +223,8 @@ def test_every_same_tag_gold_span_is_scored_against_every_predicted_run():
 
 
 def test_a_multi_token_gold_span_hits_when_only_whitespace_splits_the_predicted_runs():
-    # The permit register's unit `1층 141호` is one gold span. the model labels the space `O`, which the served
-    # projection joins back. Both single runs and the joined surface must be readable, and a run that a NON-space
-    # character separates stays apart.
+    # The unit `1층 141호` is one gold span, and the model labels the space `O`. The decoder returns both runs and
+    # their joined surface. Runs separated by any other character stay separate.
     raw = "X 1층 141호 Y"
     ids = [JP.label_to_id["O"]] * len(raw)
     for start, end in ((2, 4), (5, 9)):
@@ -256,7 +238,7 @@ def test_a_multi_token_gold_span_hits_when_only_whitespace_splits_the_predicted_
     result = scorer.score_board([row], lambda _raw: ids, CENTROIDS, id_to_label=JP.id_to_label, resolve_tags=_RESOLVE)
     assert result["tag_hit"]["building_name"] == 1
 
-    # Runs split by a letter are two spans, never one.
+    # Runs split by a letter decode as two spans.
     raw2 = "1층X141호"
     ids2 = [JP.label_to_id["B-building_name"], JP.label_to_id["I-building_name"], JP.label_to_id["O"]]
     ids2 += [JP.label_to_id["B-building_name"]] + [JP.label_to_id["I-building_name"]] * 3
@@ -264,8 +246,8 @@ def test_a_multi_token_gold_span_hits_when_only_whitespace_splits_the_predicted_
 
 
 def test_municipality_macro_weights_each_held_out_municipality_once():
-    # chiyoda carries 4 of 6 rows, kita 2. Wiping kita out moves the blended number by a third and the macro by a half:
-    # the macro is what says "one of two municipalities failed", whatever the row split.
+    # CHIYODA has 4 of 6 rows and KITA has 2. With KITA wrong, the blended fraction drops by a third and the
+    # municipality macro drops by half.
     chiyoda = {r["raw"] for r in ALL_ROWS if "CHIYODA" in r["raw"]}
     result = _score(chiyoda)
 
@@ -279,9 +261,8 @@ def test_municipality_macro_weights_each_held_out_municipality_once():
     assert "KITA" in report.split("lowest five")[1]
 
 
-#: A kana row: the model reads the surface back exactly, and the centroid table does not key it.
-#: The row's own kanji fields do, which is what `gold_exact` reads — the kana register renders
-#: うんぜん市 for 雲仙市 and the pre-registered number scores it unresolved either way.
+#: A kana-register row whose predicted surface misses the centroid table. Its `pref` and `muni`
+#: kanji fields do match, and `gold_exact` reads those fields.
 KANA_ROW = {
     **_row("とうきょう", "ちよだ", "1-2-3", "kana", 139.75, 35.68),
     "pref": "TOKYO",
@@ -300,11 +281,7 @@ def _score_kana() -> dict:
 
 
 def test_a_gold_exact_row_is_counted_beside_the_check_and_never_inside_it():
-    """`gold_exact` is reported next to the pre-registered number, never folded into it.
-
-    A fold reads as a higher acceptability than the pre-registration defines, on the rows the
-    centroid table cannot key — which is exactly the population the kana register is.
-    """
+    """Report `gold_exact` separately and keep it out of the acceptable count."""
     result = _score_kana()
 
     assert result["gold_exact_unresolved"] == 1
@@ -322,7 +299,7 @@ def test_a_gold_exact_row_is_counted_beside_the_check_and_never_inside_it():
 
 
 def test_a_gold_exact_row_needs_its_own_coordinate_within_the_radius():
-    """The gold pair names a centroid. the row still has to sit near it."""
+    """Require the row's coordinate to lie within the radius of its gold centroid."""
     far = {**KANA_ROW, "lon": 0.0, "lat": 0.0}
     result = scorer.score_board(
         [far],

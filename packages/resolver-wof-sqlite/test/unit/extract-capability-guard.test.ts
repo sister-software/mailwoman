@@ -2,10 +2,10 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file #1791 — a extract that cannot serve a lookup should say so at construction rather than by going quiet.
+ * @file #1791 — an extract that cannot serve a lookup should say so at construction rather than by going quiet.
  *
  *   Both ways it failed before were hard to read. An unroutable name returned zero hits, which is indistinguishable
- *   from "this country has no places": a extract reaches routing only through the name `deriveSchemaName` derives from
+ *   from "this country has no places": an extract reaches routing only through the name `deriveSchemaName` derives from
  *   its filename. Therefore, a file spelled one letter off the placetype it serves answers with nothing while holding every
  *   row that was asked for. A routable name threw from deep inside a select instead.
  *
@@ -46,7 +46,7 @@ const writeMain = (path: PathBuilderLike): void => {
 }
 
 /**
- * A extract that claims to be a place extract — it carries `spr` — and cannot serve one.
+ * An extract that claims to be a place extract — it carries `spr` — and cannot serve one.
  */
 const writeSprOnly = (path: PathBuilderLike): void => {
 	using db = new DatabaseClient<WOFDatabase>(path)
@@ -57,7 +57,7 @@ const writeSprOnly = (path: PathBuilderLike): void => {
 }
 
 /**
- * A extract with nothing in it, under a name that routes.
+ * An extract with nothing in it, under a name that routes.
  *
  * A truncated or zero-byte file reads exactly like this.
  */
@@ -98,7 +98,7 @@ describe("extract capability guard", () => {
 		expect(() => new WOFSQLitePlaceLookup({ databasePath: [dir.path("admin.db")] })).not.toThrow()
 	})
 
-	it("refuses a extract that carries spr and no place_search", () => {
+	it("refuses an extract that carries spr and no place_search", () => {
 		expect(
 			() => new WOFSQLitePlaceLookup({ databasePath: [dir.path("admin.db"), dir.path("postalcode-x.db")] })
 		).toThrow(/carries "spr" but no "place_search"/)
@@ -119,7 +119,7 @@ describe("extract capability guard", () => {
 		expect(message).toContain("postcode_x")
 	})
 
-	it("says nothing about a extract that routes, when it only lacks the table", () => {
+	it("says nothing about an extract that routes, when it only lacks the table", () => {
 		let message = ""
 
 		try {

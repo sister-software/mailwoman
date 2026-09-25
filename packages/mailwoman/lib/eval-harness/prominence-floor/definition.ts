@@ -3,9 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Define and audit the frozen prominence-floor benchmark without loading an engine.
- *   The benchmark stratifies by population and decides per band to avoid pooled results
- *   hiding regressions in underrepresented populations.
+ *   Defines and audits the frozen prominence-floor benchmark without loading an engine.
  */
 
 import { compareByCodePoint } from "@mailwoman/core/strings/compare"
@@ -20,29 +18,42 @@ import {
 import { WITHHELD_CANDIDATE_FIELDS } from "#eval-harness/same-data/fixture"
 
 /**
- * Registered strata in fill order; their source pools are disjoint.
+ * The registered strata in fill order.
+ * Their source pools are disjoint.
  */
 export const PROMINENCE_STRATA = ["unambiguous", "gold_absent"] as const
 
+/**
+ * One registered stratum ID.
+ */
 export type ProminenceStratum = (typeof PROMINENCE_STRATA)[number]
 
 /**
- * Production defaults and the four floor arms.
+ * The production-default arm and the four floor arms.
  */
 export const PROMINENCE_ARMS = ["default", "floor_1", "floor_2", "floor_3", "floor_4"] as const
 
+/**
+ * One registered arm ID.
+ */
 export type ProminenceArm = (typeof PROMINENCE_ARMS)[number]
 
+/**
+ * A population band.
+ */
 export interface ProminenceBand {
 	id: string
 	min: number
 	/**
-	 * Inclusive upper bound; zero means unbounded.
-	 * Missing populations match no band.
+	 * The inclusive upper bound.
+	 * Zero means the band is unbounded.
 	 */
 	max: number
 }
 
+/**
+ * One stratum as the definition file registers it.
+ */
 export interface ProminenceStratumDefinition {
 	id: ProminenceStratum
 	purpose: string
@@ -52,15 +63,22 @@ export interface ProminenceStratumDefinition {
 	correctIsAbstention: boolean
 }
 
+/**
+ * One arm as the definition file registers it.
+ */
 export interface ProminenceArmDefinition {
 	id: ProminenceArm
 	description: string
 	/**
-	 * Pinned `ResolveOpts`; absent on the default arm.
+	 * The pinned `ResolveOpts`.
+	 * The default arm omits it.
 	 */
 	resolveOpts?: { minWinningScore: number }
 }
 
+/**
+ * The committed prominence-floor benchmark definition.
+ */
 export interface ProminenceFloorDefinition {
 	benchmarkID: string
 	version: string
@@ -119,12 +137,13 @@ export interface ProminenceFloorDefinition {
 export const PROMINENCE_DEFINITION_PATH = preregistrationPath("prominence-floor", "benchmark-definition.json")
 
 /**
- * Path to the freeze record pinning the definition hash.
+ * Path to the freeze record that holds the definition hash.
  */
 export const PROMINENCE_FREEZE_PATH = preregistrationPath("prominence-floor", "benchmark-freeze.json")
 
 /**
- * Find the population band, or return `null` for missing or unmatched values.
+ * Finds the band containing a population.
+ * It returns `null` for a missing or unmatched population.
  */
 export function bandFor(bands: readonly ProminenceBand[], population: number | undefined): ProminenceBand | null {
 	if (population === undefined || !Number.isFinite(population)) return null
@@ -133,7 +152,7 @@ export function bandFor(bands: readonly ProminenceBand[], population: number | u
 }
 
 /**
- * Validate the benchmark definition and report execution blockers.
+ * Audits the benchmark definition and returns every problem that would block a run.
  */
 export function auditProminenceDefinition(definition: ProminenceFloorDefinition): string[] {
 	const problems: string[] = [
@@ -180,15 +199,13 @@ export function auditProminenceDefinition(definition: ProminenceFloorDefinition)
 		)
 	}
 
-	// The bands must partition rather than overlap: a row in two bands would be counted
-	// twice under a claim stated per band, and the disjoint-pool rule could not hold.
+	// The bands must partition the population range.
+	// An overlap counts a row twice, and a gap drops rows before the census can report them.
 	const ordered = [...definition.populationBands].toSorted((left, right) => left.min - right.min)
 
 	for (const [index, band] of ordered.entries()) {
-		// `bandRule` registers that a row with no recorded population is in no band.
-		// `bandFor` enforces that by refusing `undefined`, but a band starting at 0 would admit
-		// a row the register counted as zero, which is the same absence wearing a number,
-		// and the reader `readCities` supplies turns an empty column into exactly that.
+		// A row with no recorded population belongs to no band.
+		// Bands start at 1 because `readCities` reads an empty population column as zero.
 		if (band.min < 1) {
 			problems.push(
 				`band ${band.id} starts at ${band.min} — a band must start at 1 or above, or an uncounted population enters it as a zero`
@@ -205,8 +222,6 @@ export function auditProminenceDefinition(definition: ProminenceFloorDefinition)
 			problems.push(`bands ${band.id} and ${next.id} overlap at ${next.min} — a row would be counted in both`)
 		}
 
-		// A gap is as wrong as an overlap and is harder to see: the rows falling in it are filtered out
-		// before a stratum counts its eligible pool, so the census reports nothing missing.
 		if (next && band.max !== 0 && next.min > band.max + 1) {
 			problems.push(
 				`bands ${band.id} and ${next.id} leave ${band.max + 1} to ${next.min - 1} in no band — those rows would vanish before the census could report them`
@@ -226,7 +241,7 @@ export function auditProminenceDefinition(definition: ProminenceFloorDefinition)
 }
 
 /**
- * Load the frozen definition, requiring matching identity, hash, and a clean audit.
+ * Loads the frozen definition after checking its identity, hash, and audit.
  */
 export async function loadProminenceDefinition(): Promise<ProminenceFloorDefinition> {
 	return loadFrozenDefinition<ProminenceFloorDefinition>({

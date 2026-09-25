@@ -3,57 +3,49 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Row schema + loud validation for the demo-cascade smoke eval (#524). Split out of the runner
- *   (`demo-cascade-smoke.ts`) so the schema interface is unit-testable without loading the model /
- *   the hot DB. A malformed row must fail naming the row, never silently skip or crash mid-run.
- *
- *   Row convention (see `data/eval/external/demo-cascade-smoke.readme.md`): each row asserts the
- *   resolved WOF place ID of the top cascade hit — the whole-stack interface — not parse components.
- *   Exactly one of `expect.id` (a verified WOF id) or `expect.anchor_centroid` (postcode-only dead
- *   ends where the slim DB has no row and the demo synthesizes an anchor-centroid hit) per row.
- *
- *   Restored 2026-08-06. The 2026-07-10 probe triage (c61159ef) swept this file into the gitignored
- *   `scripts/diagnostic/` drawer while leaving its only importer — `demo-cascade-smoke.ts`, a
- *   promotion-eval battery leg — behind in `scripts/eval/`. The commit message's "check spawn targets
- *   verified present post-move" was true of the spawn target and false of its dependency, so the
- *   cascade leg has been an `ERR_MODULE_NOT_FOUND` ever since. it was spawned with `nothrow` and only
- *   when a `wof-hot.db` was present, which is why nothing surfaced it for four weeks.
+ *   Row schema and validation for the demo-cascade smoke eval. It lives apart from `smoke.ts` so tests can load it
+ *   without the model or the hot database.
  */
 
 import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
 
+/**
+ * Expected top cascade hit for a smoke row.
+ * A row sets exactly one of `id` and `anchor_centroid`.
+ */
 export interface SmokeRowExpect {
 	/**
-	 * The WOF place id the cascade's TOP hit must carry.
-	 *
-	 * Verified against the gazetteer.
+	 * WOF place ID that the top cascade hit must carry.
 	 */
 	id?: number
 	/**
-	 * Human-readable cross-check (not graded — the id is the assertion).
+	 * Place name for human cross-checking.
+	 * The eval does not grade it.
 	 */
 	name?: string
 	/**
-	 * Human-readable cross-check (not graded — the id is the assertion).
+	 * Placetype for human cross-checking.
+	 * The eval does not grade it.
 	 */
 	placetype?: string
 	/**
-	 * The cascade dead-ends (no WOF row) and the demo's anchor-centroid fallback must fire instead.
-	 *
-	 * Mutually exclusive with `id`.
+	 * Whether the cascade finds no WOF row and the demo's anchor-centroid fallback must produce the hit.
 	 */
 	anchor_centroid?: boolean
 }
 
+/**
+ * One smoke-eval row.
+ */
 export interface SmokeRow {
 	input: string
 	expect: SmokeRowExpect
 	/**
-	 * Why this row is here (bug number, preset name, failure mode it pins).
+	 * Reason the row exists, such as the failure mode it guards against.
 	 */
 	note?: string
 	/**
-	 * Provenance: issue / preset / report the row came from.
+	 * Issue, preset, or report that the row came from.
 	 */
 	source?: string
 }
@@ -62,10 +54,7 @@ const EXPECT_KEYS = new Set(["id", "name", "placetype", "anchor_centroid"])
 const ROW_KEYS = new Set(["input", "expect", "note", "source"])
 
 /**
- * How much of an offending row the error echoes back.
- *
- * Long enough to recognize the row at a glance, short enough that a pathological
- * single-line file cannot flood the terminal.
+ * Maximum number of characters of an invalid row that the error message repeats.
  */
 const ERROR_ROW_ECHO_LIMIT = 200
 
@@ -83,19 +72,16 @@ class SmokeRowError extends Error {
 }
 
 /**
- * Parse + validate a jsonl smoke-row file.
+ * Parses and validates a JSONL smoke-row file.
  *
- * @throws A {@link SmokeRowError} naming the 1-based row number
- * (and echoing the offending line) on any malformed row.
- * Returns at least one row.
- * An empty file is an error rather than a vacuous pass.
+ * Blank lines and lines starting with `//` or `#` are skipped.
+ *
+ * @throws A {@link SmokeRowError} with the one-based line number and the line text when a row is invalid.
+ * @throws An `Error` when the file has no rows.
  */
 export function parseSmokeRows(text: string, sourceLabel: string): SmokeRow[] {
-	// The row number is the point of this parser: every error names the 1-based line a human would
-	// count to in the file. TextSpliterator drops empty segments, so a fixture with a blank line
-	// renumbers every row after it — measured, by the "numbers rows by file line" case in
-	// demo-cascade-rows.test.ts, which caught exactly that when this was briefly a spliterator.
-	// split() keeps blank lines, and the input is one bounded committed fixture.
+	// Error messages report file line numbers. `TextSpliterator` drops empty segments and would shift the numbering
+	// after a blank line. `split()` keeps every line.
 	// oxlint-disable-next-line mailwoman/prefer-spliterator -- row numbering needs blank lines kept
 	const lines = text.split("\n")
 	const rows: SmokeRow[] = []
@@ -179,9 +165,7 @@ export function parseSmokeRows(text: string, sourceLabel: string): SmokeRow[] {
 			}
 		}
 
-		// Assembled field by field rather than cast: every value above has been checked,
-		// and building the row from those checks is what makes the schema and the
-		// validator one statement instead of two that can drift.
+		// Building the row from the checked fields keeps the schema and the validation in sync.
 		rows.push({
 			input: row.input,
 			expect: {

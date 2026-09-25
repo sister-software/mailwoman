@@ -10,61 +10,65 @@ import { approxCircleGeometry, bboxToBounds, geomBounds, radiusCircleGeometry } 
 import type { BoundsTuple, PlaceBBox, PlaceGeometry } from "#map/geometry"
 
 /**
- * `[longitude, latitude]`.
+ * A coordinate pair as `[longitude, latitude]`.
  */
 export type LngLat = [number, number]
 
 /**
- * Identifies how a street-level result was located: `address_point` is an exact
- * building point and `interpolated` is a TIGER range estimate.
+ * How a street-level result was located.
+ *
+ * `address_point` is an exact building point, and `interpolated` is an estimate from a TIGER address range.
  */
 export type PlaceTier = "address_point" | "interpolated"
 
 /**
- * Describes a resolved place as the map renders it: the shared {@link ResolvedPlaceView}
- * plus an optional bbox, street tier with uncertainty radius, and pre-fetched polygon.
+ * A resolved place with the extra fields the map uses to draw it.
  */
 export interface ResolvedMapPlace extends ResolvedPlaceView {
 	/**
-	 * The place's bounding box when the gazetteer carries one, which anchor-centroid postcodes do not.
+	 * The place's bounding box.
+	 * Postcodes located by an anchor centroid have none.
 	 */
 	bbox?: PlaceBBox
 
 	/**
-	 * The street-level tier, set only when the result came from address points
-	 * or interpolation rather than the admin cascade.
+	 * The street-level tier.
+	 *
+	 * It is set only for results from address points or interpolation.
 	 */
 	tier?: PlaceTier
 
 	/**
-	 * The uncertainty radius in meters for a street-level result, drawn as a circle when `tier` is set.
+	 * The uncertainty radius in meters of a street-level result.
+	 * The map draws it as a circle when `tier` is set.
 	 */
 	uncertaintyM?: number
 
 	/**
-	 * The admin polygon, when the host has already fetched it; its presence makes
-	 * the outline and camera follow the polygon.
+	 * The admin polygon, if the host has already fetched it.
+	 * When present, the outline and camera follow the polygon.
 	 */
 	geometry?: PlaceGeometry
 }
 
 /**
- * Describes where the map camera should go: a `center` point at a zoom,
- * or `bounds` to fit with pixel padding.
+ * Where the map camera should go: a `center` point at a zoom, or `bounds` to fit with pixel padding.
  *
- * Only `center` can be applied declaratively through {@link cameraToViewState}, because
- * fitting bounds needs the map's pixel size and so `<ResultCamera>` applies it imperatively.
+ * Only a `center` target can be applied declaratively through {@link cameraToViewState}.
+ * Fitting bounds needs the map's pixel size, so `<ResultCamera>` applies it imperatively.
  */
 export type MapCameraTarget =
 	| { kind: "center"; center: LngLat; zoom: number }
 	| { kind: "bounds"; bounds: BoundsTuple; padding: number }
 
 /**
- * The declarative render spec for one resolved place — the pure output of {@link computeMapPlaceRenderSpec}.
+ * The markers, outline and camera target for one resolved place, as returned
+ * by {@link computeMapPlaceRenderSpec}.
  */
 export interface MapPlaceRenderSpec {
 	/**
-	 * The marker positions as `[lon, lat]`, currently always a single marker.
+	 * The marker positions as `[lon, lat]`.
+	 * There is always exactly one marker.
 	 */
 	markers: LngLat[]
 
@@ -91,9 +95,9 @@ const FIT_PADDING = 40
 const MIN_EXTENT_DEG = 0.001
 
 /**
- * Computes the markers, outline and camera target for a resolved place without side effects.
+ * Computes the markers, outline and camera target for a resolved place.
  *
- * It expects any crisp polygon to be pre-fetched into `place.geometry`, since it performs no loading.
+ * The function loads nothing, so the caller must put any fetched polygon in `place.geometry` first.
  */
 export function computeMapPlaceRenderSpec(place: ResolvedMapPlace): MapPlaceRenderSpec {
 	const markers: LngLat[] = [[place.lon, place.lat]]
@@ -144,8 +148,7 @@ export function computeMapPlaceRenderSpec(place: ResolvedMapPlace): MapPlaceRend
 }
 
 /**
- * Converts a `center` camera target into a `viewState` patch that a controlled
- * `<MapCanvas>` applies as a jump.
+ * Converts a `center` camera target into a `viewState` patch for a controlled `<MapCanvas>`.
  *
  * It returns `null` for a `bounds` target, which `<ResultCamera>` must fit imperatively.
  */

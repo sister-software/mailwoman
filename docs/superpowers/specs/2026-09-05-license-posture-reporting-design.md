@@ -8,46 +8,47 @@ links to the same `/license` page and depends on the release that carries this w
 ## The problem
 
 Mailwoman is dual-licensed, `AGPL-3.0-only OR LicenseRef-Commercial`. Today the only place an
-installation reports which branch applies is `mailwoman doctor`, and the only people who run the
-doctor are people who already know it exists. Every other output — a `geocode --json` record, a
-Nominatim `/search` result, a Photon FeatureCollection — says nothing about who produced it or
-under what terms. A team that deploys the Photon drop-in behind their product has no signal, in the
-tool itself, that the AGPL source offer (section 13) attaches to that deployment, or that a
-commercial license exists.
+installation reports which branch applies is `mailwoman doctor`, and only people who already know
+about the doctor run it. Every other output, such as a `geocode --json` record, a Nominatim `/search`
+result, or a Photon FeatureCollection, says nothing about who produced it or under what terms. A team
+that deploys the Photon drop-in behind their product gets no indication from the tool itself that the
+AGPL source offer (section 13) applies to that deployment, or that a commercial license exists.
 
 The doctor already computes the answer. `runtimeLicenseCheck` in `packages/mailwoman/lib/doctor/checks.ts`
 derives the applied branch from `chooseLicenseBranch` and `verifyConfiguredLicenseKey`, and reports the
-licensee, key id, and key status. This design puts that same answer where responses already go.
+licensee, key id, and key status. This design adds the same answer to the outputs the tool already
+produces.
 
 ## Decisions taken
 
-**The runtime does not change.** A valid key changes what is reported, never what runs. This holds
-the line PR #2117 drew: `doctor` and `license verify` remain advisory, and no code path refuses work
-for want of a key.
+**The runtime does not change.** A valid key changes what is reported, never what runs. This keeps the
+boundary PR #2117 set: `doctor` and `license verify` remain advisory, and no code path refuses work for
+lack of a key.
 
 **One posture, computed once per process.** Every output reads the same value: the applied license
 branch, from the same two inputs the doctor uses (the package's `license` expression and the
 configured key's offline verification). No output re-derives it.
 
-**No licensee, no key id, in any response.** The doctor prints those locally for the operator. A
-Photon deployment serving the public must not carry its operator's commercial relationship in every
-response. The stamp says which branch applies and nothing about who holds it.
+**Responses never include the licensee or the key id.** The doctor prints those locally for the
+operator. A Photon deployment serving the public must not expose its operator's commercial relationship
+in every response. The stamp says which branch applies and nothing about who holds it.
 
 **The notice prints on every CLI invocation, TTY or not.** A notice that only prints to a terminal
-never reaches the deployment it describes. A compliant AGPL user pays two stderr lines they can
-redirect. The only thing that silences the notice is a valid key. There is no environment variable.
+never reaches the deployment it describes. For a compliant AGPL user, the cost is two stderr lines they
+can redirect. Only a valid key silences the notice, and no environment variable does.
 
 **Wording uses the doctor's vocabulary.** The doctor reports three obligations: attribution,
 share-alike on modifications, and the source offer to network users. The notice states the source
 offer, because that is the obligation a network deployment carries and the one the commercial
 agreement waives.
 
-**Drop-in protocols are not broken.** A field goes where the protocol has room for one and nowhere
-else. Where it has none, headers carry the posture.
+**Drop-in protocols stay intact.** A field is added only where the protocol has room for one. Where it
+has none, headers carry the posture.
 
 ## The stamp
 
-One object, snake-case keys to match `intent_markers` and `admin_coherence` on the wire:
+The stamp is one object with snake-case keys, matching `intent_markers` and `admin_coherence` on the
+wire:
 
 ```json
 "engine": {
@@ -68,7 +69,7 @@ One object, snake-case keys to match `intent_markers` and `admin_coherence` on t
 | `notice`      | present only when `license` is `AGPL-3.0-only`; absent otherwise                                         |
 
 An expired, unknown, invalid or retired key reads as `AGPL-3.0-only` with the notice present, the
-same reading the doctor gives it. The stamp does not say why; the doctor does.
+same reading the doctor gives it. The stamp does not say why, and the doctor does.
 
 ### Home
 
@@ -92,8 +93,8 @@ export function buildEngineStamp(input: {
 }): EngineStamp
 ```
 
-`chooseLicenseBranch` supplies `license`; the function is pure and takes `now` through the
-verification it is handed, so a test drives `valid`, `expired`, `unknown_key`, `invalid`, and
+`chooseLicenseBranch` supplies `license`. The function is pure and receives `now` through the
+verification it is given, so a test can exercise `valid`, `expired`, `unknown_key`, `invalid`, and
 no-key without a clock.
 
 The version comes from `readMailwomanManifest` in `packages/mailwoman/lib/cli-kit/metadata.ts`, which
@@ -101,26 +102,27 @@ is the one read of mailwoman's own manifest and lives in the `mailwoman` package
 and the three drop-ins may not depend on `mailwoman` (the engine-agnosticism boundary in
 `packages/api/lib/schema.ts`), so the `mailwoman` package builds the stamp once and hands it to each
 app as an option. Each drop-in's `cli.ts` already wires its engine from `mailwoman`, so the hand-off
-point exists; the app packages carry only the type and the placement.
+point exists. The app packages carry only the type and the placement.
 
-A `resolveEngineStamp()` in the `mailwoman` package memoizes the result for the process: manifest read,
-`verifyConfiguredLicenseKey()`, `buildEngineStamp`. The doctor's `runtimeLicenseCheck` keeps its
-richer `LicensePosture`; both call `chooseLicenseBranch`, so they cannot disagree on the branch.
+A `resolveEngineStamp()` in the `mailwoman` package runs the manifest read,
+`verifyConfiguredLicenseKey()`, and `buildEngineStamp`, and memoizes the result for the process. The
+doctor's `runtimeLicenseCheck` keeps its richer `LicensePosture`. Both call `chooseLicenseBranch`, so
+they cannot disagree on the branch.
 
 ## Placement
 
 ### The stderr notice
 
-Printed once, at the end of a CLI invocation, by the launcher `packages/mailwoman/lib/cli.ts`:
+The launcher `packages/mailwoman/lib/cli.ts` prints the notice once, at the end of a CLI invocation:
 
 ```
 mailwoman is licensed AGPL-3.0-only: modified or network-served copies must offer their source.
 A commercial license waives that obligation: https://mailwoman.ai/license
 ```
 
-The launcher must keep its single static import (its header explains the compile-cache ordering), so
-the notice arrives by dynamic import after `dispatchCommand()` resolves and is written before
-`process.exitCode` is set. It prints for every exit code, including a usage error, and for `--help`
+The launcher must keep its single static import (its header explains the compile-cache ordering). The
+notice code is therefore loaded by dynamic import after `dispatchCommand()` resolves, and the notice is
+written before `process.exitCode` is set. It prints for every exit code, including a usage error, and for `--help`
 and `--version`. It does not print when the key verifies `valid`. It prints for an expired key with the
 expiry date appended to the first line:
 
@@ -128,8 +130,8 @@ expiry date appended to the first line:
 mailwoman is licensed AGPL-3.0-only (the configured license key expired on 2026-09-01): modified or network-served copies must offer their source.
 ```
 
-The text is one function in `stamp.ts`, `licenseNotice(verification)`, returning the two lines or
-`undefined`; the launcher writes what it returns. The doctor's `detail` line is unchanged.
+One function in `stamp.ts`, `licenseNotice(verification)`, produces the text. It returns the two lines
+or `undefined`, and the launcher writes what it returns. The doctor's `detail` line is unchanged.
 
 The same notice prints once at server startup, in `serveNode` (`packages/api-kit/lib/serve.ts`), after
 the `listening on` line, when the app options carry a stamp with a `notice`.
@@ -160,15 +162,15 @@ Server: mailwoman/9.2.0 (AGPL-3.0-only)
 Link: <https://mailwoman.ai/license>; rel="license"
 ```
 
-`rel="license"` is a registered link relation (RFC 8288), so the libpostal drop-in and every proxy in
-front of the others report the license without a body change. With a valid key the `Server` header
+`rel="license"` is a registered link relation (RFC 8288). The libpostal drop-in, and every proxy in
+front of the other apps, therefore report the license without a body change. With a valid key the `Server` header
 reads `mailwoman/9.2.0 (LicenseRef-Commercial)` and the `Link` header is unchanged. No app sets a
 `Server` header today, so nothing is displaced.
 
 ## The `/license` page
 
 `https://mailwoman.ai/license` returns 404 today, as do `/licensing`, `/licensing/commercial` and
-`/pricing`. The pages under `docs/records/site-2026-08/licensing/` are records rather than routed. This
+`/pricing`. The pages under `docs/records/site-2026-08/licensing/` are records and have no route. This
 design adds one routed page, `docs/src/pages/license.mdx`, that states:
 
 - the dual license in one paragraph, with the AGPL obligations in the doctor's vocabulary;
@@ -177,7 +179,7 @@ design adds one routed page, `docs/src/pages/license.mdx`, that states:
 - how a key is configured (`MAILWOMAN_LICENSE_KEY`) and checked (`mailwoman doctor`,
   `mailwoman license verify`).
 
-The URL is the interface; the self-service design places its Payment Link on this page. The path is
+The URL is the interface, and the self-service design places its Payment Link on this page. The path is
 `/license`, singular, to match `license_url`, `rel="license"`, and the `license` command.
 
 ## Interfaces changed
@@ -193,9 +195,9 @@ The URL is the interface; the self-service design places its Payment Link on thi
 | `@mailwoman/libpostal`    | `LibpostalAppOptions.engine?`; headers only                                                                                                                                 |
 | `@mailwoman/docs`         | `src/pages/license.mdx`                                                                                                                                                     |
 
-The `engine` option is optional on every app so that a test or an embedding application that builds an
-app without the `mailwoman` package still works; without it, no body field and no headers are added.
-The four `cli.ts` entry points always pass one.
+The `engine` option is optional on every app, so a test or an embedding application can build an app
+without the `mailwoman` package. When the option is absent, the app adds neither the body field nor
+the headers. The four `cli.ts` entry points always pass one.
 
 ## Verification
 
@@ -233,5 +235,6 @@ Docs: `yarn docs:build` routes `/license`, and the existing link check passes.
 - Any change to the doctor's `LicensePosture` or its `detail` line.
 - The MCP server's advertised version (`packages/mcp/lib/server.ts`) and the Fastify plugin; both
   can adopt the stamp later through the same option.
-- The library API: no notice on import, no stamp on a `GeocodeResult` returned in-process.
-- Payment, checkout, and the license worker: the separate design that follows this one.
+- The library API. Importing the library prints no notice, and a `GeocodeResult` returned in-process
+  carries no stamp.
+- Payment, checkout, and the license worker, which the separate design that follows this one covers.

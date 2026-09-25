@@ -3,23 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Country precision: when an input names a country, does the parse return it?
- *
- *   Most rows that name a country do not check the parsed country.
- *   A row's top-level `country` field unexpectedly selects a locale.
- *   So a row can name Venezuela, omit the parsed country, and still pass.
- *
- *   The board's `country` field is the reference, and the words in the input only select rows. Venue names
- *   can look like country names, so the input alone is ambiguous. The board uses ISO alpha-2 codes,
- *   which lets us compare countries without mistaking a venue for one.
- *
- *   The outcomes distinguish a correct country (`agreed`), a different country (`contradicted`), and
- *   no country (`dropped`). A missing country is different from a wrong one, so they are counted apart.
- *
- *   The census includes rows whose input names the country listed in the board: 361 of 982 rows.
- *   Rows with no country name or a country-like venue name are excluded.
- *
- *   Usage: node packages/mailwoman/lib/dev-tools/country-precision-census.run.ts [--limit <n>] [--json <path>]
+ * Measures whether the parse returns the country for board rows whose input contains their board country's name.
  */
 
 import { CountryISO2, CountryNames } from "@mailwoman/codex/country"
@@ -38,7 +22,7 @@ const { values: args } = parseArguments({
 })
 
 /**
- * Match longer country names first, so longer names are not mistaken for shorter ones.
+ * Lists country names longest first so the pattern prefers the longest match.
  */
 const NAMES_BY_LENGTH = [...CountryNames].toSorted((left, right) => right.length - left.length)
 
@@ -48,32 +32,26 @@ const NAME_PATTERN = new RegExp(
 )
 
 /**
- * Return the country named in the input, or null if none is found.
+ * Returns the full country name found in the input, or null.
  *
- * The pattern matches full country names only.
- * A code or abbreviation can be ambiguous, so neither selects a row.
- *
- * This selects rows for the census.
- * The board's country field remains the reference.
+ * Codes and abbreviations are ambiguous, so they never select a row.
+ * The match only selects rows.
+ * The board's `country` field stays the reference.
  */
 function namedCountry(input: string): string | null {
 	return NAME_PATTERN.exec(input)?.[1] ?? null
 }
 
 /**
- * Map folded country names to ISO alpha-2 codes.
- *
- * The parser returns country names while the board stores codes, so convert the
- * parsed name and leave the board's reference unchanged.
+ * Maps lowercased country names to ISO alpha-2 codes, because the parser returns names
+ * and the board stores codes.
  */
 const CODE_BY_FOLDED_NAME = new Map(
 	Object.entries(CountryISO2).map(([name, code]) => [name.trim().toLowerCase(), code])
 )
 
 /**
- * Map country names that do not directly match an alpha-2 code in the codex.
- *
- * In particular, map `UK` to `GB`, the alpha-2 code for the United Kingdom.
+ * Maps parsed country forms that the codex does not resolve, such as `UK` to `GB`.
  */
 const SURFACE_ALIASES: Readonly<Record<string, string>> = {
 	uk: "GB",
@@ -83,7 +61,7 @@ const SURFACE_ALIASES: Readonly<Record<string, string>> = {
 }
 
 /**
- * Convert a parsed country name to alpha-2, or return null if it cannot be mapped.
+ * Converts a parsed country to alpha-2, or returns null when it cannot be mapped.
  */
 function codeOf(surface: string | null | undefined): string | null {
 	if (!surface) return null
@@ -102,20 +80,26 @@ const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-U
 const cases = await loadRegressionCases()
 const limit = args.limit ? Number.parseInt(args.limit, 10) : Number.POSITIVE_INFINITY
 
+/**
+ * Holds one census row.
+ */
 interface Row {
 	input: string
 	/**
-	 * The board's alpha-2 country code.
+	 * Holds the board's alpha-2 country code.
 	 */
 	truth: string
 	/**
-	 * The country name returned by the parser.
+	 * Holds the country the parser returned.
 	 */
 	parsed: string | null
 	/**
-	 * The parsed country's alpha-2 code, or null if unknown.
+	 * Holds the parsed country's alpha-2 code, or null when it cannot be mapped.
 	 */
 	parsedCode: string | null
+	/**
+	 * Separates a wrong country (`contradicted`) from a missing one (`dropped`).
+	 */
 	outcome: "agreed" | "contradicted" | "dropped" | "unplaceable"
 }
 
@@ -126,12 +110,11 @@ for (const seed of cases) {
 
 	const truth = seed.country?.toUpperCase()
 
-	// Without a board country, there is no reference for comparison.
 	if (!truth) continue
 
 	const named = namedCountry(seed.input)
 
-	// Include only rows where the input names the country listed by the board.
+	// The census keeps only rows whose input contains the board country's name.
 	if (!named || codeOf(named) !== truth) continue
 
 	const parsed = decodeAsJSON(await classifier.parse(seed.input)).country ?? null

@@ -3,22 +3,13 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Acquire one vintage of a published file geodatabase — transfer the archive, unzip it into a `.gdb`
- *   directory, and answer with the directory gdal will open.
+ *   Downloads one vintage of a published file geodatabase and unzips it into a `.gdb` directory for GDAL.
  *
- *   the archive is unzipped **into** A `.gdb` directory rather than IN place. These publishers put the
- *   geodatabase's files at the archive's root, and gdal identifies a file geodatabase by the directory
- *   suffix. Unzipping in place produces a pile of `a0000000*.gdbtable` files no driver will open, which
- *   reads as an unsupported format rather than as an extraction that landed one level too high.
+ *   The publishers put the geodatabase files at the archive root, and GDAL recognizes a file geodatabase by its
+ *   `.gdb` directory suffix. The archive is therefore extracted into a named `.gdb` directory.
  *
- *   the cache is keyed on the product'S own vintage, never on A length probe. The hosts these callers use
- *   answer `head` with http 405 and ignore `Range` — a `curl -r 0-1023` returns http 200 with the whole
- *   body — so "just check the size" starts a real transfer of a file already on disk. Keying on the vintage
- *   the catalogue declares means a re-run against the same vintage never re-transfers, and a new vintage
- *   never overwrites the old one in place.
- *
- *   shared rather than copied because nothing in it is any one product's: it is a cache key, a transfer and
- *   an extraction. What stays with each caller is where the URL came from and what the two names are.
+ *   The cache is keyed on the catalogue's revision date. The hosts reject `HEAD` requests and ignore `Range`, so
+ *   checking the remote size would download the whole file. Each vintage gets its own directory.
  */
 
 import { PathBuilder, type PathBuilderLike } from "path-ts"
@@ -28,43 +19,45 @@ import { makeDirectories } from "#fs/writers"
 import { runFile } from "#process"
 import { streamToDisk } from "#utils/stream-to-disk"
 
+/**
+ * Options for {@link downloadZippedGeodatabase}.
+ */
 export interface DownloadZippedGeodatabaseOptions {
 	/**
-	 * The direct file URL, read from the catalogue entry rather than assembled —
-	 * these file services key on an opaque id with no relationship to the dataset id.
+	 * The direct file URL from the catalogue entry.
+	 *
+	 * The URL uses an opaque file ID, so callers cannot build it from the dataset ID.
 	 */
 	url: string
 	/**
-	 * The product's ISO revision date.
-	 *
-	 * The cache is keyed on it.
+	 * The product's ISO revision date, which keys the cache.
 	 */
 	revisionDate: string
 	/**
-	 * Where vintages are kept.
+	 * The directory that holds one subdirectory per vintage.
 	 */
 	cacheRoot: PathBuilderLike
 	/**
-	 * The archive's file name, as the catalogue entry names the resource.
+	 * The archive's file name from the catalogue entry.
 	 */
 	resource: string
 	/**
-	 * The `.gdb` directory name the archive's contents are extracted into.
+	 * The `.gdb` directory name to extract into.
 	 */
 	directory: string
 	/**
-	 * Names the caller in the refusal, e.g. `"flood download"`.
+	 * A label for the caller in error messages, such as `"flood download"`.
 	 */
 	context: string
 	onProgress?: (message: string) => void
 }
 
 /**
- * Download and unzip the geodatabase for one product vintage, returning the path of the `.gdb` directory.
+ * Downloads and unzips the geodatabase for one product vintage and returns the `.gdb` directory path.
  *
- * The transfer writes to a `.part` file and renames only on a clean finish,
- * so an interrupted run never presents as a complete archive.
- * The same discipline the database build uses, for the same reason.
+ * An existing `.gdb` directory or archive for the vintage is reused.
+ * The download writes to a `.part` file and renames it only on success,
+ * so an interrupted download leaves no archive behind.
  */
 export async function downloadZippedGeodatabase(options: DownloadZippedGeodatabaseOptions): Promise<string> {
 	const vintageDir = PathBuilder.from(options.cacheRoot)(options.revisionDate)

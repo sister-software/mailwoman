@@ -3,9 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   A bounded, reviewed source for Venezuela's `locality postcode, region` convention (#1821).
- *   Bulk sources yielded zero Venezuelan tuples, so this recipe reads four reviewed facts and applies
- *   only transformations that do not create another postcode-to-place join.
+ *   Renders four hand-reviewed Venezuelan postcode facts in the `locality postcode, region` order.
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
@@ -18,14 +16,12 @@ import { SourceRegister } from "#registers"
 import { SurfaceOrigin } from "#types"
 
 /**
- * A separate sampler bucket so a receipt measures these reviewed after-locality rows
- * and no other postcode placement.
+ * The source label for these rows.
+ *
+ * The rows get their own sampler bucket so an eval can measure them apart from other postcode placements.
  */
 export const REVIEWED_POSTCODE_TAIL_SOURCE = "synth-reviewed-postcode-tail"
 
-/**
- * The four postcode-to-place facts reviewed for #1821 and committed in the package data file.
- */
 const REVIEWED_TUPLE_COUNT = 4
 
 interface ReviewedTupleProvenance {
@@ -36,6 +32,9 @@ interface ReviewedTupleProvenance {
 	sourceLicenseNote: string
 }
 
+/**
+ * One reviewed postcode fact and the source it was read from.
+ */
 export interface ReviewedPostcodeTuple {
 	id: string
 	locality: string
@@ -70,10 +69,18 @@ interface Variant {
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/
 
+/**
+ * Returns the path of the committed reviewed-tuple data file.
+ */
 export function defaultReviewedPostcodeTuplePath(): string {
 	return resolveModulePath("@mailwoman/corpus/data/reviewed-ve-postcode-tuples.json")
 }
 
+/**
+ * Reads and validates the reviewed tuples.
+ *
+ * @throws When the file does not hold exactly four complete, unique, reviewed tuples.
+ */
 export async function readReviewedPostcodeTuples(
 	path: PathBuilderLike = defaultReviewedPostcodeTuplePath()
 ): Promise<ReviewedPostcodeTuple[]> {
@@ -118,6 +125,12 @@ export async function readReviewedPostcodeTuples(
 
 const foldAccents = (value: string): string => stripCombiningMarks(value).normalize("NFC")
 
+/**
+ * Returns the surface variants of one tuple.
+ *
+ * Every variant reuses the tuple's own locality, postcode and region, so no variant
+ * pairs a postcode with a place the review did not cover.
+ */
 export function reviewedPostcodeTailVariants(tuple: ReviewedPostcodeTuple): Variant[] {
 	const tail = `${tuple.locality} ${tuple.postcode}, ${tuple.region}`
 	const withCountry = `${tail}, ${tuple.country}`
@@ -155,8 +168,7 @@ export function reviewedPostcodeTailVariants(tuple: ReviewedPostcodeTuple): Vari
 }
 
 /**
- * Emit bounded surface variants of the committed reviewed facts without
- * constructing another geographic join.
+ * The corpus recipe that emits every variant of every reviewed tuple.
  */
 export const reviewedPostcodeTailRecipe: CorpusRecipe = {
 	name: "reviewed-postcode-tail",
@@ -184,9 +196,9 @@ export const reviewedPostcodeTailRecipe: CorpusRecipe = {
 
 				if (
 					alignAndWrite(write, canonical, "reviewed-postcode-tail", {
-						// The four facts were read from their publishers by hand and recorded in
-						// `reviewed-ve-postcode-tuples.json`, which names the publisher per tuple.
-						// No bulk source yielded Venezuelan tuples, so there is no upstream file to point at.
+						// A person read these facts from their publishers, and the data file
+						// records the publisher of each tuple.
+						// No upstream bulk file exists.
 						register: SourceRegister.ReviewedByHand,
 						surface: SurfaceOrigin.Composed,
 						baseSourceID: tuple.id,

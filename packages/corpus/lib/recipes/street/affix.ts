@@ -170,10 +170,10 @@ function parseStreet(
 }
 
 /**
- * Names the two street shapes the suffix-boundary recipe balances.
+ * The two street shapes that the suffix-boundary recipe balances.
  *
- * In `terminal-only`, a name-prone suffix word precedes the real suffix and belongs to
- * the name; in `terminal-contrast`, the name-prone word is itself the final suffix.
+ * In a `terminal-only` street, a name-prone suffix word precedes the real suffix and belongs to the name.
+ * In a `terminal-contrast` street, the name-prone word is itself the final suffix.
  */
 export type SuffixBoundaryClass = "terminal-only" | "terminal-contrast"
 
@@ -284,7 +284,10 @@ interface RenderRowOpts {
 }
 
 /**
- * Place a rendered street in a full, bare, street-only, or venue-prefixed address.
+ * Places a rendered street in a full, bare, street-only, or venue-prefixed address.
+ *
+ * The `cutoffs` option sets the cumulative probabilities of the first three formats.
+ * The remainder produces venue-prefixed rows.
  */
 export function renderRow(
 	random: () => number,
@@ -348,7 +351,9 @@ function renderBalanceRow(t: BalanceTuple): { raw: string; components: Partial<R
 }
 
 /**
- * Street-affix recipe registered with the corpus builder.
+ * Generates US rows that split OpenAddresses streets into `street_prefix`, `street` and `street_suffix`.
+ *
+ * The `--multilocale-count` option appends FR, DE, IT and NL rows in native order without affix labels.
  */
 export const streetAffixRecipe: CorpusRecipe = {
 	name: "street-affix",
@@ -544,10 +549,10 @@ const VENUE_POOL_MIN_SIZE = 500
 const TERMINAL_ONLY_SHARE = 0.8
 
 /**
- * Generates US rows that teach where a street name ends and its suffix begins,
- * mixing about 80% `terminal-only` and 20% `terminal-contrast` streets.
+ * Generates US rows that teach where a street name ends and its suffix begins.
  *
- * It trains on non-Vermont OpenAddresses streets and reserves Vermont for the golden set.
+ * The recipe targets 80% `terminal-only` and 20% `terminal-contrast` streets.
+ * It draws training rows from non-Vermont OpenAddresses streets and reserves Vermont for the golden set.
  */
 export const suffixBoundaryRecipe: CorpusRecipe = {
 	name: "suffix-boundary",

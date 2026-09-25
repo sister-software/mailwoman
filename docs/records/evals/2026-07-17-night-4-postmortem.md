@@ -23,7 +23,7 @@ module; cascade probe closed shape-routing with receipts.
   v381 done; 2k probe launched (v3.9.0, ap-wyS4XeIeCE0mtzo8zDWdaT). SALVAGE CATCH: night-3 falsified
   the OA-sourced splice (uppercase PT / stripped RO) and mechanism-confirmed the WOF re-source as
   v267 with a multi-leg pre-registration demand (fr/it/pl overlap + the broken BR row) — the probe's
-  read is AMENDED accordingly: grade parity subsets pt/ro/fr/it/pl/br, notthe target.
+  read is AMENDED accordingly: grade parity subsets pt/ro/fr/it/pl/br, not just the target.
 - 04:55 — P1 CLOSED via the pre-registered measured-negative exit (PR #1152, docs-only, operator
   merge): decode-time atlas prior structurally cannot separate `…Chevaleret Paris` from `Rue de
 Paris` (identical terminal token + membership; emission-gap distributions overlap; a bias that

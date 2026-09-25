@@ -11,8 +11,8 @@ Mailwoman is dual-licensed: **AGPL-3.0-only**, or **LicenseRef-Commercial** unde
 branches are offered for every release, and the branch that applies to an installation is the one it
 can show a key for. The offer reaches the code and model artifacts Sister Software authors, to the
 extent it holds or controls the rights in them. Third-party components distributed with Mailwoman, and
-reference data you download, stay under the terms of whoever published them; no branch of this offer
-changes those. The two sections below, on reference data and on what a pretrained package carries, say
+reference data you download, stay under the terms of whoever published them, and neither branch of this
+offer changes those terms. The two sections below, on reference data and on what a pretrained package carries, say
 where to read them.
 
 ## The open-source branch
@@ -25,9 +25,8 @@ reports these three by name for the installation it runs on.
 Without a license key, every `mailwoman` command ends with a two-line notice on stderr that says so,
 and every HTTP response from the native API and the drop-in servers carries a `Server` header naming
 the branch and a `Link: rel="license"` header pointing here. JSON responses carry the same in an
-`engine` object. None of it changes what runs. The AGPL grants those rights directly and no key is
-needed to exercise them. The notice records which branch applies, and every command runs the same with
-or without a key.
+`engine` object. The notice records which branch applies, and every command runs the same with or
+without a key. The AGPL grants those rights directly, so exercising them requires no key.
 
 ## The commercial branch
 
@@ -44,7 +43,7 @@ the [pricing page](/docs/pricing).
 in the repository is a reference template, and its own opening notice says it is not self-executing and
 grants no rights on its own. It carries the same ten sections in the same order, and four of them read
 differently from `commercial-2026-10`: the template defines the licensee generically where the
-published agreement names the entity given at checkout, the template leaves fees and term open where
+published agreement identifies the entity given at checkout, the template leaves fees and term open where
 the published agreement states the subscription price and the key-period mechanics, and the template's
 attribution section carries a paragraph limiting the waiver to Sister Software's own attribution that
 the published agreement states only in its grant section. Read the published version for a purchase
@@ -64,8 +63,8 @@ terms are for each bundle we host.
 ## Reference data you download
 
 The resolver needs a gazetteer, and no npm package carries one. Four bundles are published for
-download — `candidate`, `poi`, `fr` and `us` — and each one is rows somebody else published. Taking a
-copy engages that publisher's terms:
+download (`candidate`, `poi`, `fr` and `us`), and each one contains rows another party published.
+Taking a copy engages that publisher's terms:
 
 | bundle      | published by                               | terms as the publisher names them                                              |
 | ----------- | ------------------------------------------ | ------------------------------------------------------------------------------ |

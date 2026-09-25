@@ -3,8 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Resolve measurement inputs and report their selection, size, truth coverage, and content hash. The full board
- *   is the default; hand-picked sets require a recorded rationale.
+ *   Resolves measurement input sets and reports each set's selection, size, truth coverage and content hash.
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
@@ -23,13 +22,12 @@ import type { PathBuilderLike } from "path-ts"
 
 import type { Selection } from "#power"
 
-/**
- * Repo-relative path to the triaged parity fixtures.
- */
 const PARITY_FIXTURES_RELATIVE_PATH = "packages/mailwoman/lib/eval-harness/fixtures/parity-corpus.triaged.jsonl"
 
 /**
- * Discriminated reference to a supported input set.
+ * A reference to one input set, discriminated by `kind`.
+ *
+ * A `literal` set must carry `why`, the rationale for the hand-picked inputs.
  */
 export type InputSetRef =
 	| { kind: "board"; country?: string; address_kind?: string; status?: string }
@@ -45,33 +43,32 @@ export type InputSetRef =
 	  }
 
 /**
- * Supported held-out sources: BAN France and FDIC United States.
+ * The held-out sources: BAN for France and FDIC for the United States.
  */
 export const HOLDOUT_SOURCES = ["fr", "us"] as const
 
 type HoldoutSource = (typeof HOLDOUT_SOURCES)[number]
 
 /**
- * Default number of rows in a holdout draw.
+ * The default number of rows in a holdout draw.
  */
 export const HOLDOUT_DEFAULT_N = 300
 
-/**
- * Available benchmark panel versions.
- */
 const PANEL_VERSIONS = ["v1", "v2", "v2.1", "v3", "v3.1"] as const
 
 type PanelVersion = (typeof PANEL_VERSIONS)[number]
 
 /**
- * Golden-set splits: tuning data and held-back data.
+ * The golden splits.
+ *
+ * `dev` is the tuning split, and `full` includes the held-back rows.
  */
 const GOLDEN_SPLITS = ["dev", "full"] as const
 
 type GoldenSplit = (typeof GOLDEN_SPLITS)[number]
 
 /**
- * Hand-picked input with caller-supplied truth coordinates and optional provenance.
+ * A hand-picked input with a caller-supplied truth coordinate.
  */
 export interface LiteralInputWithTruth {
 	input: string
@@ -81,50 +78,57 @@ export interface LiteralInputWithTruth {
 	truth_type?: string
 }
 
+/**
+ * One input row with its routing hints and truth.
+ */
 export interface ResolvedInput {
 	/**
-	 * Source case ID, or the literal input's index.
+	 * The source case ID, or the index of a literal input.
 	 */
 	id: string
 	input: string
 	country?: string
 	/**
-	 * Country overlay selected for runtime routing.
+	 * The country overlay used for runtime routing.
 	 */
 	routeCountry?: string
 	/**
-	 * Locale-region hint that scopes the fuzzy resolver tier on board rows.
+	 * The locale region that scopes the fuzzy resolver tier on board rows.
 	 */
 	fuzzyCountryScope?: string
 	/**
-	 * Row-specific resolver country assertion from the board.
+	 * The board row's own resolver country.
 	 */
 	defaultCountry?: string
 	addressKind?: string
 	status?: string
 	/**
-	 * Board expectations when available; absent for ungraded literal inputs.
+	 * The board case with its expectations.
+	 * Literal inputs have none.
 	 */
 	seed?: SeedCase
 	/**
-	 * Truth coordinate used for distance grading, independent of source corpus.
+	 * The truth coordinate for distance grading.
 	 */
 	truthLat?: number
 	truthLon?: number
 	/**
-	 * Provenance type for the truth point, used for stratification.
+	 * The provenance type of the truth point, used for stratification.
 	 */
 	truthType?: string
 	/**
-	 * Per-row distance tolerance in metres, when specified.
+	 * The row's distance tolerance in metres.
 	 */
 	toleranceM?: number
 	/**
-	 * Component expectations for golden and parity rows.
+	 * The expected components of a golden or parity row.
 	 */
 	expectComponents?: Record<string, string>
 }
 
+/**
+ * A resolved input set with its provenance and truth coverage.
+ */
 export interface ResolvedInputSet {
 	setID: string
 	inputs: ResolvedInput[]
@@ -132,25 +136,26 @@ export interface ResolvedInputSet {
 	sha256: string
 	selection: Selection
 	/**
-	 * Source population size for subsets.
+	 * The size of the population a subset was drawn from.
 	 */
 	populationN?: number
 	/**
-	 * Rationale for a hand-picked set, echoed in results.
+	 * The rationale for a hand-picked set, repeated in results.
 	 */
 	why?: string
 	/**
-	 * Population strata excluded from this set.
+	 * The population strata this set excludes.
 	 */
 	notCovered: string[]
 	/**
-	 * Counts by truth type.
+	 * Row counts by truth type.
 	 *
-	 * Type counts may overlap; `any` and `none` partition the rows.
+	 * The type counts may overlap.
+	 * The `any` and `none` counts partition the rows.
 	 */
 	hasTruth: { components: number; coordinates: number; tier: number; any: number; none: number }
 	/**
-	 * Current regression-corpus hash for board-derived sets.
+	 * The regression corpus hash of a board-derived set.
 	 */
 	corpusHash?: string
 	notes: string[]
@@ -205,7 +210,7 @@ function truthCounts(cases: SeedCase[]): ResolvedInputSet["hasTruth"] {
 }
 
 /**
- * Resolve a reference and report the selected rows and any excluded strata.
+ * Resolves a reference to its rows, excluded strata and notes.
  */
 export async function resolveInputSet(ref: InputSetRef): Promise<ResolvedInputSet> {
 	switch (ref.kind) {
@@ -227,9 +232,9 @@ export async function resolveInputSet(ref: InputSetRef): Promise<ResolvedInputSe
 }
 
 /**
- * Expand coordinate-truthed board inputs into autocomplete prefixes.
+ * Expands each board row that has a truth coordinate into autocomplete prefixes.
  *
- * Each prefix inherits its row's truth, tolerance, and country settings for grading.
+ * Each prefix keeps its row's truth, tolerance and country hints.
  */
 async function resolveLadder(ref: Extract<InputSetRef, { kind: "ladder" }>): Promise<ResolvedInputSet> {
 	const board = await resolveBoard({
@@ -281,9 +286,10 @@ async function resolveLadder(ref: Extract<InputSetRef, { kind: "ladder" }>): Pro
 }
 
 /**
- * Draw from a held-out source.
+ * Draws a sample from a held-out source.
  *
- * The default is unseeded; pass a seed only to reproduce the same sample.
+ * The draw is unseeded by default.
+ * A seed reproduces the same sample.
  */
 async function resolveHoldout(ref: Extract<InputSetRef, { kind: "holdout" }>): Promise<ResolvedInputSet> {
 	const source = ref.source ?? "fr"
@@ -317,7 +323,7 @@ async function resolveHoldout(ref: Extract<InputSetRef, { kind: "holdout" }>): P
 		country: source.toUpperCase(),
 		truthLat: row.lat,
 		truthLon: row.lon,
-		// Both sources contain national house-number address points.
+		// Both sources are national house-number address points.
 		truthType: "rooftop",
 	}))
 
@@ -345,7 +351,7 @@ async function resolveHoldout(ref: Extract<InputSetRef, { kind: "holdout" }>): P
 }
 
 /**
- * Resolve a caller-selected list of inputs.
+ * Resolves a caller-selected list of inputs.
  */
 async function resolveLiteral(ref: Extract<InputSetRef, { kind: "literal" }>): Promise<ResolvedInputSet> {
 	if (!ref.inputs.length) throw new Error("input set: a literal set needs at least one input")
@@ -357,7 +363,8 @@ async function resolveLiteral(ref: Extract<InputSetRef, { kind: "literal" }>): P
 		)
 	}
 
-	// Coordinates make a literal input gradeable; bare strings are observation-only.
+	// A literal input with coordinates can be graded.
+	// A bare string can only be observed.
 	const rows: ResolvedInput[] = ref.inputs.map((entry, index) =>
 		typeof entry === "string"
 			? { id: String(index), input: entry }
@@ -372,7 +379,7 @@ async function resolveLiteral(ref: Extract<InputSetRef, { kind: "literal" }>): P
 	)
 
 	const graded = rows.filter((row) => row.truthLat !== undefined).length
-	// Include truth coordinates so differently graded sets have different IDs.
+	// The digest includes the truth coordinates, so sets graded differently get different IDs.
 	const digest = rows.map((row) => `${row.input}\u0000${row.truthLat ?? ""}\u0000${row.truthLon ?? ""}`)
 
 	return {
@@ -404,7 +411,7 @@ async function resolveLiteral(ref: Extract<InputSetRef, { kind: "literal" }>): P
 }
 
 /**
- * Resolve the full board or a filtered subset.
+ * Resolves the full regression board or a filtered subset.
  */
 async function resolveBoard(ref: Extract<InputSetRef, { kind: "board" }>): Promise<ResolvedInputSet> {
 	const all = await loadRegressionCases()
@@ -472,9 +479,9 @@ async function resolveBoard(ref: Extract<InputSetRef, { kind: "board" }>): Promi
 }
 
 /**
- * JSONL corpus row.
+ * One row of a JSONL corpus.
  *
- * These input files are external artifacts, so fields are optional.
+ * Every field is optional because the files come from outside this package.
  */
 interface CorpusRow {
 	id?: string
@@ -491,7 +498,10 @@ interface CorpusRow {
 }
 
 /**
- * Read a JSONL corpus or throw with the missing path; never substitute an empty set.
+ * Reads a JSONL corpus.
+ *
+ * @throws When the file is missing.
+ * An empty set would report zero differences and look like no effect.
  */
 async function readCorpus(path: PathBuilderLike, what: string): Promise<CorpusRow[]> {
 	if (!(await pathExists(path))) {
@@ -509,8 +519,7 @@ async function readCorpus(path: PathBuilderLike, what: string): Promise<CorpusRo
 }
 
 /**
- * Truth census for a coordinate-containing corpus, where `components` is the
- * only non-coordinate expectation available.
+ * Counts truth for rows whose only possible expectations are coordinates and components.
  */
 function coordinateTruthCounts(rows: ResolvedInput[]): ResolvedInputSet["hasTruth"] {
 	let coordinates = 0
@@ -541,7 +550,7 @@ function coordinateTruthCounts(rows: ResolvedInput[]): ResolvedInputSet["hasTrut
 }
 
 /**
- * Resolve a benchmark panel while preserving its per-row truth type.
+ * Resolves a benchmark panel and keeps each row's truth type.
  */
 async function resolvePanel(ref: Extract<InputSetRef, { kind: "panel" }>): Promise<ResolvedInputSet> {
 	const version = ref.version ?? "v2"
@@ -598,7 +607,7 @@ async function resolvePanel(ref: Extract<InputSetRef, { kind: "panel" }>): Promi
 }
 
 /**
- * Resolve the tuning (`dev`) or held-back (`full`) golden split.
+ * Resolves the `dev` or `full` golden split.
  */
 async function resolveGolden(ref: Extract<InputSetRef, { kind: "golden" }>): Promise<ResolvedInputSet> {
 	const version = ref.version ?? "v0.1.3"
@@ -647,15 +656,14 @@ async function resolveGolden(ref: Extract<InputSetRef, { kind: "golden" }>): Pro
 }
 
 /**
- * Resolve parse-parity fixtures with component expectations only.
+ * Resolves the parse-parity fixtures, which carry component expectations only.
  */
 async function resolveParity(ref: Extract<InputSetRef, { kind: "parity" }>): Promise<ResolvedInputSet> {
 	const path = repoRootPath(PARITY_FIXTURES_RELATIVE_PATH)
 	const raw = await readCorpus(path, "parity corpus")
 
-	// The same live filter `parity-corpus.ts` applies: 22 rules-era no-solution assertions
-	// plus 33 gold-triage tombstones are fixtures a neural parser must not be graded against.
-	// Feeding them in would quietly inflate the denominator with rows that cannot pass.
+	// This matches the filter in `parity-corpus.ts`.
+	// Dropped rows and rows without `expect` cannot pass, so counting them would inflate the denominator.
 	const all = raw.filter((row) => !(row as { dropped?: boolean }).dropped && row.expect)
 	const tombstones = raw.length - all.length
 
@@ -682,7 +690,6 @@ async function resolveParity(ref: Extract<InputSetRef, { kind: "parity" }>): Pro
 		notCovered: isSubset
 			? [`countries excluded: ${[...new Set(all.map((r) => r.country))].filter((c) => c !== ref.country).join(", ")}`]
 			: [],
-		// Parity fixtures have no coordinate truth.
 		hasTruth: { components: inputs.length, coordinates: 0, tier: 0, any: inputs.length, none: 0 },
 		notes: [
 			`Parity corpus, ${all.length} live fixtures (${tombstones} tombstones skipped)${isSubset ? `, filtered to ${inputs.length}` : ""}.`,

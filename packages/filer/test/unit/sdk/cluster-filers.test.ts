@@ -3,8 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Test authoritative and inferred clustering with in-memory fixtures. Inferred links require a shared authoritative
- *   identifier; name-only matches across components must not link or alter authoritative clusters.
+ *   Tests authoritative and inferred clustering against in-memory fixtures.
  */
 
 import {
@@ -125,7 +124,7 @@ async function readClusterMap(db: DatabaseClient<FilerDatabase>, assertion: stri
 }
 
 /**
- * Insert two Form 499 nodes sharing an authoritative FRN, allowing an inferred link.
+ * Inserts two named Form 499 nodes linked to one FRN, so they can pass the identifier check.
  */
 async function seedSharedFRNPair(
 	db: DatabaseClient<FilerDatabase>,
@@ -163,7 +162,7 @@ async function seedSharedFRNPair(
 }
 
 /**
- * Insert nodes in different authoritative components whose legal names share a canonical key.
+ * Inserts two nodes in separate authoritative components whose legal names share a canonical form.
  */
 async function seedDisjointNamedPair(
 	db: DatabaseClient<FilerDatabase>,
@@ -298,16 +297,16 @@ describe("clusterInferredLinks — the identifier veto", () => {
 		await clusterAuthoritativeComponents(db)
 		const authoritativeBefore = await readClusterMap(db, FilerEdgeAssertion.Authoritative)
 
-		// The names share a canonical form, but the components remain distinct.
+		// The Acme names share a canonical form, but they sit in separate components.
 		expect(authoritativeBefore.get(FRN_A)).toBe(authoritativeBefore.get(FORM499_A))
 		expect(authoritativeBefore.get(FRN_B)).toBe(authoritativeBefore.get(FORM499_B))
 		expect(authoritativeBefore.get(FRN_A)).not.toBe(authoritativeBefore.get(FRN_B))
 
 		const inferredResult = await clusterInferredLinks(db, { sourceVintage: "2026-cluster-v1", validFrom: "2026-07-01" })
 
-		// FORM499_D is excluded because it has no legal name.
+		// FORM499_D has no legal name, so it is skipped.
 		expect(inferredResult.recordsConsidered).toBe(3)
-		// The Acme records share no identifier, so the veto blocks their exact-name match.
+		// The Acme records share no identifier, so their name match does not link them.
 		expect(inferredResult.linkedClusters).toBe(0)
 		expect(inferredResult.links).toBe(0)
 
@@ -319,15 +318,13 @@ describe("clusterInferredLinks — the identifier veto", () => {
 
 		expect(inferredEdges).toHaveLength(0)
 
-		// Keep their inferred assignments separate.
 		const inferredMap = await readClusterMap(db, FilerEdgeAssertion.Inferred)
 		expect(inferredMap.get(FORM499_A)).toBeDefined()
 		expect(inferredMap.get(FORM499_A)).not.toBe(inferredMap.get(FORM499_B))
 		expect(inferredMap.get(FORM499_A)).not.toBe(inferredMap.get(FORM499_C))
-		// Do not assign a cluster to the nameless node.
 		expect(inferredMap.has(FORM499_D)).toBe(false)
 
-		// Inferred clustering must not alter authoritative assignments.
+		// The inferred pass leaves the authoritative clusters unchanged.
 		const authoritativeAfter = await readClusterMap(db, FilerEdgeAssertion.Authoritative)
 		expect(authoritativeAfter).toEqual(authoritativeBefore)
 	})
@@ -417,7 +414,7 @@ describe("clusterInferredLinks — the identifier veto", () => {
 		expect(bridge?.source).toBe(CLUSTER_FILERS_SOURCE)
 		expect(bridge?.match_score).not.toBeNull()
 
-		// A valid inferred link must not alter authoritative assignments.
+		// A new inferred link leaves the authoritative clusters unchanged.
 		const authoritativeAfter = await readClusterMap(db, FilerEdgeAssertion.Authoritative)
 		expect(authoritativeAfter).toEqual(authoritativeBefore)
 		expect(authoritativeResult.clusters).toBe(1)
@@ -480,7 +477,7 @@ describe("clusterInferredLinks — the identifier veto", () => {
 		using db = openMemory()
 		await createAllTables(db)
 
-		// `LLC` canonicalizes to an empty name and cannot form a blocking key.
+		// The legal name `LLC` canonicalizes to an empty string.
 		const designationOnlyFRN = `${FilerIdentifierType.FRN}:1230000000`
 		const designationOnlyNode = `${FilerIdentifierType.Form499ID}:999999`
 
@@ -509,7 +506,7 @@ describe("clusterInferredLinks — the identifier veto", () => {
 			})
 			.execute()
 
-		// Include a normal record to prove only the empty-name record was excluded.
+		// This ordinary record shows that the pass skips only the empty name.
 		const normalFRN = `${FilerIdentifierType.FRN}:1230000001`
 		const normalNode = `${FilerIdentifierType.Form499ID}:999998`
 
@@ -600,7 +597,7 @@ describe("clusterInferredLinks — the identifier veto", () => {
 			])
 			.execute()
 
-		// Share an FRN to isolate name-vintage selection from the identifier veto.
+		// Both nodes share an FRN, so only the choice of name decides the link.
 		await db
 			.insertInto("filer_edge")
 			.values([authoritativeEdge(frnNodeID, renamedNode), authoritativeEdge(frnNodeID, secondNode)])
@@ -633,7 +630,7 @@ describe("clusterInferredLinks — the identifier veto", () => {
 			])
 			.execute()
 
-		// Selecting the older name would prevent these records from blocking together.
+		// The records block together only if the pass picks the newer name.
 		const result = await clusterInferredLinks(db, { sourceVintage: "2026-cluster-v1", validFrom: "2026-07-01" })
 		expect(result.recordsConsidered).toBe(2)
 		expect(result.linkedClusters).toBe(1)
@@ -667,7 +664,7 @@ describe("clusterInferredLinks — cross-vintage supersession", () => {
 		expect(edgesAfterV1[0]?.valid_from).toBe("2026-01-01")
 		expect(edgesAfterV1[0]?.valid_to).toBeNull()
 
-		// A later filing changes node B's name, so the next run should not link it.
+		// A later filing renames node B, so the next run does not link it.
 		await db
 			.insertInto("filer_attribute")
 			.values({
@@ -682,11 +679,10 @@ describe("clusterInferredLinks — cross-vintage supersession", () => {
 		const v2 = await clusterInferredLinks(db, { sourceVintage: "2026-02-01", validFrom: "2026-02-01" })
 		expect(v2.linkedClusters).toBe(0)
 
-		// Confirm the cluster assignments split.
 		const inferredMap = await readClusterMap(db, FilerEdgeAssertion.Inferred)
 		expect(inferredMap.get(nodeAID)).not.toBe(inferredMap.get(nodeBID))
 
-		// Close the old edge and write no replacement edge.
+		// The run closes the old edge and writes no new one.
 		const edgesAfterV2 = await db
 			.selectFrom("filer_edge")
 			.selectAll()
@@ -728,7 +724,7 @@ describe("clusterInferredLinks — cross-vintage supersession", () => {
 
 		expect(secondRun).toHaveLength(1)
 		expect(secondRun[0]?.valid_to).toBeNull()
-		// Use the ISO `validFrom`, not the vintage label.
+		// `valid_from` holds the ISO `validFrom` option.
 		expect(secondRun[0]?.valid_from).toBe("2026-07-01")
 	})
 
@@ -741,7 +737,6 @@ describe("clusterInferredLinks — cross-vintage supersession", () => {
 
 		await seedSharedFRNPair(db, "7500000007", "750", "751", { a: "Rebuild Co Corp", b: "Rebuild Co Inc" }, "2026-Q1")
 
-		// The first run links the matching names.
 		const firstBuild = await clusterInferredLinks(db, { sourceVintage: "2026-cluster-v1", validFrom: "2026-07-01" })
 		expect(firstBuild.linkedClusters).toBe(1)
 
@@ -754,7 +749,7 @@ describe("clusterInferredLinks — cross-vintage supersession", () => {
 		expect(edgesAfterFirstBuild).toHaveLength(1)
 		expect(edgesAfterFirstBuild[0]?.valid_to).toBeNull()
 
-		// Correct node B's name without changing the clustering vintage.
+		// Node B gets a corrected name, and the rerun keeps the same vintage label.
 		await db
 			.insertInto("filer_attribute")
 			.values({
@@ -766,15 +761,13 @@ describe("clusterInferredLinks — cross-vintage supersession", () => {
 			})
 			.execute()
 
-		// Rebuild using the same vintage label.
 		const rebuild = await clusterInferredLinks(db, { sourceVintage: "2026-cluster-v1", validFrom: "2026-07-01" })
 		expect(rebuild.linkedClusters).toBe(0)
 
-		// Confirm the assignments split.
 		const inferredMap = await readClusterMap(db, FilerEdgeAssertion.Inferred)
 		expect(inferredMap.get(nodeAID)).not.toBe(inferredMap.get(nodeBID))
 
-		// The stale same-vintage edge must be deleted, not left open.
+		// The rerun deletes the earlier edge from the same vintage.
 		const edgesAfterRebuild = await db
 			.selectFrom("filer_edge")
 			.selectAll()
@@ -792,7 +785,7 @@ describe("clusterFilers (orchestrator)", () => {
 	it("runs both passes and returns their combined results, including a real inferred link", async () => {
 		using db = openMemory()
 		await seedFixture(db)
-		// Add a shared-FRN pair that passes the identifier veto.
+		// This pair shares an FRN, so the inferred pass links it.
 		await seedSharedFRNPair(db, "9990009990", "990", "991", { a: "Orchestrator Co Corp", b: "Orchestrator Co Inc" })
 
 		const result = await clusterFilers(db, { sourceVintage: "2026-cluster-v1", validFrom: "2026-07-01" })

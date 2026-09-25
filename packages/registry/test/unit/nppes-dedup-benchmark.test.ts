@@ -2,8 +2,7 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file Unit coverage for the NPPES dedup benchmark's pure stages — org-name tokens, the truth grains, the pairwise
- *   scorer, the setting progression, the adjudication packet, and the report renderer.
+ * @file Unit tests for the pure stages of the NPPES dedup benchmark.
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
@@ -97,8 +96,7 @@ describe("scoreEntities", () => {
 		const entities = [entity("e1", [record("a-1"), record("a-2"), record("b-1"), record("b-2")])]
 		const s = scoreEntities(entities, npiLabel, 4)
 
-		// 2 true pairs recovered out of 6 predicted.
-		// Both true pairs found.
+		// The cluster predicts 6 pairs, and 2 of them are the only true pairs.
 		expect(s.precision).toBeCloseTo(2 / 6, 12)
 		expect(s.recall).toBe(1)
 		expect(s.f1).toBeCloseTo(0.5, 12)
@@ -146,8 +144,7 @@ describe("truth grains", () => {
 
 		expect(label(record("1"))).toBe(label(record("2")))
 		expect(label(record("3"))).not.toBe(label(record("1")))
-		// Same org name, different address key.
-		// The string grain cannot see the two are one org.
+		// NPI 4 has the same org name at a different address key, so the string grain keeps it separate.
 		expect(label(record("4"))).not.toBe(label(record("1")))
 	})
 
@@ -158,10 +155,10 @@ describe("truth grains", () => {
 	it("unions same-org NPIs within the co-location radius and no further", () => {
 		const coords = new Map([
 			["1", { latitude: 29.7, longitude: -95.4 }],
-			// ~20 m north of NPI 1.
+			// NPI 2 is about 20 m north of NPI 1.
 			["2", { latitude: 29.70018, longitude: -95.4 }],
 			["3", { latitude: 29.7, longitude: -95.4 }],
-			// ~11 km away, same org name as NPI 1.
+			// NPI 4 shares NPI 1's org name and is about 11 km away.
 			["4", { latitude: 29.8, longitude: -95.4 }],
 		])
 
@@ -189,7 +186,7 @@ describe("truth grains", () => {
 
 		expect(label(record("1"))).toBe(label(record("2")))
 		expect(label(record("3"))).not.toBe(label(record("1")))
-		// Un-geocoded: seeded, so it is its own class rather than absent.
+		// NPI 4 has no coordinate, so it forms its own class.
 		expect(label(record("4"))).toBe("4")
 	})
 })
@@ -263,9 +260,7 @@ describe("writeOvermergePacket", () => {
 			expect(text).not.toContain("## Cluster 2")
 			expect(text).toContain('auth="Ada Lovelace"')
 			expect(text).toContain('taxonomy="208D"')
-			// The header names the run an adjudicator is holding.
-			// It read `TX` for every state until the sample's own state was threaded through,
-			// so a CA packet claimed to be a TX one.
+			// The header must print the sample's state.
 			expect(text).toContain("CA --max-npis 300")
 			expect(text).not.toContain("TX")
 		} finally {

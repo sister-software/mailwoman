@@ -12,27 +12,27 @@ tags:
 
 # Falsehoods programmers believe about addresses
 
-This article series is inspired by and cites Michael Tandy's [original catalogue of address falsehoods](https://www.mjt.me.uk/posts/falsehoods-programmers-believe-about-addresses/), maintained since 2013. Tandy's article is a taxonomy of assumptions that break parsers, validators, and databases. This series expands on that taxonomy, adding historical context on how geocoders have handled (or failed to handle) each category, and what Mailwoman's neural approach changes.
+This article series is inspired by and cites Michael Tandy's [original catalogue of address falsehoods](https://www.mjt.me.uk/posts/falsehoods-programmers-believe-about-addresses/), maintained since 2013. Tandy's article is a taxonomy of assumptions that break parsers, validators, and databases. This series expands on that taxonomy. It adds historical context on how geocoders have handled or failed to handle each category, and it describes what Mailwoman's neural approach changes.
 
 ## The falsehoods are the central cases
 
-Tandy's falsehoods are not edge cases. They are the central cases that rule-based geocoders fail on. Each falsehood is a place where a human can see what's happening ("that's a building number, even though it's a fraction") but a regex cannot. The thesis of Mailwoman's neural approach is that a model trained on diverse address data can learn to handle these cases without explicit rules, including combinations of falsehoods that no rule set could enumerate.
+Tandy's falsehoods are the central cases that rule-based geocoders fail on, rather than edge cases. In each one, a human can see what's happening ("that's a building number, even though it's a fraction") but a regex cannot. Mailwoman's neural approach rests on the claim that a model trained on diverse address data can learn to handle these cases without explicit rules, including combinations of falsehoods that no rule set could enumerate.
 
-Mailwoman is not the first project to notice this. Deepparse (2020) showed that a BiLSTM could match libpostal on structured addresses. The academic literature since has confirmed that transformers beat CRFs on noisy and multilingual address data. What Mailwoman adds is a **[staged pipeline](../../our-approach/the-staged-pipeline.mdx)** that separates concerns: a phrase grouper proposes boundaries, a neural classifier types spans, a CRF enforces sequence validity, and a reconciler checks joint coherence against a gazetteer. Each stage handles a different class of falsehood without the others needing to know about it.
+Mailwoman is not the first project to notice this. Deepparse (2020) showed that a BiLSTM could match libpostal on structured addresses. The academic literature since has confirmed that transformers beat CRFs on noisy and multilingual address data. Mailwoman adds a **[staged pipeline](../../our-approach/the-staged-pipeline.mdx)** that separates concerns. A phrase grouper proposes boundaries, a neural classifier types spans, a CRF enforces sequence validity, and a reconciler checks joint coherence against a gazetteer. Each stage handles a different class of falsehood without the others needing to know about it.
 
 ## Categories
 
-Each article in this series takes one category of falsehood, explains what traditional geocoders assumed, what counterexamples broke those assumptions, and how Mailwoman's architecture addresses the class of problem rather than the individual counterexample.
+Each article in this series takes one category of falsehood. It explains what traditional geocoders assumed, which counterexamples broke those assumptions, and how Mailwoman's architecture addresses the class of problem rather than the individual counterexample.
 
 | Category  | Article                                                                         | What it covers                                                                                                         |
 | --------- | ------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
 | Numbers   | [Falsehoods about numbers in addresses](./falsehoods-numbers.mdx)               | Zero, negative, fractions, duplicates, ranges, names that are numbers                                                  |
-| Streets   | [Falsehoods about street names](./falsehoods-streets.mdx)                       | Missing suffixes, numbered streets, recurring names, addresses with no streets at all                                  |
+| Streets   | [Falsehoods about street names](./falsehoods-streets.mdx)                       | Missing suffixes, numbered streets, recurring names, addresses without streets                                         |
 | Postcodes | [Falsehoods about postcodes](./falsehoods-postcodes.mdx)                        | Leading zeros, multi-city postcodes, per-building postcodes, missing postcodes                                         |
-| Hierarchy | [Falsehoods about administrative hierarchy](./falsehoods-hierarchy.mdx)         | No states, no counties, duplicate city names, city-states                                                              |
+| Hierarchy | [Falsehoods about administrative hierarchy](./falsehoods-hierarchy.mdx)         | Countries without states or counties, duplicate city names, city-states                                                |
 | Format    | [Falsehoods about address format](./falsehoods-format.mdx)                      | Punctuation, non-ASCII, variable ordering, mixed character sets, changing addresses                                    |
-| Shapes    | [Falsehoods about address shapes and dimensions](./falsehoods-shapes.mdx)       | Not a point rather than a polygon rather than a building rather than at ground level rather than unique per coordinate |
-| Precision | [Falsehoods about geocoded precision and frontages](./falsehoods-proximity.mdx) | Not one correct coordinate rather than always "close enough," not the front door                                       |
+| Shapes    | [Falsehoods about address shapes and dimensions](./falsehoods-shapes.mdx)       | Whether an address is a point, polygon, or building, sits at ground level, or is unique per coordinate                 |
+| Precision | [Falsehoods about geocoded precision and frontages](./falsehoods-proximity.mdx) | Addresses with more than one correct coordinate, when "close enough" fails, and when the front door is the wrong point |
 
 ## Original
 

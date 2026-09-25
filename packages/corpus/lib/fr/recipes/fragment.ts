@@ -3,10 +3,11 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Generate postcode-free French street fragments from BAN tuples. The recipe includes bare streets,
- *   designator-led streets, numbered-street anchors, and bare-locality counterexamples. It requires
- *   `--exclude-surfaces` to keep fragment-board street names out of training. Disable the French
- *   `street_prefix` loss mask when using these rows.
+ *   Generates French street fragments without a postcode from BAN tuples.
+ *
+ *   The output mixes designator-led streets, some with a house number, and bare commune names as counterexamples.
+ *   `--exclude-surfaces` is required so that streets on the fragment evaluation board stay out of training. Training on
+ *   these rows needs the French `street_prefix` loss mask disabled.
  */
 
 import { sample } from "@mailwoman/core/random"
@@ -19,7 +20,8 @@ import { SourceRegister } from "#registers"
 import { SurfaceOrigin } from "#types"
 
 /**
- * Both street fragments and locality counterexamples use BAN names.
+ * The provenance for every row.
+ * Street and commune names both come from BAN.
  */
 const FR_FRAGMENT_PROVENANCE = {
 	register: SourceRegister.BaseAdresseNationale,
@@ -27,19 +29,19 @@ const FR_FRAGMENT_PROVENANCE = {
 }
 
 /**
- * House-number values weighted toward common small values.
+ * House numbers to sample from.
+ * Repeated entries weight the draw toward small values.
  */
-
 const HOUSE_NUMBERS = [
 	1, 1, 2, 2, 3, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 15, 16, 18, 20, 21, 24, 27, 30, 33, 42, 57, 68, 84, 102, 115, 140,
 ]
 
 /**
- * French ordinal and letter suffixes used in house numbers.
+ * French repetition and letter suffixes for house numbers.
  */
 const ALNUM_SUFFIXES = ["bis", "ter", "A", "B"]
 
-// Match the accent-stripping fold used by the reserved-surface list.
+// The reserved-surface list is stored in this folded form: accents stripped, lowercase, single spaces.
 const norm = (value: string): string =>
 	value
 		.normalize("NFD")
@@ -49,7 +51,7 @@ const norm = (value: string): string =>
 		.trim()
 
 /**
- * Apply French commune capitalization while keeping joining particles lowercase.
+ * Particles that stay lowercase inside a French commune name.
  */
 const FR_LOWER = new Set([
 	"le",
@@ -69,6 +71,11 @@ const FR_LOWER = new Set([
 	"lez",
 ])
 
+/**
+ * Title-cases a French commune name.
+ *
+ * Each word and hyphenated part is capitalized except joining particles after the first.
+ */
 export function frTitleCase(value: string): string {
 	const cap = (token: string, first: boolean): string =>
 		!first && FR_LOWER.has(token) ? token : token.charAt(0).toUpperCase() + token.slice(1)
@@ -85,21 +92,21 @@ export function frTitleCase(value: string): string {
 }
 
 /**
- * Detect common French street-name particles.
+ * Matches common French particles in a street name.
  */
 const PARTICLE = /\b(de la|de l'|du|des|de|d'|le|la|les)\b/i
 
 /**
- * Detect a year or French day-month phrase in a street name.
+ * Matches a year or a French day-and-month phrase in a street name.
  */
 const DATEISH =
 	/\b(1[0-9]|20)\d{2}\b|\b\d{1,2}\s+(janvier|f[ée]vrier|mars|avril|mai|juin|juillet|ao[ûu]t|septembre|octobre|novembre|d[ée]cembre)\b/i
 
-// Fraction of numbered examples with an alphanumeric suffix.
+// The share of numbered rows whose house number has a suffix.
 const ALNUM_HOUSE_NUMBER_SHARE = 0.25
 
 /**
- * Recipe registered with the corpus builder.
+ * The recipe registered with the corpus builder.
  */
 export const frFragmentRecipe: CorpusRecipe = {
 	name: "fr-fragment",
@@ -147,7 +154,7 @@ export const frFragmentRecipe: CorpusRecipe = {
 		const hnProb = opts.hnProb ?? 0.35
 		const bareLocalityProb = opts.bareProb ?? 0.25
 
-		// Use source commune names for bare-locality counterexamples.
+		// Commune names collected here feed the bare-locality counterexamples.
 		const localities = new Set<string>()
 
 		let read = 0
@@ -170,7 +177,6 @@ export const frFragmentRecipe: CorpusRecipe = {
 				continue
 			}
 
-			// Keep reserved fragment-board surfaces out of training.
 			if (excluded.has(norm(fullStreet))) {
 				contaminated++
 
@@ -179,7 +185,7 @@ export const frFragmentRecipe: CorpusRecipe = {
 
 			const { prefix, street } = decomposeFrStreet(fullStreet)
 
-			// This recipe targets designator-led streets; other street forms are out of scope.
+			// The recipe keeps only streets that start with a designator such as "rue".
 			if (!prefix || !street) {
 				skipped++
 
@@ -232,14 +238,14 @@ export const frFragmentRecipe: CorpusRecipe = {
 			}
 		}
 
-		// MARK: counter-distribution — bare localities
-		//
-		// Emit counterexamples after collecting the complete locality pool.
+		// MARK: Bare-locality counterexamples
+
+		// The count makes bare localities `bareLocalityProb` of all emitted rows.
 		const pool = [...localities].toSorted()
 		const wanted = Math.round((emitted / Math.max(1, 1 - bareLocalityProb)) * bareLocalityProb)
 
 		for (let i = 0; i < wanted && pool.length; i++) {
-			// Restore the casing used by the fragment evaluation board.
+			// The fragment evaluation board uses title-cased commune names.
 			const name = frTitleCase(sample(pool, random))
 			const sourceID = recipeSourceID("synth-fr-fragment", { locality: name, v: `neg-${i}` })
 

@@ -86,7 +86,7 @@ a coordinate for every coordinate-less postcode, in priority order:
 2. **GeoNames postal** (`--geonames <dir>`) — the postcode's OWN centroid, matched by string from the GeoNames `zip` dump (CC-BY 4.0, ~80+ countries). The cleanest fill for ES/IT and ~half of DE; it is _finer_ than the WOF parent-borrow (the postcode's point rather than a borrowed locality's), and it corrects WOF's mis-linked Italian parents (`20121` → central Milan rather than a Liguria village). WOF ids stay canonical; only the coordinate comes from GeoNames.
 3. **WOF parent-borrow / ancestor fallback** (`--admin`, `--repos`) — a coarse "which city/region" approximation from the admin hierarchy, last resort for postcodes GeoNames does not cover.
 
-Postcodes neither GeoNames nor WOF can place keep `latitude=0` (membership only — the country posterior still works). **Licensing:** a extract shipping GeoNames-sourced coordinates must attribute "GeoNames (CC-BY 4.0)".
+Postcodes neither GeoNames nor WOF can place keep `latitude=0` (membership only — the country posterior still works). **Licensing:** an extract shipping GeoNames-sourced coordinates must attribute "GeoNames (CC-BY 4.0)".
 
 ### Coverage and accuracy
 

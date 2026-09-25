@@ -1,138 +1,145 @@
 # Closed-vocab fields: model-first, with a soft gazetteer anchor
 
-How Mailwoman handles closed-vocabulary address fields — `country`, `po_box`,
-`cedex` — and why we resolve them **inside the model** (with a gazetteer fed in as a
-soft feature) rather than overriding the model with a deterministic post-parse lookup.
+This page describes how Mailwoman handles the closed-vocabulary address fields `country`,
+`po_box` and `cedex`. We resolve them **inside the model**, with a gazetteer fed in as a
+soft feature, instead of overriding the model with a deterministic post-parse lookup.
 
 :::info[Supersedes the night-9 overlay conclusion]
-A first pass (2026-06-09 night shift) concluded these fields should be tagged by a
-deterministic post-parse overlay (`ClosedVocabTagger`, issue #464). That conclusion was
-**reversed** after review: it was reached from an unfair comparison and it contradicts
-the project's model-first ethos. This doc is the corrected design record. Pressure-tested
-across a two-turn DeepSeek consult; see the rationale below.
+A first pass (2026-06-09 night shift) concluded that a deterministic post-parse overlay
+(`ClosedVocabTagger`, issue #464) should tag these fields. That conclusion was
+**reversed** after review. It rested on an unfair comparison, and it contradicts the
+project's model-first approach. This page is the corrected design record. The design was
+reviewed in a two-turn DeepSeek consultation, and the rationale follows below.
 :::
 
 :::tip[Generalized to street registries]
-The same principle applied to street names — where the registers are national and
-complete enough to make substitution tempting — is
-[registry-backed structured prediction](./registry-backed-structured-prediction.mdx).
-That doc carries the source capability tiers and the positive-evidence-only rule.
+[Registry-backed structured prediction](./registry-backed-structured-prediction.mdx)
+applies the same principle to street names, where national registers are complete enough
+to make substitution tempting. That page defines the source capability tiers and the
+positive-evidence-only rule.
 :::
 
 ## Decision
 
-1. **The model is the authority for every field, including closed-vocab ones.** We do
+1. **The model is the authority for every field, including closed-vocab fields.** We do
    not override its output with a lookup table.
-2. **The gazetteer enters as a soft feature, never a substitution** — the same principle
-   as the [postcode anchor](./QUERY_SHAPE.mdx). `codex`'s matchers (`matchCountry`,
-   `matchPOBox`, the cedex pattern) flip role from _override_ to _feature-source_.
-3. **Starved closed-vocab fields are covered by training**, the same negative-space
-   recipe that fixed `unit` — see [negative space](../../records/site-2026-08/concepts/negative-space-coverage.mdx).
+2. **The gazetteer enters as a soft feature and never substitutes for the model's
+   output.** This is the same principle as the [postcode anchor](./QUERY_SHAPE.mdx).
+   `codex`'s matchers (`matchCountry`, `matchPOBox`, the cedex pattern) change role from
+   _override_ to _feature-source_.
+3. **Training covers starved closed-vocab fields** with the same negative-space recipe
+   that fixed `unit`. See [negative space](../../records/site-2026-08/concepts/negative-space-coverage.mdx).
 
 ## Why not a deterministic overlay — the reasoning
 
-**The over-firing was a data artifact rather than a model limitation.** The night-9 `country`
-recipe output was almost entirely _trailing-country_ rows, so the model learned one cheap
-shortcut — "trailing token ⇒ country" — and tagged cities and regions as countries (49
-F1, 23% precision). That is a skewed training distribution rather than a transformer+CRF ceiling.
-Context-sensitive token classifiers (BERT+CRF, LUKE, BLINK) routinely resolve gazetteer
-homographs from local context; "Atlanta, Georgia" → region vs "Tbilisi, Georgia" →
-country is the _canonical_ job of a context-sensitive tagger.
+**The over-firing came from the training data.** The night-9
+`country` recipe produced almost entirely _trailing-country_ rows. The model learned the
+shortcut "trailing token ⇒ country" and tagged cities and regions as countries (49 F1, 23%
+precision). A skewed training distribution caused this result, and it does not show a
+limit of the transformer+CRF architecture. Context-sensitive token classifiers (BERT+CRF,
+LUKE, BLINK) routinely resolve gazetteer homographs from local context. Tagging "Atlanta,
+Georgia" as a region and "Tbilisi, Georgia" as a country is the _canonical_ task of a
+context-sensitive tagger.
 
-**The "deterministic = 100%" result was a mirage.** It was measured on a curated eval
-with **zero homographs**, against the crippled (badly-trained) model. The homograph case
-— the one that matters — is exactly where a flat lookup _cannot_ win without a hand-coded
-guard, and that guard is the growing-exception-list smell the project rejects
-([provenance-first](../../records/site-2026-08/concepts/corpus-poisoning-vulnerability.mdx)). The
-overlay provides perfect precision only on the cases that were never hard.
+**The "deterministic = 100%" result was misleading.** It was measured on a curated eval
+with **zero homographs**, against a badly trained model. A flat lookup _cannot_ handle the
+homograph case without a hand-coded guard, and such guards grow into the exception lists
+the project rejects
+([provenance-first](../../records/site-2026-08/concepts/corpus-poisoning-vulnerability.mdx)).
+The overlay achieves perfect precision only on the easy cases.
 
-**It contradicts a principle we already committed to.** The postcode-anchor work
-established lexicon signals as a _soft channel, never a substitution_. A post-parse
-override is precisely the substitution we ruled out.
+**It contradicts a principle we already adopted.** The postcode-anchor work established
+that lexicon signals enter as a _soft channel and never substitute for the model_. A
+post-parse override is exactly the substitution we ruled out.
 
-**The instinct is right, the layer is wrong.** A wrong `country` is a wrong _continent_
-downstream, so wanting a hard guarantee is sound — but the place to enforce it is the
-**resolver, using calibrated confidence** (we ship isotonic `conf=`): if the model is
-low-confidence _and_ the gazetteer has an unambiguous match, the resolver may prefer the
-lookup as a candidate. That is a downstream re-rank at the resolution layer rather than a
-parser substitution — the same safety, at the right layer.
+**A hard guarantee belongs in the resolver.** A wrong `country` puts the result on the
+wrong _continent_ downstream, so a hard guarantee is a reasonable goal. The
+**resolver should enforce it using calibrated confidence** (we ship isotonic `conf=`). If
+the model has low confidence _and_ the gazetteer has an unambiguous match, the resolver may
+prefer the lookup as a candidate. That is a re-rank at the resolution layer instead of a
+substitution in the parser, and it provides the same safety.
 
 ## Revised taxonomy (three tiers, all model-first)
 
-The night-9 "open-vocab → train / closed-vocab → deterministic" split was too coarse; the
-partition that matters is by _what the field needs to learn_:
+The night-9 split of "open-vocab → train / closed-vocab → deterministic" was too coarse. The
+useful partition is by _what the field needs to learn_:
 
 | Tier                                                 | Fields                                   | Treatment                                                                                                                                               |
 | ---------------------------------------------------- | ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Open-vocab, starved**                              | `unit`, `street_prefix`, `street_suffix` | coverage recipe + retrain (proven: `unit` 0→92%, sharpened neighbors)                                                                                   |
-| **Closed-vocab, no homographs, starved**             | `po_box`, `cedex`                        | also a coverage recipe — they were starved rather than unlearnable. "PO Box"/"CEDEX" carry no ambiguity, so no anchor is needed; train them like `unit` |
+| **Closed-vocab, without homographs, starved**        | `po_box`, `cedex`                        | also a coverage recipe — they were starved rather than unlearnable. "PO Box"/"CEDEX" carry no ambiguity, so no anchor is needed; train them like `unit` |
 | **Closed-vocab, large set + homographs + long tail** | `country`                                | balanced coverage recipe **plus** a soft gazetteer anchor feature (long-tail recall floor + homograph flag). The only tier that needs the feature       |
 
-The deterministic _override_ appears in none of them.
+None of the tiers uses a deterministic _override_.
 
 ## Architecture: a soft gazetteer anchor
 
-For `country`, the matcher produces per-token features fed into the transformer's token
-representation (same implementation as the postcode anchor), and the model decides every tag:
+For `country`, the matcher produces per-token features that feed into the transformer's
+token representation, using the same implementation as the postcode anchor. The model
+decides every tag. The features are:
 
-- **Binary gazetteer-match flag** — "this token/sequence is a known country surface form."
-  Its main job is **long-tail recall**: with ~250 countries at realistic prevalence, a
-  small country appears a handful of times in training; the flag gives the model a prior
-  it can't get from the subword embeddings of 3 examples. (It cannot help OOV /
-  misspelled forms — there the model is on its own, which is correct.)
-- **Known-homograph flag** — "this surface form is _also_ a US state / region name." This
-  is the single highest-value bit: it tells the model "context is non-negotiable here,
-  don't fall back on a shortcut." Produced statically by intersecting the country and
-  region gazetteers. Expected to _improve_ `region` precision rather than dent it.
-- **Optional entity-type embedding** — a small learned vector including the signal type
-  (is-country / country+region-homograph / cedex / po_box). Near-zero cost; lets the model
-  learn distinct behaviors per signal.
+- **Binary gazetteer-match flag:** "this token/sequence is a known country surface form."
+  Its main purpose is **long-tail recall**. With ~250 countries at realistic prevalence, a
+  small country appears only a handful of times in training. The flag gives the model a
+  prior that it cannot learn from the subword embeddings of 3 examples. The flag cannot
+  help with OOV or misspelled forms, and the model correctly handles those on its own.
+- **Known-homograph flag:** "this surface form is _also_ a US state or region name." This
+  is the most valuable bit, because it tells the model to rely on context instead of a
+  shortcut. It is produced statically by intersecting the country and region gazetteers.
+  It is expected to _improve_ `region` precision.
+- **Optional entity-type embedding:** a small learned vector that includes the signal type
+  (is-country / country+region-homograph / cedex / po_box). It costs almost nothing and
+  lets the model learn a distinct behavior for each signal.
 
-The matcher (codex) is reused rather than discarded — it stops overriding and starts informing.
+The codex matcher is reused. It stops overriding the model and instead supplies features to it.
 
 ## Data + training recipe
 
-Built to deny the model the cheap shortcut and give it a fair shot:
+The recipe keeps the model from learning the positional shortcut and gives it enough
+examples to learn from context:
 
-- **Position variety** — leading / middle / trailing / **absent** country. If every row
-  ends with a country, the CRF learns a transition prior that kills recall on the (common)
-  absent-country address.
-- **Explicit homograph pairs** disambiguated _within the same address window_ — Atlanta vs
-  Tbilisi Georgia; Paris TX vs Paris FR; San José CR vs CA.
-- **Hard negatives** — state/province codes that are also country codes (CA, GA, IN, MA…);
-  person-name countries (Jordan, Chad, Dominica).
-- **Realistic prevalence with loss-level compensation.** Don't inflate country everywhere
-  (that re-creates the over-fire). Target **~12–18%** of rows carrying a country, then
-  compensate the imbalance with a **class-weighted CRF loss (~3–5× on B/I-country)** plus
-  light **transition regularization**, rather than raw oversampling. Validate on a
-  _production-prevalence_ (~5%) held-out set so the transition prior stays representative.
+- **Position variety:** leading, middle, trailing, and **absent** country. If every row
+  ends with a country, the CRF learns a transition prior that destroys recall on the
+  common absent-country address.
+- **Explicit homograph pairs** disambiguated _within the same address window_: Atlanta vs
+  Tbilisi Georgia, Paris TX vs Paris FR, San José CR vs CA.
+- **Hard negatives:** state and province codes that are also country codes (CA, GA, IN,
+  MA…), and countries that are also person names (Jordan, Chad, Dominica).
+- **Realistic prevalence with loss-level compensation.** Do not inflate country everywhere,
+  because that recreates the over-firing. Target **~12–18%** of rows carrying a country.
+  Compensate for the imbalance with a **class-weighted CRF loss (~3–5× on B/I-country)**
+  and light **transition regularization** instead of raw oversampling. Validate on a
+  held-out set at _production prevalence_ (~5%) so the transition prior stays
+  representative.
 
 ## Eval-first — because the last measurement misled us
 
-Before any retrain, build a **hard, non-gameable homograph eval** (~500–1000 rows) and
-re-measure the current model to get the _true_ baseline (the 27% figure was a separate
-US-order artifact; the number under homograph stress is unknown). It must contain:
+Before any retrain, build a **hard homograph eval that a shortcut cannot pass** (~500–1000
+rows). Re-measure the current model on it to get the _true_ baseline. The 27% figure was a
+separate US-order artifact, and the number under homograph stress is unknown. The eval
+must contain:
 
-- ≥50 **homograph pairs** (same ambiguous token, opposite label, distinguished only by real
-  neighbor tokens — no regex-exploitable tell).
+- ≥50 **homograph pairs**: the same ambiguous token with opposite labels, distinguished
+  only by real neighbor tokens and without any cue a regex could exploit.
 - ≥30 **state-code-as-country** negatives (CA/GA/IN/MA… as state _and_ as country).
 - ≥20 **person-name-as-country** negatives.
 - ≥20 non-trailing positions and **≥30% absent-country** rows (to measure O-emission /
   hallucination).
 - a handful of **long-tail countries** (Eswatini, Timor-Leste, São Tomé) for recall.
 
-**Acceptance (per-tag no-regression):** `country` up, `region`/`locality` flat. Run DeepSeek's
-A/B/C control — current model, soft-feature-on-old-corpus, soft-feature-on-balanced-corpus
-— so we learn whether the _feature_ or the _data_ does the work and don't pay for the
-feature if balanced data alone suffices.
+**Acceptance (per-tag no-regression):** `country` improves, and `region`/`locality` stay
+flat. Run DeepSeek's A/B/C control: the current model, the soft feature on the old corpus,
+and the soft feature on the balanced corpus. The control shows whether the _feature_ or the
+_data_ improves `country`, so we can skip the feature if balanced data alone is enough.
 
 ## How the field handles this (prior art)
 
-Two paradigms divide the space:
+Existing systems follow one of two approaches:
 
-- **Parse-time structured tagging** — produce an authoritative field-tagged record
-  (Mailwoman, Pelias, libpostal, deepparse). The over-firing failure mode lives here.
-- **Index-time disambiguation** — don't commit a parse; let retrieval decide (Airmail).
+- **Parse-time structured tagging** produces an authoritative field-tagged record
+  (Mailwoman, Pelias, libpostal, deepparse). Over-firing occurs in this approach.
+- **Index-time disambiguation** does not commit to a parse and lets retrieval decide
+  (Airmail).
 
 | System                     | Approach to `country` / closed-vocab                                                                                                      | Lexicon used as                                                                   |
 | -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
@@ -141,21 +148,22 @@ Two paradigms divide the space:
 | **Pelias Parser**          | dictionary classifiers + cartesian solver                                                                                                 | fully deterministic (no ML to inform)                                             |
 | **Pelias Placeholder**     | deterministic WoF hierarchy resolution downstream of the parse                                                                            | a resolution layer rather than span re-tagging                                    |
 | **Nominatim**              | `countrycodes` is a hard filter; special phrases                                                                                          | deterministic overlays on search                                                  |
-| **Google libaddressinput** | per-ISO-country deterministic metadata                                                                                                    | validation/format engine, no free-text parse                                      |
+| **Google libaddressinput** | per-ISO-country deterministic metadata                                                                                                    | validation/format engine without free-text parsing                                |
 | **Airmail**                | parserless by default; small BERT to aid malformed queries; country baked into a flat content field at index time, S2 cells for hierarchy | OSM `key=value` as a separate deterministic _index-time_ tag channel              |
 
-**Where we sit.** The field is bimodal: libpostal/deepparse learn everything (and inherit
-the over-fire risk); Pelias/Nominatim/libaddressinput treat country deterministically but
-were never ML parsers. Our position — _keep the model authoritative for every field, but
-feed it the gazetteer as a soft feature_ — is the **model-first synthesis**: the lexicon
-informs rather than overrides. The closest kindred is Airmail's instinct that closed
-categorical vocab deserves a deterministic _channel_ (its OSM tags) alongside the fuzzy
-path — but Airmail applies it at index time and goes the _opposite_ way on label
-granularity (it merges labels and tolerates confusion; we add labels and sharpen).
+**Where we sit.** Existing systems fall into two groups. libpostal and deepparse learn every
+label and carry the over-firing risk. Pelias, Nominatim and libaddressinput treat country
+deterministically, but none of them is an ML parser. Our position is to _keep the model
+authoritative for every field and feed it the gazetteer as a soft feature_. We call this
+the **model-first synthesis**: the lexicon informs the model without overriding it. The
+closest related design is Airmail, which gives closed categorical vocabulary a
+deterministic _channel_ (its OSM tags) alongside the fuzzy path. Airmail applies that
+channel at index time, however, and takes the _opposite_ approach to label granularity. It
+merges labels and tolerates confusion, while we add labels and make them more precise.
 
-A useful motivating example for the homograph guard the model must learn: Pelias's legacy
-`addressit` parsed `CA` into a `region='CA'` subquery and _never_ a `country='Canada'`
-alternative ([pelias/api #1287](https://github.com/pelias/api/pull/1287)).
+Pelias's legacy `addressit` shows why the model must learn to handle homographs. It parsed
+`CA` into a `region='CA'` subquery and _never_ produced a `country='Canada'` alternative
+([pelias/api #1287](https://github.com/pelias/api/pull/1287)).
 
 ## Citations
 

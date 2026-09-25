@@ -19,14 +19,14 @@
    */
   ```
   (Files with a module docstring merge it into this block after the author line, like `resolver-wof-sqlite/candidate-schema.ts`.)
-- `erasableSyntaxOnly`: no `enum` (use `const X = {…} as const` + `type X = (typeof X)[keyof typeof X]`), no constructor parameter properties, no runtime namespaces.
+- `erasableSyntaxOnly` rules out `enum` (use `const X = {…} as const` + `type X = (typeof X)[keyof typeof X]`), constructor parameter properties, and runtime namespaces.
 - Relative imports carry explicit `.ts` extensions.
 - Indentation: tabs (match the repo).
-- Acronym casing in identifiers: whole camelCase components — `wofID`, `buildSHA`, `toPOICategoryID`. DB columns stay `snake_case` (string interfaces).
-- Kysely is the only DB connector; table DDL through the schema-builder; `WITHOUT ROWID` via `.modifyEnd(sql`without rowid`)`.
-- New core subpath ⇒ update **both** exports maps in `core/package.json` (dev `exports` with `node` condition first AND `publishConfig.exports` without it).
-- All work in `/home/lab/Projects/mailwoman-exotic-poi` (branch `feat/exotic-poi`). The worktree is already installed + compiled.
-- Commits: run the listed `git add` + `git commit`, then verify with `git log -1 --oneline` (the pre-commit hook can fail silently in pipelines — never pipe commit output).
+- Acronym casing in identifiers uses whole camelCase components: `wofID`, `buildSHA`, `toPOICategoryID`. DB columns stay `snake_case`, because they are string interfaces.
+- Kysely is the only DB connector. Write table DDL with the schema builder, and add `WITHOUT ROWID` with `.modifyEnd(sql`without rowid`)`.
+- A new core subpath requires updating **both** exports maps in `core/package.json`: the dev `exports` with the `node` condition first, and `publishConfig.exports` without it.
+- Do all work in `/home/lab/Projects/mailwoman-exotic-poi` (branch `feat/exotic-poi`). The worktree is already installed and compiled.
+- Commits: Run the listed `git add` and `git commit`, then verify with `git log -1 --oneline`. The pre-commit hook can fail silently in pipelines, so never pipe commit output.
 - End every commit message with:
   ```
   Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>
@@ -770,7 +770,7 @@ export interface POITaxonomyTable {
 
 - [ ] **Step 2: Write the seed data `poi-taxonomy/data/taxonomy.json`**
 
-This is the hand-curated SEED (Plan 3 replaces `categories` with the full ~2,100-entry Overture snapshot and keeps the synonym table growing). It must cover every phrase used in Plan 2's fixtures and the operator's canonical examples.
+This is the hand-curated seed. Plan 3 replaces `categories` with the full ~2,100-entry Overture snapshot and keeps extending the synonym table. It must cover every phrase used in Plan 2's fixtures and the operator's canonical examples.
 
 ```json
 {
@@ -973,7 +973,7 @@ This is the hand-curated SEED (Plan 3 replaces `categories` with the full ~2,100
 }
 ```
 
-Caution from the spec: seed `hierarchy`/`basicLabel` values for `overture`-source rows are provisional until Plan 3 snapshots the real taxonomy — that's why `overtureRelease` is `null`. Do not "fix" ids to the old `categories` property's names.
+Caution from the spec: The seed `hierarchy`/`basicLabel` values for `overture`-source rows are provisional until Plan 3 snapshots the real taxonomy, which is why `overtureRelease` is `null`. Do not "fix" ids to the old `categories` property's names.
 
 - [ ] **Step 3: Compile check**
 
@@ -1304,6 +1304,6 @@ Expected: clean status (or one lint-fix commit first), branch pushed.
 
 ## Execution notes for reviewers
 
-- Task 4's `yarn install` is the only step that touches the lockfile; if it produces a larger-than-expected diff, stop and check you're on the worktree's yarn version (`yarn --version` should match `.yarnrc.yml`).
-- The seed taxonomy's Overture-namespace hierarchies are provisional by design (spec §3.3): Plan 3's snapshot build is the correction mechanism. Reviewers should check synonym→id integrity (the test does) and not bikeshed category ancestry.
-- Plan 2 (pipeline: `poi_query` kind + intent record + routing) and Plan 3 (poi.db builder + MCP server) are separate documents; nothing in this plan touches the runtime pipeline, so golden parses are byte-identical by construction.
+- Task 4's `yarn install` is the only step that touches the lockfile. If it produces a larger diff than expected, stop and check that you are on the worktree's yarn version (`yarn --version` should match `.yarnrc.yml`).
+- The seed taxonomy's Overture-namespace hierarchies are provisional by design (spec §3.3), and Plan 3's snapshot build corrects them. Reviewers should check synonym→id integrity, which the test also checks, and should not debate category ancestry.
+- Plan 2 (pipeline: `poi_query` kind, intent record, routing) and Plan 3 (poi.db builder, MCP server) are separate documents. Nothing in this plan touches the runtime pipeline, so golden parses stay byte-identical by construction.

@@ -4,7 +4,7 @@
 
 **Goal:** The license key format in `@mailwoman/core` signs and verifies on WebCrypto, gains the `lid` and `agreement` fields, reads its trusted keys from one typed register that also produces the well-known JSON, and is importable by a Cloudflare Worker through `@mailwoman/core/license/key` and `@mailwoman/core/license/register` with no `node:` specifier in the bundle.
 
-**Architecture:** A new `packages/core/lib/crypto/ed25519.ts` holds Ed25519 and SHA-256 on `globalThis.crypto.subtle` with a PEM codec; `key.ts` becomes async on top of it; `register.ts` replaces `trusted-keys.ts`; every caller awaits the new signatures in the same change, with no forwarding exports. An esbuild bundle test under the `workerd,worker,browser` conditions is the check that the two subpaths stay `node:`-free.
+**Architecture:** A new `packages/core/lib/crypto/ed25519.ts` holds Ed25519 and SHA-256 on `globalThis.crypto.subtle` with a PEM codec; `key.ts` becomes async on top of it, and `register.ts` replaces `trusted-keys.ts`. Every caller awaits the new signatures in the same change, without forwarding exports. An esbuild bundle test under the `workerd,worker,browser` conditions checks that the two subpaths stay `node:`-free.
 
 **Tech Stack:** TypeScript under Node 24 (type stripping), WebCrypto (`SubtleCrypto` Ed25519 + SHA-256), zod 4, vitest, esbuild 0.28.2 (already pinned in `@mailwoman/neural`).
 
@@ -13,17 +13,17 @@
 ## Global Constraints
 
 - No compatibility re-exports. A name that moves is imported from its new home by every caller in this plan. A function that becomes async is awaited by every caller in this plan.
-- `node:*` imports are refused outside `@mailwoman/core` by `oxlint.config.ts`. Inside core, the new `crypto/` modules import NO `node:*` module at all; that is what makes them portable.
-- Relative imports carry `.ts`; sibling modules go through `#*` (`#crypto/ed25519`), never `../`.
-- No `enum`; `const X = {…} as const`.
-- Comments state invariants; no dates, PR numbers, or "now"/"added".
+- `oxlint.config.ts` refuses `node:*` imports outside `@mailwoman/core`. Inside core, the new `crypto/` modules import no `node:*` module at all, which is what makes them portable.
+- Relative imports carry `.ts`. Sibling modules are imported through `#*` (`#crypto/ed25519`), never `../`.
+- Do not use `enum`. Use `const X = {…} as const`.
+- Comments state invariants. They contain no dates, PR numbers, or "now"/"added".
 - Acronym casing: `PEM`, `DER`, `URL`, `ID` as whole components: `publicKeyDER`, `licenseKeyID`, `toBase64URL`.
-- Wire keys snake_case; the payload fields `lid` and `agreement` are lower-case words.
-- Every existing hand-issued token stays valid: the signature covers `mwl1.<payload>` bytes and the WebCrypto verifier must accept a token the `node:crypto` signer produced. Task 0 captures that fixture before the swap.
-- Run `yarn compile` before any test that spawns the compiled CLI. Pre-commit runs the compiled CLI too.
+- Wire keys are snake_case. The payload fields `lid` and `agreement` are lower-case words.
+- Every existing hand-issued token stays valid. The signature covers the `mwl1.<payload>` bytes, and the WebCrypto verifier must accept a token the `node:crypto` signer produced. Task 0 captures that fixture before the swap.
+- Run `yarn compile` before any test that spawns the compiled CLI. The pre-commit hook runs the compiled CLI too.
 - Commit messages end with `Claude-Session: https://claude.ai/code/session_011sdRccUsbdDyqumVDfHnvg`.
 - Work happens on branch `docs/license-shop-design` in the worktree `.claude/worktrees/license-posture`; rename it to `feat/license-key-webcrypto` at Task 0. Never `cd` to the main checkout.
-- The worktree Bash guard refuses `cat >>` heredocs, computed arguments, and the word `eval`; use `python3 - <<'EOF'` heredocs or the Edit/Write tools for file changes.
+- The worktree Bash guard refuses `cat >>` heredocs, computed arguments, and the word `eval`. Use `python3 - <<'EOF'` heredocs or the Edit/Write tools for file changes.
 
 ---
 
@@ -61,7 +61,7 @@
 
 - Create: `packages/core/test/fixtures/license/legacy-token.json`
 
-This runs against the CURRENT `node:crypto` implementation, before any code changes, so the fixture is what shipped.
+This runs against the current `node:crypto` implementation before any code changes, so the fixture records what shipped.
 
 - [ ] **Step 1: Rename the branch**
 
@@ -96,7 +96,7 @@ const token = encodeLicenseKey(payload, pair.privateKeyPEM)
 process.stdout.write(`${JSON.stringify({ ...pair, kid, payload, token }, null, "\t")}\n`)
 ```
 
-Run from the worktree root: `node /tmp/claude-1000/-home-lab-Projects-mailwoman/dc5b25ae-2f59-4cfe-a00a-391f0b430ece/scratchpad/legacy-fixture.ts > packages/core/test/fixtures/license/legacy-token.json` (create the directory first). The private key in this file is a TEST key that signs nothing real; it exists so the WebCrypto signer can be checked for byte-identical output too.
+Run from the worktree root: `node /tmp/claude-1000/-home-lab-Projects-mailwoman/dc5b25ae-2f59-4cfe-a00a-391f0b430ece/scratchpad/legacy-fixture.ts > packages/core/test/fixtures/license/legacy-token.json` (create the directory first). The private key in this file is a test key that signs nothing real. It exists so the WebCrypto signer can also be checked for byte-identical output.
 
 - [ ] **Step 3: Verify the fixture verifies today**
 
@@ -104,7 +104,7 @@ Run from the worktree root: `node /tmp/claude-1000/-home-lab-Projects-mailwoman/
 node packages/mailwoman/out/cli.js license verify --key "$(python3 -c 'import json;print(json.load(open("packages/core/test/fixtures/license/legacy-token.json"))["token"])')"
 ```
 
-Expected: `status: unknown_key` (the fixture key is not in the shipped trust map). That is the right answer; the test in Task 2 injects the fixture's public key as trusted.
+Expected: `status: unknown_key`, because the fixture key is not in the shipped trust map. That is the correct result. The test in Task 2 injects the fixture's public key as trusted.
 
 - [ ] **Step 4: Commit**
 
@@ -393,7 +393,7 @@ export async function sha256Bytes(data: Uint8Array): Promise<Uint8Array> {
 }
 ```
 
-If TypeScript rejects `crypto.subtle` as an unknown global in core, the `@types/node` version in use lacks the `crypto` global; add `import { webcrypto } from "node:crypto"` is NOT the fix (it breaks portability). Check `tsconfig` `lib` first; `@types/node` 20+ declares `var crypto: webcrypto.Crypto`.
+If TypeScript rejects `crypto.subtle` as an unknown global in core, the `@types/node` version in use lacks the `crypto` global. Do not fix this by adding `import { webcrypto } from "node:crypto"`, because that breaks portability. Check `tsconfig` `lib` first. `@types/node` 20+ declares `var crypto: webcrypto.Crypto`.
 
 Add the two subpath exports to `packages/core/package.json`, beside `./hash`:
 
@@ -726,11 +726,11 @@ export async function verifyLicenseKey(
 }
 ```
 
-Keep the existing per-field docstrings on the schema (`v`, `kid`, `licensee`, `expires`, `scope`, `terms`) from the current file. Note `error instanceof Error ? …` here: use `errorMessage` from `#errors/schema` instead if that import is `node:`-free (it is: one type-only import); prefer it.
+Keep the existing per-field docstrings on the schema (`v`, `kid`, `licensee`, `expires`, `scope`, `terms`) from the current file. Replace the `error instanceof Error ? …` expression here with `errorMessage` from `#errors/schema`. That module is `node:`-free, since its only import is type-only.
 
 - [ ] **Step 4: Remove the Ed25519 helpers from `hash.ts`**
 
-Delete `generateEd25519KeyPair`, `signEd25519`, `verifyEd25519`, `publicKeyDER`, the `Ed25519KeyPairPEM` interface, and the now-unused names from the `node:crypto` import (`createPrivateKey`, `createPublicKey`, `generateKeyPairSync`, `sign`, `verify`). `sha256Hex`, `sha256File`, `md5File` stay. Run `grep -rn "from \"@mailwoman/core/hash\"\|from \"#hash\"" packages --include='*.ts' -l` and confirm no remaining importer names a deleted symbol (Task 0's grep found only `key.ts`).
+Delete `generateEd25519KeyPair`, `signEd25519`, `verifyEd25519`, `publicKeyDER`, the `Ed25519KeyPairPEM` interface, and the now-unused names from the `node:crypto` import (`createPrivateKey`, `createPublicKey`, `generateKeyPairSync`, `sign`, `verify`). `sha256Hex`, `sha256File`, `md5File` stay. Run `grep -rn "from \"@mailwoman/core/hash\"\|from \"#hash\"" packages --include='*.ts' -l` and confirm that no remaining importer imports a deleted symbol. Task 0's grep found only `key.ts`.
 
 - [ ] **Step 5: Run the tests**
 
@@ -932,7 +932,7 @@ export function publishedLicenseKeys(): PublishedLicenseKeys {
 }
 ```
 
-Delete `packages/core/lib/license/trusted-keys.ts` (`git rm`). In `publication.ts`, delete the local `PublishedLicenseKeys` interface and add `import type { PublishedLicenseKeys } from "#license/register"`; `confirmLicenseKeyPublished` now reads `entry.status`, which has three values: `active` → `listed`, anything else → `retired` (the `LicenseKeyPublication` vocabulary stays). In `index.ts` replace `export * from "#license/trusted-keys"` with `export * from "#license/register"`.
+Delete `packages/core/lib/license/trusted-keys.ts` (`git rm`). In `publication.ts`, delete the local `PublishedLicenseKeys` interface and add `import type { PublishedLicenseKeys } from "#license/register"`; `confirmLicenseKeyPublished` reads `entry.status`, which has three values. It maps `active` → `listed` and anything else → `retired`, keeping the `LicenseKeyPublication` vocabulary. In `index.ts` replace `export * from "#license/trusted-keys"` with `export * from "#license/register"`.
 
 Add to `packages/core/package.json` `exports`, beside `./license/publication`:
 
@@ -951,7 +951,7 @@ Add to `packages/core/package.json` `exports`, beside `./license/publication`:
 
 - [ ] **Step 4: Regenerate the well-known JSON from the register**
 
-The `register` CLI action arrives in Task 5; for now write the file with a scratchpad script that prints `JSON.stringify(publishedLicenseKeys(), null, "\t")` to `docs/static/.well-known/mailwoman/license-keys.json`. Diff it against the committed file: the only changes should be the `$comment` text and key order; `kid`, `publicKey`, `majorVersions`, `status` are identical.
+The `register` CLI action arrives in Task 5. Until then, write the file with a scratchpad script that prints `JSON.stringify(publishedLicenseKeys(), null, "\t")` to `docs/static/.well-known/mailwoman/license-keys.json`. Diff it against the committed file. Only the `$comment` text and key order should change, and `kid`, `publicKey`, `majorVersions` and `status` should be identical.
 
 - [ ] **Step 5: Run the tests**
 
@@ -1019,13 +1019,13 @@ export function resolveEngineStamp(): Promise<ResolvedEngineStamp> {
 
 - [ ] **Step 3: Await it in the doctor**
 
-In `packages/mailwoman/lib/doctor/runner.ts`: the deps interface line `licenseKey(): LicenseKeyVerification | undefined` becomes `licenseKey(): Promise<LicenseKeyVerification | undefined>`; the wiring `licenseKey: () => verifyConfiguredLicenseKey()` is unchanged in text; the call site `const key = deps.licenseKey()` becomes `const key = await deps.licenseKey()`.
+In `packages/mailwoman/lib/doctor/runner.ts`, make three changes. The deps interface line `licenseKey(): LicenseKeyVerification | undefined` becomes `licenseKey(): Promise<LicenseKeyVerification | undefined>`. The wiring `licenseKey: () => verifyConfiguredLicenseKey()` keeps its text. The call site `const key = deps.licenseKey()` becomes `const key = await deps.licenseKey()`.
 
-In `packages/mailwoman/test/unit/doctor/runner.test.ts`, every `licenseKey: () => X` becomes `licenseKey: async () => X` (five sites at the lines the grep in this plan's preparation found: 54, 215, 252, 264, 278; re-grep, the numbers move).
+In `packages/mailwoman/test/unit/doctor/runner.test.ts`, every `licenseKey: () => X` becomes `licenseKey: async () => X`. The grep during this plan's preparation found five sites, at lines 54, 215, 252, 264 and 278. Re-run the grep, because the line numbers will have moved.
 
 - [ ] **Step 4: Fix the stamp test's key fixtures**
 
-In `packages/core/test/unit/license/stamp.test.ts`, the module-level `pair`, `kid`, `token`, `valid`, `expired`, `unknownKey`, `invalid` become top-level `await`s of the async functions (vitest supports top-level await in ESM test files; `key.test.ts` in Task 2 already does this).
+In `packages/core/test/unit/license/stamp.test.ts`, the module-level `pair`, `kid`, `token`, `valid`, `expired`, `unknownKey`, `invalid` become top-level `await`s of the async functions. vitest supports top-level await in ESM test files, and `key.test.ts` in Task 2 already uses it.
 
 - [ ] **Step 5: Run the affected suites**
 
@@ -1051,7 +1051,7 @@ Claude-Session: https://claude.ai/code/session_011sdRccUsbdDyqumVDfHnvg"
 - Modify: `packages/mailwoman/lib/cli-native/commands/license.ts`
 - Test: `packages/mailwoman/test/integration/license-cli.test.ts` (create)
 
-**Interfaces produced:** `mailwoman license register [--write] [--json]` — prints the derived well-known JSON, or writes it to `docs/static/.well-known/mailwoman/license-keys.json` under the repo root.
+**Interfaces produced:** `mailwoman license register [--write] [--json]`, which prints the derived well-known JSON or writes it to `docs/static/.well-known/mailwoman/license-keys.json` under the repo root.
 
 - [ ] **Step 1: Write the failing CLI test**
 
@@ -1126,18 +1126,18 @@ describe("mailwoman license", () => {
 })
 ```
 
-Check that `makeTemporaryDirectory` is the name `@mailwoman/core/fs/temporary` exports (`grep -n "^export" packages/core/lib/fs/temporary.ts`); use whatever the module names, and its disposal idiom.
+Check that `makeTemporaryDirectory` is the name `@mailwoman/core/fs/temporary` exports (`grep -n "^export" packages/core/lib/fs/temporary.ts`). Use the name the module exports, and its disposal idiom.
 
 - [ ] **Step 2: Run to verify it fails**
 
 Run: `yarn compile && yarn vitest run packages/mailwoman/test/integration/license-cli.test.ts`
-Expected: the `register` test fails (unknown action); the other two may fail on the compile of `license.ts` against the async API. Fix compile first: it is the next step.
+Expected: the `register` test fails with an unknown action. The other two may fail because `license.ts` does not compile against the async API. The next step fixes the compile.
 
 - [ ] **Step 3: Update the command**
 
 In `packages/mailwoman/lib/cli-native/commands/license.ts`:
 
-- Imports: drop `TRUSTED_LICENSE_SIGNING_KEYS`; add `publishedLicenseKeys, trustedLicenseSigningKeys` from `@mailwoman/core/license`; add `repoRootPath` from `@mailwoman/core/paths` and `writeLocalTextFile` is already imported.
+- Imports: drop `TRUSTED_LICENSE_SIGNING_KEYS`. Add `publishedLicenseKeys, trustedLicenseSigningKeys` from `@mailwoman/core/license` and `repoRootPath` from `@mailwoman/core/paths`. `writeLocalTextFile` is already imported.
 - `keygen`: `const pair = await generateLicenseSigningKeyPair()`; `const kid = await licenseKeyID(pair.publicKeyPEM, major)`; the printed instructions become:
 
 ```ts
@@ -1169,7 +1169,7 @@ async function registerCommand(parsed: ParsedCommand): Promise<number> {
 }
 ```
 
-Add `write: { type: "boolean", default: false, description: "register: write the well-known file under docs/static instead of printing it." }` to the options, `register` to the positional description and the `switch`. `--json` on `register` is accepted and prints the same document (the document IS JSON).
+Add `write: { type: "boolean", default: false, description: "register: write the well-known file under docs/static instead of printing it." }` to the options, `register` to the positional description and the `switch`. `register` accepts `--json` and prints the same document, since the document is already JSON.
 
 - [ ] **Step 4: Compile, run the CLI test, and regenerate the well-known file through the command**
 
@@ -1189,7 +1189,7 @@ git commit -m "feat(cli): license keygen, issue and verify on the WebCrypto key;
 Claude-Session: https://claude.ai/code/session_011sdRccUsbdDyqumVDfHnvg"
 ```
 
-(The pre-commit hook regenerates the CLI reference page and the man page for the new action; stage what it writes.)
+The pre-commit hook regenerates the CLI reference page and the man page for the new action. Stage the files it writes.
 
 ---
 
@@ -1222,7 +1222,7 @@ test("license-register: the committed well-known file equals the register's deri
 })
 ```
 
-Match the `context` shape to what `versionSyncCheck.run(context)` receives (`grep -n "interface.*Context" packages/repo-health/lib/check.ts`), and the import path to how the registry imports checks (`#checks/version-sync` inside the package; from the test use the package's exported subpath, or `#checks/…` if the test tsconfig maps it — copy whichever an existing repo-health test does).
+Match the `context` shape to what `versionSyncCheck.run(context)` receives (`grep -n "interface.*Context" packages/repo-health/lib/check.ts`). Match the import path to how the registry imports checks: `#checks/version-sync` inside the package. From the test, use the package's exported subpath, or `#checks/…` if the test tsconfig maps it. Copy whichever form an existing repo-health test uses.
 
 - [ ] **Step 2: Run to verify it fails**
 
@@ -1272,7 +1272,7 @@ export const licenseRegisterCheck: RepoCheck = {
 }
 ```
 
-In `registry.ts`, import `licenseRegisterCheck` from `#checks/license-register` and add it to the checks list beside `versionSyncCheck`. If the repo-health package does not yet depend on `@mailwoman/core` for the `license` subpath (it depends on core already for `fs/readers`), nothing to add. Add the export subpath for `./checks/license-register` if the test imports it that way and sibling checks are exported so.
+In `registry.ts`, import `licenseRegisterCheck` from `#checks/license-register` and add it to the checks list beside `versionSyncCheck`. The repo-health package already depends on core for `fs/readers`, so the `license` subpath needs no new dependency. Add the export subpath for `./checks/license-register` only if the test imports it that way and the sibling checks are exported the same way.
 
 - [ ] **Step 4: Run the test and the health command**
 
@@ -1355,7 +1355,7 @@ test("@mailwoman/core/license/key and /register bundle for a Worker with no node
 
 Run: `yarn workspace @mailwoman/core add -D esbuild@0.28.2 && yarn vitest run packages/core/test/integration/worker-bundle.test.ts`
 
-Expected: pass if Tasks 1 to 3 left the graph clean, fail naming the module otherwise. If it names `packages/core/lib/objects.ts` reaching `spliterator` and that in turn reaching `node:`, the fix is a `#json/strict.ts` module holding `parseJSONStrict` alone (the function has no Node dependency; the shelf it sits on does) and `key.ts` importing that. If it names `#errors/schema`, the same move. Record the module the test named in the commit message.
+Expected: the test passes if Tasks 1 to 3 left the graph clean. Otherwise it fails and reports the offending module. If it reports `packages/core/lib/objects.ts` reaching `spliterator`, which in turn reaches `node:`, create a `#json/strict.ts` module that holds only `parseJSONStrict` and have `key.ts` import it. The function has no Node dependency, but the module it currently lives in does. If the test reports `#errors/schema`, apply the same fix. Record the reported module in the commit message.
 
 - [ ] **Step 3: Commit**
 
@@ -1397,7 +1397,7 @@ yarn lint
 yarn vitest run packages/core/test packages/mailwoman/test/unit/cli-kit packages/mailwoman/test/unit/doctor packages/mailwoman/test/unit/cli-launcher.test.ts packages/mailwoman/test/integration/license-cli.test.ts packages/mailwoman/test/integration/openapi-cli.test.ts packages/repo-health/test
 ```
 
-Then `yarn test` alone, with nothing else running, and read the failures against the log rather than the exit code: model-loading suites time out under machine load and pass alone.
+Then run `yarn test` alone, with nothing else running. Read the failures in the log rather than relying on the exit code, because model-loading suites time out under machine load and pass when run alone.
 
 - [ ] **Step 3: Measure the launcher**
 
@@ -1405,7 +1405,7 @@ Then `yarn test` alone, with nothing else running, and read the failures against
 node --import /tmp/claude-1000/-home-lab-Projects-mailwoman/dc5b25ae-2f59-4cfe-a00a-391f0b430ece/scratchpad/count-modules.mjs packages/mailwoman/out/cli.js --version 2>&1 >/dev/null | grep -E "^COUNT="
 ```
 
-Update `MEASURED_MODULE_COUNT` in `packages/mailwoman/test/unit/module-count.test.ts` to the number; it should move by a handful (the `crypto/` modules in, `node:crypto` out of the license path).
+Update `MEASURED_MODULE_COUNT` in `packages/mailwoman/test/unit/module-count.test.ts` to the new number. It should change by a handful, since the `crypto/` modules are added and `node:crypto` leaves the license path.
 
 - [ ] **Step 4: Commit, push, PR**
 
@@ -1417,4 +1417,4 @@ Claude-Session: https://claude.ai/code/session_011sdRccUsbdDyqumVDfHnvg"
 git push -u origin feat/license-key-webcrypto
 ```
 
-Open the PR against `main` with the template, the spec linked, and the session link as the last line. The PR closes the issue B task list on the tracking issue created at execution start (task-intake).
+Open the PR against `main` using the template, with the spec linked and the session link as the last line. The PR closes the issue B task list on the tracking issue created when execution started (task-intake).

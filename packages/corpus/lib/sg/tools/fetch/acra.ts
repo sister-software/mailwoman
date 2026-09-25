@@ -3,19 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Fetch Singapore's acra corporate-entity register from data.gov.sg: 27 monthly CSVs (one per first
- *   letter of the entity name plus "others"), 53 columns, the registered address fielded — `Block`,
- *   `Street Name`, `Level No`, `Unit No`, `Building Name`, `Postal Code` — which is the NPPES shape,
- *   so the corpus adapter renders the string and the spans fall out by construction. A Singapore
- *   postcode names one building, so the postcode column is also the join to the OneMap/Overture rows.
- *
- *   License: Singapore Open Data Licence version 1.0 (attribution. commercial use, modification and
- *   adaptation permitted. no share-alike). The prescribed attribution sentence goes in the manifest.
- *
- *   data.gov.sg serves a dataset in two calls: `initiate-download` prepares a signed URL and
- *   `poll-download` answers it once the export is ready.
- *
- *   Invoke via `mailwoman corpus fetch acra-sg --out-root <path>`.
+ *   Fetches the ACRA corporate-entity CSVs for Singapore from data.gov.sg, which publishes them with fielded addresses.
  */
 
 import { BYTES_PER_KIB } from "@mailwoman/core/fs/formatters"
@@ -38,12 +26,16 @@ const DATASET_API = "https://api-production.data.gov.sg/v2/public/api/datasets"
 const DOWNLOAD_API = "https://api-open.data.gov.sg/v1/public/api/datasets"
 const LICENSE = "Singapore Open Data Licence version 1.0 — https://data.gov.sg/open-data-licence"
 
+// The licence prescribes this attribution sentence, and the manifest records it.
 const ATTRIBUTION =
 	"Contains information from ACRA Information on Corporate Entities accessed on <date> from data.gov.sg which is made available under the terms of the Singapore Open Data Licence version 1.0 https://data.gov.sg/open-data-licence"
 
 const POLL_INTERVAL_MS = 3000
 const POLL_ATTEMPTS = 40
 
+/**
+ * Options for {@link fetchACRASG}.
+ */
 export type FetchACRASGOptions = BaseFetchOptions
 
 interface CollectionMetadata {
@@ -67,7 +59,9 @@ async function readJSON<T>(url: string): Promise<T> {
 }
 
 /**
- * Ask the portal to prepare the CSV export, then poll until it names the signed URL.
+ * Asks data.gov.sg to prepare a CSV export and polls until the export's signed URL is ready.
+ *
+ * The function returns `undefined` when polling runs out of attempts.
  */
 async function signedURLFor(datasetID: string): Promise<string | undefined> {
 	await readJSON(`${DOWNLOAD_API}/${datasetID}/initiate-download`)
@@ -88,6 +82,11 @@ function filenameFor(name: string, datasetID: string): string {
 	return `acra-entities-${(letter ?? datasetID).toLowerCase().replaceAll(/[^a-z0-9]+/g, "-")}.csv`
 }
 
+/**
+ * Downloads every dataset in the ACRA collection and writes a collection manifest after each file.
+ *
+ * The function skips a file that the previous manifest lists and that still exists on disk.
+ */
 export async function fetchACRASG(options: FetchACRASGOptions, report?: (line: string) => void): Promise<FetchSummary> {
 	const destDir = options.outRoot(SLUG)
 	await makeDirectories(destDir)

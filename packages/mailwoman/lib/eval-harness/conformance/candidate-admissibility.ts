@@ -3,26 +3,23 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Compare resolver candidate tables to test refinement monotonicity: adding query information may reorder or expand
- *   candidates, and may remove candidates contradicted by that information, but must not remove compatible candidates.
- *   Account for country contradictions, hierarchy re-scoping, and fetch-window limits separately. A removal at the
- *   fetch window is unmeasured, not a pass. Pair lookups by tag, placetype, and folded value; fold repeated lookups
- *   within each run before comparison.
+ *   Compares resolver candidate tables for a base query and a refined query. A refinement may reorder candidates, add
+ *   them, or remove ones that the added information contradicts. Every other removal must be explained by a hierarchy
+ *   re-scope or a full fetch window.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
 import type { ResolveCandidateTrace, ResolveNodeTrace } from "@mailwoman/core/resolver"
 
 /**
- * Mutually exclusive candidate accounts: held, contradicted, rescoped,
- * beyond the observed window, or unexplained.
+ * Mutually exclusive explanations for a candidate's movement between the two tables.
  */
 export const CANDIDATE_ACCOUNTS = ["held", "contradicted", "rescoped", "beyond_window", "unexplained"] as const
 
 export type CandidateAccount = (typeof CANDIDATE_ACCOUNTS)[number]
 
 /**
- * Side on which a candidate was observed.
+ * Whether a candidate stayed in the table, left it, or entered it after refinement.
  */
 export const CANDIDATE_DIRECTIONS = ["held", "removed", "added"] as const
 
@@ -33,11 +30,11 @@ export type CandidateDirection = (typeof CANDIDATE_DIRECTIONS)[number]
  */
 export interface CandidateReading {
 	/**
-	 * Key of the lookup containing this candidate.
+	 * Key of the lookup that holds this candidate.
 	 */
 	lookup: string
 	/**
-	 * Stable identity including placetype, `${placetype}:${id}`.
+	 * Candidate identity in the form `${placetype}:${id}`.
 	 */
 	key: string
 	name: string
@@ -45,21 +42,23 @@ export interface CandidateReading {
 	account: CandidateAccount
 	direction: CandidateDirection
 	/**
-	 * 1-based final rank in the base pool, absent when the base never held it.
+	 * One-based rank in the base pool.
+	 * It is absent when the base pool lacks the candidate.
 	 */
 	baseRank?: number
 	/**
-	 * 1-based final rank in the refined pool, absent when the refined lookup never held it.
+	 * One-based rank in the refined pool.
+	 * It is absent when the refined pool lacks the candidate.
 	 */
 	variantRank?: number
 	/**
-	 * Resolver evidence supporting the account, including held candidates.
+	 * Resolver evidence for the account.
 	 */
 	reason: string
 }
 
 /**
- * Scope recorded for one lookup.
+ * Query scope that a lookup ran under.
  */
 interface LookupScope {
 	country?: string
@@ -69,55 +68,56 @@ interface LookupScope {
 }
 
 /**
- * Candidate pooled across repeated instances of one lookup.
+ * Candidate merged across repeated records of one lookup.
  */
 interface PooledCandidate {
 	key: string
 	name: string
 	country: string
 	/**
-	 * Best rank across repeated lookups.
+	 * Best one-based rank across the repeated records.
 	 */
 	rank: number
 }
 
 /**
- * Repeated records of one lookup folded into one observation.
+ * Repeated trace records of one lookup merged into one observation.
  */
 export interface LookupFold {
 	/**
-	 * `tag|placetype|foldedValue` key.
+	 * Key in the form `tag|placetype|foldedValue`.
 	 */
 	key: string
 	tag: string
 	placetype: string
 	value: string
 	/**
-	 * Number of records combined.
+	 * Number of merged records.
 	 */
 	records: number
 	pool: Map<string, PooledCandidate>
 	/**
-	 * The widest fetch window any record ran with.
+	 * Largest fetch limit among the records.
 	 */
 	limit: number
 	/**
-	 * Whether any record filled or overflowed its candidate window.
+	 * Whether any record reached its fetch limit or had truncated candidates.
 	 */
 	windowed: boolean
 	scope: LookupScope
 	/**
-	 * Distinct resolver checks, in first-seen order.
+	 * Distinct resolver checks in first-seen order.
 	 */
 	checks: string[]
 	/**
-	 * Pick source, or `null` when no candidate was selected.
+	 * Source of the last picked candidate, or `null` when no record picked one.
 	 */
 	pickedSource: string | null
 }
 
 /**
- * Fold trace records into one observation per lookup.
+ * Merges trace records into one observation per lookup key.
+ * The key folds the value by trimming and lowercasing it.
  */
 export function foldLookups(records: readonly ResolveNodeTrace[]): Map<string, LookupFold> {
 	const folds = new Map<string, LookupFold>()
@@ -148,7 +148,7 @@ export function foldLookups(records: readonly ResolveNodeTrace[]): Map<string, L
 		fold.records += 1
 		fold.limit = Math.max(fold.limit, record.query.limit)
 
-		// Mark pools at their fetch limit or with trace-truncated candidates as windowed.
+		// A full or truncated pool may have hidden candidates beyond its limit.
 		if (record.candidatesTruncated > 0 || record.candidates.length >= record.query.limit) {
 			fold.windowed = true
 		}
@@ -204,7 +204,8 @@ function candidateKeyOf(candidate: ResolveCandidateTrace): string {
 }
 
 /**
- * Identify hierarchy scopes that make the refined lookup a different population.
+ * Describes the hierarchy scopes that the refined lookup added or changed.
+ * It returns `null` when the scopes match.
  */
 function rescopedPath(base: LookupScope, variant: LookupScope): string | null {
 	const parts: string[] = []
@@ -225,17 +226,22 @@ function rescopedPath(base: LookupScope, variant: LookupScope): string | null {
 }
 
 /**
- * Counts by candidate account.
+ * Number of candidate readings per account.
  */
 export type CandidateAccountCounts = Record<CandidateAccount, number>
 
 /**
- * Result of comparing one pair of candidate tables.
+ * Result of comparing a base and a refined query's candidate tables.
  */
 export interface RefinementReading {
 	/**
-	 * `refines` when all movement is explained; `diverges` when movement is unexplained;
-	 * `unmeasured` when removals hit a fetch window; `undecidable` when no lookups pair.
+	 * Verdict for the pair.
+	 *
+	 * `diverges` means some movement is unexplained.
+	 * `unmeasured` means some removal happened in a full window.
+	 *
+	 * `undecidable` means no lookup ran on both sides.
+	 * `refines` means every movement is explained.
 	 */
 	relation: "refines" | "diverges" | "unmeasured" | "undecidable"
 	basis: string
@@ -243,15 +249,17 @@ export interface RefinementReading {
 	counts: CandidateAccountCounts
 	readings: CandidateReading[]
 	/**
-	 * Lookups performed in both runs; denominator for account counts.
+	 * Number of lookups that ran in both queries.
 	 */
 	pairedLookups: number
 	/**
-	 * Lookups performed only by the refined query.
+	 * Lookups that only the refined query ran.
 	 */
 	addedLookups: string[]
 	/**
-	 * Lookups performed only by the base; reported but not graded.
+	 * Lookups that only the base query ran.
+	 *
+	 * They appear in the differences and do not affect the relation.
 	 */
 	droppedLookups: string[]
 }
@@ -283,7 +291,7 @@ function describeScope(scope: LookupScope): string {
 }
 
 /**
- * Classify candidates for a paired lookup.
+ * Appends a reading for every candidate that either side of a paired lookup holds.
  */
 function accountLookup(base: LookupFold, variant: LookupFold, readings: CandidateReading[]): void {
 	const rescope = rescopedPath(base.scope, variant.scope)
@@ -310,7 +318,7 @@ function accountLookup(base: LookupFold, variant: LookupFold, readings: Candidat
 			continue
 		}
 
-		// Country contradiction is directly testable, even when the pool is windowed.
+		// A country contradiction explains the removal even when the refined pool is windowed.
 		if (variant.scope.country && candidate.country && candidate.country !== variant.scope.country) {
 			readings.push({
 				lookup: base.key,
@@ -375,7 +383,7 @@ function accountLookup(base: LookupFold, variant: LookupFold, readings: Candidat
 	for (const candidate of variant.pool.values()) {
 		if (base.pool.has(candidate.key)) continue
 
-		// A candidate beyond the base window was not observed absent, so its addition is not unexplained.
+		// A full base window may have hidden this candidate, so its addition counts as explained.
 		if (base.windowed) {
 			readings.push({
 				lookup: variant.key,
@@ -424,10 +432,10 @@ function accountLookup(base: LookupFold, variant: LookupFold, readings: Candidat
 }
 
 /**
- * Read a refinement pair's candidate tables.
+ * Compares the candidate tables of a base query and its refinement.
  *
- * `base` is the coarser query's records and `variant` the refined query's.
- * Both come from the resolver's own `ResolveOpts.traceSink`; neither is re-derived here.
+ * Both arguments are records from the resolver's `ResolveOpts.traceSink`.
+ * `base` holds the coarser query's records, and `variant` holds the refined query's records.
  */
 export function accountRefinement(
 	base: readonly ResolveNodeTrace[],
@@ -506,7 +514,8 @@ export function accountRefinement(
 		}
 	}
 
-	// Only windowed removals make the comparison unmeasured; windowed additions are explained.
+	// Windowed removals leave the comparison unmeasured.
+	// Windowed additions count as explained.
 	const unprovable = readings.filter(
 		(reading) => reading.account === "beyond_window" && reading.direction === "removed"
 	)

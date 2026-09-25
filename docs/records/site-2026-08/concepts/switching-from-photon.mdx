@@ -6,15 +6,9 @@ description: A Photon-compatible autocomplete API without the Elasticsearch clus
 
 # Switching from Photon
 
-[Photon](https://photon.komoot.io) is the type-ahead geocoder — search-as-you-type, GeoJSON out. It's
-also an Elasticsearch cluster you feed a Photon import before it answers anything. Mailwoman speaks the
-same `/api` interface from a SQLite file, so your autocomplete keeps working without the cluster.
+[Photon](https://photon.komoot.io) is a type-ahead geocoder that searches as you type and returns GeoJSON. It runs on an Elasticsearch cluster, which must load a Photon import before it can answer queries. Mailwoman serves the same `/api` interface from a SQLite file, so your autocomplete keeps working without the cluster.
 
-**Try it first.** We host a live instance at [photon.mailwoman.ai](https://photon.mailwoman.ai) —
-nothing to install, no import to wait on. Open
-[`/api?q=berlin&limit=3`](https://photon.mailwoman.ai/api?q=berlin&limit=3) in a browser (or point your
-existing Photon client at the host) and read the GeoJSON that comes back. When it looks right, the one
-command below runs the same thing on your own machine.
+**Try it first.** We host a live instance at [photon.mailwoman.ai](https://photon.mailwoman.ai), so you can test it without installing anything or waiting for an import. Open [`/api?q=berlin&limit=3`](https://photon.mailwoman.ai/api?q=berlin&limit=3) in a browser, or point your existing Photon client at the host, and check the GeoJSON it returns. When the results look right, the command below runs the same service on your own machine.
 
 ## One command
 
@@ -34,37 +28,22 @@ curl "http://localhost:2322/reverse?lat=52.52&lon=13.405"
 | `GET /api`     | `GET /api`     | `q`, `limit`, `lat`/`lon` bias |
 | `GET /reverse` | `GET /reverse` | `lat` / `lon`                  |
 
-`limit` returns the top-N ranked matches (an ambiguous name like `Springfield` yields each instance),
-and `lat`/`lon` is a proximity bias — the same query near different map centers re-ranks the results
-toward the viewport. `lang` and `osm_tag` are accepted for wire compatibility but not yet applied:
-`lang` because the model ships a single (en-US) locale, and `osm_tag` layer filtering is on the roadmap.
+`limit` returns the top-N ranked matches, so an ambiguous name like `Springfield` returns each instance. `lat`/`lon` is a proximity bias: the same query near different map centers ranks results closer to the viewport higher. `lang` and `osm_tag` are accepted for wire compatibility but not yet applied. `lang` has no effect because the model ships a single (en-US) locale, and `osm_tag` layer filtering is on the roadmap.
 
-Both return a GeoJSON `FeatureCollection` of `Point` features with `properties` (`name`, `street`,
-`postcode`, `city`, `county`, `state`, `country`, `countrycode`, `osm_key`, `osm_value`, `type`, …) —
-the shape a Photon client already parses.
+Both endpoints return a GeoJSON `FeatureCollection` of `Point` features with `properties` (`name`, `street`, `postcode`, `city`, `county`, `state`, `country`, `countrycode`, `osm_key`, `osm_value`, `type`, …). Photon clients already parse this shape.
 
 ## What's different
 
-- **No Elasticsearch.** Resolution runs over the same SQLite gazetteer the rest of Mailwoman uses, and
-  `/api` is backed by the FST autocomplete tier plus the neural parser.
-- **Properties** come from the Who's On First / Overture placetype chain rather than raw OSM tags, mapped
-  to Photon's key names.
+- **It does not use Elasticsearch.** Resolution runs over the same SQLite gazetteer as the rest of Mailwoman, and `/api` uses the FST autocomplete tier plus the neural parser.
+- **Properties** come from the Who's On First / Overture placetype chain, mapped to Photon's key names, rather than from raw OSM tags.
 
 ## What's missing
 
-- **Prefix ranking** is its own art. Mailwoman's `/api` resolves the query through the geocoder today;
-  the dedicated prefix-first FST front is the refinement that closes the last gap with Photon's tuned
-  type-ahead ordering.
-- **Coverage** mirrors the gazetteer — strong in the US, improving across the EU.
+- **Prefix ranking** is a separate problem. Today Mailwoman's `/api` resolves the query through the geocoder. A dedicated prefix-first FST front end is the planned change to match Photon's tuned type-ahead ordering.
+- **Coverage** follows the gazetteer. It is strong in the US and improving across the EU.
 
 ## Photon in the wild
 
-For a sense of what Photon looks like in production, [Cartes](https://cartes.app) (an open-source French
-web map we admire) runs its own Photon instance and layers France's
-[BAN](https://adresse.data.gouv.fr) address API on top for house-number queries. The pairing works well
-for them. It's also the kind of per-country shim a parser-first geocoder makes unnecessary: Mailwoman
-reads the house number in the query and resolves it against the same BAN rooftop data directly.
+[Cartes](https://cartes.app), an open-source French web map we admire, shows Photon in production. It runs its own Photon instance and adds France's [BAN](https://adresse.data.gouv.fr) address API for house-number queries. The combination works well for them. A parser-first geocoder does not need that kind of per-country addition. Mailwoman reads the house number in the query and resolves it directly against the same BAN rooftop data.
 
-See [how Mailwoman compares](./how-mailwoman-compares.mdx#what-about-the-map-apps) for the full capability
-matrix and the longer Cartes note. For structured lookup (the Nominatim shape) instead of autocomplete,
-see [Switching from Nominatim](./switching-from-nominatim.mdx).
+See [how Mailwoman compares](./how-mailwoman-compares.mdx#what-about-the-map-apps) for the full capability matrix and a longer note on Cartes. For structured lookup (the Nominatim shape) instead of autocomplete, see [Switching from Nominatim](./switching-from-nominatim.mdx).

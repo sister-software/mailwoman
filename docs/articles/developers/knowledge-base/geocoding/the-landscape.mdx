@@ -8,128 +8,127 @@ role: explanation
 
 ## The question
 
-You need addresses turned into coordinates. Within an hour of looking you have found a hosted API you
-could be calling this afternoon, an open-source engine you could run yourself, a library you could
-install, and a colleague insisting the whole thing is a hundred lines of Python. All four are true
-statements about somebody's situation. Which one is a true statement about yours?
+You need addresses turned into coordinates. Within an hour of searching you have found a hosted API you
+could call this afternoon, an open-source engine you could run yourself, a library you could install,
+and a colleague who insists the whole thing is a hundred lines of Python. Each option suits some
+situation. This page helps you work out which one suits yours.
 
 ## The analog
 
-Compare it to storing files. You can pay someone to store them, run a file server yourself, or write
-them to the disk already in the machine. Nobody thinks one of those is the right answer to every
-question — you pick by how much you have, how frequently you touch it, who is allowed to see it, and
-what happens when it is unavailable. Geocoding splits the same three ways and the deciding questions
-rhyme.
+Consider file storage. You can pay someone to store your files, run a file server yourself, or write
+them to the disk already in the machine. No one of those is right for every case. You choose based on
+how much data you have, how frequently you access it, who may see it, and what happens when it is
+unavailable. Geocoding offers the same three options, and similar questions decide between them.
 
-There is a fourth option in both cases, and it is the one people skip past out of embarrassment: for a
-small, bounded, well-understood set of files, a folder is fine. The equivalent here wins more of the
-time than the field admits, so it goes first.
+Both cases also have a fourth option that people tend to overlook. For a small, bounded, well-understood
+set of files, a folder is enough. The geocoding equivalent is the right choice in more cases than people
+expect, so this page covers it first.
 
 ## The bounded case: when a regex and a CSV win
 
-If your addresses live in a known universe — a utility's service addresses, a retailer's store list,
-one city's delivery points — you may not have a geocoding problem at all. You have a matching problem,
-and it is much easier.
+If your addresses come from a known, fixed set (a utility's service addresses, a retailer's store list,
+one city's delivery points), you may not need geocoding at all. You need matching, which is much
+easier.
 
-The approach is to normalize both sides and compare. Lowercase, strip punctuation, expand the standard
-abbreviations, drop the tokens your database does not carry, then take the best fuzzy match above a
-threshold. Against a bounded, curated universe this is accurate, fast, trivially debuggable, and takes
-an afternoon. Nothing in this shelf argues against it, and a team that ships it and moves on has made
-a good decision.
+Normalize both sides and compare them. Lowercase the text, strip punctuation, expand the standard
+abbreviations, and drop the tokens your database does not store. Then take the best fuzzy match above a
+threshold. Against a bounded, curated set this is accurate, fast and easy to debug, and it takes an
+afternoon to build. Nothing in this section of the docs argues against it, and a team that ships it and
+moves on has made a good decision.
 
-The same is true of two other reductions:
+Two other simplifications have the same property:
 
-- **Postcode-only.** Pull the postcode with one pattern per country, look it up in a
-  postcode-to-coordinate table, return the center. In countries where a postcode covers a handful of
-  delivery points this is nearly building-grain. In countries where it covers a rural route it is not,
-  and the approach has no way to tell you which case you are in.
-- **Locality-only.** Find the town name, return its center, ignore the rest. For counting customers by
-  metro area or assigning sales territories, the finer detail was never going to change the answer.
+- **Postcode-only.** Extract the postcode with one pattern per country, look it up in a
+  postcode-to-coordinate table, and return the center. In countries where a postcode covers a handful of
+  delivery points, the result is close to building-level. In countries where a postcode covers a rural
+  route, it is not, and this approach cannot tell you which case applies.
+- **Locality-only.** Find the town name, return its center, and ignore the rest. For counting customers
+  by metro area or assigning sales territories, finer detail would not change the answer.
 
-What all three share is a boundary condition, and it is worth naming because it is where they stop:
-they work on the addresses you already know about. A new customer, a building finished last month, an
-address in a format the abbreviation table never met — the normalizer returns nothing, the postcode
-pattern extracts nothing, and there is no gradient between a match and no match to escalate on. They
-also give you no signal about which case you are in, so the failure arrives as silence.
+All three approaches have the same limit: they work only on addresses you already know about. For a
+new customer, a building finished last month, or an address in a format the abbreviation table does not
+cover, the normalizer returns nothing and the postcode pattern extracts nothing. There is no partial
+match to escalate on. The approaches also do not signal which case occurred, so a failure produces no
+output and no error.
 
-Pick the cheapest approach that clears your actual requirement, and stop there. A geocode accurate to
-five meters when the application needs five kilometers is engineering you paid for and cannot use.
+Pick the cheapest approach that meets your actual requirement, and stop there. A geocode accurate to
+five meters is wasted effort when the application needs only five kilometers.
 
 ## Hosted APIs
 
-You send a string over HTTPS, you get a result back. No data to download, no index to build, no
-gazetteer to keep current, and global coverage on the first afternoon.
+You send a string over HTTPS and receive a result. You do not download data, build an index or keep a
+gazetteer current, and you get global coverage on the first day.
 
-**What it is for:** prototypes, one-shot batches, small volumes, and any team without the capacity to
-source and maintain reference data for the countries it serves. That last one is not a small
-consideration — keeping a national address dataset current is a standing job rather than a setup step.
+**What it is for:** prototypes, one-time batches, small volumes, and any team that lacks the capacity
+to source and maintain reference data for the countries it serves. That last point matters, because
+keeping a national address dataset current is ongoing work that continues after setup.
 
-**What you are trading.** The result comes as a component set in the provider's own vocabulary, which
-you will translate into your schema, and the translation loses whatever your schema has no slot for.
-The reasoning is not inspectable: when one address consistently resolves wrongly, there is no stage to
-examine and no local override to add, so the correction has to happen downstream in your code. Terms
-vary on what you may store and for how long, which decides whether geocoding is a one-time cost or a
-recurring one for a stable set of addresses. And every query leaves your infrastructure, which is a
-conversation with your compliance function if any of those addresses are guarded.
+**What you are trading.** The result arrives as a set of components in the provider's own vocabulary.
+You must translate it into your schema, and the translation loses anything your schema has no field
+for. You cannot inspect the provider's reasoning. When one address keeps resolving wrongly, there is no
+stage to examine and no local override to add, so you must correct it downstream in your code. Terms
+vary on what you may store and for how long, which decides whether geocoding a stable set of addresses
+is a one-time cost or a recurring one. Every query also leaves your infrastructure, which your
+compliance team must review if any of those addresses fall under data-protection rules.
 
-This shelf makes no claims about any provider's pricing or accuracy. Both change, both are specific to
-your query mix, and both belong on the provider's own pages rather than in someone else's
-documentation.
+This section makes no claims about any provider's pricing or accuracy. Both change, both depend on your
+query mix, and the provider's own pages are the right source for both.
 
 ## Self-hosted engines
 
-You run the geocoder. The data is yours, the queries never leave your network, and the cost is
-infrastructure rather than per-request.
+You run the geocoder. The data is yours, the queries never leave your network, and you pay for
+infrastructure instead of per request.
 
-Most of the well-known open engines are the search-engine-with-a-map architecture: an index over every
-place, queried as text. That design is strong at fuzzy recall over an enormous corpus and is
-the right choice for exploratory search. It also wants the index resident, which is where the
-published memory recommendations come from — [The two architectures](./the-two-architectures.mdx)
-carries those figures with dated citations, and the reasoning behind them.
+Most well-known open engines use the search-engine-with-a-map architecture: an index over every place,
+queried as text. That design is strong at fuzzy recall over a very large corpus and is the right choice
+for exploratory search. It also needs the index in memory, which explains the published memory
+recommendations. [The two architectures](./the-two-architectures.mdx) gives those figures with dated
+citations and explains the reasoning behind them.
 
-**What it is for:** volume that makes per-request pricing material; data-residency requirements; a
-need to inspect or modify the reference data; search-box workloads.
+**What it is for:** volume high enough that per-request pricing matters, data-residency requirements,
+a need to inspect or modify the reference data, and search-box workloads.
 
-**What you are trading:** an operations burden that does not go away. Index builds, data refreshes,
-version upgrades, and enough memory to keep the index warm. For a team with a platform function this
-is routine. For a team without one it is a second product to run.
+**What you are trading:** a permanent operations burden. You handle index builds, data refreshes,
+version upgrades, and enough memory to keep the index loaded. For a team with a platform group this is
+routine. For a team without one, it is a second product to run.
 
 ## In-process libraries
 
 The geocoder is a dependency. You call a function, it returns a result, and no socket opens.
 
-**What it is for:** the case where geocoding is a step inside something else — a batch job, an import
-pipeline, a validation pass on a form — and the round trip is pure overhead. Also the case where the
-addresses may not leave the process at all.
+**What it is for:** geocoding as one step inside a larger job, such as a batch job, an import pipeline
+or a form validation pass, where a network round trip adds only overhead. It also suits cases where the
+addresses must not leave the process.
 
-**What you are trading:** you carry the data. The reference artifacts sit on your disk and you decide
-when to refresh them, which means their currency is now your responsibility rather than a vendor's.
-And a library gives you a function rather than a service: if you want an HTTP endpoint, you deploy one.
+**What you are trading:** you store the data. The reference files sit on your disk, and you decide when
+to refresh them, so keeping them current is your responsibility instead of a vendor's. A library also
+gives you a function instead of a service. If you want an HTTP endpoint, you deploy one.
 
 ## Where Mailwoman sits
 
-Mailwoman is the third shape, with the second available on top of it. The parser is an npm install and
-a model file; geocoding adds a gazetteer you download once and keep. If you want an endpoint, the
-API server and the Nominatim-, Photon- and libpostal-compatible drop-ins are servers you run on your
-own hardware, pointed at your own data. [What Mailwoman is](../../get-started/what-mailwoman-is.mdx)
-sets out the boundary of the claim, including what it does not do.
+Mailwoman is an in-process library, and you can run it as a self-hosted engine. The parser is an npm
+install plus a model file, and geocoding adds a gazetteer that you download once and keep. If you want
+an endpoint, the API server and the Nominatim-, Photon- and libpostal-compatible drop-ins are servers
+you run on your own hardware against your own data.
+[What Mailwoman is](../../get-started/what-mailwoman-is.mdx) describes the scope of the project,
+including what it does not do.
 
-Where it does not fit, stated directly:
+Mailwoman does not fit these cases:
 
-- **You need city-level or postcode-level answers only.** The reductions at the top of this page are
-  cheaper and simpler, and they will not be less accurate at that grain.
-- **Your queries are exploratory rather than postal.** Landmarks, partial strings, "the place near the
-  bridge" — that is the search architecture's home ground.
-- **You need a country outside the measured tiers.** Coverage is claimed per locale and only where a
-  coordinate-graded evaluation exists. [What ships today](../../status.mdx) draws that boundary, and
-  outside it the output is unverified rather than merely thin.
+- **You need only city-level or postcode-level answers.** The simplifications at the top of this page
+  are cheaper and simpler, and they are equally accurate at that level.
+- **Your queries are exploratory instead of postal.** Landmarks, partial strings, and descriptions like "the
+  place near the bridge" suit the search architecture better.
+- **You need a country outside the measured tiers.** Mailwoman claims coverage per locale, and only
+  where a coordinate-graded evaluation exists. [What ships today](../../status.mdx) lists those
+  locales. Outside them, the output is unverified, which is worse than merely less accurate.
 
 ## The one thing worth deciding first
 
-Not which tool. Your tolerance — in meters, written down — and whether your address universe is
-bounded or open. Those two facts eliminate most of this page. Everything else is a question about
-operations, and operations questions are easier to answer once the requirement is a number instead of
-"as accurate as possible".
+Decide your requirements before you pick a tool. Write down your tolerance in meters, and determine
+whether your set of addresses is bounded or open. Those two facts rule out most of the options on this
+page. The remaining questions are about operations, and they are easier to answer once the requirement
+is a number instead of "as accurate as possible".
 
 ## Related
 

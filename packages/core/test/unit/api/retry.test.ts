@@ -2,8 +2,7 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file Tests for the retry policy — `Retry-After` parsing per RFC 9110 §10.2.3, and which failure
- *   classes are worth another attempt.
+ * @file Tests `Retry-After` parsing (RFC 9110 §10.2.3) and the classification of retryable failures.
  */
 
 import {
@@ -37,7 +36,6 @@ describe("parseRetryAfterMs", () => {
 	})
 
 	it("parses the HTTP-date form, not just delay-seconds", () => {
-		// HTTP-date values are the second form allowed by RFC 9110.
 		const retryAt = new Date(Date.now() + 45_000)
 		const parsed = parseRetryAfterMs(retryAt.toUTCString())
 
@@ -50,12 +48,11 @@ describe("parseRetryAfterMs", () => {
 	})
 
 	it("falls back to the LONG ceiling when the header is present but unparseable", () => {
-		// An invalid supplied value still uses the conservative maximum delay.
 		expect(parseRetryAfterMs("not-a-valid-value")).toBe(MAX_RETRY_AFTER_MS)
 		expect(parseRetryAfterMs("Tue, 99 Xyz 2026 99:99:99 GMT")).toBe(MAX_RETRY_AFTER_MS)
 	})
 
-	// Delay-seconds accepts digits only; the HTTP-date parser separately requires `GMT`.
+	// The delay-seconds form accepts only plain digits.
 	it.each([["0x10"], ["1.5"], ["-30"], ["+30"], ["1e3"]])(
 		"rejects %s as delay-seconds, falling back to the long ceiling",
 		(value) => {
@@ -74,7 +71,7 @@ describe("isRetryableStatus", () => {
 	})
 
 	it("NEVER treats a 403 as retryable", () => {
-		// A rejected credential cannot be fixed by retrying.
+		// Retrying cannot fix a rejected credential.
 		expect(isRetryableStatus(403)).toBe(false)
 	})
 })

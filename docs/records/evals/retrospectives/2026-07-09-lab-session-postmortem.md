@@ -39,7 +39,7 @@ FR z=+0.90 / US z=+0.29, non-FR drift ~0. Training: 12k steps, constant lr 5e-5,
 - **npm tarball-replication lag** (~15 min, metadata-before-blob on `kind-classifier@5.9.0`) bit
   the endpoint bump — poll the tarball URL rather than `npm view`, before declaring a publish consumable.
 - **Trackio was silently CSV-only for every run** (reserved `_legend` key) — found+fixed at the
-  v241 launch; unknown how several prior runs went untracked live.
+  v241 launch; unknown how many prior runs went untracked live.
 - Judging tier behavior from Photon `properties` misled twice (#1041/#1050) — decoration lags the
   resolution ladder by one release; verify tier via repro script rather than wire labels.
 

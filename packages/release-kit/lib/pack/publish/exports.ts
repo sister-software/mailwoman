@@ -3,34 +3,23 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Pure helpers for deriving a consumer-resolvable `exports` map at pack time — the single-map
- *   replacement for the retired hand-maintained `publishConfig.exports` duplication. Used by
- *   `publish-workspace.ts`; kept side-effect-free so tests can import them without triggering a
- *   publish.
+ *   Pure helpers that derive the consumer `exports` and `imports` maps at pack time.
  */
 
 /**
- * True for TypeScript source (`.ts`/`.tsx`) — declaration files (`.d.ts`) are legitimate publish targets.
+ * Returns true for a `.ts` or `.tsx` source path.
+ * Declaration files (`.d.ts`) are valid publish targets.
  */
 function isTypeScriptSource(path: string): boolean {
 	return /\.tsx?$/.test(path) && !path.endsWith(".d.ts")
 }
 
 /**
- * Map a dev-map TypeScript target to the JavaScript `tsc` actually emits for it.
+ * Maps a TypeScript target in the development map to the JavaScript file that `tsc` emits for it.
  *
- * The `lib/` segment is dropped, and that is the whole subtlety.
- * Source lives under `lib/` and every workspace sets `"rootDir": "./lib"`,
- * which strips that segment from the emit — `./lib/utils/index.ts` compiles to
- * `./out/utils/index.js`, not `./out/lib/utils/index.js`.
- *
- * A map that keeps the segment points every consumer at a path the tarball
- * does not contain, and {@link assertNoSourceTargets} does not catch it,
- * because the target it produced is no longer TypeScript.
- * It is well-formed JavaScript at an address that does not exist.
- *
- * That is the same failure shape as the hand-maintained duplication this module replaced,
- * which shipped a fully-broken v7.2.0.
+ * Every workspace sets `"rootDir": "./lib"`, so the emit drops the `lib/` segment.
+ * For example, `./lib/utils/index.ts` compiles to `./out/utils/index.js`. {@link assertNoSourceTargets}
+ * cannot detect a wrong JavaScript path, so this mapping must drop the segment.
  */
 function emittedTargetFor(target: string): string {
 	return `./out/${target
@@ -40,19 +29,17 @@ function emittedTargetFor(target: string): string {
 }
 
 /**
- * Rewrite the packed manifest's `exports` for consumers, in place inside the tarball.
+ * Rewrites an `exports` map for the packed consumer manifest.
  *
- * The dev map points at `.ts` source wherever the repo runs source directly
- * (`node` everywhere, and any `browser` or `worker` condition that names a source file);
- * published packages ship only `out/`.
- * This rewrites every such condition to its emitted JavaScript counterpart,
- * reorders each entry `types`-first, and strips any legacy `publishConfig.exports`.
+ * The development map points conditions such as `node` at `.ts` source,
+ * and published packages ship only `out/`.
+ * This function rewrites every TypeScript target to its emitted JavaScript file
+ * and moves `types` to the front of each entry.
  *
- * The conditions themselves are kept: a Node target and a browser target may be different files.
+ * It keeps every condition, because a Node target and a browser target may be different files.
  *
- * The rewrite is keyed on the target being TypeScript source rather than on the condition name.
- * A condition-name rule only covers the conditions someone thought of.
- * {@link assertNoSourceTargets} refuses whatever this misses.
+ * The rewrite checks whether the target is TypeScript source, whatever the condition
+ * name. {@link assertNoSourceTargets} rejects any TypeScript target that remains.
  */
 export function transformExportsForPublish(exports: unknown): unknown {
 	if (typeof exports !== "object" || exports === null) return exports
@@ -69,7 +56,7 @@ export function transformExportsForPublish(exports: unknown): unknown {
 		const conditions = value as Record<string, unknown>
 		const rewritten: Record<string, unknown> = {}
 
-		// Types first (npm requires it precede default to take effect), then consumer-safe runtime targets.
+		// The `types` condition must come before `default` to take effect.
 		if (typeof conditions["types"] === "string") {
 			rewritten["types"] = conditions["types"]
 		}
@@ -88,12 +75,12 @@ export function transformExportsForPublish(exports: unknown): unknown {
 }
 
 /**
- * Rewrite package-private `imports` aliases for the packed consumer manifest.
+ * Rewrites package-private `imports` aliases for the packed consumer manifest.
  *
- * These use the same development shape as exports: `node` points at source TypeScript so Node's
- * native type stripping can run the checkout directly, while `default` points at emitted JavaScript.
- * A package installed under `node_modules` cannot type-strip that source, so the packed
- * map rewrites every `node → .ts` condition to emitted JavaScript.
+ * The development aliases point `node` at TypeScript source, which Node cannot
+ * type-strip under `node_modules`.
+ * This function rewrites those targets to emitted JavaScript in the same way
+ * as {@link transformExportsForPublish}.
  */
 export function transformImportsForPublish(imports: unknown): unknown {
 	if (typeof imports !== "object" || imports === null) return imports
@@ -101,7 +88,7 @@ export function transformImportsForPublish(imports: unknown): unknown {
 	const out: Record<string, unknown> = {}
 
 	for (const [specifier, value] of Object.entries(imports as Record<string, unknown>)) {
-		// Source-only test aliases have no consumer representation and must not promise an excluded file.
+		// A string alias to TypeScript source is test-only, and the tarball excludes its file.
 		if (typeof value === "string") {
 			if (!isTypeScriptSource(value)) {
 				out[specifier] = value
@@ -121,14 +108,13 @@ export function transformImportsForPublish(imports: unknown): unknown {
 }
 
 /**
- * Refuse a transformed map that still resolves to TypeScript source.
+ * Throws when a transformed map still resolves to TypeScript source.
  *
- * Node will not type-strip under `node_modules` (`ERR_UNSUPPORTED_NODE_MODULES_TYPE_STRIPPING`),
+ * Node refuses to type-strip under `node_modules` (`ERR_UNSUPPORTED_NODE_MODULES_TYPE_STRIPPING`),
  * and consumer bundlers do not compile dependencies.
- * A `.ts` target therefore breaks the package, and the tarball audit will not say so:
- * it checks that each target is present, and a shipped `.ts` file is present.
+ * The tarball audit checks only that each target exists, so it cannot catch a shipped `.ts` target.
  *
- * `label` names the workspace, so a failure says which manifest to edit.
+ * @param label The workspace label that the error message prints.
  */
 export function assertNoSourceTargets(label: string, transformed: unknown): void {
 	const leaked = collectExportTargets(transformed).filter((target) => isTypeScriptSource(target))
@@ -142,8 +128,8 @@ export function assertNoSourceTargets(label: string, transformed: unknown): void
 }
 
 /**
- * Walk a transformed exports map.
- * Return every concrete (non-pattern) file target.
+ * Returns every file target in an exports map.
+ * Targets that contain a `*` pattern are skipped.
  */
 export function collectExportTargets(exports: unknown): string[] {
 	const targets: string[] = []

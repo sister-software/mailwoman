@@ -29,10 +29,7 @@ const CSV_HEADER = [
 	"Provider Second Line Business Practice Location Address",
 	"Provider Business Practice Location Address City Name",
 	"Provider Business Practice Location Address State Name",
-	// CMS's own spelling.
-	// This fixture carried `Postcode` after a vocabulary sweep rewrote both it and the adapter,
-	// so the two agreed with each other and with no file CMS publishes.
-	// Every test here passed while the adapter read 11.4 GB of real NPPES and emitted zero rows.
+	// The fixture must use the publisher's exact column name so that it matches real files.
 	"Provider Business Practice Location Address Postal Code",
 ].join(",")
 
@@ -54,11 +51,7 @@ describe("usgov-nppes adapter", () => {
 	})
 
 	it("refuses a file whose practice-location column it cannot find, rather than emitting zero rows", async () => {
-		// The shape that cost a corpus build its NPPES source: a vocabulary sweep rewrote
-		// `Postal Code` to `Postcode` in the adapter on 2026-09-11.
-		// `record[…]` then read `undefined` on every row, the row filter dropped all of them,
-		// and the run reported `yielded: 0` after reading 11.4 GB in 354 seconds without raising.
-		// A rename now names the column it broke.
+		// A renamed column must raise an error that names it, instead of silently dropping every row.
 		const swept = CSV_HEADER.replace(
 			"Provider Business Practice Location Address Postal Code",
 			"Provider Business Practice Location Address Postcode"
@@ -72,7 +65,7 @@ describe("usgov-nppes adapter", () => {
 
 		await expect(async () => {
 			for await (const _row of adapter.rows({ inputPath: path })) {
-				// The refusal lands on the first record, so the loop body never runs.
+				// The adapter throws on the first record, so the loop body never runs.
 			}
 		}).rejects.toThrow(/Postal Code/)
 	})

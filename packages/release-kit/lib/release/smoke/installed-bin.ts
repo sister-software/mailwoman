@@ -2,20 +2,18 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file The `mailwoman` executable inside a clean-install probe project.
+ * @file Locates the `mailwoman` executable inside a clean-install probe project.
  */
 
 import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
 import type { PathBuilder } from "path-ts"
 
 /**
- * The `mailwoman` bin entry of the package installed under `projectDir`, read from the installed manifest.
+ * Returns the path of the `mailwoman` bin entry from the manifest of the
+ * package installed under `projectDir`.
  *
- * The smokes read the entry rather than spell the compiled path.
- * The published package may move its entry, and a spelled path then names a file that no
- * longer ships, so the probe reports a missing module instead of exercising the CLI.
- *
- * The installed manifest is the interface a consumer reaches, which is what a clean-install probe tests.
+ * The smokes read the bin entry from the installed manifest because the published
+ * package may move the compiled file.
  *
  * @throws When the installed manifest declares no `mailwoman` bin.
  */

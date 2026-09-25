@@ -3,47 +3,33 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The curated rows of the four target families that had no board (#1931 task 6), each authored from the set its
- *   issue attests. The selection is by hand and every row says which family it pins. the points are never typed: a row
- *   that names a place carries the gazetteer lookup (`name`, `country`, `parent`) and `family-board.run.ts` reads the
- *   coordinate off the admin gazetteer, refusing a name it cannot find or finds twice.
- *
- *   - **F3, district plus city (#1914).** `Camden, London` tags the district `street` and answers the parent city's
- *     point, 5 of 5 probes. The truth is the district's own record with `dependent_locality` asserted, at 2 km: London's
- *     point is 5.6 km from Camden's, Berlin's 2.6 km from Kreuzberg's, so the coordinate separates the two answers where
- *     it can and the component assertion separates them where it cannot (Le Marais sits 0.4 km from Paris's point).
- *   - **F5, «locality» «postcode» (#1821).** `Barcelona 6001, Anzoátegui, Venezuela` reads as street plus house number.
- *     New Zealand and South Africa write the same order, so the family is attested on three countries, each row
- *     asserting the postcode and the locality, at the locality's 25 km. `Auckland` is also a region 42 km from the city.
- *   - **F7, the possessive qualifier (#1754).** `St Mary's, Oxford` decodes to one component and answers Georgia. The
- *     issue's own hierarchy (`locality=Oxford › dependent_locality=St Mary's`) is asserted against Oxford's point. the
- *     other rows are possessives the gazetteer knows: neighbourhoods of London and New York, and towns whose own name
- *     carries the apostrophe (`King's Lynn`, `Lee's Summit`, `St. John's`).
- *   - **F9, Commonwealth and military po_box (#517).** The postal arena's last 0% class, parse-only: `GPO Box`,
- *     `Locked Bag`, `Private Bag`, and the military line `PSC 802 Box 74, APO AE 09499` under the synthesizer's gold
- *     convention (the unit line is `po_box`, APO/FPO/DPO the locality, AA/AE/AP the region).
- *
- *   A lowercase leg rides with each family, the user register every eval carries.
+ * Defines the hand-curated board rows for target families F3, F5, F7 and F9.
  */
 
+/**
+ * Identifies one of the target families on the family board.
+ */
 export type TargetFamily = "F3" | "F5" | "F7" | "F9"
 
 /**
- * A gazetteer lookup: the record whose point is the row's truth.
+ * Describes the gazetteer record whose point is a row's expected coordinate.
  */
 export interface PlaceLookup {
 	name: string
 	country: string
 	/**
-	 * A name the record must sit under (`London` for `Camden`); empty when the name alone is unambiguous.
+	 * Sets a name the record must sit under, such as `London` for `Camden`.
 	 */
 	parent?: string
 	/**
-	 * Restrict to these placetypes when the name answers more than one record.
+	 * Restricts the lookup to these placetypes when the name matches more than one record.
 	 */
 	placetypes?: readonly string[]
 }
 
+/**
+ * Describes one family-board row.
+ */
 export interface FamilyRow {
 	family: TargetFamily
 	id: string
@@ -52,7 +38,8 @@ export interface FamilyRow {
 	addressKind: string
 	expectComponents: Record<string, string>
 	/**
-	 * Absent for a parse-only row (the po_box family).
+	 * Holds the gazetteer lookup.
+	 * A parse-only row, such as a po_box row, has none.
 	 */
 	place?: PlaceLookup
 	toleranceM?: number
@@ -60,26 +47,27 @@ export interface FamilyRow {
 }
 
 /**
- * The district is the truth.
- * The parent city's point is the defect's answer.
+ * Sets the tolerance around a district's own point.
+ *
+ * The parent city's point is the wrong answer, and it usually lies farther away than this.
  */
 const DISTRICT_TOLERANCE_M = 2000
 
 /**
- * A locality's own tolerance on this board.
+ * Sets the tolerance around a locality's point.
  */
 const LOCALITY_TOLERANCE_M = 25_000
 
 /**
- * The qualifier rows assert the larger place's point where the smaller one has no record (`St Mary's`).
+ * Sets the tolerance for rows checked against the larger place's point,
+ * such as `St Mary's, Oxford` against Oxford.
  */
 const QUALIFIER_TOLERANCE_M = 10_000
 
 /**
- * The id's tail: the input lower-cased, every run of non-alphanumerics one dash.
+ * Builds an id suffix by lowercasing the input and replacing each run of non-alphanumerics with one dash.
  *
- * A lowercase leg (an input that is already its own lowercase) carries `-lower`,
- * so it and its cased twin keep distinct ids.
+ * An input that is already lowercase gets `-lower`, so it and its cased twin keep distinct ids.
  */
 function slugOf(input: string): string {
 	const slug = input
@@ -176,12 +164,24 @@ function poBox(
 }
 
 /**
- * The board: every row of the four families, in family order.
+ * Lists every family-board row in family order.
  *
- * The header says where each family's rows come from.
+ * Coordinates are never typed here.
+ * `family-board.run.ts` reads each point from the admin gazetteer and refuses a
+ * name it finds zero times or more than once.
+ * Each family also has lowercase rows.
+ *
+ * - F3 rows pair a district with its city and assert `dependent_locality`, because the
+ *   defect tags the district as a street and returns the city's point.
+ * - F5 rows write the postcode after the locality, as New Zealand, South Africa and Venezuela do.
+ * - F7 rows carry a possessive, either as a qualifier such as `St Mary's, Oxford`
+ *   or inside a town name such as `King's Lynn`.
+ * - F9 rows are parse-only Commonwealth and military PO boxes.
+ *   A military row follows the synthesizer's convention: the unit line is `po_box`,
+ *   APO/FPO/DPO is the locality and AA/AE/AP is the region.
  */
 export const FAMILY_ROWS: readonly FamilyRow[] = [
-	// F3 — district plus city.
+	// F3 rows pair a district with its city.
 	district("GB", "Camden", "London", { placetypes: ["borough"] }),
 	district("GB", "Camden", "London", { placetypes: ["borough"], input: "camden, london" }),
 	district("GB", "Hackney", "London", { placetypes: ["borough"] }),
@@ -204,7 +204,7 @@ export const FAMILY_ROWS: readonly FamilyRow[] = [
 	district("ES", "Triana", "Sevilla"),
 	district("IT", "Brera", "Milano"),
 
-	// F5 — «locality» «postcode», the postcode after the city.
+	// F5 rows write the postcode after the locality.
 	localityPostcode("NZ", "Auckland 1010", { locality: "Auckland", postcode: "1010" }),
 	localityPostcode("NZ", "auckland 1010", { locality: "auckland", postcode: "1010" }, "Auckland"),
 	localityPostcode("NZ", "Wellington 6011", { locality: "Wellington", postcode: "6011" }),
@@ -252,7 +252,7 @@ export const FAMILY_ROWS: readonly FamilyRow[] = [
 		"Caracas"
 	),
 
-	// F7 — the possessive qualifier.
+	// F7 rows carry a possessive.
 	possessive(
 		"GB",
 		"St Mary's, Oxford",
@@ -345,7 +345,7 @@ export const FAMILY_ROWS: readonly FamilyRow[] = [
 		QUALIFIER_TOLERANCE_M
 	),
 
-	// F9 — Commonwealth and military po_box, parse-only.
+	// F9 rows are parse-only Commonwealth and military PO boxes.
 	poBox(
 		"AU",
 		"GPO Box 1234, Sydney NSW 2001",

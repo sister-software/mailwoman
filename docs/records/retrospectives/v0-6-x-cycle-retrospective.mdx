@@ -7,14 +7,15 @@ title: v0.6.x cycle retrospective + v0.7 plan
 
 **Iteration window:** 2026-05-25 → 2026-05-29, ~4 days wall-clock, four
 training runs (v0.6.1, v0.6.2, v0.6.2b parallel, v0.6.3). **Outcome:**
-no shippable v0.6.x release. The cycle was **held** after v0.6.3
-empirically confirmed a corpus-dilution failure mode. The pattern
-revealed by three iterations of recipe-tuning has produced a structured
-v0.7 plan that addresses the binding constraint (model calibration) and
-defers system-multiplicity architecture (per-locale routing) to v0.8.
+The cycle produced no shippable v0.6.x release. It was **held** after
+v0.6.3 empirically confirmed a corpus-dilution failure mode. Three
+iterations of recipe tuning revealed a pattern, and that pattern shaped
+a v0.7 plan. The plan addresses the binding constraint (model
+calibration) and defers system-multiplicity architecture (per-locale
+routing) to v0.8.
 
-This is the technical postmortem. The forward plan in section 5 is the
-synthesis of two DeepSeek consults (turns 11 and 12) plus the
+This page is the technical postmortem. The forward plan in section 5
+combines two DeepSeek consults (turns 11 and 12) with the
 [postcode-only diagnostic](../evals/model-versions/2026-05-29-postcode-diagnostic.mdx)
 run on v0.6.0.
 
@@ -23,28 +24,28 @@ run on v0.6.0.
 The cycle started after v0.6.0 shipped and v0.6.1 was found to have
 catastrophically regressed locality recall (-8.6pp) due to a
 `dependent_locality` over-emission spike (+1066 hallucinations on the
-golden set). The cycle's goal: restore v0.6.0's quality without losing
-the v0.6.1 street-decomposition signal that motivated the synth-street
-weight bump in the first place.
+golden set). The cycle's goal was to restore v0.6.0's quality without
+losing the v0.6.1 street-decomposition signal that motivated the
+synth-street weight bump.
 
-| Run                   | Recipe change                    | dep_loc halls | locality recall | house_number recall |    Harness % | Verdict             |
-| --------------------- | -------------------------------- | ------------: | --------------: | ------------------: | -----------: | ------------------- |
-| v0.6.0                | (baseline)                       |             0 |           40.0% |               79.0% |        14.4% | shipped             |
-| v0.6.1                | synth-street weight 2.0          |   **1066** ❌ |           31.1% |               75.9% |    (similar) | regressed, held     |
-| v0.6.2                | + synth-no-street 1.0            |           0 ✓ |           41.0% |        **74.0%** ❌ |        14.0% | 1 violation, hold   |
-| v0.6.2b               | synth-no-street 0.5 (parallel)   |           0 ✓ |     41.1% (20K) |         77.3% (20K) |  14.7% (20K) | 2 violations at 20K |
-| v0.6.3                | + house-venue 1.0, no-street 0.5 |    **844** ❌ |    **34.7%** ❌ |             77.0% ✓ | **12.5%** ❌ | 3 violations, hold  |
-| v0.6.4 (not launched) | no-street 0.75 to fix dilution   |           TBD |             TBD |                 TBD |          TBD | held                |
+| Run                   | Recipe change                       | dep_loc halls | locality recall | house_number recall |    Harness % | Verdict             |
+| --------------------- | ----------------------------------- | ------------: | --------------: | ------------------: | -----------: | ------------------- |
+| v0.6.0                | (baseline)                          |             0 |           40.0% |               79.0% |        14.4% | shipped             |
+| v0.6.1                | synth-street weight 2.0             |   **1066** ❌ |           31.1% |               75.9% |    (similar) | regressed, held     |
+| v0.6.2                | + synth-no-street 1.0               |           0 ✓ |           41.0% |        **74.0%** ❌ |        14.0% | 1 violation, hold   |
+| v0.6.2b               | synth-no-street 0.5 (parallel)      |           0 ✓ |     41.1% (20K) |         77.3% (20K) |  14.7% (20K) | 2 violations at 20K |
+| v0.6.3                | + house-venue 1.0 and no-street 0.5 |    **844** ❌ |    **34.7%** ❌ |             77.0% ✓ | **12.5%** ❌ | 3 violations, hold  |
+| v0.6.4 (not launched) | no-street 0.75 to fix dilution      |           TBD |             TBD |                 TBD |          TBD | held                |
 
-The pattern: every change addresses one regression at the cost of
-another. v0.6.2 fixed dep_loc but cost house_number. v0.6.3 recovered
-house_number but reopened dep_loc + cost locality. The synth-side
-implementation is fragile in a way that recipe tuning cannot stabilize.
+Every change fixed one regression at the cost of another. v0.6.2 fixed
+dep_loc but cost house_number. v0.6.3 recovered house_number but
+reopened dep_loc and cost locality. Recipe tuning cannot stabilize the
+synth-side implementation.
 
 ## 2. Infrastructure that came out of the cycle
 
-The cycle didn't ship a model, but it did ship a substantial
-infrastructure layer that v0.7 will sit on top of:
+The cycle did not ship a model, but it did ship substantial
+infrastructure that v0.7 builds on:
 
 - **2D pre-publish eval check**
   ([`scripts/eval-check.ts`](https://github.com/sister-software/mailwoman))
@@ -73,8 +74,9 @@ infrastructure layer that v0.7 will sit on top of:
 - **Training-log charts**
   ([`scripts/parse-training-log.ts`](https://github.com/sister-software/mailwoman) +
   [`training-chart.ts`](https://github.com/sister-software/mailwoman)) —
-  SVG line-chart generator, no dependencies. Made "same noise pattern
-  across runs" visually rigorous instead of impressionistic.
+  a dependency-free SVG line-chart generator. It made "same noise
+  pattern across runs" something we could check visually instead of an
+  impression.
 - **Corpus linter v1**
   ([`mailwoman dev lint corpus-slice`](https://github.com/sister-software/mailwoman/blob/main/packages/mailwoman/lib/commands/dev/lint/corpus-slice.tsx))
   — distribution outliers, label-vacuum, bigram collisions, anti-pattern
@@ -84,8 +86,8 @@ infrastructure layer that v0.7 will sit on top of:
   as venues.
 - **Postcode-only harness**
   ([`scripts/harness-postcode.ts`](https://github.com/sister-software/mailwoman))
-  — per-country postcode accuracy check. Created as the v0.7 regression
-  fence for what should be a slam-dunk metric.
+  — per-country postcode accuracy check. It was created as the v0.7
+  regression check for a metric the model should score highly on.
 
 ## 3. What v0.6.x revealed
 
@@ -103,46 +105,49 @@ the cost of another. The pattern is reproducible:
   at 0.5. The anti-decompose:companion ratio dropped from 1.0:0 (v0.6.2)
   to 0.5:1.0. dep_loc came back gradually (1 at 20K → 844 at 100K).
 
-The recipe-knob story is wrong because it treats synthetic data as a
-different MIXTURE of the same distribution. It's a different
-DISTRIBUTION entirely. Every synthetic template imports a distributional
-assumption that doesn't exist in real addresses; weight tuning addresses
-the magnitude of the mismatch but not its structure.
+Recipe tuning treats synthetic data as a different _mixture_ of the
+same distribution. Synthetic data is a different _distribution_. Every
+synthetic template imports a distributional assumption that real
+addresses do not share. Weight tuning changes the magnitude of the
+mismatch but leaves its structure in place.
 
 ### 3.2 Per-tag recall has been the wrong release metric
 
 The 2D check operates on per-tag recall. v0.6.2b passed the check in
 isolation (dep_loc 0, locality 41.1%, house_number 77.3% at 20K) but
-its harness pass rate was 14.7% — a 0.3pp improvement over v0.6.0's
-14.4%. Three iterations of corpus engineering produced essentially zero
+its harness pass rate was 14.7%, a 0.3pp improvement over v0.6.0's
+14.4%. Three iterations of corpus engineering produced almost no
 address-level improvement.
 
-Per-tag recall collapses 4,561 addresses into one number per tag. The
-failure modes it masks: tree validity (a B-locality nested inside a
-B-street is structurally invalid but counted as correct), swap errors
-(`"Springfield, 123 Main St"` with locality and street swapped scores
-67% per-tag, 0% address-level), missing components ("3 out of 4 tags
-present" still produces a parse the resolver can't use).
+Per-tag recall collapses 4,561 addresses into one number per tag. It
+hides three failure modes:
 
-DeepSeek turn 11 changed mind from turn 7 on this point: the v0.6.2b
-ship recommendation was wrong because it was conditional against per-tag
+- Tree validity. A B-locality nested inside a B-street is structurally
+  invalid but counted as correct.
+- Swap errors. `"Springfield, 123 Main St"` with locality and street
+  swapped scores 67% per-tag and 0% at address level.
+- Missing components. "3 out of 4 tags present" still produces a parse
+  the resolver cannot use.
+
+DeepSeek turn 11 reversed turn 7's position on this point. The v0.6.2b
+ship recommendation was wrong because it was conditioned on per-tag
 recall rather than the harness.
 
 ### 3.3 The model is overconfident rather than undertrained
 
-The per-token confidence probe found 81% of WRONG predictions land at
-≥ 0.9 confidence on both v0.6.2 and v0.6.2b. This is calibration
-crisis-level — the model is decisively wrong rather than uncertain. Two
-implications:
+The per-token confidence probe found that 81% of wrong predictions land
+at ≥ 0.9 confidence on both v0.6.2 and v0.6.2b. The model is severely
+miscalibrated: it is decisively wrong rather than uncertain. This has
+two implications:
 
 - **It explains v0.6.x fragility.** An overconfident model amplifies
   small distributional shifts (a new synth extract) into large prediction
   swings, because the model commits hard to whatever it learned most
-  recently. The recipe-tuning whack-a-mole pattern is the direct
-  consequence.
-- **It pre-empts the CRF re-enablement.** The fp32-CRF fix is verified.
-  But enabling CRF on top of an overconfident model would make
-  overconfidence WORSE — the CRF tightly constrains the transition path,
+  recently. The cycle of fixing one regression and causing another
+  follows directly.
+- **It blocks CRF re-enablement for now.** The fp32-CRF fix is verified.
+  Enabling CRF on top of an overconfident model would make
+  overconfidence worse. The CRF tightly constrains the transition path,
   so a confident wrong emission locks the whole sequence into a wrong
   path. Calibrate first, then add CRF.
 
@@ -150,11 +155,11 @@ implications:
 
 The
 [postcode-only diagnostic](../evals/model-versions/2026-05-29-postcode-diagnostic.mdx)
-on v0.6.0 found postcode exact-match at 75.9% overall — 80.5% US, 70.1%
-FR, 57% DE, 0% GB/CA/NL. The failure mechanism is visible in the data:
+on v0.6.0 found postcode exact-match at 75.9% overall: 80.5% US, 70.1%
+FR, 57% DE, 0% GB/CA/NL. The failure mechanism is visible in the data.
 SentencePiece fragments multi-token alphanumeric postcodes into pieces
-the model can't span, and the model labels SOME of the pieces as
-postcode but not all.
+the model cannot span, and the model labels only some of the pieces as
+postcode.
 
 This is a tokenizer concern rather than a schema concern. Adding more JP / KR /
 BR coverage (system-multiplicity) does not fix it. v0.7 needs to address
@@ -165,16 +170,17 @@ postcodes at the character or FST level.
 v0.1.2 has been the check baseline for every v0.6.x decision. Three
 iterations consumed the same dataset as decision data. The threshold
 values in the 2D check (2pp recall drop, 100 hallucination count) were
-calibrated against the same set we've been reading. Some check
+calibrated against the same set we have been reading. Some check
 pass/fail decisions may have been false positives.
 
-The model has never seen v0.1.2 in training. But the recipe has been
-tuned against it three times. That's decision-side leakage, even if it
-isn't training-side.
+The model has never seen v0.1.2 in training, but the recipe has been
+tuned against it three times. That is decision-side leakage, even
+though no training-side leakage occurred.
 
 ## 4. What did not cause v0.6.x's pathology
 
-For the record, so future-us doesn't relitigate these:
+These causes were considered and ruled out. They are recorded here so
+later cycles do not reopen them:
 
 - **System-multiplicity (JP block addressing, KR dual systems, etc.)
   did not cause v0.6.x failures.** All measured regressions were on
@@ -184,17 +190,16 @@ For the record, so future-us doesn't relitigate these:
 - **CRF disablement did not cause v0.6.x failures.** v0.6.x was
   CE-only because of the bf16 NaN issue in CRF transitions. The
   [fp32-CRF fix](../evals/model-versions/2026-05-28-fp32-crf-diagnostic.mdx) is
-  verified — but enabling CRF on top of v0.6.x's overconfident model
+  verified, but enabling CRF on top of v0.6.x's overconfident model
   would have amplified the failure rather than fixed it.
-- **Model capacity was not the binding constraint.** 29.3M params, 6
-  layers × 384 hidden, trained from scratch. Whether this is undersized
-  is unknown — but the failures we measured were calibration
-  failures rather than capacity ceilings.
+- **Model capacity was not the binding constraint.** The model has
+  29.3M params, 6 layers × 384 hidden, trained from scratch. Whether
+  this is undersized is unknown. The failures we measured were
+  calibration failures rather than capacity ceilings.
 
 ## 5. v0.7 plan
 
-**Synthesis of DeepSeek turns 11 + 12 + postcode diagnostic.** The
-plan addresses the binding constraint (calibration) plus the
+This plan combines DeepSeek turns 11 and 12 with the postcode diagnostic. It addresses the binding constraint (calibration) plus the
 diagnostic-confirmed structural issue (postcode tokenizer), and defers
 the speculative-architecture work (per-locale routing) to v0.8.
 
@@ -212,37 +217,40 @@ the speculative-architecture work (per-locale routing) to v0.8.
 
 **P0 — Calibration experiment** (~30 min Modal, blocks v0.7 release)
 
-- `label_smoothing=0.1` on v0.6.0's UNCHANGED corpus.
-- Single-variable change (no synth changes, no corpus changes).
+- Set `label_smoothing=0.1` on v0.6.0's unchanged corpus.
+- Change only that variable. The synth extracts and the corpus stay the same.
 - Held-out test set: split v0.1.2 randomly 90/10 dev/test.
-- Early-eval checks against DEV; release-check against TEST (touched once).
-- Measure: **harness pass rate** (PRIMARY — replaces per-tag recall as
-  the release metric), overconfidence %, per-tag recall on held-out test.
-- Decision: ship if harness improves and overconfidence drops; pivot if
-  not.
+- Run early-eval checks against dev and the release check against test,
+  touching test once.
+- Measure the **harness pass rate** (the primary metric, which replaces
+  per-tag recall as the release metric), overconfidence %, and per-tag
+  recall on the held-out test set.
+- Decision: ship if the harness improves and overconfidence drops.
+  Otherwise, pivot.
 
 **P1 — Postcode fix** (depends on diagnostic + calibration result)
 
 The diagnostic confirms postcode `<90%` on most countries (US 80.5%, FR
 70.1%, GB/CA/NL 0%). Three approaches in priority order:
 
-1. **Character-level feature extractor** — parallel char-CNN or
+1. **Character-level feature extractor.** Add a parallel char-CNN or
    char-bigram embedding alongside subword tokens. The postcode shape
-   becomes visible at character level even when fragmented at subword
-   level. Architecture change (~50KB extra params), but contained.
-2. **Postcode-aware tokenizer pre-pass** — regex detects and guards
+   becomes visible at character level even when it is fragmented at
+   subword level. This is an architecture change (~50KB extra params),
+   but a contained one.
+2. **Postcode-aware tokenizer pre-pass.** A regex detects and guards
    postcode-shaped substrings (`/[A-Z]\d[A-Z]?\s*\d[A-Z]\d/` etc.)
-   before SentencePiece runs. Single token, single label, no
-   fragmentation. Simpler to ship than (1) but requires per-country
-   patterns.
-3. **Per-country postcode FST** — treat postcodes like admin names; FST
+   before SentencePiece runs. The postcode becomes a single token with a
+   single label and is never fragmented. This is simpler to ship than (1)
+   but requires per-country patterns.
+3. **Per-country postcode FST.** Treat postcodes like admin names. The FST
    recognizes country-specific shapes and biases the model toward
-   labeling the matched span as postcode. Layer 1.5 of the
+   labeling the matched span as postcode. This is Layer 1.5 of the
    [shallow-fusion architecture](../site-2026-08/concepts/fst-priors-as-shallow-fusion.mdx).
 
-DeepSeek turn 12 favors (1) + (3). Final choice depends on calibration
-result — if calibration alone moves postcode accuracy meaningfully
-upward, the tokenizer fix becomes smaller-scope.
+DeepSeek turn 12 favors (1) + (3). The final choice depends on the
+calibration result. If calibration alone raises postcode accuracy
+meaningfully, the tokenizer fix can be smaller in scope.
 
 **P2 — Pre-classifier design** (blocked on postcode result, may slip to v0.8)
 
@@ -261,12 +269,13 @@ This is the entry point for v0.8's system-multiplicity work
 - **Harness pass rate is the primary release metric.** Per-tag recall
   becomes a diagnostic-only metric. The 2D check stays as a secondary
   safety net but no longer controls the ship decision.
-- **Held-out test set methodology.** v0.1.2 split 90/10 dev/test. Test
-  read exactly once per release. Closes decision-side test-set leakage.
-- **Synthesis-as-supplement rather than synthesis-as-primary.** Small targeted
-  extracts, weight < 0.25, one-and-done. Real data is the primary fix for
-  distributional gaps. v0.6.x's 100K+ row synthesis was the wrong
-  philosophy.
+- **Held-out test set methodology.** v0.1.2 is split 90/10 dev/test,
+  and the test split is read exactly once per release. This closes
+  decision-side test-set leakage.
+- **Synthetic data supplements real data instead of replacing it.**
+  Synthetic extracts should be small, targeted, weighted < 0.25, and used
+  once. Real data is the primary fix for distributional gaps. v0.6.x's
+  100K+ row synthesis was the wrong approach.
 
 ### 5.4 Decision-tree on calibration results
 
@@ -305,24 +314,23 @@ The v0.8+ direction (informed by DeepSeek turn 12):
   `street` → `house_number`. Consumers opt in. Avoid lossy universal
   projection.
 
-This work is meaningful but is not what v0.6.x failures were pointing
-at. v0.7 fixes the measured problems; v0.8 starts the structural
-direction.
+This work matters, but the v0.6.x failures did not come from it. v0.7
+fixes the measured problems, and v0.8 starts the structural work.
 
 ## 7. The meta-lesson
 
-The v0.6.x cycle ran three full retrains chasing recipe tweaks because
-the surface failure mode (dep_loc hallucinations) felt like a recipe
-problem. The deeper failure mode (calibration crisis, decision-side
-test-set leakage, wrong release metric) became visible only after the
-recipe-tuning iterations had exhausted plausible knobs.
+The v0.6.x cycle ran three full retrains on recipe tweaks because the
+surface failure mode (dep_loc hallucinations) looked like a recipe
+problem. The deeper failure modes (severe miscalibration, decision-side
+test-set leakage, the wrong release metric) became visible only after
+the recipe-tuning iterations had exhausted the plausible settings.
 
 Recipe tuning is fast and feels productive. It produces concrete
-deliverables (new training runs, new charts, new error reports). But it
-masks deeper questions about whether the right thing is being optimized
-at all. The DeepSeek consult model — broad architectural question at a
-fixed cadence, designed to challenge framing rather than refine within
-it — was the single highest-changeage intervention of the cycle.
+deliverables (new training runs, new charts, new error reports). It also
+hides the question of whether the right thing is being optimized at
+all. The DeepSeek consults asked a broad architectural question at a
+fixed cadence and were designed to challenge the framing rather than
+refine within it. They were the most useful intervention of the cycle.
 
 For the next cycle: cap the recipe-tuning budget at two iterations
 before forcing a methodology rethink.

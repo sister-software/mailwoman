@@ -1,20 +1,20 @@
 # Phase 7 — Stage 1 Normalize + QueryShape boundary
 
-**Goal:** ship two new workspaces, `@mailwoman/normalize` and `@mailwoman/query-shape`, that implement runtime-pipeline stages 1 + the QueryShape boundary per [`STAGES.md`](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/STAGES.mdx) and [`QUERY_SHAPE.md`](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/QUERY_SHAPE.mdx). Pure functions, no ML, no new runtime dependencies beyond `@mailwoman/core`.
+**Goal:** ship two new workspaces, `@mailwoman/normalize` and `@mailwoman/query-shape`, that implement runtime-pipeline stages 1 + the QueryShape boundary per [`STAGES.md`](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/STAGES.mdx) and [`QUERY_SHAPE.md`](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/QUERY_SHAPE.mdx). Both use pure functions without ML and add no runtime dependencies beyond `@mailwoman/core`.
 
 **Branch:** ad-hoc on `main`; ship via incremental commits.
 
-**Depends on:** [`STAGES.md`](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/STAGES.mdx) (the interface interface) and [`QUERY_SHAPE.md`](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/QUERY_SHAPE.mdx) (the QueryShape sub-system design).
+**Depends on:** [`STAGES.md`](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/STAGES.mdx) (the stage interface) and [`QUERY_SHAPE.md`](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/QUERY_SHAPE.mdx) (the QueryShape sub-system design).
 
-**Why these two together:** QueryShape consumes `NormalizedInput.normalized` and produces structural priors that downstream stages thread through. Building them in the same ship means the boundary between them gets its first real test before it ossifies.
+**Why these two together:** QueryShape consumes `NormalizedInput.normalized` and produces structural priors that downstream stages thread through. Building them in the same release tests the boundary between them before it becomes hard to change.
 
 ## Order of operations
 
 Per STAGES.md "What's next" suggestion: **QueryShape first**, then Normalize. Reasons:
 
-- QueryShape can run on raw input directly (treating raw as already-normalized) for a v0 — useful for early integration.
-- QueryShape's interface is smaller; less to get wrong on the first pass.
-- Normalize's offsetMap is essential; building it second lets us see QueryShape's actual access patterns before committing to the offsetMap shape.
+- QueryShape can run on raw input directly (treating raw as already-normalized) for a v0, which helps early integration.
+- QueryShape's interface is smaller, so there is less to get wrong on the first pass.
+- Normalize's offsetMap is essential, and building it second lets us see QueryShape's actual access patterns before committing to the offsetMap shape.
 
 ## Tasks
 
@@ -94,7 +94,7 @@ Per STAGES.md "What's next" suggestion: **QueryShape first**, then Normalize. Re
 
 #### Ship
 
-- [ ] One commit, one push. No npm publish — internal use only until Increment B lands.
+- [ ] One commit, one push. Do not publish to npm; the package is internal until Increment B lands.
 
 ### Increment B — `@mailwoman/normalize`
 
@@ -149,7 +149,7 @@ Optional, defer if running long:
 
 - [ ] Update CLI to expose `--show-query-shape` and `--show-normalized` debug flags
 - [ ] Wire into `@mailwoman/neural` so the neural classifier optionally consumes `QueryShape.segments` as input feature (encoder feature path from STAGES.md Stage 3 "Future" section)
-- [ ] No `runPipeline` coordinator yet — that's a separate phase
+- [ ] Do not build the `runPipeline` coordinator yet, because it is a separate phase
 
 ## Success criteria
 
@@ -165,8 +165,8 @@ Optional, defer if running long:
 - Stage 2 (locale check) — separate phase.
 - Stage 2.5 (kind classifier) — separate phase.
 - `runPipeline` coordinator — Phase 8 or later.
-- npm publish of the new packages — internal use only until they have a consumer.
-- Replacing the existing word tokenizer in `@mailwoman/core` — QueryShape's tokenization is internal-only.
+- npm publish of the new packages. They stay internal until they have a consumer.
+- Replacing the existing word tokenizer in `@mailwoman/core`. QueryShape's tokenization is internal-only.
 
 ## When to call this phase done
 

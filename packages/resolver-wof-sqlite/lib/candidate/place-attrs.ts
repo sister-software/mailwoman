@@ -49,7 +49,7 @@ export interface PlaceAttrs {
  * Stage one candidate row: a normalized name key, the place it belongs to, the source id
  * the row hangs on, and whether the key is that place's canonical name (`is_primary`).
  *
- * `sid` is passed separately rather than read off the place because a extract fold
+ * `sid` is passed separately rather than read off the place because an extract fold
  * and the alias pass stage rows for ids the admin `attrs` map never held.
  */
 export type StageRow = (k: string, a: PlaceAttrs, sid: number, isPrimary: number) => void

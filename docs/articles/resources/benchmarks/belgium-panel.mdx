@@ -9,26 +9,26 @@ role: evidence
 ## What ran
 
 On **2026-08-04** we ran 30 Belgian address lines through a local install three times, changing one
-thing each time. Belgium was chosen because it is _not_ a measured locale: no Belgian rooftop register
+thing each time. We chose Belgium because it is an unmeasured locale. No Belgian rooftop register
 ships, no `nl-BE` or `fr-BE` weights package exists, and the global candidate gazetteer is the only
-artifact answering. This panel reports what that gets you.
+artifact that answers. This panel reports the results you get from that setup.
 
-It also carries a case Belgium is well suited to. Five Brussels streets appear twice, once in Dutch
-and once in French — `Wetstraat` and `Rue de la Loi`, `Grote Markt` and `Grand-Place` — so a pair
-tests whether two surface forms of one street reach one place.
+Belgium also suits a bilingual test. Five Brussels streets appear twice, once in Dutch and once in
+French, such as `Wetstraat` and `Rue de la Loi` or `Grote Markt` and `Grand-Place`. Each pair tests
+whether two surface forms of one street reach the same place.
 
-The result the page turns on: out of the box, six of the 30 rows do not land in Belgium. Setting one
+The main result is that six of the 30 rows do not land in Belgium with default settings. Setting one
 option fixes all six.
 
 ## Method
 
 The panel is [`be-panel.json`](/benchmarks/be-panel.json): thirty address lines built from public
-street names, each paired with the postcode and commune it belongs to. Ten are the five bilingual
-Brussels pairs; nine are in Flanders, nine in Wallonia, and two in the German-speaking Community. No
-Belgian rooftop register ships, so the house number is parsed and never looked up. The panel does not
-depend on any particular number existing at any of these streets.
+street names, each paired with the postcode and commune it belongs to. Ten lines are the five
+bilingual Brussels pairs. Nine are in Flanders, nine are in Wallonia, and two are in the
+German-speaking Community. No Belgian rooftop register ships, so the pipeline parses the house number
+but never looks it up. The panel does not depend on any particular number existing on these streets.
 
-Three arms, each named for the question a reader arrives with:
+The run has three arms, each named for the question a reader is likely to ask:
 
 | Arm              | Weights | Configured             | Question                                       |
 | ---------------- | ------- | ---------------------- | ---------------------------------------------- |
@@ -36,26 +36,27 @@ Three arms, each named for the question a reader arrives with:
 | `fr-overlay`     | `fr-FR` | nothing                | Does the nearest measured locale help?         |
 | `country-pinned` | `en-US` | `defaultCountry: "BE"` | What if I tell it the file is Belgian?         |
 
-The first two leave the country unpinned, because country routing is the measurement. Belgian place
-names collide with Dutch, French and Slovenian ones, and a cross-border miss is the failure worth
-catching.
+The first two arms leave the country unpinned, because the panel measures country routing. Belgian
+place names collide with Dutch, French and Slovenian ones, and the panel is designed to catch
+cross-border misses.
 
-Four things are graded, and there is no ground-truth coordinate set among them. Belgium has no public
-rooftop register we can grade distances against, so this page claims no distance to a true building.
+The panel grades four measures, and none of them uses a ground-truth coordinate set. Belgium has no
+public rooftop register to grade distances against, so this page claims no distance to a true
+building.
 
-- **Resolution** — did a coordinate come back, and at which tier.
-- **Country routing** — is the coordinate inside a bounding box drawn around Belgium's extremes, and
-  does the result name `BE`. A coordinate outside the box did not land in Belgium; one inside it is
-  not thereby correct.
-- **Locality**, split in three, because the two obvious versions of it are each wrong on their own.
-  `parsed` reads the span the model labeled, which is close to circular. The commune is right there
-  in the input string. `name matched` reads only the nodes the resolver decorated, which says the
-  gazetteer returned an accepted spelling and says nothing about where. `resolved` is the name match
-  conjoined with the bounding-box check, and it is the one to read: a place name is not unique on
-  Earth, and this panel exists to catch the cases where the wrong one won.
-- **Bilingual agreement** — for each pair, the distance between the two language forms. This one needs
-  no ground truth at all: the two rows name one street, so any distance between them is the pipeline
-  disagreeing with itself.
+- **Resolution:** whether a coordinate came back, and at which tier.
+- **Country routing:** whether the coordinate falls inside a bounding box drawn around Belgium's
+  extremes, and whether the result reports `BE`. A coordinate outside the box did not land in
+  Belgium. A coordinate inside the box is not necessarily correct.
+- **Locality**, split three ways, because each of the two obvious versions is misleading on its own.
+  `parsed` reads the span the model labeled, which is nearly circular because the commune appears in
+  the input string. `name matched` reads only the nodes the resolver decorated. It shows that the
+  gazetteer returned an accepted spelling but not where that place is. `resolved` combines the name
+  match with the bounding-box check, and it is the measure to read. Place names repeat across
+  countries, and this panel exists to catch cases where the wrong place won.
+- **Bilingual agreement:** for each pair, the distance between the two language forms. This measure
+  needs no ground truth. Both rows refer to one street, so any distance between them means the
+  pipeline disagrees with itself.
 
 ## Numbers
 
@@ -76,36 +77,36 @@ Thirty rows per arm, from [`be-results.json`](/benchmarks/be-results.json):
 | Answered at `admin`             | 27     | 27           | 30               |
 | Answered at no tier             | 3      | 3            | 0                |
 
-Three readings, in order of how much they change what you would do:
+The three findings below are ordered by how much they change what you would do.
 
-**Every row that answered at all answered at `admin`** — a commune centroid. Nothing on this panel is
-street-grade, because there is no Belgian artifact that could make it street-grade. A perfect score
-here means "resolved to the right commune", and a commune is kilometers wide. Three rows in the first
-two arms answered at no tier: they returned no coordinate, and they are counted as `none` rather than
-folded into the `admin` row.
+**Every row that answered did so at `admin`**, which is a commune centroid. No result on this panel
+is street-grade, because no Belgian artifact exists that could provide street-grade results. A
+perfect score here means "resolved to the right commune", and a commune is kilometers wide. Three
+rows in the first two arms returned no coordinate. They are counted as `none` rather than included
+in the `admin` row.
 
-**The two locality rows are one metric and its check.** A name match says the gazetteer returned a
-place carrying an accepted spelling. It does not say the place is in Belgium, and on this panel that
-gap is exactly two rows in each of the first two arms — one Belgian commune name matched in the
-Netherlands, one in France. The row that means what a reader thinks "locality" means is the last of
-the two.
+**The last locality row applies a check to the one above it.** A name match shows that the gazetteer
+returned a place with an accepted spelling. It does not show that the place is in Belgium. On this
+panel, that gap is two rows in each of the first two arms: one Belgian commune name matched a place
+in the Netherlands, and one matched a place in France. The last of the two rows is the locality
+measure to read.
 
 **The French overlay changes nothing.** The `fr-overlay` arm is identical to `base` on every measure
-and on every one of the thirty per-row records. The result file says why, in the per-arm `weights`
-entry rather than the single `versions.model` run stamp. Both arms record the same `weights.model`,
-`model.onnx`, while their `weights.source` differs — and the difference is the giveaway:
-`package:@mailwoman/neural-weights-en-us` against `package:@mailwoman/neural-weights-fr-fr+base`. That
-`+base` suffix is the loader reporting that the French package resolved _through_ to the base one. The
-French package is a data-only overlay: it ships no `model.onnx` at all, only French postcode,
-pair-index and FST siblings. None of those siblings is consulted for a Belgian postcode. Belgium is
-not a tier, and choosing the nearest tier does not make it one.
+and on all thirty per-row records. The per-arm `weights` entry in the result file shows why. The
+single `versions.model` run stamp does not. Both arms record the same `weights.model`, `model.onnx`,
+but their `weights.source` values differ: `package:@mailwoman/neural-weights-en-us` against
+`package:@mailwoman/neural-weights-fr-fr+base`. The `+base` suffix means the loader resolved the
+French package _through_ to the base package. The French package is a data-only overlay. It ships
+no `model.onnx`, only French postcode, pair-index and FST siblings, and the pipeline consults none of
+them for a Belgian postcode. Belgium has no tier, and choosing the nearest tier does not give it one.
 
-**Pinning the country fixes every failure.** `country-pinned` is 30 out of 30 on all six resolution
-measures. That is one option in the call, and the section below is what it is repairing.
+**Pinning the country fixes every failure.** `country-pinned` scores 30 out of 30 on all six
+resolution measures. That result comes from one option in the call, and the next section describes
+the failures it repairs.
 
 ## Losses
 
-Six rows fail in the `base` arm. Five are one defect and the sixth is a different one.
+Six rows fail in the `base` arm. Five share one defect, and the sixth has a different one.
 
 | Address                             | Where it landed                  | Named |
 | ----------------------------------- | -------------------------------- | ----- |
@@ -116,7 +117,8 @@ Six rows fail in the `base` arm. Five are one defect and the sixth is a differen
 | `Place Saint-Lambert 1, 4000 Liège` | 47.229, 1.110 — Le Liège, France | `FR`  |
 | `Rue Léopold 1, 4000 Liège`         | 46.243, 14.364 — Slovenia        | `SI`  |
 
-The gazetteer is not the problem. Probing `candidate.db` directly for the names these rows carry:
+The gazetteer contains the right answers. A direct probe of `candidate.db` for the names in these
+rows returns:
 
 ```
 leuven      → Leuven/BE pop=102275  |  Leuven/BE pop=101032  |  Leuven/NL pop=0
@@ -127,10 +129,10 @@ sankt vith  → Sankt Vith/BE pop=9481
 
 The Belgian answer is present and ranked first in each case. A 102,275-person Belgian city loses to a
 zero-population Dutch hamlet of the same name, and a 197,013-person Belgian city loses to a
-238-person French commune, so ranking is not what decided these.
+238-person French commune. Ranking did not decide these rows.
 
-The country prior is. Re-running the six failures with the country filter disabled, same weights, same
-gazetteer, same input strings:
+The country prior decided them. The six failures were re-run with the country filter disabled, using
+the same weights, gazetteer and input strings:
 
 ```
 default                  hardPlaceCountry: false
@@ -143,61 +145,62 @@ FR 47.229, 1.110   →     BE  50.645, 5.574   Place Saint-Lambert 1, 4000 Lièg
 SI 46.243, 14.364  →     SI  46.243, 14.364  Rue Léopold 1, 4000 Liège
 ```
 
-Five of the six recover. The mechanism is that a confident whole-string country guess is promoted from
-a ranking bias to a filter, and when the guess is wrong the correct candidates are removed before
-ranking runs. That is also why three of the six returned nothing rather than something wrong: with
-every Belgian candidate filtered out, there was nothing left to rank.
+Five of the six recover. A confident whole-string country guess is promoted from a ranking bias to a
+filter. When the guess is wrong, the filter removes the correct candidates before ranking runs. This
+also explains why three of the six returned nothing instead of a wrong answer. The filter removed
+every Belgian candidate, so nothing was left to rank.
 
-**The sixth row is a parse failure and survives every fix.** `Rue Léopold 1, 4000 Liège` parses as
-street `Rue Léopold 1`, postcode `4000 Liège`, house number `null` — the number is swallowed into the
-street span and the commune into the postcode span. Slovenia's postcode 4000 is Kranj, and a query
-carrying `4000` and no readable commune routes there. Under `country-pinned` this row returns the
-right coordinate, and its parse is still wrong: house number `null`, street still `Rue Léopold 1`,
-postcode still `4000 Liège`. **The 30-out-of-30 above includes a row whose parse is broken.** That is
-the resolve-rate trap in its natural habitat, and it is the reason this page reports the parsed and
-resolved locality counts as separate rows instead of one.
+**The sixth row is a parse failure, and no configuration fixes it.** `Rue Léopold 1, 4000 Liège`
+parses as street `Rue Léopold 1`, postcode `4000 Liège`, and house number `null`. The parser absorbs
+the number into the street span and the commune into the postcode span. Slovenia's postcode 4000 is
+Kranj, and a query with `4000` and no readable commune routes there. Under `country-pinned`, this row
+returns the right coordinate, but its parse is still wrong: house number `null`, street
+`Rue Léopold 1`, postcode `4000 Liège`. **The 30-out-of-30 above includes a row whose parse is
+broken.** A high resolve rate can hide a broken parse in this way, so this page reports the parsed
+and resolved locality counts as separate rows.
 
 **Two of the six were scored as locality hits until the metric was fixed.** `Oude Markt 1, 3000
-Leuven` resolves to a hierarchy reading `["Leuven"]` and `Place Saint-Lambert 1, 4000 Liège` to
-`["Le Liège", "Liège"]`. Both are accepted spellings. Both are in the wrong country. A name match is
-not a resolution on a panel whose subject is cross-border misrouting, which is why the published
-metric is the name match conjoined with the bounding-box check — and why the two rows are reported
-separately rather than one replacing the other.
+Leuven` resolves to a hierarchy reading `["Leuven"]`, and `Place Saint-Lambert 1, 4000 Liège`
+resolves to `["Le Liège", "Liège"]`. Both are accepted spellings, and both places are in the wrong
+country. On a panel that tests cross-border misrouting, a name match does not count as a correct
+resolution. The published metric therefore combines the name match with the bounding-box check, and
+the page reports both rows separately.
 
 **One bilingual pair could not be measured.** `Grote Markt 1, 1000 Brussel` returned no coordinate in
 the `base` and `fr-overlay` arms, so its French twin had nothing to be compared against. The pairs
-row reads `4 comparable of 5 declared` rather than `4 of 4` because an early version of the script
-dropped the unmeasurable pair from its own denominator and reported a clean sweep. Of the pairs that
-could be compared, every one agreed to within the reporting precision, in every arm.
+row reads `4 comparable of 5 declared` rather than `4 of 4`. An early version of the script dropped
+the unmeasurable pair from its denominator and reported that every pair agreed. Every pair that could
+be compared agreed to within the reporting precision, in every arm.
 
 ## Caveats
 
-**Belgium is not a measured locale, and this panel does not make it one.** There is no Belgian eval
-set, no Belgian training tier, and no Belgian rooftop data. Everything above is 30 addresses through
-a global gazetteer. [Locales and tiers](../../developers/reference/locales-and-tiers.mdx) draws the
-line this page sits outside of.
+**Belgium is an unmeasured locale, and this panel does not change that.** Mailwoman has no Belgian
+eval set, training tier, or rooftop data. All results above come from 30
+addresses run through a global gazetteer.
+[Locales and tiers](../../developers/reference/locales-and-tiers.mdx) lists the measured locales,
+and Belgium is outside that list.
 
-**Every number is a commune-grade number.** All 84 answering row-runs answered at `admin`. Do not read
-`30 of 30` as street accuracy — read it as "the right commune centroid", with the error bounded by
-the size of the commune rather than by anything measured here.
+**Every number is a commune-grade number.** All 84 answering row-runs answered at `admin`. Read
+`30 of 30` as "the right commune centroid" and not as street accuracy. The error is bounded by the
+size of the commune, and this panel does not measure it.
 
 **The bounding-box check is coarse in one direction only.** A coordinate outside the box definitely
-missed Belgium. A coordinate inside it could still be the wrong commune, and the locality row is
-what covers that case.
+missed Belgium. A coordinate inside it could still be the wrong commune, and the locality row covers
+that case.
 
-**The locality expectations are ours.** Each row carries a committed list of accepted commune
-spellings in `be-panel.json`, covering the Dutch, French and English forms a gazetteer may hold. We
-wrote those lists. They are public facts and checkable, and they are still our lists.
+**We wrote the locality expectations.** Each row has a committed list of accepted commune spellings
+in `be-panel.json`, covering the Dutch, French and English forms a gazetteer may hold. The spellings
+are public facts that anyone can check, but we chose which ones to include.
 
-**n = 30, and the rows are civic addresses on well-known streets.** That is an easier population than
-a delivery manifest. A harder panel would score worse, and we have not run one.
+**n = 30, and the rows are civic addresses on well-known streets.** That population is easier than a
+delivery manifest. A harder panel would likely score worse, and we have not run one.
 
 ## What to do with this
 
 Pin the country when you know it. For a file you already know is Belgian, `defaultCountry: "BE"` took
-this panel from 24 correct to 30, and it is the same one-line change in the library, the CLI and the
-server. The country prior exists to help an input that arrives with no context; a file that _has_
-context should say so rather than let the prior guess.
+this panel from 24 correct to 30. The change is one line in the library, the CLI and the server. The
+country prior exists to help an input that arrives without context. A file that _has_ context should
+state it instead of letting the prior guess.
 
 ## Reproduce
 
@@ -209,8 +212,8 @@ addresses in each of the three arms.
 That file's `versions` block records what this run used: Mailwoman 8.7.0, `model.onnx` from
 `neural-weights-en-us@7.0.0`, and `candidate-global-1026.db`. Each arm additionally carries its own
 `weights` entry, which is how the identical `base` and `fr-overlay` columns are traceable to one ONNX
-file behind two package names. There is no data-release field, because no Belgian register ships to
-have one.
+file behind two package names. The block has no data-release field, because no Belgian register
+ships.
 
 ```bash
 npm install mailwoman @mailwoman/neural @mailwoman/neural-weights-en-us \
@@ -220,8 +223,8 @@ mailwoman data pull candidate
 node be-panel.mjs --data-root <DATA_ROOT> --out be-results.json
 ```
 
-One 1.65 GB bundle, and no rooftop database — that is the point of the panel. The three arms took
-4,273 ms together, model load excluded.
+The run needs one 1.65 GB bundle and no rooftop database, which is the condition the panel tests. The
+three arms took 4,273 ms together, excluding model load.
 
 ## Related
 

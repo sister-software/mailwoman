@@ -45,23 +45,23 @@ import {
 } from "#resolver-backend"
 
 /**
- * Lists the geocode command's parsed options that a session reads.
+ * The parsed geocode command options that a session reads.
  *
- * It is declared structurally so that this lower layer does not import the CLI specification.
+ * The interface is structural so that this module does not import the CLI specification.
  */
 export interface GeocodeSessionOptions {
 	/**
-	 * Whether to feed the gazetteer FST prior to the parse; on unless `false`.
+	 * Whether to feed the gazetteer FST prior to the parse.
+	 * Only `false` disables it.
 	 */
 	gazetteerPrior?: boolean
 	locale: string
 
 	/**
-	 * Loads the weights from this npm `--prefix` cache root instead of the installed
-	 * package, for grading a candidate bundle.
+	 * An npm `--prefix` cache root to load weights from instead of the installed package.
 	 *
-	 * An explicit cache root never falls back to installed packages, so a cache
-	 * without the locale's package fails session creation.
+	 * Session creation fails when this root lacks the locale's package,
+	 * because it never falls back to installed packages.
 	 */
 	weightsCacheRoot?: string
 	bias?: string
@@ -79,96 +79,101 @@ export interface GeocodeSessionOptions {
 	forkEntity: boolean
 
 	/**
-	 * Whether to enable the venue tier for `poi.db` entity upgrades; off unless `true`.
+	 * Whether to enable the venue tier for `poi.db` entity upgrades.
+	 * Only `true` enables it.
 	 */
 	poiVenueTier?: boolean
 
 	/**
-	 * Whether to promote a national capital among same-name bare-toponym candidates; on unless `false`.
+	 * Whether to promote a national capital among same-name candidates for a bare place name.
+	 * Only `false` disables it.
 	 *
-	 * When unset, a missing capitals reference disables promotion, but an explicit `true` throws instead.
+	 * When the option is unset, a missing capitals reference disables promotion.
+	 * An explicit `true` throws instead.
 	 */
 	capitalTier?: boolean
 
 	/**
-	 * Whether own-name `variant` aliases are exempt from the cross-country
-	 * primary-preference penalty; on unless `false`.
+	 * Whether own-name `variant` aliases skip the cross-country primary-name penalty.
+	 * Only `false` disables it.
 	 *
-	 * It affects only the candidate backend, and does nothing on an artifact without the `name_role` column.
+	 * It affects only the candidate backend and needs the `name_role` column.
 	 */
 	variantAliasExemption?: boolean
 	postcodeShapeCoherence: boolean
 	postcodeContainmentCoherence: boolean
 
 	/**
-	 * Whether a parsed region qualifier re-ranks locality candidates by admin containment; on unless `false`.
+	 * Whether a parsed region re-ranks locality candidates by admin containment.
+	 * Only `false` disables it.
 	 */
 	adminContainmentRerank?: boolean
 
 	/**
-	 * Deprecated and ignored; it is accepted only so existing callers keep compiling.
+	 * Deprecated.
+	 * The session ignores this option.
 	 */
 	retryAlternateRegister?: boolean
 	placeCountryThreshold: number
 
 	/**
-	 * Whether to record a {@link GeocodeTrace} per input, which costs one extra decode per input.
+	 * Whether to record a {@link GeocodeTrace} per input.
+	 * Tracing costs one extra decode per input.
 	 */
 	trace?: boolean
 
 	/**
-	 * Whether a lookup that resolves nothing re-probes the value across the other
-	 * admin bands and records which hold it.
+	 * Whether a lookup that resolves nothing re-probes the value in the other admin bands.
 	 *
-	 * It leaves the result unchanged, costs one extra backend call per band per miss,
-	 * and has no effect without {@link trace}.
+	 * The probe leaves the result unchanged and costs one backend call per band per miss.
+	 * It requires {@link trace}.
 	 */
 	diagnoseUnreachable?: boolean
 
 	/**
-	 * Receives one-time initialization milestones for interactive callers.
+	 * Receives initialization progress messages.
 	 */
 	onProgress?: (message: string) => void
 }
 
 /**
- * Holds the per-stage evidence behind one geocode, which the `--debug` view renders.
+ * The per-stage evidence behind one geocode, rendered by the `--debug` view.
  *
- * It is assembled only when the session is opened with {@link GeocodeSessionOptions.trace},
- * and stages that do not run on the geocode path are absent rather than defaulted.
+ * A session builds it only when {@link GeocodeSessionOptions.trace} is set.
  */
 export interface GeocodeTrace {
 	/**
-	 * The decode-path record for the parse, from pieces and soft-feature channels
-	 * through the Viterbi path to the final tokens.
+	 * The decoder's record of the parse, from input pieces and feature channels to the final tokens.
 	 */
 	parse: NeuralParseTrace
 
 	/**
-	 * The structural priors the query classifier conditioned on.
+	 * The structural features the query classifier used.
 	 */
 	queryShape: QueryShape
 
 	/**
-	 * The kind verdict that {@link inputMode} was derived from; absent when the caller pinned the register.
+	 * The kind verdict behind {@link inputMode}.
+	 * It is absent when the caller set the input mode.
 	 */
 	kind?: QueryKindResult
 	inputMode: InputMode
 
 	/**
-	 * The session's configured locale, shown beside the locale head's verdict.
+	 * The session's configured locale.
 	 */
 	locale: string
 
 	/**
-	 * One record per backend lookup the resolver performed; empty when the tree had nothing to resolve.
+	 * One record per backend lookup that the resolver performed.
 	 */
 	resolver: ResolveNodeTrace[]
 }
 
 /**
- * Holds one address's geocode result together with the {@link AddressTree} it was
- * resolved from, whose nodes carry character offsets for span rendering.
+ * One address's geocode result and the {@link AddressTree} it was resolved from.
+ *
+ * The tree's nodes carry character offsets for span rendering.
  */
 export interface GeocodeRun {
 	result: GeocodeResult
@@ -177,39 +182,40 @@ export interface GeocodeRun {
 	/**
 	 * Wall-clock milliseconds for `parse`, `resolve` and `total`, plus `trace` when the session traces.
 	 *
-	 * The `trace` phase is present even when tracing threw, so the phases always sum to `total`.
+	 * The `trace` phase is recorded even when tracing threw, so the phases sum to `total`.
 	 */
 	timing: PipelineTiming
 
 	/**
-	 * The debug evidence, absent unless the session traces and the classifier's `traceParse` succeeded.
+	 * The debug evidence.
+	 *
+	 * It is present only when the session traces and `traceParse` succeeded.
 	 */
 	trace?: GeocodeTrace
 }
 
 /**
- * Represents a warm geocoder over one set of options.
+ * A geocoder with its models and databases loaded for one set of options.
  *
- * Dispose it when done, because it holds its database and layer handles open until disposal.
+ * Dispose it to close its database and layer handles.
  */
 export interface GeocodeSession extends Disposable {
 	/**
-	 * One-time session construction phases, in wall-clock milliseconds.
+	 * Session construction phases in wall-clock milliseconds.
 	 */
 	initTiming: PipelineTiming
 
 	/**
-	 * The artifact paths this session actually opened, which can differ from the options
-	 * because missing artifacts degrade silently.
-	 * An absent path means the session loaded no such artifact.
+	 * The artifact paths that this session opened.
+	 *
+	 * Missing artifacts are skipped without an error, so these paths can differ from the options.
 	 */
 	artifacts: {
 		fstPath?: PathBuilderLike
 		streetMorphologyPath?: string
 
 		/**
-		 * The `model.onnx` the classifier loaded and the resolution rung that produced it,
-		 * such as `package:…` or `cache:…`.
+		 * The `model.onnx` path that the classifier loaded and its source, such as `package:…` or `cache:…`.
 		 */
 		weights?: { modelPath: string; source: string }
 	}
@@ -245,25 +251,23 @@ function parseBiasPoints(raw: string | undefined): NonNullable<GeocodeDeps["bias
 }
 
 /**
- * Holds the dependencies for the fork-to-entity probe, plus the handle that
- * must be disposed to close `poi.db`.
+ * The fork-to-entity probe's dependencies and the `poi.db` handle to dispose.
  */
 export interface ForkEntityProbe {
 	deps: Pick<GeocodeDeps, "poiLookup" | "isStreetGeneric">
 
 	/**
-	 * The `poi.db` handle behind `deps.poiLookup`, kept separately because
-	 * `POIExecutorLookup` declares no disposal.
+	 * The `poi.db` handle behind `deps.poiLookup`.
+	 *
+	 * It is kept separately because `POIExecutorLookup` declares no disposal.
 	 */
 	handle?: Disposable
 }
 
 /**
- * Opens the authority-designation route when the sealed flood layer exists in the
- * data root, and returns `undefined` otherwise.
+ * Opens the authority-designation route from the sealed flood layer in the data root.
  *
- * A layer that exists but fails to open also yields `undefined`, so an advisory
- * layer cannot break geocoding.
+ * It returns `undefined` when the layer is missing or fails to open.
  */
 export async function loadAuthorityDesignationRoute(
 	options: Pick<GeocodeSessionOptions, "dataRoot">
@@ -282,11 +286,9 @@ export async function loadAuthorityDesignationRoute(
 }
 
 /**
- * Opens the soil-capability route when the sealed soil layer exists in the data root,
- * and returns `undefined` otherwise.
+ * Opens the soil-capability route from the sealed soil layer in the data root.
  *
- * A layer that exists but fails to open also yields `undefined`, so an advisory
- * layer cannot break geocoding.
+ * It returns `undefined` when the layer is missing or fails to open.
  */
 export async function loadSoilCapabilityRoute(
 	options: Pick<GeocodeSessionOptions, "dataRoot">
@@ -305,11 +307,9 @@ export async function loadSoilCapabilityRoute(
 }
 
 /**
- * Opens the coastal-erosion route when the sealed England coastal layer exists in
- * the data root, and returns `undefined` otherwise.
+ * Opens the coastal-erosion route from the sealed England coastal layer in the data root.
  *
- * A layer that exists but fails to open also yields `undefined`, so an advisory
- * layer cannot break geocoding.
+ * It returns `undefined` when the layer is missing or fails to open.
  */
 export async function loadCoastalErosionRoute(
 	options: Pick<GeocodeSessionOptions, "dataRoot">
@@ -328,11 +328,9 @@ export async function loadCoastalErosionRoute(
 }
 
 /**
- * Opens the zoning route when the sealed Irish zoning layer exists in the data root,
- * and returns `undefined` otherwise.
+ * Opens the zoning route from the sealed Irish zoning layer in the data root.
  *
- * A layer that exists but fails to open also yields `undefined`, so an advisory
- * layer cannot break geocoding.
+ * It returns `undefined` when the layer is missing or fails to open.
  */
 export async function loadZoningDesignationRoute(
 	options: Pick<GeocodeSessionOptions, "dataRoot">
@@ -351,10 +349,11 @@ export async function loadZoningDesignationRoute(
 }
 
 /**
- * Loads the fork-to-entity probe's POI lookup and street-generic test, or neither
- * when `poi.db` is absent or the probe is disabled.
+ * Loads the fork-to-entity probe's POI lookup and street-generic test.
  *
- * Both are required, because without the street-generic test the probe would match street queries to venues.
+ * It loads neither when `poi.db` is absent or the probe is disabled.
+ * The two load together because the probe needs the street-generic test to keep
+ * street queries from matching venues.
  */
 export async function loadForkEntityDeps(
 	options: Pick<GeocodeSessionOptions, "dataRoot" | "forkEntity">
@@ -381,8 +380,8 @@ export async function loadForkEntityDeps(
 }
 
 /**
- * Loads the gazetteer, neural model, and optional layers once, and returns a
- * {@linkcode GeocodeSession} that geocodes many inputs against them.
+ * Loads the gazetteer, neural model and optional layers, and returns a
+ * {@linkcode GeocodeSession} that reuses them across inputs.
  */
 export async function createGeocodeSession(options: GeocodeSessionOptions): Promise<GeocodeSession> {
 	const initStartedAt = performance.now()

@@ -2,11 +2,10 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file Generate Chinese training rows whose settlement ends in an ordinal organizational unit.
- * The shared Chinese unit grammar labels the full unit chain as `locality_unit` and its named head
- * as `dependent_locality`. Leading Chinese administrative names and trailing Latin country names
- * receive their corresponding tags. Rows without a recognized unit chain are skipped. Input is JSONL
- * containing `{ raw, country }`; rows are aligned character by character for the CJK model only.
+ * @file Labels Chinese rows whose settlement ends in an organizational unit chain.
+ *
+ *   The unit grammar tags the whole chain as `locality_unit` and its named head as `dependent_locality`. Input is JSONL
+ *   with `{ raw, country }`. Rows are aligned per character for the CJK model.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -17,12 +16,12 @@ import { alignRow } from "#utils/align"
 import { cjkAwareTokenizer } from "#utils/tokenize"
 
 /**
- * Leading Han text and digits in the Chinese portion of a row.
+ * Matches the leading run of Han characters and digits.
  */
 const LEADING_HAN = /^[\p{Script=Han}〇\d]+/u
 
 /**
- * Administrative prefixes matched from broadest to narrowest.
+ * Administrative prefixes, matched in order from broadest to narrowest.
  */
 const ADMIN_PREFIXES: ReadonlyArray<readonly [pattern: RegExp, tag: "region" | "locality" | "subregion"]> = [
 	[/^(.+?(?:省|自治区))/u, "region"],
@@ -31,7 +30,7 @@ const ADMIN_PREFIXES: ReadonlyArray<readonly [pattern: RegExp, tag: "region" | "
 ]
 
 /**
- * Return components supported by the string, or `null` when no unit chain is found.
+ * Labels the components of a row, or returns `null` when the row has no unit chain.
  */
 export function labelCNOrganizationalRow(raw: string): Record<string, string> | null {
 	const han = LEADING_HAN.exec(raw)?.[0]
@@ -44,7 +43,7 @@ export function labelCNOrganizationalRow(raw: string): Record<string, string> | 
 	for (const [pattern, tag] of ADMIN_PREFIXES) {
 		const match = pattern.exec(rest)
 
-		// Require text after the prefix for the settlement name.
+		// A prefix is taken only when text remains after it for the settlement.
 		if (match && match[1]!.length < rest.length) {
 			components[tag] = match[1]!
 			rest = rest.slice(match[1]!.length)
@@ -64,7 +63,7 @@ export function labelCNOrganizationalRow(raw: string): Record<string, string> | 
 	const tail = raw.slice(han.length).trim()
 
 	if (tail) {
-		// Split comma-delimited tails; otherwise recognize a final country name.
+		// A Latin tail becomes a region and a trailing "China" country.
 		const segments = tail.includes(",")
 			? tail
 					.split(",")
@@ -85,7 +84,8 @@ export function labelCNOrganizationalRow(raw: string): Record<string, string> | 
 }
 
 /**
- * Split a space-delimited tail when its final word is `China`.
+ * Splits a trailing `China` off a tail without commas.
+ * Any other tail stays one segment.
  */
 function tailWithoutCommas(tail: string): string[] {
 	const words = tail.split(/\s+/u).filter((word) => word.length)
@@ -101,7 +101,7 @@ function tailWithoutCommas(tail: string): string[] {
 const SOURCE = "coarse-placer-cn-units"
 
 /**
- * Recipe registered with the corpus builder.
+ * The recipe registered with the corpus builder.
  */
 export const cnOrganizationalUnitsRecipe: CorpusRecipe = {
 	name: "cn-organizational-units",
@@ -157,7 +157,7 @@ export const cnOrganizationalUnitsRecipe: CorpusRecipe = {
 					"CC-BY-4.0 — GeoNames populated places, INFERRED from the `<name>, <admin1>, <country>` row shape; data/coarse-placer carries no per-row source",
 			}
 
-			// Require exact substring alignment; no spelling correction is allowed.
+			// Every component must appear verbatim in `raw`.
 			const aligned = alignRow(canonical as Parameters<typeof alignRow>[0], { tokenizer, maxEditDistance: 0 })
 
 			if (aligned.kind !== "labeled" || !aligned.row) {

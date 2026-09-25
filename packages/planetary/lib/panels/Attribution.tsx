@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Attribution from the pipeline's manifest rather than from a string in the app: the manifest names the sources a build
- *   read and the nomenclature snapshot date, so the line changes when the archives do and never drifts from them.
+ *   Builds the map credits from the build manifest, so they list the sources and the nomenclature
+ *   snapshot date that the build actually used.
  */
 
 import type { PlanetaryBuildManifest } from "@mailwoman/astrogeology/schema/manifest"
@@ -15,12 +15,15 @@ import { commitURL } from "@mailwoman/site-kit/build-info"
 import type { PlanetaryMapConfig } from "#bodies/config"
 import { useBuildManifest } from "#panels/useBuildManifest"
 
+/**
+ * Props for {@link Attribution}.
+ */
 export interface AttributionProps {
 	config: PlanetaryMapConfig
 }
 
 /**
- * One line per source the manifest names, in the manifest's order, then the renderer.
+ * Returns one credit line per manifest source in manifest order, followed by the renderer.
  */
 function creditLines(manifest: PlanetaryBuildManifest, config: PlanetaryMapConfig): string[] {
 	const lines: string[] = []
@@ -40,11 +43,14 @@ function creditLines(manifest: PlanetaryBuildManifest, config: PlanetaryMapConfi
 	return lines
 }
 
+/**
+ * Renders the map footer with source credits from the build manifest.
+ */
 export function Attribution({ config }: AttributionProps) {
 	const state = useBuildManifest(config.artifacts.manifestURL)
 
-	// Before the manifest answers, the credit still names both sources: it is a licence obligation
-	// that cannot wait on a fetch, and the manifest only ever refines the snapshot date it carries.
+	// The licences require the credits even before the manifest loads, so a fallback
+	// lists both sources without the snapshot date.
 	const lines =
 		state.status === "ready"
 			? creditLines(state.manifest, config)

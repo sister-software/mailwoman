@@ -22,7 +22,7 @@ fixtures, 20 countries, deliberately fragment-heavy):
 | house_number | 0.808        | 0.97     |
 | **street**   | **0.573**    | **0.90** |
 
-Coarse geography is ~99%. The the system _what things are_. What it cannot reliably do is say **where
+Coarse geography is ~99%. The model knows _what things are_. What it cannot reliably do is say **where
 one thing ends and the next begins**.
 
 The archetype, on the shipped model:

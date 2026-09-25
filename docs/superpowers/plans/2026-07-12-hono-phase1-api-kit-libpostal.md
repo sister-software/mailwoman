@@ -4,19 +4,19 @@
 
 **Goal:** Stand up the `@mailwoman/api-kit` plumbing workspace and migrate `@mailwoman/libpostal` from express to Hono + `@hono/zod-openapi`, with the OpenAPI document emitted from the route table and the handwritten `libpostal/openapi.yaml` retired through a spec-parity check.
 
-**Architecture:** Per the approved spec (`docs/superpowers/specs/2026-07-12-hono-api-surface-design.md`): code-first, one direction — Zod schemas next to routes, spec emitted, never handwritten. libpostal is the pattern-prover (smallest drop-in). api-kit ships **only what libpostal consumes** in this phase (node serve wrapper + doc-emit helpers); the error envelope, GeoJSON atoms, and metrics hooks land in later phases with their first consumers (photon / native API). Deliberate deferral rather than a gap.
+**Architecture:** The approved spec (`docs/superpowers/specs/2026-07-12-hono-api-surface-design.md`) is code-first, and information flows one way. Zod schemas sit next to routes, and the spec is emitted from them, never handwritten. libpostal, the smallest drop-in, proves the pattern. In this phase api-kit ships **only what libpostal consumes**: the node serve wrapper and the doc-emit helpers. The error envelope, GeoJSON atoms, and metrics hooks land in later phases with their first consumers (photon and the native API). This deferral is deliberate.
 
 **Tech Stack:** hono `^4.12.29`, `@hono/zod-openapi` `^1.4.0` (re-exports Zod 4 as `z` with `.openapi()` metadata), `@hono/node-server` `^2.0.8`, zod `^4.4.3` (already used by `core`/`mailwoman`), vitest.
 
 ## Global Constraints
 
-- **Vendor wire shapes are immutable**: response bodies, error bodies (`{ "error": "query is required" }` etc.), status codes (200/400/500/501), and CORS header behavior must match `libpostal/index.ts` on main exactly. The engine interface (`LibpostalEngine`, `ParseMatch`) is public API and must not change.
-- **No express shims**: `createLibpostalRouter` is deleted rather than deprecated (operator decision 2026-07-12 — vendor wire compat is the only legacy binding). Rides the next-major train.
-- `erasableSyntaxOnly` — no `enum`, no constructor parameter properties. Relative imports carry explicit `.ts` extensions; `rewriteRelativeImportExtensions` handles `out/`.
-- **Both exports maps** on every touched `package.json`: dev map (`node` → `.ts` first) AND `publishConfig.exports` (no `node` condition). A subpath in only one map is a release bug.
-- Acronym casing: whole camelCase components — `attachOpenAPIDocs`, `emitOpenAPIDocuments`, never `attachOpenApiDocs`.
-- No raw `process.env`/`process.argv` (CI-enforced oxlint rule). `node:util` `parseArgs` is the existing CLI pattern — keep it.
-- Compile before running anything against `out/` — stale `out/` lies. Format with `yarn oxfmt <file>` before committing (pre-commit hook checks staged files).
+- **Vendor wire shapes must not change.** Response bodies, error bodies (`{ "error": "query is required" }` and the others), status codes (200/400/500/501), and CORS header behavior must match `libpostal/index.ts` on main exactly. The engine interface (`LibpostalEngine`, `ParseMatch`) is public API and must not change.
+- **No express shims.** `createLibpostalRouter` is deleted rather than deprecated (operator decision 2026-07-12: vendor wire compatibility is the only legacy commitment). The change ships in the next major release.
+- `erasableSyntaxOnly` rules out `enum` and constructor parameter properties. Relative imports carry explicit `.ts` extensions, and `rewriteRelativeImportExtensions` handles `out/`.
+- **Both exports maps** on every touched `package.json`: the dev map (`node` → `.ts` first) and `publishConfig.exports` (without the `node` condition). A subpath that appears in only one map is a release bug.
+- Acronym casing uses whole camelCase components: `attachOpenAPIDocs` and `emitOpenAPIDocuments`, never `attachOpenApiDocs`.
+- No raw `process.env`/`process.argv` reads (a CI-enforced oxlint rule). `node:util` `parseArgs` is the existing CLI pattern, so keep it.
+- Compile before running anything against `out/`, because a stale `out/` gives wrong results. Format with `yarn oxfmt <file>` before committing, since the pre-commit hook checks staged files.
 - Run repo commands from the repo root. Plain `node` runs `.ts` source directly.
 
 ---
@@ -109,7 +109,7 @@ export {}
 - [ ] **Step 5: Install + verify resolution**
 
 Run: `yarn install`
-Expected: lockfile gains hono/@hono/zod-openapi/@hono/node-server entries, no resolution errors.
+Expected: The lockfile gains hono, @hono/zod-openapi, and @hono/node-server entries without resolution errors.
 
 Run: `node -e 'import("@hono/zod-openapi").then((m) => console.log(typeof m.OpenAPIHono))'` from `api-kit/`
 Expected: `function`
@@ -461,7 +461,7 @@ git commit -m "refactor(libpostal): split engine interface + zod wire schemas ou
 
 (`express` removed.) Run `yarn install`.
 
-- [ ] **Step 2: Port the test file.** Rewrite `libpostal/index.test.ts`: keep the three engine-mapping tests verbatim (their import path is unchanged); replace the express `withServer` harness — Hono apps answer `app.request()` directly, no listener. Add the wire-parity and new-capability tests:
+- [ ] **Step 2: Port the test file.** Rewrite `libpostal/index.test.ts`: keep the three engine-mapping tests verbatim, since their import path is unchanged. Replace the express `withServer` harness, because Hono apps answer `app.request()` directly without a listener. Add the wire-parity and new-capability tests:
 
 ```ts
 /**
@@ -1134,7 +1134,7 @@ git push -u origin feat/hono-api
 gh pr create --title "feat!: Hono API surface, phase 1 — api-kit + libpostal migration" --body "<summarize: spec link, api-kit contents, libpostal wire-parity receipts (test list), yaml retirement adjudications, breaking notes (createLibpostalRouter removed — next-major train)>"
 ```
 
-⚠ Do not merge — next-major train (with #1074 and the #875 casing batch). Note this in the PR body.
+⚠ Do not merge. The PR ships in the next major release, together with #1074 and the #875 casing batch. Note this in the PR body.
 
 ---
 

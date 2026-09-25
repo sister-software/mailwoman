@@ -31,7 +31,7 @@ const registry = createStreetLocaleRegistry(
 /**
  * Resolve the street-normalization locale for a BAN country.
  *
- * @throws for an unsupported country rather than silently folding with the wrong rules — a extract
+ * @throws for an unsupported country rather than silently folding with the wrong rules — an extract
  * built with the wrong normalizer keys every street incorrectly and looks fine until a probe misses.
  * Add the country to {@link BAN_COUNTRY_TO_STREET_LOCALE}
  * (and a branch in `normalizeStreetForKeyLocale`) before building its extract.

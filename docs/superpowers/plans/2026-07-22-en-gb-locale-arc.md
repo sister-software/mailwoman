@@ -18,8 +18,8 @@
 - Compiled CLI for runs: `yarn compile` then `node mailwoman/out/cli.js ...`. Never `npx tsx`.
 - Zero raw `process.env`/`process.argv` in shipped code — use `@mailwoman/core/env` + `core/utils/scripting`; data paths via `dataRootPath()` (never hardcode `$MAILWOMAN_DATA_ROOT`).
 - Acronym casing: whole camelCase components (`extractPPD` rather than `extractPpd`).
-- never wrap `modal run -d` in shell `timeout`. Launch detached, poll with `run_in_background` + until-loops.
-- PPD snapshot (frozen): `$MAILWOMAN_DATA_ROOT/ppd/2026-07-22/pp-complete.csv` (31,346,259 rows, md5 recorded). Column order: `0 id, 1 price, 2 date, 3 postcode, 4 type, 5 newbuild, 6 tenure, 7 PAON, 8 SAON, 9 street, 10 locality, 11 town, 12 district, 13 county, 14 category, 15 status`. All fields ALL-CAPS. Modern rows fill `locality` only when ≠ town; 1995-era rows pad `locality`=town (~64% of filled) — drop when equal.
+- Never wrap `modal run -d` in a shell `timeout`. Launch detached, and poll with `run_in_background` and until-loops.
+- PPD snapshot (frozen): `$MAILWOMAN_DATA_ROOT/ppd/2026-07-22/pp-complete.csv` (31,346,259 rows, md5 recorded). Column order: `0 id, 1 price, 2 date, 3 postcode, 4 type, 5 newbuild, 6 tenure, 7 PAON, 8 SAON, 9 street, 10 locality, 11 town, 12 district, 13 county, 14 category, 15 status`. All fields are uppercase. Modern rows fill `locality` only when it differs from town. 1995-era rows pad `locality` with the town (~64% of filled rows), so drop `locality` when it equals the town.
 - Label indices (STAGE3, num_labels=33): `B-dependent_locality`=7, `I-dependent_locality`=8. Classifier: `model.classifier` = `nn.Linear(384, 33)`.
 - Promotion/ship of any model is the operator's act. Probe grading is reported against the pre-registration in the spec, never silently reinterpreted.
 
@@ -159,12 +159,12 @@ git commit -m "feat(corpus): GB title-case util — PPD all-caps → natural cas
 
 **Row rules (all deliberate, from the 2026-07-22 profile):**
 
-- Skip rows with non-empty SAON (flats/units — `LocaleBaseTuple` has no `unit`; wave-2).
-- Skip rows whose PAON is not house-number-shaped (`/^\d+[A-Za-z]?(\s*-\s*\d+[A-Za-z]?)?$/` — building-name PAONs are out of scope v1). Normalize ranges to `4-6`.
+- Skip rows with a non-empty SAON (flats and units). `LocaleBaseTuple` has no `unit`, so these wait for wave 2.
+- Skip rows whose PAON is not shaped like a house number (`/^\d+[A-Za-z]?(\s*-\s*\d+[A-Za-z]?)?$/`). Building-name PAONs are out of scope for v1. Normalize ranges to `4-6`.
 - Skip rows missing street or postcode.
 - Emit `CITY` empty when PPD locality equals town (the 1995-era padding) or is empty.
 - Title-case STREET/CITY/DISTRICT/REGION via `titleCaseGB`; postcode passes through verbatim.
-- Count every skip reason in `PPDExtractStats` — no silent drops.
+- Count every skip reason in `PPDExtractStats`, so that nothing is dropped silently.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -532,7 +532,7 @@ git commit -m "feat(eval): GB golden board (120 rows) + promote NZ suburb board 
 
 - Test: `core/decoder/build-tree.test.ts` (add cases; file exists — find the sibling test for `emitSpans`)
 
-**Why:** the spec assumed the word-consistency heal lumps "suburb, city" into one locality span. Exploration found both merge mechanisms (`span-bridge.ts` `bridgeable`, `build-tree.ts` `emitSpans`) explicitly refuse to merge across commas. Diagnose before fixing (superpowers:systematic-debugging): prove the pipeline preserves the distinction, or find the real lumper.
+**Why:** The spec assumed that the word-consistency heal merges "suburb, city" into one locality span. Exploration found that both merge mechanisms (`span-bridge.ts` `bridgeable` and `build-tree.ts` `emitSpans`) explicitly refuse to merge across commas. Diagnose before fixing (superpowers:systematic-debugging): either show that the pipeline preserves the distinction, or find the code that merges the spans.
 
 - [ ] **Step 1: Write the characterization test**
 
@@ -732,7 +732,13 @@ Clone `v3.8.5-latam-8k.yaml` verbatim, then apply exactly these deltas (header c
 - `train.reinit_label_rows: ["B-dependent_locality", "I-dependent_locality"]`
 - `train.trackio_run_name: v3.10.0-gb-probe-s42`
 
-Header must carry the pre-registered reads verbatim from the spec (PRIMARY: dependent_locality emission on the 246-row NZ board + GB board; GUARDS: golden us/fr noise, digit + FR fragment boards, 6 demo presets byte-identical; FALLBACK: locality-mapped ship, no knob-spinning) and `Launch: modal run -d corpus-python/modal/train_remote.py --config v3.10.0-gb-probe.yaml --resume none`.
+The header must carry the pre-registered reads verbatim from the spec:
+
+- Primary: dependent_locality emission on the 246-row NZ board and the GB board.
+- Guards: golden us/fr within noise, the digit and FR fragment boards, and 6 byte-identical demo presets.
+- Fallback: ship with dependent localities mapped to locality, without further knob changes.
+
+It must also carry the launch line `Launch: modal run -d corpus-python/modal/train_remote.py --config v3.10.0-gb-probe.yaml --resume none`.
 
 - [ ] **Step 3: Build + sync the corpus overlay**
 
@@ -756,7 +762,7 @@ git commit -m "feat(train): v3.10.0-gb-probe config — GB extract + dependent_l
 - [ ] **Step 1: Launch detached** — `modal run -d corpus-python/modal/train_remote.py --config v3.10.0-gb-probe.yaml --resume none` (never wrapped in `timeout`). Verify census per Task 7 Step 4.
 - [ ] **Step 2: On completion** — export + quantize per the runbook two-step (`export_onnx` then `quantize_onnx` → `model-v3100-gb-probe-int8.onnx`), package-shaped.
 - [ ] **Step 3: Grade against the pre-registration** — NZ 246-row board, GB 120-row board, golden us/fr, digit + FR fragment boards, 6 demo presets byte-identical (use the eval-harness; never compare across harnesses — the #727 lesson).
-- [ ] **Step 4: Report** — reads vs pre-registration, verbatim, to the operator. PASS → operator decides 8k. fail on primary → invoke the pre-registered fallback (locality-mapped), no knob iteration.
+- [ ] **Step 4: Report** the reads against the pre-registration, verbatim, to the operator. If the probe passes, the operator decides on the 8k run. If the primary read fails, invoke the pre-registered fallback (locality-mapped) without iterating on knobs.
 
 ---
 

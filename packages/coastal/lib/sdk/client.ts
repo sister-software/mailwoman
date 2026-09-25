@@ -3,28 +3,15 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The Environment Agency's catalogue entry, ISO record and spatial services, read through
- *   {@linkcode APIClient}.
+ *   Client for the Environment Agency's NCERM catalogue entry, ISO record and spatial services.
+ *   The geodatabase download streams through `download.ts` instead of this client.
  *
- *   these are API requests and they GO through `APIClient`. Small bodies, repeated calls, a third-party
- *   host — the pacing, bounded retry, response caching and `ResourceError` mapping are exactly what they
- *   need. The 70 MB geodatabase is not one of them: it is a file transfer, it streams to disk on raw
- *   `fetch`, and `download.ts` says so in place.
- *
- *   three measured client behaviors are encoded here rather than written down somewhere else.
- *
- *   1. the OGC service slug is A misspelling OF the product. `ncerm-national-2024` answers http 404;
- *      `ncern-national-2024` answers http 200 with 110,478 bytes of `GetCapabilities`. Correcting the
- *      spelling loses the service half of the two-path verification and reports a clean run while doing it,
- *      so the misspelling is a named constant in `vocabulary.ts` and never assembled from the product name.
- *   2. freshness cannot be probed BY content length. The download host answers `head` with http 405 and
- *      ignores `Range`. A ranged GET returns 200 with the whole 70,296,882-byte body — so a size probe
- *      starts a real transfer. {@linkcode EANCERMClient.readCatalogueRecord} reads the ISO revision date out
- *      of the catalogue entry instead, which is the authority's own statement about what changed.
- *   3. the attribution comes from the structured licence field. The abstract carries the statement twice and
- *      the first copy — inherited from the superseded 2018–2021 record — has no year. The ISO record carries
- *      no `gmd:credit` element at all. {@linkcode parseAttributionStatement} refuses the yearless copy, so a
- *      reader that falls back to the abstract cannot take the wrong one.
+ *   - The OGC service slug is spelled `ncern`. The correctly spelled slug returns 404, so
+ *     `vocabulary.ts` keeps the misspelling as a constant.
+ *   - The download host rejects HEAD and ignores `Range`, so file size cannot show freshness.
+ *     {@linkcode EANCERMClient.readCatalogueRecord} reads the ISO revision date instead.
+ *   - The abstract holds the attribution statement twice, and only the second copy has a year.
+ *     {@linkcode parseAttributionStatement} rejects copies without a year.
  */
 
 import {
@@ -41,88 +28,64 @@ import { stringifyJSON } from "@mailwoman/core/json"
 
 import { NCERM_ATTRIBUTION, NCERM_CATALOGUE_PACKAGE_ID, NCERM_DATASET_ID, NCERM_SERVICE_SLUG } from "#vocabulary"
 
-// Re-exported so a caller branching on this client's failures needs exactly one import.
-
 /**
- * The EA's spatial-data service root for ncerm.
- *
- * Built on the misspelled slug — see this file's header.
+ * Root URL of the EA spatial-data service for NCERM, built on the misspelled service slug.
  */
 export const EA_NCERM_SPATIAL_BASE_URL = `https://environment.data.gov.uk/spatialdata/${NCERM_SERVICE_SLUG}`
 
 /**
- * The EA's CSW, where the ISO 19115 record is readable.
+ * The EA's CSW endpoint, which serves the ISO 19115 record.
  *
- * The dataset landing page is a client-side application and returns only its shell to
- * a fetch, so this is the primary source that can actually be read.
+ * The dataset landing page is a client-side app, so a plain fetch cannot read it.
  */
 export const EA_CSW_URL = "https://environment.data.gov.uk/discover/ea/csw"
 
 /**
- * The catalogue API the data.gov.uk entry is read from.
- */
-
-/**
  * Minimum spacing between EA requests, in milliseconds.
  *
- * The EA publishes no rate limit for these services and its WFS `GetCapabilities`
- * reports `<ows:Fees>none`, so this is courtesy pacing rather than a published ceiling —
- * stated as such rather than dressed up as a measured limit.
- * Two requests a second is far below anything a public OGC endpoint is provisioned for
- * and costs a build nothing: the acquisition path makes single-digit numbers of calls,
- * and the verification a few dozen.
+ * The EA publishes no rate limit for these services, so this value is courtesy pacing.
  */
 export const EA_MIN_REQUEST_INTERVAL_MS = 500
 
 /**
  * How long a cached EA metadata response stays fresh.
  *
- * Six hours, chosen against the product's cadence rather than a wall-clock intuition.
- * The ISO `MD_MaintenanceFrequencyCode` is `annually` and no prose names a publication
- * month, so the revision date moves at most once a year.
- *
- * A shorter TTL adds nothing.
+ * The ISO record gives an annual maintenance frequency, so six hours is ample.
  */
 const EA_CACHE_TTL_MS = 6 * 60 * 60 * 1000
 
 /**
- * The licence value the catalogue entry must carry.
- *
- * A different value is a licence change, and a build that absorbed one would
- * ship an artifact under terms nobody checked.
+ * The licence value that the catalogue entry must carry.
+ * A different value means the terms changed.
  */
 export const EA_EXPECTED_CATALOGUE_LICENCE = "Open Government Licence"
 
+/**
+ * Options for {@link createEANCERMClient}.
+ */
 export type CreateCoastalClientOptions = CreatePacedCachedClientOptions
 
 /**
- * What the catalogue says about the product.
+ * The product's catalogue entry.
  */
 export type CoastalCatalogueRecord = CKANPackageRecord
 
 /**
- * The marker the published record puts before each copy of its attribution statement.
+ * Text that the published record puts before each copy of its attribution statement.
  */
 const ATTRIBUTION_MARKER = "Attribution statement:"
 
-/**
- * A four-digit year, anywhere in a statement.
- *
- * Bounded and anchored to word boundaries, so it is linear on any input.
- */
 const YEAR_PATTERN = /\b\d{4}\b/u
 
 /**
- * The attribution statement carrying a year, taken from a block of text that may hold the statement more than once.
+ * Return the last attribution statement in `text` that contains a four-digit year.
  *
- * The first copy is the wrong one, measured. The 2024 record's abstract ends "…© Environment Agency copyright and/or database right Attribution statement: © Environment Agency copyright and/or database right 2025. All rights reserved. " — two copies, the first inherited from the superseded record and carrying no year. A parse that took the first match would ship an attribution naming no year, which is a licence condition stated incorrectly rather than a cosmetic slip.
+ * The record's abstract holds two copies, and the first copy has no year.
+ * Each copy ends at the next marker or the next XML tag.
  *
- * Index scans rather than A regex, and that is A correctness choice rather than A speed one. The obvious form — `/Attribution statement:\s*([^<]*?)(?=Attribution statement:|<|$)/g` — backtracks polynomially, because the `\s*` and the lazy run overlap on whitespace and the lookahead's `$` alternative makes every position a candidate end. The input here is a 27,643-byte document that arrived over the network, so "a pathological one cannot happen" is not a claim this reader gets to make. Two `indexOf` calls per copy answer the same question in one pass.
+ * The parser uses `indexOf` scans because the obvious regex backtracks polynomially on network input.
  *
- * Each copy ends AT the next marker or the next TAG, whichever comes first. The statement sits inside a `gco:CharacterString`, so a scan that ran to the end of the document would return several kilobytes of XML that happens to contain a year.
- *
- * @throws {Error} When no copy carries a four-digit year. A statement without one is not this product's attribution,
- *   and guessing which copy was meant is exactly the choice that produced the malformed pair.
+ * @throws {Error} When no copy contains a year.
  */
 export function parseAttributionStatement(text: string): string {
 	const statements: string[] = []
@@ -138,8 +101,7 @@ export function parseAttributionStatement(text: string): string {
 		const nextMarker = text.indexOf(ATTRIBUTION_MARKER, from)
 		const nextTag = text.indexOf("<", from)
 
-		// `Math.min` over the two ends, with an absent end reading as the end of the string rather
-		// than as `-1`, which would sort below every real index and truncate every statement to nothing.
+		// A missing marker or tag counts as the end of the string, because `-1` would win `Math.min`.
 		const end = Math.min(nextMarker === -1 ? text.length : nextMarker, nextTag === -1 ? text.length : nextTag)
 		const statement = text.slice(from, end).trim()
 
@@ -163,18 +125,17 @@ export function parseAttributionStatement(text: string): string {
 }
 
 /**
- * A client for the EA's catalogue entry, ISO record, WFS and OGC API Features endpoints.
+ * Client for the EA's catalogue entry, ISO record, WFS and OGC API Features endpoints.
  */
 export class EANCERMClient extends APIClient<APIClientConfig> {
 	/**
-	 * The catalogue entry: reference dates, licence, and the direct file URLs.
+	 * Read the catalogue entry, with its reference dates, licence and file URLs.
 	 *
-	 * The download URL is read from here rather than assembled, because the EA's file service
-	 * keys on an opaque `fileDataSetId` that has no relationship to the dataset id.
-	 * A hard-coded URL survives a republish by pointing at a file that is no longer the product.
+	 * The download URL comes from the entry because the file service keys on an opaque
+	 * ID that changes when the product is republished.
 	 *
-	 * @throws {Error} When the entry names a different dataset, carries no `revision`
-	 * reference date, or names a licence other than {@link EA_EXPECTED_CATALOGUE_LICENCE}.
+	 * @throws {Error} When the entry is for a different dataset, has no `revision` date,
+	 * or carries a licence other than {@link EA_EXPECTED_CATALOGUE_LICENCE}.
 	 */
 	public async readCatalogueRecord(): Promise<CoastalCatalogueRecord> {
 		return readCKANPackageRecord(this, {
@@ -186,13 +147,10 @@ export class EANCERMClient extends APIClient<APIClientConfig> {
 	}
 
 	/**
-	 * The attribution statement the published record carries, checked against the constant the build ships.
+	 * Read the live attribution statement from the ISO record.
 	 *
-	 * Read at build time rather than trusted from `vocabulary.ts`: the constant is
-	 * what the artifact is stamped with offline, and this is the live value it is
-	 * reconciled with when the network is available.
-	 * OGL v3.0 makes the statement a licence condition, so a change in it is a
-	 * change in what a re-user has to publish.
+	 * The build compares it with the `NCERM_ATTRIBUTION` constant, because OGL
+	 * v3.0 makes the statement a licence condition.
 	 */
 	public async readAttributionStatement(): Promise<string> {
 		const { data } = await this.fetch<string>({
@@ -215,14 +173,9 @@ export class EANCERMClient extends APIClient<APIClientConfig> {
 	}
 
 	/**
-	 * The feature count the WFS reports for one layer.
+	 * Read one layer's feature count from the WFS without downloading geometry.
 	 *
-	 * `resultType=hits`, which returns the count without a single geometry.
-	 *
-	 * This is the second path in the build's two-path agreement check: the same authority,
-	 * a different distribution channel.
-	 * A geodatabase whose feature count disagrees with the live service is not a file
-	 * this build should be writing into a sealed artifact.
+	 * The build compares it with the geodatabase count to catch a stale or truncated file.
 	 */
 	public async readFeatureCount(layer: string): Promise<number> {
 		return readWFSFeatureCount(this, {
@@ -234,11 +187,9 @@ export class EANCERMClient extends APIClient<APIClientConfig> {
 	}
 
 	/**
-	 * The extent one OGC API Features collection declares, in CRS84 order.
+	 * Read the extent that one OGC API Features collection declares, in CRS84 order.
 	 *
-	 * Read at build time rather than trusted from the constant in `vocabulary.ts`:
-	 * the constant is what the ingest asserts against offline, and this is the live
-	 * value it is reconciled with when the network is available.
+	 * The build compares it with the offline constant in `vocabulary.ts`.
 	 */
 	public async readDeclaredBBox(layer: string): Promise<[number, number, number, number]> {
 		return readOGCCollectionBBox(this, {
@@ -250,7 +201,7 @@ export class EANCERMClient extends APIClient<APIClientConfig> {
 }
 
 /**
- * Refuse an attribution the published record no longer matches.
+ * Throw when the live attribution statement differs from the one this build ships.
  *
  * @throws {Error} When the live statement differs from {@link NCERM_ATTRIBUTION}.
  */
@@ -264,7 +215,7 @@ export function assertAttributionUnchanged(live: string): void {
 }
 
 /**
- * Build an {@link EANCERMClient} with the disk cache and pacing this package's acquisition path expects.
+ * Build an {@link EANCERMClient} with a disk cache and request pacing.
  */
 export function createEANCERMClient(options: CreateCoastalClientOptions = {}): EANCERMClient {
 	return createPacedCachedClient(

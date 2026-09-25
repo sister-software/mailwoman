@@ -1,12 +1,11 @@
 # Earth: the geocoder map as a product at `earth.mailwoman.ai`
 
-**Status:** design approved 2026-09-06. Decisions the operator took: the word "demo" is retired, the app lives
-under `packages/`, the browser runtime moves into the packages that own it (no `@mailwoman/browser`), and
-Cloudflare Workers Builds builds and deploys the app. Shell landed in #2196, the runtime's package homes in #2203;
-the launch PR moves the runtime, the panels and the browser suite into the app and retires the docs page. The two
-dashboard steps are the Workers Builds project and the bucket's CORS rule for the workers.dev preview origin.
-Launch PR #2206 opened 2026-09-07; the Workers Builds project and the public bucket's CORS rule are the two dashboard
-steps the operator took.
+**Status:** design approved 2026-09-06. The operator decided that the word "demo" is retired, the app lives under
+`packages/`, the browser runtime moves into the packages that own it (without a `@mailwoman/browser` package), and
+Cloudflare Workers Builds builds and deploys the app. The shell landed in #2196 and the runtime's package homes in
+#2203. The launch PR moves the runtime, the panels and the browser suite into the app and retires the docs page.
+Launch PR #2206 opened 2026-09-07. The operator took the two dashboard steps: creating the Workers Builds project and
+adding the public bucket's CORS rule for the workers.dev preview origin.
 **Builds on:** `2026-09-06-browser-export-conditions-design.md` (the packages must bundle under Vite without
 aliases before this app can consume them).
 **Precedes:** `2026-09-06-planetary-app-design.md`, which copies this app's build and deployment shape.
@@ -19,26 +18,26 @@ The geocoder map at `mailwoman.ai/demo` is a browser application that happens to
 page and its runtime are 3,976 lines under `docs/src/pages/demo/` and `docs/src/shared/`, and they own the
 model loader, the httpvfs resolvers, the range-cache service worker, the version-pin constants that
 `mailwoman gazetteer publish` tells the operator to bump, and the runtime assembly in `_runtime.ts` (701
-lines). Ten packages and scripts name a docs file as their canonical twin. `docs/package.json` carries
+lines). Ten packages and scripts refer to a docs file as their canonical twin. `docs/package.json` carries
 `onnxruntime-web`, `maplibre-gl`, `react-map-gl` and twelve `@mailwoman/*` runtime packages, and
 `docs-build.yml` rebuilds and redeploys the whole site when any of nine packages change.
 
-The result is that documentation is the integration test surface for the browser geocoder, and every
-docs build problem (the disabled `rspack` bundler, the jiti loader rules, the `demo-assets` plugin) is
-a runtime problem wearing a docs costume.
+As a result, the documentation site is the integration test surface for the browser geocoder. Every docs
+build problem (the disabled `rspack` bundler, the jiti loader rules, the `demo-assets` plugin) is really a
+runtime problem that shows up in the docs build.
 
 ## Decisions taken
 
 **Earth is a product rather than a demo.** It ships at `earth.mailwoman.ai` beside `moon.mailwoman.ai` and
-`mars.mailwoman.ai`. Every identifier that says "demo" is renamed at the moment it moves, to a name
-that says what it is. "Fake runtime" stays as the test-fixture term in stories and tests.
+`mars.mailwoman.ai`. Every identifier that says "demo" is renamed when it moves, to a name that describes
+what it is. "Fake runtime" stays as the test-fixture term in stories and tests.
 
 **The app is a private workspace under `packages/`.** `packages/earth`, `@mailwoman/earth`,
 `private: true`, in `SANCTIONED_RELEASE_ABSENCES` with the reason "private Earth map app — Cloudflare
 infrastructure, never publishes". Every workspace lives under `packages/` except `docs/`, and an app is
 a workspace with a `wrangler.toml` rather than a new directory root.
 
-**The runtime moves to its owners.** No new runtime package. The table below is the move map.
+**The runtime moves to its owners.** The design adds no new runtime package. The table below is the move map.
 
 **Docusaurus keeps the components and loses the runtime.** Docs pages keep importing
 `@mailwoman/react` and rendering the explainers (`ModelVisualizer`, `PipelineExplorer`,
@@ -47,8 +46,8 @@ that bundles them, and the dependencies that exist only for them. Docs under web
 Vite are then two independent bundler readings of every package both consume.
 
 **Cloudflare builds it.** Workers Builds, connected to the repository, builds on push to `main` and
-deploys with `wrangler deploy`. No publish workflow, no API token in GitHub, no Worker script: the
-`wrangler.toml` declares `assets` and nothing else.
+deploys with `wrangler deploy`. The app needs no publish workflow, API token in GitHub, or Worker script,
+because the `wrangler.toml` declares `assets` and nothing else.
 
 **Done includes the removal.** The work is not finished while any of the geocoder page, its runtime
 modules, its plugin, its static assets, or its dependencies remain in `docs/`.
@@ -79,13 +78,13 @@ packages/earth/
     sqljs/              staged by the build from sql.js-httpvfs, as artifacts.ts does today
 ```
 
-`wrangler.toml` has no `main`, no `run_worker_first`, no routes other than the custom domain. Static
-Asset requests do not invoke a Worker.
+`wrangler.toml` has no `main`, no `run_worker_first`, and no routes other than the custom domain. Static
+asset requests do not invoke a Worker.
 
 ### Build and deployment
 
-Workers Builds configuration lives in the Cloudflare dashboard, so the spec records it here and the
-package README repeats it:
+Workers Builds configuration lives in the Cloudflare dashboard, so this spec records it and the package
+README repeats it:
 
 | Setting           | Value                                                                                                                                                                  |
 | ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -96,10 +95,10 @@ package README repeats it:
 | Watch paths       | `packages/earth/**`, `packages/react/**`, `packages/neural/**`, `packages/resolver-wof-wasm/**`, `packages/core/**`, `packages/cartographer/**`, `packages/spatial/**` |
 
 Yarn 4 locates the project root by walking up from the working directory, so `yarn install` from
-`packages/earth` installs the workspace graph (LIKELY; the first build proves it, and the fallback is a
-root directory of `.` with `yarn workspace @mailwoman/earth build`). The build never needs the
-`neural-weights-*` binaries: the app fetches model and gazetteer artifacts from `public.mailwoman.ai` at
-runtime, exactly as the docs page does.
+`packages/earth` likely installs the workspace graph. The first build will confirm it. The fallback is a
+root directory of `.` with `yarn workspace @mailwoman/earth build`. The build never needs the
+`neural-weights-*` binaries, because the app fetches model and gazetteer artifacts from
+`public.mailwoman.ai` at runtime, exactly as the docs page does.
 
 `build.json` is generated by the build with `app`, `revision` (`gitHead()` from `@mailwoman/core/git`),
 `buildTime` (`isoSeconds` from `@mailwoman/core/utils/time`), and the resource versions from
@@ -108,7 +107,7 @@ and one basemap tile.
 
 ### PWA
 
-`vite-plugin-pwa` in `injectManifest` mode. The service worker source is the range-cache worker moved
+The app uses `vite-plugin-pwa` in `injectManifest` mode. The service worker source is the range-cache worker moved
 from `docs/static/range-cache-sw.js` to `packages/earth/lib/service-worker.ts`, unchanged in behaviour
 (persistence of validated 64 KB range chunks keyed by URL and offset, torn-chunk integrity), with the
 app-shell precache manifest injected at build. Precache holds the shell, hashed JS/CSS, icons, the sqljs
@@ -129,14 +128,15 @@ Manifest identity:
 
 ### Routes
 
-Three routes, read from `location.pathname` with no router: `/` is the geocoder, `/debug` is the same
-page with the model visualizer open, `/trace` is the trace page that `docs/src/pages/trace.tsx` is today.
+The app has three routes, read from `location.pathname` without a router. `/` is the geocoder, `/debug` is
+the same page with the model visualizer open, and `/trace` is the trace page that `docs/src/pages/trace.tsx`
+is today.
 `?q=<address>` is preserved on all three. Cloudflare's SPA fallback serves `index.html` for each.
 
 ### The move map
 
-Every row moves in its own PR, with tests travelling and the rename applied in the same change. No
-compatibility re-export is left behind.
+Every row moves in its own PR, with its tests and its rename in the same change. The move leaves no
+compatibility re-export behind.
 
 | From (`docs/src/…`)                                                                                                                              | To                                                                                                                                         | Renamed to                                                               |
 | ------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------ |
@@ -157,12 +157,12 @@ compatibility re-export is left behind.
 | `pages/debug.tsx`, `pages/trace.tsx`                                                                                                             | the app's routes                                                                                                                           |                                                                          |
 | `plugins/demo-assets/`                                                                                                                           | deleted; asset staging becomes a Vite build step in the app                                                                                |                                                                          |
 
-The runtime assembly (`_runtime.ts`) stays application code: `@mailwoman/react` keeps its runtime hook
+The runtime assembly (`_runtime.ts`) stays application code. `@mailwoman/react` keeps its runtime hook
 free of the ONNX, httpvfs and maplibre graph by design, and the assembly imports all three. The loader
 lives in `mailwoman`, the one package that already depends on `neural` and `resolver-wof-wasm`, so the
-version pins `mailwoman gazetteer publish` bumps are package-local. The sql.js staging stays in docs:
-`PipelineExplorer` and `GuidedTour` resolve against the gazetteer, so the docs embed keeps the gazetteer
-half of the loader and the staged worker.
+version pins that `mailwoman gazetteer publish` bumps are local to that package. The sql.js staging stays
+in docs, because `PipelineExplorer` and `GuidedTour` resolve against the gazetteer. The docs embed
+therefore keeps the gazetteer half of the loader and the staged worker.
 
 Renames in `@mailwoman/react/map`, applied when `_runtime.ts` lands and the package's own tests are
 touched: `GeocoderDemo` to `Geocoder`, `DemoMap` to `MapCanvas`, `DemoControls` to `GeocoderControls`,
@@ -172,32 +172,32 @@ touched: `GeocoderDemo` to `Geocoder`, `DemoMap` to `MapCanvas`, `DemoControls` 
 
 ### Docs after the move
 
-- `docs/package.json` loses every dependency `knip` reports unused once the page and its runtime leave;
-  the list is measured at that point rather than predicted here. If an explainer needs one of the removed
-  packages, that explainer moves to the Earth app under `/debug`; a docs page links to it.
+- `docs/package.json` loses every dependency `knip` reports unused once the page and its runtime leave.
+  The list is measured at that point rather than predicted here. If an explainer needs one of the removed
+  packages, that explainer moves to the Earth app under `/debug`, and a docs page links to it.
 - `/demo`, `/debug` and `/trace` become redirects to `earth.mailwoman.ai` with the same path and query,
   through `@docusaurus/plugin-client-redirects` (not yet a docs dependency) or a static page with a
   `meta refresh` and a link, whichever preserves `?q=` in the docs build.
 - `docs-build.yml` watch paths shrink to `docs/**`, `packages/react/**`, `packages/core/**`,
   `packages/codex/**`.
 - The Vale scope and AGENTS.md lose their references to the geocoder page. AGENTS.md also drops the
-  stale `apps/web-demo/` line; that directory was removed on 2026-08-21.
+  stale `apps/web-demo/` line, because that directory was removed on 2026-08-21.
 
 ### Origins and CORS
 
 `packages/tile-worker/lib/cors.ts` gains `https://earth.mailwoman.ai`, `https://moon.mailwoman.ai` and
-`https://mars.mailwoman.ai`. `public.mailwoman.ai` is the R2 public origin and its CORS policy is
-verified for the new origin before launch; the check is a `curl` with an `Origin` header against
-`releases.json`, `wof-hot.db` (a `Range` request), and one model file, recorded in the launch PR.
-Range behaviour does not change: the browser talks to `public.mailwoman.ai` directly, and no Worker sits
+`https://mars.mailwoman.ai`. `public.mailwoman.ai` is the R2 public origin, and its CORS policy is
+verified for the new origin before launch. The check is a `curl` with an `Origin` header against
+`releases.json`, `wof-hot.db` (a `Range` request), and one model file, recorded in the launch PR. Range
+behavior does not change, because the browser talks to `public.mailwoman.ai` directly and no Worker sits
 in that path.
 
 ### Testing
 
 - `@mailwoman/react/map`: the fake-runtime component tests, stories and geometry tests stay. The
-  runtime hook gets a test with injected loaders, no network.
-- `@mailwoman/resolver-wof-wasm`: the moved httpvfs tests travel; the candidate-backend parity test
-  (browser versus `candidate-lookup.ts`) keeps its rows.
+  runtime hook gets a test with injected loaders and without network access.
+- `@mailwoman/resolver-wof-wasm`: the httpvfs tests move with their modules, and the candidate-backend
+  parity test (browser versus `candidate-lookup.ts`) keeps its rows.
 - `packages/earth`: route and query parsing, `build.json` shape, a Vite production build in CI, and a
   Playwright smoke over the fake runtime: shell loads, `Geocoder` renders, a fake query completes,
   `/debug` opens the visualizer, `?q=` survives.
@@ -215,7 +215,7 @@ in that path.
   the staged `docs/static/mailwoman/` assets, and the twelve dependencies above are gone from `docs/`.
   `grep -rn "docs/src/shared" packages` returns zero lines, and the twin comments in
   `resolver-wof-sqlite`, `spatial/polyline.ts`, `demo-cascade-smoke.ts`, `data/bundles.ts` and
-  `gazetteer/publish.tsx` name their package or app.
+  `gazetteer/publish.tsx` refer to their package or app.
 - No identifier exported from `@mailwoman/react`, `@mailwoman/neural` or `@mailwoman/resolver-wof-wasm`
   contains "demo", except the fake-runtime test fixtures.
 - The docs site builds with `rspackBundler` retried and the result recorded.
@@ -249,13 +249,15 @@ Receipts, one per bullet, as of the launch PR (`feat/earth-runtime-launch`):
 
 ## Out of scope
 
-Redesigning the geocoder's appearance, the resolver, or the model. A generated release manifest in place
-of `resources.ts` (the version pins move as constants first; the manifest is a follow-up). A Worker
-script of any kind. Any planetary data.
+- Redesigning the geocoder's appearance, the resolver, or the model.
+- A generated release manifest in place of `resources.ts`. The version pins move as constants first, and
+  the manifest is a follow-up.
+- A Worker script of any kind.
+- Any planetary data.
 
 ## Drift from the uploaded proposal
 
-Recorded so nobody re-reads the proposal as current.
+This table is recorded so nobody reads the proposal as current.
 
 | Proposal                                                    | Checkout at `c79757bdf`                                                                |
 | ----------------------------------------------------------- | -------------------------------------------------------------------------------------- |

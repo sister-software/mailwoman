@@ -3,26 +3,16 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Build the French rooftop address-point extract from BAN département CSV files using the shared
- *   address-point schema. Each valid row supplies its own number, street, postcode, locality, and
- *   coordinates, which are written directly to the database.
- *
- *   The `rep` suffix is appended to the house number (for example, `8 bis`). Street keys use the
- *   same French normalizer as the lookup tier.
- *
- *   The builder streams rows into a temporary database, creates indexes, analyzes, swaps the result
- *   into place, seals it as mode 0444, and records its checksum and provenance. It writes a separate
- *   BAN artifact and does not modify the OSM extract.
- *
- *   BAN uses the Licence Ouverte / Etalab 2.0, which requires attribution and has no share-alike
- *   clause. The extract uses `source = "ban:fr"`.
+ *   Builds the BAN rooftop address-point database from département CSV files. The output is a
+ *   separate sealed database, and the OSM extract is left unchanged. Street keys use the same
+ *   normalizer as the lookup side.
  *
  *   Examples:
  *     node packages/ban/lib/scripts/build/address-point-database.ts \
  *       --csv-dir $MAILWOMAN_DATA_ROOT/corpus/sources/ban --release 2026-05-18
- *     # validate on a few départements first:
+ *     # Build a few départements as a quick check.
  *     node packages/ban/lib/scripts/build/address-point-database.ts --depts 48,2A,05 --out /tmp/ban-sample.db
- *     # from an installed package, through the `./scripts/*` export:
+ *     # Run the script from an installed package.
  *     node node_modules/@mailwoman/ban/out/scripts/build/address-point-database.js --help
  */
 
@@ -88,10 +78,9 @@ async function parse(): Promise<BuildArgs> {
 }
 
 /**
- * Return département dumps keyed by code.
+ * Return département CSV paths keyed by département code.
  *
- * Skip aggregate files, prefer uncompressed CSVs, and optionally restrict the
- * result to selected départements.
+ * Aggregate files are skipped, and an uncompressed CSV wins over its gzipped copy.
  */
 async function departementFiles(csvDir: string, depts: string[] | null): Promise<Map<string, string>> {
 	const byDept = new Map<string, string>()
@@ -111,7 +100,6 @@ async function departementFiles(csvDir: string, depts: string[] | null): Promise
 		const path = `${csvDir}/${name}`
 		const existing = byDept.get(dept)
 
-		// Prefer the uncompressed file when both formats exist.
 		if (!existing || (existing.endsWith(".gz") && !name.endsWith(".gz"))) {
 			byDept.set(dept, path)
 		}
@@ -177,7 +165,7 @@ async function main(): Promise<void> {
 					number,
 					null,
 					rec.postcode,
-					// Normalize arrondissement names to their base city; other commune names are unchanged.
+					// Arrondissement names reduce to their base city.
 					rec.city ? stripArrondissement(normalizeLocalityForKey(rec.city)) : null,
 					rec.street,
 					rec.lat,
@@ -217,9 +205,8 @@ async function main(): Promise<void> {
 	const md5 = await md5File(args.output)
 	const bytes = (await statPath(args.output)).size
 
-	// Provenance manifest — additive, written at creation (house discipline).
-	// Only for a full national build (the fast --depts validation builds are transient
-	// and don't rewrite the record).
+	// Only a full build writes the attribution record.
+	// A `--depts` build is a throwaway check.
 	if (!args.depts) {
 		const attributionPath = banDatabasePath("ATTRIBUTION.json")
 

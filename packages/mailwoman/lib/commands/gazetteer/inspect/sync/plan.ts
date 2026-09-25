@@ -3,7 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Select WOF repositories before network or filesystem changes. Pure helpers keep selection and refusals testable.
+ *   Selects WOF repositories for a sync before any network or filesystem work. The helpers are pure so
+ *   tests can cover selection and rejection directly.
  */
 
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
@@ -23,18 +24,20 @@ export interface DiscoveredRepo {
 	name: string
 	url: string
 	/**
-	 * GitHub's packed size in KB; checkout size may be much larger.
+	 * GitHub's packed repository size in KB.
+	 * A checkout can be much larger.
 	 */
 	diskUsageKB?: number
 }
 
 /**
- * Match WOF repository names, excluding the owner directory itself.
+ * Matches WOF repository names.
  */
 const REPO_NAME_PATTERN = /^whosonfirst(?:-data)?-[a-z0-9-]+$/
 
 /**
- * Reject a repository name used as the destination directory.
+ * Throws when the destination directory's basename is a WOF repository name,
+ * which usually means the user meant `--repos`.
  */
 export function assertDestinationNotARepoName(destination: string): void {
 	const basename = destination.trim().replace(/\/+$/, "").split("/").pop() ?? ""
@@ -49,34 +52,41 @@ export function assertDestinationNotARepoName(destination: string): void {
 }
 
 /**
- * Map ISO-2 codes to admin and postalcode repositories.
+ * Maps comma-separated ISO 3166-1 alpha-2 codes to their admin and postalcode repository names.
  */
 export function countryRepoNames(raw: string | undefined): string[] {
 	return extractDelimited(raw).flatMap((code) => [wofRepoName("admin", code), wofRepoName("postalcode", code)])
 }
 
+/**
+ * Filters for {@link selectRepos}.
+ */
 export interface SelectReposOptions {
 	/**
-	 * Comma-separated repository allow-list.
+	 * Comma-separated repository names.
 	 */
 	repos?: string
 	/**
-	 * Comma-separated ISO-2 country codes.
+	 * Comma-separated ISO 3166-1 alpha-2 country codes.
 	 */
 	countries?: string
 	/**
-	 * Sync every repository in the organization.
+	 * Selects every repository when no other filter is set.
 	 */
 	all?: boolean
 }
 
+/**
+ * The selected repositories and their combined packed size.
+ */
 export interface RepoSelection {
 	selected: DiscoveredRepo[]
 	totalDiskUsageKB: number
 }
 
 /**
- * Find the discovered name with the longest shared prefix.
+ * Returns the discovered name with the longest shared prefix, or `null` when no name
+ * shares more than the common `whosonfirst-data-` prefix.
  */
 function nearestName(candidate: string, discovered: readonly DiscoveredRepo[]): string | null {
 	let best: string | null = null
@@ -95,7 +105,6 @@ function nearestName(candidate: string, discovered: readonly DiscoveredRepo[]): 
 		}
 	}
 
-	// Ignore the common prefix shared by every repository.
 	return bestShared > "whosonfirst-data-".length ? best : null
 }
 
@@ -104,18 +113,17 @@ function totalKB(entries: readonly DiscoveredRepo[]): number {
 }
 
 /**
- * Select discovered repositories or throw a descriptive error.
+ * Selects discovered repositories by name, country or `all`, and throws a descriptive
+ * error for an unknown name, an unknown country or a missing filter.
  */
 export function selectRepos(discovered: readonly DiscoveredRepo[], options: SelectReposOptions): RepoSelection {
 	const byName = new Map(discovered.map((entry) => [entry.name, entry]))
 	const wanted = new Set<string>()
 
-	// Reject unknown names instead of silently syncing an empty selection.
 	for (const name of extractDelimited(options.repos)) {
 		if (!byName.has(name)) {
 			const suggestion = nearestName(name, discovered)
 
-			// A country-name hint is more reliable than a near-spelling suggestion.
 			throw new CommandError(
 				`No repository named \`${name}\` in ${WOF_REPO_OWNER}.` +
 					(suggestion ? ` Did you mean \`${suggestion}\`?` : "") +
@@ -126,7 +134,8 @@ export function selectRepos(discovered: readonly DiscoveredRepo[], options: Sele
 		wanted.add(name)
 	}
 
-	// Include available admin and postalcode repositories; either may be absent.
+	// A country may lack its admin or its postalcode repository.
+	// It fails only when both are missing.
 	for (const code of extractDelimited(options.countries)) {
 		const candidates = countryRepoNames(code).filter((name) => byName.has(name))
 
@@ -154,7 +163,7 @@ export function selectRepos(discovered: readonly DiscoveredRepo[], options: Sele
 		return { selected: [...discovered], totalDiskUsageKB: totalKB(discovered) }
 	}
 
-	// Preserve GitHub's discovered order for stable plans.
+	// The selection keeps discovery order so that plans are stable.
 	const selected = discovered.filter((entry) => wanted.has(entry.name))
 
 	return { selected, totalDiskUsageKB: totalKB(selected) }

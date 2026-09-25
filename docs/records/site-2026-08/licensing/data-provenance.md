@@ -7,29 +7,19 @@ hide_footer: true
 
 # Data licensing & provenance
 
-The [code licensing](./index.md) pages cover the engine: AGPL or commercial. This page covers the
-**data**, where Mailwoman's gazetteer comes from, the license each source carries, and the one boundary
-that needs your attention before you ship anything OSM-derived.
+The [code licensing](./index.md) pages cover the engine, which is AGPL or commercial. This page covers the **data**: where Mailwoman's gazetteer comes from, the license each source carries, and the one boundary to check before you ship anything derived from OSM.
 
-In short: the core gazetteer is built entirely from permissive sources, so a resolved coordinate
-carries no copyleft. One optional precision tier (OpenStreetMap rooftop) is share-alike, and it is walled
-off from the core so its obligations never leak into the default product.
+The core gazetteer is built entirely from permissive sources, so a resolved coordinate carries no copyleft. One optional precision tier, OpenStreetMap rooftop, is share-alike. It is kept separate from the core so that its obligations never apply to the default product.
 
 :::caution[Legal sign-off: ☐ not cleared (as of 2026-06-30)]
 
-The OpenStreetMap precision tier is **built but not enabled** in any published artifact — not on npm rather than
-on R2 rather than in the demo. Turning it on is blocked on counsel reviewing the [questions
-below](#what-counsel-needs-to-confirm). When that review lands, flip this to **☑ cleared**, name the
-reviewing counsel, and date it.
+The OpenStreetMap precision tier is **built but not enabled** in any published artifact. It is not on npm, on R2, or in the demo. Enabling it is blocked until counsel reviews the [questions below](#what-counsel-needs-to-confirm). When that review is complete, change this banner to **☑ cleared**, name the reviewing counsel, and add the date.
 
 :::
 
 ## Where the data comes from
 
-Every source below is recorded with its license at the point it enters the pipeline. The authoritative
-catalog is [`address-data-sources.mdx`](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/address-data-sources.mdx); the legal notices ship as `THIRD_PARTY_NOTICES.md` in the source distribution, and each
-built data artifact carries its own `ATTRIBUTION.json` recording source, release, and license
-at build time.
+Each source below is recorded with its license at the point it enters the pipeline. The authoritative catalog is [`address-data-sources.mdx`](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/address-data-sources.mdx). The legal notices ship as `THIRD_PARTY_NOTICES.md` in the source distribution. Each built data artifact carries its own `ATTRIBUTION.json`, which records the source, release, and license at build time.
 
 | Source                 | License             | Obligation                                     | Role in Mailwoman                                                                |
 | ---------------------- | ------------------- | ---------------------------------------------- | -------------------------------------------------------------------------------- |
@@ -43,100 +33,58 @@ at build time.
 | libpostal dictionaries | MIT                 | attribution                                    | bundled normalization data (`core/data/`)                                        |
 | libaddressinput        | Apache-2.0          | attribution                                    | bundled format rules (`core/data/`)                                              |
 
-The deliberate design choice is in the first row: **WOF is the anchor and the eval key**, and supplemental
-data attaches as attributes on WOF-keyed entities, never as imported foreign-id records. That keeps the
-permissive license of the core intact even as coverage grows.
+The first row records the deliberate design choice. **WOF is the anchor and the eval key.** Supplemental data attaches as attributes on WOF-keyed entities and is never imported as records with foreign ids. This keeps the core's permissive license intact as coverage grows.
 
 ## The ODbL boundary
 
-OpenStreetMap is licensed under the [ODbL](https://opendatacommons.org/licenses/odbl/), which is share-alike
-**on a Derivative Database** but draws a line at what it calls a _Produced Work_. That line is the whole game
-for a geocoder, so it's worth stating precisely:
+OpenStreetMap is licensed under the [ODbL](https://opendatacommons.org/licenses/odbl/). The ODbL requires share-alike **on a Derivative Database** but treats what it calls a _Produced Work_ differently. For a geocoder, that distinction decides the obligations, so it needs a precise statement:
 
-- A **Derivative Database** is a database built from ODbL data; for Mailwoman, that's the OSM rooftop extract
-  (`address-points-<cc>-<slug>.db`). Redistributing one carries the full ODbL obligation: attribution,
-  share-alike, and keeping it open.
-- A **Produced Work** is something _algorithmically derived_ from the database that is not itself a database
-  — a rendered map, a report, or (the case that matters here) a single resolved coordinate handed back from
-  a lookup. ODbL does **not** impose share-alike on a Produced Work; it asks only for attribution.
+- A **Derivative Database** is a database built from ODbL data. For Mailwoman, that is the OSM rooftop extract (`address-points-<cc>-<slug>.db`). Redistributing one carries the full ODbL obligation: attribution, share-alike, and keeping it open.
+- A **Produced Work** is something _algorithmically derived_ from the database that is not itself a database. Examples are a rendered map, a report, or, in the case that matters here, a single resolved coordinate returned from a lookup. ODbL does **not** impose share-alike on a Produced Work and requires only attribution.
 
-So the working position, the one counsel needs to confirm, is that **serving a resolved coordinate is a
-Produced Work** (attribution, no copyleft), while **distributing the extract itself is a Derivative Database**
-(full ODbL). The architecture is built around that distinction holding.
+Our working position, which counsel needs to confirm, is that **serving a resolved coordinate is a Produced Work** (attribution without copyleft), while **distributing the extract itself is a Derivative Database** (full ODbL). The architecture assumes that this distinction holds.
 
 ## How the boundary is enforced
 
-The quarantine is structural rather than a runtime flag you could forget to set. Four mechanisms keep ODbL data
-from reaching the permissive core:
+The separation is built into the structure of the code and data, so it does not depend on a runtime flag that someone could forget to set. Four mechanisms keep ODbL data out of the permissive core:
 
-1. **Per-row provenance.** Every address point carries a `source` string
-   ([`address-point-schema.ts:41`](https://github.com/sister-software/mailwoman/blob/main/resolver-wof-sqlite/address-point-schema.ts)).
-   OSM points are stamped `openstreetmap:<cc>` ([`build-rooftop-extract.ts:88`](https://github.com/sister-software/mailwoman/blob/main/osm/scripts/build-rooftop-extract.ts));
-   permissive points are `overture:*` or `openaddresses`. License is attributable down to the row.
+1. **Per-row provenance.** Every address point carries a `source` string ([`address-point-schema.ts:41`](https://github.com/sister-software/mailwoman/blob/main/resolver-wof-sqlite/address-point-schema.ts)). OSM points are marked `openstreetmap:<cc>` ([`build-rooftop-extract.ts:88`](https://github.com/sister-software/mailwoman/blob/main/osm/scripts/build-rooftop-extract.ts)), and permissive points are `overture:*` or `openaddresses`. The license of every row can be identified.
 
-2. **The core never folds an OSM byte.** OSM points live in their own extracts beside the WOF-keyed
-   gazetteer, never merged into it. The `@mailwoman/osm` workspace is **code only**, so it contains no OSM
-   data and depending on it carries no obligation.
+2. **The core never includes OSM data.** OSM points live in their own extracts beside the WOF-keyed gazetteer and are never merged into it. The `@mailwoman/osm` workspace contains **only code** and no OSM data, so depending on it carries no obligation.
 
-3. **The tier is dark by default.** The cascade reaches the OSM extracts only through an _optional_ injected
-   dependency (`osmExtracts?` in [`geocode-core.ts:86`](https://github.com/sister-software/mailwoman/blob/main/mailwoman/geocode-core.ts)),
-   consulted only for a non-US parse with no US situs match. The default product never injects it, so the
-   tier does not exist unless a caller deliberately wires it in.
+3. **The tier is off by default.** The cascade reaches the OSM extracts only through an _optional_ injected dependency (`osmExtracts?` in [`geocode-core.ts:86`](https://github.com/sister-software/mailwoman/blob/main/mailwoman/geocode-core.ts)). It consults them only for a non-US parse without a US situs match. The default product never injects the dependency, so the tier is absent unless a caller deliberately adds it.
 
-4. **The corpus refuses share-alike.** Training data is filtered through
-   [`SHARE_ALIKE_PATTERN`](https://github.com/sister-software/mailwoman/blob/main/corpus/src/license.ts)
-   (`--exclude-share-alike`), so no ODbL row can land in a proprietary weight build. Where a source is
-   dual-licensed (France BAN), we elect the permissive option.
+4. **The corpus excludes share-alike data.** Training data is filtered through [`SHARE_ALIKE_PATTERN`](https://github.com/sister-software/mailwoman/blob/main/corpus/src/license.ts) (`--exclude-share-alike`), so no ODbL row can enter a proprietary weight build. Where a source is dual-licensed (France BAN), we elect the permissive option.
 
 ## Attribution: required, and not yet wired
 
-ODbL requires attribution wherever the data is used. For Mailwoman that means **"© OpenStreetMap
-contributors"** with an ODbL link, on:
+ODbL requires attribution wherever the data is used. For Mailwoman, that means **"© OpenStreetMap contributors"** with an ODbL link on:
 
 - any geocoding result that resolved through an OSM extract, and
-- the distribution of any extract itself (a `LICENSE` + attribution file alongside the `.db`).
+- the distribution of any extract itself, as a `LICENSE` and attribution file beside the `.db`.
 
-Three gaps stand between today and that being true. They are prerequisites for enabling the tier rather than
-afterthoughts:
+Three gaps remain before that is true. They must be closed before the tier is enabled:
 
-- The Nominatim-compatible `licence` string
-  ([`nominatim/index.ts:307`](https://github.com/sister-software/mailwoman/blob/main/nominatim/index.ts))
-  credits WOF, Overture, OpenAddresses, and TIGER — **it omits OpenStreetMap.** It needs an ODbL clause that
-  appears whenever an OSM-sourced result is returned.
-- The public `GeocodeResult`
-  ([`geocode-core.ts`](https://github.com/sister-software/mailwoman/blob/main/mailwoman/geocode-core.ts))
-  has **no field to carry per-result attribution** — the `source` reaches the resolver node metadata but is
-  dropped before the result is returned. Surfacing ODbL attribution per result requires adding that field
-  first.
-- `THIRD_PARTY_NOTICES.md` credits OSM only as reaching us _via WOF and Overture_ (development-time). When
-  first-party OSM extracts ship, it needs a new entry for the `@mailwoman/osm` distribution. We hold that edit
-  until the extracts ship — adding it sooner would document a distribution that isn't happening.
+- The Nominatim-compatible `licence` string ([`nominatim/index.ts:307`](https://github.com/sister-software/mailwoman/blob/main/nominatim/index.ts)) credits WOF, Overture, OpenAddresses, and TIGER, but **it omits OpenStreetMap.** It needs an ODbL clause that appears whenever a result comes from OSM.
+- The public `GeocodeResult` ([`geocode-core.ts`](https://github.com/sister-software/mailwoman/blob/main/mailwoman/geocode-core.ts)) has **no field for per-result attribution**. The `source` reaches the resolver node metadata but is dropped before the result is returned. That field must be added before ODbL attribution can appear on each result.
+- `THIRD_PARTY_NOTICES.md` credits OSM only as data that reaches us _via WOF and Overture_ (development-time). When first-party OSM extracts ship, it needs a new entry for the `@mailwoman/osm` distribution. We are holding that edit until the extracts ship, because adding it sooner would document a distribution that does not exist.
 
-(The note in [`osm/README.md`](https://github.com/sister-software/mailwoman/blob/main/osm/README.md) that
-"the resolver surfaces © OpenStreetMap contributors on any result that resolved through one" describes the
-target state rather than the current one. The `source` tag rides as far as the resolver node; it is not yet emitted
-to a user.)
+The note in [`osm/README.md`](https://github.com/sister-software/mailwoman/blob/main/osm/README.md) that "the resolver surfaces © OpenStreetMap contributors on any result that resolved through one" describes the target state. The current code has not reached it yet. The `source` tag reaches the resolver node but is not yet shown to users.
 
 ## What counsel needs to confirm
 
-The sign-off check is these questions:
+Sign-off requires answers to these questions:
 
-1. **Produced Work vs Derivative Database.** Does serving a single resolved coordinate from an OSM extract
-   constitute a Produced Work (attribution only), as assumed above — or a Derivative Database hand-off
-   (share-alike)? This determines whether API consumers inherit any obligation.
-2. **The opt-in-per-country distribution.** Each extract is a separately-downloaded, per-country artifact, and
-   the downloader takes the share-alike obligation only on the countries they pull. Does that distribution
-   model satisfy ODbL, and what attribution + license file must ship beside each `.db`?
-3. **The attribution surface.** Is "© OpenStreetMap contributors (ODbL)" on the result and in the extract
-   distribution sufficient, and where exactly must it appear (per-result, per-session, in the docs)?
+1. **Produced Work vs Derivative Database.** Does serving a single resolved coordinate from an OSM extract constitute a Produced Work (attribution only), as assumed above, or the hand-off of a Derivative Database (share-alike)? The answer determines whether API consumers inherit any obligation.
+2. **The opt-in-per-country distribution.** Each extract is a separately downloaded, per-country artifact, and the downloader takes on the share-alike obligation only for the countries they download. Does that distribution model satisfy ODbL, and what attribution and license file must ship beside each `.db`?
+3. **The attribution surface.** Is "© OpenStreetMap contributors (ODbL)" on the result and in the extract distribution sufficient, and where exactly must it appear (per result, per session, in the docs)?
 
-When these are answered, build the three attribution prerequisites above, flip the sign-off banner, and the
-tier can ship. Until then, the build and the local benchmark are fine to run; **publishing is blocked.**
+When these questions are answered, build the three attribution prerequisites above and update the sign-off banner. The tier can then ship. Until then, you can run the build and the local benchmark, but **publishing is blocked.**
 
 ## See also
 
-- [Database products catalog](./data-products.md) — the same sources seen from the artifact side: what each shipped or planned database contains, its tier, its version, and its size.
-- [`osm/README.md`](https://github.com/sister-software/mailwoman/blob/main/osm/README.md) — the OSM package, the extract builder, the boundary in package terms.
-- [`address-data-sources.mdx`](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/address-data-sources.mdx) — the full source catalog + the licensing gradient.
-- [`THIRD_PARTY_NOTICES.md`](https://github.com/sister-software/mailwoman/blob/main/THIRD_PARTY_NOTICES.md) — the formal notices shipped with the package.
-- [Open-source license](./open-source.md) · [Commercial license](./commercial.md) — the engine's terms.
+- [Database products catalog](./data-products.md): the same sources from the artifact side, including what each shipped or planned database contains, its tier, its version, and its size.
+- [`osm/README.md`](https://github.com/sister-software/mailwoman/blob/main/osm/README.md): the OSM package, the extract builder, and the boundary in package terms.
+- [`address-data-sources.mdx`](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/address-data-sources.mdx): the full source catalog and the range of source licenses.
+- [`THIRD_PARTY_NOTICES.md`](https://github.com/sister-software/mailwoman/blob/main/THIRD_PARTY_NOTICES.md): the formal notices shipped with the package.
+- [Open-source license](./open-source.md) · [Commercial license](./commercial.md): the engine's terms.

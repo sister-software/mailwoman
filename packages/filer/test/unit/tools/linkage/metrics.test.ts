@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Test pairwise grouping metrics without a database dependency.
+ *   Tests the pairwise grouping metrics.
  */
 
 import { groupPredicateFromMap, scorePairwiseGrouping } from "@mailwoman/filer/tools/linkage-metrics"
@@ -11,7 +11,6 @@ import { describe, expect, it } from "vitest"
 
 describe("scorePairwiseGrouping", () => {
 	it("scores a perfect prediction as precision/recall/F1 all 1", () => {
-		// Two truth groups; prediction matches them.
 		const truth = new Map([
 			["a", "g1"],
 			["b", "g1"],
@@ -43,7 +42,7 @@ describe("scorePairwiseGrouping", () => {
 			["c", "singleton:c"],
 		])
 
-		// Predict every ID as a singleton; no positive pairs.
+		// The prediction puts every ID in its own group.
 		const predicted = new Map([
 			["a", "p1"],
 			["b", "p2"],
@@ -57,19 +56,17 @@ describe("scorePairwiseGrouping", () => {
 		expect(score.truthPositivePairs).toBe(1) // {a,b}
 		expect(score.precision).toBeNull()
 		expect(score.recall).toBe(0)
-		// Undefined precision makes F1 undefined, not zero.
+		// F1 is null whenever precision is null.
 		expect(score.f1).toBeNull()
 	})
 
 	it("reports recall as null (not 0) when truth has zero positive pairs but the prediction merges records anyway", () => {
-		// Truth contains only singletons.
 		const truth = new Map([
 			["a", "singleton:a"],
 			["b", "singleton:b"],
 			["c", "singleton:c"],
 		])
 
-		// Prediction merges all three incorrectly.
 		const predicted = new Map([
 			["a", "p1"],
 			["b", "p1"],
@@ -82,13 +79,13 @@ describe("scorePairwiseGrouping", () => {
 		expect(score.falsePositivePairs).toBe(3) // {a,b}, {a,c}, {b,c}
 		expect(score.truthPositivePairs).toBe(0)
 		expect(score.predictedPositivePairs).toBe(3)
-		expect(score.precision).toBe(0) // defined (denominator > 0), just zero
+		expect(score.precision).toBe(0) // The denominator is positive, so precision is defined.
 		expect(score.recall).toBeNull()
 		expect(score.f1).toBeNull()
 	})
 
 	it("reports F1 as null (not 0) for a PERFECT prediction over an all-singleton truth — I2's worked example", () => {
-		// The prediction matches an all-singleton truth, but both positive-pair denominators are empty.
+		// Precision and recall both have zero denominators.
 		const truth = new Map([
 			["a", "singleton:a"],
 			["b", "singleton:b"],
@@ -107,7 +104,7 @@ describe("scorePairwiseGrouping", () => {
 	})
 
 	it("reports F1 as 0 (not null) when BOTH components are defined and nothing was recovered — a measured miss", () => {
-		// Truth and prediction each contain a different pair; both denominators are nonzero.
+		// Truth and prediction each have one pair, and the pairs differ.
 		const truth = new Map([
 			["a", "g1"],
 			["b", "g1"],
@@ -135,7 +132,7 @@ describe("scorePairwiseGrouping", () => {
 	})
 
 	it("computes a worked partial-overlap example by hand", () => {
-		// Truth groups a/b/c; d and e are singletons.
+		// Truth groups a, b and c. d and e are singletons.
 		const truth = new Map([
 			["a", "g1"],
 			["b", "g1"],
@@ -144,7 +141,7 @@ describe("scorePairwiseGrouping", () => {
 			["e", "singleton:e"],
 		])
 
-		// Prediction misses c and incorrectly merges d/e.
+		// The prediction leaves out c and wrongly merges d and e.
 		const predicted = new Map([
 			["a", "p1"],
 			["b", "p1"],
@@ -159,7 +156,6 @@ describe("scorePairwiseGrouping", () => {
 			groupPredicateFromMap(predicted)
 		)
 
-		// Expected: 3 truth pairs, 2 predicted pairs, 1 true positive, 1 false positive, 2 false negatives.
 		expect(score.truePositivePairs).toBe(1)
 		expect(score.falsePositivePairs).toBe(1)
 		expect(score.falseNegativePairs).toBe(2)

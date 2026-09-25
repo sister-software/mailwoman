@@ -40,8 +40,9 @@ function extractRegionAncestry(pc: DatabaseClient<WOFDatabase>, attrs: Map<numbe
  * Stages one postcode or locality extract's located `spr` rows and their `names`
  * aliases into the candidate table.
  *
- * When the extract names a row's region, it also writes that row's ancestor chain through
- * the region, so the stamped ancestors agree with the scope the row is found under.
+ * When `attrs` is given and the extract's `ancestors` table places a row in a known region,
+ * the row also gets that region's scope and the region's ancestor chain.
+ * The stored ancestors then agree with the row's scope.
  */
 export function foldExtract(ctx: {
 	out: DatabaseClient<CandidateDatabase>

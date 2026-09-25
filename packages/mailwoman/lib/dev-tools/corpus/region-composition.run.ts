@@ -3,28 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Which US regions the training mixture writes, per source (#2311).
- *
- *   The bare admin surface reads 100.0% in Vermont and 2.3% in Arkansas over a region-stratified panel, and a swap test
- *   places the cause in the region code and the postcode rather than the locality name. This reads the corpus the
- *   candidate trained on and reports where each source's US rows sit, so the claim "the mixture is thin on Arkansas"
- *   is a count rather than a guess.
- *
- *   A row's region is the text its `region` span covers, folded to a USPS code with `lookupUSState`, because the corpus
- *   writes `California`, `california` and `CA` as separate surfaces of one region. A US row with no `region` span is
- *   counted separately: it carries no region at all, so it is neither present nor absent for any code.
- *
- *   The aggregation runs inside DuckDB and only the grouped counts cross into JS. The train split is 681,901,687 rows
- *   over 718 parquet files and 40 GB, which the grouped query reads in 45,519 ms at six threads.
- *
- *   This measures the pool rather than the exposure. A training run draws from each source under `source_weights` and
- *   `source_reps` in its config, so a source's region spread bounds what the run can see and does not state it. Read
- *   this table beside the config's weights.
- *
- *   Run:
- *
- *       node packages/mailwoman/lib/dev-tools/corpus/region-composition.run.ts
- *       node packages/mailwoman/lib/dev-tools/corpus/region-composition.run.ts --corpus <dir> --out-json <path>
+ * Counts each corpus source's US rows by region, with `--corpus <dir>` and `--out-json <path>` as options.
  */
 
 import { US_STATE_ABBREVIATIONS, lookupUSState } from "@mailwoman/codex/us/state"
@@ -49,18 +28,15 @@ const { values } = parseArguments({
 		split: { type: "string", default: "train" },
 		"out-json": { type: "string" },
 		/**
-		 * Sources whose region spread is printed in full.
-		 *
-		 * The pooled table covers the rest.
+		 * Sets how many of the largest and of the smallest pooled regions the region table prints.
 		 */
 		detail: { type: "string", default: "12" },
 		"memory-limit": { type: "string", default: "8GB" },
 		threads: { type: "string", default: "8" },
 		/**
-		 * Read only the first N parquet files of the split.
+		 * Limits the run to the first N parquet files of the split.
 		 *
-		 * A truncated run reports a share of one corner of the corpus, so the header
-		 * names the count it read against the count the manifest holds.
+		 * The header prints the number of files read beside the number in the manifest.
 		 */
 		files: { type: "string" },
 	},
@@ -74,10 +50,14 @@ const { db, fileList } = await openMixture(mixture.files, {
 })
 
 /**
- * `span_starts` and `span_ends` are character offsets into `raw`, and `span_tags` is the
- * parallel tag list, so the region surface is the substring the `region` entry covers.
+ * Groups the US rows by source, region text and row shape inside DuckDB,
+ * so only grouped counts reach JavaScript.
  *
- * DuckDB's `list_position` is 1-based and answers NULL when the row carries no region span.
+ * The region text is the substring of `raw` that the `region` span covers.
+ * `list_position` is 1-based and returns NULL when the row has no region span.
+ *
+ * The counts describe the pool that a run draws from.
+ * A run weights sources by `source_weights` and `source_reps`, so read these counts beside the config.
  */
 const sql = `
 WITH us AS (
@@ -114,8 +94,12 @@ console.log(
 )
 
 /**
- * Per source: rows by folded region code, rows whose region text folds to no US code,
- * and rows with no region span.
+ * Holds one source's row counts by region code.
+ *
+ * `lookupUSState` folds region text such as `California` and `CA` to one code.
+ * `unfolded` counts region text that folds to no code.
+ *
+ * `noRegionSpan` counts rows without a region, which count toward no code.
  */
 interface SourceComposition {
 	source: string
@@ -127,14 +111,10 @@ interface SourceComposition {
 const bySource = new Map<string, SourceComposition>()
 
 /**
- * Per region: rows, how many carry a `street` span anywhere, and what tag opens the row.
+ * Holds per-region row counts, street-span counts and the tag each row opens with.
  *
- * The opening tag is the one the trace points at.
- * The bare admin surface writes the locality first, and a region whose rows open on a
- * street has shown the model a street in the position the probe puts a locality in.
- *
- * The unconditioned street share does not separate the regions — 47 of 50 sit between 89%
- * and 99.5% — because it counts a street anywhere in the row rather than in front.
+ * The opening tag matters because a bare admin query starts with the locality.
+ * A region whose rows open with a street has trained the model to expect a street in that position.
  */
 const streetShapes = new Map<
 	string,
@@ -143,11 +123,9 @@ const streetShapes = new Map<
 		withStreet: number
 		bareAdmin: number
 		/**
-		 * Rows writing the region as its two-letter code rather than its name,
-		 * and how many of those are the bare admin surface.
+		 * Counts rows that write the region as its two-letter code, and how many of those are bare admin rows.
 		 *
-		 * The model reads a surface: `Arkansas` and `AR` are one region to a counter and two strings
-		 * to it, so a count that folds them cannot say what the code token was seen in company with.
+		 * The model sees `Arkansas` and `AR` as different strings, so the code form gets its own count.
 		 */
 		codeForm: number
 		codeFormBare: number
@@ -221,10 +199,10 @@ function regionRows(entry: SourceComposition): number {
 }
 
 /**
- * The share of a source's region-containing rows held by its largest five regions.
+ * Returns the share of a source's region rows held by its five largest regions.
  *
- * A source that writes all 56 codes evenly reads near 5/56.
- * One that writes a corner of the country reads near 1.
+ * An even spread over all 56 codes gives about 5/56.
+ * A source concentrated in a few regions gives nearly 1.
  */
 function topFiveShare(entry: SourceComposition): number {
 	const counts = [...entry.byRegion.values()].toSorted((a, b) => b - a)

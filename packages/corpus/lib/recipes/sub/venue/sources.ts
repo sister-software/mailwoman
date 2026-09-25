@@ -22,14 +22,14 @@ import {
 } from "#tools"
 
 /**
- * Resolve the packaged lexicon path.
+ * Resolves the path of the packaged sub-venue lexicon.
  */
 export function defaultLexiconPath(): string {
 	return resolveModulePath("@mailwoman/corpus/data/sub-venue-lexicon.json")
 }
 
 /**
- * Read the lexicon; invalid JSON fails the build.
+ * Reads the sub-venue lexicon and throws on invalid JSON.
  */
 export async function readSubVenueLexicon(path: string = defaultLexiconPath()): Promise<SubVenueLexiconTable> {
 	return await readLocalJSONFile<SubVenueLexiconTable>(path)
@@ -42,7 +42,9 @@ const MIN_NAME_LENGTH = 4
 const MAX_ATTESTED_TOKENS = 4
 
 /**
- * Rejects a name that contains route punctuation, has no letters, or is a single lowercase code.
+ * Reports whether a name has a usable length, contains a letter, and lacks route punctuation.
+ *
+ * The check also rejects a single lowercase token, which is usually a code.
  */
 export function isCleanName(name: string): boolean {
 	if (name.length < MIN_NAME_LENGTH || name.length > MAX_VENUE_NAME_LENGTH) return false
@@ -123,7 +125,9 @@ const STREET_TAIL_WORDS: ReadonlySet<string> = new Set([
 const GERMAN_STREET_TAIL = /(?:straße|strasse|weg|platz|gasse|allee|ring|damm)$/
 
 /**
- * Check whether a name can fill the venue slot.
+ * Reports whether a clean name can fill the venue slot.
+ *
+ * The check rejects names that start with a street or stop word or end with a street type.
  */
 export function isVenueSlotName(name: string): boolean {
 	if (!isCleanName(name)) return false
@@ -138,7 +142,7 @@ export function isVenueSlotName(name: string): boolean {
 }
 
 /**
- * Locale-specific designator and surface, with its shape constraints.
+ * A designator phrase that may produce positives in one locale, with its shape constraints.
  */
 export interface PromotedSurface {
 	designatorID: string
@@ -153,14 +157,16 @@ export interface PromotedSurface {
 }
 
 /**
- * Title-case a single-token designator phrase for rendering.
+ * Uppercases the first character of a phrase.
  */
 export function titleCase(phrase: string): string {
 	return phrase.charAt(0).toUpperCase() + phrase.slice(1)
 }
 
 /**
- * Match phrases at word boundaries, avoiding cases such as `gate` in `Briggate`.
+ * Reports whether a lowercased name contains the phrase at word boundaries.
+ *
+ * The boundary check keeps `gate` from matching inside `Briggate`.
  */
 export function containsPhrase(lowerName: string, phrase: string): boolean {
 	let from = 0
@@ -189,9 +195,9 @@ const SIGN_IDENTIFIER_ATOM = /^(?:[0-9]{1,3}|[A-Za-z]|[A-Za-z][0-9]{1,3}|[0-9]{1
 
 /**
  * Reports whether a value is a short sign identifier, such as `12`, `B` or `A3`,
- * or a range of two joined by `-` or `/`.
+ * or a range of two identifiers joined by `-` or `/`.
  *
- * Shape classification alone accepts values this rejects, so callers check both.
+ * Shape classification alone accepts some values that this check rejects, so callers apply both.
  */
 export function isSignIdentifier(value: string): boolean {
 	const parts = value.split(/[/-]/)
@@ -205,7 +211,7 @@ export function isSignIdentifier(value: string): boolean {
  * Reports whether a lowercased name uses a promoted phrase as `<phrase> <identifier>`,
  * or as an English `<modifier> <phrase>` when the designator allows it.
  *
- * A bare mention of the phrase does not count, because it does not show the name is a sub-venue.
+ * A bare mention of the phrase returns `false` because it does not show that the name is a sub-venue.
  */
 export function hasPromotedShape(
 	lowerName: string,
@@ -231,7 +237,7 @@ export function hasPromotedShape(
 }
 
 /**
- * Match a promoted shape and enforce the maximum sub-venue token count.
+ * Applies {@link hasPromotedShape} to names of at most four tokens.
  */
 export function matchesPromotedShape(
 	lowerName: string,
@@ -245,8 +251,12 @@ export function matchesPromotedShape(
 }
 
 /**
- * Returns the `unit` designator surfaces eligible for a locale: shipped designators
- * for English plus the locale's promoted phrases, minus any rejected ones.
+ * Returns the designator surfaces that may produce `unit` positives in a locale.
+ *
+ * English locales get every shipped designator.
+ * Every locale gets its promoted phrases.
+ *
+ * The function removes any pair that the ledger rejects for the locale.
  */
 export function promotedSurfacesFor(
 	locale: string,
@@ -299,7 +309,7 @@ export function promotedSurfacesFor(
 }
 
 /**
- * Return phrases rejected for this locale.
+ * Returns the phrases that the promotion ledger rejects for a locale.
  */
 export function rejectedPhrasesFor(
 	locale: string,
@@ -315,7 +325,7 @@ interface ShapeBucket {
 }
 
 /**
- * Per-designator distributions and a pooled fallback for one region.
+ * One region's identifier shape distributions, per designator and pooled.
  */
 export interface IdentifierModel {
 	byDesignator: Map<string, ShapeBucket[]>
@@ -327,7 +337,9 @@ const POOLED_IDENTIFIER_DESIGNATORS: readonly string[] = ["gate", "terminal", "c
 const MIN_OWN_SHAPE_OBSERVATIONS = 20
 
 /**
- * Build a regional identifier model from the lexicon's `identifierShapes`.
+ * Builds a region's identifier model from the lexicon's `identifierShapes`.
+ *
+ * The pooled fallback combines the gate, terminal and campus distributions.
  */
 export function buildIdentifierModel(lexicon: SubVenueLexiconTable, region: string): IdentifierModel {
 	const byDesignator = new Map<string, ShapeBucket[]>()
@@ -358,8 +370,9 @@ export function buildIdentifierModel(lexicon: SubVenueLexiconTable, region: stri
 }
 
 /**
- * Samples an identifier for a designator, weighting shapes by observation count
- * and using the regional pool when the designator has too few observations of its own.
+ * Samples an identifier for a designator, weighting shapes by observation count.
+ *
+ * A designator with fewer than 20 observations of its own uses the pooled distribution.
  */
 export function sampleIdentifier(model: IdentifierModel, designatorID: string, random: () => number): string | null {
 	const own = model.byDesignator.get(designatorID) ?? []
@@ -374,7 +387,7 @@ export function sampleIdentifier(model: IdentifierModel, designatorID: string, r
 }
 
 /**
- * Source pools loaded once per recipe leg.
+ * The address context and name pools for one recipe leg.
  */
 export interface LegPools {
 	context: LocaleBaseTuple[]
@@ -385,36 +398,35 @@ export interface LegPools {
 	venues: string[]
 
 	/**
-	 * Extract names that contain a promoted surface in its required shape.
+	 * Extract names of at most four tokens that use a promoted phrase in its required shape.
 	 */
 	attested: string[]
 
 	/**
-	 * Venue names containing a locale-rejected phrase, used in negative venue rows.
+	 * Venue names that contain a phrase rejected for the locale.
 	 */
 	rejectedVenues: string[]
 
 	/**
-	 * Names with a designator inside a longer proper name, so the whole string is labeled `venue`, not `unit`.
+	 * Names that contain a designator inside a longer proper name, so the whole string is a `venue`.
 	 */
 	longerNames: string[]
 
 	/**
-	 * Venue names containing a promoted phrase without its required shape,
-	 * which teach the promotion boundary.
+	 * Venue names that contain a promoted phrase without its required shape.
 	 */
 	unpromotedShapes: string[]
 }
 
 /**
- * Holds the name pools one source contributes to a recipe leg.
+ * The name pools that one source contributes to a recipe leg.
  *
  * Only OSM extracts fill `attested` and `unpromotedShapes`, because POI data has no tier or localized names.
  */
 export type NamePools = Pick<LegPools, "venues" | "attested" | "rejectedVenues" | "longerNames" | "unpromotedShapes">
 
 /**
- * Empty pools for sources unavailable to a locale; keeping arrays present allows unconditional merging.
+ * Empty name pools for a source that a leg lacks.
  */
 export const EMPTY_NAME_POOLS: NamePools = {
 	venues: [],
@@ -425,7 +437,7 @@ export const EMPTY_NAME_POOLS: NamePools = {
 }
 
 /**
- * Locale-specific filters required by pool readers.
+ * The locale-specific filters that the pool readers apply.
  */
 export interface PoolQuery {
 	promoted: readonly PromotedSurface[]
@@ -440,7 +452,7 @@ function isLongerProperName(low: string, name: string, designatorPhrases: readon
 }
 
 /**
- * Read an OSM extract and classify names into source pools.
+ * Reads an OSM sub-venue extract and sorts its names into name pools.
  */
 export async function readExtractPools(path: string, query: PoolQuery): Promise<NamePools> {
 	const rows = await readSubVenueJSONL(path)
@@ -514,7 +526,7 @@ const POI_CONFOUND_CATEGORIES: readonly string[] = [
 /**
  * Reads the venue and confound name pools for one country from `poi.db`.
  *
- * `poi.db` covers few countries, so an empty result does not mean the names do not exist.
+ * The database covers only a few countries, so an empty result may reflect missing coverage.
  */
 export function readPOIPools(dbPath: PathBuilderLike, country: string, query: PoolQuery): NamePools {
 	using db = new DatabaseClient<POIDatabase>(dbPath, { readOnly: true })
@@ -571,7 +583,7 @@ export function readPOIPools(dbPath: PathBuilderLike, country: string, query: Po
 }
 
 /**
- * Combine two sources' name pools.
+ * Concatenates two sources' name pools.
  */
 export function mergeNamePools(a: NamePools, b: NamePools): NamePools {
 	return {

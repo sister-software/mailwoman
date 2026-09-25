@@ -3,28 +3,20 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Read the published file geodatabase as a stream of WGS84 features, through ogr2ogr.
+ *   Reads the EA flood geodatabase as a stream of WGS84 features through ogr2ogr.
  *
- *   OGR is build tooling, never A serve dependency (scope invariant 6). It converts the authority's
- *   geometry into the structure the runtime probes, and nothing downstream of this module knows gdal
- *   exists.
+ *   GDAL is build tooling only. Nothing downstream of this module depends on it.
  *
- *   the source is not IN WGS84 and saying SO is the check. `Flood_Zones_2_3_Rivers_and_Sea` is published
- *   in OSGB36 / British National Grid — metres, easting/northing, epsg:27700 — so a builder that read the
- *   coordinates as degrees would place every polygon in the Gulf of Guinea. The projection is asserted
- *   against the source's declared authority code before a single feature is read, and the reprojected
- *   stream is asserted against the collection's own declared bounding box, which is the check that
- *   catches a coordinate-order mistake the projection check cannot see.
+ *   The source is in British National Grid (EPSG:27700, metres). The ingest asserts the declared EPSG code
+ *   before reading any feature, and it checks every reprojected vertex against the collection's declared
+ *   bounding box. The bounding-box check catches a swapped axis order, which the EPSG check cannot see.
  *
- *   `OGR_GEOM_AREA` rides along AS the independent area witness. gdal computes it on the source geometry
- *   in the source's own metres, before reprojection and before this package has touched a ring — so
- *   comparing it against an area computed from the encoded rings is a two-path check on ring nesting and
- *   hole handling, which are otherwise silent when wrong. See `rings.ts`'s `ringAreaReadings`.
+ *   Each feature also carries `OGR_GEOM_AREA`, which GDAL computes in source metres before reprojection.
+ *   Comparing it with the area of the encoded rings checks ring nesting and hole handling. See
+ *   `ringAreaReadings` in `rings.ts`.
  *
- *   the datum shift needs A grid, and its absence is silent. OSGB36 to WGS84 is accurate to a metre only
- *   through the OSTN15 grid. without it proj substitutes a ballpark offset and produces coordinates that
- *   are metres wrong and indistinguishable from correct ones. The identity read refuses the build rather
- *   than letting the whole layer shift.
+ *   The OSGB36 to WGS84 shift is accurate only with the OSTN15 grid. Without the grid, proj silently uses
+ *   an approximate offset, so the identity read refuses the build instead.
  */
 
 import { declaredFeatureCount } from "@mailwoman/core/layers"
@@ -35,12 +27,6 @@ import { ogr2ogrGeoJSONSeq } from "@mailwoman/spatial/tools/ogr-stream"
 import { EA_DECLARED_BBOX, EA_FLOOD_LAYER, EA_SOURCE_EPSG } from "#vocabulary"
 
 /**
- * The ring types, and the proj guard, both re-exported from `@mailwoman/spatial`:
- * neither is flood-specific, and a second copy of the `projinfo` parse would be a
- * second place for the ballpark check to stop refusing.
- */
-
-/**
  * One source feature, reprojected to WGS84.
  */
 export interface FloodSourceFeature {
@@ -49,14 +35,14 @@ export interface FloodSourceFeature {
 	zoneSource: string | null
 	origin: string | null
 	/**
-	 * Gdal's own area of the source geometry, in square metres of the source projection.
+	 * GDAL's area of the source geometry, in square metres of the source projection.
 	 */
 	sourceAreaM2: number
 	polygons: MultiPolygonRings
 }
 
 /**
- * What the ingest was pointed at.
+ * Options for reading the flood geodatabase.
  */
 export interface FloodIngestOptions {
 	/**
@@ -64,65 +50,55 @@ export interface FloodIngestOptions {
 	 */
 	geodatabasePath: string
 	/**
-	 * Layer inside it.
-	 *
+	 * Layer to read.
 	 * Defaults to the EA's published layer name.
 	 */
 	layer?: string
 	/**
-	 * Stop after this many features.
-	 *
-	 * The fixtures and smoke rungs use it.
-	 * A full build does not set it.
+	 * Maximum number of features to read.
+	 * Fixture and smoke builds set it.
 	 */
 	limit?: number
 	/**
-	 * The epsg code the source must declare.
-	 *
-	 * A source declaring anything else is a product change rather than a variation to absorb.
+	 * The EPSG code the source must declare.
 	 */
 	expectEPSG?: number
 	/**
-	 * The extent every reprojected vertex must land inside.
-	 *
-	 * Defaults to the EA collection's own declaration.
+	 * The WGS84 extent that every reprojected vertex must fall inside.
+	 * Defaults to the EA collection's declared extent.
 	 */
 	declaredBBox?: readonly [number, number, number, number]
 	/**
-	 * Read only the authority's feature ids in `[objectIDFrom, objectIDTo]`, inclusive.
+	 * Reads only features whose `OBJECTID` lies in `[objectIDFrom, objectIDTo]`, inclusive.
 	 *
-	 * This is what makes a bounded build possible: the classification cannot run over the whole file in
-	 * one process (see `ingest-chunk.ts`), so the builder walks ranges of the authority's own ids.
-	 * Ranges rather than an offset because `objectid` is the source's stable key.
-	 *
-	 * A range names the same features on every run, which an offset into a result set does not.
+	 * The builder cannot classify the whole file in one process (see `ingest-chunk.ts`),
+	 * so it reads ranges of `OBJECTID`.
+	 * The ingest uses ID ranges instead of offsets because `OBJECTID` is the source's
+	 * stable key, so a range selects the same features on every run.
 	 */
 	objectIDFrom?: number
 	objectIDTo?: number
 }
 
 /**
- * Coordinate decimals ogr2ogr writes into the stream.
+ * Number of coordinate decimals that ogr2ogr writes.
  *
- * Nine is ~0.1 mm at this latitude — far past the source's own precision, and chosen
- * so the reprojection contributes nothing measurable to the area cross-check.
+ * Nine decimals is about 0.1 mm, so rounding adds nothing measurable to the area cross-check.
  */
 const COORDINATE_PRECISION = 9
 
 /**
- * How far outside the declared extent a vertex may fall before the ingest refuses.
+ * Tolerance in degrees outside the declared extent.
  *
- * A declared extent is itself a rounded published value, so an exact test would be brittle.
- * This margin is small enough that an unprojected or axis-swapped read —
- * which lands degrees or whole hemispheres away — still fails.
+ * The published extent is rounded, so an exact test would be brittle.
+ * An unprojected or axis-swapped read lands much farther away and still fails.
  */
 const BBOX_MARGIN_DEGREES = 0.01
 
 /**
- * What the source declares about itself: its authority code and its feature count,
- * read before any feature is.
+ * Reads the layer's declared EPSG code and feature count before any feature is read.
  *
- * @throws {Error} When the layer is missing, or its declared epsg is not `expectEPSG`.
+ * @throws {Error} When the layer is missing or its declared EPSG code differs from `expectEPSG`.
  */
 export async function readFloodSourceIdentity(
 	options: FloodIngestOptions
@@ -139,7 +115,7 @@ export async function readFloodSourceIdentity(
 }
 
 /**
- * The ingest's `select`, with the id range applied when one is asked for.
+ * Builds the ogr2ogr SQL query, including the optional `OBJECTID` range.
  */
 function floodSelectSQL(layer: string, options: FloodIngestOptions): string {
 	const select = `SELECT OBJECTID AS area_id, origin, flood_zone, flood_source, OGR_GEOM_AREA AS source_area_m2 FROM ${layer}`
@@ -168,14 +144,9 @@ interface RawFeature {
 }
 
 /**
- * Stream the layer as WGS84 features.
+ * Streams the layer as WGS84 features and checks each one against the declared extent.
  *
- * Every feature is checked against the declared extent as it passes.
- * A swapped coordinate order survives a projection check — both axes are still
- * numbers in a plausible range — and shows up here immediately, before 813,627
- * polygons are written to the wrong side of the planet.
- *
- * @throws {Error} When ogr2ogr fails, when a feature carries no geometry or no zone value,
+ * @throws {Error} When ogr2ogr fails, when a feature lacks geometry or a zone value,
  * or when a reprojected vertex falls outside the declared extent.
  */
 export async function* readFloodSourceFeatures(options: FloodIngestOptions): AsyncGenerator<FloodSourceFeature> {
@@ -202,9 +173,7 @@ export async function* readFloodSourceFeatures(options: FloodIngestOptions): Asy
 }
 
 /**
- * Validate one raw GeoJSON feature and narrow it.
- *
- * Split out so the generator body stays a loop.
+ * Validates one raw GeoJSON feature and converts it to a source feature.
  */
 function toSourceFeature(
 	raw: RawFeature,
@@ -235,33 +204,30 @@ function toSourceFeature(
 }
 
 /**
- * Where a build's features come from, and what the source declares about itself.
+ * A source of flood features together with the source's declared metadata.
  *
- * The builder takes one of these rather than a path, which is what makes the fixture rung possible:
- * hand-built geometry with no network and no gdal still exercises the whole database half —
- * the vocabulary check, the cell classification, the coverage rows, the manifest and the seal.
- * A fixture rung that could only run through ogr2ogr would test the conversion on the
- * machines that have it and nothing at all on the ones that do not.
+ * The builder accepts this interface instead of a path so that fixture builds can
+ * supply hand-built geometry without GDAL or network access.
  */
 export interface FloodFeatureSource {
 	/**
-	 * What the source says it holds.
-	 *
-	 * The build compares its own streamed total against this, so a short read throws
-	 * instead of building a smaller England.
+	 * The feature count the source declares.
+	 * The build throws when it streams a different total.
 	 */
 	declaredFeatureCount: number
 	layer: string
 	epsg: number
 	/**
-	 * A description of where these features came from, for the receipt.
+	 * A description of where the features came from, recorded in the build receipt.
 	 */
 	origin: string
 	features: () => AsyncIterable<FloodSourceFeature>
 }
 
 /**
- * The published geodatabase as a feature source — identity read up front, features streamed on demand.
+ * Creates a feature source for the published geodatabase.
+ *
+ * It reads the layer identity immediately and streams features on demand.
  */
 export async function createGeodatabaseFeatureSource(
 	options: FloodIngestOptions & { declaredFeatureCount?: number }
@@ -269,9 +235,8 @@ export async function createGeodatabaseFeatureSource(
 	const identity = await readFloodSourceIdentity(options)
 
 	return {
-		// A range's own count is supplied by the caller, because `ogrinfo` reports
-		// the layer's total and nothing narrower.
-		// The whole-file total is still checked: the builder sums what its chunks streamed and compares that.
+		// The caller supplies a range's count because `ogrinfo` reports only the layer total.
+		// The builder still checks the layer total against the sum of its chunks.
 		declaredFeatureCount: declaredFeatureCount({
 			declared: options.declaredFeatureCount,
 			limit: options.limit,

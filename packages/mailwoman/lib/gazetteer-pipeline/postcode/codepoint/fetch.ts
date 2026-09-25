@@ -2,6 +2,8 @@
  * @copyright Sister Software.
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
+ *
+ *   Downloads and verifies the Ordnance Survey Code-Point Open archive.
  */
 
 import { APIClient } from "@mailwoman/core/api"
@@ -12,32 +14,29 @@ import { prettyJSON } from "@mailwoman/core/json"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 
 /**
- * Points at the root of the OS Downloads API, which serves OpenData products without authentication.
+ * The root of the OS Downloads API, which serves OpenData products without authentication.
  */
 export const OS_DOWNLOADS_API_BASE = "https://api.os.uk/downloads/v1"
 
 /**
- * The OS Data Hub product id for Code-Point Open.
+ * The OS Data Hub product ID for Code-Point Open.
  */
 export const CODEPOINT_PRODUCT_ID = "CodePointOpen"
 
 /**
- * Names the licence Code-Point Open is published under.
- *
- * The spelling matches OS exactly, because the database `meta` table stores it verbatim.
+ * The licence Code-Point Open is published under, spelled exactly as OS spells it.
  */
 export const CODEPOINT_LICENSE = "Open Government Licence v3.0"
 
 /**
- * The OGL v3 deed.
+ * The URL of the OGL v3 licence text.
  */
 export const CODEPOINT_LICENSE_URL = "https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/"
 
 /**
- * Builds the attribution OS requires for redistributing Code-Point Open: one line
- * each for OS, Royal Mail and National Statistics, plus the OGL.
+ * Builds the attribution OS requires for redistributing Code-Point Open.
  *
- * `year` is the year of the redistribution rather than of the OS release.
+ * `year` is the year of redistribution, which can differ from the OS release year.
  */
 export function codePointAttribution(year: number): string {
 	return [
@@ -49,62 +48,62 @@ export function codePointAttribution(year: number): string {
 }
 
 /**
- * One downloadable file OS offers for a product, as the Downloads API reports it.
+ * One downloadable file for a product, as the Downloads API reports it.
  */
 export interface CodePointDownload {
 	/**
-	 * Holds the OS-published MD5 of the archive, which {@link downloadCodePointOpen}
-	 * verifies the downloaded bytes against.
+	 * The OS-published MD5 of the archive.
 	 */
 	md5: string
 
 	/**
-	 * Gives the archive size in bytes.
+	 * The archive size in bytes.
 	 */
 	size: number
 
 	/**
-	 * Gives the download URL, which redirects to a CDN object.
+	 * The download URL, which redirects to a CDN object.
 	 */
 	url: string
 
 	/**
-	 * Names the archive format, such as `CSV` or `GeoPackage`.
+	 * The archive format, such as `CSV` or `GeoPackage`.
 	 */
 	format: string
 
 	/**
-	 * Names the coverage area; Code-Point Open publishes only `GB`, which excludes
-	 * Northern Ireland (see {@link CODEPOINT_COVERAGE_NOTE}).
+	 * The coverage area.
+	 *
+	 * Code-Point Open publishes only `GB`, which excludes Northern Ireland.
 	 */
 	area: string
 
 	/**
-	 * Gives the archive file name, such as `codepo_gb.zip`.
+	 * The archive file name, such as `codepo_gb.zip`.
 	 */
 	fileName: string
 }
 
 /**
- * The product record, for the version stamp that goes into the database's provenance.
+ * The Downloads API product record.
  */
 export interface CodePointProduct {
 	id: string
 	name: string
 
 	/**
-	 * Gives the OS release label, such as `2026-05`, which differs from the dataset
-	 * version in the archive's `Doc/metadata.txt`.
+	 * The OS release label, such as `2026-05`.
+	 *
+	 * It differs from the dataset version in the archive's `Doc/metadata.txt`.
 	 */
 	version: string
 }
 
 /**
- * States that Code-Point Open covers England, Scotland and Wales only,
- * not Northern Ireland, the Isle of Man or the Channel Islands.
+ * A note stating that Code-Point Open covers England, Scotland, and Wales only.
  *
- * The missing `BT` postcodes are a licensing gap, so they must be reported
- * rather than filled from another source.
+ * The missing `BT` postcodes are a licensing gap.
+ * Reports must state the gap instead of filling it from another source.
  */
 export const CODEPOINT_COVERAGE_NOTE =
 	"Code-Point Open covers England, Scotland and Wales only (country codes E92000001/S92000003/W92000004). " +
@@ -113,11 +112,10 @@ export const CODEPOINT_COVERAGE_NOTE =
 	"See NORTHERN_IRELAND_OPTIONS_NOTE for why the gap cannot be filled from a free source."
 
 /**
- * Explains why Northern Ireland postcode centroids cannot be filled from a
- * free source, and which options remain.
+ * A note explaining why no free source can fill Northern Ireland postcode centroids,
+ * and which options remain.
  *
- * ONSPD and NSPL exclude their `BT` coordinates from the OGL, so this published
- * database must keep its `BT` gap.
+ * ONSPD and NSPL exclude their `BT` coordinates from the OGL, so this published database keeps its `BT` gap.
  */
 export const NORTHERN_IRELAND_OPTIONS_NOTE =
 	"Northern Ireland (BT) postcode centroids CANNOT be filled from a free source. ONSPD/NSPL carry BT coordinates " +
@@ -137,7 +135,7 @@ export const NORTHERN_IRELAND_OPTIONS_NOTE =
 	"counts 50,032 live NI postcodes."
 
 /**
- * Create a paced API client with bounded retries for metadata requests.
+ * Creates a paced OS Downloads API client with bounded retries.
  */
 export function createOSDownloadsClient(): APIClient {
 	return new APIClient({
@@ -149,7 +147,7 @@ export function createOSDownloadsClient(): APIClient {
 }
 
 /**
- * Read the product record (for its `version` stamp).
+ * Fetches the Code-Point Open product record, which carries the release `version`.
  */
 export async function fetchCodePointProduct(client: APIClient = createOSDownloadsClient()): Promise<CodePointProduct> {
 	const { data } = await client.fetch<CodePointProduct>({ url: `/products/${CODEPOINT_PRODUCT_ID}`, method: "GET" })
@@ -172,66 +170,65 @@ export async function fetchCodePointDownloads(
 }
 
 /**
- * Configures {@link downloadCodePointOpen}.
- *
- * By default it fetches the CSV archive and reuses an existing file whose MD5
- * already matches the published one.
+ * Options for {@link downloadCodePointOpen}.
  */
 export interface DownloadCodePointOptions {
 	/**
-	 * Names the directory that receives the archive, its `.md5` sidecar and `acquisition.json`.
+	 * The directory for the archive, its `.md5` sidecar, and `acquisition.json`.
 	 *
-	 * A later download into the same directory overwrites them, so use a new
-	 * directory per acquisition to keep earlier ones.
+	 * A later download into the same directory overwrites these files.
+	 * Use a new directory per acquisition to keep earlier ones.
 	 */
 	destDir: PathBuilderLike
 
 	/**
-	 * Selects the archive format, defaulting to `CSV`, the only format the database builder parses.
+	 * The archive format.
+	 *
+	 * Defaults to `CSV`, the only format the database builder parses.
 	 */
 	format?: "CSV" | "GeoPackage"
 
 	/**
-	 * Supplies an existing client to reuse, including its request pacing.
+	 * An existing client to reuse, including its request pacing.
 	 */
 	client?: APIClient
 
 	/**
-	 * Skip the download when the destination file already matches the upstream MD5; defaults to `true`.
+	 * Whether to skip the download when the existing file already matches the upstream MD5.
+	 * Defaults to `true`.
 	 */
 	reuseExisting?: boolean
 	onPhase?: (phase: string, detail?: string) => void
 }
 
 /**
- * Describes the archive that {@link downloadCodePointOpen} downloaded or reused,
- * with its verified MD5 and the product version.
+ * The archive that {@link downloadCodePointOpen} downloaded or reused.
  */
 export interface DownloadCodePointResult {
 	archivePath: PathBuilder
 
 	/**
-	 * Gives the archive size in bytes.
+	 * The archive size in bytes.
 	 */
 	bytes: number
 
 	/**
-	 * Holds the MD5 of the archive on disk, already verified equal to {@link CodePointDownload.md5}.
+	 * The MD5 of the archive on disk, which matches {@link CodePointDownload.md5}.
 	 */
 	md5: string
 
 	/**
-	 * Gives the product's OS release label at acquisition time.
+	 * The product's OS release label at acquisition time.
 	 */
 	version: string
 
 	/**
-	 * Holds the Downloads API record the archive came from.
+	 * The Downloads API record for the archive.
 	 */
 	download: CodePointDownload
 
 	/**
-	 * Is true when the archive on disk already matched, so nothing was downloaded.
+	 * True when the existing archive already matched and nothing was downloaded.
 	 */
 	reused: boolean
 }
@@ -239,7 +236,8 @@ export interface DownloadCodePointResult {
 /**
  * Downloads a Code-Point Open archive into `destDir` and verifies its MD5 against the Downloads API record.
  *
- * The function also writes an `.md5` sidecar and an `acquisition.json` provenance file beside the archive.
+ * It also writes an `.md5` sidecar and an `acquisition.json` provenance file beside the archive.
+ * A reused archive gets neither file rewritten.
  */
 export async function downloadCodePointOpen(options: DownloadCodePointOptions): Promise<DownloadCodePointResult> {
 	const { format = "CSV", reuseExisting = true } = options

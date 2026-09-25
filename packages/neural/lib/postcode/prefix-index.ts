@@ -18,8 +18,9 @@ const MAX_U8_LEN = 255
 const MAX_EXACT_WOF_ID = Number.MAX_SAFE_INTEGER
 
 /**
- * One admin place that a postcode prefix asserts, stored once in the file's
- * ancestor dictionary and referenced by index.
+ * One administrative place that a postcode prefix lies within.
+ *
+ * The file stores each ancestor once in a dictionary, and nodes reference it by index.
  */
 export interface PostcodePrefixAncestor {
 	/**
@@ -28,48 +29,50 @@ export interface PostcodePrefixAncestor {
 	placetype: string
 
 	/**
-	 * The Who's On First id that a consumer joins against the gazetteer.
+	 * The Who's On First id, which consumers join against the gazetteer.
 	 */
 	wofID: number
 
 	/**
-	 * The display name, carried so a trace is readable without a gazetteer lookup.
+	 * The display name, which keeps a trace readable without a gazetteer lookup.
 	 */
 	name: string
 }
 
 /**
- * One prefix and everything it asserts.
+ * One postcode prefix with its ancestry, centroid and unit count.
  */
 export interface PostcodePrefixNode {
 	/**
-	 * The prefix with every non-alphanumeric character stripped and letters uppercased,
+	 * The prefix with non-alphanumeric characters removed and letters uppercased,
 	 * such as `"941"`, `"SW1A"` or `"BT9"`.
 	 */
 	prefix: string
 
 	/**
-	 * The admin ancestry the prefix asserts, coarsest first.
+	 * The administrative ancestry of the prefix, coarsest first.
 	 *
-	 * An empty list is a valid answer, as for a GB outward code in a cross-border
-	 * postcode area that asserts only the country.
+	 * The list may be empty, as for a GB outward code in a postcode area that crosses a border.
 	 */
 	ancestors: readonly PostcodePrefixAncestor[]
 
 	/**
-	 * The centroid latitude, absent together with {@link PostcodePrefixNode.lon} for an ancestry-only node.
+	 * The centroid latitude.
+	 *
+	 * It and {@link PostcodePrefixNode.lon} are both absent for an ancestry-only node.
 	 */
 	lat?: number
 	lon?: number
 
 	/**
-	 * The measured 95th-percentile distance in km from the centroid to the units under this prefix.
-	 * It is present exactly when a coordinate is present.
+	 * The 95th-percentile distance in km from the centroid to the units under this prefix.
+	 *
+	 * It is present if and only if a coordinate is present.
 	 */
 	radiusP95Km?: number
 
 	/**
-	 * The number of units observed under this prefix at build time, which is not a count of units that exist.
+	 * The number of units observed under this prefix at build time.
 	 */
 	unitCount: number
 }
@@ -77,13 +80,12 @@ export interface PostcodePrefixNode {
 /**
  * The licensing tier of the index's source, as defined in `docs/engineering/reference/layer-interface.mdx`.
  *
- * It travels in the header so a share-alike (ODbL) obligation stays attached to the artifact.
+ * The header stores the tier so that a share-alike (ODbL) obligation stays with the artifact.
  */
 export type PostcodePrefixTier = "shipped" | "build-local"
 
 /**
- * The JSON header of a PFX1 postcode-prefix index, recording its country,
- * prefix levels, source provenance, tier and attribution.
+ * The JSON header of a PFX1 postcode-prefix index.
  */
 export interface PostcodePrefixHeader {
 	/**
@@ -95,7 +97,7 @@ export interface PostcodePrefixHeader {
 	 * The sub-national scope slug and filename suffix, such as `"gb-esw"` for
 	 * Code-Point Open or `"gb-ni"` for the BT districts.
 	 *
-	 * It separates files that share a country but come from registers with different licences and coverage.
+	 * It separates files for one country that come from registers with different licences and coverage.
 	 */
 	scope: string
 	schemaVersion: 1
@@ -107,15 +109,15 @@ export interface PostcodePrefixHeader {
 	levels: readonly string[]
 
 	/**
-	 * The numbering authority the prefixes came from, not the gazetteer they were joined to.
+	 * The numbering authority that issued the prefixes.
 	 *
-	 * Deriving prefixes from gazetteer parents would inherit ZIPs whose parent state
-	 * is the mail processor's rather than the code's.
+	 * Prefixes come from the authority because gazetteer parents can place a
+	 * ZIP in its mail processor's state.
 	 */
 	source: string
 
 	/**
-	 * The MD5 checksums of the source artifacts, for provenance.
+	 * The MD5 checksums of the source artifacts.
 	 */
 	sourceMD5s: string[]
 
@@ -130,22 +132,21 @@ export interface PostcodePrefixHeader {
 	tier: PostcodePrefixTier
 
 	/**
-	 * The source licence attribution, carried so a copied artifact still names its terms.
+	 * The source licence attribution, which stays with any copy of the artifact.
 	 */
 	attribution: string
 
 	/**
-	 * States what a missing prefix means for this file.
+	 * What a missing prefix means for this file.
 	 *
-	 * A miss in a complete register means the prefix does not exist, while a miss
-	 * in a partial one may only mean it is unattested.
+	 * A miss in a complete register means the prefix does not exist.
+	 * A miss in a partial register may mean only that the prefix was not observed.
 	 */
 	coverageNote: string
 
 	/**
-	 * The soft-prior bias magnitude, absent until calibration measures one
-	 * so that an uncalibrated bias cannot reach the decoder.
-	 * No consumer reads it yet.
+	 * The emission bias magnitude, which stays absent until calibration measures a value.
+	 * No consumer reads it.
 	 */
 	delta?: number
 }
@@ -155,11 +156,12 @@ function ancestorKey(a: PostcodePrefixAncestor): string {
 }
 
 /**
- * Serializes a postcode-prefix index to PFX1 bytes, requiring every coordinate to carry
- * `radiusP95Km` so a coarse centroid never reads as a precise point.
+ * Serializes a postcode-prefix index to PFX1 bytes.
  *
- * @throws On a duplicate prefix, a coordinate without its radius or the reverse,
- * or a value too large for the format.
+ * Every coordinate must have a `radiusP95Km` so that a coarse centroid is never read as a precise point.
+ *
+ * @throws On a duplicate prefix, a coordinate without a radius or a radius without
+ * a coordinate, or a value too large for the format.
  */
 export function serializePostcodePrefixIndex(
 	header: PostcodePrefixHeader,
@@ -336,8 +338,9 @@ export function serializePostcodePrefixIndex(
 }
 
 /**
- * The part of {@link PostcodePrefixIndexResolver} that consumers read, so `@mailwoman/resolver`
- * can use a prefix index without depending on `@mailwoman/neural`.
+ * The part of {@link PostcodePrefixIndexResolver} that consumers read.
+ *
+ * It lets `@mailwoman/resolver` use a prefix index without depending on `@mailwoman/neural`.
  */
 export interface PostcodePrefixIndexLike {
 	probe(prefix: string): PostcodePrefixNode | null
@@ -345,8 +348,9 @@ export interface PostcodePrefixIndexLike {
 }
 
 /**
- * Reads PFX1 bytes into an in-memory prefix map, using no Node APIs
- * so the browser runtime can load the same artifact.
+ * Reads PFX1 bytes into an in-memory prefix map.
+ *
+ * The resolver uses no Node APIs, so the browser runtime can load the same artifact.
  */
 export class PostcodePrefixIndexResolver implements PostcodePrefixIndexLike {
 	readonly header: PostcodePrefixHeader
@@ -430,22 +434,23 @@ export class PostcodePrefixIndexResolver implements PostcodePrefixIndexLike {
 	}
 
 	/**
-	 * The header's country code, so a load site can reject an index built for a different locale.
+	 * The header's country code, which a load site uses to reject an index built for another country.
 	 */
 	get country(): string {
 		return this.header.country
 	}
 
 	/**
-	 * Iterates every node in the file's prefix-sorted order; runtime lookups should
-	 * use {@link PostcodePrefixIndexResolver.probe}.
+	 * Iterates every node in the file's prefix-sorted order.
+	 *
+	 * Runtime lookups should use {@link PostcodePrefixIndexResolver.probe}.
 	 */
 	nodes(): IterableIterator<PostcodePrefixNode> {
 		return this.#nodes.values()
 	}
 
 	/**
-	 * Looks up one prefix, returning `null` when the index has no node for it.
+	 * Returns the node for one prefix, or `null` when the index has none.
 	 *
 	 * A miss is neutral unless the header's `coverageNote` says the register is complete.
 	 */

@@ -36,5 +36,5 @@ interpolation (#483) exists for — and this extract is its gold standard.
   scope (#378's two-tier split).
 
 Next: DE/FR extracts need the analogous Overture pulls (street/number fill ≈100% in both);
-US rollout = build the state list + a extract-routing wrapper (state → db path) behind the
+US rollout = build the state list + an extract-routing wrapper (state → db path) behind the
 same interface.

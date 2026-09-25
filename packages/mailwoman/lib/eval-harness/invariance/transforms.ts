@@ -3,33 +3,28 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Define pure input perturbations for the invariance mini-suite.
- *   Transform classes follow metamorphic-testing literature, not project-specific failures.
- *   `apply` returns `null` when a transform does not apply.
+ *   Input perturbations for the invariance mini-suite, drawn from the metamorphic-testing literature.
  */
 
 /**
- * A named perturbation with its literature reference and pure transform.
+ * Named perturbation with its literature citation.
  */
 export interface Transform {
 	id: string
 	label: string
 	/**
-	 * One-line citation grounding the class in the metamorphic-testing / NLP-robustness literature.
+	 * One-line citation for the perturbation class.
 	 */
 	literatureAnchor: string
 	/**
-	 * Returns the perturbed string, or `null` when the class doesn't apply to this input.
+	 * Returns the perturbed string, or `null` when the perturbation does not apply to the input.
 	 */
 	apply: (raw: string) => string | null
 }
 
-// #region comma-drop
-
 /**
- * Remove every comma.
- *
- * Applicable only when the input carries at least one.
+ * Removes every comma and collapses whitespace.
+ * It returns `null` when the input has no comma.
  */
 function commaDrop(raw: string): string | null {
 	if (!raw.includes(",")) return null
@@ -37,13 +32,10 @@ function commaDrop(raw: string): string | null {
 	return raw.replaceAll(",", "").replaceAll(/\s+/g, " ").trim()
 }
 
-// #endregion
-
-// #region abbreviation-swap
-
 /**
- * Narrow English street-suffix table, independent of the gauntlet's abbreviation source.
- * French and German street types are out of scope.
+ * English street-suffix abbreviations.
+ *
+ * The table is separate from the gauntlet's abbreviation source and omits French and German street types.
  */
 const LONG_TO_SHORT = new Map([
 	["avenue", "Ave"],
@@ -58,27 +50,31 @@ const SHORT_TO_LONG = new Map([
 ])
 
 /**
- * Suffix words excluded by the Saint-prefix look-ahead.
+ * Street-suffix words.
+ * A following word from this set means `st` is a suffix.
  */
 const STREET_SUFFIX_WORDS = new Set(["avenue", "ave", "street", "st", "road", "rd"])
 
 /**
- * Unit and floor markers excluded from Saint-prefix detection.
+ * Unit and floor markers.
+ * A following word from this set means `st` is a suffix.
  */
 const SECONDARY_DESIGNATOR_WORDS = new Set(["apt", "ste", "suite", "unit", "fl", "floor", "bldg", "rm", "room"])
 
 /**
- * Treat `st` as a Saint prefix when it is followed by a capitalized, non-suffix,
- * non-unit token and has no trailing punctuation.
+ * Reports whether the `st` token at index `i` is a Saint prefix.
  *
- * This heuristic may skip some genuine street suffixes, preferring that to corrupting place names.
+ * It is one when it has no trailing punctuation and the next word is capitalized
+ * and is neither a street suffix nor a unit marker.
+ *
+ * The heuristic can skip a real suffix, which is safer than rewriting a place name such as `St Louis`.
  */
 function isSaintPrefixFollower(tokens: string[], i: number): boolean {
 	const ownBare = tokens[i]!.replace(/[.,]+$/, "")
 	const ownTrail = tokens[i]!.slice(ownBare.length)
 
 	if (ownTrail) {
-		return false // phrase-final "St," — a suffix closing a phrase, never a Saint-prefix.
+		return false
 	}
 
 	for (let j = i + 1; j < tokens.length; j++) {
@@ -97,7 +93,8 @@ function isSaintPrefixFollower(tokens: string[], i: number): boolean {
 }
 
 /**
- * Swap the first supported suffix, skipping tokens identified as Saint prefixes.
+ * Swaps the first supported suffix between its long and short forms, skipping Saint prefixes.
+ * It returns `null` when the input has no supported suffix.
  */
 function abbreviationSwap(raw: string): string | null {
 	const tokens = raw.split(/(\s+)/)
@@ -107,7 +104,7 @@ function abbreviationSwap(raw: string): string | null {
 		const trail = tokens[i]!.slice(bare.length)
 		const lower = bare.toLowerCase()
 
-		if (lower === "st" && isSaintPrefixFollower(tokens, i)) continue // Saint-prefix guard — see doc comment above.
+		if (lower === "st" && isSaintPrefixFollower(tokens, i)) continue
 
 		const long = LONG_TO_SHORT.get(lower)
 		const short = SHORT_TO_LONG.get(lower)
@@ -125,9 +122,7 @@ function abbreviationSwap(raw: string): string | null {
 }
 
 /**
- * Expand supported abbreviations before comparing component values.
- *
- * This removes expected spelling changes while preserving span differences.
+ * Expands every supported abbreviation so that an abbreviation swap does not register as a component change.
  */
 export function canonicalizeAbbreviations(value: string): string {
 	return value
@@ -142,34 +137,23 @@ export function canonicalizeAbbreviations(value: string): string {
 		.join("")
 }
 
-// #endregion
-
-// #region case-fold (ALL-CAPS) / lowercase
-
 /**
- * All-caps the input.
- *
- * Always applicable — every string has a casing.
+ * Uppercases the input.
  */
 function caseFold(raw: string): string | null {
 	return raw.toUpperCase()
 }
 
 /**
- * All-lowercase the input.
- *
- * Always applicable.
+ * Lowercases the input.
  */
 function lowercase(raw: string): string | null {
 	return raw.toLowerCase()
 }
 
-// #endregion
-
-// #region whitespace-jitter
-
 /**
- * Double literal spaces; return `null` when none are present.
+ * Doubles every space.
+ * It returns `null` when the input has no space.
  */
 function whitespaceJitter(raw: string): string | null {
 	if (!raw.includes(" ")) return null
@@ -177,54 +161,37 @@ function whitespaceJitter(raw: string): string | null {
 	return raw.replaceAll(" ", "  ")
 }
 
-// #endregion
-
-// #region trailing-punct
-
 /**
- * Append a trailing period.
- *
- * Always applicable.
+ * Appends a period.
  */
 function trailingPunct(raw: string): string | null {
 	return `${raw}.`
 }
 
-// #endregion
-
-// #region paired-punct transforms
-
 /**
- * Wrap the input in quotes, as when copying a quoted spreadsheet or CSV cell.
+ * Wraps the input in double quotes, as a copied CSV cell would be.
  */
 function wrapInQuotes(raw: string): string | null {
 	return `"${raw}"`
 }
 
 /**
- * Append an irrelevant parenthetical aside; existing components should remain unchanged.
+ * Appends an irrelevant parenthetical, which must leave the existing components unchanged.
  */
 function addParenthetical(raw: string): string | null {
 	return `${raw} (main entrance)`
 }
 
-// #endregion
-
-// #region idempotence
-
 /**
- * Return the input unchanged; the runner parses it twice to test determinism.
+ * Returns the input unchanged.
+ * The runner parses it twice to test determinism.
  */
 function identity(raw: string): string | null {
 	return raw
 }
 
-// #endregion
-
-// #region registry
-
 /**
- * Registered metamorphic transforms.
+ * Registered transforms.
  */
 export const TRANSFORMS: readonly Transform[] = [
 	{
@@ -288,9 +255,9 @@ export const TRANSFORMS: readonly Transform[] = [
 const BY_ID = new Map(TRANSFORMS.map((t) => [t.id, t]))
 
 /**
- * Look up a transform by id.
+ * Returns the transform with the given ID.
  *
- * @throws On an unknown id — a typo in `suite.jsonl` should fail loudly.
+ * @throws When the ID is unknown.
  */
 export function getTransform(id: string): Transform {
 	const t = BY_ID.get(id)
@@ -301,5 +268,3 @@ export function getTransform(id: string): Transform {
 
 	return t
 }
-
-// #endregion

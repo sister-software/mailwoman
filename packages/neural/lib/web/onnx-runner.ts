@@ -18,38 +18,39 @@ import {
 } from "#ort-feeds"
 
 /**
- * Configures {@link WebONNXRunner}: whether to try WebGPU before WASM, the padded
- * sequence length, and where the ONNX Runtime WASM files are served.
+ * Options for {@link WebONNXRunner}.
  */
 export interface WebONNXRunnerOpts {
 	/**
-	 * Whether to try the WebGPU provider before WASM, defaulting to `true`; turn it off
-	 * where a failing WebGPU probe only adds latency.
+	 * Whether to try the WebGPU provider before WASM, which defaults to `true`.
+	 *
+	 * Turn it off where WebGPU is known to fail, because the failed attempt adds latency.
 	 */
 	useWebGPU?: boolean
 
 	/**
-	 * The sequence length the model's input shape is fixed to, defaulting to {@link DEFAULT_FIXED_SEQ_LEN}.
+	 * The fixed input sequence length of the model, which defaults to {@link DEFAULT_FIXED_SEQ_LEN}.
 	 */
 	fixedSeqLen?: number
 
 	/**
-	 * The URL prefix onnxruntime-web loads its `.wasm` files from, such as a self-hosted copy;
-	 * when unset, onnxruntime-web's default applies.
+	 * The URL prefix from which onnxruntime-web loads its `.wasm` files, such as a self-hosted copy.
+	 *
+	 * When unset, onnxruntime-web uses its default location.
 	 */
 	wasmPathsRoot?: string
 }
 
 /**
- * Sets the length the web runner pads every token feed to by default,
- * because WebGPU needs static input shapes.
+ * The default length to which the web runner pads every token feed.
+ * WebGPU needs static input shapes.
  */
 export const DEFAULT_FIXED_SEQ_LEN = 128
 
 /**
  * Fetches a URL into bytes and throws on any non-OK status.
  *
- * It uses the platform `fetch` rather than `APIClient` so that axios stays out of the browser bundle.
+ * It uses the platform `fetch` so that `APIClient` and axios stay out of the browser bundle.
  */
 export async function fetchBytes(url: string, fetchImpl: typeof fetch = fetch): Promise<Uint8Array> {
 	const res = await fetchImpl(url)
@@ -70,7 +71,7 @@ function outputTensor(tensor: ort.Tensor): OutputTensor {
 }
 
 /**
- * Reports which execution backend the web runner's session uses and the size of the model it loaded.
+ * The execution backend of the web runner's session and the size of the loaded model in bytes.
  */
 export interface WebONNXRunnerDiagnostics {
 	backend: "webgpu" | "wasm"
@@ -78,10 +79,10 @@ export interface WebONNXRunnerDiagnostics {
 }
 
 /**
- * Runs the model in browsers with `onnxruntime-web` as a {@link NeuralRunner}.
+ * Runs the model in browsers with `onnxruntime-web`.
  *
  * The session is created on the first inference, on WebGPU when allowed and available
- * and on WASM otherwise, and {@link WebONNXRunner.diagnostics} stays `null` until then.
+ * and on WASM otherwise. {@link WebONNXRunner.diagnostics} stays `null` until then.
  */
 export class WebONNXRunner implements NeuralRunner {
 	public readonly fixedSeqLen: number
@@ -125,8 +126,8 @@ export class WebONNXRunner implements NeuralRunner {
 		if (!this.#loadPromise) {
 			const generation = this.#generation
 
-			// A release() during the load bumps the generation and frees the session itself,
-			// so a stale load must not publish it.
+			// A release() during the load increments the generation and frees this session,
+			// so a stale load must not store it.
 			const adopt = (session: ort.InferenceSession, backend: WebONNXRunnerDiagnostics["backend"]) => {
 				if (generation !== this.#generation) return session
 
@@ -171,8 +172,8 @@ export class WebONNXRunner implements NeuralRunner {
 	 * Frees the session's native memory in the WASM heap or on the GPU,
 	 * which garbage collection never reclaims.
 	 *
-	 * It is safe to call more than once or while a load is in flight, in
-	 * which case the loading session is awaited and then released.
+	 * It may be called more than once.
+	 * When a load is in progress, it waits for the session and then releases it.
 	 */
 	async release(): Promise<void> {
 		this.#modelBytes = null
@@ -196,16 +197,14 @@ export class WebONNXRunner implements NeuralRunner {
 	/**
 	 * The loaded graph's declared input names, or `null` before the first inference creates the session.
 	 *
-	 * Callers use them to warn when a model trained with anchor or gazetteer features
-	 * runs without them, since the zero-filled fallback degrades accuracy.
+	 * Callers use them to warn when a model trained with soft-feature channels runs without them.
 	 */
 	get inputNames(): readonly string[] | null {
 		return this.#session?.inputNames ?? null
 	}
 
 	/**
-	 * Runs a character-path graph on one padded encoding, with no soft-feature channels,
-	 * like `ONNXRunner.inferChars`.
+	 * Runs a character-input graph on one padded encoding, like `ONNXRunner.inferChars`.
 	 */
 	inferChars: InferCharsFunction = async (charIDs, attentionMask) => {
 		const session = await this.#ensureSession()
@@ -228,8 +227,8 @@ export class WebONNXRunner implements NeuralRunner {
 	/**
 	 * Runs one token-id sequence like `ONNXRunner.infer`.
 	 *
-	 * A soft-feature channel is fed only when the graph declares it, and a declared channel
-	 * the caller omits is zero-filled, so the session never rejects a missing input.
+	 * A soft-feature channel is fed only when the graph declares it.
+	 * A declared channel that the caller omits is zero-filled, so the session never rejects a missing input.
 	 */
 	infer: InferFunction = async (tokenIDs, anchor, gazetteer, country, evidence) => {
 		const session = await this.#ensureSession()

@@ -3,26 +3,21 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The design tokens every consumer of `@mailwoman/react` reads. This file is the source of record; `tokens.css` is
- *   its compiled output and is generated, never hand-edited. `styleframe dtcg export` publishes the same values as
- *   W3C dtcg JSON for Figma and any other tool — dtcg is the interchange format here rather than the input, because
- *   `styleframe dtcg import` is a one-shot code generator rather than a build step.
+ *   The design tokens for `@mailwoman/react`. This file is the source of record, and `tokens.css` is generated
+ *   from it. `styleframe dtcg export` publishes the same values as W3C DTCG JSON.
  *
- *   three layers, and a component rule may read only the middle one. Primitives are raw values with no opinion about
- *   use. semantics say what a value is FOR. the few component tokens exist where a component needs a name of its own.
- *   `styles.css` reading raw primitives is the defect this file replaces: it read 22 Infima names it did not own, and
- *   eight of them were undefined in production, so those rules silently took Infima's light fallbacks inside a dark
- *   app.
+ *   The tokens have three layers. Primitives are raw values. Semantic tokens describe what a value is used for, and
+ *   component rules may read only this layer. Component tokens exist where a component needs a name of its own.
  *
- *   themes. Light is the docs site. dark is the three map apps, which set `data-theme="dark"` on `<html>` themselves.
- *   Every semantic token is defined in both, so a value can never resolve to nothing.
+ *   The light theme serves the docs site. The dark theme serves the map apps, which set `data-theme="dark"` on
+ *   `<html>`. Every semantic token has a value in both themes.
  */
 
 import { styleframe } from "styleframe"
 
 const s = styleframe({
 	themes: {
-		// The apps and the docs toggle both address a theme by attribute rather than by class.
+		// The apps and the docs toggle select a theme by attribute.
 		selector: ({ name }) => `[data-theme="${name}"]`,
 	},
 })
@@ -32,17 +27,12 @@ const { variable, theme, ref } = s
 // #region Primitives
 
 /*
- * Raw values with no opinion about use.
- *
- * Only the semantic layer below may reference them. a component rule that reaches
- * one has skipped the layer that says what the value is for.
+ * Only the semantic layer may reference primitives.
  */
 
 /**
- * The brand anchors, carried verbatim from the design system.
- *
+ * The brand colours from the design system.
  * `#ff00b0` is the primary.
- * Earth shipped a drifted `#e0367c` for as long as it read Infima's palette, and that value is retired.
  */
 const brandMagenta = variable("brand-magenta", "#ff00b0")
 const brandBlue = variable("brand-blue", "#1a00ff")
@@ -51,10 +41,10 @@ const brandAmber = variable("brand-amber", "hsl(39deg 100% 50%)")
 const brandTeal = variable("brand-teal", "hsl(97.78deg 100% 50%)")
 
 /**
- * Neutrals in oklch so the lightness steps are perceptually even rather than even in sRGB,
- * where a mid-grey reads darker than its number.
+ * The neutral ramp.
  *
- * One hue for the whole ramp keeps chrome from drifting warm at one end and cool at the other.
+ * It uses oklch so the lightness steps are perceptually even, and one hue
+ * so the ramp keeps a constant temperature.
  */
 const neutral0 = variable("neutral-0", "oklch(100% 0 264)")
 const neutral50 = variable("neutral-50", "oklch(97% 0.004 264)")
@@ -71,9 +61,9 @@ const neutral950 = variable("neutral-950", "oklch(12% 0.022 264)")
 const neutral1000 = variable("neutral-1000", "oklch(0% 0 264)")
 
 /**
- * State hues.
+ * The base state hues.
  *
- * Each carries a strong value for text and marks, and a tint for the background behind them.
+ * The semantic layer derives a strong value and a background tint from each.
  */
 const successBase = variable("success-base", "oklch(62% 0.15 150)")
 const warningBase = variable("warning-base", "oklch(75% 0.15 75)")
@@ -85,17 +75,18 @@ const infoBase = variable("info-base", "oklch(65% 0.13 230)")
 // #region Type
 
 /*
- * Two axes.
- *
- * A rule names a scale role. a scale role names a face role. only a face role names a family.
+ * A rule refers to a scale role, a scale role refers to a face role,
+ * and only a face role refers to a font family.
  */
 
 /**
- * Swapping the typeface edits these five and nothing else.
+ * The face roles.
+ * A typeface change edits only these five tokens.
  *
- * Each role states what any face bound to it must do: `number` needs tabular lining figures
- * so a column of coordinates holds its width as it updates; `code` needs `0` and `O`, `1`
- * and `l` to be told apart; `glyph` needs monochrome marks that sit on the text baseline.
+ * The `number` face needs tabular lining figures so a column of coordinates keeps its width.
+ * The `code` face must distinguish `0` from `O` and `1` from `l`.
+ *
+ * The `glyph` face needs monochrome marks that sit on the text baseline.
  */
 const fontFamilyDisplay = variable("font-family-display", `"Iosevka Nexus Web", "Iosevka", system-ui, sans-serif`)
 const fontFamilyText = variable("font-family-text", `"Iosevka Nexus Web", "Iosevka", system-ui, sans-serif`)
@@ -109,11 +100,12 @@ const fontFamilyCode = variable(
 const fontFamilyGlyph = variable("font-family-glyph", `"Iosevka Nexus Mono Web", "Iosevka", ui-monospace, monospace`)
 
 /**
- * A map label is drawn by MapLibre from a signed-distance-field range rather than by the
- * browser from a `@font-face`, so the DOM faces above cannot reach the globe.
+ * The SDF font stack for map labels.
  *
- * This names the SDF stack, and its value must be one the glyph host serves —
- * today `Noto Sans Regular`, `Noto Sans Medium` or `Noto Sans Italic`.
+ * MapLibre draws labels from signed-distance-field glyph ranges, so the DOM
+ * faces above do not apply to the map.
+ *
+ * The value must be a stack that the glyph host serves.
  */
 const fontFamilyMap = variable("font-family-map", `"Noto Sans Regular"`)
 
@@ -138,16 +130,8 @@ const fontWeightSemibold = variable("font-weight-semibold", "600")
 // #region Shape and motion
 
 /**
- * Spacing is A scale rather than a guess.
- *
- * The stylesheet had 19 distinct padding/margin/gap values across 171 declarations —
- * 0.05rem, 0.35rem, 0.65rem, 1.1rem — each picked by eye at the moment it was written
- * and none of them relatable to any other.
- * A tail of near-misses like that reads as care and behaves as noise: two panels meant
- * to match never quite do, and nothing says which value was deliberate.
- *
- * Seven steps on a 2px grid.
- * A padding, a margin or a gap that is not one of these is a value someone has to justify.
+ * The spacing scale, in seven steps on a 2px grid.
+ * Padding, margins and gaps should use these steps.
  */
 const space0 = variable("space-0", "0.125rem")
 const space1 = variable("space-1", "0.25rem")
@@ -158,12 +142,11 @@ const space5 = variable("space-5", "1rem")
 const space6 = variable("space-6", "1.5rem")
 
 /**
- * The small end of the radius scale.
+ * The radius scale.
  *
- * `radius-tick` is for marks a few pixels across — a legend swatch, a tag —
- * where a larger radius eats the shape; `radius-tight` is the inline block.
- * The stylesheet used to carry six raw pixel radii (2, 3, 4, 6, 8, 10) with no relation between
- * them, and `999px` written out four times beside a `--radius-pill` that already said it.
+ * `radius-tick` is for marks a few pixels across, such as a legend swatch,
+ * where a larger radius would distort the shape.
+ * `radius-tight` is for inline blocks.
  */
 const radiusTick = variable("radius-tick", "0.125rem")
 const radiusTight = variable("radius-tight", "0.25rem")
@@ -179,9 +162,9 @@ const easingStandard = variable("easing-standard", "cubic-bezier(0.4, 0, 0.2, 1)
 const easingDecelerate = variable("easing-decelerate", "cubic-bezier(0, 0, 0.2, 1)")
 
 /**
- * Safe-area insets belong to the chrome rather than to each component that happens to sit near an edge.
+ * The safe-area insets.
  *
- * They stay CSS expressions because `env()` resolves per device and has no static value.
+ * They stay `env()` expressions because each device resolves them at runtime.
  */
 variable("safe-area-top", "env(safe-area-inset-top, 0px)")
 variable("safe-area-right", "env(safe-area-inset-right, 0px)")
@@ -189,10 +172,9 @@ variable("safe-area-bottom", "env(safe-area-inset-bottom, 0px)")
 variable("safe-area-left", "env(safe-area-inset-left, 0px)")
 
 /**
- * How tall the footer strip stands, so a sheet ending above it and the strip
- * itself read one number instead of two that drift.
+ * The height of the map footer strip.
  *
- * One line of caption type over 0.35rem of padding on each side.
+ * The strip and any sheet that ends above it both read this token.
  */
 variable("map-footer-height", "1.9rem")
 
@@ -201,10 +183,9 @@ variable("map-footer-height", "1.9rem")
 // #region Semantics
 
 /*
- * The one layer a component rule may read.
+ * Component rules may read only this layer.
  *
- * Every token here is defined in light and overridden in dark, so a value can never
- * resolve to nothing the way eight Infima names did in production.
+ * The dark theme below overrides these tokens where the light value does not suit a dark ground.
  */
 
 const backgroundCanvas = variable("color-background-canvas", ref(neutral50))
@@ -226,10 +207,8 @@ const controlForeground = variable("control-foreground", ref(neutral900))
 const controlBorder = variable("control-border", ref(neutral300))
 
 /**
- * Every state colour carries a paired tint for the ground behind it.
- *
- * The eight names that were undefined in production were all of this shape.
- * A foreground whose background partner was missing.
+ * The state colours.
+ * Each colour has a paired background tint.
  */
 const stateSuccess = variable("color-state-success", ref(successBase))
 const stateSuccessBackground = variable("color-state-success-background", "oklch(62% 0.15 150 / 0.14)")
@@ -243,17 +222,10 @@ const stateInfoBackground = variable("color-state-info-background", "oklch(65% 0
 const accentBackground = variable("color-accent-background", "oklch(65% 0.29 340 / 0.14)")
 
 /**
- * The three confidence tiers, said once.
+ * The three confidence tiers.
  *
- * They were two palettes for one idea: the bars and the About legend painted `#22c55e / #f59e0b / #ef4444`
- * while the span ribbon and the containment tree painted `#1aa84d / #e6a800 / #d8504a`.
- * So the legend in the About sheet explained colours the results table does not use,
- * under a comment claiming the two matched.
- *
- * Raw hex also meant one set of colours for both themes, on a surface that flips from white to near-black.
- *
- * They are the state palette because that is what they are: high is success,
- * mid is a warning, low is a failure.
+ * They reuse the state palette: high maps to success, mid to warning and low to danger.
+ * Every confidence display should read these tokens so the legend matches the results.
  */
 const confidenceHigh = variable("color-confidence-high", ref(stateSuccess))
 const confidenceHighTint = variable("color-confidence-high-tint", ref(stateSuccessBackground))
@@ -263,11 +235,9 @@ const confidenceLow = variable("color-confidence-low", ref(stateDanger))
 const confidenceLowTint = variable("color-confidence-low-tint", ref(stateDangerBackground))
 
 /**
- * The pipeline's stage hues, for the timing bar.
+ * The pipeline stage hues for the timing bar.
  *
- * Deliberately not the confidence palette.
- * A stage is not a verdict, and a reader who has learned that green means confident
- * should not meet green again meaning "shape".
+ * They avoid the confidence colours so that green keeps a single meaning.
  */
 const stageShape = variable("color-stage-shape", "#3578e5")
 const stageClassify = variable("color-stage-classify", "#8b5cf6")
@@ -278,8 +248,7 @@ const stageResolve = variable("color-stage-resolve", "#14b8a6")
 // #region Material
 
 /*
- * Glass is a composition of background, border, blur, saturation, shadow and highlight —
- * never one background colour, because the parts respond differently to the ground behind them.
+ * The glass material combines a background, border, blur, saturation, shadow and highlight.
  */
 
 const glassBackground = variable("material-glass-background", "oklch(100% 0 264 / 0.72)")
@@ -290,15 +259,14 @@ const glassShadow = variable("material-glass-shadow", "0 4px 28px oklch(0% 0 264
 const glassHighlight = variable("material-glass-highlight", "oklch(100% 0 264 / 0.5)")
 
 /**
- * What the material becomes where `backdrop-filter` is unavailable or the viewer asks for less transparency.
- *
- * It is opaque on purpose: no control may depend on the blur to stay readable.
+ * The opaque glass background for browsers without `backdrop-filter`
+ * and for viewers who prefer reduced transparency.
  */
 const glassFallbackBackground = variable("material-glass-fallback-background", ref(neutral0))
 
 // #endregion
 
-// #region Dark theme — the three map apps, and the docs toggle.
+// #region Dark theme
 
 theme("dark", ({ variable: themeVariable }) => {
 	themeVariable(backgroundCanvas, ref(neutral950))
@@ -317,7 +285,7 @@ theme("dark", ({ variable: themeVariable }) => {
 	themeVariable(controlForeground, ref(neutral100))
 	themeVariable(controlBorder, "oklch(100% 0 264 / 0.16)")
 
-	// The state hues brighten on a dark ground: the same hue at higher lightness reads at the same strength.
+	// The state hues use higher lightness on a dark ground so they read at the same strength.
 	themeVariable(stateSuccess, "oklch(76% 0.16 150)")
 	themeVariable(stateSuccessBackground, "oklch(76% 0.16 150 / 0.18)")
 	themeVariable(stateWarning, "oklch(84% 0.15 75)")
@@ -328,9 +296,8 @@ theme("dark", ({ variable: themeVariable }) => {
 	themeVariable(stateInfoBackground, "oklch(78% 0.12 230 / 0.18)")
 	themeVariable(accentBackground, "oklch(65% 0.29 340 / 0.18)")
 
-	// Denser than the light theme's 0.72: a dark pane over a bright map lets a white
-	// label under it read through the blur, and the pane a search field sits on
-	// may never compete with the text typed into it.
+	// The dark glass is more opaque than the light glass so that white map labels
+	// do not show through the blur behind a search field.
 	themeVariable(glassBackground, "oklch(18% 0.026 264 / 0.86)")
 	themeVariable(glassBorder, "oklch(100% 0 264 / 0.14)")
 	themeVariable(glassShadow, "0 4px 28px oklch(0% 0 264 / 0.45)")
@@ -340,8 +307,8 @@ theme("dark", ({ variable: themeVariable }) => {
 
 // #endregion
 
-// Referenced by name from `styles.css` and the app stylesheets.
-// Listed here so the compiler keeps them.
+// The stylesheets read these tokens by name.
+// This list keeps the compiler from dropping them.
 void [
 	brandBlue,
 	brandNavy,
@@ -429,4 +396,7 @@ void [
 	textPrimary,
 ]
 
+/**
+ * The styleframe instance that compiles to `tokens.css`.
+ */
 export default s

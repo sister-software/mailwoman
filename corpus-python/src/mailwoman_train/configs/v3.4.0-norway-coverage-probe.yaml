@@ -1,42 +1,16 @@
-# === v3.4.0-norway-coverage-probe — 2k probe. Does un-dropping Norway (#1145) fix the Norwegian rows? ===
+# This 2k probe repeats the v310 recipe with Norwegian rows in the training mix.
+# Earlier configs wrote the Norway key unquoted, so YAML read it as a boolean and the loader dropped every Norwegian row.
+# The probe tests whether Norwegian coverage alone fixes streets that the model reads as localities.
 #
-# the one variable vs shipped v310: Norway is now in the training mix. v310 (and every model since
-# v1.9.0) trained on zero Norwegian rows — `country_weights: no: 1.0` parsed to the YAML boolean
-# `false`, so `country_weights.get("no")` missed and the loader dropped all 25k Norwegian rows
-# (#1145). This config is v310's exact recipe with that key now quoted (fixed on main), so Norway
-# flows: ~4.2% of the corpus, including the synth-no-street-led source (weight 12.0) that has never
-# contributed a row. init_from v310, 2k, to see if coverage alone moves the needle fast.
-#
-# why IT matters: the deepparse rematch (scratchpad/deepparse-cmp/rematch-after-trackb.md) showed two
-# of four contextful house_number losses are Norwegian rows the model simply never saw. The street
-# reads as a locality (B0's unseen-street signature):
-#     Epleskogen 39A        -> locality "Epleskogen" + postcode 39A     (should be street + hn)
-#     Tindvegen nedre 44B   -> locality "Tindvegen" + street "nedre"    (should be street + hn)
-#
-# PRE-registered read (written before the numbers exist):
-#   primary (the operator's question) — the brief's Norwegian rows: does the street stop reading as a
-#     locality? `Epleskogen 39A` / `Tindvegen nedre 44B` -> street rather than locality. If the street reads
-#     correctly, coverage is the fix and an 8k run (init_from v264, full recipe) becomes a ship
-#     candidate. If the street still reads as locality after 2k of Norway-inclusive training, either
-#     coverage alone is insufficient or 2k off v310 cannot overwrite the "never saw Norway" prior —
-#     escalate to init_from v264 full recipe before concluding.
-#   secondary — the Norway digit board (board 3). caveat: synth-no-street-led's on-disk part predates its
-#     own --exclude-surfaces (#1145) and is contaminated vs the board, so its three street-led classes
-#     will read inflated — do not treat board-3 street-led movement as generalization. bare-street-hn
-#     (a form no-street-led never emits) and bare-pc (the negative class) are the clean cells.
-#   guard — the FR fragment board (board 2) and global parity must not fall. Norway coverage must not be
-#     bought by trading away fr-fragment F1 or the broad corpus.
-#
-# Not a ship. A pass justifies the 8k run (init_from v264 = "what v310 would have been with the bug
-# fixed"), pre-registered against the same rows. Promotion is the operator's act.
-#
-# Launch: cd corpus-python && modal run -d -m launch.train_remote --config v3.4.0-norway-coverage-probe.yaml --resume none
+# Launch the run from corpus-python:
+#   modal run -d -m launch.train_remote --config v3.4.0-norway-coverage-probe.yaml --resume none
 
 data:
   corpus_dir: /data/corpus/versioned/v0.10.9-fr-fragment/corpus-v0.10.9-fr-fragment
   tokenizer_dir: /data/models/tokenizer/v0.9.0-multisplice
   max_length: 128
-  country_weights: # Verbatim from v2.4.1.
+  # Keep the Norway key quoted, because YAML 1.1 reads the bare key as the boolean false.
+  country_weights:
     US: 1.0
     FR: 1.0
     DE: 1.0
@@ -60,7 +34,7 @@ data:
     HR: 1.0
     HU: 1.0
     AU: 1.0
-  source_weights: # Verbatim from v2.4.1 + the one new assay source.
+  source_weights:
     wof-admin: 2.0
     wof-postalcode: 2.0
     ban: 3.0
@@ -86,14 +60,11 @@ data:
     synth-anchor-absorption: 6.0
     synth-fr-bare-street: 12.0
     synth-si-bare-village: 12.0
+    # The on-disk part of this source overlaps the Norway digit board, so its street-led classes read high on that board.
     synth-no-street-led: 12.0
     synth-cz-pcfirst-preposition: 12.0
     synth-nl-postcode: 6.0
-    # probe 1: the fragment/autocomplete source (assay weight — moderate precedent).
     synth-fragment: 6.0
-    # #727 T2 new — the one variable. 12.0 = the targeted-fix precedent (fr-bare-street,
-    # si-bare-village, no-street-led are all 12.0). Streets with no house number + the
-    # bare-locality counter.
     synth-fr-fragment: 12.0
   train_rows_per_epoch: 1000000
   val_rows: 4096
@@ -103,14 +74,13 @@ data:
   augment_glue_prob: 0.25
   anchor_lookup_path: /data/anchor/pilot-anchor-lookup.json
   gazetteer_lexicon_path: /data/gazetteer/anchor-lexicon-v1.json
-  # #1104 country-lexicon channel — the dedicated country soft-feed vocabulary (feature_dim 2).
   country_lexicon_path: /data/gazetteer/country-surface-lexicon-v1.json
   gazetteer_choreography: true
   affix_relabel_lexicon_path: /data/gazetteer/affix-relabel-lexicon-v1.json
   anchor_paint_mode: shaped
   anchor_value_mode: posterior_latlon
 
-model: # Verbatim from v2.4.1.
+model:
   hidden_size: 384
   use_span_boundary_head: true
   span_boundary_loss_weight: 0.5
@@ -130,16 +100,12 @@ model: # Verbatim from v2.4.1.
   use_postcode_anchor: true
   use_gazetteer_anchor: true
   gazetteer_feature_dim: 5
-  # #1104 country channel on — dedicated 2-dim [country_surface, country_ambiguous] soft feed with its
-  # own projection + confidence (must equal the lexicon's feature_dim). Default-False elsewhere, so a
-  # resume from a pre-country checkpoint stays byte-identical until this flips.
   use_country_anchor: true
+  # This value must equal the feature_dim of the country lexicon.
   country_feature_dim: 2
-  # #1104 homograph-guard softener — the one variable vs v263. Scales the country_ambiguous dim by 0.5
-  # before the country_projection (bakes into the exported ONNX. no lexicon/inference change). v263's
-  # hard guard (scale 1.0) over-suppressed homograph countries Georgia/Jordan (country-homograph F1
-  # 89.8->82.6); softening should recover homograph recall without giving back the country F1 the
-  # WOF-admin rows produced.
+  # The model scales the country_ambiguous feature by this factor before the country projection.
+  # The scale is baked into the exported ONNX graph.
+  # A full-strength guard of 1.0 suppressed country names that are also other place names, such as Georgia.
   country_ambiguous_scale: 0.5
   class_weights:
     O: 0.5
@@ -178,9 +144,8 @@ model: # Verbatim from v2.4.1.
   use_phrase_priors: true
   phrase_feature_dim: 10
 
-train: # Same-vocab init_from fine-tune off the shipped v261 (fresh optimizer; --resume none on a fresh
-  # output_dir honors init_from, weights only). The new country_projection starts random and learns to
-  # route the cue. the encoder keeps v261's span-boundary + street grammar.
+# With --resume none and a fresh output_dir, init_from loads only the weights and the optimizer starts fresh.
+train:
   output_dir: /data/output-v340-norway-coverage-probe-s42/checkpoints
   seed: 42
   init_from: /data/output-v310-fr-fragment-s42/checkpoints/step-008000

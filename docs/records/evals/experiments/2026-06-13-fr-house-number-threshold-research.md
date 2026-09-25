@@ -125,7 +125,7 @@ The research shifts my earlier "hold" lean. The direct reading:
 
 - libpostal — 99.45% full-parse (whole-sequence rather than per-component); OSM + format-template ordering.
   https://github.com/openvenues/libpostal
-- Yassine, Beauchemin, et al., "Changeaging Subword Embeddings for Multinational Address Parsing"
+- Yassine, Beauchemin, et al., "Leveraging Subword Embeddings for Multinational Address Parsing"
   (deepparse), 2020. Reorder-collapse + inverse-order zero-shot. https://arxiv.org/abs/2006.16152 ·
   library: https://arxiv.org/abs/2311.11846 · https://deepparse.org/
 - Yin, Li, Goldberg, "Is ChatGPT a game changer for geocoding", SIGSPATIAL workshop 2023. Per-component

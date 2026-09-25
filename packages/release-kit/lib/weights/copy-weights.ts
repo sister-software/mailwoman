@@ -21,27 +21,28 @@ import { $public } from "#env/index"
 import { derivedStoreServeViolation, derivedWeightsDir, derivedWeightsKey } from "#weights/derived-weights-key"
 
 /**
- * Configures {@linkcode copyWeights}; `destRoot` defaults to `repoRoot`,
- * where the release config is read from.
+ * Options for {@linkcode copyWeights}.
  */
 export interface CopyWeightsOptions {
 	/**
-	 * Names the checkout whose `release.config.json` and repo-committed files supply
-	 * the sources; data-root sources come from the configured data root.
+	 * The checkout whose `release.config.json` and committed files supply the sources.
+	 * Data-root sources come from the configured data root.
 	 */
 	repoRoot: string
 
 	/**
-	 * Names the directory that receives the weights workspaces, such as a preflight
-	 * staging tree; it moves only destinations, never sources.
+	 * The directory that receives the weights workspaces, such as a preflight staging tree.
+	 *
+	 * It defaults to `repoRoot` and changes only the destinations.
 	 */
 	destRoot?: string
 	log: (line: string) => void
 }
 
 /**
- * Reports which weights workspaces {@linkcode copyWeights} materialized,
- * or that `MAILWOMAN_SKIP_WEIGHTS_COPY` skipped the copy.
+ * The weights workspaces that {@linkcode copyWeights} materialized.
+ *
+ * `skipped` is true when `MAILWOMAN_SKIP_WEIGHTS_COPY` is set.
  */
 export interface CopyWeightsReport {
 	skipped: boolean
@@ -105,7 +106,7 @@ async function stashDerived(context: MaterializationContext, dir: string, filena
 }
 
 /**
- * Materialize every weights workspace's binaries and evidence artifacts under `destRoot`.
+ * Copies or builds the binaries and evidence artifacts of every weights workspace under `destRoot`.
  */
 export async function copyWeights({
 	repoRoot,

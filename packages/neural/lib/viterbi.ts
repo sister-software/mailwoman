@@ -66,10 +66,8 @@ interface ViterbiTransitionAdjustment {
 }
 
 /**
- * Supplies the per-token emission scores, the `from × to` transition scores,
- * and optional start, end and per-timestep transition bonuses for {@link viterbi}.
- *
- * When several adjustments target the same timestep and label, only the largest bonus applies.
+ * The scores that {@link viterbi} decodes: emissions, transitions, and optional start,
+ * end and per-timestep bonuses.
  */
 export interface ViterbiInput {
 	/**
@@ -94,13 +92,15 @@ export interface ViterbiInput {
 	endTransitions?: number[]
 
 	/**
-	 * Timestep-scoped transition bonuses; when omitted or empty, the decode adds no adjustment.
+	 * Bonuses added to the transition into one label at one timestep.
+	 *
+	 * When several adjustments target the same timestep and label, only the largest bonus applies.
 	 */
 	transitionAdjustments?: ReadonlyArray<ViterbiTransitionAdjustment>
 }
 
 /**
- * Holds the highest-scoring label-index path and its total score.
+ * The highest-scoring label-index path and its total score.
  */
 export interface ViterbiResult {
 	/**
@@ -207,8 +207,7 @@ export function viterbi(input: ViterbiInput): ViterbiResult {
 }
 
 /**
- * Picks the highest-scoring label for each token independently, the fallback decode
- * when no transition matrix is available.
+ * Picks the highest-scoring label for each token independently, ignoring transitions.
  */
 export function perTokenArgmax(emissions: readonly number[][]): number[] {
 	return emissions.map((row) => {

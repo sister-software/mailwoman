@@ -140,7 +140,7 @@ never has — so it needs the board rather than a commit.
 the name alone admits `TIGERClassCode`, the literals alone admit every US state table, since `AL`, `CA` and `DE`
 are each a state and a country.
 
-Ranked by how several of the 35 name them:
+Ranked by the count of the 35 that name them:
 
 ```
 DE 26   FR 25   US 24   GB 23   ES 20   IT 16   AU 14   CA 14   NL 14

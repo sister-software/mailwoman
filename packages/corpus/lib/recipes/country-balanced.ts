@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Build balanced country-label examples from OpenAddresses and codex names, including
- *   absent-country negatives and country/state contrasts. `--golden` uses held-out data.
+ *   Builds country-label training rows from OpenAddresses tuples and codex country names. The mix includes rows with no
+ *   country and contrasts between country names and US place names. `--golden` reads held-out sources.
  */
 
 import type { ComponentTag } from "@mailwoman/codex/component"
@@ -22,23 +22,22 @@ import { SurfaceOrigin } from "#types"
 import type { CanonicalRow } from "#types"
 import { alignRow } from "#utils"
 
-// Draw country tokens independently of the address locale.
-
+// Country names are drawn without regard to the address's own country.
 const COUNTRY_FORM_POOL = (() => {
-	const surface = Object.values(COUNTRY_SURFACE_FORMS).flat() // Curated endonyms, abbreviations, and canonical forms.
+	// `surface` holds curated endonyms and abbreviations, and `names` holds canonical English names.
+	const surface = Object.values(COUNTRY_SURFACE_FORMS).flat()
 	const names = [...CountryNames]
 
-	// Include all canonical English country names.
 	return { surface, names }
 })()
 
 /**
- * Fraction of addresses with no country component.
+ * The share of address rows rendered with no country.
  */
 const COUNTRY_ABSENT_PROB = 0.3
 
 /**
- * OpenAddresses source metadata.
+ * One OpenAddresses archive and how to render its rows.
  */
 interface CountrySource {
 	zip: PathBuilderLike
@@ -49,7 +48,7 @@ interface CountrySource {
 }
 
 /**
- * Training sources.
+ * The training sources.
  */
 const SOURCES: readonly CountrySource[] = [
 	{
@@ -88,7 +87,6 @@ const SOURCES: readonly CountrySource[] = [
 		region: "",
 		order: "fr",
 	},
-	// ES uses IGN columns; add it after a dedicated IGN adapter is available.
 	{
 		zip: dataRootPath("oa-cache", "it__countrywide.zip"),
 		csv: "it/countrywide.csv",
@@ -106,7 +104,7 @@ const SOURCES: readonly CountrySource[] = [
 ]
 
 /**
- * Held-out sources used by `--golden`.
+ * The held-out sources that `--golden` reads.
  */
 const EVAL_SOURCES: readonly CountrySource[] = [
 	{
@@ -120,7 +118,7 @@ const EVAL_SOURCES: readonly CountrySource[] = [
 ]
 
 /**
- * Address tuple with source country and rendering order.
+ * An address tuple with its source country and rendering order.
  */
 interface CountryTuple {
 	house_number: string
@@ -133,7 +131,7 @@ interface CountryTuple {
 }
 
 /**
- * Read up to `limit` tuples from one source archive.
+ * Reads up to `limit` tuples from one source archive.
  */
 async function readTuples(source: CountrySource, limit: number): Promise<CountryTuple[]> {
 	return readOATuples(source, {
@@ -147,25 +145,26 @@ async function readTuples(source: CountrySource, limit: number): Promise<Country
 	})
 }
 
-// Mix curated country surfaces with canonical ISO names.
+// The share of country draws taken from the curated surface forms instead of canonical names.
 const SURFACE_FORM_SHARE = 0.6
 
 /**
- * Pick a country surface, or `null` for an absent-country example.
+ * Picks a country name, or returns `null` for a row with no country.
  */
 function pickCountry(random: () => number): string | null {
-	if (random() < COUNTRY_ABSENT_PROB) return null // Negative example without a country.
+	if (random() < COUNTRY_ABSENT_PROB) return null
 	const pool = random() < SURFACE_FORM_SHARE ? COUNTRY_FORM_POOL.surface : COUNTRY_FORM_POOL.names
 
 	return sample(pool, random)
 }
 
-// Format thresholds for full, newline-separated, and bare forms.
+// A draw below FULL_CUTOFF gives a comma before the country, a draw below FULL_NEWLINE_CUTOFF
+// gives a newline, and any higher draw gives the bare form without region or postcode.
 const FULL_CUTOFF = 0.8
 const FULL_NEWLINE_CUTOFF = 0.92
 
 /**
- * Render an address with or without a country surface.
+ * Renders an address in its source order, followed by the country when one is given.
  */
 function renderCountry(
 	random: () => number,
@@ -189,16 +188,15 @@ function renderCountry(
 		const regPc = [reg, pc].filter(isPresent).join(" ")
 		body = `${hn} ${street}, ${loc}${regPc ? ", " + regPc : ""}`
 	} else if (order === "fr") {
-		// France: number, street, postcode, locality.
+		// France uses number, street, postcode, locality.
 		body = `${hn} ${street}, ${[pc, loc].filter(isPresent).join(" ")}`
 	} else {
-		// Germany, Italy, and the Netherlands: street, number, postcode, locality.
+		// Germany, Italy and the Netherlands use street, number, postcode, locality.
 		const pcCity = [pc, loc].filter(isPresent).join(" ")
 		body = `${street} ${hn}, ${pcCity}`
 	}
 
 	if (!country) {
-		// Omit the country for negative examples.
 		return { fmt: "negative", raw: body, components }
 	}
 
@@ -217,7 +215,7 @@ function renderCountry(
 	}
 }
 
-// Names shared by countries and US states or localities.
+// A name shared by a country and a US state or locality.
 interface Homograph {
 	surface: string
 	iso2: string
@@ -264,20 +262,21 @@ const HOMOGRAPHS: readonly Homograph[] = [
 	},
 ]
 
-// Two-letter codes shared by US state abbreviations and ISO country codes.
+// A US state code that is also an ISO country code.
 interface AbbrevRegion {
 	code: string
 	localities: readonly string[]
 	postcodes: readonly string[]
 }
 
+// The paired countries are Canada, Georgia, India, Morocco, Panama and Albania.
 const ABBREV_REGIONS: readonly AbbrevRegion[] = [
-	{ code: "CA", localities: ["Los Angeles", "Sacramento", "San Diego"], postcodes: ["90012", "95814", "92101"] }, // California / Canada
-	{ code: "GA", localities: ["Atlanta", "Savannah", "Macon"], postcodes: ["30309", "31401", "31201"] }, // Georgia(US) / Georgia
-	{ code: "IN", localities: ["Indianapolis", "Fort Wayne"], postcodes: ["46204", "46802"] }, // Indiana / India
-	{ code: "MA", localities: ["Boston", "Worcester"], postcodes: ["02108", "01608"] }, // Massachusetts / Morocco
-	{ code: "PA", localities: ["Philadelphia", "Pittsburgh"], postcodes: ["19103", "15222"] }, // Pennsylvania / Panama
-	{ code: "AL", localities: ["Birmingham", "Montgomery"], postcodes: ["35203", "36104"] }, // Alabama / Albania
+	{ code: "CA", localities: ["Los Angeles", "Sacramento", "San Diego"], postcodes: ["90012", "95814", "92101"] },
+	{ code: "GA", localities: ["Atlanta", "Savannah", "Macon"], postcodes: ["30309", "31401", "31201"] },
+	{ code: "IN", localities: ["Indianapolis", "Fort Wayne"], postcodes: ["46204", "46802"] },
+	{ code: "MA", localities: ["Boston", "Worcester"], postcodes: ["02108", "01608"] },
+	{ code: "PA", localities: ["Philadelphia", "Pittsburgh"], postcodes: ["19103", "15222"] },
+	{ code: "AL", localities: ["Birmingham", "Montgomery"], postcodes: ["35203", "36104"] },
 ]
 
 const STREET_POOL: readonly string[] = [
@@ -295,11 +294,11 @@ const STREET_POOL: readonly string[] = [
 
 const houseNo = (random: () => number): string => String(1 + Math.floor(random() * 998))
 
-// Fraction of homograph examples that include a street address.
+// The share of country-reading homograph rows that include a street address.
 const HOMOGRAPH_WITH_STREET_SHARE = 0.6
 
 /**
- * Render a country/US-name contrast and return its provenance country code.
+ * Renders a homograph as either the country or the US place, with the matching country code.
  */
 function renderHomograph(random: () => number): {
 	fmt: string
@@ -327,7 +326,6 @@ function renderHomograph(random: () => number): {
 	const pc = sample(h.us.postcodes, random)
 
 	if (h.us.role === "region") {
-		// Here the shared name is a US region.
 		return {
 			fmt: "homograph-us-region",
 			raw: `${hn} ${street}, ${h.us.locality}, ${h.surface} ${pc}`,
@@ -336,7 +334,6 @@ function renderHomograph(random: () => number): {
 		}
 	}
 
-	// Here the shared name is a US locality.
 	return {
 		fmt: "homograph-us-locality",
 		raw: `${hn} ${street}, ${h.surface}, ${h.us.region} ${pc}`,
@@ -346,7 +343,7 @@ function renderHomograph(random: () => number): {
 }
 
 /**
- * Render a shared state/country code as a US region.
+ * Renders a US address whose state code is also a country code.
  */
 function renderAbbrevRegion(random: () => number): {
 	fmt: string
@@ -370,16 +367,16 @@ function renderAbbrevRegion(random: () => number): {
 }
 
 /**
- * Fraction of country/state homograph examples.
+ * The share of rows that are homograph contrasts.
  */
 const HOMOGRAPH_FRAC = 0.22
 /**
- * Fraction of state-code contrast examples.
+ * The share of rows that are state-code contrasts.
  */
 const ABBREV_FRAC = 0.08
 
 /**
- * Balanced-country recipe.
+ * The country-balanced recipe registered with the corpus builder.
  */
 export const countryBalancedRecipe: CorpusRecipe = {
 	name: "country-balanced",
@@ -389,11 +386,11 @@ export const countryBalancedRecipe: CorpusRecipe = {
 	async run(opts, write) {
 		if (opts.count == null) throw new Error("country-balanced recipe requires --count <N>")
 		const count = opts.count
-		// Preserve the generator's seeded output.
 		const random = makeMulberry32(opts.seed)
 		const source = opts.sourceName ?? "synth-country"
 		const sources = opts.golden ? EVAL_SOURCES : SOURCES
-		const perSource = Math.ceil((count * 3) / sources.length) // Read extra tuples to fill the target count.
+		// Reading three times the target leaves room for skipped rows.
+		const perSource = Math.ceil((count * 3) / sources.length)
 
 		const pool: CountryTuple[] = []
 
@@ -417,7 +414,6 @@ export const countryBalancedRecipe: CorpusRecipe = {
 		const N = pool.length
 
 		while (emitted < count && guard++ < count * 8) {
-			// Mix homographs, state-code contrasts, and country-name examples.
 			const roll = random()
 			let rendered: { fmt: string; raw: string; components: Partial<Record<ComponentTag, string>> }
 			let rowISO2: string
@@ -432,7 +428,7 @@ export const countryBalancedRecipe: CorpusRecipe = {
 				rowISO2 = a.iso2
 			} else {
 				const t = pool[Math.floor(random() * N)]!
-				const country = pickCountry(random) // `null` omits the country.
+				const country = pickCountry(random)
 				rendered = renderCountry(random, t, country)
 				rowISO2 = t.iso2
 
@@ -473,7 +469,6 @@ export const countryBalancedRecipe: CorpusRecipe = {
 				continue
 			}
 
-			// Preserve source values and address order.
 			write(
 				stringifyJSON({
 					...aligned.row,

@@ -3,18 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The same-data benchmark's tables (#2261), rendered from generated results so the published record is
- *   never typed by hand — the self-reporting rule `oa/resolver/eval.ts` states for every eval here.
+ *   Renders the same-data benchmark's Markdown tables from generated results.
  *
- *   Distinct from `eval-harness/score/country-homograph.ts`, which grades the classifier's
- *   country/region/locality tagging on a homograph corpus. This grades the resolver's selection from a
- *   frozen candidate set. They share a word and measure different layers.
- *
- *   Every rate prints its denominator, and a rate nobody could compute prints as `unmeasured` rather than as
- *   zero. A wrong-area rate over no coordinate-containing selection is not 0%.
- *
- *   `renderLosses` lists the rows the baseline won and Mailwoman did not, with the query in view. A report
- *   of aggregates alone cannot be audited, and those rows name the mechanism.
+ *   Every rate prints its denominator. A rate with a zero denominator prints as `unmeasured`.
  */
 
 import { renderMarkdownTable } from "@mailwoman/core/strings/markdown-table"
@@ -32,8 +23,7 @@ import {
 import type { ThresholdDecision, ThresholdPoint } from "#eval-harness/same-data/threshold"
 
 /**
- * A rate as a percentage with the two counts that produced it, or the word
- * that says nobody could measure it.
+ * Formats a rate as a percentage with its numerator and denominator, or as `unmeasured`.
  */
 export function renderRatio({ numerator, denominator, value }: Ratio): string {
 	if (value === null) return "unmeasured"
@@ -42,7 +32,7 @@ export function renderRatio({ numerator, denominator, value }: Ratio): string {
 }
 
 /**
- * Per-stratum metrics for every arm, plus the pooled row.
+ * Renders per-stratum metrics for every arm, followed by a pooled row per arm.
  */
 export function renderMetricsTable(
 	panel: readonly SameDataPanelRow[],
@@ -104,9 +94,7 @@ export function renderMetricsTable(
 }
 
 /**
- * The abstention metrics, which only the withheld-gold stratum can carry.
- *
- * Reported apart so an absent-candidate failure mode is never pooled away.
+ * Renders the abstention metrics for the withheld-gold stratum, the only stratum where they apply.
  */
 export function renderAbstentionTable(
 	panel: readonly SameDataPanelRow[],
@@ -127,7 +115,7 @@ export function renderAbstentionTable(
 }
 
 /**
- * One paired comparison, with the discordant counts that drive the test rather than only its verdict.
+ * Renders one paired comparison, including the discordant counts behind the test.
  */
 export function renderPairedComparison(label: string, comparison: PairedComparison): string[] {
 	return [
@@ -153,7 +141,7 @@ export function renderPairedComparison(label: string, comparison: PairedComparis
 }
 
 /**
- * The reliability table for one arm.
+ * Renders the reliability table for one arm.
  */
 export function renderReliability(arm: string, bins: readonly ReliabilityBin[]): string[] {
 	const rows = bins.map((bin) => [
@@ -166,7 +154,7 @@ export function renderReliability(arm: string, bins: readonly ReliabilityBin[]):
 }
 
 /**
- * The registered decision, with the quantity that decided it beside each condition.
+ * Renders the registered decision with the observed value for each condition.
  */
 export function renderDecisionTable(verdict: BenchmarkVerdict): string[] {
 	return [
@@ -194,8 +182,9 @@ export function renderDecisionTable(verdict: BenchmarkVerdict): string[] {
 }
 
 /**
- * One arm's abstention-threshold curve, with both sides of the trade in the same row: what
- * withholding provides on the withheld-gold rows and what it costs on the rows that hold a gold.
+ * Renders one arm's abstention-threshold curve.
+ *
+ * Each row shows the false-selection rate on withheld-gold rows next to the accuracy on rows with a gold.
  */
 export function renderThresholdCurve(arm: string, curve: readonly ThresholdPoint[]): string[] {
 	const rows = curve.map((point) => [
@@ -218,7 +207,7 @@ export function renderThresholdCurve(arm: string, curve: readonly ThresholdPoint
 }
 
 /**
- * The registered rule re-read at each threshold, with the quantity that decided each row beside it.
+ * Renders the registered decision rule evaluated at each threshold.
  */
 export function renderThresholdDecisions(decisions: readonly ThresholdDecision[]): string[] {
 	const rows = decisions.map(({ threshold, verdict }) => [
@@ -236,11 +225,10 @@ export function renderThresholdDecisions(decisions: readonly ThresholdDecision[]
 }
 
 /**
- * The rows the baseline got right and Mailwoman did not, with the query in view.
+ * Renders up to `limit` rows that the baseline got right and Mailwoman got wrong.
  *
- * A record that prints only aggregates cannot be audited, and these are the rows
- * worth reading: a deterministic resolver with no fame term beating the production
- * one names a mechanism rather than a rounding difference.
+ * The table shows each row's query, gold, both selections, and Mailwoman's mechanism
+ * so a reader can audit the losses.
  */
 export function renderLosses(
 	panel: readonly SameDataPanelRow[],

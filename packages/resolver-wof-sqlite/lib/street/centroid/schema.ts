@@ -3,21 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Typed schema for the derived street-centroid extract (`street-centroids-<cc>.db`, built by
- *   `ban/scripts/build-street-centroid-extract.ts` — the #1042 street-level tier behind "street-only
- *   FR queries deserve a street-level answer"). The extract is a `group BY street` roll-up of the
- *   sealed rooftop address-point extract: one row per (street, postcode, commune) carrying the street's
- *   centroid + bounding-box extent + member-point count. No new data source — a derived artifact.
- *
- *   Single source of truth for the columns shared by the builder (a positional prepared insert for
- *   throughput) and the reader ({@link StreetCentroidSqliteLookup}), so a column rename in one is a
- *   compile error in the other — the same discipline as `address-point-schema.ts`.
- *
- *   Probe scopes (most-selective first): by `postcode`, else by `locality_base` (the
- *   arrondissement-stripped commune — see `stripArrondissement`; BAN names Paris/Lyon/Marseille rows
- *   per arrondissement, but a query names the base commune). The reader weighted-aggregates across the
- *   matched rows (by `point_count`) so a locality-scope probe returns the street's grand centroid over
- *   every postcode/arrondissement it spans.
+ *   Schema for the street-centroid extract, which groups the address-point extract by street.
  */
 
 import type { Kysely } from "kysely"
@@ -25,34 +11,36 @@ import type { Kysely } from "kysely"
 import type { NameKey, StreetKey } from "#street/normalize"
 
 /**
- * One street roll-up.
+ * One row per street, postcode and commune.
  *
- * `(street_norm, postcode, locality_base)` is unique.
- * `lat`/`lon` are the unweighted mean of the group's member address
- * points (each source row = one point), so a cross-group weighted mean
- * (`SUM(lat*point_count) / SUM(point_count)`) reconstructs the grand centroid.
+ * The tuple `(street_norm, postcode, locality_base)` is unique.
+ * The reader combines rows by `SUM(lat * point_count) / SUM(point_count)` to get a
+ * street's centroid across every postcode and arrondissement it spans.
  *
- * `min_/max_lat/lon` are the group's extent (the reader turns the bbox diagonal into an honest `uncertainty_m`).
+ * It converts the bounding-box diagonal from the `min_*` and `max_*` columns into `uncertainty_m`.
  */
 export interface StreetCentroidTable {
 	/**
-	 * Shared `normalizeStreetForKeyLocale` of the street — the build/query-consistent probe key.
+	 * The street key from `normalizeStreetForKeyLocale`, which both the builder and the reader use.
 	 */
 	street_norm: StreetKey
 	/**
-	 * The 5-digit postcode of this group, or null when the source row carried none.
+	 * The postcode of this group, or null when the source row has none.
 	 */
 	postcode: string | null
 	/**
-	 * Arrondissement-stripped commune (`stripArrondissement(normalizeLocalityForKey(commune))`) — the fallback scope.
+	 * The commune key with any arrondissement removed.
+	 *
+	 * BAN stores Paris, Lyon and Marseille per arrondissement, but a query usually gives the base commune.
+	 * The reader uses this column when the query has no postcode.
 	 */
 	locality_base: NameKey
 	/**
-	 * Weighted-mean centroid latitude of the street's member points.
+	 * The mean latitude of the group's member address points.
 	 */
 	lat: number
 	/**
-	 * Weighted-mean centroid longitude of the street's member points.
+	 * The mean longitude of the group's member address points.
 	 */
 	lon: number
 	min_lat: number
@@ -60,33 +48,31 @@ export interface StreetCentroidTable {
 	min_lon: number
 	max_lon: number
 	/**
-	 * Member address-point count — the weight for a cross-group centroid aggregate.
+	 * The number of member address points, which weights the cross-row centroid.
 	 */
 	point_count: number
 	/**
-	 * A representative street name as it appeared in the source (display / debugging).
+	 * One street name as it appeared in the source, kept for display and debugging.
 	 */
 	street_raw: string
 	/**
-	 * Provenance: the register this street was derived from (e.g. `ban:fr`).
+	 * The source register, such as `ban:fr`.
 	 */
 	source: string
 	/**
-	 * The pinned data release the underlying points came from.
+	 * The data release that the member points came from.
 	 */
 	release: string
 	/**
-	 * #727 phase-4c: `foldStreetSurface(street_raw)`. The interface-fold street-name existence key for
-	 * {@link StreetLocalityEvidence}.
+	 * The value of `foldStreetSurface(street_raw)`, used by {@link StreetLocalityEvidence}
+	 * to check that a street name exists.
 	 *
-	 * Distinct from `street_norm` (the `street-normalize` geocoding key): the name-evidence rerank
-	 * folds the model's street surface with the same `foldStreetSurface` used to build this column
-	 * (the fold-parity interface), so it must not drift from `street_norm`'s richer normalizer.
-	 * Indexed (`idx_sc_name`) for a direct seek.
+	 * The name-evidence rerank folds the model's street text with the same function, so this
+	 * column must use `foldStreetSurface` and must not follow the `street_norm` normalizer.
+	 * The type is a plain string because `foldStreetSurface` differs from the
+	 * {@link NameKey} fold that other `name_key` columns use.
 	 *
-	 * Deliberately unbranded despite the `name_key` column name: `foldStreetSurface` is a
-	 * different fold from the {@link NameKey} one every other `name_key` column carries,
-	 * and giving it that brand would invite exactly the cross-fold probe the brands exist to stop.
+	 * Branding it as a `NameKey` would allow a probe with the wrong fold.
 	 */
 	name_key: string
 }
@@ -101,8 +87,7 @@ export interface StreetCentroidDatabase {
 /**
  * The `street_centroid` columns in insert order.
  *
- * The builder's positional prepared statement derives its placeholder list from this,
- * so the positional order can't drift from the DDL / the reader.
+ * The builder derives the placeholders of its positional insert from this list.
  */
 export const STREET_CENTROID_COLUMNS = [
 	"street_norm",
@@ -122,7 +107,7 @@ export const STREET_CENTROID_COLUMNS = [
 ] as const
 
 /**
- * Create the `street_centroid` table — called before the streaming bulk load.
+ * Creates the `street_centroid` table before the bulk load.
  */
 export async function createStreetCentroidTable(db: Kysely<StreetCentroidDatabase>): Promise<void> {
 	await db.schema
@@ -145,11 +130,10 @@ export async function createStreetCentroidTable(db: Kysely<StreetCentroidDatabas
 }
 
 /**
- * Create the probe indexes: the two geocoding-scope indexes (postcode, locality-base)
- * the resolver reader relies on, plus `idx_sc_name`.
+ * Creates the postcode and locality indexes that the reader probes, plus `idx_sc_name`.
  *
- * The #727 phase-4c name-existence key for a direct `name_key = ?` seek
- * (the unscoped fragment lookup. Without it that query skip-scans `idx_sc_postcode` at ~5 ms/probe).
+ * The `idx_sc_name` index serves the unscoped `name_key = ?` lookup,
+ * which would otherwise skip-scan `idx_sc_postcode`.
  */
 export async function createStreetCentroidIndexes(db: Kysely<StreetCentroidDatabase>): Promise<void> {
 	await db.schema.createIndex("idx_sc_postcode").on("street_centroid").columns(["postcode", "street_norm"]).execute()

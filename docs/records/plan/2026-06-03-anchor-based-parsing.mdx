@@ -3,16 +3,16 @@
 **Direction D.** Some tokens in an address carry far more geographic information than others. The
 postcode is the clearest case, with distinctive streets and landmarks close behind. Treat those as
 _first-class structured anchors_ that condition (or bypass) the neural parser, rather than flattening
-them into just-another-BIO-tag. Around that sits a single self-conditioned model per **script** extract, a
-tiny always-resident coarse placer for graceful abstention, and a strict soft-prior discipline that
-keeps anchors from laundering errors. DeepSeek-signed across two consults (German conditioning:
+them into one more BIO tag. The rest of the design is a single self-conditioned model per **script** extract, a
+tiny always-resident coarse placer for graceful abstention, and a strict soft-prior rule that
+keeps anchors from propagating errors. DeepSeek signed off across two consults (German conditioning:
 `.agents/skills/deepseek-consult/session-notes-2026-06-02-german-conditioning.md`; resolver routing:
 `.agents/skills/deepseek-consult/session-notes-2026-05-30-resolver.md`).
 
 ## Why now
 
 The v0.8.0 German order-extract experiment (postmortem)
-taught two things at once. The order _is_ learnable cheaply: a 5,000-row extract roughly doubled German
+showed two things. The order _is_ learnable cheaply: a 5,000-row extract roughly doubled German
 street and house-number F1. But the continue-train re-triggered the Saint-Albans span-fragmentation bug
 at end-of-string. The model bled the postcode span into the adjacent city (`München` → `chen`, `Berlin`
 → absorbed into the postcode run), which collapsed locality and postcode and dragged the resolver down
@@ -20,20 +20,20 @@ with it. The collapse is **emission-level**: raw per-token argmax already fragme
 span-merge or CRF-transition table can repair it (both sit downstream of emissions, and the error is
 _cross-tag_, a city's lead piece leaking into `postcode` rather than a same-tag split).
 
-The mechanism reframes the whole roadmap. Think about what a postcode encodes: a US ZIP runs
+This mechanism changes the whole roadmap. Consider what a postcode encodes: a US ZIP runs
 northeast to west by its first digit, a UK postcode plus a house number nearly identifies a single
 building, and German PLZ and French codes are zone-hierarchical. It is the most information-dense token
 in an address, and we were asking a sequence labeler to find it _and_ to know where it stops, in one
 pass, with nothing telling it the postcode is a different kind of thing from the city sitting beside it.
-That framing is the bug. Lift the postcode out with a dedicated high-precision extractor, resolve it,
-and feed it back as a conditioning anchor, and the model never gets the chance to make the cross-tag
-mistake. It gains the strongest available locale signal for everything else at the same time.
+That framing caused the bug. If a dedicated high-precision extractor lifts the postcode out, resolves it,
+and feeds it back as a conditioning anchor, the model cannot make the cross-tag mistake. The model also
+gains the strongest available locale signal for everything else.
 
-This generalizes. The same "high-precision, high-geo-load token as an anchor" pattern covers distinctive
+The same pattern of treating a high-precision, geographically dense token as an anchor covers distinctive
 streets (Champs-Élysées, Shibuya 109) and landmarks (Empire State Building), which the
 [exotic-POI understanding docs](../site-2026-08/understanding/exotic-poi/landmark-queries.mdx) already describe as a
-domain the BIO parser handles poorly. The postcode isthe most regular member of that family, the
-one a regex can catch.
+domain the BIO parser handles poorly. The postcode is the most regular member of that family, and
+a regex can catch it.
 
 ## The anchor layer
 
@@ -44,8 +44,8 @@ authoritative.
 
 ### Postcode anchor (the first and most regular)
 
-- **Extractor:** pure regex + a fuzzy gazetteer. Zero-GPU, always-resident, ~2 MB for 15-20 countries,
-  microsecond latency, polyfillable in WASM. A Damerau-Levenshtein distance of 1 absorbs OCR,
+- **Extractor:** pure regex + a fuzzy gazetteer. It needs no GPU, stays resident, takes ~2 MB for 15-20
+  countries, runs in microseconds, and can be polyfilled in WASM. A Damerau-Levenshtein distance of 1 absorbs OCR,
   transposition, and truncation noise.
 - **Resolves to a country posterior.** 5-digit formats collide across US/DE/FR/ES/IT, so a single hard
   country call is wrong; the extractor returns a distribution (`75001` → `{FR: 0.98, US: 0.02}`) plus
@@ -56,8 +56,8 @@ authoritative.
   centroid, confidence). The raw tokens stay untouched, so the model can see, and recover from, a
   mistyped or out-of-gazetteer code.
 - **Anchor-dropout ~20%** during training (replace with a learned `[NO-ANCHOR]` embedding) so the model
-  never _depends_ on the anchor. This keeps it a soft prior and closes the circularity (anchor conditions
-  the parse, parse feeds the resolver) without laundering errors.
+  never _depends_ on the anchor. This keeps it a soft prior and breaks the circularity (the anchor conditions
+  the parse, and the parse feeds the resolver) without propagating errors.
 
 ### Where position fits in
 
@@ -65,15 +65,15 @@ The extractor finds a postcode wherever a human put it (resilient to positional 
 counts: it feeds the candidate's confidence, because some house numbers do look like postcodes. The
 collision is narrow (only purely-numeric-postcode countries, and house numbers typically run 1-4 digits)
 but real. `12345` is at once a valid US ZIP (Schenectady) and a plausible house number, so gazetteer
-membership alone does not always decide. So the extractor does not try to win that call. An ambiguous
+membership alone does not always decide. The extractor therefore leaves that call to the parser. An ambiguous
 candidate carries low confidence, the anchor channel propagates the doubt, and the parser plus its
 surrounding context makes the final decision. The extractor's job is high-_recall_ candidate generation
-with calibrated confidence, well short of a high-precision hard ruling.
+with calibrated confidence rather than a high-precision hard ruling.
 
 ### Generalized anchors: distinctive streets, landmarks, districts
 
-The same mechanism, with a salience-weighted place gazetteer + fuzzy/alias matching in place of a regex.
-Three pipeline placements, decided by the **router** (see coarse placer), by query type:
+These anchors use the same mechanism, with a salience-weighted place gazetteer + fuzzy/alias matching in place of a regex.
+The **router** (see coarse placer) chooses one of three pipeline placements by query type:
 
 | Query type                       | Example                                              | Pipeline placement                                                                         |
 | -------------------------------- | ---------------------------------------------------- | ------------------------------------------------------------------------------------------ |
@@ -81,18 +81,18 @@ Three pipeline placements, decided by the **router** (see coarse placer), by que
 | Distinctive street in an address | `350 Fifth Avenue`, `10 Downing Street`              | Anchor **conditions** the parser (strong city/country prior); parser still runs.           |
 | Distinctive district / component | `Ginza`, `2-Chōme`                                   | Locality/neighborhood anchor; conditions parser + resolver.                                |
 
-**Guardrails (these are critical):**
+**Guardrails:**
 
-1. **Salience is data-driven, never a hand-curated VIP list.** "Champs-Élysées is special" must fall out
-   of OSM/WOF popularity + uniqueness scores rather than a hardcoded entry. A hand-maintained famous-list is the
-   "just one more rule" trap with better taste, and we keep it off the table.
+1. **Salience is data-driven, never a hand-curated VIP list.** The salience of Champs-Élysées must come
+   from OSM/WOF popularity + uniqueness scores rather than a hardcoded entry. A hand-maintained list of famous
+   places would grow one rule at a time, so we exclude it.
 2. **Ambiguity-aware.** Champs-Élysées is near-unique (sharp prior); Broadway, Main Street, and Fifth
    Avenue exist in dozens of towns (weak, multi-modal prior). Anchors emit a posterior over candidates
    and must not over-commit on a common name ("Broadway Avenue, Springfield" must not anchor to NYC).
-3. **Concepts are past the parser's fence.** "The Hajj" refers to a place (Mecca) without being a place
-   name; resolving it is semantic entity-linking, or concept-aliasing, a different subsystem near the
+3. **Concepts are outside the parser's scope.** "The Hajj" refers to a place (Mecca) without being a place
+   name. Resolving it is semantic entity-linking, or concept-aliasing, which belongs to a different subsystem near the
    resolver (where "Macca's → McDonald's" alias logic conceptually lives). The parser stays out of it.
-   Grow it into a general world-knowledge base and the surface becomes unbounded.
+   If that subsystem grew into a general world-knowledge base, its surface would become unbounded.
 
 ## The model architecture
 
@@ -107,8 +107,8 @@ conditioning.** One Latin extract (US, UK, DE, FR, ES, IT, NL, BR, MX… as cond
 extract (JP/KR/CN share descending-locality structure), one Arabic, one Indic. Awkward cases (UK,
 tri-lingual CH, ES-Spain vs ES-LatAm) are locales _within_ the Latin extract.
 
-The two axes have different jobs: **script routes; address-system subdivides a extract only on capacity
-overflow** (see the cross-pollution metric). That is why both came up. They operate at different layers.
+The two axes have different jobs. **Script routes, and address-system subdivides an extract only on capacity
+overflow** (see the cross-pollution metric). Both axes appear in this plan because they operate at different layers.
 
 ### Self-conditioning over a hard locale token
 
@@ -128,9 +128,9 @@ few hundred KB) predicts (script, continent, coarse-region) with a **temperature
 trained with a little outlier exposure (unseen scripts as an "other" class) so it knows the edge of its
 own competence. Below threshold it **abstains**, returning "probably East Asian, off my loaded map"
 instead of a confident mis-parse. It runs first, gives an instant coarse answer, and decides which script
-extract to download. That is the selective-geography product story: ship ~28 MB that places the planet
-coarsely, then fetch the region you care about for street-level detail (tiered loading, no permanent
-whole-world footprint).
+extract to download. This supports selective geography as a product: ship ~28 MB that places any input
+coarsely, then fetch the region you care about for street-level detail. Loading is tiered, so the whole
+world never needs to stay resident.
 
 ### Does conditioning really isolate, orpaper over?
 
@@ -138,12 +138,12 @@ A conditioned shared model is modulated rather than hard-isolated: its FFN and a
 DeepSeek read is that conditioning _functionally_ specializes up to ~20-30 locales per extract at ≥300-dim
 hidden (we have 384), so our 15-20 target sits inside the safe regime, and the German collapse was a
 training-schedule artifact rather than a shared-weights limit. **Treat the capacity numbers as directional
-estimates rather than gospel** (the same source over-called the tokenizer wall, which our own
-`diag-tokenizer-multiscript.ts` walked back). The part we trust is the falsifiable regression check below.
+estimates.** The same source overestimated the tokenizer limit, and our own
+`diag-tokenizer-multiscript.ts` corrected it. We rely on the falsifiable regression check below.
 
 ## Decision rules (pre-registered)
 
-- **No promotion on parser-F1 alone.** The resolver is the judge. German's pre-experiment resolver
+- **No promotion on parser-F1 alone.** Resolver accuracy decides promotion. German's pre-experiment resolver
   locality-match was already 77.4% (v0 79.4%), a weak parser that the resolver absorbed, so a from-scratch
   retrain for German _alone_ is not justified. Keep v0.7.2 and **batch** the locale expansion.
 - **Retrain trigger (resolver terms):** a locale's resolver utility falls below ~80% city match, or
@@ -157,9 +157,9 @@ estimates rather than gospel** (the same source over-called the tokenizer wall, 
 
 ## Staged plan
 
-1. **Now — nothing to production.** v0.7.2 stays; no urgency. Drop the decoder span-merge and
-   CRF-transition ideas for German (the diagnostic killed both).
-2. **This week, no GPU, highest ROI — the postcode anchor.** Build (a) a postcode → country-posterior +
+1. **Now: ship nothing to production.** v0.7.2 stays, and nothing is urgent. Drop the decoder span-merge and
+   CRF-transition ideas for German, because the diagnostic ruled out both.
+2. **This week: the postcode anchor, which needs no GPU and has the highest ROI.** Build (a) a postcode → country-posterior +
    region + centroid gazetteer for the target locales from OpenAddresses (US already exists:
    `postalcode-us.db`, 42,319 codes; the global admin DB currently has _zero_ postcodes), and (b) the
    regex + fuzzy extractor with calibrated confidence. It helps the resolver _today_ and becomes the
@@ -168,7 +168,7 @@ estimates rather than gospel** (the same source over-called the tokenizer wall, 
 
    **Status (2026-06-03): the anchor shipped for US, NL, FR, and DE** (PRs #247-#250). The gazetteer came
    from the WOF postcode repos via `build-unified-wof --placetypes postalcode` rather than OpenAddresses
-   aggregation — the operator's "extend the custom WOF build" rule, and WOF carries the centroids (or an
+   aggregation. That choice follows the operator's "extend the custom WOF build" rule, and WOF carries the centroids (or an
    admin ancestor to borrow one). A data-quality survey showed ES/IT are orphan-heavy in WOF and stay
    membership-only until a non-WOF source is approved. See `resolver-wof-sqlite/POSTCODE-ANCHOR.md` and
    `docs/articles/evals/2026-06-03-night-5-postmortem.md`.
@@ -180,8 +180,7 @@ estimates rather than gospel** (the same source over-called the tokenizer wall, 
 4. **Real run.** One from-scratch, balanced, self-conditioned run once the pilot passes and 4-5 locales
    are staged.
 5. **Global.** Script-extract collection + the coarse-placer tier; the generalized place-anchor gazetteer
-   for distinctive streets / landmarks; subdivide a extract by address-system only if its 20k regression check
-   refuses to clear.
+   for distinctive streets / landmarks; subdivide an extract by address-system only if it fails its 20k regression check.
 
 ## Related
 

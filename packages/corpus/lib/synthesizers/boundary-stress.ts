@@ -3,19 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Generate aligned address examples that stress ambiguous boundaries between adjacent components.
- *
- *   Base-locale examples use US, French, and German vocabulary so they remain compatible with the
- *   training corpus. Components are separated by whitespace for reliable alignment.
- *
- *   Templates cover street suffixes, comma-free US address components, French street prefixes,
- *   and house numbers following streets.
- *
- *   Bare-locality and house-number-before-street examples balance the full-address and
- *   number-after-street forms.
- *
- *   Region/postcode tokens glued without a separator and AU/NZ/UK slash units are excluded because
- *   they require locale-specific vocabulary outside this recipe's base languages.
+ *   Generates US and French address rows that stress the boundaries between adjacent components.
  */
 
 /* oxlint-disable mailwoman/prefer-home -- the admin tails below are written as US templates because every tuple this
@@ -33,14 +21,20 @@ import type { CanonicalRow } from "#types"
    would hide the distribution behind a wall of identifiers. Genuine thresholds in these files are
    extracted as named constants above. */
 
+/**
+ * The row templates that {@link synthesizeBoundaryStressRow} can produce.
+ */
 export type BoundaryStressTemplate =
 	| "street-eats-affix"
 	| "comma-less-city-state"
 	| "fr-prefix"
 	| "house-number-after-street"
-	| "bare-locality" // Locality without a street.
+	| "bare-locality"
 	| "house-number-before-street"
 
+/**
+ * A locality, region, postcode and country used as an address tail.
+ */
 export interface BoundaryStressBaseTuple {
 	locality: string
 	region: string
@@ -48,14 +42,20 @@ export interface BoundaryStressBaseTuple {
 	country: string
 }
 
+/**
+ * Options for {@link synthesizeBoundaryStressRow}.
+ */
 export interface BoundaryStressSynthesisOpts {
 	random?: () => number
 	/**
-	 * Force a specific shape (tests + balanced recipe-output composition).
+	 * A template to use instead of a sampled one.
 	 */
 	forceTemplate?: BoundaryStressTemplate
 }
 
+/**
+ * One synthesized row with its template.
+ */
 export interface SynthesizedBoundaryStressRow {
 	raw: string
 	components: CanonicalRow["components"]
@@ -63,9 +63,6 @@ export interface SynthesizedBoundaryStressRow {
 	template: BoundaryStressTemplate
 }
 
-/**
- * Varied multi-word names for suffix-boundary examples.
- */
 const MULTIWORD_STREETS = [
 	"Country Club",
 	"Martin Luther King",
@@ -192,9 +189,6 @@ const SUFFIXES = [
 // Keep the order fixed because seeded sampling depends on it.
 const DIRECTIONALS = ["N", "S", "E", "W", "NE", "NW", "SE", "SW"] as const satisfies readonly DirectionalAbbreviation[]
 
-/**
- * French street types and names for prefix and number-order examples.
- */
 const FR_PREFIXES = [
 	"Rue",
 	"Avenue",
@@ -240,10 +234,10 @@ const FR_NAMES = [
 ] as const
 
 /**
- * Venue prefixes for bare-locality examples.
+ * Venue prefixes for bare-locality rows.
  *
- * Terms are selected from vocabulary labeled as venue in the base corpus; street-
- * and locality-dominant words are excluded.
+ * The list uses only words that the base corpus labels as venue, and avoids words
+ * that it mostly labels as street or locality.
  */
 const VENUES = [
 	"Community Center",
@@ -262,9 +256,7 @@ const VENUES = [
 	"Public School",
 ] as const
 
-/**
- * Localities selected from names labeled as locality in the base corpus.
- */
+// The base corpus labels each of these localities as locality.
 const US_TUPLES: ReadonlyArray<BoundaryStressBaseTuple> = [
 	{ locality: "Albuquerque", region: "NM", postcode: "87102", country: "US" },
 	{ locality: "Indianapolis", region: "IN", postcode: "46203", country: "US" },
@@ -296,10 +288,7 @@ const US_TUPLES: ReadonlyArray<BoundaryStressBaseTuple> = [
 	{ locality: "Springfield", region: "MA", postcode: "01108", country: "US" },
 ]
 
-/**
- * French localities sampled across départements.
- * French rows omit a region component.
- */
+// French rows carry no region component.
 const FR_TUPLES: ReadonlyArray<BoundaryStressBaseTuple> = [
 	{ locality: "Paris", region: "", postcode: "75003", country: "FR" },
 	{ locality: "Marseille", region: "", postcode: "13016", country: "FR" },
@@ -321,7 +310,6 @@ const FR_TUPLES: ReadonlyArray<BoundaryStressBaseTuple> = [
 	{ locality: "Rambouillet", region: "", postcode: "78120", country: "FR" },
 ]
 
-// German number-after-street forms are covered by the dedicated `german` recipe.
 const houseNumber = (random: () => number): string => String(1 + Math.floor(random() * 4999))
 const localeFor: Record<string, string> = { US: "en-US", FR: "fr-FR", DE: "de-DE" }
 
@@ -335,9 +323,9 @@ const ALL_TEMPLATES: readonly BoundaryStressTemplate[] = [
 ]
 
 /**
- * Synthesize one row.
+ * Synthesizes one row from a sampled or forced template.
  *
- * When `base` is absent, sample an internal locale-specific tuple.
+ * When `base` is absent, the function samples a built-in US or French tuple that suits the template.
  */
 export function synthesizeBoundaryStressRow(
 	base: BoundaryStressBaseTuple | undefined,
@@ -347,14 +335,11 @@ export function synthesizeBoundaryStressRow(
 	const template = opts.forceTemplate ?? sample(ALL_TEMPLATES, random)
 
 	if (template === "bare-locality") {
-		// Include bare, comma-free, postcode, and venue-prefixed locality forms without a street.
 		const b = base ?? (random() < 0.3 ? sample(FR_TUPLES, random) : sample(US_TUPLES, random))
 		const venue = random() < 0.45 ? sample(VENUES, random) : ""
-		// Include country-token examples in a minority of rows.
 		const withCountry = random() < 0.12
 
 		if (b.country === "FR") {
-			// French bare form has postcode and locality, without region.
 			const core = `${b.postcode} ${b.locality}${withCountry ? ", France" : ""}`
 
 			return {
@@ -371,8 +356,8 @@ export function synthesizeBoundaryStressRow(
 		}
 
 		const withZip = random() < 0.5
-		const comma = random() < 0.6 ? "," : "" // Include comma-free forms.
-		// Use the country name labeled as country in the base corpus.
+		const comma = random() < 0.6 ? "," : ""
+		// The base corpus labels this spelling as country.
 		const countryName = "United States"
 		const core = `${b.locality}${comma} ${b.region}${withZip ? ` ${b.postcode}` : ""}${withCountry ? `, ${countryName}` : ""}`
 
@@ -395,13 +380,12 @@ export function synthesizeBoundaryStressRow(
 		template === "house-number-after-street" ||
 		template === "house-number-before-street"
 	) {
-		// These templates use French vocabulary.
 		const b = base ?? sample(FR_TUPLES, random)
 		const name = sample(FR_NAMES, random)
 		const hn = houseNumber(random)
 
 		if (template === "house-number-before-street") {
-			// Mirror the number-after-street form with the same vocabulary.
+			// This form balances the number-after-street form with the same vocabulary.
 			const raw = `${hn} ${name}, ${b.postcode} ${b.locality}`
 
 			return {
@@ -414,7 +398,6 @@ export function synthesizeBoundaryStressRow(
 
 		if (template === "fr-prefix") {
 			const prefix = sample(FR_PREFIXES, random)
-			// Split the street prefix from the name in postcode-first order.
 			const raw = `${hn} ${prefix} ${name}, ${b.postcode} ${b.locality}`
 
 			return {
@@ -431,7 +414,6 @@ export function synthesizeBoundaryStressRow(
 			}
 		}
 
-		// Place the house number after the street name.
 		const raw = `${name} ${hn}, ${b.postcode} ${b.locality}`
 
 		return {
@@ -442,7 +424,6 @@ export function synthesizeBoundaryStressRow(
 		}
 	}
 
-	// US street shapes use base-consistent ZIP codes.
 	const b = base ?? sample(US_TUPLES, random)
 	const hn = houseNumber(random)
 	const dir = random() < 0.4 ? sample(DIRECTIONALS, random) : ""
@@ -462,10 +443,8 @@ export function synthesizeBoundaryStressRow(
 
 	const raw =
 		template === "comma-less-city-state"
-			? // Remove commas to stress segmentation.
-				`${hn} ${streetCore} ${b.locality} ${b.region} ${b.postcode}`
-			: // Use delimiters and a multi-word street.
-				`${hn} ${streetCore}, ${b.locality}, ${b.region} ${b.postcode}`
+			? `${hn} ${streetCore} ${b.locality} ${b.region} ${b.postcode}`
+			: `${hn} ${streetCore}, ${b.locality}, ${b.region} ${b.postcode}`
 
 	return { raw, components, locale: localeFor[b.country] ?? "en-US", template }
 }

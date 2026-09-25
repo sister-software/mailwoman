@@ -3,20 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Golden eval-set validator (Phase 1 task #9 in the plan).
- *
- *   The golden set is hand-labeled ground truth for the neural classifier. Each entry must carry
- *   components whose surface forms actually occur in `raw` — otherwise the entry will silently rot
- *   the eval signal. This module:
- *
- *   - Defines `GoldenEntry` (schema check).
- *   - Loads `.jsonl` files (one entry per line).
- *   - Validates every entry: schema shape, ComponentTag membership, reachability of each component in
- *       `raw` via `componentsPresentIn`.
- *   - Returns a structured report of per-entry errors so the CLI / CI surface can act on it.
- *
- *   The 1000-entry target (500 US + 500 FR) is a human task. This module catches the regressions that
- *   creep in over time as new entries land.
+ *   Validates the hand-labeled golden eval set, where every labeled component must occur in `raw`.
  */
 
 import { componentsPresentIn } from "@mailwoman/codex/address-format"
@@ -31,9 +18,9 @@ const TAG_SET = new Set<string>(COMPONENT_TAGS as readonly string[])
 /**
  * A golden-set candidate row, as `golden-expand` writes and `golden-promote` reads.
  *
- * `source` names the producer (`expand-golden:<provider>`); the seed/provenance fields
- * trace the candidate back to the corpus row and LLM call that produced it.
- * A committed golden entry is the {@link GoldenEntry} narrowing.
+ * `source` identifies the producer, such as `expand-golden:<provider>`.
+ * The seed and provenance fields trace the candidate to its corpus row and LLM call.
+ * {@link GoldenEntry} narrows this type to a committed entry.
  */
 export interface GoldenCandidateEntry {
 	raw: string
@@ -55,7 +42,7 @@ export interface GoldenEntry extends GoldenCandidateEntry {
 }
 
 /**
- * Per-entry validation failure.
+ * A validation failure for one line of a golden file.
  */
 export interface GoldenIssue {
 	file: string
@@ -64,7 +51,7 @@ export interface GoldenIssue {
 }
 
 /**
- * Aggregate report from `validateGoldenDir`.
+ * The aggregate report that `validateGoldenDir` returns.
  */
 export interface GoldenReport {
 	entries: number
@@ -73,13 +60,13 @@ export interface GoldenReport {
 }
 
 /**
- * Parse a single jsonl line into a `GoldenEntry`.
+ * Parses one JSONL line into a `GoldenEntry`.
+ *
+ * `validateGoldenFile` records the thrown message against the line number, so this parse must stay strict.
  *
  * @throws On schema violations.
  */
 export function parseGoldenLine(line: string): GoldenEntry {
-	// The throw is the result: `validateGoldenFile` catches it and records the message
-	// against the line number, so a tolerant parse would report a corrupt row as valid.
 	const obj = parseJSONStrict<Partial<GoldenEntry> & Record<string, unknown>>(line)
 
 	if (typeof obj.raw !== "string" || !obj.raw.length) {
@@ -114,11 +101,10 @@ export function parseGoldenLine(line: string): GoldenEntry {
 }
 
 /**
- * Check that every component in `entry` appears in `entry.raw`.
+ * Returns the tags in `entry` whose values do not occur in `entry.raw`.
  *
- * A golden entry's `raw` is hand-written ground truth rather than a render, so the question
- * here really is containment: does this labeled span occur in the string a person typed.
- * That is the weaker of the two reconciliations, and the right one for a string no layout produced.
+ * A golden `raw` is hand-written, so this check uses containment instead of
+ * reconciling against a rendered layout.
  */
 export function unreachableComponents(entry: GoldenEntry): ComponentTag[] {
 	const present = componentsPresentIn(entry.components, entry.raw)
@@ -134,18 +120,15 @@ export function unreachableComponents(entry: GoldenEntry): ComponentTag[] {
 }
 
 /**
- * Validate one `.jsonl` file end-to-end, returning a list of issues.
+ * Validates one `.jsonl` file and returns its issues.
  *
- * Parses line by line over `TextSpliterator` rather than `JSONSpliterator`: every issue this returns
- * carries the line number it was found on, and a malformed line has to be reported rather than thrown.
- * `JSONSpliterator` parses each row for you and throws on the first bad one — correct for
- * consumers that want the rows, wrong for the validator whose whole job is locating the bad ones.
+ * This reads lines with `TextSpliterator` because `JSONSpliterator` throws on the first malformed row.
+ * The validator must instead report every bad row with its line number.
  */
 export async function validateGoldenFile(source: PathBuilderLike): Promise<GoldenIssue[]> {
-	// Each issue names the file as text.
 	const path = source.toString()
 	const issues: GoldenIssue[] = []
-	// Counted over every row including blanks, so the number matches what an editor shows.
+	// Blank lines count too, so the number matches the line an editor shows.
 	let lineNumber = 0
 
 	for await (const raw of TextSpliterator.fromAsync(path, { skipEmpty: false })) {
@@ -175,7 +158,7 @@ export async function validateGoldenFile(source: PathBuilderLike): Promise<Golde
 }
 
 /**
- * Validate every `.jsonl` in a golden directory.
+ * Validates every `.jsonl` file directly inside a golden directory.
  */
 export async function validateGoldenDir(dir: PathBuilderLike): Promise<GoldenReport> {
 	const root = PathBuilder.from(dir)

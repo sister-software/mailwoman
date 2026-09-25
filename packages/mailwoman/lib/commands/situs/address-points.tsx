@@ -3,38 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mailwoman situs address-points --state VT` — build a per-state address-point database (#476) from
- *   the pinned-release Overture Parquet: exact `(street, number)` within a `(postcode | locality)`
- *   scope → exact point. The geocoder's street-level opening move — when the point exists you look
- *   it up. you interpolate (#483) only on miss. This database is also the gold standard the future
- *   tiger interpolation is graded against.
- *
- *   `mailwoman situs address-points --country TW` — the national shape of the same build, for a country whose
- *   Overture addresses are one register rather than fifty: one `address-points-<cc>.db`, read by
- *   `OvertureNationalDatabaseProvider`. The country names its street locale through that provider's
- *   registry, so the keys here are the keys the reader probes with. Taiwan (`zh`) scopes a point by
- *   縣市 + 鄉鎮市區 (`address_levels[1]` + `[2]`, folded together into `locality_norm`), carries no
- *   postcode, writes the number as `１２２號`, and names the 村里 (`address_levels[3]`) which lands in
- *   `admin_code`. `--bbox` drops rows whose coordinate falls outside the country: the 2026-06-17.0 TW
- *   parquet carries one row placed in Alaska, and a mis-keyed source point served as a rooftop is the
- *   highest-confidence wrong answer the pipeline can give.
- *
- *   Keying uses the shared normalizer (`@mailwoman/resolver-wof-sqlite/street-normalize`) — the same
- *   function the lookup tier applies at query time. Provenance per row (epic #470 rules): source
- *   dataset + release pinned in-table.
- *
- *   County scoping (#483 density characterization): Overture carries no county field, so an optional
- *   --county-fips filter does a point-in-polygon against the tiger county boundary shapefile
- *   (--county-boundary, same tiger vintage as the edges the interpolation database reads) — keeps a
- *   county-scoped gold comparable to a county-scoped segment table.
- *
- *   Alternate source: --oa-csv builds from OpenAddresses conformed CSV(s) instead of the Overture
- *   parquet, for states Overture's US addresses theme does not carry (HI, NH).
- *
- *   Maintainer-only: needs the local parquet/CSV inputs + the @duckdb/node-api dev dep + the optional
- * @mailwoman/resolver-wof-sqlite peer (the shared schema + normalizer). Progress streams to stderr.
- *   the final summary lands on stdout. The build writes to a temp path, then atomically swaps into
- *   place (scripts/agents.md) — the original script rebuilt in place.
+ * Builds a state or national address-point database from Overture or OpenAddresses.
  */
 
 import { removePathIfPresent, makeDirectories } from "@mailwoman/core/fs/writers"
@@ -48,7 +17,7 @@ import { basename, dirname, resolvePath } from "path-ts"
 import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 
 /**
- * Native command-line interface consumed by the filesystem command router.
+ * Declares the options of `mailwoman situs address-points`.
  */
 export const spec = {
 	name: "address-points",
@@ -79,10 +48,24 @@ export const spec = {
 } as const satisfies CommandSpec
 
 /**
- * The four numbers a `--bbox` carries: minLon, minLat, maxLon, maxLat.
+ * The number of `--bbox` fields: minLon, minLat, maxLon, maxLat.
  */
 const BBOX_FIELDS = 4
 
+/**
+ * Builds an address-point database that maps `(street, number)` within a postcode
+ * or locality scope to an exact point, then prints its provenance summary.
+ *
+ * `--state` builds one US state from the Overture addresses parquet.
+ * `--country` builds one national database for `OvertureNationalDatabaseProvider`.
+ *
+ * `--oa-csv` builds from OpenAddresses CSVs for states that Overture does not carry.
+ *
+ * Keys come from the shared normalizer in `@mailwoman/resolver-wof-sqlite`,
+ * which the lookup tier also applies at query time.
+ * The command needs `@duckdb/node-api` and the optional `@mailwoman/resolver-wof-sqlite` peer.
+ * It builds into a temp path and swaps the result into place.
+ */
 const SitusAddressPoints: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { DatabaseClient } = await import("@mailwoman/sqlite/client")
@@ -90,9 +73,7 @@ const SitusAddressPoints: CommandComponent<typeof spec> = ({ options }) => {
 		const { addressPointDatabasePath } = await import("@mailwoman/resolver-wof-sqlite/paths")
 		const { swapDatabaseIntoPlace } = await import("@mailwoman/sqlite/sealed-db")
 
-		// OA mode: build from OpenAddresses CSV(s) rather than the Overture parquet.
 		const OA_MODE = Boolean(options.oaCSV)
-		// National mode: one country's whole parquet, keyed with the locale its provider registers.
 		const COUNTRY = options.country?.toUpperCase()
 
 		if (!options.state && !COUNTRY) {
@@ -129,15 +110,13 @@ const SitusAddressPoints: CommandComponent<typeof spec> = ({ options }) => {
 			? dataRootPath("overture", options.release, `addresses-${COUNTRY.toLowerCase()}.parquet`)
 			: dataRootPath("overture", options.release, "addresses-us.parquet")
 
-		// The build's label in every message and in the layer manifest: the state or the country.
 		const SCOPE = COUNTRY ?? STATE
 
 		const { licenseForOvertureCountry, nationalAddressPointsPath, streetLocaleForOvertureCountry } =
 			await import("#geocode/national-overture")
 
-		// A national build keys with the locale the provider will read it with —
-		// the one-function discipline across the build/probe boundary.
-		// An unregistered country throws here rather than keying with the wrong rules.
+		// A national build must key with the locale its provider reads with.
+		// An unregistered country throws here instead of keying with the wrong rules.
 		const nationalLocale = COUNTRY ? streetLocaleForOvertureCountry(COUNTRY) : undefined
 
 		const finalOut = resolvePath(
@@ -147,9 +126,7 @@ const SitusAddressPoints: CommandComponent<typeof spec> = ({ options }) => {
 					: addressPointDatabasePath(`address-points-us-${STATE.toLowerCase()}.db`))
 		)
 
-		// Optional maintainer deps: the shared schema/normalizer (resolver-wof-sqlite, an optional peer)
-		// and the DuckDB parquet/CSV reader (@duckdb/node-api, a dev dep).
-		// Both dynamic + guarded so the published CLI doesn't force them on every consumer.
+		// Both imports are dynamic so the published CLI does not require these optional dependencies.
 		let pointSchema: typeof import("@mailwoman/resolver-wof-sqlite/address")
 		let streetNormalize: typeof import("@mailwoman/resolver-wof-sqlite/street")
 
@@ -183,13 +160,10 @@ const SitusAddressPoints: CommandComponent<typeof spec> = ({ options }) => {
 			normalizeStreetForKeyLocale,
 		} = streetNormalize
 
-		// Build the dataset allow-list (normalised to lower-case for a case-insensitive match).
-		// Empty = no filter (keep everything).
+		// An empty allow-list keeps every dataset.
 		const allowedDatasets: Set<string> = new Set(extractDelimited(options.licenseFilter).map((d) => d.toLowerCase()))
 
 		await makeDirectories(dirname(finalOut))
-		// Build into a temp path.
-		// Atomically swap on success (scripts/agents.md).
 		const tmpOut = `${finalOut}.building-${process.pid}.db`
 
 		for (const sfx of ["", "-wal", "-shm"]) {
@@ -199,13 +173,13 @@ const SitusAddressPoints: CommandComponent<typeof spec> = ({ options }) => {
 		const instance = await DuckDBInstance.create()
 		const duck = await instance.connect()
 
-		// Optional thread cap (national driver sets this so concurrent state builds don't oversubscribe cores).
+		// The national driver caps threads so concurrent state builds do not oversubscribe cores.
 		if (options.threads && /^\d+$/.test(options.threads)) {
 			await duck.run(`SET threads TO ${options.threads}`)
 		}
 
-		// Optional county scope: PIP against the tiger county polygon (geoid = state+county FIPS).
-		// DuckDB hoists the scalar subquery to a constant, so the per-row cost is the containment test.
+		// Overture has no county field, so a county scope tests each point against the TIGER county polygon.
+		// DuckDB hoists the scalar subquery to a constant, so each row pays only the containment test.
 		let countyFilter = ""
 
 		if (options.countyFips) {
@@ -216,17 +190,13 @@ const SitusAddressPoints: CommandComponent<typeof spec> = ({ options }) => {
 							ST_Point(lon, lat))`
 		}
 
-		// License filter: pushed into DuckDB so the parquet scan drops ineligible rows
-		// before transfer. lower() matches case-insensitively against our normalised allow-list.
+		// DuckDB applies the license filter so the parquet scan drops ineligible rows before transfer.
 		const datasetFilter = allowedDatasets.size
 			? `AND lower(sources[1].dataset) IN (${[...allowedDatasets].map((d) => `'${d}'`).join(", ")})`
 			: ""
 
 		const kdb = new DatabaseClient<AddressPointDatabase>(tmpOut)
-		// DDL + column order come from the shared schema (address-point-schema)
-		// so the writer can't drift from AddressPointSqliteLookup (the reader).
-		// The insert stays a positional prepared statement — tens of millions of rows per state —
-		// but its column list is derived from ADDRESS_POINT_COLUMNS.
+		// The DDL and column order come from the shared schema so this writer cannot drift from the reader.
 		kdb.exec("PRAGMA journal_mode = WAL;")
 
 		await createAddressPointTable(kdb)
@@ -236,19 +206,11 @@ const SitusAddressPoints: CommandComponent<typeof spec> = ({ options }) => {
 					 VALUES (${ADDRESS_POINT_COLUMNS.map(() => "?").join(", ")})`
 		)
 
-		// Provenance accounting: per-dataset counts across all rows returned by DuckDB (pre-JS drop).
-		// When --license-filter is active DuckDB already dropped the ineligible rows,
-		// so this reflects the kept set.
-		// `totalReturned` feeds the kept-vs-dropped summary below.
+		// These counts cover every row DuckDB returns, before the JavaScript-side drops.
 		const datasetCounts = new Map<string, number>()
 		let kept = 0
 		let totalReturned = 0
 
-		// stream the parquet scan in DuckDB DataChunks (~2048 rows each)
-		// rather than materialising the whole result.
-		// A 13.5M-row state (CA/FL/TX) blows the ~4GB V8 heap that way (OOM 2026-06-14).
-		// stream()+fetchChunk() keeps JS memory bounded to one chunk.
-		// The growing data lives in the on-disk SQLite WAL inside a single transaction.
 		const oaCSVList = OA_MODE
 			? extractDelimited(options.oaCSV)
 					.map((p) => `'${p}'`)
@@ -292,8 +254,10 @@ const SitusAddressPoints: CommandComponent<typeof spec> = ({ options }) => {
 							${countyFilter}
 							${datasetFilter}`
 
+		// The scan streams one DataChunk at a time because the largest states overflow
+		// the V8 heap when the whole result is materialized.
 		const stream = await duck.stream(streamSQL)
-		// A streamed DataChunk carries no column names of its own, so pull them off the result once.
+		// A streamed DataChunk has no column names, so the names come from the result.
 		const colNames = stream.columnNames()
 		kdb.exec("BEGIN")
 
@@ -315,9 +279,8 @@ const SitusAddressPoints: CommandComponent<typeof spec> = ({ options }) => {
 				const lat = Number(r.lat)
 				const lon = Number(r.lon)
 
+				// OpenAddresses rows can have empty coordinates.
 				if (!Number.isFinite(lat) || !Number.isFinite(lon)) continue
-
-				// OA rows can carry empty coords
 
 				const locality = r.locality
 					? nationalLocale
@@ -341,9 +304,7 @@ const SitusAddressPoints: CommandComponent<typeof spec> = ({ options }) => {
 					lon,
 					OA_MODE ? "openaddresses" : `overture:${r.dataset}`,
 					OA_MODE ? "openaddresses-latest" : options.release,
-					// The US and OA sources state no commune key.
-					// A national build carries the third admin level (the Taiwanese 村里) here,
-					// the finest place the register names below the scope pair.
+					// Only a national build has an admin code: the third admin level, such as the Taiwanese 村里.
 					r.admin_code ? String(r.admin_code) : null,
 					null
 				)
@@ -365,7 +326,7 @@ const SitusAddressPoints: CommandComponent<typeof spec> = ({ options }) => {
 			)
 			.get() as Record<string, number>
 
-		// Always emit provenance so operators can audit database licenses.
+		// The summary always includes provenance so operators can audit database licenses.
 		const lines: string[] = [
 			`${kept} points → ${finalOut}`,
 			`${totalReturned} ${SCOPE} rows from ${OA_MODE ? "OpenAddresses" : basename(PARQUET)}`,
@@ -380,9 +341,7 @@ const SitusAddressPoints: CommandComponent<typeof spec> = ({ options }) => {
 		}
 
 		if (allowedDatasets.size) {
-			// The DuckDB query already excluded non-allowed rows, so totalReturned is the kept count.
-			// Run a secondary count (cheap: parquet predicate pushdown on a single column) for
-			// the total-minus-kept so the operator can see how much the filter dropped.
+			// The main query already excluded filtered rows, so a second count measures what the filter dropped.
 			const totalResult = await duck.runAndReadAll(`
 						SELECT count(*) AS n
 						FROM read_parquet('${PARQUET}')
@@ -402,10 +361,9 @@ const SitusAddressPoints: CommandComponent<typeof spec> = ({ options }) => {
 			)
 		}
 
-		await kdb.destroy() // closes the underlying `db` handle
+		await kdb.destroy()
 
-		// Stamped on the temp file, before the swap, for the same reason the interpolation
-		// database is: the swap is the moment the artifact becomes live.
+		// The manifest is stamped on the temp file because the swap is the moment the database goes live.
 		const { buildSHA, stampLayerManifest } = await import("#gazetteer-pipeline/stamp-manifest")
 		const { LayerFreshnessPolicy, LayerTier } = await import("@mailwoman/core/layers")
 		const { repoRootPath } = await import("@mailwoman/core/paths")
@@ -415,11 +373,8 @@ const SitusAddressPoints: CommandComponent<typeof spec> = ({ options }) => {
 			version: options.release,
 			schemaVersion: 1,
 			tier: LayerTier.BuildLocal,
-			// The manifest admits only an spdx expression the obligations table knows.
-			// The US build records Overture's theme license.
-			// Which source datasets it kept is the attribution beside it, since a database
-			// built with a different allow-list carries different per-dataset terms.
-			// A national build records the theme license and the register's own.
+			// The manifest accepts only an SPDX expression that the obligations table knows.
+			// The attribution lists the kept datasets because each allow-list carries different terms.
 			license: COUNTRY ? licenseForOvertureCountry(COUNTRY) : "CDLA-Permissive-2.0",
 			attribution: `Overture addresses (${(allowedDatasets.size ? [...allowedDatasets] : sortedDatasets.map(([dataset]) => dataset)).toSorted().join(", ")})`,
 			source: "overture-addresses",
@@ -451,7 +406,7 @@ const SitusAddressPoints: CommandComponent<typeof spec> = ({ options }) => {
 		)
 	}
 
-	return null // progress streams to stderr until the summary lands
+	return null
 }
 
 export default SitusAddressPoints

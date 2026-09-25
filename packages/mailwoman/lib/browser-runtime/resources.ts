@@ -3,8 +3,10 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Browser asset URLs, version pins, attribution data, and FST loaders. Assets use immutable caching; rebuilds require
- *   new dated paths, with these constants serving as the mutable pointers.
+ *   Defines browser asset URLs, version pins, data credits and FST loaders.
+ *
+ *   The CDN caches assets as immutable, so every rebuild publishes to a new dated path. The version
+ *   constants in this module select which path the runtime loads.
  */
 
 import { fetchWithRetry } from "#browser-runtime/fetch"
@@ -12,35 +14,35 @@ import type { FSTMatcherLike, FSTProvenanceLike } from "#browser-runtime/types"
 
 /**
  * Public asset origin.
- * Databases support byte-range reads from this host.
+ * It supports byte-range reads of the databases.
  */
 const ASSET_BASE_URL = "https://public.mailwoman.ai/mailwoman/"
 
+/**
+ * Returns the URL of one file in a locale's release.
+ */
 export function assetURL(locale: string, version: string, filename: string): string {
 	return `${ASSET_BASE_URL}${locale}/${version}/${filename}`
 }
 
 /**
- * Publisher credit and license URL for a fetched dataset.
- * Basemap attribution is handled separately.
+ * The publisher credit and license URL for a fetched dataset.
  */
 export interface DataCredit {
-	/**
-	 * Publisher name.
-	 */
 	publisher: string
 	/**
-	 * URL for the license or attribution terms.
+	 * URL of the license or attribution terms.
 	 */
 	termsURL: string
 	/**
-	 * Artifacts covered by this credit.
+	 * A description of the artifacts that the credit covers.
 	 */
 	artifacts: string
 }
 
 /**
- * Publisher credits for the runtime's fetched data, excluding the basemap.
+ * Publisher credits for the runtime's fetched data.
+ * Basemap attribution is handled elsewhere.
  */
 export const DATA_CREDITS: readonly DataCredit[] = [
 	{
@@ -81,26 +83,25 @@ export const DATA_CREDITS: readonly DataCredit[] = [
 ]
 
 /**
- * URL of the per-locale releases manifest.
+ * Returns the URL of a locale's releases manifest.
  */
 export function releasesManifestURL(locale: string): string {
 	return `${ASSET_BASE_URL}${locale}/releases.json`
 }
 
 /**
- * Same-origin path for sql.js-httpvfs runtime assets.
+ * Returns the same-origin path of the sql.js-httpvfs runtime assets.
  */
 export function sqljsBaseURL(siteBaseURL: string): string {
 	return `${siteBaseURL}mailwoman/sqljs`
 }
 
 /**
- * Build a street-extract URL.
+ * Returns a street-extract URL.
  *
- * US extracts are state-specific; national extracts use a dated path.
+ * National extracts use a dated path, and US state extracts use an undated path.
  */
 export function streetExtractURL(slug: string, kind: "situs" | "interp"): string {
-	// National extracts use dated URLs; US extracts use the state-specific path.
 	if (NATIONAL_STREET_SLUGS.has(slug)) {
 		return `${ASSET_BASE_URL}street/${slug}/${NATIONAL_STREET_EXTRACT_VERSION}/${kind}.db`
 	}
@@ -109,46 +110,48 @@ export function streetExtractURL(slug: string, kind: "situs" | "interp"): string
 }
 
 /**
- * National street extracts, currently available for France.
+ * Slugs of the national street extracts.
  */
 export const NATIONAL_STREET_SLUGS = new Set(["fr"])
 
 /**
- * Version of the published national street extract.
+ * Version of the published national street extracts.
  */
 export const NATIONAL_STREET_EXTRACT_VERSION = "2026-07-10"
 
 /**
- * National fallback slug when no US state extract applies.
+ * The national extract slug used when no US state extract applies.
  */
 export const NATIONAL_STREET_FALLBACK_SLUG = "fr"
 
 /**
- * Version for the model-independent admin gazetteer.
- * Bump it when the artifact is rebuilt and uploaded.
+ * Version of the admin gazetteer, which every model release shares.
+ * Update it after uploading a rebuilt gazetteer.
  */
 export const ADMIN_GAZETTEER_VERSION = "2026-08-25b"
 
 /**
- * Build the dated URL for the global, byte-ranged candidate gazetteer.
+ * Returns the URL of the global candidate gazetteer, which the runtime reads with byte ranges.
  */
 export function adminGazetteerURL(): string {
 	return `${ASSET_BASE_URL}gazetteer/${ADMIN_GAZETTEER_VERSION}/candidate.db`
 }
 
 /**
- * Version of the model-independent POI layer.
- * Bump it when the artifact is rebuilt and uploaded.
+ * Version of the POI layer, which every model release shares.
+ * Update it after uploading a rebuilt layer.
  */
 export const POI_LAYER_VERSION = "2026-07-20a"
 
+/**
+ * Returns the URL of the POI layer database.
+ */
 export function poiLayerURL(): string {
 	return `${ASSET_BASE_URL}poi/${POI_LAYER_VERSION}/poi.db`
 }
 
 /**
- * US state and territory slugs with hosted street extracts.
- * Other regions use the gazetteer fallback.
+ * US state and territory slugs that have hosted street extracts.
  */
 export const HOSTED_STREET_SLUGS = new Set([
 	"ak",
@@ -260,7 +263,8 @@ const US_STATE_NAME_TO_SLUG: Record<string, string> = {
 }
 
 /**
- * Convert a recognized US region name or abbreviation to its extract slug.
+ * Converts a US state name or two-letter code to its extract slug.
+ * Any two-letter input passes through unchanged.
  */
 export function regionToStateSlug(region: string | undefined): string | null {
 	if (!region) return null
@@ -268,12 +272,11 @@ export function regionToStateSlug(region: string | undefined): string | null {
 
 	if (/^[a-z]{2}$/.test(r)) return r
 
-	// Accept two-letter abbreviations directly.
 	return US_STATE_NAME_TO_SLUG[r] ?? null
 }
 
 /**
- * Build the URL configuration shared by the primary and comparison classifier loaders.
+ * Returns the loader URL configuration shared by the primary and comparison classifiers.
  */
 export function neuralClassifierLoadURLs(
 	locale: string,
@@ -284,10 +287,10 @@ export function neuralClassifierLoadURLs(
 		modelURL: assetURL(locale, version, "model.onnx"),
 		tokenizerURL: assetURL(locale, version, "tokenizer.model"),
 		modelCardURL: assetURL(locale, version, "model-card.json"),
-		// Required by gazetteer-trained bundles; older releases may omit it.
+		// Gazetteer-trained bundles require the lexicon.
+		// Older releases may not include it.
 		gazetteerLexiconURL: assetURL(locale, version, "anchor-lexicon-v1.json"),
 		runner: { useWebGPU: !opts.forceWASM },
-		// Include postcode anchors when the release has them.
 		...(opts.hasAnchor
 			? {
 					postcodeBinaryURLs: [
@@ -301,29 +304,30 @@ export function neuralClassifierLoadURLs(
 }
 
 /**
- * Countries whose placetype-pair indexes the demo requests; missing files are skipped.
+ * Countries whose placetype-pair indexes the demo requests.
+ * The demo skips missing files.
  */
 export const PAIR_INDEX_COUNTRIES = ["gb", "nz"] as const
 
 /**
- * Versioned pair-index path.
+ * Version of the pair-index binaries.
+ * Update it with each rebuild.
  *
- * Bump alongside binary rebuilds because CDN assets are immutable.
- * This pin belongs to the deployed site because its bundled reader enforces a schema version.
+ * The site pins this version because its bundled reader accepts only one schema version.
  */
 export const PAIR_INDEX_VERSION = "2026-08-05"
 
 /**
- * Return the base URL for a pair-index generation.
+ * Returns the base URL of one pair-index version.
  */
 export function pairIndexBaseURL(version: string): string {
 	return `${ASSET_BASE_URL}pair-index/${version}`
 }
 
 /**
- * Build the country binary URLs under a pair-index base.
+ * Returns the per-country binary URLs under a pair-index base URL.
  *
- * @param baseURL Base for the binaries — a trailing slash is tolerated.
+ * @param baseURL Base URL of the binaries, with or without a trailing slash.
  */
 export function pairIndexURLs(baseURL: string): string[] {
 	const base = baseURL.replace(/\/$/, "")
@@ -331,6 +335,9 @@ export function pairIndexURLs(baseURL: string): string[] {
 	return PAIR_INDEX_COUNTRIES.map((cc) => `${base}/pair-index-${cc}.bin`)
 }
 
+/**
+ * Loads the release's FST gazetteer and, when the binary includes it, its provenance.
+ */
 export async function loadFSTGazetteer(
 	locale: string,
 	version: string
@@ -350,16 +357,16 @@ export async function loadFSTGazetteer(
 	try {
 		provenance = fstModule.readFSTProvenanceWeb(fstBinary) as FSTProvenanceLike | undefined
 	} catch {
-		/* V2 binary — no provenance */
+		// Version 2 binaries have no provenance section.
 	}
 
 	return { matcher, provenance }
 }
 
 /**
- * Load the release's street-morphology FST.
+ * Loads the release's street-morphology FST.
  *
- * Return `null` when the artifact is unavailable; corrupt binaries throw.
+ * The function returns `null` when the file is unavailable and throws when the binary is corrupt.
  */
 export async function loadStreetMorphologyFST(locale: string, version: string): Promise<FSTMatcherLike | null> {
 	const res = await fetchWithRetry(assetURL(locale, version, "fst-street-morphology.bin"))

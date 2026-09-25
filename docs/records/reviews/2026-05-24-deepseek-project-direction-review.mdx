@@ -37,11 +37,11 @@ The staged pipeline is the project's strongest intellectual contribution:
 | 5. Reconcile         | Joint-coherent interpretation across candidates                  | Opt-in; mocked top-k in tests                            |
 | 6. Resolve           | World hierarchy — WOF gazetteer                                  | Yes (WOF SQLite)                                         |
 
-This decomposition is bitter-lesson-aligned in exactly the right way. The bitter lesson says "general methods that use computation win over hand-engineered domain knowledge." It does not say "make one model do everything." It says don't hand-engineer things the system could learn from data. Mailwoman decomposes where decomposition is correct (the gazetteer is a lookup rather than a learning problem; boundary discovery is structural rather than semantic) and learns where learning is correct (per-token type distribution). The important distinction is "learn distributions, look up the world, compose constraints."
+This decomposition is consistent with the bitter lesson. The bitter lesson says "general methods that use computation win over hand-engineered domain knowledge." It argues against hand-engineering what the system could learn from data, and it does not require one model to do everything. Mailwoman decomposes where decomposition is correct (the gazetteer is a lookup rather than a learning problem; boundary discovery is structural rather than semantic) and learns where learning is correct (per-token type distribution). The important distinction is "learn distributions, look up the world, compose constraints."
 
 ### 2. Parse/resolve split stays intact
 
-Keeping parser and resolver separate is the most important architectural decision. It avoids asking the model to memorize WOF/BAN/TIGER, and it gives the resolver room to return candidates instead of pretending one answer is certain. The `alternatives` field and `--candidates` CLI direction are aligned with graceful failure. This is where Mailwoman can be meaningfully better than old geocoders: only "more correct top-1," but more direct about ambiguity.
+Keeping parser and resolver separate is the most important architectural decision. It avoids asking the model to memorize WOF/BAN/TIGER, and it gives the resolver room to return candidates instead of pretending one answer is certain. The `alternatives` field and `--candidates` CLI direction are aligned with graceful failure. This is where Mailwoman can be meaningfully better than old geocoders: it can be more direct about ambiguity as well as "more correct top-1."
 
 ### 3. Small, TypeScript-first neural runtime
 
@@ -147,7 +147,7 @@ The [Codex review](./2026-05-24-codex-project-direction-review.mdx) (same date) 
 
 ### Hypotheses this review adds
 
-**1. The from-scratch-vs-fine-tuning control experiment.** The Codex review does not mention fine-tuning from a pretrained checkpoint. This is the single highest-changeage unanswered question. The plan explicitly rejects pretrained BERT, but the empirical divergence record across 9 runs is evidence the hypothesis needs testing. A controlled experiment costs ~2 GPU hours and answers whether the capacity/diversity mismatch is the root cause.
+**1. The from-scratch-vs-fine-tuning control experiment.** The Codex review does not mention fine-tuning from a pretrained checkpoint. This is the most consequential unanswered question. The plan explicitly rejects pretrained BERT, but the empirical divergence record across 9 runs is evidence the hypothesis needs testing. A controlled experiment costs ~2 GPU hours and answers whether the capacity/diversity mismatch is the root cause.
 
 **2. The model capacity wall.** The Codex review describes the 9M-param model as "reasonable for address tagging." This review flags that the divergence fingerprint — loss bottoms deep, then climbs to a confident-wrong degenerate minimum — is consistent with a model hitting a capacity wall where memorization is more stable than generalization. spaCy's analogous Japanese NER model uses 110M params (12× larger). The task is narrower, but the loss surface instability across 9 runs suggests the current capacity may be insufficient for stable training from scratch.
 
@@ -276,14 +276,14 @@ Before paying for a full expensive validation run (rented H100, LLM generation a
 - [ ] Eval matrix produces baseline numbers for fallback and joint paths (Step 4).
 - [ ] Synthetic data has explicit curriculum weights (Step 5).
 
-Then spend on a full C-train. Not before.
+Spend on a full C-train only after every item passes.
 
 ## Where Mailwoman should go
 
 The project should aim to become the **TypeScript-native open geocoding front end**: parser, structured candidate generator, and resolver interface that can run locally, in a browser, or next to Pelias-like services. It does not need rooftop precision or a universal world model to be valuable. It needs to be:
 
-- Easy to deploy (npm install, no C compilation).
-- direct about ambiguity (candidate surfaces, calibration, graceful-failure signals).
+- Easy to deploy (npm install without C compilation).
+- Direct about ambiguity (candidate surfaces, calibration, graceful-failure signals).
 - Cheap enough for browsers and serverless (current ~60MB cold load is competitive).
 - Retrainable on open data (corpus pipeline is the moat).
 - Calibrated enough that downstream systems can decide when to ask for more context.
@@ -294,7 +294,7 @@ That direction is coherent. The current architectural work supports it. The next
 
 Continue the project. Do not expand scope yet.
 
-The architecture is correct. The corpus is a moat. The training stability is the existing blocker. The divergence fingerprint across 9 runs is now the central technical question — and it has two unexamined hypotheses (from-scratch initialization, model capacity) that the current bisect ladder does not test. Run those control experiments before the next full train.
+The architecture is correct, and the corpus pipeline is a durable advantage. Training stability is the current blocker. The divergence pattern across 9 runs is now the central technical question, and it has two unexamined hypotheses (from-scratch initialization, model capacity) that the current bisect ladder does not test. Run those control experiments before the next full train.
 
 The next investment should be a validation sprint:
 

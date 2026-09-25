@@ -21,23 +21,26 @@ import {
 import { downloadRemote, probeRemote, verifyChecksum, writeArtifact } from "#weights/fetch-hf-weights/transfer"
 
 /**
- * Configures {@link fetchHFWeights}: the repo root to read release config from,
- * the model version (defaulting to the base model's), and the progress logger.
+ * Options for {@link fetchHFWeights}.
  */
 export interface FetchHFWeightsOptions {
 	/**
-	 * The checkout that manifests, model cards and committed lexicons are read from,
-	 * which is never written unless it is also the destination.
+	 * The checkout that supplies manifests, model cards and committed lexicons.
+	 *
+	 * The fetch writes to it only when it is also the destination.
 	 */
 	repoRoot?: PathBuilderLike
 
 	/**
-	 * The model-card version that names the bucket directory, defaulting to the base package's model card.
+	 * The model-card version that selects the bucket directory.
+	 *
+	 * It defaults to the version in the base package's model card.
 	 */
 	version?: string
 
 	/**
-	 * Receives progress lines, defaulting to stderr.
+	 * Receives progress lines.
+	 * It defaults to stderr.
 	 */
 	log?: (line: string) => void
 }
@@ -47,11 +50,12 @@ function writeStderr(line: string): void {
 }
 
 /**
- * Downloads each distinct planned weights object once and writes it, checksum-verified,
- * into every workspace that declares it, along with artifacts sourced from the checkout.
+ * Downloads each distinct planned weights object once and writes it into every workspace that declares it.
+ *
+ * It also copies the artifacts sourced from the checkout, and it verifies checksums for both.
  *
  * It probes every remote object before downloading anything, so an unstaged
- * version fails once with all missing objects named.
+ * version fails once and lists every missing object.
  */
 export async function fetchHFWeights(
 	destRoot: string,
@@ -182,7 +186,7 @@ export async function fetchHFWeights(
 }
 
 /**
- * Print a materialization receipt.
+ * Logs a summary of a materialization report.
  */
 export function reportHFMaterialization(
 	report: HFMaterializationReport,

@@ -8,13 +8,13 @@ audience: teams
 # Overview
 
 Mailwoman is an address parser and geocoder that runs inside your own process. `npm install` puts a
-39.4 MB model file on your disk, and a parse after that is a function call with no network in it.
+39.4 MB model file on your disk. After that, a parse is a function call that makes no network request.
 
-Reading an address and placing it are two passes, and they become available at different times. The
-model reads: it takes a string and returns tagged components with a confidence score on each.
-Placing those components on the map is a second pass over a gazetteer database you download once and
-keep. There is no account, no API key and no meter, because there is nothing on our side of the call
-to meter.
+Reading an address and placing it are two separate passes, and they become available at different
+times. The model reads a string and returns tagged components, each with a confidence score. A second
+pass places those components on the map using a gazetteer database that you download once and keep.
+Mailwoman requires no account and no API key, and it does not meter usage, because no call reaches a
+server of ours.
 
 ## What it does
 
@@ -25,18 +25,18 @@ from the same install. Each one has a page that runs it end to end.
 
 ## What it costs to carry
 
-A full install of the entry package plus the English weights is 707 MB, and 523 MB of that is the
-ONNX runtime rather than anything of ours. The model inside it is 39.4 MB. Geocoding adds a 1.65 GB
-gazetteer download, which is why it is a second decision rather than part of the first. Every figure
-is stated with the command that produced it, and so is every accuracy number on
-[Benchmarks](../resources/benchmarks/index.mdx).
+A full install of the entry package plus the English weights is 707 MB, and the ONNX runtime accounts
+for 523 MB of that. The model inside it is 39.4 MB. Geocoding adds a 1.65 GB gazetteer download, so
+you decide on it separately. Each figure is published with the command that produced it, as is each
+accuracy number on [Benchmarks](../resources/benchmarks/index.mdx).
 
 [Footprints](../developers/reference/footprints.mdx)
 
 ## Where it runs
 
-A Node library, a container, a serverless instance, a browser tab, or an MCP server an agent talks
-to over stdio. The shapes differ in what has to be resident and what each one gives up.
+Mailwoman runs as a Node library, in a container, on a serverless instance, in a browser tab, or as
+an MCP server that an agent talks to over stdio. The shapes differ in what has to be resident and
+what each one gives up.
 
 [Deployment options](./deployment-options.mdx)
 
@@ -67,13 +67,13 @@ npx mailwoman parse "350 5th Ave, New York, NY 10118"
 ```
 
 That command opened no socket. The same call from the library returns the tree behind this flattened
-view, with a span and a confidence score per component.
+view, with a span and a confidence score for each component.
 
 ## What it is not
 
-It is not a hosted service, and it is not an authoritative register of delivery points. It reads the
-string you hand it and matches what it can against open data, so it will tell you that a string looks
-like an address in Manhattan and where that is. It will not tell you that mail arrives there.
+Mailwoman is not a hosted service or an authoritative register of delivery points. It reads the
+string you give it and matches what it can against open data. It can tell you that a string looks
+like an address in Manhattan and where that address is. It cannot tell you that mail arrives there.
 [What Mailwoman is](../developers/get-started/what-mailwoman-is.mdx) has the full shape of that
 boundary.
 

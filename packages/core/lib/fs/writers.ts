@@ -2,15 +2,9 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file The asynchronous write surface. Every writer here takes a {@linkcode PathBuilderLike} and answers a promise.
+ * @file Asynchronous file-system writers that take a {@linkcode PathBuilderLike} and return a promise.
  *
- *   The companion to `./readers.ts`, and the reason both exist is in that file's header.
- *
- *   Two ceremonies are encoded here rather than repeated at the call site. Every file writer creates the parent
- *   directory first, because the alternative is an enoent that names the file and not the missing directory.
- *   {@linkcode createSymbolicLink} unlinks its destination first, because `symlink` onto an existing path is eexist
- *   and `copyFile` onto an existing symlink writes through it — the defect that put symlinks in a publish tarball and
- *   made npm answer http 415.
+ *   Every file writer creates the parent directory first.
  */
 
 import { appendFile, chmod, copyFile, cp, mkdir, rename, rm, symlink, utimes, writeFile } from "node:fs/promises"
@@ -25,28 +19,22 @@ import { prettyJSON, stringifyJSON, type StringifiedJSON } from "#json"
 // #region Directories
 
 /**
- * Create a directory and any missing parent directories, like `mkdir -p`.
+ * Creates each directory and any missing parents, like `mkdir -p`.
  *
- * @param paths The paths to create, run in parallel.
+ * @param paths The paths to create in parallel.
  *
- * @returns The paths that were created, for convenience in chaining.
+ * @returns The same paths, for chaining.
  */
 export function makeDirectories<T extends PathBuilderLike[]>(...paths: T): Promise<T> {
 	return Promise.all(paths.map((path) => mkdir(path.toString(), { recursive: true }))).then(() => paths)
 }
 
 /**
- * Create one directory, raising eexist when something is already there.
+ * Creates one directory and rejects with `EEXIST` when the path already exists.
  *
- * The exclusive counterpart to {@linkcode makeDirectories}.
- * It is recursive.
- *
- * Therefore, idempotent.
- * That idempotence is what disqualifies it here: `mkdir` without `recursive` is an atomic
- * test-and-set, and it is how both of this repository's inter-process locks are held.
- *
- * Swapping one for {@linkcode makeDirectories} would let every waiter take the
- * lock at once, and nothing would report it.
+ * A non-recursive `mkdir` is an atomic test-and-set, and the repository's inter-process
+ * locks depend on it. {@linkcode makeDirectories} succeeds on an existing directory,
+ * so it cannot replace this function for a lock.
  */
 export function makeDirectoryExclusive(path: PathBuilderLike): Promise<void> {
 	return mkdir(path.toString()).then(() => undefined)
@@ -57,7 +45,7 @@ export function makeDirectoryExclusive(path: PathBuilderLike): Promise<void> {
 // #region Files
 
 /**
- * A buffer-like object that can be written to a file.
+ * Data that `writeFile` accepts as file content.
  *
  * @internal
  */
@@ -67,15 +55,12 @@ export type BufferLike =
 	| AsyncIterable<string | NodeJS.ArrayBufferView>
 
 /**
- * Write a local text file, creating its parent directory first.
+ * Writes a local text file.
  *
- * A string is written verbatim.
- * Any other iterable of strings — an array, a `Set`, a generator — is written one
- * element per line, every line terminated including the last: an unterminated final
- * line appends badly and is not what `TextSpliterator` round-trips.
- *
- * An empty iterable writes an empty file rather than a lone newline, because "no lines"
- * and "one blank line" are different files and a bare `join` produces the second.
+ * A string is written as is.
+ * Any other iterable of strings is written one element per line, and every line
+ * ends with a newline, including the last.
+ * An empty iterable writes an empty file.
  *
  * @see {@linkcode writeLocalJSONFile} for a JSON-specific writer that pretty-prints and adds a trailing newline.
  * @category Files
@@ -108,14 +93,13 @@ export async function writeLocalTextFile<S extends PathBuilderLike[]>(
 
 	await mkdir(dirname(filePath), { recursive: true })
 
-	// A string is itself an `Iterable<string>` over its characters, so settle it before selecting the line writer.
+	// A string is also an `Iterable<string>` of characters, so it must be handled before the line writer.
 	const resolved = await content
 
 	if (typeof resolved === "string") return writeFile(filePath, resolved, "utf8")
 
-	// `try`/`finally` rather than `await using`, which is equivalent here: this module is
-	// in the import graph of the Docusaurus plugins, and that config loader babel-parses
-	// its graph without the `explicitResourceManagement` plugin.
+	// The Docusaurus config loader parses this module with Babel without `explicitResourceManagement`,
+	// so this block uses `try`/`finally` in place of `await using`.
 	const writer = createNewlineWriter(filePath)
 
 	try {
@@ -128,20 +112,17 @@ export async function writeLocalTextFile<S extends PathBuilderLike[]>(
 }
 
 /**
- * One line per element, every line terminated.
- * No elements produces the empty string.
+ * Joins lines with a newline after each one, including the last.
+ * An empty array returns an empty string.
  *
- * The same shape {@linkcode writeLocalTextFile} applies to an iterable,
- * for the sites that build a document and hand it somewhere else.
- * `lines.join("\n")` leaves the last line unterminated, and `lines.join("\n") + "\n"`
- * turns an empty list into a file containing one blank line.
+ * The output matches what {@linkcode writeLocalTextFile} writes for an iterable.
  */
 export function toLinesText(lines: readonly string[]): string {
 	return lines.length ? `${lines.join("\n")}\n` : ""
 }
 
 /**
- * Write a local JSON file, tab-indented, creating its parent directory first.
+ * Writes a tab-indented local JSON file.
  *
  * @category Files
  * @runtime node
@@ -156,13 +137,9 @@ export function writeLocalJSONFile<T = Record<string, unknown>, S extends PathBu
 }
 
 /**
- * Write one JSON value per line, newline-terminated.
+ * Writes a JSONL file with one JSON value per line, each followed by a newline.
  *
- * The jsonl shape every panel, fixture and result file in this repository is
- * read back with by `JSONSpliterator.fromAsync`.
- *
- * The trailing newline is part of the interface: a file whose last line has
- * none appends badly and diffs noisily.
+ * `JSONSpliterator.fromAsync` reads these files back.
  *
  * @category Files
  * @runtime node
@@ -178,7 +155,7 @@ export function writeLocalJSONLFile<T, S extends PathBuilderLike[] = PathBuilder
 }
 
 /**
- * Write a local file's bytes, creating its parent directory first.
+ * Writes bytes to a local file.
  *
  * @category Files
  * @runtime node
@@ -199,25 +176,7 @@ export async function writeLocalBuffer<S extends PathBuilderLike[]>(
 }
 
 /**
- * Write a local file, creating its parent directory first, letting the runtime
- * decide how to encode `content`.
- *
- * Prefer {@linkcode writeLocalTextFile} or {@linkcode writeLocalBuffer}
- * when the call site knows which it has.
- * The name then says so, and a reader does not have to follow the value back to its producer.
- *
- * This overload exists for the sites where it genuinely does not: a payload that
- * is a string on one branch and bytes on another.
- *
- * @category Files
- * @runtime node
- */
-/**
- * Write a UTF-8 text file readable and writable by its owner alone (`0600`), creating the parent directory.
- *
- * The mode is applied after the write as well as at creation, because `writeFile`
- * keeps the mode of a file that already exists.
- * For a signing key or any other secret the caller must not leave world-readable.
+ * Writes a UTF-8 text file that only its owner can read and write (`0600`), such as a signing key.
  */
 export async function writePrivateTextFile<S extends PathBuilderLike[]>(
 	content: string | Promise<string>,
@@ -230,13 +189,20 @@ export async function writePrivateTextFile<S extends PathBuilderLike[]>(
 	const filePath = resolvePath(...pathSegments)
 
 	await makeDirectories(dirname(filePath))
-	// Not `writeLocalTextFile` + `changeMode`: the mode has to be set at creation,
-	// or the secret exists world-readable between the two calls.
-	// `changeMode` afterwards covers a file that already existed with a wider mode.
+	// Setting the mode at creation keeps a new file private from the start.
+	// `writeFile` keeps an existing file's mode, so `changeMode` also runs afterwards.
 	await writeFile(filePath, await content, { encoding: "utf8", mode: 0o600 })
 	await changeMode(filePath, 0o600)
 }
 
+/**
+ * Writes a local file whose content may be text or bytes.
+ *
+ * Use {@linkcode writeLocalTextFile} or {@linkcode writeLocalBuffer} when the content type is known.
+ *
+ * @category Files
+ * @runtime node
+ */
 export async function writeLocalFile<S extends PathBuilderLike[]>(
 	content: string | BufferLike,
 	...pathSegments: S
@@ -257,7 +223,7 @@ export async function writeLocalFile<S extends PathBuilderLike[]>(
 // #region Appending
 
 /**
- * Append text to a local file, creating it and its parent directory when neither exists.
+ * Appends text to a local file and creates the file and its parent directory when needed.
  *
  * @category Files
  * @runtime node
@@ -280,20 +246,20 @@ export async function appendLocalTextFile<S extends PathBuilderLike[]>(
 // #endregion
 
 /**
- * Remove a file, or a directory and everything under it.
+ * Removes a file, or a directory and everything under it.
  *
  * @throws {Error} If the path does not exist.
- * @see {@linkcode removePathIfPresent} to not throw if the path does not exist.
+ * @see {@linkcode removePathIfPresent} for a version that ignores a missing path.
  */
 export function removePath(path: PathBuilderLike): Promise<void> {
 	return rm(path.toString(), { recursive: true })
 }
 
 /**
- * Remove a directory and everything under it.
+ * Removes a directory and everything under it.
  *
  * @param path The directory to remove.
- * @param cachedStats Optional pre-fetched stats for the directory.
+ * @param cachedStats Stats for the directory, when the caller already has them.
  */
 export function removeDirectory(path: PathBuilderLike, cachedStats?: Stats): Promise<void> {
 	const resolved = cachedStats ? Promise.resolve(cachedStats) : statPath(path)
@@ -308,10 +274,10 @@ export function removeDirectory(path: PathBuilderLike, cachedStats?: Stats): Pro
 }
 
 /**
- * Remove a file.
+ * Removes a file.
  *
  * @param path The file to remove.
- * @param cachedStats Optional pre-fetched stats for the file.
+ * @param cachedStats Stats for the file, when the caller already has them.
  */
 export function removeFile(path: PathBuilderLike, cachedStats?: Stats): Promise<void> {
 	const resolved = cachedStats ? Promise.resolve(cachedStats) : statPath(path)
@@ -326,17 +292,17 @@ export function removeFile(path: PathBuilderLike, cachedStats?: Stats): Promise<
 }
 
 /**
- * Remove a file, or a directory and everything under it, treating absence as success — `rm -rf`.
+ * Removes a file or directory tree and succeeds when the path is missing, like `rm -rf`.
  */
 export function removePathIfPresent(path: PathBuilderLike): Promise<void> {
 	return rm(path.toString(), { recursive: true, force: true })
 }
 
 /**
- * Copy a file or a directory tree, creating the destination's parent directory first.
+ * Copies a file or directory tree and creates the destination's parent directory first.
  *
  * @param source The file or directory to copy.
- * @param destination Where it lands.
+ * @param destination The destination path.
  */
 export async function copyPath(source: PathBuilderLike, destination: PathBuilderLike): Promise<void> {
 	const target = destination.toString()
@@ -347,11 +313,10 @@ export async function copyPath(source: PathBuilderLike, destination: PathBuilder
 }
 
 /**
- * Copy one file, replacing whatever is at the destination.
+ * Copies one file and replaces whatever is at the destination.
  *
- * The destination is unlinked first: `copyFile` onto a symlink writes through it
- * and leaves the link in place, which is how a materialized weights artifact stayed
- * a symlink and made `npm publish` answer http 415.
+ * The destination is removed first because `copyFile` onto a symlink writes
+ * through the link and leaves the link in place.
  */
 export async function copyFileTo(source: PathBuilderLike, destination: PathBuilderLike): Promise<void> {
 	const target = destination.toString()
@@ -363,12 +328,11 @@ export async function copyFileTo(source: PathBuilderLike, destination: PathBuild
 }
 
 /**
- * Move a file or directory, creating the destination's parent directory first.
+ * Moves a file or directory with `rename` and creates the destination's parent directory first.
  *
- * Rename only, so it does not cross a filesystem boundary, which is the property
- * an atomic publish depends on.
- * Use {@linkcode copyPath} followed by {@linkcode removePathIfPresent}
- * where the two ends may live on different devices.
+ * `rename` is atomic and fails across filesystems.
+ * Use {@linkcode copyPath} and then {@linkcode removePathIfPresent}
+ * when the paths may be on different devices.
  */
 export async function movePath(source: PathBuilderLike, destination: PathBuilderLike): Promise<void> {
 	const target = destination.toString()
@@ -379,10 +343,12 @@ export async function movePath(source: PathBuilderLike, destination: PathBuilder
 }
 
 /**
- * Point a symbolic link at a target, replacing whatever is already there.
+ * Creates a symbolic link and replaces whatever is at the link path.
  *
- * @param target What the link points at.
- * @param linkPath Where the link itself lives.
+ * The existing path is removed first because `symlink` fails with `EEXIST` on an existing path.
+ *
+ * @param target The path the link points to.
+ * @param linkPath The path of the link itself.
  */
 export async function createSymbolicLink(
 	target: PathBuilderLike,
@@ -398,14 +364,14 @@ export async function createSymbolicLink(
 }
 
 /**
- * Change a path's permission bits.
+ * Changes a path's permission bits.
  */
 export function changeMode(path: PathBuilderLike, mode: number | string): Promise<void> {
 	return chmod(path.toString(), mode)
 }
 
 /**
- * Set a path's access and modification times.
+ * Sets a path's access and modification times.
  */
 export function setTimestamps(
 	path: PathBuilderLike,

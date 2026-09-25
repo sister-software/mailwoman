@@ -49,9 +49,9 @@ const OSGB36_TO_WGS84_HELMERT = {
 } as const
 
 /**
- * Holds a geodetic latitude and longitude in degrees, on an ellipsoid the caller must track.
+ * A geodetic latitude and longitude in degrees on an ellipsoid that the caller must track.
  *
- * The same numbers name different places on Airy 1830 and on GRS80.
+ * The same numbers refer to different places on Airy 1830 and on GRS80.
  */
 export interface GeodeticLatLon {
 	/**
@@ -70,21 +70,23 @@ export interface GeodeticLatLon {
  */
 export interface NationalGridPoint {
 	/**
-	 * Easting in metres; valid GB values run roughly from 0 to 700,000.
+	 * Easting in metres.
+	 * Valid GB values run roughly from 0 to 700,000.
 	 */
 	easting: number
 
 	/**
-	 * Northing in metres; valid GB values run roughly from 0 to 1,300,000.
+	 * Northing in metres.
+	 * Valid GB values run roughly from 0 to 1,300,000.
 	 */
 	northing: number
 }
 
 /**
- * Converts National Grid eastings and northings to OSGB36 latitude and longitude
- * on the Airy 1830 ellipsoid, without any datum shift.
+ * Converts a National Grid easting and northing to OSGB36 latitude and longitude
+ * on the Airy 1830 ellipsoid, without a datum shift.
  *
- * The result is not WGS84; pass it to {@link osgb36AiryToWGS84}.
+ * Pass the result to {@link osgb36AiryToWGS84} to get WGS84 coordinates.
  */
 export function osgb36GridToAiryLatLon({ easting, northing }: NationalGridPoint): GeodeticLatLon {
 	const a = AIRY_1830_A
@@ -159,7 +161,7 @@ export function osgb36GridToAiryLatLon({ easting, northing }: NationalGridPoint)
  * Converts OSGB36 latitude and longitude on Airy 1830 to WGS84 with the seven-parameter
  * Helmert transform, accurate to about 5 m.
  *
- * Heights are not modelled, so the result is suitable for horizontal positions only.
+ * The transform ignores height, so use the result for horizontal positions only.
  */
 export function osgb36AiryToWGS84({ latitude, longitude }: GeodeticLatLon): GeodeticLatLon {
 	const { tx, ty, tz, scalePPM, rx, ry, rz } = OSGB36_TO_WGS84_HELMERT
@@ -209,8 +211,8 @@ export function osgb36AiryToWGS84({ latitude, longitude }: GeodeticLatLon): Geod
  * Converts a British National Grid (EPSG:27700) easting and northing to WGS84
  * (EPSG:4326) latitude and longitude, accurate to about 5 m across GB.
  *
- * It does not treat `{ easting: 0, northing: 0 }` as missing, so callers must filter
- * Code-Point Open's zero placeholder rows themselves.
+ * It converts `{ easting: 0, northing: 0 }` like any other point, so callers must
+ * filter out Code-Point Open's zero placeholder rows.
  */
 export function osgb36ToWGS84(point: NationalGridPoint): GeodeticLatLon {
 	return osgb36AiryToWGS84(osgb36GridToAiryLatLon(point))

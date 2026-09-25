@@ -11,33 +11,22 @@ import { JSON_PARSE, JSON_STRINGIFY, restrictedPropertiesExcept } from "./config
 
 const config = createOxlintConfig({
 	spdxLicenseIdentifier: "AGPL-3.0",
-	// Mailwoman ships React (ink) UIs, so keep the React rules the prior shared config applied.
+	// Mailwoman ships Ink UIs, so the React rules stay on.
 	react: true,
-	// Headers were disabled previously because the old eslint-plugin-headers
-	// stacked duplicate headers on --fix.
-	// That bug is fixed in the new oxlint header plugin, so headers can be safely re-enabled —
-	// set `headers: true` (or remove this line) to enforce + autofix them repo-wide.
-	// Left off here to match the repo's prior behavior.
 	headers: false,
 	restrictProcessGlobals: true,
 	// A number used as a comparison threshold needs a name.
-	// Data tables (bbox rows, codepoint ranges, status maps) are left alone,
-	// which is why `no-magic-numbers` stays off.
+	// `no-magic-numbers` stays off so that data tables are left alone.
 	unnamedThresholds: true,
-	// Exported module-level constants carry a JSDoc block saying what the value means and where it came from — provenance rather than a restatement of the identifier. Scoped to exported only: on the local SCREAMING_CASE constants the name is usually the documentation already (`STREET_TYPES_FILENAME`, `SVG_WIDTH`), and requiring a sentence there produces restatements, which cost the next reader more than the missing comment did. Public surface is where a reader has no other context.
+	// Only exported constants need a JSDoc block.
+	// A local constant's name usually says enough.
 	constantDocs: {
 		scope: "exported",
-		// Command modules export these as framework metadata.
-		// The `description` string is the `--help` text.
-		// A JSDoc block above them can only restate it.
+		// Command modules export these as framework metadata, and `description` is the `--help` text.
 		ignoreNames: ["description", "args", "options", "alias", "isDefault"],
 	},
-	// An acronym is capitalized as a whole camelCase component: `parseJSON`,
-	// `POILookup`, `createWOFResolver`.
-	// The shipped list covers general programming vocabulary.
-	// Everything below is this project's own, and the list is worth widening on sight —
-	// `outHtml` sat in three sibling files for months because a hand-maintained list
-	// only contains the acronyms someone thought to add.
+	// An acronym is capitalized as a whole camelCase component, as in `parseJSON` and `POILookup`.
+	// These entries extend the shipped list with this project's acronyms.
 	acronymCasing: {
 		extraAcronyms: [
 			"BIO",
@@ -56,29 +45,21 @@ const config = createOxlintConfig({
 			"WOF",
 			"ZCTA",
 		],
-		// Names whose casing is not ours to choose.
-		// Prefer a scoped disable comment at the one site that needs it — an entry here
-		// silently covers every future declaration of the same name.
+		// An entry here exempts every future declaration of the name.
+		// Prefer a scoped disable comment.
 		ignoreNames: [
-			// kysely's own dialect classes are `SqliteAdapter`/`SqliteDialect`/`SqliteDriver`;
-			// ours implement its interfaces and read as a matched pair only if they follow suit.
+			// These classes implement Kysely's interfaces and match its `Sqlite*` class names.
 			"SqliteAdapter",
 			"SqliteDialect",
 			"SqliteDialectConfig",
 			"SqliteDriver",
-			// `LedgerAppendOptions` receives the CLI option bag verbatim.
-			// Its fields are the `--run-id` flag names, and the house form is derived at the boundary.
+			// `LedgerAppendOptions` receives the CLI options unchanged, so its field matches the `--run-id` flag.
 			"runId",
 		],
 	},
 	ignorePatterns: [
-		// `**/coverage` is dropped and re-added anchored, for the reason `.gitignore` records at its
-		// own coverage entry: bare, it matches a directory of that name at any depth, and this repository
-		// has four that are source — `mailwoman/lib/coverage/`, `mailwoman/lib/commands/coverage/`,
-		// `mailwoman/test/unit/coverage/` and `cartographer/lib/coverage/`.
-		// Those files were never linted, and because the pre-commit hook hands oxlint
-		// the staged paths and oxlint errors when a path list resolves to nothing,
-		// staging one of them refused the commit outright.
+		// The default `**/coverage` pattern would also ignore source directories named
+		// `coverage`, so only the root coverage directory is ignored.
 		...DefaultIgnorePatterns.filter((pattern) => pattern !== "**/coverage"),
 		"/coverage/",
 		".pi",
@@ -87,40 +68,30 @@ const config = createOxlintConfig({
 		"docs/.docusaurus",
 		"**/.agents/**",
 		"**/.claude/**",
-		// Python venv + egg-info under corpus-python/ (vendored JS we don't own).
+		// Python virtual environments can contain third-party JavaScript.
 		"**/.venv/**",
 		"**/*.egg-info/**",
-		// Emscripten-generated single-file artifact (rebuilt by sentencepiece-wasm/build.sh).
+		// sentencepiece-wasm/build.sh generates this file with Emscripten.
 		"packages/sentencepiece-wasm/sentencepiece.mjs",
 	],
 })
 
-// Mailwoman-specific rule overrides, merged onto the shared base.
-// The factory's `overrides` option shallow-spreads, so merge `rules` explicitly
-// to avoid clobbering the base rule set.
 /**
- * `@mailwoman/neural` is bundled for a browser whole: the demo reaches its web loader,
- * which reaches the classifier and every soft-feature channel behind it.
+ * Files in `@mailwoman/neural` that the docs demo bundles for the browser.
  *
- * So the browser-reachable set is the package minus its Node tier, stated that way round
- * because the Node tier is the short, stable list.
- * An enumeration of the browser half needs an edit every time a module is added,
- * and gets one only if its author remembered this file.
+ * The set is the package minus its Node tier, because the Node tier is the shorter, stable list.
+ * A value import of a Node-only module from these files breaks the webpack build.
  *
- * A value import of a Node-only module from here breaks the client bundle:
- * webpack follows it eagerly and chokes on `onnxruntime-node`'s binary assets.
- * `import type` is erased before the bundler sees it and stays legal.
- *
- * No node-side check catches a violation: `yarn compile`, the test legs and the gauntlet never bundle.
- * Only the separate docs-build workflow does, which is minutes later and in another run.
+ * `import type` stays legal because it is erased before bundling.
+ * Only the docs build bundles this package, so the lint rule is the earliest check.
  */
 const BROWSER_REACHABLE_NEURAL_FILES = ["packages/neural/lib/*.ts"]
 
 /**
- * The Node tier, exempt from the rule below.
+ * Node-tier files of `@mailwoman/neural`, which are exempt from the browser import rule.
  *
- * `index.ts` is the Node entry and re-exports the other three as values; `test/**`
- * and the nested directories fall outside the single-segment glob above on their own.
+ * `index.ts` is the Node entry.
+ * Nested directories already fall outside the single-segment glob above.
  */
 const NODE_TIER_NEURAL_FILES = [
 	"packages/neural/lib/index.ts",
@@ -133,40 +104,38 @@ const NODE_TIER_NEURAL_FILES = [
 ]
 
 /**
- * Node-only modules the browser tier must not pull into the bundle.
+ * Node-only modules that the browser tier must not import as values.
  *
- * `./onnx-runner.ts` warrants its place twice over now that `@mailwoman/neural/onnx-runner`
- * carries a `browser` condition: export conditions do not apply to relative specifiers,
- * so the package-name form is safe and the relative one silently is not.
- * Naming the relative path is what makes that difference visible at the point of the mistake.
+ * Export conditions do not apply to relative specifiers.
+ * `@mailwoman/neural/onnx-runner` resolves to a browser build, but `./onnx-runner.ts` does not.
  */
 const NODE_ONLY_NEURAL_MODULES = [
 	"./onnx-runner.ts",
 	"./weights.ts",
 	"./scorer.ts",
 	"onnxruntime-node",
-	// `$public` reaches node:util/node:fs/node:path.
-	// The `node:*` pattern below cannot catch it: the rule matches specifiers,
-	// and this module launders the builtins behind its own name.
-	// `./env.ts` extends it and is the same module one hop further away.
+	// `@mailwoman/core/env` imports Node builtins, which the `node:*` pattern cannot see.
+	// `./env.ts` and `#env` extend it.
 	"@mailwoman/core/env",
 	"./env.ts",
 	"#env",
 ]
 
 /**
- * Every Node builtin, by specifier prefix.
- *
- * A browser-reachable file importing one of these is a bundle break whatever the module is called.
+ * Specifier pattern that matches every Node builtin.
  */
 const NODE_BUILTIN_PATTERN = "node:*"
 
+/**
+ * Oxlint config for the monorepo.
+ *
+ * It adds the repo-local plugin and Mailwoman rules to the shared config.
+ *
+ * The shared factory's `overrides` option spreads shallowly, so this object
+ * merges `overrides` and `rules` itself.
+ */
 export default {
 	...config,
-	// The repo-local plugin (`oxlint.plugin.ts`) rides alongside the bundled Sister Software one.
-	//
-	// `mailwoman/comment-reflow` lives there too, so the fork in
-	// `config/oxlint/comment-reflow/` needs no package.
 	jsPlugins: [...((config.jsPlugins as string[] | undefined) ?? []), "./oxlint.plugin.ts"],
 	overrides: [
 		...((config.overrides as unknown[] | undefined) ?? []),
@@ -200,48 +169,32 @@ export default {
 			},
 		},
 		{
-			// `@mailwoman/sqlite` is where a connection comes into being, so it is the one place that names the builtin.
+			// `@mailwoman/sqlite` opens connections, so it may import `node:sqlite`.
 			files: ["packages/sqlite/**/*.ts"],
 			rules: {
 				"typescript/no-restricted-imports": "off",
 			},
 		},
 		{
-			// `packages/core/lib/fs/*` is the idiom the redirects below point at,
-			// so it is the one place that reaches `node:fs` directly.
+			// The import rule redirects `node:fs` to these wrappers, so they may import it.
 			files: ["packages/core/lib/fs/**/*.ts"],
 			rules: {
 				"typescript/no-restricted-imports": "off",
 			},
 		},
 		{
-			// `packages/core/lib/json.ts` is what both redirects point at.
-			// The printers and the parsers are where the builtin is named, and each call
-			// inside them is the wrapper the rule recommends.
+			// This file holds the JSON wrappers that the rule recommends.
 			files: ["packages/core/lib/json.ts"],
 			rules: {
 				"no-restricted-properties": restrictedPropertiesExcept(JSON_PARSE, JSON_STRINGIFY),
 			},
 		},
 		{
-			// A redirect to `@mailwoman/core` is only actionable where the import is,
-			// and these files cannot take it.
-			// The reason is structural rather than per-call, so it is stated once here
-			// instead of as a disable comment on every line, which is what these files carried
-			// before, each repeating this paragraph in miniature.
-			//
-			// `docs/static/**` ships standalone: the benchmark harnesses and the published server example
-			// run on node builtins with no monorepo install, which is what lets a reader copy them.
-			// `ancestrie`, `annotations` and `un-locode-lookup` are leaf packages that declare no
-			// `@mailwoman/core` dependency, and taking one drags core's ~11 MB of shipped data behind it.
-			// The same trade that keeps `un-locode-lookup` re-implementing the ray cast
-			// rather than importing `@mailwoman/spatial`.
-			//
-			// Only the printer entry is lifted.
-			// `JSON.parse` still binds, because these files already answer it per site with something
-			// this override cannot say — whether a throw on corrupt input is the interface there.
-			// Lifting both would leave those six disable comments dead while reading as
-			// though they still did work.
+			// These files cannot depend on `@mailwoman/core`.
+			// The `docs/static` scripts run without a monorepo install, and the leaf
+			// packages avoid pulling in core's shipped data.
+			// Only `JSON.stringify` is allowed here.
+			// Each `JSON.parse` site keeps its own disable comment.
 			files: [
 				"docs/static/**/*.mjs",
 				"packages/ancestrie/**/*.ts",
@@ -253,8 +206,7 @@ export default {
 			},
 		},
 		{
-			// `packages/core/lib/module/*` owns ESM plumbing — package-directory resolution
-			// and `file:` URL conversion — and is the one place `node:url` is reached for it.
+			// These modules resolve package directories and convert `file:` URLs with `node:url`.
 			files: ["packages/core/lib/module/**/*.ts"],
 			rules: {
 				"typescript/no-restricted-imports": "off",
@@ -262,10 +214,7 @@ export default {
 			},
 		},
 		{
-			// The homes `prefer-home` points at are the one place each shape is typed out:
-			// the clock helpers, the seeded generators, and `@mailwoman/spatial`,
-			// which owns Earth's radius and every reading of it.
-			// The table that names each shape, and its test, spell the constants out by necessity.
+			// `prefer-home` points at these files, and the plugin and its test spell out the same shapes.
 			files: [
 				"packages/core/lib/utils/time.ts",
 				"packages/core/lib/random.ts",
@@ -279,9 +228,8 @@ export default {
 			},
 		},
 		{
-			// A test file imports the package under test through its public exports
-			// and a helper by relative path.
-			// The `#` map is the package's private naming and stays inside `lib/`.
+			// Tests import the package through its public exports.
+			// The `#` import map is private to `lib/`.
 			files: [
 				"packages/*/test/**/*.ts",
 				"packages/*/test/**/*.tsx",
@@ -295,24 +243,22 @@ export default {
 			},
 		},
 		{
-			// `packages/core/lib/process.ts` is the child-process idiom and the one place `node:child_process` is reached.
+			// This file wraps `node:child_process` for the rest of the repo.
 			files: ["packages/core/lib/process.ts"],
 			rules: {
 				"typescript/no-restricted-imports": "off",
 			},
 		},
 		{
-			// `core/scripting/arguments.ts` is the argv boundary (`parseArguments`, `cliArguments`)
-			// and reaches `node:util` for the one builtin it wraps.
+			// This file wraps `parseArgs` from `node:util`.
 			files: ["packages/core/lib/scripting/arguments.ts"],
 			rules: {
 				"typescript/no-restricted-imports": "off",
 			},
 		},
 		{
-			// The remaining core homes, each the one place its builtin is reached:
-			// host facts (`node:os`), a timed wait (`node:timers/promises`), an emitter's next
-			// event (`node:events`), digests (`node:crypto`), the compile cache (`node:module`).
+			// These core modules wrap `node:os`, `node:timers/promises`, `node:events`,
+			// `node:crypto` and `node:module`.
 			files: [
 				"packages/core/lib/utils/system.ts",
 				"packages/core/lib/utils/sleep.ts",
@@ -326,18 +272,15 @@ export default {
 			},
 		},
 		{
-			// Corpus tests are co-located with the modules they cover.
-			// Test-only http/TCP servers need Node builtins, while production corpus
-			// modules continue to use the package-wide builtin homes.
+			// Corpus tests sit beside their modules and start local HTTP and TCP servers.
 			files: ["packages/corpus/lib/**/*.test.ts", "packages/corpus/lib/**/*.test.tsx"],
 			rules: {
 				"typescript/no-restricted-imports": "off",
 			},
 		},
 		{
-			// Builtins with no idiom to wrap yet, each reached directly by the one file that needs it:
-			// a line reader over a fixed-width feed, a worker's `workerData`, the cluster primary,
-			// a test-local http server and the two `https.get` downloads that predate `APIClient`.
+			// These files use builtins that core does not wrap yet, such as readline,
+			// worker_threads, cluster, http and https.
 			files: [
 				"packages/filer/lib/sdk/form499/index.ts",
 				"packages/filer/lib/sdk/provider-list.ts",
@@ -362,34 +305,15 @@ export default {
 	],
 	rules: {
 		...(config.rules as Record<string, unknown>),
-		// The plugin measures a tab as four columns, and oxfmt renders one as two.
-		// An indented comment is therefore measured wider than it prints,
-		// and wraps early by two columns per indent level.
-		// One sentence per line.
-		//
-		// A sentence that fits takes a line of its own, and only a sentence too long for the
-		// measure wraps — at a comma or before a conjunction, with a parenthetical held whole.
-		//
-		// The lead sentence of a block stands alone and the rest travel in pairs,
-		// which is the shape the hand-written comments in isp-nexus settled on.
-		// There the author wrote short paragraphs and the formatter only ever filled inside one.
-		//
-		// 90 is the measure and 120 the ceiling.
-		// The columns between are bought, by a parenthetical that would otherwise split
-		// or a tail that would otherwise strand, rather than filled.
-		// `tabWidth` matches oxfmt, whose tab is two columns.
-		// The upstream plugin assumed four and wrapped every indented comment early.
+		// The reflow puts each sentence on its own line and wraps only sentences longer than 90 columns.
+		// A line may reach 120 columns to avoid splitting a parenthetical.
+		// `tabWidth` matches oxfmt's two-column tab.
 		"mailwoman/comment-reflow": ["warn", { printWidth: 120, targetWidth: 90, tabWidth: 2, paragraphSentences: 2 }],
 		"guard-for-in": "error",
-		// The shared base sets this to `warn`.
-		// It every run prints and no run refuses.
-		// Therefore, an unused binding accumulates.
-		// `tsc` does not catch it either.
-		// `noUnusedLocals` and `noUnusedParameters` are off in `@sister.software/tsconfig`.
-		// Measured before promoting: those two flags over every package's source
-		// and test project report zero, so this refuses the next one rather than a backlog.
-		// The base's options are repeated verbatim because setting a severity alone drops them, and every
-		// axis carries an `^_` escape, so a binding that must exist unused still has a legal spelling.
+		// The shared base only warns, and the shared tsconfig disables `noUnusedLocals`,
+		// so this rule is promoted to an error.
+		// Setting a severity alone would drop the base's options, so they are repeated here.
+		// Prefix a deliberately unused binding with `_`.
 		"no-unused-vars": [
 			"error",
 			{
@@ -439,32 +363,22 @@ export default {
 				],
 			},
 		],
-		// `split("\n")`/`split("\t")` materializes every segment into one array
-		// before the first is read — the whole-buffer parse spliterator exists to avoid.
-		// Bounded-input sites keep split behind a scoped disable saying why their bound is durable.
+		// `split("\n")` builds the whole array before the first segment is read.
+		// A site with bounded input may keep `split` behind a scoped disable that explains the bound.
 		"mailwoman/prefer-spliterator": "error",
-		// A helper shape that already has a home (`HELPER_HOMES` in `oxlint.plugin.ts`)
-		// is reported at the copy, with the import that replaces it.
-		// The home files themselves are exempted in `overrides`.
+		// This rule reports a copy of a helper listed in `HELPER_HOMES` in `oxlint.plugin.ts`.
 		"mailwoman/prefer-home": "error",
-		// `JSON.parse` throws on corrupt input and returns `any`, so every direct call site
-		// either wraps it in its own try/catch or lets the exception escape untyped.
-		// `tryParsingJSON<T>` (`@mailwoman/core/objects`) is the house wrapper:
-		// typed result, non-throwing, explicit fallback.
-		// Sites where throw-on-corrupt is the interface — sealed-artifact readers, jsonl bulk loaders that
-		// must fail loudly with position info — keep `JSON.parse` behind a scoped disable stating why.
-		// Note the wrapper returns the fallback for non-string input, so a `JSON.parse(buffer)`
-		// site converts with an explicit `.toString()` or not at all.
+		// Direct `JSON.parse` calls should use `tryParsingJSON<T>` from `@mailwoman/core/objects`,
+		// which returns a typed result or a fallback.
+		// A site that must throw on corrupt input keeps `JSON.parse` behind a scoped disable.
+		// The wrapper returns the fallback for non-string input, so convert a buffer with `.toString()` first.
 		//
-		// The entries are named in `config/oxlint/restricted-properties.ts` so an override can lift
-		// one of them by subtraction; `"off"` there would drop the other, and every entry added later.
+		// An override lifts one entry by calling `restrictedPropertiesExcept` with that entry.
+		// Setting the rule to `"off"` would lift every entry.
 		"no-restricted-properties": restrictedPropertiesExcept(),
 		"typescript/no-explicit-any": "error",
 		"unicorn/no-new-array": "off",
-		// Several suites assert through helpers that throw rather than calling
-		// `expect` inline — `expectProposal` in the phrase-grouper catalogue,
-		// `assertDownstreamOffsetsSurvive` in the tokenizer suite.
-		// Without this the rule reads those tests as asserting nothing.
+		// Some suites assert through helpers named `expect*` or `assert*` that throw on failure.
 		"vitest/expect-expect": ["error", { assertFunctionNames: ["expect", "expect*", "assert*"] }],
 	},
 }

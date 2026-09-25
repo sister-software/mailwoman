@@ -2,81 +2,84 @@
  * @copyright Sister Software.
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file Corroborate EDGAR name matches with the registrant's SIC or an explicit CIK pin.
- *   On 2026-08-03, selecting the top name-score match for 24 telecom registrants returned two wrong companies:
- *
- *   | query                  | resolved to                                | score |
- *   | ---------------------- | ------------------------------------------ | ----- |
- *   | `Altice USA, Inc.`     | AlTi Global, Inc. — SIC 6282, investment advice | 0.829 |
- *   | `WideOpenWest, Inc.`   | WidePoint Corp — SIC 7373, systems design   | 0.886 |
- *
- *
- *   The SIC rule rejected both false matches and accepted 6 of 8 real carriers. It also rejected Bandwidth
- *   (SIC 7372) and Ooma (7374); widening the range would admit WidePoint (7373). Keep the allowlist narrow
- *   and record exceptions as named `pinnedCIKs`. A rejection means uncorroborated, not disproven.
+ * @file Corroborates an EDGAR name match with the registrant's SIC code or an explicit CIK pin.
+ *   A high name score alone can pick an unrelated company, such as WidePoint (SIC 7373) for "WideOpenWest".
+ *   The SIC list stays narrow for that reason. Carriers filed under other codes, such as Bandwidth (7372),
+ *   need a pin instead. A failed check leaves the match unconfirmed rather than disproving it.
  */
 
 import type { CIK } from "#sdk/edgar/filings/index"
 
 /**
- * Enumerated SIC codes accepted as telecom corroboration.
+ * SIC codes that corroborate a telecom match.
  */
 export const TELECOM_SIC_CODES: ReadonlySet<string> = new Set([
 	"4812", // Radiotelephone communications.
-	"4813", // Telephone communications (no radiotelephone) — the ILECs and most CLECs.
+	"4813", // Telephone communications other than radiotelephone. Most ILECs and CLECs file here.
 	"4822", // Telegraph and other message communications.
 	"4832", // Radio broadcasting stations.
 	"4833", // Television broadcasting stations.
 	"4841", // Cable and other pay television services.
-	"4899", // Communications services, NEC — where satellite and in-flight providers land.
+	"4899", // Communications services not elsewhere classified. Satellite and in-flight providers file here.
 ])
 
 /**
- * Reason a candidate was or was not corroborated.
+ * Reason a candidate passed or failed corroboration.
  */
 export const CIKCorroborationBasis = {
 	/**
-	 * Registrant SIC is in the accepted set.
+	 * The registrant's SIC is in the accepted set.
 	 */
 	TelecomSIC: "telecom-sic",
 	/**
-	 * Operator explicitly pinned this CIK; SIC was not checked.
+	 * The caller pinned this CIK, so the SIC was skipped.
 	 */
 	Pinned: "pinned",
 	/**
-	 * SIC is present but outside the accepted set.
+	 * The registrant's SIC is outside the accepted set.
 	 */
 	NonTelecomSIC: "non-telecom-sic",
 	/**
-	 * EDGAR supplied no SIC to evaluate.
+	 * EDGAR returned no SIC.
 	 */
 	NoSIC: "no-sic",
 } as const
 
+/**
+ * Union of the {@link CIKCorroborationBasis} values.
+ */
 export type CIKCorroborationBasis = (typeof CIKCorroborationBasis)[keyof typeof CIKCorroborationBasis]
 
+/**
+ * Result of {@link corroborateCIK}.
+ */
 export interface CIKCorroborationVerdict {
 	corroborated: boolean
 	basis: CIKCorroborationBasis
 	/**
-	 * SIC evaluated, when available.
+	 * The trimmed SIC that was checked, if any.
 	 */
 	sic?: string
 }
 
+/**
+ * Options for {@link corroborateCIK}.
+ */
 export interface CIKCorroborationOptions {
 	/**
-	 * Specific CIK exceptions checked before SIC; record a reason for each pin.
+	 * CIKs accepted without an SIC check.
 	 */
 	pinnedCIKs?: ReadonlySet<string>
 	/**
-	 * Accepted SIC codes; defaults to {@linkcode TELECOM_SIC_CODES}.
+	 * Accepted SIC codes.
+	 * The default is {@linkcode TELECOM_SIC_CODES}.
 	 */
 	acceptedSICCodes?: ReadonlySet<string>
 }
 
 /**
- * Corroborate a name-matched CIK using its SIC or an explicit pin; this function never uses the name score.
+ * Corroborates a name-matched CIK by its SIC code or a pin.
+ * The name score plays no part.
  */
 export function corroborateCIK(
 	cik: CIK,

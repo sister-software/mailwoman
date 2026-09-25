@@ -3,20 +3,14 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Readers over the resolved tree's metadata stamps — the receipts resolver mechanisms leave on nodes
- *   (`resolver_country`, the #42/#1735 scope stamps, the #1880 capital promotion). Extracted from
- *   `geocode-core.ts` as one unit: each is a walk that answers the first stamp it meets, each stamp's
- *   absence means "the mechanism never spoke", and none of them ranks anything.
+ *   Reads the metadata stamps that resolver passes leave on a resolved tree's nodes.
  */
 
 import { type AddressNode, type AddressTree, firstNodeWhere, walkNodes } from "@mailwoman/core/decoder"
 import { countryFromPostcodeFormat } from "@mailwoman/core/resolver"
 
 /**
- * The resolved tree's own country — the first `resolver_country` stamp on any node
- * (constant across one address's resolved nodes), or undefined when nothing resolved with one.
- *
- * The rooftop second pass keys on this.
+ * Returns the uppercased first `resolver_country` stamp in the tree, or undefined when no node has one.
  */
 export function resolvedCountryOf(tree: AddressTree): string | undefined {
 	for (const n of walkNodes(tree.roots)) {
@@ -29,9 +23,10 @@ export function resolvedCountryOf(tree: AddressTree): string | undefined {
 }
 
 /**
- * The #1880 capital promotion's stamp, read back off the resolved tree.
+ * Returns the promoted candidate's country from the `capital_promotion` stamp.
  *
- * The promoted candidate's country, or `undefined` when no node's race was reordered by it.
+ * It returns `"unknown"` for a stamp without a country, and `undefined`
+ * when capital promotion changed no node's winner.
  */
 export function capitalPromotionOf(tree: AddressTree): string | undefined {
 	for (const n of walkNodes(tree.roots)) {
@@ -46,23 +41,19 @@ export function capitalPromotionOf(tree: AddressTree): string | undefined {
 }
 
 /**
- * The #1882 variant-alias exemption's stamp (#1893), read back off the resolved tree.
- *
- * `true` when some node's winning candidate reached the top because the exemption
- * spared it the cross-country alias penalty, `undefined` when it never spoke: off,
- * no variant row in any race, the variant lost, or a backend that never runs the ranker.
+ * Returns `true` when the variant-alias exemption decided some node's winner, and `undefined` otherwise.
  */
 export function variantAliasExemptionOf(tree: AddressTree): true | undefined {
 	return firstNodeWhere(tree.roots, (n) => n.metadata?.["variant_alias_exemption"] === true) ? true : undefined
 }
 
 /**
- * The country #42's postcode-country coherence pass scoped the walk to,
- * read back off the resolved tree's `postcode_country_scope` stamp, or the #1735
- * explicit-country pre-scope, whose receipt exists precisely so a tree that was right
- * from the start still gets its country's rooftop database loaded.
+ * Returns the country that a resolver pass scoped the walk to.
  *
- * `undefined` whenever nothing was overridden.
+ * It reads the `postcode_country_scope` stamp, then the `explicit_country_scope` stamp.
+ * The explicit stamp lets a tree scoped correctly from the start still load its country's rooftop database.
+ *
+ * The function returns `undefined` when neither stamp is present.
  */
 export function postcodeCountryScopeOf(tree: AddressTree): string | undefined {
 	for (const n of walkNodes(tree.roots)) {
@@ -75,41 +66,29 @@ export function postcodeCountryScopeOf(tree: AddressTree): string | undefined {
 }
 
 /**
- * The first `postcode` node's value in a parsed tree, or undefined.
+ * Returns the value of the first `postcode` node in a parsed tree, or undefined.
  */
 export function treePostcodeValue(tree: AddressTree): string | undefined {
 	return firstNodeWhere(tree.roots, (node) => node.tag === "postcode")?.value
 }
 
 /**
- * Retag a whole-input span the model read as something else when the string is an
- * unambiguous postcode — the bare-postcode class (#22).
+ * Retags the tree's only valued node as `postcode` when its value is an unambiguous postcode.
  *
- * `mailwoman geocode --locale en-GB "N7 0BT"` parses to `{ street: "N7 0BT" }`
- * and returns no coordinate, while the same code inside a full address (`… London, N7 0BT`)
- * parses as a postcode and resolves to a point 38 m from the rooftop.
- * Nothing downstream can recover it: the walk only looks up a `postcode` node,
- * and span-rescore's confident-constituent guard treats the street span as un-recoverable
- * material (correctly — that guard is what stops "Ave" resolving to Ave, France).
+ * The model sometimes tags a bare postcode such as `N7 0BT` as a street,
+ * and the resolver then finds no coordinate.
+ * The retag applies only when all of these hold:
  *
- * The check is deliberately the narrowest one that fixes the class:
+ * - The tree has no `postcode` node.
+ * - The node is the only node with a value.
+ * - `countryFromPostcodeFormat` maps the value to a single country, as it does for GB, CA and IE formats.
  *
- * - The tree carries no postcode node already (never second-guess a parse that found one),
- * - The retagged node is the only value-containing node in the tree, and
- * - Its value matches a format that is unforgeable across the systems we resolve
- *   ({@link POSTCODE_FORMAT_COUNTRY} — GB/CA/IE, the same table #928 already trusts to name a country outright).
- *
- * So it fires on `N7 0BT` and `K2P 1L4` and on nothing that is also a plausible street, venue or city name.
- * A US ZIP is out of scope by construction: `90210` alone is five digits, which the model
- * already tags `postcode`, and the format table would not distinguish it from a DE PLZ anyway.
- *
- * Mutates and returns the tree (same posture as `recognizeUSRegions`).
+ * The function mutates the tree and returns it.
  */
 export function recognizeBarePostcode(tree: AddressTree): AddressTree {
 	const valued: AddressNode[] = []
 
 	for (const n of walkNodes(tree.roots)) {
-		// The parse already found a postcode, never second-guess it.
 		if (n.tag === "postcode") return tree
 
 		if (n.value.trim().length) {

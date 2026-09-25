@@ -32,8 +32,10 @@ const FINEST_DIAGNOSTIC_BAND = PLACETYPE_SPECIFICITY["microhood"]!
 const COARSEST_DIAGNOSTIC_BAND = PLACETYPE_SPECIFICITY["country"]!
 
 /**
- * The admin placetypes that `ResolveOpts.diagnoseUnreachable` re-probes, coarse to fine,
- * derived from `PLACETYPE_SPECIFICITY` so a new placetype is probed automatically.
+ * The admin placetypes from country to microhood that `ResolveOpts.diagnoseUnreachable`
+ * re-probes, coarse to fine.
+ *
+ * The list derives from `PLACETYPE_SPECIFICITY`, so a new placetype in that range is probed automatically.
  */
 export const DIAGNOSTIC_BANDS: readonly string[] = Object.entries(PLACETYPE_SPECIFICITY)
 	.filter(([, rank]) => rank !== undefined && rank <= FINEST_DIAGNOSTIC_BAND && rank >= COARSEST_DIAGNOSTIC_BAND)
@@ -43,8 +45,8 @@ export const DIAGNOSTIC_BANDS: readonly string[] = Object.entries(PLACETYPE_SPEC
 /**
  * Collects the trace for one placetype lookup and emits it as a `ResolveNodeTrace`.
  *
- * The walk calls a recorder unconditionally, using {@link NOOP_TRACE_RECORDER}
- * when no trace sink is set, so the hot path has no per-event branches.
+ * The walk always calls a recorder and uses {@link NOOP_TRACE_RECORDER} when no
+ * trace sink is set, so the hot path has no per-event branches.
  */
 export interface NodeTraceRecorder {
 	bind(
@@ -66,7 +68,7 @@ export interface NodeTraceRecorder {
 }
 
 /**
- * A {@link NodeTraceRecorder} that records nothing, used when no trace sink was requested.
+ * A {@link NodeTraceRecorder} that records nothing, for walks without a trace sink.
  */
 export const NOOP_TRACE_RECORDER: NodeTraceRecorder = Object.freeze({
 	bind() {},
@@ -77,8 +79,9 @@ export const NOOP_TRACE_RECORDER: NodeTraceRecorder = Object.freeze({
 })
 
 /**
- * Creates a {@link NodeTraceRecorder} that sends one `ResolveNodeTrace` to `sink` on `emit`,
- * listing at most ten candidates from the last stage.
+ * Creates a {@link NodeTraceRecorder} that sends one `ResolveNodeTrace` to `sink` on `emit`.
+ *
+ * The record lists at most ten candidates from the last stage, with each candidate's rank in every stage.
  */
 export function createNodeTraceRecorder(sink: (record: ResolveNodeTrace) => void): NodeTraceRecorder {
 	const checks: string[] = []
@@ -162,7 +165,7 @@ export function createNodeTraceRecorder(sink: (record: ResolveNodeTrace) => void
 }
 
 /**
- * Holds the options and mutable budget that one `resolveTree` call threads through its tree walk.
+ * The options and mutable state that one `resolveTree` call passes through its tree walk.
  */
 export interface ResolutionState {
 	lookupsRemaining: number
@@ -170,33 +173,35 @@ export interface ResolutionState {
 	minWinningScore: number
 
 	/**
-	 * Counts lookups rejected by {@link ResolutionState.minWinningScore}.
+	 * The count of lookups rejected by {@link ResolutionState.minWinningScore}.
 	 *
 	 * A nonzero count skips the span-rescore pass, which would otherwise treat the
-	 * refused node as unresolved and redo the declined lookup.
+	 * refused node as unresolved and repeat the rejected lookup.
 	 */
 	minScoreRefusals: number
 	candidatesPerLookup: number
 	defaultCountry?: string
 
 	/**
-	 * Whether {@link ResolutionState.defaultCountry} came from the locale
-	 * rather than the caller, which `country` lookups then ignore.
+	 * Whether {@link ResolutionState.defaultCountry} came from the locale instead of the caller.
+	 *
+	 * `country` lookups ignore an inferred default.
 	 */
 	defaultCountryIsInferred: boolean
 
 	/**
 	 * The tree's only value-bearing node when it maps to `locality`, or null otherwise.
 	 *
-	 * Its lookup also probes country and region namesakes, because the locality placetype
-	 * filter cannot reach a country the parser tagged as a locality.
+	 * Its lookup also probes countries and regions of the same name, because the locality
+	 * placetype filter cannot reach a country that the parser tagged as a locality.
 	 */
 	bareLocalityNode: AddressNode | null
 	parentFallback: boolean
 
 	/**
-	 * The tree's first postcode value, forwarded to locality lookups so the backend
-	 * can favor postcode-proximal candidates.
+	 * The tree's first postcode value.
+	 *
+	 * Locality lookups send it to the backend, which can then favor nearby candidates.
 	 */
 	postcode?: string
 
@@ -213,25 +218,26 @@ export interface ResolutionState {
 	/**
 	 * The countries implied by the postcode's format.
 	 *
-	 * When a `postalcode` lookup has no country scope, it probes only these countries and abstains if
-	 * all miss, because an unscoped probe of a space-stripped code can match another country's system.
+	 * A `postalcode` lookup without a country scope probes only these countries
+	 * and abstains if all of them miss.
+	 * An unscoped probe of a space-stripped code can match another country's postcode system.
 	 */
 	postcodeFormatCountries?: readonly string[]
 
 	/**
-	 * The locale hint's country, sent as `fuzzyCountry` on every lookup to scope only the typo-fuzzy tier.
+	 * The locale hint's country, sent as `fuzzyCountry` on every lookup.
+	 * It scopes only the typo-fuzzy tier.
 	 */
 	fuzzyCountryScope?: string
 
 	/**
-	 * The postcode prefix index for {@link ResolutionState.postcodePrefixPrior},
-	 * which cannot fire without it.
+	 * The postcode prefix index that {@link ResolutionState.postcodePrefixPrior} requires.
 	 */
 	postcodePrefixIndex?: PostcodePrefixIndexLike
 
 	/**
-	 * Proximity-bias points, such as a viewport or user location, forwarded to
-	 * every lookup to reorder candidates.
+	 * Proximity-bias points, such as a viewport or user location, that every
+	 * lookup uses to reorder candidates.
 	 */
 	bias?: Array<{ lat: number; lon: number; weight?: number }>
 
@@ -248,14 +254,15 @@ export interface ResolutionState {
 	anchorWeight: number
 
 	/**
-	 * Receives one trace record per lookup; when absent, the walk records nothing.
+	 * The callback that receives one trace record per lookup.
+	 * The walk records nothing when it is absent.
 	 */
 	traceSink?: (record: ResolveNodeTrace) => void
 
 	/**
 	 * Whether an empty lookup re-probes the other admin bands and traces which ones hold the value.
 	 *
-	 * It is set only when a trace sink exists and never affects the pick.
+	 * It is set only when a trace sink exists, and it never affects the pick.
 	 */
 	diagnoseUnreachable?: boolean
 
@@ -272,7 +279,7 @@ export interface ResolutionState {
 
 	/**
 	 * Returns a candidate's capital level for bounded capital promotion.
-	 * When it is absent, no candidate is promoted.
+	 * Capital promotion is off when it is absent.
 	 */
 	capitalLevel?: (place: { name: string; country?: string; lat: number; lon: number }) => number
 
@@ -282,8 +289,8 @@ export interface ResolutionState {
 	hardCountry?: string
 
 	/**
-	 * Whether a resolved region with no locality node in the tree gains its coincident
-	 * same-name locality as an interpretation.
+	 * Whether a resolved region gains its coincident locality of the same name as an
+	 * interpretation when the tree has no locality node.
 	 */
 	hierarchyCompletion: boolean
 
@@ -294,21 +301,23 @@ export interface ResolutionState {
 
 	/**
 	 * Whether locality candidates contained by {@link ResolutionState.regionQualifier}
-	 * are partitioned ahead of the rest.
+	 * are ordered ahead of the rest.
 	 */
 	adminContainmentRerank: boolean
 
 	/**
-	 * The tree's first region-tagged value, extracted up front because the region and locality
-	 * nodes are siblings and the walk would not otherwise pass it to the locality lookup.
+	 * The tree's first region value.
 	 *
+	 * The region and locality nodes are siblings, so the walk would not otherwise
+	 * pass the region to the locality lookup.
 	 * It applies only with {@link ResolutionState.adminContainmentRerank}
 	 * and no caller-supplied default country.
 	 */
 	regionQualifier?: string
 
 	/**
-	 * Whether any node maps to the `locality` placetype; hierarchy completion runs only when none does.
+	 * Whether any node maps to the `locality` placetype.
+	 * Hierarchy completion runs only when this is false.
 	 */
 	localityNodePresent: boolean
 
@@ -318,18 +327,20 @@ export interface ResolutionState {
 	resolvedRegion: CoordinateOptionalPlace | null
 
 	/**
-	 * The decorated node for {@link ResolutionState.resolvedRegion}, which receives
-	 * the completed locality interpretation in place.
+	 * The decorated node for {@link ResolutionState.resolvedRegion}.
+	 *
+	 * Hierarchy completion adds the locality interpretation to it in place.
 	 */
 	resolvedRegionNode: AddressNode | null
 }
 
 /**
- * Picks the completion locality among coincident same-name candidates, preferring the
- * most populous and then the nearest, or returns `null` on an exact tie.
+ * Picks the completion locality among coincident candidates of the same name,
+ * preferring the most populous and then the nearest.
+ * It returns `null` on an exact tie.
  *
- * Population outranks distance because a principal city can sit farther from
- * the admin centroid than a same-name hamlet.
+ * Population ranks above distance because a principal city can lie farther from
+ * the admin centroid than a hamlet of the same name.
  */
 export function pickCompletion(candidates: readonly CoincidentLocality[]): CoincidentLocality | null {
 	if (!candidates.length) return null
@@ -350,8 +361,9 @@ export function pickCompletion(candidates: readonly CoincidentLocality[]): Coinc
 }
 
 /**
- * Returns the first usable postcode value anywhere in the tree, so a locality lookup
- * can see a postcode that sits beside it rather than above it.
+ * Returns the first postcode value anywhere in the tree, skipping shape-excluded postcodes.
+ *
+ * A locality lookup uses it because the postcode node is usually a sibling of the locality.
  */
 export function firstPostcodeValue(roots: readonly AddressNode[]): string | undefined {
 	for (const n of walkNodes(roots)) {
@@ -362,10 +374,11 @@ export function firstPostcodeValue(roots: readonly AddressNode[]): string | unde
 }
 
 /**
- * Recovers a locality from raw-text spans when the tree resolved nothing,
- * appending a resolved `locality` node on a hit.
+ * Recovers a locality from raw-text spans when the tree resolved no place,
+ * and appends a resolved `locality` node on a hit.
  *
- * It never runs on a tree that already has a resolved place, so it cannot disturb a working coordinate.
+ * When no span matches, it tries to resolve the postcode node from the code
+ * part of a compound postcode value.
  */
 export async function applySpanRescore(
 	roots: AddressNode[],
@@ -458,8 +471,10 @@ async function recoverPostcodeNode(
 }
 
 /**
- * The default distance limit for {@link applyPostcodeConsistency} moving a locality onto its
- * postcode's point, set above the 99th percentile of agreeing postcode-to-settlement distances.
+ * The farthest distance, in kilometres, that {@link applyPostcodeConsistency}
+ * moves a locality onto its postcode's point.
+ *
+ * The value sits above the 99th percentile of distances between agreeing postcodes and settlements.
  */
 export const DEFAULT_POSTCODE_MAX_MOVE_KM = 300
 
@@ -467,9 +482,11 @@ export const DEFAULT_POSTCODE_MAX_MOVE_KM = 300
  * Reconciles each resolved locality that lies farther than `thresholdKm` from
  * the tree's resolved postcode point.
  *
- * It re-picks the nearest alternative within the threshold, or else flags `postcode_city_mismatch`
- * and moves the coordinate to the postcode point unless that move exceeds `maxMoveKm`,
- * which guards against a mistyped but valid postcode.
+ * It re-picks the nearest alternative within the threshold.
+ * Without one, it flags `postcode_city_mismatch` and moves the coordinate to the postcode point.
+ *
+ * It skips the move when the distance exceeds `maxMoveKm`, because a mistyped
+ * but valid postcode can point far away.
  */
 export function applyPostcodeConsistency(
 	roots: readonly AddressNode[],

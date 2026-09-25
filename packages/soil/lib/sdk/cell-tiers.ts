@@ -3,17 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The two phases between the streamed touches and the artifact a consumer reads: the stored containment
- *   index, and the reduction above it.
- *
- *   both read the touch table, and only one OF them compacts. `resolveCells` writes the tiers a probe walks
- *   and collapses uniform interiors parent-ward; `reduceCells` reads the uncompacted touches, because a
- *   compacted parent no longer names the cells the reduction has to answer.
- *
- *   the reduction is the slow phase and its memory is bounded BY construction. A lattice of 49 point tests
- *   per sampled cell, over a delineation cache that is cleared whole rather than evicted one entry at a
- *   time — see {@link GEOMETRY_CACHE_ENTRIES}. Memory stays flat in row count, which is the property the poi
- *   build lost when a reader materialized instead of streaming.
+ *   Turns the build's cell-touch table into the containment index and the per-cell capability reduction.
  */
 
 import { expandShortCellInt, shortCellToInt, type H3Cell } from "@mailwoman/spatial"
@@ -25,12 +15,10 @@ import { SoilCellContainment, type SoilCapabilityCellTable, type SoilDatabase } 
 import { mapUnitProfile, reduceCell, type CellCandidate, type MapUnitProfile } from "#sdk/reduce"
 
 /**
- * Resolve the touch table into the stored containment index.
+ * Writes the touch table into the `soil_map_unit_cell` containment index.
  *
- * Compaction happens here and only on the whole side.
- * It is expected to yield close to nothing on this layer, which is the inversion
- * the survey predicts: compaction needs a uniform interior, and 85.4% of `IA153`'s
- * delineations are smaller than one resolution-9 cell.
+ * Only whole cells are compacted.
+ * Most soil delineations are smaller than one index cell, so compaction removes few rows on this layer.
  */
 export function resolveCells(
 	database: DatabaseClient<SoilDatabase>,
@@ -50,10 +38,8 @@ export function resolveCells(
 
 	let wholeRows = 0
 
-	// One group per (delineation, resolution): `compactCells` takes a single resolution,
-	// and an adaptively-indexed layer has several.
-	// Pooling them throws.
-	// Compacting only the target-resolution group would silently drop every coarsened delineation's interior.
+	// Each group is one delineation at one resolution, because `compactCells` throws on mixed resolutions.
+	// Coarsened delineations are indexed at other resolutions, so every group must be compacted.
 	database.exec("BEGIN")
 
 	for (const { area_id: areaID, resolution } of groups) {
@@ -73,10 +59,8 @@ export function resolveCells(
 
 	database.exec("COMMIT")
 
-	// The partial rows are every touch that is not whole for its own delineation.
-	// `insert or replace` above already put the whole rows in, and the primary key is
-	// `(h3_cell, area_id)`, so this insert must skip them explicitly rather than rely on the key:
-	// a partial row replacing a whole one would demote an answered cell to a ray cast.
+	// The partial rows use `INSERT OR IGNORE` so that they never replace a whole row with the same key.
+	// A replaced whole row would force the reader to ray-cast a cell it could answer directly.
 	database.exec(
 		"INSERT OR IGNORE INTO soil_map_unit_cell (h3_cell, resolution, area_id, containment) " +
 			"SELECT DISTINCT t.h3_cell, t.resolution, t.area_id, 'partial' FROM build_cell_touch t WHERE t.is_full = 0"
@@ -100,15 +84,12 @@ export function resolveCells(
 }
 
 /**
- * Cells reduced per progress report.
- *
- * The reduction is the slow phase — a lattice of 49 point tests per sampled cell —
- * so it reports often enough that a long run is visibly alive.
+ * The number of cells reduced between progress reports and commits.
  */
 const REDUCE_PROGRESS_STRIDE = 50_000
 
 /**
- * One delineation's geometry, as the reduction reads it.
+ * One delineation's geometry as the reduction reads it.
  */
 interface StoredDelineation {
 	mukey: string
@@ -120,22 +101,17 @@ interface StoredDelineation {
 }
 
 /**
- * How many delineations the reduction keeps in memory at once.
+ * The maximum number of delineations that the reduction keeps in memory.
  *
- * Sized to bound the phase rather than to hold everything: the pilot region's median
- * delineation encodes to roughly 1.4 kB, so 200,000 of them is a few hundred megabytes —
- * comfortable, and far below the 2.5 million a whole state holds.
- * Memory stays flat in row count, which is the property the poi build lost
- * when a reader materialized instead of streaming.
+ * The limit keeps memory bounded when a state has millions of delineations.
  */
 const GEOMETRY_CACHE_ENTRIES = 200_000
 
 /**
- * Reduce the touch table into `soil_capability_cell`.
+ * Reduces the touch table into `soil_capability_cell`.
  *
- * Reads the touch table rather than `soil_map_unit_cell` on purpose: the stored index is compacted on
- * the whole side, so a compacted parent no longer names the cells the reduction has to answer.
- * The touch table is the uncompacted truth about which delineation reaches which cell.
+ * It reads the touch table because `soil_map_unit_cell` is compacted, and a compacted
+ * parent cell hides the index cells that the reduction must answer.
  */
 export function reduceCells(
 	database: DatabaseClient<SoilDatabase>,
@@ -175,13 +151,10 @@ export function reduceCells(
 	let currentResolution = indexResolution
 	let candidates: CellCandidate[] = []
 
-	// A delineation is named by every cell it reaches — 5.35 of them per cell at resolution
-	// 9 on the pilot region — so a naive read fetches each ring blob once per touch.
-	// At Iowa's scale that is millions of blob reads of ground already in memory.
-	// The cache is bounded and cleared whole when it fills rather than evicted
-	// one at a time: h3 cell integers carry their ancestry in their high bits,
-	// so a scan in `h3_cell` order visits neighbours together and a cleared cache refills
-	// with the delineations the next run of cells actually names.
+	// Each delineation touches several cells, so the cache avoids reading its rings once per touch.
+	// The cache is cleared whole when it fills.
+	// The scan runs in `h3_cell` order and visits neighbouring cells together.
+	// After a clear, the cache refills with the delineations that the next cells need.
 	const geometry = new Map<string, StoredDelineation>()
 
 	const batch = beginBatched(database, { rowsPerCommit: REDUCE_PROGRESS_STRIDE })
@@ -285,7 +258,7 @@ function insertRow(statement: ReturnType<DatabaseClient["prepare"]>, row: SoilCa
 }
 
 /**
- * Every map unit's per-unit-area profile, computed once and reused for every cell it reaches.
+ * Computes every map unit's profile once so that each cell reuses it.
  */
 function readMapUnitProfiles(database: DatabaseClient<SoilDatabase>): Map<string, MapUnitProfile> {
 	const componentsByMukey = new Map<

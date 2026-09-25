@@ -10,7 +10,7 @@ tags:
 
 # Franchise and brand queries
 
-A franchise query names a specific chain or brand. The user doesn't want the nearest restaurant — they want the nearest **McDonalds**. The brand name is the query, and the geocoder's job is to resolve it to one or more specific locations.
+A franchise query asks for a specific chain or brand. The user wants the nearest **McDonalds** rather than the nearest restaurant. The brand name is the query, and the geocoder must resolve it to one or more specific locations.
 
 ## What franchise queries look like
 
@@ -25,7 +25,7 @@ A franchise query names a specific chain or brand. The user doesn't want the nea
 | `Walmart Supercenter vs Walmart Neighborhood Market` | A specific sub-brand of the franchise        |
 | `McDonalds with PlayPlace`                           | A franchise location with a specific amenity |
 
-Franchise queries have three components: a **brand name**, an optional **sub-brand** or **feature filter**, and an optional **location constraint**. The brand name is the hard part — it may not match what the franchise calls itself, and it varies by region.
+Franchise queries have three components: a **brand name**, an optional **sub-brand** or **feature filter**, and an optional **location constraint**. The brand name is the hard part because it may not match what the franchise calls itself, and it varies by region.
 
 ## Brand-name problem
 
@@ -43,13 +43,13 @@ Franchise queries have three components: a **brand name**, an optional **sub-bra
 
 A geocoder that only matches "McDonald's" against an exact-string index will miss every slang and regional variant. A geocoder that matches all variants requires an **alias table** mapping user-facing terms to brand identifiers.
 
-The alias table isn't a translation dictionary — it [maps every name people use for a chain onto one brand identifier](../../concepts/synonymy-and-homonymy.mdx), so "Macca's" in Australia, "Mickey D's" in the US, and "マクド" in Kansai all resolve to the same brand.
+The alias table is not a translation dictionary. It [maps every name people use for a chain onto one brand identifier](../../concepts/synonymy-and-homonymy.mdx), so "Macca's" in Australia, "Mickey D's" in the US, and "マクド" in Kansai all resolve to the same brand.
 
 ## Sub-brand problem
 
 Franchises have sub-brands that differ in meaningful ways:
 
-- **Walmart** has Walmart Supercenter (full grocery), Walmart Discount Store (general merchandise, no grocery), Walmart Neighborhood Market (grocery-only, smaller footprint), and Sam's Club (warehouse membership).
+- **Walmart** has Walmart Supercenter (full grocery), Walmart Discount Store (general merchandise without grocery), Walmart Neighborhood Market (grocery-only, smaller footprint), and Sam's Club (warehouse membership).
 - **Hilton** has Hilton Hotels & Resorts (full-service), Hilton Garden Inn (mid-scale), Hampton by Hilton (budget), Homewood Suites (extended stay), and several others.
 - **Starbucks** has company-operated stores, licensed stores (in airports, hotels, grocery stores), and Starbucks Reserve Roastery (premium, limited locations).
 
@@ -62,7 +62,7 @@ A query for `Walmart` could mean any of the sub-brands. A query for `Walmart Sup
 1. Resolve the location constraint (`Springfield, IL`) to coordinates or an area.
 2. Find the nearest Walmart to that location.
 
-The location constraint is an address or place name — the kind of query Mailwoman already handles. The franchise lookup is new. The composition of "parse the location constraint, then query the franchise index near that location" is a **two-stage resolver** query: resolve the place, then find POIs near it.
+The location constraint is an address or place name, which is the kind of query Mailwoman already handles. The franchise lookup is new. Parsing the location constraint and then querying the franchise index near that location is a **two-stage resolver** query: resolve the place, then find POIs near it.
 
 This is the same pattern as "gas station near Springfield, IL" (amenity + location constraint) but with a named brand instead of a generic category.
 
@@ -70,15 +70,15 @@ This is the same pattern as "gas station near Springfield, IL" (amenity + locati
 
 **Google's Places API** handles franchise queries through Google's place database. A search for "McDonalds" returns McDonalds locations ranked by proximity and prominence. Google's database includes franchise locations globally, with sub-brand classification (Walmart Supercenter vs Walmart Neighborhood Market) and user-contributed attributes (PlayPlace, drive-through, 24-hour). Google handles spelling variants and some slang through its search model.
 
-**Nominatim** handles franchise queries by matching the brand name against OSM's `name` and `brand` tags. OSM has good coverage of franchise locations in well-mapped areas. However, OSM's brand tagging is inconsistent: some locations are tagged `brand=McDonald's`, others `name=McDonald's`, and the relationship between franchise brand and individual location name varies by mapper. Nominatim does not handle slang or regional variants — `Macca's` returns nothing unless an Australian mapper tagged a location with `alt_name=Macca's`.
+**Nominatim** handles franchise queries by matching the brand name against OSM's `name` and `brand` tags. OSM has good coverage of franchise locations in well-mapped areas. However, OSM's brand tagging is inconsistent: some locations are tagged `brand=McDonald's`, others `name=McDonald's`, and the relationship between franchise brand and individual location name varies by mapper. Nominatim does not handle slang or regional variants. `Macca's` returns nothing unless an Australian mapper tagged a location with `alt_name=Macca's`.
 
-**Pelias** indexes franchise locations as part of its OSM and OpenAddresses gazetteers. The same OSM tagging inconsistency applies. Pelias's search matches "McDonalds" against name and brand fields, and its `categories` parameter can filter by broad types (e.g., `food`), but it has no brand-alias resolution — slang and variants don't match unless the exact text appears in the data. Sub-brand classification is not modeled.
+**Pelias** indexes franchise locations as part of its OSM and OpenAddresses gazetteers. The same OSM tagging inconsistency applies. Pelias's search matches "McDonalds" against name and brand fields, and its `categories` parameter can filter by broad types (e.g., `food`), but it has no brand-alias resolution. Slang and variants don't match unless the exact text appears in the data. Pelias does not model sub-brand classification.
 
 ## What Mailwoman does today
 
-The category infrastructure that amenity queries use — the `poi_query` kind, the anchor split, `poi.db` resolution — exists now, but brand matching isn't wired into it. Mailwoman's parser will still see `Walmart` and try to classify it as an address component: a lone brand name with no other tokens is a one-token address, and the parser may read it as `locality` (there are towns named Walmart) or `venue` (the venue classifier exists but is weak, see [Landmark queries](./landmark-queries.mdx)).
+The category infrastructure that amenity queries use (the `poi_query` kind, the anchor split, and `poi.db` resolution) exists now, but brand matching isn't wired into it. Mailwoman's parser still sees `Walmart` and tries to classify it as an address component. A lone brand name is a one-token address, and the parser may read it as `locality` (there are towns named Walmart) or `venue`. The venue classifier exists but is weak, as [Landmark queries](./landmark-queries.mdx).
 
-**Franchise queries are still deferred.** There's no brand lexicon yet — no table mapping "Walmart," "Macca's," or `マクド` to a chain identifier, and no join from Overture's `brand.wikidata` field to a name. The location-constraint half (`near Springfield, IL`) already works, through the same anchor-parsing path amenity queries use; the brand-lookup half doesn't exist. See [the series index](./exotic-point-of-interest-queries.mdx#whats-still-ahead) for what's built and what isn't across the whole POI arc.
+**Franchise queries are still deferred.** Mailwoman has no brand lexicon yet. No table maps "Walmart," "Macca's," or `マクド` to a chain identifier, and nothing joins Overture's `brand.wikidata` field to a name. The location-constraint half (`near Springfield, IL`) already works through the same anchor-parsing path that amenity queries use. The brand-lookup half doesn't exist. See [the series index](./exotic-point-of-interest-queries.mdx#whats-still-ahead) for what's built and what isn't across the whole POI arc.
 
 ## See also
 

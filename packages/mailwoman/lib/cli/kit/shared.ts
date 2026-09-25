@@ -3,13 +3,15 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Shared Ink helpers and types for CLI commands. Kept outside `commands/` so the router does not treat it as a
- *   command, and written without JSX for Node type stripping.
+ *   Shared Ink helpers and types for CLI commands.
+ *
+ *   The module lives outside `commands/` so the router does not load it as a command. It avoids JSX
+ *   because Node type stripping cannot compile JSX.
  */
 
 import { formatAsCountryISO2, type CountryISO2 } from "@mailwoman/codex/country"
 import { formatAsUSStateAbbreviation, type USStateAbbreviation } from "@mailwoman/codex/us"
-// Import specific core modules to keep each command's dependency graph small.
+// Subpath imports from core keep each command's dependency graph small.
 import { prettyJSON, stringifyJSON } from "@mailwoman/core/json"
 import { type PlacetypeRole, PlacetypeRoles } from "@mailwoman/core/placetypes"
 import { spawnProcessSync } from "@mailwoman/core/process"
@@ -33,14 +35,14 @@ export interface ParsedCommandProps<Options, Args extends unknown[] = string[]> 
 }
 
 /**
- * Component receiving parsed command arguments.
+ * A command component that receives parsed options and arguments.
  */
 export type ParsedCommandComponent<Options = Record<string, never>, Args extends unknown[] = string[]> = React.FC<
 	ParsedCommandProps<Options, Args>
 >
 
 /**
- * Command component whose option type is inferred from its `spec`.
+ * A command component whose option type is inferred from its `spec`.
  */
 export type CommandComponent<Spec extends CommandSpec, Args extends unknown[] = string[]> = ParsedCommandComponent<
 	OptionsOf<Spec>,
@@ -56,9 +58,11 @@ export type CommandTaskState<T> =
 	| { status: "error"; message: string }
 
 /**
- * Run a one-shot task, render its state, then exit with the result code or 1 on failure.
+ * Runs a one-shot task and returns its state.
+ *
+ * The process exits with the result's code after success or with code 1 after failure.
  */
-/* oxlint-disable react-hooks/exhaustive-deps -- Task closures are captured once; rerunning on each render is incorrect. */
+/* oxlint-disable react-hooks/exhaustive-deps -- The task must run once, so the effect ignores later closures. */
 export function useCommandTask<T>(task: () => Promise<T>, exitCode?: (result: T) => number): CommandTaskState<T> {
 	const [state, setState] = useState<CommandTaskState<T>>({ status: "running" })
 
@@ -81,7 +85,7 @@ export function useCommandTask<T>(task: () => Promise<T>, exitCode?: (result: T)
 /* oxlint-enable react-hooks/exhaustive-deps */
 
 /**
- * State of a deferred component import.
+ * The state of a deferred component import.
  */
 type LazyComponentState<P extends object> =
 	| { status: "loading" }
@@ -89,9 +93,10 @@ type LazyComponentState<P extends object> =
 	| { status: "error"; message: string }
 
 /**
- * Defer loading a heavy child until first render.
+ * Wraps a component whose module loads on first render.
  *
- * Render nothing while loading and show import failures before exiting.
+ * The wrapper renders nothing while loading.
+ * After an import failure, it shows the error and exits with code 1.
  */
 export function lazyComponent<P extends object>(load: () => Promise<React.FC<P>>): React.FC<P> {
 	return function LazyComponent(props: P) {
@@ -137,8 +142,8 @@ export function lazyComponent<P extends object>(load: () => Promise<React.FC<P>>
 }
 
 /**
- * Write machine-readable output directly to stdout to avoid Ink wrapping.
- * Return `null` for use in a render branch.
+ * Writes machine-readable output straight to stdout so Ink does not wrap it.
+ * It returns `null` so a render branch can return its result.
  */
 export function writeRawStdout(text: string | object): null {
 	const normalized = typeof text === "string" ? text + "\n" : prettyJSON(text)
@@ -158,7 +163,7 @@ export interface Check {
 }
 
 /**
- * Render check results and an optional pass/fail summary.
+ * Renders check results and, when `verdict` is set, a pass or fail summary.
  */
 export function CheckList({ checks, verdict }: { checks: readonly Check[]; verdict?: boolean }): React.ReactElement {
 	const lines = checks.map((c, i) =>
@@ -182,7 +187,8 @@ export function CheckList({ checks, verdict }: { checks: readonly Check[]; verdi
 }
 
 /**
- * Parse and validate comma-separated placetype roles; return `undefined` when absent.
+ * Parses and validates comma-separated placetype roles.
+ * It returns `undefined` for empty input.
  */
 export function parseRoles(raw: string | undefined): PlacetypeRole[] | undefined {
 	if (!raw) return undefined
@@ -201,7 +207,7 @@ export function parseRoles(raw: string | undefined): PlacetypeRole[] | undefined
 }
 
 /**
- * Write progress to stderr so stdout remains machine-readable.
+ * Writes a progress line to stderr so stdout stays machine-readable.
  */
 export function reportToStderr(line: string): void {
 	console.error(line)
@@ -213,17 +219,19 @@ export function reportToStderr(line: string): void {
 export interface CommandTaskResultProps<T> {
 	state: CommandTaskState<T>
 	/**
-	 * Content shown while the task runs; omit to render nothing.
+	 * Content shown while the task runs.
+	 * Nothing renders when it is omitted.
 	 */
 	running?: React.ReactNode
 	/**
-	 * Content shown after success; defaults to `String(result)`.
+	 * Content shown after success.
+	 * Defaults to `String(result)`.
 	 */
 	done?: (result: T) => React.ReactNode
 }
 
 /**
- * Render running, error, and success states for a one-shot command.
+ * Renders the running, error and success states of a one-shot command.
  */
 export function CommandTaskResult<T>({ state, running, done }: CommandTaskResultProps<T>): React.ReactElement | null {
 	if (state.status === "running") {
@@ -240,21 +248,21 @@ export function CommandTaskResult<T>({ state, running, done }: CommandTaskResult
 }
 
 /**
- * Create a stderr phase reporter for build pipelines.
+ * Creates a function that writes build-phase progress lines to stderr.
  */
 export function phaseReporter(prefix = "  "): (phase: string, detail?: string) => void {
 	return (phase, detail) => console.error(`${prefix}[${phase}]${detail ? ` ${detail}` : ""}`)
 }
 
 /**
- * Parse comma-separated ISO 3166-1 alpha-2 country codes.
+ * Parses comma-separated ISO 3166-1 alpha-2 country codes.
  */
 export function splitCountryCodes(raw: string | undefined): CountryISO2[] {
 	return extractDelimited(raw).map(formatAsCountryISO2)
 }
 
 /**
- * Parse comma-separated USPS state and territory abbreviations.
+ * Parses comma-separated USPS state and territory abbreviations and drops unrecognized values.
  */
 export function splitUSStateCodes(raw: string | undefined): USStateAbbreviation[] {
 	return extractDelimited(raw).flatMap((value) => {
@@ -265,13 +273,14 @@ export function splitUSStateCodes(raw: string | undefined): USStateAbbreviation[
 }
 
 /**
- * Parse a non-negative integer count, or return `fallback` when absent.
- * Reject invalid values and preserve zero.
+ * Parses a non-negative integer option.
+ *
+ * It returns `fallback` when the option is absent and throws for an invalid value.
  */
 export function countOption(raw: string | undefined, fallback: number): number {
 	if (raw == null) return fallback
 
-	// Treat blank input as invalid rather than zero.
+	// `Number("")` is 0, so blank input needs an explicit rejection.
 	const parsed = raw.trim() === "" ? Number.NaN : Number(raw)
 
 	if (!Number.isInteger(parsed) || parsed < 0) {
@@ -282,7 +291,7 @@ export function countOption(raw: string | undefined, fallback: number): number {
 }
 
 /**
- * Parse comma-separated numeric values, ignoring blank entries.
+ * Parses comma-separated numbers.
  */
 export function splitNumberList(raw: string | undefined): number[] {
 	return extractDelimited(raw).map(Number)
@@ -291,14 +300,14 @@ export function splitNumberList(raw: string | undefined): number[] {
 const ANSI_PATTERN = new RegExp(`${String.fromCharCode(27)}\\[[0-9;?]*[A-Za-z]`, "gu")
 
 /**
- * Remove ANSI escape sequences from child-process output.
+ * Removes ANSI escape sequences from child-process output.
  */
 export function stripAnsi(value: string): string {
 	return value.replace(ANSI_PATTERN, "")
 }
 
 /**
- * Shared result shape for polygon-layer verification.
+ * The result shape shared by polygon-layer verifications.
  */
 export interface LayerVerificationLike<Row extends { outcome: string; label: string }> {
 	agreement: readonly Row[]
@@ -314,29 +323,29 @@ export interface LayerVerificationLike<Row extends { outcome: string; label: str
  */
 export interface FormatLayerVerificationOptions<Row> {
 	/**
-	 * Service used for comparison.
+	 * Name of the reference service.
 	 */
 	serviceLabel: string
 	/**
-	 * Scope described by the out-of-coverage line.
+	 * Scope label for the out-of-coverage summary line.
 	 */
 	outsideLabel: string
 	/**
-	 * Format one disagreement row for stderr.
+	 * Formats one disagreement row for stderr.
 	 */
 	describeRow: (row: Row) => string
 	/**
-	 * Optional detail appended to the agreement summary.
+	 * Extra detail appended to the agreement summary.
 	 */
 	extraSummary?: string
 	/**
-	 * All-clear text for the out-of-coverage summary.
+	 * Text for the out-of-coverage summary when every point passed.
 	 */
 	outsideNoneLabel?: string
 }
 
 /**
- * Format verification summaries and print each disagreement to stderr.
+ * Prints each disagreement to stderr and returns the verification summary lines.
  */
 export function formatLayerVerification<Row extends { outcome: string; label: string }>(
 	verified: LayerVerificationLike<Row>,
@@ -360,7 +369,9 @@ export function formatLayerVerification<Row extends { outcome: string; label: st
 }
 
 /**
- * Run a child with inherited stdio and throw on launch failure or nonzero exit.
+ * Runs a child process with inherited stdio.
+ *
+ * It throws when the process fails to launch or exits with a nonzero code.
  */
 export function runProcessOrFail(
 	cmd: string,
@@ -385,10 +396,10 @@ export function runProcessOrFail(
 }
 
 /**
- * Load the neural classifier.
+ * Loads the script-routed neural classifier, or returns `undefined` when loading fails.
  *
- * Report missing weights as a warning, but propagate errors from a present invalid bundle.
- * Callers should send `onDegrade` messages to stderr.
+ * Every failure is reported through `onDegrade`, which callers should write to stderr.
+ * The message distinguishes an uninstalled weights package from weights that failed to load.
  */
 export async function loadClassifierTolerant(
 	locale: string,
@@ -401,7 +412,7 @@ export async function loadClassifierTolerant(
 	try {
 		const { NeuralAddressClassifier } = await import("@mailwoman/neural")
 
-		// Routed by script: a kanji or Hangul line runs on the character-path family, the primary stays the locale.
+		// The router sends CJK and Hangul input to the character-path model and other input to the locale model.
 		return await NeuralAddressClassifier.loadRoutedFromWeights({
 			locale,
 			modelPath: options.modelPath,
@@ -409,11 +420,9 @@ export async function loadClassifierTolerant(
 		})
 	} catch (error) {
 		const message = error instanceof Error ? error.message : String(error)
-		// "Absent" = the weights package simply isn't installed (the resolver's not-found signal).
-		// Every other failure means the weights did resolve but the encoder couldn't load them —
-		// a partial/metadata-only bundle ("missing model files"), a bad explicit --model/--tokenizer
-		// path, or a corrupt artifact — so we surface the underlying error verbatim
-		// rather than mislabel it "not installed" and swallow the cause.
+		// A module-resolution error means the weights package is not installed.
+		// Any other error comes from weights that resolved but failed to load,
+		// so the message includes the original error.
 		const absent = /Could not resolve/iu.test(message)
 		const { weightsPackageName } = await import("@mailwoman/neural/weights")
 

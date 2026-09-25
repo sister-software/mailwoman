@@ -1,75 +1,15 @@
-# === v3.1.0-fr-fragment — #727 T2. One variable vs the shipped v264: the synth-fr-fragment source. ===
+# This run fine-tunes v264 with one change: the synth-fr-fragment source at weight 12.0.
+# The source teaches French streets that appear without a house number, such as "Rue Montmartre".
+# It also carries bare localities so the street designator, rather than a missing number, decides the label.
+# The recipe excludes every street surface that the FR fragment board reserves for evaluation.
 #
-# the measured problem (T1c, docs/articles/evals/2026-07-16-t1c-fragment-board-verdict.md. the FR
-# fragment board, n=400/class, 95% Wilson):
-#     street-housenumber   0.925 [0.895, 0.947]      <n> Rue X
-#     bare-street          0.215 [0.178, 0.258]          Rue X
-# Same streets, same model. the only difference is a leading number. The model has learned that a
-# house number licenses a street reading at all. Strip it and a designator-led phrase parses as a
-# locality, designator included:
-#     "Rue Montmartre" -> locality="Rue Montmartre"
-#     "Allee Poque"    -> locality="Allee Poque"
-# `Rue` can only mean street in French. This is not a mislabelled ambiguous toponym. it is a
-# mislabelled `Rue`. The worst cell is date-name at 0.055, where a digit is present so the licence is
-# granted and the model emits street — then steals the digit as a house number and fragments the
-# phrase: "Allee du 11 Novembre" -> street="Allee du" + house_number="11" + street="Novembre".
-#
-# the one change: source_weights + synth-fr-fragment: 12.0 (the targeted-fix precedent —
-# synth-fr-bare-street / synth-si-bare-village / synth-no-street-led are all 12.0), and corpus_dir ->
-# the v0.10.9 overlay (v0.10.6-fragment-v5's 700 base refs verbatim + the one new corpus file). Model,
-# tokenizer, anchor knobs, class_weights, country_weights, every other source_weight, LR and schedule
-# are identical to v264. Clean attribution.
-#
-# why the existing recipe doesn'T cover IT: synth-fr-bare-street (#251) mints "<n> Rue <name>, <City>"
-# — the bare comma form, targeting postcode-anchoring imbalance. Every row it emits still carries a
-# house number and a locality, so it never shows the model a street standing alone. Different change.
-#
-# the recipe output (144,865 rows, packages/corpus/lib/fr/recipes/fragment.ts): bare-street 14.3%,
-# street-particle 37.3%, date-name 0.5% (BAN's ceiling — only 1,418 such streets exist),
-# street-housenumber 21.0% + alnum-housenumber 7.0% (the anchor, so the licence is not unlearned),
-# and bare-locality 20.0% — the counter-distribution, which is not optional. T1c's standing
-# prediction is that the board's bare-locality cell reads 0.980 for the wrong reason: the model calls
-# everything without a house number a locality and is accidentally right. Teaching bare streets alone
-# lets it satisfy every row by flipping that default — trading one broken prior for another. Both
-# bare forms must appear so the designator is the discriminating evidence.
-#
-# the split: the recipe excludes all 2,400 street surfaces reserved by the fragment board
-# (mailwoman/eval-harness/fixtures/ban-fragments-fr.surfaces.txt) — source-disjoint by normalized
-# street surface rather than by record row. Verified: 0 of 144,865 emitted rows carry a board surface. The
-# recipe throws without the list rather than mint rows that train on their own eval set.
-#
-# the check (pre-registered. baselines.json profile fragment-fr-v264, registered against the shipped
-# model at commit e45e0255):
-#   move  : bare-street 0.215 · street-particle 0.273 · admin-street-homonym 0.087 · date-name 0.055
-#   guard : street-housenumber 0.925 · alnum-housenumber 0.925  (contextful — a source that fixes
-#           fragments by degrading full addresses has moved the failure rather than fixed it)
-#   guard : bare-locality 0.980 — the one TO watch. It may fall BY design. If it collapses while the
-#           bare classes rise, the source traded one default for another instead of teaching the
-#           distinction, and the counter-distribution ratio (--bare-prob) is the knob.
-#   guard : the global parity floor (mailwoman eval parity). Board 2 moving is not a verdict alone.
-#   also  : parity.street.hallucination_rate@v301-span 0.352 should fall if T1c's diagnosis holds.
-# Read: `mailwoman eval fragment-board --weights-cache <dir>` + `mailwoman eval parity`.
-#
-# not A promote check. The standing floors and the 2pp golden check are untouched. this checkpoint
-# ships nowhere on its own. If the bare classes are flat: do not bump the weight and re-run — that is
-# the treadmill. One diagnostic (did the synth-fr-fragment rows actually reach the loader? check the manifest
-# read), then fork to the operator.
-#
-# ⚠ conventions loss-mask: this source teaches FR street_prefix. The mask forbids it for FR and would
-# -inf these gold labels (the v1.6.0 ~7M-loss blow-up). It is off in this lineage already (v264
-# inherits v193a3, and synth-fr-admin-split/synth-fr-bare-street already teach FR street_prefix), so
-# no action — but do not turn it on for this run.
-#
-# init_from v264 step-008000 with a fresh optimizer, LR 1.0e-5 constant, 8000 steps — the same shape
-# v264 itself used off v263. This is the documented init_from case: a finished, shipped checkpoint
-# fine-tuned on new data. (`resume` is for continuing a capability mid-emergence — the affix scar.)
-#
-# Launch: cd corpus-python && modal run -d -m launch.train_remote --config v3.1.0-fr-fragment.yaml --resume none
+# Launch the run from corpus-python:
+#   modal run -d -m launch.train_remote --config v3.1.0-fr-fragment.yaml --resume none
 data:
   corpus_dir: /data/corpus/versioned/v0.10.9-fr-fragment/corpus-v0.10.9-fr-fragment
   tokenizer_dir: /data/models/tokenizer/v0.9.0-multisplice
   max_length: 128
-  country_weights: # Verbatim from v2.4.1.
+  country_weights:
     US: 1.0
     FR: 1.0
     DE: 1.0
@@ -93,7 +33,7 @@ data:
     HR: 1.0
     HU: 1.0
     AU: 1.0
-  source_weights: # Verbatim from v2.4.1 + the one new assay source.
+  source_weights:
     wof-admin: 2.0
     wof-postalcode: 2.0
     ban: 3.0
@@ -122,11 +62,7 @@ data:
     synth-no-street-led: 12.0
     synth-cz-pcfirst-preposition: 12.0
     synth-nl-postcode: 6.0
-    # probe 1: the fragment/autocomplete source (assay weight — moderate precedent).
     synth-fragment: 6.0
-    # #727 T2 new — the one variable. 12.0 = the targeted-fix precedent (fr-bare-street,
-    # si-bare-village, no-street-led are all 12.0). Streets with no house number + the
-    # bare-locality counter.
     synth-fr-fragment: 12.0
   train_rows_per_epoch: 1000000
   val_rows: 4096
@@ -136,14 +72,13 @@ data:
   augment_glue_prob: 0.25
   anchor_lookup_path: /data/anchor/pilot-anchor-lookup.json
   gazetteer_lexicon_path: /data/gazetteer/anchor-lexicon-v1.json
-  # #1104 country-lexicon channel — the dedicated country soft-feed vocabulary (feature_dim 2).
   country_lexicon_path: /data/gazetteer/country-surface-lexicon-v1.json
   gazetteer_choreography: true
   affix_relabel_lexicon_path: /data/gazetteer/affix-relabel-lexicon-v1.json
   anchor_paint_mode: shaped
   anchor_value_mode: posterior_latlon
 
-model: # Verbatim from v2.4.1.
+model:
   hidden_size: 384
   use_span_boundary_head: true
   span_boundary_loss_weight: 0.5
@@ -163,16 +98,12 @@ model: # Verbatim from v2.4.1.
   use_postcode_anchor: true
   use_gazetteer_anchor: true
   gazetteer_feature_dim: 5
-  # #1104 country channel on — dedicated 2-dim [country_surface, country_ambiguous] soft feed with its
-  # own projection + confidence (must equal the lexicon's feature_dim). Default-False elsewhere, so a
-  # resume from a pre-country checkpoint stays byte-identical until this flips.
   use_country_anchor: true
+  # This value must equal the feature_dim of the country lexicon.
   country_feature_dim: 2
-  # #1104 homograph-guard softener — the one variable vs v263. Scales the country_ambiguous dim by 0.5
-  # before the country_projection (bakes into the exported ONNX. no lexicon/inference change). v263's
-  # hard guard (scale 1.0) over-suppressed homograph countries Georgia/Jordan (country-homograph F1
-  # 89.8->82.6); softening should recover homograph recall without giving back the country F1 the
-  # WOF-admin rows produced.
+  # The model scales the country_ambiguous feature by this factor before the country projection.
+  # The scale is baked into the exported ONNX graph.
+  # A full-strength guard of 1.0 suppressed country names that are also other place names, such as Georgia.
   country_ambiguous_scale: 0.5
   class_weights:
     O: 0.5
@@ -211,9 +142,8 @@ model: # Verbatim from v2.4.1.
   use_phrase_priors: true
   phrase_feature_dim: 10
 
-train: # Same-vocab init_from fine-tune off the shipped v261 (fresh optimizer; --resume none on a fresh
-  # output_dir honors init_from, weights only). The new country_projection starts random and learns to
-  # route the cue. the encoder keeps v261's span-boundary + street grammar.
+# With --resume none and a fresh output_dir, init_from loads only the weights and the optimizer starts fresh.
+train:
   output_dir: /data/output-v310-fr-fragment-s42/checkpoints
   seed: 42
   init_from: /data/output-v264-country-softguard-s42/checkpoints/step-008000

@@ -232,7 +232,7 @@ looks like a uniform win and is not one. Blocking on the character beats promoti
 _measurably_ — the shipped result now beats blanket postcode-first on every percentile (p90 1.88 km
 vs 3.26, ≤1 km 86.2% vs 82.3%), because rural keeps the locality.
 
-### 9. `0,0` is a extract population rather than an edge case
+### 9. `0,0` is an extract population rather than an edge case
 
 144,715 rows across four shipped extracts sit on null island — **48,216 of 142,604 JP postcodes, one in
 three** — and `decorateNode` was copying that onto the node, where every `lat != null` guard
@@ -244,14 +244,14 @@ No shipped CLI path produced a `0,0` answer — the cascade's country-bbox check
 was a latent hazard with a live mechanism. Where it did cost something is evals: two DE panel rows
 graded **5,776 km** from their own address, moving the panel mean by 3.85 km on both arms.
 
-### 10. A extract named `postcode-*.db` cannot serve `postalcode` queries
+### 10. An extract named `postcode-*.db` cannot serve `postalcode` queries
 
 `deriveSchemaName` yields `postcode_ca_overture`; the routing tests `startsWith("postalcode_")`.
 "postcode" ≠ "postalcode", so seventeen extracts holding 877,397 codes silently return zero hits, and
 `postalcode-geonames-intl.db` — which routes, being spelled right, but carries only `spr` — throws
 mid-query instead. Neither is live (these are build inputs, and the candidate table has all 843,739 CA
 codes at placetype 11), but the first CA measurement of this run reported _"974 of 1,000 rows resolve
-no postcode node"_, which reads as a coverage catastrophe and was a extract-selection artifact. #1791.
+no postcode node"_, which reads as a coverage catastrophe and was an extract-selection artifact. #1791.
 
 ### 11. The currency flags are not empty, they are CONSTANT
 

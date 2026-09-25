@@ -105,7 +105,7 @@ Nine standards were assessed. The verdict column is binding.
 | Standard                                                                          | Verdict                          | Scope taken                                                                                    | Grounding                                                                                                                                                                                                                                          |
 | --------------------------------------------------------------------------------- | -------------------------------- | ---------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | [Diátaxis](https://diataxis.fr/)                                                  | Adopt, structural                | Page-role split; one purpose per page                                                          | Already the six-role frontmatter interface (four Diátaxis roles plus `landing` and `evidence`). Geocode Earth's flat sidebar mixing read-once with look-up-repeatedly survives only at roughly 25 pages.                                           |
-| [ASD-STE100](https://asd-ste100.org/)                                             | Adapt, reference register only   | One instruction per sentence, active voice, one word one meaning, no rhetorical language       | Applied to `reference` pages. The controlled dictionary is rejected: it cannot carry geo and ML vocabulary, and no surveyed contemporary uses one. Tutorials and guides are exempt; flattening them would discard the field's best warm registers. |
+| [ASD-STE100](https://asd-ste100.org/)                                             | Adapt, reference register only   | One instruction per sentence, active voice, one word per meaning, without rhetorical language  | Applied to `reference` pages. The controlled dictionary is rejected: it cannot carry geo and ML vocabulary, and no surveyed contemporary uses one. Tutorials and guides are exempt; flattening them would discard the field's best warm registers. |
 | [ISO 19100](https://www.iso.org/committee/54904.html)                             | Adapt, terminology seed only     | An ISO term where it is already the natural codebase term, such as coordinate reference system | The field speaks GeoJSON (`feature`, `properties`, `geometry` at both Mapbox and Geocode Earth), which is also the wire reality here. No wholesale adoption.                                                                                       |
 | [UPU S42](https://www.upu.int/)                                                   | Adapt, postal shelf terminology  | Postal component vocabulary: delivery point, postcode, address component                       | Used in the postal shelf and codex-adjacent reference. Plain language on first mention, then the term.                                                                                                                                             |
 | [RFC 7322](https://www.rfc-editor.org/rfc/rfc7322)                                | Adopt, organization principles   | Facts separated from rationale, stable section hierarchy, consistent terminology               | Interface first, rationale after. This is the ordering that lets a reference page be skimmed by a reader who already knows why.                                                                                                                    |
@@ -138,22 +138,23 @@ addresses…"). Every superlative is cashed out by a checkable action in the sam
 before the steps that would hit them rather than inside them. A caveat states the ceiling and the next action in
 one sentence pair. Put a reading-time estimate at the top. Run every command and paste the real output.
 
-**`guide`.** Same warmth, no scenario storytelling. State the outcome first, then a prerequisites block,
-then the steps. No marketing language.
+**`guide`.** Use the same warmth as a tutorial, without scenario storytelling. State the outcome first, then a
+prerequisites block, then the steps. Avoid marketing language.
 
-**`reference`.** Controlled register: declarative, no contractions, no humor, tables in place of prose.
+**`reference`.** Use a controlled register: declarative sentences without contractions or humor, and tables in
+place of prose.
 Errors and statuses form one closed table with a stable grep-able code, a one-line meaning, and retry or
 next-step guidance; an entry that restates its own name is decoration. Show the full request and the full
 literal response together. On HTTP surfaces, curl first, then language tabs, every tab hitting the identical
-endpoint. On library surfaces, full-file runnable examples with their output or rendered result rather than
+endpoint. On library surfaces, show full-file runnable examples with their output or rendered result rather than
 fragments. Placeholders use `<CAPS_PLACEHOLDER>` with an inline replace-me comment. Give the HTTP API
-reference one URL-anatomy diagram. Facts before rationale.
+reference one URL-anatomy diagram. Put facts before rationale.
 
-**`explanation`.** Plain narrative, analog first: name the rule-world concept before the statistical one.
-Define a term at first use in one sentence, then link it. Longer sentences are permitted. Zero hype.
+**`explanation`.** Write plain narrative, analog first: name the rule-world concept before the statistical one.
+Define a term at first use in one sentence, then link it. Longer sentences are permitted. Avoid hype.
 
-**`landing`.** Short declaratives. Every number sourced. Superlatives only when cashed out. One
-call-to-action per page. On a pricing page, one worked cost example rather than three correct facts a reader
+**`landing`.** Write short declaratives. Source every number. Use a superlative only when the page backs it
+with a checkable fact. Give each page one call-to-action. On a pricing page, one worked cost example rather than three correct facts a reader
 has to assemble.
 
 **`evidence`.** Method, then numbers, then losses, then a link to the run that produced them. First-person
@@ -166,10 +167,10 @@ the training set share a source, say so in the same section as the number.
    words; `forward geocoding` and `reverse geocoding` are the only direction terms.
 2. **No boilerplate repeated verbatim across pages.** Shared content lives on one page and is linked. A
    reader comparing two pages should find them different where the subjects differ.
-3. **Code examples use real places.** London, or an address from the test corpus. Never lorem placeholders.
+3. **Code examples use real places.** Use London or an address from the test corpus, never lorem placeholders.
    Examples on `reference` pages are generated or executed, because a typo inside copy-pasteable code
    propagates into the reader's own code where a prose typo would not.
-4. **Admissions take the flat-fact plus next-step form.** No bare FAQ fragments in flowing prose.
+4. **Admissions take the flat-fact plus next-step form.** Do not put bare FAQ fragments in flowing prose.
 5. **Quoted third-party voice is typographically separated from house voice.** A reader must be able to tell
    whose claim they are evaluating.
 6. **Version forks stay navigable side by side** with one migration pointer, and the old version keeps one
@@ -298,7 +299,7 @@ Adding a rule means adding a fixture. `config/vale/fixtures/dirty.md` carries on
 count and at least one hit from every rule file, and it runs in the docs CI job. That script also carries
 negative assertions: `full-text search` in plain prose must stay quiet, because the `text search` swap is
 guarded so the FTS vocabulary this repo ships survives the rule, and a backticked `promotion-eval.ts` or
-`mailwoman eval promote` must stay quiet, because a name tied to a interface in backticks is exempt by design.
+`mailwoman eval promote` must stay quiet, because a name tied to an interface in backticks is exempt by design.
 
 ## Templates
 

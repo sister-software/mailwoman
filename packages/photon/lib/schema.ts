@@ -3,19 +3,17 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Zod wire schemas for the Photon-compatible surface. Key names and envelopes are the vendor
- *   interface — immutable. Query schemas are validator-proof by construction (unions accepting
- *   string or repeated values) with doc-exact `.openapi()` overrides: validation can never fail,
- *   and every wire decision stays in the handlers (see routes.ts's legacyQuery adapter).
+ *   Zod schemas for the Photon-compatible API. Key names and envelopes match Photon and must not
+ *   change. The query schemas accept any string or string array, so validation never fails. The
+ *   handlers in `routes.ts` do the actual parsing.
  */
 
 import { z } from "@hono/zod-openapi"
 import { featureCollectionSchema, featureSchema, stampedResponseSchema } from "@mailwoman/api-kit"
 
 /**
- * Photon feature properties — OSM-derived keys.
- *
- * Tolerant of extras (`[key: string]: unknown` on the wire type).
+ * Photon feature properties with OSM-derived keys.
+ * Extra keys are allowed.
  */
 export const PhotonPropertiesSchema = z
 	.object({
@@ -40,20 +38,19 @@ export const PhotonPropertiesSchema = z
 	.openapi("PhotonProperties")
 
 /**
- * One Photon result feature — GeoJSON geometry plus Photon's property block.
+ * One Photon result feature with GeoJSON geometry and Photon's properties.
  */
 export const PhotonFeatureSchema = featureSchema(PhotonPropertiesSchema).openapi("PhotonFeature")
 
 /**
- * Response body of `/api`, a GeoJSON FeatureCollection as Photon returns it.
+ * A GeoJSON FeatureCollection of Photon features.
  */
 export const PhotonFeatureCollectionSchema =
 	featureCollectionSchema(PhotonFeatureSchema).openapi("PhotonFeatureCollection")
 
 /**
- * The error/degenerate envelope: an empty FeatureCollection carrying a message.
- *
- * Never `{error}` on this surface.
+ * The error envelope, which is an empty FeatureCollection with a message.
+ * Photon does not use an `{ error }` body.
  */
 export const PhotonMessageCollectionSchema = z
 	.object({
@@ -64,12 +61,10 @@ export const PhotonMessageCollectionSchema = z
 	.openapi("PhotonMessageCollection")
 
 /**
- * The schema.org [`GeoCoordinates`](https://schema.org/GeoCoordinates) node —
- * mirrors `@mailwoman/annotations`'s `SchemaOrgGeoCoordinates` interface.
+ * The schema.org [`GeoCoordinates`](https://schema.org/GeoCoordinates) node.
  *
- * Hand-modeled locally (no import from `@mailwoman/annotations`) matching this package's
- * existing wire-schema convention: each surface owns its own doc-accuracy schemas
- * rather than sharing a schema across the package boundary.
+ * It mirrors the `SchemaOrgGeoCoordinates` interface in `@mailwoman/annotations`.
+ * Each API package defines its own schemas, so this one is written out here.
  */
 export const SchemaOrgGeoCoordinatesSchema = z
 	.object({
@@ -80,8 +75,8 @@ export const SchemaOrgGeoCoordinatesSchema = z
 	.openapi("SchemaOrgGeoCoordinates")
 
 /**
- * The schema.org [`PostalAddress`](https://schema.org/PostalAddress) node —
- * mirrors `SchemaOrgPostalAddress`.
+ * The schema.org [`PostalAddress`](https://schema.org/PostalAddress) node.
+ * It mirrors `SchemaOrgPostalAddress`.
  */
 export const SchemaOrgPostalAddressSchema = z
 	.object({
@@ -96,8 +91,9 @@ export const SchemaOrgPostalAddressSchema = z
 	.openapi("SchemaOrgPostalAddress")
 
 /**
- * The `format=jsonld` re-serialization (#1052) — mirrors `@mailwoman/annotations`'s
- * `SchemaOrgPlace` interface, the shape `photonToSchemaOrg` actually produces.
+ * The `format=jsonld` output.
+ *
+ * It mirrors the `SchemaOrgPlace` interface that `photonToSchemaOrg` produces.
  */
 export const SchemaOrgPlaceSchema = z
 	.object({
@@ -110,10 +106,10 @@ export const SchemaOrgPlaceSchema = z
 	.openapi("SchemaOrgPlace")
 
 /**
- * The FeatureCollection as a route returns it — the collection plus the optional `engine` stamp.
+ * The FeatureCollection with the optional `engine` stamp.
  *
- * Named because it is a union arm: an unnamed arm is inlined, and a generated client
- * then names the variant after its position.
+ * The schema has an OpenAPI name because it is a union member.
+ * A generated client would otherwise label an inlined member by its position.
  */
 export const StampedPhotonFeatureCollectionSchema = stampedResponseSchema(
 	PhotonFeatureCollectionSchema,
@@ -121,28 +117,24 @@ export const StampedPhotonFeatureCollectionSchema = stampedResponseSchema(
 )
 
 /**
- * The real `/api` + `/reverse` 200 response union (#1052 doc accuracy): a GeoJSON
- * FeatureCollection by default, or an array of schema.org `Place` JSON-LD objects
- * when `format=jsonld` — see `routes.ts`'s handlers (`photonToSchemaOrg`).
+ * The `/api` and `/reverse` 200 response for the OpenAPI document.
  *
- * Doc-only.
- * The wire behavior is unchanged.
+ * The response is a GeoJSON FeatureCollection by default or an array of schema.org
+ * `Place` objects for `format=jsonld`.
  */
 export const PhotonResponseSchema = z
 	.union([StampedPhotonFeatureCollectionSchema, z.array(SchemaOrgPlaceSchema)])
 	.openapi("PhotonResponse")
 
 /**
- * A query param that may legally repeat (or that a client may repeat without the
- * validator being allowed to answer for us).
- *
- * Validator-proof: accepts one value or many.
- * The doc override keeps the emitted parameter schema exact.
+ * A query parameter that accepts one value or a repeated value.
+ * Each use sets its documented type with `.openapi()`.
  */
 const tolerantParam = z.union([z.string(), z.array(z.string())]).optional()
 
 /**
- * `GET /api` query — documented shape. presence/parsing enforced in-handler.
+ * The documented query parameters of `GET /api`.
+ * The handler checks and parses them.
  */
 export const searchQueryParams = z.object({
 	q: tolerantParam.openapi({ type: "string", description: "The query string to search for." }),
@@ -160,7 +152,7 @@ export const searchQueryParams = z.object({
 })
 
 /**
- * `GET /reverse` query.
+ * The documented query parameters of `GET /reverse`.
  */
 export const reverseQueryParams = z.object({
 	lat: tolerantParam.openapi({ type: "number", description: "Latitude." }),

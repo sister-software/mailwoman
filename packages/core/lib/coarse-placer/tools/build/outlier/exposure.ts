@@ -3,17 +3,12 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Outlier-exposure data for the #244 coarse-placer's explicit "other" (off-map) class — milestone
- *   2. The closed-set model is confidently wrong on scripts it never saw (Cyrillic→DE@0.71). The
- *   fix is to train an "off my loaded map" class on those scripts. Source: the WOF `names` table,
- *   which carries native-script alternate names in dozens of languages
- *   (rus/ukr/ara/ell/heb/hin/tha/kat/hye/…) — i.e. exactly the off-map scripts we want the model to
- *   learn to abstain on. Balanced per-language for script diversity, filtered to a genuinely
- *   off-map dominant script (not Latin rather than CJK — those are the in-map countries), then appended to
- *   the train/val/test splits as `country: "other"`.
+ *   Builds training rows for the coarse placer's `OTHER` class from scripts outside the model's countries.
  *
- *   Run after build-dataset. Run: `mailwoman placer build-dataset --outliers exposure [--per-lang
- *   2500]`
+ *   Without these rows the model assigns unseen scripts to an in-map country with high confidence. The rows come
+ *   from native-script names in the WOF `names` table, sampled evenly per language and kept only when the name is
+ *   mostly in a script other than Latin or CJK. They are appended to the existing splits, so run this after
+ *   `mailwoman placer build-dataset`.
  */
 
 import { DatabaseClient } from "@mailwoman/sqlite/client"
@@ -27,7 +22,7 @@ import { appendLocalTextFile } from "#fs/writers"
 import { stringifyJSON } from "#json"
 
 /**
- * Share of a bucket that must be off-map before it is treated as an exposure case rather than noise.
+ * The minimum share of counted characters that must be off-map for a name to be kept.
  */
 const OFFMAP_DOMINANCE = 0.6
 
@@ -36,76 +31,84 @@ const OFFMAP_DOMINANCE = 0.6
  */
 export interface BuildOutlierExposureOptions {
 	/**
-	 * Names sampled per off-map language.
-	 *
-	 * Default 2500.
+	 * The number of names sampled per language.
+	 * The default is 2,500.
 	 */
 	perLang?: number
 	/**
-	 * WOF admin SQLite path.
+	 * The WOF admin SQLite path.
 	 *
-	 * Default `$MAILWOMAN_DATA_ROOT/db/wof/admin-global-priority.db`.
+	 * The default is `$MAILWOMAN_DATA_ROOT/db/wof/admin-global-priority.db`.
 	 */
 	wof?: PathBuilderLike
 	/**
-	 * Dataset dir the `other` rows append to.
-	 *
-	 * Default `<repo>/data/coarse-placer`.
+	 * The dataset directory whose split files receive the rows.
+	 * The default is `<repo>/data/coarse-placer`.
 	 */
 	data?: PathBuilderLike
 }
 
 /**
- * Result of {@linkcode buildOutlierExposure}.
+ * The result of {@linkcode buildOutlierExposure}.
  */
 export interface BuildOutlierExposureResult {
 	/**
-	 * Total `other` pool size (names + address-shaped variants).
+	 * The number of `OTHER` rows written, counting names and their address-shaped variants.
 	 */
 	total: number
 }
 
 /**
- * Off-map languages whose `names` are written in a NON-Latin, NON-CJK script (CJK = the in-map CN/JP/KR/TW).
+ * Languages whose WOF names use scripts outside Latin and CJK.
  *
- * TODO: Belongs in a constant, perhaps derived from `@mailwoman/codex`?
+ * CJK is excluded because CN, JP, KR and TW are in-map classes.
+ *
+ * TODO: Derive this list from `@mailwoman/codex`.
  */
 const OFF_MAP_LANGS = [
+	// Cyrillic
 	"rus",
 	"ukr",
 	"bel",
 	"bul",
 	"srp",
-	"mkd", // Cyrillic
-	"ell", // Greek
+	"mkd",
+	// Greek
+	"ell",
+	// Arabic script
 	"ara",
 	"fas",
 	"urd",
 	"snd",
-	"pus", // Arabic-script
+	"pus",
+	// Hebrew
 	"heb",
-	"yid", // Hebrew
+	"yid",
+	// Devanagari
 	"hin",
 	"mar",
 	"nep",
-	"san", // Devanagari
+	"san",
+	// Other Brahmic scripts
 	"ben",
 	"tam",
 	"tel",
 	"kan",
 	"mal",
-	"sin", // Brahmic
+	"sin",
+	// Southeast Asian scripts
 	"tha",
 	"lao",
 	"khm",
-	"mya", // SE-Asian
+	"mya",
+	// Georgian, Armenian and Ethiopic
 	"kat",
 	"hye",
-	"amh", // Georgian / Armenian / Ethiopic
+	"amh",
 ]
 
 /**
- * Dominant script must be off-map: has chars in a non-Latin, non-CJK, non-digit block.
+ * Returns whether most letters in `s` belong to a script other than Latin or CJK.
  */
 function isOffMapScript(s: string): boolean {
 	let off = 0
@@ -114,9 +117,9 @@ function isOffMapScript(s: string): boolean {
 	for (const ch of s) {
 		const cp = ch.codePointAt(0)!
 
+		// ASCII digits, spaces and punctuation are not counted.
 		if (cp <= 0x40 || (cp >= 0x5b && cp <= 0x60) || cp === 0x20) continue
 
-		// punct/space/digits
 		total++
 		const script = scriptOf(cp)
 
@@ -128,13 +131,14 @@ function isOffMapScript(s: string): boolean {
 	return total > 0 && off / total > OFFMAP_DOMINANCE
 }
 
-// Mimic a real off-map address: a pure-script place name isn't what we see at inference
-// (those carry Latin digits + structure, e.g. "ул. Тверская, д. 1").
-// For each name we also emit an address-shaped variant — name + a house number,
-// deterministically — so the model learns "off-map script + digits = still other"
-// and doesn't get pulled to a country by the numeric/punctuation n-grams.
+/**
+ * Adds a house number to a name so it resembles a real off-map address such as "ул. Тверская, д. 1".
+ *
+ * These variants teach the model that digits and punctuation do not imply an in-map country.
+ */
 function addressVariant(name: string, h: number): string {
-	const n = (h % 4) + 1 // 1–4 digit house number
+	// The house number has one to four digits.
+	const n = (h % 4) + 1
 	const num = String(h % Math.pow(10, n) || 7)
 
 	switch (h % 3) {
@@ -148,21 +152,17 @@ function addressVariant(name: string, h: number): string {
 }
 
 /**
- * Coarse-placer non-Latin outlier-exposure builder — see the module doc.
- */
-/**
- * The one column this tool reads out of `wof.db`.
+ * The WOF `names` columns this tool reads.
  *
- * Not `WOFDatabase` from `@mailwoman/resolver-wof-sqlite`: that package depends on this one,
- * so importing its schema here would invert the layering.
- * A tool in `@mailwoman/core` reaching a resolver artifact at all is the odd part.
- *
- * This names the narrowest read it needs rather than pretending the dependency is fine.
+ * The resolver package depends on core, so core cannot import the resolver's `WOFDatabase` schema.
  */
 interface WOFNameRead {
 	names: { name: string; language: string }
 }
 
+/**
+ * Appends `OTHER` rows built from off-map WOF names to the dataset splits.
+ */
 export async function buildOutlierExposure(
 	options: BuildOutlierExposureOptions = {},
 	report?: (line: string) => void
@@ -191,14 +191,13 @@ export async function buildOutlierExposure(
 			pool.push(name)
 			pool.push(addressVariant(name, hashFNV1a(name)))
 
-			// address-shaped sibling
 			kept++
 		}
 
 		report?.(`  ${lang}: ${kept}`)
 	}
 
-	// Deterministic shuffle (FNV hash sort) + split 80/10/10, append as `other`.
+	// Sorting by hash shuffles deterministically before the 80/10/10 split.
 	pool.sort((a, b) => hashFNV1a(a) - hashFNV1a(b))
 	const nVal = Math.floor(pool.length * 0.1)
 	const nTest = Math.floor(pool.length * 0.1)

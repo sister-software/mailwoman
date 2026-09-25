@@ -1,62 +1,62 @@
 # Spatial layers + POI queries — design
 
-2026-07-18. Operator + Claude, brainstormed over one session; research receipts in
+2026-07-18. The operator and Claude brainstormed this design in one session. Research receipts are in
 `scratchpad/exotic-poi-a-vs-b-research.md` (four parallel research passes: geocoder prior art,
-NLU literature, repo cost audit, Overture taxonomy/licensing) and the Nexus salvage survey
-(session transcript). Companion engineering half of `docs/articles/understanding/exotic-poi/`.
+NLU literature, repo cost audit, Overture taxonomy/licensing) and in the Nexus salvage survey
+(session transcript). This spec is the engineering companion to `docs/articles/understanding/exotic-poi/`.
 
 ## 1. Framing
 
-Mailwoman today answers one question: "where is this address?" The operator's target is the
-question class _around_ that one — physical-plausibility checks on broadband filings,
-infrastructure proximity ("how far is this fiber hut from a datacenter?"), build-out feasibility,
-market sizing. These are composite questions no single model answers. The consumer of these
-queries is an **agent** (an LLM with tools) rather than a search box. The agent supplies intent
-extraction, planning, and narrative; mailwoman supplies what the agent lacks: **deterministic,
+Mailwoman today answers one question: "where is this address?" The operator wants to answer the
+related questions around it: physical-plausibility checks on broadband filings,
+infrastructure proximity ("how far is this fiber hut from a datacenter?"), build-out feasibility, and
+market sizing. No single model answers these composite questions. The consumer of these
+queries is an **agent** (an LLM with tools), not a search box. The agent supplies intent
+extraction, planning, and narrative. Mailwoman supplies what the agent lacks: **deterministic,
 local, fast, provenance-tracked spatial ground truth.**
 
-This resolves the original design question (trained decoder emitting OverpassQL vs. pipeline
-extension) decisively. Research verdict, one-sided on four fronts:
+This settles the original design question of a trained decoder that emits OverpassQL vs. a pipeline
+extension. The research favored the pipeline extension on all four fronts:
 
 1. **Industry practice**: every production geocoder (Nominatim special phrases, Photon, Pelias,
    Mapbox, HERE, Google) treats category/brand intent as classification into a closed taxonomy.
-   The learned parts are rankers/disambiguators, never generators.
-2. **The generative path has been tried**: Text-to-OverpassQL (TACL 2024) — 582M params for
-   36.7% execution accuracy; GPT-4 + retrieval 40.4%. No production deployment of a small
+   Their learned parts rank and disambiguate, and none of them generate queries.
+2. **The generative path has been tried**: Text-to-OverpassQL (TACL 2024) reached
+   36.7% execution accuracy with 582M params, and GPT-4 with retrieval reached 40.4%. No production deployment of a small
    generative geo-query model exists.
-3. **NLU literature**: flat queries (subject × optional anchor — exactly POI queries) are tagger
-   territory; generation pays only on nested intents. Autoregressive decode = 5–20× the latency
+3. **NLU literature**: flat queries (a subject with an optional anchor, which is exactly the shape of POI queries) suit
+   a tagger. Generation pays off only on nested intents. Autoregressive decoding costs 5–20× the latency
    of our single thread-blocking `session.run`.
-4. **This repo**: option A is assembly (a `QueryKind`, a scorer, `variant-aliases`' first
-   consumer, a sealed poi.db); option B is a second ML product line that still needs poi.db
+4. **This repo**: option A assembles existing parts (a `QueryKind`, a scorer, the first consumer of `variant-aliases`,
+   and a sealed poi.db). Option B is a second ML product line that still needs poi.db
    to answer anything.
 
-**Pre-registered escalation** (so B is never re-litigated ad hoc): if evals show lexicon recall
-is the binding constraint, the fix is an intent+slot head on the EXISTING encoder
-(JointBERT/Alexa pattern, ~10 examples/class) — not a decoder.
+**Pre-registered escalation**, so that option B is not reopened ad hoc: if evals show that lexicon recall
+is the binding constraint, the fix is an intent+slot head on the existing encoder
+(JointBERT/Alexa pattern, ~10 examples/class), not a decoder.
 
-Overpass itself: never a serving backend (interpreted QL over a planet export, rate-limited,
-seconds-to-minutes). An OverpassQL _emitter_ may exist as a pure export format over the intent
-record — we print the query; we never run it.
+Overpass itself is never a serving backend. It interprets QL over a planet export, is rate-limited, and takes
+seconds to minutes. An OverpassQL _emitter_ may exist as a pure export format over the intent
+record. We print the query but never run it.
 
 ## 2. Governing architecture — three layers
 
 ### 2.1 Spatial layer registry (data)
 
-Every dataset — shipped, user-built, or private — is the same artifact shape: a **sealed,
-readonly, provenance-tracked SQLite database** ("layer") keyed on a shared spatial spine.
-This extends the existing gazetteer discipline (sealed 0444 artifacts, Kysely schema modules,
+Every dataset, whether shipped, user-built, or private, has the same artifact shape: a **sealed,
+readonly, provenance-tracked SQLite database** (a "layer") keyed on a shared spatial spine.
+This extends the existing gazetteer practices (sealed 0444 artifacts, Kysely schema modules,
 build-then-swap) from reference data to analysis layers.
 
-**The spine.** Every layer row is addressable by at least one of:
+**The spine.** Every layer row is addressable by at least one of these keys:
 
-- `h3` — H3 cell, stored as 48-bit short cell (port `shortenH3Cell`/`expandH3Cell` from Nexus
-  `spatial/h3`). Resolution declared per-table in the layer manifest.
-- `wof_id` — WOF ancestry anchor (the resolver's existing id space; parallel id spaces stay
-  nullable metadata, per the GERS rule).
-- `address_id` — the `@mailwoman/address-id` key, where rows are address-grained.
+- `h3`: an H3 cell, stored as a 48-bit short cell (port `shortenH3Cell`/`expandH3Cell` from Nexus
+  `spatial/h3`). The layer manifest declares the resolution per table.
+- `wof_id`: the WOF ancestry anchor, in the resolver's existing id space. Parallel id spaces stay
+  nullable metadata, per the GERS rule.
+- `address_id`: the `@mailwoman/address-id` key, for layers whose rows are address-grained.
 
-**The manifest.** Each layer embeds a `layer_manifest` table (single row):
+**The manifest.** Each layer embeds a single-row `layer_manifest` table:
 
 | field                                                | meaning                                                                  |
 | ---------------------------------------------------- | ------------------------------------------------------------------------ |
@@ -67,66 +67,66 @@ build-then-swap) from reference data to analysis layers.
 | `freshness_policy`                                   | `sealed` (rebuild-only) \| `versioned-refresh` (e.g. officials registry) |
 | `spine_keys`                                         | which spine columns this layer carries, and H3 resolution                |
 
-**Coverage metadata — the meaning-of-zero rule.** Layers derived from incomplete surveys (OSM
-above all) must carry a `layer_coverage` table: per-H3-cell (coarse res) completeness signal, so
-consumers can distinguish "mapped and absent" from "unmapped." Absence of a row is never
-evidence by itself. Scorers built on layers emit `{claim, evidence_found, coverage_confidence}`,
-never a bare score. This field is interface-mandatory from day one because retrofitting
-epistemics onto sealed artifacts means rebuilding all of them.
+**Coverage metadata and the meaning of zero.** Layers derived from incomplete surveys (OSM
+above all) must carry a `layer_coverage` table that gives a completeness signal per H3 cell at a coarse resolution. Consumers can then
+distinguish "mapped and absent" from "unmapped." A missing row is never
+evidence by itself. Scorers built on layers emit `{claim, evidence_found, coverage_confidence}`
+instead of a bare score. The interface requires this field from the first release, because adding
+coverage data to sealed artifacts later would mean rebuilding all of them.
 
 **Tiers.**
 
-- `shipped` — permissive sources only (Overture Places CDLA-P, Census/TIGER public domain,
-  Wikidata CC0, Foursquare labels Apache-2.0). Built by us, published R2/npm like the gazetteer.
-- `build-local` — ODbL and other share-alike sources (OSM POIs, Overture _base_ theme — which
-  is explicitly ODbL; Overture does not launder OSM). We ship the **builder CLI**, the user
-  builds on their own disk, nothing ODbL is distributed by us. Same posture as the unpublished
-  `osm/` workspace.
-- `private` — the user's own data (CRM, survey notes, parcel relationships), conforming to the
-  same schema interface, loaded from `$MAILWOMAN_DATA_ROOT`, never leaves their machine. This is
-  how "internal geo" (who owns the building, have we worked with this builder) joins the same
+- `shipped`: permissive sources only (Overture Places CDLA-P, Census/TIGER public domain,
+  Wikidata CC0, Foursquare labels Apache-2.0). We build these layers and publish them to R2/npm like the gazetteer.
+- `build-local`: ODbL and other share-alike sources, such as OSM POIs and the Overture _base_ theme.
+  The base theme is explicitly ODbL, because Overture's license does not replace OSM's. We ship the **builder CLI**, the user
+  builds the layer on their own disk, and we distribute nothing under ODbL. The unpublished
+  `osm/` workspace follows the same policy.
+- `private`: the user's own data (CRM, survey notes, parcel relationships). It conforms to the
+  same schema interface, loads from `$MAILWOMAN_DATA_ROOT`, and never leaves the user's machine. This is
+  how "internal geo" (who owns the building, whether we have worked with this builder) joins the same
   query surface as public layers.
 
 ### 2.2 Spatial primitives (compute)
 
 `@mailwoman/spatial` grows a small closed verb set over the layer interface:
 `nearest(layer, from, k)`, `within(layer, center, radius)`, `distance(a, b)`,
-`aggregate(layer, h3res)`; later `along(street-network, a, b)` (TIGER geometry) for
-route-length questions ($/mile builds). Deterministic, unit-tested, no ML.
+`aggregate(layer, h3res)`. A later `along(street-network, a, b)` over TIGER geometry answers
+route-length questions ($/mile builds). The primitives are deterministic and unit-tested, and they use no ML.
 
 ### 2.3 Agent surface (`@mailwoman/mcp`)
 
-An MCP server exposing the toolset: `parse`, `geocode`, `poi_search(category|brand|name, near,
-radius, limit)`, `layer_list`, `layer_query`, `spatial_nearest`, `spatial_within`,
-`spatial_distance`. Thin: schema + dispatch over existing library calls — no logic of its own.
-The POI **intent record** (§3.2) doubles as the `poi_search` tool schema. Human NL surfaces
-(CLI, demo, photon drop-in) are thin fronts on the same calls; agents skip NL entirely.
+An MCP server exposes the toolset: `parse`, `geocode`, `poi_search(category|brand|name, near,
+radius, limit)`, `layer_list`, `layer_query`, `spatial_nearest`, `spatial_within`, and
+`spatial_distance`. The server is thin: it holds schemas and dispatches to existing library calls, with no logic of its own.
+The POI **intent record** (§3.2) also serves as the `poi_search` tool schema. Human natural-language surfaces
+(CLI, demo, photon drop-in) are thin fronts on the same calls, and agents skip natural language entirely.
 
-**Scope guard.** Mailwoman ships the spine, layers, primitives, and tool surface. Verticals
-(BDC plausibility, build-out feasibility) are agent workflows — skills/docs/examples — not new
-packages, until one proves product pull. (The BAN discipline: test the implementation on one
-vertical before expanding.)
+**Scope limit.** Mailwoman ships the spine, layers, primitives, and tool surface. Verticals
+(BDC plausibility, build-out feasibility) stay agent workflows built from skills, docs, and examples. They
+become new packages only after one shows product demand. As with BAN, we test the implementation on one
+vertical before expanding.
 
 ## 3. Phase 1 — the POI arc (implementable now)
 
-Extends the Fable exotic-POI spec (scratchpad/fable-exotic-poi-design.md); its Phases 0–2
+This phase extends the Fable exotic-POI spec (scratchpad/fable-exotic-poi-design.md). That spec's Phases 0–2
 (coordinate kind, venue gazetteer extract, venue-fragment retrain) proceed as written. This spec
-adds the amenity/brand/intent half and re-homes venue data as layer #1.
+adds the amenity/brand/intent half and moves venue data into layer #1.
 
 ### 3.1 Pipeline: `poi_query` kind
 
 - New `QueryKind` union member `poi_query` (`core/pipeline/types.ts`).
-- New scorer in `kind-classifier` (template: `scoreVenueLandmark`): lexicon hit on a
-  category/brand phrase, with the already-reserved `locale` param blocking locale-specific
-  aliases. The classifier's "no place-name dictionaries" docstring invariant is relaxed
-  deliberately: the lexicon lives in `variant-aliases` data and is injected rather than hardcoded.
-- Anchor split: on a `poi_query` hit, the subject phrase is stripped and the remainder
+- A new scorer in `kind-classifier` (modeled on `scoreVenueLandmark`) fires on a lexicon hit for a
+  category/brand phrase. The already-reserved `locale` param blocks locale-specific
+  aliases. This deliberately relaxes the classifier's docstring invariant against place-name dictionaries.
+  The lexicon lives in `variant-aliases` data and is injected instead of hardcoded.
+- Anchor split: on a `poi_query` hit, the subject phrase is stripped, and the remainder
   (`near Springfield IL`, `, Portland OR`) runs through the normal parse→resolve path.
-  Two-stage, where stage 2 is the existing model.
+  The split has two stages, and stage 2 is the existing model.
 - New pipeline branch: POI results are not `AddressTree`s. `runPipeline` gains an optional
-  `poiResolver` stage and a distinct result shape (`PipelineResult.kind` finally gets a
-  consumer). API gains a response variant; drop-ins map it natively (photon: FeatureCollection).
-- Relative-position/leader queries (`behind the church…`): abstain result
+  `poiResolver` stage and a distinct result shape, which gives `PipelineResult.kind` its first
+  consumer. The API gains a response variant, and drop-ins map it natively (photon: FeatureCollection).
+- Relative-position and leader queries (`behind the church…`) return an abstain result
   (`kind=landmark, confidence, no coordinate`), per the Fable spec.
 
 ### 3.2 Intent record
@@ -142,77 +142,77 @@ interface POIIntent {
 }
 ```
 
-Compilers over `POIIntent`: (a) SQL against poi.db (the only executor); (b) OverpassQL
-emitter (export-only, prints text). The record is also the `poi_search` MCP schema.
+Two compilers read `POIIntent`: (a) SQL against poi.db, which is the only executor, and (b) an OverpassQL
+emitter, which is export-only and prints text. The record is also the `poi_search` MCP schema.
 
 ### 3.3 The lexicon (`variant-aliases` grows up)
 
-The taxonomy is general-purpose — biking trails, restaurants, hospitals — not ISP-specific;
-ISP-adjacent categories are one part of it. It therefore splits from `variant-aliases`:
+The taxonomy is general-purpose and covers biking trails, restaurants, and hospitals as well as
+ISP-adjacent categories. It therefore splits from `variant-aliases`:
 
 - **New data package `@mailwoman/poi-taxonomy`**: the Overture category snapshot (ids +
-  hierarchy + basic-label tier) plus the synonym table (phrase → category id), bootstrapped
-  from Foursquare OS Places labels (Apache-2.0) + Wikidata aliases (CC0), then curated.
-  Snapshot-versioned per Overture release — a different freshness cadence and size class than
-  variant-aliases. Pins the NEW Overture `taxonomy` property (~2,100 categories, 13 top-level,
-  ~280 basic labels); the old `categories` property dies in the Sept 2026 Overture release, and
-  the new taxonomy's canonical list is not yet a committed machine-readable file — snapshot it
-  per release into the package build. Nominatim special phrases / OSM wiki are CC BY-SA —
-  consult as reference, never ship a derived table.
-- **`variant-aliases` stays** the small curated locale-slang table (`Macca's`, `PFK`, `servo`),
-  now resolving to poi-taxonomy category ids / brand names — it finally gets a consumer.
-- Brand aliases: Wikidata QID-keyed (CC0), joined to Overture `brand.wikidata` (~3,000 chains).
+  hierarchy + basic-label tier) plus the synonym table (phrase → category id). The synonym table starts
+  from Foursquare OS Places labels (Apache-2.0) and Wikidata aliases (CC0) and is then curated.
+  The package is versioned per Overture release, so its refresh cadence and size class differ from
+  variant-aliases. It pins the new Overture `taxonomy` property (~2,100 categories, 13 top-level,
+  ~280 basic labels). The old `categories` property is removed in the Sept 2026 Overture release, and
+  Overture does not yet publish the new taxonomy's canonical list as a committed machine-readable file, so snapshot it
+  into the package build for each release. Nominatim special phrases and the OSM wiki are CC BY-SA.
+  Consult them as reference, and never ship a table derived from them.
+- **`variant-aliases` stays** as the small curated locale-slang table (`Macca's`, `PFK`, `servo`).
+  Its entries now resolve to poi-taxonomy category ids or brand names, which gives the package its first consumer.
+- Brand aliases are keyed by Wikidata QID (CC0) and joined to Overture `brand.wikidata` (~3,000 chains).
 
 ### 3.4 poi.db — layer #1
 
-- Source: Overture Places (CDLA-P), confidence ≥ 0.85 (the third-party-audit reliability knee),
-  `taxonomy.primary`/`hierarchy`/`alternates`, `brand.*`, names, centroid, GERS id as nullable
-  metadata. WOF-keyed ancestry via PIP against the existing gazetteer at build time.
-- Schema per house discipline: Kysely schema module + `createXTable`, staging bulk-load via raw
-  positional INSERTs, `WITHOUT ROWID` candidate-style probe table (clone
-  `resolver-wof-sqlite/candidate-*`), FTS5 name search (raw DDL, per rule), sealed 0444,
-  layer manifest + coverage table per §2.1.
-- Build: `mailwoman gazetteer build poi` (Overture places ingest; the divisions ingest is
-  precedent). Scope: **all currently supported locales' countries (US, CA, MX, FR)** —
-  operator decision. California rows cover the demo-preset acceptance probes (Pier 39 /
-  Golden Check Park). Demo (Tier A pocket) inclusion is a separate budget review.
-- Venue resolve half (placetypeMap `venue` entry, resolve.ts venue pass) proceeds per the
-  Fable spec Phase 1; poi.db serves both the venue lookup and category/brand search.
+- Source: Overture Places (CDLA-P) filtered to confidence ≥ 0.85, the point where third-party audits found reliability levels off.
+  Each row carries `taxonomy.primary`/`hierarchy`/`alternates`, `brand.*`, names, a centroid, and the GERS id as nullable
+  metadata. The build assigns WOF-keyed ancestry by PIP against the existing gazetteer.
+- The schema follows house rules: a Kysely schema module + `createXTable`, a staging bulk-load through raw
+  positional INSERTs, a `WITHOUT ROWID` candidate-style probe table (clone
+  `resolver-wof-sqlite/candidate-*`), FTS5 name search (raw DDL, per rule), sealing at 0444, and the
+  layer manifest + coverage table from §2.1.
+- Build: `mailwoman gazetteer build poi`, an Overture places ingest modeled on the existing divisions ingest.
+  The operator set the scope to **the countries of all currently supported locales (US, CA, MX, FR)**.
+  California rows cover the demo-preset acceptance probes (`Pier 39` /
+  `Golden Gate Park`). Including POI data in the demo (Tier A pocket) needs a separate budget review.
+- The venue resolve half (the placetypeMap `venue` entry and the resolve.ts venue pass) proceeds per the
+  Fable spec Phase 1. poi.db serves both the venue lookup and category/brand search.
 
 ### 3.5 Infrastructure classes (build-local)
 
-`fire_hydrant`, `post_box`, `drinking_water`, `data_center` etc. have no permissive source:
-they live in OSM and in Overture's _base_ theme, both ODbL. Ship `poi build --source osm`
-(reuse `osm/sdk` ingestion) producing a build-local layer conforming to the same schema.
+`fire_hydrant`, `post_box`, `drinking_water`, `data_center`, and similar classes have no permissive source.
+They exist only in OSM and in Overture's _base_ theme, and both are ODbL. Ship `poi build --source osm`,
+which reuses `osm/sdk` ingestion to produce a build-local layer with the same schema.
 The category lexicon still recognizes these subjects when the layer is absent. The answer is
 then "requires the locally-built OSM layer," not a mangled parse.
 
 ### 3.6 Checks (pre-registered)
 
-- Golden 2pp guard with the `poi_query` scorer live; byte-identical parses for non-POI queries.
-- Curated POI query board (the class-1/9 probe table + amenity/brand/infra fixtures) with
-  written floors set at Phase-1 baseline; graded on assembled answer (id + coordinate) rather than
+- The golden 2pp check passes with the `poi_query` scorer live, and non-POI queries produce byte-identical parses.
+- A curated POI query board (the class-1/9 probe table + amenity/brand/infra fixtures) gets
+  written floors at the Phase-1 baseline. It is graded on the assembled answer (id + coordinate), not
   label F1.
-- Full-address venue (class 2) non-regression.
-- Runtime-flag register rows for the new stage + scorer (invariant 5); flag-off = byte-identical.
-- Demo presets stay green; Pier 39 resolving to the pier (not SF centroid) is the acceptance
-  probe once the venue extract lands.
+- Full-address venue queries (class 2) do not regress.
+- The new stage and scorer get runtime-flag register rows (invariant 5). With the flag off, output is byte-identical.
+- Demo presets stay green. Once the venue extract lands, the acceptance probe is Pier 39 resolving to the pier
+  instead of the SF centroid.
 
 ## 4. Phase 2 — BDC plausibility (proving-ground vertical; separate spec)
 
-Named here so Phase 1 decisions serve it; specced separately once Phase 1's interface is real.
+This section describes Phase 2 so that Phase 1 decisions can serve it. It gets its own spec once Phase 1's interface exists.
 
-The question: grade broadband availability filings by physical plausibility — does claimed
-fiber service have the co-present physical plant (datacenter within reasonable distance, fiber
-huts, power)? Score = `{claim, supporting evidence found, coverage_confidence}`; the
-highest-confidence positive is co-presence; sparse OSM coverage degrades toward "insufficient
-survey data," which is itself output.
+Phase 2 grades broadband availability filings by physical plausibility. It asks whether claimed
+fiber service has the physical plant it needs: a datacenter within reasonable distance, fiber
+huts, and power. The score is `{claim, supporting evidence found, coverage_confidence}`. The
+highest-confidence positive is co-presence. Where OSM coverage is sparse, the result degrades toward "insufficient
+survey data," and that result is itself reported.
 
-**Nexus salvage map** (`/home/lab/Projects/isp-nexus/universe`, AGPL, operator is sole author
-and has approved relicensing by copy). Salvage rule: copy code in, no provenance headers
-required, and **never duplicate functionality mailwoman already has** — Nexus TIGER work merges
-into the existing `tiger/` workspace, H3 utilities into `@mailwoman/spatial`, fetch/ingest into
-`sdk/`-style submodules; all storage re-homed to Kysely/node:sqlite per house rules:
+**Nexus salvage map** (`/home/lab/Projects/isp-nexus/universe`, AGPL). The operator is the sole author
+and has approved relicensing by copy. The salvage rule is to copy code in without provenance headers
+and to **never duplicate functionality mailwoman already has**. Nexus TIGER work merges
+into the existing `tiger/` workspace, H3 utilities go into `@mailwoman/spatial`, and fetch/ingest code goes into
+`sdk/`-style submodules. All storage moves to Kysely/node:sqlite per house rules:
 
 | Salvage                                                                                                                                                                           | From                                   | Into                                       |
 | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------- | ------------------------------------------ |
@@ -224,55 +224,55 @@ into the existing `tiger/` workspace, H3 utilities into `@mailwoman/spatial`, fe
 | CORES scraper + Form 499 parser + entity classification                                                                                                                           | `sync/fcc/`                            | provider registry (freshness-policy layer) |
 | Block/tract/county availability×demographics rollup SQL                                                                                                                           | `generate-provider-geojson.ts`         | design reference for `aggregate()`         |
 
-Known gaps (new work): no ECFS/ULS clients, no CAF/RDOF/tribal ingest, H3-keyed storage is new
-(Nexus joined on GEOID). CostQuest fabric IDs are treated as opaque join keys; we work at the
-granularity the public filings support and grade claims against physics rather than against
+Known gaps that need new work: there are no ECFS/ULS clients and no CAF/RDOF/tribal ingest, and H3-keyed storage is new
+(Nexus joined on GEOID). CostQuest fabric IDs are treated as opaque join keys. We work at the
+granularity the public filings support and grade claims against physical evidence instead of
 the fabric's own map.
 
-Layers implied: `bdc.db` (shipped; US-gov public filings), `infra.db` (build-local, ODbL),
-`power.db` (HIFLD candidate — license check pending), TIGER demographics (shipped),
-provider registry (shipped, versioned-refresh). Second vertical (build-out feasibility:
-situs 124.9M points × ACS income × along-network distance × BDC competitors) reuses all of it.
+Implied layers: `bdc.db` (shipped; US-gov public filings), `infra.db` (build-local, ODbL),
+`power.db` (HIFLD candidate, license check pending), TIGER demographics (shipped), and the
+provider registry (shipped, versioned-refresh). A second vertical, build-out feasibility
+(situs 124.9M points × ACS income × along-network distance × BDC competitors), reuses all of these layers.
 
 ## 5. Deferred, explicitly
 
-- Subsidy-program registry (churny; needs versioned-refresh discipline and a curator).
-- Zoning (per-municipality fragmentation; per-project build-local at best).
-- Officials/constituency directory beyond jurisdiction boundaries (TIGER districts are
-  shippable now; _people_ churn). Soft-power analysis stays in the conversation rather than the
-  artifact — mailwoman's layers stay public-record structure.
+- A subsidy-program registry. It churns and needs versioned refreshes and a curator.
+- Zoning. It is fragmented per municipality and could at best be a per-project build-local layer.
+- An officials/constituency directory beyond jurisdiction boundaries. TIGER districts can
+  ship now, but the _people_ churn. Soft-power analysis stays in the conversation and out of the
+  artifact, and mailwoman's layers stay limited to public-record structure.
 - Free-form phrasing recall (→ pre-registered escalation, §1).
-- OverpassQL emitter can ship in any phase — it's a pure formatter; lowest priority.
+- The OverpassQL emitter can ship in any phase because it is a pure formatter. It has the lowest priority.
 
 ## 6. Sequencing
 
-1. **Layer interface** (manifest + coverage tables + tier semantics) — first, so poi.db is born
-   conforming. Small PR: schema module + docs page.
-2. **Phase 1 POI arc** — kind + intent record + lexicon wiring + poi.db pilot (CA) + pipeline
-   branch + API/CLI surfaces. 3 wiring PRs + 1 data PR, per the repo-cost audit.
-3. **`@mailwoman/mcp`** — thin; can land in parallel with (2) once the intent record is typed.
-4. **Fable spec Phases 0–2** (coordinate kind, venue resolve, venue-fragment retrain) —
-   unchanged, interleaved as operator schedules them.
-5. **Phase 2 BDC spec** — after (1)–(3) the result on poi.db.
+1. **Layer interface** (manifest + coverage tables + tier semantics) comes first, so poi.db
+   conforms from its first build. It is a small PR with a schema module and a docs page.
+2. **Phase 1 POI arc**: kind + intent record + lexicon wiring + poi.db pilot (CA) + pipeline
+   branch + API/CLI surfaces. The repo-cost audit estimates 3 wiring PRs and 1 data PR.
+3. **`@mailwoman/mcp`** is thin and can land in parallel with (2) once the intent record is typed.
+4. **Fable spec Phases 0–2** (coordinate kind, venue resolve, venue-fragment retrain) stay
+   unchanged and are interleaved as the operator schedules them.
+5. **Phase 2 BDC spec** comes after (1)–(3) produce results on poi.db.
 
 ## 7. Decisions (resolved 2026-07-18, operator)
 
-- MCP server ships in v1 alongside Phase 1.
-- poi.db scope: all currently supported locales' countries (US, CA, MX, FR).
-- Nexus salvage: copy files in (same-author relicense), no provenance headers, never duplicate
-  existing mailwoman functionality — merge into existing workspaces where one exists.
-- Lexicon home: split — general-purpose categories + synonyms in the new
-  `@mailwoman/poi-taxonomy` data package; locale slang stays in `variant-aliases` (§3.3).
-  Rationale: the taxonomy serves every category use case (trails, restaurants, ISP infra alike)
-  and refreshes on Overture's cadence rather than curation cadence.
+- The MCP server ships in v1 alongside Phase 1.
+- poi.db scope: the countries of all currently supported locales (US, CA, MX, FR).
+- Nexus salvage: copy files in under the same-author relicense, without provenance headers, and never duplicate
+  existing mailwoman functionality. Merge into an existing workspace wherever one exists.
+- Lexicon home: split. General-purpose categories and synonyms go in the new
+  `@mailwoman/poi-taxonomy` data package, and locale slang stays in `variant-aliases` (§3.3).
+  The taxonomy serves every category use case (trails, restaurants, and ISP infrastructure alike)
+  and refreshes on Overture's release cadence instead of a curation cadence.
 
 - poi.db H3 keying (resolved 2026-07-18, delegated to Claude): rows key on the **res-9 48-bit
-  short cell** as the clustered probe prefix — matching `ADDRESS_H3_RESOLUTION = 9` in
-  `@mailwoman/address-id` so the POI↔address join is a direct key equality. Exact centroids
-  stay on the row (finer granularity derivable; coarser is not). Rationale is the serving
-  profile: the browser/React-Native/web-worker path is byte-range probes over a remote sealed
-  DB, and a res-9-clustered `WITHOUT ROWID` B-tree makes a neighborhood query one contiguous
-  key range (few range requests, no joins) — the same access pattern as the candidate
-  gazetteer. `layer_coverage` cells sit at res 6 (epistemics rather than lookups).
+  short cell** as the clustered probe prefix. This matches `ADDRESS_H3_RESOLUTION = 9` in
+  `@mailwoman/address-id`, so the POI↔address join is a direct key equality. Exact centroids
+  stay on the row, because finer granularity cannot be derived from a coarser key. The choice follows the serving
+  profile. The browser/React-Native/web-worker path makes byte-range probes against a remote sealed
+  DB, and a res-9-clustered `WITHOUT ROWID` B-tree turns a neighborhood query into one contiguous
+  key range with few range requests and no joins. The candidate
+  gazetteer uses the same access pattern. `layer_coverage` cells sit at res 6 because they describe coverage and are not used for lookups.
 
-Remaining open: when the demo pocket gets a slim POI extract (budget review at Phase-1 exit).
+Still open: when the demo pocket gets a slim POI extract. The budget review at Phase-1 exit decides this.

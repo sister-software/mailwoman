@@ -1,76 +1,29 @@
 /**
- * Which rows the weights-family routers send to a graph that cannot produce the row's
- * expected tags, and which rows the candidate routers disagree about.
+ * Reports which board rows the weights-family routers send to a graph that cannot emit
+ * the row's expected tags, and which rows the routers disagree about.
  *
- * `docs/engineering/CONTRIBUTING_MODEL_WORK.mdx` requires a route comparison before a
- * change sends an existing request to a different graph, and a comparison needs truth.
- * The gauntlet board declares no routing label.
+ * The board has no routing label, so this tool derives one where it can.
+ * A family's model card lists the tags its head can emit.
  *
- * It does carry one for a subset, in a form that has to be derived: a row's `expectComponents` names
- * the tags a correct parse produces, a family's model card declares the tags its head can emit,
- * and a row whose expected tags only one family emits is labeled for that family by construction.
- * On the current board that is 26 rows of 1,029, and 7 of the 26 route to a
- * family that cannot emit what they ask for.
+ * When only one family can emit every tag in a row's `expectComponents`, that family is the row's label.
+ * Neither the country nor the script mix can serve as a label, because mixed-script
+ * rows route correctly to either family.
  *
- * The other 1,003 rows have no label, because their tags are in both families' vocabularies.
- * For those the tool reports where the routers disagree, which is the set a human has to adjudicate.
+ * Most rows have tags that every family can emit, so they get no label.
+ * For those rows the tool prints where the routers disagree, for a human to label.
+ * Router agreement does not imply a correct route.
  *
- * A row states its country, its address kind and its expected components.
- * Nothing says which model graph should read it, and two obvious derivations
- * both fail on rows the board already holds.
+ * Two routers run:
  *
- * The country does not supply it.
- * `新加坡` is an SG row written wholly in Han, and `逊克二分场四队, HEILONGJIANG, CHINA`
- * is a CN row whose Han sits in one comma segment.
+ * - `script` is the shipped router, `routeFamilyForText`.
+ *   An abstention lets the caller's locale decide.
+ * - `locale-hint` folds `detectLocale` from `@mailwoman/locale-hint` to a family.
  *
- * Reading truth off the country would send both to the Latin family, which is the
- * reading `script-router.ts` records as measured wrong: under the whole-input fold
- * `Far East Chinese 口福羊汤, 13 Gerrard St, London W1D 5PS` came back `country: "Chi"`, `region: "Far East"`.
- *
- * The script share does not supply it either.
- * `逊克二分场四队, HEILONGJIANG, CHINA` carries 29.2% Han and routes to the character model.
- *
- * `Far East Chinese 口福羊汤, 13 Gerrard St, London W1D 5PS` carries 10.8% Han and stays on the Latin one.
- * Those distributions overlap, which is why `carriesFamilySegment` reads
- * where the Han sits rather than how much there is.
- *
- * A threshold fitted here would restate one router's rule and then grade that router against itself.
- *
- * Which scripts a family can encode settles nothing either.
- * The Latin SentencePiece model tokenizes `新加坡` as three pieces, `▁新` `加` `坡`, and
- * `neural-weights-cjk`'s `char-vocab.json` carries all 52 ASCII letters among its 4,451 entries.
- *
- * Each family represents the other's script.
- *
- * Which tags a family can emit does settle a row, and it is read from the model cards rather than argued.
- * `en-us` declares 33 labels and `cjk` declares 49, and `block`, `district`,
- * `municipality` and `prefecture` are in the second set alone.
- *
- * A row expecting any of those is unreachable on the Latin graph whatever script it is written in.
- * That is what labels the 26 rows, and it reaches rows a disagreement census cannot:
- * `jp-ws-jingumae-4-12-10-google-canonical` is mis-routed and both routers agree on it,
- * so agreement is not correctness and the two sections below answer different questions.
- *
- * This tool claims no confusion matrix over the whole board.
- * It grades the rows the label sets label, and for the rest it reports what each
- * router answered and prints the rows they disagree about.
- *
- * Two routers run here and a third is named:
- *
- * - `script` is the shipped router (`routeFamilyForText`).
- *   Abstaining means the caller's locale decides, which for a Latin request is
- *   the ordinary path rather than a failure.
- * - `locale-hint` is `@mailwoman/locale-hint`'s `detectLocale` folded to a family.
- *   It costs a query-shape computation and runs before any model.
- * - The model's `locale_logits` router is left out.
- *   Reading that output needs a parse, so a posterior route runs the primary graph before
- *   it can pick another one, and that cost belongs in the same measurement as its accuracy.
- *   Reading it also means loading weights, which this tool does not do.
+ * The model's `locale_logits` router is excluded because it needs loaded weights and a parse.
  *
  * Run:
  *
- *     node packages/mailwoman/lib/dev-tools/route-census.run.ts
- *     node packages/mailwoman/lib/dev-tools/route-census.run.ts --checking-only --out-json <path>
+ *     node packages/mailwoman/lib/dev-tools/route-census.run.ts [--checking-only] [--out-json <path>]
  */
 
 import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
@@ -102,48 +55,32 @@ const { values } = parseArguments({
 })
 
 /**
- * What a router answered, with `(caller)` standing for an abstention so the two read in one column.
+ * Stands for a router abstention in the answer tables.
  */
 const CALLER = "(caller)"
 
 /**
- * The family an abstention resolves to, which is the family of the locale a process is opened with.
+ * Sets the family an abstention resolves to, which is `resolveWeights`' default locale.
  *
- * Comparing the two routers means resolving this first.
- * The script router abstains on every Latin row and the locale hint names the Latin family,
- * and those are the same outcome: a process opened at `--locale en-US` loads the Latin family,
- * so "the caller decides" and "the Latin family" route the row to one graph.
- *
- * Comparing the raw answers instead reported 1,011 of 1,029 rows as disagreements,
- * every one of them a row both routers send to the same place.
- *
- * `en-us` because that is `resolveWeights`' own default locale.
- * A census of a process opened elsewhere would resolve abstentions to that locale's family instead.
+ * Routers are compared after this resolution.
+ * Otherwise an abstention and an explicit Latin answer would count as a disagreement
+ * although both reach the same graph.
  */
 const DEFAULT_CALLER_FAMILY = "en-us"
 
 /**
- * The graph a row reaches, which is what two routers have to be compared on.
+ * Returns the graph a router answer reaches.
  */
 function resolved(answer: string): string {
 	return answer === CALLER ? DEFAULT_CALLER_FAMILY : answer
 }
 
 /**
- * The family `detectLocale` implies, the locale it named, and which scorer named it.
+ * Returns the family `detectLocale` implies, the locale it chose, and which scorer chose it.
  *
- * The locale travels with the family because the two are different claims
- * and this census turns on the difference.
- * `Rinrin, 3 Chome-57 Tenmanmachi, Takayama, Gifu 506-0025, Japan` is locale `ja-JP`, which the
- * locale hint gets right from `format=jp_postcode`, and the row is written entirely in Latin script.
- *
- * Folding that locale to a family answers `cjk` for a Latin row, and on this row
- * that answer reaches the only graph whose head vocabulary carries the `prefecture`
- * and `municipality` tags the row expects.
- * Whether that graph parses romaji well is unmeasured.
- *
- * The reason column reports which scorer decided, so a reader can tell a
- * postcode-named locale from a script-named one.
+ * The locale is kept beside the family because they can diverge.
+ * A romanized Japanese address gets `ja-JP` from its postcode, which folds to the
+ * `cjk` family although the text is Latin script.
  */
 function localeHintAnswer(text: string): { family: string; locale: string; reason: string } {
 	const shape = computeQueryShape(text)
@@ -159,12 +96,10 @@ function localeHintAnswer(text: string): { family: string; locale: string; reaso
 }
 
 /**
- * The tags each family's head can emit, read from its published model card.
+ * Reads the tags each family's head can emit from its model card, with the BIO prefix stripped.
  *
- * A card's labels are BIO-prefixed (`B-locality`, `I-locality`), so the prefix is
- * stripped to leave the tag a row's `expectComponents` is keyed by.
- * A family whose card is absent from the checkout contributes no tags and therefore
- * labels no row, which understates the graded set rather than mislabeling it.
+ * A family whose card is missing from the checkout is skipped, which shrinks
+ * the graded set without mislabeling any row.
  */
 async function emittableTags(): Promise<Map<string, ReadonlySet<string>>> {
 	const out = new Map<string, ReadonlySet<string>>()
@@ -184,11 +119,9 @@ async function emittableTags(): Promise<Map<string, ReadonlySet<string>>> {
 }
 
 /**
- * The family a row's expected tags name, or `undefined` when more than one family could produce them.
+ * Returns the only family that can emit every expected tag, or `undefined` when zero or several can.
  *
- * `undefined` is the ordinary answer.
- * It means the row's tags are in every family's vocabulary, so the label sets say nothing about
- * which graph should read it, and the row needs a human label instead.
+ * Most rows return `undefined` and need a human label.
  */
 function familyByExpectedTags(
 	expected: readonly string[],
@@ -201,6 +134,9 @@ function familyByExpectedTags(
 	return capable.length === 1 ? capable[0] : undefined
 }
 
+/**
+ * Describes the fields this tool reads from a board row.
+ */
 interface BoardRow {
 	id?: string
 	input?: string
@@ -210,6 +146,9 @@ interface BoardRow {
 	expectComponents?: Record<string, unknown>
 }
 
+/**
+ * Describes a labeled row that the shipped router sends to the wrong family.
+ */
 interface Misroute {
 	id: string
 	country: string
@@ -218,13 +157,14 @@ interface Misroute {
 	truth: string
 	input: string
 	/**
-	 * The expected tags the routed family cannot emit.
-	 *
-	 * These are what makes the row unreachable.
+	 * Lists the expected tags that the routed family cannot emit.
 	 */
 	unreachable: string[]
 }
 
+/**
+ * Describes a row that the two routers send to different graphs.
+ */
 interface Disagreement {
 	id: string
 	country: string
@@ -233,14 +173,12 @@ interface Disagreement {
 	script: string
 	localeHint: string
 	/**
-	 * The locale the hint named, and which of its scorers named it.
-	 *
-	 * A family disagreement whose locale is right is a different finding from one whose locale is wrong.
+	 * Holds the locale the hint chose and the scorer that chose it.
 	 */
 	hintLocale: string
 	hintReason: string
 	/**
-	 * The input's script distribution, so a reader labeling the row sees what each router was looking at.
+	 * Describes the input's script mix, which helps a reader label the row.
 	 */
 	scripts: string
 }
@@ -248,15 +186,9 @@ interface Disagreement {
 const casesRoot = CASES_DIR
 
 /**
- * A case directory the board loads from: a two-letter country code, non-recursively.
+ * Matches the two-letter country directories the board loader reads, without recursion.
  *
- * Copied from `cases/load.ts`'s `COUNTRY_DIR` rather than widened, so this
- * census reads the population the board reads.
- * A recursive glob over the whole tree instead returns 1,308 rows across 230 countries,
- * because it picks up `cases/generalization/country-sweep-2026-08-05-passes.jsonl` —
- * 279 rows the loader's directory rule excludes and `mwdev_compare` does not run.
- *
- * Measuring a router on rows the board never grades would report a mis-route nothing checks.
+ * This copies `COUNTRY_DIR` from `cases/load.ts` so the census covers exactly the rows the board grades.
  */
 const COUNTRY_DIR = /^[a-z]{2}$/u
 
@@ -268,12 +200,7 @@ const disagreements: Disagreement[] = []
 const misroutes: Misroute[] = []
 
 /**
- * One row the candidate leading-run reading would send to a different graph
- * than the shipped router sends it to.
- *
- * The reading is tried after the shipped router and only when that router abstained,
- * so this list is the whole difference between the two arms.
- * Every row a change would move, and no row it would leave alone.
+ * Describes a row that a candidate router would send to a different graph than the shipped router does.
  */
 interface MovedRow {
 	id: string
@@ -288,14 +215,9 @@ const movedByLeadingRun: MovedRow[] = []
 const movedByPostcode: MovedRow[] = []
 
 /**
- * The candidate readings this tool measures, each tried after the shipped router
- * and only where that router abstained.
+ * Lists the unshipped candidate routers, which apply only where the shipped router abstains.
  *
- * Reported separately rather than as one arm.
- * They are different classes of evidence.
- *
- * One reads where a script sits, one reads a postal format — and a combined count
- * would not say which reading claimed a row.
+ * Each candidate is reported on its own so the output shows which one moved each row.
  */
 const CANDIDATES: ReadonlyArray<{ name: string; route: (text: string) => string; moved: MovedRow[] }> = [
 	{
@@ -382,8 +304,7 @@ for (const dir of countryDirs) {
 			country.script[script] = (country.script[script] ?? 0) + 1
 			byCountry.set(row.country, country)
 
-			// The label sets grade this row when they name exactly one family.
-			// The shipped router is the arm graded, because it is the one deciding today.
+			// A row with a tag-derived label grades the shipped router.
 			const expected = Object.keys(row.expectComponents ?? {})
 			const byTags = familyByExpectedTags(expected, emittable)
 
@@ -460,9 +381,7 @@ if (misroutes.length) {
 	console.log(`The shipped router sends every one of them to a family that can emit their tags.`)
 }
 
-// The candidate arms, reported on the whole board rather than on the rows each proposal was built from.
-// `#2350` states its readings as hypotheses with rows they must move and rows they must not, and the
-// board is hand-authored, so the count that decides anything is over every row rather than over those.
+// Candidates are measured over every board row, including rows outside each one's design set.
 console.log(`\n## Candidate readings — measured and unshipped\n`)
 
 for (const candidate of CANDIDATES) {

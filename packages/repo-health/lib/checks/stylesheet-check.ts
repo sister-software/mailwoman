@@ -2,13 +2,10 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file The stylesheet invariants the map apps' chrome depends on.
+ * @file Checks the stylesheet invariants that the map apps' chrome depends on.
  *
- *   Every rule here was earned by a defect that reached production, and each one is either an invariant the design
- *   system states once (a reset that makes a class of bug impossible) or a detector for a shape no invariant can
- *   express. There is no CSS linter in this repository. these are the specific things that broke.
- *
- *   `docs/` is out of scope. It is a Docusaurus site on Infima's own system, and its stylesheets answer to that.
+ *   The check asserts two resets on the system stylesheet and runs detectors over every app stylesheet. `docs/` is
+ *   out of scope because the Docusaurus site uses Infima's styles.
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
@@ -18,48 +15,41 @@ import { type Diagnostic, DiagnosticSeverity, type RepoCheck } from "#check"
 import { trackedSourcePaths } from "#tracked-sources"
 
 /**
- * The stylesheet that carries the design system's own invariants — the reset
- * and the base layer live here, and the first two rules below assert their contents
- * rather than searching for their absence everywhere else.
+ * The stylesheet that holds the design system's reset and base layer.
  */
 const SYSTEM_STYLESHEET = "packages/react/styles.css"
 
 /**
- * A rule, as the text gives it up: the selector list, the declarations inside
- * the braces, and the at-rules it is nested in.
+ * One style rule with its selector list, declaration body and enclosing at-rules.
  *
- * The enclosing at-rules are what separate a rule that uses a token from a
- * rule that is a material's fallback.
- * The chip's hover background and a sticky header both paint the fallback colour on purpose.
- *
- * Only the rules inside `@supports not (backdrop-filter…)` and
- * `@media (prefers-reduced-transparency: reduce)` are the fallback itself.
+ * The enclosing at-rules identify a material fallback.
+ * Only rules inside `@supports not (backdrop-filter…)` or `@media (prefers-reduced-transparency: reduce)`
+ * count as the fallback, even though other rules may paint the fallback colour.
  */
 interface StyleRule {
 	selector: string
 	body: string
 	line: number
 	/**
-	 * Every enclosing at-rule preamble, outermost first — `@layer components`, `@media (max-width: 600px)`.
+	 * Every enclosing at-rule preamble, outermost first, such as `@layer components`.
 	 */
 	context: readonly string[]
 }
 
 /**
- * Split a stylesheet into rules, carrying the at-rule nesting each one sits in.
+ * Splits a stylesheet into rules and records the at-rules around each one.
  *
- * Comments are blanked rather than deleted, so every reported line number still matches
- * the file on disk and a declaration quoted in prose is not read as one.
+ * The parser replaces comments with spaces, so line numbers match the file
+ * and a declaration inside a comment is ignored.
  */
 function styleRules(css: string): StyleRule[] {
 	const clean = css.replaceAll(/\/\*[\s\S]*?\*\//gu, (comment) => comment.replaceAll(/[^\n]/gu, " "))
 	const rules: StyleRule[] = []
 	const context: string[] = []
-	// The text since the last brace: an at-rule preamble, a selector list, or a run of declarations.
+	// `pending` holds the text since the last brace.
 	let pending = ""
-	// Where the current line is, and where the first NON-blank character of `pending` sat.
-	// The second is the line a diagnostic names, so a selector is reported at its own line
-	// rather than at the blank one after the rule above.
+	// `selectorLine` records the line of the first non-blank character in `pending`,
+	// so a diagnostic points at the selector itself.
 	let line = 1
 	let selectorLine = 1
 
@@ -83,7 +73,7 @@ function styleRules(css: string): StyleRule[] {
 				continue
 			}
 
-			// A declaration block: it runs to the next closing brace, since declarations carry no braces of their own.
+			// A declaration block ends at the next closing brace because declarations contain no braces.
 			const close = clean.indexOf("}", index)
 			const end = close === -1 ? clean.length : close
 			const body = clean.slice(index + 1, end)
@@ -117,7 +107,7 @@ function styleRules(css: string): StyleRule[] {
 }
 
 /**
- * Whether the rule sits inside the guards a material's opaque fallback is declared under.
+ * Returns whether the rule sits inside an at-rule that guards a material's opaque fallback.
  */
 function isMaterialFallback(rule: StyleRule): boolean {
 	return rule.context.some(
@@ -130,46 +120,34 @@ function declares(body: string, property: string): boolean {
 }
 
 /**
- * Whether the selector names a state of something styled elsewhere — `:hover`,
- * `:disabled`, a `--active` modifier.
+ * Matches a selector for a state such as `:hover`, `:disabled` or a `--active` modifier.
  *
- * A state rule states only what changes, and takes the rest from the rule it varies,
- * so asking it to repeat a color would be asking for the copy this file exists to prevent.
+ * A state rule declares only what changes and inherits its color from the base rule.
  */
 const STATE_SELECTOR = /:(?:hover|active|disabled|focus|focus-visible|focus-within|checked|first|last|nth)|--[a-z]+$/u
 
 /**
- * Vendor pairs the bundler collapses.
+ * Properties with a `-webkit-` twin.
  *
- * A minifier keeps the last of two declarations carrying the same value, so the standard
- * property has to come after its prefixed twin or it is the one dropped from the output.
+ * The minifier keeps only the last declaration of such a pair, so the standard property must come last.
  */
 const VENDOR_PAIRS = ["backdrop-filter", "mask-image", "user-select", "text-stroke", "box-decoration-break"] as const
 
 /**
- * The token that marks a glass surface, and the token its fallbacks paint instead.
- */
-/**
- * A radius written as a raw pixel length.
+ * Matches a `border-radius` written in raw pixels.
  *
- * The design system carries a radius scale — `tick`, `tight`, `control`, `panel` / `sheet`,
- * `pill` — and the stylesheets carried six raw pixel values beside it (2, 3, 4, 6, 8, 10)
- * plus `999px` written out four times next to the `--radius-pill` that already said it.
- * Nothing about a raw radius is wrong on its own.
- *
- * The defect is that six of them cannot be told apart from a decision, so two components
- * meant to match never quite do and nobody can say which value was meant.
- *
- * `0` and `50%` are exempt because neither is a step on any scale.
+ * Rules should use the `--radius-*` tokens instead.
+ * Values without `px`, such as `0` and `50%`, pass.
  */
 const RAW_RADIUS = /border-radius\s*:\s*[^;}]*\d+px/u
 
+// The token that marks a glass surface, and the token that its fallbacks paint instead.
 const MATERIAL_BACKGROUND = "var(--material-glass-background)"
 const MATERIAL_FALLBACK = "var(--material-glass-fallback-background)"
 
 /**
- * A selector list as an order-independent key, so a fallback that names the
- * same surfaces in another order matches.
+ * Returns a selector list as an order-independent key, so a fallback that lists
+ * the same surfaces in another order still matches.
  */
 function selectorSet(selector: string): string {
 	return selector
@@ -180,18 +158,17 @@ function selectorSet(selector: string): string {
 }
 
 /**
- * Every diagnostic one stylesheet earns, from its text alone.
+ * Returns the diagnostics for one stylesheet's text.
+ * Tests call it directly with failing inputs.
  *
- * Exported so the rules are exercised on the shapes that broke rather than only on a tree that
- * already passes: a check that has never been shown to fail is a check nobody has tested.
- *
- * @param file The repo-relative path, which decides whether the system-wide invariants are asserted on it.
+ * @param file The repo-relative path.
+ * The system-wide invariants apply only to {@link SYSTEM_STYLESHEET}.
  */
 export function stylesheetDiagnostics(file: string, css: string): Diagnostic[] {
 	const diagnostics: Diagnostic[] = []
 	const rules = styleRules(css)
 
-	// ── Invariants, asserted once on the system stylesheet ───────────────────────────────────────────────────────
+	// The system stylesheet must carry the box-sizing reset and the button color default.
 	if (file === SYSTEM_STYLESHEET) {
 		const universalBorderBox = rules.some(
 			(rule) => rule.selector.includes("*") && /box-sizing\s*:\s*border-box/u.test(rule.body)
@@ -220,7 +197,7 @@ export function stylesheetDiagnostics(file: string, css: string): Diagnostic[] {
 		}
 	}
 
-	// ── Detectors, over every app stylesheet ─────────────────────────────────────────────────────────────────────
+	// The detectors run over every rule in every app stylesheet.
 	for (const rule of rules) {
 		const paintsBackground = declares(rule.body, "background") || declares(rule.body, "background-color")
 
@@ -262,7 +239,7 @@ export function stylesheetDiagnostics(file: string, css: string): Diagnostic[] {
 		}
 	}
 
-	// ── A material and its fallbacks name the same surfaces ──────────────────────────────────────────────────────
+	// Each material fallback must list the same selectors as the material.
 	const material = rules.find((rule) => rule.body.includes(MATERIAL_BACKGROUND))
 
 	if (material) {
@@ -287,10 +264,9 @@ export function stylesheetDiagnostics(file: string, css: string): Diagnostic[] {
 }
 
 /**
- * The check the chrome arc ends on: the invariants that make two of these defects
- * impossible, and detectors for the two no invariant expresses.
+ * The `stylesheet-interface` check.
  *
- * Registered in `#registry` and run by `mwops health stylesheet-interface`.
+ * It runs {@link stylesheetDiagnostics} over every tracked app stylesheet.
  */
 export const stylesheetCheck: RepoCheck = {
 	id: "stylesheet-interface",

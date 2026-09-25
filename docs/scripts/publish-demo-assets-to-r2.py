@@ -4,43 +4,26 @@
 @license AGPL-3.0
 @author Teffen Ellis, et al.
 
-Publish the public demo assets to the Cloudflare R2 bucket the demo serves from
-(nexus-public → https://public.mailwoman.ai/mailwoman/...). This codifies the
-hosting migration so a model release isn't a one-off manual rclone.
+Uploads the demo's runtime assets to the Cloudflare R2 bucket behind
+https://public.mailwoman.ai/mailwoman/.
 
-The demo reads EVERYTHING from R2 at runtime (model, tokenizer, fst, postcode-*.bin,
-wof-hot.db, wof-polygons.db, releases.json) plus the same-origin sql.js-httpvfs
-worker that lives in the Pages deploy. This pushes the R2 half.
+This script is the only producer of the demo's R2 objects. The sql.js-httpvfs worker must be
+same-origin, so the docs demo-assets plugin stages it into the Pages deploy instead.
 
-Two R2 gotchas this handles (learned the hard way — see memory
-project-sqlite-over-http-spike):
-  - rclone's `copy` 501s on a post-PUT op against R2 (needs --s3-no-head
-    --s3-disable-checksum --no-update-modtime) AND its --header-upload silently
-    drops Cache-Control. boto3 `upload_file` with ExtraArgs sets Content-Type +
-    Cache-Control on the multipart create itself — one clean step, no 501.
-  - sql.js-httpvfs range-reads the DBs cross-origin, so the objects MUST carry a
-    sane Content-Type (octet-stream, NOT gzipped by Cloudflare) and a long
-    immutable Cache-Control so Cloudflare edge-caches the byte ranges.
+The upload uses boto3 because rclone's `--header-upload` drops Cache-Control on R2. sql.js-httpvfs
+reads the databases with cross-origin range requests, so each object needs an uncompressed
+Content-Type and a long immutable Cache-Control.
 
-Credentials come from the RCLONE_S3_PUBLIC_* env vars (repo .env): source them
-first, e.g.  `set -a; . ./.env; set +a; python3 docs/scripts/publish-demo-assets-to-r2.py ...`
+Credentials come from the RCLONE_S3_PUBLIC_* variables in the repo .env file:
 
-Usage:
-  publish-demo-assets-to-r2.py --src <staged-dir> [--bucket nexus-public] [--prefix mailwoman] [--dry-run]
+  set -a; . ./.env; set +a
+  python3 docs/scripts/publish-demo-assets-to-r2.py --src <staged-dir> [--bucket nexus-public] [--prefix mailwoman] [--dry-run]
 
-  <staged-dir> mirrors the R2 layout under the prefix, e.g.
-    <src>/en-us/v4.0.0/{model.onnx,tokenizer.model,model-card.json,fst-en-US.bin,postcode-*.bin,wof-hot.db,wof-polygons.db}
-    <src>/en-us/releases.json
-    <src>/pair-index/2026-08-05/pair-index-{gb,nz}.bin
-  (The sql.js-httpvfs worker is staged into the Pages deploy by the demo-assets
-   plugin, NOT here — it must be same-origin.)
+The staged directory mirrors the R2 layout under the prefix. Stage it by hand, for example:
 
-THIS SCRIPT IS THE ONLY PRODUCER of the demo's R2 objects, including the
-placetype-pair indexes. Nothing assembles the pair-index staging dir for you:
-`mailwoman release hf --pair-indexes` uploads them to HUGGING FACE (flat under
-the version dir), and the docs demo-assets plugin copies them into the PAGES
-deploy for dev preview. The bucket copies the demo actually reads have always
-been hand-staged into a `--src` tree and pushed through here.
+  <src>/en-us/v4.0.0/{model.onnx,tokenizer.model,model-card.json,fst-en-US.bin,postcode-*.bin,wof-hot.db,wof-polygons.db}
+  <src>/en-us/releases.json
+  <src>/pair-index/2026-08-05/pair-index-{gb,nz}.bin
 """
 
 import argparse
@@ -54,24 +37,17 @@ try:
 except ImportError:
     sys.exit("boto3 is required: pip install boto3")
 
-# Versioned assets never change, so cache them for a long time.
+# Versioned assets never change, so they are cached for a week as immutable.
 CACHE_CONTROL = "public, max-age=604800, immutable"
-# releases.json can change when the default version changes. Keep its cache short
-# so visitors quickly get the new version instead of mixing old and new assets.
+# releases.json changes when the default version changes, so its cache is short.
 MUTABLE_CACHE_CONTROL = "public, max-age=60, must-revalidate"
-# Files served with the shorter cache lifetime.
 MUTABLE_FILES = {"releases.json"}
-# These directories need a generation segment: <dir>/<generation>/<file>.
-#
-# Pair-index files were once overwritten at the same URL. Cloudflare kept serving
-# the old bytes because they were cached as immutable. The demo reads
-# `pair-index/<generation>/`; update PAIR_INDEX_VERSION when staging a new one.
-#
-# gazetteer/, poi/, and street/ already use dated paths. Add them here only when
-# the demo has a matching version constant.
+# Files in these directories must sit under a generation segment, `<dir>/<generation>/<file>`.
+# An overwritten immutable key keeps serving the old bytes from the CDN. When staging a new
+# pair-index generation, update PAIR_INDEX_VERSION in the demo to match.
 VERSIONED_DIRS = {"pair-index"}
-# Content-Type by extension. Keep databases, models, and binaries uncompressed;
-# gzip breaks the database reader's range requests.
+# Databases, models and binaries use octet-stream so that Cloudflare does not gzip them, which
+# would break range requests.
 CONTENT_TYPE = {
     ".db": "application/octet-stream",
     ".onnx": "application/octet-stream",
@@ -84,6 +60,7 @@ CONTENT_TYPE = {
 
 
 def env(name: str) -> str:
+    """Return a required environment variable, or exit with a message when it is unset."""
     v = os.environ.get(name)
     if not v:
         sys.exit(f"missing env var {name} (source the repo .env first)")
@@ -91,8 +68,13 @@ def env(name: str) -> str:
 
 
 def main() -> None:
+    """Upload every file under ``--src`` to the bucket with its Content-Type and Cache-Control."""
     ap = argparse.ArgumentParser()
-    ap.add_argument("--src", required=True, help="staged asset dir mirroring the R2 layout under the prefix")
+    ap.add_argument(
+        "--src",
+        required=True,
+        help="staged asset dir mirroring the R2 layout under the prefix",
+    )
     ap.add_argument("--bucket", default="nexus-public")
     ap.add_argument("--prefix", default="mailwoman")
     ap.add_argument("--dry-run", action="store_true")
@@ -106,8 +88,7 @@ def main() -> None:
     if not files:
         sys.exit(f"no files under {src}")
 
-    # Layout guard before the credential read, so a mis-staged tree fails the same
-    # way with or without the .env sourced (and under --dry-run).
+    # The layout check runs before credentials are read, so it also runs under --dry-run.
     unversioned = [
         r
         for r in (p.relative_to(src).as_posix() for p in files)
@@ -151,7 +132,9 @@ def main() -> None:
         )
         print(f"  ✓ {key}  ({ct}, {cc}, {size_mb:.1f} MB)")
 
-    print(f"\n{'(dry-run) ' if args.dry_run else ''}{len(files)} objects, {total / 1024 / 1024:.1f} MB → {args.bucket}/{args.prefix}/")
+    print(
+        f"\n{'(dry-run) ' if args.dry_run else ''}{len(files)} objects, {total / 1024 / 1024:.1f} MB → {args.bucket}/{args.prefix}/"
+    )
     print(f"Served at https://public.mailwoman.ai/{args.prefix}/...")
 
 

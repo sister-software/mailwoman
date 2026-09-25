@@ -3,10 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Evaluate ownership of digit-containing tokens in Norwegian address fragments.
- *   Positive cases test house numbers; negative postcode cases require both postcode retention
- *   and no invented house number. Surfaces are split by normalized street name.
- *   Slash compounds remain one Norwegian component, unlike Australian unit/number forms.
+ *   Board that checks whether the parser tags digits in Norwegian address fragments as a house number or a postcode.
  */
 
 import { foldCaseWhitespace } from "@mailwoman/normalize/fold"
@@ -19,13 +16,18 @@ import {
 } from "#eval-harness/span-board"
 
 /**
- * Fixture set backing the digit board — house-number and postcode ambiguity probes.
+ * Repository-relative path of the digit-board fixtures.
  */
 export const DIGIT_BOARD_FIXTURES = "packages/mailwoman/lib/eval-harness/fixtures/no-digits.jsonl"
 
+/**
+ * Digit-board fixture.
+ */
 export interface DigitFixture extends SpanBoardFixture {
 	/**
-	 * Present on the negative class: the parser must emit no house_number, and must still emit the postcode.
+	 * Marks a negative row.
+	 *
+	 * The parser must emit the expected postcode and no house number.
 	 */
 	expect_no_house_number?: boolean
 }
@@ -34,6 +36,9 @@ export type DigitBoardOptions = SpanBoardOptions
 
 export type DigitBoardOutcome = SpanBoardOutcome
 
+/**
+ * Joins the values of every node with the given tag in input order.
+ */
 const tagText = (nodes: Array<{ tag: string; value: string; start: number }>, tag: string): string =>
 	nodes
 		.filter((n) => n.tag === tag)
@@ -41,6 +46,9 @@ const tagText = (nodes: Array<{ tag: string; value: string; start: number }>, ta
 		.map((n) => n.value)
 		.join(" ")
 
+/**
+ * Runs the digit board against its fixtures.
+ */
 export async function runDigitBoard(options: DigitBoardOptions = {}): Promise<DigitBoardOutcome> {
 	return runSpanBoard<DigitFixture>(
 		{
@@ -55,8 +63,7 @@ export async function runDigitBoard(options: DigitBoardOptions = {}): Promise<Di
 				const hn = tagText(nodes, "house_number")
 				const pc = tagText(nodes, "postcode")
 
-				// The negative class scores two things at once, because either failure is the same
-				// mistake: the postcode must survive and no house_number may be invented from it.
+				// A negative row passes only when the postcode survives and no house number is invented from it.
 				const ok = fixture.expect_no_house_number
 					? foldCaseWhitespace(hn) === "" &&
 						foldCaseWhitespace(pc) === foldCaseWhitespace((fixture.expect.postcode ?? []).join(" "))

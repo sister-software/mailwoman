@@ -13,17 +13,16 @@ const MAX_TAGS_PER_BYTE = 256
 const MAGIC = 0x31_58_49_50
 
 /**
- * Sets the PIX1 schema version this reader accepts, in which each record carries
- * both the child's and the parent's `ComponentTag`.
+ * The PIX1 schema version this reader accepts, in which each record stores
+ * both the child's and the parent's tag.
  *
- * Older versions are refused rather than read, because their records lack the
- * parent tag byte and would decode misaligned.
+ * The reader rejects older versions because their records lack the parent tag byte
+ * and would decode misaligned.
  */
 export const KNOWN_SCHEMA_VERSION = 3
 
 /**
- * Describes one folded (child, parent) name pair and the component tags observed
- * at each end, as passed to {@link serializePairIndex}.
+ * One folded (child, parent) name pair and the component tag of each end.
  */
 export interface PairIndexEntry {
 	/**
@@ -42,18 +41,17 @@ export interface PairIndexEntry {
 	tag: ComponentTag
 
 	/**
-	 * The tag this pair resolves the parent to, which {@link serializePairIndex}
-	 * requires to be a known `ComponentTag`.
+	 * The tag this pair resolves the parent to.
 	 *
-	 * A builder that cannot derive it from its source's own semantics must not guess one.
+	 * A builder must derive it from its source data and must not substitute a default.
 	 */
 	parentTag: ComponentTag
 }
 
 /**
- * Describes the typed edge a pair-index hit returns: the child's tag and the parent's tag.
+ * The child and parent tags that a pair-index hit returns.
  *
- * Instances are interned per resolver, so callers must not rely on identity to distinguish entries.
+ * Each resolver shares one frozen instance among all entries with the same tags.
  */
 export interface PairEdge {
 	readonly tag: ComponentTag
@@ -61,8 +59,7 @@ export interface PairEdge {
 }
 
 /**
- * Describes the JSON header of a PIX1 pair-index file: its country, prior weights,
- * format stamps and source provenance.
+ * The JSON header of a PIX1 pair-index file.
  */
 export interface PairIndexHeader {
 	/**
@@ -77,10 +74,10 @@ export interface PairIndexHeader {
 	schemaVersion: 3
 
 	/**
-	 * The tag names that record tag indexes point into, copied from `COMPONENT_TAGS` at serialize time.
+	 * The tag names that record tag indexes refer to, copied from `COMPONENT_TAGS` when serializing.
 	 *
-	 * The reader throws only on a referenced name it does not know, so an index built
-	 * after the tag union grows still loads if the new tag is unused.
+	 * The reader throws only when a record references an unknown name.
+	 * An index built with newer tags still loads if no record uses them.
 	 */
 	tagTable: string[]
 
@@ -102,22 +99,22 @@ export interface PairIndexHeader {
 	/**
 	 * The decoder bonus a hit adds to the transition into `B-<tag>` at the child window's first piece.
 	 *
-	 * When absent, the prior applies no transition term rather than a default one.
+	 * When absent, the prior applies no transition bonus.
 	 */
 	transitionBeta?: number
 
 	/**
 	 * The emission bias a hit adds to the record's `parentTag` over the parent window.
 	 *
-	 * When absent, the prior writes no parent bias; `PlacetypePairPriorOpts.parentDelta`
-	 * overrides it at decode time.
+	 * When absent, the prior adds no parent bias.
+	 * `PlacetypePairPriorOpts.parentDelta` overrides it at decode time.
 	 */
 	parentDelta?: number
 }
 
 /**
- * Describes the caller-supplied part of a {@link PairIndexHeader}, omitting `schemaVersion`
- * and `tagTable`, which {@link serializePairIndex} stamps itself.
+ * The caller-supplied part of a {@link PairIndexHeader}. {@link serializePairIndex}
+ * fills in `schemaVersion` and `tagTable`.
  */
 export type PairIndexHeaderInput = Omit<PairIndexHeader, "schemaVersion" | "tagTable">
 
@@ -126,11 +123,12 @@ function pairKey(child: string, parent: string): string {
 }
 
 /**
- * Serializes a header and entries into the PIX1 binary read by {@link PairIndexResolver},
- * sorting entries by (child, parent) for deterministic output.
+ * Serializes a header and entries into the PIX1 binary that {@link PairIndexResolver} reads.
  *
- * @throws If `entries` contains a duplicate (child, parent) pair, if a name exceeds 65,535
- * UTF-8 bytes, or if an entry's `tag` or `parentTag` is not a known `ComponentTag`.
+ * Entries are sorted by (child, parent) so the output is deterministic.
+ *
+ * @throws If `entries` contains a duplicate (child, parent) pair, if a name exceeds
+ * 65,535 UTF-8 bytes, or if a tag is unknown.
  */
 export function serializePairIndex(header: PairIndexHeaderInput, entries: readonly PairIndexEntry[]): Uint8Array {
 	if (COMPONENT_TAGS.length > MAX_TAGS_PER_BYTE) {
@@ -220,8 +218,9 @@ export function serializePairIndex(header: PairIndexHeaderInput, entries: readon
 }
 
 /**
- * Reads and validates only the header of a PIX1 binary, so callers can check `country`
- * or provenance before paying for a full {@link PairIndexResolver} parse.
+ * Reads and validates only the header of a PIX1 binary.
+ *
+ * Callers use it to check `country` or provenance before a full {@link PairIndexResolver} parse.
  */
 export function peekPairIndexHeader(bytes: Uint8Array): PairIndexHeader {
 	return readHeaderBlock(bytes).header
@@ -247,8 +246,10 @@ function readHeaderBlock(bytes: Uint8Array): { header: PairIndexHeader; cursor: 
 }
 
 /**
- * Reads a PIX1 pair-index binary into a map for constant-time `probe()` lookups of
- * folded (child, parent) pairs, in Node or the browser.
+ * Loads a PIX1 pair-index binary into a map for constant-time `probe()` lookups
+ * of folded (child, parent) pairs.
+ *
+ * It runs in Node and in the browser.
  */
 export class PairIndexResolver {
 	readonly header: PairIndexHeader
@@ -306,23 +307,21 @@ export class PairIndexResolver {
 	}
 
 	/**
-	 * Returns the typed edge a folded (child, parent) pair asserts, or `undefined`
-	 * when the index has no entry for it.
+	 * Returns the edge for a folded (child, parent) pair, or `undefined` when the index has no entry for it.
 	 */
 	probe(childFolded: string, parentFolded: string): PairEdge | undefined {
 		return this.#probeMap.get(pairKey(childFolded, parentFolded))
 	}
 
 	/**
-	 * The header's child bias magnitude, exposed to satisfy {@link PairIndexLike}.
+	 * The header's child bias magnitude.
 	 */
 	get delta(): number {
 		return this.header.delta
 	}
 
 	/**
-	 * The header's ISO country code, which selects the trailing-postcode shape
-	 * the prior strips from parent segments.
+	 * The header's ISO country code, which selects the postcode pattern the prior strips from parent segments.
 	 */
 	get country(): string {
 		return this.header.country
@@ -344,10 +343,9 @@ export class PairIndexResolver {
 }
 
 /**
- * Describes the subset of {@link PairIndexResolver} that prior modules consume,
- * so test doubles can stand in for it.
+ * The subset of {@link PairIndexResolver} that the priors use, which test doubles can implement.
  *
- * An absent `transitionBeta` means the index applies no transition term, not a default one.
+ * An absent `transitionBeta` means the index applies no transition bonus.
  */
 export interface PairIndexLike {
 	probe(child: string, parent: string): PairEdge | undefined
@@ -355,14 +353,17 @@ export interface PairIndexLike {
 	readonly transitionBeta?: number
 
 	/**
-	 * The parent bias magnitude, which an explicit `PlacetypePairPriorOpts.parentDelta`
-	 * overrides; absent means no parent bias.
+	 * The parent bias magnitude.
+	 *
+	 * An absent value means no parent bias, and `PlacetypePairPriorOpts.parentDelta` overrides it.
 	 */
 	readonly parentDelta?: number
 
 	/**
-	 * The ISO country code; absent, or a country with no known postcode shape,
-	 * disables the parent-segment postcode strip.
+	 * The ISO country code.
+	 *
+	 * Without it, or without a known postcode pattern for it, the prior does not
+	 * strip postcodes from parent segments.
 	 */
 	readonly country?: string
 }

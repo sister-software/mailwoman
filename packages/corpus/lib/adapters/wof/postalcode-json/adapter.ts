@@ -3,38 +3,17 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `wof-postalcode`: Who's On First postalcode GeoJSON-bundle adapter.
+ *   Emits corpus rows from Who's On First postalcode GeoJSON repositories.
  *
- *   **Phase 1.5.1 pivot.** Replaces the previous SpatiaLite-backed implementation (formerly at
- *   `packages/corpus/lib/adapters/wof-postalcode/`, removed in this same change). The rationale is
- *   in `wof-admin-json/adapter.ts` and in `decisions.md` — short version: the SQLite distribution
- *   mirror is dead, the live distro tags every postcode row `mz:is_current = -1` which the old
- *   `is_current = 1` predicate excluded, and localized `name:*` variants don't ship in the SQLite
- *   export at all.
+ *   The input directory must hold the `whosonfirst-data-postalcode-<cc>` repositories and the matching
+ *   `whosonfirst-data-admin-<cc>` repositories. Postcode records point to their ancestors by `wof:parent_id`, so the
+ *   admin records must be in the same walk.
  *
- *   Input: a directory containing one or more cloned `whosonfirst-data-postalcode-<cc>` repos plus
- *   the relevant `whosonfirst-data-admin-<cc>` repos (postcode records reference admin ancestry by
- *   `wof:parent_id`, so the locality / region / country records must be in the same walk for the
- *   ancestry chain to resolve). The corpus pipeline clones all four repos under
- *   `/data/corpus/sources/wof/repos/` and points the adapter at that root.
+ *   Each postcode record produces one row per pair of name slot and hierarchy variant. The name slots are the canonical
+ *   `wof:name` (slot `default`) plus any `name:*` variants. The hierarchy variants are the postcode alone, then with
+ *   locality, region and country added in turn. Ancestor names always use the canonical `wof:name`.
  *
- *   Per live postalcode record, the adapter emits one row per `(name-variant, hierarchy-variant)`
- *   pair:
- *
- *   - **Name variants**: canonical `wof:name` (slot key `default`, typically the postcode digits
- *       themselves) plus any `name:*` variants on the postcode feature. In practice WOF postcode
- *       records rarely carry localized name variants, so this expansion is usually a no-op — but
- *       the code path stays symmetric with the admin adapter for consistency.
- *   - **Hierarchy variants** (unchanged from the SQLite adapter): self, +locality, +locality+region,
- *       +locality+region+country.
- *
- *   `source_id` is `wof-postalcode-<wof_id>-<name-slot>-<hierarchy-variant>`. Ancestor names always
- *   come from the ancestor's canonical `wof:name`; this adapter does not iterate ancestor name
- *   variants (e.g. it does not emit `"75008 Париж"` even when Paris has a `name:rus_x_preferred`).
- *   That cross-product belongs to a future synthesis pass. emitting it here would multiply row
- *   counts ~10× without a clear training-value story.
- *
- *   License: CC0.
+ *   `source_id` has the form `wof-postalcode-<wof_id>-<name-slot>-<hierarchy-variant>`.
  */
 
 import type { ComponentTag } from "@mailwoman/codex/component"
@@ -53,18 +32,19 @@ import { US_STATE_BY_ABBREVIATION } from "#us/fips-state"
 import { buildAncestryIndex, walkFeatures, type WOFRecord } from "#utils"
 
 /**
- * US state name → USPS alpha-2, the surface form a US postal address carries.
+ * Maps a lowercase US state name to its USPS code.
  *
- * WOF names the region in full (`Oregon`); the layout renders whatever it is given,
- * because a layout is an order and not a vocabulary.
- * Choosing the surface form is therefore this adapter's decision, and the postal one is the code.
+ * WOF stores full state names such as `Oregon`, and the address layout prints components unchanged.
+ * The adapter substitutes the USPS code so the row matches how a US postal address is written.
  */
 const US_STATE_ABBREVIATION_BY_NAME: ReadonlyMap<string, string> = new Map(
 	Object.values(US_STATE_BY_ABBREVIATION).map((state) => [state.name.toLowerCase(), state.abbreviation])
 )
 
 /**
- * The region surface form to print for `country`, given the name WOF carries.
+ * Returns the region text to print.
+ *
+ * US state names become USPS codes, and other names pass through.
  */
 function regionSurface(country: string, name: string): string {
 	if (country !== "US") return name
@@ -73,11 +53,11 @@ function regionSurface(country: string, name: string): string {
 }
 
 /**
- * Map a WOF placetype to a Mailwoman `ComponentTag`, or `undefined` to skip.
+ * Maps a WOF placetype to a component tag, or returns `undefined` for a placetype this adapter skips.
  *
- * Per-adapter deliberately (the admin adapter carries its own): each table is a
- * record filter for its adapter's emission set.
- * This one keeps `postalcode` plus the ancestry placetypes its variants render — not a shared vocabulary.
+ * The mapping also filters records, so it covers only `postalcode`
+ * and the ancestor placetypes the variants use.
+ * The admin adapter keeps its own mapping.
  */
 function placetypeToTag(placetype: WhosOnFirstPlacetype | string): ComponentTag | undefined {
 	switch (placetype) {
@@ -97,10 +77,9 @@ function placetypeToTag(placetype: WhosOnFirstPlacetype | string): ComponentTag 
 }
 
 /**
- * Compute hierarchy variants for a postcode record.
+ * Builds the hierarchy variants for a postcode record, or returns an empty list for any other placetype.
  *
- * `selfName` is the postcode surface form (canonical `wof:name` for the `default` slot,
- * a `name:*` localized variant otherwise).
+ * `selfName` is the postcode text for the current name slot.
  */
 export function postcodeVariantsFor(row: WOFRecord, ancestry: WOFRecord[], selfName: string): WOFVariantSpec[] {
 	if (placetypeToTag(row.placetype) !== "postcode") return []
@@ -142,22 +121,23 @@ export function postcodeVariantsFor(row: WOFRecord, ancestry: WOFRecord[], selfN
 }
 
 /**
- * Build the per-record name-slot list.
+ * Returns a record's name slots.
  *
- * The `default` slot uses `wof:name` verbatim (postcode digits); subsequent slots
- * come from `name:*` variants dedup'd against the default.
+ * The `default` slot holds `wof:name` unchanged.
+ * The other slots hold `name:*` variants that differ from it.
  */
 export function nameSlotsFor(rec: WOFRecord): Array<{ key: string; value: string }> {
 	return wofNameSlotsFor(rec)
 }
 
 /**
- * Registry id for this adapter.
- *
- * Stamped into every row it emits, so a corpus record can be traced back to the dataset it came from.
+ * The source ID on rows from this adapter.
  */
 export const WOF_POSTALCODE_ADAPTER_ID = "wof-postalcode"
 
+/**
+ * Creates the WOF postalcode adapter.
+ */
 export function createWOFPostalcodeAdapter(): CorpusAdapter {
 	return {
 		id: WOF_POSTALCODE_ADAPTER_ID,
@@ -169,10 +149,7 @@ export function createWOFPostalcodeAdapter(): CorpusAdapter {
 			"Who's On First postalcode GeoJSON bundles (postcode → locality/region pairs). Ancestor names from sibling admin repos.",
 
 		async *rows(opts: AdapterOptions): AsyncIterable<CanonicalRow> {
-			// Pass 1: full walk.
-			// We keep every record whose placetype maps to a ComponentTag.
-			// The postcode adapter needs locality / region / country admin records in the index
-			// so it can resolve postcode ancestry, even though it only emits rows for postcode records.
+			// The index keeps admin records as well as postcodes so that postcode ancestry resolves.
 			const byID = new Map<number, WOFRecord>()
 
 			for await (const rec of walkFeatures(opts.inputPath, { signal: opts.signal })) {
@@ -186,7 +163,6 @@ export function createWOFPostalcodeAdapter(): CorpusAdapter {
 
 			const ancestry = buildAncestryIndex(byID)
 
-			// Pass 2: emit postcode rows only, sorted by id for determinism.
 			yield* emitWOFJSONRows({
 				records: byID,
 				ancestry,

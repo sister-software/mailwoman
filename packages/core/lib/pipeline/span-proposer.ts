@@ -3,38 +3,37 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Propose spans for balanced punctuation, known designator phrases, and ambiguous numeric forms.
- *   Proposals provide evidence and alternatives; downstream stages decide which reading to use.
- *   Designators come from a caller-supplied codex lexicon, keeping core independent of codex data.
+ *   Proposes spans for balanced punctuation, designator phrases and ambiguous numeric forms. Downstream stages choose
+ *   among the proposals. The caller supplies the designator lexicon, so core does not depend on codex data.
  */
 
 /**
- * Maximum token count for short-input tail handling.
+ * A bracketed tail with at most this many tokens gets the lower short-tail confidence.
  */
 const SHORT_INPUT_MAX_TOKENS = 3
 
 /**
- * Confidence assigned to a short-input tail span.
+ * The confidence of a short bracketed tail at the end of the input.
  */
 const SHORT_TAIL_CONFIDENCE = 0.45
 
 /**
- * Digits in the ZIP portion of a ZIP+4.
+ * The digit count of the ZIP portion of a ZIP+4.
  */
 const ZIP5_LENGTH = 5
 
 /**
- * Minimum annotation confidence for suppressing contained proposals.
+ * An annotation with at least this confidence suppresses the proposals inside it.
  */
 const CONFIDENT_ANNOTATION_MIN = 0.6
 
 /**
- * Structural kinds emitted by the span proposer.
+ * The structural kinds the span proposer emits.
  */
 export type ProposedSpanKind =
 	/** Balanced parenthetical or bracketed aside. */
 	| "ANNOTATION_SPAN"
-	/** Balanced quoted content; the classifier determines its tag. */
+	/** Balanced quoted content. The classifier assigns its tag. */
 	| "QUOTED_SPAN"
 	/** Delivery-service phrase and identifier. */
 	| "PO_BOX_PHRASE"
@@ -50,33 +49,34 @@ export type ProposedSpanKind =
 	| "SPLIT_HOUSE_NUMBER"
 
 /**
- * Proposed span with character offsets into the input; `end` is exclusive.
+ * A proposed span with character offsets into the input.
+ * `end` is exclusive.
  */
 export interface ProposedSpan {
 	start: number
 	end: number
 	kind: ProposedSpanKind
 	/**
-	 * Shape-derived confidence in `[0, 1]`.
+	 * A confidence in `[0, 1]` derived from the span's shape.
 	 */
 	confidence: number
 	/**
-	 * Shared ID for alternative readings of the same surface.
+	 * Alternative readings of the same text share this ID.
 	 */
 	alternativeGroup?: number
 	/**
-	 * Cue family and rule that emitted the proposal.
+	 * The cue family and rule that emitted the proposal.
 	 */
 	source: string
 }
 
 /**
- * Lowercase vocabulary supplied by the caller.
- * An empty lexicon enables only delimiter proposals.
+ * The lowercase vocabulary that the caller supplies.
+ * An empty lexicon produces only delimiter proposals.
  */
 export interface SpanProposerLexicon {
 	/**
-	 * Address-system codes used to condition numeric proposals.
+	 * Address-system codes that enable system-specific numeric proposals.
 	 */
 	systems: ReadonlySet<string>
 	/**
@@ -88,12 +88,14 @@ export interface SpanProposerLexicon {
 	 */
 	levelDesignators: ReadonlySet<string>
 	/**
-	 * Designators treated as descriptive annotation text rather than unit labels.
+	 * Designators that usually introduce descriptive text.
+	 * Their unit phrases get lower confidence.
 	 */
 	weakDesignators: ReadonlySet<string>
 	/**
-	 * Venue-interior designators, kept separate from postal unit designators
-	 * so consumers can weight them differently.
+	 * Venue-interior designators.
+	 *
+	 * They are kept apart from postal unit designators so consumers can weight them differently.
 	 */
 	venueStructureDesignators: ReadonlySet<string>
 	/**
@@ -102,18 +104,18 @@ export interface SpanProposerLexicon {
 	venueStructureModifiers: ReadonlySet<string>
 	/**
 	 * Venue designators allowed after a modifier.
-	 * Excludes forms that commonly occur in street names.
+	 * The set excludes forms common in street names.
 	 */
 	modifierEligibleStructureDesignators: ReadonlySet<string>
 	/**
-	 * Global regex for delivery-service phrases.
-	 * Must use the `g` flag.
+	 * A regex for delivery-service phrases.
+	 * It must use the `g` flag.
 	 */
 	deliveryService?: RegExp
 }
 
 /**
- * Empty vocabulary for delimiter-only proposals.
+ * An empty lexicon, which limits proposals to paired delimiters.
  */
 export const EMPTY_SPAN_PROPOSER_LEXICON: SpanProposerLexicon = {
 	systems: new Set(),
@@ -129,13 +131,14 @@ export const EMPTY_SPAN_PROPOSER_LEXICON: SpanProposerLexicon = {
 
 interface RawToken {
 	/**
-	 * Original whitespace-delimited token.
+	 * The whitespace-delimited token as written.
 	 */
 	body: string
 	start: number
 	end: number
 	/**
-	 * Token with edge punctuation removed, plus its offsets.
+	 * The token with edge punctuation removed.
+	 * `strippedStart` and `strippedEnd` are its offsets.
 	 */
 	stripped: string
 	strippedStart: number
@@ -187,10 +190,11 @@ function tokenize(text: string): RawToken[] {
 
 // #endregion
 
-// #region Cue family 1 — paired delimiters (M2)
+// #region Paired delimiters
 
 /**
- * Find balanced delimiter pairs, or return `null` if any delimiter is unmatched.
+ * Finds balanced delimiter pairs.
+ * Returns `null` when any delimiter is unmatched.
  */
 function findBalancedPairs(text: string, open: string, close: string): Array<{ open: number; close: number }> | null {
 	const stack: number[] = []
@@ -213,7 +217,8 @@ function findBalancedPairs(text: string, open: string, close: string): Array<{ o
 }
 
 /**
- * Pair same-character quotes in order; odd counts are unbalanced.
+ * Pairs same-character quotes in order.
+ * Returns `null` for an odd count.
  */
 function findSameCharPairs(text: string, ch: string): Array<{ open: number; close: number }> | null {
 	const positions: number[] = []
@@ -234,7 +239,11 @@ function findSameCharPairs(text: string, ch: string): Array<{ open: number; clos
 }
 
 /**
- * Estimate annotation confidence from the content's shape and position.
+ * Estimates how likely bracketed content is an annotation.
+ *
+ * A strong designator with a short identifier, such as "Unit 4B", scores low
+ * because it is probably a real unit.
+ * Content that starts lowercase or with a digit scores high.
  */
 function annotationConfidence(content: string, atEndOfInput: boolean, lexicon: SpanProposerLexicon): number {
 	const tokens = content.split(/\s+/).filter((value) => value.length)
@@ -271,7 +280,6 @@ function proposePairedDelimiters(text: string, lexicon: SpanProposerLexicon): Pr
 
 		if (!pairs) continue
 
-		// Ignore unmatched delimiter classes.
 		for (const p of pairs) {
 			const content = text.slice(p.open + 1, p.close).trim()
 
@@ -292,12 +300,12 @@ function proposePairedDelimiters(text: string, lexicon: SpanProposerLexicon): Pr
 		() => findSameCharPairs(text, '"'),
 		() => findBalancedPairs(text, "“", "”"),
 		() => findBalancedPairs(text, "«", "»"),
-		// German/Czech low-9 quotes use “ as their closer.
 	]
 
 	const hasLow9 = text.includes("„")
 
 	for (const [idx, find] of quotePairFinders.entries()) {
+		// German and Czech quotes close a „ with “, so the “…” finder is skipped when „ is present.
 		if (hasLow9 && idx === 1) continue
 		const pairs = find()
 
@@ -329,10 +337,10 @@ function proposePairedDelimiters(text: string, lexicon: SpanProposerLexicon): Pr
 
 // #endregion
 
-// #region Cue family 2 — designator + identifier
+// #region Designator phrases
 
 /**
- * Short identifier shapes per the designator grammar: "4B", "500", "#104", "B", "B99".
+ * Reports whether a token has a short identifier shape, such as "4B", "500", "#104", "B" or "B99".
  */
 function isShortIdentifier(body: string): boolean {
 	return /^#?\d{1,6}[A-Za-z]{0,2}$/.test(body) || /^[A-Za-z]$/.test(body) || /^[A-Za-z]\d{1,4}$/.test(body)
@@ -353,12 +361,11 @@ function proposeDesignatorPhrases(
 		if (!isUnit && !isLevel) continue
 		const next = tokens[i + 1]!
 
+		// The numeric readings below handle identifiers that contain a slash or hyphen.
 		if (next.stripped.includes("/") || next.stripped.includes("-")) continue
 
-		// Numeric cue logic handles punctuated identifiers.
 		if (!isShortIdentifier(next.stripped)) continue
 		const weak = lexicon.weakDesignators.has(lead)
-		// Preserve venue-structure provenance for downstream weighting.
 		const venueStructure = !isLevel && lexicon.venueStructureDesignators.has(lead)
 
 		out.push({
@@ -370,7 +377,7 @@ function proposeDesignatorPhrases(
 		})
 	}
 
-	// Also recognize modifier-first venue phrases, at lower confidence because street names can share this shape.
+	// Modifier-first venue phrases get lower confidence because street names can have the same shape.
 	for (let i = 1; i < tokens.length; i++) {
 		const designator = tokens[i]!.stripped.toLowerCase()
 
@@ -382,10 +389,10 @@ function proposeDesignatorPhrases(
 
 		const beforeModifier = tokens[i - 2]
 
-		// A leading house number indicates a street address, not a venue substructure.
+		// A preceding house number means the phrase is a street name.
 		if (beforeModifier && /^\d{1,6}[A-Za-z]?$/.test(beforeModifier.stripped)) continue
 
-		// Avoid extracting a phrase embedded in a longer proper name.
+		// A preceding capitalized word means the phrase is part of a longer proper name.
 		if (beforeModifier && /^\p{Lu}/u.test(beforeModifier.stripped)) continue
 
 		out.push({
@@ -398,7 +405,7 @@ function proposeDesignatorPhrases(
 	}
 
 	if (lexicon.deliveryService) {
-		// Clone the shared global regex to reset its match state.
+		// The clone keeps this call from sharing `lastIndex` with other users of the lexicon's regex.
 		const re = new RegExp(lexicon.deliveryService.source, lexicon.deliveryService.flags)
 
 		for (const m of text.matchAll(re)) {
@@ -417,19 +424,19 @@ function proposeDesignatorPhrases(
 
 // #endregion
 
-// #region Cue family 3 — dual-path numeric punctuation (M3)
+// #region Punctuated numbers
 
 const SLASH_COMPOUND = /^(\d{1,4}[A-Za-z]?)\/(\d{1,5}[A-Za-z]?)$/
 const HYPHEN_COMPOUND = /^(\d{1,4})-(\d{1,5})$/
 const FRACTION = /^\d\/\d$/
 
 /**
- * Confidence for numeric readings that have a plausible alternative.
+ * The confidence of a fused numeric reading that has a plausible alternative.
  */
 const AMBIGUOUS_PROPOSAL_CONFIDENCE = 0.55
 
 /**
- * Road-type leaders that prevent route numbers from being parsed as unit splits.
+ * Road-type words whose following number is a route number, which must stay unsplit.
  */
 const ROAD_LEADERS: ReadonlySet<string> = new Set(["hwy", "highway", "route", "rte", "sr", "cr", "interstate", "loop"])
 
@@ -447,7 +454,7 @@ function proposeNumericReadings(
 		const prevLead = prev?.stripped.toLowerCase() ?? ""
 		const prevIsDesignator = lexicon.unitDesignators.has(prevLead) || lexicon.levelDesignators.has(prevLead)
 
-		// US house-number fractions are one fused value.
+		// A US house number followed by a fraction, as in "123 1/2", is one value.
 		if (lexicon.systems.has("us") && FRACTION.test(t.stripped) && prev && /^\d{1,5}$/.test(prev.stripped)) {
 			out.push({
 				start: prev.strippedStart,
@@ -466,7 +473,9 @@ function proposeNumericReadings(
 			const leftEnd = t.strippedStart + slash[1]!.length
 			const rightStart = leftEnd + 1
 
-			// Accept a split when a unit designator or AU/NZ leading-number pattern provides context.
+			// A slash compound splits into unit and house number after a designator.
+			// For AU and NZ, it also splits after a single capitalized leading word
+			// that could be an unlisted designator.
 			const leadingShape =
 				!prevIsDesignator &&
 				prev !== undefined &&
@@ -535,7 +544,7 @@ function proposeNumericReadings(
 					source: "slash:fused-alternative",
 				})
 			} else if (prev && /^\p{Lu}[\p{L}]{3,}$/u.test(prev.stripped)) {
-				// Treat trailing European compounds as fused numbers; require a long preceding street name.
+				// A compound after a capitalized word of four or more letters reads as a European fused house number.
 				out.push({
 					start: t.strippedStart,
 					end: t.strippedEnd,
@@ -551,7 +560,7 @@ function proposeNumericReadings(
 		const hyphen = HYPHEN_COMPOUND.exec(t.stripped)
 
 		if (hyphen) {
-			// ZIP+4 is a postcode, not a house-number compound.
+			// A five-digit left side is a ZIP+4 postcode.
 			if (hyphen[1]!.length === ZIP5_LENGTH) continue
 			const next = i + 1 < tokens.length ? tokens[i + 1] : undefined
 			const leftEnd = t.strippedStart + hyphen[1]!.length
@@ -586,7 +595,7 @@ function proposeNumericReadings(
 					source: "hyphen:fused-alternative",
 				})
 			} else if (next && (/^\p{Lu}/u.test(next.stripped) || /^\d{1,4}(?:st|nd|rd|th)$/i.test(next.stripped))) {
-				// A following street name or ordinal indicates a fused house number.
+				// A following capitalized word or ordinal suggests a fused house number.
 				out.push({
 					start: t.strippedStart,
 					end: t.strippedEnd,
@@ -606,9 +615,12 @@ function proposeNumericReadings(
 // #region Entry point
 
 /**
- * Propose typed spans synchronously.
+ * Proposes typed spans for the input.
  *
- * Results may overlap and are sorted by start, then confidence.
+ * Results may overlap.
+ * They are sorted by start offset, then by descending confidence.
+ *
+ * A confident annotation suppresses the designator and numeric proposals inside it.
  */
 export function proposeSpans(text: string, lexicon: SpanProposerLexicon = EMPTY_SPAN_PROPOSER_LEXICON): ProposedSpan[] {
 	if (!text.length) return []

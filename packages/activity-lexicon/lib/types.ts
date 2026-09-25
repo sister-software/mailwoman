@@ -4,16 +4,13 @@
  * @author Teffen Ellis, et al.
  *
  *   Types for the reviewed activity-phrase lexicon.
- *
- *   Entries recognize a typed phrase and name a committed attestation. world semantics live elsewhere.
  */
 
 /**
  * Where a record came from.
  *
- * Field-for-field the shape `@mailwoman/geographic-model` uses for its own provenance,
- * so a consumer carrying both never has to translate between two spellings of the same idea.
- * It is restated rather than imported because this package does not depend on `@mailwoman/geographic-model`.
+ * The shape matches the provenance type in `@mailwoman/geographic-model`.
+ * It is copied because this package does not depend on that one.
  */
 export interface ActivityLexiconProvenance {
 	/**
@@ -34,10 +31,7 @@ export interface ActivityLexiconProvenance {
 }
 
 /**
- * The phrase is the subject of a query committed to this repository.
- *
- * The strongest attestation available: the form was written down for grading
- * before it was written down for recognition.
+ * Attestation for a phrase that appears in a query committed to this repository.
  */
 export interface CommittedQueryAttestation {
 	kind: "committed-query"
@@ -46,42 +40,37 @@ export interface CommittedQueryAttestation {
 	 */
 	reference: string
 	/**
-	 * The committed query verbatim.
-	 *
-	 * A reader can grep for it.
-	 * A test can require the phrase to end it.
+	 * The committed query, copied exactly.
 	 */
 	detail: string
 }
 
 /**
- * Which regular transformation produced a derived form.
+ * Regular transformation that produced a derived form.
  *
- * Deliberately closed: an open list would let any pair of strings be declared related.
+ * The list is closed so that an entry cannot declare an arbitrary pair of strings related.
  */
 export type ActivityPhraseDerivation = "plural" | "nominalization" | "verb-phrase" | "possessive"
 
 /**
- * The phrase is a regular transformation of another entry in this lexicon.
+ * Attestation for a phrase that is a regular transformation of another entry.
  *
- * The base carries the authority.
- * The derivation names the transformation.
+ * The base entry supplies the evidence.
  */
 export interface DerivedFormAttestation {
 	kind: "derived-form"
 	/**
 	 * Another entry's `phrase`.
-	 *
-	 * The base may not itself be derived.
-	 * An attestation chain that never reaches a committed record attests nothing.
+	 * The base entry must not itself be derived.
 	 */
 	base: string
 	derivation: ActivityPhraseDerivation
 }
 
 /**
- * The phrase is the regional-register counterpart of another entry, and the register
- * split it follows is recorded in a committed vocabulary rather than asserted here.
+ * Attestation for a regional variant of another entry.
+ *
+ * A committed vocabulary must record the regional split.
  */
 export interface RegionalRegisterAttestation {
 	kind: "regional-register"
@@ -94,29 +83,31 @@ export interface RegionalRegisterAttestation {
 	 */
 	base: string
 	/**
-	 * The locales the referenced record carries, written out so a reader sees what
-	 * the entry's own `locales` are copied from.
+	 * The locales of the referenced record, which the entry's `locales` copy.
 	 */
 	detail: string
 }
 
 /**
- * The phrase paraphrases a clause of the activity concept's own description.
+ * Attestation for a phrase that paraphrases part of the activity concept's description.
  *
- * The clause is quoted so the citation can be checked against the compiled artifact rather than believed.
+ * The quoted clause lets a check verify the citation against the compiled artifact.
  */
 export interface ConceptDescriptionAttestation {
 	kind: "concept-description"
 	/**
-	 * The concept identifier whose description is cited — the entry's own `activity`.
+	 * The cited concept identifier, which equals the entry's `activity`.
 	 */
 	reference: string
 	/**
-	 * The exact substring of that concept's description the phrase rests on.
+	 * The exact substring of the concept's description that the phrase paraphrases.
 	 */
 	detail: string
 }
 
+/**
+ * Evidence that justifies an entry.
+ */
 export type ActivityPhraseAttestation =
 	| CommittedQueryAttestation
 	| DerivedFormAttestation
@@ -128,36 +119,30 @@ export type ActivityPhraseAttestation =
  */
 export interface ActivityPhraseEntry {
 	/**
-	 * The text a person types, as a reader would write it.
-	 *
-	 * Comparison is done over the normalized form.
+	 * The text a person types.
+	 * Matching compares normalized forms.
 	 */
 	phrase: string
 	/**
-	 * A concept identifier of kind `activity`, owned by whichever artifact the consumer resolves against.
-	 *
-	 * This lexicon neither defines the concept nor claims anything about it.
+	 * A concept identifier of kind `activity`.
+	 * The artifact the consumer resolves against defines it.
 	 */
 	activity: string
 	/**
-	 * BCP-47 tags where the phrasing is in active use, following the
-	 * `@mailwoman/variant-aliases` semantics: an exact tag match is a full match,
-	 * a language-only match is a weaker one, and nothing else matches.
+	 * BCP-47 tags where the phrasing is in use, with `@mailwoman/variant-aliases` matching rules.
 	 *
-	 * Absent means unscoped, and is not the same as an empty list: a phrase used everywhere carries no
-	 * tags, while a phrase scoped to nowhere is a record that can never fire, which the audit refuses.
+	 * An absent field means the phrase applies everywhere.
+	 * The audit rejects an empty list because such an entry could never match.
 	 */
 	locales?: ReadonlyArray<Intl.UnicodeBCP47LocaleIdentifier>
 	/**
 	 * How the entry was produced.
-	 *
-	 * `curated` is the only admissible value: a phrase mined from traffic would be
-	 * a measurement, and this vocabulary carries none.
+	 * Only curated entries are allowed.
 	 */
 	source: "curated"
 	attestation: ActivityPhraseAttestation
 	/**
-	 * Why the entry is in the lexicon, for a reader deciding whether it still belongs.
+	 * Why the entry belongs in the lexicon.
 	 */
 	note: string
 }
@@ -173,12 +158,11 @@ export interface ActivityPhraseLexicon {
 }
 
 /**
- * How an entry's locale scope met the locale a query was read under.
+ * How an entry's locales matched the query locale.
  *
- * - `unscoped` — the entry declares no locales and answers under any.
- * - `exact` — the query's locale tag is one the entry declares.
- * - `language` — only the language subtag agrees.
- *   Weaker on purpose: a regional phrasing reached through its language alone is a guess about the region.
+ * - `unscoped`: the entry declares no locales and matches any locale.
+ * - `exact`: the entry declares the query's locale tag.
+ * - `language`: only the language subtag matches, which is weaker evidence for a regional phrase.
  */
 export type ActivityPhraseLocaleScope = "unscoped" | "exact" | "language"
 
@@ -189,9 +173,7 @@ export interface ActivityPhraseLocaleMatch {
 	scope: ActivityPhraseLocaleScope
 	/**
 	 * `1` for `unscoped` and `exact`, `0.5` for `language`.
-	 *
-	 * The numbers `@mailwoman/variant-aliases` reports for the same three cases,
-	 * carried over rather than chosen here.
+	 * These values match `@mailwoman/variant-aliases`.
 	 */
 	confidence: number
 }

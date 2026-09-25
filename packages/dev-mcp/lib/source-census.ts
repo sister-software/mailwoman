@@ -34,7 +34,7 @@ import type { PathBuilderLike } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
 /**
- * What a extract can be joined through, which decides what a corpus builder can extract from it.
+ * What an extract can be joined through, which decides what a corpus builder can extract from it.
  *
  * `ancestry` does not promise the chain reaches a locality — only that the table exists.
  * The header records why that distinction cost a measurement.
@@ -65,7 +65,7 @@ export interface SourceCensusRow {
 	/**
 	 * Whether any row carries a usable `parent_id`.
 	 *
-	 * A extract whose every row reads `-1` cannot be walked upward, and that is invisible from a row count.
+	 * An extract whose every row reads `-1` cannot be walked upward, and that is invisible from a row count.
 	 */
 	parentLinked?: boolean
 	readable: boolean

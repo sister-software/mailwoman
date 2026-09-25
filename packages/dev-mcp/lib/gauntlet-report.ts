@@ -3,26 +3,10 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Lift the required lines out of a gauntlet log.
+ *   Extracts the header counts, verdict, pins line and firing count from a gauntlet log.
  *
- *   The gauntlet is the release authority and this module adds nothing to its grading. A second implementation of it
- *   would be a second answer key. What it does is surface three things the spec says must not stay buried in a log a
- *   reader has to scroll:
- *
- *   1. The **conditional header**, which is the verdict's actual denominator. Reading the tail of a gauntlet log instead of
- *      this line is how "+15 rows, zero regressions" got reported on 2026-08-15 for a run that was 329/352 against a
- *      350/352 baseline — 21 regressions, in a line printed above the part that got read.
- *   2. The **pins line**. `run.ts` states the reason it prints on every run, pinned or not: "two pin logs that
- *      differ only in a flag someone typed are not evidence about that flag unless each log says which configuration
- *      it graded."
- *   3. The **firing count**, for the one pass that prints one. An unchanged verdict from a mechanism that never ran
- *      proves nothing — but only postcode-country coherence reports its own firing rate, so this field is named for
- *      that pass rather than for "the pin under test". Pin a different pin and the log carries no evidence it
- *      participated. the `unparsed` note says so rather than letting the coherence number stand in for it.
- *
- *   Every field is extracted, so every field can be absent. A pattern that does not match yields `null` and a note
- *   saying the line was not found. it never yields a plausible default. A parser that invented a `0` here would be
- *   manufacturing exactly the kind of number this repo's meaning-of-zero rule exists to forbid.
+ *   This module only reads the log and never regrades it. A field whose line is missing stays `null`, and
+ *   `unparsed` records why. The parser never substitutes a default such as `0`.
  */
 
 interface GauntletLayerReport {
@@ -32,12 +16,13 @@ interface GauntletLayerReport {
 	tracked: number
 }
 
+/**
+ * The lines extracted from one gauntlet run.
+ */
 export interface GauntletReport {
 	/**
-	 * `pass` / `fail` as the run printed it, or `null` when no verdict line appeared —
-	 * a crash, or a run killed before it finished.
-	 *
-	 * Never defaulted to `fail`: "did not finish" and "finished and failed" are different facts.
+	 * `PASS` or `FAIL` as the run printed it, or `null` when the run crashed or stopped before a verdict.
+	 * A missing verdict is kept apart from `FAIL`.
 	 */
 	verdict: string | null
 	layers: GauntletLayerReport[]
@@ -46,43 +31,31 @@ export interface GauntletReport {
 	 */
 	pins: string | null
 	/**
-	 * `{ n, of }` for the postcode-country coherence pass specifically, or `null`
-	 * when the log carried no firing line.
+	 * The firing count of the postcode-country coherence pass, or `null` when the log has no firing line.
 	 *
-	 * Named for the mechanism it measures rather than for "the pin under test",
-	 * because those are usually not the same thing: pin `gazetteerPrior` and this still
-	 * reports coherence, which is the only pass that prints a firing count.
-	 * Reading it as the pinned pin's firing rate would be a fabricated number.
+	 * Only that pass prints a firing count.
+	 * The field says nothing about any other pinned pass.
 	 */
 	postcode_country_coherence_fired_on: { n: number; of: number } | null
 	/**
-	 * Refused rows, verbatim, in log order.
-	 *
-	 * These are the rows a verdict rests on.
+	 * The counted failures, verbatim and in log order.
 	 */
 	counted_failures: string[]
 	/**
-	 * Tracked rows the run flagged as now passing — the promote-to-pass candidates.
+	 * The tracked rows that now pass and could be promoted.
 	 */
 	now_passing: string[]
 	/**
-	 * What could not be extracted, and from which pattern.
-	 *
-	 * Read this before trusting an absent field.
+	 * Notes on each field that could not be extracted.
 	 */
 	unparsed: string[]
 }
 
 /**
- * Only patterns whose quantifiers cannot overlap live here.
+ * Line patterns whose quantifiers cannot overlap.
  *
- * The lines this file recognises by shape rather than by regex — the pins line,
- * the promote line — are matched with `startsWith` / `indexOf` instead.
- * Both wanted an ambiguous quantifier to express (`(.*pins.*|.*=.*)$` and `(.*?)\s+now passes`),
- * which backtracks quadratically on a long non-matching line and which CodeQL flags as polynomial ReDoS.
- *
- * A gauntlet log is our own output rather than hostile input, so the practical exposure was small,
- * but the string version is both shorter and unconditionally linear, so there was nothing to trade away.
+ * The pins and promote lines use `startsWith` and `indexOf` instead, because a regex for
+ * them needs an ambiguous quantifier that backtracks quadratically on long lines.
  */
 const HEADER = /^=== Gauntlet · (\S+) \((\d+)\/(\d+) counted cases pass(?:, (\d+) tracked)?\)/
 const VERDICT = /^verdict: (PASS|FAIL)/
@@ -94,11 +67,9 @@ const NOW_PASSING_MARK = " now PASSES"
 const NOW_PASSING_PREFIX = "+"
 
 /**
- * Parse a gauntlet run's combined output.
+ * Parses a gauntlet run's output.
  *
- * Takes stdout and stderr together because the pieces are split across them. the
- * report goes to stdout, the pins line to stderr — and a reader wanting "what did
- * this run grade" should not have to know which stream carried which.
+ * The run prints its report to stdout and the pins line to stderr, so this function reads both.
  */
 export function parseGauntletReport(stdout: string, stderr: string): GauntletReport {
 	const report: GauntletReport = {
@@ -111,8 +82,7 @@ export function parseGauntletReport(stdout: string, stderr: string): GauntletRep
 		unparsed: [],
 	}
 
-	// The log is already fully in memory and capped at 8 MB by the job registry, so there is no stream to consume
-	// lazily and no growth path.
+	// The job registry buffers the log and caps it at 8 MB.
 	// oxlint-disable-next-line mailwoman/prefer-spliterator -- bounded, already buffered
 	for (const line of `${stderr}\n${stdout}`.split("\n")) {
 		const header = HEADER.exec(line)
@@ -152,10 +122,7 @@ export function parseGauntletReport(stdout: string, stderr: string): GauntletRep
 			continue
 		}
 
-		// A line of `+ <id>`, then `NOW_PASSING_MARK`, then `— promote to status=pass`.
-		// Located by index rather than matched by pattern: the id can contain anything,
-		// and expressing "everything up to the marker" as a regex needs a lazy quantifier
-		// followed by `\s+`, which is the quadratic shape.
+		// A promote line starts with `+ <id>`, followed by `NOW_PASSING_MARK`.
 		if (trimmed.startsWith(NOW_PASSING_PREFIX)) {
 			const marker = trimmed.indexOf(NOW_PASSING_MARK)
 
@@ -169,7 +136,7 @@ export function parseGauntletReport(stdout: string, stderr: string): GauntletRep
 		if (!report.pins && line.startsWith(PINS_PREFIX)) {
 			const rest = line.slice(PINS_PREFIX.length).trim()
 
-			// The pins line is the one that names a configuration — either by saying so or by carrying an assignment.
+			// The pins line either mentions pins or contains an assignment.
 			if (rest.toLowerCase().includes("pins") || rest.includes("=")) {
 				report.pins = rest
 			}
@@ -205,10 +172,9 @@ export function parseGauntletReport(stdout: string, stderr: string): GauntletRep
 }
 
 /**
- * A one-line reading of the report, for the `summary` an agent relays.
+ * Summarizes the report in one line.
  *
- * Leads with the admitted fraction rather than the verdict word: the fraction is the thing a reader
- * can compare against a baseline, and the line that got skipped the day this rule was written.
+ * The line starts with the pass fraction because a reader compares that fraction against a baseline.
  */
 export function summarizeGauntletReport(report: GauntletReport): string {
 	if (!report.layers.length) {

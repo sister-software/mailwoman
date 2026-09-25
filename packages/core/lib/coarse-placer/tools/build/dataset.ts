@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Build balanced coarse-placer train, validation, and test datasets. Sample each country
- *   separately, deduplicate addresses, then split each country's rows 80/10/10.
+ *   Builds balanced coarse-placer train, validation and test sets. Each country is sampled separately,
+ *   deduplicated and split 80/10/10.
  */
 
 import { type PathBuilderLike, resolvePath, resolvePathBuilder } from "path-ts"
@@ -27,21 +27,19 @@ interface DatasetRow {
  */
 export interface BuildDatasetOptions {
 	/**
-	 * Rows sampled per country.
-	 *
-	 * Default 50000.
+	 * The number of rows sampled per country.
+	 * The default is 50,000.
 	 */
 	perCountry?: number
 	/**
-	 * Dataset output dir.
-	 *
-	 * Default `<repo>/data/coarse-placer`.
+	 * The output directory.
+	 * The default is `<repo>/data/coarse-placer`.
 	 */
 	data?: PathBuilderLike
 }
 
 /**
- * Result of {@linkcode buildDataset}.
+ * The output directory and row count of each split from {@linkcode buildDataset}.
  */
 export interface BuildDatasetResult {
 	outDir: string
@@ -53,11 +51,10 @@ export interface BuildDatasetResult {
 const VAL_FRAC = 0.1
 const TEST_FRAC = 0.1
 
-// Format Overture addresses in varied native forms so country prediction uses
-// address features, not one fixed template.
-// Apply the same deduplicated 80/10/10 split as the corpus data.
 /**
- * Format a street, number, postcode, and locality as an address.
+ * Formats an Overture address in one of four layouts chosen by `t`.
+ *
+ * Varying the layout makes the classifier learn from address content instead of one fixed template.
  */
 function formatEU(street: unknown, number: unknown, postcode: unknown, loc: string, t: number): string {
 	const s = String(street).trim()
@@ -66,18 +63,21 @@ function formatEU(street: unknown, number: unknown, postcode: unknown, loc: stri
 
 	switch (t) {
 		case 1:
-			return `${s}${num} ${loc}` // Omit postcode and comma.
+			// This layout has no postcode or comma.
+			return `${s}${num} ${loc}`
 		case 2:
-			return `${s}${num}, ${loc}${pc ? `, ${pc}` : ""}` // Put postcode last.
+			// This layout puts the postcode last.
+			return `${s}${num}, ${loc}${pc ? `, ${pc}` : ""}`
 		case 3:
-			return `${s}, ${pc ? `${pc} ` : ""}${loc}` // Omit house number.
+			// This layout has no house number.
+			return `${s}, ${pc ? `${pc} ` : ""}${loc}`
 		default:
-			return `${s}${num}, ${pc ? `${pc} ` : ""}${loc}` // {street number, postcode locality}
+			return `${s}${num}, ${pc ? `${pc} ` : ""}${loc}`
 	}
 }
 
 /**
- * Build the coarse-placer dataset files.
+ * Builds the coarse-placer dataset files.
  */
 export async function buildDataset(
 	options: BuildDatasetOptions = {},
@@ -88,7 +88,7 @@ export async function buildDataset(
 
 	const TRAIN_GLOB = dataRootPath("corpus", "versioned", "v0.5.0", "corpus-v0.5.0", "train", "*.parquet")
 
-	// Use the newer G-NAF corpus for AU, which has more address rows than the v0.5.0 pin.
+	// AU rows come from the G-NAF corpus, which has more AU rows than v0.5.0.
 	const AU_GLOB = dataRootPath(
 		"corpus",
 		"versioned",
@@ -101,7 +101,6 @@ export async function buildDataset(
 	const OVERTURE_DIR = dataRootPath("overture", OVERTURE_ADDRESSES_RELEASE)
 	await makeDirectories(OUT_DIR)
 
-	// Load DuckDB only when the dataset builder runs.
 	const { DuckDBInstance } = await import("@duckdb/node-api")
 	const duck = await (await DuckDBInstance.create()).connect()
 
@@ -117,7 +116,7 @@ export async function buildDataset(
 	]
 
 	for (const [country, glob] of CORPUS_SOURCES) {
-		// Filter by country before sampling to preserve the per-country quota.
+		// The country filter runs before sampling so each country gets its full quota.
 		const q = `SELECT raw FROM (
 				SELECT raw FROM read_parquet('${glob}') WHERE country = '${country}' AND nullif(trim(raw), '') IS NOT NULL
 			) USING SAMPLE ${Math.ceil(PER * 1.3)} ROWS`
@@ -217,7 +216,7 @@ export async function buildDataset(
 	]
 
 	for (const [name, rows] of splits) {
-		// Interleave classes deterministically.
+		// Sorting by hash interleaves the countries deterministically.
 		rows.sort((a, b) => hashFNV1a(a.raw + a.country) - hashFNV1a(b.raw + b.country))
 		const p = resolvePath(OUT_DIR, `${name}.jsonl`)
 

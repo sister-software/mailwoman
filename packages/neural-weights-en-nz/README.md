@@ -18,72 +18,74 @@ tags:
 
 The trained-model bundle (`@mailwoman/neural-weights-en-nz`) for
 [Mailwoman](https://mailwoman.ai), a postal-address parser. This
-package is **data only** — a `model-card.json`, the NZ placetype-pair
+package contains **data only**: a `model-card.json`, the NZ placetype-pair
 retrieval index, and the shared gazetteer lexicons. It has no JavaScript logic
-of its own; it is loaded at inference time by `@mailwoman/neural`.
+of its own, and `@mailwoman/neural` loads it at inference time.
 
-> **This locale is served by the shared multi-locale model.** The en-nz bundle
-> ships no `model.onnx`/`tokenizer.model` of its own — it declares
+> **The shared multi-locale model serves this locale.** The en-nz bundle
+> ships no `model.onnx`/`tokenizer.model` of its own. It declares
 > `@mailwoman/neural-weights-en-us` as its `mailwoman.baseWeights` and resolves
-> the base package's model + tokenizer at runtime (byte-identical artifact; one
-> encoder serves both locales). What this package ships is the **NZ-specific
-> soft-feed data**: the placetype-pair retrieval index (`pair-index-nz.bin`,
-> built from the LINZ-derived OpenAddresses NZ countrywide register — see
-> _Evaluation_ below), plus the shared gazetteer/country lexicons.
+> the base package's model and tokenizer at runtime. The artifact is
+> byte-identical, and one encoder serves both locales. This package ships the
+> **NZ-specific soft-feed data**: the placetype-pair retrieval index
+> (`pair-index-nz.bin`, built from the LINZ-derived OpenAddresses NZ countrywide
+> register, described under _Evaluation_ below) and the shared gazetteer/country
+> lexicons.
 
 ## What this is
 
-The NZ-facing half of Mailwoman's retrieval side: real (child, parent)
-suburb/town pairs (e.g. "Plimmerton" is a real suburb of "Porirua") fed to the
-decoder as a soft `dependent_locality` bias, restricted to NZ input only. NZ's
-register repeats names across tiers — 21.6% of its pairs are
-identity pairs (suburb == town, e.g. "Mangawhai, Mangawhai") — which is why
-`@mailwoman/neural` ≥7.8.0's identical-adjacent-segment rule exists; this
-bundle's index is that rule's data source.
+This bundle is the NZ half of Mailwoman's retrieval data. It holds real
+(child, parent) suburb/town pairs (for example, "Plimmerton" is a real suburb of
+"Porirua"), which are fed to the decoder as a soft `dependent_locality` bias for
+NZ input only. NZ's register repeats names across tiers, and 21.6% of its pairs
+are identity pairs (suburb == town, for example "Mangawhai, Mangawhai").
+`@mailwoman/neural` ≥7.8.0 added its identical-adjacent-segment rule for that
+reason, and this bundle's index is that rule's data source.
 
-Unlike the en-gb sibling, **no postcode-anchor binary ships** — no WOF NZ
-postcode database exists yet, so the postcode-anchor channel resolves off for
-en-nz (a loud one-time warning rather than a crash). Building that database is the
-tracked follow-up in `model-card.json`.
+Unlike the en-gb sibling, this bundle **ships no postcode-anchor binary**. No
+WOF NZ postcode database exists yet, so the postcode-anchor channel is off for
+en-nz. The loader logs a one-time warning instead of crashing. Building that
+database is the tracked follow-up in `model-card.json`.
 
 ## Intended use
 
-Parsing free-text NZ postal addresses into structured components (locality,
-dependent_locality, street, house_number, …) for **geocoding** — resolving a
-parsed address to coordinates via a gazetteer/resolver.
+The bundle parses free-text NZ postal addresses into structured components
+(locality, dependent_locality, street, house_number, …) for **geocoding**, which
+resolves a parsed address to coordinates through a gazetteer or resolver.
 
 ## Ship-config requirement (read before using)
 
-The Mailwoman model expects the soft anchor + gazetteer channels fed at
+The Mailwoman model expects the soft anchor and gazetteer channels to be fed at
 inference. Construct the scorer through `@mailwoman/neural`'s `createScorer`
-(the canonical `ProductionScorer`), which reads the bundle's
-`requires`/channel interface and **fails closed** if a declared channel isn't
-fed. Do not hand-wire the raw ONNX session with the anchor input zero-filled.
+(the canonical `ProductionScorer`). It reads the bundle's `requires`/channel
+interface and **fails closed** if a declared channel is not fed. Do not
+hand-wire the raw ONNX session with the anchor input zero-filled.
 
 ## Evaluation
 
-**en-nz battery, 2026-07-24 — all 6 pre-registered bars pass.** Prior on at
-the calibrated δ=10, on the shipped v385 base: NZ suburb board (246 rows)
-as-written **246/246 emission, 246/246 tag-correct (100%)**; comma-stripped
-**244/246 (99.2%)**; curated no-suburb board **0/54 false positives**. The
-venue-confound read is **interim** — 0/510 on a synthetic board; no real NZ
-venue-name source exists on disk yet (issue #1279). Every GB number reproduces
-exactly through the same code path. Full breakdown, δ-sweep table, and the
-repeated-name-convention story: `model-card.json`'s `eval` and `notes` blocks.
+**en-nz battery, 2026-07-24: all 6 pre-registered bars pass.** With the prior on
+at the calibrated δ=10, on the shipped v385 base, the NZ suburb board (246 rows)
+scored **246/246 emission and 246/246 tag-correct (100%)** as written, and
+**244/246 (99.2%)** with commas stripped. The curated no-suburb board had
+**0/54 false positives**. The venue-confound result is **interim**: 0/510 on a
+synthetic board, because no real NZ venue-name source exists on disk yet (issue
+#1279). Every GB number reproduces exactly through the same code path.
+`model-card.json`'s `eval` and `notes` blocks hold the full breakdown, the
+δ-sweep table, and the history of the repeated-name convention.
 
 ## Limitations
 
-- **Expects its channels** — see _Ship-config requirement_.
-- **No NZ postcode anchor yet** — the anchor channel is off for en-nz until a
+- **The model expects its channels.** See _Ship-config requirement_.
+- **No NZ postcode anchor exists yet.** The anchor channel is off for en-nz until a
   WOF NZ postcode database is built (model-card follow-up).
-- **Venue-confound specificity is interim** — measured 0 FP on a synthetic
-  board only; real NZ venue-name data is an open acquisition (issue #1279).
-- **Placetype-pair prior is restricted to NZ** — it structurally cannot fire
-  on non-NZ input.
-- **All-caps / shouting input degrades** the admin tags (mixed-case training);
-  `@mailwoman/neural`'s `normalizeCase` opt recovers detected all-caps ASCII.
-- **Non-Latin scripts** (CJK, Cyrillic) fall through to byte-fallback tokens;
-  quality there is unmeasured.
+- **Venue-confound specificity is interim.** It measured 0 FP on a synthetic
+  board only, and real NZ venue-name data is still to be acquired (issue #1279).
+- **The placetype-pair prior is restricted to NZ.** It cannot fire on non-NZ
+  input.
+- **All-caps input degrades** the admin tags, because training used mixed case.
+  `@mailwoman/neural`'s `normalizeCase` option recovers detected all-caps ASCII.
+- **Non-Latin scripts** (CJK, Cyrillic) fall through to byte-fallback tokens,
+  and quality there is unmeasured.
 
 ## License & links
 

@@ -3,20 +3,10 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Acquisition, end to end: which survey areas a region holds, their archives, and the inputs the builder
- *   takes.
+ *   Downloads a region's soil survey areas and turns them into builder inputs.
  *
- *   the freshness question is answered BY the tabular service rather than BY the file host. `sacatalog.saverest` is
- *   the version-established date, and it is also what the archive's filename embeds — so one catalogue call
- *   both decides what to download and names the file. The download host cannot answer it: it refuses `head`
- *   with 405 and ignores `Range`, so a length probe there is a full transfer.
- *
- *   the vintage is the refresh the build ingested, and IT is one date FOR the whole artifact. nrcs performs
- *   one coordinated Annual Soils Refresh, each October 1. grouping `sacatalog` by year of `saverest` returns
- *   2016: 1, 2025: 3,323, 2026: 56. So a region's areas share a refresh and the manifest can carry one
- *   `source_vintage` — the latest of the areas built, because that is the date after which nothing in the
- *   artifact changed. Every area's own date is kept per row in `soil_survey_area`, and so is the far older
- *   field-survey date, which is the number a currency claim actually turns on.
+ *   The catalogue's `saverest` date decides which archive to download and also appears in the archive's
+ *   filename. The download host rejects `HEAD` and ignores `Range`, so it cannot answer freshness cheaply.
  */
 
 import type { PathBuilderLike } from "path-ts"
@@ -27,44 +17,47 @@ import { downloadSurveyArea, type SurveyAreaArchive } from "#sdk/download"
 import { mapUnitShapefile, readSoilSourceIdentity, surveyAreaShapefile } from "#sdk/ingest/index"
 import { readSurveyAreaAttributes, readSurveyAreaOutline } from "#sdk/survey-area"
 
+/**
+ * Options for {@link acquireRegion}.
+ */
 export interface AcquireRegionOptions {
 	client: SoilDataAccessClient
 	/**
-	 * The survey-area symbol prefix — a state code (`IA`) for a whole state,
-	 * or a full symbol (`IA153`) for the single-area rung.
+	 * The survey-area symbol prefix.
+	 *
+	 * A state code such as `IA` selects a whole state, and a full symbol such as `IA153` selects one area.
 	 */
 	prefix: string
 	/**
-	 * Where vintages are kept.
+	 * The directory where downloaded archives are cached.
 	 */
 	cacheRoot: PathBuilderLike
 	/**
-	 * Build only these symbols out of the ones the catalogue returns.
-	 *
-	 * Absent means all of them.
+	 * The symbols to build from the catalogue's results.
+	 * When it is absent, every symbol is built.
 	 */
 	only?: ReadonlyArray<string>
 	onProgress?: (message: string) => void
 }
 
 /**
- * What one region's acquisition produced.
+ * The result of acquiring one region.
  */
 export interface AcquiredRegion {
 	catalog: SurveyAreaCatalogEntry[]
 	archives: SurveyAreaArchive[]
 	areas: SurveyAreaInput[]
 	/**
-	 * The refresh the artifact carries — the latest version date among the areas built.
+	 * The latest `saverest` date among the areas built, used as the artifact's source vintage.
 	 */
 	sourceVintage: string
 }
 
 /**
- * Acquire every survey area a prefix names, and turn them into builder inputs.
+ * Downloads every survey area that matches the prefix and turns each into a builder input.
  *
- * @throws {Error} When the catalogue holds nothing for the prefix, when `only` names a symbol
- * the catalogue does not carry, or when any area's archive, metadata or shapefile refuses.
+ * @throws {Error} When the catalogue has nothing for the prefix, when `only` lists a symbol
+ * that the catalogue lacks, or when an area's archive, metadata or shapefile cannot be read.
  */
 export async function acquireRegion(options: AcquireRegionOptions): Promise<AcquiredRegion> {
 	const catalog = await options.client.readSurveyAreaCatalog(options.prefix)
@@ -116,10 +109,7 @@ export async function acquireRegion(options: AcquireRegionOptions): Promise<Acqu
 		})
 	}
 
-	// The latest refresh among the areas built, because that is the date after
-	// which nothing in this artifact changed.
-	// Taking the earliest would claim a currency the newest area does not have.
-	// Taking today's date would claim one no area has.
+	// The latest refresh date is the date after which nothing in this artifact changed.
 	const sourceVintage = selected
 		.map((entry) => entry.saverest)
 		.toSorted()

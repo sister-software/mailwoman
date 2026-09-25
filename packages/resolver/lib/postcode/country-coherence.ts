@@ -10,18 +10,19 @@ import type { ResolvedPlace, ResolverBackend } from "@mailwoman/core/resolver"
 import { haversineKm } from "@mailwoman/spatial"
 
 /**
- * Sets the default maximum distance, in kilometres, between a postcode
- * and a locality for them to count as consistent.
+ * The default maximum distance, in kilometres, between a postcode and a locality
+ * for them to count as consistent.
  *
- * Verdicts were unchanged between 15 and 50 km, so the value is not finely tuned.
+ * Verdicts did not change anywhere between 15 and 50 km, so the exact value matters little.
  */
 export const POSTCODE_COUNTRY_COHERENCE_THRESHOLD_KM = 25
 
 /**
- * Names which part of the address justified a country-scope verdict.
+ * The part of the address that justified a country-scope verdict.
  *
  * - `pair`: the postcode and the locality both resolve in the country, within the threshold distance.
- * - `locality`: the locality exists in exactly one country, and no postcode in that country contradicts it.
+ * - `locality`: the locality exists in exactly one country, and that country's
+ *   copy of the postcode does not contradict it.
  * - `postcode`: the postcode exists in exactly one country, and no gazetteer knows the locality.
  */
 export type PostcodeCountryScopeEvidence = "pair" | "locality" | "postcode"
@@ -36,70 +37,72 @@ export interface PostcodeCountryScope {
 	country: string
 
 	/**
-	 * The postcode the verdict was reached on.
+	 * The postcode the verdict used.
 	 */
 	postcode: string
 
 	/**
-	 * The locality the verdict was reached on.
+	 * The locality the verdict used.
 	 */
 	locality: string
 
 	/**
-	 * Which evidence carried the verdict.
+	 * The evidence that carried the verdict.
 	 */
 	evidence: PostcodeCountryScopeEvidence
 
 	/**
-	 * The distance in kilometres between the postcode point and the nearest
-	 * same-named locality, never above the threshold.
+	 * The distance in kilometres between the postcode point and the nearest same-named locality.
 	 *
-	 * It is present only for `pair` evidence, because a single-sided verdict has no
-	 * second point, and a `0` would claim an agreement nobody tested.
+	 * It is set only for `pair` evidence, because the other verdicts compare no second point.
 	 */
 	distanceKm?: number
 
 	/**
-	 * The postcode place that anchored the verdict, absent for `locality` evidence.
+	 * The postcode place behind the verdict.
+	 * It is absent for `locality` evidence.
 	 */
 	postcodePlace?: ResolvedPlace
 
 	/**
-	 * The locality place that anchored the verdict, absent for `postcode` evidence.
+	 * The locality place behind the verdict.
+	 * It is absent for `postcode` evidence.
 	 */
 	localityPlace?: ResolvedPlace
 }
 
 /**
- * Configures {@linkcode findPostcodeCountryScope} with the postcode,
- * the caller's default country, and optional overrides.
+ * Options for {@linkcode findPostcodeCountryScope}.
  */
 export interface PostcodeCountryScopeOpts {
 	/**
-	 * The address's postcode, which callers should take from the resolver's own pre-scan
-	 * so this pass and the walk agree on it.
+	 * The address's postcode.
+	 *
+	 * Callers should pass the value from the resolver's own pre-scan, so that this pass
+	 * and the walk use the same postcode.
 	 */
 	postcode: string
 
 	/**
-	 * The country the caller's default would hard-filter to, or `undefined` when no default is in force.
+	 * The caller's default country filter, or `undefined` when no default applies.
 	 *
-	 * Without a default, only the `pair` rung runs, and the pass abstains
-	 * unless exactly one country qualifies.
+	 * Without a default, only the `pair` test runs, and the pass returns a scope only
+	 * when exactly one country qualifies.
 	 */
 	defaultCountry: string | undefined
 
 	/**
-	 * The consistency radius in kilometres, defaulting to {@link POSTCODE_COUNTRY_COHERENCE_THRESHOLD_KM}.
+	 * The consistency radius in kilometres.
+	 *
+	 * It defaults to {@link POSTCODE_COUNTRY_COHERENCE_THRESHOLD_KM}.
 	 */
 	thresholdKm?: number
 
 	/**
-	 * Upper-case ISO 3166-1 alpha-2 codes that replace the postcode-shape half of the
-	 * candidate countries, such as the shape-coherence pass's intersection.
+	 * Upper-case ISO 3166-1 alpha-2 codes that replace the countries inferred from the postcode's shape.
 	 *
-	 * It cannot narrow the other half, the countries whose gazetteer holds this postcode,
-	 * and every candidate still has to pass the pair test.
+	 * Countries whose gazetteer holds the postcode are still added, and every
+	 * candidate must pass the pair test.
 	 */
 	candidateSystems?: readonly string[]
 }
@@ -114,7 +117,7 @@ const MAX_LOCALITY_VALUES = 3
  * Returns up to three distinct locality values in document order, listing every
  * `locality` before any `dependent_locality`.
  *
- * Document order matters because the first-written locality is the one the address is about.
+ * Order matters because the first locality written is the one the address is about.
  */
 export function localityValuesInDocumentOrder(roots: readonly AddressNode[]): string[] {
 	const out: string[] = []
@@ -128,7 +131,7 @@ export function localityValuesInDocumentOrder(roots: readonly AddressNode[]): st
 }
 
 /**
- * Returns the first of {@link localityValuesInDocumentOrder}, which is the locality the address is about.
+ * Returns the first value of {@link localityValuesInDocumentOrder}.
  */
 export function firstLocalityValue(roots: readonly AddressNode[]): string | undefined {
 	return localityValuesInDocumentOrder(roots)[0]
@@ -237,8 +240,8 @@ async function coherenceIn(
  * Finds the one country, other than the caller's default, in which the address's
  * postcode and locality are consistent.
  *
- * It returns `null` when the default country is already consistent, when the address
- * names a country, or when more than one alternative qualifies.
+ * It returns `null` when the address has a country node, when the default country is
+ * already consistent, or when more than one alternative qualifies.
  */
 export async function findPostcodeCountryScope(
 	roots: readonly AddressNode[],

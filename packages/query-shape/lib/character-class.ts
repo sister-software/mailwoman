@@ -7,17 +7,13 @@
 import type { CharacterClass, ScriptCode, ScriptShare, SpanRange, TokenCharacterClass, TokenClass } from "#types"
 
 /**
- * Codepoint-level character class.
+ * The character class of a single codepoint.
  */
 export type CodepointClass = TokenCharacterClass | "whitespace" | "connector" | "other"
 
 const CJK_RANGES: ReadonlyArray<[number, number]> = [
-	// The Han characters inside the CJK symbols block.
-	// It this list began at 0x3040.
-	// Therefore, never held.
-	// `々` means "repeat the previous character" and appears inside a name — 代々木,
-	// 佐々木, 酒々井町, 野々市市 — so classifying it `other` made `tokenizeForClass` break the
-	// name at the one position that is not a boundary.
+	// These are the Han characters inside the CJK symbols block.
+	// The iteration mark `々` appears inside names such as 代々木, so the tokenizer must not break a token at it.
 	[0x30_05, 0x30_05],
 	[0x30_07, 0x30_07],
 	[0x30_21, 0x30_29],
@@ -51,24 +47,14 @@ const ARABIC_RANGES: ReadonlyArray<[number, number]> = [
 /**
  * Codepoint ranges per ISO 15924 script, most specific first.
  *
- * Why these exist beside `CJK_RANGES`.
- * The class above buckets Kana, Han and Hangul as one `cjk` value, and that bucket
- * is what every consumer of a folded shape has to reason with.
+ * The `cjk` character class merges Kana, Han and Hangul.
+ * These ranges keep the scripts apart so that consumers can tell Korean input from Japanese input.
  *
- * So `서울특별시 종로구` and `東京都千代田区` are the same input as far as anything downstream can tell,
- * and the locale hint answers `ja-JP` for both.
+ * The ranges are written by hand because `computeQueryShape` runs on every keystroke.
+ * `character-class.test.ts` checks every codepoint in every range against `\p{Script=…}`.
  *
- * The classes are not wrong for what they are for: the tokenizer breaks a token at a
- * script transition and the decoder wants to know whether a run is ideographic.
- * They just cannot carry the distinction, and the ranges to carry it were already in the file, merged.
- *
- * Measured against unicode'S own property rather than eyeballed: `character-class.test.ts`
- * walks every codepoint in every range below and asserts the answer equals `\p{Script=…}`.
- * Hand ranges are here for the reason the rest of this file uses them — `computeQueryShape` promises
- * microseconds and runs per keystroke — and the test is what keeps them honest as Unicode moves.
- *
- * Halfwidth and fullwidth forms split three ways rather than answering one script: fullwidth ascii is
- * Latin or common by what it duplicates, halfwidth katakana is Kana, halfwidth jamo is Hangul.
+ * Halfwidth and fullwidth forms belong to several scripts.
+ * Fullwidth ASCII is Latin or Common, halfwidth katakana is Kana and halfwidth jamo is Hangul.
  */
 const SCRIPT_RANGES: ReadonlyArray<readonly [ScriptCode, ReadonlyArray<[number, number]>]> = [
 	[
@@ -115,8 +101,8 @@ const SCRIPT_RANGES: ReadonlyArray<readonly [ScriptCode, ReadonlyArray<[number, 
 			[0x2e_80, 0x2e_99], // CJK radicals supplement, either side of the unassigned 2E9A
 			[0x2e_9b, 0x2e_f3],
 			[0x2f_00, 0x2f_d5], // Kangxi radicals
-			[0x30_05, 0x30_05], // 々 — the iteration mark, in 代々木 and 佐々木 and 酒々井町
-			[0x30_07, 0x30_07], // 〇 — the ideographic number zero
+			[0x30_05, 0x30_05], // The iteration mark 々
+			[0x30_07, 0x30_07], // The ideographic number zero 〇
 			[0x30_21, 0x30_29], // Hangzhou numerals
 			[0x30_38, 0x30_3b],
 			[0x34_00, 0x4d_bf], // CJK Unified Ideographs Extension A
@@ -177,39 +163,30 @@ const SCRIPT_RANGES: ReadonlyArray<readonly [ScriptCode, ReadonlyArray<[number, 
 ]
 
 /**
- * Codepoints Unicode calls `Common` that sit inside blocks this file otherwise reads as a script.
+ * Codepoints that Unicode assigns to `Common` inside blocks that otherwise belong to one script.
  *
- * They answer `Zyyy`, which takes them out of both halves of every share,
- * and that is what makes the share readable.
- * `ブロードウェイ` is seven characters, two of them the prolonged sound mark `ー`; folding that mark into
- * neither script reports `Kana 1.00`, and the first version of this table, which had no entry for it,
- * reported `Kana 0.67 / Zzzz 0.20` and made an ordinary katakana word look a fifth unrecognized.
- *
- * The voiced marks and the middle dot are the same case: a Japanese-specific character
- * that belongs to no one script, because both kana use it.
+ * These codepoints map to `Zyyy`, so script shares ignore them.
+ * For example, the prolonged sound mark `ー` in `ブロードウェイ` does not count, and the word reads as `Kana` 1.00.
  */
 const COMMON_RANGES: ReadonlyArray<[number, number]> = [
-	[0x06_40, 0x06_40], // Arabic tatweel ـ — a letter-joining stretch rather than a letter
-	// CJK symbols and punctuation, minus the characters in that block Unicode assigns to Han: 々 (U+3005),
+	[0x06_40, 0x06_40], // Arabic tatweel ـ, which stretches a joined letter
+	// CJK symbols and punctuation, except the characters that Unicode assigns to Han: 々 (U+3005),
 	// 〇 (U+3007), the Hangzhou numerals (U+3021..3029) and the ideographic marks U+3038..303B.
-	// The first version of this list took the block whole and answered `Zyyy` for the
-	// iteration mark, which appears in 代々木 and 佐々木 and 酒々井町.
 	[0x30_00, 0x30_04],
 	[0x30_06, 0x30_06],
 	[0x30_08, 0x30_20],
-	[0x30_2a, 0x30_2d], // Ideographic tone marks. U+302E..302F beside them are HANGUL tone marks
+	[0x30_2a, 0x30_2d], // Ideographic tone marks. The adjacent U+302E..302F are Hangul tone marks.
 	[0x30_30, 0x30_37],
 	[0x30_3c, 0x30_3f],
-	// The voiced marks and the katakana-hiragana double hyphen, minus U+309D..309F,
-	// which are Hiragana: the iteration marks ゝゞ and the digraph yori.
-	// Same defect as the block above, one range over.
+	// The voiced marks and the katakana-hiragana double hyphen.
+	// U+309D..309F are Hiragana.
 	[0x30_99, 0x30_9c],
 	[0x30_a0, 0x30_a0],
 	[0x30_fb, 0x30_fc], // Katakana middle dot ・ and prolonged sound mark ー
 	[0xff_01, 0xff_20], // Fullwidth punctuation and digits
 	[0xff_3b, 0xff_40],
 	[0xff_5b, 0xff_65],
-	[0xff_70, 0xff_70], // Halfwidth prolonged sound mark ｰ — the halfwidth twin of U+30FC
+	[0xff_70, 0xff_70], // Halfwidth prolonged sound mark ｰ
 	[0xff_9e, 0xff_9f], // Halfwidth voiced marks
 ]
 
@@ -261,9 +238,7 @@ const PUNCT_CODEPOINTS = new Set<number>([
 ])
 
 /**
- * "Connector" codepoints join adjacent tokens instead of separating them.
- *
- * Hyphen, apostrophe, underscore — surface in "10118-1234", "O'Brien", "Saint-Denis", and similar.
+ * Connector codepoints join adjacent characters into one token, as in "10118-1234" and "O'Brien".
  */
 const CONNECTOR_CODEPOINTS = new Set<number>([
 	0x2d, // -
@@ -274,14 +249,14 @@ const CONNECTOR_CODEPOINTS = new Set<number>([
 ])
 
 /**
- * Classify a single Unicode codepoint.
+ * Classifies a single Unicode codepoint.
  */
 export function classifyCodepoint(cp: number): CodepointClass {
 	if (cp >= 0x30 && cp <= 0x39) return "digit"
 
 	if ((cp >= 0x41 && cp <= 0x5a) || (cp >= 0x61 && cp <= 0x7a)) return "alpha"
 
-	// Latin-1 letters with diacritics + Latin Extended-A/B
+	// Latin-1 letters with diacritics, Latin Extended-A/B and Latin Extended Additional.
 	if ((cp >= 0x00_c0 && cp <= 0x02_4f) || (cp >= 0x1e_00 && cp <= 0x1e_ff)) return "alpha"
 
 	if (cp === 0x20 || cp === 0x09 || cp === 0x0a || cp === 0x0d || cp === 0xa0) return "whitespace"
@@ -300,15 +275,12 @@ export function classifyCodepoint(cp: number): CodepointClass {
 }
 
 /**
- * The ISO 15924 script a single codepoint is written in.
+ * Returns the ISO 15924 script of a single codepoint.
  *
- * `Zyyy` is Unicode's own answer for a character that belongs to no one script —
- * a digit, a comma, a space — and it is a real answer rather than a failure:
- * `10118` is script-neutral in every language that writes it.
- * `Zzzz` is the unknown case, which here means a script this file has no ranges for.
+ * `Zyyy` (Common) covers characters shared by many scripts, such as digits, commas and spaces.
+ * `Zzzz` (Unknown) covers scripts that this file has no ranges for.
  *
- * The two are kept apart because a ranked script list that counted every comma
- * would report `Zyyy` first on every input.
+ * Script shares skip `Zyyy` so that punctuation does not dominate every ranking.
  */
 export function scriptForCodepoint(cp: number): ScriptCode {
 	if (inRange(cp, COMMON_RANGES)) return "Zyyy"
@@ -325,12 +297,12 @@ export function scriptForCodepoint(cp: number): ScriptCode {
 }
 
 /**
- * The script a token is written in: the one the most of its script-containing codepoints carry.
+ * Returns the script of most codepoints in a token, ignoring `Zyyy` codepoints.
  *
- * A token that carries none — `10118`, `-` — answers `Zyyy` rather than guessing from its neighbours.
- * The tokenizer breaks at a script transition, so a token mixing two scripts is rare
- * and comes from a connector joining them (`ニューヨーク-NY`); the majority answer names the
- * one that writes most of it and `scripts` on the whole shape still reports both.
+ * A token with no script codepoints, such as `10118`, returns `Zyyy`.
+ * A token mixes scripts only when a connector joins them, as in `ニューヨーク-NY`.
+ *
+ * The input's `scripts` list still reports both scripts in that case.
  */
 export function classifyTokenScript(text: string): ScriptCode {
 	const counts = new Map<ScriptCode, number>()
@@ -359,17 +331,14 @@ export function classifyTokenScript(text: string): ScriptCode {
 }
 
 /**
- * Every script the input is written in, ranked by how much of it they write.
+ * Returns every script in the input, ranked by share.
  *
- * `share` is the proportion of script-containing codepoints, so the digits and the commas
- * are out of both halves of the fraction: `金龍酒家, 12 Gerrard Street, London WC2H 7JS`
- * answers `Latn` 0.82 / `Hani` 0.18 rather than burying both under the punctuation.
- * An input carrying no script-containing codepoint at all — a bare postcode —
- * answers an empty list, which is the honest reading: nothing in `10118` names a script.
+ * Each share is a fraction of the codepoints that have a script, so digits and punctuation do not count.
+ * For example, `金龍酒家, 12 Gerrard Street, London WC2H 7JS` gives `Latn` 0.82 and `Hani` 0.18.
  *
- * This is the field that carries what the folded `CharacterClass` cannot.
- * `cjk` is one value for three scripts, and a `mixed` input names no script at all,
- * so a Han venue inside a London address was invisible to every consumer that read the fold.
+ * An input without script codepoints, such as a bare postcode, returns an empty list.
+ *
+ * This list distinguishes scripts that the folded `CharacterClass` merges into `cjk` or `mixed`.
  */
 export function foldInputScripts(text: string): ScriptShare[] {
 	const counts = new Map<ScriptCode, number>()
@@ -395,10 +364,11 @@ export function foldInputScripts(text: string): ScriptShare[] {
 }
 
 /**
- * Classify a token by walking its codepoints and folding to the dominant class.
+ * Classifies a token from the classes of its codepoints.
  *
- * Mixed alphanumeric (e.g. `"221B"`, `"10118-1234"`) returns `"mixed"`.
- * Pure-punct tokens return `"punct"`.
+ * Any CJK, Cyrillic or Arabic codepoint decides the class, in that order.
+ * A token with both digits and Latin letters, such as `"221B"`, returns `"mixed"`.
+ * A token of only punctuation returns `"punct"`.
  */
 export function classifyToken(text: string): TokenCharacterClass {
 	let hasDigit = false
@@ -457,7 +427,7 @@ export function classifyToken(text: string): TokenCharacterClass {
 }
 
 /**
- * Fold per-token classes into the whole-input character class.
+ * Folds the token classes into one character class for the whole input.
  */
 export function foldInputClass(tokens: ReadonlyArray<TokenClass>): CharacterClass {
 	if (!tokens.length) return "alpha"
@@ -510,20 +480,15 @@ export function foldInputClass(tokens: ReadonlyArray<TokenClass>): CharacterClas
 }
 
 /**
- * The script a range of the input is written in, given the tokens already classified for it.
+ * Returns the script of the tokens that overlap the half-open range `[start, end)`.
  *
- * The answer for a whole string is not the answer for its parts, and for an
- * address the parts are what a caller usually has.
- * `逊克二分场四队, heilongjiang, china` is `Latn` 0.71 / `Hani` 0.29 as a string,
- * because the romanized province and country outweigh the Han unit, but its first
- * segment is `Hani`, its second and third are `Latn`, and a rule about how to render
- * or route the unit wants the first of those rather than the average of all three.
+ * A part of an address can use a different script from the whole.
+ * In `逊克二分场四队, heilongjiang, china`, the whole string is mostly `Latn`, but the first segment is `Hani`.
  *
- * Weighted by codepoints rather than by token count, so one long Han run is not outvoted
- * by three short Latin ones, and `Zyyy` tokens abstain: a range holding only a house
- * number answers `Zyyy` rather than borrowing a neighbour's script.
- * Offsets are half-open and are the ones `TokenClass.span` carries, so a `Segment`,
- * a component span or any pair of indices into the same normalized text can be passed straight in.
+ * Each token counts by its length in UTF-16 code units, so one long token can outweigh several short ones.
+ * `Zyyy` tokens are skipped, and a range with only such tokens returns `Zyyy`.
+ *
+ * The offsets index the same normalized text as `TokenClass.span`.
  */
 export function scriptForRange(tokens: ReadonlyArray<TokenClass>, start: number, end: number): ScriptCode {
 	const weights = new Map<ScriptCode, number>()
@@ -550,12 +515,9 @@ export function scriptForRange(tokens: ReadonlyArray<TokenClass>, start: number,
 }
 
 /**
- * Every token of a string with its class and its script — the whole per-token half of a `QueryShape`.
+ * Tokenizes a string and returns each token with its class, length and script.
  *
- * Exported because it was typed three times: `computeQueryShape` builds it, and two test
- * files rebuilt it to feed `detectKnownFormats` and `detectRegionAbbreviations`.
- * Adding `script` broke all three, which is the tell — a shape assembled in more
- * than one place grows a field in one of them.
+ * `computeQueryShape` and the tests share this function so that every caller builds tokens the same way.
  */
 export function classifyTokens(text: string): TokenClass[] {
 	return tokenizeForClass(text).map((span) => ({
@@ -567,9 +529,9 @@ export function classifyTokens(text: string): TokenClass[] {
 }
 
 /**
- * Walk a string and emit token spans (whitespace-and-punctuation-separated).
+ * Splits a string into token spans at whitespace, punctuation and script changes.
  *
- * Callers usually want {@linkcode classifyTokens}, which adds the class and the script to each span.
+ * Most callers want {@linkcode classifyTokens}, which adds the class and the script to each span.
  */
 export function tokenizeForClass(text: string): SpanRange[] {
 	const tokens: SpanRange[] = []
@@ -586,15 +548,15 @@ export function tokenizeForClass(text: string): SpanRange[] {
 			continue
 		}
 
-		// A leading connector (rare — most inputs don't start with `-`/`'`) is consumed as whitespace.
+		// A connector at the start of a token is skipped like whitespace.
 		if (cls === "connector") {
 			i += cp > 0xff_ff ? 2 : 1
 
 			continue
 		}
 
-		// Start a token at i. walk until we hit whitespace, punct, or a script boundary.
-		// Connectors (`-`, `'`, `_`) join across digit/alpha boundaries.
+		// The token runs until whitespace, punctuation or a class change.
+		// Connectors stay inside it.
 		const start = i
 		const startCls = cls
 		let cur = i
@@ -612,7 +574,9 @@ export function tokenizeForClass(text: string): SpanRange[] {
 				continue
 			}
 
-			// Break tokens across script transitions (digit↔alpha is fine. alpha↔cjk is a boundary).
+			// Digits and Latin letters share a token.
+			// Other class changes end it, except that a token starting with an `other`
+			// codepoint may continue into digits or letters.
 			const isLatinPair = (a: CodepointClass, b: CodepointClass) =>
 				(a === "digit" || a === "alpha") && (b === "digit" || b === "alpha")
 
