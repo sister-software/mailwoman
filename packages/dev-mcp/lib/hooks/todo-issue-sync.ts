@@ -17,10 +17,12 @@ import {
 	removePath,
 	writeLocalJSONFile,
 } from "@mailwoman/core/fs/writers"
-import { parseJSONStrict, tryParsingJSON } from "@mailwoman/core/json"
+import { tryParsingJSON } from "@mailwoman/core/json"
 import { runFileSync, spawnProcess } from "@mailwoman/core/process"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { PathBuilder, type PathBuilderLike, resolvePath as resolve } from "path-ts"
+
+import { replaceTaskBlock } from "#github/index"
 
 /**
  * Maximum reads of the payload while waiting for it to stabilize.
@@ -28,9 +30,6 @@ import { PathBuilder, type PathBuilderLike, resolvePath as resolve } from "path-
 const MAX_SYNC_PASSES = 5
 const LOCK_RETRY_MS = 100
 const MAX_LOCK_ATTEMPTS = 300
-
-const SYNC_BEGIN = "<!-- todo-sync:begin -->"
-const SYNC_END = "<!-- todo-sync:end -->"
 
 export interface TodoItem {
 	content: string
@@ -167,13 +166,14 @@ function syncIssue(issue: number, todos: TodoItem[], dryRun: boolean): void {
 		timeout: 30_000,
 	})
 
-	const begin = body.indexOf(SYNC_BEGIN)
-	const end = body.indexOf(SYNC_END)
+	let next: string
 
-	// Leave issues without task-intake markers untouched.
-	if (begin === -1 || end === -1 || end < begin) return
-
-	const next = body.slice(0, begin + SYNC_BEGIN.length) + "\n" + renderTaskList(todos) + "\n" + body.slice(end)
+	try {
+		next = replaceTaskBlock(body, renderTaskList(todos))
+	} catch {
+		// Leave issues without task-intake markers untouched.
+		return
+	}
 
 	if (next === body) return
 
@@ -187,77 +187,6 @@ function syncIssue(issue: number, todos: TodoItem[], dryRun: boolean): void {
 		input: next,
 		timeout: 30_000,
 	})
-}
-
-export interface GitHubUser {
-	login: string
-	name: string | null
-}
-
-export interface GitHubLabel {
-	name: string
-	color: string
-}
-
-export interface GitHubMilestone {
-	title: string
-	dueOn: string | null
-}
-
-export type GitHubIssueState = "OPEN" | "CLOSED"
-
-export interface GitHubIssue {
-	number: number
-	title: string
-	url: string
-	state: GitHubIssueState
-	issueType: string | null
-	author: GitHubUser
-	assignees: GitHubUser[]
-	labels: GitHubLabel[]
-	milestone: GitHubMilestone | null
-	createdAt: string
-	updatedAt: string
-	closedAt: string | null
-	body: string
-}
-
-const ISSUE_FIELDS = [
-	"number",
-	"title",
-	"url",
-	"state",
-	"issueType",
-	"author",
-	"assignees",
-	"labels",
-	"milestone",
-	"createdAt",
-	"updatedAt",
-	"closedAt",
-	"body",
-].join(",")
-
-interface RawIssueType {
-	name: string
-}
-
-interface RawGitHubIssue extends Omit<GitHubIssue, "issueType"> {
-	issueType: RawIssueType | null
-}
-
-/**
- * Fetch one issue with `gh` and normalize its issue type to a name.
- */
-export async function fetchGitHubIssue(repo: string, issueNumber: number): Promise<GitHubIssue> {
-	const body = runFileSync("gh", ["issue", "view", String(issueNumber), "--repo", repo, "--json", ISSUE_FIELDS])
-
-	const raw = parseJSONStrict<RawGitHubIssue>(body)
-
-	return {
-		...raw,
-		issueType: raw.issueType?.name ?? null,
-	}
 }
 
 async function main(): Promise<void> {
@@ -276,7 +205,6 @@ async function main(): Promise<void> {
 	}
 }
 
-// TODO: I don't believe this is true. Use node's `parseArgs`
 // oxlint-disable-next-line sister-software/no-process-globals -- executable-entry detection has no project helper.
 const entryPath = process.argv[1]
 

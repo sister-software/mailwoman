@@ -33,6 +33,11 @@
 			"node": "./lib/tools/index.ts",
 			"default": "./out/tools/index.js"
 		},
+		"./github": {
+			"types": "./out/github/index.d.ts",
+			"node": "./lib/github/index.ts",
+			"default": "./out/github/index.js"
+		},
 		"./hooks/*": {
 			"types": "./out/hooks/*.d.ts",
 			"node": "./lib/hooks/*.ts",

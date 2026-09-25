@@ -29,6 +29,7 @@ import { daemonTool } from "#tools/daemon"
 import { diagnoseTool } from "#tools/diagnose"
 import { diffGeocodeTool } from "#tools/diff/geocode"
 import { diffParseTool } from "#tools/diff/parse"
+import { githubTools } from "#tools/github"
 import { inputsTool } from "#tools/inputs"
 import { interfaceTool } from "#tools/interface"
 import { lookupTool } from "#tools/lookup"
@@ -45,6 +46,7 @@ import { traceTool } from "#tools/trace"
 import { vocabTool } from "#tools/vocab"
 
 export type { DevTool, DevToolDeps, Provenance } from "#tool-kit"
+export { githubTools, type GitHubToolOverrides } from "#tools/github"
 
 /**
  * Every tool, in the order an agent should meet them: what is running, what can be measured,
@@ -80,6 +82,7 @@ const FACTORIES = [
 export async function buildToolTable(deps: DevToolDeps): Promise<DevTool[]> {
 	return [
 		...(await Promise.all(FACTORIES.map((factory) => factory(deps)))),
+		...githubTools(deps),
 		...(await buildSpawnTools(deps.registry, deps.jobs)),
 	]
 }

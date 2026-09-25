@@ -18,55 +18,23 @@ asks for one. The number of steps does not grant permission to write to GitHub.
 
 ## Step 1 — write the plan as a todo list FIRST
 
-State the steps before touching anything. Use the branch for the active client:
+State the steps before touching anything. Use the development MCP for every client:
 
-- **Codex:** The issue's task list is the durable task list. Update it with `gh issue edit` as work
-  completes. Codex lifecycle events do not expose Claude Code's `TodoWrite` payload to this repository's
-  synchronization hook.
+- **Codex:** The issue's task list is the durable task list. Update it with the `mwdev_issue`
+  `update_tasks` action as work completes. Codex lifecycle events do not expose Claude Code's
+  `TodoWrite` payload to this repository's synchronization hook.
 - **Claude Code with `TodoWrite`:** Use `TodoWrite`; the hook below mirrors its list into the linked
   issue automatically.
-- **Claude Code without task tools:** Keep the issue's task list current with `gh issue edit`. Enabling
-  the task tools through `CLAUDE_CODE_ENABLE_TODO_TOOLS=1` is an operator decision.
+- **Claude Code without task tools:** Keep the issue's task list current with the `mwdev_issue`
+  `update_tasks` action. Enabling the task tools through `CLAUDE_CODE_ENABLE_TODO_TOOLS=1` is an
+  operator decision.
 
 ## Step 2 — create the issue from the template's fields
 
-The `.github/ISSUE_TEMPLATE/*.yml` forms only shape the web UI — `gh issue create` bypasses them — so
-mirror their headings in the body. Bug work uses the bug-report fields, feature work the
-feature-request fields. Labels: `bug` or `enhancement`, plus the Area label (the dropdown's options
-are real GitHub labels).
-
-Every issue body carries a task-list section with the sync markers:
-
-```bash
-gh issue create --label enhancement --label resolver \
-  --title "Feature: <one factual line>" \
-  --body "$(cat <<'EOF'
-## What changes
-
-<one sentence — the behavior after the change>
-
-## Evidence the change is needed
-
-<the failing example today, with the address in view and measured scope>
-
-## Scope
-
-<locales and tiers affected; tested interfaces changed; promotion-eval or board rows touched>
-
-## Tradeoff
-
-<what it costs — regression risk, corpus, compute, maintenance>
-
-## Task list
-
-<!-- todo-sync:begin -->
-- [ ] <checkable assertion>
-- [ ] <checkable assertion>
-- [ ] <the claim completion is judged by>
-<!-- todo-sync:end -->
-EOF
-)"
-```
+Call `mwdev_issue` with `action: create`. Supply the feature-request fields `title`, `area`, `change`,
+`evidence`, `scope`, `tradeoff`, and `tasks`. The tool applies the `enhancement` and area labels,
+generates the marker-delimited task list, rejects a body that fails Vale, creates the issue, and links
+the checkout.
 
 For a bug, the headings are: `Failing input` (exact string, original spelling), `Expected result`,
 `Observed result`, `First stage that diverges`, `Evidence and scope`, `Artifacts under test`,
@@ -74,13 +42,10 @@ For a bug, the headings are: `Failing input` (exact string, original spelling), 
 
 ## Step 3 — link the session
 
-```bash
-mkdir -p .claude/state && echo <issue-number> > .claude/state/linked-issue
-```
-
-The `.claude/state` name is shared integration state rather than a Claude Code-only instruction. Claude
-Code's `packages/dev-mcp/lib/hooks/todo-issue-sync.ts` PostToolUse hook rewrites the marker-delimited
-block after `TodoWrite`. Codex and Claude Code sessions without `TodoWrite` update the issue directly.
+The issue tool writes `.claude/state/linked-issue`. The `.claude/state` name is shared integration state
+rather than a Claude Code-only instruction. Claude Code's
+`packages/dev-mcp/lib/hooks/todo-issue-sync.ts` PostToolUse hook rewrites the marker-delimited block after
+`TodoWrite`. Codex and Claude Code sessions without `TodoWrite` use the issue tool.
 The hook's interface is:
 
 - **Fail-open and silent** — it never blocks a turn, and the `gh` work runs detached.
@@ -96,5 +61,6 @@ The hook's interface is:
 
 - Check every box, or say on the issue why a box stays open. An unchecked box with no comment reads
   as forgotten rather than deferred.
-- The PR body says `Closes #<n>` — the PR template asserts the linked issue's task list is checked.
+- Call `mwdev_pull_request` with `action: create` and the issue number. The tool verifies the issue's task
+  list, creates a Vale-checked body that says `Closes #<n>`, and starts a tracked CI monitor.
 - Unlink: `rm -f .claude/state/linked-issue`.
