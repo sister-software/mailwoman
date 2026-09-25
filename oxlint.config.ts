@@ -326,6 +326,7 @@ export default {
 				ignoreRestSiblings: true,
 			},
 		],
+		"mailwoman/no-await-using-sync-disposable": "error",
 		"mailwoman/no-cross-package-reexport": "error",
 		"mailwoman/no-database-boundary-cast": "error",
 		"mailwoman/no-database-handle-cast": "error",

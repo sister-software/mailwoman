@@ -27,6 +27,14 @@ interface ESTreeNode extends AstNode {
 	 * Template of a tagged-template expression.
 	 */
 	quasi?: AstNode
+	/**
+	 * A function's declared return type.
+	 */
+	returnType?: AstNode
+	/**
+	 * The members of a union or intersection type.
+	 */
+	types?: AstNode[]
 }
 
 interface RuleContext {
@@ -843,6 +851,183 @@ const noCrossPackageReexportRule: Rule = {
 }
 
 /**
+ * Types that declare `[Symbol.dispose]` and no `[Symbol.asyncDispose]`.
+ *
+ * `DatabaseClient` closes the `node:sqlite` handle, `DisposableDuckDB` calls `closeSync()` on the
+ * connection and on the instance behind it, and `RegionDatabaseProvider` closes its cached handles.
+ */
+const SYNC_DISPOSABLE_TYPES = new Set(["DatabaseClient", "DisposableDuckDB", "RegionDatabaseProvider"])
+
+/**
+ * Cross-package functions that answer one of {@link SYNC_DISPOSABLE_TYPES}.
+ *
+ * A same-file helper needs no entry: the rule reads its declared return type.
+ */
+const SYNC_DISPOSABLE_FACTORIES = new Set([
+	"openBDCDatabaseIfPresent",
+	"openBuiltClient",
+	"openDuckDB",
+	"openFilerDatabaseIfPresent",
+])
+
+/**
+ * The identifier a type reference names, or null for a dotted or computed one.
+ */
+function typeReferenceName(node: AstNode): string | null {
+	if (node.type !== "TSTypeReference") return null
+
+	return node.typeName?.type === "Identifier" ? (node.typeName.name ?? null) : null
+}
+
+/**
+ * Whether `node` resolves to a {@link SYNC_DISPOSABLE_TYPES} member, past `Promise` and a union.
+ */
+function namesSyncDisposable(node: AstNode | undefined): boolean {
+	if (!node) return false
+
+	if (node.type === "TSUnionType") return ((node as ESTreeNode).types ?? []).some(namesSyncDisposable)
+
+	const name = typeReferenceName(node)
+
+	if (!name) return false
+
+	if (SYNC_DISPOSABLE_TYPES.has(name)) return true
+
+	if (name !== "Promise") return false
+
+	return (node.typeArguments?.params ?? []).some(namesSyncDisposable)
+}
+
+/**
+ * The initialized expression past `await`, a cast, and a non-null assertion.
+ */
+function initializedExpression(node: AstNode | null | undefined): AstNode | null {
+	let current = node ?? null
+
+	while (
+		current &&
+		(current.type === "AwaitExpression" || current.type === "TSAsExpression" || current.type === "TSNonNullExpression")
+	) {
+		current = current.argument ?? current.expression ?? null
+	}
+
+	return current
+}
+
+/**
+ * The synchronously-disposed name an initializer resolves to, or null when the shape says nothing.
+ *
+ * `locals` holds the same-file helpers whose return type named one.
+ */
+function syncDisposableSource(node: AstNode, locals: ReadonlySet<string>): string | null {
+	if (node.type === "NewExpression") {
+		const name = node.callee?.type === "Identifier" ? (node.callee.name ?? "") : ""
+
+		return SYNC_DISPOSABLE_TYPES.has(name) ? name : null
+	}
+
+	if (node.type !== "CallExpression") return null
+
+	const callee = node.callee
+
+	if (callee?.type === "Identifier") {
+		const name = callee.name ?? ""
+
+		return SYNC_DISPOSABLE_FACTORIES.has(name) || locals.has(name) ? name : null
+	}
+
+	// `DatabaseClient.temp()`, `RegionDatabaseProvider.create()`.
+	if (callee?.type === "MemberExpression" && callee.object?.type === "Identifier") {
+		const owner = callee.object.name ?? ""
+
+		return SYNC_DISPOSABLE_TYPES.has(owner) ? owner : null
+	}
+
+	return null
+}
+
+/**
+ * Walk `node` and its children, calling `visit` on each.
+ */
+function walkTree(node: AstNode, visit: (node: AstNode) => void): void {
+	visit(node)
+
+	for (const [key, value] of Object.entries(node)) {
+		if (key === "parent" || key === "range" || key === "loc") continue
+
+		const children = Array.isArray(value) ? value : [value]
+
+		for (const child of children) {
+			if (child && typeof child === "object" && typeof (child as AstNode).type === "string") {
+				walkTree(child as AstNode, visit)
+			}
+		}
+	}
+}
+
+/**
+ * Take a synchronously-disposed resource with `using`.
+ */
+const noAwaitUsingSyncDisposableRule: Rule = {
+	meta: {
+		name: "no-await-using-sync-disposable",
+		type: "problem",
+		schema: [],
+	},
+	create(context: RuleContext) {
+		return {
+			Program(program: AstNode) {
+				const locals = new Set<string>()
+
+				walkTree(program, (node) => {
+					if (node.type === "FunctionDeclaration" && node.id?.type === "Identifier") {
+						if (namesSyncDisposable((node as ESTreeNode).returnType?.typeAnnotation)) {
+							locals.add(node.id.name ?? "")
+						}
+
+						return
+					}
+
+					if (node.type !== "VariableDeclarator" || node.id?.type !== "Identifier") return
+
+					const initializer = node.init
+
+					if (initializer?.type !== "ArrowFunctionExpression" && initializer?.type !== "FunctionExpression") return
+
+					if (namesSyncDisposable((initializer as ESTreeNode).returnType?.typeAnnotation)) {
+						locals.add(node.id.name ?? "")
+					}
+				})
+
+				walkTree(program, (node) => {
+					if (node.type !== "VariableDeclaration" || node.kind !== "await using") return
+
+					for (const declarator of node.declarations ?? []) {
+						const initializer = initializedExpression(declarator.init)
+
+						if (!initializer) continue
+
+						const source = syncDisposableSource(initializer, locals)
+
+						if (!source) continue
+
+						context.report({
+							node: declarator,
+							message:
+								`\`${source}\` declares \`[Symbol.dispose]\` and no \`[Symbol.asyncDispose]\`, so the scope exit ` +
+								"has nothing to await and `await using` reads as though disposal were asynchronous. Declare it " +
+								"with `using`; the factory keeps its own await, as in `using db = await openBuiltClient(path)`. " +
+								"`await using` belongs to a resource whose teardown is itself asynchronous, such as a " +
+								"`TemporaryDirectory` removing its directory.",
+						})
+					}
+				})
+			},
+		}
+	},
+}
+
+/**
  * The `mailwoman` oxlint plugin with every repo-local rule.
  */
 const mailwomanPlugin: Plugin = {
@@ -850,6 +1035,7 @@ const mailwomanPlugin: Plugin = {
 	rules: {
 		// Adapt the fix-capable shared rule to this plugin's local rule type.
 		"comment-reflow": reflowRule as unknown as Rule,
+		"no-await-using-sync-disposable": noAwaitUsingSyncDisposableRule,
 		"no-database-boundary-cast": noDatabaseBoundaryCastRule,
 		"no-cross-package-reexport": noCrossPackageReexportRule,
 		"no-database-handle-cast": noDatabaseHandleCastRule,

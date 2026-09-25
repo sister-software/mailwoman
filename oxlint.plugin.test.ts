@@ -344,6 +344,95 @@ test("prefer-home reads `i >= 1` as the same stopping point as `i > 0`", () => {
 	expect(messages[0]).toContain("shuffleWith")
 })
 
+function typeReference(name: string, ...parameters: TestNode[]): TestNode {
+	const reference: TestNode = { type: "TSTypeReference", range: [0, 0], typeName: identifier(name) }
+
+	if (parameters.length) {
+		reference.typeArguments = { type: "TSTypeParameterInstantiation", range: [0, 0], params: parameters }
+	}
+
+	return reference
+}
+
+/**
+ * A program holding one `await using` declaration over `initializer`, after `preamble`.
+ */
+function awaitUsingProgram(initializer: TestNode, ...preamble: TestNode[]): TestNode {
+	return {
+		type: "Program",
+		range: [0, 0],
+		body: [
+			...preamble,
+			{
+				type: "VariableDeclaration",
+				kind: "await using",
+				range: [0, 0],
+				declarations: [{ type: "VariableDeclarator", range: [0, 0], id: identifier("db"), init: initializer }],
+			},
+		],
+	}
+}
+
+function call(callee: TestNode, awaited: boolean): TestNode {
+	const expression: TestNode = { type: "CallExpression", range: [0, 0], callee, arguments: [] }
+
+	return awaited ? { type: "AwaitExpression", range: [0, 0], argument: expression } : expression
+}
+
+test("no-await-using-sync-disposable reports a construction, a static factory and a cross-package one", () => {
+	const construction: TestNode = {
+		type: "NewExpression",
+		range: [0, 0],
+		callee: identifier("DatabaseClient"),
+		arguments: [],
+	}
+
+	const temp = call(
+		{ type: "MemberExpression", range: [0, 0], object: identifier("DatabaseClient"), property: identifier("temp") },
+		false
+	)
+
+	expect(reportsFor("no-await-using-sync-disposable", awaitUsingProgram(construction))).toHaveLength(1)
+	expect(reportsFor("no-await-using-sync-disposable", awaitUsingProgram(temp))).toHaveLength(1)
+
+	const messages = reportsFor("no-await-using-sync-disposable", awaitUsingProgram(call(identifier("openDuckDB"), true)))
+
+	expect(messages).toHaveLength(1)
+	expect(messages[0]).toContain("`using`")
+})
+
+test("no-await-using-sync-disposable reads a same-file helper's declared return type", () => {
+	const helper: TestNode = {
+		type: "FunctionDeclaration",
+		range: [0, 0],
+		id: identifier("fixtureDB"),
+		returnType: {
+			type: "TSTypeAnnotation",
+			range: [0, 0],
+			typeAnnotation: typeReference("Promise", typeReference("DatabaseClient", typeReference("WOFDatabase"))),
+		},
+	}
+
+	const program = awaitUsingProgram(call(identifier("fixtureDB"), true), helper)
+
+	expect(reportsFor("no-await-using-sync-disposable", program)).toHaveLength(1)
+})
+
+test("no-await-using-sync-disposable leaves an asynchronously-disposed resource alone", () => {
+	const scratch = awaitUsingProgram(call(identifier("temporaryDirectory"), true))
+
+	expect(reportsFor("no-await-using-sync-disposable", scratch)).toEqual([])
+
+	const stack: TestNode = {
+		type: "NewExpression",
+		range: [0, 0],
+		callee: identifier("AsyncDisposableStack"),
+		arguments: [],
+	}
+
+	expect(reportsFor("no-await-using-sync-disposable", awaitUsingProgram(stack))).toEqual([])
+})
+
 function importNode(type: string, specifier: string): TestNode {
 	const source = { type: "Literal", value: specifier, range: [0, 0] as [number, number] }
 

@@ -197,6 +197,11 @@ Database files are read-only published artifacts. Build a replacement separately
 it into place. Use Kysely over `node:sqlite`; read `packages/sqlite/AGENTS.md` before changing database
 construction or inline SQL.
 
+A resource whose teardown runs synchronously declares `Symbol.dispose` and is taken with `using`, even
+when the factory that produced it is async: `using db = await openBuiltClient(path)`. `await using`
+belongs to a teardown that itself awaits, such as `TemporaryDirectory` removing its directory.
+`mailwoman/no-await-using-sync-disposable` reports the database handles that get it backwards.
+
 There is no root `scripts/` directory. Executables enter through a package registry, a `mailwoman`
 command, or `packages/mailwoman/lib/dev-tools/*.run.ts`. The `no-root-scripts` repository check enforces
 this structure.
