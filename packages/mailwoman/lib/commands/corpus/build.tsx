@@ -14,6 +14,7 @@
  *   the CLI handles partial builds during development.
  */
 
+import { isAlpha2CodeShape } from "@mailwoman/codex/country"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import type { BuildStage } from "@mailwoman/corpus"
 import type { AdapterOptions } from "@mailwoman/corpus/types"
@@ -76,7 +77,11 @@ function isAdapterInputMap(input: unknown): input is Record<string, AdapterInput
 
 		if ("outputDir" in value && value.outputDir !== undefined && typeof value.outputDir !== "string") return false
 
-		if ("country" in value && value.country !== undefined && typeof value.country !== "string") return false
+		// The shape rather than the type.
+		// A lower-case `nl` is a string, and the four adapters that filter per row compare it
+		// against the row's own upper-case code, so it selects zero rows and reports nothing.
+		// `corpus run` rejects it at the flag, and this is the other way in.
+		if ("country" in value && value.country !== undefined && !isAlpha2CodeShape(value.country)) return false
 
 		return (
 			!("limit" in value) ||

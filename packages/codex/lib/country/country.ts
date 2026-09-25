@@ -201,6 +201,20 @@ export function formatAsCountryISO2(value: string): CountryISO2 {
 }
 
 /**
+ * Whether a value has the two-upper-case-letter shape a country code is keyed by.
+ *
+ * This admits a code {@link CountryISO2} does not list, which is why it exists
+ * beside {@link formatAsCountryISO2}: `XK` is Kosovo, carried by the source register
+ * and by the `operational-non-iso-codes` postal regime, and `ZZ` is the user-assigned
+ * code the corpus fragment recipes put on a row whose country is undetermined.
+ * Both are legitimate keys and neither is in the 249 ISO members, so a filter or a row validator
+ * checks the shape and a field that means a real country calls {@link formatAsCountryISO2}.
+ */
+export function isAlpha2CodeShape(value: unknown): value is string {
+	return typeof value === "string" && /^[A-Z]{2}$/u.test(value)
+}
+
+/**
  * Case-insensitive check: is the token any recognized country form?
  */
 export function isCountryToken(token: unknown): boolean {

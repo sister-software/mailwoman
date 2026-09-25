@@ -11,6 +11,7 @@
  */
 
 import { ProgressBar } from "@inkjs/ui"
+import { isAlpha2CodeShape } from "@mailwoman/codex/country"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import { Box, Text } from "ink"
@@ -36,7 +37,7 @@ export const spec = {
 		out: { type: "string", required: true, description: "Output root", deprecatedName: "output" },
 		country: {
 			type: "string",
-			validate: (value) => /^[A-Z]{2}$/u.test(value),
+			validate: isAlpha2CodeShape,
 			validationMessage: "--country must be an ISO alpha-2 code.",
 			description: "Country filter",
 		},

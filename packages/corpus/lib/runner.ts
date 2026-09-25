@@ -29,6 +29,7 @@
  *   steps run later, consuming the jsonl files this writes.
  */
 
+import { isAlpha2CodeShape } from "@mailwoman/codex/country"
 import { openWriteStream, type WriteStream } from "@mailwoman/core/fs/streams"
 import { writeLocalJSONFile, makeDirectories } from "@mailwoman/core/fs/writers"
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -339,13 +340,11 @@ function assertEmittedRow(adapter: CorpusAdapter, row: CanonicalRow): void {
 	}
 
 	// The shape as well as the presence.
-	// `country` is the key `country_weights` is looked up by and the value every country
-	// filter compares, so a code outside the ISO 3166-1 alpha-2 shape reaches a training run
-	// as rows nothing admits and nothing selects, while every count of them looks ordinary.
-	// WOF record 1141959953 publishes `Nl`, and `v0.6.0-register-surface` carries 431 rows under it.
-	// `ZZ` is admitted here deliberately: the fragment recipes use it for a row whose country
-	// is undetermined, which is a claim about the row rather than a malformed code (#2358).
-	if (!/^[A-Z]{2}$/.test(row.country)) {
+	// `country_weights` is keyed by this value and every country filter compares it, so a code outside
+	// the shape trains on nothing and matches no filter while every count of those rows reads ordinary.
+	// The shape rather than ISO membership, because `ZZ` and `XK` are both legitimate here
+	// and neither is an ISO member.
+	if (!isAlpha2CodeShape(row.country)) {
 		throw new Error(
 			`adapter ${adapter.id}: row.country ${stringifyJSON(row.country)} is not two upper-case letters ` +
 				`for source_id=${row.source_id}. ISO 3166-1 alpha-2 is the shape country_weights and every ` +

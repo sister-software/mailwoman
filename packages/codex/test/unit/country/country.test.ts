@@ -4,7 +4,13 @@
  * @author Teffen Ellis, et al.
  */
 
-import { countrySurfaceForms, formatAsCountryISO2, isCountryToken, matchCountry } from "@mailwoman/codex/country"
+import {
+	countrySurfaceForms,
+	formatAsCountryISO2,
+	isAlpha2CodeShape,
+	isCountryToken,
+	matchCountry,
+} from "@mailwoman/codex/country"
 import { expect, test } from "vitest"
 
 test("matchCountry: resolves alpha-2, alpha-3, and name (case-insensitive) to the iso2", () => {
@@ -54,4 +60,27 @@ test("formatAsCountryISO2 normalizes an explicit code and rejects other input", 
 	expect(formatAsCountryISO2(" us ")).toBe("US")
 	expect(() => formatAsCountryISO2("USA")).toThrow(/ISO 3166-1 alpha-2/)
 	expect(() => formatAsCountryISO2("XX")).toThrow(/ISO 3166-1 alpha-2/)
+})
+
+test("isAlpha2CodeShape admits the two codes the corpus keys on that ISO does not list", () => {
+	// This is why it exists beside `formatAsCountryISO2`, which rejects both.
+	// `XK` is Kosovo, in the source register and the `operational-non-iso-codes` regime.
+	// `ZZ` is what a corpus fragment row carries when its country is undetermined.
+	expect(isAlpha2CodeShape("XK")).toBe(true)
+	expect(isAlpha2CodeShape("ZZ")).toBe(true)
+	expect(() => formatAsCountryISO2("XK")).toThrow(/ISO 3166-1 alpha-2/)
+	expect(() => formatAsCountryISO2("ZZ")).toThrow(/ISO 3166-1 alpha-2/)
+})
+
+test("isAlpha2CodeShape refuses a case or length a country filter would match nothing with", () => {
+	// `Nl` is what WOF record 1141959953 publishes, and a filter comparing it
+	// against a row's `NL` selects zero rows.
+	expect(isAlpha2CodeShape("Nl")).toBe(false)
+	expect(isAlpha2CodeShape("nl")).toBe(false)
+	expect(isAlpha2CodeShape("NLD")).toBe(false)
+	expect(isAlpha2CodeShape("N")).toBe(false)
+	expect(isAlpha2CodeShape(" NL")).toBe(false)
+	expect(isAlpha2CodeShape("")).toBe(false)
+	expect(isAlpha2CodeShape(undefined)).toBe(false)
+	expect(isAlpha2CodeShape(42)).toBe(false)
 })
