@@ -72,6 +72,7 @@ test("toMGRS: Washington Monument matches Wikipedia's vector (~4m); zone+band el
 	// We match to ~4m.
 	expect(toMGRS(38.88949, -77.03524)).toBe("18SUJ2348306482")
 	expect(toMGRS(-33.8688, 151.2093).startsWith("56H")).toBe(true) // Sydney, zone 56 band H
+	expect(toMGRS(82, -40)).toMatch(/^\d+X/) // band X spans 72°N to 84°N
 	expect(toMGRS(85, 0)).toBe("") // above 84°N — MGRS bands stop
 })
 

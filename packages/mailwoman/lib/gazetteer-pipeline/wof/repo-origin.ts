@@ -79,11 +79,12 @@ export async function resolveWOFRepoOrigin(repo: string, probe: ForkProbe): Prom
 }
 
 /**
- * Probes our fork through the `gh` CLI, reporting `diverged` when GitHub's
- * compare shows the fork ahead of upstream.
+ * Probes our fork through the `gh` CLI.
  *
- * It returns `absent` only on a 404 and rethrows other lookup errors,
- * while a failed compare counts as `clean`.
+ * @returns `diverged` when GitHub's compare shows the fork ahead of upstream, `clean`
+ * when it is not, and `absent` when the fork lookup returns 404.
+ * @throws Error when the fork lookup fails for any other reason or the compare yields no `ahead_by`.
+ * {@link resolveWOFRepoOrigin} records the failure as an upstream fallback, not as a clean fork.
  */
 export const githubForkProbe: ForkProbe = async (org, repo) => {
 	try {
@@ -98,16 +99,18 @@ export const githubForkProbe: ForkProbe = async (org, repo) => {
 		throw error
 	}
 
-	try {
-		const { stdout } = await runFile("gh", [
-			"api",
-			`/repos/${org}/${repo}/compare/${UPSTREAM_ORG}:HEAD...${org}:HEAD`,
-			"--jq",
-			".ahead_by",
-		])
+	const { stdout } = await runFile("gh", [
+		"api",
+		`/repos/${org}/${repo}/compare/${UPSTREAM_ORG}:HEAD...${org}:HEAD`,
+		"--jq",
+		".ahead_by",
+	])
 
-		return Number(stdout.trim()) > 0 ? "diverged" : "clean"
-	} catch {
-		return "clean"
+	const aheadBy = Number(stdout.trim())
+
+	if (stdout.trim() === "" || !Number.isInteger(aheadBy)) {
+		throw new Error(`compare returned no ahead_by for ${org}/${repo}: "${stdout.trim()}"`)
 	}
+
+	return aheadBy > 0 ? "diverged" : "clean"
 }

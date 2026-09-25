@@ -235,7 +235,8 @@ const MGRS_ROW_LETTERS = "ABCDEFGHJKLMNPQRSTUV"
  */
 export function toMGRS(lat: number, lon: number): string {
 	if (lat < MGRS_LAT_MIN || lat > MGRS_LAT_MAX) return ""
-	const band = MGRS_LAT_BANDS[Math.floor((lat + 80) / 8)]!
+	// Band X spans 72° to 84°, so 80° and above still maps to the last band.
+	const band = MGRS_LAT_BANDS[Math.min(Math.floor((lat + 80) / 8), MGRS_LAT_BANDS.length - 1)]!
 	const { zone, easting, northing } = latLonToUtm(lat, lon)
 	const colLetter = MGRS_COL_SETS[(zone - 1) % 3]![Math.floor(easting / 100_000) - 1]!
 	let row = Math.floor(northing / 100_000) % 20
