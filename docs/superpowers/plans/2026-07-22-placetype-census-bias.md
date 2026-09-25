@@ -1,6 +1,6 @@
 # Placetype-pair decode prior — design + plan (rev 2, post-review)
 
-**Date:** 2026-07-22 · **Status:** reviewed design (DeepSeek Pro ×2 turns + Kimi repo-grounded review — `2026-07-22-placetype-census-bias-KIMI_FEEDBACK.md`), pre-task-expansion · **Supersedes:** rev 1 and the morning fork (A–D) from the night postmortem.
+**Date:** 2026-07-22 · **Status:** reviewed design (DeepSeek Pro ×2 turns + a Kimi repo-grounded review), pre-task-expansion · **Supersedes:** rev 1 and the morning fork (A–D) from the night postmortem.
 
 **Naming note (Kimi):** The artifact and module family is called **placetype-pair** (`pair-index`, `placetype-pair-prior`). Identifiers never use bare "census", because that word collides with US Census/TIGER. This doc's filename keeps the original slug for continuity.
 
