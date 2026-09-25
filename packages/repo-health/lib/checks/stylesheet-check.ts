@@ -9,6 +9,7 @@
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { normalizeWhitespace } from "@mailwoman/core/strings/format"
 import { relative } from "path-ts"
 
 import { type Diagnostic, DiagnosticSeverity, type RepoCheck } from "#check"
@@ -63,7 +64,7 @@ function styleRules(css: string): StyleRule[] {
 		}
 
 		if (character === "{") {
-			const preamble = pending.trim().replaceAll(/\s+/gu, " ")
+			const preamble = normalizeWhitespace(pending)
 
 			pending = ""
 

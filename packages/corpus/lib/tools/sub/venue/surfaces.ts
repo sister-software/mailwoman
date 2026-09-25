@@ -11,6 +11,8 @@
  *   {@link NON_SPACING_SCRIPT} and {@link nameContainsSurfaces}.
  */
 
+import { normalizeWhitespace } from "@mailwoman/core/strings/format"
+
 import type { SubVenueSurface } from "#tools/sub/venue/table"
 
 /**
@@ -43,7 +45,7 @@ const NON_SPACING_SCRIPT = /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana
  * `ターミナルビル` and `航站楼` pass through untouched; `Flughafenterminal` folds.
  */
 export function normalizeSurface(text: string): string {
-	const trimmed = text.trim().replaceAll(/\s+/gu, " ")
+	const trimmed = normalizeWhitespace(text)
 
 	return CASE_FOLDING_SCRIPT.test(trimmed) ? trimmed.toLowerCase() : trimmed
 }

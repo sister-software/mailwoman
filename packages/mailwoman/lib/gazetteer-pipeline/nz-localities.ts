@@ -34,6 +34,7 @@ import { readLocalTextFile, readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { md5Hex } from "@mailwoman/core/hash"
 import { NZ_LOCALITY_ID_BASE } from "@mailwoman/core/resolver/synthetic-id-ranges"
+import { normalizeWhitespace } from "@mailwoman/core/strings/format"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
@@ -80,7 +81,7 @@ export interface BuildNZLocalitiesOptions {
  * the display form verbatim and lets `normalizeLocalityForKey` (at candidate-build time) own the key.
  */
 function cleanName(raw: string | undefined): string {
-	return (raw ?? "").trim().replaceAll(/\s+/g, " ")
+	return normalizeWhitespace(raw ?? "")
 }
 
 /**

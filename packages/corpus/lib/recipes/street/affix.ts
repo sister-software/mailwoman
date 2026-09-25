@@ -18,6 +18,7 @@ import {
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { sample } from "@mailwoman/core/random"
+import { normalizeWhitespace } from "@mailwoman/core/strings/format"
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 import type { PathBuilderLike } from "path-ts"
 
@@ -256,7 +257,7 @@ async function readVenuePool(csvPath: PathBuilderLike): Promise<string[]> {
 	const pool: string[] = []
 
 	for await (const record of readCSVRecords(csvPath)) {
-		const name = (record.site_name ?? "").trim().replaceAll(/\s+/gu, " ")
+		const name = normalizeWhitespace(record.site_name ?? "")
 
 		if (
 			name.length < VENUE_NAME_MIN_LENGTH ||

@@ -13,6 +13,7 @@
  */
 
 import { type FileHandle, open } from "@mailwoman/core/fs/readers"
+import { normalizeWhitespace } from "@mailwoman/core/strings/format"
 import { Parser } from "htmlparser2"
 import { PMTiles, type RangeResponse, type Source } from "pmtiles"
 
@@ -91,7 +92,7 @@ function htmlText(html: string): string {
 	parser.write(html)
 	parser.end()
 
-	return text.replaceAll(/\s+/gu, " ").trim()
+	return normalizeWhitespace(text)
 }
 
 /**

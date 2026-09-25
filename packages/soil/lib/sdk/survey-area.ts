@@ -30,6 +30,7 @@
 
 import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
 import { runFile } from "@mailwoman/core/process"
+import { normalizeWhitespace } from "@mailwoman/core/strings/format"
 import type { ParsedGeometry } from "@mailwoman/spatial"
 import type { PathBuilderLike } from "path-ts"
 
@@ -381,7 +382,7 @@ function readSourceCitations(xml: string): Array<{ date: string; title: string; 
 
 		citations.push({
 			date: date.trim(),
-			title: (elementText(body, "title") ?? "").replaceAll(/\s+/gu, " ").trim(),
+			title: normalizeWhitespace(elementText(body, "title") ?? ""),
 			scale: scale ? Number(scale) : null,
 		})
 	}
