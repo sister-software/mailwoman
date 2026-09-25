@@ -15,6 +15,11 @@ import type { RegionDatabases } from "#geocode/regions"
 const COUNTRY_TO_STREET_LOCALE = new Map<string, StreetLocale>([
 	["tw", "zh"],
 	["it", "it"],
+	// The street rule is settled and the license expression is not, so `situs address-points --country
+	// es` reaches `licenseForOvertureCountry`'s refusal. `sources[].dataset` reads
+	// `OpenAddresses/scne.es`, the Sistema Cartográfico Nacional de España, where #2300 records the
+	// publisher as Catastro INSPIRE. Two different bodies, and the file settles neither.
+	["es", "es"],
 ])
 
 const registry = createStreetLocaleRegistry(

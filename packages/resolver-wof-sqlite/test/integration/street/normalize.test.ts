@@ -213,6 +213,41 @@ describe("normalizeStreetForKeyLocale — the pl/vn/id branches (the 2026-08-19 
 	})
 })
 
+describe("normalizeStreetForKeyLocale — the es branch (Spanish rooftop keying)", () => {
+	it("es: KEEPS the leading type, which Spain needs more than Italy does", () => {
+		// Dropping a recognized type merges 7.977% of Spain's distinct (municipio, street)
+		// pairs against Italy's 3.941%, and `Calle Mayor` with `Plaza Mayor` is why.
+		expect(normalizeStreetForKeyLocale("Calle Mayor", "es")).toBe("calle mayor")
+		expect(normalizeStreetForKeyLocale("Plaza Mayor", "es")).toBe("plaza mayor")
+		expect(normalizeStreetForKeyLocale("Avenida Mayor", "es")).toBe("avenida mayor")
+	})
+
+	it("es: expands only the abbreviations that mean one token in every language the register writes", () => {
+		expect(normalizeStreetForKeyLocale("Ctra. de Burgos", "es")).toBe("carretera de burgos")
+		expect(normalizeStreetForKeyLocale("CARRETERA DE BURGOS", "es")).toBe("carretera de burgos")
+		expect(normalizeStreetForKeyLocale("Rbla. de Catalunya", "es")).toBe("rambla de catalunya")
+	})
+
+	it("es: leaves c/, av and pl unexpanded, since each names two stored tokens", () => {
+		// The register carries `calle` beside `carrer`, `avenida` beside `avinguda`,
+		// and `plaza` beside `plaça`.
+		// Expanding to one would key a query to the wrong token in the other region,
+		// so an abbreviation misses instead.
+		// `streetKeyVariants` is where a one-to-many key belongs.
+		expect(normalizeStreetForKeyLocale("C/ Mayor", "es")).toBe("c/ mayor")
+		expect(normalizeStreetForKeyLocale("Av. Diagonal", "es")).toBe("av diagonal")
+
+		expect(normalizeStreetForKeyLocale("Carrer Mayor", "es")).toBe("carrer mayor")
+		expect(normalizeStreetForKeyLocale("Avinguda Diagonal", "es")).toBe("avinguda diagonal")
+	})
+
+	it("es: the cedilla and the comma the register writes both fold away", () => {
+		// `plaça` on 39,585 rows and a trailing comma on `aldea,` are both in the register.
+		expect(normalizeStreetForKeyLocale("Plaça de Catalunya", "es")).toBe("placa de catalunya")
+		expect(normalizeStreetForKeyLocale("Aldea, Sograndio", "es")).toBe("aldea sograndio")
+	})
+})
+
 describe("normalizeStreetForKeyLocale — the it branch (ANNCSU rooftop keying)", () => {
 	it("it: KEEPS the leading type, where pl drops it", () => {
 		// Dropping a recognized type merges 3.941% of Italy's distinct (comune, street)

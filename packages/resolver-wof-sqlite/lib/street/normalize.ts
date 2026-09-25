@@ -145,7 +145,7 @@ export function normalizeStreetForKey(street: string): StreetKey {
  * Names the rule set {@link normalizeStreetForKeyLocale} uses to fold a street
  * name into an address-point key.
  */
-export type StreetLocale = "us" | "en" | "fr" | "de" | "it" | "nl" | "pl" | "vn" | "id" | "zh"
+export type StreetLocale = "us" | "en" | "es" | "fr" | "de" | "it" | "nl" | "pl" | "vn" | "id" | "zh"
 
 function foldHan(input: string): string {
 	return input.normalize("NFKC").replaceAll("臺", "台").replaceAll(/\s+/g, "").toLowerCase()
@@ -227,6 +227,27 @@ const IT_STREET_TYPE_ABBREV = new Map<string, string>([
 	["lungarno", "lungarno"],
 ])
 
+/**
+ * Spanish street-type abbreviations whose expansion is the same token in every
+ * language the register writes, after `fold`.
+ *
+ * `c/`, `av` and `pl` are deliberately absent.
+ * Spain's register carries Castilian beside Galician, Catalan and Basque — `calle`
+ * and `carrer`, `avenida` and `avinguda`, `plaza` and `plaça` — so those three expand to
+ * a different stored token depending on the region, and one key cannot hold both.
+ *
+ * A query spelling them stays unexpanded and misses rather than keying to the wrong one.
+ * The one-to-many case belongs in `streetKeyVariants`, which is single-variant outside `us` today.
+ */
+const ES_STREET_TYPE_ABBREV = new Map<string, string>([
+	["ctra", "carretera"],
+	["crta", "carretera"],
+	["rbla", "rambla"],
+	["gta", "glorieta"],
+	["cjon", "callejon"],
+	["rda", "ronda"],
+])
+
 const ID_STREET_ABBREV = new Map<string, string>([
 	["jl", "jalan"],
 	["jln", "jalan"],
@@ -278,6 +299,15 @@ export function normalizeStreetForKeyLocale(street: string, locale: StreetLocale
 			// and a match deeper in the name is part of the name.
 			if (tokens.length > 1) {
 				tokens[0] = IT_STREET_TYPE_ABBREV.get(tokens[0]!) ?? tokens[0]!
+			}
+			break
+		case "es":
+			// The type is kept, for the reason `it` keeps it and more strongly: dropping a
+			// recognized Spanish type merges 7.977% of Spain's distinct (municipio, street) pairs,
+			// where Italy merges 3.941% and Poland 0.131%.
+			// `Calle Mayor` and `Plaza Mayor` share a municipio often.
+			if (tokens.length > 1) {
+				tokens[0] = ES_STREET_TYPE_ABBREV.get(tokens[0]!) ?? tokens[0]!
 			}
 			break
 		case "nl":
