@@ -23,7 +23,7 @@ import {
 	type SubVenuePromotion,
 } from "#tools"
 
-//#region Lexicon
+// #region Lexicon
 
 /**
  * Resolve the packaged lexicon path.
@@ -39,9 +39,9 @@ export async function readSubVenueLexicon(path: string = defaultLexiconPath()): 
 	return await readLocalJSONFile<SubVenueLexiconTable>(path)
 }
 
-//#endregion
+// #endregion
 
-//#region Name filters
+// #region Name filters
 
 /**
  * Maximum venue-name length; longer values are likely descriptions.
@@ -163,9 +163,9 @@ export function isVenueSlotName(name: string): boolean {
 	return !STREET_TAIL_WORDS.has(tail) && !GERMAN_STREET_TAIL.test(tail)
 }
 
-//#endregion
+// #endregion
 
-//#region Promotions
+// #region Promotions
 
 /**
  * Locale-specific designator and surface, with its shape constraints.
@@ -348,9 +348,9 @@ export function rejectedPhrasesFor(
 	return promotions.filter((p) => p.decision === "reject" && p.locale === locale).map((p) => p.phrase)
 }
 
-//#endregion
+// #endregion
 
-//#region Identifier sampling
+// #region Identifier sampling
 
 interface ShapeBucket {
 	shape: string
@@ -427,9 +427,9 @@ export function sampleIdentifier(model: IdentifierModel, designatorID: string, r
 	return sample(bucket.examples, random)
 }
 
-//#endregion
+// #endregion
 
-//#region Pools
+// #region Pools
 
 /**
  * Source pools loaded once per recipe leg.
@@ -644,4 +644,4 @@ export function mergeNamePools(a: NamePools, b: NamePools): NamePools {
 	}
 }
 
-//#endregion
+// #endregion

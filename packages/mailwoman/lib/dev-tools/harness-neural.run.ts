@@ -55,7 +55,7 @@ import ts from "typescript"
 import { normLoose } from "#dev-tools/value-match"
 import { createRuntimePipeline } from "#index"
 
-//#region Args
+// #region Args
 
 interface Args {
 	testsDir: string
@@ -190,9 +190,9 @@ function parseArgs(): Args {
 	return out as Args
 }
 
-//#endregion
+// #endregion
 
-//#region Assertion extraction — TS AST → list of (input, expected[])
+// #region Assertion extraction — TS AST → list of (input, expected[])
 
 interface ExtractedAssertion {
 	file: string
@@ -327,9 +327,9 @@ async function discoverAssertions(testsDir: PathBuilderLike): Promise<ExtractedA
 	return all
 }
 
-//#endregion
+// #endregion
 
-//#region Neural output → the visible ClassificationRecord vocabulary
+// #region Neural output → the visible ClassificationRecord vocabulary
 
 /**
  * Visible classification labels in the assertion vocabulary —
@@ -424,9 +424,9 @@ function neuralTreeToVisibleRecord(flat: Partial<Record<ComponentTag, string>>):
 	return { record: out as ClassificationRecord, dropped }
 }
 
-//#endregion
+// #endregion
 
-//#region Comparison — case-insensitive superset match
+// #region Comparison — case-insensitive superset match
 
 /**
  * Pass if every tag in `expected` is present in `actual` and the actual value
@@ -470,9 +470,9 @@ function anyExpectedMatches(expected: ClassificationRecord[], actual: Classifica
 	return false
 }
 
-//#endregion
+// #endregion
 
-//#region Per-assertion runner
+// #region Per-assertion runner
 
 interface AssertionResult {
 	file: string
@@ -532,9 +532,9 @@ async function runAssertion(
 	}
 }
 
-//#endregion
+// #endregion
 
-//#region Falsehoods JSONL loader
+// #region Falsehoods JSONL loader
 
 interface FalsehoodRow {
 	input: string
@@ -574,9 +574,9 @@ async function loadFalsehoods(dir: PathBuilderLike): Promise<ExtractedAssertion[
 	return out
 }
 
-//#endregion
+// #endregion
 
-//#region Report
+// #region Report
 
 interface FileStats {
 	total: number
@@ -692,9 +692,9 @@ function printReport(results: AssertionResult[]): void {
 	}
 }
 
-//#endregion
+// #endregion
 
-//#region Main
+// #region Main
 
 async function main(): Promise<void> {
 	const args = parseArgs()
@@ -836,4 +836,4 @@ async function main(): Promise<void> {
 
 runIfScript(import.meta, main)
 
-//#endregion
+// #endregion

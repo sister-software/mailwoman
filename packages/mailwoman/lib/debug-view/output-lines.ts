@@ -23,7 +23,7 @@ import { ABSENT } from "#debug-view/trace-rows"
 import type { GeocodeResult } from "#geocode/result"
 import type { GeocodeTrace } from "#geocode/session"
 
-//#region Interface
+// #region Interface
 
 /**
  * One rendered row of the output pane.
@@ -69,9 +69,9 @@ export interface OutputLine {
 	badgeColor?: string
 }
 
-//#endregion
+// #endregion
 
-//#region Formatting helpers
+// #region Formatting helpers
 
 /**
  * Six decimals ≈ 0.1 m — finer than any tier's uncertainty, and short enough to read.
@@ -151,9 +151,9 @@ function componentLines(tree: AddressTree): OutputLine[] {
 	return lines
 }
 
-//#endregion
+// #endregion
 
-//#region Builder
+// #region Builder
 
 export interface OutputLinesInput {
 	result: GeocodeResult
@@ -313,4 +313,4 @@ export function outputLines(input: OutputLinesInput): OutputLine[] {
 	return lines
 }
 
-//#endregion
+// #endregion

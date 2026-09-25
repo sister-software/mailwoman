@@ -14,7 +14,7 @@ import { JSONSpliterator } from "spliterator"
  */
 export const DEFAULT_SUITE_PATH = "packages/mailwoman/lib/eval-harness/invariance/suite.jsonl"
 
-//#region fixture loading
+// #region fixture loading
 
 export interface InvarianceRow {
 	id: string
@@ -39,4 +39,4 @@ export async function loadSuite(path: string = DEFAULT_SUITE_PATH): Promise<Inva
 	return Array.fromAsync(JSONSpliterator.fromAsync<InvarianceRow>(path, { comment: "//" }))
 }
 
-//#endregion
+// #endregion

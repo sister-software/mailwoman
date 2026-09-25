@@ -96,7 +96,7 @@ export * from "#recipes/sub/venue/sources"
 export * from "#recipes/sub/venue/context"
 export * from "#recipes/sub/venue/render"
 
-//#region Plan
+// #region Plan
 
 /**
  * One locale's leg of the recipe.
@@ -214,9 +214,9 @@ export const SUBVENUE_LEGS: readonly SubVenueLeg[] = [
  */
 export const US_IDENTIFIER_REGION_BORROWED_FROM = "GB"
 
-//#endregion
+// #endregion
 
-//#region Tunables
+// #region Tunables
 
 /**
  * The row count this recipe output is built at, and the arithmetic behind it.
@@ -278,9 +278,9 @@ const ATTESTED_FRACTION = 0.1
  */
 const ENGLISH_MODIFIER_FORM_FRACTION = 0.6
 
-//#endregion
+// #endregion
 
-//#region Board reservation
+// #region Board reservation
 
 /**
  * Surfaces reserved by `mailwoman/eval-harness/fixtures/venue-structure-confounds.jsonl`.
@@ -347,11 +347,11 @@ export function isBoardReserved(raw: string): boolean {
 	return BOARD_RESERVED_SURFACES.some((surface) => low.includes(surface))
 }
 
-//#endregion
+// #endregion
 
-//#endregion
+// #endregion
 
-//#region Positive forms
+// #region Positive forms
 
 /**
  * A sub-venue string plus how it was made, for the composition report.
@@ -419,9 +419,9 @@ export function buildSubVenueForm(
  */
 export const buildPositiveForms = buildSubVenueForm
 
-//#endregion
+// #endregion
 
-//#region Negatives
+// #region Negatives
 
 /**
  * Negative classes, named so the composition report can count them and a failure can be attributed.
@@ -486,9 +486,9 @@ function availableNegativeClasses(pools: LegPools, streets: StreetNegatives): Ne
 	return available
 }
 
-//#endregion
+// #endregion
 
-//#region Recipe
+// #region Recipe
 
 /**
  * Per-leg composition tallies the build prints and the report quotes.
@@ -902,4 +902,4 @@ export const subVenueRecipe: CorpusRecipe = {
 	},
 }
 
-//#endregion
+// #endregion

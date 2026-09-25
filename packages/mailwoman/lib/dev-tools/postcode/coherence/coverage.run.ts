@@ -72,7 +72,7 @@ const backend: ResolverBackend =
 		? new WOFCandidateTableLookup({ databasePath: candidatePath })
 		: new WOFSQLitePlaceLookup({ databasePath: wofPaths })
 
-//#region 1. Row counts
+// #region 1. Row counts
 
 const rows = new Map<string, number>()
 
@@ -104,9 +104,9 @@ if (backendName === "candidate") {
 	}
 }
 
-//#endregion
+// #endregion
 
-//#region 2. Live reachability, through the pass's own lookups
+// #region 2. Live reachability, through the pass's own lookups
 
 console.log(`\n### ${backendName} backend · ${backendName === "fts" ? wofPaths.length : 1} source(s)`)
 console.log(`\n| system | country | postcode rows | postcode resolves | exact locality | pair coherent |`)
@@ -153,4 +153,4 @@ console.log(
 )
 console.log(`data root: ${dataRootPath()}`)
 
-//#endregion
+// #endregion

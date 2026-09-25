@@ -7,7 +7,7 @@
 import { TileMetadataRoute, TileRoute } from "#routes/tile"
 import { WorkerRoute } from "#routing"
 
-//#region Tile Retrieval
+// #region Tile Retrieval
 
 /**
  * Serves a per-provider broadband tile, keyed by provider, state and tile set.
@@ -27,9 +27,9 @@ export const BroadbandProviderTileRoute = WorkerRoute.GET(
 	}
 )
 
-//#endregion
+// #endregion
 
-//#region Metadata Lookup
+// #region Metadata Lookup
 
 /**
  * Serves TileJSON metadata for a per-provider broadband tile set.
@@ -49,4 +49,4 @@ export const BroadbandProviderTileMetadataRoute = WorkerRoute.GET(
 	}
 )
 
-//#endregion
+// #endregion

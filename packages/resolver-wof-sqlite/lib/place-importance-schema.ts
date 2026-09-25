@@ -36,7 +36,7 @@ import { allRows } from "@mailwoman/core/utils"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { Kysely } from "kysely"
 
-//#region Schema
+// #region Schema
 
 /**
  * One row of `place_importance`.
@@ -108,9 +108,9 @@ export async function createPlaceImportanceTable(db: Kysely<PlaceImportanceDatab
 		.execute()
 }
 
-//#endregion
+// #endregion
 
-//#region The referential derivation
+// #region The referential derivation
 
 /**
  * Re-exported from `@mailwoman/core/resolver`.
@@ -122,9 +122,9 @@ export async function createPlaceImportanceTable(db: Kysely<PlaceImportanceDatab
  * the column and the function that fills it are one hop apart.
  */
 
-//#endregion
+// #endregion
 
-//#region The legacy blend
+// #region The legacy blend
 
 /**
  * The most the encyclopedic channel may raise a place's blended importance above
@@ -176,9 +176,9 @@ export function blendImportance(referential: number, encyclopedic: number | null
 	return Math.max(referential, Math.min(encyclopedic, referential + ENCYCLOPEDIC_BOOST_CAP))
 }
 
-//#endregion
+// #endregion
 
-//#region Reading a database that may or may not carry the split
+// #region Reading a database that may or may not carry the split
 
 /**
  * Where a reader's two scores came from.
@@ -440,4 +440,4 @@ export function loadImportanceSplit<DB>(db: DatabaseClient<DB>): ImportanceSplit
 	}
 }
 
-//#endregion
+// #endregion

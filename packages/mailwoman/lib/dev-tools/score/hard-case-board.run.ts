@@ -54,7 +54,7 @@ const locales = [...new Set(board.map((c) => c.locale))].toSorted()
 
 console.error(`[board] ${board.length} rows, locales=[${locales.join(", ")}]`)
 
-//#region Resolver + pipelines
+// #region Resolver + pipelines
 
 const resolverMod = await import("@mailwoman/resolver-wof-sqlite")
 const wofPaths = await existingWOFDatabasePaths()
@@ -102,9 +102,9 @@ for (const arm of arms) {
 	pipelines.set(arm, byLocale)
 }
 
-//#endregion
+// #endregion
 
-//#region Scoring
+// #region Scoring
 
 interface Outcome {
 	/**
@@ -175,9 +175,9 @@ function score(c: HardCase, resolved: Resolved[]): Outcome {
 	}
 }
 
-//#endregion
+// #endregion
 
-//#region Run
+// #region Run
 
 interface RowResult {
 	id: string
@@ -220,9 +220,9 @@ for (const c of board) {
 	})
 }
 
-//#endregion
+// #endregion
 
-//#region Report
+// #region Report
 
 function tally(rows: RowResult[], arm: string): { pass: number; total: number } {
 	return { pass: rows.filter((r) => r.byArm[arm]!.pass).length, total: rows.length }
@@ -345,4 +345,4 @@ if (anyTie) {
 	)
 }
 
-//#endregion
+// #endregion

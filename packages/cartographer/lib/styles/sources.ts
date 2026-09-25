@@ -7,7 +7,7 @@
 import type { SourceSpecification } from "maplibre-gl"
 import type { Tagged } from "type-fest"
 
-//#region Type Definitions
+// #region Type Definitions
 
 /**
  * The tilesets available in the Nexus Tile API.

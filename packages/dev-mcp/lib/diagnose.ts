@@ -218,7 +218,7 @@ export interface AccountInput {
 		| undefined
 }
 
-//#region Facts
+// #region Facts
 
 /**
  * The decode's own confidence, over the tokens the tree was built from.
@@ -495,9 +495,9 @@ export function collectOutcomeFacts(result: AccountInput["result"]): OutcomeFact
 	}
 }
 
-//#endregion
+// #endregion
 
-//#region Shapes
+// #region Shapes
 
 /**
  * Match the mechanism-state predicates.
@@ -566,9 +566,9 @@ export function matchShapes(facts: {
 	return shapes
 }
 
-//#endregion
+// #endregion
 
-//#region Rendering
+// #region Rendering
 
 function channelMark(reading: ChannelReading): string {
 	return reading.state
@@ -647,9 +647,9 @@ export function renderAccount(account: Omit<RowAccount, "rendered">): string {
 	return parts.join(" · ")
 }
 
-//#endregion
+// #endregion
 
-//#region Aggregation
+// #region Aggregation
 
 export interface ShapeAggregate {
 	n: number
@@ -737,7 +737,7 @@ export function aggregateCounterfactuals(
 	return out
 }
 
-//#endregion
+// #endregion
 
 /**
  * The in-vocabulary mis-tag refinement of `unclassified` (#1722 v2 — the `bd-op2-london-college` class,

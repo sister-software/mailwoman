@@ -222,7 +222,7 @@ export interface MultiPolygonLiteral<P extends PolygonPath = PolygonPath> extend
 	coordinates: P[]
 }
 
-//#region Ring-list geometry — the parsed-GeoJSON shape
+// #region Ring-list geometry — the parsed-GeoJSON shape
 
 /**
  * A geometry as it arrives from `JSON.parse`, or a typed literal.
@@ -328,4 +328,4 @@ export function reversedRing(minLon: number, minLat: number, maxLon: number, max
 	]
 }
 
-//#endregion
+// #endregion

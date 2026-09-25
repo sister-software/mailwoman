@@ -237,7 +237,7 @@ const PARIS_FIXTURE: FixtureNode[] = [
 	},
 ]
 
-//#region deserializeFSTWeb — happy path
+// #region deserializeFSTWeb — happy path
 
 describe("deserializeFSTWeb", () => {
 	test("round-trips a 2-state FST: node + place counts", () => {
@@ -302,9 +302,9 @@ describe("deserializeFSTWeb", () => {
 	})
 })
 
-//#endregion
+// #endregion
 
-//#region deserializeFSTWeb — v1 importance derivation
+// #region deserializeFSTWeb — v1 importance derivation
 
 test("deserializeFSTWeb: v1 derives importance from a population u32 via the log2 curve", () => {
 	// v1 stores population (u32) in the importance slot.
@@ -321,9 +321,9 @@ test("deserializeFSTWeb: v1 derives importance from a population u32 via the log
 	expect(place.referential).toBeCloseTo(1 / 14, 4)
 })
 
-//#endregion
+// #endregion
 
-//#region deserializeFSTWeb — error paths
+// #region deserializeFSTWeb — error paths
 
 test("deserializeFSTWeb: a buffer shorter than the header throws", () => {
 	expect(() => deserializeFSTWeb(new Uint8Array(HEADER_SIZE - 1))).toThrow(/too small/i)
@@ -350,9 +350,9 @@ test("deserializeFSTWeb: a version above MAX_VERSION (now 5) is rejected", () =>
 	expect(() => deserializeFSTWeb(bytes)).toThrow(/version 6 unsupported/i)
 })
 
-//#endregion
+// #endregion
 
-//#region readFSTProvenanceWeb
+// #region readFSTProvenanceWeb
 
 const PROVENANCE = {
 	builtAt: "2026-06-25T00:00:00Z",
@@ -394,9 +394,9 @@ test("readFSTProvenanceWeb: a corrupt trailer (bad JSON) is swallowed to undefin
 	expect(readFSTProvenanceWeb(bytes)).toBeUndefined()
 })
 
-//#endregion
+// #endregion
 
-//#region surface-ambiguity classes
+// #region surface-ambiguity classes
 
 test("web reader roundtrips crossCountryBranches under header flags bit0, undefined without it", async () => {
 	const { serializeFST } = await import("@mailwoman/resolver-wof-sqlite/fst")
@@ -436,4 +436,4 @@ test("web reader roundtrips crossCountryBranches under header flags bit0, undefi
 	expect(m2.accepting(hit2.stateID)[0]!.crossCountryBranches).toBeUndefined()
 })
 
-//#endregion
+// #endregion

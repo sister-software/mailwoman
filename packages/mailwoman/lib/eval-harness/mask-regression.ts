@@ -109,7 +109,7 @@ export interface MaskRegressionOptions {
 	json?: string
 }
 
-//#region Locale matrix (mirrors capability-manifest.ts)
+// #region Locale matrix (mirrors capability-manifest.ts)
 
 /**
  * The per-tag vocabulary scored, unfolded (street parts split — mirrors score-affix.ts / capability-manifest.ts).
@@ -118,9 +118,9 @@ export interface MaskRegressionOptions {
  */
 const TAGS = UNFOLDED_ADDRESS_TAGS
 
-//#endregion
+// #endregion
 
-//#region The check
+// #region The check
 
 interface Delta {
 	locale: SystemCode
@@ -266,4 +266,4 @@ export async function maskRegressionCheck(
 	return { pass: true, violations }
 }
 
-//#endregion
+// #endregion

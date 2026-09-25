@@ -7,7 +7,7 @@
 import { createLightSpec, createSkySpec, StyleSpecificationComposer } from "@mailwoman/cartographer/base/composition"
 import { expect, test } from "vitest"
 
-//#region createLightSpec
+// #region createLightSpec
 
 test("createLightSpec: returns the house defaults when called bare", () => {
 	expect(createLightSpec()).toEqual({
@@ -31,9 +31,9 @@ test("createLightSpec: overriding position replaces the whole tuple", () => {
 	expect(createLightSpec({ position: [1, 2, 3] }).position).toEqual([1, 2, 3])
 })
 
-//#endregion
+// #endregion
 
-//#region createSkySpec
+// #region createSkySpec
 
 test("createSkySpec: returns the house atmospheric defaults when called bare", () => {
 	expect(createSkySpec()).toEqual({
@@ -53,9 +53,9 @@ test("createSkySpec: an override shadows only the named key", () => {
 	expect(spec["fog-ground-blend"]).toBe(0.1) // untouched default
 })
 
-//#endregion
+// #endregion
 
-//#region StyleSpecificationComposer — construction
+// #region StyleSpecificationComposer — construction
 
 test("Composer: light/sky default to the house specs when unset", () => {
 	const composer = new StyleSpecificationComposer({ sources: {} })
@@ -104,9 +104,9 @@ test("Composer: injects DEM sources for terrain + hillshade alongside the caller
 })
 */
 
-//#endregion
+// #endregion
 
-//#region StyleSpecificationComposer — layers
+// #region StyleSpecificationComposer — layers
 
 test("Composer.layers: exposes the base layer list as an array", () => {
 	const composer = new StyleSpecificationComposer({ sources: {} })
@@ -152,9 +152,9 @@ test("Composer.layers: an inserted layer sits immediately after its anchor", () 
 	expect(ids[anchorIdx + 1]).toBe("mw-anchored-layer")
 })
 
-//#endregion
+// #endregion
 
-//#region StyleSpecificationComposer — serialization
+// #region StyleSpecificationComposer — serialization
 
 test("Composer.toJSON: emits a v8 style with the self-host glyph + sprite endpoints", () => {
 	const style = new StyleSpecificationComposer({ sources: {} }).toJSON()
@@ -212,4 +212,4 @@ test("Composer: two instances from the shared BaseLayers have independent layer 
 	expect(a.layers).toHaveLength(baseCount) // The first composer remains unchanged.
 })
 
-//#endregion
+// #endregion

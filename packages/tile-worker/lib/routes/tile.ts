@@ -15,7 +15,7 @@ import { TileFileExtensionMap, type TileTypeFileExtension } from "#protomaps/fil
 import { CloudflareWorkerPMTiles } from "#protomaps/index"
 import { WorkerRoute } from "#routing"
 
-//#region Tile Retrieval
+// #region Tile Retrieval
 
 /**
  * Serves a single tile from a PMTiles archive in R2, by tile set and z/x/y.
@@ -65,9 +65,9 @@ export const TileRoute = WorkerRoute.GET(
 	}
 )
 
-//#endregion
+// #endregion
 
-//#region Metadata Lookup
+// #region Metadata Lookup
 
 /**
  * Serves a tile set's TileJSON metadata, which clients read before requesting tiles.
@@ -101,4 +101,4 @@ export const TileMetadataRoute = WorkerRoute.GET(
 	}
 )
 
-//#endregion
+// #endregion

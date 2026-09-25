@@ -33,7 +33,7 @@ const BBOX_2D_LENGTH = 4
  */
 const BBOX_3D_LENGTH = 6
 
-//#region Bounding Box Literals
+// #region Bounding Box Literals
 
 /**
  * A 2-dimensional rectangular area that can be determined by two longitudes and two latitudes.
@@ -127,9 +127,9 @@ export type BBox3DLiteral = [
 	maxAltitude: number,
 ]
 
-//#endregion
+// #endregion
 
-//#region Type Predicates
+// #region Type Predicates
 
 /**
  * Type-predicate for 2-dimensional bounding boxes (`[west, south, east, north]`).
@@ -177,7 +177,7 @@ export function isGeoBoundingBox(input: unknown): input is GeoBoundingBox {
 	return input instanceof GeoBoundingBox
 }
 
-//#endregion
+// #endregion
 
 /**
  * Input for creating a GeoBoundingBox instance.
@@ -193,7 +193,7 @@ export type GeoBoundingBoxInput = BBox2DLiteral | BBox3DLiteral | GeoBoundingBox
  * and maximum coordinates of the object's Geometries, Features, or Feature Collections.
  */
 export class GeoBoundingBox {
-	//#region Properties
+	// #region Properties
 
 	public projection: CoordinateProjection
 
@@ -236,9 +236,9 @@ export class GeoBoundingBox {
 	 */
 	#maxAltitude: number
 
-	//#endregion
+	// #endregion
 
-	//#region Accessors
+	// #region Accessors
 
 	public get minLongitude() {
 		return this.#minLongitude
@@ -335,9 +335,9 @@ export class GeoBoundingBox {
 		return this.toJSON()[Symbol.iterator]()
 	}
 
-	//#endregion
+	// #endregion
 
-	//#region Constructors
+	// #region Constructors
 
 	/**
 	 * Creates a blank GeoBoundingBox instance.
@@ -384,9 +384,9 @@ export class GeoBoundingBox {
 		this.projection = projection ?? CoordinateProjection.WGS84
 	}
 
-	//#endregion
+	// #endregion
 
-	//#region Predicates
+	// #region Predicates
 
 	public is3D() {
 		return this.#minAltitude !== 0 || this.#maxAltitude !== 0
@@ -396,9 +396,9 @@ export class GeoBoundingBox {
 		return !this.is3D()
 	}
 
-	//#endregion
+	// #endregion
 
-	//#region Conversion
+	// #region Conversion
 
 	/**
 	 * Converts the 2D GeoBoundingBox to an array literal.
@@ -464,10 +464,10 @@ export class GeoBoundingBox {
 		return `SRID=${this.projection};POLYGON((${minLongitude} ${minLatitude}, ${maxLongitude} ${minLatitude}, ${maxLongitude} ${maxLatitude}, ${minLongitude} ${maxLatitude}, ${minLongitude} ${minLatitude}))`
 	}
 
-	//#endregion
+	// #endregion
 }
 
-//#region Equirectangular bbox around a point
+// #region Equirectangular bbox around a point
 
 /**
  * Plain latitude/longitude bounds used as a query filter.
@@ -509,4 +509,4 @@ export function bboxAround(lat: number, lon: number, radiusKM: number): LatLonBo
 	}
 }
 
-//#endregion
+// #endregion

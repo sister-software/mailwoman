@@ -8,7 +8,7 @@ import type { Tagged } from "type-fest"
 
 import type { AdminLevel1Code, FIPSStateCode } from "#state"
 
-//#region Tagged FIPS types
+// #region Tagged FIPS types
 
 /**
  * A 4-digit number assigned by the Census to uniquely identify a block.
@@ -201,9 +201,9 @@ export type FIPSPlaceCode = Tagged<string, "FIPSPlaceCode">
  */
 export type FIPSCongressionalDistrictCode = Tagged<string, "FIPSConressionalDistrictCode">
 
-//#endregion
+// #endregion
 
-//#region GeoID Parsing Setup
+// #region GeoID Parsing Setup
 
 /**
  * A part of a GeoID to it's respective name.
@@ -419,9 +419,9 @@ export class GeoIDParsingError extends Error {
 	}
 }
 
-//#endregion
+// #endregion
 
-//#region GeoID Input Matchers
+// #region GeoID Input Matchers
 
 export class GeoIDInputMatcher<T extends GeoIDPart[] = GeoIDPart[]> {
 	public pattern: RegExp
@@ -544,9 +544,9 @@ export function isGeoIDComponent<T extends GeoIDPart>(component: T, input: unkno
 	return matcher.test(input)
 }
 
-//#endregion
+// #endregion
 
-//#region GeoID Parsing
+// #region GeoID Parsing
 
 /**
  * GeoID input matchers sorted by length in descending order, such that the most specific matchers are first.
@@ -643,9 +643,9 @@ export function parseGeoID(input: unknown): ParsedGeoID | null {
 	return null
 }
 
-//#endregion
+// #endregion
 
-//#region GeoID Formatting
+// #region GeoID Formatting
 
 /**
  * Format a parsed block GeoID back into a string.
@@ -700,4 +700,4 @@ export function formatGeoID(input: unknown): string | null {
 	return null
 }
 
-//#endregion
+// #endregion

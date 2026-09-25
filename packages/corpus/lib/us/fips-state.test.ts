@@ -12,7 +12,7 @@ import {
 } from "@mailwoman/corpus/us/fips-state"
 import { expect, test } from "vitest"
 
-//#region US_FIPS_STATE table
+// #region US_FIPS_STATE table
 
 test("US_FIPS_STATE: maps zero-padded FIPS codes to the correct state", () => {
 	expect(US_FIPS_STATE["01"]).toEqual({ abbreviation: "AL", name: "Alabama" })
@@ -49,9 +49,9 @@ test("US_FIPS_STATE: is frozen (immutable reference table)", () => {
 	expect(Object.isFrozen(US_FIPS_STATE)).toBe(true)
 })
 
-//#endregion
+// #endregion
 
-//#region lookupFipsState
+// #region lookupFipsState
 
 test("lookupFipsState: resolves a known zero-padded code", () => {
 	expect(lookupFipsState("50")).toEqual({ abbreviation: "VT", name: "Vermont" })
@@ -74,9 +74,9 @@ test("lookupFipsState: the lookup is exact — a non-padded code does not match"
 	expect(lookupFipsState("6")).toBeNull()
 })
 
-//#endregion
+// #endregion
 
-//#region US_STATE_BY_ABBREVIATION (inverted view)
+// #region US_STATE_BY_ABBREVIATION (inverted view)
 
 test("US_STATE_BY_ABBREVIATION: inverts the table by postal abbreviation", () => {
 	expect(US_STATE_BY_ABBREVIATION.CA).toEqual({ abbreviation: "CA", name: "California" })
@@ -88,9 +88,9 @@ test("US_STATE_BY_ABBREVIATION: has the same cardinality as the forward table", 
 	expect(Object.keys(US_STATE_BY_ABBREVIATION)).toHaveLength(Object.keys(US_FIPS_STATE).length)
 })
 
-//#endregion
+// #endregion
 
-//#region lookupStateAbbreviation
+// #region lookupStateAbbreviation
 
 test("lookupStateAbbreviation: resolves an uppercase abbreviation", () => {
 	expect(lookupStateAbbreviation("CA")).toEqual({ abbreviation: "CA", name: "California" })
@@ -113,4 +113,4 @@ test("lookupStateAbbreviation: null/undefined/empty input returns null", () => {
 	expect(lookupStateAbbreviation("")).toBeNull()
 })
 
-//#endregion
+// #endregion

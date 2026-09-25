@@ -16,9 +16,9 @@ import {
 } from "#styles/layers"
 import type { TileSetSourceRecord } from "#styles/sources"
 
-//#endregion
+// #endregion
 
-//#region Spec Creators
+// #region Spec Creators
 
 export function createLightSpec(spec?: Partial<LightSpecification>): LightSpecification {
 	return {
@@ -46,9 +46,9 @@ export function createSkySpec(spec?: Partial<SkySpecification>): SkySpecificatio
 	}
 }
 
-//#endregion
+// #endregion
 
-//#region Style Composition
+// #region Style Composition
 
 /**
  * The glyph host every style composed here reads fonts from.
@@ -156,4 +156,4 @@ export class StyleSpecificationComposer {
 	}
 }
 
-//#endregion
+// #endregion

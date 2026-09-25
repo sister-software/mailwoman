@@ -37,7 +37,7 @@ import {
 import { createWOFResolver } from "@mailwoman/resolver/resolve"
 import { describe, expect, it } from "vitest"
 
-//#region Fixtures — the real 75001 collision
+// #region Fixtures — the real 75001 collision
 
 const PC_75001_FR: ResolvedPlace = {
 	id: 421_307_175,
@@ -231,9 +231,9 @@ const LONDON_OH: ResolvedPlace = {
 	exactMatch: true,
 }
 
-//#endregion
+// #endregion
 
-//#region Fixtures — the 2026-08-09 eu-mixed panel block (#24)
+// #region Fixtures — the 2026-08-09 eu-mixed panel block (#24)
 
 // `Valy 117, 37901 Třeboň`.
 // The pair case the codex shape list could not reach (no `cz` address system).
@@ -322,7 +322,7 @@ const SARNEN_CH: ResolvedPlace = {
 	exactMatch: true,
 }
 
-//#endregion
+// #endregion
 
 /**
  * Models the two backend behaviours that cause the bug: `country` is a hard filter

@@ -125,7 +125,7 @@ export const EMPTY_SPAN_PROPOSER_LEXICON: SpanProposerLexicon = {
 	modifierEligibleStructureDesignators: new Set(),
 }
 
-//#region Tokenization
+// #region Tokenization
 
 interface RawToken {
 	/**
@@ -185,9 +185,9 @@ function tokenize(text: string): RawToken[] {
 	return out
 }
 
-//#endregion
+// #endregion
 
-//#region Cue family 1 — paired delimiters (M2)
+// #region Cue family 1 — paired delimiters (M2)
 
 /**
  * Find balanced delimiter pairs, or return `null` if any delimiter is unmatched.
@@ -327,9 +327,9 @@ function proposePairedDelimiters(text: string, lexicon: SpanProposerLexicon): Pr
 	return out
 }
 
-//#endregion
+// #endregion
 
-//#region Cue family 2 — designator + identifier
+// #region Cue family 2 — designator + identifier
 
 /**
  * Short identifier shapes per the designator grammar: "4B", "500", "#104", "B", "B99".
@@ -415,9 +415,9 @@ function proposeDesignatorPhrases(
 	return out
 }
 
-//#endregion
+// #endregion
 
-//#region Cue family 3 — dual-path numeric punctuation (M3)
+// #region Cue family 3 — dual-path numeric punctuation (M3)
 
 const SLASH_COMPOUND = /^(\d{1,4}[A-Za-z]?)\/(\d{1,5}[A-Za-z]?)$/
 const HYPHEN_COMPOUND = /^(\d{1,4})-(\d{1,5})$/
@@ -601,9 +601,9 @@ function proposeNumericReadings(
 	return out
 }
 
-//#endregion
+// #endregion
 
-//#region Entry point
+// #region Entry point
 
 /**
  * Propose typed spans synchronously.
@@ -635,4 +635,4 @@ export function proposeSpans(text: string, lexicon: SpanProposerLexicon = EMPTY_
 	return out
 }
 
-//#endregion
+// #endregion

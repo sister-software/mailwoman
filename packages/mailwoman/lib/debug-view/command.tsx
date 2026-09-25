@@ -41,7 +41,7 @@ import { createGeocodeSession } from "#geocode/session"
 import { DebugFrame, mapPaneCellSize } from "./DebugFrame.tsx"
 import { DebugSessionApp } from "./DebugSessionApp.tsx"
 
-//#region Static (non-TTY) path
+// #region Static (non-TTY) path
 
 /**
  * Geocode `input` once and render exactly one {@link DebugFrame} to a string.
@@ -145,9 +145,9 @@ function GeocodeDebugStatic(props: { input: string; options: GeocodeCommandOptio
 	return writeRawStdout(state.result)
 }
 
-//#endregion
+// #endregion
 
-//#region Interactive (TTY) path — the Ink handoff
+// #region Interactive (TTY) path — the Ink handoff
 
 /**
  * Hand the terminal from the command adapter's Ink instance to a full-screen renderer configured here.
@@ -225,9 +225,9 @@ function DebugSessionHandoff(props: { input: string; options: GeocodeCommandOpti
 
 /* oxlint-enable react-hooks/exhaustive-deps */
 
-//#endregion
+// #endregion
 
-//#region Dispatcher
+// #region Dispatcher
 
 export function GeocodeDebugCommand(props: {
 	input: string
@@ -240,4 +240,4 @@ export function GeocodeDebugCommand(props: {
 	)
 }
 
-//#endregion
+// #endregion

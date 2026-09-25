@@ -41,7 +41,7 @@ import { createGeocodeSession, type GeocodeRun, type GeocodeSession } from "#geo
 
 import { DebugFrame, mapPaneCellSize, outputPaneCapacity, type DebugData, type DebugPane } from "./DebugFrame.tsx"
 
-//#region Interface
+// #region Interface
 
 export interface DebugSessionAppProps {
 	/**
@@ -92,9 +92,9 @@ interface SessionRun extends GeocodeRun {
 	input: string
 }
 
-//#endregion
+// #endregion
 
-//#region Constants
+// #region Constants
 
 const PANE_CYCLE: readonly DebugPane[] = ["input", "output", "map"]
 
@@ -127,9 +127,9 @@ const MAX_MERCATOR_LATITUDE = 85.05112878
  */
 const FALLBACK_MAX_ZOOM = 22
 
-//#endregion
+// #endregion
 
-//#region Viewport math
+// #region Viewport math
 
 function messageOf(error: unknown): string {
 	return error instanceof Error ? error.message : String(error)
@@ -178,9 +178,9 @@ function zoomedViewport(view: Viewport, delta: number, source: TileSource | null
 	}
 }
 
-//#endregion
+// #endregion
 
-//#region Session
+// #region Session
 
 /**
  * Open the session, the tile archive, and geocode the starting query.
@@ -221,7 +221,7 @@ function closeResources(resources: Resources | null): void {
 	})
 }
 
-//#endregion
+// #endregion
 
 /* oxlint-disable react-hooks/exhaustive-deps -- The mount effect is one-shot BY interface: it opens the
 	 session, the tile archive and the first geocode, and its cleanup is the only thing that closes them.
@@ -253,7 +253,7 @@ export function DebugSessionApp({ initialInput, options }: DebugSessionAppProps)
 	const frameRequestRef = useRef(0)
 	const runRequestRef = useRef(0)
 
-	//#region Lifecycle — mount, resize, fatal exit
+	// #region Lifecycle — mount, resize, fatal exit
 
 	useEffect(() => {
 		let disposed = false
@@ -340,9 +340,9 @@ export function DebugSessionApp({ initialInput, options }: DebugSessionAppProps)
 		exit(fatalError instanceof Error ? fatalError : new CommandError(messageOf(fatalError)))
 	}, [phase, fatalError, exit])
 
-	//#endregion
+	// #endregion
 
-	//#region Map frame — the request-counter-guarded render
+	// #region Map frame — the request-counter-guarded render
 
 	useEffect(() => {
 		if (!run) return
@@ -411,9 +411,9 @@ export function DebugSessionApp({ initialInput, options }: DebugSessionAppProps)
 		}
 	}, [run, viewport, resources, size.columns, size.rows])
 
-	//#endregion
+	// #endregion
 
-	//#region Input + keys
+	// #region Input + keys
 
 	// Stable across a keystroke so the memoized input field is, too.
 	// It is the one element that has to re-render when the user types, and a fresh
@@ -544,9 +544,9 @@ export function DebugSessionApp({ initialInput, options }: DebugSessionAppProps)
 		{ isActive: phase === "ready" || phase === "busy" }
 	)
 
-	//#endregion
+	// #endregion
 
-	//#region Render
+	// #region Render
 
 	// Memoized because `DebugFrame`'s panes are memoized: a fresh object literal per render
 	// would defeat every one of them, and the map pane is the expensive one — 28 rows of
@@ -604,7 +604,7 @@ export function DebugSessionApp({ initialInput, options }: DebugSessionAppProps)
 		/>
 	)
 
-	//#endregion
+	// #endregion
 }
 
 /* oxlint-enable react-hooks/exhaustive-deps */

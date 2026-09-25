@@ -7,7 +7,7 @@
 import { TileMetadataRoute, TileRoute } from "#routes/tile"
 import { WorkerRoute } from "#routing"
 
-//#region Tile Retrieval
+// #region Tile Retrieval
 
 /**
  * Serves a tiger tile, keyed additionally by state so each state's archive is fetched separately.
@@ -27,9 +27,9 @@ export const TIGERTileRoute = WorkerRoute.GET(
 	}
 )
 
-//#endregion
+// #endregion
 
-//#region Metadata Lookup
+// #region Metadata Lookup
 
 /**
  * Serves TileJSON metadata for a state's tiger tile set.
@@ -49,7 +49,7 @@ export const TIGERTileMetadataRoute = WorkerRoute.GET(
 	}
 )
 
-//#endregion
+// #endregion
 
 // export const TIGERBlockRoute = WorkerRoute.GET(
 // 	"/tiger/:stateCode(\\d+)/:tileSetName([a-zA-Z0-9_\\-]+)/:z(\\d+)/:x(\\d+)/:y(\\d+).:fileExtension([a-z0-9]+)",

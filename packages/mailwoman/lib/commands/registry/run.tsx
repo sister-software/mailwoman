@@ -48,7 +48,7 @@ import type { RegionDatabaseResolver } from "#geocode/regions"
  */
 export const isDefault = true
 
-//#region CLI interface — args + options
+// #region CLI interface — args + options
 
 /**
  * Native command-line interface consumed by the filesystem command router.
@@ -83,9 +83,9 @@ export const spec = {
 
 type Options = OptionsOf<typeof spec>
 
-//#endregion
+// #endregion
 
-//#region Column mapping
+// #region Column mapping
 
 /**
  * Built-in best-effort mapping for tidy contact/org CSVs.
@@ -489,9 +489,9 @@ async function runMultiSource(specs: MultiSourceSpec[], options: Options): Promi
 	return written === null ? prettyJSON(geojson) : `${summary}\n${written}`
 }
 
-//#endregion
+// #endregion
 
-//#region Core
+// #region Core
 
 async function runRegistry(csvPath: string, options: Options): Promise<string> {
 	const { inferMapping, ingestRows, streamRows, resolveEntities, toGeoJSON } = await import("@mailwoman/registry")
@@ -534,9 +534,9 @@ async function runRegistry(csvPath: string, options: Options): Promise<string> {
 	return written === null ? prettyJSON(geojson) : `${summary}\n${written}`
 }
 
-//#endregion
+// #endregion
 
-//#region React command component
+// #region React command component
 
 const RegistryCommand: ParsedCommandComponent<Options> = ({ args, options }) => {
 	const state = useCommandTask(async () => {
@@ -564,4 +564,4 @@ const RegistryCommand: ParsedCommandComponent<Options> = ({ args, options }) => 
 
 export default RegistryCommand
 
-//#endregion
+// #endregion

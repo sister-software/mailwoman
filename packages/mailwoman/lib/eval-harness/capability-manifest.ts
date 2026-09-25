@@ -94,7 +94,7 @@ export interface CapabilityManifestOptions {
 	write?: boolean
 }
 
-//#region Tier + locale matrix
+// #region Tier + locale matrix
 
 /**
  * Serving tiers and their channel feed (vs the model-card ship-config, expressed as overrides).
@@ -125,9 +125,9 @@ const FORBIDDEN_TAGS: Set<string> = new Set(
 	Object.values(ADDRESS_SYSTEM_CONVENTIONS).flatMap((c) => c?.forbiddenTags ?? [])
 )
 
-//#endregion
+// #endregion
 
-//#region Build the manifest
+// #region Build the manifest
 
 /**
  * `{ maskOffF1, maskOnF1? }` — maskOnF1 present only for forbidden-set tags the model emits.
@@ -212,9 +212,9 @@ async function buildManifest(paths: ResolvedPaths): Promise<Capabilities> {
 	return capabilities
 }
 
-//#endregion
+// #endregion
 
-//#region Entry
+// #region Entry
 
 /**
  * Measure the per-tier × system × tag capability manifest.
@@ -285,4 +285,4 @@ export async function generateCapabilityManifest(options: CapabilityManifestOpti
 	}
 }
 
-//#endregion
+// #endregion

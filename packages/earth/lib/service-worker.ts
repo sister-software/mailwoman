@@ -33,7 +33,7 @@ declare const self: ServiceWorkerGlobalScope
 
 precacheAndRoute(self.__WB_MANIFEST)
 
-//#region Range cache
+// #region Range cache
 
 /**
  * Partial Content: the response to a range request, which is what this worker caches.
@@ -215,4 +215,4 @@ async function pruneOtherVersions(keepVersion: string): Promise<void> {
 	}
 }
 
-//#endregion
+// #endregion

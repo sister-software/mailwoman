@@ -41,7 +41,7 @@ export class Placetype implements Disposable {
 		this.children.clear()
 	}
 
-	//#region Static Caches
+	// #region Static Caches
 
 	/**
 	 * A map of placetypes indexed by their Brooklyn Integers ID.
@@ -66,9 +66,9 @@ export class Placetype implements Disposable {
 	 */
 	static #childNamesOfParentName = new Map<string, Set<string>>()
 
-	//#endregion
+	// #endregion
 
-	//#region Static Methods
+	// #region Static Methods
 
 	static async prepare({ batchSize, localRepoDirectory }: PlacetypeServiceInit) {
 		const { repoDirectory, exists } = await prepareRepositoryDirectories(PLACETYPES_REPO_SOURCE, localRepoDirectory)
@@ -161,14 +161,14 @@ export class Placetype implements Disposable {
 		return 0
 	}
 
-	//#endregion
+	// #endregion
 
 	/**
 	 * The source definition of this placetype.
 	 */
 	readonly #definition: PlacetypeDefinition
 
-	//#region Properties
+	// #region Properties
 
 	/**
 	 * The Brooklyn Integers ID of this placetype.
@@ -221,9 +221,9 @@ export class Placetype implements Disposable {
 	 */
 	public children: Set<Placetype>
 
-	//#endregion
+	// #endregion
 
-	//#region Predicates
+	// #region Predicates
 
 	/**
 	 * Check if this placetype has a child matching the given name, ID, or Placetype instance.
@@ -242,9 +242,9 @@ export class Placetype implements Disposable {
 		return children.has(child)
 	}
 
-	//#endregion
+	// #endregion
 
-	//#region Lineage Methods
+	// #region Lineage Methods
 
 	/**
 	 * Find the ancestors of this placetype, optionally filtered by role.
@@ -347,9 +347,9 @@ export class Placetype implements Disposable {
 		}
 	}
 
-	//#endregion
+	// #endregion
 
-	//#region Constructors
+	// #region Constructors
 
 	/**
 	 * Register a placetype specification, creating a new Placetype instance and indexing it by id.
@@ -436,9 +436,9 @@ export class Placetype implements Disposable {
 		}
 	}
 
-	//#endregion
+	// #endregion
 
-	//#region Methods
+	// #region Methods
 
 	public toString() {
 		const { name, id, role } = this.#definition

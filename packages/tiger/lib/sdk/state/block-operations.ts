@@ -22,7 +22,7 @@ export interface StateBlockIntersectionCriteria {
 	tractCodes?: FIPSTractCode[]
 }
 
-//#region Row parsing
+// #region Row parsing
 
 /**
  * @internal
@@ -68,4 +68,4 @@ export function parseTIGERBlockFeatureCollectionFromRows(rows: TIGERBlockRow[]):
 	return featureCollection
 }
 
-//#endregion
+// #endregion

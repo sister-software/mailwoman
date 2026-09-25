@@ -70,7 +70,7 @@ function hasWordContent(piece: string): boolean {
 	return /[\p{L}\p{N}]/u.test(piece)
 }
 
-//#region Structural types
+// #region Structural types
 
 export interface FSTMatchLike {
 	stateID: number
@@ -101,9 +101,9 @@ export interface FSTMatcherLike {
 	accepting(stateID: number): FSTPlaceEntryLike[]
 }
 
-//#endregion
+// #endregion
 
-//#region Placetype → BIO label mapping
+// #region Placetype → BIO label mapping
 
 /**
  * The only placetypes that reach a BIO tag.
@@ -233,9 +233,9 @@ export function collapseFSTBias(
 	return byTag
 }
 
-//#endregion
+// #endregion
 
-//#region Internals
+// #region Internals
 
 export interface WordGroup {
 	fstToken: string
@@ -813,4 +813,4 @@ function applyBias(
 	}
 }
 
-//#endregion
+// #endregion

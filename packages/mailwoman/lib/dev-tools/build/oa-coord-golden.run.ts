@@ -40,7 +40,7 @@ import { dirname } from "path-ts"
 import { CSVSpliterator, type CSVSpliteratorInit } from "spliterator"
 import { Globerator } from "spliterator/node/fs"
 
-//#region CSV source
+// #region CSV source
 
 /**
  * Approximates Python's default `csv.DictReader` dialect.
@@ -68,9 +68,9 @@ function csvRecordsFromFile(filePath: string): AsyncIterable<CSVRecord> {
 	return CSVSpliterator.fromAsync<CSVRecord>(openReadStream(filePath), CSV_OPTIONS)
 }
 
-//#endregion
+// #endregion
 
-//#region Sampling
+// #region Sampling
 
 /**
  * The address orders a row can be rendered in, cycled so no single template dominates the set.
@@ -229,7 +229,7 @@ function toEvalRows(buckets: Map<string, Address[]>, country: string): Record<st
 	return rows
 }
 
-//#endregion
+// #endregion
 
 const { values } = parseArguments({
 	options: {

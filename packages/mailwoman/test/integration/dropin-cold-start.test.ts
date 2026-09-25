@@ -56,7 +56,7 @@ const fixtures = new AsyncDisposableStack()
 
 afterAll(() => fixtures.disposeAsync())
 
-//#region Paths + budgets
+// #region Paths + budgets
 
 const PHOTON_CLI = workspacePath("photon", "out", "cli.js")
 const NOMINATIM_CLI = workspacePath("nominatim", "out", "cli.js")
@@ -120,9 +120,9 @@ const PULL_TIMEOUT_MS = 600_000
  */
 const CONDITIONAL_TEST_TIMEOUT_MS = PULL_TIMEOUT_MS + 3 * HEALTHY_TIMEOUT_MS + 30_000
 
-//#endregion
+// #endregion
 
-//#region Server lifecycle helpers
+// #region Server lifecycle helpers
 
 /**
  * A spawned long-running server plus its captured output — captured live (not just at exit)
@@ -295,7 +295,7 @@ async function mcpRoundTrip(
 	return { results, stderr: server.stderr }
 }
 
-//#endregion
+// #endregion
 
 /**
  * Fresh, empty data root — never populated, so the "missing data" + "libpostal
@@ -473,7 +473,7 @@ describe("mailwoman-mcp — cold start over stdio, no data", () => {
 	)
 })
 
-//#region Conditional: real data pull + Paris/Texas retest
+// #region Conditional: real data pull + Paris/Texas retest
 
 const isFull = $public.MAILWOMAN_COLD_START_FULL === "1"
 
@@ -552,4 +552,4 @@ describe.skipIf(!isFull || !hasMailwomanCLI || !hasPhotonCLI || !hasNominatimCLI
 	}
 )
 
-//#endregion
+// #endregion

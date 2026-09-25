@@ -24,7 +24,7 @@ export interface Transform {
 	apply: (raw: string) => string | null
 }
 
-//#region comma-drop
+// #region comma-drop
 
 /**
  * Remove every comma.
@@ -37,9 +37,9 @@ function commaDrop(raw: string): string | null {
 	return raw.replaceAll(",", "").replaceAll(/\s+/g, " ").trim()
 }
 
-//#endregion
+// #endregion
 
-//#region abbreviation-swap
+// #region abbreviation-swap
 
 /**
  * Narrow English street-suffix table, independent of the gauntlet's abbreviation source.
@@ -142,9 +142,9 @@ export function canonicalizeAbbreviations(value: string): string {
 		.join("")
 }
 
-//#endregion
+// #endregion
 
-//#region case-fold (ALL-CAPS) / lowercase
+// #region case-fold (ALL-CAPS) / lowercase
 
 /**
  * All-caps the input.
@@ -164,9 +164,9 @@ function lowercase(raw: string): string | null {
 	return raw.toLowerCase()
 }
 
-//#endregion
+// #endregion
 
-//#region whitespace-jitter
+// #region whitespace-jitter
 
 /**
  * Double literal spaces; return `null` when none are present.
@@ -177,9 +177,9 @@ function whitespaceJitter(raw: string): string | null {
 	return raw.replaceAll(" ", "  ")
 }
 
-//#endregion
+// #endregion
 
-//#region trailing-punct
+// #region trailing-punct
 
 /**
  * Append a trailing period.
@@ -190,9 +190,9 @@ function trailingPunct(raw: string): string | null {
 	return `${raw}.`
 }
 
-//#endregion
+// #endregion
 
-//#region paired-punct transforms
+// #region paired-punct transforms
 
 /**
  * Wrap the input in quotes, as when copying a quoted spreadsheet or CSV cell.
@@ -208,9 +208,9 @@ function addParenthetical(raw: string): string | null {
 	return `${raw} (main entrance)`
 }
 
-//#endregion
+// #endregion
 
-//#region idempotence
+// #region idempotence
 
 /**
  * Return the input unchanged; the runner parses it twice to test determinism.
@@ -219,9 +219,9 @@ function identity(raw: string): string | null {
 	return raw
 }
 
-//#endregion
+// #endregion
 
-//#region registry
+// #region registry
 
 /**
  * Registered metamorphic transforms.
@@ -302,4 +302,4 @@ export function getTransform(id: string): Transform {
 	return t
 }
 
-//#endregion
+// #endregion

@@ -20,7 +20,7 @@ import { repoRootPath } from "@mailwoman/core/paths"
 
 import { readCommands, type CommandNode, type OptionSpec } from "./cli-schema.ts"
 
-//#region Scope policy
+// #region Scope policy
 
 /**
  * The command groups this page documents in full.
@@ -49,9 +49,9 @@ export const GROUP_NOTES: Readonly<Record<string, string>> = {
 	wof: "Prepares and inspects the Who's On First gazetteer source tree.",
 }
 
-//#endregion
+// #endregion
 
-//#region Derived shapes
+// #region Derived shapes
 
 /**
  * One flag row.
@@ -138,9 +138,9 @@ export interface CLISurface {
 	totalCommands: number
 }
 
-//#endregion
+// #endregion
 
-//#region Type + default rendering
+// #region Type + default rendering
 
 function renderType(option: OptionSpec): string {
 	if (option.choices) return option.choices.map((value) => `\`${value}\``).join(" \\| ")
@@ -174,9 +174,9 @@ export function renderDefault(value: unknown): string {
 	return `\`${String(value)}\``
 }
 
-//#endregion
+// #endregion
 
-//#region MDX escaping + tables
+// #region MDX escaping + tables
 
 /**
  * Make a source-authored help string safe as MDX table-cell text.
@@ -210,9 +210,9 @@ export function renderTable(headers: readonly string[], rows: readonly (readonly
 	return [line(headers), `| ${widths.map((width) => "-".repeat(width)).join(" | ")} |`, ...rows.map(line)].join("\n")
 }
 
-//#endregion
+// #endregion
 
-//#region Collection
+// #region Collection
 
 /**
  * Flatten a command node and its path into {@link CLICommand} records.
@@ -358,9 +358,9 @@ export async function collectCLISurface(commandsDirectory = COMMANDS_DIRECTORY):
 	return { documented, undocumented, totalCommands }
 }
 
-//#endregion
+// #endregion
 
-//#region Rendering
+// #region Rendering
 
 const FRONTMATTER = [
 	"---",
@@ -529,7 +529,7 @@ export function renderCLIReference(surface: CLISurface): string {
 	return `${sections.join("\n").replaceAll(/\n{3,}/g, "\n\n")}`
 }
 
-//#endregion
+// #endregion
 
 /**
  * The page this generator owns.

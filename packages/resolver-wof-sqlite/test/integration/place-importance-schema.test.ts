@@ -161,7 +161,7 @@ describe("splitLegacyImportance", () => {
 	})
 })
 
-//#region loadImportanceSplit
+// #region loadImportanceSplit
 
 function seedPopulation(db: DatabaseClient<PlaceImportanceDatabase>, rows: ReadonlyArray<[number, number]>): void {
 	db.exec("CREATE TABLE place_population (id INTEGER PRIMARY KEY, population INTEGER NOT NULL DEFAULT 0)")
@@ -244,4 +244,4 @@ describe("loadImportanceSplit", () => {
 	})
 })
 
-//#endregion
+// #endregion

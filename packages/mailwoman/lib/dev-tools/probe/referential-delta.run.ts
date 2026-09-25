@@ -46,7 +46,7 @@ import { existingWOFDatabasePaths } from "#resolver-backend"
 
 const { values } = parseArguments({ options: { board: { type: "string" } } })
 
-//#region 1 — Gazetteer census of the saturated tail
+// #region 1 — Gazetteer census of the saturated tail
 
 const adminPath = wofDatabasePath("admin-global-priority.db")
 
@@ -99,9 +99,9 @@ if (!(await pathExists(adminPath))) {
 	console.log("")
 }
 
-//#endregion
+// #endregion
 
-//#region 2 — Live query replay
+// #region 2 — Live query replay
 
 /**
  * The pre-split within-tier key, verbatim from `lookup.ts` before the split:
@@ -169,4 +169,4 @@ if (!wofPaths.length) {
 	console.log(`- result sets whose ORDER differs pre-split vs post-split: **${differing}**\n`)
 }
 
-//#endregion
+// #endregion

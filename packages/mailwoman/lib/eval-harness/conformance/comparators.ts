@@ -130,7 +130,7 @@ function populatedComponents(result: GauntletResult): Record<string, string> {
 	return out
 }
 
-//#region resolution_identity
+// #region resolution_identity
 
 /**
  * The resolved admin chain as stable identity keys, finest first.
@@ -213,9 +213,9 @@ function compareResolutionIdentity(base: ConformanceOutcome, variant: Conformanc
 	}
 }
 
-//#endregion
+// #endregion
 
-//#region assembled_coordinate
+// #region assembled_coordinate
 
 function compareAssembledCoordinate(
 	fixture: ConformanceFixture,
@@ -281,9 +281,9 @@ function compareAssembledCoordinate(
 	return { comparator: "assembled_coordinate", observed: "equivalent", basis, differences: [] }
 }
 
-//#endregion
+// #endregion
 
-//#region parse_whole_strict
+// #region parse_whole_strict
 
 function compareParseWholeStrict(base: ConformanceOutcome, variant: ConformanceOutcome): ComparatorReading {
 	const a = populatedComponents(base.result)
@@ -321,9 +321,9 @@ function compareParseWholeStrict(base: ConformanceOutcome, variant: ConformanceO
 		: { comparator: "parse_whole_strict", observed: "equivalent", basis, differences: [] }
 }
 
-//#endregion
+// #endregion
 
-//#region component_map
+// #region component_map
 
 /**
  * Is every populated base component present in the variant with an equal value?
@@ -382,9 +382,9 @@ function compareComponentMap(base: ConformanceOutcome, variant: ConformanceOutco
 	return { comparator: "component_map", observed: "diverges", basis, differences: diff }
 }
 
-//#endregion
+// #endregion
 
-//#region mechanism_shape
+// #region mechanism_shape
 
 function compareMechanismShape(base: ConformanceOutcome, variant: ConformanceOutcome): ComparatorReading {
 	const a = base.mechanismShapes
@@ -431,9 +431,9 @@ function compareMechanismShape(base: ConformanceOutcome, variant: ConformanceOut
 	return { comparator: "mechanism_shape", observed: "diverges", basis, differences }
 }
 
-//#endregion
+// #endregion
 
-//#region candidate_admissibility
+// #region candidate_admissibility
 
 function compareCandidateAdmissibility(base: ConformanceOutcome, variant: ConformanceOutcome): ComparatorReading {
 	const a = base.candidates
@@ -463,7 +463,7 @@ function compareCandidateAdmissibility(base: ConformanceOutcome, variant: Confor
 	}
 }
 
-//#endregion
+// #endregion
 
 /**
  * Read a pair of outcomes on the axis the fixture named.

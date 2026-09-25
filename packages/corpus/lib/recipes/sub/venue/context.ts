@@ -13,7 +13,7 @@ import { readTuples as readLocaleTuples, type LocalePart } from "#international/
 import { readTuples as readRecipeTuples } from "#recipes/scaffold"
 import type { LocaleBaseTuple } from "#surfaces/locale"
 
-//#region Address context
+// #region Address context
 
 /**
  * DE + ES address context.
@@ -150,4 +150,4 @@ export function buildStreetNegatives(
 	return { designator, modifierDesignator, gateSuffix }
 }
 
-//#endregion
+// #endregion

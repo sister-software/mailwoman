@@ -9,7 +9,7 @@ import type { GeoFeature, MultiPolygonLiteral } from "@mailwoman/spatial"
 import type { GeoIDPart } from "#geoid"
 import type { TIGERTabulatedBlockProperties } from "#tabulation-block"
 
-//#region FIPS Codes
+// #region FIPS Codes
 
 /**
  * FIPS codes for US States.
@@ -389,9 +389,9 @@ export function isAdminLevel1FIPSCode(code: string | null | undefined): code is 
 	return isStateFIPSCode(code) || isTerritoryFIPSCode(code)
 }
 
-//#endregion
+// #endregion
 
-//#region State Abbreviation
+// #region State Abbreviation
 
 /**
  * Two-letter abbreviations of a US states.
@@ -488,9 +488,9 @@ export const AdminLevel1Abbreviation = {
 	...TerritoryAbbreviation,
 } as const
 
-//#endregion
+// #endregion
 
-//#region State Name
+// #region State Name
 
 /**
  * US State abbreviations to their full names.
@@ -559,9 +559,9 @@ export const StateName = {
 
 export type StateName = (typeof StateName)[keyof typeof StateName]
 
-//#endregion
+// #endregion
 
-//#region State Utilities
+// #region State Utilities
 
 /**
  * Predicate for checking if a string is a proper abbreviation for a US State
@@ -680,4 +680,4 @@ export interface TIGERState {
 
 export type TIGERStateFeature = GeoFeature<MultiPolygonLiteral, TIGERTabulatedBlockProperties>
 
-//#endregion
+// #endregion

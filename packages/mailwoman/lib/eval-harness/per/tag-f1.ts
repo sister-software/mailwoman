@@ -151,7 +151,7 @@ export async function scorePerTagF1(
 	return Object.fromEntries(tags.map((tag) => [tag, +(100 * perTagRates(counts[tag]!).f1).toFixed(1)]))
 }
 
-//#region Classifier construction
+// #region Classifier construction
 
 /**
  * Options for {@linkcode createUnfoldedEvalClassifier}.
@@ -237,9 +237,9 @@ export async function createUnfoldedEvalClassifier(
 	})
 }
 
-//#endregion
+// #endregion
 
-//#region Conventions mask off/on battery
+// #region Conventions mask off/on battery
 
 export interface LocaleEvalSpec {
 	/**
@@ -344,4 +344,4 @@ export async function scoreConventionsMaskOffOn(
 	return { off, on }
 }
 
-//#endregion
+// #endregion

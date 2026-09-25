@@ -66,7 +66,7 @@ import {
 	resolveWOFDatabasePaths,
 } from "#resolver-backend"
 
-//#region Interface
+// #region Interface
 
 /**
  * The subset of the geocode command's parsed options a session reads.
@@ -321,9 +321,9 @@ export interface GeocodeSession extends Disposable {
 	geocode(input: string): Promise<GeocodeRun>
 }
 
-//#endregion
+// #endregion
 
-//#region Path + flag helpers
+// #region Path + flag helpers
 
 async function resolveWOFPath(options: Pick<GeocodeSessionOptions, "dataRoot" | "resolveDB">): Promise<string[]> {
 	// The shared database selection (explicit list, then $MAILWOMAN_WOF_DB, then the default set)
@@ -536,9 +536,9 @@ export async function loadForkEntityDeps(
 	}
 }
 
-//#endregion
+// #endregion
 
-//#region Session
+// #region Session
 
 export async function createGeocodeSession(options: GeocodeSessionOptions): Promise<GeocodeSession> {
 	const initStartedAt = performance.now()
@@ -995,4 +995,4 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 	}
 }
 
-//#endregion
+// #endregion

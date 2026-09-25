@@ -106,4 +106,4 @@ export interface EntityGeoData {
  */
 export type MapFeatureData = Partial<Omit<EntityGeoData, "bucket">> & { bucket?: string }
 
-//#endregion
+// #endregion

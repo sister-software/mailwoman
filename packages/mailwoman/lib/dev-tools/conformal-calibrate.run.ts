@@ -100,11 +100,11 @@ const values = rawValues as {
 	wof?: string
 }
 
-//#region CLI helpers
+// #region CLI helpers
 
-//#endregion
+// #endregion
 
-//#region Conformal quantile
+// #region Conformal quantile
 
 function conformalThreshold(calScores: number[], targetCoverage: number): number {
 	const n = calScores.length
@@ -118,9 +118,9 @@ function conformalThreshold(calScores: number[], targetCoverage: number): number
 	return [...calScores].toSorted((a, b) => a - b)[rank - 1]!
 }
 
-//#endregion
+// #endregion
 
-//#region Seeded deterministic shuffle — a reproducibility PIN
+// #region Seeded deterministic shuffle — a reproducibility PIN
 
 /**
  * Keep this exact glibc-constant LCG stream: the published conformal thresholds were
@@ -141,9 +141,9 @@ function seededShuffle<T>(arr: T[], seed: number): T[] {
 	return out
 }
 
-//#endregion
+// #endregion
 
-//#region Tree walkers — read STAMPED metadata, never alter resolution
+// #region Tree walkers — read STAMPED metadata, never alter resolution
 
 /**
  * Fixed floor for an exact situs point (building-centroid precision).
@@ -193,9 +193,9 @@ function findStreetHit(tree: AddressTree): StreetHit | null {
 	return null
 }
 
-//#endregion
+// #endregion
 
-//#region Holdout row type (matches /tmp/ood-truth.jsonl)
+// #region Holdout row type (matches /tmp/ood-truth.jsonl)
 
 interface HoldoutRow {
 	input: string
@@ -205,9 +205,9 @@ interface HoldoutRow {
 	state?: string
 }
 
-//#endregion
+// #endregion
 
-//#region Main
+// #region Main
 
 /**
  * Build the parse → resolve cascade this calibration measures.
@@ -541,4 +541,4 @@ async function main(): Promise<void> {
 
 runIfScript(import.meta, main)
 
-//#endregion
+// #endregion

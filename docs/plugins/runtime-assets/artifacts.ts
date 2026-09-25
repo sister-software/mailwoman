@@ -19,7 +19,7 @@ import { tryResolvePackageSpecifier } from "@mailwoman/core/module/resolve-from"
 import { syncArtifact } from "@mailwoman/resolver-wof-wasm/host-assets"
 import { basename, dirname, type PathBuilderLike, resolvePath } from "path-ts"
 
-//#region Model artifact staging
+// #region Model artifact staging
 
 /**
  * Relative imports of a staged ES module, from its `from "./…"` and `import "./…"` specifiers.
@@ -101,4 +101,4 @@ export async function stageMapLibreWorker(destDir: PathBuilderLike): Promise<str
 	return staged
 }
 
-//#endregion
+// #endregion

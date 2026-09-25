@@ -33,7 +33,7 @@ import type { Database } from "@mailwoman/sqlite/database-schema"
 import { basename, dirname, extname, PathBuilder } from "path-ts"
 import { CSVSpliterator } from "spliterator"
 
-//#region Column name normalization
+// #region Column name normalization
 
 /**
  * @deprecated belongs in core, if really needed. spliterator should handle this.
@@ -60,9 +60,9 @@ function dedupColumns(names: string[]): string[] {
 	})
 }
 
-//#endregion
+// #endregion
 
-//#region Type inference
+// #region Type inference
 
 type SQLiteColType = "INTEGER" | "REAL" | "TEXT"
 
@@ -115,9 +115,9 @@ function inferColumnType(samples: (string | null)[]): ColumnInfo {
 	return { name: "", type, nullable: nullCount / total >= 0.5 }
 }
 
-//#endregion
+// #endregion
 
-//#region Main: read CSV, infer schema, produce SQL
+// #region Main: read CSV, infer schema, produce SQL
 
 interface IngestOptions {
 	inputPath: string
@@ -376,4 +376,4 @@ export async function ingestCSV(options: IngestCSVOptions): Promise<void> {
 	})
 }
 
-//#endregion
+// #endregion

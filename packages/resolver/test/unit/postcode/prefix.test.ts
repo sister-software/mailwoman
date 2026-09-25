@@ -27,7 +27,7 @@ import { derivePostcodePrefix, probePostcodePrefix } from "@mailwoman/resolver/p
 import { createWOFResolver } from "@mailwoman/resolver/resolve"
 import { describe, expect, it } from "vitest"
 
-//#region Fixtures
+// #region Fixtures
 
 const node = (over: Partial<AddressNode> & Pick<AddressNode, "tag" | "value">): AddressNode => ({
 	start: 0,
@@ -88,7 +88,7 @@ const gbAncestryOnlyIndex: PostcodePrefixIndexLike = {
 			: null,
 }
 
-//#endregion
+// #endregion
 
 describe("derivePostcodePrefix — the derivation laws", () => {
 	it("derives the GB outward code: compact minus the trailing 3 unit characters", () => {

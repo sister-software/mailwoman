@@ -463,7 +463,7 @@ export async function runDoctor(overrides?: Partial<DoctorDeps>): Promise<Doctor
 	])
 }
 
-//#region --verbose environment dump
+// #region --verbose environment dump
 
 /**
  * One resolved setting in the `--verbose` dump.
@@ -533,4 +533,4 @@ export async function describeEnvironment(overrides?: Partial<DoctorDeps>): Prom
 	return entries
 }
 
-//#endregion
+// #endregion

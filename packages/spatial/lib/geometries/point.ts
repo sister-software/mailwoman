@@ -104,13 +104,13 @@ export type GeoPointInput =
 	| LatLngLiteral
 	| LatLng
 
-//#region GeoPoint
+// #region GeoPoint
 
 /**
  * A single point geometry, such as a specific location, address, or longitude, latitude pair.
  */
 export class GeoPoint implements PointLiteral {
-	//#region Properties
+	// #region Properties
 
 	/**
 	 * Declares the type of GeoJSON object as a `Point` geometry.
@@ -219,9 +219,9 @@ export class GeoPoint implements PointLiteral {
 		this.#altitude = value
 	}
 
-	//#endregion
+	// #endregion
 
-	//#region Constructors
+	// #region Constructors
 
 	/**
 	 * Create a new GeoPoint object with default coordinates.
@@ -339,9 +339,9 @@ export class GeoPoint implements PointLiteral {
 		}
 	}
 
-	//#endregion
+	// #endregion
 
-	//#region Predicates
+	// #region Predicates
 
 	/**
 	 * Whether the GeoPoint is 2-dimensional.
@@ -364,9 +364,9 @@ export class GeoPoint implements PointLiteral {
 		return this.#latitude === 0 && this.#longitude === 0
 	}
 
-	//#endregion
+	// #endregion
 
-	//#region Conversion
+	// #region Conversion
 
 	public toJSON(): PointLiteral {
 		return {
@@ -423,7 +423,7 @@ export class GeoPoint implements PointLiteral {
 	public toString(): string {
 		return stringifyJSON(this.toJSON())
 	}
-	//#endregion
+	// #endregion
 
 	public [Symbol.iterator](): Iterator<number> {
 		return this.coordinates[Symbol.iterator]()

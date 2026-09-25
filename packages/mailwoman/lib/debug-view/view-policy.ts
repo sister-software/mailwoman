@@ -19,7 +19,7 @@ import { CommandError } from "@mailwoman/core/scripting/command"
 import type { GeocodeCommandOptions } from "#geocode/command-options"
 import type { GeocodeResult } from "#geocode/result"
 
-//#region Zoom heuristic
+// #region Zoom heuristic
 
 /**
  * The map pane's initial zoom for a freshly-geocoded result, before any interactive pan/zoom.
@@ -44,9 +44,9 @@ export function initialZoomForTier(result: GeocodeResult): number {
 	return 4
 }
 
-//#endregion
+// #endregion
 
-//#region CLI-usage guards
+// #region CLI-usage guards
 
 /**
  * `--debug` is its own rendered surface (a captured Ink frame) — combining it with a `--format`
@@ -115,4 +115,4 @@ export function assertDebugSizeFloor(columns: number, rows: number): void {
 	if (violation) throw new CommandError(`--debug-size ${violation}`)
 }
 
-//#endregion
+// #endregion

@@ -107,7 +107,7 @@ function biasOf(matcher: unknown, surface: string): Map<string, number> {
 
 const round4 = (n: number): number => Math.round(n * 1e4) / 1e4
 
-//#region Emit
+// #region Emit
 
 const CASES_ROOT = new URL("../eval-harness/gauntlet/cases/", import.meta.url)
 
@@ -213,4 +213,4 @@ console.error(`wrote ${sorted.length} rows → ${OUT}`)
 console.error(`  fstReach in=${inReach} out=${sorted.length - inReach}`)
 console.error(`  rows whose probe surface has a DIFFERENT bias between arms: ${moved}`)
 
-//#endregion
+// #endregion

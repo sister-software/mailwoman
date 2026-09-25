@@ -28,9 +28,9 @@ export { DEFAULT_SUITE_PATH, loadSuite, type InvarianceRow } from "#eval-harness
 // Repo-root-relative (mirrors `FRAGMENT_BOARD_FIXTURES` / `POI_BOARD_FIXTURES`): the compiled tree
 // (`out/`) never gets a copy of the `.jsonl` fixture — only `.ts` sources are transpiled — so this
 // resolves against the CWD the CLI is invoked from (the repo root) rather than `import.meta.dirname`.
-//#region parse function construction
+// #region parse function construction
 
-//#region the run
+// #region the run
 
 /**
  * `GAINED` means the candidate holds a pair the baseline violated; it is non-blocking.
@@ -352,4 +352,4 @@ export async function runInvarianceSuite(options: RunInvarianceOptions): Promise
 	}
 }
 
-//#endregion
+// #endregion

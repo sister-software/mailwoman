@@ -24,7 +24,7 @@ export interface ExpectationReading {
 	issues: string[]
 }
 
-//#region Expectations
+// #region Expectations
 
 /**
  * The case table this row is graded against, or `null` when it asserts nothing.
@@ -93,4 +93,4 @@ export function gradeExpectation(item: ResolvedInput, result: GeocodeRun["result
 	return { source: expectation.source, met: issues.length === 0, issues }
 }
 
-//#endregion
+// #endregion

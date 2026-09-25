@@ -102,7 +102,7 @@ import { deriveGeocodeRegister } from "#geocode/core"
 const DEFAULT_ANCHOR_LOOKUP = dataRootPath("anchor", "pilot-anchor-lookup.json")
 const DEFAULT_GAZETTEER_LEXICON = "data/gazetteer/anchor-lexicon-v1.json"
 
-//#region Options
+// #region Options
 
 /**
  * Options for {@linkcode perLocaleF1} — one field per flag the check used to serialize into argv.
@@ -168,9 +168,9 @@ export interface PerLocaleF1Result {
 	spread: number
 }
 
-//#endregion
+// #endregion
 
-//#region Golden row + fold (shared semantics with harness-neural.ts)
+// #region Golden row + fold (shared semantics with harness-neural.ts)
 
 interface GoldenRow {
 	raw: string
@@ -289,9 +289,9 @@ function exactMatch(pred: Record<string, string>, gold: Record<string, string>):
 	return true
 }
 
-//#endregion
+// #endregion
 
-//#region Per-file metrics
+// #region Per-file metrics
 
 /**
  * One tag's counts and rates within a single locale file.
@@ -394,9 +394,9 @@ function scoreFile(file: string, rows: GoldenRow[], preds: Array<Record<string, 
 	}
 }
 
-//#endregion
+// #endregion
 
-//#region Main
+// #region Main
 
 /**
  * Score each locale file separately and report per-locale component-F1, exact-match,
@@ -645,4 +645,4 @@ export async function perLocaleF1(
 	return result
 }
 
-//#endregion
+// #endregion

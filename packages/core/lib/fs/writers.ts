@@ -254,7 +254,7 @@ export async function writeLocalFile<S extends PathBuilderLike[]>(
 
 // #endregion
 
-//#region Appending
+// #region Appending
 
 /**
  * Append text to a local file, creating it and its parent directory when neither exists.

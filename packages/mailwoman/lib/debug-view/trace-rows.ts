@@ -22,7 +22,7 @@ import { softmax } from "@mailwoman/neural/viterbi"
 
 import type { GeocodeTrace } from "#geocode/session"
 
-//#region Shared
+// #region Shared
 
 /**
  * What a row shows where the datum genuinely does not exist.
@@ -44,9 +44,9 @@ function fields(parts: Array<string | null>): string {
 	return parts.filter((part) => part != null && part.length).join(FIELD_GAP)
 }
 
-//#endregion
+// #endregion
 
-//#region Rows
+// #region Rows
 
 /**
  * How many locale-head classes the row names.
@@ -190,4 +190,4 @@ export function decodeRow(trace: GeocodeTrace | undefined): string {
 	])
 }
 
-//#endregion
+// #endregion

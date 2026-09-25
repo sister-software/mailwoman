@@ -218,7 +218,7 @@ export class HTTPVFSInterpolator {
 	}
 }
 
-//#region Street-level resolution
+// #region Street-level resolution
 
 /**
  * A street-level coordinate + which tier produced it + an honest radius.

@@ -59,7 +59,7 @@ export const CITY_TOL = 15_000
  * Each entry's `note` is its justification and ships verbatim in the emitted board.
  */
 export const FRAGMENT_ROWS: Curated[] = [
-	//#region comma_free
+	// #region comma_free
 	// The FST prior's design register: a two-toponym fragment with no punctuation. Each is paired with its
 	// `comma_control` twin below — same truth, comma restored. A `comma_free` row that moves while its
 	// control does not is the bias acting exactly where it was designed to.
@@ -266,9 +266,9 @@ export const FRAGMENT_ROWS: Curated[] = [
 		toleranceM: CITY_TOL,
 		note: "DE comma-free. Weimar's encyclopedic weight far exceeds its size (pop 65,228) — bias 0.43 → 0.67, the archetype of the two-score split.",
 	},
-	//#endregion
+	// #endregion
 
-	//#region comma_control
+	// #region comma_control
 	// The byte-stability twins. These must not be where an arm warrants its score.
 	{
 		id: "us-cc-moscow-idaho",
@@ -393,5 +393,5 @@ export const FRAGMENT_ROWS: Curated[] = [
 		toleranceM: CITY_TOL,
 		note: "Comma control for de-cf-weimar-thueringen.",
 	},
-	//#endregion
+	// #endregion
 ]

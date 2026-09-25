@@ -15,7 +15,7 @@ import { sample } from "@mailwoman/core/random"
 import { countryToLocale } from "#synthesizers/utils"
 import type { CanonicalRow } from "#types"
 
-//#region Types
+// #region Types
 
 /* oxlint-disable sister-software/no-unnamed-threshold -- the bare decimals below are weighted-sampler
    cutoffs rather than thresholds: `const r = random()` followed by a cascade of `r < 0.4` branches is the
@@ -53,9 +53,9 @@ export interface SynthesizedNoStreetRow {
 	template: NoStreetTemplate
 }
 
-//#endregion
+// #endregion
 
-//#region Venue name pools
+// #region Venue name pools
 
 /**
  * Venue names without street-like words.
@@ -142,9 +142,9 @@ const COUNTRY_NAMES = new Map<string, ReadonlyArray<string>>([
 	["AU", ["Australia"]],
 ])
 
-//#endregion
+// #endregion
 
-//#region Synthesis
+// #region Synthesis
 
 /**
  * Generate one no-street row from a base locality, region, postcode, and country.
@@ -275,4 +275,4 @@ export function hasAnyStreetSideTag(components: CanonicalRow["components"]): boo
 	return false
 }
 
-//#endregion
+// #endregion

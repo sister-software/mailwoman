@@ -8,7 +8,7 @@
 
 import type { AdminLevel1Code } from "#state"
 
-//#region Constants
+// #region Constants
 
 /**
  * Census tiger levels for geographic data.
@@ -94,9 +94,9 @@ export const TIGERCurrentVintage = 2023
 
 export type TIGERCurrentVintage = typeof TIGERCurrentVintage
 
-//#endregion
+// #endregion
 
-//#region File Name Generation
+// #region File Name Generation
 
 /**
  * Type-helper for tiger feature geometry file names.
@@ -170,9 +170,9 @@ export function TIGERNationZIPPath<Vintage extends number = TIGERCurrentVintage>
 	return path
 }
 
-//#endregion
+// #endregion
 
-//#region Manifests
+// #region Manifests
 
 /**
  * A tiger manifest for a specific state at a specific level of detail.
@@ -263,4 +263,4 @@ export function TIGERStateManifest<SFC extends AdminLevel1Code, Vintage extends 
 	return manifest as TIGERStateManifest<SFC, Vintage>
 }
 
-//#endregion
+// #endregion

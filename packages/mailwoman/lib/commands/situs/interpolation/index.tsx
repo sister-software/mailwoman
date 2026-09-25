@@ -98,7 +98,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-//#region State FIPS map
+// #region State FIPS map
 
 const STATE_FIPS: Record<string, string> = {
 	AL: "01",
@@ -169,9 +169,9 @@ const RANKED_FILE = repoRootPathBuilder("mailwoman", "data", "county-population-
  */
 const CLI_ENTRY = scriptEntryPath()
 
-//#endregion
+// #endregion
 
-//#region County population ranking
+// #region County population ranking
 
 interface CountyRecord {
 	stateFips: string
@@ -245,9 +245,9 @@ async function loadRankedCounties(): Promise<CountyRecord[]> {
 	return records
 }
 
-//#endregion
+// #endregion
 
-//#region HTTP utilities
+// #region HTTP utilities
 
 /**
  * Simple GET-to-text with redirect following.
@@ -287,9 +287,9 @@ async function downloadFile(url: string, dest: PathBuilderLike, retries = 3): Pr
 	}
 }
 
-//#endregion
+// #endregion
 
-//#region ZIP extraction
+// #region ZIP extraction
 
 /**
  * The shapefile components DuckDB needs out of a tiger edges archive.
@@ -310,9 +310,9 @@ async function extractEdgesZip(zipPath: PathBuilderLike, destDir: PathBuilderLik
 	await extractZipEntries(zipPath, destDir, { selector: SHAPEFILE_MEMBERS, flatten: true })
 }
 
-//#endregion
+// #endregion
 
-//#region Parallel download pool
+// #region Parallel download pool
 
 interface DownloadTask {
 	geoid: string
@@ -379,9 +379,9 @@ async function downloadParallel(
 	return { downloaded, skipped, failed }
 }
 
-//#endregion
+// #endregion
 
-//#region Database build (per state)
+// #region Database build (per state)
 
 interface DatabaseBuildResult {
 	wallMs: number
@@ -676,4 +676,4 @@ const SitusInterpolation: CommandComponent<typeof spec> = ({ options }) => {
 
 export default SitusInterpolation
 
-//#endregion
+// #endregion

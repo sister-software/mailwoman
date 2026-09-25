@@ -51,7 +51,7 @@ import { channelsRow, decodeRow, localeHeadRow, systemRow, tokensRow } from "#de
 import type { GeocodeResult } from "#geocode/result"
 import type { GeocodeTrace } from "#geocode/session"
 
-//#region Interface
+// #region Interface
 
 export type DebugPane = "input" | "output" | "map"
 
@@ -118,9 +118,9 @@ export interface DebugFrameProps {
 	color: boolean
 }
 
-//#endregion
+// #endregion
 
-//#region Layout constants
+// #region Layout constants
 
 /**
  * Border (2) + the input line (1) + the span ribbon (1) + the five evidence rows (5).
@@ -187,9 +187,9 @@ export function outputPaneCapacity(rows: number): number {
 	return Math.max(0, paneRowHeight(rows) - OUTPUT_PANE_CHROME_ROWS)
 }
 
-//#endregion
+// #endregion
 
-//#region Shared helpers
+// #region Shared helpers
 
 const FOCUS_BORDER_COLOR = "cyan"
 const UNFOCUSED_BORDER_COLOR = "gray"
@@ -308,9 +308,9 @@ function confidenceColor(confidence: number): string {
 	return confidence >= MID_CONFIDENCE_MIN ? "yellow" : "red"
 }
 
-//#endregion
+// #endregion
 
-//#region Input area
+// #region Input area
 
 /**
  * One evidence row: a dim fixed-width label and the value, truncated as one text so the row can never wrap.
@@ -387,9 +387,9 @@ const InputBar = memo(function InputBar(props: {
 	)
 })
 
-//#endregion
+// #endregion
 
-//#region Output pane
+// #region Output pane
 
 /**
  * The label column of a field row, including its trailing space.
@@ -499,9 +499,9 @@ const OutputPane = memo(function OutputPane(props: {
 	)
 })
 
-//#endregion
+// #endregion
 
-//#region Map pane
+// #region Map pane
 
 /**
  * The expensive pane, and the one that depends on nothing the input row changes.
@@ -554,9 +554,9 @@ const MapPane = memo(function MapPane(props: {
 	)
 })
 
-//#endregion
+// #endregion
 
-//#region Footer
+// #region Footer
 
 /**
  * The key hints, in the order a new reader needs them: how to move focus,
@@ -578,7 +578,7 @@ function Footer(props: { focused: DebugPane | null; columns: number }): React.Re
 	)
 }
 
-//#endregion
+// #endregion
 
 export function DebugFrame(props: DebugFrameProps): React.ReactElement {
 	const paneHeight = paneRowHeight(props.rows)

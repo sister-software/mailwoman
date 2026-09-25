@@ -14,7 +14,7 @@ export type LogFn = PinoLogFn
 
 export type BaseLogger = Pick<PinoBaseLogger, Exclude<Level, "fatal">>
 
-//#region Constants
+// #region Constants
 
 /**
  * Labels log levels in the browser console.
@@ -47,7 +47,7 @@ const LogLevelColors = {
 	fatal: `light-dark(#DA1E28, #FA4D56)`,
 } as const
 
-//#region Functions
+// #region Functions
 
 /**
  * Creates a logger with the given prefix.
@@ -115,9 +115,9 @@ export function silentLogger(): BaseConsoleLogger {
 	return logger as BaseConsoleLogger
 }
 
-//#endregion
+// #endregion
 
-//#region Functions
+// #region Functions
 
 /**
  * Creates a logger with the given prefix.
@@ -182,4 +182,4 @@ export class ConsoleLogger {
 
 Object.assign(ConsoleLogger, createLogger())
 
-//#endregion
+// #endregion

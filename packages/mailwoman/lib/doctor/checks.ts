@@ -153,7 +153,7 @@ export function versionMeetsFloor(version: string, floor: string): boolean {
 	return v.patch >= f.patch
 }
 
-//#region Observations (facts the runner gathers) → checks (verdicts)
+// #region Observations (facts the runner gathers) → checks (verdicts)
 
 /**
  * Observation of `@mailwoman/neural-weights-en-us` resolution.
@@ -469,9 +469,9 @@ export function onnxRuntimeCheck(o: ONNXRuntimeObservation): DoctorCheck {
 	}
 }
 
-//#endregion
+// #endregion
 
-//#region License posture
+// #region License posture
 
 export interface RuntimeLicenseObservation {
 	/**
@@ -673,9 +673,9 @@ function describeObligations(obligations: readonly LicenseObligation[], recogniz
 	return obligations.length ? obligations.join(", ") : "none"
 }
 
-//#endregion
+// #endregion
 
-//#region Aggregate
+// #region Aggregate
 
 /**
  * Derive the process exit code: `0` when every core check is `ok`, else `1`.
@@ -702,4 +702,4 @@ function firstLine(message: string): string {
 	return message.split("\n", 1)[0]!.trim()
 }
 
-//#endregion
+// #endregion

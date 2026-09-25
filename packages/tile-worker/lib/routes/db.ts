@@ -82,4 +82,4 @@ export const DatabaseRetrieveRoute = WorkerRoute.GET(DB_ROUTE_PATTERN, async ({ 
 	return response
 })
 
-//#endregion
+// #endregion

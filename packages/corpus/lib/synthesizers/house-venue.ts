@@ -43,7 +43,7 @@ export interface SynthesizedHouseVenueRow {
 	template: HouseVenueTemplate
 }
 
-//#region Venue pool
+// #region Venue pool
 
 /**
  * Venue names without street-like terms.
@@ -117,9 +117,9 @@ const GB_VENUES: ReadonlyArray<string> = [
 	"Golden Dragon 金龍饭店",
 ]
 
-//#endregion
+// #endregion
 
-//#region Fallback street pool
+// #region Fallback street pool
 
 /**
  * Fallback street names for tuples without a street value.
@@ -142,9 +142,9 @@ const FALLBACK_STREETS: ReadonlyArray<string> = [
 	"Forest Blvd",
 ]
 
-//#endregion
+// #endregion
 
-//#region House-number generator
+// #region House-number generator
 
 function randomHouseNumber(random: () => number): string {
 	// Generate a plain numeric house number from 1 to 9999.
@@ -155,9 +155,9 @@ function randomHouseNumber(random: () => number): string {
 	return String(n)
 }
 
-//#endregion
+// #endregion
 
-//#region Synthesis
+// #region Synthesis
 
 /**
  * Share of GB rows drawn from the British venue pool.
@@ -268,4 +268,4 @@ export function hasHouseNumberAndVenue(components: CanonicalRow["components"]): 
 	return components.house_number !== undefined && components.venue !== undefined
 }
 
-//#endregion
+// #endregion

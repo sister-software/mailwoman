@@ -29,7 +29,7 @@ const s = styleframe({
 
 const { variable, theme, ref } = s
 
-//#region Primitives
+// #region Primitives
 
 /*
  * Raw values with no opinion about use.
@@ -80,9 +80,9 @@ const warningBase = variable("warning-base", "oklch(75% 0.15 75)")
 const dangerBase = variable("danger-base", "oklch(58% 0.2 25)")
 const infoBase = variable("info-base", "oklch(65% 0.13 230)")
 
-//#endregion
+// #endregion
 
-//#region Type
+// #region Type
 
 /*
  * Two axes.
@@ -133,9 +133,9 @@ const fontWeightRegular = variable("font-weight-regular", "400")
 const fontWeightMedium = variable("font-weight-medium", "500")
 const fontWeightSemibold = variable("font-weight-semibold", "600")
 
-//#endregion
+// #endregion
 
-//#region Shape and motion
+// #region Shape and motion
 
 /**
  * Spacing is A scale rather than a guess.
@@ -196,9 +196,9 @@ variable("safe-area-left", "env(safe-area-inset-left, 0px)")
  */
 variable("map-footer-height", "1.9rem")
 
-//#endregion
+// #endregion
 
-//#region Semantics
+// #region Semantics
 
 /*
  * The one layer a component rule may read.
@@ -273,9 +273,9 @@ const stageShape = variable("color-stage-shape", "#3578e5")
 const stageClassify = variable("color-stage-classify", "#8b5cf6")
 const stageResolve = variable("color-stage-resolve", "#14b8a6")
 
-//#endregion
+// #endregion
 
-//#region Material
+// #region Material
 
 /*
  * Glass is a composition of background, border, blur, saturation, shadow and highlight —
@@ -296,9 +296,9 @@ const glassHighlight = variable("material-glass-highlight", "oklch(100% 0 264 / 
  */
 const glassFallbackBackground = variable("material-glass-fallback-background", ref(neutral0))
 
-//#endregion
+// #endregion
 
-//#region Dark theme — the three map apps, and the docs toggle.
+// #region Dark theme — the three map apps, and the docs toggle.
 
 theme("dark", ({ variable: themeVariable }) => {
 	themeVariable(backgroundCanvas, ref(neutral950))
@@ -338,7 +338,7 @@ theme("dark", ({ variable: themeVariable }) => {
 	themeVariable(glassFallbackBackground, ref(neutral900))
 })
 
-//#endregion
+// #endregion
 
 // Referenced by name from `styles.css` and the app stylesheets.
 // Listed here so the compiler keeps them.

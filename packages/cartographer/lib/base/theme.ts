@@ -28,7 +28,7 @@ const darkFlavor = namedFlavor("dark")
 export const MailwomanBaseFlavor: Flavor = {
 	...darkFlavor,
 
-	//#region Base
+	// #region Base
 	background: "hsl(0deg 10% 5%)",
 	earth: "hsl(0deg 10% 5%)",
 
@@ -55,8 +55,8 @@ export const MailwomanBaseFlavor: Flavor = {
 	zoo: "#222323",
 	military: "#242323",
 
-	//#endregion
-	//#region Tunnel
+	// #endregion
+	// #region Tunnel
 	tunnel_other_casing: "#141414",
 	tunnel_minor_casing: "#141414",
 	tunnel_link_casing: "#141414",
@@ -68,10 +68,10 @@ export const MailwomanBaseFlavor: Flavor = {
 	tunnel_major: "#292929",
 	tunnel_highway: "#292929",
 
-	//#endregion
+	// #endregion
 	buildings: "#111111",
 
-	//#region Casing
+	// #region Casing
 	minor_service_casing: "#1f1f1f",
 	minor_casing: "#1f1f1f",
 	link_casing: "#1f1f1f",
@@ -87,11 +87,11 @@ export const MailwomanBaseFlavor: Flavor = {
 	highway_casing_early: "#1f1f1f",
 	highway: "hsl(36deg 10% 50%)",
 
-	//#endregion
+	// #endregion
 	railway: "#000000",
 	boundaries: "hsl(240deg 100% 90%)",
 
-	//#region Bridges
+	// #region Bridges
 	bridges_other_casing: "#2b2b2b",
 	bridges_minor_casing: "#1f1f1f",
 	bridges_link_casing: "#1f1f1f",
@@ -103,7 +103,7 @@ export const MailwomanBaseFlavor: Flavor = {
 	bridges_major: "#3d3d3d",
 	bridges_highway: "#474747",
 
-	//#endregion
+	// #endregion
 
 	ocean_label: "#717784",
 	subplace_label: "hsl(50deg 50% 70%)",

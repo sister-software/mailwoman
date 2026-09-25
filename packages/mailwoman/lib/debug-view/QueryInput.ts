@@ -26,7 +26,7 @@
 import { Text, useInput, type Key } from "ink"
 import { createElement, type ReactElement } from "react"
 
-//#region Editing model
+// #region Editing model
 
 export interface InputState {
 	value: string
@@ -193,9 +193,9 @@ export function applyKey(state: InputState, input: string, key: Key): InputState
 	}
 }
 
-//#endregion
+// #endregion
 
-//#region Component
+// #region Component
 
 export interface QueryInputProps {
 	value: string
@@ -259,4 +259,4 @@ export function QueryInput(props: QueryInputProps): ReactElement {
 	)
 }
 
-//#endregion
+// #endregion

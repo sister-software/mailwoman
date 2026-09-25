@@ -13,7 +13,7 @@ import { ADMIN_TOL, CITY_TOL, type Curated } from "#dev-tools/hard-case-board/ro
  * Curated toponym cases grouped by ambiguity type.
  */
 export const TOPONYM_ROWS: Curated[] = [
-	//#region homonym_confound
+	// #region homonym_confound
 	// Region-abbreviation homonyms.
 	{
 		id: "us-hc-portland-maine",
@@ -108,9 +108,9 @@ export const TOPONYM_ROWS: Curated[] = [
 		bugRef: "#833",
 		note: "#833's surface with the region SPELLED OUT and the comma removed — the abbreviation-free path, which gains no benefit from region-abbrev recognition.",
 	},
-	//#endregion
+	// #endregion
 
-	//#region bare_namesake
+	// #region bare_namesake
 	// Bare namesakes with a pinned referential answer.
 	{
 		id: "fr-bn-bordeaux",
@@ -288,9 +288,9 @@ export const TOPONYM_ROWS: Curated[] = [
 		toleranceM: ADMIN_TOL,
 		note: "DE city of 68,635 that shares its name with the river it sits on. Bias 0.44 → 0.59.",
 	},
-	//#endregion
+	// #endregion
 
-	//#region wiki_pop_conflict
+	// #region wiki_pop_conflict
 	// Cases where population and importance rankings disagree.
 	{
 		id: "fr-wpc-saint-denis-suburb",
@@ -370,9 +370,9 @@ export const TOPONYM_ROWS: Curated[] = [
 		toleranceM: ADMIN_TOL,
 		note: "The bare form of the disagreement: 149 US bearers, population leader Springfield MO (171,589), importance leader Springfield IL (0.6126 vs MO 0.5962). Pinned to the REFERENTIAL answer per the ratified §2 policy — a row the importance arm should NOT be able to move without violating it.",
 	},
-	//#endregion
+	// #endregion
 
-	//#region street_head_control
+	// #region street_head_control
 	// Street-head controls ensure name bias does not misclassify a street token as locality.
 	{
 		id: "us-shc-sweeney-ranch-road",
@@ -470,5 +470,5 @@ export const TOPONYM_ROWS: Curated[] = [
 		bugRef: "#1142",
 		note: "GB street-head control on the surface whose LABEL inverts between arms (see gb-wpc-manchester) — the inversion arrives here as a locality pull on a street head.",
 	},
-	//#endregion
+	// #endregion
 ]
