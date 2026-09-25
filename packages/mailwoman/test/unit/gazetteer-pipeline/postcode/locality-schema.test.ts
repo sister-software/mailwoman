@@ -52,7 +52,7 @@ function tableInfo(db: DatabaseClient<PostcodeLocalityDatabase>, table: string):
 
 describe("createPostcodeLocalityTable", () => {
 	it("declares the shipped column shape", async () => {
-		await using db = await buildDatabase(false)
+		using db = await buildDatabase(false)
 
 		expect(
 			tableInfo(db, "postcode_locality").map((c) => ({
@@ -75,7 +75,7 @@ describe("createPostcodeLocalityTable", () => {
 	})
 
 	it("declares the meta key/value shape with `key` as the primary key", async () => {
-		await using db = await buildDatabase(false)
+		using db = await buildDatabase(false)
 
 		expect(tableInfo(db, "meta").map((c) => ({ name: c.name, type: c.type.toUpperCase(), pk: c.pk }))).toEqual([
 			{ name: "key", type: "TEXT", pk: 1 },
@@ -84,7 +84,7 @@ describe("createPostcodeLocalityTable", () => {
 	})
 
 	it("is re-runnable under `ifNotExists` — the accumulative build fills one database country by country", async () => {
-		await using kdb = DatabaseClient.temp<PostcodeLocalityDatabase>()
+		using kdb = DatabaseClient.temp<PostcodeLocalityDatabase>()
 
 		await createPostcodeLocalityTable(kdb, { ifNotExists: true })
 		await createPostcodeLocalityIndex(kdb, { ifNotExists: true })
@@ -102,7 +102,7 @@ describe("createPostcodeLocalityTable", () => {
 
 describe("createPostcodeLocalityIndex", () => {
 	it("creates the non-unique (postcode, country) probe index", async () => {
-		await using db = await buildDatabase(false)
+		using db = await buildDatabase(false)
 
 		expect(db.prepare("PRAGMA index_list(postcode_locality)").all()).toEqual([
 			expect.objectContaining({ name: "postcode_locality_by_pc", unique: 0, partial: 0 }),
@@ -122,7 +122,7 @@ describe("createPostcodeLocalityIndex", () => {
 
 describe("POSTCODE_LOCALITY_INSERT_SQL", () => {
 	it("binds in the DDL's column order", async () => {
-		await using db = await buildDatabase(false)
+		using db = await buildDatabase(false)
 		const declared = tableInfo(db, "postcode_locality").map((c) => c.name)
 
 		expect([...POSTCODE_LOCALITY_COLUMNS]).toEqual(declared)
@@ -135,7 +135,7 @@ describe("POSTCODE_LOCALITY_INSERT_SQL", () => {
 	})
 
 	it("lands each positional value in its own column", async () => {
-		await using db = await buildDatabase(false)
+		using db = await buildDatabase(false)
 
 		const values: PostcodeLocalityInsertValues = ["10115", "DE", 101_752_063, "Berlin", "Berlin|Berlino", 0, 1]
 
@@ -153,7 +153,7 @@ describe("POSTCODE_LOCALITY_INSERT_SQL", () => {
 	})
 
 	it("accepts a null alias list", async () => {
-		await using db = await buildDatabase(false)
+		using db = await buildDatabase(false)
 
 		db.prepare(POSTCODE_LOCALITY_INSERT_SQL).run("10115", "DE", 101_752_063, "Berlin", null, 1.5, 0)
 

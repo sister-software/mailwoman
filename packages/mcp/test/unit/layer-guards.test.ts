@@ -60,7 +60,7 @@ async function emptySqliteFile(name: string): Promise<PathBuilder> {
 async function poiFixtureFile(name: string): Promise<PathBuilder> {
 	scratch = await temporaryDirectory("mcp-layer-guards-")
 	const path = scratch.path(name)
-	await using kdb = new DatabaseClient<POIDatabase>(path)
+	using kdb = new DatabaseClient<POIDatabase>(path)
 
 	await createPOITable(kdb)
 	// Also creates `poi_category_codes`, per `poi-schema.ts`'s naming.
@@ -81,7 +81,7 @@ describe("openBDCDatabaseIfPresent", () => {
 
 	it("opens the database when the file is present", async () => {
 		const path = await emptySqliteFile("bdc.db")
-		await using db = await openBDCDatabaseIfPresent(path)
+		using db = await openBDCDatabaseIfPresent(path)
 
 		expect(db).toBeDefined()
 	})
@@ -133,7 +133,7 @@ describe("openFilerDatabaseIfPresent", () => {
 
 	it("opens the database when the file is present", async () => {
 		const path = await emptySqliteFile("filer.db")
-		await using db = await openFilerDatabaseIfPresent(path)
+		using db = await openFilerDatabaseIfPresent(path)
 
 		expect(db).toBeDefined()
 	})

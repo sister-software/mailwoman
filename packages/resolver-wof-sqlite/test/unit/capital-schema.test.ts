@@ -23,7 +23,7 @@ async function openWithTable(): Promise<DatabaseClient<CandidateDatabase>> {
 
 describe("capital table round-trip", () => {
 	it("returns what the builder wrote, keys parsed", async () => {
-		await using db = await openWithTable()
+		using db = await openWithTable()
 
 		db.prepare("INSERT INTO capital (country, latitude, longitude, level, keys) VALUES (?, ?, ?, ?, ?)").run(
 			"CR",
@@ -45,7 +45,7 @@ describe("capital table round-trip", () => {
 	})
 
 	it("skips a row with an unknown level or unparseable keys instead of crashing the session open", async () => {
-		await using db = await openWithTable()
+		using db = await openWithTable()
 		const insert = db.prepare("INSERT INTO capital (country, latitude, longitude, level, keys) VALUES (?, ?, ?, ?, ?)")
 
 		insert.run("XX", 0, 0, "county-seat", stringifyJSON(["x"]))

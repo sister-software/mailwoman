@@ -39,7 +39,7 @@ async function fixtureDB(): Promise<DatabaseClient<WOFDatabase>> {
 }
 
 test("verifyAdmin passes a complete fixture", async () => {
-	await using db = await fixtureDB()
+	using db = await fixtureDB()
 	const r = verifyAdmin(db, TINY_BASELINE)
 
 	expect(r.checks.map((c) => `${c.check}:${c.ok}`)).toEqual([
@@ -55,7 +55,7 @@ test("verifyAdmin passes a complete fixture", async () => {
 })
 
 test("verifyAdmin fails node-census when a required country node is missing (#1026)", async () => {
-	await using db = await fixtureDB()
+	using db = await fixtureDB()
 	db.exec("DELETE FROM spr WHERE id = 1") // drop Testland's country node
 	const r = verifyAdmin(db, TINY_BASELINE)
 	expect(r.ok).toBe(false)
@@ -65,7 +65,7 @@ test("verifyAdmin fails node-census when a required country node is missing (#10
 })
 
 test("verifyAdmin fails place-abbr when the join table is missing (the #1015 missed-step class)", async () => {
-	await using db = await fixtureDB()
+	using db = await fixtureDB()
 	db.exec("DROP TABLE place_abbr")
 	const r = verifyAdmin(db, TINY_BASELINE)
 	expect(r.ok).toBe(false)

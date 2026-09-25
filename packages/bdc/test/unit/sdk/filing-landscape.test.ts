@@ -259,7 +259,7 @@ describe("filingLandscape — Check 2 (extended): coverage-check is required, no
 
 		await changeMode(corruptOut, 0o644)
 
-		await using writable = await openBuiltClient<BDCDatabase>(corruptOut, { write: true })
+		using writable = await openBuiltClient<BDCDatabase>(corruptOut, { write: true })
 
 		const sfRow = await writable
 			.selectFrom("bdc_availability")
@@ -416,7 +416,7 @@ describe("filingLandscape — Check 4: vintage-or-throw", () => {
 		await changeMode(corruptOut, 0o644)
 		expect(await pathExists(corruptOut)).toBe(true)
 
-		await using writable = await openBuiltClient<BDCDatabase>(corruptOut, { write: true })
+		using writable = await openBuiltClient<BDCDatabase>(corruptOut, { write: true })
 		await writable.deleteFrom("layer_manifest").execute()
 
 		await expect(filingLandscape(writable, { geoids: [GEOID_SF] })).rejects.toThrow(/manifest/)

@@ -105,7 +105,7 @@ describe("the bulk-write statements bind against the real unified schema", () =>
 	}
 
 	test("every prepared insert accepts a row", async () => {
-		await using db = await openUnified()
+		using db = await openUnified()
 		const { spr, names, population, concordances } = prepareInserts(db)
 		const id = OVERTURE_ID_BASE + 1
 
@@ -131,7 +131,7 @@ describe("the bulk-write statements bind against the real unified schema", () =>
 
 	test("spr uses OR REPLACE so a re-ingest updates the row rather than throwing on its primary key", async () => {
 		// Content-derived ids make a re-ingest recompute the same id, so this is the path a second run takes.
-		await using db = await openUnified()
+		using db = await openUnified()
 		const { spr } = prepareInserts(db)
 		const id = OVERTURE_ID_BASE + 2
 

@@ -50,7 +50,7 @@ describe("openBuiltClient", () => {
 	it("opens a sealed artifact read-only by default", async () => {
 		const path = await makeDB()
 		await sealDatabase(path)
-		await using db = await openBuiltClient(path)
+		using db = await openBuiltClient(path)
 		expect((db.prepare("SELECT v FROM t").get() as { v: string }).v).toBe("x")
 	})
 
@@ -64,7 +64,7 @@ describe("openBuiltClient", () => {
 
 	it("allows a write open of an UNsealed database (builder staging)", async () => {
 		const path = await makeDB()
-		await using db = await openBuiltClient(path, { write: true })
+		using db = await openBuiltClient(path, { write: true })
 
 		expect(() => db.exec("INSERT INTO t (v) VALUES ('y')")).not.toThrow()
 	})

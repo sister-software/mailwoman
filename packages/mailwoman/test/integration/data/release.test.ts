@@ -153,7 +153,7 @@ describe("RegionDatabaseProvider atomic switchover", () => {
 		await writeLocalTextFile("", apDir("address-points-us-tx-v1.db"))
 		await writeLocalJSONFile({ "address-points": "v1" }, (await root)("releases.json"))
 
-		await using provider = await RegionDatabaseProvider.create(factory, await root)
+		using provider = await RegionDatabaseProvider.create(factory, await root)
 
 		const first = provider.for("tx").addressPoints
 		await provider.reload()

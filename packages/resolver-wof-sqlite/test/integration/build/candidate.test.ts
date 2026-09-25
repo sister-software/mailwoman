@@ -762,9 +762,9 @@ describe("ResurrectCurrencyHoles ( — the currency backfill)", () => {
 	}
 
 	test("resurrects the Rochester class: dead + attested + only a DISTANT namesake alive", async () => {
-		const db = buildWithBackfill(true)
+		using db = await buildWithBackfill(true)
 
-		const rows = (await db)
+		const rows = db
 			.prepare(`SELECT spr_id, population, is_primary FROM candidate WHERE name_key = 'rochester' ORDER BY spr_id`)
 			.all() as { spr_id: number; population: number; is_primary: number }[]
 
@@ -775,11 +775,10 @@ describe("ResurrectCurrencyHoles ( — the currency backfill)", () => {
 		expect(kent.population).toBe(28_671)
 
 		expect(kent.is_primary).toBe(1)
-		;(await db).destroy()
 	})
 
 	test("keeps the checks: unattested, near-live, under-floor and superseded rows all stay dead", async () => {
-		await using db = await buildWithBackfill(true)
+		using db = await buildWithBackfill(true)
 
 		for (const key of ["oldblob", "nearlive", "tinyham", "ghosttown"]) {
 			const rows = db.prepare(`SELECT spr_id FROM candidate WHERE name_key = ?`).all(key) as { spr_id: number }[]
@@ -789,7 +788,7 @@ describe("ResurrectCurrencyHoles ( — the currency backfill)", () => {
 	})
 
 	test("without the option the pass never runs and every hole stays dead", async () => {
-		await using db = await buildWithBackfill(false)
+		using db = await buildWithBackfill(false)
 		const { n } = db.prepare(`SELECT COUNT(*) AS n FROM candidate WHERE spr_id = 300`).get() as { n: number }
 
 		expect(n).toBe(0)
