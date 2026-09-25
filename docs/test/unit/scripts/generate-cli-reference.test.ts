@@ -77,7 +77,7 @@ describe("generate-cli-reference", () => {
 
 			| Flag                      | Type    | Default | Description                                                                                                                                                 |
 			| ------------------------- | ------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
-			| \`--dry-run\`               | boolean | \`false\` | Print the download plan; touch no network and write nothing                                                                                                 |
+			| \`--dry-run\`               | boolean | \`false\` | Print the download plan; touch no network and write no data                                                                                                 |
 			| \`--only [only]\`           | string  | —       | Only pull artifacts whose remote/local path or state slug contains this substring (e.g. --only nh)                                                          |
 			| \`--force\`                 | boolean | \`false\` | Re-download even when a local copy already appears present                                                                                                  |
 			| \`--data-root [data-root]\` | string  | —       | Override the data root for this pull (default: $MAILWOMAN_DATA_ROOT or the built-in default)                                                                |

@@ -501,7 +501,7 @@ export function renderCLIReference(surface: CLISurface): string {
 		"## Rationale",
 		"",
 		"This page is generated rather than written because a hand-maintained flag table is wrong the day a",
-		"flag changes, and nothing catches it. The generator reads the same command specifications that",
+		"flag changes, and no check catches it. The generator reads the same command specifications that",
 		"build the binary, so a flag string here is the flag string `--help` prints. A test asserts the",
 		"committed page against a fresh render, which turns a stale page into a failing build.",
 		"",

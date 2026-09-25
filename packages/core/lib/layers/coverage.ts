@@ -15,8 +15,8 @@ import type { CoverageCell } from "#layers/manifest"
  * the authority's own polygons reach, and none anywhere else.
  *
  * `observedRows` counts the polygons reaching the cell, which is what the interface's column means.
- * There is no zero-row cell here and there cannot be one: a cell with no polygon
- * gets no row, because a `source_present` layer publishes no evidence that would
+ * There is no zero-row cell here and there cannot be one: a cell with no polygon gets no row,
+ * because a `source_present` layer publishes no evidence that would
  * let an empty cell be distinguished from unmapped ground.
  *
  * A layer whose absence carries meaning (flood's Zone 1) emits its rows from the

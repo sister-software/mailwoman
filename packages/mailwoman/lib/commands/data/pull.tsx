@@ -85,7 +85,7 @@ export const spec = {
 		"dry-run": {
 			type: "boolean",
 			default: false,
-			description: "Print the download plan; touch no network and write nothing",
+			description: "Print the download plan; touch no network and write no data",
 		},
 		only: {
 			type: "string",
