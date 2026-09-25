@@ -40,7 +40,7 @@ const FORM_499_FIELD_NOTES: Record<keyof Form499Row, string> = {
 	lifecycle:
 		"workbook-only; the FCC's own cessation date and successor filer. Not an input to this eval — the corpus " +
 		"is synthetic and states no lifecycle — but it is what closes valid_to on a real build",
-	operatingStates: "workbook-only registered footprint; staged as an attribute, no edge reads it",
+	operatingStates: "workbook-only registered footprint; staged as an attribute that no edge reads",
 }
 
 const PROVIDER_FIELD_NOTES: Record<keyof ProviderListRow, string> = {
@@ -380,8 +380,8 @@ export function renderLinkageEvalReport(input: RenderLinkageEvalReportInput): st
 		"",
 		"## What is in each artifact",
 		"",
-		"Counted from the two builds rather than asserted about them. The withheld build contains no ownership node, no " +
-			"ownership edge, no family row the prediction would score and no family row carrying a relationship this " +
+		"Counted from the two builds rather than asserted about them. The withheld build contains no ownership node or " +
+			"ownership edge, no family row the prediction would score, and no family row carrying a relationship this " +
 			"eval cannot classify — that is the withholding, verified, and a runtime check refuses to report a withheld " +
 			`score if any of those four counts is non-zero. It does contain ${withheld.census.nonOwnershipFamilyRows} ` +
 			"corporate-family rows, from the management-company disclosures the eval does not withhold; they are " +

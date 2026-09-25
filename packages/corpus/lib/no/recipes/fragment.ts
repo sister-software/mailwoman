@@ -39,7 +39,8 @@ export const noFragmentRecipe: CorpusRecipe = {
 		},
 		{
 			flag: "--bare-street-prob <n>",
-			description: "Share of street rows emitted as a BARE street, no number (default 0.30 — the pure licence signal)",
+			description:
+				"Share of street rows emitted as a bare street without a house number, the pure licence signal (default 0.30)",
 		},
 		{
 			flag: "--counter-prob <n>",

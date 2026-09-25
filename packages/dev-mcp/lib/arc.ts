@@ -235,7 +235,7 @@ export async function runArc(registry: EngineRegistryLike, options: ArcOptions):
 	}
 
 	const control = options.control ? await compare("self-control (shipped vs itself)", options.control) : undefined
-	const nullLeg = options.null ? await compare("null (same base, no new data)", options.null) : undefined
+	const nullLeg = options.null ? await compare("null (same base without new data)", options.null) : undefined
 	const candidate = await compare("candidate", options.candidate)
 
 	return decideArc(control, nullLeg, candidate, await protectedCountries(), options.shape ?? "fine-tune")

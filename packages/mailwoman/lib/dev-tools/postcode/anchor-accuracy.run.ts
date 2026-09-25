@@ -102,7 +102,7 @@ async function main(): Promise<void> {
 	console.log(`rows with postcode + coords: ${withPostcode}`)
 	console.log(`  placed (centroid found):     ${placed} (${((100 * placed) / withPostcode).toFixed(1)}%)`)
 	console.log(
-		`  in gazetteer, no centroid:   ${inGazetteerNoCentroid} (${((100 * inGazetteerNoCentroid) / withPostcode).toFixed(1)}%)`
+		`  in gazetteer but unplaced:   ${inGazetteerNoCentroid} (${((100 * inGazetteerNoCentroid) / withPostcode).toFixed(1)}%)`
 	)
 	console.log(
 		`  not in gazetteer at all:     ${notInGazetteer} (${((100 * notInGazetteer) / withPostcode).toFixed(1)}%)`

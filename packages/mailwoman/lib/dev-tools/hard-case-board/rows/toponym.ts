@@ -157,7 +157,7 @@ export const TOPONYM_ROWS: Curated[] = [
 		probeSurface: "Reims",
 		expectID: 101_751_377,
 		toleranceM: ADMIN_TOL,
-		note: "Dominant-bearer control for the FR bare class (pop 196,565, no serious namesake).",
+		note: "Dominant-bearer control for the FR bare class (population 196,565 without a serious namesake).",
 	},
 	{
 		id: "gb-bn-whitby",

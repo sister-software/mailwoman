@@ -110,7 +110,7 @@ export async function renderOaResolverReport(input: OaReportInput): Promise<stri
 		lines.push("")
 
 		lines.push(
-			`interpolation hit rate (interp coord, no exact point): ${interpHits}/${neuralInterpAgg.overall.n} (${((100 * interpHits) / Math.max(1, neuralInterpAgg.overall.n)).toFixed(1)}%)`
+			`interpolation hit rate (interp coord without exact point): ${interpHits}/${neuralInterpAgg.overall.n} (${((100 * interpHits) / Math.max(1, neuralInterpAgg.overall.n)).toFixed(1)}%)`
 		)
 
 		if (cascadeOn) {

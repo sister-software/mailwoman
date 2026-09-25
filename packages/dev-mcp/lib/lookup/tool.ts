@@ -348,7 +348,7 @@ async function runPostcodeLookup(args: LookupArgs): Promise<LookupResult> {
 			source: LookupSource.Postcode,
 			rows: [],
 			unavailable_reason:
-				`${resolved.packageDir ?? resolved.source} ships no postcode anchor artifact (no postcode-<cc>.bin, no ` +
+				`${resolved.packageDir ?? resolved.source} ships no postcode anchor artifact (neither postcode-<cc>.bin nor ` +
 				"anchor-lookup.json). The anchor channel runs OFF for this locale — an absent artifact, not an empty one.",
 			notes: [UNAVAILABLE_NOTE],
 		}

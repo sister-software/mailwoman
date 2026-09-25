@@ -274,7 +274,7 @@ The four subpackages are generated verbatim — do not hand-edit them (they are 
 see \`mailwoman clients generate\`). Everything in this module is the thin, hand-written ergonomics
 layer over that generated code: friendly client classes with a sensible default \`base_url\`.
 
-Quick start (hosted Photon trial endpoint, no local server needed):
+Quick start against the hosted Photon trial endpoint, which needs no local server:
 
     from mailwoman_client import PhotonClient
     from mailwoman_client.photon.api.geocoding import search
@@ -399,8 +399,8 @@ function pythonReadme(): string {
 		"",
 		"## Usage",
 		"",
-		"Forward-geocode against the hosted Photon trial endpoint (`https://photon.mailwoman.ai`, no",
-		"local server needed):",
+		"Forward-geocode against the hosted Photon trial endpoint (`https://photon.mailwoman.ai`), which",
+		"needs no local server:",
 		"",
 		"```python",
 		"from mailwoman_client import PhotonClient",

@@ -37,7 +37,7 @@ function isTestFile(path: string): boolean {
 export const noRootScriptsCheck: RepoCheck = {
 	id: "no-root-scripts",
 	description:
-		"No tracked file under a root scripts/ directory, no code path built into one, and no CI or package.json target that runs scripts/… or a bare lib/*.ts path.",
+		"No tracked file sits under a root scripts/ directory, no code path builds into one, and no CI or package.json target runs scripts/… or a bare lib/*.ts path.",
 	async run(context) {
 		const root = context.repoRoot
 		const diagnostics: Diagnostic[] = []

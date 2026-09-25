@@ -109,7 +109,7 @@ const LITERAL_INPUT_WITH_TRUTH_SCHEMA = z.object({
 const LITERAL_INPUT_SCHEMA = z.union([z.string(), LITERAL_INPUT_WITH_TRUTH_SCHEMA])
 
 const LITERAL_INPUTS_DESCRIPTION =
-	"Bare strings are OBSERVED — no truth, no grade. An object carrying `lat`/`lon` is GRADED against that point, " +
+	"Bare strings are observed without a truth point, so they are not graded. An object carrying `lat`/`lon` is GRADED against that point, " +
 	"which is what makes this the authoring loop for a new board row: measure the candidates before writing the case " +
 	"file, rather than writing rows and discovering the score afterwards."
 

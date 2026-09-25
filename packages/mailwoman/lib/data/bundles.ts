@@ -267,7 +267,8 @@ export const BUNDLES: Record<string, DataBundle> = {
 	},
 	fr: {
 		name: "fr",
-		description: "French national rooftop address-point database (BAN) — situs-only, no interpolation tier (~6.95 GB).",
+		description:
+			"French national rooftop address-point database (BAN), with situs points only and no interpolation tier (~6.95 GB).",
 		artifacts: [
 			{
 				remotePath: "street/fr/2026-07-10/situs.db",

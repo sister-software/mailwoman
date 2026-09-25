@@ -39,7 +39,8 @@ function* bareCountrySurfaces(): Generator<{ surface: string; iso2: string }> {
  */
 export const bareCountryRecipe: CorpusRecipe = {
 	name: "bare-country",
-	description: "The country name as the whole query (#1651 parse half): ISO names + curated endonyms, no codes",
+	description:
+		"Emits a country name as the whole query, drawn from ISO names and curated endonyms but never from country codes",
 	mode: "generate",
 	async run(opts, write) {
 		makeMulberry32(opts.seed)

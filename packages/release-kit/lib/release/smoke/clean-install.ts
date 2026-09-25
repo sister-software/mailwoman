@@ -390,7 +390,7 @@ export async function smokeCleanInstall({ repoRoot, log }: SmokeCleanInstallOpti
 			const firstPartyDependencies = await firstPartyClosure(repoRoot, leaf)
 
 			log(
-				`[smoke] standalone-leaf import: ${leaf} alone (no umbrella, no hoisting; closure ${firstPartyDependencies.join(", ") || "none"})…`
+				`[smoke] standalone-leaf import: ${leaf} alone (without the umbrella or hoisting; closure ${firstPartyDependencies.join(", ") || "none"})…`
 			)
 
 			const solo = tmp.path(`solo-${leafDir}`)

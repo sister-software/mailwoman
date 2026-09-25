@@ -193,7 +193,7 @@ export function renderNPPESDedupReport(input: NPPESReportInput): string {
 			`**${pct(defaultOutOfBox.f1)}%** on this sample — essentially the baseline. The default auto-computes the ` +
 			`address-frequency table over the INPUT records, and this benchmark deliberately sub-samples ${N} records, so ` +
 			`that table is too sparse to carry the inverse-frequency signal (a corpus statistic you can't synthesize from a ` +
-			`sample). It's **not a regression** (≥ baseline, no over-merge added) — it's the honest floor when the input isn't ` +
+			`sample). It's **not a regression**, because it meets the baseline without adding over-merges — it's the honest floor when the input isn't ` +
 			`corpus-scale. Fed the corpus-wide table (the \`+ inverse-address-frequency\` row above, what the CLI builds from ` +
 			`the full source files) the SAME default reaches the **${pct(progression[2]!.score.f1)}%** baseline. On a full-dataset ` +
 			`dedup the input IS the corpus, so zero-config reaches the baseline on its own.`

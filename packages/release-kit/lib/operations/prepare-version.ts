@@ -19,7 +19,7 @@ import { prepareReleaseVersion } from "#release/prepare-version"
 export const prepareVersion = defineOperation({
 	id: "release.prepare-version",
 	description:
-		"Write the target version (patch|minor|major|x.y.z) into the root package.json, every release workspace, and release.config.json. No git, no npm. --check-only resolves and validates without writing.",
+		"Write the target version (patch|minor|major|x.y.z) into the root package.json, every release workspace, and release.config.json without running git or npm. --check-only resolves and validates without writing.",
 	effect: OperationEffect.LocalWrite,
 	inputSchema: z
 		.object({

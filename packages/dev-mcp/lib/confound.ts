@@ -167,7 +167,7 @@ export function worktreePairReading(
 			`${armA} and ${armB} ran different source trees in separate processes. Measured delta: ${delta.commits} ` +
 				`commit${delta.commits === 1 ? "" : "s"} touching ${delta.files} file${delta.files === 1 ? "" : "s"} ` +
 				`(git diff ${delta.range}). Everything in those commits is inside this comparison — the attribution is ` +
-				"exactly as narrow as that diff, no narrower.",
+				"exactly as narrow as that diff.",
 		],
 	}
 }

@@ -42,7 +42,7 @@ const MIN_NAME_LENGTH = 4
 const MAX_ATTESTED_TOKENS = 4
 
 /**
- * Reject names with route punctuation, no letters, or a single lowercase code.
+ * Rejects a name that contains route punctuation, has no letters, or is a single lowercase code.
  */
 export function isCleanName(name: string): boolean {
 	if (name.length < MIN_NAME_LENGTH || name.length > MAX_VENUE_NAME_LENGTH) return false

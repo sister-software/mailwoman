@@ -187,11 +187,11 @@ export function reconciliationReport(result: ReconciliationResult, options: Reco
 	lines.push(`| **enrolled** | ${counts.enrolled} | resolves to an eligibility record AND a funding record |`)
 
 	lines.push(
-		`| **eligible, not enrolled** | ${counts["eligible-not-enrolled"]} | eligibility record, no funding record resolved (the **anti-join**) |`
+		`| **eligible, not enrolled** | ${counts["eligible-not-enrolled"]} | eligibility record without a resolved funding record (the **anti-join**) |`
 	)
 
 	lines.push(
-		`| **funded, not in eligibility set** | ${counts["funded-not-eligible"]} | funding record, no eligibility record resolved |`
+		`| **funded, not in eligibility set** | ${counts["funded-not-eligible"]} | funding record without a resolved eligibility record |`
 	)
 
 	lines.push("")

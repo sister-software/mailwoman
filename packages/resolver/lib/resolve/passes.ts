@@ -271,8 +271,8 @@ export interface ResolutionState {
 	localeCountryPriorWeight: number
 
 	/**
-	 * Returns a candidate's capital level for bounded capital promotion;
-	 * when absent, no candidate is promoted.
+	 * Returns a candidate's capital level for bounded capital promotion.
+	 * When it is absent, no candidate is promoted.
 	 */
 	capitalLevel?: (place: { name: string; country?: string; lat: number; lon: number }) => number
 

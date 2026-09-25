@@ -22,7 +22,7 @@ export const rigTool = (_deps: DevToolDeps): DevTool => ({
 		"handful of strings and reports each result's SOURCE id — `whosonfirst:locality:101750331` vs " +
 		"`geonames:locality:2639268` is how a coverage question gets settled. Endpoints are pinned to loopback " +
 		"and cannot be overridden: a comparison against another host is `mwdev_compare`'s external arm, which " +
-		"refuses the shared public instances by name. Queries here are OBSERVATIONS — no grading, no rate, no " +
+		"refuses the shared public instances by name. Queries here are observations and produce no grade, rate or " +
 		"verdict. Building a rig (dump download, checksum verification, index extraction) stays manual in its " +
 		"own script, and this tool says which one when the containers are absent.",
 	inputSchema: z.object({
