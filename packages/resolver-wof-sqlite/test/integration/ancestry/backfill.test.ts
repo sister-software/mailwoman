@@ -43,7 +43,7 @@ test("discoverAdminDataRoots: missing root.path yields empty list, never throws"
 })
 
 test("backfillAncestorsFromHierarchy: inserts wof:hierarchy ancestors for only-self places, idempotent", async () => {
-	await using db = DatabaseClient.temp<WOFDatabase>()
+	using db = DatabaseClient.temp<WOFDatabase>()
 	db.exec("CREATE TABLE spr (id INTEGER PRIMARY KEY, placetype TEXT)")
 	db.exec("CREATE TABLE ancestors (id INTEGER, ancestor_id INTEGER, ancestor_placetype TEXT, lastmodified INTEGER)")
 
@@ -90,7 +90,7 @@ test("backfillAncestorsFromHierarchy: inserts wof:hierarchy ancestors for only-s
 })
 
 test("backfillAncestorsFromHierarchy: repairs a borough that INHERITED its parent's dead end (#1445)", async () => {
-	await using db = DatabaseClient.temp<WOFDatabase>()
+	using db = DatabaseClient.temp<WOFDatabase>()
 	db.exec("CREATE TABLE spr (id INTEGER PRIMARY KEY, placetype TEXT)")
 	db.exec("CREATE TABLE ancestors (id INTEGER, ancestor_id INTEGER, ancestor_placetype TEXT, lastmodified INTEGER)")
 
@@ -171,7 +171,7 @@ test("backfillAncestorsFromHierarchy: repairs a borough that INHERITED its paren
 })
 
 test("backfillAncestorsFromHierarchy: survives more candidates than SQLite's bound-variable cap", async () => {
-	await using db = DatabaseClient.temp<WOFDatabase>()
+	using db = DatabaseClient.temp<WOFDatabase>()
 	db.exec("CREATE TABLE spr (id INTEGER PRIMARY KEY, placetype TEXT)")
 	db.exec("CREATE TABLE ancestors (id INTEGER, ancestor_id INTEGER, ancestor_placetype TEXT, lastmodified INTEGER)")
 	// Production always carries ancestors_by_id (unified-schema.ts) and the freeze
@@ -206,7 +206,7 @@ test("backfillAncestorsFromHierarchy: survives more candidates than SQLite's bou
 })
 
 test("backfillAncestorsFromHierarchy: leaves a place whose SOURCE hierarchy stops short alone", async () => {
-	await using db = DatabaseClient.temp<WOFDatabase>()
+	using db = DatabaseClient.temp<WOFDatabase>()
 	db.exec("CREATE TABLE spr (id INTEGER PRIMARY KEY, placetype TEXT)")
 	db.exec("CREATE TABLE ancestors (id INTEGER, ancestor_id INTEGER, ancestor_placetype TEXT, lastmodified INTEGER)")
 

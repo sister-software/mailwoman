@@ -352,7 +352,7 @@ export async function foldGeonamesIntoAdmin(opts: FoldOptions): Promise<FoldResu
 	await copyFileTo(opts.adminIn, opts.adminOut)
 	await changeMode(opts.adminOut, 0o644)
 
-	await using db = new DatabaseClient<WOFDatabase>(opts.adminOut)
+	using db = new DatabaseClient<WOFDatabase>(opts.adminOut)
 
 	// #1026 + #1514: the purge clears the A-class country/region nodes and the locality ancestry too, so a fold that does not pass adminForCountries un-parents the 95 zero-coverage locales' localities. Default it to the same gap set `buildAdmin` uses, scoped to this run — the caller opts OUT by passing an explicit set.
 	const adminForCountries =

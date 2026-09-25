@@ -51,7 +51,7 @@ async function build(rows: Form499Row[]) {
 		buildSHA: "deadbeef",
 	})
 
-	await using db = new DatabaseClient<FilerDatabase>(out, { readOnly: true })
+	using db = new DatabaseClient<FilerDatabase>(out, { readOnly: true })
 
 	const edges = db
 		.prepare("SELECT from_node_id, to_node_id, relationship, valid_from, valid_to FROM filer_edge ORDER BY 1, 2, 3")

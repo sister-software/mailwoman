@@ -213,7 +213,7 @@ async function main(): Promise<void> {
 
 	// read-only on the admin DB.
 	// This module must never write to it.
-	await using db = new DatabaseClient<WOFDatabase>(dbPath, { readOnly: true })
+	using db = new DatabaseClient<WOFDatabase>(dbPath, { readOnly: true })
 
 	const sourceMD5 = values["skip-source-md5"] ? "(skipped)" : await md5File(dbPath)
 

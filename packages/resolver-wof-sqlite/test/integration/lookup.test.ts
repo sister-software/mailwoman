@@ -463,7 +463,7 @@ describe("WOFSQLitePlaceLookup against an inline WOF fixture", () => {
 	})
 
 	test("Disposable: Symbol.dispose closes the lookup", async () => {
-		await using db = buildFixtureDB()
+		using db = buildFixtureDB()
 
 		{
 			using disposable = new WOFSQLitePlaceLookup({ database: db, buildFTS: true })
@@ -505,7 +505,7 @@ describe("WOFSQLitePlaceLookup ctor", () => {
 
 		// Build the fixture on disk with its FTS index, then seal the file 0444 to mimic a shipped extract.
 		{
-			await using disk = buildFixtureDB(dbPath)
+			using disk = buildFixtureDB(dbPath)
 			const builder = new WOFSQLitePlaceLookup({ database: disk, buildFTS: true })
 			builder[Symbol.dispose]()
 		}

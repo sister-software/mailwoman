@@ -31,7 +31,7 @@ let dbPath: PathBuilder
 async function buildFixtureDB(): Promise<PathBuilder> {
 	const sql = await readLocalTextFile(fixtureSQLPath)
 	const path = scratch.path("fcc-bdc-fixture.db")
-	await using db = new DatabaseClient<BDCDatabase>(path)
+	using db = new DatabaseClient<BDCDatabase>(path)
 	db.exec(sql)
 
 	return path

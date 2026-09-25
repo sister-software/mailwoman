@@ -72,7 +72,7 @@ export async function buildSealedArtifact<DB, Streamed, Result>(
 	let streamed: Streamed | undefined
 
 	{
-		await using kdb = new DatabaseClient<DB>(tmpPath)
+		using kdb = new DatabaseClient<DB>(tmpPath)
 
 		try {
 			kdb.exec("PRAGMA journal_mode = OFF")

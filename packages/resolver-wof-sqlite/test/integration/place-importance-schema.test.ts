@@ -174,7 +174,7 @@ function seedPopulation(db: DatabaseClient<PlaceImportanceDatabase>, rows: Reado
 
 describe("loadImportanceSplit", () => {
 	it("reads the split columns verbatim when they exist", async () => {
-		await using kdb = DatabaseClient.temp<PlaceImportanceDatabase>()
+		using kdb = DatabaseClient.temp<PlaceImportanceDatabase>()
 		seedPopulation(kdb, [[1, 96_128]])
 
 		await createPlaceImportanceTable(kdb)

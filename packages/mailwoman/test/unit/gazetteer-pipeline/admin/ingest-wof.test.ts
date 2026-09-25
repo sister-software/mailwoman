@@ -64,7 +64,7 @@ afterAll(() => ROOT[Symbol.asyncDispose]())
 
 describe("ingestWOF centroids (#1726)", () => {
 	it("stores the label centroid when present, the math centroid otherwise, and never a mix", async () => {
-		await using db = DatabaseClient.temp<WOFDatabase>()
+		using db = DatabaseClient.temp<WOFDatabase>()
 
 		await createUnifiedSchema(db)
 		await ingestWOF(db, { dataDir: ROOT.path })
@@ -94,7 +94,7 @@ describe("ingestWOF directory symlinks", () => {
 		await writeLocalFile(feature(42, {}), dataDir("42.geojson"))
 		await createSymbolicLink(repo, root("whosonfirst-data", "whosonfirst-data-admin-us"))
 
-		await using db = DatabaseClient.temp<WOFDatabase>()
+		using db = DatabaseClient.temp<WOFDatabase>()
 		await createUnifiedSchema(db)
 
 		const result = await ingestWOF(db, { dataDir: root })
@@ -145,7 +145,7 @@ describe("ingestWOF label-point adjudication (#1905)", () => {
 	})
 
 	it("without a lookup the label preference is unchanged and the override count is a measured zero", async () => {
-		await using db = DatabaseClient.temp<WOFDatabase>()
+		using db = DatabaseClient.temp<WOFDatabase>()
 
 		await createUnifiedSchema(db)
 

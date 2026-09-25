@@ -118,7 +118,7 @@ test("buildPostcodeNIOSM: #920 laws, the malformed drop, and the ODbL/meaning-of
 	// accessSync: root.path ignores the permission and would pass a W_OK probe on a sealed file).
 	expect((await statPath(out)).mode & 0o222).toBe(0)
 
-	await using db = new DatabaseClient<WOFDatabase>(out, { readOnly: true })
+	using db = new DatabaseClient<WOFDatabase>(out, { readOnly: true })
 
 	// Name law: `spr.name` is the sanitized-query token shape.
 	// The display form is an alt `names` row.

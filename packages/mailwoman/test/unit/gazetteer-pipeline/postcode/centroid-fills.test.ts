@@ -38,7 +38,7 @@ test("parent-borrow fills a (0,0) postcode from the admin gazetteer; real coordi
 		)
 		.run()
 
-	await using db = new DatabaseClient<WOFDatabase>(databasePath)
+	using db = new DatabaseClient<WOFDatabase>(databasePath)
 	const r = await fillPostcodeCentroids(db, { adminPath })
 	expect(r.placedBefore).toBe(1)
 	expect(r.placedAfter).toBe(2)
@@ -95,7 +95,7 @@ test("GeoNames postal names each postcode's delivery city, including territories
 		geonamesDir("US.txt")
 	)
 
-	await using db = new DatabaseClient<WOFDatabase>(databasePath)
+	using db = new DatabaseClient<WOFDatabase>(databasePath)
 
 	const r = await fillPostcodeCentroids(db, { geonamesDir })
 
@@ -152,7 +152,7 @@ test("falls back to the combined dump for a country the per-country directory ha
 		geonamesCombined
 	)
 
-	await using db = new DatabaseClient<WOFDatabase>(databasePath)
+	using db = new DatabaseClient<WOFDatabase>(databasePath)
 
 	const r = await fillPostcodeCentroids(db, { geonamesDir, geonamesCombined })
 

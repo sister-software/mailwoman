@@ -113,7 +113,7 @@ afterAll(() => {
 })
 
 test("V2 tags mark the official-language preferred name; transliterations and historic forms stay 0", async () => {
-	await using db = freshDB()
+	using db = freshDB()
 
 	await ingestGeonamesAliases(db, ["FI"], dir.path, () => {}, { alternateDir: altDir.path })
 
@@ -133,7 +133,7 @@ test("V2 tags mark the official-language preferred name; transliterations and hi
 })
 
 test("without the V2 file the fold is untagged, exactly the pre-#936 behavior", async () => {
-	await using db = freshDB()
+	using db = freshDB()
 
 	await ingestGeonamesAliases(db, ["FI"], dir.path, () => {}, { alternateDir: altDir.path("nope") })
 

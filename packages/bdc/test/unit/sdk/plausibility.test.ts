@@ -139,7 +139,7 @@ async function buildPOILookupFixture(rows: readonly POIFixtureRow[]): Promise<PO
 	await using scratch = await temporaryDirectory("bdc-plausibility-poi-")
 	const databasePath = scratch.path("poi.db")
 
-	await using kdb = new DatabaseClient<POIDatabase>(databasePath)
+	using kdb = new DatabaseClient<POIDatabase>(databasePath)
 
 	await createPOITable(kdb)
 	await createPOIStagingTables(kdb)

@@ -121,7 +121,7 @@ test("links the locality → region → country ancestry so parentID scoping rea
 })
 
 test("default (no includeAdmin) stays localities-only with no admin rows — byte-stable", async () => {
-	await using db2 = DatabaseClient.temp<WOFDatabase>()
+	using db2 = DatabaseClient.temp<WOFDatabase>()
 
 	db2.exec(`CREATE TABLE spr (id INTEGER PRIMARY KEY, parent_id INTEGER, name TEXT, placetype TEXT, country TEXT,
 		 latitude REAL, longitude REAL, min_latitude REAL, min_longitude REAL, max_latitude REAL, max_longitude REAL,

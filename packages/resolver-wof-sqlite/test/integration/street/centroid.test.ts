@@ -47,7 +47,7 @@ type StreetCentroidFixture = TemporaryDirectory & { extractPath: PathBuilder }
 async function seedExtract(rows: Seed[]): Promise<StreetCentroidFixture> {
 	const scratch = await temporaryDirectory("sc-test-")
 	const extractPath = scratch.path("street-centroids.db")
-	await using kdb = new DatabaseClient<StreetCentroidDatabase>(extractPath)
+	using kdb = new DatabaseClient<StreetCentroidDatabase>(extractPath)
 	await createStreetCentroidTable(kdb)
 
 	const ins = kdb.prepare(

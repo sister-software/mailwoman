@@ -257,7 +257,7 @@ describe("StreetInterpolator", () => {
 
 describe("StreetInterpolator — artifact-carried radius calibration", () => {
 	it("reads the extract's baked multiplier at open time", async () => {
-		await using kdb = DatabaseClient.temp<StreetSegmentDatabase>()
+		using kdb = DatabaseClient.temp<StreetSegmentDatabase>()
 		seed(kdb, [MAIN_EVEN])
 
 		await writeInterpCalibration(kdb, { radius_multiplier: 1.7, method: "split-conformal:2026-06-14", region: "TX" })

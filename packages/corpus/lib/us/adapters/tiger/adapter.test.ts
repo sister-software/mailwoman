@@ -30,7 +30,7 @@ let dbPath: PathBuilder
 async function buildFixtureDB(): Promise<PathBuilder> {
 	const sql = await readLocalTextFile(fixtureSQLPath)
 	const path = scratch.path("tiger-fixture.db")
-	await using db = new DatabaseClient<TIGERDatabase>(path)
+	using db = new DatabaseClient<TIGERDatabase>(path)
 	db.exec(sql)
 
 	return path

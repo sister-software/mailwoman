@@ -70,7 +70,7 @@ beforeAll(async () => {
 afterAll(() => dir[Symbol.asyncDispose]())
 
 test("a re-fold with a different country list leaves no name bound to another country's place", async () => {
-	await using db = freshDB()
+	using db = freshDB()
 
 	await ingestGeonamesAliases(db, ["BW", "AT"], dir.path, () => {})
 
@@ -86,7 +86,7 @@ test("a re-fold with a different country list leaves no name bound to another co
 })
 
 test("a re-fold rewrites the range wholesale — no row survives from the previous run", async () => {
-	await using db = freshDB()
+	using db = freshDB()
 
 	await ingestGeonamesAliases(db, ["BW", "AT"], dir.path, () => {})
 	await ingestGeonamesAliases(db, ["AT"], dir.path, () => {})
@@ -106,7 +106,7 @@ test("a re-fold rewrites the range wholesale — no row survives from the previo
 })
 
 test("a stale population cannot outlive the place it belonged to", async () => {
-	await using db = freshDB()
+	using db = freshDB()
 
 	await ingestGeonamesAliases(db, ["BW", "AT"], dir.path, () => {})
 
@@ -124,7 +124,7 @@ test("a stale population cannot outlive the place it belonged to", async () => {
 })
 
 test("re-folding the SAME list twice is a no-op, not a doubling", async () => {
-	await using db = freshDB()
+	using db = freshDB()
 
 	await ingestGeonamesAliases(db, ["BW", "AT"], dir.path, () => {})
 	const first = db.prepare(`SELECT COUNT(*) AS n FROM names WHERE id >= ?`).get(GEONAMES_ID_BASE) as Row
@@ -136,7 +136,7 @@ test("re-folding the SAME list twice is a no-op, not a doubling", async () => {
 })
 
 test("every folded locality gets its self-ancestor row, admin fold or not", async () => {
-	await using db = freshDB()
+	using db = freshDB()
 
 	await ingestGeonamesAliases(db, ["BW", "AT"], dir.path, () => {})
 
@@ -156,7 +156,7 @@ test("every folded locality gets its self-ancestor row, admin fold or not", asyn
 })
 
 test("the purge stops at the GeoNames-POSTAL namespace above it", async () => {
-	await using db = freshDB()
+	using db = freshDB()
 
 	db.prepare(`INSERT INTO names (id, name, placetype, country, language, privateuse, official, lastmodified)
 	            VALUES (?, 'AD500', 'postalcode', 'AD', '', '', 0, 0)`).run(9_500_000_000_000)

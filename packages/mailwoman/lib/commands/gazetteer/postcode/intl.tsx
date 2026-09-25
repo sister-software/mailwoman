@@ -210,7 +210,7 @@ async function buildDatabase(
 		console.error(`out exists, overwriting: ${outPath}`)
 	}
 
-	await using kdb = new DatabaseClient<WOFDatabase>(outPath)
+	using kdb = new DatabaseClient<WOFDatabase>(outPath)
 	// Regenerated artifact — drop any prior table so a re-run with a different country set
 	// fully replaces it (and synthetic ids restart cleanly without colliding with stale rows).
 	await kdb.schema.dropTable("spr").ifExists().execute()
@@ -280,7 +280,7 @@ async function foldIntoCandidate(
 	await copyFileTo(srcPath, dstPath)
 
 	const { DatabaseClient } = await import("@mailwoman/sqlite/client")
-	await using out = new DatabaseClient<WOFDatabase>(dstPath)
+	using out = new DatabaseClient<WOFDatabase>(dstPath)
 	using database = new DatabaseClient<WOFDatabase>(databasePath, { readOnly: true })
 
 	const ptRow = getRow<{ id: number }>(out.prepare("SELECT id FROM placetype_codes WHERE placetype='postalcode'"))

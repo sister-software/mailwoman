@@ -477,7 +477,7 @@ describe("lookupCandidate fame-diagnosis extras", () => {
 
 	it("joins importance_split by spr_id when an importance DB is given, and reports a missing row as null", async () => {
 		const db = await candidateFixture()
-		await using importance = DatabaseClient.temp<PlaceImportanceDatabase>()
+		using importance = DatabaseClient.temp<PlaceImportanceDatabase>()
 
 		importance.exec(
 			"CREATE TABLE place_importance (id INTEGER PRIMARY KEY, referential REAL NOT NULL, encyclopedic REAL, importance REAL NOT NULL)"

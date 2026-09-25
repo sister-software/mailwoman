@@ -222,7 +222,7 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 	}
 
 	using src = new DatabaseClient<WOFDatabase>(opts.input, { readOnly: true })
-	await using kdb = new DatabaseClient<CandidateDatabase>(opts.output)
+	using kdb = new DatabaseClient<CandidateDatabase>(opts.output)
 
 	kdb.exec("PRAGMA page_size=8192; PRAGMA journal_mode=OFF; PRAGMA synchronous=OFF; PRAGMA cache_size=-2000000;")
 

@@ -95,7 +95,7 @@ const GazetteerPostalAlias: CommandComponent<typeof spec> = ({ options }) => {
 
 		console.error(`▸ writing ${rows.length.toLocaleString()} rows → ${out}`)
 
-		await using kdb = new DatabaseClient<PostalCityAliasDatabase>(out)
+		using kdb = new DatabaseClient<PostalCityAliasDatabase>(out)
 		kdb.exec("PRAGMA journal_mode = WAL;")
 		// DDL via the shared createPostalCityAliasTable builder.
 		// The exact table the reader + tests use, so this producer can't drift from postal-city-alias-schema.ts.
