@@ -5,6 +5,7 @@ import { parseJSONStrict } from "@mailwoman/core/json"
 import { runFile } from "@mailwoman/core/process"
 import { childEnv } from "@mailwoman/core/scripting/utils"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
+import { stripAnsi } from "mailwoman/cli-kit"
 import { mailwomanCLIPath } from "mailwoman/cli-kit/metadata"
 import { $public } from "mailwoman/env"
 import type { PathBuilderLike } from "path-ts"
@@ -51,7 +52,7 @@ async function runCLI(
 }
 
 function parseStdoutJSON(stdout: string): unknown {
-	const cleaned = stdout.replaceAll(/\[[0-9;]*[a-zA-Z]/gu, "").trim()
+	const cleaned = stripAnsi(stdout).trim()
 	const start = cleaned.search(/[{[]/u)
 
 	if (start < 0) throw new Error(`No JSON payload in stdout:\n${stdout}`)
@@ -159,8 +160,13 @@ describe("— the interactive/declined degraded banner is unchanged (check)", ()
 		const { stdout, stderr, code } = await runCLI(["parse", "--degraded", "--neural", ADDRESS], absentEnv())
 
 		expect(code).not.toBe(0)
+
 		// Ink wraps the error to the terminal width, so the check ignores line breaks.
-		expect(`${stdout}${stderr}`.replaceAll(/\s+/g, " ")).toContain("cannot be combined with --policy or --neural")
+		// Chalk closes and reopens its color at the wrap, leaving an escape sequence between two words.
+		// The sequences therefore come out before the whitespace collapse.
+		expect(stripAnsi(`${stdout}${stderr}`).replaceAll(/\s+/g, " ")).toContain(
+			"cannot be combined with --policy or --neural"
+		)
 	}, 30_000)
 })
 

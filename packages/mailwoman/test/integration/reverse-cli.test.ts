@@ -1,6 +1,7 @@
 import { parseJSONStrict } from "@mailwoman/core/json"
 import { runFile } from "@mailwoman/core/process"
 import { childEnv } from "@mailwoman/core/scripting/utils"
+import { stripAnsi } from "mailwoman/cli-kit"
 import { mailwomanCLIPath } from "mailwoman/cli-kit/metadata"
 import { $public } from "mailwoman/env"
 import { describe, expect, test } from "vitest"
@@ -11,8 +12,7 @@ const ADMIN_DB = $public.MAILWOMAN_WOF_ADMIN_DB
 const POLYGONS_DB = $public.MAILWOMAN_WOF_POLYGONS_DB
 
 function stripAnsiSpinner(stdout: string): string {
-	const ansi = /\[[0-9;]*[a-zA-Z]/gu
-	const cleaned = stdout.replace(ansi, "").trim()
+	const cleaned = stripAnsi(stdout).trim()
 	const objStart = cleaned.search(/[{[]/)
 
 	return objStart >= 0 ? cleaned.slice(objStart) : cleaned

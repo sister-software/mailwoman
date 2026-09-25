@@ -3,6 +3,7 @@ import { parseJSONStrict } from "@mailwoman/core/json"
 import { runFile } from "@mailwoman/core/process"
 import { childEnv } from "@mailwoman/core/scripting/utils"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
+import { stripAnsi } from "mailwoman/cli-kit"
 import { mailwomanCLIPath } from "mailwoman/cli-kit/metadata"
 import { parseCommand } from "mailwoman/cli-native/spec"
 import { spec as parseSpec } from "mailwoman/commands/parse"
@@ -136,8 +137,7 @@ describeIfWOF(`npx mailwoman parse --neural --resolve against ${wofPath}`, () =>
 })
 
 function stripAnsiSpinner(stdout: string): string {
-	const ansi = /\[[0-9;]*[a-zA-Z]/gu
-	const cleaned = stdout.replace(ansi, "").trim()
+	const cleaned = stripAnsi(stdout).trim()
 
 	const objStart = cleaned.search(/[{[]/)
 

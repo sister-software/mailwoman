@@ -15,6 +15,7 @@
 import { parseJSONStrict } from "@mailwoman/core/json"
 import { runFile } from "@mailwoman/core/process"
 import { childEnv } from "@mailwoman/core/scripting/utils"
+import { stripAnsi } from "mailwoman/cli-kit"
 import { mailwomanCLIPath } from "mailwoman/cli-kit/metadata"
 import { describe, expect, test } from "vitest"
 
@@ -25,8 +26,7 @@ const cliBin = await mailwomanCLIPath()
  * Isolate the JSON payload.
  */
 function extractJSON(stdout: string): unknown {
-	const ansi = /\[[0-9;]*[a-zA-Z]/gu
-	const cleaned = stdout.replace(ansi, "").trim()
+	const cleaned = stripAnsi(stdout).trim()
 	// Find the outermost JSON object (debug mode emits an object — non-debug emits an array).
 	const objStart = cleaned.indexOf("{")
 	const objEnd = cleaned.lastIndexOf("}")
