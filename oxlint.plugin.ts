@@ -851,7 +851,7 @@ const noCrossPackageReexportRule: Rule = {
 }
 
 /**
- * Types that declare `[Symbol.dispose]` and no `[Symbol.asyncDispose]`.
+ * Types whose whole teardown runs inside `[Symbol.dispose]`.
  *
  * `DatabaseClient` closes the `node:sqlite` handle, `DisposableDuckDB` calls `closeSync()` on the
  * connection and on the instance behind it, and `RegionDatabaseProvider` closes its cached handles.
@@ -861,7 +861,7 @@ const SYNC_DISPOSABLE_TYPES = new Set(["DatabaseClient", "DisposableDuckDB", "Re
 /**
  * Cross-package functions that answer one of {@link SYNC_DISPOSABLE_TYPES}.
  *
- * A same-file helper needs no entry: the rule reads its declared return type.
+ * For a same-file helper the rule reads the declared return type instead.
  */
 const SYNC_DISPOSABLE_FACTORIES = new Set([
 	"openBDCDatabaseIfPresent",
@@ -915,7 +915,7 @@ function initializedExpression(node: AstNode | null | undefined): AstNode | null
 }
 
 /**
- * The synchronously-disposed name an initializer resolves to, or null when the shape says nothing.
+ * The synchronously-disposed name an initializer resolves to, or null for any other expression.
  *
  * `locals` holds the same-file helpers whose return type named one.
  */
@@ -1014,11 +1014,10 @@ const noAwaitUsingSyncDisposableRule: Rule = {
 						context.report({
 							node: declarator,
 							message:
-								`\`${source}\` declares \`[Symbol.dispose]\` and no \`[Symbol.asyncDispose]\`, so the scope exit ` +
-								"has nothing to await and `await using` reads as though disposal were asynchronous. Declare it " +
-								"with `using`; the factory keeps its own await, as in `using db = await openBuiltClient(path)`. " +
-								"`await using` belongs to a resource whose teardown is itself asynchronous, such as a " +
-								"`TemporaryDirectory` removing its directory.",
+								`\`${source}\` completes its teardown inside \`[Symbol.dispose]\`, so \`using\` already closes it ` +
+								"at scope exit. Declare it with `using` and keep the factory's own await, as in " +
+								"`using db = await openBuiltClient(path)`. `await using` states that disposal itself awaits, " +
+								"which is the shape a `TemporaryDirectory` removing its directory needs.",
 						})
 					}
 				})
