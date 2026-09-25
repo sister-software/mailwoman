@@ -1,6 +1,5 @@
 node_modules
 
-/internal/
 .notes
 
 # ignore all of whosonfirst/dictionaries
