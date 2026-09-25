@@ -87,6 +87,11 @@
 			"node": "./lib/nz/index.ts",
 			"default": "./out/nz/index.js"
 		},
+		"./nl": {
+			"types": "./out/nl/index.d.ts",
+			"node": "./lib/nl/index.ts",
+			"default": "./out/nl/index.js"
+		},
 		"./address-layout": {
 			"types": "./out/address/layout.d.ts",
 			"node": "./lib/address/layout.ts",

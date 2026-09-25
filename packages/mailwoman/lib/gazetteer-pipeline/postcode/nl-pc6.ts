@@ -22,6 +22,7 @@
  *   Run: node scripts/build-postalcode-nl-pc6.ts [--csv <pc6-centroids.csv>] [--out <postalcode-nl-pc6.db>]
  */
 
+import { isNLPostcodeKey } from "@mailwoman/codex/nl"
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { NL_PC6_ID_BASE } from "@mailwoman/core/resolver/synthetic-id-ranges"
@@ -103,9 +104,8 @@ export async function buildNLPC6Database(
 			const lon = Number(lonS)
 			const lat = Number(latS)
 
-			// A valid PC6 is 4 digits + 2 letters.
-			// The CBS file is already normalized (no space).
-			if (!/^\d{4}[A-Z]{2}$/.test(pc6) || !Number.isFinite(lat) || !Number.isFinite(lon)) {
+			// The CBS file writes the key form already, without the space.
+			if (!isNLPostcodeKey(pc6) || !Number.isFinite(lat) || !Number.isFinite(lon)) {
 				skipped++
 
 				continue

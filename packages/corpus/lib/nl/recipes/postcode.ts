@@ -18,6 +18,7 @@
  *   keep polarity balanced (the v1.9.9 lesson).
  */
 
+import { isNLPostcodeKey } from "@mailwoman/codex/nl"
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 
 import { alignAndWrite, readTuples, requireRegister, type CorpusRecipe, recipeSourceID } from "#recipes/scaffold"
@@ -66,7 +67,7 @@ export const nlPostcodeRecipe: CorpusRecipe = {
 				.toUpperCase()
 				.replaceAll(/\s+/g, "")
 
-			if (!street || !city || !number || !/^\d{4}[A-Z]{2}$/.test(rawPostcode)) {
+			if (!street || !city || !number || !isNLPostcodeKey(rawPostcode)) {
 				skipped++
 
 				continue

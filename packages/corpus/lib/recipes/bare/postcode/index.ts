@@ -27,6 +27,7 @@
  *   they do — the trained surface and the prior that boosts it come from one check.
  */
 
+import { isNLPostcodeKey } from "@mailwoman/codex/nl"
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { SeededRandom } from "@mailwoman/core/utils"
@@ -136,8 +137,7 @@ const WRITTEN_FORMS: ReadonlyMap<string, { locale: string; render: (compact: str
 		"NL",
 		{
 			locale: "nl-NL",
-			render: (compact) =>
-				/^\d{4}[A-Z]{2}$/.test(compact) ? [`${compact.slice(0, 4)} ${compact.slice(4)}`, compact] : [],
+			render: (compact) => (isNLPostcodeKey(compact) ? [`${compact.slice(0, 4)} ${compact.slice(4)}`, compact] : []),
 		},
 	],
 ])

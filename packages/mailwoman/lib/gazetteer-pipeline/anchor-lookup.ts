@@ -6,6 +6,7 @@
  *   Builds the postcode anchor lookup that maps each postcode to its countries and a centroid.
  */
 
+import { isNLPostcodeKey } from "@mailwoman/codex/nl"
 import { readUnquotedTSVText } from "@mailwoman/core/fs/delimited"
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { finished, openWriteStream } from "@mailwoman/core/fs/streams"
@@ -83,8 +84,6 @@ const GB_UNIT_KEY = /^[A-Z]{1,2}\d[A-Z\d]?\d[A-Z]{2}$/
 
 const GB_INWARD_LENGTH = 3
 
-const NL_PC6_KEY = /^\d{4}[A-Z]{2}$/
-
 const HAS_LETTERS = /[A-Z]/
 
 const GB_SOURCE = "os-codepoint-open"
@@ -148,7 +147,7 @@ function loadNLPC6(): Map<string, Centroid> {
 	for (const row of rows) {
 		const pc = (row.name || "").trim().toUpperCase()
 
-		if (!NL_PC6_KEY.test(pc)) continue
+		if (!isNLPostcodeKey(pc)) continue
 		const lat = Number(row.latitude)
 		const lon = Number(row.longitude)
 
