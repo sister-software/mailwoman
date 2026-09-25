@@ -2,9 +2,6 @@
  * @copyright Sister Software.
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- *
- *   Held-out corpus and truth builders for `filerLinkageEval`. This module contains data and pure functions only;
- *   it does not import the evaluation module.
  */
 
 import { createHash } from "@mailwoman/core/hash"
@@ -17,17 +14,29 @@ import type { Form499Row } from "#sdk/form499/index"
 import type { ProviderListRow } from "#sdk/provider-list"
 
 /**
- * Generation date of the committed linkage scorecard, pinned for byte-for-byte test reproduction.
+ * This date is the generation date of the committed linkage scorecard.
+ *
+ * Tests pass it so that the regenerated scorecard matches byte for byte.
  */
 export const PUBLISHED_LINKAGE_EVAL_DATE = "2026-07-31"
 
 /**
- * Published SHA-256 of the withheld run's inputs, checked by the evaluation test.
+ * The eval reads `filer_family` membership as of this date.
+ *
+ * Membership is temporal (`valid_from`/`valid_to`), so a same-family prediction needs a date.
+ * The date falls after the corpus's latest `lastFiledAt` and is fixed
+ * so that scores never depend on the current date.
+ */
+export const LINKAGE_EVAL_AS_OF = "2026-06-01"
+
+/**
+ * This hash is the published SHA-256 of the withheld run's inputs.
+ * The evaluation test checks it.
  */
 export const PUBLISHED_WITHHELD_INPUTS_SHA256 = "b20909439dcf6bc0d2b04da43b3b3fb11cdb9ff68313e12d3eeb78a24bacda58"
 
 /**
- * Published SHA-256 of the control inputs, with `holdingCompany` intact.
+ * This hash is the published SHA-256 of the control run's inputs, which keep `holdingCompany`.
  */
 export const PUBLISHED_CONTROL_INPUTS_SHA256 = "86f4c23616835425615960dabbf22df214fb2001b325e9b0128f9e0abf45f802"
 
@@ -45,7 +54,7 @@ const FRN_SHARED_REGISTRANT_2 = toFRN("9100000011")!
 const FRN_COMANAGED = toFRN("9100000012")!
 
 /**
- * Fill optional Form 499 fields so fixtures specify only distinctive values.
+ * This function fills the optional Form 499 fields so that each fixture states only its distinctive values.
  */
 function evalForm499Row(
 	overrides: Partial<Form499Row> &
@@ -69,12 +78,12 @@ function evalForm499Row(
 }
 
 /**
- * Authored held-out corpus of 12 Form 499 filers.
+ * This function returns the authored held-out corpus of 12 Form 499 filers.
  *
- * It covers two multi-member families with spelling variants, standalone filers,
- * same-name distinct entities, a registrant with two FRNs, and shared management companies.
- * Legal names and DBAs do not repeat another row's holding-company value,
- * so withholding that field is meaningful.
+ * The corpus covers two multi-member families with spelling variants, standalone filers,
+ * distinct entities that share a name, a registrant with two FRNs, and a shared management company.
+ * No legal name or DBA repeats a holding-company value, so a withheld run cannot
+ * recover a parent from another field.
  */
 export function buildLinkageEvalForm499Rows(): Form499Row[] {
 	return [
@@ -174,10 +183,10 @@ export function buildLinkageEvalForm499Rows(): Form499Row[] {
 }
 
 /**
- * Provider rows for selected fixtures.
+ * This function returns BDC provider rows for a subset of the fixtures.
  *
- * Provider `700004` links the two FRNs of one registrant; holding-company
- * values agree with Form 499 or are null.
+ * Provider `700004` links the two FRNs of one registrant.
+ * Each holding-company value either matches the Form 499 row or is null.
  */
 export function buildLinkageEvalProviderRows(): ProviderListRow[] {
 	return [
@@ -190,7 +199,7 @@ export function buildLinkageEvalProviderRows(): ProviderListRow[] {
 }
 
 /**
- * Control and withheld input projections for the evaluation.
+ * This interface holds the Form 499 and provider rows that one eval run builds from.
  */
 export interface LinkageEvalInputs {
 	form499Rows: Form499Row[]
@@ -198,15 +207,14 @@ export interface LinkageEvalInputs {
 }
 
 /**
- * Return unmodified inputs for the control run.
+ * This function returns the unmodified inputs for the control run.
  */
 export function buildControlEvalInputs(): LinkageEvalInputs {
 	return { form499Rows: buildLinkageEvalForm499Rows(), providerRows: buildLinkageEvalProviderRows() }
 }
 
 /**
- * Return inputs for the withheld run, clearing `holdingCompany` from both sources
- * before building the database.
+ * This function returns the withheld run's inputs, with `holdingCompany` cleared in both sources.
  */
 export function buildFilteredEvalInputs(): LinkageEvalInputs {
 	const form499Rows = buildLinkageEvalForm499Rows().map((row) => ({ ...row, holdingCompany: "" }))
@@ -216,28 +224,30 @@ export function buildFilteredEvalInputs(): LinkageEvalInputs {
 }
 
 /**
- * Registrant used as the evaluation unit; one registrant may hold multiple FRNs.
+ * A registrant is the eval's scoring unit.
+ * One registrant can hold several FRNs.
  */
 export interface LinkageEvalRegistrant {
 	/**
-	 * Smallest member FRN, used as the scored ID.
+	 * The smallest member FRN serves as the registrant's scored ID.
 	 */
 	representative: FRN
 	/**
-	 * Sorted FRNs held by this registrant.
+	 * This list holds the registrant's FRNs in sorted order.
 	 */
 	frns: FRN[]
 	/**
-	 * FRN and linked provider nodes used to read family memberships.
+	 * These IDs cover the registrant's FRN and provider nodes, which the eval
+	 * reads family memberships through.
 	 */
 	nodeIDs: string[]
 }
 
 /**
- * Group FRNs linked by provider ID into registrants.
+ * This function groups FRNs that share a provider ID into registrants.
  *
- * Build truth from the input data rather than the evaluated artifact, so family
- * scoring does not depend on entity-resolution results.
+ * It builds truth from the inputs rather than from the evaluated artifact,
+ * so family scoring does not depend on entity-resolution results.
  */
 export function buildTruthRegistrants(
 	rows: readonly Form499Row[],
@@ -275,7 +285,7 @@ export function buildTruthRegistrants(
 	const registrants: LinkageEvalRegistrant[] = []
 
 	for (const members of membersOfRoot.values()) {
-		// A filer may have multiple Form 499 rows for the same FRN.
+		// One FRN can appear on several Form 499 rows.
 		const sorted = [...new Set(members)].toSorted()
 		const nodeIDs = sorted.map((frn) => `${FilerIdentifierType.FRN}:${frn}`)
 
@@ -292,18 +302,21 @@ export function buildTruthRegistrants(
 }
 
 /**
- * Unique truth label for a registrant without a disclosed parent.
+ * This function returns a truth label unique to a registrant that discloses no parent.
  */
 function singletonTruthGroup(representative: FRN): string {
 	return `singleton:${representative}`
 }
 
 /**
- * Build held-out family truth from `holdingCompany` values using the same canonicalization as the builder.
+ * This function builds held-out family truth from `holdingCompany` values.
  *
- * Collect disclosures across all rows for each registrant; shared parents
- * and multi-parent links form connected groups.
- * Management companies are excluded because they represent operational control, not ownership.
+ * It mints family IDs with `mintFamilyID`, so truth uses the builder's name canonicalization.
+ * Registrants that share a parent join one group.
+ *
+ * A registrant that discloses two parents merges those parents' groups.
+ *
+ * Management companies are excluded because they indicate operational control rather than ownership.
  */
 export function buildTruthFamilyGroups(
 	rows: readonly Form499Row[],
@@ -320,7 +333,7 @@ export function buildTruthFamilyGroups(
 
 	const families = createUnionFind()
 
-	// Keep family IDs by registrant until all unions finish; roots can change during construction.
+	// Family IDs stay keyed by registrant until all unions finish, because union-find roots change during construction.
 	const familyIDsOfRegistrant = new Map<FRN, Set<string>>()
 
 	const attribute = (frn: FRN | null, holdingCompany: string | null): void => {
@@ -346,7 +359,6 @@ export function buildTruthFamilyGroups(
 		attribute(row.frn, row.holdingCompany)
 	}
 
-	// All unions are complete; aggregate family IDs by final component.
 	const familyIDsOfRoot = new Map<string, Set<string>>()
 
 	for (const registrant of registrants) {
@@ -403,7 +415,9 @@ function serializeProviderListRow(row: ProviderListRow): string {
 }
 
 /**
- * Hash the exact evaluation inputs in fixed field order so results are stable across runtimes.
+ * This function returns the SHA-256 of the evaluation inputs.
+ *
+ * It serializes fields in a fixed order so that the hash is stable across runtimes.
  */
 export function hashLinkageEvalInputs(inputs: {
 	form499Rows: readonly Form499Row[]

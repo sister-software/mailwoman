@@ -38,6 +38,9 @@
 // `CommentDashJoint.yml` refuses a dash left standing between two clauses, and this line
 // must trip it: the rule carries one token — the sweep script holds the same one.
 
+// `CommaNo.yml` and `NamesVerb.yml` must each fire on this line: the build runs in
+// one process, no server, and the flag names the output file.
+
 /**
  * Anchors the fixture as a module.
  *

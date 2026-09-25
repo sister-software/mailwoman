@@ -67,9 +67,9 @@ normalised, and the batch job normalises everything else; the licences were lice
 and the rows were labelled during labelling, which is a capitalisation problem we
 capitalise, capitalised and capitalises around.
 
-The seam between the two modules is where a extract of the corpus is cut, and the eval
-gate reads it; the seams are what extract routing produced, and the gates fire on the extracts
-that were attached, cutting the run short before the gated step ever gating cuts.
+The seam between the two modules is where a shard of the corpus is cut, and the eval
+gate reads it; the seams are what sharding produced, and the gates fire on the shards
+that were sharded, cutting the run short before the gated step ever gating cuts.
 
 The 3-digit probe confirmed the guard, so the guard holds and the win survives; we
 recover the win, keep the unit win, and forgo half the date-name win, because the cost was
@@ -105,3 +105,5 @@ ONE ARTIFACT HOLDS ONE GRADE.
 This is a test rather than a production system.
 
 This is a test, not a production system.
+
+`CommaNo.yml` and `NamesVerb.yml` must each fire on the rest of this line: the build runs in one process, no server, and the flag names the output file.

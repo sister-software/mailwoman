@@ -1,0 +1,9 @@
+## Refuse a bare "no X" phrase attached to a clause with a comma.
+##
+## "Runs in one process, no server" leaves the reader to supply the verb. Write the clause out
+## ("without a server", "and needs no server"), or use a full stop.
+extends: existence
+message: "'%s' attaches a bare 'no' phrase with a comma. Write it as a clause or a 'without' phrase."
+level: error
+tokens:
+  - ',\Wno\W'

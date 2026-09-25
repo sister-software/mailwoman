@@ -25,7 +25,7 @@
 ## Renaming any name in the exceptions list is a separate, operator-approved
 ## change; adding one means a new interface-tied identifier exists.
 extends: existence
-message: "'%s' is ambiguous shorthand — name the concrete thing (the check by its name, the artifact by its filename, the boundary by its interface) or use a plain verb. Backticks do NOT exempt a code comment; a interface-tied identifier belongs in this rule's exceptions list."
+message: "'%s' is ambiguous shorthand — name the concrete thing (the check by its name, the artifact by its filename, the boundary by its interface) or use a plain verb. Backticks do NOT exempt a code comment; an interface-tied identifier belongs in this rule's exceptions list."
 level: error
 ignorecase: true
 ## Every entry is a REAL artifact: a package, a command, or a tracked filename. Prose that means

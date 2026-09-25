@@ -1,6 +1,7 @@
 /**
- * @copyright Sister Software.
+ * @copyright Sister Software
  * @license AGPL-3.0
+ * @author Teffen Ellis, et al.
  */
 
 import { renderMarkdownTable } from "@mailwoman/core/strings/markdown-table"
@@ -8,93 +9,89 @@ import { renderMarkdownTable } from "@mailwoman/core/strings/markdown-table"
 import type { FRN } from "#frn"
 import type { Form499Row } from "#sdk/form499/index"
 import type { ProviderListRow } from "#sdk/provider-list"
-import type { LinkageEvalInputs, LinkageEvalRegistrant } from "#tools/linkage/corpus"
+import { LINKAGE_EVAL_AS_OF, type LinkageEvalInputs, type LinkageEvalRegistrant } from "#tools/linkage/corpus"
 import type { LinkageEvalRun, TruthPositivePairOutcome } from "#tools/linkage/eval"
 
-const EVAL_AS_OF = "2026-06-01"
+/**
+ * Joins sentences into one Markdown paragraph, so that each sentence can sit on its own source line.
+ */
+function paragraph(...sentences: string[]): string {
+	return sentences.join(" ")
+}
 
-function formatScoreValue(value: number | null): string {
+function formatScore(value: number | null): string {
 	return value === null ? "N/A" : value.toFixed(3)
 }
 
-const renderTable = renderMarkdownTable
+const ATTRIBUTE_ONLY = "Stored as an attribute. Neither the family path nor the entity-resolution path reads it."
+const AGENT_ATTRIBUTE = "Stored as an attribute. It never becomes an edge input."
 
 const FORM_499_FIELD_NOTES: Record<keyof Form499Row, string> = {
 	form499ID: "",
-	frn: "the truth key, never itself withheld",
+	frn: "The truth key. It is never withheld.",
 	lastFiledAt: "",
 	usfContributor: "",
-	legalNameOfCarrier: "the entity-resolution pass's blocking key and score input",
+	legalNameOfCarrier: "The entity-resolution pass uses it as the blocking key and as a score input.",
 	doingBusinessAs: "",
 	principalCommType: "",
-	holdingCompany: "the field under test",
-	managementCompany: "control rather than ownership — kept in the input, excluded from the prediction",
-	hqAddress: "staged as an attribute; no code on the family or entity-resolution path reads it",
-	customerInquiriesTelephone: "staged as an attribute; no code on the family or entity-resolution path reads it",
-	customerInquiriesAddress: "staged as an attribute; no code on the family or entity-resolution path reads it",
-	dcAgentDisplayName: "attribute only — never an edge input (shared-agent doctrine)",
-	dcAgentOrganizationName: "attribute only — never an edge input",
-	dcAgentTelephone: "attribute only — never an edge input",
-	dcAgentEmailAddress: "attribute only — never an edge input",
-	dcAgentAddress: "attribute only — never an edge input",
-	lifecycle:
-		"workbook-only; the FCC's own cessation date and successor filer. Not an input to this eval — the corpus " +
-		"is synthetic and states no lifecycle — but it is what closes valid_to on a real build",
-	operatingStates: "workbook-only registered footprint; staged as an attribute that no edge reads",
+	holdingCompany: "The field under test.",
+	managementCompany:
+		"Records control rather than ownership. It stays in the input and is excluded from the prediction.",
+	hqAddress: ATTRIBUTE_ONLY,
+	customerInquiriesTelephone: ATTRIBUTE_ONLY,
+	customerInquiriesAddress: ATTRIBUTE_ONLY,
+	dcAgentDisplayName: AGENT_ATTRIBUTE,
+	dcAgentOrganizationName: AGENT_ATTRIBUTE,
+	dcAgentTelephone: AGENT_ATTRIBUTE,
+	dcAgentEmailAddress: AGENT_ATTRIBUTE,
+	dcAgentAddress: AGENT_ATTRIBUTE,
+	lifecycle: paragraph(
+		"Workbook-only. It holds the FCC's cessation date and successor filer, which close `valid_to` on a real build.",
+		"The synthetic corpus does not set it, so this eval does not read it."
+	),
+	operatingStates: "Workbook-only registered footprint. It is stored as an attribute, and edges never read it.",
 }
 
 const PROVIDER_FIELD_NOTES: Record<keyof ProviderListRow, string> = {
-	providerID: "registrant identity — two FRNs under one providerID are one registrant",
-	frn: "the truth key, never itself withheld",
-	holdingCompany: "the field under test",
+	providerID: "Registrant identity. Two FRNs under one provider ID are one registrant.",
+	frn: "The truth key. It is never withheld.",
+	holdingCompany: "The field under test.",
 }
 
 function isPopulated(value: unknown): boolean {
 	return value !== null && value !== undefined && value !== "" && value !== false
 }
 
-// repo-health-ignore private-name-shadows-export -- This corpus-field count is unrelated to the H3 coverage helper.
-function describeCoverage<Row>(rows: readonly Row[], field: keyof Row, heldOut: boolean): string {
-	if (heldOut) return "**withheld**"
+function describeFieldCoverage<Row>(rows: readonly Row[], field: keyof Row, withheld: boolean): string {
+	if (withheld) return "**withheld**"
 
 	const populated = rows.filter((row) => isPopulated(row[field])).length
 
-	if (populated === 0) return `**0 of ${rows.length}** — never set`
-
-	return `${populated} of ${rows.length}`
+	return populated === 0 ? `**0 of ${rows.length}** (never set)` : `${populated} of ${rows.length}`
 }
 
-function renderInputShapeTables(withheld: LinkageEvalInputs, control: LinkageEvalInputs): string[] {
-	const form499Rows = (Object.keys(FORM_499_FIELD_NOTES) as Array<keyof Form499Row>).map((field) => {
-		const heldOut = control.form499Rows.some((row, index) => row[field] !== withheld.form499Rows[index]![field])
+/**
+ * Renders one row per field, marking a field withheld when any control row
+ * differs from its withheld counterpart.
+ */
+function renderFieldTable<Row>(
+	title: string,
+	notes: Record<keyof Row, string>,
+	withheldRows: readonly Row[],
+	controlRows: readonly Row[]
+): string[] {
+	const rows = (Object.keys(notes) as Array<keyof Row>).map((field) => {
+		const withheld = controlRows.some((row, index) => row[field] !== withheldRows[index]![field])
 
 		return [
-			`\`${field}\``,
-			heldOut ? "**no**" : "yes",
-			describeCoverage(withheld.form499Rows, field, heldOut),
-			FORM_499_FIELD_NOTES[field],
+			`\`${String(field)}\``,
+			withheld ? "**no**" : "yes",
+			describeFieldCoverage(withheldRows, field, withheld),
+			notes[field],
 		]
 	})
 
-	const providerRows = (Object.keys(PROVIDER_FIELD_NOTES) as Array<keyof ProviderListRow>).map((field) => {
-		const heldOut = control.providerRows.some((row, index) => row[field] !== withheld.providerRows[index]![field])
-
-		return [
-			`\`${field}\``,
-			heldOut ? "**no**" : "yes",
-			describeCoverage(withheld.providerRows, field, heldOut),
-			PROVIDER_FIELD_NOTES[field],
-		]
-	})
-
-	return [
-		...renderTable(["Form499Row field", "in the withheld input?", "populated in the corpus", "note"], form499Rows),
-		"",
-		...renderTable(
-			["ProviderListRow field", "in the withheld input?", "populated in the corpus", "note"],
-			providerRows
-		),
-	]
+	return renderMarkdownTable([title, "in the withheld input?", "populated in the corpus", "note"], rows)
 }
 
 function renderCorpusTable(
@@ -102,30 +99,15 @@ function renderCorpusTable(
 	registrants: readonly LinkageEvalRegistrant[],
 	truthGroupOf: ReadonlyMap<FRN, string>
 ): string[] {
-	const representativeOfFRN = new Map<FRN, FRN>()
+	const representativeOf = new Map<FRN, FRN>()
 
 	for (const registrant of registrants) {
 		for (const frn of registrant.frns) {
-			representativeOfFRN.set(frn, registrant.representative)
+			representativeOf.set(frn, registrant.representative)
 		}
 	}
 
-	const tableRows = rows.map((row) => {
-		const frn = row.frn!
-		const representative = representativeOfFRN.get(frn)!
-		const group = truthGroupOf.get(representative) ?? ""
-
-		return [
-			frn,
-			row.legalNameOfCarrier,
-			representative === frn ? "itself" : `${representative}`,
-			row.holdingCompany || "_(none)_",
-			row.managementCompany || "_(none)_",
-			group.startsWith("singleton:") ? "_(no family)_" : `\`${group}\``,
-		]
-	})
-
-	return renderTable(
+	return renderMarkdownTable(
 		[
 			"FRN",
 			"legal name (always given)",
@@ -134,68 +116,89 @@ function renderCorpusTable(
 			"management company",
 			"truth family",
 		],
-		tableRows
+		rows.map((row) => {
+			const frn = row.frn!
+			const representative = representativeOf.get(frn)!
+			const group = truthGroupOf.get(representative) ?? ""
+
+			return [
+				frn,
+				row.legalNameOfCarrier,
+				representative === frn ? "itself" : representative,
+				row.holdingCompany || "_(none)_",
+				row.managementCompany || "_(none)_",
+				group.startsWith("singleton:") ? "_(no family)_" : `\`${group}\``,
+			]
+		})
+	)
+}
+
+/**
+ * Renders a table with one row per metric and one column per run.
+ */
+function renderRunTable(
+	header: string[],
+	withheld: LinkageEvalRun,
+	control: LinkageEvalRun,
+	metrics: Array<[label: string, read: (run: LinkageEvalRun) => string | number]>
+): string[] {
+	return renderMarkdownTable(
+		header,
+		metrics.map(([label, read]) => [label, String(read(withheld)), String(read(control))])
 	)
 }
 
 function renderResultsTable(withheld: LinkageEvalRun, control: LinkageEvalRun): string[] {
-	const row = (label: string, of: (run: LinkageEvalRun) => string): string[] => [label, of(withheld), of(control)]
-
-	return renderTable(
-		["metric", "withheld (the measurement)", "control (parent disclosed)"],
-		[
-			row("precision", (run) => formatScoreValue(run.score.precision)),
-			row("recall", (run) => formatScoreValue(run.score.recall)),
-			row("F1", (run) => formatScoreValue(run.score.f1)),
-			row("true-positive pairs", (run) => String(run.score.truePositivePairs)),
-			row("false-positive pairs", (run) => String(run.score.falsePositivePairs)),
-			row("false-negative pairs", (run) => String(run.score.falseNegativePairs)),
-			row("truth-positive pairs", (run) => String(run.score.truthPositivePairs)),
-			row("predicted-positive pairs", (run) => String(run.score.predictedPositivePairs)),
-			row("total registrant pairs scored", (run) => String(run.score.totalPairs)),
-			row("input SHA-256", (run) => `\`${run.inputsSHA256.slice(0, 16)}…\``),
-		]
-	)
+	return renderRunTable(["metric", "withheld (the measurement)", "control (parent disclosed)"], withheld, control, [
+		["precision", (run) => formatScore(run.score.precision)],
+		["recall", (run) => formatScore(run.score.recall)],
+		["F1", (run) => formatScore(run.score.f1)],
+		["true-positive pairs", (run) => run.score.truePositivePairs],
+		["false-positive pairs", (run) => run.score.falsePositivePairs],
+		["false-negative pairs", (run) => run.score.falseNegativePairs],
+		["truth-positive pairs", (run) => run.score.truthPositivePairs],
+		["predicted-positive pairs", (run) => run.score.predictedPositivePairs],
+		["total registrant pairs scored", (run) => run.score.totalPairs],
+		["input SHA-256", (run) => `\`${run.inputsSHA256.slice(0, 16)}…\``],
+	])
 }
 
 function renderCensusTable(withheld: LinkageEvalRun, control: LinkageEvalRun): string[] {
-	const row = (label: string, of: (run: LinkageEvalRun) => number): string[] => [
-		label,
-		String(of(withheld)),
-		String(of(control)),
-	]
-
-	return renderTable(
-		["what the built artifact contains", "withheld", "control"],
+	return renderRunTable(["what the built artifact contains", "withheld", "control"], withheld, control, [
+		["`holding_company_name` nodes", (run) => run.census.holdingCompanyNodes],
+		["ownership `filer_edge` rows (relationship asserts ownership)", (run) => run.census.ownershipEdges],
 		[
-			row("`holding_company_name` nodes", (run) => run.census.holdingCompanyNodes),
-			row("ownership `filer_edge` rows (relationship asserts ownership)", (run) => run.census.ownershipEdges),
-			row(
-				"`filer_family` rows the prediction scores (relationship asserts ownership)",
-				(run) => run.census.scoredFamilyRows
-			),
-			row(
-				"`filer_family` rows the prediction ignores (recognized rather than ownership)",
-				(run) => run.census.nonOwnershipFamilyRows
-			),
-			row(
-				"`filer_family` rows with an unrecognized relationship (check refuses on these)",
-				(run) => run.census.unrecognizedFamilyRows
-			),
-			row("`filer_family` rows, total", (run) => run.census.familyRows),
-			row("entity-resolution records scored", (run) => run.inferred.recordsConsidered),
-			row("entity-resolution links written", (run) => run.inferred.links),
-		]
-	)
+			"`filer_family` rows the prediction scores (relationship asserts ownership)",
+			(run) => run.census.scoredFamilyRows,
+		],
+		[
+			"`filer_family` rows the prediction ignores (recognized, but not ownership)",
+			(run) => run.census.nonOwnershipFamilyRows,
+		],
+		[
+			"`filer_family` rows with an unrecognized relationship (the check refuses these)",
+			(run) => run.census.unrecognizedFamilyRows,
+		],
+		["`filer_family` rows, total", (run) => run.census.familyRows],
+		["entity-resolution records scored", (run) => run.inferred.recordsConsidered],
+		["entity-resolution links written", (run) => run.inferred.links],
+	])
 }
 
-function renderPairsTable(
-	pairs: readonly TruthPositivePairOutcome[],
-	recoveredBy: (pair: TruthPositivePairOutcome) => string
-): string[] {
-	return renderTable(
+function renderPairsTable(withheld: LinkageEvalRun, control: LinkageEvalRun): string[] {
+	const recoveredInControl = (pair: TruthPositivePairOutcome) =>
+		control.truthPositivePairs.find((other) => other.a === pair.a && other.b === pair.b)?.recovered ?? false
+
+	const yesNo = (value: boolean) => (value ? "yes" : "no")
+
+	return renderMarkdownTable(
 		["registrant A", "registrant B", "truth family", "recovered?"],
-		pairs.map((pair) => [pair.a, pair.b, `\`${pair.familyID}\``, recoveredBy(pair)])
+		withheld.truthPositivePairs.map((pair) => [
+			pair.a,
+			pair.b,
+			`\`${pair.familyID}\``,
+			`withheld: ${yesNo(pair.recovered)} · control: ${yesNo(recoveredInControl(pair))}`,
+		])
 	)
 }
 
@@ -210,72 +213,328 @@ interface RenderLinkageEvalReportInput {
 	truthGroupOf: ReadonlyMap<FRN, string>
 }
 
-// repo-health-ignore private-name-shadows-export -- This renders a corporate-family verdict, not a Vale report.
-function renderVerdict(withheld: LinkageEvalRun, control: LinkageEvalRun): string {
-	return (
-		"**Corporate-family membership resolves correctly when the filer discloses its parent, and not at all when it " +
-		`doesn't.** Given the corpus with \`holdingCompany\` present, \`filer.db\` puts every one of the ` +
-		`${control.score.truthPositivePairs} same-family registrant pairs in the same family and invents none: precision ` +
-		`${formatScoreValue(control.score.precision)}, recall ${formatScoreValue(control.score.recall)}. Given the same ` +
-		"corpus with that one field removed, it makes no family call at all — " +
-		`${withheld.score.truePositivePairs} of ${withheld.score.truthPositivePairs} pairs recovered, recall ` +
-		`${formatScoreValue(withheld.score.recall)}, precision and F1 undefined because there were no positive calls to ` +
-		"score. Family membership in this pipeline is a disclosed field, transcribed and canonicalized; nothing in the " +
-		"build infers one from anything else."
-	)
+function renderSummary({ withheld, control }: RenderLinkageEvalReportInput): string[] {
+	return [
+		paragraph(
+			"**`filer.db` recovers corporate-family membership when a filer discloses its parent, and recovers none when it does not.**",
+			`With \`holdingCompany\` present, the build places all ${control.score.truthPositivePairs} same-family registrant pairs`,
+			`in the same family and adds no false pairs: precision ${formatScore(control.score.precision)},`,
+			`recall ${formatScore(control.score.recall)}.`,
+			"With that one field removed from the same corpus, the build makes no family predictions.",
+			`It recovers ${withheld.score.truePositivePairs} of ${withheld.score.truthPositivePairs} pairs for a recall of`,
+			`${formatScore(withheld.score.recall)}, and precision and F1 are undefined because there are no positive predictions to score.`,
+			"This pipeline takes family membership from the disclosed parent name after canonicalizing it,",
+			"and nothing in the build infers membership from other evidence."
+		),
+	]
 }
 
-function renderControlSection(control: LinkageEvalRun): string {
-	return (
-		"The control run is not an achievement and should not be read as one. A pipeline whose entire family mechanism " +
-		'is "copy the parent name the filer wrote down, canonicalize it, and group by the result" is supposed to score ' +
-		`${formatScoreValue(control.score.f1)} when handed that name. Its job here is narrower and more important: it ` +
-		"proves this harness reads a table the truth can reach. Without it, the withheld run's zero is " +
-		"unfalsifiable — an eval pointed at the wrong table reports zero too, and reports it as confidently with " +
-		"the answer sitting in the artifact. The two runs differ in exactly one field, and the input hashes below " +
-		"differ accordingly."
-	)
+function renderQuestion(): string[] {
+	return [
+		"## The question",
+		"",
+		paragraph(
+			"A corporate family is a set of operating companies under one parent.",
+			"`filer.db` builds families from the parent name that a filer discloses on its Form 499 or on the broadband",
+			"provider list, and both sources contribute rows to the control build below.",
+			"This eval sets a baseline for whether membership can be recovered for a filer that discloses no parent,",
+			"using names, identifiers or any other signal already in the pipeline.",
+			"Today it cannot, and the withheld score below records that result so that a later build with more evidence",
+			"has a number to beat."
+		),
+	]
 }
 
-function renderWhySection(withheld: LinkageEvalRun): string {
-	return (
-		"Nothing else in the build produces an ownership fact. Two mechanisms account for that, and both are " +
-		"deliberate. First, the builder writes a corporate-family row only where an input row names a parent — there is " +
-		"no path from a filing to a family that does not run through a disclosed name. Second, the entity-resolution " +
-		`pass (which ran here, over ${withheld.inferred.recordsConsidered} records) answers a different question: it ` +
-		"decides whether two identifiers denote the same legal entity, and it will not merge two records that share no " +
-		'identifier code, no matter how similar their names are. Even if it did merge them, a merge asserts "same ' +
-		'company" rather than "same parent", so it could not populate a family. The corpus exercises that refusal on purpose: ' +
-		"two of its filers canonicalize to the byte-identical legal name `american fiber partners` and are not the same " +
-		"company. The canonical name is the blocking key, so that pair is proposed as a candidate and scored — and the " +
-		"veto refuses it, which is what a veto is for."
-	)
+function renderRuns({ control }: RenderLinkageEvalReportInput): string[] {
+	return [
+		"## The two runs",
+		"",
+		paragraph(
+			"Both runs build a scratch `filer.db` from the same authored corpus with the same shipped code,",
+			"and both read the prediction the same way.",
+			"They differ in one field."
+		),
+		"",
+		"- **withheld**: `holdingCompany` is cleared on every Form 499 row and every provider-list row before the " +
+			"builder reads them. This run is the measurement.",
+		"- **control**: the corpus keeps that field. This run checks the harness.",
+		"",
+		paragraph(
+			"The control score is expected rather than impressive.",
+			"A pipeline that groups filers by the canonicalized parent name they reported should score",
+			`${formatScore(control.score.f1)} when it is given that name.`,
+			"The control run shows that the harness reads a table the truth can reach.",
+			"Without it, the withheld score of zero could not be falsified, because an eval that reads the wrong table",
+			"also reports zero.",
+			"The two runs differ in exactly one field, and their input hashes differ accordingly."
+		),
+		"",
+		"### What counts as a prediction",
+		"",
+		paragraph(
+			"Two registrants are predicted to share a family when the built `filer.db` places them in a common family",
+			`as of ${LINKAGE_EVAL_AS_OF}.`,
+			"The eval reads each membership with the shipped corporate-family reader that product callers use.",
+			"That reader answers for one node at a time, and a registrant can own several nodes (its FRN registrations",
+			"and its provider ID), so the eval takes the union of the families across those nodes.",
+			"The union is the eval's own step, and it is why a parent disclosed on only one of a registrant's two filings",
+			"still counts."
+		),
+		"",
+		paragraph(
+			"Memberships that exist only because two filers reported the same management company are excluded from both",
+			"the prediction and the truth.",
+			"Management is operational control rather than ownership, and the eval does not withhold that field.",
+			"Counting it would let a field the eval provides decide a question about the field the eval withholds.",
+			"The corpus includes two filers that report the same manager so that the exclusion is exercised."
+		),
+		"",
+		"### What counts as a registrant",
+		"",
+		paragraph(
+			"The eval scores registrants rather than FRNs.",
+			"One operator can hold several FRN registrations, and the corpus has one registrant that holds two,",
+			"joined by a shared provider ID.",
+			"A parent disclosed on one registration describes the whole company.",
+			"Scoring FRNs separately would let the truth partition put one legal entity in two families at once."
+		),
+		"",
+		paragraph(
+			"Treating a shared provider ID as proof of one registrant is a modelling choice.",
+			"Real provider-list rows that share a provider ID have been observed reporting different parents,",
+			"which would mean the fold joins companies that should stay apart.",
+			"That failure would be visible here.",
+			"Folding two registrants from different families puts a truth-negative pair inside one truth group,",
+			"the control run cannot recover that pair, control recall falls below 1.000, and the test that asserts",
+			"a perfect control fails."
+		),
+	]
 }
 
-function renderWhatWouldMoveItSection(): string {
-	return (
-		"It's tempting to call the withheld number a floor that any better evidence would lift. That is not what this " +
-		"code does, and an earlier version of this page said it anyway. Two probes show the actual pipeline output.\n\n" +
-		"**Populating the address and contact columns changes nothing.** Fill `hqAddress`, " +
-		"`customerInquiriesTelephone` and `customerInquiriesAddress` identically across all three members of one family " +
-		"in the withheld corpus, then rebuild, re-cluster and re-score: byte-identical result, 0 pairs recovered. Those " +
-		"columns are stored as attributes and nothing on the family path — or on the entity-resolution path, which reads " +
-		"only legal names and identifier codes — ever looks at them. That is a property of the pipeline rather than a gap in " +
-		"the corpus.\n\n" +
-		"**Adding an ownership EDGE changes nothing either.** Write inferred `subsidiary` `filer_edge` rows joining those " +
-		"same filers to a parent — the shape a corporate-filing importer is specified to emit — and recall stays 0.000. " +
-		"Corporate-family MEMBERSHIP is read from `filer_family` alone. The family readers do query `filer_edge`, but " +
-		"only to recover the raw company name behind a canonicalized family id — never to decide who belongs to a " +
-		"family, which is the only thing this eval scores.\n\n" +
-		"The accurate statement is narrower: **a channel that produces a `filer_family` row " +
-		"moves this number; a channel that produces only a `filer_edge` row does not.** Injecting three ownership " +
-		"`filer_family` rows into the withheld build moves recall from 0.000 to 0.500 at precision 1.000. A standing test " +
-		'holds that open, so "this baseline can be beaten" is re-checked on every run rather than asserted here.\n\n' +
-		"That is also the forward dependency for anyone using this page as a before/after baseline. A later build beats " +
-		"0.000 only if its new evidence lands as `filer_family` membership rows. An importer that writes ownership edges " +
-		"and stops there re-runs to 0.000 — and it will read as though the evidence didn't help, when in fact nothing " +
-		"read it."
-	)
+function renderCorpus(input: RenderLinkageEvalReportInput): string[] {
+	const { registrants, truthForm499Rows, truthGroupOf } = input
+
+	return [
+		"## Corpus",
+		"",
+		paragraph(
+			`The corpus has ${truthForm499Rows.length} Form 499 filers folded into ${registrants.length} registrants.`,
+			"It is authored rather than sampled, so every truth fact can be audited on this page instead of trusted",
+			"from an external source.",
+			"It contains the following filers."
+		),
+		"",
+		"- Two multi-member families whose members spell the parent name inconsistently.",
+		"- Four standalone filers.",
+		"- Two unrelated companies with identical canonical names.",
+		"- One registrant that holds two FRNs, where only the second filing discloses the parent.",
+		"- One filer that discloses no parent but reports the same management company as a member of the first " +
+			"family. The prediction must not treat that as ownership.",
+		"",
+		...renderCorpusTable(truthForm499Rows, registrants, truthGroupOf),
+	]
+}
+
+function renderInputShape({ withheldInputs, controlInputs }: RenderLinkageEvalReportInput): string[] {
+	return [
+		"## Input record shape",
+		"",
+		paragraph(
+			"The tables below list every field the builder receives in the withheld run and how much of each field",
+			"the corpus fills in.",
+			"Filling in the empty fields would not change the result, because nothing on the family path reads them",
+			'(see "What would move this number" below).',
+			"They are listed so that the corpus's sparsity is not mistaken for the reason the withheld run scores zero."
+		),
+		"",
+		...renderFieldTable(
+			"Form499Row field",
+			FORM_499_FIELD_NOTES,
+			withheldInputs.form499Rows,
+			controlInputs.form499Rows
+		),
+		"",
+		...renderFieldTable(
+			"ProviderListRow field",
+			PROVIDER_FIELD_NOTES,
+			withheldInputs.providerRows,
+			controlInputs.providerRows
+		),
+	]
+}
+
+function renderResults({ withheld, control, registrants }: RenderLinkageEvalReportInput): string[] {
+	const truthNegativePairs = withheld.score.totalPairs - withheld.score.truthPositivePairs
+
+	return [
+		"## Results",
+		"",
+		...renderResultsTable(withheld, control),
+		"",
+		paragraph(
+			"The withheld run reports F1 as `N/A` rather than `0.000` on purpose.",
+			"Precision is undefined when a prediction makes no positive calls, because its denominator is zero,",
+			"and an F1 built on an undefined precision is also undefined.",
+			"Recovering nothing because nothing was predicted is a different failure from predicting pairs and getting",
+			"them all wrong, which would show `precision 0.000`."
+		),
+		"",
+		"### Same-family pairs, individually",
+		"",
+		paragraph(
+			`The table lists the ${withheld.score.truthPositivePairs} registrant pairs that the withheld field puts together.`,
+			`The other ${truthNegativePairs} pairs of the ${registrants.length} registrants are truth negatives,`,
+			"including the pair with identical names."
+		),
+		"",
+		...renderPairsTable(withheld, control),
+	]
+}
+
+function renderArtifacts({ withheld, control }: RenderLinkageEvalReportInput): string[] {
+	return [
+		"## What is in each artifact",
+		"",
+		paragraph(
+			"These counts come from the two builds rather than from assertions about them.",
+			"The withheld build has zero ownership nodes, ownership edges, scored family rows, and family rows with",
+			"a relationship the eval cannot classify.",
+			"Those four zero counts confirm the withholding, and a runtime check refuses to report a withheld score",
+			"if any of them is non-zero.",
+			`The build does contain ${withheld.census.nonOwnershipFamilyRows} corporate-family rows from the`,
+			"management-company disclosures, which the eval does not withhold.",
+			"Those rows use a separate namespace from ownership families, and the prediction skips them."
+		),
+		"",
+		paragraph(
+			"The family counts are split by what the prediction does with each row rather than by relationship name,",
+			"and the three buckets partition the total.",
+			"The scored bucket holds every membership whose relationship asserts ownership, so a `subsidiary` or",
+			"`parent_company` row from a future writer is counted there.",
+			"The second bucket holds the relationships the eval recognizes and deliberately does not score:",
+			"`management_company` and `same_entity`.",
+			"The third bucket holds any other relationship string, which the shipped writers never produce,",
+			"and the check refuses to report a score when that bucket is not empty.",
+			"The table prints the total next to the three buckets, so every row is accounted for."
+		),
+		"",
+		...renderCensusTable(withheld, control),
+	]
+}
+
+function renderWhyNothing({ withheld }: RenderLinkageEvalReportInput): string[] {
+	return [
+		"## Why the withheld run recovers nothing",
+		"",
+		paragraph(
+			"No other part of the build produces an ownership fact, and two deliberate design choices keep it that way.",
+			"First, the builder writes a corporate-family row only when an input row discloses a parent,",
+			"so every path from a filing to a family runs through a disclosed name.",
+			`Second, the entity-resolution pass, which ran here over ${withheld.inferred.recordsConsidered} records,`,
+			"answers a different question.",
+			"It decides whether two identifiers denote the same legal entity, and it merges two records only when they",
+			"share an identifier code, however similar their names are.",
+			"A merge would assert that two records are the same company rather than that they share a parent,",
+			"so even a merge could not populate a family.",
+			"The corpus tests that refusal on purpose.",
+			"Two of its filers canonicalize to the identical legal name `american fiber partners` but are different",
+			"companies.",
+			"The canonical name is the blocking key, so the pair is proposed and scored, and the identifier veto",
+			"rejects it."
+		),
+	]
+}
+
+function renderWhatWouldMoveIt(): string[] {
+	return [
+		"## What would move this number",
+		"",
+		"Better evidence would not lift the withheld score in this code, and two probes show why.",
+		"",
+		paragraph(
+			"**Populating the address and contact fields changes nothing.**",
+			"Filling `hqAddress`, `customerInquiriesTelephone` and `customerInquiriesAddress` identically across all",
+			"three members of one family in the withheld corpus, then rebuilding, re-clustering and re-scoring,",
+			"gives a byte-identical result with 0 pairs recovered.",
+			"Those fields are stored as attributes.",
+			"Neither the family path nor the entity-resolution path reads them, because entity resolution reads only",
+			"legal names and identifier codes.",
+			"The result comes from the pipeline's design rather than from gaps in the corpus."
+		),
+		"",
+		paragraph(
+			"**Adding an ownership edge changes nothing either.**",
+			"Writing inferred `subsidiary` `filer_edge` rows that join the same filers to a parent, in the shape",
+			"a corporate-filing importer is specified to emit, leaves recall at 0.000.",
+			"Corporate-family membership is read from `filer_family` alone.",
+			"The family readers query `filer_edge` only to recover the raw company name behind a canonicalized",
+			"family ID, and never to decide who belongs to a family, which is what this eval scores."
+		),
+		"",
+		paragraph(
+			"**A channel that writes a `filer_family` row moves this number, and a channel that writes only",
+			"a `filer_edge` row does not.**",
+			"Injecting three ownership `filer_family` rows into the withheld build raises recall from 0.000 to 0.500",
+			"at precision 1.000.",
+			"A standing test keeps that probe running, so the claim that this baseline can be beaten is checked on",
+			"every run."
+		),
+		"",
+		paragraph(
+			"Anyone using this page as a before-and-after baseline depends on that distinction.",
+			"A later build scores above 0.000 only if its new evidence lands as `filer_family` membership rows.",
+			"An importer that writes ownership edges and stops there will score 0.000 again, which would look as if",
+			"the evidence did not help when in fact nothing read it."
+		),
+	]
+}
+
+function renderMethod({ withheld, control, truthForm499Rows }: RenderLinkageEvalReportInput): string[] {
+	return [
+		"## Metric choice",
+		"",
+		paragraph(
+			"Precision, recall and F1 are pairwise.",
+			"They count unordered registrant pairs rather than aligning predicted clusters with true ones.",
+			"A predicted family's ID is derived from the canonicalized parent name, so there is no correspondence",
+			"problem and no alignment step to get wrong.",
+			"The only well-defined question is whether two registrants are correctly placed together or apart,",
+			"and pairs answer it directly.",
+			"An empty denominator is reported as `N/A`, never as zero."
+		),
+		"",
+		"## Reproducibility",
+		"",
+		paragraph(
+			"The SHA-256 of the withheld run's inputs, which are the exact bytes the builder received, is",
+			`\`${withheld.inputsSHA256}\`.`
+		),
+		"",
+		`The SHA-256 of the control run's inputs is \`${control.inputsSHA256}\`.`,
+		"",
+		paragraph(
+			"The corpus is a fixed literal without sampling or randomness, the builder and the clustering pass are",
+			"deterministic, and every date the runs depend on is a constant.",
+			"Re-running the eval reproduces both scores and both hashes byte for byte.",
+			"The test suite regenerates this page and compares it with the committed copy, so a corpus change that is",
+			"not republished fails the test."
+		),
+		"",
+		"## Caveats",
+		"",
+		paragraph(
+			`This corpus is a synthetic set of ${truthForm499Rows.length} filers rather than real FCC Form 499 data,`,
+			"because the repository ships no real corpus with a stable hash to pin.",
+			"The eval gains exactness and reproducibility at the cost of scale.",
+			"The withheld score does not show that ownership is hard to recover in general.",
+			"It shows that this build has one way to learn a parent, and that way was removed.",
+			"Scale limits confidence but not the mechanism, because a larger corpus of the same shape would score",
+			"the same for the reason given above.",
+			"The control score does not measure what share of real filers report a parent or how accurately they",
+			"report it.",
+			"It shows only that this pipeline groups filers correctly when they do."
+		),
+	]
 }
 
 /**
@@ -283,161 +542,19 @@ function renderWhatWouldMoveItSection(): string {
  * with `holdingCompany` withheld against the control run that keeps it.
  */
 export function renderLinkageEvalReport(input: RenderLinkageEvalReportInput): string {
-	const { date, withheld, control, withheldInputs, controlInputs, registrants, truthForm499Rows, truthGroupOf } = input
-
-	const lines: string[] = [
-		`# ${date} — does filer.db recover corporate family without the disclosed parent?`,
-		"",
-		renderVerdict(withheld, control),
-		"",
-		"## The question",
-		"",
-		"A corporate family is a set of operating companies under one parent. `filer.db` builds families from the parent " +
-			"name a filer discloses — on its Form 499, or on the broadband provider list, whichever carries it; both " +
-			"sources contribute rows to the control build below. The open question this eval exists to baseline is whether " +
-			"that membership is recoverable for a filer that discloses nothing — from names, identifiers, or any other " +
-			'signal already in the pipeline. Today the answer is no, and the number below is what "no" measures as, so ' +
-			"that a later build with more evidence has something to beat.",
-		"",
-		"## The two runs",
-		"",
-		"Both runs build a real scratch `filer.db` from the same authored corpus with the same shipped code, and read " +
-			"the prediction the same way. They differ in one field.",
-		"",
-		"- **withheld** — `holdingCompany` cleared on every Form 499 row and every provider-list row before the builder " +
-			"sees it. The measurement.",
-		"- **control** — the identical corpus, that field intact. The check on the harness.",
-		"",
-		renderControlSection(control),
-		"",
-		"### What counts as a prediction",
-		"",
-		"Two registrants are predicted to be the same family iff the built `filer.db` places them in a common family as " +
-			`of ${EVAL_AS_OF}. Each membership is read with the shipped corporate-family reader, the one a product caller ` +
-			"uses — but the eval composes it: that reader answers strictly per node, and a registrant can own several " +
-			"nodes (its FRN registrations and its provider id), so the eval takes the union across them. The reader is " +
-			"shipped; the union is this eval's own step, and it is why a parent disclosed on one of a registrant's two " +
-			"filings still counts.\n\nMembership rows that exist only because two filers named the same MANAGEMENT " +
-			"company are excluded from both the prediction and the truth: management is operational control rather than " +
-			"ownership; that field is not withheld here; and letting it answer would mean a field this eval hands over " +
-			"deciding a question about the field it holds back. The corpus includes two filers reporting the same manager " +
-			"so that exclusion has something to do.",
-		"",
-		"### What counts as a registrant",
-		"",
-		"The unit scored is the registrant rather than the FRN. One operator can hold several FRN registrations — the corpus " +
-			"has one that holds two, joined by a shared provider id — and a parent disclosed on one registration is a " +
-			"fact about the company rather than about that registration. Scoring FRNs individually would have let the truth " +
-			"partition put a single legal entity in two different families at once.\n\nTreating a shared provider id as " +
-			"proof of one registrant is a modelling choice rather than a law: real provider-list rows sharing a provider id have " +
-			"been observed reporting different parents, which would mean the fold is joining companies that ought to stay " +
-			"apart. That failure is not silent here. Folding two registrants that belong to different families puts a " +
-			"truth-negative pair inside one truth group, the control run cannot recover it, control recall drops below " +
-			"1.000, and the test asserting a perfect control fails. The rule is required and wired to a regression check.",
-		"",
-		"## Corpus",
-		"",
-		`${truthForm499Rows.length} Form 499 filers folded into ${registrants.length} registrants, authored rather than ` +
-			"sampled so every truth fact is auditable here instead of trusted from an external source. Two multi-member " +
-			"families whose members spell the parent name inconsistently; four standalone filers; a pair of unrelated " +
-			"companies with identical canonical names; one registrant holding two FRNs where only the second discloses " +
-			"the parent; and one filer that discloses no parent but names the same MANAGEMENT company as a member of the " +
-			"first family, which the prediction has to decline to treat as ownership. Every row is in the table below; " +
-			"the counts in this paragraph add up to it.",
-		"",
-		...renderCorpusTable(truthForm499Rows, registrants, truthGroupOf),
-		"",
-		"## Input record shape",
-		"",
-		"Every field the builder receives in the withheld run, and how much of it the corpus fills in. The " +
-			"empty columns are worth reading, but not for the obvious reason: filling them in changes nothing, because " +
-			'nothing on the family path reads them (see "What would move this number" below). They are listed so the ' +
-			"corpus's sparsity is not mistaken for the reason the withheld run scores zero.",
-		"",
-		...renderInputShapeTables(withheldInputs, controlInputs),
-		"",
-		"## Results",
-		"",
-		...renderResultsTable(withheld, control),
-		"",
-		`F1 is reported as \`N/A\` for the withheld run rather than \`0.000\`, and that is not a rounding convention. ` +
-			"Precision is undefined when a prediction makes no positive calls at all — there is no denominator — and an " +
-			'F1 built on an undefined component is undefined too. "Recovered nothing because it claimed nothing" and ' +
-			'"claimed things and got them all wrong" are different failures with different fixes, and the second one ' +
-			"would read `precision 0.000`.",
-		"",
-		"### Same-family pairs, individually",
-		"",
-		`The ${withheld.score.truthPositivePairs} registrant pairs the withheld field puts together. Every other pair of ` +
-			`the ${registrants.length} registrants (${withheld.score.totalPairs - withheld.score.truthPositivePairs} of ` +
-			"them) is a truth negative, including the identical-name pair.",
-		"",
-		...renderPairsTable(withheld.truthPositivePairs, (pair) => {
-			const inControl = control.truthPositivePairs.find((other) => other.a === pair.a && other.b === pair.b)
-
-			return `withheld: ${pair.recovered ? "yes" : "no"} · control: ${inControl?.recovered ? "yes" : "no"}`
-		}),
-		"",
-		"## What is in each artifact",
-		"",
-		"Counted from the two builds rather than asserted about them. The withheld build contains no ownership node or " +
-			"ownership edge, no family row the prediction would score, and no family row carrying a relationship this " +
-			"eval cannot classify — that is the withholding, verified, and a runtime check refuses to report a withheld " +
-			`score if any of those four counts is non-zero. It does contain ${withheld.census.nonOwnershipFamilyRows} ` +
-			"corporate-family rows, from the management-company disclosures the eval does not withhold; they are " +
-			"namespaced separately from ownership families and the prediction skips them. An earlier version of this " +
-			"page claimed no family row could exist here at all, which was wrong on its own artifact.\n\nThe family " +
-			"counts are split by what the prediction does with a row rather than by relationship name, into three buckets that " +
-			'partition the total. "Scored" is every membership whose relationship asserts OWNERSHIP, so a `subsidiary` ' +
-			"or `parent_company` row a future writer emits lands there rather than going uncounted. The second bucket " +
-			"is the relationships this eval recognizes and deliberately does not score — `management_company` and " +
-			"`same_entity`. " +
-			"The third is anything else: a relationship string no shipped writer can produce, which the check refuses " +
-			"on rather than filing under either of the other two. The total is printed alongside all three so nothing " +
-			"can hide between them.",
-		"",
-		...renderCensusTable(withheld, control),
-		"",
-		"## Why the withheld run recovers nothing",
-		"",
-		renderWhySection(withheld),
-		"",
-		"## What would move this number",
-		"",
-		renderWhatWouldMoveItSection(),
-		"",
-		"## Metric choice",
-		"",
-		"Precision, recall and F1 are PAIRWISE — over unordered registrant pairs rather than over an alignment between " +
-			"predicted and true clusters. A predicted family's id is derived from the canonicalized parent name, so " +
-			"there is no correspondence problem to solve and no alignment step to get wrong; the only well-defined " +
-			"question is whether two registrants are correctly judged together or apart, which pairs answer directly. " +
-			"Empty denominators are reported as `N/A`, never as zero, throughout.",
-		"",
-		"## Reproducibility",
-		"",
-		`SHA-256 of the withheld run's inputs — the exact bytes the builder received: \`${withheld.inputsSHA256}\`.` +
-			`\n\nSHA-256 of the control run's inputs: \`${control.inputsSHA256}\`.`,
-		"",
-		"The corpus is a fixed literal with no sampling and no randomness; the builder and the clustering pass are " +
-			'deterministic; every date the runs depend on is a constant rather than "today". Re-running reproduces ' +
-			"both scores and both hashes byte for byte. The test suite regenerates this entire page and compares it to " +
-			"the committed copy, so editing the corpus without republishing fails rather than leaving the " +
-			"numbers above stale.",
-		"",
-		"## Caveats",
-		"",
-		`This is a synthetic ${truthForm499Rows.length}-filer corpus rather than a run against real FCC Form 499 data — no ` +
-			"such corpus ships in this repo with a stable hash to pin to, so the eval provides exactness and reproducibility " +
-			"at the cost of scale. What the withheld number does not say is that ownership is hard to recover in " +
-			"general; it says that this build has exactly one way to learn a parent and that way was taken away. Scale " +
-			"is the one limitation this corpus carries, and it limits confidence rather than the mechanism: a larger " +
-			"corpus of the same shape scores the same, for the reason given above. The control number says nothing " +
-			"about how frequently real " +
-			"filers report a parent, or report it accurately — only that when they do, this pipeline groups them " +
-			"correctly.",
-		"",
+	const sections = [
+		[`# ${input.date} — does filer.db recover corporate family without the disclosed parent?`],
+		renderSummary(input),
+		renderQuestion(),
+		renderRuns(input),
+		renderCorpus(input),
+		renderInputShape(input),
+		renderResults(input),
+		renderArtifacts(input),
+		renderWhyNothing(input),
+		renderWhatWouldMoveIt(),
+		renderMethod(input),
 	]
 
-	return lines.join("\n")
+	return `${sections.map((lines) => lines.join("\n")).join("\n\n")}\n`
 }
