@@ -313,6 +313,29 @@ describe("WebONNXRunner feed construction (mocked session)", () => {
 		await runner.infer([5])
 		expect(runner.inputNames).toContain("gazetteer_features")
 	})
+
+	test("release() during an in-flight load frees the session without publishing it", async () => {
+		let finishLoad!: () => void
+		const session = { inputNames: ["input_ids", "attention_mask"], release: vi.fn(() => Promise.resolve()) }
+
+		sessionCreateMock.mockReturnValue(
+			new Promise((resolve) => {
+				finishLoad = () => resolve(session)
+			})
+		)
+
+		const runner = await WebONNXRunner.fromBytes(new Uint8Array([1]), { useWebGPU: false })
+		const inference = runner.infer([5])
+		const released = runner.release()
+
+		finishLoad()
+		await released
+		await inference.catch(() => {})
+
+		expect(session.release).toHaveBeenCalledTimes(1)
+		expect(runner.inputNames).toBeNull()
+		await expect(runner.infer([5])).rejects.toThrow(/released/)
+	})
 })
 
 describe("defaultGazetteerLexiconURL", () => {

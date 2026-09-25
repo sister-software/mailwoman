@@ -88,6 +88,7 @@ export class WebONNXRunner implements NeuralRunner {
 	public diagnostics: WebONNXRunnerDiagnostics | null = null
 	#session: ort.InferenceSession | null = null
 	#loadPromise: Promise<ort.InferenceSession> | null = null
+	#generation = 0
 
 	#modelBytes: Uint8Array | null
 
@@ -122,6 +123,20 @@ export class WebONNXRunner implements NeuralRunner {
 		if (this.#session) return this.#session
 
 		if (!this.#loadPromise) {
+			const generation = this.#generation
+
+			// A release() during the load bumps the generation and frees the session itself,
+			// so a stale load must not publish it.
+			const adopt = (session: ort.InferenceSession, backend: WebONNXRunnerDiagnostics["backend"]) => {
+				if (generation !== this.#generation) return session
+
+				this.#session = session
+				this.diagnostics = { backend, modelBytes: this.#modelByteLength }
+				this.#modelBytes = null
+
+				return session
+			}
+
 			this.#loadPromise = (async () => {
 				const modelBytes = this.#modelBytes
 
@@ -136,12 +151,7 @@ export class WebONNXRunner implements NeuralRunner {
 							graphOptimizationLevel: "all",
 						})
 
-						this.#session = session
-						this.diagnostics = { backend: "webgpu", modelBytes: this.#modelByteLength }
-
-						this.#modelBytes = null
-
-						return session
+						return adopt(session, "webgpu")
 					} catch {}
 				}
 
@@ -150,11 +160,7 @@ export class WebONNXRunner implements NeuralRunner {
 					graphOptimizationLevel: "all",
 				})
 
-				this.#session = session
-				this.diagnostics = { backend: "wasm", modelBytes: this.#modelByteLength }
-				this.#modelBytes = null
-
-				return session
+				return adopt(session, "wasm")
 			})()
 		}
 
@@ -170,6 +176,8 @@ export class WebONNXRunner implements NeuralRunner {
 	 */
 	async release(): Promise<void> {
 		this.#modelBytes = null
+
+		this.#generation++
 
 		const pending = this.#loadPromise
 
