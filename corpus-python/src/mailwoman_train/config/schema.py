@@ -1,10 +1,3 @@
-"""The typed run-configuration schema.
-
-Keep configs flat and explicit. nothing here reads an environment variable at import time. Every
-field's default is the value a run gets when its YAML omits the key, so a default is a decision.
-Reading a YAML into these dataclasses is ``load.py``.
-"""
-
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -12,13 +5,6 @@ from dataclasses import dataclass, field
 
 @dataclass
 class CorpusReceiptConfig:
-    """Minimum sampled-corpus evidence a training hypothesis requires.
-
-    ``component_sequence`` is matched as a contiguous subsequence after BIO labels are
-    collapsed to component spans. This lets a receipt assert a tail such as
-    locality -> postcode -> region while allowing venue/street context before it.
-    """
-
     name: str = ""
     min_draws: int = 1
     source: str | None = None
@@ -28,22 +14,6 @@ class CorpusReceiptConfig:
 
 @dataclass
 class ValidationCoverageConfig:
-    """Rows one country must hold in a held-out split for a run's metrics to say anything about it.
-
-    A corpus receipt asserts what the train split serves a draw. This asserts what a held-out split
-    contains, and the two are separate declarations because they are separate questions.
-
-    ``evaluate()`` reports ``val_loss``, ``val_rows`` and ``macro_f1`` over the whole split. A
-    country holding no row changes none of those numbers. So a run cannot tell a locale it validates
-    well from a locale it does not validate at all.
-
-    ``min_street_rows`` is separate from ``min_rows`` because the two absences are different
-    findings. A country absent from a split is invisible to every metric the split produces. A
-    country present with rows that carry no ``street`` or ``house_number`` tag is visible to the
-    admin metrics and invisible to the street ones, which is the state FR and DE were measured in
-    (#2353).
-    """
-
     country: str = ""
     split: str = "val"
     min_rows: int = 1
@@ -55,164 +25,69 @@ class DataConfig:
     corpus_dir: str = "/data/corpus/versioned/v0.1.0/corpus-v0.1.0"
     tokenizer_dir: str = "/data/models/tokenizer/v0.1.0"
     max_length: int = 128
-    # Per-country sampling weights for the train split. Anything not listed gets dropped.
+
     country_weights: dict[str, float] = field(default_factory=lambda: {"US": 1.0, "FR": 1.0})
-    # Per-source sampling weights, keyed on adapter id (e.g. "ban", "tiger", "usgov-nppes").
-    # When None (default): all sources pass, no source-level filtering.
-    # When set: rows from unlisted sources are dropped. Weight / max_weight acceptance
-    # multiplies with country_weights — a row must pass both filters to survive.
+
     source_weights: dict[str, float] | None = None
-    # Per-source target exposure in reps per row (#1677), for the sources whose weight nobody can pick:
-    # the weight is derived at launch from the source's row count and the run's total samples, beside the
-    # fixed ``source_weights`` (see ``source_reps.py``). A source takes a weight or a reps target, never both.
+
     source_reps: dict[str, float] | None = None
-    # hypothesis-containing corpus receipts enforced by ``audit_epoch_mixture``. Empty keeps
-    # historical configs unchanged. A run must not start until its audit passes.
+
     required_corpus_receipts: list[CorpusReceiptConfig] = field(default_factory=list)
-    # Held-out coverage enforced by ``audit_validation_coverage``. Empty keeps historical configs
-    # unchanged. Checked on the CPU preflight for the same reason the receipts are: a split that
-    # cannot measure a locale is worth knowing before the GPU spend rather than after (#2353).
+
     required_validation_coverage: list[ValidationCoverageConfig] = field(default_factory=list)
-    # Hard cap on how many rows the streaming loader yields per epoch (None = unlimited).
+
     train_rows_per_epoch: int | None = None
     val_rows: int | None = 4096
-    # Filter: keep only rows with country + at least one of (region, locality, postcode).
+
     coarse_filter: bool = True
-    # Training augmentation: expand abbreviations to teach token equivalence.
-    # Probability (0-1) that each augmentation fires per row. 0 = disabled.
+
     augment_directional_prob: float = 0.0
     augment_region_prob: float = 0.0
-    # Region+postcode glue augmentation (#513): probability that a row with a region token
-    # immediately followed by a postcode token yields an extra copy with the pair fused in
-    # raw ("NY 14201" -> "NY14201") while tokens/labels stay split — the model learns to
-    # split the fused surface at the SP-piece level. 0 = disabled (rng-stream bit-identical).
+
     augment_glue_prob: float = 0.0
-    # v3.24: ordinal-street swap ("5th" ↔ "Fifth") on street-family tokens — the 8.2.0 metamorphic catch.
+
     augment_ordinal_prob: float = 0.0
-    # Case augmentation (#829): probability that a row yields an extra lowercased copy (raw + tokens
-    # lowercased. labels + char-offset spans unchanged — lowercasing is length-preserving). Teaches the
-    # model that a lowercase query is the same address (the #829 lowercase-sensitivity class). Model-first
-    # vs a deterministic case-normalizer. 0 = disabled (rng-stream bit-identical).
+
     augment_case_prob: float = 0.0
-    # Punct-drop augmentation (#1101): probability a row yields an extra delimiter-free copy —
-    # separator commas + wrapping quotes stripped (gap-only. interior apostrophes kept), raw + tokens +
-    # char-offset spans all re-targeted. Teaches robustness to whitespace-only input (64% of parity
-    # gold). Model-first vs a deterministic delimiter-normalizer. 0 = disabled (rng-stream bit-identical).
+
     augment_punct_drop_prob: float = 0.0
     augment_upper_case_prob: float = 0.0
-    # Augmentation-pool exclusion (2026-08-10 recipe review): sources whose rows bypass the
-    # augmentation stage entirely (original emitted exactly once). Augmented copies of an
-    # oversampled synthetic source are near-duplicates that compound its reps per row while
-    # adding none of the diversity that moves OOD boards. list that source here. The affix
-    # relabel still applies — label policy and augmentation policy are independent.
+
     augment_exclude_sources: list[str] = field(default_factory=list)
-    # Postcode-anchor lookup (#239/#240). Path to the JSON {postcode: [posterior, lat, lon]} table
-    # (built by scripts/build-pilot-anchor-lookup.ts). When set and model.use_postcode_anchor is on,
-    # the loader projects per-piece anchor features onto each row. None → no anchor features.
+
     anchor_lookup_path: str | None = None
-    # Gazetteer-anchor lexicon (#464, knowledge-ladder rung 3.2). Path to the codex-generated
-    # candidate-tag-set lexicon JSON (built by scripts/build-gazetteer-anchor-lexicon.mjs). When set
-    # and model.use_gazetteer_anchor is on, the loader paints per-piece multi-hot membership clues
-    # from the raw surface (never gold labels — same computation at train + inference). None → off.
+
     gazetteer_lexicon_path: str | None = None
-    # Country-lexicon channel (#1104). Path to the codex-generated country-surface lexicon JSON (built
-    # by codex/tools/build-country-surface-lexicon.ts). When set and model.use_country_anchor is on,
-    # the loader paints per-piece [country_surface, country_ambiguous] clues from the raw surface
-    # (never gold labels — same computation at train + inference). None → the country channel is off.
+
     country_lexicon_path: str | None = None
-    # Street-type channel (P-A / Option A probe). Path to the codex-generated street-type lexicon JSON
-    # (built by scripts/build-street-type-lexicon.ts). When set and model.use_street_type_anchor is on,
-    # the loader paints a per-piece street_type clue from the raw surface (never gold labels — same
-    # computation at train + inference). None → the street-type channel is off.
+
     street_type_lexicon_path: str | None = None
-    # Locality-surface channel (v3.16.0 evidence-bundle probe). Path to the locality-surface lexicon
-    # JSON (built by scripts/diagnostic/build-locality-surface-lexicon.ts — WOF US+FR locality names,
-    # curated, homograph bit). Same schema as the gazetteer lexicon. painted from the RAW surface.
+
     locality_surface_lexicon_path: str | None = None
-    # Gazetteer channel choreography (#464, v0.9.13 postcode fix). When True (with anchor + gazetteer
-    # channels on), zero the gazetteer clue on tokens adjacent to a postcode-anchor hit, so the model
-    # never learns the biased region->postcode CRF transition that cost v0.9.12 ~3pp US postcode.
-    # Inference must mirror it (classifier suppressGazetteerNearPostcode). For the consolidation run.
+
     gazetteer_choreography: bool = False
-    # --- CharCNN input path (#825 / v8 CJK). The D1 interface: char_ids (B, S, W), S = label units,
-    # W = composition window. "off" (default) = the SentencePiece path, byte-identical to every prior
-    # recipe. "word" = one unit per whitespace token (the #825 Latin char-word probe). "char" = one
-    # unit per character (the v8 JP probe. char_ctx=3 → W=7). Both non-off modes skip SentencePiece
-    # entirely, require span-schema parquet files (#519), and are channel-free — the anchor/gazetteer/
-    # country/street/locality channels project per SP-piece and re-align per-unit post-probe, so the
-    # loader raises if any channel path is configured alongside. Pairs with model.use_char_embed.
+
     char_mode: str = "off"
-    # Sealed codepoint-sorted char-vocab JSON (char_tokenizer.build_char_vocab). Required when
-    # char_mode != "off"; the artifact ships with the weights (D2 — the tokenizer-mismatch scar).
+
     char_vocab_path: str | None = None
-    # Composition-window context: neighbor chars included on each side of a unit (D6). CJK char mode
-    # wants 3 (W=7); Latin char-word mode wants 0 (W = the token's own chars).
+
     char_ctx: int = 0
-    # W: chars per unit row. Char mode needs >= 2*char_ctx + 1. word mode = max word length.
+
     max_unit_width: int = 16
-    # S: max units per row (char mode: chars. word mode: words). None -> data.max_length.
+
     max_units: int | None = None
-    # Label vocabulary (v8 CJK Phase 2 — labels.resolve_label_set). "stage3" (default, the Latin 33)
-    # keeps every existing recipe byte-identical; "stage3-jp" is the JP char model's 47-label head.
-    # Non-default sets are supported only on the char path — the SP path raises (loud, per #1349's
-    # silent-mismatch lesson) until it grows its own threading.
+
     label_set: str = "stage3"
-    # Affix-split relabel pass (#511). Path to the codex-generated relabel lexicon (built by
-    # scripts/build-affix-relabel-lexicon.mjs). When set, every street span in every loaded row is
-    # relabeled with the affix recipe's exact split semantics (trailing USPS suffix ->
-    # street_suffix, leading directional -> street_prefix), after augmentation — ending the
-    # base-vs-affix-recipe label contradiction the #492 ladder measured at >=1,000:1. None -> off.
+
     affix_relabel_lexicon_path: str | None = None
-    # --- #220/#723 anchor-absorption knobs. Defaults preserve v1.9.2 behavior exactly. ---
-    # where the postcode anchor is painted at training:
-    #   "gold"   (default) — on gold B/I-postcode spans only (the v1.9.2 behavior, the #723 root cause:
-    #                        the model never saw the anchor fire on a house# at train, but inference
-    #                        paints on shape, so it faceplants on "12345 Main St").
-    #   "shaped"           — on postcode-shaped spans (the per-country POSTCODE_PATTERNS, mirroring
-    #                        inference's neural/postcode-anchor.ts), so the model sees + learns to
-    #                        override the anchor on house-numbers-that-look-like-postcodes. This is the fix.
+
     anchor_paint_mode: str = "gold"
-    # What the anchor encodes:
-    #   "posterior_latlon"        (default) — the v1.9.2 country-posterior + normalized centroid vector.
-    #   "region_agnostic_mindist"           — demote to a weak scalar log(1 + min_km from the token's
-    #                                         postcode centroid to the nearest gazetteer region centroid),
-    #                                         placed in feat[0], rest zeroed. non-real-postcode -> the
-    #                                         large constant. Train/inference-congruent (no detected
-    #                                         region -> no circularity). Keeps ANCHOR_FEATURE_DIM so the
-    #                                         resumed projection layer carries over (re-learns the weaker
-    #                                         input). The model learns congruence internally (model-first).
+
     anchor_value_mode: str = "posterior_latlon"
-    # Region-centroid table {region_key: [lat, lon]} for region_agnostic_mindist. None -> mode unavailable.
-    # note: anchor dropout is not a new field — it's the existing train.py curriculum
-    # (perturb_anchor_confidence, ANCHOR_ZERO_OUT_MAX). To probe a harder mask, bump that constant. do
-    # not add a parallel knob (the review's no-reinvent conclusion).
+
     region_centroids_path: str | None = None
 
     def __post_init__(self) -> None:
-        """Reject country codes YAML has silently retyped.
-
-        THE NORWAY PROBLEM. YAML 1.1 resolves the bare token ``NO`` to the BOOLEAN ``false``, so a
-        config writing the obvious
-
-            country_weights:
-              NO: 1.0
-
-        yields the dict ``{False: 1.0}``. The loader then does ``country_weights.get(row_country)``
-        — ``.get("NO")`` misses, returns None, and every Norwegian row is dropped on the spot. The
-        annotation above says ``dict[str, float]`` and Python enforces none of it, so this ran
-        silently in 44 configs from v1.9.0-multilocale through the shipped v264/v310: Norway has
-        never been in a training run. It surfaced as a "digit ownership defect" because the only
-        Norwegian rows anyone looked at were parse failures in the eval corpus.
-
-        ``NO`` is the sole ISO-3166-1 alpha-2 code that collides with a YAML 1.1 boolean, which is
-        why this hid for. Therefore, long — one country, no pattern, nothing else to notice. The fix in the
-        configs is to quote the key. this guard is what stops it coming back, because the next
-        person to add a country will write it unquoted and be right to expect that to work.
-
-        Raise rather than coerce: a config that says ``false`` does not *mean* Norway, it means the
-        author typed something whose meaning YAML changed. Silently repairing it would hide the same
-        class of bug in the next field that grows a bare-token key.
-        """
         for key in self.country_weights:
             if not isinstance(key, str):
                 raise ValueError(
@@ -224,13 +99,6 @@ class DataConfig:
 
 @dataclass
 class ModelConfig:
-    # Per-token embedding width and transformer body hidden dim. v0.3.0/v0.4.0 shipped at
-    # 256 on a 9M-param encoder. v0.5.0's Thread C scaffold preserves that baseline so the
-    # phrase-prior conditioning's contribution can be ablated cleanly against v0.4.0
-    # numerics. The Phase 8 plan recommends a 256 → 384 or 512 bump for the v0.5.0 full
-    # train ("likely paid for by rented GPU") but only after the new architecture is
-    # validated stable at the current size. Bump becomes a follow-up
-    # `v0_5_0-classifier-large.yaml` recipe once the baseline lands clean.
     hidden_size: int = 256
     num_hidden_layers: int = 6
     num_attention_heads: int = 4
@@ -239,140 +107,62 @@ class ModelConfig:
     type_vocab_size: int = 1
     hidden_dropout_prob: float = 0.1
     attention_probs_dropout_prob: float = 0.1
-    # v0.3.0+ training-time toggles. build_model passes these through to the encoder.
-    # Default False / 0.0 keeps v0.2.0 behavior for back-compat with older configs.
+
     use_crf: bool = False
     label_smoothing: float = 0.0
-    # Weight on the CRF NLL leg of the dual loss (CE + crf_loss_weight × CRF_NLL).
-    # With ``crf_normalization=per_sequence`` (v0.3.0 default), the CRF NLL is per-
-    # sequence and unbounded (~10–100x CE's per-token magnitude), so 0.05–0.1 is
-    # typical to keep CRF as a structural regularizer. With ``per_token`` (v0.4.0),
-    # the two losses are comparable in magnitude and the weight can be 1.0 cleanly.
+
     crf_loss_weight: float = 0.1
-    # v0.4.0: CRF NLL normalization. ``"per_sequence"`` = v0.3.0 mean-over-batch
-    # (preserves backward compat with old configs). ``"per_token"`` = sum NLL across
-    # batch / total real tokens — self-balances against per-token CE, eliminates
-    # ``crf_loss_weight`` hand-tuning, matches AllenNLP/flair defaults.
+
     crf_normalization: str = "per_sequence"
-    # v0.6.2 diagnostic flag: force the CRF forward to compute in fp32 while the rest of
-    # the model continues in bf16. Tests the 2026-05-28 postmortem's hypothesis that the
-    # 33×33 transition table with masked -inf entries is numerically unstable under bf16's
-    # 7-bit mantissa. Default False keeps existing configs bit-identical.
+
     crf_fp32: bool = False
-    # v0.4.0: optional per-class CE weights, keyed on BIO label ("O", "B-locality", ...).
-    # ``None`` (default) = uniform weighting. Recipe per issue #116: derive from corpus
-    # label-frequency as ``(1 / class_freq) ** 0.5``, then halve fine-class weights
-    # (venue/street/house_number) to re-prioritize coarse-class recovery. See
-    # configs/v0_4_0.yaml for the worked example.
+
     class_weights: dict[str, float] | None = None
-    # v0.5.0 thread C: phrase-prior conditioning from Stage 2.7 (Thread E). When True, the
-    # encoder forward concatenates a per-token feature row (BIE markers + PhraseKind one-
-    # hot) onto the token+position embedding before the first transformer block, and
-    # projects back to ``hidden_size`` with a learned linear. Default False preserves
-    # v0.3.0/v0.4.0 numerics for ablation studies. See `phrase_priors.py` for the slot
-    # layout + ``the-knowledge-ladder.md`` § Phrase grouper for the design rationale.
+
     use_phrase_priors: bool = False
-    # Per-token feature width. Determined by the phrase-priors taxonomy. surfaced as a
-    # config field so corpus-side feature shape and model-side projection width stay
-    # in lockstep through the model-card layer.
-    phrase_feature_dim: int = 10  # = PHRASE_BIE_DIM (3) + PHRASE_KIND_DIM (7)
-    # PR3: self-conditioning. When True, the encoder mean-pools its output and sends that one
-    # vector through two independent projections: an auxiliary locale head over the
-    # labels.LOCALE_COUNTRIES vocabulary trained on the corpus ``country`` field, and a FiLM
-    # projection whose scale and shift modulate the per-token representations before the BIO head.
-    # The posterior is not an input to the FiLM projection. The aux loss is what couples them, by
-    # pushing country information into the pooled vector both projections read.
-    # The head is exported as the LocalePosterior the resolver consumes. Default False keeps
-    # v0.8.x numerics for back-compat. ``num_locales`` is not a yaml knob — build_model derives
-    # it from labels.NUM_LOCALES so the head width and the target vocabulary can never drift.
+
+    phrase_feature_dim: int = 10
+
     use_locale_conditioning: bool = False
-    # Weight on the auxiliary locale cross-entropy leg (loss = BIO_CE + crf + locale_loss_weight ×
-    # locale_CE). 0.0 disables the aux loss even when conditioning is on (the FiLM path still runs
-    # unsupervised, which is rarely what you want); a value like 0.3 keeps the locale signal a
-    # genuine but secondary objective behind the per-token BIO task.
+
     locale_loss_weight: float = 0.0
-    # Postcode-anchor conditioning channel (#239/#240 de-risk pilot). When True, the encoder takes a
-    # per-token ``(B, S, NUM_LOCALES+2)`` anchor-feature tensor (uniform country posterior + centroid)
-    # and a ``(B, S)`` confidence scalar, and injects ``c·(W·features + v_ANCHOR)`` at the input
-    # embedding — a position-local hard cue at the postcode span (the property self-conditioning's
-    # global FiLM lacked). Robustness is the confidence curriculum applied corpus-side (see the data
-    # loader). Default False keeps existing numerics. Composes with ``use_locale_conditioning``.
+
     use_postcode_anchor: bool = False
-    # Dual-injection (#327, v0.9.4): when the anchor is on, also inject the pooled postcode anchor at
-    # position 0 — an order-independent global cue the locality can attend back to regardless of where
-    # the postcode sits. Fixes the anchor's positional harm on international word order (postcode after
-    # the city), where the per-token-only injection fired on the wrong side of the locality. Default
-    # False (no change); requires use_postcode_anchor.
+
     inject_first_token: bool = False
-    # Gazetteer-anchor channel (#464, knowledge-ladder rung 3.2). When on (with
-    # data.gazetteer_lexicon_path set), the encoder takes per-token multi-hot candidate-tag-set
-    # clues (country/region/po_box/cedex/homograph) painted from the raw surface by the codex
-    # lexicon, and injects ``c·(W_g·features + v_GAZ)`` at the input embedding. The clue informs.
-    # the model decides (model-first). Default False keeps existing numerics bit-identical.
+
     use_gazetteer_anchor: bool = False
 
-    # Dedicated affix head (#492 probe/run): a 2-layer MLP over [final hidden ; gazetteer 5-dim]
-    # emitting {O, B/I-street_prefix, B/I-street_suffix}. Its 4 affix logits replace the main
-    # classifier's affix columns in the returned logits (merge-in-forward — ONNX export and
-    # score-affix need no changes). Loss = main CE + affix CE (1:1).
     use_affix_head: bool = False
-    # Separate dependent_locality head (P-B probe): resurrect the dead dep-loc tag in its own MLP head
-    # (fresh weights own the B/I-dependent_locality columns, merge-in-forward like the affix head) instead
-    # of reinit-ing the shared classifier rows. Tests whether head-subspace separation avoids the
-    # comma-drop invariance break that every flat-head reinit recipe paid (v3.10–v3.13). init_from-safe
-    # (strict=False leaves the fresh head. main CE trains it via merged logits).
+
     use_deploc_head: bool = False
-    # Train-time conventions pairing (#478): mask conventions-forbidden labels out of the CE on
-    # rows whose gold country has a conventions row (mirror: conventions.py <- codex). The
-    # inference mask's training half. hypothesis = FR region recovers (16.2 was the v4.3.0 tail).
+
     use_conventions_loss_mask: bool = False
-    # Span-boundary aux head (#727 GLiNER-lite probe): a training-only 2-logit head predicting per-token
-    # span start (B-*) and END (entity token whose successor doesn't continue it), supervised from the BIO
-    # labels. Adds boundary-placement pressure against the region→street absorption residual. Inference-
-    # invariant (never exported). span_boundary_loss_weight scales the aux BCE leg. 0 disables it.
+
     use_span_boundary_head: bool = False
     span_boundary_loss_weight: float = 0.0
-    # #727 stage-2 phase 1 — the semi-Markov span scorer (span_scorer.py). Unlike the stage-1 aux head
-    # above, this is a real scoring path: it scores every span up to `max_span` tokens per segment type
-    # and a segment-level transition table carries the address grammar, so a whole segmentation is
-    # scored jointly instead of emerging from per-token votes. Default-off ⇒ off the logits path;
-    # `span_loss_weight` scales the semi-CRF NLL leg (0 disables it). Phase 2 exports it.
+
     use_span_scorer: bool = False
     span_loss_weight: float = 0.0
     span_dim: int = 128
     max_span: int = 8
-    # Must match the lexicon JSON's feature_dim (slot count).
+
     gazetteer_feature_dim: int = 5
-    # Country-lexicon channel (#1104). When on (with data.country_lexicon_path set), the encoder takes
-    # a per-token [country_surface, country_ambiguous] clue painted from the raw surface by the codex
-    # country lexicon and injects ``c·(W_c·features + v_CTRY)`` at the input embedding — its own
-    # projection, independent of the gazetteer's shared 5-hot slot and not zeroed near a postcode. The
-    # clue informs. the model decides (model-first). Default False keeps existing numerics bit-identical.
+
     use_country_anchor: bool = False
-    # Must match the country lexicon JSON's feature_dim (emitted [country_surface, country_ambiguous]).
+
     country_feature_dim: int = 2
-    # #1104 homograph-guard softener. Scales the country_ambiguous dim (index 1) of country_features
-    # before country_projection — 1.0 = the v263 behavior (hard ambiguous guard); <1.0 softens the
-    # suppression of homograph countries (Georgia/Jordan) that over-fired on the country-homograph
-    # probe (89.8→82.6). The scale is a registered buffer, so it bakes into the exported ONNX — no
-    # lexicon or inference change. inference feeds the raw [surface, ambiguous] and the graph scales it.
+
     country_ambiguous_scale: float = 1.0
-    # Street-type channel (P-A / Option A probe). When on (with data.street_type_lexicon_path set), the
-    # encoder takes a per-token street_type clue painted from the raw surface by the codex street-type
-    # lexicon and injects ``c·(W_s·features + v_STREET)`` at the input embedding — its own projection,
-    # a separate channel from the gazetteer (so v385 loads clean). Default False keeps numerics identical.
+
     use_street_type_anchor: bool = False
-    # Must match the street-type lexicon JSON's feature_dim (emitted single street_type slot).
+
     street_type_feature_dim: int = 1
-    # Locality-surface channel (v3.16.0 evidence-bundle probe) — Option A's second correlated channel:
-    # per-token [locality, locality_homograph] membership evidence. Default False keeps numerics identical.
+
     use_locality_surface_anchor: bool = False
-    # Must match the locality-surface lexicon JSON's feature_dim ([locality, locality_homograph]).
+
     locality_surface_feature_dim: int = 2
-    # CharCNN front-end (#825 / v8 CJK). When True the per-unit embedding is composed from char_ids
-    # (B, S, W) by CharCNNEmbedding instead of the SentencePiece piece-ID lookup. Pairs with
-    # data.char_mode != "off" (the trainer enforces the pairing); char_vocab_size is derived from the
-    # loaded char vocab at build time, never from the yaml.
+
     use_char_embed: bool = False
     char_embed_dim: int = 64
     char_kernel_sizes: list[int] = field(default_factory=lambda: [3, 4, 5])
@@ -387,127 +177,66 @@ class TrainConfig:
     grad_accum_steps: int = 1
     learning_rate: float = 5e-4
     weight_decay: float = 0.01
-    # #727 stage-2: give the fresh span head its own (higher) LR while the pretrained encoder keeps
-    # `learning_rate`. A randomly-initialized head cannot train at a fine-tuning LR — the v3.0.0 probe
-    # proved that the expensive way. None ⇒ one param group ⇒ byte-identical to every prior recipe.
+
     span_head_learning_rate: float | None = None
-    # #456/#1100 dead-tag resurrection: carve the output head (`classifier.`) into its own param
-    # group, exactly parallel to span_head_learning_rate above. Pairs with reinit_label_rows below —
-    # a re-initialized row cannot climb out of a baked-negative neighborhood at the encoder's LR.
+
     classifier_learning_rate: float | None = None
-    # BIO label names (e.g. "B-dependent_locality") whose classifier rows get reset to the live-row
-    # mean at init_from time (see train.reinit_label_rows). Requires train.init_from — resetting rows
-    # on a from-scratch model is a no-op (already random) and signals a config mistake. Empty ⇒ no-op,
-    # byte-identical to every prior recipe.
+
     reinit_label_rows: list[str] = field(default_factory=list)
     warmup_steps: int = 1000
     max_steps: int = 50000
     eval_every_steps: int = 2000
     save_every_steps: int = 5000
     log_every_steps: int = 100
-    precision: str = "fp32"  # one of: fp32 | fp16 | bf16
+    precision: str = "fp32"
     num_workers: int = 2
     csv_log_path: str = "{output_dir}/train_log.csv"
-    # Global-norm gradient clip. 0 disables clipping. Defaults to 1.0. the CRF NLL leg of
-    # Stage 2 emits sharp gradients during warmup and diverged at the LR peak without it.
+
     grad_clip_norm: float = 1.0
-    # --- Fisher capture + EWC (v8.3.0 Phase 1, the B11 consolidation artifact — see fisher.py). ---
-    # Capture side (base runs): accumulate the diagonal empirical Fisher over the final
-    # fisher_capture_last_n_steps optimizer steps (the memo's "last N batches" at the
-    # effective-batch grain) and write fisher-diag-v1.npz + sidecar beside the final checkpoint.
-    # Read-only on p.grad — byte-identical trajectory with the flag on or off (pinned by test).
+
     fisher_capture: bool = False
     fisher_capture_last_n_steps: int = 2000
-    # Consumption side (fine-tunes): ewc_lambda > 0 adds λ/2·ΣF_i(θ_i−θ*_i)² against
-    # ewc_reference (a checkpoint dir. defaults to train.init_from — the base the fine-tune
-    # starts from). Params absent from the Fisher artifact (fresh heads) are unpenalized.
+
     ewc_lambda: float = 0.0
     ewc_fisher_path: str | None = None
     ewc_reference: str | None = None
-    # LR schedule after warmup. ``"cosine"`` = decay to 0 across max_steps (v0.4.0 default,
-    # right for full-length production runs). ``"constant"`` = hold ``learning_rate`` flat
-    # for the rest of the run after warmup — the smoke-window default per v0.5.0 process
-    # (see docs/articles/plan/reference/VERDICT_SMOKES.md). Cosine decay during a short
-    # smoke window masks divergence by collapsing LR before the loss curve shows it. the
-    # constant-LR mode keeps the signal visible. See the ref doc for when to pick which.
+
     lr_schedule: str = "cosine"
-    # ``"linear_cooldown"``'s branch point (2026-08-10 recipe review, setting 11): resume a
-    # mid-schedule checkpoint at this step with ``learning_rate`` set to that checkpoint's
-    # current (tail) LR. multiplier holds 1.0 through the start, then decays linearly to zero
-    # at ``max_steps`` — the WSD-style read of a mid-cosine checkpoint's finished-schedule
-    # endpoint. Required by (and only read by) lr_schedule='linear_cooldown'.
+
     cooldown_start_step: int | None = None
-    # Gazetteer-anchor confidence curriculum (#464, v0.9.13). When True, the trainer ramps a per-row
-    # zero-out of the gazetteer clue's confidence by step (same schedule as the postcode anchor) so the
-    # model can't over-rely on the always-on clue — the v0.9.12 US-postcode-recovery knob. Off keeps
-    # v0.9.12-style always-on runs reproducible. Requires model.use_gazetteer_anchor.
+
     gazetteer_curriculum: bool = False
-    # Evidence-bundle anti-over-trust curriculum (v3.16.0 probe — the P-A decay's measured requirement).
-    # When True, the trainer applies the same ramped per-row zero-out schedule to the street_type and
-    # locality_surface confidences, so the model keeps its label competence with and without the bundle
-    # (the retrieval-ablation training the RAG over-trust literature prescribes). The ablation check
-    # (evidence-zeroed parse ≥ baseline on unaffected spans) is the corresponding eval-side check.
+
     evidence_curriculum: bool = False
-    # v3.21.0 false-evidence noise rate (per row per bundle channel. see train.perturb_evidence_noise).
-    # 0.0 = off — the v3.16→v3.20 recipes reproduce byte-identically.
+
     evidence_noise_prob: float = 0.0
-    # Training objective. "supervised" = the BIO token-classification loss (CE + optional CRF, the
-    # default and only historical mode). "mlm" = self-supervised masked-language-model PRE-training
-    # on the corpus text (BIO labels ignored): masks `mlm_mask_prob` of attended tokens and predicts
-    # them via the tied token-embedding head, producing an encoder checkpoint a later supervised run
-    # fine-tunes from (`init_from`). See pretrain.py. Off the supervised path entirely.
+
     objective: str = "supervised"
-    # Fraction of attended (non-pad) tokens masked for the MLM objective. 0.15 is bert-classic. the
-    # small-encoder literature favors ~0.4 — tune per experiment. Ignored unless objective == "mlm".
+
     mlm_mask_prob: float = 0.15
-    # Initialize model weights from this checkpoint dir at the start of a supervised run, without
-    # loading optimizer/scheduler/step (unlike resume). This is how a fine-tune run starts from an
-    # MLM-pretrained encoder. Empty = fresh init. Ignored when resuming (resume takes precedence).
+
     init_from: str = ""
 
-    # Freeze every parameter except the affix head (#492 frozen-encoder probe): the optimizer
-    # sees only head params. Distinguishes encoder-representation sufficiency from output-head
-    # competition — see issue #492's pre-registered ladder.
     freeze_encoder: bool = False
-    # #901 v2.1.3: freeze the token-embedding table during fine-tune. The no-added-source control
-    # (`v2.1.2-zeroslice-control`) proved any 2k init_from fine-tune of a mean-init surgery base breaks
-    # the same SI short-village rows (4/4 casualty row-identity, no recipe output attached) — gradient through the
-    # never-trained mean-init rows is the mechanism. Freezing removes it while the encoder
-    # layers learn the boundary rules (the multi-word F1 gains came from encoder-layer learning).
+
     freeze_token_embeddings: bool = False
-    # cRT-style probe (classifier-only retraining, frozen encoder — 2026-07-22 census-bias plan
-    # "Parallel training-side experiment"): every param not starting with one of these prefixes
-    # gets requires_grad=False. matches stay trainable. Empty (default) = no-op, byte-identical
-    # to every prior recipe. Mutually exclusive with freeze_encoder/freeze_token_embeddings — the
-    # three settings overlap in intent (encoder-representation exclusion) and combining them would
-    # make the "which setting did it" attribution ambiguous. See train.py's application site (mirrors
-    # the freeze_encoder idiom: loud count print, raise-if-no-match) and build_optimizer's
-    # empty-base-group handling for the classifier-only case.
+
     trainable_only_prefixes: list[str] = field(default_factory=list)
-    # Trackio experiment tracking (Hugging Face). Off by default so existing configs and
-    # plain/CI runs stay bit-identical and never depend on the optional 'trackio' package.
-    # When enabled, the metrics written to train_log.csv are also streamed to a Trackio
-    # project (see trackio_logging.py). All tracking is best-effort: a failure degrades to
-    # CSV-only and never aborts the run.
+
     trackio_enabled: bool = False
     trackio_project: str = "mailwoman"
-    # HF Space id for the hosted dashboard, e.g. "sister-software/mailwoman-trackio".
-    # The Space is auto-created on first run if it doesn't exist. Empty = local-only
-    # dashboard (~/.cache/huggingface/trackio), no HF upload.
+
     trackio_space: str = ""
-    # Optional human-readable run name. Empty = derive a stable name from output_dir so
-    # a resumed run (resume="auto") continues the same dashboard run instead of forking.
+
     trackio_run_name: str = ""
-    # Make the dashboard Space private (visible to org members only). Defaults True so
-    # in-progress training metrics aren't published publicly by accident. Ignored if the
-    # Space already exists.
+
     trackio_private: bool = True
 
 
 @dataclass
 class EvalConfig:
-    golden_dir: str = ""  # path to data/eval/golden/v0.1.0/ (in-repo)
-    val_jsonl: str = ""  # optional: a hand-curated val.jsonl mirroring golden schema
+    golden_dir: str = ""
+    val_jsonl: str = ""
 
 
 @dataclass

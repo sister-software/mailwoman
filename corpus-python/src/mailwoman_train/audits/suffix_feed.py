@@ -1,32 +1,3 @@
-"""Terminal-only carrier audit over the selectable training feed (#1569).
-
-Permanent reconstruction of the 2026-08-09 250k feed audit (the original tool was ad-hoc and
-never committed). It streams the exact selectable feed — source multinomial + country/coarse
-filtering, no augmentation — classifies every street-family group, applies the load-time
-relabel pass under a chosen lexicon, and reports carrier correctness per class and source.
-
-Definitions mirror ``classifySuffixBoundaryStreet`` (corpus/src/recipes/street-affix.ts),
-evaluated with the CLASSIFY lexicon's vocabulary (use the v2 artifact — it carries
-``name_prone``):
-
-- **terminal-only** — the group's trailing word is a true (non-name-prone) suffix and the word
-  before it is name-prone ('Blue Hill Rd'; 'Menlo Park' + 'Road').
-- **terminal-contrast** — the trailing word itself is name-prone ('Sutton Hollow').
-
-Correct = after the relabel pass, the group's last word carries ``street_suffix`` and the word
-before it carries ``street``. The RELABEL lexicon is the experiment variable: v1 (no
-``name_prone``) reproduces the 2026-08-09 baseline — ordinary-source monolithic carriers stay
-wrong (695/3,151 = 22.1% in that audit) — and v2 licenses the positional split.
-
-Volume-side run (see ``train_remote.py::audit_suffix_feed``)::
-
-    python -m mailwoman_train.audits.suffix_feed \
-      --config src/mailwoman_train/configs/v4.3.3-suffix-boundary-base-60k.yaml \
-      --classify-lexicon /data/gazetteer/affix-relabel-lexicon-v2.json \
-      --relabel-lexicon /data/gazetteer/affix-relabel-lexicon-v2.json \
-      --rows 250000 --seed 1569 --json suffix-feed-audit.json
-"""
-
 from __future__ import annotations
 
 import argparse
@@ -50,7 +21,6 @@ def _component(label: str) -> str | None:
 
 
 def street_family_groups(labels: list[str]) -> list[list[int]]:
-    """Token indices of each street span plus its immediately-following authored suffix span."""
     groups: list[list[int]] = []
     i = 0
     n = len(labels)
@@ -74,7 +44,6 @@ def street_family_groups(labels: list[str]) -> list[list[int]]:
 
 
 def classify_street_group(words: list[str], classify_lex: AffixRelabelLexicon) -> str | None:
-    """Port of ``classifySuffixBoundaryStreet`` over the lexicon vocabulary."""
     if len(words) < 2:
         return None
     terminal = classify_lex.suffixes.get(words[-1].lower())
@@ -96,12 +65,6 @@ def evaluate_row(
     classify_lex: AffixRelabelLexicon,
     relabel_lex: AffixRelabelLexicon,
 ) -> list[tuple[str, bool]]:
-    """Classify each street-family group and score the effective (post-relabel) labels.
-
-    Returns ``[(class, correct), ...]`` for the carrier groups. non-carrier groups yield
-    nothing. The caller's row is never mutated (the relabel runs on a shallow copy with a
-    copied label list — the same discipline the loader uses).
-    """
     tokens: list[str] = row["tokens"]
     labels: list[str] = row["labels"]
     groups = street_family_groups(labels)

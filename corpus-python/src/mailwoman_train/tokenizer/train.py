@@ -1,35 +1,10 @@
-"""SentencePiece tokenizer training harness (v0.5.0 Thread A).
-
-A reproducible trainer that produces a versioned tokenizer + model card from a corpus
-parquet tree. Used to train ``tokenizer-v0.5.0-a0`` on ``corpus-v0.3.0`` and (once Thread B
-lands) ``tokenizer-v0.5.0-a1`` on ``corpus-v0.4.0`` via the same code path.
-
-The runtime wrapper lives in ``mailwoman_train.tokenizer`` — that's the SP encoder + label
-realigner the Phase 2 train loop consumes. This module is *only* about producing the SP
-model file from a corpus version. The two are kept separate so the heavy parquet/sampling
-imports don't load when the train loop just wants to encode.
-
-Why a new module (not extending ``scripts/train_tokenizer.py``)?
-
-- The legacy script is stdin-or-file driven. the harness interface is "give me a corpus
-  version + vocab budget, do the sampling and training and measurement end-to-end."
-- The harness writes a richer ``model_card.json`` (sentencepiece flags, UDS preview,
-  byte-fallback rate per script) the legacy ``META.json`` doesn't carry.
-- A0 / A1 retrain is a single re-invocation: same harness, new ``--corpus``.
-
-Default sampling strategy: per-country reservoir over the train split, taking ``raw``
-strings only (whitespace tokens / BIO labels are irrelevant to SP training). Countries
-default to ``US`` + ``FR`` to match corpus-v0.3.0's mass. pass ``--countries`` to widen
-once Thread B's adversarial transliteration corpus is in the mix.
-"""
-
 from __future__ import annotations
 
 import hashlib
 import json
 import logging
 import random
-import subprocess  # nosec B404 — spawns external toolchain binaries by design (git for provenance stamps)
+import subprocess  # nosec B404
 import tempfile
 import time
 from collections import Counter
@@ -54,8 +29,6 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class TrainerConfig:
-    """Inputs to ``train_tokenizer``. Keep fields flat — they round-trip into the model card."""
-
     corpus_dir: Path
     output_dir: Path
     corpus_version: str
@@ -75,19 +48,6 @@ class TrainerConfig:
 
 
 def iter_train_files(corpus_dir: Path) -> list[Path]:
-    """Resolve the train-split parquet paths for ``corpus_dir``.
-
-    Source of truth is ``MANIFEST.json``'s ``slices[]`` (each entry carries an absolute
-    ``path``), which supports adapter-addition corpora composed across versions — e.g.
-    ``corpus-v0.4.0`` is logically ``corpus-v0.3.0``'s base parquet files + the new kryptonite +
-    transliteration recipe outputs, with the v0.3.0 files left on disk under their original
-    versioned dir rather than re-emitted. Globbing ``<corpus>/train/`` would silently
-    miss those cross-version base files.
-
-    Falls back to a glob over ``<corpus>/train/`` for backward-compat with corpora that
-    don't carry a manifest (e.g. ad-hoc test fixtures). Raises ``FileNotFoundError`` if
-    neither source yields a parquet file.
-    """
     manifest = corpus_dir / "MANIFEST.json"
     if manifest.exists():
         data = json.loads(manifest.read_text())
@@ -102,9 +62,7 @@ def iter_train_files(corpus_dir: Path) -> list[Path]:
 
 
 def iter_raws_by_country(corpus_dir: Path, country: str) -> Iterable[str]:
-    """Yield ``raw`` strings from every train parquet file whose row matches ``country``."""
     for path in iter_train_files(corpus_dir):
-        # Column-projected read keeps RSS low.
         t = pq.read_table(path, columns=["raw", "country"])
         raws = t["raw"]
         countries = t["country"]
@@ -114,7 +72,6 @@ def iter_raws_by_country(corpus_dir: Path, country: str) -> Iterable[str]:
 
 
 def reservoir_sample(it: Iterable[str], k: int, rng: random.Random) -> list[str]:
-    """Algorithm-R reservoir sampler. Single pass, memory ≤ ``k``."""
     out: list[str] = []
     for i, x in enumerate(it):
         if i < k:
@@ -133,7 +90,6 @@ def sample_balanced_raws(
     per_country: int,
     seed: int,
 ) -> list[str]:
-    """Per-country reservoir sample, concatenated + shuffled."""
     rng = random.Random(seed)
     out: list[str] = []
     for cc in countries:
@@ -151,15 +107,6 @@ def mine_postcode_literals(
     countries: Sequence[str] | None = None,
     max_files: int | None = None,
 ) -> list[str]:
-    """Return the top-``top_k`` postcode literals in the train split by frequency.
-
-    Reads each parquet file's ``labels`` column and pulls out tokens whose BIO label endswith
-    ``-postcode``. The unigram trainer will not always keep these whole on its own. adding
-    them as UDS guarantees one piece per common postcode literal.
-
-    ``countries``: when given, only count postcodes from rows whose ``country`` matches.
-    ``max_files``: for unit tests. in production leave ``None`` to scan everything.
-    """
     counter: Counter[str] = Counter()
     files = iter_train_files(corpus_dir)
     if max_files is not None:
@@ -184,8 +131,6 @@ def mine_postcode_literals(
             labs = labels_col[i].as_py()
             for tok, lab in zip(toks, labs, strict=True):
                 if lab.endswith("-postcode"):
-                    # Strip trailing punctuation like ``75008,`` so the literal we add to
-                    # the vocab is the bare postcode form. Anything else is unsafe to mine.
                     cleaned = tok.strip(" ,;:.()[]\"'")
                     if cleaned:
                         counter[cleaned] += 1
@@ -193,9 +138,8 @@ def mine_postcode_literals(
 
 
 def git_commit(workdir: Path | None = None) -> str | None:
-    """Best-effort: return the current HEAD SHA, or None outside a git checkout."""
     try:
-        out = subprocess.check_output(  # nosec B603, B607 — fixed argv list, no shell, trusted PATH binary
+        out = subprocess.check_output(  # nosec B603, B607
             ["git", "rev-parse", "HEAD"],
             cwd=workdir or Path(__file__).parent,
             stderr=subprocess.DEVNULL,
@@ -214,11 +158,6 @@ def sha256_of_file(path: Path) -> str:
 
 
 def resolve_user_defined_symbols(cfg: TrainerConfig) -> tuple[list[str], list[str]]:
-    """The UDS list this run will train with, and the SentencePiece-normalized copy of it.
-
-    Two lists because two consumers: the model card records what a human asked for, and the
-    trainer needs ASCII spaces rewritten to ``▁`` or the literal never matches.
-    """
     uds = list(cfg.user_defined_symbols)
     if cfg.mine_postcode_literals > 0:
         uds.extend(
@@ -229,9 +168,7 @@ def resolve_user_defined_symbols(cfg: TrainerConfig) -> tuple[list[str], list[st
             )
         )
     uds = _dedupe_keep_order(uds)
-    # SentencePiece's vocab budget must be > UDS count + reserved special-tokens — otherwise
-    # the trainer aborts. Cap UDS at min(uds, vocab_size // 4) defensively so a misconfigured
-    # caller (e.g. asking for 30K UDS with vocab=48K) doesn't poison the training pass.
+
     uds_cap = max(0, cfg.vocab_size // 4)
     if len(uds) > uds_cap:
         logger.warning(
@@ -255,14 +192,10 @@ def build_model_card(
     vocab_path: Path,
     byte_fb: dict[str, Any] | None,
 ) -> dict[str, Any]:
-    """The card that travels with the model, carrying what would otherwise be unrecoverable."""
-    # Drop the absolute ``input`` path from sp_flags before writing so the card stays portable
-    # across machines. keep everything else.
+
     portable_flags = {k: v for k, v in sp_flags.items() if k not in ("input",)}
     portable_flags["user_defined_symbols_count"] = len(uds)
-    # Keep a preview of the UDS list. the full list is mostly mined postcodes, redundant in
-    # the card. The full list is recoverable from ``tokenizer.vocab`` (UDS shows up as
-    # `<surface>\t0` entries adjacent to the special tokens).
+
     portable_flags["user_defined_symbols_preview"] = uds[:64]
     portable_flags.pop("user_defined_symbols", None)
 
@@ -288,25 +221,11 @@ def build_model_card(
 
 
 def train_tokenizer(cfg: TrainerConfig) -> dict[str, Any]:
-    """End-to-end SentencePiece training + byte-fallback measurement.
-
-    Steps:
-
-    1. Sample per-country raws into a temp text file.
-    2. (Optional) Mine top-N postcode literals from the corpus and union with the supplied
-       UDS list.
-    3. Invoke ``spm.SentencePieceTrainer.train`` with the assembled flags.
-    4. (Optional) Encode the eval fixture and compute overall + per-script byte-fallback.
-    5. Persist ``tokenizer.model``, ``tokenizer.vocab``, ``model_card.json``.
-
-    Returns the model card dict.
-    """
     started = time.time()
 
     cfg.output_dir.mkdir(parents=True, exist_ok=True)
     model_prefix = cfg.output_dir / "tokenizer"
 
-    # 1. Sample.
     raws = sample_balanced_raws(
         cfg.corpus_dir,
         countries=cfg.countries,
@@ -316,10 +235,8 @@ def train_tokenizer(cfg: TrainerConfig) -> dict[str, Any]:
     if not raws:
         raise RuntimeError(f"sampled zero lines from corpus_dir={cfg.corpus_dir} countries={cfg.countries}")
 
-    # 2. Resolve UDS: caller's list, deduped + intersected with sane limits.
     uds, uds_for_sp = resolve_user_defined_symbols(cfg)
 
-    # 3. Materialize sampled raws to a temp file (SP wants a path on disk).
     with tempfile.NamedTemporaryFile("w", suffix=".txt", delete=False, encoding="utf-8") as tmp:
         tmp_path = Path(tmp.name)
         for line in raws:
@@ -354,7 +271,6 @@ def train_tokenizer(cfg: TrainerConfig) -> dict[str, Any]:
         )
         spm.SentencePieceTrainer.train(**sp_flags)
     finally:
-        # Clean up the sampling temp file regardless of training success.
         try:
             tmp_path.unlink()
         except FileNotFoundError:
@@ -366,14 +282,12 @@ def train_tokenizer(cfg: TrainerConfig) -> dict[str, Any]:
     if not model_path.exists():
         raise RuntimeError(f"sentencepiece training finished without writing {model_path}")
 
-    # 4. Byte-fallback measurement.
     sp = spm.SentencePieceProcessor(model_file=str(model_path))
     byte_fb: dict[str, Any] | None = None
     if cfg.eval_fixture is not None:
         fixture_lines = load_fixture_lines(cfg.eval_fixture)
         byte_fb = measure_byte_fallback(sp, fixture_lines)
 
-    # 5. Persist model card.
     card = build_model_card(
         cfg,
         sp=sp,
@@ -387,7 +301,7 @@ def train_tokenizer(cfg: TrainerConfig) -> dict[str, Any]:
     )
     card_path = cfg.output_dir / "model_card.json"
     card_path.write_text(json.dumps(card, indent=2) + "\n", encoding="utf-8")
-    # Keep a meta.json compatibility shim — older Phase 1 scripts looked for this name.
+
     (cfg.output_dir / "META.json").write_text(json.dumps(card, indent=2) + "\n", encoding="utf-8")
 
     logger.info(
@@ -399,9 +313,6 @@ def train_tokenizer(cfg: TrainerConfig) -> dict[str, Any]:
     return card
 
 
-#: The harness's surface. `detect_script`, `measure_byte_fallback`, `load_fixture_lines`,
-#: `DEFAULT_USER_DEFINED_SYMBOLS` and `parse_user_defined_symbols_file` are re-exported from
-#: `byte_fallback.py` and `uds.py`, because the CLI and the tests reach all of it through here.
 __all__ = [
     "DEFAULT_USER_DEFINED_SYMBOLS",
     "TrainerConfig",

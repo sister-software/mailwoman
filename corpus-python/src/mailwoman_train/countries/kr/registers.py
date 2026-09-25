@@ -1,30 +1,9 @@
-"""The Korean permit registry (지방행정인허가데이터) as a NOISY corpus source: reading and aligning (#2204 §5).
-
-Every permit row carries the same premises in both address systems, typed by a clerk:
-
-    도로명주소  서울특별시 종로구 종로 233, 1층 일부호 (종로5가)
-    지번주소    서울특별시 종로구 종로5가 43-1
-
-plus a planar coordinate in EPSG:5174 and both postcodes. The road-name form is `<시도> <시군구> <도로명> <건물번호>`,
-then an optional `, <상세주소>` (floor, unit, building) and an optional parenthetical `(<법정동>[, <건물명>])`; the
-lot-number form is `<시도> <시군구> <법정동> [<리>] [산]<본번>[-<부번>]` followed by whatever the clerk added.
-
-Alignment is exact against the LABEL register's own key sets (`KeyIndex`, built from the 주소DB): the region must be
-a listed 시도, the 시군구 one the region lists, the road one that 시군구 lists, and the number a building number.
-A string that satisfies the whole key becomes a training row whose spans are the matched pieces. one that does not is
-a BOARD row — a typed address the model will be read on, never trained on. The alignment rate per file is measured
-and reported before any row enters a corpus, which is the rule `.notes/data-sources.md` sets for a noisy source.
-
-The coordinate transform shells out to GDAL's `gdaltransform` in bulk (EPSG:5174 → EPSG:4326), the one tool on the
-host that knows the Korean 1985 datum. PROJ's answer for Jongno's 197993.9 / 452032.96 is 126.978080 / 37.570582.
-"""
-
 from __future__ import annotations
 
 import csv
 import io
 import re
-import subprocess  # nosec B404 — spawns gdaltransform by design (the EPSG:5174 → WGS84 step below)
+import subprocess  # nosec B404
 from collections import Counter
 from collections.abc import Iterable, Iterator, Sequence
 from dataclasses import dataclass, field
@@ -42,8 +21,6 @@ _UNIT_TOKEN = re.compile(r"^(?:지하\s?)?(?:B?\d+(?:~\d+)?(?:층|호)|\d+층|B\
 
 @dataclass
 class KeyIndex:
-    """The LABEL register's key sets, the only thing a permit string is allowed to align against."""
-
     regions: set[str]
     sigungu_by_region: dict[str, set[str]]
     roads_by_unit: dict[tuple[str, str], set[str]]
@@ -51,7 +28,6 @@ class KeyIndex:
     ris_by_dong: dict[tuple[str, str, str], set[str]] = field(default_factory=dict)
 
     def sigungu_span(self, region: str, tokens: Sequence[str], start: int) -> int:
-        """How many tokens from `start` form one of the region's 시군구 (2 for `수원시 장안구`), or 0."""
         candidates = self.sigungu_by_region.get(region, set())
         for width in (2, 1):
             if start + width <= len(tokens) and " ".join(tokens[start : start + width]) in candidates:
@@ -86,7 +62,6 @@ class Aligned:
 def iter_permit_rows(
     source_dir: Path, statuses: Iterable[str] = (OPEN_STATUS,), pattern: str = "*.csv"
 ) -> Iterator[PermitRow]:
-    """Stream the permit CSVs (CP949 as delivered), one `PermitRow` per business in one of `statuses`."""
     wanted = set(statuses)
     for path in sorted(source_dir.glob(pattern)):
         with path.open("rb") as raw:
@@ -118,11 +93,10 @@ def iter_permit_rows(
 
 
 def transform_coordinates(points: Sequence[tuple[float, float]]) -> list[tuple[float, float] | None]:
-    """EPSG:5174 planar (x, y) → WGS84 (lon, lat) through `gdaltransform`, one process per call."""
     if not points:
         return []
     payload = "\n".join(f"{x} {y}" for x, y in points) + "\n"
-    result = subprocess.run(  # nosec B603, B607 — fixed argv list, no shell, trusted PATH binary. stdin is numbers
+    result = subprocess.run(  # nosec B603, B607
         ["gdaltransform", "-s_srs", "EPSG:5174", "-t_srs", "EPSG:4326", "-output_xy"],
         input=payload,
         capture_output=True,
@@ -136,7 +110,7 @@ def transform_coordinates(points: Sequence[tuple[float, float]]) -> list[tuple[f
             out.append(None)
             continue
         lon, lat = float(parts[0]), float(parts[1])
-        # Korea's bounding box. a point outside it is a mis-keyed source coordinate rather than a location.
+
         out.append((lon, lat) if 124.0 <= lon <= 132.0 and 33.0 <= lat <= 39.5 else None)
     if len(out) != len(points):
         raise RuntimeError(f"gdaltransform answered {len(out)} lines for {len(points)} points")
@@ -149,7 +123,6 @@ def _put(spans: list[tuple[int, int, str]], text: str, start: int, end: int, tag
 
 
 def align_road_address(text: str, index: KeyIndex) -> Aligned | None:
-    """Align one road-name string to the register's key, or answer None."""
     head, _, tail = text.partition("(")
     parenthetical = tail[:-1].strip() if tail.endswith(")") else ""
     core, _, detail = head.partition(",")
@@ -164,15 +137,14 @@ def align_road_address(text: str, index: KeyIndex) -> Aligned | None:
         return None
     region = tokens[0]
     width = index.sigungu_span(region, tokens, 1)
-    # A region with no 시군구 level (세종특별자치시) lists the empty string. its strings go region → road.
+
     if not width and "" not in index.sigungu_by_region.get(region, set()):
         return None
     sigungu = " ".join(tokens[1 : 1 + width])
     road_at = 1 + width
     unit = (region, sigungu)
     roads = index.roads_by_unit.get(unit, set())
-    # In an 읍/면 area the road form carries the 읍/면 between the 시군구 and the road (`기장군 기장읍 기장해안로 205`);
-    # the register lists those names beside the 동 of the same unit.
+
     eupmyeon_at: int | None = None
     if (
         road_at + 2 < len(tokens)
@@ -181,11 +153,11 @@ def align_road_address(text: str, index: KeyIndex) -> Aligned | None:
     ):
         eupmyeon_at = road_at
         road_at += 1
-    # A road name is one token. a numbered branch (`대학로8길`) is part of that token in the register.
+
     if road_at + 1 >= len(tokens) or tokens[road_at] not in roads:
         return None
     number_at_token = road_at + 1
-    # `달구벌대로 지하 1476`: the underground marker stands as its own token before the number, outside every span.
+
     if tokens[number_at_token] == "지하" and number_at_token + 1 < len(tokens):
         number_at_token += 1
     number = tokens[number_at_token]
@@ -203,8 +175,7 @@ def align_road_address(text: str, index: KeyIndex) -> Aligned | None:
     _put(spans, text, positions[road_at], positions[road_at] + len(tokens[road_at]), "street")
     number_at = positions[number_at_token]
     _put(spans, text, number_at, number_at + len(number), "house_number")
-    # What follows the number, with or without a comma, is the building name and then the floor/unit — the same
-    # leading-venue, unit-tail reading the lot form uses.
+
     rest_tokens = [*tokens[number_at_token + 1 :], *detail.split()]
     if rest_tokens:
         rest_start = number_at + len(number)
@@ -250,7 +221,6 @@ def align_road_address(text: str, index: KeyIndex) -> Aligned | None:
 
 
 def align_lot_address(text: str, index: KeyIndex) -> Aligned | None:
-    """Align one lot-number string to the register's key, or answer None."""
     tokens = text.split()
     positions: list[int] = []
     cursor = 0
@@ -262,7 +232,7 @@ def align_lot_address(text: str, index: KeyIndex) -> Aligned | None:
         return None
     region = tokens[0]
     width = index.sigungu_span(region, tokens, 1)
-    # A region with no 시군구 level (세종특별자치시) lists the empty string. its strings go region → road.
+
     if not width and "" not in index.sigungu_by_region.get(region, set()):
         return None
     sigungu = " ".join(tokens[1 : 1 + width])
@@ -290,8 +260,6 @@ def align_lot_address(text: str, index: KeyIndex) -> Aligned | None:
     _put(spans, text, positions[lot_at], positions[lot_at] + len(lot), "house_number")
     rest = tokens[lot_at + 1 :]
     if rest:
-        # The clerk writes the building name first and the floor/unit after it (`교보생명빌딩 2층`, `지강빌딩 1층 일부호`):
-        # the venue is the run of tokens before the first unit-shaped one, the unit everything from there to the end.
         first_unit = next((i for i, token in enumerate(rest) if _UNIT_TOKEN.match(token)), len(rest))
         if first_unit:
             start = positions[lot_at + 1]
@@ -314,7 +282,6 @@ def align_lot_address(text: str, index: KeyIndex) -> Aligned | None:
 
 
 def to_record(aligned: Aligned) -> dict[str, Any]:
-    """One aligned string as a row in the CJK corpus schema."""
     raw = aligned.raw
     tokens: list[str] = []
     labels: list[str] = []
@@ -343,7 +310,6 @@ def to_record(aligned: Aligned) -> dict[str, Any]:
 
 
 def alignment_census(rows: Iterable[PermitRow], index: KeyIndex) -> dict[str, Any]:
-    """The rate the noisy source aligns at, per form and per category, measured before any row trains."""
     per_form: Counter[str] = Counter()
     per_category: dict[str, Counter[str]] = {}
     for row in rows:

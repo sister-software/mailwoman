@@ -1,21 +1,3 @@
-"""Task #25 (SP vocab-pruning probe) — fired-set measurement over the full training feed.
-
-Walks every train parquet file of a corpus manifest, encodes each `raw` with the shipped tokenizer, and
-accumulates per-id fire counts. Counted at the unit the model reads: `encode()` output ids
-(feedback-count-at-the-unit-the-model-reads). Full feed, no sampling — the pre-registration
-(docs/superpowers/plans/2026-07-31-sp-vocab-pruning-preregistration.md) explains why a sampled
-fired-set would defeat the probe's own point.
-
-Output: an .npz with `counts` (int64[vocab]) + a JSON sidecar with the run parameters.
-
-Usage:
-    python -m mailwoman_train.tokenizer.vocab.utilization \
-        --manifest $MAILWOMAN_DATA_ROOT/corpus/versioned/v0.15.0-venue/corpus-v0.15.0-venue/MANIFEST.json \
-        --tokenizer neural-weights-en-us/tokenizer.model \
-        --out $MAILWOMAN_DATA_ROOT/scratch-vocab-prune/utilization-v0150-venue.npz \
-        [--workers 14] [--data-root-remap "/data:$MAILWOMAN_DATA_ROOT"]
-"""
-
 from __future__ import annotations
 
 import argparse
@@ -43,7 +25,6 @@ def _init_worker(tokenizer_path: str) -> None:
 
 
 def _count_file(path: str, vocab_size: int) -> np.ndarray:
-    """Encode every `raw` in one parquet file. return int64 fire counts."""
     from itertools import chain
 
     import pyarrow.parquet as pq
@@ -54,8 +35,7 @@ def _count_file(path: str, vocab_size: int) -> np.ndarray:
     for batch in pf.iter_batches(columns=["raw"], batch_size=65536):
         raws = batch.column(0).to_pylist()
         id_lists = _SP.encode(raws)  # type: ignore[union-attr]
-        # Flatten via C-speed chain + fromiter, then one bincount — the per-id python loop was the
-        # bottleneck (a ~6h pace over 8B ids. this path measures ~20-30 min on 13 workers).
+
         flat = np.fromiter(chain.from_iterable(id_lists), dtype=np.int64)
         counts += np.bincount(flat, minlength=vocab_size)
 
@@ -77,8 +57,7 @@ def main() -> None:
         ),
     )
     args = parser.parse_args()
-    # Resolved here rather than as an argparse default so `--help` and an explicit value need no
-    # data root configured.
+
     if args.data_root_remap is None:
         args.data_root_remap = f"/data:{data_root_path()}"
 

@@ -1,10 +1,3 @@
-"""Reading Overture-TW rows, and rendering one in a register.
-
-The 路 / 段 / 巷 / 弄 designators stay inside the street span: they are the street's own name rather than a
-type suffix beside it. The 號 designator likewise stays inside the house number, so ``298之1號`` is
-one span — which is how the household-registration form writes it.
-"""
-
 from __future__ import annotations
 
 import random
@@ -20,8 +13,6 @@ from ....corpora.builder import MAX_FIELD_CHARS, RowRenderer
 from ....corpora.builder import verify_record as _verify_record
 from ....text.normalize import ascii_digits, fullwidth_digits, normalize_text
 
-#: Resolved after parsing rather than here: reading the data root at import would raise for a caller who
-#: passes `--parquet` and never needs it.
 PARQUET_PARTS = ("overture", "2026-06-17.0", "addresses-tw.parquet")
 LABEL_SET_NAME = "stage3-cjk"
 SOURCE = "overture-tw"
@@ -37,7 +28,7 @@ REGISTER_WEIGHTS: dict[str, float] = {
     "with_unit": 0.15,
 }
 
-# The sub-number the source keeps in ``unit``: 之N, 之N附N, with or without the 號 designator, then the rest (a floor).
+
 _SUB_NUMBER = re.compile(r"^(之[0-9０-９]+(?:附[0-9０-９]+)?號?)(.*)$")
 
 SourceRow = tuple[str, str, str, str, str, str, float, float]
@@ -45,18 +36,10 @@ SourceRow = tuple[str, str, str, str, str, str, float, float]
 
 
 def verify_record(record: dict[str, Any], tag_set: frozenset[str]) -> None:
-    """The shared verifier bound to this corpus's label set."""
     _verify_record(record, tag_set, label_set_name=LABEL_SET_NAME)
 
 
 def split_number_unit(number: str, unit: str) -> tuple[str, str]:
-    """Fold the sub-number the source keeps in ``unit`` into the house number. what remains is the floor.
-
-    ``("２９８", "之１號")`` → ``("２９８之１號", "")``; ``("２０１號", "四樓")`` → ``("２０１號", "四樓")``;
-    ``("１４", "之１附１號")`` → ``("１４之１附１號", "")``; ``("１５２號", "四樓之２")`` → ``("１５２號", "四樓之２")``.
-    A number that already ends in 號 keeps a following ``之N`` as its own continuation only when the unit carries
-    nothing else, because ``201號之2`` is the written form of that address.
-    """
     match = _SUB_NUMBER.match(unit)
     if not match:
         return number, unit
@@ -79,7 +62,6 @@ def render_row(
     register: str,
     country: bool = False,
 ) -> dict[str, Any]:
-    """Render one TW row in one register, returning the corpus record (spans, legacy tokens, provenance)."""
     renderer = RowRenderer()
     sep = " " if register == "spaced" else ""
     digits = fullwidth_digits if register == "official" else ascii_digits
@@ -131,7 +113,6 @@ def render_row(
 
 
 def available_registers(village: str, unit: str) -> tuple[str, ...]:
-    """The registers a row can render: ``official`` needs a 里, ``with_unit`` a floor."""
     options = [name for name in REGISTER_WEIGHTS if name not in ("official", "with_unit")]
     if village:
         options.insert(0, "official")
@@ -153,7 +134,6 @@ def iter_source_rows(
     dropped: Counter[str] | None = None,
     agencies: Counter[str] | None = None,
 ) -> Iterator[SourceRow]:
-    """Stream eligible rows: three levels present, a street and a number, no field over the renderer's budget."""
     handle = pq.ParquetFile(parquet)
     groups = (
         handle.metadata.num_row_groups

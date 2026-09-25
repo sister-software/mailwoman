@@ -1,19 +1,3 @@
-"""P0 sampler stationarity (2026-08-09 training-substrate audit, HANDOFF-CODEX-TO-CLAUDE §6).
-
-``_raw_row_stream`` samples sources by weighted multinomial, but when a source's finite
-iterator exhausts it DELETES the source and renormalizes the remaining mixture. So
-``source_weights`` is only the OPENING distribution: a small oversampled source (the #1569
-30k-row suffix source at weight 12.0) is live for the first ~3,330 optimizer steps of each
-~7,812-step epoch and silent afterwards. The v4.3.3 B1 board oscillated in lockstep with
-those exposure windows.
-
-Interface pinned here (the repair): the realized source mixture must be STATIONARY across
-the whole epoch. A source that exhausts before the epoch ends cycles (fresh shuffled pass —
-weighted sampling with replacement at the pass level); the epoch ends once every source has
-completed at least one full pass, so the largest source is seen exactly once and no source
-ever silently leaves the mixture.
-"""
-
 from __future__ import annotations
 
 import random
@@ -73,9 +57,6 @@ def _emit(corpus: Path, source_weights: dict[str, float]) -> list[dict]:
 
 
 def test_small_source_keeps_appearing_after_its_first_pass_exhausts(tmp_path: Path) -> None:
-    """The exposure-window defect head-on: at equal weights, the 12-row source exhausts ~24
-    draws into a 132-row epoch and today contributes nothing to the remaining ~110 draws.
-    A stationary mixture keeps it present in every quarter of the stream."""
     corpus = _write_corpus(
         tmp_path,
         {"part-big.parquet": _rows("big", 120), "part-small.parquet": _rows("small", 12)},
@@ -91,9 +72,6 @@ def test_small_source_keeps_appearing_after_its_first_pass_exhausts(tmp_path: Pa
 
 
 def test_epoch_covers_the_large_source_once_and_cycles_the_small_one(tmp_path: Path) -> None:
-    """Epoch semantics under the stationary interface: the largest source completes exactly
-    one full pass (every row exactly once, no loss, no duplication); the small source cycles
-    to hold its weighted share, so it emits more rows than it contains."""
     big_rows = _rows("big", 120)
     small_rows = _rows("small", 12)
     corpus = _write_corpus(tmp_path, {"part-big.parquet": big_rows, "part-small.parquet": small_rows})
@@ -110,8 +88,6 @@ def test_epoch_covers_the_large_source_once_and_cycles_the_small_one(tmp_path: P
 
 
 def test_realized_share_is_stable_between_stream_halves(tmp_path: Path) -> None:
-    """Quantified stationarity: at weights 1:1 the small source's realized share must sit
-    near 0.5 in both halves of the stream rather than ~1.0-then-0.0."""
     corpus = _write_corpus(
         tmp_path,
         {"part-big.parquet": _rows("big", 120), "part-small.parquet": _rows("small", 12)},
@@ -124,10 +100,6 @@ def test_realized_share_is_stable_between_stream_halves(tmp_path: Path) -> None:
 
 
 def test_positive_weight_source_with_zero_selectable_rows_raises(tmp_path: Path) -> None:
-    """A cycling sampler must never spin on a source whose filters admit nothing. A source
-    whose full pass yields zero selectable rows (here: every row filtered by country) is a
-    recipe/corpus interface violation — fail loudly naming the source, never silently drop it
-    (the same discipline as the unreachable-positive-weight guard)."""
     corpus = _write_corpus(
         tmp_path,
         {
@@ -140,11 +112,6 @@ def test_positive_weight_source_with_zero_selectable_rows_raises(tmp_path: Path)
 
 
 def test_source_absent_from_source_weights_raises(tmp_path: Path) -> None:
-    """The mirror of the guard above, and the one that was missing. A positive weight with no rows
-    raises. a source with no weight used to be filtered out and logged at INFO as "zero-weighted",
-    which is what a deliberate zero also says. The shape it hid: a regenerated recipe output takes a version
-    suffix in its ``source`` column, the config keeps the old key, and training continues on the
-    superseded vintage."""
     corpus = _write_corpus(
         tmp_path,
         {
@@ -157,8 +124,6 @@ def test_source_absent_from_source_weights_raises(tmp_path: Path) -> None:
 
 
 def test_source_named_at_zero_is_declined_without_raising(tmp_path: Path) -> None:
-    """Naming a source at zero is how the config declines it, so that path stays silent and legal.
-    The refusal above must not make ``synth-no-street-led: 0.0`` unexpressible."""
     corpus = _write_corpus(
         tmp_path,
         {
@@ -172,9 +137,6 @@ def test_source_named_at_zero_is_declined_without_raising(tmp_path: Path) -> Non
 
 
 def test_val_split_still_tolerates_an_unnamed_source(tmp_path: Path) -> None:
-    """Validation corpora carry their own fixed source subset, so the refusal is scoped to the split
-    whose recipe claims coverage — the same scoping the unreachable-positive-weight guard already
-    uses."""
     corpus = tmp_path / "corpus"
     (corpus / "val").mkdir(parents=True)
     pq.write_table(

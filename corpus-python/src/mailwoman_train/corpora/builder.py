@@ -1,10 +1,3 @@
-"""The row machinery every corpus builder shares: schema, renderer, sampling, verification, stats.
-
-Nothing here is specific to one country. A name that four builders and a register reader all need
-has no business inside any one of them, because taking it from there makes every other country
-depend on that country's builder.
-"""
-
 from __future__ import annotations
 
 import hashlib
@@ -32,21 +25,14 @@ SCHEMA = pa.schema(
     ]
 )
 
-# Budget for one row's field values (prefecture + municipality + street + number). The char model
-# runs at S=96 units and ``encode_row_units`` truncates past that silently, so the corpus must not
-# contain a row that cannot fit. 64 leaves 32 characters of headroom for everything rendering adds:
-# 〒NNN-nnnn + space (10), 日本 (2), three separator spaces, and the designator register's kanji.
-# Measured distribution: median rendered row is 18 characters, so this truncates far out in the tail.
+
 MAX_FIELD_CHARS = 64
 
-# The hard invariant the field budget exists to produce. Violation raises — reaching it means the
-# field budget stopped bounding the rendered length, which is a code defect rather than tail data.
+
 MAX_RENDERED_CHARS = 96
 
 
 class RowRenderer:
-    """Concatenate normalized field values large-to-small, recording each span as it lands."""
-
     def __init__(self) -> None:
         self.raw = ""
         self.starts: list[int] = []
@@ -62,17 +48,15 @@ class RowRenderer:
         self.tags.append(tag)
 
     def glue(self, text: str) -> None:
-        """Append unlabeled text (the 〒 mark, a separating space) — it stays outside every span."""
         self.raw += text
 
 
 def muni_bucket(municipality: str) -> int:
-    # md5 is a stable bucketing hash here, never a security digest (bandit B324).
+
     return int(hashlib.md5(normalize_text(municipality).encode("utf-8"), usedforsecurity=False).hexdigest(), 16) % 100
 
 
 def select_exact(count: int, quota: int, rng: random.Random) -> Iterator[bool]:
-    """Stream an exact ``quota``-of-``count`` selection mask (O(1) memory, seeded, no reservoir)."""
     remaining_quota = min(quota, count)
     remaining = count
     for _ in range(count):
@@ -84,7 +68,6 @@ def select_exact(count: int, quota: int, rng: random.Random) -> Iterator[bool]:
 
 
 def water_fill(counts: dict[str, int], target: int) -> int:
-    """Largest per-prefecture cap whose total is <= target (so Tokyo cannot drown Tottori)."""
     if not counts:
         return 0
     low, high = 0, max(counts.values())
@@ -105,21 +88,6 @@ def verify_record(
     max_rendered_chars: int = MAX_RENDERED_CHARS,
     forbid_whitespace: bool = True,
 ) -> None:
-    """Re-validate one rendered record through the TRAINING consumer rather than through its own author.
-
-    Five independent checks, each of which has a scar behind it: the row fits S=96 so the loader
-    never truncates it silently, no span holds whitespace (an interior U+3000 in a source name field
-    put one inside a ``district``), every span covers exactly its own text (the secondary-corpus self-check),
-    every tag is in the active label set (a tag outside it collapses to ``O`` at load — silent,
-    #1349), and the triple survives ``char_label_array_from_spans``, the function the char path
-    actually calls.
-
-    `label_set_name` is a parameter because it appears in the message a violation raises. It was a
-    module constant read from the defining module, so the TW builder — which imported this from the
-    JP one — reported `stage3-jp` for a row it had validated against `stage3-cjk`.
-
-    `forbid_whitespace` is off for the CJK and KR corpora, whose rows carry a labeled space.
-    """
     raw = record["raw"]
     if not record["span_tags"]:
         raise RuntimeError(f"all-O row: {raw!r}")
@@ -135,28 +103,14 @@ def verify_record(
     char_label_array_from_spans(raw, record["span_starts"], record["span_ends"], record["span_tags"])
 
 
-#: The head Korea, Taiwan and the Chinese organizational units share. Japan has its own
-#: (`stage3-jp`), so its rows never take the verifier below.
 CJK_LABEL_SET_NAME = "stage3-cjk"
 
 
 def verify_cjk_record(record: dict[str, Any], tag_set: frozenset[str]) -> None:
-    """`verify_record` for a row in the CJK head, where an interior space can be part of a span.
-
-    A Chinese row's Latin admin tail carries a real inner space — `Inner Mongolia`, `Xinjiang
-    Uyghur` — and in `char_mode: char` the space is its own unit, so the label array is well formed.
-    Korea and the register corpus need the same allowance, and reaching into the overlay builder to
-    get it made one country's corpus builder a dependency of another's.
-    """
     verify_record(record, tag_set, label_set_name=CJK_LABEL_SET_NAME, forbid_whitespace=False)
 
 
 def coverage_stats(records: Iterable[dict[str, Any]]) -> dict[str, Any]:
-    """The BIO coverage the eval protocol asks for — counted on the LABEL ARRAY rather than on the JSON.
-
-    ``JSON hides gaps``: a span triple can look complete while the array the model reads is mostly
-    ``O``. So this walks ``char_label_array_from_spans`` output, the same array the loader builds.
-    """
     per_tag_rows: Counter[str] = Counter()
     per_tag_spans: Counter[str] = Counter()
     per_tag_chars: Counter[str] = Counter()

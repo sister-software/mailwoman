@@ -54,34 +54,24 @@ try:
 except ImportError:
     sys.exit("boto3 is required: pip install boto3")
 
-# Versioned assets live under en-us/<version>/ and never change → immutable, long-lived
-# (Cloudflare edge-caches the byte ranges sql.js-httpvfs reads).
+# Versioned assets never change, so cache them for a long time.
 CACHE_CONTROL = "public, max-age=604800, immutable"
-# exception: releases.json is the mutable version pointer the demo reads to pick
-# defaultVersion. It must not be immutable — otherwise a `defaultVersion` flip never
-# reaches returning visitors (they stay pinned to the old version's assets for up to a
-# week, which on mobile Safari surfaces as a stale/torn cached DB → "database disk image
-# is malformed"). Short max-age + must-revalidate so flips propagate within ~a minute.
+# releases.json can change when the default version changes. Keep its cache short
+# so visitors quickly get the new version instead of mixing old and new assets.
 MUTABLE_CACHE_CONTROL = "public, max-age=60, must-revalidate"
-# Basenames served with MUTABLE_CACHE_CONTROL instead of the immutable default.
+# Files served with the shorter cache lifetime.
 MUTABLE_FILES = {"releases.json"}
-# Top-level dirs whose objects must sit under a generation segment
-# (`<dir>/<generation>/<file>`), never directly at the dir root.
+# These directories need a generation segment: <dir>/<generation>/<file>.
 #
-# `pair-index` earned this the hard way: the binaries were uploaded flat at
-# `mailwoman/pair-index/pair-index-<cc>.bin` and then overwritten IN place for the
-# PIX schema-3 rebuilt (2026-08-04). CACHE_CONTROL says immutable, so Cloudflare
-# kept serving the schema-1 bytes — which the site's reader rejects outright
-# (`schemaVersion 1 predates the typed parent record`) — until a manual purge.
-# The demo reads `pair-index/<generation>/` (docs/src/shared/resources.tsx →
-# PAIR_INDEX_VERSION); bump that constant in the same commit you stage a new one.
+# Pair-index files were once overwritten at the same URL. Cloudflare kept serving
+# the old bytes because they were cached as immutable. The demo reads
+# `pair-index/<generation>/`; update PAIR_INDEX_VERSION when staging a new one.
 #
-# The other model-independent artifacts (gazetteer/, poi/, street/) already carry
-# a dated segment by convention and are not listed — add one here only after it
-# has a version constant on the demo side to match.
+# gazetteer/, poi/, and street/ already use dated paths. Add them here only when
+# the demo has a matching version constant.
 VERSIONED_DIRS = {"pair-index"}
-# Content-Type by extension. The DBs/model/binaries must be octet-stream so Cloudflare
-# doesn't gzip them (gzipped ranges break sql.js-httpvfs).
+# Content-Type by extension. Keep databases, models, and binaries uncompressed;
+# gzip breaks the database reader's range requests.
 CONTENT_TYPE = {
     ".db": "application/octet-stream",
     ".onnx": "application/octet-stream",
@@ -162,7 +152,7 @@ def main() -> None:
         print(f"  ✓ {key}  ({ct}, {cc}, {size_mb:.1f} MB)")
 
     print(f"\n{'(dry-run) ' if args.dry_run else ''}{len(files)} objects, {total / 1024 / 1024:.1f} MB → {args.bucket}/{args.prefix}/")
-    print("Served at https://public.mailwoman.ai/{}/...".format(args.prefix))
+    print(f"Served at https://public.mailwoman.ai/{args.prefix}/...")
 
 
 if __name__ == "__main__":

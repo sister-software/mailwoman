@@ -1,15 +1,3 @@
-"""One seeded Taiwan build, pinned end to end — the rows, the board, the centroids and the report.
-
-The third of three country builders, and the last without a seeded reference. `build` threads one
-`random.Random` through the selection masks, the register draw and the country-prefix fraction, so
-moving a draw re-renders the corpus. and nothing in the suite ran this path, because it reads an
-Overture-TW parquet no test has.
-
-The fixture is not a sample of that source. It is the shapes the renderers branch on: a village
-present and a village absent, a floor unit and none, and a `之N` sub-number the splitter has to
-separate from the house number.
-"""
-
 from __future__ import annotations
 
 import argparse
@@ -23,11 +11,6 @@ import pytest
 
 from mailwoman_train.countries.tw.corpora import build
 
-#: Committed beside this file, captured from the code as it stood before a split. Regenerating it
-#: after a change makes the test compare the new code against itself, so regenerate only when the
-#: current code is already verified against the existing reference.
-#:
-#: Regenerate with: uv run python -m tests.mailwoman_train.countries.test_tw_build_parity
 REFERENCE = Path(__file__).parent / "tw-build-reference.json"
 
 REFERENCE_README = [
@@ -55,12 +38,11 @@ SOURCE_SCHEMA = pa.schema(
     ]
 )
 
-#: (region, district, village, street, number, unit) — the branches rather than a sample. 新北市中和區 and
-#: 臺中市豐原區 hash to buckets 97 and 94, over the default board floor of 90, so they are held out.
+
 SOURCE_ROWS: list[tuple[str, str, str, str, str, str]] = [
-    ("臺北市", "中正區", "黎明里", "重慶南路一段", "122號", "3樓"),  # every field present
-    ("臺北市", "中正區", "", "館前路", "8號", ""),  # no village, no floor
-    ("臺北市", "大安區", "龍泉里", "新生南路三段", "之2號", "5樓"),  # a 之N sub-number
+    ("臺北市", "中正區", "黎明里", "重慶南路一段", "122號", "3樓"),
+    ("臺北市", "中正區", "", "館前路", "8號", ""),
+    ("臺北市", "大安區", "龍泉里", "新生南路三段", "之2號", "5樓"),
     ("新北市", "板橋區", "留侯里", "文化路一段", "266號", ""),
     ("新北市", "三重區", "五谷里", "重新路五段", "609號", "12樓"),
     ("臺中市", "西屯區", "何厝里", "臺灣大道三段", "301號", ""),
@@ -70,16 +52,15 @@ SOURCE_ROWS: list[tuple[str, str, str, str, str, str]] = [
     ("臺南市", "中西區", "赤崁里", "民權路二段", "30號", ""),
     ("桃園市", "桃園區", "中路里", "復興路", "195號", "4樓"),
     ("新竹市", "東區", "光復里", "光復路一段", "89號", ""),
-    ("新北市", "中和區", "安平里", "中和路", "100號", "6樓"),  # board bucket 97
-    ("臺中市", "豐原區", "北陽里", "中正路", "45號", ""),  # board bucket 94
+    ("新北市", "中和區", "安平里", "中和路", "100號", "6樓"),
+    ("臺中市", "豐原區", "北陽里", "中正路", "45號", ""),
 ]
 
 
 def write_fixture(root: Path) -> Path:
-    """The synthetic Overture-TW parquet, returned as its path."""
     root.mkdir(parents=True, exist_ok=True)
     rows: list[dict[str, Any]] = []
-    for index in range(6):  # repeat the shapes so the quota arithmetic has something to divide
+    for index in range(6):
         for region, district, village, street, number, unit in SOURCE_ROWS:
             rows.append(
                 {
@@ -98,7 +79,6 @@ def write_fixture(root: Path) -> Path:
 
 
 def reference_args(parquet: Path, out_dir: Path) -> argparse.Namespace:
-    """Every fraction non-zero, so every optional draw is taken off the shared RNG stream."""
     return argparse.Namespace(
         parquet=str(parquet),
         out_dir=str(out_dir),
@@ -117,7 +97,6 @@ def reference_args(parquet: Path, out_dir: Path) -> argparse.Namespace:
 
 
 def run_build(root: Path) -> dict[str, Any]:
-    """One build, returned as the pinned payload."""
     parquet = write_fixture(root)
     out_dir = root / "corpus"
     report = build(reference_args(parquet, out_dir))
@@ -145,7 +124,6 @@ def built(tmp_path_factory: pytest.TempPathFactory) -> dict[str, Any]:
 
 
 def test_the_build_is_deterministic_under_a_fixed_seed(tmp_path: Path) -> None:
-    """Sanity: two builds of the same fixture agree, so a later mismatch means the code moved."""
     assert run_build(tmp_path / "a") == run_build(tmp_path / "b")
 
 
@@ -158,7 +136,6 @@ def test_the_written_corpus_matches_the_committed_reference(built: dict[str, Any
 
 
 def test_the_report_matches_the_committed_reference(built: dict[str, Any]) -> None:
-    """The report carries the attribution the licence requires, and the counts a reader trusts."""
     if not REFERENCE.is_file():
         pytest.skip(f"no reference at {REFERENCE}; generate it before splitting")
     expected = json.loads(REFERENCE.read_text(encoding="utf-8"))["report"]
@@ -166,7 +143,6 @@ def test_the_report_matches_the_committed_reference(built: dict[str, Any]) -> No
 
 
 def test_every_span_covers_the_text_it_claims(built: dict[str, Any]) -> None:
-    """The spans are emitted by construction, so this holds for any input — and says so when it stops."""
     for section in ("train", "val", "board"):
         for row in built[section]:
             raw = row["raw"]
@@ -178,18 +154,12 @@ def test_every_span_covers_the_text_it_claims(built: dict[str, Any]) -> None:
 
 
 def test_the_fixture_holds_out_a_district_and_keeps_the_attribution(built: dict[str, Any]) -> None:
-    """A fixture with no board row, or no agency, would pin an empty path through the build."""
     assert built["report"]["board_districts"] >= 1, "no held-out 鄉鎮市區 — the bucket floor missed the fixture"
     assert built["report"]["attribution"], "the report carries no source agency, which the licence requires"
     assert built["centroids"], "no district centroid landed. Therefore, no board row can be scored"
 
 
 def write_reference() -> None:
-    """Capture the current build as the reference the tests above compare against.
-
-    Run this only when the current code already passes against the existing reference — otherwise
-    the artifact records whatever the code does now, and the tests assert nothing.
-    """
     import tempfile
 
     with tempfile.TemporaryDirectory() as scratch:

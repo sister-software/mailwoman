@@ -1,21 +1,3 @@
-"""#727 stage-2 Phase 1 CHECK: does a segment decode over LEARNED span scores beat the token decode?
-
-Baselines to beat (v264, ship config, triaged parity corpus): street token@1 0.573. A segment decode
-over the SUMMED-BIO stand-in scored 0.453 — WORSE — which is exactly why a trained span scorer is
-necessary and why decode-hardening alone was falsified (docs/articles/evals/
-2026-07-15-night-3-postmortem.md). If seg@1 does not cross token@1 here, the arc is falsified: do not
-tune span_loss_weight and re-run (that is the treadmill), run one diagnostic and fork.
-
-This deliberately runs in Python against the torch checkpoint — Phase 1 must not depend on the ONNX
-export path that Phase 2 builds.
-
-Usage:
-  uv run python scripts/eval_seg_at_1.py \
-      --checkpoint /tmp/v300-ckpt \
-      --tokenizer "$MAILWOMAN_DATA_ROOT/models/tokenizer/v0.9.0-multisplice" \
-      --fixtures ../mailwoman/eval-harness/fixtures/parity-corpus.triaged.jsonl
-"""
-
 from __future__ import annotations
 
 import argparse
@@ -29,24 +11,14 @@ from ..labels import ID_TO_LABEL
 from ..nn.encoder import MailwomanCoarseEncoder
 from ..nn.span_scorer import SEGMENT_TYPES
 
-# The street family, matching mailwoman/eval-harness/parity-corpus.ts PARITY_FLOORS.
 STREET_TYPES = {"street", "street_prefix", "street_prefix_particle", "street_suffix"}
 
 
 def fold(value: str) -> str:
-    """Case-fold + collapse whitespace — the same comparison the JS parity check uses."""
     return " ".join(value.lower().split())
 
 
 def _surface(pieces: list[str]) -> tuple[str, list[tuple[int, int]]]:
-    """Detokenized text + each piece's (start, end) char offsets into it.
-
-    Offsets rather than piece-concatenation: the JS parity harness reads each node's `value` by slicing the
-    ORIGINAL text between the span's char offsets, so the spacing between spans survives. Joining the
-    selected pieces instead silently drops the `O`-labelled bare `▁` separator and welds words
-    together — `▁5 | th | ▁ | Ave` becomes "5thAve" instead of "5th Ave", which scored token@1 at
-    0.285 against a known 0.573 until this was caught.
-    """
     text = ""
     offsets: list[tuple[int, int]] = []
     for piece in pieces:
@@ -57,11 +29,6 @@ def _surface(pieces: list[str]) -> tuple[str, list[tuple[int, int]]]:
 
 
 def _join_runs(text: str, offsets: list[tuple[int, int]], selected: list[int]) -> str:
-    """Take the substring under each maximal contiguous run of selected pieces, join with ' ' — mirrors the JS harness.
-
-    The JS side emits one NODE per span (street, street_suffix, …) and joins their values with a
-    space. a contiguous run of pieces is exactly one such node.
-    """
     if not selected:
         return ""
     runs: list[list[int]] = [[selected[0]]]
@@ -101,9 +68,6 @@ def main() -> int:
         with torch.no_grad():
             out = model(input_ids=ids, attention_mask=mask)
 
-        # token@1 — the shipped decode's shape: BIO argmax over street-family pieces.
-        # strict=True: pieces and labels are the same sequence. A length mismatch is a bug rather
-        # than something to silently truncate past.
         bio = [ID_TO_LABEL[int(i)] for i in out.logits[0].argmax(-1)]
         token_street = _join_runs(
             text,
@@ -111,9 +75,6 @@ def main() -> int:
             [i for i, lab in enumerate(bio) if lab != "O" and lab.split("-", 1)[1] in STREET_TYPES],
         )
 
-        # seg@1 — the semi-Markov argmax segmentation over street-family segments. A checkpoint
-        # without a span scorer has nothing to decode, and reporting it as a zero score would read
-        # as a model that failed rather than one this check does not apply to.
         if model.semi_crf is None:
             raise RuntimeError("this checkpoint has no span scorer; seg@1 needs one to decode")
         segmentation = model.semi_crf.decode(out.span_scores, mask.sum(dim=1).long())[0]
