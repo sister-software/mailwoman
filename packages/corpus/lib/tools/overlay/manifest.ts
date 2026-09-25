@@ -117,11 +117,9 @@ async function descriptor(
 	source: string
 ): Promise<ParquetFileDescriptor> {
 	// One per file, and `assembleOverlayManifest` calls this once per file.
-	await using db = await openDuckDB()
+	using db = await openDuckDB()
 
-	const result = await db.connection.runAndReadAll(
-		`SELECT source_id FROM read_parquet('${escapeSQLString(localPath)}')`
-	)
+	const result = await db.runAndReadAll(`SELECT source_id FROM read_parquet('${escapeSQLString(localPath)}')`)
 
 	const sids = result.getRowObjects().map((r) => r.source_id as string)
 

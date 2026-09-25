@@ -246,8 +246,7 @@ export async function lintRecipeVocab(options: LintRecipeVocabOptions): Promise<
 	const minCount = options.minCount ?? 50
 	const fraction = options.fraction ?? 1
 
-	await using handle = await openDuckDB()
-	const con = handle.connection
+	using con = await openDuckDB()
 
 	// 1. the recipe output's own (token -> dominant tag) + the countries it uses each token in
 	const outputRows = await readRows(con, options.recipeOutputPath)

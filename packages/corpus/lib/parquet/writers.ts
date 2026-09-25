@@ -217,7 +217,7 @@ export interface WriteParquetSplitsOptions {
 export type PerSplitRows = Partial<Record<SplitName, AsyncIterable<LabeledRow>>>
 
 async function writeStagedParquet(stagePath: string, outputPath: string): Promise<void> {
-	await using db = await openDuckDB()
+	using db = await openDuckDB()
 	const columns = [...PARQUET_COLUMNS]
 
 	const columnsLiteral =
@@ -225,9 +225,9 @@ async function writeStagedParquet(stagePath: string, outputPath: string): Promis
 
 	const selectList = columns.map(escapeSQLIdentifier).join(", ")
 
-	await db.connection.run("SET preserve_insertion_order=true")
+	await db.run("SET preserve_insertion_order=true")
 
-	await db.connection.run(
+	await db.run(
 		`COPY (SELECT ${selectList} FROM read_json('${escapeSQLString(stagePath)}', ` +
 			`columns = ${columnsLiteral}, format = 'newline_delimited')) ` +
 			`TO '${escapeSQLString(outputPath)}' (FORMAT PARQUET, COMPRESSION SNAPPY, ROW_GROUP_SIZE ${ROW_GROUP_SIZE})`

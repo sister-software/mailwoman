@@ -55,11 +55,9 @@ export async function countParquetRows(path: PathBuilderLike): Promise<number> {
 		throw new Error(`No parquet file at ${path}`)
 	}
 
-	await using db = await openDuckDB()
+	using db = await openDuckDB()
 
-	const result = await db.connection.runAndReadAll(
-		`SELECT count(*) AS n FROM read_parquet('${escapeSQLString(path.toString())}')`
-	)
+	const result = await db.runAndReadAll(`SELECT count(*) AS n FROM read_parquet('${escapeSQLString(path.toString())}')`)
 
 	const rows = result.getRowObjects() as Array<{ n: unknown }>
 
@@ -80,11 +78,9 @@ export async function parquetColumnNames(path: PathBuilderLike): Promise<string[
 		throw new Error(`No parquet file at ${path}`)
 	}
 
-	await using db = await openDuckDB()
+	using db = await openDuckDB()
 
-	const result = await db.connection.runAndReadAll(
-		`DESCRIBE SELECT * FROM read_parquet('${escapeSQLString(path.toString())}')`
-	)
+	const result = await db.runAndReadAll(`DESCRIBE SELECT * FROM read_parquet('${escapeSQLString(path.toString())}')`)
 
 	return (result.getRowObjects() as Array<{ column_name: unknown }>).map((row) => String(row.column_name))
 }

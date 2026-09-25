@@ -170,8 +170,7 @@ export async function jsonlToParquet(
 	const selectList = REQUIRED_COLUMNS.join(", ")
 
 	const output = options.output.toString()
-	await using handle = await openDuckDB()
-	const db = handle.connection
+	using db = await openDuckDB()
 
 	// Row order is required: the overlay-manifest assembler records first/last source_id from file order.
 	// `preserve_insertion_order` (DuckDB default) keeps output order = input order.

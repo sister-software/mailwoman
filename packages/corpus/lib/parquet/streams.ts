@@ -82,13 +82,13 @@ export async function* openParquetRowStream<T>(
 	const { columns, limit } = options
 	// Disposed when this generator finishes or a consumer abandons it,
 	// since `for await` calls `.return()` on break.
-	await using db = await openDuckDB()
+	using db = await openDuckDB()
 	const projection = columns?.length ? columns.map(escapeSQLIdentifier).join(", ") : "*"
 	const limitClause = limit === undefined ? "" : ` LIMIT ${validateRowLimit(limit)}`
 	const sql = `SELECT ${projection} FROM read_parquet('${escapeSQLString(path.toString())}')${limitClause}`
 
 	try {
-		const stream = await db.connection.stream(sql)
+		const stream = await db.stream(sql)
 		const columnNames = stream.columnNames()
 
 		for (let chunk = await stream.fetchChunk(); chunk && chunk.rowCount > 0; chunk = await stream.fetchChunk()) {

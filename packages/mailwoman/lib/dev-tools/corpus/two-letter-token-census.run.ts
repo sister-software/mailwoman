@@ -42,7 +42,7 @@ const { values } = parseArguments({
 
 const mixture = await readMixtureFiles(values.corpus!, values.split!, values.files ? Number(values.files) : undefined)
 
-await using mix = await openMixture(mixture.files, {
+using mix = await openMixture(mixture.files, {
 	memoryLimit: values["memory-limit"]!,
 	threads: Number(values.threads),
 })

@@ -7,7 +7,7 @@
 
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
-import { type DuckDBConnection, escapeSQLString, openDuckDB } from "@mailwoman/corpus/parquet/duckdb"
+import { type DisposableDuckDB, escapeSQLString, openDuckDB } from "@mailwoman/corpus/parquet/duckdb"
 import type { ParquetManifest } from "@mailwoman/corpus/parquet/writers"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 
@@ -96,9 +96,8 @@ export async function readMixtureFiles(
 export async function openMixture(
 	files: readonly PathBuilderLike[],
 	options: { memoryLimit: string; threads: number }
-): Promise<{ db: DuckDBConnection; fileList: string } & AsyncDisposable> {
-	const handle = await openDuckDB()
-	const db = handle.connection
+): Promise<{ db: DisposableDuckDB; fileList: string } & Disposable> {
+	const db = await openDuckDB()
 
 	await db.run(`SET memory_limit='${escapeSQLString(options.memoryLimit)}'`)
 	await db.run(`SET threads=${options.threads}`)
@@ -106,6 +105,6 @@ export async function openMixture(
 	return {
 		db,
 		fileList: files.map((path) => `'${escapeSQLString(path.toString())}'`).join(", "),
-		[Symbol.asyncDispose]: () => handle[Symbol.asyncDispose](),
+		[Symbol.dispose]: () => db[Symbol.dispose](),
 	}
 }

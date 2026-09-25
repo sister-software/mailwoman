@@ -475,8 +475,7 @@ export const intersectionRecipe: CorpusRecipe = {
 
 		console.error(`  eval exclusions: ${exclusions.nodes.size} nodes, ${exclusions.pairs.size} pairs`)
 
-		await using handle = await openDuckDB()
-		const db = handle.connection
+		using db = await openDuckDB()
 
 		await db.run("INSTALL spatial; LOAD spatial;")
 

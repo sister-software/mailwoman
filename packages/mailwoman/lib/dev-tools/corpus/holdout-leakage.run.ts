@@ -81,8 +81,7 @@ for (const [country, holdout] of Object.entries(holdouts)) {
 	clauses.push(`SUM(CASE WHEN ${predicates.get(country)} THEN 1 ELSE 0 END) AS ${country}`)
 }
 
-await using handle = await openDuckDB()
-const db = handle.connection
+using db = await openDuckDB()
 
 const result = await db.runAndReadAll(
 	`SELECT COUNT(*) AS rows, ${clauses.join(", ")} FROM read_parquet('${escapeSQLString(pattern)}', union_by_name = true)`
