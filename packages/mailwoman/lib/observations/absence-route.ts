@@ -315,10 +315,10 @@ export async function createAbsenceObservationRoute(
 		return {
 			identity,
 			observe: (outcome) => decide(outcome, { affording, model, db, identity }),
-			[Symbol.dispose]: () => db.destroy(),
+			[Symbol.dispose]: () => db[Symbol.dispose](),
 		}
 	} catch (error) {
-		await db.destroy()
+		db[Symbol.dispose]()
 
 		throw error
 	}
