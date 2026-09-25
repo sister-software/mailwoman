@@ -158,6 +158,14 @@ const REMOVAL_GUIDANCE =
 	"a variable, is never derived; name the path in full."
 
 /**
+ * The replacement for GitHub issue and pull-request mutations owned by the development MCP.
+ */
+const GITHUB_MUTATION_GUIDANCE =
+	"Use `mwdev_issue` for issue creation, edits, task updates, and comments. Use `mwdev_pull_request` for pull-request " +
+	"creation, edits, and comments. Those tools Vale-check prose, preserve the issue's marker-owned task list, require " +
+	"the closing issue when creating a pull request, and start CI monitoring. Other `gh` operations remain available."
+
+/**
  * Forms of an admitted command that the guard refuses.
  *
  * Each pattern is tested against that command's own segment.
@@ -185,6 +193,18 @@ const REFUSED_SPELLINGS: ReadonlyArray<{
 		pattern: /^\s*timeout\b/u,
 		because: "a shell `timeout` kills the `modal` client when it expires, which cancels whatever it was running",
 		guidance: DETACHED_LAUNCH_GUIDANCE,
+	},
+	{
+		head: "gh",
+		pattern: /(?:^|\s)issue\s+(?:create|edit|comment)\b/u,
+		because: "the development MCP owns this GitHub issue mutation",
+		guidance: GITHUB_MUTATION_GUIDANCE,
+	},
+	{
+		head: "gh",
+		pattern: /(?:^|\s)pr\s+(?:create|edit|comment)\b/u,
+		because: "the development MCP owns this GitHub pull-request mutation",
+		guidance: GITHUB_MUTATION_GUIDANCE,
 	},
 	{ head: "sed", pattern: /(?:^|\s)(?:-[a-zA-Z]*i|--in-place)/u, because: "`sed` in place edits a file" },
 	{ head: "sort", pattern: /(?:^|\s)(?:-[a-zA-Z]*o\b|--output)/u, because: "`sort` with an output flag overwrites" },

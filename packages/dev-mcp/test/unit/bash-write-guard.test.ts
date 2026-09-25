@@ -119,6 +119,32 @@ describe("bash-write-guard: a Modal launch this shell could kill", () => {
 	})
 })
 
+describe("bash-write-guard: GitHub mutations owned by the development MCP", () => {
+	it.each([
+		["creating an issue", `gh issue create --title "Feature" --body "Body"`],
+		["editing an issue", `gh issue edit 2365 --body "Body"`],
+		["commenting on an issue", `gh issue comment 2365 --body "Comment"`],
+		["creating a pull request", `gh pr create --title "Feature" --body "Body"`],
+		["editing a pull request", `gh pr edit 2366 --body "Body"`],
+		["commenting on a pull request", `gh pr comment 2366 --body "Comment"`],
+	])("refuses %s", (_label, command) => {
+		expect(refusalFor(command)).not.toBeNull()
+		expect(guidanceFor(command)).toContain("mwdev_issue")
+		expect(guidanceFor(command)).toContain("mwdev_pull_request")
+	})
+
+	it.each([
+		["viewing an issue", `gh issue view 2365`],
+		["closing an issue", `gh issue close 2365`],
+		["viewing a pull request", `gh pr view 2366`],
+		["watching checks", `gh pr checks 2366 --watch`],
+		["merging a pull request", `gh pr merge 2366 --squash`],
+		["reading a workflow run", `gh run view 36142066728`],
+	])("still admits %s", (_label, command) => {
+		expect(refusalFor(command)).toBeNull()
+	})
+})
+
 describe("bash-write-guard: the work a session actually does", () => {
 	it.each([
 		["a build whose log lands outside the repository", `{ yarn compile; echo "EXIT=$?"; } > /tmp/compile.log 2>&1`],
