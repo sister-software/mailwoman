@@ -153,7 +153,7 @@ describe("ExternalGeocoderClient.probeIdentity", () => {
 		const dead = { throws: { message: "connect ECONNREFUSED 127.0.0.1:4000", code: "ERR_NETWORK" } }
 		const { client: pelias } = client(ExternalEngine.Pelias, [dead])
 
-		await expect(pelias.probeIdentity()).rejects.toThrow(/does not start or stop external services/)
+		await expect(pelias.probeIdentity()).rejects.toThrow(/does not start external services/)
 	})
 })
 

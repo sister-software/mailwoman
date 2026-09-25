@@ -55,7 +55,7 @@ describe("the index over this repository", () => {
 		const percentile = entries.find((entry) => entry.name === "percentile")
 
 		expect(percentile?.file).toBe("packages/core/lib/stats.ts")
-		expect(percentile?.sentence).toContain("Nearest-rank percentile")
+		expect(percentile?.sentence).toContain("nearest-rank percentile")
 	})
 })
 

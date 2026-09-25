@@ -18,6 +18,8 @@ import { JobRegistry, type Job } from "@mailwoman/dev-mcp/jobs"
 import { githubTools } from "@mailwoman/dev-mcp/tools"
 import { afterEach, describe, expect, it, vi } from "vitest"
 
+import { stubEngineRegistry } from "../stub-registry.ts"
+
 let fixtures = new AsyncDisposableStack()
 
 afterEach(async () => {
@@ -97,7 +99,7 @@ describe("GitHub MCP tools", () => {
 		})
 
 		const [tool] = githubTools(
-			{ registry: { repoRoot: cwd.toString() } as never, jobs: new JobRegistry(), startedAt: Date.now() },
+			{ registry: stubEngineRegistry({ repoRoot: cwd.toString() }), jobs: new JobRegistry(), startedAt: Date.now() },
 			{ run, lint: async () => undefined }
 		)
 
@@ -122,7 +124,7 @@ describe("GitHub MCP tools", () => {
 		const run: RunGitHub = vi.fn(async () => rawIssue(replaceTaskBlock(COMPLETE_BODY, "- [ ] Pending.")))
 
 		const [, tool] = githubTools(
-			{ registry: { repoRoot: process.cwd() } as never, jobs: new JobRegistry(), startedAt: Date.now() },
+			{ registry: stubEngineRegistry({ repoRoot: process.cwd() }), jobs: new JobRegistry(), startedAt: Date.now() },
 			{ run, lint: async () => undefined, branch: () => "feature/test" }
 		)
 
@@ -176,7 +178,7 @@ describe("GitHub MCP tools", () => {
 		} satisfies Job)
 
 		const [, tool] = githubTools(
-			{ registry: { repoRoot: process.cwd() } as never, jobs, startedAt: Date.now() },
+			{ registry: stubEngineRegistry({ repoRoot: process.cwd() }), jobs, startedAt: Date.now() },
 			{ run, lint: async () => undefined, branch: () => "feature/test" }
 		)
 

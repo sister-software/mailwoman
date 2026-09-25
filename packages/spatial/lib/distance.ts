@@ -118,7 +118,7 @@ export function greatCircleDistance(
 }
 
 /**
- * Great-circle distance in kilometres between two lat/lon pairs given as raw scalars.
+ * Returns the great-circle distance in kilometres between two coordinates on Earth.
  *
  * The formula's one true home — every resolver + eval consumer of the
  * `(aLat, aLon, bLat, bLon)` shape imports this instead of re-declaring it.
