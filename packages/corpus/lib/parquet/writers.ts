@@ -44,7 +44,7 @@ import { Field, Int32, List, Table as ArrowTable, tableToIPC, Utf8, vectorFromAr
 import { Compression, Table as WasmTable, WriterPropertiesBuilder, writeParquet } from "parquet-wasm"
 import { type PathBuilderLike, resolvePathBuilder } from "path-ts"
 
-import { connectDuckDB, escapeSQLIdentifier, escapeSQLString } from "#parquet/duckdb"
+import { escapeSQLIdentifier, escapeSQLString, openDuckDB } from "#parquet/duckdb"
 import {
 	PARQUET_COLUMN_TYPES,
 	PARQUET_COLUMNS,
@@ -217,7 +217,7 @@ export interface WriteParquetSplitsOptions {
 export type PerSplitRows = Partial<Record<SplitName, AsyncIterable<LabeledRow>>>
 
 async function writeStagedParquet(stagePath: string, outputPath: string): Promise<void> {
-	const db = await connectDuckDB()
+	await using db = await openDuckDB()
 	const columns = [...PARQUET_COLUMNS]
 
 	const columnsLiteral =
@@ -225,17 +225,13 @@ async function writeStagedParquet(stagePath: string, outputPath: string): Promis
 
 	const selectList = columns.map(escapeSQLIdentifier).join(", ")
 
-	try {
-		await db.run("SET preserve_insertion_order=true")
+	await db.connection.run("SET preserve_insertion_order=true")
 
-		await db.run(
-			`COPY (SELECT ${selectList} FROM read_json('${escapeSQLString(stagePath)}', ` +
-				`columns = ${columnsLiteral}, format = 'newline_delimited')) ` +
-				`TO '${escapeSQLString(outputPath)}' (FORMAT PARQUET, COMPRESSION SNAPPY, ROW_GROUP_SIZE ${ROW_GROUP_SIZE})`
-		)
-	} finally {
-		db.closeSync()
-	}
+	await db.connection.run(
+		`COPY (SELECT ${selectList} FROM read_json('${escapeSQLString(stagePath)}', ` +
+			`columns = ${columnsLiteral}, format = 'newline_delimited')) ` +
+			`TO '${escapeSQLString(outputPath)}' (FORMAT PARQUET, COMPRESSION SNAPPY, ROW_GROUP_SIZE ${ROW_GROUP_SIZE})`
+	)
 }
 
 async function writeStagedRow(stage: WriteStream, row: ParquetRow): Promise<void> {

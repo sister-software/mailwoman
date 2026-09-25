@@ -42,7 +42,7 @@ const { values } = parseArguments({
 
 const mixture = await readMixtureFiles(values.corpus!, values.split!, values.files ? Number(values.files) : undefined)
 
-const { db, fileList } = await openMixture(mixture.files, {
+await using mix = await openMixture(mixture.files, {
 	memoryLimit: values["memory-limit"]!,
 	threads: Number(values.threads),
 })
@@ -55,7 +55,7 @@ const { db, fileList } = await openMixture(mixture.files, {
 const sql = `
 WITH spans AS (
 	SELECT country, raw, unnest(span_starts) AS st, unnest(span_ends) AS en, unnest(span_tags) AS tg
-	FROM read_parquet([${fileList}])
+	FROM read_parquet([${mix.fileList}])
 )
 SELECT
 	substring(raw, st + 1, en - st) AS text,
@@ -67,9 +67,7 @@ WHERE regexp_full_match(substring(raw, st + 1, en - st), '[A-Z]{2}')
 GROUP BY 1, 2, 3`
 
 const started = Date.now()
-const reader = await db.runAndReadAll(sql)
-
-db.closeSync()
+const reader = await mix.db.runAndReadAll(sql)
 
 console.log(
 	`${mixture.manifest.corpus_version} ${values.split}: ${mixture.files.length} of ${mixture.available} file(s), ` +

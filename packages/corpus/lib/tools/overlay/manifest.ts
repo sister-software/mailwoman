@@ -13,7 +13,7 @@ import { sha256Hex } from "@mailwoman/core/hash"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { basename, dirname, PathBuilder, type PathBuilderLike } from "path-ts"
 
-import { connectDuckDB, escapeSQLString } from "#parquet/duckdb"
+import { escapeSQLString, openDuckDB } from "#parquet/duckdb"
 import type { SplitName } from "#utils/split"
 
 interface ParquetFileDescriptor {
@@ -116,8 +116,13 @@ async function descriptor(
 	split: SplitName,
 	source: string
 ): Promise<ParquetFileDescriptor> {
-	const db = await connectDuckDB()
-	const result = await db.runAndReadAll(`SELECT source_id FROM read_parquet('${escapeSQLString(localPath)}')`)
+	// One per file, and `assembleOverlayManifest` calls this once per file.
+	await using db = await openDuckDB()
+
+	const result = await db.connection.runAndReadAll(
+		`SELECT source_id FROM read_parquet('${escapeSQLString(localPath)}')`
+	)
+
 	const sids = result.getRowObjects().map((r) => r.source_id as string)
 
 	return {

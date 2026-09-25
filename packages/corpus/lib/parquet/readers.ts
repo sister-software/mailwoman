@@ -11,7 +11,7 @@
 import { pathExists } from "@mailwoman/core/fs/readers"
 import type { PathBuilderLike } from "path-ts"
 
-import { connectDuckDB, escapeSQLString } from "#parquet/duckdb"
+import { escapeSQLString, openDuckDB } from "#parquet/duckdb"
 import { openParquetRowStream, type ParquetRowStreamOptions } from "#parquet/streams"
 
 /**
@@ -55,19 +55,15 @@ export async function countParquetRows(path: PathBuilderLike): Promise<number> {
 		throw new Error(`No parquet file at ${path}`)
 	}
 
-	const db = await connectDuckDB()
+	await using db = await openDuckDB()
 
-	try {
-		const result = await db.runAndReadAll(
-			`SELECT count(*) AS n FROM read_parquet('${escapeSQLString(path.toString())}')`
-		)
+	const result = await db.connection.runAndReadAll(
+		`SELECT count(*) AS n FROM read_parquet('${escapeSQLString(path.toString())}')`
+	)
 
-		const rows = result.getRowObjects() as Array<{ n: unknown }>
+	const rows = result.getRowObjects() as Array<{ n: unknown }>
 
-		return Number(rows[0]?.n ?? 0)
-	} finally {
-		db.closeSync()
-	}
+	return Number(rows[0]?.n ?? 0)
 }
 
 /**
@@ -84,13 +80,11 @@ export async function parquetColumnNames(path: PathBuilderLike): Promise<string[
 		throw new Error(`No parquet file at ${path}`)
 	}
 
-	const db = await connectDuckDB()
+	await using db = await openDuckDB()
 
-	try {
-		const result = await db.runAndReadAll(`DESCRIBE SELECT * FROM read_parquet('${escapeSQLString(path.toString())}')`)
+	const result = await db.connection.runAndReadAll(
+		`DESCRIBE SELECT * FROM read_parquet('${escapeSQLString(path.toString())}')`
+	)
 
-		return (result.getRowObjects() as Array<{ column_name: unknown }>).map((row) => String(row.column_name))
-	} finally {
-		db.closeSync()
-	}
+	return (result.getRowObjects() as Array<{ column_name: unknown }>).map((row) => String(row.column_name))
 }

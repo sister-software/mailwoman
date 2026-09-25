@@ -10,23 +10,40 @@
  */
 
 /**
- * An open DuckDB connection, re-exported so consumers of {@link connectDuckDB} can
- * name the type without their own static dependency on the optional peer.
+ * An open DuckDB connection, re-exported so consumers of {@link openDuckDB} can name
+ * the type without their own static dependency on the optional peer.
  */
 export type { DuckDBConnection } from "@duckdb/node-api"
 
 /**
- * Open an in-memory DuckDB connection.
+ * An in-memory DuckDB connection that closes itself, and the instance behind it.
  *
- * The caller owns the close.
- * Every reader and writer in this family wraps its use in `try`/`finally` with `db.closeSync()`,
- * because a connection left open holds the native instance for the life of the process.
+ * Take it with `await using`.
+ * Closing the connection alone leaves the instance open.
  */
-export async function connectDuckDB(): Promise<import("@duckdb/node-api").DuckDBConnection> {
+export interface DisposableDuckDB extends AsyncDisposable {
+	readonly connection: import("@duckdb/node-api").DuckDBConnection
+}
+
+/**
+ * Open an in-memory DuckDB connection that disposal closes along with its instance.
+ *
+ * `await using db = await openDuckDB()`, then `db.connection`.
+ * A connection left open holds the native instance for the life of the process,
+ * and one opened per file in a loop holds one per file.
+ */
+export async function openDuckDB(): Promise<DisposableDuckDB> {
 	const { DuckDBInstance } = await import("@duckdb/node-api")
 	const instance = await DuckDBInstance.create()
+	const connection = await instance.connect()
 
-	return await instance.connect()
+	return {
+		connection,
+		[Symbol.asyncDispose]: async () => {
+			connection.closeSync()
+			instance.closeSync()
+		},
+	}
 }
 
 /**

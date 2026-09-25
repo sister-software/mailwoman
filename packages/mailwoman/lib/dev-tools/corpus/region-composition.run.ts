@@ -44,7 +44,7 @@ const { values } = parseArguments({
 
 const mixture = await readMixtureFiles(values.corpus!, values.split!, values.files ? Number(values.files) : undefined)
 
-const { db, fileList } = await openMixture(mixture.files, {
+await using mix = await openMixture(mixture.files, {
 	memoryLimit: values["memory-limit"]!,
 	threads: Number(values.threads),
 })
@@ -72,7 +72,7 @@ WITH us AS (
 		-- The surface the probe writes: a locality, a region and a postcode, and nothing else. Compared as a SET, so a
 		-- row is bare whatever order it writes them in.
 		list_sort(list_distinct(span_tags)) = ['locality', 'postcode', 'region'] AS bare_admin
-	FROM read_parquet([${fileList}])
+	FROM read_parquet([${mix.fileList}])
 	WHERE country = 'US'
 )
 SELECT
@@ -86,7 +86,7 @@ FROM us
 GROUP BY 1, 2, 3, 4, 5`
 
 const started = Date.now()
-const reader = await db.runAndReadAll(sql)
+const reader = await mix.db.runAndReadAll(sql)
 
 console.log(
 	`${mixture.manifest.corpus_version} ${values.split}: ${mixture.files.length} of ${mixture.available} file(s), ` +
@@ -191,8 +191,6 @@ for (const row of reader.getRowObjects()) {
 		entry.unfolded.set(surface, (entry.unfolded.get(surface) ?? 0) + rows)
 	}
 }
-
-db.closeSync()
 
 function regionRows(entry: SourceComposition): number {
 	return [...entry.byRegion.values()].reduce((sum, n) => sum + n, 0)

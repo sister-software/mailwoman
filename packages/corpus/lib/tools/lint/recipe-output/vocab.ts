@@ -42,7 +42,7 @@ import { pyRound } from "@mailwoman/core/numeric"
 import { PathBuilder } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
-import { connectDuckDB, type DuckDBConnection } from "#parquet/duckdb"
+import { type DuckDBConnection, openDuckDB } from "#parquet/duckdb"
 
 /**
  * A column-projected base or recipe-output row: parallel token + label lists plus the row's country.
@@ -246,7 +246,8 @@ export async function lintRecipeVocab(options: LintRecipeVocabOptions): Promise<
 	const minCount = options.minCount ?? 50
 	const fraction = options.fraction ?? 1
 
-	const con = await connectDuckDB()
+	await using handle = await openDuckDB()
+	const con = handle.connection
 
 	// 1. the recipe output's own (token -> dominant tag) + the countries it uses each token in
 	const outputRows = await readRows(con, options.recipeOutputPath)

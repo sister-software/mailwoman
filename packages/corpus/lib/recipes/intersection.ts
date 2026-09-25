@@ -47,7 +47,7 @@ import type { PathBuilderLike } from "path-ts"
 import { JSONSpliterator } from "spliterator"
 
 import { stableSourceID } from "#adapters/utils"
-import { connectDuckDB } from "#parquet/duckdb"
+import { openDuckDB } from "#parquet/duckdb"
 import { readZippedCSVRecords, type CorpusRecipe } from "#recipes/scaffold"
 import { weightedPick } from "#synthesizers/utils"
 import type { CanonicalRow, LabeledRow } from "#types"
@@ -475,7 +475,9 @@ export const intersectionRecipe: CorpusRecipe = {
 
 		console.error(`  eval exclusions: ${exclusions.nodes.size} nodes, ${exclusions.pairs.size} pairs`)
 
-		const db = await connectDuckDB()
+		await using handle = await openDuckDB()
+		const db = handle.connection
+
 		await db.run("INSTALL spatial; LOAD spatial;")
 
 		// Pool real crossings: eval-excluded, connector-safe names, one crossing per distinct pair.

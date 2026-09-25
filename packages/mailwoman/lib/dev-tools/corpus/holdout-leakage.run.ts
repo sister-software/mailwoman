@@ -23,7 +23,7 @@
 
 import { stringifyJSON } from "@mailwoman/core/json"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
-import { connectDuckDB, escapeSQLString } from "@mailwoman/corpus/parquet/duckdb"
+import { escapeSQLString, openDuckDB } from "@mailwoman/corpus/parquet/duckdb"
 import { componentAtSpanSQL } from "@mailwoman/corpus/parquet/span-sql"
 import { normalizeDuckDBValue } from "@mailwoman/corpus/parquet/streams"
 import { holdoutComponents } from "@mailwoman/corpus/tools"
@@ -81,7 +81,8 @@ for (const [country, holdout] of Object.entries(holdouts)) {
 	clauses.push(`SUM(CASE WHEN ${predicates.get(country)} THEN 1 ELSE 0 END) AS ${country}`)
 }
 
-const db = await connectDuckDB()
+await using handle = await openDuckDB()
+const db = handle.connection
 
 const result = await db.runAndReadAll(
 	`SELECT COUNT(*) AS rows, ${clauses.join(", ")} FROM read_parquet('${escapeSQLString(pattern)}', union_by_name = true)`

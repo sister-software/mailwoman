@@ -36,7 +36,7 @@ import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
 import type { PathBuilderLike } from "path-ts"
 import { TextSpliterator } from "spliterator"
 
-import { connectDuckDB, escapeSQLString } from "#parquet/duckdb"
+import { escapeSQLString, openDuckDB } from "#parquet/duckdb"
 import { PARQUET_COLUMNS, PARQUET_COLUMN_TYPES } from "#parquet/schema"
 
 /**
@@ -170,7 +170,9 @@ export async function jsonlToParquet(
 	const selectList = REQUIRED_COLUMNS.join(", ")
 
 	const output = options.output.toString()
-	const db = await connectDuckDB()
+	await using handle = await openDuckDB()
+	const db = handle.connection
+
 	// Row order is required: the overlay-manifest assembler records first/last source_id from file order.
 	// `preserve_insertion_order` (DuckDB default) keeps output order = input order.
 	await db.run("SET preserve_insertion_order=true")
