@@ -100,4 +100,10 @@ describe("assertAdmissibleLicenseExpression", () => {
 
 		expect(() => assertAdmissibleLicenseExpression("public-domain")).toThrow(/"public-domain"/u)
 	})
+
+	it("admits a known license with a WITH exception, as summarizeLicense recognizes it", () => {
+		expect(summarizeLicense("Apache-2.0 WITH LLVM-exception").recognized).toBe(true)
+		expect(() => assertAdmissibleLicenseExpression("Apache-2.0 WITH LLVM-exception AND MIT")).not.toThrow()
+		expect(() => assertAdmissibleLicenseExpression("public-domain WITH LLVM-exception")).toThrow(/"public-domain/u)
+	})
 })

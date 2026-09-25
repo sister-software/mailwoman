@@ -417,8 +417,8 @@ export async function buildPostcodeLocalityTW(args: PostcodeLocalityTWOptions): 
 	const rows: PostcodeLocalityInsertValues[] = []
 	const tierCounts = { polygon: 0, wikidata: 0, name_in_polygon: 0, name_nearby: 0, region_fallback: 0 }
 	const unmatched: string[] = []
-	const matched = tierCounts.polygon + tierCounts.wikidata + tierCounts.name_in_polygon + tierCounts.name_nearby
-	const matchRate = `${((100 * matched) / districts.length).toFixed(1)}%`
+	let matched: number
+	let matchRate: string
 
 	{
 		using kdb = new DatabaseClient<PostcodeLocalityDatabase>(buildPath)
@@ -554,6 +554,10 @@ export async function buildPostcodeLocalityTW(args: PostcodeLocalityTWOptions): 
 				if (++kept >= NEARBY_KEEP) break
 			}
 		}
+
+		// The tier counts are final only after every district has been matched.
+		matched = tierCounts.polygon + tierCounts.wikidata + tierCounts.name_in_polygon + tierCounts.name_nearby
+		matchRate = `${((100 * matched) / districts.length).toFixed(1)}%`
 
 		const insert = kdb.prepare(POSTCODE_LOCALITY_INSERT_SQL)
 		kdb.exec("BEGIN")

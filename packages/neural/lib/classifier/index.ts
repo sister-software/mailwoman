@@ -285,20 +285,20 @@ export class NeuralAddressClassifier {
 	/**
 	 * Parses text and also returns the per-piece logits and piece offsets.
 	 *
-	 * The tree comes from the same decode path as `parse`, including repairs.
+	 * The tree comes from the same decode path and case normalization as `parse`, including repairs.
 	 * The returned logits are the raw model output, before priors and repairs.
-	 * Unlike `parse`, this method does not normalize case.
 	 */
 	async parseWithLogits(text: string, opts?: ParseOpts): Promise<ParseWithLogitsResult> {
 		if (!text.length) {
 			return { tree: { raw: text, roots: [] }, logits: [], pieces: [] }
 		}
 
-		const { tokens, logits, pieces, localeCountry } = await this.#decode(text, opts)
+		const modelText = opts?.normalizeCase !== false ? normalizeInputCase(text) : text
+		const { tokens, logits, pieces, localeCountry } = await this.#decode(modelText, opts)
 
 		return {
 			tree: treeWithLocaleCountry(
-				text,
+				modelText,
 				tokens,
 				opts?.calibrate ? { calibrate: opts.calibrate } : undefined,
 				localeCountry

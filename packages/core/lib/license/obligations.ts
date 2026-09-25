@@ -111,6 +111,13 @@ export function licenseIdentifiers(expression: string): string[] {
 }
 
 /**
+ * Returns the license part of an identifier, without any `WITH` exception.
+ */
+function withoutException(identifier: string): string {
+	return identifier.split(/\s+WITH\s+/i)[0]!
+}
+
+/**
  * Summarizes the known obligations of an SPDX expression.
  */
 export function summarizeLicense(expression: string): LicenseSummary {
@@ -119,7 +126,7 @@ export function summarizeLicense(expression: string): LicenseSummary {
 	const unrecognized: string[] = []
 
 	for (const identifier of identifiers) {
-		const known = KNOWN_OBLIGATIONS.get(identifier.split(/\s+WITH\s+/i)[0]!)
+		const known = KNOWN_OBLIGATIONS.get(withoutException(identifier))
 
 		if (!known) {
 			unrecognized.push(identifier)
@@ -189,13 +196,16 @@ const LICENSE_REF = /^LicenseRef-[A-Za-z0-9.-]+$/u
  * Throws unless every identifier in the expression may be recorded in a layer manifest.
  *
  * An admissible identifier is in the obligations table, matches `LicenseRef-…`, or is `NOASSERTION`.
+ * A `WITH` exception is ignored, as it is in {@link summarizeLicense}.
  * The doctor reports `NOASSERTION` as degraded.
  *
  * A manifest is sealed, so an unknown identifier is rejected at build time.
  */
 export function assertAdmissibleLicenseExpression(expression: string, context = "license"): void {
 	for (const identifier of licenseIdentifiers(expression)) {
-		if (identifier === "NOASSERTION" || KNOWN_OBLIGATIONS.has(identifier) || LICENSE_REF.test(identifier)) continue
+		const license = withoutException(identifier)
+
+		if (license === "NOASSERTION" || KNOWN_OBLIGATIONS.has(license) || LICENSE_REF.test(license)) continue
 
 		throw new Error(
 			`${context}: ${stringifyJSON(identifier)} is not an admissible license identifier. Use the SPDX identifier the obligations table knows (packages/core/lib/license/obligations.ts), a LicenseRef- this repository defines, or NOASSERTION.`
