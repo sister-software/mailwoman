@@ -166,9 +166,14 @@ export function bboxCoverageCells(
 }
 
 const SOURCE_MANIFEST_DEFAULTS = {
-	"overture-places": { license: "CDLA-Permissive-2.0", attribution: "Overture Maps Foundation" },
-	osm: { license: "ODbL-1.0", attribution: "OpenStreetMap contributors" },
-} as const satisfies Record<string, { license: string; attribution: string }>
+	"overture-places": {
+		license: "CDLA-Permissive-2.0",
+		attribution: "Overture Maps Foundation",
+		tier: LayerTier.Shipped,
+		shareAlike: false,
+	},
+	osm: { license: "ODbL-1.0", attribution: "OpenStreetMap contributors", tier: LayerTier.BuildLocal, shareAlike: true },
+} as const satisfies Record<string, { license: string; attribution: string; tier: LayerTier; shareAlike: boolean }>
 
 /**
  * Configures {@link buildPOIDatabase}, which reads `rows` when given and otherwise streams `parquetPaths`.
@@ -219,10 +224,10 @@ export interface BuildPOIOptions {
 	source?: "overture-places" | "osm"
 
 	/**
-	 * The manifest distribution tier, defaulting to {@link LayerTier.Shipped}.
+	 * The manifest distribution tier, defaulting to {@link LayerTier.BuildLocal} for OSM
+	 * and {@link LayerTier.Shipped} otherwise.
 	 *
-	 * The default does not follow `source`, so an OSM build must pass
-	 * {@link LayerTier.BuildLocal} itself because ODbL is share-alike.
+	 * An OSM build cannot be {@link LayerTier.Shipped} because ODbL is share-alike.
 	 */
 	tier?: LayerTier
 
@@ -288,6 +293,16 @@ export async function buildPOIDatabase(opts: BuildPOIOptions): Promise<BuildPOIR
 
 	if (!opts.rows && (!opts.parquetPaths || !opts.parquetPaths.length)) {
 		throw new Error("buildPOIDatabase: pass either `rows` (test/injected source) or `parquetPaths` (from ingestPlaces)")
+	}
+
+	const source = opts.source ?? "overture-places"
+	const sourceManifestDefaults = SOURCE_MANIFEST_DEFAULTS[source]
+	const tier = opts.tier ?? sourceManifestDefaults.tier
+
+	if (sourceManifestDefaults.shareAlike && tier === LayerTier.Shipped) {
+		throw new Error(
+			`buildPOIDatabase: ${source} is ${sourceManifestDefaults.license}, so the layer cannot be tier "shipped"`
+		)
 	}
 
 	if (await pathExists(opts.out)) {
@@ -416,14 +431,11 @@ export async function buildPOIDatabase(opts: BuildPOIOptions): Promise<BuildPOIR
 
 		progress("manifest", "writing layer manifest + coverage")
 
-		const source = opts.source ?? "overture-places"
-		const sourceManifestDefaults = SOURCE_MANIFEST_DEFAULTS[source]
-
 		await writeLayerManifest(kdb, {
 			name: "poi",
 			version: opts.version ?? opts.release,
 			schemaVersion: 1,
-			tier: opts.tier ?? LayerTier.Shipped,
+			tier,
 			license: sourceManifestDefaults.license,
 			attribution: sourceManifestDefaults.attribution,
 			source,

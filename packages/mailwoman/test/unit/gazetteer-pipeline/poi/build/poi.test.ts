@@ -371,6 +371,34 @@ describe("buildPOIDatabase — --source osm build-local branch", () => {
 		expect(coverageRows).toHaveLength(1)
 		expect(coverageRows[0]!.observed_rows).toBe(2)
 	})
+
+	it("defaults an OSM build to the build-local tier", async () => {
+		await buildPOIDatabase({
+			rows: osmFixtureRows(),
+			out,
+			release: "260627",
+			buildSHA: "deadbeef",
+			source: "osm",
+			createdAt: "2026-07-30T00:00:00Z",
+		})
+
+		using kdb = new DatabaseClient<POIDatabase>(out, { readOnly: true })
+
+		expect((await readLayerManifest(kdb)).tier).toBe("build-local")
+	})
+
+	it("refuses to mark an OSM build as shipped", async () => {
+		await expect(
+			buildPOIDatabase({
+				rows: osmFixtureRows(),
+				out,
+				release: "260627",
+				buildSHA: "deadbeef",
+				source: "osm",
+				tier: LayerTier.Shipped,
+			})
+		).rejects.toThrow(/ODbL-1\.0.*cannot be tier "shipped"/)
+	})
 })
 
 /**
