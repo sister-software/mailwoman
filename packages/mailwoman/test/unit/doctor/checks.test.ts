@@ -1,13 +1,3 @@
-/**
- * @copyright Sister Software
- * @license AGPL-3.0
- * @author Teffen Ellis, et al.
- *
- *   Unit tests for the pure `mailwoman doctor` verdict logic. No filesystem, no Ink — every check is a
- *   function from an observation to a {@link DoctorCheck}, so the ok/missing/degraded decisions and the
- *   exit-code discipline are covered here without standing up a data root.
- */
-
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import {
 	assembleReport,
@@ -40,7 +30,7 @@ describe("version parsing + floor comparison", () => {
 		expect(parseVersion("v24")).toBeUndefined()
 	})
 
-	it("compares major → minor → patch", () => {
+	it("Compares major → minor → patch", () => {
 		expect(versionMeetsFloor("24.18.0", ">=24.18.0")).toBe(true)
 		expect(versionMeetsFloor("24.18.2", ">=24.18.0")).toBe(true)
 		expect(versionMeetsFloor("25.0.0", ">=24.18.0")).toBe(true)
@@ -68,7 +58,7 @@ describe("weightsCheck (core)", () => {
 		const c = weightsCheck({ error: "Could not resolve @mailwoman/neural-weights-en-us\nInstall it via ..." })
 		expect(c.status).toBe(CheckStatus.Missing)
 		expect(c.fix).toContain("npm install @mailwoman/neural-weights-en-us")
-		// The detail is trimmed to the first line of the error.
+
 		expect(c.detail).toBe("Could not resolve @mailwoman/neural-weights-en-us")
 	})
 
@@ -136,7 +126,7 @@ describe("gazetteerCheck (optional)", () => {
 
 		expect(c.status).toBe(CheckStatus.OK)
 		expect(c.detail).toContain("candidate.db")
-		// That the size is rendered at all rather than how: a literal would pin the runner's locale rather than this check.
+
 		expect(c.detail).toContain(ByteFormatter.formatSI(1_400_000_000))
 	})
 
@@ -147,11 +137,6 @@ describe("gazetteerCheck (optional)", () => {
 	})
 
 	it("ok on a convention-path candidate.db with no env set", () => {
-		// A fresh consumer runs `data pull candidate` and never exports anything.
-		// That used to be the documented trap — the file on disk, every tool ignoring it —
-		// and the fix was an export line. resolveCandidateDBPath reaches the convention
-		// path now, so the same observation is healthy, and telling the reader to export
-		// something would be advice that changes nothing.
 		const c = gazetteerCheck({
 			conventionCandidate: "/data/wof/candidate.db",
 			probed: ["/data/wof/admin.db", "/data/wof/candidate.db"],
@@ -279,11 +264,7 @@ describe("computeExitCode + assembleReport (meaning-of-zero)", () => {
 	})
 })
 
-describe("every failing check states its consequence (#1577)", () => {
-	// The point of `consequence` is that a reader can decide whether a red line is worth acting on today.
-	// A check that fails without one has silently opted out of that interface,
-	// and nothing else in the tree would notice — so enumerate the failing branch
-	// of every check here rather than spot-checking one.
+describe("Every failing check states its consequence", () => {
 	const failing: Array<[string, DoctorCheck]> = [
 		["weights absent", weightsCheck({ error: "Could not resolve @mailwoman/neural-weights-en-us" })],
 		[
@@ -308,7 +289,7 @@ describe("every failing check states its consequence (#1577)", () => {
 	]
 
 	for (const [name, check] of failing) {
-		it(`${name} → consequence + fix`, () => {
+		it(`${name} reports its consequence and fix`, () => {
 			expect(check.status).not.toBe(CheckStatus.OK)
 			expect(check.consequence).toBeTruthy()
 			expect(check.fix).toBeTruthy()

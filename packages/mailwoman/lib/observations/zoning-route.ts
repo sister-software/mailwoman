@@ -3,43 +3,10 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The zoning route, observation-only: after the resolver has produced a coordinate, the local authority's
- *   own zoning designation for that coordinate is recorded beside the answer — the authority's own code IN
- *   its own spelling, its description, the named plan it belongs to and that plan's stated window, and, where
- *   and only where the publisher itself publishes one, its national generic classification carried as a
- *   separate labelled value that never replaces the local code.
- *
- *   the route reads. IT never answers. It takes a finished coordinate and returns a record. Nothing here is
- *   consulted while an answer is being chosen, no candidate is read, no result is added, removed or
- *   re-ordered, and no abstain is reached or avoided because of it. A geocode with the route configured is
- *   the same geocode plus one advisory, which is a statement about construction rather than about a
- *   measurement.
- *
- *   presence is the switch, and IT is A layer path. There is no boolean: a boolean would make the caller's
- *   factory construct the reader itself and put a sealed layer open on the default construction path. A
- *   session resolves the layer path, opens it if the file is there, and hands the route in. a session that
- *   finds no file hands in nothing and is byte-identical to one built before this route existed.
- *
- *   no scenario, but always A jurisdiction and A plan. The coastal route answers under one of twelve named
- *   scenarios because its product publishes twelve. This product publishes one, so there is no scenario to
- *   name — and there is a jurisdiction and a plan, which are part of the claim rather than parameters of it.
- *   A zone exists inside a named Development Plan or Local Area Plan adopted by a named authority, with a
- *   stated validity window. an observation that dropped either would report a designation nobody could trace
- *   to a plan.
- *
- *   only A designation reaches A caller, and the silence is required. There is no absence observation
- *   here, and zoning is the hardest case for the rule: a location with no zoning polygon is outside any
- *   adopted plan area, or inside one on land the plan does not zone, or in a jurisdiction that has never
- *   adopted zoning, or in a jurisdiction whose records nobody has published — and no product distinguishes
- *   them. The publisher itself proves the asymmetry by stating `UNZ - Unzoned` as a positive value on a
- *   handful of rows: where it means unzoned it says so, so an absent row means nothing. The named refusal is
- *   what a receipt carries instead.
- *
- *   the observation is about the plan, never about what may be built. The publisher states that its data are
- *   "not published here as legal definitions of the current actuality with regard to Local Authority zoning
- *   or their geographic extents" and that "Original data should be sourced directly from the relevant Local
- *   Authority". So the wording reports what a plan assigns at a location, and the product's own exclusions
- *   ride on every observation.
+ *   Add local-authority zoning designations as observations after geocoding.
+ *   The route never changes answer selection and reports only published designations.
+ *   Each observation preserves the local code, jurisdiction, plan, coverage, and limitations.
+ *   No designation is not evidence that land is unrestricted.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -64,12 +31,7 @@ import {
 } from "#observations/layer-record"
 
 /**
- * One zoning designation, recorded beside an answer.
- *
- * Everything a reader needs to check the claim is here: which authority, which plan
- * and window, which product and vintage, the polygons the location falls inside with
- * each one's verbatim local code, how containment was established, and the coverage
- * record with the sentence saying what it does not license.
+ * Zoning designation and provenance recorded beside an answer.
  */
 export interface ZoningDesignationObservation {
 	/**
@@ -111,10 +73,7 @@ export interface ZoningDesignationObservation {
 }
 
 /**
- * Why a coordinate produced no observation.
- *
- * Every one of these is a silence the route owes an account of.
- * An unnamed silence and a silence for the right reason read identically on a receipt.
+ * Named reasons a coordinate produced no observation.
  */
 export const ZONING_REFUSALS = [
 	/**
@@ -134,7 +93,7 @@ export const ZONING_REFUSALS = [
 export type ZoningRefusal = (typeof ZONING_REFUSALS)[number]
 
 /**
- * What the route decided about one coordinate: an observation, or a named silence.
+ * Observation or named refusal for one coordinate.
  */
 export type ZoningDecision =
 	| { fired: true; observation: ZoningDesignationObservation }
@@ -143,13 +102,7 @@ export type ZoningDecision =
 export interface ZoningDesignationRoute extends Disposable {
 	identity: ZoningLayerIdentity
 	/**
-	 * Decide one resolved coordinate.
-	 *
-	 * Pure with respect to the pipeline: it reads the layer and returns a record.
-	 *
-	 * `null` and `undefined` are both accepted because a geocode result has nullable `lat`/`lon`.
-	 * A caller that had to narrow them first would be narrowing on this route's behalf,
-	 * and a coordinate-less answer is a named refusal here rather than a caller's problem.
+	 * Read the layer for one coordinate; missing coordinates return a named refusal.
 	 */
 	observe: (latitude: number | null | undefined, longitude: number | null | undefined) => ZoningDecision
 }
@@ -165,15 +118,7 @@ export interface ZoningDesignationRouteOptions {
 }
 
 /**
- * Build the route against one sealed layer.
- *
- * Everything that would make the route answer a well-formed wrong thing is
- * refused by the reader's own constructor.
- * A manifest naming a different layer, a coverage table with no rows, an empty jurisdiction
- * table, and above all a coverage row whose basis would support an exclusion.
- *
- * That last one would otherwise present as a route reporting unmapped
- * and unzoned land alike as free of restriction.
+ * Build the route against one sealed layer; the reader validates its manifest and coverage.
  */
 export function createZoningDesignationRoute(options: ZoningDesignationRouteOptions): ZoningDesignationRoute {
 	const lookup = new ZoningLookup({ databasePath: options.databasePath })

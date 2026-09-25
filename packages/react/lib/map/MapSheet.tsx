@@ -3,17 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `<MapSheet>` — a side panel over the map: a title, a close button, and content.
- *
- *   The close button is not optional. On a wide screen the control that opened the sheet stays visible beside it and
- *   could close it again, but on a phone the sheet is the whole panel and covers that control — so a sheet without its
- *   own close is a sheet a phone cannot dismiss. One component carries it so the four sheets in these apps cannot
- *   disagree about that.
- *
- *   Escape closes it too, because a panel over the whole screen is a modal in every way that matters to someone
- *   holding a keyboard.
- *
- *   node-safe: pure React, no maplibre.
+ *   Side panel over the map with a heading, close button, and Escape dismissal.
  */
 
 import { type ReactNode, useEffect } from "react"
@@ -30,11 +20,7 @@ export interface SheetCloseProps {
 }
 
 /**
- * The × that dismisses a sheet.
- *
- * Exported because the geocoder's panel needs the same control and had grown its own copy:
- * identical markup, the same borrowed class, a separately worded label.
- * One component so they cannot disagree about the glyph, the target or the fact that it is a `button`.
+ * Accessible button for dismissing a sheet.
  */
 export function SheetClose({ label, onClose, className }: SheetCloseProps): ReactNode {
 	return (

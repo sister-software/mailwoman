@@ -1,9 +1,3 @@
-/**
- * @copyright Sister Software
- * @license AGPL-3.0
- * @author Teffen Ellis, et al.
- */
-
 import { createServer, type Server } from "node:http"
 import type { AddressInfo } from "node:net"
 
@@ -30,9 +24,6 @@ let base: string
 let flakyHits = 0
 let rangeConnections = 0
 
-/**
- * Range-test payload: 40 bytes served in 16-byte chunks.
- */
 const RANGE_BODY = Buffer.from("0123456789abcdefghijklmnopqrstuvwxyz!@#$")
 const RANGE_CHUNK = 16
 
@@ -42,7 +33,6 @@ beforeAll(async () => {
 			res.writeHead(200)
 			res.end("payload")
 		} else if (req.url === "/range") {
-			// Return partial content so the client must request the remainder.
 			rangeConnections++
 			const start = Number(/bytes=(\d+)-/.exec(req.headers.range ?? "")?.[1] ?? 0)
 
@@ -230,7 +220,7 @@ describe("resumableDownload", () => {
 		expect(bytes).toBe(RANGE_BODY.length)
 		expect(await readLocalTextFile(dest)).toBe(RANGE_BODY.toString())
 		expect(await pathExists(dest + ".tmp")).toBe(false)
-		// Three 16-byte range requests transfer the 40-byte body.
+
 		expect(rangeConnections).toBe(3)
 		expect(lines).toHaveLength(3)
 	})

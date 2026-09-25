@@ -1,16 +1,3 @@
-/**
- * @copyright Sister Software
- * @license AGPL-3.0
- * @author Teffen Ellis, et al.
- *
- *   Tests for the fork-preference resolver.
- *
- *   Two legs are required. A clean fork must resolve upstream — after the 2026-08-20 sweep forked 474 repos,
- *   existence stopped meaning "we corrected this", and a fork does not track its parent, so preferring a clean one
- *   reads a stale snapshot for no benefit. And a failed probe must pull upstream while saying the lookup failed,
- *   because "no fork" and "could not look" license different conclusions.
- */
-
 import {
 	FORK_ORG,
 	type ForkState,
@@ -20,8 +7,8 @@ import {
 import { describe, expect, it } from "vitest"
 
 const states: Record<string, ForkState> = {
-	"whosonfirst-data-admin-gb": "diverged", // carries the 35 January-2019 corrections
-	"whosonfirst-data-admin-fr": "clean", // forked by the sweep, no commits of ours
+	"whosonfirst-data-admin-gb": "diverged",
+	"whosonfirst-data-admin-fr": "clean",
 }
 
 const probe = async (org: string, repo: string): Promise<ForkState> =>
@@ -36,7 +23,7 @@ describe("resolveWOFRepoOrigin", () => {
 		expect(origin.reason).toContain("carries commits upstream does not")
 	})
 
-	it("sends a CLEAN fork to upstream — existence is not correction, and a fork does not track its parent", async () => {
+	it("Sends a CLEAN fork to upstream — existence is not correction, and a fork does not track its parent", async () => {
 		const origin = await resolveWOFRepoOrigin("whosonfirst-data-admin-fr", probe)
 
 		expect(origin).toMatchObject({ org: UPSTREAM_ORG, source: "upstream" })

@@ -1,21 +1,3 @@
-/**
- * @copyright Sister Software
- * @license AGPL-3.0
- * @author Teffen Ellis, et al.
- *
- *   The committed case-folding suite, checked against the corpus it was drawn from. No model, no gazetteer —
- *   two jsonl files and the pure law module, so this runs wherever the repo does.
- *
- *   the point is that nothing here is authored. Every `base` must be the verbatim `input` of the committed
- *   board row its `rowRef` names, and every `variant` must be exactly the named transformation applied to that
- *   base. A hand-typed variant is how a case-folding row quietly acquires a dropped accent or a collapsed
- *   space, and the law then reports on a transformation nobody declared — so the suite is re-derived here
- *   rather than trusted.
- *
- *   The base rows are additionally required to be `status: pass` on the board. A case-folding violation
- *   stated over a row the pipeline already fails says nothing about casing.
- */
-
 import { pathExists } from "@mailwoman/core/fs/readers"
 import {
 	auditCaseFoldingSuite,
@@ -39,9 +21,6 @@ beforeAll(async () => {
 	corpus = new Map((await loadRegressionCases()).map((seedCase) => [seedCase.id, seedCase]))
 })
 
-/**
- * Split `cases/gb/regression.jsonl#gb-downing-us-scoped` into the file it names and the case id inside it.
- */
 function splitRowRef(rowRef: string): { file: string; caseID: string } {
 	const [file, caseID] = rowRef.split("#")
 

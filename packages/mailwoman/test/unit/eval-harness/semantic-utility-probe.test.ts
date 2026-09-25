@@ -1,15 +1,3 @@
-/**
- * @copyright Sister Software
- * @license AGPL-3.0
- * @author Teffen Ellis, et al.
- *
- *   Tests for the pre-registered semantic-utility probe (#1928): the freeze mechanism, the refusals, the
- *   metric arithmetic, and the committed pre-registration's own consistency with the board it references.
- *
- *   No model, no database, no pipeline — the decision function is graded against synthetic counts and the
- *   loader against temporary copies of the committed files, so every threshold is exercised without a run.
- */
-
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
@@ -60,10 +48,6 @@ interface BaselineReceipt {
 
 const receipt = await readLocalJSONFile<BaselineReceipt>(PROBE_BASELINE_RECEIPT_PATH)
 
-/**
- * Write a definition + freeze pair into a scratch directory, so a refusal can be
- * provoked without touching the committed ruler.
- */
 async function scratchPair(
 	mutate: (definition: SemanticProbeDefinition) => void,
 	freezeOverride?: Partial<ProbeFreezeRecord>
@@ -149,7 +133,7 @@ describe("the committed pre-registration", () => {
 		}
 	})
 
-	it("gives every control row the failure it guards", async () => {
+	it("Gives every control row the failure it guards", async () => {
 		for (const control of definition.controlRows) {
 			expect(control.guards.length, control.id).toBeGreaterThan(0)
 		}
@@ -192,7 +176,7 @@ describe("execution refusals", () => {
 	it("refuses an unregistered comparator", async () => {
 		const fixture = definition.targetRows[0]!
 		const outcome: POIBoardOutcome = { path: "full" }
-		// A name the conformance layer registers and this probe does not — the exact way a definition acquires one.
+
 		const unregistered = "resolution_identity" as ProbeComparatorName
 
 		expect(() => gradeWithComparator(unregistered, fixture, outcome)).toThrow(/unregistered outcome comparator/u)
@@ -345,7 +329,7 @@ describe("the decision", () => {
 		expect(decideProbe(definition, counts({ diagnosticNumerator: 2 })).decision).toBe("STOP-REDESIGN")
 	})
 
-	it("stops on a control regression even when the primary bar is cleared", async () => {
+	it("Stops on a control regression even when the primary bar is cleared", async () => {
 		const verdict = decideProbe(
 			definition,
 			counts({ primaryNumerator: 4, diagnosticNumerator: 4, controlHoldNumerator: 5 })

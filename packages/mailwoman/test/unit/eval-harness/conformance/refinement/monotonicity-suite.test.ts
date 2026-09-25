@@ -1,24 +1,3 @@
-/**
- * @copyright Sister Software
- * @license AGPL-3.0
- * @author Teffen Ellis, et al.
- *
- *   The committed refinement suite, checked against the corpus it was drawn from. No model, no gazetteer —
- *   two jsonl files and the pure law module, so this runs wherever the repo does.
- *
- *   the check that only this file can make. The law module walks a chain and reports its TIP. it cannot know
- *   whether that tip is a query anybody geocodes, because it never loads the corpus. Here it is checked: every
- *   chain's tip must be the verbatim `input` of the committed board row its `rowRef` names, and every base
- *   below it must be exactly the named coarsening of the link above. Without both halves a chain is
- *   self-consistent and unattested — a sequence of invented strings that agree with each other, which is
- *   precisely the thing the fixture discipline exists to refuse.
- *
- *   the coverage is asserted AS A ratio rather than A number. The eligible count moves whenever a comma-carrying row
- *   is committed, so pinning it would fail on other people's work. what must hold is that the suite states
- *   strictly less than the population it draws from and says so, and that every chain it does state is
- *   counted once however many links it carries.
- */
-
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { type ConformanceFixture, loadConformanceFixtures } from "mailwoman/eval-harness/conformance/fixture"
 import {
@@ -47,9 +26,6 @@ beforeAll(async () => {
 	corpusInputs = cases.map((seedCase) => seedCase.input)
 })
 
-/**
- * Split `cases/de/regression.jsonl#de-r9-nippes-koeln` into the file it names and the case id inside it.
- */
 function splitRowRef(rowRef: string): { file: string; caseID: string } {
 	const [file, caseID] = rowRef.split("#")
 

@@ -1,16 +1,3 @@
-/**
- * @copyright Sister Software
- * @license AGPL-3.0
- * @author Teffen Ellis, et al.
- *
- *   The freshness reader, against fixtures written by the real manifest writer.
- *
- *   The property under test throughout is that an artifact which cannot state its provenance says so. Every
- *   failure this reader can meet — not on disk, no manifest rather than a database, an undatable stamp — has to
- *   arrive as its own entry, because on the wire a dropped entry and a guessed epoch are both
- *   indistinguishable from a measured answer, and whether a measured answer exists is the question.
- */
-
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { LayerFreshnessPolicy, LayerTier } from "@mailwoman/core/layers"
@@ -29,14 +16,6 @@ async function scratch(): Promise<PathBuilder> {
 	return fixtures.use(await temporaryDirectory("mw-freshness-")).path
 }
 
-/**
- * A stamped artifact, written through `stampLayerManifest`.
- * The same writer every builder uses.
- *
- * The fixture is deliberately not hand-rolled SQL: a reader tested against a table this
- * test invented would keep passing after the interface's own writer changed shape,
- * which is the one regression it exists to catch.
- */
 async function stamped(path: PathBuilder, name: string, createdAt: string): Promise<PathBuilder> {
 	await stampLayerManifest(path, {
 		name,
@@ -56,9 +35,6 @@ async function stamped(path: PathBuilder, name: string, createdAt: string): Prom
 	return path
 }
 
-/**
- * A built database with no manifest — the state of every artifact built before the layer interface.
- */
 function bare(path: PathBuilder): PathBuilder {
 	using db = new DatabaseClient<WOFDatabase>(path)
 
@@ -76,10 +52,7 @@ describe("readFreshness — a stamped artifact", () => {
 		expect(entry?.manifest).toBe(ManifestState.Present)
 		expect(entry?.built).toBe("2026-08-17T19:21:17.000Z")
 		expect(entry?.version).toBe("candidate@2026-08-17")
-		// The candidate's source is a chain.
-		// It names its ancestor admin build — and the vintage carries the database counts
-		// that make one candidate build different from another.
-		// Both, or neither identifies it.
+
 		expect(entry?.sources).toEqual(["admin-global-priority@2026-08-17", "postcode-databases=24"])
 		expect(entry?.reason).toBeUndefined()
 	})
@@ -94,7 +67,6 @@ describe("readFreshness — a stamped artifact", () => {
 			{ name: "reverse-admin", path: older },
 		])
 
-		// Verbatim rather than re-serialized: the date the artifact states is the date the wire carries.
 		expect(report.dataUpdated).toBe("2026-08-17T19:21:17.000Z")
 		expect(report.artifacts).toHaveLength(2)
 	})
@@ -111,7 +83,7 @@ describe("readFreshness — an artifact that cannot state its provenance", () =>
 		expect(entry?.name).toBe("gazetteer")
 		expect(entry?.path).toBe(path.toString())
 		expect(entry?.reason).toContain("predates the layer interface")
-		// No date is invented from the file's mtime, and the report declines to date itself.
+
 		expect(entry?.built).toBeUndefined()
 		expect(report.dataUpdated).toBeUndefined()
 	})
@@ -132,13 +104,11 @@ describe("readFreshness — an artifact that cannot state its provenance", () =>
 
 		const [entry] = (await readFreshness([{ name: "gazetteer", path }])).artifacts
 
-		// A fault to chase rather than a rebuild to schedule.
-		// Collapsing the two would file a corrupt artifact under the same heading as one that is merely old.
 		expect(entry?.manifest).toBe(ManifestState.Unreadable)
 		expect(entry?.reason).toBeDefined()
 	})
 
-	it("refuses a stamp it cannot date instead of dropping it from the maximum", async () => {
+	it("Refuses a stamp it cannot date instead of dropping it from the maximum", async () => {
 		const path = await stamped((await scratch())("candidate.db"), "candidate", "whenever")
 
 		const report = await readFreshness([{ name: "gazetteer", path }])
@@ -146,7 +116,7 @@ describe("readFreshness — an artifact that cannot state its provenance", () =>
 
 		expect(entry?.manifest).toBe(ManifestState.Unreadable)
 		expect(entry?.reason).toContain("created_at")
-		// Silently skipping it would leave the entry reading like an artifact nobody ever stamped.
+
 		expect(report.dataUpdated).toBeUndefined()
 	})
 

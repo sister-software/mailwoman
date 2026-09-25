@@ -1,18 +1,3 @@
-/**
- * @copyright Sister Software
- * @license AGPL-3.0
- * @author Teffen Ellis, et al.
- *
- *   CLI integration tests for `mailwoman reverse <lat> <lon>` (#484).
- *
- *   Error-path tests run unconditionally against the compiled CLI (node out/cli.js). The end-to-end
- *   suite checks on both real DB env vars — same pattern as resolve-flag.test.ts and
- *   resolver-wof-sqlite/reverse.test.ts:
- *
- *   - MAILWOMAN_WOF_ADMIN_DB — admin gazetteer with place_bbox R*Tree
- *   - MAILWOMAN_WOF_POLYGONS_DB — polygon sidecar (wof-polygons.db)
- */
-
 import { parseJSONStrict } from "@mailwoman/core/json"
 import { runFile } from "@mailwoman/core/process"
 import { childEnv } from "@mailwoman/core/scripting/utils"
@@ -25,9 +10,6 @@ const cliBin = await mailwomanCLIPath()
 const ADMIN_DB = $public.MAILWOMAN_WOF_ADMIN_DB
 const POLYGONS_DB = $public.MAILWOMAN_WOF_POLYGONS_DB
 
-/**
- * Strip ansi escape sequences + ink spinner frames so the JSON parser can consume CLI stdout.
- */
 function stripAnsiSpinner(stdout: string): string {
 	const ansi = /\[[0-9;]*[a-zA-Z]/gu
 	const cleaned = stdout.replace(ansi, "").trim()
@@ -36,11 +18,8 @@ function stripAnsiSpinner(stdout: string): string {
 	return objStart >= 0 ? cleaned.slice(objStart) : cleaned
 }
 
-// MARK: Error-path tests — run unconditionally, no real DB required.
-
 describe("mailwoman reverse — argument and DB error paths", () => {
 	test("exits non-zero with a clear message when lat/lon are missing", async () => {
-		// Native CLI usage and operational errors consistently land on stderr.
 		await expect(
 			runFile("node", [cliBin, "reverse"], {
 				env: childEnv({ MAILWOMAN_WOF_ADMIN_DB: "", NODE_NO_WARNINGS: "1" }),
@@ -75,8 +54,6 @@ describe("mailwoman reverse — argument and DB error paths", () => {
 	})
 })
 
-// MARK: End-to-end tests against the real production DBs.
-
 describe.skipIf(!ADMIN_DB || !POLYGONS_DB)(
 	"mailwoman reverse — end-to-end against MAILWOMAN_WOF_ADMIN_DB + MAILWOMAN_WOF_POLYGONS_DB",
 	() => {
@@ -108,7 +85,7 @@ describe.skipIf(!ADMIN_DB || !POLYGONS_DB)(
 			expect(["polygon", "approximate"]).toContain(json.containment)
 			const names = json.hierarchy.map((p) => p.name)
 			expect(names).toContain("United States")
-			// The hierarchy must reach at least the region (New York state).
+
 			const placetypes = json.hierarchy.map((p) => p.placetype)
 			expect(placetypes).toContain("region")
 		}, 60_000)
@@ -134,10 +111,10 @@ describe.skipIf(!ADMIN_DB || !POLYGONS_DB)(
 			const out = result.stdout
 			expect(out).toMatch(/containment:/)
 			expect(out).toMatch(/wof:\d+/)
-			expect(out).not.toMatch(/^\s*\{/u) // not JSON
+			expect(out).not.toMatch(/^\s*\{/u)
 		}, 60_000)
 
-		test("open ocean (40.0, -40.0) → empty hierarchy, exit 0", async () => {
+		test("Open ocean (40.0, -40.0) → empty hierarchy, exit 0", async () => {
 			const result = await runFile("node", [cliBin, "reverse", "40.0", "-40.0"], {
 				env: ENV,
 				maxBuffer: 4 * 1024 * 1024,
@@ -148,8 +125,6 @@ describe.skipIf(!ADMIN_DB || !POLYGONS_DB)(
 		}, 60_000)
 
 		test("centroid-only mode (no polygon DB) returns approximate containment", async () => {
-			// Deliberately strip the polygons DB.
-			// Every result must be approximate.
 			const result = await runFile("node", [cliBin, "reverse", "40.7128", "-74.0060"], {
 				env: { ...ENV, MAILWOMAN_WOF_POLYGONS_DB: "" },
 				maxBuffer: 4 * 1024 * 1024,

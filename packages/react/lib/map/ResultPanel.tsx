@@ -3,15 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `<ResultPanel>` — the demo's parse+resolve result block, assembled from the shared pipeline
- *   presentational units (it does not re-implement any of them): `KindBadge`, `ComponentTable`,
- *   `ResolvedPlace`, `CandidatePicker`, plus the `CopyButton` + `buildParsePayload` copy affordance. This
- *   is the standalone, story-testable unit the demo's floating panel renders (the map analogue of the
- *   result block PipelineExplorer inlines), so `Geocoder` composes one panel instead of duplicating
- *   the marker/table/candidate glue. Heavy host visualizers (span highlight, tree, timing) slot in via
- *   `extras`; the no-resolve diagnostic via `failure`.
- *
- *   node-safe: pure React + the shared units, no maplibre.
+ *   Compose the geocoder's parse and resolution result from shared UI components.
+ *   Hosts may inject diagnostics and additional visualizers.
  */
 
 import type { ParseResult, ResolvedPlaceView } from "@mailwoman/core/pipeline/client-result"

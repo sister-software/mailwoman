@@ -1,15 +1,3 @@
-/**
- * @copyright Sister Software
- * @license AGPL-3.0
- * @author Teffen Ellis, et al.
- *
- *   #1901: the authoritative-provider boundary, exercised through `geocodeAddress` with mock
- *   classifier/resolver deps and the shipped fixture provider. The suite pins the interface's four
- *   distinctions — matched, ambiguous-not-collapsed, refused-is-not-a-miss, transport-error-is-not-
- *   silence — plus the two invariants that make the boundary safe to configure: the open result is
- *   byte-identical without a provider, and provider assertions never rewrite Mailwoman's own answer.
- */
-
 import type { AddressNode } from "@mailwoman/core/decoder"
 import {
 	type AuthoritativeQuery,
@@ -25,10 +13,6 @@ function node(partial: Partial<AddressNode> & Pick<AddressNode, "tag" | "value">
 	return { start: 0, end: 0, confidence: 1, children: [], ...partial }
 }
 
-/**
- * A minimal always-resolves engine: one locality node with a coordinate, so the open
- * result is a stable admin answer the provider block can be compared against.
- */
 function testDeps(): GeocodeDeps {
 	const classifier: GeocodeClassifier = {
 		parse: async (text) => ({
@@ -59,7 +43,7 @@ function testDeps(): GeocodeDeps {
 
 const INPUT = "1 Example Terrace, Testtown TT1 1TT"
 
-describe("#1901: the authoritative provider block on GeocodeResult", () => {
+describe(": the authoritative provider block on GeocodeResult", () => {
 	it("an exact fixture match arrives as a `matched` block with the provider's assertions verbatim", async () => {
 		const provider = createFixtureAuthoritativeProvider({
 			rules: [{ matchOn: "example terrace", response: fixtureExactMatch() }],
@@ -84,7 +68,6 @@ describe("#1901: the authoritative provider block on GeocodeResult", () => {
 
 		const result = await geocodeAddress(INPUT, { ...testDeps(), authoritativeProvider: provider })
 
-		// The resolver's own answer, untouched by the provider's different coordinate.
 		expect(result.lat).toBe(51.5)
 		expect(result.lon).toBe(-0.1)
 		expect(result.authoritative!.matches![0]!.lat).toBe(0.5)
@@ -120,14 +103,14 @@ describe("#1901: the authoritative provider block on GeocodeResult", () => {
 		expect(result.authoritative!.matches![1]!.match_status).toBe("approximate")
 	})
 
-	it("a refusal is a spoken outcome: status `refused`, no matches field, and the open answer stands", async () => {
+	it("A refusal is a spoken outcome: status `refused` without matches field, and the open answer stands", async () => {
 		const provider = createFixtureAuthoritativeProvider({ rules: [] })
 
 		const result = await geocodeAddress(INPUT, { ...testDeps(), authoritativeProvider: provider })
 
 		expect(result.authoritative!.status).toBe("refused")
 		expect(result.authoritative!.matches).toBeUndefined()
-		// Distinct from a parse failure: the parse's components are all still here.
+
 		expect(result.locality).toBe("Testtown")
 		expect(result.lat).toBe(51.5)
 	})
@@ -151,7 +134,7 @@ describe("#1901: the authoritative provider block on GeocodeResult", () => {
 		expect(result.lat).toBe(51.5)
 	})
 
-	it("no provider configured → no block, and the result is deep-equal to a provider run minus the block", async () => {
+	it("No provider configured → no block, and the result is deep-equal to a provider run minus the block", async () => {
 		const provider = createFixtureAuthoritativeProvider({
 			rules: [{ matchOn: "example terrace", response: fixtureExactMatch() }],
 		})

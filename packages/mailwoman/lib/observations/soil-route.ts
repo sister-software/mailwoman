@@ -3,43 +3,10 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The soil-capability designation route, observation-only: after the resolver has produced a coordinate,
- *   the soil survey's own reading for that coordinate is recorded beside the answer — the capability class
- *   the survey assigns with the share of the cell it covers, the farmland classification as published
- *   including its condition, the survey area with both its dates, and the coverage record stating that the
- *   authority mapped there.
- *
- *   the route reads. IT never answers. It takes a finished coordinate and returns a record. Nothing here is
- *   consulted while an answer is being chosen, no candidate is read, no result is added, removed or
- *   re-ordered, and no abstain is reached or avoided because of it.
- *
- *   presence is the switch, and IT is A layer path. There is no boolean: a boolean would make the caller's
- *   factory construct the reader itself and put a sealed layer open on the default construction path.
- *
- *   the share is not optional, and that is the whole point OF this layer. nrcs's own map-unit aggregation
- *   ships its dominant-condition class beside the share that class covers, with an observed minimum of 2%.
- *   So a caller never receives a class without the share it rests on, and never receives a class at all when
- *   the cell holds none. A cell that is entirely unrated is complete and carries no capability reading,
- *   which is a different answer from unmapped ground and from land the survey rated as unsuitable.
- *
- *   the observation is about the MAP, never about the land. nrcs states that its data "do not eliminate the
- *   need for onsite sampling, testing, and detailed study of specific sites for intensive uses" and are
- *   "intended for planning purposes only". So the wording reports what the soil survey assigns to the map
- *   unit covering the location — a fact about the map — and never whether the land can be farmed. The
- *   product's own caveats ride on every observation, because a caller cannot see from a class code that the
- *   survey declines to speak about a specific site.
- *
- *   the provenance carries the survey vintage rather than only the refresh. A polygon republished in the 2025
- *   Annual Soils Refresh can rest on a field survey published in 1960. That is `IA153`, measured — and the
- *   dataset's own time-period-of-content ends at the refresh, so a consumer reading that as survey currency
- *   reads it wrong by sixty-five years. Both dates reach the caller, apart, with the source title the older
- *   one came from.
- *
- *   A second route rather than A widened first one. The flood layer's route carries a flood-shaped
- *   observation — a zone code, a containment path, the authority's zone definition — and this one carries a
- *   distribution, five shares and two dates. They share the marker code (`authority_designation`) and the
- *   `layer` mechanism family, which is what a reader branches on. folding them into one observation type
- *   would need a union every consumer then has to narrow, for no field either of them shares.
+ *   Add a soil-survey observation after geocoding; it never changes answer selection.
+ *   Record the capability distribution, top-class share, survey dates, coverage, and limits.
+ *   A designated absence differs from an unrated cell and from an unmapped location.
+ *   This describes the survey map, not site-specific land capability.
  */
 
 import {
@@ -63,11 +30,7 @@ import {
 } from "#observations/layer-record"
 
 /**
- * One soil-capability reading, recorded beside an answer.
- *
- * Everything a reader needs to check the claim is here: which authority, which product and vintage,
- * the class distribution with the four absence shares kept apart, the weighting that produced them,
- * the survey area with both its dates, and the coverage record that licenses the reading.
+ * Soil-capability reading and provenance recorded beside an answer.
  */
 export interface SoilCapabilityObservation {
 	/**
@@ -114,10 +77,7 @@ export interface SoilCapabilityObservation {
 }
 
 /**
- * Why a coordinate produced no observation.
- *
- * Every one of these is a silence the route owes an account of.
- * An unnamed silence and a silence for the right reason read identically on a receipt.
+ * Named reasons a coordinate produced no observation.
  */
 export const SOIL_DESIGNATION_REFUSALS = [
 	/**
@@ -134,7 +94,7 @@ export const SOIL_DESIGNATION_REFUSALS = [
 export type SoilDesignationRefusal = (typeof SOIL_DESIGNATION_REFUSALS)[number]
 
 /**
- * What the route decided about one coordinate: an observation, or a named silence.
+ * Observation or named refusal for one coordinate.
  */
 export type SoilDesignationDecision =
 	| { fired: true; observation: SoilCapabilityObservation }
@@ -143,13 +103,7 @@ export type SoilDesignationDecision =
 export interface SoilCapabilityRoute extends Disposable {
 	identity: SoilLayerIdentity
 	/**
-	 * Decide one resolved coordinate.
-	 *
-	 * Pure with respect to the pipeline: it reads the layer and returns a record.
-	 *
-	 * `null` and `undefined` are both accepted because a geocode result has nullable `lat`/`lon`.
-	 * A caller that had to narrow them first would be narrowing on this route's behalf,
-	 * and a coordinate-less answer is a named refusal here rather than a caller's problem.
+	 * Read the layer for one coordinate; missing coordinates return a named refusal.
 	 */
 	observe: (latitude: number | null | undefined, longitude: number | null | undefined) => SoilDesignationDecision
 }
@@ -165,13 +119,7 @@ export interface SoilCapabilityRouteOptions {
 }
 
 /**
- * Build the route against one sealed layer.
- *
- * Everything that would make the route answer a well-formed wrong thing is refused
- * by the reader's own constructor — a manifest naming a different product,
- * a coverage table with no rows, a vocabulary with no classes.
- * Each of those would otherwise present as a route that simply never fires, which on a
- * receipt is indistinguishable from a region the authority genuinely has not surveyed.
+ * Build the route against one sealed layer, validating its manifest, coverage, and vocabulary.
  */
 export function createSoilCapabilityRoute(options: SoilCapabilityRouteOptions): SoilCapabilityRoute {
 	const lookup = new SoilCapabilityLookup({ databasePath: options.databasePath })

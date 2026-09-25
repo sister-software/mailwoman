@@ -1,30 +1,12 @@
-/**
- * @copyright Sister Software
- * @license AGPL-3.0
- * @author Teffen Ellis, et al.
- *
- *   Tests for the secondary-unit regex repair pass (parser-improvement backlog). Each case builds a
- *   char-aligned DecoderToken sequence (offsets must match the raw text) and asserts the repaired
- *   unit span. Covers ADD (model missed the unit), snap (model truncated it), single-letter idents
- *   ("STE D"), bare hash, smear-clip, and the precision guards (no-add-over-structural, no false
- *   match on "United"/"Box"/bare prose).
- */
-
 import type { BIOLabel } from "@mailwoman/codex/component"
 import type { DecoderToken } from "@mailwoman/core/decoder"
 import { repairUnitLabels } from "@mailwoman/neural/unit-repair"
 import { describe, expect, it } from "vitest"
 
-/**
- * Build a char-aligned token.
- */
 function tok(piece: string, start: number, end: number, label: BIOLabel): DecoderToken {
 	return { piece, start, end, label, confidence: 1 }
 }
 
-/**
- * The contiguous unit value implied by the repaired labels (first B-…I-* run).
- */
 function unitValue(text: string, tokens: DecoderToken[]): string | null {
 	let start = -1
 	let end = -1
@@ -38,7 +20,7 @@ function unitValue(text: string, tokens: DecoderToken[]): string | null {
 		} else if (t.label === "I-unit" && start !== -1) {
 			end = t.end
 		} else if (start !== -1) {
-			break // run ended
+			break
 		}
 	}
 
@@ -60,7 +42,7 @@ describe("repairUnitLabels", () => {
 		const { tokens: out, changed } = repairUnitLabels(text, tokens)
 		expect(changed).toBeGreaterThan(0)
 		expect(unitValue(text, out)).toBe("Apt 456")
-		// the street/number must be untouched.
+
 		expect(out[0]!.label).toBe("B-house_number")
 		expect(out[1]!.label).toBe("B-street")
 	})
@@ -96,7 +78,7 @@ describe("repairUnitLabels", () => {
 		expect(unitValue(text, out)).toBe("STE D")
 	})
 
-	it("ADDs a bare hash unit (#104)", () => {
+	it("ADDs a bare hash unit", () => {
 		const text = "10 Downing St #104"
 
 		const tokens = [
@@ -110,8 +92,7 @@ describe("repairUnitLabels", () => {
 		expect(unitValue(text, out)).toBe("#104")
 	})
 
-	it("reclaims a bare unit the model mislabeled as locality (Flat 2 → unit)", () => {
-		// The v0.7.2 failure mode: "Flat 2 14 Smith St" → model labels "Flat 2" as locality.
+	it("Reclaims a bare unit the model mislabeled as locality (Flat 2 → unit)", () => {
 		const text = "Flat 2  14 Smith St"
 
 		const tokens = [
@@ -125,19 +106,18 @@ describe("repairUnitLabels", () => {
 		const { tokens: out, changed } = repairUnitLabels(text, tokens)
 		expect(changed).toBeGreaterThan(0)
 		expect(unitValue(text, out)).toBe("Flat 2")
-		// the house_number/street must be untouched.
+
 		expect(out[2]!.label).toBe("B-house_number")
 		expect(out[3]!.label).toBe("B-street")
 	})
 
 	it("does NOT add over a structural tag (Apt where the number is a confident house_number)", () => {
 		const text = "Apt 4"
-		// pathological: model labeled "4" as house_number.
-		// ADD must be blocked.
+
 		const tokens = [tok("Apt", 0, 3, "O"), tok("4", 4, 5, "B-house_number")]
 		const { tokens: out, changed } = repairUnitLabels(text, tokens)
 		expect(changed).toBe(0)
-		expect(out[1]!.label).toBe("B-house_number") // untouched
+		expect(out[1]!.label).toBe("B-house_number")
 	})
 
 	it("does NOT match 'Box' (that is a po_box, not a unit)", () => {
@@ -166,11 +146,7 @@ describe("repairUnitLabels", () => {
 	it("clips smear: a stray unit label past the match is trimmed", () => {
 		const text = "Apt 4 Springfield"
 
-		const tokens = [
-			tok("Apt", 0, 3, "B-unit"),
-			tok("4", 4, 5, "I-unit"),
-			tok("Springfield", 6, 17, "I-unit"), // model smeared the unit onto the city
-		]
+		const tokens = [tok("Apt", 0, 3, "B-unit"), tok("4", 4, 5, "I-unit"), tok("Springfield", 6, 17, "I-unit")]
 
 		const { tokens: out } = repairUnitLabels(text, tokens)
 		expect(unitValue(text, out)).toBe("Apt 4")

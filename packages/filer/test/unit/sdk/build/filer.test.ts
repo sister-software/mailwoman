@@ -1,12 +1,3 @@
-/**
- * @copyright Sister Software.
- * @license AGPL-3.0
- * @author Teffen Ellis, et al.
- *
- * Tests for {@linkcode buildFilerDatabase}. Synthetic rows exercise the full build without
- * touching source files.
- */
-
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { parseJSONStrict } from "@mailwoman/core/json"
@@ -29,14 +20,10 @@ const FRN_ACME = toFRN("0001753557")!
 const FRN_BDC_ONLY = toFRN("0009999999")!
 const FRN_GAMMA = toFRN("0005555555")!
 
-// Family-membership fixtures — distinct from the FRNs above to avoid any accidental cross-test coupling.
 const FRN_DELTA = toFRN("0002222222")!
 const FRN_EPSILON = toFRN("0003333333")!
 const FRN_ZETA = toFRN("0004444444")!
 
-/**
- * Returns one complete filing and one unregistered filer with most optional fields blank.
- */
 function form499FixtureRows(): Form499Row[] {
 	return [
 		{
@@ -80,12 +67,6 @@ function form499FixtureRows(): Form499Row[] {
 	]
 }
 
-/**
- * Provider 130077 has two FRNs; both should produce separate edges.
- *
- * One row has no holding company and should count as skipped.
- * Provider 130080 is separate.
- */
 function providerFixtureRows(): ProviderListRow[] {
 	return [
 		{ providerID: 130_077, frn: FRN_ACME, holdingCompany: "Acme Holdings Inc" },
@@ -231,7 +212,6 @@ describe("buildFilerDatabase", () => {
 			buildSHA: "deadbeef",
 		})
 
-		// Row 2 (providerID 130077, frn FRN_BDC_ONLY) has holdingCompany: null — no edge, counted as skipped.
 		expect(result.skipped).toBe(1)
 
 		using db = openFilerDB(out)
@@ -242,7 +222,6 @@ describe("buildFilerDatabase", () => {
 			.where("to_node_id", "like", `${FilerIdentifierType.HoldingCompanyName}:%`)
 			.execute()
 
-		// Only providerID 130077 (row 1, Acme Holdings Inc) and providerID 130080 (Gamma Corp).
 		expect(holdingEdges).toHaveLength(2)
 	})
 
@@ -269,8 +248,7 @@ describe("buildFilerDatabase", () => {
 			expect(edge.source_vintage.length).toBeGreaterThan(0)
 			expect(edge.assertion).toBe("authoritative")
 			expect(edge.valid_from.length).toBeGreaterThan(0)
-			// sourceVintage above ("2026-Q1") is deliberately not ISO — valid_from must never
-			// inherit that shape : every edge's valid_from is ISO YYYY-MM-DD regardless of source.
+
 			expect(edge.valid_from).toMatch(/^\d{4}-\d{2}-\d{2}$/)
 		}
 	})
@@ -296,7 +274,6 @@ describe("buildFilerDatabase", () => {
 			expect(edge.to_node_id).not.toContain("John Doe")
 		}
 
-		// DC-agent fields still recorded, but only as plain attributes, never as relationship evidence.
 		const dcAgentAttr = await db
 			.selectFrom("filer_attribute")
 			.selectAll()
@@ -398,9 +375,6 @@ describe("buildFilerDatabase", () => {
 		const out = scratch.path("filer.db")
 
 		const malformedRows: ProviderListRow[] = [
-			// Two different, unrelated providers, both with a blank frn.
-			// Without the guard these would silently share one degenerate `frn:` node,
-			// falsely asserting they are the same filer.
 			{ providerID: 900_001, frn: "" as ProviderListRow["frn"], holdingCompany: null },
 			{ providerID: 900_002, frn: "" as ProviderListRow["frn"], holdingCompany: null },
 		]
@@ -432,9 +406,6 @@ describe("buildFilerDatabase", () => {
 	})
 
 	describe("idempotent write path", () => {
-		/**
-		 * A small fixture with predictable node, edge, attribute, and skip counts.
-		 */
 		function idempotencyFixtureRow(): Form499Row {
 			return {
 				form499ID: "700001",
@@ -463,7 +434,6 @@ describe("buildFilerDatabase", () => {
 
 			const row = idempotencyFixtureRow()
 
-			// The same row twice — simulates a same-source/same-vintage double-insert opportunity.
 			const result = await buildFilerDatabase({
 				form499Rows: [row, row],
 				out,
@@ -519,7 +489,6 @@ describe("buildFilerDatabase", () => {
 			expect(first.edges).toBe(2)
 			expect(first.attributes).toBe(2)
 
-			// The rebuild-and-swap discipline: no `.prev` left lingering.
 			expect(await pathExists(`${out}.prev`)).toBe(false)
 		})
 
@@ -527,11 +496,6 @@ describe("buildFilerDatabase", () => {
 			await using scratch = await temporaryDirectory("filer-build-")
 			const out = scratch.path("filer.db")
 
-			// usfContributor: true + an Incumbent principalCommType -> two
-			// classification values ("usf_contributor", "incumbent_lec") sharing
-			// (node_id, key="classification", source, source_vintage) — only `value` differs.
-			// Proves the stage table's dedup key includes `value`, not just
-			// (node_id, key, source, source_vintage), or the second classification would be silently dropped.
 			const row: Form499Row = {
 				...idempotencyFixtureRow(),
 				principalCommType: "Incumbent Local Exchange Carrier",
@@ -581,9 +545,6 @@ describe("buildFilerDatabase", () => {
 			using db = openFilerDB(out)
 			const edges = await db.selectFrom("filer_edge").selectAll().execute()
 
-			// Every edge belongs to the second build's vintage — none of the first build's rows
-			// survived alongside it as additional rows (that would be cross-build accumulation,
-			// which this artifact deliberately does not support — see the module docstring's minor-B note).
 			expect(edges.length).toBeGreaterThan(0)
 			expect(edges.every((e) => e.source_vintage === "2026-Q2")).toBe(true)
 
@@ -599,9 +560,6 @@ describe("buildFilerDatabase", () => {
 	describe("typed relationship + family membership", () => {
 		const SOURCE_VINTAGE = "2026-Q3"
 
-		/**
-		 * Builds a filing row with defaults; each test overrides only relevant fields.
-		 */
 		function familyFixtureRow(overrides: Partial<Form499Row> & Pick<Form499Row, "form499ID" | "frn">): Form499Row {
 			return {
 				lastFiledAt: "2026-05-01",
@@ -623,7 +581,7 @@ describe("buildFilerDatabase", () => {
 			}
 		}
 
-		it("types holding/management edges to their named FilerRelationship, keeping identity edges SameEntity", async () => {
+		it("Types holding/management edges to their named FilerRelationship, keeping identity edges SameEntity", async () => {
 			await using scratch = await temporaryDirectory("filer-build-")
 			const out = scratch.path("filer.db")
 
@@ -648,26 +606,22 @@ describe("buildFilerDatabase", () => {
 
 			const toTarget = (nodeID: string) => edges.filter((e) => e.to_node_id === nodeID)
 
-			// FRN<->form499ID: identity, never HoldingCompany/ManagementCompany.
 			expect(
 				toTarget(`${FilerIdentifierType.Form499ID}:800001`).every(
 					(e) => e.relationship === FilerRelationship.SameEntity
 				)
 			).toBe(true)
 
-			// bdcProviderID<->FRN: identity too.
 			expect(
 				toTarget(`${FilerIdentifierType.FRN}:${FRN_DELTA}`).every(
 					(e) => e.relationship === FilerRelationship.SameEntity
 				)
 			).toBe(true)
 
-			// FRN->holdingCompanyName and bdcProviderID->holdingCompanyName both assert HoldingCompany.
 			const holdingEdges = toTarget(`${FilerIdentifierType.HoldingCompanyName}:Alpha Holdco Inc`)
 			expect(holdingEdges).toHaveLength(2)
 			expect(holdingEdges.every((e) => e.relationship === FilerRelationship.HoldingCompany)).toBe(true)
 
-			// FRN->managementCompanyName asserts ManagementCompany, never collapsed into HoldingCompany.
 			const managementEdges = toTarget(`${FilerIdentifierType.ManagementCompanyName}:Beta Management Co`)
 			expect(managementEdges).toHaveLength(1)
 			expect(managementEdges[0]!.relationship).toBe(FilerRelationship.ManagementCompany)
@@ -718,9 +672,7 @@ describe("buildFilerDatabase", () => {
 				expect(family.source_vintage).toBe("2026-05-01")
 				expect(family.valid_from).toBe("2026-05-01")
 				expect(family.valid_to).toBeNull()
-				// A 499 row naming its own holding company is the filing.
-				// Nothing was matched.
-				// The edgar block below pins the opposite grading from the same builder.
+
 				expect(family.assertion).toBe(FilerEdgeAssertion.Authoritative)
 				expect(family.match_score).toBeNull()
 			}
@@ -774,8 +726,6 @@ describe("buildFilerDatabase", () => {
 			using db = openFilerDB(out)
 			const families = await db.selectFrom("filer_family").selectAll().execute()
 
-			// form499FixtureRows' FRN_ACME row has both a holdingCompany and a managementCompany,
-			// so this suite isn't vacuously passing on account of there being no family rows at all.
 			expect(families.length).toBeGreaterThan(0)
 
 			for (const family of families) {
@@ -856,9 +806,6 @@ describe("buildFilerDatabase", () => {
 			return { cik: CIK_PARENT, filingDate: "2026-04-01", ...overrides }
 		}
 
-		/**
-		 * Builds a filing row with defaults for EDGAR matching tests.
-		 */
 		function corroborationForm499Row(
 			overrides: Partial<Form499Row> & Pick<Form499Row, "form499ID" | "frn" | "legalNameOfCarrier">
 		): Form499Row {
@@ -916,12 +863,11 @@ describe("buildFilerDatabase", () => {
 				valid_from: "2026-04-01",
 			})
 
-			// No corroboration possible (no form499Rows at all) — no family row for this build.
 			const familyRows = await db.selectFrom("filer_family").selectAll().execute()
 			expect(familyRows).toHaveLength(0)
 		})
 
-		it("edgarRows ALONE satisfies the 'at least one source' guard — it does not require form499/provider data", async () => {
+		it("EdgarRows ALONE satisfies the 'at least one source' condition — it does not require form499/provider data", async () => {
 			await using scratch = await temporaryDirectory("filer-build-")
 			const out = scratch.path("filer.db")
 
@@ -971,7 +917,6 @@ describe("buildFilerDatabase", () => {
 			const frnNodeID = `${FilerIdentifierType.FRN}:${frn}`
 			const cikNodeID = `${FilerIdentifierType.CIK}:${CIK_PARENT}`
 
-			// The inferred FRN -> CIK edge.
 			const inferredEdges = await db
 				.selectFrom("filer_edge")
 				.selectAll()
@@ -988,7 +933,6 @@ describe("buildFilerDatabase", () => {
 				match_score: 0.9,
 			})
 
-			// The precondition: the same fact also lands as a filer_family row rather than just the edge above.
 			const familyRows = await db
 				.selectFrom("filer_family")
 				.selectAll()
@@ -998,9 +942,6 @@ describe("buildFilerDatabase", () => {
 
 			expect(familyRows).toHaveLength(1)
 
-			// The family row carries the same grading as the edge above.
-			// `source` alone cannot supply it, because this very build also writes an authoritative
-			// `edgar-exhibit-21` disclosure edge, so the source name spans both grades.
 			expect(familyRows[0]).toMatchObject({
 				naming_node_id: cikNodeID,
 				assertion: FilerEdgeAssertion.Inferred,
@@ -1011,7 +952,7 @@ describe("buildFilerDatabase", () => {
 			})
 		})
 
-		it("abstains (no inferred edge, no family row) when the subsidiary name matches TWO DIFFERENT FRNs — a genuine name collision, never picked arbitrarily", async () => {
+		it("Abstains (neither inferred edge nor family row) when the subsidiary name matches TWO DIFFERENT FRNs — a genuine name collision, never picked arbitrarily", async () => {
 			await using scratch = await temporaryDirectory("filer-build-")
 			const out = scratch.path("filer.db")
 
@@ -1044,7 +985,6 @@ describe("buildFilerDatabase", () => {
 			const familyRows = await db.selectFrom("filer_family").selectAll().where("family_id", "=", cikNodeID).execute()
 			expect(familyRows).toHaveLength(0)
 
-			// The disclosure edge still stands — abstention is about the corroboration only.
 			const disclosureEdges = await db
 				.selectFrom("filer_edge")
 				.selectAll()
@@ -1054,10 +994,7 @@ describe("buildFilerDatabase", () => {
 			expect(disclosureEdges).toHaveLength(1)
 		})
 
-		/**
-		 * The score should reflect how closely the original names agree, not just their canonical forms.
-		 */
-		describe("the subsidiary→FRN match score varies with what the match actually knows", () => {
+		describe("The subsidiary→FRN match score varies with what the match actually knows", () => {
 			async function scoreFor(legalNameOfCarrier: string, subsidiaryName: string): Promise<number | null> {
 				await using scratch = await temporaryDirectory("filer-build-")
 				const out = scratch.path("filer.db")
@@ -1093,9 +1030,6 @@ describe("buildFilerDatabase", () => {
 			})
 
 			it("raw names differing in LEGAL DESIGNATION score weakest — canonicalization erased the only distinguishing part, and the abstention never sees this case", async () => {
-				// The case the abstention cannot see: 499 carries only the LLC, Exhibit
-				// 21 discloses the Inc. Exactly one FRN matches, so an edge is written —
-				// at the weakest score rather than the ceiling.
 				expect(await scoreFor("American Broadband LLC", "American Broadband, Inc.")).toBe(0.5)
 			})
 

@@ -1,9 +1,3 @@
-/**
- * @copyright Sister Software
- * @license AGPL-3.0
- * @author Teffen Ellis, et al.
- */
-
 import { removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { workspacePath } from "@mailwoman/core/paths"
 import {
@@ -53,7 +47,6 @@ describe("variantsFor (pure)", () => {
 	})
 
 	it("country uses the OpenCage-canonical name for the default slot value", () => {
-		// Use the canonical display name in the default slot.
 		const v = variantsFor(rec({ name: "United States", placetype: "country" }), [], "United States of America")
 		expect(v).toHaveLength(1)
 		expect(v[0]!.components).toEqual({ country: "United States of America" })
@@ -71,7 +64,7 @@ describe("variantsFor (pure)", () => {
 
 		expect(v[0]!.components.locality).toBe("St. Petersburg")
 		expect(v[1]!.components.locality).toBe("St. Petersburg")
-		expect(v[1]!.components.region).toBe("Florida") // Keep the canonical ancestor name.
+		expect(v[1]!.components.region).toBe("Florida")
 	})
 
 	it("subregion (county) yields self only", () => {
@@ -95,7 +88,7 @@ describe("nameSlotsFor", () => {
 			placetype: "locality",
 			country: "US",
 			nameVariants: new Map([
-				["name:eng_x_preferred", "Saint Petersburg"], // Same as the default name.
+				["name:eng_x_preferred", "Saint Petersburg"],
 				["name:eng_x_colloquial", "St. Petersburg"],
 				["name:rus_x_preferred", "Санкт-Петербург"],
 			]),
@@ -130,19 +123,17 @@ describe("wof-admin-json adapter against fixture", () => {
 
 		const rows = await loadRows()
 
-		// Emit canonical and colloquial names for the same WOF record.
 		const stPete = rows.filter((r) => r.source_id.startsWith("wof-admin-1021-"))
 		const stPeteRaws = stPete.map((r) => r.raw)
 		expect(stPeteRaws.some((r) => r.includes("Saint Petersburg"))).toBe(true)
 		expect(stPeteRaws.some((r) => r.includes("St. Petersburg"))).toBe(true)
 
-		// Source IDs distinguish name slots.
 		const slotKeys = new Set(stPete.map((r) => r.source_id.match(/^wof-admin-1021-(.+)-(?:self|with-[a-z-]+)$/)?.[1]))
 		expect(slotKeys.has("default")).toBe(true)
 		expect(slotKeys.has("name-eng-x-colloquial")).toBe(true)
 	})
 
-	it("emits per-hierarchy variants for a vanilla locality (Portland, no localized variants)", async () => {
+	it("Emits per-hierarchy variants for a vanilla locality (Portland without localized variants)", async () => {
 		await runAdapter({
 			adapter: createWOFAdminAdapter(),
 			adapterOptions: { inputPath: fixtureRoot, country: "US" },
@@ -152,7 +143,7 @@ describe("wof-admin-json adapter against fixture", () => {
 
 		const rows = await loadRows()
 		const portland = rows.filter((r) => r.source_id.startsWith("wof-admin-1012-default-"))
-		// Check the bare locality and an ancestor variant; parent rendering follows US formatting rules.
+
 		expect(portland.map((r) => r.raw)).toContain("Portland")
 
 		const withAncestor = portland.find(
@@ -176,13 +167,12 @@ describe("wof-admin-json adapter against fixture", () => {
 		expect(rows.every((r) => r.locale === "fr-FR")).toBe(true)
 		expect(rows.every((r) => r.source === WOF_ADMIN_ADAPTER_ID)).toBe(true)
 		expect(rows.every((r) => r.license === "CC0-1.0")).toBe(true)
-		// Check common French hierarchy variants.
+
 		expect(rows.map((r) => r.raw)).toContain("Paris")
 		expect(rows.map((r) => r.raw)).toContain("Paris, Île-de-France")
 	})
 
 	it("upper-cases a country code the publisher spelled in mixed case, and the filter still selects it", async () => {
-		// Achter de Hoven has a mixed-case `Nl` source code.
 		await runAdapter({
 			adapter: createWOFAdminAdapter(),
 			adapterOptions: { inputPath: fixtureRoot, country: "NL" },
@@ -206,9 +196,9 @@ describe("wof-admin-json adapter against fixture", () => {
 		})
 
 		const rows = await loadRows()
-		// Pelias marks current records with -1.
+
 		expect(rows.some((r) => r.source_id.startsWith("wof-admin-1001-"))).toBe(true)
-		// A zero marks a superseded record.
+
 		expect(rows.some((r) => r.raw.includes("Old Place"))).toBe(false)
 	})
 
@@ -221,7 +211,7 @@ describe("wof-admin-json adapter against fixture", () => {
 		})
 
 		const rows = await loadRows()
-		// Alternate-geometry exports are not separate records.
+
 		expect(rows.some((r) => r.raw.includes("alt-geometry"))).toBe(false)
 	})
 
@@ -269,7 +259,6 @@ describe("wof-admin-json adapter against fixture", () => {
 		const usDefault = rows.find((r) => r.source_id === "wof-admin-1001-default-self")
 		expect(usDefault?.raw).toContain("United States of America")
 
-		// Preserve source names in colloquial slots.
 		const colloquialRaws = rows
 			.filter((r) => r.source_id.startsWith("wof-admin-1001-name-eng-x-colloquial-"))
 			.map((r) => r.raw)

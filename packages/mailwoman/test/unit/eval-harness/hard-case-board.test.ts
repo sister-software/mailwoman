@@ -1,16 +1,3 @@
-/**
- * @copyright Sister Software.
- * @license AGPL-3.0
- * @author Teffen Ellis, et al.
- *
- *   The hard-case board's own guards. Two things are worth a test here and nothing else is:
- *
- *   1. The committed board loads and validates — a board that silently dropped a malformed row would
- *        under-report its own size and the arm comparison would run on a set nobody declared.
- *   2. The all-or-nothing coordinate refinement actually refuses partials. That rule is the board's
- *        meaning-of-zero discipline, and a schema rule nobody tests is a comment.
- */
-
 import { HardCaseSchema, loadHardCaseBoard } from "mailwoman/eval-harness/hard-case-board"
 import { describe, expect, it } from "vitest"
 
@@ -55,8 +42,6 @@ describe("hard-case board schema", () => {
 	})
 
 	it("refuses an unknown key rather than ignoring it", () => {
-		// A typo'd `expectLon` that parsed as "coordinate not asserted" is the input-tail
-		// defect the strict schema exists to make loud.
 		expect(HardCaseSchema.safeParse({ ...VALID, expectLng: -116.999 }).success).toBe(false)
 	})
 })

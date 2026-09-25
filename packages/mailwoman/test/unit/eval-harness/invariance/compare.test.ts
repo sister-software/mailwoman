@@ -1,11 +1,3 @@
-/**
- * @copyright Sister Software
- * @license AGPL-3.0
- * @author Teffen Ellis, et al.
- *
- *   Unit tests for the invariance mini-suite's component comparator — pure, no model, no I/O.
- */
-
 import { compareComponents } from "mailwoman/eval-harness/invariance/compare"
 import { describe, expect, it } from "vitest"
 
@@ -34,8 +26,7 @@ describe("compareComponents", () => {
 		expect(compareComponents({}, {}).verdict).toBe("INVARIANT")
 	})
 
-	it("is LOST when a critical tag's value changes — the Pennsylvania Ave comma-drop shape", () => {
-		// Reproduces the feed-8k finding: comma-drop pulls "NW" out of `street` and into `locality`.
+	it("Is LOST when a critical tag's value changes — the Pennsylvania Ave comma-drop shape", () => {
 		const a = { house_number: "1600", street: "Pennsylvania Ave NW", locality: "Washington", region: "DC" }
 
 		const b = {
@@ -66,17 +57,14 @@ describe("compareComponents", () => {
 		expect(compareComponents(a, b).verdict).toBe("LOST")
 	})
 
-	it("does not treat a critical tag absent from the ORIGINAL as broken just because it's absent in both", () => {
+	it("Does not treat a critical tag absent from the ORIGINAL as broken just because it's absent in both", () => {
 		const a = { street: "Rue Montmartre", locality: "Paris" }
 		const b = { street: "Rue Montmartre", locality: "Paris" }
 
 		expect(compareComponents(a, b).verdict).toBe("INVARIANT")
 	})
 
-	it("is LOST when a critical tag is ABSENT in the original but PRESENT in the transformed parse — hallucination", () => {
-		// A hallucinated house_number/street/postcode can resolve to a specific wrong rooftop —
-		// worse than a fallback to a coarser admin tier, so this is `lost` even
-		// though nothing "changed" in the more familiar sense of a present value drifting.
+	it("Is LOST when a critical tag is ABSENT in the original but PRESENT in the transformed parse — hallucination", () => {
 		const a = { street: "Rue Montmartre", locality: "Paris" }
 		const b = { street: "Rue Montmartre", locality: "Paris", postcode: "75001" }
 
@@ -86,14 +74,14 @@ describe("compareComponents", () => {
 		expect(result.diff.some((d) => d.includes("hallucinated"))).toBe(true)
 	})
 
-	it("is DEGRADED when only a non-critical tag drifts", () => {
+	it("Is DEGRADED when only a non-critical tag drifts", () => {
 		const a = { house_number: "41", street: "Hightree Drive", locality: "Macclesfield", dependent_locality: "Henbury" }
 		const b = { house_number: "41", street: "Hightree Drive", locality: "Macclesfield", dependent_locality: "" }
 
 		expect(compareComponents(a, b).verdict).toBe("DEGRADED")
 	})
 
-	it("is DEGRADED when a new non-critical tag appears", () => {
+	it("Is DEGRADED when a new non-critical tag appears", () => {
 		const a = { house_number: "41", street: "Hightree Drive" }
 		const b = { house_number: "41", street: "Hightree Drive", unit: "Flat 2" }
 

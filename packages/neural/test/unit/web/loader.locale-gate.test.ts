@@ -1,23 +1,3 @@
-/**
- * @copyright Sister Software
- * @license AGPL-3.0
- * @author Teffen Ellis, et al.
- *
- *   #1278 phase 2 — the browser-side per-parse country selection. Two concerns, no ORT/classifier mock
- *   needed (the units under test are pure):
- *
- *   1. browser-safety scope (the hard check): the two Stage-2 modules the loader now imports —
- *      `@mailwoman/locale-hint` + `@mailwoman/query-shape` — must be free of any `node:*` / fs / path /
- *      process runtime import across their full non-test source, or they'd break the browser bundle. A
- *      static scan of the shipped source asserts it (a type-only re-export of `@mailwoman/core/pipeline`
- *      erases at compile and is explicitly allowed).
- *
- *   2. PER-parse selection: `detectPairIndexCountry` maps an input's structural shape to a country subtag
- *      (postcode format / script only — never place names), and `resolvePairIndexForText` selects the
- *      loaded index whose header country matches (or the explicit `{ country }` override), returning the
- *      byte-stable `undefined` on no match.
- */
-
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { resolvePackageDirectory } from "@mailwoman/core/module/resolvers"
 import { PairIndexResolver, serializePairIndex, type PairIndexHeaderInput } from "@mailwoman/neural/pair"
@@ -32,11 +12,6 @@ const browserSafePackageRoots = {
 	"query-shape": resolvePackageDirectory("@mailwoman/query-shape"),
 } as const
 
-// ── Browser-safety scope ─────────────────────────────────────────────────────────────────────────────
-
-/**
- * Every non-test `.ts` under `dir`, recursively (the runtime source the browser bundle would pull).
- */
 async function sourceFiles(dir: PathBuilder): Promise<PathBuilder[]> {
 	const out: PathBuilder[] = []
 
@@ -54,9 +29,6 @@ async function sourceFiles(dir: PathBuilder): Promise<PathBuilder[]> {
 	return out
 }
 
-/**
- * A runtime `import`/`export … from` line (not a `type`-only one, which erases).
- */
 function isRuntimeImportLine(line: string): boolean {
 	const trimmed = line.trim()
 
@@ -64,20 +36,16 @@ function isRuntimeImportLine(line: string): boolean {
 
 	if (!/^(import|export)\b/.test(trimmed)) return false
 
-	// `import type … ` / `export type … ` erase entirely rather than a runtime import.
 	return !/^(import|export)\s+type\b/.test(trimmed)
 }
 
-/**
- * The module specifier of an import/export-from line.
- */
 function specifierOf(line: string): string {
 	return /from\s+["']([^"']+)["']/.exec(line)?.[1] ?? ""
 }
 
-describe("browser-safety scope — locale-hint + query-shape are node-free (#1278 hard check)", () => {
+describe("Browser-safe locale packages exclude Node dependencies", () => {
 	for (const pkg of ["locale-hint", "query-shape"]) {
-		test(`@mailwoman/${pkg}: no node:* / fs / path / process runtime import in the transitive source`, async () => {
+		test(`@mailwoman/${pkg} omits Node runtime imports from its transitive source`, async () => {
 			const files = await sourceFiles(browserSafePackageRoots[pkg as keyof typeof browserSafePackageRoots])
 
 			expect(files.length).toBeGreaterThan(0)
@@ -86,7 +54,6 @@ describe("browser-safety scope — locale-hint + query-shape are node-free (#127
 			for (const file of files) {
 				const text = await readLocalTextFile(file)
 
-				// Named node builtins must never appear as a value in browser-portable source.
 				if (/\brequire\s*\(/.test(text) || /\bprocess\.\w/.test(text) || /\b__dirname\b|\b__filename\b/.test(text)) {
 					offenders.push(`${file}: bare node global (require/process/__dirname)`)
 				}
@@ -102,8 +69,6 @@ describe("browser-safety scope — locale-hint + query-shape are node-free (#127
 						offenders.push(`${file}: runtime import of "${spec}"`)
 					}
 
-					// A value import of @mailwoman/core would drag the ~9MB data package into the bundle.
-					// Only a type-only re-export (erased) is allowed.
 					if (spec.startsWith("@mailwoman/core")) {
 						offenders.push(
 							`${file}: runtime import of "${spec}" (only \`export type\`/\`import type\` is browser-safe)`
@@ -116,8 +81,6 @@ describe("browser-safety scope — locale-hint + query-shape are node-free (#127
 		})
 	}
 })
-
-// ── Per-parse country detection ──────────────────────────────────────────────────────────────────────
 
 describe("detectPairIndexCountry — structural country from the input shape", () => {
 	test("a UK postcode drives a gb detection", () => {
@@ -138,15 +101,9 @@ describe("detectPairIndexCountry — structural country from the input shape", (
 	})
 
 	test("bitter-lesson-safe: a bare place name with NO postcode is NOT read as gb — it falls through to the us fallback", () => {
-		// locale-hint keys off structural cues (postcode/script) only, never place-name dictionaries,
-		// so "Shoreditch London" — a real GB dependent_locality/locality pair — detects `us`, not `gb`.
-		// The pair prior is additive, so a conservative miss (no bias) is the safe failure mode.
-		// A caller who knows the posture uses the `{ country }` override on resolvePairIndexForText.
 		expect(detectPairIndexCountry("Shoreditch London")).toBe("us")
 	})
 })
-
-// ── Per-parse index selection ────────────────────────────────────────────────────────────────────────
 
 function indexFor(country: string): LoadedPairIndex {
 	const header: PairIndexHeaderInput = {
@@ -173,27 +130,25 @@ describe("resolvePairIndexForText — per-parse selection among the loaded index
 		const opt = resolvePairIndexForText(loaded, "10 Downing Street, London SW1A 2AA")
 
 		expect(opt).toEqual({ index: gb.resolver })
-		expect(opt!.index).toBe(gb.resolver) // the same retained instance rather than a copy
+		expect(opt!.index).toBe(gb.resolver)
 	})
 
 	test("US text selects the us index", () => {
 		expect(resolvePairIndexForText(loaded, "350 5th Ave, New York, NY 10118")).toEqual({ index: us.resolver })
 	})
 
-	test("a detected country with NO loaded index → undefined (byte-stable no-prior)", () => {
-		// CJK detects `jp`, but only gb + us are loaded → no bias.
+	test("A detected country with NO loaded index → undefined (byte-stable no-prior)", () => {
 		expect(resolvePairIndexForText(loaded, "東京都千代田区丸の内1-9-1")).toBeUndefined()
-		// gb-only load, US input → no us index → undefined.
+
 		expect(resolvePairIndexForText([gb], "350 5th Ave, New York, NY 10118")).toBeUndefined()
 	})
 
-	test("the explicit { country } override bypasses detection (pins a posture the text shape can't reveal)", () => {
-		// "Shoreditch London" detects `us`; the override forces the gb pick.
+	test("The explicit { country } override bypasses detection (pins a posture the text shape can't reveal)", () => {
 		expect(resolvePairIndexForText(loaded, "Shoreditch London", { country: "en-gb" })).toEqual({ index: gb.resolver })
 		expect(resolvePairIndexForText(loaded, "Shoreditch London", { country: "gb" })).toEqual({ index: gb.resolver })
 	})
 
-	test("no indexes loaded → undefined regardless of text", () => {
+	test("No indexes loaded → undefined regardless of text", () => {
 		expect(resolvePairIndexForText([], "10 Downing Street, London SW1A 2AA")).toBeUndefined()
 		expect(resolvePairIndexForText([], "Shoreditch London", { country: "en-gb" })).toBeUndefined()
 	})

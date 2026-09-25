@@ -1,13 +1,3 @@
-/**
- * @copyright Sister Software
- * @license AGPL-3.0
- * @author Teffen Ellis, et al.
- *
- *   The collision interface for the address-point normalizer (#476): variants that refer to the same
- *   street must normalize identically. distinct streets must not. Build-side and lookup-side both
- *   import the same function, so these tests are the whole correctness story for the keying.
- */
-
 import {
 	canonicalizeRouteKey,
 	normalizeHouseNumberForKey,
@@ -43,7 +33,6 @@ describe("normalizeStreetForKey", () => {
 	})
 
 	it("does not collapse a bare directional-only name", () => {
-		// "N" alone is a (weird but real) street name — single tokens are never expanded.
 		expect(normalizeStreetForKey("N")).toBe("n")
 	})
 
@@ -52,14 +41,13 @@ describe("normalizeStreetForKey", () => {
 		expect(normalizeStreetForKey("  CALLE   José.  ")).toBe("calle jose")
 	})
 
-	it("folds a spelled ordinal before a street suffix to digit form (#723)", () => {
+	it("Folds a spelled ordinal before a street suffix to digit form", () => {
 		expect(normalizeStreetForKey("Tenth St")).toEqual(normalizeStreetForKey("10th Street"))
 		expect(normalizeStreetForKey("Fifth Avenue")).toEqual(normalizeStreetForKey("5th Ave"))
 		expect(normalizeStreetForKey("Twentieth St")).toBe("20th street")
 	})
 
 	it("does NOT fold an ordinal WORD that is not followed by a street suffix", () => {
-		// "First National Bank Rd" — "First" is a name prefix here rather than an ordinal cross-street.
 		expect(normalizeStreetForKey("First National Bank Rd")).toContain("first")
 	})
 
@@ -78,8 +66,6 @@ describe("normalizeLocalityForKey", () => {
 
 describe("canonicalizeRouteKey", () => {
 	it("folds TIGER and E911/Overture route spellings to the same key", () => {
-		// tiger "State Rte 100" → normalizeStreetForKey → "state route 100" already.
-		// The E911 spelling needs the designator fold to meet it.
 		expect(canonicalizeRouteKey(normalizeStreetForKey("State Rte 100"))).toBe("state route 100")
 		expect(canonicalizeRouteKey(normalizeStreetForKey("VT ROUTE 100"))).toBe("state route 100")
 		expect(canonicalizeRouteKey(normalizeStreetForKey("US Hwy 5"))).toBe("us route 5")
@@ -98,28 +84,27 @@ describe("canonicalizeRouteKey", () => {
 	it("never folds non-route names", () => {
 		expect(canonicalizeRouteKey(normalizeStreetForKey("State Street"))).toBe("state street")
 		expect(canonicalizeRouteKey(normalizeStreetForKey("Old Route 100"))).toBe("old route 100")
-		// Bare "Route N" stays unfolded.
-		// The designator (US vs state) is unknown.
+
 		expect(canonicalizeRouteKey(normalizeStreetForKey("Route 100"))).toBe("route 100")
 	})
 })
 
 describe("stripLocalityQualifier (query-side fallback)", () => {
 	it("strips an OA locality qualifier to the gazetteer base name", () => {
-		expect(stripLocalityQualifier("Kraubath/Mur")).toBe("Kraubath") // AT slash-qualifier
+		expect(stripLocalityQualifier("Kraubath/Mur")).toBe("Kraubath")
 		expect(stripLocalityQualifier("St.Kanzian/Klopeiner See")).toBe("St.Kanzian")
-		expect(stripLocalityQualifier("Hart b.Graz")).toBe("Hart") // abbreviated bei
-		expect(stripLocalityQualifier("Feistritz o.Bleiburg")).toBe("Feistritz") // abbreviated ob
-		expect(stripLocalityQualifier("Lenk im Simmental")).toBe("Lenk") // CH spelled qualifier
-		expect(stripLocalityQualifier("Roche VD")).toBe("Roche") // CH canton code
-		expect(stripLocalityQualifier("Odense S")).toBe("Odense") // DK postal direction
-		expect(stripLocalityQualifier("Hurup Thy")).toBe("Hurup") // DK region suffix
+		expect(stripLocalityQualifier("Hart b.Graz")).toBe("Hart")
+		expect(stripLocalityQualifier("Feistritz o.Bleiburg")).toBe("Feistritz")
+		expect(stripLocalityQualifier("Lenk im Simmental")).toBe("Lenk")
+		expect(stripLocalityQualifier("Roche VD")).toBe("Roche")
+		expect(stripLocalityQualifier("Odense S")).toBe("Odense")
+		expect(stripLocalityQualifier("Hurup Thy")).toBe("Hurup")
 	})
 
 	it("returns '' when nothing is stripped (no wasted re-probe)", () => {
 		expect(stripLocalityQualifier("Paris")).toBe("")
 		expect(stripLocalityQualifier("San Francisco")).toBe("")
-		// "am Main" is part of the canonical name — must not be over-stripped.
+
 		expect(stripLocalityQualifier("Frankfurt am Main")).toBe("")
 		expect(stripLocalityQualifier("New York")).toBe("")
 		expect(stripLocalityQualifier("Foo an der")).toBe("")
@@ -152,7 +137,6 @@ describe("streetKeyVariants", () => {
 	})
 
 	it("never touches a street genuinely named with a type word", () => {
-		// Street Road (Bucks County PA) and a one-word name: no doubled-type signature, no saint.
 		expect(streetKeyVariants("Street Road")).toEqual(["street road"])
 		expect(streetKeyVariants("Broadway")).toEqual(["broadway"])
 	})
@@ -175,8 +159,7 @@ describe("streetLocaleForSurface (the Québec surface router)", () => {
 		expect(streetLocaleForSurface("Fifth Avenue", "en")).toBe("en")
 		expect(streetLocaleForSurface("Grosvenor Place", "en")).toBe("en")
 		expect(streetLocaleForSurface("1 Avenue NE", "en")).toBe("en")
-		// "Main St": st abbreviates Street here, and the fr rules would expand it to saint.
-		// The lead-anchored predicate is what keeps that fold away from English surfaces.
+
 		expect(streetLocaleForSurface("Main St", "en")).toBe("en")
 	})
 
@@ -201,20 +184,19 @@ describe("streetLocaleForSurface (the Québec surface router)", () => {
 
 describe("normalizeStreetForKeyLocale — the pl/vn/id branches (the 2026-08-19 coverage lane)", () => {
 	it("pl: folds ł (the non-decomposing letter) and STRIPS the leading type — OSM Poland tags streets bare", () => {
-		// Typed, spelled and bare surfaces all key to the extract's bare form (22 of 5.56M rows carry "ulica").
 		expect(normalizeStreetForKeyLocale("ul. Świętokrzyska", "pl")).toBe("swietokrzyska")
 		expect(normalizeStreetForKeyLocale("ulica Świętokrzyska", "pl")).toBe("swietokrzyska")
 		expect(normalizeStreetForKeyLocale("Świętokrzyska", "pl")).toBe("swietokrzyska")
 		expect(normalizeStreetForKeyLocale("Marszałkowska", "pl")).toBe("marszalkowska")
 		expect(normalizeStreetForKeyLocale("al. Jerozolimskie", "pl")).toBe("jerozolimskie")
 		expect(normalizeStreetForKeyLocale("Plac Zamkowy", "pl")).toBe("zamkowy")
-		// The type alone is a name rather than a prefix, never stripped to nothing.
+
 		expect(normalizeStreetForKeyLocale("Ulica", "pl")).toBe("ulica")
 	})
 
 	it("vn: folds BOTH đ (d-with-stroke) and ð (eth) — OSM mixes the codepoints inside one value", () => {
 		expect(normalizeStreetForKeyLocale("Đường Trần Hưng Đạo", "vn")).toBe("duong tran hung dao")
-		// The measured OSM mixture: U+0110 leading, U+00D0 (ETH) inside Đạo — the majority variant's key.
+
 		expect(normalizeStreetForKeyLocale("\u0110ường Trần Hưng \u00D0ạo", "vn")).toBe("duong tran hung dao")
 		expect(normalizeStreetForKeyLocale("Duong Tran Hung Dao", "vn")).toBe("duong tran hung dao")
 		expect(normalizeStreetForKeyLocale("Phố Huế", "vn")).toBe("pho hue")
@@ -227,7 +209,6 @@ describe("normalizeStreetForKeyLocale — the pl/vn/id branches (the 2026-08-19 
 	})
 
 	it("the letter maps stay OUT of the other locales — built extracts keep their keys", () => {
-		// A Polish-named street in a de extract keys with ł intact, exactly as the extract was built.
 		expect(normalizeStreetForKeyLocale("Łuckastraße", "de")).toBe("łuckastrasse")
 	})
 })
@@ -236,14 +217,14 @@ describe("the zh branch — the Taiwanese register's Han keys", () => {
 	it("keys a street as its Han fold: no whitespace, kanji section numerals as written", () => {
 		expect(normalizeStreetForKeyLocale("重慶南路一段", "zh")).toBe("重慶南路一段")
 		expect(normalizeStreetForKeyLocale("重慶南路 一段", "zh")).toBe("重慶南路一段")
-		// Full-width Latin or digits inside a name fold to ascii, as they do in the number.
+
 		expect(normalizeStreetForKeyLocale("中山路２段", "zh")).toBe("中山路2段")
 	})
 
 	it("keys 臺 and 台 as one locality: the register writes 臺北市, a query 台北市", () => {
 		expect(normalizeLocalityForKeyLocale("臺北市中正區", "zh")).toBe("台北市中正區")
 		expect(normalizeLocalityForKeyLocale("台北市 中正區", "zh")).toBe("台北市中正區")
-		// The shared fold is untouched: the candidate gazetteer keys 臺 names as written.
+
 		expect(normalizeLocalityForKey("臺北市")).toBe("臺北市")
 		expect(normalizeLocalityForKeyLocale("Paris", "fr")).toBe("paris")
 	})
@@ -258,7 +239,7 @@ describe("the zh branch — the Taiwanese register's Han keys", () => {
 		expect(normalizeHouseNumberForKey("30附40號", "zh")).toBe("30附40")
 		expect(normalizeHouseNumberForKey("30號附40", "zh")).toBe("30附40")
 		expect(normalizeHouseNumberForKey("５５之２３附１號", "zh")).toBe("55之23附1")
-		// Every Latin locale keeps the trimmed, lower-cased number the extracts store.
+
 		expect(normalizeHouseNumberForKey(" 12A ", "us")).toBe("12a")
 		expect(normalizeHouseNumberForKey("3 a", "fr")).toBe("3 a")
 	})

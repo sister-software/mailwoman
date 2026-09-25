@@ -1,11 +1,4 @@
-/**
- * @copyright Sister Software
- * @license AGPL-3.0
- * @author Teffen Ellis, et al.
- *
- *   Generate parse examples from codex country names and curated variants. Exclude short codes because they are
- *   ambiguous with abbreviations and words.
- */
+
 
 import { COUNTRY_SURFACE_FORMS, CountryNames, matchCountry } from "@mailwoman/codex/country"
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
@@ -14,22 +7,16 @@ import { alignAndWrite, type CorpusRecipe, recipeSourceID } from "#recipes/scaff
 import { SourceRegister } from "#registers"
 import { SurfaceOrigin } from "#types"
 
-/**
- * Provenance for standalone country names.
- */
+
 const BARE_COUNTRY_PROVENANCE = {
 	register: SourceRegister.Codex,
 	surface: SurfaceOrigin.Attested,
 }
 
-/**
- * Minimum country-name length; shorter forms are ambiguous codes.
- */
+
 const MIN_NAME_LENGTH = 4
 
-/**
- * Yield unique canonical and curated country names.
- */
+
 function* bareCountrySurfaces(): Generator<{ surface: string; iso2: string }> {
 	const seen = new Set<string>()
 
@@ -51,15 +38,13 @@ function* bareCountrySurfaces(): Generator<{ surface: string; iso2: string }> {
 	}
 }
 
-/**
- * Bare-country recipe.
- */
+
 export const bareCountryRecipe: CorpusRecipe = {
 	name: "bare-country",
 	description: "The country name as the whole query (#1651 parse half): ISO names + curated endonyms, no codes",
 	mode: "generate",
 	async run(opts, write) {
-		// Preserve the common recipe seed interface.
+		
 		makeMulberry32(opts.seed)
 		let read = 0
 		let emitted = 0

@@ -1,11 +1,3 @@
-/**
- * @copyright Sister Software.
- * @license AGPL-3.0
- * @author Teffen Ellis, et al.
- * @file Test lifecycle-derived cessation windows and supersession edges in `buildFilerDatabase`.
- *   Workbook rows provide `Form499Row.lifecycle`; TSV rows do not, so the final suite checks TSV behavior.
- */
-
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { toFRN } from "@mailwoman/filer/frn"
 import { type FilerDatabase, FilerIdentifierType, FilerRelationship } from "@mailwoman/filer/schema"
@@ -98,7 +90,7 @@ describe("cessation closes a relationship window — when the two dates order co
 		expect(result.cessationWindowAbstained).toBe(0)
 	})
 
-	it("leaves the IDENTITY edge open — an identifier mapping does not expire when the company does", async () => {
+	it("Leaves the IDENTITY edge open — an identifier mapping does not expire when the company does", async () => {
 		const { edges } = await build([
 			filerRow({
 				form499ID: "900001",
@@ -116,7 +108,6 @@ describe("cessation closes a relationship window — when the two dates order co
 
 describe("cessation ABSTAINS rather than asserting an incoherent window", () => {
 	it("leaves the window open when the cessation date PREDATES the last filing", async () => {
-		// Annual filings may postdate cessation; this fixture has that date order.
 		const { result, edges } = await build([
 			filerRow({
 				form499ID: "900002",
@@ -128,7 +119,6 @@ describe("cessation ABSTAINS rather than asserting an incoherent window", () => 
 
 		const holding = edges.find((edge) => edge.relationship === FilerRelationship.HoldingCompany)
 
-		// An inverted window would hide the filer from every as-of query.
 		expect(holding?.valid_to).toBeNull()
 		expect(result.cessationWindowAbstained).toBe(1)
 		expect(result.closedByCessation).toBe(0)
@@ -200,7 +190,7 @@ describe("supersession edges", () => {
 		expect(superseded).toMatchObject({
 			from_node_id: `${FilerIdentifierType.Form499ID}:801004`,
 			to_node_id: `${FilerIdentifierType.Form499ID}:821002`,
-			// Use the cessation date as the effective date.
+
 			valid_from: "2013-09-08",
 			valid_to: null,
 		})
@@ -222,7 +212,6 @@ describe("supersession edges", () => {
 	})
 
 	it("mints the successor node even when its own row never appears", async () => {
-		// Keep the reported edge even when its target has no row.
 		const { edges } = await build([
 			filerRow({
 				form499ID: "900007",
@@ -243,8 +232,7 @@ describe("supersession edges", () => {
 })
 
 describe("a TSV-shaped row is unaffected", () => {
-	it("writes no lifecycle attribute, no supersession, and closes no window", async () => {
-		// TSV rows have no lifecycle notes.
+	it("Writes neither lifecycle attribute nor supersession, and closes no window", async () => {
 		const { result, edges, attributes } = await build([filerRow({ form499ID: "900009" })])
 
 		expect(result.closedByCessation).toBe(0)

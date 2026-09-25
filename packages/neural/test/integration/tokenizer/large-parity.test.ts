@@ -1,23 +1,3 @@
-/**
- * @copyright Sister Software
- * @license AGPL-3.0
- * @author Teffen Ellis, et al.
- *
- *   Large-scale TS↔Python tokenizer parity sweep.
- *
- *   Validates the SentencePiece offset reconstruction against 10k real corpus rows. Skips silently
- *   when the large fixture isn't present (the file is generated on the host from corpus parquet —
- *   see `fixtures/generate-tokenizer-parity.py --from-parquet`).
- *
- *   Two assertions:
- *
- *   1. Byte-for-byte pieces+ids equality on every entry — the essential Phase 3 invariant.
- *   2. Offset reconstruction correctness on entries that don't contain documented unsupported cases
- *        (byte-fallback pieces + zero-width joiners). Those gaps are documented in tokenizer.ts.
- *        the sweep confirms the 99%+ population is correctly handled, and surfaces which
- *        non-Latin-script edge cases the v0.1.0 tokenizer hits byte-fallback on.
- */
-
 import { readLocalJSONFile, pathExists } from "@mailwoman/core/fs/readers"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { workspacePath } from "@mailwoman/core/paths"
@@ -70,12 +50,10 @@ describe.skipIf(!haveLargeFixture)("MailwomanTokenizer — large-scale parity (1
 		expect(divergences).toBe(0)
 	})
 
-	test("offset reconstruction is correct on the supported subset (no byte-fallback, no ZWJ)", async () => {
+	test("Offset reconstruction is correct on the supported subset (neither byte-fallback nor ZWJ)", async () => {
 		const fixture = await readLocalJSONFile<FixtureEntry[]>(LARGE_FIXTURE_PATH)
 		const tokenizer = await MailwomanTokenizer.loadFromFile(MODEL_PATH)
 
-		// Documented unsupported cases in tokenizer.ts: byte-fallback pieces (`<0xHH>`) and inputs
-		// containing zero-width joiner / non-joiner characters that the walker can't account for.
 		const BYTE_FALLBACK_RE = /^<0x[0-9A-F]{2}>$/u
 		const ZERO_WIDTH_RE = /[\u200B-\u200F\uFEFF]/u
 
@@ -110,15 +88,8 @@ describe.skipIf(!haveLargeFixture)("MailwomanTokenizer — large-scale parity (1
 			}
 		}
 
-		// Sanity: we expect the vast majority of corpus rows to be in the supported
-		// subset (Latin- script and Latin-with-diacritics dominate).
 		expect(supported).toBeGreaterThan(fixture.length * 0.95)
 
-		// Allow up to 0.1% slack for Unicode normalization edge cases — SentencePiece nfkc-
-		// normalizes pieces (e.g. Fullwidth ＝ → ascii =, precomposed Hangul → decomposed Jamo),
-		// so the piece text may differ from `raw.slice` even when the offset itself is correct.
-		// Properly handling this needs an nfkc-aware comparator.
-		// Current sweep shows ≤ 0.05% rate.
 		const mismatchRate = mismatches / supported
 
 		if (mismatchRate >= 0.001) {

@@ -1,17 +1,3 @@
-/**
- * @copyright Sister Software
- * @license AGPL-3.0
- * @author Teffen Ellis, et al.
- *
- *   #1902's acceptance criteria, one named test each. Every case runs on the shipped synthetic fixture
- *   — invented addresses, invented identifiers in the reserved 0-prefixed range, no model, no
- *   gazetteer, no network — so the suite runs anywhere and no licensed row can reach it.
- *
- *   What the suite pins is the shape of the report rather than any prose about it: a numerator and its
- *   denominator for every rate, an outcome vocabulary neither arm can privately redefine, and a writer
- *   that refuses before it opens a file.
- */
-
 import { readLocalTextFile, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { AuthoritativeResponseStatus, type AuthoritativeQuery } from "@mailwoman/core/resolver"
@@ -64,9 +50,6 @@ async function collectRows(adapter: PremiseLinkageAdapter): Promise<PremiseLinka
 	return rows
 }
 
-/**
- * An adapter over an explicit row list — used to feed the same fixture rows back in a different order.
- */
 function listAdapter(name: string, rows: readonly PremiseLinkageInputRow[]): PremiseLinkageAdapter {
 	return {
 		name,
@@ -104,12 +87,6 @@ function armNamed(report: PremiseLinkageReport, arm: string): PremiseLinkageArmR
 	return found
 }
 
-/**
- * Run something that must refuse, and hand back the refusal itself.
- *
- * A reason and a path are what the writer promises, and a message match would
- * pass on a refusal for the wrong reason.
- */
 function refusalFrom(run: () => unknown): PremiseLinkageRedactionError {
 	try {
 		run()
@@ -128,12 +105,11 @@ function isCount(value: unknown): value is PremiseLinkageCount {
 	return typeof (value as PremiseLinkageCount).n === "number" && typeof (value as PremiseLinkageCount).of === "number"
 }
 
-describe("#1902: synthetic fixtures exercise exact, wrong, refused and ambiguous in both required arms", () => {
+describe(": synthetic fixtures exercise exact, wrong, refused and ambiguous in both required arms", () => {
 	it("grades every fixture row through both arms, and the authoritative arm produces all four outcomes", async () => {
 		const run = await syntheticRun()
 		const fixtureRows = await collectRows(syntheticFixtureAdapter())
 
-		// Both arms graded every row: two arms' worth of result rows, and no row silently dropped.
 		expect(run.rows).toHaveLength(fixtureRows.length * 2)
 		expect(armNamed(run.report, OPEN_ARM_NAME).rowsRead).toBe(fixtureRows.length)
 		expect(armNamed(run.report, AUTHORITATIVE_ARM_NAME).rowsRead).toBe(fixtureRows.length)
@@ -151,8 +127,6 @@ describe("#1902: synthetic fixtures exercise exact, wrong, refused and ambiguous
 	it("grades both arms through ONE mapper, so neither arm can hold a private definition of `exact`", () => {
 		const expected = { scheme: "uprn", id: "000000000001" }
 
-		// The open arm's state: no authoritative block at all.
-		// A refusal, never a wrong answer.
 		expect(outcomeFor(undefined, expected)).toEqual({
 			outcome: PremiseLinkageOutcome.Refused,
 			failureCategory: PremiseLinkageFailureCategory.ArmAssertsNoIdentifier,
@@ -182,7 +156,6 @@ describe("#1902: synthetic fixtures exercise exact, wrong, refused and ambiguous
 
 		expect(outcomeFor({ provider: "p", status: "refused" }, expected).outcome).toBe(PremiseLinkageOutcome.Refused)
 
-		// Ambiguity keeps its candidates and is never collapsed into the first one.
 		expect(
 			outcomeFor(
 				{
@@ -208,12 +181,11 @@ describe("#1902: synthetic fixtures exercise exact, wrong, refused and ambiguous
 
 		expect(authoritative.erroredOverAll).toEqual({ n: 2, of: authoritative.rowsRead })
 
-		// Ungradable rows are outside the eligible denominator, in both directions: it is smaller than the run.
 		expect(authoritative.overall.exactOverEligible.of).toBeLessThan(authoritative.rowsRead)
 	})
 })
 
-describe("#1902: the report prints every numerator and denominator", () => {
+describe(": the report prints every numerator and denominator", () => {
 	it("states an `n` and an `of` for every rate, at the run level and per class", async () => {
 		const { report } = await syntheticRun()
 
@@ -250,8 +222,6 @@ describe("#1902: the report prints every numerator and denominator", () => {
 		expect(comparison.improved.of).toBe(comparison.changed.of)
 		expect(comparison.improved.n + comparison.regressed.n).toBeLessThanOrEqual(comparison.changed.n)
 
-		// The open arm refuses on identity everywhere, so a provider match is a strict improvement
-		// and a provider that names the wrong premise is a strict regression.
 		expect(comparison.improved.n).toBeGreaterThan(0)
 		expect(comparison.regressed.n).toBeGreaterThan(0)
 	})
@@ -263,10 +233,8 @@ describe("#1902: the report prints every numerator and denominator", () => {
 		const permittedOpen = armNamed(permitted.report, OPEN_ARM_NAME)
 		const requiredOpen = armNamed(required.report, OPEN_ARM_NAME)
 
-		// Abstention permitted: the open arm's refusals leave the denominator entirely.
 		expect(permittedOpen.overall.exactOverEligible).toEqual({ n: 0, of: 0 })
 
-		// A unique answer required: the same refusals count against it, and are still recorded as refusals.
 		expect(requiredOpen.overall.exactOverEligible.of).toBeGreaterThan(0)
 		expect(requiredOpen.overall.refusedOverAll).toEqual(permittedOpen.overall.refusedOverAll)
 
@@ -276,7 +244,7 @@ describe("#1902: the report prints every numerator and denominator", () => {
 	})
 })
 
-describe("#1902: reordering the private input does not change aggregate results", () => {
+describe(": reordering the private input does not change aggregate results", () => {
 	it("produces deep-equal aggregates from the same rows fed in reverse", async () => {
 		const rows = await collectRows(syntheticFixtureAdapter())
 		const forward = await syntheticRun({ adapter: listAdapter("forward", rows) })
@@ -286,7 +254,7 @@ describe("#1902: reordering the private input does not change aggregate results"
 	})
 })
 
-describe("#1902: two runs with different salts cannot be joined by their case identifiers", () => {
+describe(": two runs with different salts cannot be joined by their case identifiers", () => {
 	it("shares no case identifier between two salts over the same inputs", async () => {
 		const rows = await collectRows(syntheticFixtureAdapter())
 		const first = new Set(rows.map((row) => caseIDFor(row.input, SALT)))
@@ -312,7 +280,7 @@ describe("#1902: two runs with different salts cannot be joined by their case id
 	})
 })
 
-describe("#1902: the public-report writer refuses an injected disclosure", () => {
+describe(": the public-report writer refuses an injected disclosure", () => {
 	it("refuses a raw address in a report field, naming the path", async () => {
 		const run = await syntheticRun()
 		const injected = structuredClone(run.report)
@@ -343,8 +311,6 @@ describe("#1902: the public-report writer refuses an injected disclosure", () =>
 
 		injected.arms[0]!.providerName = `graded ${run.inputs[0]!} in 4 ms`
 
-		// The one check that proves a disclosure — this string was read from the run's own input —
-		// is the one reported, ahead of the two heuristics the same value also trips.
 		expect(refusalFrom(() => publishableReport({ ...run, report: injected })).reason).toBe(
 			PremiseLinkageRedactionReason.InputSubstring
 		)
@@ -411,7 +377,7 @@ describe("#1902: the public-report writer refuses an injected disclosure", () =>
 	})
 })
 
-describe("#1902: small result cells are suppressed according to the configured minimum", () => {
+describe(": small result cells are suppressed according to the configured minimum", () => {
 	it("removes every per-class cell below the minimum and counts the removals", async () => {
 		const permissive = await syntheticRun({ minCellSize: 1 })
 		const strict = await syntheticRun({ minCellSize: 3 })
@@ -438,7 +404,7 @@ describe("#1902: small result cells are suppressed according to the configured m
 	})
 })
 
-describe("#1902: the Mailwoman-only arm uses the production pipeline, unchanged", () => {
+describe(": the Mailwoman-only arm uses the production pipeline, unchanged", () => {
 	it("consults the provider once per row, not twice — the open arm is handed none", async () => {
 		const log: AuthoritativeQuery[] = []
 		const rows = await collectRows(syntheticFixtureAdapter())
@@ -448,8 +414,6 @@ describe("#1902: the Mailwoman-only arm uses the production pipeline, unchanged"
 			authoritativeProvider: syntheticFixtureProvider({ log }),
 		})
 
-		// Two arms, one provider consult per row: the open arm ran the same rows through
-		// the same `geocodeAddress` with nothing in the provider slot.
 		expect(log).toHaveLength(rows.length)
 	})
 
@@ -483,16 +447,14 @@ describe("#1902: the Mailwoman-only arm uses the production pipeline, unchanged"
 
 		expect(openRows.length).toBeGreaterThan(0)
 
-		// `none` is the recorded provider precisely because the arm consulted one and got nothing back.
-		// The block is absent, so every open row reports the structural refusal.
 		expect(openRows.every((row) => row.failureCategory === PremiseLinkageFailureCategory.ArmAssertsNoIdentifier)).toBe(
 			true
 		)
 	})
 })
 
-describe("#1902: the authoritative arm consumes the #1901 provider interface", () => {
-	it("hands the fixture provider the assembled #1901 query, once per row", async () => {
+describe(": the authoritative arm consumes the provider interface", () => {
+	it("Hands the fixture provider the assembled query, once per row", async () => {
 		const log: AuthoritativeQuery[] = []
 		const rows = await collectRows(syntheticFixtureAdapter())
 
@@ -521,7 +483,7 @@ describe("#1902: the authoritative arm consumes the #1901 provider interface", (
 	})
 })
 
-describe("#1902: a controlled run configuration is validated before any licensed file is opened", () => {
+describe(": a controlled run configuration is validated before any licensed file is opened", () => {
 	it("accepts a factory and a plain object, and refuses anything missing a required piece", async () => {
 		const config = {
 			adapter: syntheticFixtureAdapter(),

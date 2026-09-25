@@ -3,24 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `<MapCompass>` — the needle that appears when the map leaves north and fades out when it returns.
- *
- *   It is a compass rose, the way the reference map apps draw it: a ringed dial carrying a two-tone needle whose red
- *   half points north and whose pale half points south. A single-color arrow cannot say which end is north, so a
- *   reader has to already know the convention to read it. two tones say it outright. There is no `N` on the dial —
- *   at this size the letter and the needle's north tip want the same few pixels, and the tip is the clearer of them.
- *
- *   The whole dial counter-rotates the bearing, so the needle keeps pointing at true north while the map turns under
- *   it. Pressing it returns the map to north, which is why the control is a button rather than an ornament.
- *
- *   It stays mounted through the fade rather than unmounting on the bearing crossing zero, because a control that
- *   vanishes mid-gesture is the thing that reads as a glitch. `HIDE_BELOW_DEGREES` is the dead zone: a map settled by
- *   a snap-to-north lands a fraction off zero, and a compass that lingers over that fraction never goes away.
- *
- *   Under `prefers-reduced-motion` it appears and disappears with no transition, and the dial still rotates —
- *   rotation is the information rather than decoration.
- *
- *   node-safe: pure React, no maplibre. The host reads the bearing off its own map and passes it in.
+ *   Show a counter-rotating compass when the map is not facing north.
+ *   Pressing the button resets the map; the host supplies its bearing.
  */
 
 import type { ReactNode } from "react"

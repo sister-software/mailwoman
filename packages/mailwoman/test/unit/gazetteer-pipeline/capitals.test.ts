@@ -1,12 +1,3 @@
-/**
- * @copyright Sister Software
- * @license AGPL-3.0
- * @author Teffen Ellis, et al.
- * @file The capitals-reference build (#1880) — the exact-code admission rule (`ppla` in, `PPLA2`/`pplch` out), the
- *   coverage grading against the catalog's own capital names, and the wrong-format classification that keeps a postal
- *   export squatting on `<CC>.txt` from reading as "scanned, no capital".
- */
-
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
@@ -77,9 +68,6 @@ describe("buildCapitalsReference", () => {
 			dir("countryInfo.txt")
 		)
 
-		// AA: a real dump whose pplc name disagrees with the catalog.
-		// BB: a postal export on the dump filename.
-		// CC: no file at all.
 		await writeLocalFile(dumpRow(1, "Other Name", "P", "PPLC", "AA"), dir("AA.txt"))
 
 		await writeLocalTextFile(
@@ -112,7 +100,7 @@ describe("buildCapitalsReference", () => {
 		])
 	})
 
-	it("throws without countryInfo.txt — no catalog, no coverage denominator", async () => {
+	it("Throws without countryInfo.txt — neither catalog nor coverage denominator", async () => {
 		await using dirDirectory = await temporaryDirectory("mw-capitals-")
 		const dir = dirDirectory.path
 

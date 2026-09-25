@@ -1,13 +1,3 @@
-/**
- * @copyright Sister Software
- * @license AGPL-3.0
- * @author Teffen Ellis, et al.
- *
- *   Unit tests for `RemoteResolver` + `serializableResolveOpts` — transport behavior with a stubbed
- *   fetch, no network. The live round-trip against a real resolver service is covered in
- *   `mailwoman/test/api-engine.test.ts`.
- */
-
 import type { AddressTree } from "@mailwoman/core/decoder"
 import { parseJSONStrict } from "@mailwoman/core/json"
 import type { AddressPointLookup, InterpolationLookup, ResolveOpts } from "@mailwoman/core/resolver"
@@ -61,7 +51,7 @@ describe("RemoteResolver", () => {
 		const [, init] = fetchSpy.mock.calls[0]!
 		const body = parseJSONStrict<{ tree: AddressTree; opts: unknown }>(init.body)
 		expect(body.tree.raw).toBe(tree.raw)
-		expect(body.opts).toEqual({ defaultCountry: "US" }) // addressPoints stripped
+		expect(body.opts).toEqual({ defaultCountry: "US" })
 	})
 
 	test("throws on a non-2xx response", async () => {

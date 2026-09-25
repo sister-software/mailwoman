@@ -3,21 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mailwoman data coverage` — what mailwoman can do PER country, parse and geocode kept apart.
- *
- *   Sibling of `data inventory`, which asks what artifacts are on disk and whether they can say how they were built.
- *   This asks the question a reader actually has: for a given country, can we parse an address there, and can we place
- *   it — and those two have wildly different answers.
- *
- *   It exists because the answer is held in five registers that do not agree, and reading any one of them alone
- *   produces a confident wrong answer. A published locale package is not training (only `en-us` ships a model. the
- *   rest are data-only overlays). Corpus rows are not training (`country_weights` is a hard admission filter — a
- *   country absent from it trains on nothing, which is how Norway trained on zero rows across 44 configs). Training is
- *   not verification (a board row that is not `status: pass` tracks rather than checks). And the geocoder's coverage is
- *   a different, much wider set than the parser's.
- *
- *   `--json` emits the full report. The checklist form shows the mismatches first, because those are the rows nobody
- *   is looking at.
+ *   Report parse and geocode coverage separately for each country.
+ *   The report compares packages, corpus rows, training admission, and board coverage;
+ *   checklist output highlights mismatches before country details.
  */
 
 import {
@@ -100,16 +88,10 @@ const CoverageCommand: CommandComponent<typeof spec> = ({ options }) => {
 export default CoverageCommand
 
 /**
- * The checklist form.
- *
- * Mismatches first — they are the rows nobody is looking at, and each one is a
- * defect class that has shipped at least once.
+ * Render the checklist, showing coverage mismatches first.
  */
 /**
- * How many empty-but-admitted codes to name before eliding.
- *
- * There are ~100 of them by design — the config declares intent for every board country —
- * so the full list buries the three lines above it that a reader must act on.
+ * Maximum empty-but-admitted country codes shown before eliding.
  */
 const EMPTY_CODES_SHOWN = 24
 

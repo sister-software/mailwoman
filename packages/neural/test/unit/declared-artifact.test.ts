@@ -1,16 +1,3 @@
-/**
- * @copyright Sister Software.
- * @license AGPL-3.0
- * @author Teffen Ellis, et al.
- *
- *   `readDeclaredArtifactFile` — what a weights package's own card says it ships, and whether it does.
- *
- *   This reader decides whether an unfed anchor channel is a broken package or a supported posture (#1516), so
- *   its tail matters more than its happy path: the shipped cards keep `$comment_*` siblings inside `files` to
- *   record a deliberate absence, and reading one of those as a filename would turn en-gb's documented
- *   mitigation into a hard failure at every load.
- */
-
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalTextFile, writeLocalFile, makeDirectories } from "@mailwoman/core/fs/writers"
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -50,19 +37,19 @@ describe("readDeclaredArtifactFile", () => {
 		})
 	})
 
-	it("reports a declared artifact that is absent — the case the whole guard exists for", async () => {
+	it("Reports a declared artifact that is absent — the case the whole condition exists for", async () => {
 		const dir = packageDir({ files: { postcode_anchor: "postcode-us.bin" } })
 
 		expect(await readDeclaredArtifactFile(await dir)).toMatchObject({ file: "postcode-us.bin", present: false })
 	})
 
-	it("prefers the PCB1 binary over the legacy JSON lookup when a card names both", async () => {
+	it("Prefers the PCB1 binary over the legacy JSON lookup when a card names both", async () => {
 		const dir = packageDir({ files: { anchor_lookup: "anchor-lookup.json", postcode_anchor: "postcode-us.bin" } })
 
 		expect((await readDeclaredArtifactFile(await dir))?.key).toBe("postcode_anchor")
 	})
 
-	it("falls back to the legacy JSON lookup when that is all the card names", async () => {
+	it("Falls back to the legacy JSON lookup when that is all the card names", async () => {
 		const dir = packageDir({ files: { anchor_lookup: "anchor-lookup.json" } }, ["anchor-lookup.json"])
 
 		expect(await readDeclaredArtifactFile(await dir)).toMatchObject({ key: "anchor_lookup", present: true })
@@ -77,7 +64,7 @@ describe("readDeclaredArtifactFile", () => {
 		expect(await readDeclaredArtifactFile(await dir)).toBeUndefined()
 	})
 
-	it("returns undefined for a card with no files block, no card, no dir, and a corrupt card", async () => {
+	it("Returns undefined for a card with neither files block nor card without dir, and a corrupt card", async () => {
 		expect(
 			await readDeclaredArtifactFile(await packageDir({ requires: { anchor: { required: true } } }))
 		).toBeUndefined()
@@ -94,11 +81,6 @@ describe("readDeclaredArtifactFile", () => {
 	})
 
 	it("reads the SHIPPED cards: en-us/fr-fr/en-gb declare their binaries, en-nz declares none", async () => {
-		// The two postures this reader must keep apart, against the real cards rather than fixtures.
-		// A card edit that dropped either one would leave every fixture test above green.
-		// En-gb moved to the declaring column 2026-08-06 (9.0.0, ROAD_TO_V9 A4):
-		// the v4.2.0 base trained the GB anchor slot, so postcode-gb.bin returned.
-		// The #1467-era "declares none" posture now lives only on en-nz (no NZ postcode extract exists).
 		expect(await readDeclaredArtifactFile(workspacePath("neural-weights-en-us"))).toMatchObject({
 			file: "postcode-us.bin",
 		})
@@ -130,13 +112,7 @@ describe("unfedAnchorDetail — whether an unfed anchor channel is worth a warni
 		expect(await unfedAnchorDetail(await dir)).toMatch(/parsed EMPTY/)
 	})
 
-	it("stays SILENT for a package that declares no binary — the #1516 false alarm", async () => {
-		// en-gb's shape.
-		// Its card says `requires.anchor.required: true` (about the shared encoder)
-		// and ships no binary on purpose, and the old condition read only the first half.
-		// So every process that loaded this overlay printed an anchor-off warning
-		// naming no package, which an operator whose primary bin was present
-		// and feeding could only read as being about the primary.
+	it("Stays SILENT for a package that declares no binary — the false alarm", async () => {
 		const dir = packageDir({
 			requires: { anchor: { required: true } },
 			files: { $comment_postcode_anchor: "NONE — deliberate" },

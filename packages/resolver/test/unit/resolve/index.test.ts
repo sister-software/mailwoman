@@ -1,12 +1,3 @@
-/**
- * @copyright Sister Software
- * @license AGPL-3.0
- * @author Teffen Ellis, et al.
- *
- *   Unit tests for `resolveTree` — uses an in-memory `FakeResolverBackend` so the test exercises the
- *   walk + decoration semantics without depending on any concrete WOF data.
- */
-
 import type { ComponentTag } from "@mailwoman/codex/component"
 import { expandPlacetypeFilter } from "@mailwoman/codex/placetype-map"
 import type { AddressNode, Interpretation, AddressTree } from "@mailwoman/core/decoder"
@@ -70,8 +61,7 @@ class FakeResolverBackend implements ResolverBackend {
 		this.calls.push(query)
 		const text = query.text.toLowerCase()
 		const requested = Array.isArray(query.placetype) ? query.placetype : query.placetype ? [query.placetype] : null
-		// Mirror the concrete backends (lookup.ts / wasm): expand the placetype filter through the
-		// shared PLACETYPE_FILTER_GROUPS so a `region` query also reaches `macroregion`, etc. (#718).
+
 		const types = expandPlacetypeFilter(requested)
 
 		return this.#places
@@ -139,7 +129,7 @@ const FIXTURE_PLACES: ResolvedPlace[] = [
 		name: "Springfield",
 		placetype: "locality",
 		country: "US",
-		parent_id: 85_688_543, // Massachusetts — not in this fixture as a region
+		parent_id: 85_688_543,
 		lat: 42.1,
 		lon: -72.59,
 		score: 8,
@@ -220,10 +210,9 @@ describe("resolveTree", () => {
 		const input = tree("Texas, Paris", [node("region", "Texas", 0, 5, [node("locality", "Paris", 7, 12)])])
 		await resolver.resolveTree(input)
 
-		// Parent (region) query: no country constraint.
 		expect(backend.calls[0]).toMatchObject({ text: "Texas", placetype: "region" })
 		expect(backend.calls[0]).not.toHaveProperty("country")
-		// Child (locality) query: country inherited from the parent's resolution (US).
+
 		expect(backend.calls[1]).toMatchObject({ text: "Paris", placetype: "locality", country: "US" })
 	})
 
@@ -237,20 +226,16 @@ describe("resolveTree", () => {
 
 		const result = await resolver.resolveTree(input)
 
-		// The child lookup carries parentID = the resolved Illinois id (85688541).
 		expect(backend.calls[1]).toMatchObject({
 			text: "Springfield",
 			placetype: "locality",
 			parentID: 85_688_541,
 		})
 
-		// And the resolved locality is the IL Springfield rather than the MA one.
 		expect(result.roots[0]?.children[0]?.placeID).toBe("wof:101727113")
 	})
 
-	test("#194 hardCountry: a confident placer country is a HARD filter, winning over a higher-scored foreign namesake", async () => {
-		// Two same-name localities.
-		// The foreign one scores higher (the population-first collision #743 is about).
+	test("HardCountry: a confident placer country is a HARD filter, winning over a higher-scored foreign namesake", async () => {
 		const places: ResolvedPlace[] = [
 			{ id: 1, name: "Pori", placetype: "locality", country: "FI", lat: 61.48, lon: 21.79, score: 8 },
 			{ id: 2, name: "Pori", placetype: "locality", country: "US", lat: 40, lon: -90, score: 9 },
@@ -262,19 +247,13 @@ describe("resolveTree", () => {
 		const input = tree("Pori", [node("locality", "Pori", 0, 4)])
 		const result = await resolver.resolveTree(input, { hardCountry: "FI" })
 
-		// The FI Pori wins despite the US one's higher score — the hard country filter excludes it.
 		expect(result.roots[0]).toMatchObject({ placeID: "wof:1", lat: 61.48 })
-		// Three lookups since the bare-toponym races: the FI-scoped locality query plus the
-		// FI-scoped `country` and `region` side races (which find nothing here).
-		// What the #194 interface forbids is an unscoped retry.
-		// Every call must still carry the FI filter.
+
 		expect(backend.calls).toHaveLength(3)
 		expect(backend.calls.every((c) => c.country === "FI")).toBe(true)
 	})
 
-	test("#194 hardCountry miss → node left UNRESOLVED, with NO global retry (the in-region-or-unresolved interface)", async () => {
-		// The locality exists only in FR.
-		// A hardCountry of FI must not fall back to it globally.
+	test("HardCountry miss → node left UNRESOLVED, with NO global retry (the in-region-or-unresolved interface)", async () => {
 		const places: ResolvedPlace[] = [
 			{ id: 3, name: "Lyon", placetype: "locality", country: "FR", lat: 45.76, lon: 4.84, score: 9 },
 		]
@@ -283,17 +262,13 @@ describe("resolveTree", () => {
 		const resolver = createWOFResolver(backend)
 
 		const input = tree("Lyon", [node("locality", "Lyon", 0, 4, [], "neural", "v1")])
-		// spanRescore:false isolates the #194 interface — rescore is default-on and would add
-		// a second (recovery) lookup on the unresolved tree, which this test is not about.
+
 		const result = await resolver.resolveTree(input, { hardCountry: "FI", spanRescore: false })
 
-		// Unresolved — the classifier attribution survives, no coordinate, no global fallback to the FR Lyon.
 		expect(result.roots[0]?.placeID).toBeUndefined()
 		expect(result.roots[0]?.lat).toBeUndefined()
 		expect(result.roots[0]?.source).toBe("neural")
-		// Three lookups since the bare-toponym races (locality + the `country` and `region` side races),
-		// and all carried the FI filter.
-		// There is still no country-less retry anywhere.
+
 		expect(backend.calls).toHaveLength(3)
 		expect(backend.calls.every((c) => c.country === "FI")).toBe(true)
 	})
@@ -319,8 +294,7 @@ describe("resolveTree", () => {
 
 		const input = tree("Texas", [node("region", "Texas", 0, 5, [], "rule", "whos_on_first")])
 		const result = await resolver.resolveTree(input, { minWinningScore: 100 })
-		// All fixture scores top out at 10.
-		// With a 100 floor, the resolver leaves classifier attribution in place.
+
 		expect(result.roots[0]?.source).toBe("rule")
 		expect(result.roots[0]?.sourceID).toBe("whos_on_first")
 		expect(result.roots[0]?.placeID).toBeUndefined()
@@ -332,10 +306,6 @@ describe("resolveTree", () => {
 
 		const input = tree("Paris", [node("locality", "Paris", 0, 5, [], "rule", "whos_on_first")])
 
-		// Paris scores 8, so a floor of 9 refuses it.
-		// Span-rescore recovers any tree holding no resolved place, and a refusal leaves exactly that.
-		// So it used to re-issue the byte-identical locality lookup the floor had just
-		// declined, and the refusal could never reach the caller.
 		const result = await resolver.resolveTree(input, { minWinningScore: 9 })
 
 		expect(result.roots[0]?.placeID).toBeUndefined()
@@ -347,10 +317,6 @@ describe("resolveTree", () => {
 		const backend = new FakeResolverBackend(FIXTURE_PLACES)
 		const resolver = createWOFResolver(backend)
 
-		// No candidate at all, so nothing refuses and the recovery pass is the wanted behaviour.
-		// Asserted on the lookup it issues rather than on a recovered node,
-		// because the fixture has no place under this name to find.
-		// What must hold is that the refusal check did not disable the pass in general.
 		const input = tree("Nowhere", [node("locality", "Nowhere", 0, 7)])
 
 		await resolver.resolveTree(input)
@@ -358,16 +324,14 @@ describe("resolveTree", () => {
 		expect(backend.calls.filter((call) => call.placetype === "locality")).toHaveLength(2)
 	})
 
-	test("placetypeMap override can disable a default mapping", async () => {
+	test("PlacetypeMap override can disable a default mapping", async () => {
 		const backend = new FakeResolverBackend(FIXTURE_PLACES)
 		const resolver = createWOFResolver(backend)
 
 		const input = tree("Texas", [node("region", "Texas", 0, 5)])
-		// spanRescore:false isolates the placetypeMap behavior — rescore is default-on
-		// and would issue a recovery lookup on the (now unresolved) tree.
-		await resolver.resolveTree(input, { placetypeMap: { country: "country" }, spanRescore: false }) // omits region
 
-		// With region dropped, no backend call should fire.
+		await resolver.resolveTree(input, { placetypeMap: { country: "country" }, spanRescore: false })
+
 		expect(backend.calls).toHaveLength(0)
 	})
 
@@ -420,7 +384,7 @@ describe("resolveTree", () => {
 		expect(xml).not.toContain("lat=")
 		expect(xml).not.toContain("lon=")
 		expect(xml).not.toContain("place=")
-		// `src` stays because includeSrc defaults to true.
+
 		expect(xml).toContain("src=")
 	})
 
@@ -437,8 +401,6 @@ describe("resolveTree", () => {
 
 describe("resolveTree — alternatives (candidate-list API)", () => {
 	const AMBIG_PLACES: ResolvedPlace[] = [
-		// Three Springfields: same name, different states.
-		// The Springfield-class ambiguity.
 		{
 			id: 101_727_113,
 			name: "Springfield",
@@ -479,16 +441,14 @@ describe("resolveTree — alternatives (candidate-list API)", () => {
 		const result = await resolver.resolveTree(input)
 		const root = result.roots[0]!
 
-		// Top candidate (IL Springfield, score 8) wins for placeID/lat/lon.
 		expect(root.placeID).toBe("wof:101727113")
 		expect(root.lat).toBe(39.78)
 
-		// alternatives expose the remaining candidates in rank order.
 		expect(root.alternatives).toBeDefined()
 		const alts = root.alternatives as ResolvedPlace[]
 		expect(alts).toHaveLength(2)
-		expect(alts[0]?.id).toBe(101_728_010) // MO Springfield
-		expect(alts[1]?.id).toBe(101_729_887) // MA Springfield
+		expect(alts[0]?.id).toBe(101_728_010)
+		expect(alts[1]?.id).toBe(101_729_887)
 	})
 
 	test("alternatives is absent (not just empty) when only one candidate", async () => {
@@ -518,14 +478,12 @@ describe("resolveTree — alternatives (candidate-list API)", () => {
 		const result = await resolver.resolveTree(input, { candidatesPerLookup: 2 })
 		const root = result.roots[0]!
 
-		expect(root.placeID).toBe("wof:101727113") // top
+		expect(root.placeID).toBe("wof:101727113")
 		const alts = root.alternatives as ResolvedPlace[]
-		expect(alts).toHaveLength(1) // limit 2 → top + 1 alternative
+		expect(alts).toHaveLength(1)
 	})
 
-	test("anchor posterior re-ranks locality candidates by country (#369), off by default", async () => {
-		// Two same-named localities.
-		// US scores higher on name/BM25, DE is the runner-up.
+	test("Anchor posterior re-ranks locality candidates by country, off by default", async () => {
 		const berlins: ResolvedPlace[] = [
 			{ id: 1, name: "Berlin", placetype: "locality", country: "US", lat: 44.46, lon: -71.18, score: 8 },
 			{ id: 2, name: "Berlin", placetype: "locality", country: "DE", lat: 52.52, lon: 13.4, score: 7 },
@@ -533,21 +491,19 @@ describe("resolveTree — alternatives (candidate-list API)", () => {
 
 		const input = tree("Berlin", [node("locality", "Berlin", 0, 6)])
 
-		// Default (no posterior): the higher-scored US Berlin wins — byte-stable.
 		const off = await createWOFResolver(new FakeResolverBackend(berlins)).resolveTree(input)
 		expect(off.roots[0]!.placeID).toBe("wof:1")
 
-		// With a DE country posterior, the +weight*posterior boost pulls the German Berlin to the top.
 		const on = await createWOFResolver(new FakeResolverBackend(berlins)).resolveTree(input, {
 			anchorPosterior: { DE: 1 },
 		})
 
 		expect(on.roots[0]!.placeID).toBe("wof:2")
-		// The displaced US Berlin survives as the top alternative.
+
 		expect((on.roots[0]!.alternatives as ResolvedPlace[])[0]!.id).toBe(1)
 	})
 
-	test("anchor posterior leaves the pick unchanged when it already agrees (#369)", async () => {
+	test("Anchor posterior leaves the pick unchanged when it already agrees", async () => {
 		const berlins: ResolvedPlace[] = [
 			{ id: 1, name: "Berlin", placetype: "locality", country: "US", lat: 44.46, lon: -71.18, score: 8 },
 			{ id: 2, name: "Berlin", placetype: "locality", country: "DE", lat: 52.52, lon: 13.4, score: 7 },
@@ -559,19 +515,10 @@ describe("resolveTree — alternatives (candidate-list API)", () => {
 			anchorPosterior: { US: 1 },
 		})
 
-		expect(on.roots[0]!.placeID).toBe("wof:1") // US already top, boost keeps it there
+		expect(on.roots[0]!.placeID).toBe("wof:1")
 	})
 
-	test("anchor posterior re-ranks REGION candidates by country (#369), off by default", async () => {
-		// The region analogue of the locality re-rank — the collision class #447's
-		// over-fetch fix couldn't reach.
-		// A bare region abbreviation is shared across countries
-		// ("VT" is both Vermont and Viterbo; "ME" both Maine and Messina); modeled here as
-		// two same-named regions so the fake backend's name-substring match returns both.
-		// The non-US region scores higher on name/BM25, so without a signal the wrong
-		// country wins, and because resolveTree resolves region first and inherits
-		// its country down, that poisons the locality too.
-		// The postcode posterior breaks the tie at the region.
+	test("Anchor posterior re-ranks REGION candidates by country, off by default", async () => {
 		const regions: ResolvedPlace[] = [
 			{ id: 1, name: "Vermontia", placetype: "region", country: "IT", lat: 42.4, lon: 12.1, score: 8 },
 			{ id: 2, name: "Vermontia", placetype: "region", country: "US", lat: 44, lon: -72.7, score: 7 },
@@ -579,26 +526,18 @@ describe("resolveTree — alternatives (candidate-list API)", () => {
 
 		const input = tree("Vermontia", [node("region", "Vermontia", 0, 9)])
 
-		// Default (no posterior): the higher-scored IT region wins — byte-stable.
 		const off = await createWOFResolver(new FakeResolverBackend(regions)).resolveTree(input)
 		expect(off.roots[0]!.placeID).toBe("wof:1")
 
-		// With a US country posterior, the +weight*posterior boost pulls the US region to the top.
 		const on = await createWOFResolver(new FakeResolverBackend(regions)).resolveTree(input, {
 			anchorPosterior: { US: 1 },
 		})
 
 		expect(on.roots[0]!.placeID).toBe("wof:2")
-		expect((on.roots[0]!.alternatives as ResolvedPlace[])[0]!.id).toBe(1) // displaced IT survives
+		expect((on.roots[0]!.alternatives as ResolvedPlace[])[0]!.id).toBe(1)
 	})
 
-	test("anchor posterior keeps the EXACT match within the pinned country (#369) — tier-safe", async () => {
-		// The "ME → Maine rather than the more-populous Missouri" guard.
-		// Three regions all match the query.
-		// With a confident US posterior the US exact match (Maineland) must win over (a) a higher-score US
-		// partial match (Missouriland — a plain additive boost would promote it, dropping the tier)
-		// and (b) a foreign exact match (Messinaland — the posterior breaks that tie within the exact tier).
-		// `exactMatch` is the backend-supplied tier flag (see ResolvedPlace.exactMatch).
+	test("Anchor posterior keeps the EXACT match within the pinned country — tier-safe", async () => {
 		const regions: ResolvedPlace[] = [
 			{ id: 1, name: "Maineland", placetype: "region", country: "US", lat: 45, lon: -69, score: 5, exactMatch: true },
 			{
@@ -620,19 +559,10 @@ describe("resolveTree — alternatives (candidate-list API)", () => {
 			anchorPosterior: { US: 1 },
 		})
 
-		expect(on.roots[0]!.placeID).toBe("wof:1") // US exact wins: tier primary, then US posterior
+		expect(on.roots[0]!.placeID).toBe("wof:1")
 	})
 
-	// Macro-tier equivalence groups + fallback observability (#718).
-	// WOF models some countries' top-level civil division as `macroregion`
-	// (Italian regions. The post-2016 French régions) rather than `region`;
-	// likewise `macrocounty` above `county` (FR/DE/GB).
-	// The region/county placetype filter now expands through PLACETYPE_FILTER_GROUPS to
-	// reach them, but the exact type is still preferred, and a macro-only resolution
-	// is annotated `resolution_quality: "fallback"`.
-	test("region span resolves to a macroregion fallback when no exact region exists (#718)", async () => {
-		// Only a macroregion matches "Veneto".
-		// The region-only filter would have returned nothing.
+	test("Region span resolves to a macroregion fallback when no exact region exists", async () => {
 		const places: ResolvedPlace[] = [
 			{ id: 404_227_501, name: "Veneto", placetype: "macroregion", country: "IT", lat: 45.65, lon: 11.86, score: 9 },
 		]
@@ -645,10 +575,7 @@ describe("resolveTree — alternatives (candidate-list API)", () => {
 		expect(r.metadata?.["resolution_quality"]).toBe("fallback")
 	})
 
-	test("exact region is preferred over a same-name macroregion — no fallback annotation (#718)", async () => {
-		// Both an exact region and a macroregion namesake match.
-		// The real region must win and carry no fallback marker, even when the macroregion
-		// scores higher (the exact-type partition is primary).
+	test("Exact region is preferred over a same-name macroregion — no fallback annotation", async () => {
 		const places: ResolvedPlace[] = [
 			{ id: 1, name: "Foo", placetype: "macroregion", country: "IT", lat: 45, lon: 11, score: 9 },
 			{ id: 2, name: "Foo", placetype: "region", country: "IT", lat: 46, lon: 12, score: 7 },
@@ -657,15 +584,13 @@ describe("resolveTree — alternatives (candidate-list API)", () => {
 		const input = tree("Foo", [node("region", "Foo", 0, 3)])
 		const out = await createWOFResolver(new FakeResolverBackend(places)).resolveTree(input, { defaultCountry: "IT" })
 		const r = out.roots[0]!
-		expect(r.sourceID).toBe("region:2") // exact region wins despite lower score
+		expect(r.sourceID).toBe("region:2")
 		expect(r.metadata?.["resolution_quality"]).toBeUndefined()
-		// The displaced macroregion survives as an alternative.
+
 		expect((r.alternatives as ResolvedPlace[])[0]!.id).toBe(1)
 	})
 
-	test("county/subregion span resolves to a macrocounty fallback (#718)", async () => {
-		// `subregion` maps to `county` via DEFAULT_PLACETYPE_MAP.
-		// A DE Regierungsbezirk is a macrocounty.
+	test("County/subregion span resolves to a macrocounty fallback", async () => {
 		const places: ResolvedPlace[] = [
 			{ id: 404_227_567, name: "Oberbayern", placetype: "macrocounty", country: "DE", lat: 48, lon: 11.5, score: 8 },
 		]
@@ -677,10 +602,7 @@ describe("resolveTree — alternatives (candidate-list API)", () => {
 		expect(r.metadata?.["resolution_quality"]).toBe("fallback")
 	})
 
-	test("borough/localadmin under a locality query are NOT fallbacks (#718 scope guard)", async () => {
-		// The locality equivalence group's borough/localadmin are genuine peers
-		// (Brooklyn-the-borough), not macro fallbacks.
-		// They must resolve normally with no resolution_quality annotation.
+	test("Borough/localadmin under a locality query are NOT fallbacks ( scope condition)", async () => {
 		const places: ResolvedPlace[] = [
 			{ id: 421_205_765, name: "Brooklyn", placetype: "borough", country: "US", lat: 40.65, lon: -73.95, score: 8 },
 		]
@@ -692,16 +614,10 @@ describe("resolveTree — alternatives (candidate-list API)", () => {
 		expect(r.metadata?.["resolution_quality"]).toBeUndefined()
 	})
 
-	// Dual-role hierarchy completion (#405/#415).
-	// In `…, Berlin, Berlin <PC>` the parser drops the locality (city == region),
-	// leaving a region but no locality.
-	// Completion records the dropped locality as a `locality` interpretation on the
-	// resolved region node (one node, one span, two roles — no synthesized sibling),
-	// from the backend's precomputed coincident-roles relation (#403).
 	const DUAL_ROLE_PLACES: ResolvedPlace[] = [
 		{ id: 900, name: "Germany", placetype: "country", country: "DE", lat: 51.1, lon: 10.4, score: 10 },
 		{ id: 910, name: "Berlin", placetype: "region", country: "DE", parent_id: 900, lat: 52.52, lon: 13.4, score: 9 },
-		// Brandenburg resolves as a region but is not in the relation (not a dual-role place).
+
 		{
 			id: 920,
 			name: "Brandenburg",
@@ -729,13 +645,12 @@ describe("resolveTree — alternatives (candidate-list API)", () => {
 
 	const RELATION = new Map<number, CoincidentLocality[]>([[910, [berlinLocality]]])
 
-	// The completed `locality` role, read off the region node's interpretations (where #415 puts it).
 	const localityRole = (roots: AddressNode[]): Interpretation | undefined =>
 		(roots.find((r) => r.tag === "region")?.interpretations as Interpretation[] | undefined)?.find(
 			(i) => i.tag === "locality"
 		)
 
-	test("completion records the dropped locality as an interpretation on the region node (#415)", async () => {
+	test("Completion records the dropped locality as an interpretation on the region node", async () => {
 		const backend = new FakeResolverBackend(DUAL_ROLE_PLACES, RELATION)
 		const input = tree("Berlin 10115", [node("region", "Berlin", 0, 6), node("postcode", "10115", 7, 12)])
 
@@ -744,7 +659,6 @@ describe("resolveTree — alternatives (candidate-list API)", () => {
 			defaultCountry: "DE",
 		})
 
-		// No synthesized locality node — the role rides on the region node.
 		expect(result.roots.find((r) => r.tag === "locality")).toBeUndefined()
 
 		expect(localityRole(result.roots)).toMatchObject({
@@ -756,7 +670,7 @@ describe("resolveTree — alternatives (candidate-list API)", () => {
 		})
 	})
 
-	test("an explicit hierarchyCompletion: true drives completion, same as the default (#415)", async () => {
+	test("An explicit hierarchyCompletion: true drives completion, same as the default", async () => {
 		const backend = new FakeResolverBackend(DUAL_ROLE_PLACES, RELATION)
 		const input = tree("Berlin 10115", [node("region", "Berlin", 0, 6), node("postcode", "10115", 7, 12)])
 
@@ -768,14 +682,14 @@ describe("resolveTree — alternatives (candidate-list API)", () => {
 		expect(localityRole(result.roots)?.placeID).toBe("wof:911")
 	})
 
-	test("hierarchy completion is ON by default (#402)", async () => {
+	test("Hierarchy completion is ON by default", async () => {
 		const backend = new FakeResolverBackend(DUAL_ROLE_PLACES, RELATION)
 		const input = tree("Berlin 10115", [node("region", "Berlin", 0, 6), node("postcode", "10115", 7, 12)])
 		const result = await createWOFResolver(backend).resolveTree(input, { defaultCountry: "DE" })
 		expect(localityRole(result.roots)?.placeID).toBe("wof:911")
 	})
 
-	test("hierarchyCompletion: false opts out of the default (#402)", async () => {
+	test("HierarchyCompletion: false opts out of the default", async () => {
 		const backend = new FakeResolverBackend(DUAL_ROLE_PLACES, RELATION)
 		const input = tree("Berlin 10115", [node("region", "Berlin", 0, 6), node("postcode", "10115", 7, 12)])
 
@@ -787,14 +701,14 @@ describe("resolveTree — alternatives (candidate-list API)", () => {
 		expect(localityRole(result.roots)).toBeUndefined()
 	})
 
-	test("a backend without the relation no-ops (default-on is safe) (#402)", async () => {
+	test("A backend without the relation no-ops (default-on is safe)", async () => {
 		const backend = new FakeResolverBackend(DUAL_ROLE_PLACES)
 		const input = tree("Berlin 10115", [node("region", "Berlin", 0, 6), node("postcode", "10115", 7, 12)])
 		const result = await createWOFResolver(backend).resolveTree(input, { defaultCountry: "DE" })
 		expect(localityRole(result.roots)).toBeUndefined()
 	})
 
-	test("hierarchy completion does nothing for a region absent from the relation (#405)", async () => {
+	test("Hierarchy completion does nothing for a region absent from the relation", async () => {
 		const backend = new FakeResolverBackend(DUAL_ROLE_PLACES, RELATION)
 		const input = tree("Brandenburg 14770", [node("region", "Brandenburg", 0, 11), node("postcode", "14770", 12, 17)])
 
@@ -806,7 +720,7 @@ describe("resolveTree — alternatives (candidate-list API)", () => {
 		expect(localityRole(result.roots)).toBeUndefined()
 	})
 
-	test("hierarchy completion abstains when candidates tie on population AND distance (#405)", async () => {
+	test("Hierarchy completion abstains when candidates tie on population AND distance", async () => {
 		const twin = (id: number): CoincidentLocality => ({
 			id,
 			name: "Berlin",
@@ -831,7 +745,7 @@ describe("resolveTree — alternatives (candidate-list API)", () => {
 		expect(localityRole(result.roots)).toBeUndefined()
 	})
 
-	test("hierarchy completion picks the most populous when an admin has several (#405)", async () => {
+	test("Hierarchy completion picks the most populous when an admin has several", async () => {
 		const small: CoincidentLocality = {
 			id: 912,
 			name: "Berlin",
@@ -869,7 +783,7 @@ describe("resolveTree — alternatives (candidate-list API)", () => {
 		expect(localityRole(result.roots)?.placeID).toBe("wof:911")
 	})
 
-	test("hierarchy completion never adds a role when the parser already emitted a locality (#405)", async () => {
+	test("Hierarchy completion never adds a role when the parser already emitted a locality", async () => {
 		const backend = new FakeResolverBackend(DUAL_ROLE_PLACES, RELATION)
 		const input = tree("Some Town, Berlin", [node("locality", "Some Town", 0, 9), node("region", "Berlin", 11, 17)])
 
@@ -882,9 +796,6 @@ describe("resolveTree — alternatives (candidate-list API)", () => {
 		expect(localityRole(result.roots)).toBeUndefined()
 	})
 
-	// Ancestor-lineage attachment (#404).
-	// Opt-in enrichment: stamp each resolved node's containment chain onto metadata.ancestors.
-	// Off by default → byte-stable.
 	const LINEAGE = new Map<number, Ancestor[]>([
 		[
 			101_727_113,
@@ -895,7 +806,7 @@ describe("resolveTree — alternatives (candidate-list API)", () => {
 		],
 	])
 
-	test("includeAncestors stamps the lineage onto a resolved node (#404)", async () => {
+	test("IncludeAncestors stamps the lineage onto a resolved node", async () => {
 		const backend = new FakeResolverBackend(FIXTURE_PLACES, undefined, LINEAGE)
 
 		const input = tree("Illinois, Springfield", [
@@ -912,7 +823,7 @@ describe("resolveTree — alternatives (candidate-list API)", () => {
 		])
 	})
 
-	test("includeAncestors is OFF by default — no ancestors metadata (#404)", async () => {
+	test("IncludeAncestors is OFF by default — no ancestors metadata", async () => {
 		const backend = new FakeResolverBackend(FIXTURE_PLACES, undefined, LINEAGE)
 
 		const input = tree("Illinois, Springfield", [
@@ -924,10 +835,7 @@ describe("resolveTree — alternatives (candidate-list API)", () => {
 	})
 })
 
-describe("resolveTree — interpolation tier (#483)", () => {
-	// A fake interpolation lookup: hits "Main St" #42, with an exact-tier-style
-	// AddressPointLookup available for the fall-through test.
-	// Mirrors the FakeResolverBackend pattern (no SQLite).
+describe("ResolveTree — interpolation tier", () => {
 	const fakeInterp: InterpolationLookup = {
 		find: ({ street, number }) =>
 			street.toLowerCase().includes("main") && number === "42"
@@ -966,7 +874,6 @@ describe("resolveTree — interpolation tier (#483)", () => {
 			interpolated_point: { lat: 44.1, lon: -72.5, source: "tiger:edges", release: "TIGER2023" },
 		})
 
-		// Never the exact key — an estimate must not masquerade as a situs point.
 		expect(street?.metadata?.["address_point"]).toBeUndefined()
 	})
 
@@ -989,7 +896,7 @@ describe("resolveTree — interpolation tier (#483)", () => {
 		const street = result.roots.find((n) => n.tag === "street")
 		expect(street?.metadata?.["resolution_tier"]).toBe("address_point")
 		expect(street?.metadata?.["address_point"]).toMatchObject({ lat: 44.2, lon: -72.6 })
-		// the check held: no interpolated estimate stamped
+
 		expect(street?.metadata?.["interpolated_point"]).toBeUndefined()
 	})
 
@@ -1043,7 +950,7 @@ describe("resolveTree — interpolation tier (#483)", () => {
 		})
 	})
 
-	test("miss → no stamp, admin untouched", async () => {
+	test("Miss → no stamp, admin untouched", async () => {
 		const resolver = createWOFResolver(new FakeResolverBackend(FIXTURE_PLACES))
 
 		const missTree = tree("999 Main St 05601", [
@@ -1057,7 +964,7 @@ describe("resolveTree — interpolation tier (#483)", () => {
 		expect(street?.metadata?.["resolution_tier"]).toBeUndefined()
 	})
 
-	test("reassembles the full street (prefix+name+suffix) for the lookup query (#483 coverage fix)", async () => {
+	test("Reassembles the full street (prefix+name+suffix) for the lookup query ( coverage fix)", async () => {
 		let queried: string | undefined
 
 		const recorder: InterpolationLookup = {
@@ -1068,9 +975,6 @@ describe("resolveTree — interpolation tier (#483)", () => {
 			},
 		}
 
-		// "344 East Sheldon Rd": parser nests street_prefix/street_suffix under street.
-		// Street.value is the bare base name.
-		// The query must be the full reassembled street, ordered by offset.
 		const nested = tree("344 East Sheldon Rd 05450", [
 			node("street", "Sheldon", 8, 15, [
 				node("house_number", "344", 0, 3),
@@ -1085,7 +989,7 @@ describe("resolveTree — interpolation tier (#483)", () => {
 		expect(queried).toBe("East Sheldon Rd")
 	})
 
-	test("folds a directional quadrant mis-tagged `unit` into the street key (#718 admin-tail)", async () => {
+	test("Folds a directional quadrant mis-tagged `unit` into the street key ( admin-tail)", async () => {
 		let queried: string | undefined
 
 		const recorder: InterpolationLookup = {
@@ -1096,10 +1000,6 @@ describe("resolveTree — interpolation tier (#483)", () => {
 			},
 		}
 
-		// The model often tags the trailing quadrant of a directional street as `unit`
-		// ("Taylor Street NE" → [unit] "NE"), so the bare key misses the extract's "taylor street northeast".
-		// The directional unit folds back into the key by span order.
-		// The lookup normalizer expands "Ne".
 		const dirTree = tree("1532 Taylor Street Ne 20018", [
 			node("house_number", "1532", 0, 4),
 			node("street", "Taylor Street", 5, 18),
@@ -1135,7 +1035,7 @@ describe("resolveTree — interpolation tier (#483)", () => {
 		expect(queried).toBe("Taylor Street")
 	})
 
-	test("no house_number → tier never fires", async () => {
+	test("No house_number → tier never fires", async () => {
 		let called = false
 
 		const spy: InterpolationLookup = {
@@ -1152,22 +1052,17 @@ describe("resolveTree — interpolation tier (#483)", () => {
 		expect(called).toBe(false)
 	})
 
-	// #374 doctrine (2026-07-26): the conformal multiplier is a property of the calibration set the artifact was built against. An artifact carrying it in its header (`InterpolationLookup.radiusCalibration`, read at extract open) must produce exactly what the legacy caller-supplied path produced.
-	test("artifact-carried radiusCalibration is byte-identical to the caller-supplied factor (#374)", async () => {
+	test("Artifact-carried radiusCalibration is byte-identical to the caller-supplied factor", async () => {
 		const resolver = createWOFResolver(new FakeResolverBackend(FIXTURE_PLACES))
 		const artifactInterp: InterpolationLookup = { find: fakeInterp.find, radiusCalibration: 1.7 }
 
-		// Legacy path: the caller resolves the factor and forwards it per call (today's geocode-core).
 		const viaCaller = await resolver.resolveTree(addrTree(), {
 			interpolation: fakeInterp,
 			interpolationRadiusCalibration: 1.7,
 		})
 
-		// Artifact path: the extract carries the same factor.
-		// The caller passes nothing.
 		const viaArtifact = await resolver.resolveTree(addrTree(), { interpolation: artifactInterp })
 
-		// Byte-identical: the full serialized trees match rather than just the headline fields.
 		expect(stringifyJSON(viaArtifact)).toBe(stringifyJSON(viaCaller))
 		const street = viaArtifact.roots.find((n) => n.tag === "street")
 
@@ -1202,17 +1097,10 @@ describe("resolveTree — interpolation tier (#483)", () => {
 	})
 })
 
-// MARK: Street-centroid tier
-
-/**
- * A fake street-centroid lookup that hits only for known (normalized street, commune) pairs.
- */
 function fakeStreetCentroids(
 	entries: Array<{ street: string; commune: string; lat: number; lon: number }>,
 	onCall?: () => void
 ): StreetCentroidLookup {
-	// Mirror the FR normalizer's apostrophe/hyphen handling: strip apostrophes glued
-	// ("l'intendance" → "lintendance"), hyphens → space ("Sainte-Catherine" → "sainte catherine").
 	const key = (s: string, c: string) =>
 		`${s
 			.toLowerCase()
@@ -1234,14 +1122,8 @@ function fakeStreetCentroids(
 	}
 }
 
-/**
- * A FR-only provider (mirrors BANRegionDatabaseProvider: only `fr` yields a lookup).
- */
 const frProvider = (lookup: StreetCentroidLookup) => (country: string) => (country === "fr" ? lookup : undefined)
 
-/**
- * Pull the street node's stamped street-centroid tier out of a resolved tree, if any.
- */
 function streetTier(t: AddressTree): AddressNode | undefined {
 	for (const n of walkNodes(t.roots)) {
 		if (n.tag === "street" && n.metadata?.["resolution_tier"] === "street") return n
@@ -1250,12 +1132,11 @@ function streetTier(t: AddressTree): AddressNode | undefined {
 	return undefined
 }
 
-describe("resolveTree — street-centroid tier (#1042)", () => {
+describe("ResolveTree — street-centroid tier", () => {
 	test("recovers a thoroughfare the model mis-parsed as a locality (via the FR country hint)", async () => {
 		const lookup = fakeStreetCentroids([{ street: "place bellecour", commune: "Lyon", lat: 45.7576, lon: 4.8317 }])
 		const resolver = createWOFResolver(new FakeResolverBackend(FIXTURE_PLACES))
 
-		// The FR no-street parse shape: thoroughfare tagged `locality`, commune tagged `region`.
 		const input = tree("Place Bellecour, Lyon", [
 			node("locality", "Place Bellecour", 0, 15),
 			node("region", "Lyon", 17, 21),
@@ -1275,7 +1156,6 @@ describe("resolveTree — street-centroid tier (#1042)", () => {
 
 		const resolver = createWOFResolver(new FakeResolverBackend(FIXTURE_PLACES))
 
-		// Garbled parse (the real "Rue Sainte-Catherine, Bordeaux" shape): street present, commune lost.
 		const input = tree("Rue Sainte-Catherine, Bordeaux", [
 			node("locality", "e", 0, 1),
 			node("street", "Rue Sainte-Catherine", 0, 20),
@@ -1286,8 +1166,7 @@ describe("resolveTree — street-centroid tier (#1042)", () => {
 		expect(street?.metadata?.["street_centroid"]).toMatchObject({ lat: 44.8364, lon: -0.5736 })
 	})
 
-	test("unions the RESOLVED-tree country when no hint pins it (placer mis-route recovery)", async () => {
-		// Commune resolves to France (so `resolver_country: FR` is stamped) but no pre-resolution hint says FR.
+	test("Unions the RESOLVED-tree country when no hint pins it (placer mis-route recovery)", async () => {
 		const places: ResolvedPlace[] = [
 			{ id: 1, name: "Bordeaux", placetype: "locality", country: "FR", lat: 44.84, lon: -0.58, score: 9 },
 		]
@@ -1303,23 +1182,17 @@ describe("resolveTree — street-centroid tier (#1042)", () => {
 			node("locality", "Bordeaux", 23, 31),
 		])
 
-		const out = await resolver.resolveTree(input, { streetCentroids: frProvider(lookup) /* no hints */ })
+		const out = await resolver.resolveTree(input, { streetCentroids: frProvider(lookup) })
 		expect(streetTier(out)?.metadata?.["street_centroid"]).toMatchObject({ lat: 44.8419, lon: -0.5772 })
 	})
 
-	test("#1058: a span-rescored locality that contradicts the register commune is dropped ('Rue' ≠ 'Bordeaux')", async () => {
+	test(": a span-rescored locality that contradicts the register commune is dropped ('Rue' ≠ 'Bordeaux')", async () => {
 		const lookup = fakeStreetCentroids([
 			{ street: "rue sainte catherine", commune: "Bordeaux", lat: 44.8364, lon: -0.5736 },
 		])
 
 		const resolver = createWOFResolver(new FakeResolverBackend(FIXTURE_PLACES))
 
-		// The live 5.10.1 shape: span-rescore exact-matched the street's first token "Rue"
-		// to the commune Rue (Somme) and injected it as the locality.
-		// The street-centroid tier then matched the register's (street, commune) pair —
-		// "Rue Sainte-Catherine" in bordeaux.
-		// The register's commune evidence is strictly stronger than the speculative injection,
-		// so the bogus locality must not survive as the result's city.
 		const input = tree("Rue Sainte-Catherine, Bordeaux", [
 			node("region", "Bordeaux", 22, 30, [
 				node("street", "Sainte-Catherine", 4, 20, [node("street_prefix", "Rue", 0, 3)]),
@@ -1342,12 +1215,12 @@ describe("resolveTree — street-centroid tier (#1042)", () => {
 		const street = streetTier(out)
 		expect(street?.metadata?.["street_centroid"]).toMatchObject({ lat: 44.8364, lon: -0.5736 })
 		expect(street?.metadata?.["street_locality"]).toBe("Bordeaux")
-		// The speculative "Rue" locality is gone — it contradicted the register's commune.
+
 		const localities = out.roots.filter((n) => n.tag === "locality")
 		expect(localities).toHaveLength(0)
 	})
 
-	test("#1058: a span-rescored locality that MATCHES the register commune is kept", async () => {
+	test(": a span-rescored locality that MATCHES the register commune is kept", async () => {
 		const lookup = fakeStreetCentroids([
 			{ street: "rue sainte catherine", commune: "Bordeaux", lat: 44.8364, lon: -0.5736 },
 		])
@@ -1372,17 +1245,10 @@ describe("resolveTree — street-centroid tier (#1042)", () => {
 
 		const out = await resolver.resolveTree(input, { streetCentroids: frProvider(lookup), streetCountryHints: ["fr"] })
 		const localities = out.roots.filter((n) => n.tag === "locality")
-		expect(localities).toHaveLength(1) // same commune (case-insensitive) — kept
+		expect(localities).toHaveLength(1)
 	})
 
-	// #1764. The register comparison is documented diacritic-insensitive and was not: NFD produced the combining mark and `[^a-z0-9 ]` then replaced it with a space, so `Sète` folded to "se te" and matched nothing. The negative branch of that comparison is a `roots.splice`, so the miss deleted a correct locality node.
-	//
-	// The asymmetry is what makes the fold decide.
-	// `communes[]` is built from `adminValues` first, which already holds the node's own value .
-	// Therefore, whenever the typed value hits the register the fold cannot matter.
-	// It matters only when the typed value misses and the gazetteer's accented
-	// display name is the one leg left to match on.
-	test("#1764: the register-commune fold is diacritic-insensitive ('Sète' ≡ 'Sete')", async () => {
+	test(": the register-commune fold is diacritic-insensitive ('Sète' ≡ 'Sete')", async () => {
 		const lookup = fakeStreetCentroids([
 			{ street: "allee pierre barthas", commune: "Sete", lat: 43.403651, lon: 3.670243 },
 		])
@@ -1404,17 +1270,10 @@ describe("resolveTree — street-centroid tier (#1042)", () => {
 
 		const out = await resolver.resolveTree(input, { streetCentroids: frProvider(lookup), streetCountryHints: ["fr"] })
 
-		expect(out.roots.filter((n) => n.tag === "locality")).toHaveLength(1) // same commune, differently accented — kept
+		expect(out.roots.filter((n) => n.tag === "locality")).toHaveLength(1)
 	})
 
-	// The negative twin: the fix must not weaken #1058's guard.
-	// A genuinely different commune still goes.
-	//
-	// The RAW text must keep naming Sete, or the register never hits, `matchedCommune`
-	// is never set and the guard never runs.
-	// A test that would pass for the wrong reason.
-	// Only `resolver_name` moves.
-	test("#1764: a differently-accented fold does not weaken the #1058 guard ('Lyon' ≠ 'Sete')", async () => {
+	test(": a differently-accented fold does not weaken the condition ('Lyon' ≠ 'Sete')", async () => {
 		const lookup = fakeStreetCentroids([
 			{ street: "allee pierre barthas", commune: "Sete", lat: 43.403651, lon: 3.670243 },
 		])
@@ -1436,7 +1295,7 @@ describe("resolveTree — street-centroid tier (#1042)", () => {
 
 		const out = await resolver.resolveTree(input, { streetCentroids: frProvider(lookup), streetCountryHints: ["fr"] })
 
-		expect(out.roots.filter((n) => n.tag === "locality")).toHaveLength(0) // contradicts the register — dropped
+		expect(out.roots.filter((n) => n.tag === "locality")).toHaveLength(0)
 	})
 
 	test("never fires when a house number is present (rooftop tiers' domain)", async () => {
@@ -1459,7 +1318,7 @@ describe("resolveTree — street-centroid tier (#1042)", () => {
 		expect(streetTier(out)).toBeUndefined()
 	})
 
-	test("no matching country → the lookup is never consulted (byte-stable)", async () => {
+	test("No matching country → the lookup is never consulted (byte-stable)", async () => {
 		let called = false
 
 		const lookup = fakeStreetCentroids([{ street: "place bellecour", commune: "Lyon", lat: 1, lon: 2 }], () => {
@@ -1473,9 +1332,6 @@ describe("resolveTree — street-centroid tier (#1042)", () => {
 			node("locality", "Springfield", 13, 24),
 		])
 
-		// Hint is US.
-		// Provider only serves `fr`.
-		// So no lookup is opened.
 		const out = await resolver.resolveTree(input, { streetCentroids: frProvider(lookup), streetCountryHints: ["us"] })
 		expect(called).toBe(false)
 		expect(streetTier(out)).toBeUndefined()

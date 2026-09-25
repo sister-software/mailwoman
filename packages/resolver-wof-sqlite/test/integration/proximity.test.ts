@@ -1,12 +1,3 @@
-/**
- * @copyright Sister Software
- * @license AGPL-3.0
- * @author Teffen Ellis, et al.
- *
- *   Proximity + bbox tests for `WOFSQLitePlaceLookup` — exercises the R*Tree integration via the
- *   fixture-DB pattern. Real-WOF coverage lives in `integration.test.ts`.
- */
-
 import { WOFSQLitePlaceLookup } from "@mailwoman/resolver-wof-sqlite/lookup"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { bboxAround, haversineKm } from "@mailwoman/spatial"
@@ -24,7 +15,6 @@ interface FixturePlace {
 }
 
 const FIXTURE: FixturePlace[] = [
-	// Paris, FR
 	{
 		id: 101_751_119,
 		name: "Paris",
@@ -34,7 +24,7 @@ const FIXTURE: FixturePlace[] = [
 		lon: 2.34,
 		bbox: { minLat: 48.81, maxLat: 48.9, minLon: 2.22, maxLon: 2.46 },
 	},
-	// Paris, TX (small US town)
+
 	{
 		id: 101_715_829,
 		name: "Paris",
@@ -44,7 +34,7 @@ const FIXTURE: FixturePlace[] = [
 		lon: -95.55,
 		bbox: { minLat: 33.62, maxLat: 33.7, minLon: -95.6, maxLon: -95.5 },
 	},
-	// Tokyo, JP
+
 	{
 		id: 1_108_794_869,
 		name: "Tokyo",
@@ -54,7 +44,7 @@ const FIXTURE: FixturePlace[] = [
 		lon: 139.69,
 		bbox: { minLat: 35.5, maxLat: 35.83, minLon: 139.34, maxLon: 139.91 },
 	},
-	// London, GB
+
 	{
 		id: 101_750_367,
 		name: "London",
@@ -146,7 +136,7 @@ describe("bboxAround (sanity)", () => {
 		const b = bboxAround(48.85, 2.34, 100)
 		expect(b.maxLat - b.minLat).toBeGreaterThan(1.7)
 		expect(b.maxLat - b.minLat).toBeLessThan(1.9)
-		// At 48.85° latitude, cos ≈ 0.658 → lonDelta ≈ 1.37° each side → ~2.74° total
+
 		expect(b.maxLon - b.minLon).toBeGreaterThan(2.6)
 		expect(b.maxLon - b.minLon).toBeLessThan(2.9)
 	})
@@ -167,13 +157,12 @@ describe("findPlace — proximity boost", () => {
 
 		expect(candidates.length).toBeGreaterThanOrEqual(2)
 		expect(candidates[0]?.country).toBe("FR")
-		// Both candidates should carry distanceKm.
+
 		expect(candidates[0]?.distanceKm).toBeCloseTo(0, 0)
 		expect(candidates.find((c) => c.country === "US")?.distanceKm).toBeGreaterThan(7000)
 	})
 
 	test("near: {Texas coords} ranks Paris,TX ahead of Paris,FR", async () => {
-		// Coordinates of Dallas, TX
 		const candidates = await lookup.findPlace({
 			text: "Paris",
 			placetype: "locality",
@@ -190,7 +179,6 @@ describe("findPlace — proximity boost", () => {
 			near: { lat: 48.85, lon: 2.34, maxDistanceKm: 100 },
 		})
 
-		// Only Paris,FR is within 100 km of Paris,FR.
 		expect(candidates.map((c) => c.country)).toEqual(["FR"])
 	})
 })
@@ -210,7 +198,7 @@ describe("findPlace — bbox filter", () => {
 		const candidates = await lookup.findPlace({
 			text: "Paris",
 			placetype: "locality",
-			bbox: { minLat: -10, maxLat: -9, minLon: -10, maxLon: -9 }, // South Atlantic — nothing here
+			bbox: { minLat: -10, maxLat: -9, minLon: -10, maxLon: -9 },
 		})
 
 		expect(candidates).toEqual([])
@@ -235,8 +223,7 @@ describe("findPlace — backwards compat", () => {
 		expect(candidates[0]?.distanceKm).toBeUndefined()
 	})
 
-	test("near + bbox without R*Tree (legacy DB) is silently ignored; no crash, no proximity filter", async () => {
-		// Simulate an older DB that has FTS5 but not the R*Tree bbox index (built before this PR).
+	test("Near + bbox without R*Tree (legacy DB) is silently ignored; neither crash nor proximity filter", async () => {
 		const db = buildFixtureDB()
 
 		db.exec(`
@@ -255,11 +242,8 @@ describe("findPlace — backwards compat", () => {
 			bbox: { minLat: -10, maxLat: -9, minLon: -10, maxLon: -9 },
 		})
 
-		// Without the bbox filter (silently dropped) all Parises are returned.
 		expect(all).toHaveLength(2)
 
-		// `near` without `maxDistanceKm` is purely a boost — works without the R*Tree
-		// because the haversine math runs on each row's centroid columns.
 		const near = await oldLookup.findPlace({
 			text: "Paris",
 			placetype: "locality",

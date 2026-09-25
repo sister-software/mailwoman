@@ -1,14 +1,3 @@
-/**
- * @copyright Sister Software
- * @license AGPL-3.0
- * @author Teffen Ellis, et al.
- *
- *   Tests for {@linkcode aggregateBrands} (the pure aggregation core) and {@linkcode buildBrandTable} /
- *   {@linkcode serializeBrandTable}, exercised entirely via injected `BrandNameCount` fixtures and an
- *   injected `sourceLayer` — mirrors `build-poi.test.ts`'s injected-`rows` idiom, so this suite never
- *   touches `node:sqlite`.
- */
-
 import type { POIBrandTable } from "@mailwoman/poi-taxonomy"
 import {
 	aggregateBrands,
@@ -54,10 +43,7 @@ describe("aggregateBrands", () => {
 		expect(brand!.aliases).toEqual(["Zeta Mart"])
 	})
 
-	it("applies the noise floor max(3, 1% of rows) to aliases, dropping sub-floor variants", () => {
-		// rows total = 1000 -> floor = max(3, 10) = 10.
-		// An 8-row variant is noise.
-		// A 10-row variant clears it.
+	it("Applies the noise floor max(3, 1% of rows) to aliases, dropping sub-floor variants", () => {
 		const rows: BrandNameCount[] = [
 			{ wikidata: "Q1", name: "Main Co", n: 982 },
 			{ wikidata: "Q1", name: "Main Co Alt Spelling", n: 10 },
@@ -69,9 +55,6 @@ describe("aggregateBrands", () => {
 	})
 
 	it("uses the flat floor of 3 when 1% of rows is smaller", () => {
-		// rows total = 30 -> floor = max(3, 0.3) = 3.
-		// A 2-row variant is noise.
-		// A 3-row variant clears it.
 		const rows: BrandNameCount[] = [
 			{ wikidata: "Q1", name: "Main Co", n: 25 },
 			{ wikidata: "Q1", name: "Clears Floor", n: 3 },
@@ -133,9 +116,6 @@ describe("aggregateBrands — dominance floor", () => {
 			{ wikidata: "Q1", name: "Everything Else", n: 50 },
 		]
 
-		// Two variants tied at 50/50.
-		// The modal share is exactly 0.5 regardless of which name the alphabetical tie-break picks.
-		// What matters here is the QID survives the floor at the boundary.
 		const brands = aggregateBrands(rows, 1)
 		expect(brands.map((b) => b.wikidata)).toEqual(["Q1"])
 	})
@@ -147,12 +127,10 @@ describe("aggregateBrands — dominance floor", () => {
 			{ wikidata: "Q1", name: "Third", n: 25 },
 		]
 
-		// modal share = 49/100 = 0.49 < 0.5
 		expect(aggregateBrands(rows, 1)).toEqual([])
 	})
 
 	it("drops a systematically-mistagged QID — one name never clears half the QID's rows (Q4835981/'CVS' shape)", () => {
-		// ~20 unrelated chains sharing one QID, no single name anywhere near dominant.
 		const rows: BrandNameCount[] = Array.from({ length: 20 }, (_, i) => ({
 			wikidata: "Q4835981",
 			name: `Unrelated Chain ${i}`,
@@ -168,8 +146,6 @@ describe("aggregateBrands — dominance floor", () => {
 			{ wikidata: "Q1", name: "Also Minority", n: 60 },
 		]
 
-		// Clears a generous minRows (100 total >= 1) but modal share 60/100 = 0.6 ...
-		// Raise the bar to prove the floor bites independently: use a custom dominance above the modal share.
 		expect(aggregateBrands(rows, 1, 0.7).map((b) => b.wikidata)).toEqual([])
 		expect(aggregateBrands(rows, 1, 0.5).map((b) => b.wikidata)).toEqual(["Q1"])
 	})

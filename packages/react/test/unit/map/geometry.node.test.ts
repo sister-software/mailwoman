@@ -1,15 +1,3 @@
-/**
- * @copyright Sister Software
- * @license AGPL-3.0
- * @author Teffen Ellis, et al.
- *
- *   Pure geometry tests — bare node, no map, no DOM. They exercise the circle-ring + bounds math the demo
- *   outline draws with, including the edge cases the imperative `_map-helpers.ts` handled: a single point
- *   (no bbox → default radius), a degenerate bbox (zero span → clamped floor), an over-large bbox
- *   (clamped ceiling), a sub-visible radius (meter floor), MultiPolygon bounds, and the documented
- *   non-normalization of antimeridian-crossing geometry.
- */
-
 import {
 	approxCircleGeometry,
 	bboxToBounds,
@@ -21,10 +9,6 @@ import { expect, test } from "vitest"
 
 const KM_PER_DEG_LAT = 111.32
 
-/**
- * Recover a centered circle's radius (km) from the latitude half-span of its ring —
- * no cos() needed on latitude.
- */
 function circleRadiusKm(geometry: PlaceGeometry): number {
 	const b = geomBounds(geometry)
 
@@ -37,14 +21,13 @@ test("approxCircleGeometry with no bbox uses the ~3 km default radius and a clos
 	expect(geom.type).toBe("Polygon")
 	const ring = geom.coordinates[0] as number[][]
 	expect(ring).toHaveLength(65)
-	// theta=0 and theta=2π coincide → the ring is closed.
+
 	expect(ring[0]![0]).toBeCloseTo(ring[64]![0]!, 9)
 	expect(ring[0]![1]).toBeCloseTo(ring[64]![1]!, 9)
 	expect(circleRadiusKm(geom)).toBeCloseTo(3, 2)
 })
 
 test("approxCircleGeometry sizes the radius from the bbox half-diagonal", () => {
-	// 0.1°×0.1° at lat 40 → hypot(0.1·111.32, 0.1·111.32·cos40)/2 ≈ 7.01 km.
 	const geom = approxCircleGeometry(40, -74, { minLat: 39.95, maxLat: 40.05, minLon: -74.05, maxLon: -73.95 })
 	expect(circleRadiusKm(geom)).toBeCloseTo(7.01, 1)
 })
@@ -60,7 +43,7 @@ test("approxCircleGeometry clamps an over-large bbox down to the 50 km ceiling",
 })
 
 test("radiusCircleGeometry honors an exact meter radius", () => {
-	const geom = radiusCircleGeometry(40, -74, 1000) // 1 km
+	const geom = radiusCircleGeometry(40, -74, 1000)
 	expect(circleRadiusKm(geom)).toBeCloseTo(1, 3)
 })
 
@@ -118,7 +101,6 @@ test("geomBounds collapses a single-vertex (degenerate) polygon to a zero-area b
 })
 
 test("geomBounds does NOT normalize an antimeridian-crossing polygon (documents the naive min/max)", () => {
-	// A ring spanning 179°E → -179°E: the naive bounds report the full -179..179 span rather than the ~2° real one.
 	const geom: PlaceGeometry = {
 		type: "Polygon",
 		coordinates: [

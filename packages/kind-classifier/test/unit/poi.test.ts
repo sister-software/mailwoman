@@ -1,17 +1,8 @@
-/**
- * @copyright Sister Software
- * @license AGPL-3.0
- * @author Teffen Ellis, et al.
- */
-
 import type { LocaleHint } from "@mailwoman/core/pipeline"
 import { classifyKind, createKindClassifier } from "@mailwoman/kind-classifier"
 import { matchPOISubject, type POIPhraseLookup } from "@mailwoman/kind-classifier/poi"
 import { describe, expect, it } from "vitest"
 
-/**
- * Test lexicon with single- and multi-token entries.
- */
 const LOOKUP: POIPhraseLookup = (phrase) => {
 	const norm = phrase.trim().toLowerCase()
 
@@ -109,9 +100,6 @@ describe("matchPOISubject", () => {
 	})
 })
 
-/**
- * Distinguish ordered preference results from unordered affordance sets.
- */
 describe("a lookup returning several hits", () => {
 	const preferenceList: POIPhraseLookup = (phrase) =>
 		phrase.trim().toLowerCase() === "credit union"
@@ -162,7 +150,6 @@ describe("a lookup returning several hits", () => {
 		expect(m?.remainder).toBe("")
 	})
 
-	// `match` is the head of `matches`, so scoring and set handling use the same subject.
 	it("scores under the head of the set", () => {
 		const m = matchPOISubject("prescription near Denver CO", "en-US", affordedSet)
 
@@ -170,11 +157,7 @@ describe("a lookup returning several hits", () => {
 	})
 })
 
-/**
- * Verify anchor-separator behavior after regex linearization, including whitespace and comma variants.
- */
 describe("ANCHOR_SEPARATOR split behaviour (byte-identical across the linearization)", () => {
-	// Match only short leading phrases so tests exercise separator splitting.
 	const SUBJECTS = new Set(["cafe", "gas station", "hotel", "atm", "trails", "x"])
 
 	const subjectLookup: POIPhraseLookup = (phrase) => {
@@ -184,30 +167,29 @@ describe("ANCHOR_SEPARATOR split behaviour (byte-identical across the linearizat
 	}
 
 	const cases: Array<{ text: string; subject: string; remainder: string }> = [
-		// Comma splits are invariant to surrounding whitespace.
 		{ text: "cafe, Boston", subject: "cafe", remainder: "Boston" },
 		{ text: "cafe ,Boston", subject: "cafe", remainder: "Boston" },
 		{ text: "cafe , Boston", subject: "cafe", remainder: "Boston" },
 		{ text: "cafe  ,  Boston", subject: "cafe", remainder: "Boston" },
 		{ text: "cafe\t,\tBoston", subject: "cafe", remainder: "Boston" },
 		{ text: "cafe,Boston", subject: "cafe", remainder: "Boston" },
-		// Anchor words with single spaces.
+
 		{ text: "gas station near Ottawa", subject: "gas station", remainder: "Ottawa" },
 		{ text: "hotel in Paris", subject: "hotel", remainder: "Paris" },
 		{ text: "atm at JFK", subject: "atm", remainder: "JFK" },
 		{ text: "trails around Denver", subject: "trails", remainder: "Denver" },
-		// Anchor words with repeated spaces or tabs.
+
 		{ text: "gas station   near   Ottawa", subject: "gas station", remainder: "Ottawa" },
 		{ text: "hotel\tin\tParis", subject: "hotel", remainder: "Paris" },
 		{ text: "atm  at  JFK", subject: "atm", remainder: "JFK" },
-		// The first separator wins; the remainder keeps later separators.
+
 		{ text: "cafe, Boston, MA", subject: "cafe", remainder: "Boston, MA" },
 		{ text: "cafe near town in Denver", subject: "cafe", remainder: "town in Denver" },
-		// Comma consumes the shared whitespace, preserving `near y` in the remainder.
+
 		{ text: "x,  near y", subject: "x", remainder: "near y" },
 	]
 
-	it.each(cases)("splits $text → subject=$subject remainder=$remainder", ({ text, subject, remainder }) => {
+	it.each(cases)("Splits $text → subject=$subject remainder=$remainder", ({ text, subject, remainder }) => {
 		const m = matchPOISubject(text, "en-US", subjectLookup)
 		expect(m).not.toBeNull()
 		expect(m!.subject).toBe(subject)
@@ -228,18 +210,15 @@ describe("ANCHOR_SEPARATOR split behaviour (byte-identical across the linearizat
 		})
 	})
 
-	it("returns null when nothing matches (no whole hit, no lexicon-hitting prefix)", () => {
-		// No separator prefix matches the lexicon.
+	it("Returns null when nothing matches (neither whole hit nor lexicon-hitting prefix)", () => {
 		expect(matchPOISubject("Empire State Building", "en-US", subjectLookup)).toBeNull()
 	})
 
-	it("skips a leading separator (index === 0 guard) — no split before the first token", () => {
-		// Ignore a leading separator.
+	it("Skips a leading separator (index === 0 condition) — no split before the first token", () => {
 		expect(matchPOISubject(", Boston", "en-US", subjectLookup)).toBeNull()
 	})
 
 	it("substring anchor words without whitespace flanks do NOT split (identical to the old regex)", () => {
-		// Embedded anchor words without whitespace boundaries do not split.
 		expect(matchPOISubject("maintainnearby", "en-US", subjectLookup)).toBeNull()
 	})
 })
@@ -307,7 +286,6 @@ describe("span-first multilingual anchors", () => {
 })
 
 describe("ANCHOR_SEPARATOR is linear (ReDoS safety)", () => {
-	// Force a full separator scan on every call.
 	const neverHits: POIPhraseLookup = () => []
 
 	it("returns quickly on a long adversarial whitespace run (no polynomial backtracking)", () => {
@@ -316,7 +294,7 @@ describe("ANCHOR_SEPARATOR is linear (ReDoS safety)", () => {
 		const m = matchPOISubject(pathological, "en-US", neverHits)
 		const elapsed = performance.now() - start
 		expect(m).toBeNull()
-		// Keep the generous limit low enough to catch quadratic backtracking.
+
 		expect(elapsed).toBeLessThan(100)
 	})
 
@@ -333,8 +311,6 @@ describe("ANCHOR_SEPARATOR is linear (ReDoS safety)", () => {
 describe("createKindClassifier with a poi lexicon", () => {
 	const classify = createKindClassifier({ poiLexicon: LOOKUP })
 
-	// A bare category is `poi_category`; `poi_query` remains an alternative.
-	// Both use the POI branch.
 	it("emits poi_category for a bare category phrase, with poi_query underneath", async () => {
 		const result = await classify(input("hospital"), shape(), LOCALE)
 		expect(result.kind).toBe("poi_category")
@@ -365,7 +341,7 @@ describe("createKindClassifier with a poi lexicon", () => {
 		expect(withPOI).toEqual(base)
 	})
 
-	it("does NOT claim a subject + anchor match when the shape has 4+ segments (segCount guard)", async () => {
+	it("Does NOT claim a subject + anchor match when the shape has 4+ segments (segCount condition)", async () => {
 		const result = await classify(input("hospital near Springfield"), shape(["a", "b", "c", "d"]), LOCALE)
 		expect(result.kind).not.toBe("poi_query")
 	})

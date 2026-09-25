@@ -1,12 +1,3 @@
-/**
- * @copyright Sister Software
- * @license AGPL-3.0
- * @author Teffen Ellis, et al.
- *
- *   Tests for the FTS5 build helpers used by both `WOFSQLitePlaceLookup` and the
- *   `mailwoman gazetteer build fts` CLI.
- */
-
 import {
 	ALIAS_SEPARATOR,
 	buildPlaceSearchFTS,
@@ -21,9 +12,6 @@ import { describe, expect, test } from "vitest"
 function buildBaseSchema(): DatabaseClient<WOFDatabase> {
 	const db = DatabaseClient.temp<WOFDatabase>()
 
-	// Mirror the real WOF SQLite schema subset that fts.ts queries.
-	// Includes the bbox columns (min_latitude/max_latitude/min_longitude/max_longitude)
-	// the R*Tree builder reads.
 	db.exec(`
 		CREATE TABLE spr (
 			id INTEGER PRIMARY KEY,
@@ -82,7 +70,6 @@ describe("buildPlaceSearchFTS", () => {
 		using db = buildBaseSchema()
 		buildPlaceSearchFTS(db)
 
-		// Add a new place but don't reindex yet — count should still be the original 3.
 		db.exec(`
 			INSERT INTO spr VALUES (4, NULL, 'Tokyo', 'locality', 'JP', 35.68, 139.69, 35.50, 35.83, 139.34, 139.91, -1, 0);
 		`)
@@ -108,7 +95,7 @@ describe("buildPlaceSearchFTS", () => {
 		expect(row.alt_names).toContain("París")
 	})
 
-	test("joins aliases with the boundary-preserving ALIAS_SEPARATOR token (#523)", () => {
+	test("Joins aliases with the boundary-preserving ALIAS_SEPARATOR token", () => {
 		using db = buildBaseSchema()
 		buildPlaceSearchFTS(db)
 
@@ -116,19 +103,12 @@ describe("buildPlaceSearchFTS", () => {
 			alt_names: string
 		}
 
-		// One boundary between the two aliases (space-padded so each alias tokenizes normally) plus
-		// the trailing format marker that distinguishes new bags from legacy single-alias ones.
 		expect(row.alt_names).toBe(`パリ ${ALIAS_SEPARATOR} París ${ALIAS_SEPARATOR}`)
 	})
 
-	test("a phrase query cannot match ACROSS two aliases' concatenation boundary (#523)", () => {
+	test("A phrase query cannot match ACROSS two aliases' concatenation boundary", () => {
 		using db = buildBaseSchema()
 
-		// Two aliases whose concatenation forms a third phrase: the bag "York <sep>
-		// New City" must not phrase-match "york new".
-		// Without the separator token, FTS5 assigns the aliases' tokens consecutive positions
-		// and the cross-boundary phrase falsely matches (see the ALIAS_SEPARATOR probe table
-		// in fts.ts — punctuation separators do not fix this. Only an indexed token does).
 		db.exec(`
 			INSERT INTO spr VALUES (5, NULL, 'Twin Hamlet', 'locality', 'US', 40.0, -80.0, 39.9, 40.1, -80.1, -79.9, -1, 0);
 			INSERT INTO names (id, language, name) VALUES (5, 'eng', 'York');
@@ -144,12 +124,12 @@ describe("buildPlaceSearchFTS", () => {
 				}[]
 			).map((r) => r.wof_id)
 
-		expect(match('"york new"')).toEqual([]) // the false cross-boundary phrase
-		expect(match('"york"')).toEqual([5]) // each alias is still individually matchable
+		expect(match('"york new"')).toEqual([])
+		expect(match('"york"')).toEqual([5])
 		expect(match('"new city"')).toEqual([5])
 	})
 
-	test("strips an embedded U+E000 from source names so a poisoned row can't forge an alias boundary (#523)", () => {
+	test("Strips an embedded U+E000 from source names so a poisoned row can't forge an alias boundary", () => {
 		using db = buildBaseSchema()
 
 		db.exec(`
@@ -163,9 +143,8 @@ describe("buildPlaceSearchFTS", () => {
 			alt_names: string
 		}
 
-		// Flattened to a space — one alias (plus the trailing format marker), no forged boundary.
 		expect(row.alt_names).toBe(`Evil Name ${ALIAS_SEPARATOR}`)
-		expect(aliasBagExactMatch(row.alt_names, "evil", false)).toBe(false) // fragment ≠ exact
+		expect(aliasBagExactMatch(row.alt_names, "evil", false)).toBe(false)
 		expect(aliasBagExactMatch(row.alt_names, "evil name", false)).toBe(true)
 	})
 
@@ -195,7 +174,7 @@ describe("buildPlaceSearchFTS", () => {
 		expect(phases).toEqual(["checking", "creating", "populating", "creating-bbox", "populating-bbox", "done"])
 	})
 
-	test("invokes onProgress with the dropping phase when --drop is used (twice — once per index)", () => {
+	test("Invokes onProgress with the dropping phase when --drop is used (twice — once per index)", () => {
 		using db = buildBaseSchema()
 		buildPlaceSearchFTS(db)
 		const phases: string[] = []
@@ -203,10 +182,10 @@ describe("buildPlaceSearchFTS", () => {
 
 		expect(phases).toEqual([
 			"checking",
-			"dropping", // place_search
+			"dropping",
 			"creating",
 			"populating",
-			"dropping", // place_bbox
+			"dropping",
 			"creating-bbox",
 			"populating-bbox",
 			"done",
@@ -233,7 +212,6 @@ describe("buildPlaceSearchFTS", () => {
 		using db = buildBaseSchema()
 		buildPlaceSearchFTS(db)
 
-		// Paris (id 1) bbox should be present and queryable.
 		const hits = db
 			.prepare(`SELECT id FROM place_bbox WHERE min_lat <= ? AND max_lat >= ? AND min_lon <= ? AND max_lon >= ?`)
 			.all(48.85, 48.85, 2.34, 2.34) as { id: number }[]
@@ -241,13 +219,9 @@ describe("buildPlaceSearchFTS", () => {
 		expect(hits.map((h) => h.id)).toContain(1)
 	})
 
-	test("indexes places with is_current = 1 (legacy Mapzen-era) as well as is_current = -1 (modern); see #91", () => {
+	test("Indexes places with is_current = 1 (legacy Mapzen-era) as well as is_current = -1 (modern); see", () => {
 		using db = buildBaseSchema()
 
-		// Add one place tagged with the legacy convention (`is_current = 1`).
-		// WOF mixes both conventions; ~42% of admin-US rows carry `1` rather than `-1`.
-		// The filter must accept both.
-		// The Phase 4.2 regression was excluding all of these.
 		db.exec(`
 			INSERT INTO spr VALUES (
 				1000, NULL, 'Legacy Place', 'locality', 'US',
@@ -260,14 +234,12 @@ describe("buildPlaceSearchFTS", () => {
 		const result = buildPlaceSearchFTS(db)
 		expect(result.indexedRows).toBe(4)
 
-		// 3 modern + 1 legacy `match` against the new row to confirm it's actually queryable.
 		const hit = db.prepare(`SELECT wof_id FROM place_search WHERE place_search MATCH ?`).get("Legacy Place") as
 			| { wof_id: number }
 			| undefined
 
 		expect(hit?.wof_id).toBe(1000)
 
-		// Also confirm the bbox row landed in the R*Tree.
 		const bboxHit = db.prepare(`SELECT id FROM place_bbox WHERE min_lat <= ? AND max_lat >= ?`).all(40, 40) as {
 			id: number
 		}[]
@@ -275,7 +247,7 @@ describe("buildPlaceSearchFTS", () => {
 		expect(bboxHit.map((h) => h.id)).toContain(1000)
 	})
 
-	test("excludes is_current = 0 places (no-longer-current); see #91", () => {
+	test("Excludes is_current = 0 places (no-longer-current); see", () => {
 		using db = buildBaseSchema()
 
 		db.exec(`
@@ -290,7 +262,6 @@ describe("buildPlaceSearchFTS", () => {
 		const result = buildPlaceSearchFTS(db)
 		expect(result.indexedRows).toBe(3)
 
-		// the phantom is excluded
 		const hit = db.prepare(`SELECT wof_id FROM place_search WHERE place_search MATCH ?`).get("Phantom") as
 			| { wof_id: number }
 			| undefined
@@ -301,24 +272,24 @@ describe("buildPlaceSearchFTS", () => {
 
 describe("aliasBagExactMatch", () => {
 	const SEP = ALIAS_SEPARATOR
-	// What buildPlaceSearchFTS emits for aliases ["York", "New City"] (note the trailing marker).
+
 	const separated = `York ${SEP} New City ${SEP}`
 
 	test("separated bag: per-alias equality, case/whitespace-insensitive", () => {
 		expect(aliasBagExactMatch(separated, "york", false)).toBe(true)
 		expect(aliasBagExactMatch(separated, "new city", false)).toBe(true)
-		expect(aliasBagExactMatch(separated, "city", false)).toBe(false) // interior fragment
-		expect(aliasBagExactMatch(separated, "york new", false)).toBe(false) // cross-boundary fragment
+		expect(aliasBagExactMatch(separated, "city", false)).toBe(false)
+		expect(aliasBagExactMatch(separated, "york new", false)).toBe(false)
 	})
 
 	test("separated bag: unrestricted — an alias match counts even when another candidate is strictly exact", () => {
 		expect(aliasBagExactMatch(separated, "new city", true)).toBe(true)
 	})
 
-	test("legacy bag (no separator): padded containment, conditioned on anyStrictExact", () => {
-		const legacy = "York New City" // pre-#523 space-joined bag — boundaries lost
-		expect(aliasBagExactMatch(legacy, "new city", false)).toBe(true) // historical behavior preserved
-		expect(aliasBagExactMatch(legacy, "new city", true)).toBe(false) // the check
+	test("Legacy bag (no separator): padded containment, conditioned on anyStrictExact", () => {
+		const legacy = "York New City"
+		expect(aliasBagExactMatch(legacy, "new city", false)).toBe(true)
+		expect(aliasBagExactMatch(legacy, "new city", true)).toBe(false)
 	})
 
 	test("null / empty bag and empty query never match", () => {

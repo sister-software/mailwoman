@@ -1,13 +1,3 @@
-/**
- * @copyright Sister Software
- * @license AGPL-3.0
- * @author Teffen Ellis, et al.
- *
- *   Unit tests for the pure `mailwoman data` bundle logic (#task-6): bundle resolution against a
- *   `releases.json`-shaped manifest, the artifact filter, and the present/missing/stale download
- *   decision. No filesystem, no network — every fact is passed in.
- */
-
 import { stringifyJSON } from "@mailwoman/core/json"
 import {
 	artifactURL,
@@ -96,9 +86,6 @@ describe("artifactURL", () => {
 })
 
 describe("every bundle states its terms before it is pulled", () => {
-	// A bundle is downloaded rather than installed with the package, so its terms
-	// reach an operator through nothing the npm tarball carries.
-	// These are printed by `data pull` before the transfer, which is the moment an operator can still decline.
 	it.each(Object.values(BUNDLES))("$name names publishers, terms and conditions", (bundle) => {
 		expect(bundle.rights.publishers.length).toBeGreaterThan(0)
 		expect(bundle.rights.terms.length).toBeGreaterThan(0)
@@ -106,8 +93,6 @@ describe("every bundle states its terms before it is pulled", () => {
 	})
 
 	it("prints what stays unresolved beside what is required", () => {
-		// A bundle whose conditions are listed and whose gaps are not reads as fully established.
-		// Every bundle here draws on sources whose per-row terms nobody has traced, and the lines say so.
 		const lines = describeBundleRights(BUNDLES["candidate"]!)
 
 		expect(lines.some((line) => line.startsWith("published by"))).toBe(true)
@@ -116,10 +101,6 @@ describe("every bundle states its terms before it is pulled", () => {
 	})
 
 	it("says where each bundle's rows name their publisher, or that they do not", () => {
-		// `mailwoman data sources` checks the record above against the bytes,
-		// and it can only do that where the artifacts carry a publisher column.
-		// A bundle declaring none says so rather than being censused to an empty result,
-		// which would read as a clean check.
 		expect(BUNDLES["us"]?.sourceCensus).toStrictEqual({
 			table: "address_point",
 			column: "source",
@@ -127,8 +108,6 @@ describe("every bundle states its terms before it is pulled", () => {
 			family: "address-points",
 		})
 
-		// The `us` bundle's interpolation databases are a different artifact family with no such column.
-		// Naming the family is what keeps 51 of them out of the census rather than reported as unreadable.
 		expect(BUNDLES["us"]?.artifacts.some((artifact) => artifact.family === "interpolation")).toBe(true)
 
 		expect(BUNDLES["poi"]?.sourceCensus?.shape).toBe("manifest")
@@ -137,12 +116,6 @@ describe("every bundle states its terms before it is pulled", () => {
 })
 
 describe("resolveBundleArtifacts — maps versioned names", () => {
-	/**
-	 * A bundle must declare its terms to compile, so these fixtures carry an empty declaration.
-	 *
-	 * Empty is a fixture that states nothing rather than a bundle with no obligations,
-	 * and `describeBundleRights` has its own tests.
-	 */
 	const noRights = { publishers: [], terms: [], conditions: [], unresolved: [] }
 
 	const bundle: DataBundle = {
@@ -176,11 +149,11 @@ describe("resolveBundleArtifacts — maps versioned names", () => {
 		expect(resolved[1]!.localPath).toBe("interpolation/interpolation-us-ca.db")
 	})
 
-	it("substitutes the manifest-pinned version into the localPath for a matching family", () => {
+	it("Substitutes the manifest-pinned version into the localPath for a matching family", () => {
 		const resolved = resolveBundleArtifacts(bundle, { "address-points": "2026-08-01" })
 
 		expect(resolved[0]!.localPath).toBe("address-points/address-points-us-ca-2026-08-01.db")
-		// interpolation has no manifest entry — stays at the legacy path.
+
 		expect(resolved[1]!.localPath).toBe("interpolation/interpolation-us-ca.db")
 	})
 
@@ -256,35 +229,33 @@ describe("filterArtifacts — the --only substring filter", () => {
 })
 
 describe("needsDownload — the present/missing/stale decision", () => {
-	it("absent locally → yes", () => {
+	it("Absent locally → yes", () => {
 		expect(needsDownload({ exists: false }, { contentLength: 100 })).toBe(true)
 	})
 
-	it("present, md5 matches → no", () => {
+	it("Present, md5 matches → no", () => {
 		expect(needsDownload({ exists: true, md5: "abc123" }, { md5: "abc123" })).toBe(false)
 	})
 
-	it("present, md5 mismatch → yes", () => {
+	it("Present, md5 mismatch → yes", () => {
 		expect(needsDownload({ exists: true, md5: "abc123" }, { md5: "def456" })).toBe(true)
 	})
 
 	it("md5 is checked before content-length when both are present", () => {
-		// Same size, different md5.
-		// A same-size corruption/edit must still be caught.
 		expect(needsDownload({ exists: true, sizeBytes: 100, md5: "abc123" }, { contentLength: 100, md5: "def456" })).toBe(
 			true
 		)
 	})
 
-	it("no md5 on either side, content-length matches → no", () => {
+	it("No md5 on either side, content-length matches → no", () => {
 		expect(needsDownload({ exists: true, sizeBytes: 100 }, { contentLength: 100 })).toBe(false)
 	})
 
-	it("no md5 on either side, content-length mismatch → yes", () => {
+	it("No md5 on either side, content-length mismatch → yes", () => {
 		expect(needsDownload({ exists: true, sizeBytes: 99 }, { contentLength: 100 })).toBe(true)
 	})
 
-	it("no verifiable signal at all → not forced (caller surfaces a warning instead)", () => {
+	it("No verifiable signal at all → not forced (caller surfaces a warning instead)", () => {
 		expect(needsDownload({ exists: true }, {})).toBe(false)
 	})
 })

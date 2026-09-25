@@ -1,17 +1,3 @@
-/**
- * @copyright Sister Software
- * @license AGPL-3.0
- * @author Teffen Ellis, et al.
- *
- *   Tests for the pre-registered phase-2 decision ruler (#1967): the freeze mechanism, the refusals that
- *   keep a blocked lane out of the arithmetic, the three-way decision, and the committed pre-registration's
- *   own consistency with the artifacts it names.
- *
- *   No model, no database, no pipeline — the decision function is graded against synthetic readings and the
- *   loader against temporary copies of the committed files, so every threshold and every refusal is
- *   exercised without a run.
- */
-
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
@@ -54,12 +40,6 @@ afterAll(() => fixtures.disposeAsync())
 const definition = await loadPhase2Definition()
 const freeze = await readLocalJSONFile<Phase2FreezeRecord>(PHASE2_FREEZE_PATH)
 
-/**
- * The committed receipt's shape, narrowed to what this suite reads.
- *
- * Typing it here rather than importing the runner's `Phase2Receipt` keeps the pure
- * suite free of the module that loads a pipeline.
- */
 interface CommittedReceipt {
 	decisionID: string
 	definitionVersion: string
@@ -75,10 +55,6 @@ interface CommittedReceipt {
 
 const receipt = await readLocalJSONFile<CommittedReceipt>(PHASE2_RECEIPT_PATH)
 
-/**
- * Write a definition + freeze pair into a scratch directory, so a refusal can be
- * provoked without touching the committed ruler.
- */
 async function scratchPair(
 	mutate: (definition: Phase2DecisionDefinition) => void,
 	freezeOverride?: Partial<Phase2FreezeRecord>
@@ -98,10 +74,6 @@ async function scratchPair(
 	return { definitionPath, freezePath }
 }
 
-/**
- * Readings that put every registered check at its committed baseline —
- * the run the ruler's baselines describe.
- */
 function baselineReadings(source: Phase2DecisionDefinition = definition): Map<Phase2Measurement, Phase2Reading> {
 	const readings = new Map<Phase2Measurement, Phase2Reading>()
 
@@ -133,7 +105,7 @@ function outcomesAt(readings: Map<Phase2Measurement, Phase2Reading>): Phase2Chec
 	return evaluatePhase2Checks(definition, readings)
 }
 
-describe("the frozen phase-2 pre-registration (#1967)", () => {
+describe("The frozen phase-2 pre-registration", () => {
 	it("loads, and its content hash matches the committed freeze record", async () => {
 		expect(phase2DefinitionHash(definition)).toBe(freeze.sha256)
 		expect(freeze.decisionID).toBe(definition.decisionID)
@@ -153,7 +125,7 @@ describe("the frozen phase-2 pre-registration (#1967)", () => {
 		await expect(loadPhase2Definition(definitionPath, PHASE2_FREEZE_PATH)).rejects.toThrow(/content hash .* !== frozen/)
 	})
 
-	it("refuses a freeze record pinning another version", async () => {
+	it("Refuses a freeze record pinning another version", async () => {
 		const { definitionPath, freezePath } = await scratchPair(
 			(copy) => {
 				copy.version = "1.1.0"
@@ -351,7 +323,7 @@ describe("the decision the ruler maps to", () => {
 		expect(verdict.reasons).toContainEqual(expect.stringContaining("issues/1980"))
 	})
 
-	it("checks control misses FIRST — a control regression stops a run whose targets all hold", async () => {
+	it("Checks control misses FIRST — a control regression stops a run whose targets all hold", async () => {
 		const readings = withReading(baselineReadings(), "semantic_utility.treatment.control_holds", 5)
 		const verdict = decidePhase2(definition, outcomesAt(readings))
 
@@ -387,7 +359,7 @@ describe("the decision the ruler maps to", () => {
 		expect(verdict.reasons).toContainEqual(expect.stringContaining("an unreported lane is not a passing one"))
 	})
 
-	it("reports an artifact pin deviation without letting it change the decision", async () => {
+	it("Reports an artifact pin deviation without letting it change the decision", async () => {
 		const outcomes = outcomesAt(baselineReadings())
 		const pinned = decidePhase2(definition, outcomes)
 		const deviated = decidePhase2(definition, outcomes, { deviations: ['weightsVersion: observed "9.2.0"'] })
@@ -405,9 +377,6 @@ describe("the decision the ruler maps to", () => {
 		expect(verdict.defaultChangeBarUnmetRows).toEqual([1, 2, 3, 4, 5, 6, 7, 9])
 		expect(verdict.reasons).toContainEqual(expect.stringContaining("this decision authorizes no default change"))
 
-		// The same measurements against a definition whose default bar reads met on
-		// every row still decide the same thing.
-		// The register is recorded, never read.
 		const copy = await readLocalJSONFile<Phase2DecisionDefinition>(PHASE2_DEFINITION_PATH)
 
 		for (const row of copy.defaultChangeBar) {
@@ -423,13 +392,13 @@ describe("the decision the ruler maps to", () => {
 })
 
 describe("the pre-registration agrees with the artifacts it names", () => {
-	it("pins the semantic-utility ruler's committed hash", async () => {
+	it("Pins the semantic-utility ruler's committed hash", async () => {
 		const probeFreeze = await readLocalJSONFile<ProbeFreezeRecord>(PROBE_FREEZE_PATH)
 
 		expect(definition.artifactPins.semanticUtilityDefinitionSHA256).toBe(probeFreeze.sha256)
 	})
 
-	it("pins the absence ruler's committed hash", async () => {
+	it("Pins the absence ruler's committed hash", async () => {
 		const absenceFreeze = await readLocalJSONFile<AbsenceProbeFreezeRecord>(ABSENCE_PROBE_FREEZE_PATH)
 
 		expect(definition.artifactPins.absenceDefinitionSHA256).toBe(absenceFreeze.sha256)
@@ -486,7 +455,7 @@ describe("the committed receipt", () => {
 		)
 	})
 
-	it("carries the artifact identity the ruler pins, with every difference named", async () => {
+	it("Carries the artifact identity the ruler pins, with every difference named", async () => {
 		expect(receipt.artifact.poiLayerManifestVersion).toBe(definition.artifactPins.poiLayerManifestVersion)
 		expect(receipt.artifact.weightsVersion).toBe(definition.artifactPins.weightsVersion)
 		expect(receipt.artifact.geographicModelVersion).toBe(definition.artifactPins.geographicModelVersion)

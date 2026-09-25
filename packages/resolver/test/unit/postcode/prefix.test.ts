@@ -1,33 +1,8 @@
-/**
- * @copyright Sister Software
- * @license AGPL-3.0
- * @author Teffen Ellis, et al.
- *
- *   Tests for the postcode-prefix prior (#31, Mechanism 3, `ResolveOpts.postcodePrefixPrior` +
- *   `postcodePrefixIndex`) — the partial-code prior for postcodes the full-code gazetteer does not
- *   carry (the #1480 NI BT abstention). The pre-registered bars:
- *
- *   - **B3-2** — ≥60% of held-out units within 10 km, zero worse than the abstention arm. The
- *     within-10-km population is a data property of a real PFX1 artifact (a GB one is being built
- *     build-side); what the resolver-level legs below pin is the interface the artifact rides on.
- *     a hit resolves to the index node's coordinate, the node's `radiusP95Km` rides along (never
- *     read a coordinate without its radius), and an abstention arm (no index) resolves nothing, so
- *     a hit is never worse than abstention by construction.
- *   - **B3-3** — NI ≥95% country scope GB + NIR ancestry + correct district named, 0% coordinate.
- *     The ancestry-only tier resolves with no lat/lon — absence, never 0,0 (meaning-of-zero) — and
- *     the metadata interface includes `postcode_prefix` + `postcode_prefix_ancestors`.
- *   - **B3-5** — structural: the index is `PostcodePrefixIndexLike` (`probe` + optional `country`),
- *     injected, never imported from `@mailwoman/neural`. The fake indexes below are plain objects
- *     satisfying the structure — the resolver consumes any implementation.
- */
-
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import type { PostcodePrefixIndexLike, ResolverBackend } from "@mailwoman/core/resolver"
 import { derivePostcodePrefix, probePostcodePrefix } from "@mailwoman/resolver/postcode"
 import { createWOFResolver } from "@mailwoman/resolver/resolve"
 import { describe, expect, it } from "vitest"
-
-// #region Fixtures
 
 const node = (over: Partial<AddressNode> & Pick<AddressNode, "tag" | "value">): AddressNode => ({
 	start: 0,
@@ -39,17 +14,10 @@ const node = (over: Partial<AddressNode> & Pick<AddressNode, "tag" | "value">): 
 
 const tree = (...roots: AddressNode[]): AddressTree => ({ raw: roots.map((r) => r.value).join(" "), roots })
 
-/**
- * Every backend query misses.
- * The postalcode lookup must fail for the prior to fire.
- */
 const silentBackend: ResolverBackend = {
 	findPlace: async () => [],
 }
 
-/**
- * A coordinate-containing GB outward index — the B3-2 tier (prefix centroid + measured radius).
- */
 const gbCoordinateIndex: PostcodePrefixIndexLike = {
 	country: "GB",
 	probe: (prefix) =>
@@ -69,9 +37,6 @@ const gbCoordinateIndex: PostcodePrefixIndexLike = {
 			: null,
 }
 
-/**
- * The ancestry-only tier — NI's 80 BT districts with no coordinate (B3-3's 0% half).
- */
 const gbAncestryOnlyIndex: PostcodePrefixIndexLike = {
 	country: "GB",
 	probe: (prefix) =>
@@ -88,12 +53,10 @@ const gbAncestryOnlyIndex: PostcodePrefixIndexLike = {
 			: null,
 }
 
-// #endregion
-
 describe("derivePostcodePrefix — the derivation laws", () => {
 	it("derives the GB outward code: compact minus the trailing 3 unit characters", () => {
 		expect(derivePostcodePrefix("SW1A 2AA", "GB")).toBe("SW1A")
-		expect(derivePostcodePrefix("SW1A2AA", "GB")).toBe("SW1A") // already-compact input
+		expect(derivePostcodePrefix("SW1A2AA", "GB")).toBe("SW1A")
 		expect(derivePostcodePrefix("BT9 5GS", "GB")).toBe("BT9")
 		expect(derivePostcodePrefix("BT93GS", "GB")).toBe("BT9")
 		expect(derivePostcodePrefix("EC1A 1BB", "GB")).toBe("EC1A")
@@ -105,7 +68,6 @@ describe("derivePostcodePrefix — the derivation laws", () => {
 	})
 
 	it("abstains on codes too short to carry a prefix", () => {
-		// "B3" is a GB area rather than a unit-containing code — no 3-character unit to strip.
 		expect(derivePostcodePrefix("B3", "GB")).toBeNull()
 		expect(derivePostcodePrefix("12", "US")).toBeNull()
 		expect(derivePostcodePrefix("", "GB")).toBeNull()
@@ -144,12 +106,11 @@ describe("postcodePrefixResolvedPlace — the synthetic place (B3-2/B3-3)", () =
 		const postcode = resolved.roots[0]!
 		expect(postcode.tag).toBe("postcode")
 		expect(postcode.source).toBe("resolver")
-		expect(postcode.placeID).toBe("wof:0") // synthetic — not a gazetteer row
-		// The B3-2 tier: the node resolves to the index node's coordinate…
+		expect(postcode.placeID).toBe("wof:0")
+
 		expect(postcode.lat).toBe(54.577232)
 		expect(postcode.lon).toBe(-5.94725)
-		// …and the metadata interface rides along: prefix, ancestry, radius,
-		// never read a coordinate without its radius (M-3's 200× receipt).
+
 		expect(postcode.metadata?.["postcode_prefix"]).toBe("BT9")
 
 		expect(postcode.metadata?.["postcode_prefix_ancestors"]).toEqual([
@@ -166,7 +127,7 @@ describe("postcodePrefixResolvedPlace — the synthetic place (B3-2/B3-3)", () =
 		const resolver = createWOFResolver(silentBackend)
 
 		const abstained = await resolver.resolveTree(tree(node({ tag: "postcode", value: "BT9 5GS" })), {
-			postcodePrefixPrior: true, // flag on, no index — the prior cannot fire
+			postcodePrefixPrior: true,
 		})
 
 		const postcode = abstained.roots[0]!
@@ -179,7 +140,7 @@ describe("postcodePrefixResolvedPlace — the synthetic place (B3-2/B3-3)", () =
 		const resolver = createWOFResolver(silentBackend)
 
 		const off = await resolver.resolveTree(tree(node({ tag: "postcode", value: "BT9 5GS" })), {
-			postcodePrefixIndex: gbCoordinateIndex, // index present, flag off
+			postcodePrefixIndex: gbCoordinateIndex,
 		})
 
 		expect(off.roots[0]!.placeID).toBeUndefined()
@@ -198,22 +159,19 @@ describe("B3-3 — the ancestry-only tier is coordinate-free (0% get a coordinat
 		const postcode = resolved.roots[0]!
 		expect(postcode.source).toBe("resolver")
 		expect(postcode.placeID).toBe("wof:0")
-		// 0% coordinate — absence, never 0,0 (inventing a BT centroid would reproduce
-		// the `BT3 9QQ` → Sheffield defect #1480 just fixed).
+
 		expect(postcode.lat).toBeUndefined()
 		expect(postcode.lon).toBeUndefined()
 		expect(postcode.metadata?.["coordinate_source"]).toBeUndefined()
-		// The district is still named — country → constituent country → district, coarsest-first.
+
 		expect(postcode.metadata?.["postcode_prefix"]).toBe("BT9")
 		const ancestors = postcode.metadata?.["postcode_prefix_ancestors"] as Array<{ name: string }>
 		expect(ancestors.map((a) => a.name)).toEqual(["United Kingdom", "Northern Ireland", "Belfast"])
 	})
 })
 
-describe("B3-5 — structural consumption, no model imports", () => {
+describe("B3-5 — structural consumption without model imports", () => {
 	it("accepts any structurally-conforming index, from any implementation", async () => {
-		// A plain object with `probe` + `country` — nothing about `@mailwoman/neural` enters this graph.
-		// The resolver's only dependency is the structure (compile-enforced).
 		const structuralIndex: PostcodePrefixIndexLike = {
 			country: "GB",
 			probe: (prefix) =>
@@ -260,7 +218,7 @@ describe("B3-5 — structural consumption, no model imports", () => {
 		})
 
 		const postcode = resolved.roots[0]!
-		// The gazetteer row wins — no synthetic place, no prefix metadata.
+
 		expect(postcode.placeID).toBe("wof:555")
 		expect(postcode.metadata?.["postcode_prefix"]).toBeUndefined()
 	})

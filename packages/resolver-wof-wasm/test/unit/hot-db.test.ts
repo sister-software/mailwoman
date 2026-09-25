@@ -1,28 +1,3 @@
-/**
- * @copyright Sister Software
- * @license AGPL-3.0
- * @author Teffen Ellis, et al.
- *
- *   Integration tests against a real production `wof-hot.db` (the slim DB the live demo serves) — the
- *   three resolution bugs measured on the live demo 2026-06-11:
- *
- *   1. "Brooklyn" resolved to Brooklyn Park, MN because the locality placetype filter excluded the
- *        `borough` row for Brooklyn (WOF id 421205765, pop 2.5M).
- *   2. "brooklyn, new york, ny" did the same because the region-bbox-constrained pass found nothing (the
- *        borough was filtered out) and the cascade silently fell back to unconstrained.
- *   3. "New York City" has no spr row under that name — it's a WOF alias of the New York locality
- *        (85977539), reachable only through the FTS `alt_names` bag.
- *
- *   The 16 MB DB is not committed. Point `MAILWOMAN_WOF_HOT_DB` at a byte-copy of the live DB (e.g.
- *   `/tmp/v440-stage/en-us/v4.4.0/wof-hot.db`, or any `wof-hot.db` staged by build-demo-assets) and
- *   run `yarn vitest --run resolver-wof-wasm/hot-db.test.ts`. The whole suite skips when the env
- *   var is unset, so CI stays green without the artifact.
- *
- *   Covers all three lookup backends that must agree: the wasm lookup (this package), the Node lookup
- *   (`@mailwoman/resolver-wof-sqlite`), and the demo cascade (`./browser-cascade.ts`, which
- *   the live demo drives through its httpvfs lookup — same SQL + ranking as the wasm lookup).
- */
-
 import type { ComponentTag } from "@mailwoman/codex/component"
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder/types"
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"
@@ -42,10 +17,6 @@ const NEW_YORK_LOCALITY = 85_977_539
 describe.skipIf(!HOT_DB_PATH)("against the production wof-hot.db (MAILWOMAN_WOF_HOT_DB)", () => {
 	let wasmLookup: WOFWasmPlaceLookup
 
-	// `MailwomanLookupLike.placetype` is `string | string[]` by design — widened for the shared-resolver
-	// convergence, see its own doc — while this lookup accepts only the branded WOFPlacetype.
-	// Every placetype the cascade passes is valid.
-	// The mismatch is parameter variance rather than a runtime one.
 	const asCascadeLookup = (l: WOFWasmPlaceLookup): MailwomanLookupLike => l as MailwomanLookupLike
 
 	aroundAll(async (runSuite) => {
@@ -71,7 +42,7 @@ describe.skipIf(!HOT_DB_PATH)("against the production wof-hot.db (MAILWOMAN_WOF_
 		})
 	})
 
-	describe("demo resolution (runCascade — the shared resolveTree over the WASM lookup, #861)", () => {
+	describe("Demo resolution (runCascade — the shared resolveTree over the WASM lookup,)", () => {
 		const node = (tag: ComponentTag, value: string, children: AddressNode[] = []): AddressNode => ({
 			tag,
 			value,
@@ -83,7 +54,7 @@ describe.skipIf(!HOT_DB_PATH)("against the production wof-hot.db (MAILWOMAN_WOF_
 
 		const tree = (raw: string, roots: AddressNode[]): AddressTree => ({ raw, roots })
 
-		test('locality "Brooklyn" alone → the borough', async () => {
+		test('Locality "Brooklyn" alone → the borough', async () => {
 			const hits = await runCascade(
 				asCascadeLookup(wasmLookup),
 				tree("Brooklyn", [node("locality", "Brooklyn")]),
@@ -93,7 +64,7 @@ describe.skipIf(!HOT_DB_PATH)("against the production wof-hot.db (MAILWOMAN_WOF_
 			expect(hits[0]?.id).toBe(BROOKLYN_BOROUGH)
 		})
 
-		test('locality "brooklyn" under region "new york" → the borough (parent scope narrows)', async () => {
+		test('Locality "brooklyn" under region "new york" → the borough (parent scope narrows)', async () => {
 			const hits = await runCascade(
 				asCascadeLookup(wasmLookup),
 				tree("brooklyn, new york, ny", [node("region", "new york", [node("locality", "brooklyn")])]),
@@ -103,7 +74,7 @@ describe.skipIf(!HOT_DB_PATH)("against the production wof-hot.db (MAILWOMAN_WOF_
 			expect(hits[0]?.id).toBe(BROOKLYN_BOROUGH)
 		})
 
-		test('locality "New York City" → the New York locality', async () => {
+		test('Locality "New York City" → the New York locality', async () => {
 			const hits = await runCascade(
 				asCascadeLookup(wasmLookup),
 				tree("New York City", [node("locality", "New York City")]),
@@ -114,10 +85,6 @@ describe.skipIf(!HOT_DB_PATH)("against the production wof-hot.db (MAILWOMAN_WOF_
 		})
 
 		test("an unresolvable parsed region does not sink the locality (parentFallback recall)", async () => {
-			// The old cascade warned-and-widened here.
-			// The shared walk's parentFallback retries the locality unscoped when the parent
-			// scope yields nothing — recall over silence, no warning interface.
-			// The locality must still resolve.
 			const hits = await runCascade(
 				asCascadeLookup(wasmLookup),
 				tree("Brooklyn, Zzyzx Nonexistia", [node("region", "Zzyzx Nonexistia", [node("locality", "Brooklyn")])]),

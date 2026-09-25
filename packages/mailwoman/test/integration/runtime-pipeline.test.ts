@@ -1,13 +1,3 @@
-/**
- * @copyright Sister Software
- * @license AGPL-3.0
- * @author Teffen Ellis, et al.
- *
- *   Integration test for `createRuntimePipeline` — wires the real `@mailwoman/normalize` +
- *   `@mailwoman/query-shape` defaults with mocked classifier + resolver. Verifies the end-to-end
- *   composition runs cleanly on inputs that exercise each stage.
- */
-
 import type { AddressClassifier } from "@mailwoman/core/pipeline"
 import type { Resolver } from "@mailwoman/core/resolver"
 import { createRuntimePipeline } from "mailwoman/runtime-pipeline"
@@ -64,19 +54,18 @@ describe("createRuntimePipeline — wiring", () => {
 
 		const result = await pipeline("350  5th Ave, New York, NY 10118", { locale: "en-US" })
 
-		// Normalize collapsed the double space.
 		expect(result.normalized.normalized).toBe("350 5th Ave, New York, NY 10118")
-		// QueryShape detected the US ZIP.
+
 		expect(result.queryShape.knownFormats.some((f) => f.format === "us_zip")).toBe(true)
-		// Caller locale propagated.
+
 		expect(result.locale.locale).toBe("en-US")
 		expect(result.locale.source).toBe("caller")
-		// Classifier ran and produced a tree.
+
 		expect(classifier.parse).toHaveBeenCalled()
 		expect(result.tree.roots).toHaveLength(1)
-		// Resolver ran.
+
 		expect(resolver.resolveTree).toHaveBeenCalled()
-		// Full pipeline path (kind classifier is a stub returning structured_address).
+
 		expect(result.path).toBe("full")
 	})
 
@@ -96,7 +85,7 @@ describe("createRuntimePipeline — wiring", () => {
 		)
 	})
 
-	it("runs without classifier (empty tree, no throw)", async () => {
+	it("Runs without classifier (empty tree without throwing)", async () => {
 		const pipeline = createRuntimePipeline({})
 		const result = await pipeline("hello world")
 		expect(result.tree.roots).toEqual([])
@@ -104,20 +93,20 @@ describe("createRuntimePipeline — wiring", () => {
 		expect(result.timing["query-shape"]).toBeGreaterThanOrEqual(0)
 	})
 
-	it("preserves raw input through normalize → result.input", async () => {
+	it("Preserves raw input through normalize → result.input", async () => {
 		const pipeline = createRuntimePipeline({})
 		const result = await pipeline("  350  5th Ave  ")
 		expect(result.input).toBe("  350  5th Ave  ")
-		// normalized.raw also preserves the original.
+
 		expect(result.normalized.raw).toBe("  350  5th Ave  ")
-		// normalized.normalized is the trimmed + collapsed form.
+
 		expect(result.normalized.normalized).toBe("350 5th Ave")
 	})
 
 	it("offsetMap on normalized input lets consumers map back to raw chars", async () => {
 		const pipeline = createRuntimePipeline({})
 		const result = await pipeline("350  5th Ave")
-		// normalized = "350 5th Ave" (length 11); raw = "350 5th Ave" (length 12) offsetMap[4] should be 5 (the '5' in raw, after skipping the second space).
+
 		const map = (result.normalized as { offsetMap?: number[] }).offsetMap
 		expect(map).toBeDefined()
 		expect(map?.[4]).toBe(5)
@@ -193,9 +182,7 @@ describe("createRuntimePipeline — kind classifier defaults", () => {
 		expect(result.kind.kind).toBe("intersection")
 	})
 
-	it("fast-paths unambiguous postcode (US ZIP+4) inputs to resolver, skipping classifier", async () => {
-		// US ZIP+4 is unambiguous (confidence 0.95 from QueryShape) — the kind classifier
-		// scores it as postcode_only with confidence > 0.95, clearing the fast-path threshold.
+	it("Fast-paths unambiguous postcode (US ZIP+4) inputs to resolver, skipping classifier", async () => {
 		const classifier = fakeClassifier()
 		const resolver = passthroughResolver()
 		const pipeline = createRuntimePipeline({ classifier, resolver })
@@ -206,9 +193,6 @@ describe("createRuntimePipeline — kind classifier defaults", () => {
 	})
 
 	it("does NOT fast-path ambiguous 5-digit input (US/FR/DE overlap)", async () => {
-		// "10118" matches three postcode formats (US/FR/DE) with confidence 0.6 each —
-		// kind is postcode_only but confidence stays below the 0.95 fast-path threshold.
-		// Advisory-not- authoritative principle in action.
 		const classifier = fakeClassifier()
 		const resolver = passthroughResolver()
 		const pipeline = createRuntimePipeline({ classifier, resolver })
@@ -226,7 +210,7 @@ describe("createRuntimePipeline — kind classifier defaults", () => {
 		}))
 
 		const pipeline = createRuntimePipeline({ classifyKind: customKind })
-		const result = await pipeline("Paris") // default would say locality_only
+		const result = await pipeline("Paris")
 		expect(customKind).toHaveBeenCalled()
 		expect(result.kind.kind).toBe("vague")
 	})

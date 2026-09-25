@@ -1,14 +1,3 @@
-/**
- * @copyright Sister Software
- * @license AGPL-3.0
- * @author Teffen Ellis, et al.
- *
- *   Tests for the POI query board's grading core (`gradeCase`), the committed fixture interface, and the
- *   tracked-row convention that lets a known failure class sit on the board without reaching the floors.
- *   No db, no classifier, no resolver — `gradeCase` is graded against synthetic `POIBoardOutcome`
- *   fakes, matching the "no db needed" discipline `fragment-board.test.ts` set for the interval math.
- */
-
 import type { POIIntent, POIIntentOutcome } from "@mailwoman/core/pipeline"
 import {
 	auditFixtures,
@@ -102,16 +91,11 @@ describe("gradeCase — results expectation", () => {
 		const outcome = intentOutcome({
 			type: "intent",
 			intent: { subject: { kind: "category", categoryIDs: ["cafe"], matched: "cafe" } },
-			results: [
-				poiResult({ latitude: 10, longitude: 10 }), // top-ranked, far away
-				poiResult({ latitude: 39.7817, longitude: -89.6501 }), // second, right on the gold point
-			],
+			results: [poiResult({ latitude: 10, longitude: 10 }), poiResult({ latitude: 39.7817, longitude: -89.6501 })],
 		})
 
 		const grade = gradeCase(resultsFixture, outcome)
 
-		// Nearest distance is ~0 even though the top result is far, but the top-category check still
-		// applies to the TOP result, so this fixture (both results categoryID "cafe") still passes.
 		expect(grade.nearestKm).toBeLessThan(1)
 	})
 
@@ -119,7 +103,7 @@ describe("gradeCase — results expectation", () => {
 		const outcome = intentOutcome({
 			type: "intent",
 			intent: { subject: { kind: "category", categoryIDs: ["cafe"], matched: "cafe" } },
-			results: [poiResult({ latitude: 10, longitude: 10 })], // far from Springfield IL
+			results: [poiResult({ latitude: 10, longitude: 10 })],
 		})
 
 		const grade = gradeCase(resultsFixture, outcome)
@@ -225,7 +209,7 @@ describe("gradeCase — brand results expectation", () => {
 		expect(grade.resultCount).toBe(0)
 	})
 
-	it("category grading is unaffected by the brandWikidata branch (regression guard)", () => {
+	it("Category grading is unaffected by the brandWikidata branch (check)", () => {
 		const outcome = intentOutcome({
 			type: "intent",
 			intent: { subject: { kind: "category", categoryIDs: ["cafe"], matched: "cafe" } },
@@ -294,13 +278,6 @@ describe("gradeCase — address expectation", () => {
 })
 
 describe("the committed poi-board fixture set", () => {
-	// The composition register.
-	// Exact rather than a range, because the floors were re-registered against the counted number
-	// (#1960) and that is the one that must not move without an argument: 51 counted rows.
-	// The committed total and the tracked count move whenever a failure class is committed to
-	// the surface every candidate is graded on, which is what the tracked convention is for.
-	// A row added or a status flipped without this test moving is a floor denominator changing in silence.
-	// So the counted assertion is the required one, and the other two say which kind of change happened.
 	it("carries 56 cases — 51 counted toward the floors, plus 5 tracked", () => {
 		expect(fixtures).toHaveLength(56)
 		expect(fixtures.filter((f) => isCountedFixture(f))).toHaveLength(51)
@@ -421,7 +398,6 @@ describe("the committed poi-board fixture set", () => {
 })
 
 describe("evaluateFloors — breach detection", () => {
-	// Synthetic per-kind counts → a FloorInput, mirroring `runPOIBoard`'s `byExpectKind` + `overallPassRate`.
 	function report(kinds: Record<string, { total: number; pass: number }>): FloorInput {
 		const byExpectKind: FloorInput["byExpectKind"] = {}
 		let total = 0
@@ -436,9 +412,6 @@ describe("evaluateFloors — breach detection", () => {
 		return { overallPassRate: total > 0 ? pass / total : 0, byExpectKind }
 	}
 
-	// The committed v1.1 standing (2026-07-20 promotion battery): 33/37 results,
-	// 8/8 abstain, 6/6 address → 47/51 = 92.2% overall.
-	// All three floors met (overall 92.2% ≥ 90%, both hard floors 100%).
 	const shipping = report({
 		results: { total: 37, pass: 33 },
 		abstain: { total: 8, pass: 8 },
@@ -457,7 +430,6 @@ describe("evaluateFloors — breach detection", () => {
 	})
 
 	it("breaches when overall dips below 90% even with both category floors met", () => {
-		// 30/37 results (81%) but abstain/address still perfect → overall 44/51 ≈ 86% < 90%.
 		const evaluation = evaluateFloors(
 			report({
 				results: { total: 37, pass: 30 },
@@ -475,8 +447,6 @@ describe("evaluateFloors — breach detection", () => {
 	})
 
 	it("breaches on a single abstain miss (100% floor is hard) even when overall clears 90%", () => {
-		// 7/8 abstain is a single false-positive.
-		// Overall 50/51 still ≥ 90%, but the abstain floor is 100%.
 		const evaluation = evaluateFloors(
 			report({
 				results: { total: 37, pass: 37 },
@@ -490,7 +460,7 @@ describe("evaluateFloors — breach detection", () => {
 		expect(evaluation.lines.find((l) => l.key === "overall")!.met).toBe(true)
 	})
 
-	it("breaches on a single address-guard miss (the poi branch hijacking an address)", () => {
+	it("Breaches on a single address-condition miss (the poi branch hijacking an address)", () => {
 		const evaluation = evaluateFloors(
 			report({
 				results: { total: 37, pass: 37 },
@@ -515,10 +485,7 @@ describe("evaluateFloors — breach detection", () => {
 		expect(POI_BOARD_FLOORS).toEqual({ overall: 0.9, abstain: 1, address: 1 })
 	})
 
-	// The #1960 re-registration, as arithmetic rather than prose.
-	// The live standing at promotion is 35/37 results (`cat-ca-02` and `brand-us-02`),
-	// 8/8 abstain, 6/6 address.
-	describe("the 55-row composition (#1960)", () => {
+	describe("The 55-row composition", () => {
 		it("reads the same 49/51 = 96.1% it read at 51 rows, because the four promoted rows are tracked", () => {
 			const evaluation = evaluateFloors(
 				report({
@@ -573,7 +540,7 @@ describe("the tracked-row convention", () => {
 		expect(problems.join("\n")).toMatch(/unknown status/u)
 	})
 
-	it("refuses an unknown key rather than dropping it", () => {
+	it("Refuses an unknown key rather than dropping it", () => {
 		const problems = auditFixtures([{ ...resultsFixture, bugref: "#1039" } as POIBoardFixture])
 
 		expect(problems.join("\n")).toMatch(/unknown key "bugref"/u)
@@ -626,14 +593,14 @@ describe("the tracked-row convention", () => {
 		expect(partitionCases(set, [holdingGrade]).tracked[0]!.holding).toBe(true)
 	})
 
-	it("refuses a grade whose id names no committed fixture, rather than dropping it from the floors", () => {
+	it("Refuses a grade whose id names no committed fixture, rather than dropping it from the floors", () => {
 		const orphan = gradeCase({ ...resultsFixture, id: "t-orphan" }, { path: "full" })
 
 		expect(() => partitionCases([resultsFixture], [orphan])).toThrow(/names no committed fixture/u)
 	})
 })
 
-describe("the promoted semantic-utility family (#1960)", () => {
+describe("The promoted semantic-utility family", () => {
 	const definition = probeDefinition
 	const promoted = fixtures.filter((f) => f.rowRef?.startsWith("semantic-utility/probe-definition.json#"))
 
@@ -661,9 +628,6 @@ describe("the promoted semantic-utility family (#1960)", () => {
 			expect(fixture.bugRef, fixture.id).toMatch(/^#\d+$/u)
 		}
 
-		// The route-dependent three await the phase-2 decision that would reach them on the default path.
-		// The French row is tracked as a defect, because its baseline is a confident
-		// wrong answer rather than a miss.
 		const byRef = new Map(promoted.map((f) => [f.id, f]))
 
 		expect(byRef.get("sem-act-us-01")).toMatchObject({ status: "improvement_target", bugRef: "#1997" })

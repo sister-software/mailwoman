@@ -3,14 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The geocoder's chrome over the map: a search pill on top, example chips on one line beneath it, a control column
- *   down the right edge, and a result sheet that rises from the bottom when there is something to show.
- *
- *   It replaces a 400px full-height panel that carried every control at once. The layout is the one the reference
- *   map apps use, and the reason is the map: chrome that floats over it leaves the map the page, where a slab makes
- *   the map the leftover third.
- *
- *   node-safe: pure React + the shared units, no maplibre.
+ *   Render search, results, and controls over the map.
+ *   On narrow screens, the search panel becomes a draggable bottom sheet.
  */
 
 import type React from "react"
@@ -57,9 +51,7 @@ export interface GeocoderControlsProps {
 	 */
 	compare: UseCompareState
 	/**
-	 * A query that arrived with the page (a permalink's `?q=`), run once as soon as the runtime is ready.
-	 *
-	 * See `GeocoderProps.initialQuery`.
+	 * Optional URL query to run once the runtime is ready.
 	 */
 	initialQuery?: string | null
 	/**
@@ -75,18 +67,11 @@ export interface GeocoderControlsProps {
 	 */
 	placeholder: string
 	/**
-	 * The live map, for the controls that read it: the compass takes its direction,
-	 * the host's layer control reads its style.
-	 *
-	 * `null` until react-map-gl instantiates the map.
+	 * Live map instance used by the compass and host layer controls.
 	 */
 	map?: MapInstance | null
 	/**
-	 * Fired with the query whenever one is submitted, before the parse starts.
-	 *
-	 * The host writes it into the URL.
-	 * This package never touches `location`, because the address bar is the app's state
-	 * rather than a control's.
+	 * Fired before parsing; the host may write the query to its URL.
 	 */
 	onSubmitQuery?: (query: string) => void
 	/**
@@ -109,44 +94,27 @@ export interface GeocoderControlsProps {
 }
 
 /**
- * Which side sheet is open.
- *
- * At most one, because they share an edge and a phone gives each the whole panel.
+ * At most one side sheet can be open.
  */
 type SheetName = "about" | "layers" | "developer" | null
 
 /**
- * The width at or below which the panel is a bottom drawer rather than a left column.
- *
- * Stated once, and it has to agree with the `@media (max-width: 600px)` block in
- * `styles.css` that actually moves the panel: the gestures below arm on this query,
- * so a disagreement arms a drag on a layout with nowhere to drag to.
+ * Breakpoint for the bottom-drawer layout; keep in sync with CSS.
  */
 const DRAWER_LAYOUT = "(max-width: 600px)"
 
 /**
- * Travel, in pixels, that turns a press on the drawer's header into a drag rather than a tap.
- *
- * A finger never holds still, so zero would make every tap a one-pixel drag
- * and put the tap-to-toggle path out of reach.
- * Three is the smallest number that survives a resting hand without swallowing a deliberate short pull.
+ * Header movement threshold that distinguishes a drag from a tap.
  */
 const DRAG_TRAVEL_PX = 3
 
 /**
- * Downward travel, in pixels, that promotes a pull at the top of the scroll into a drag on the drawer.
- *
- * Larger than {@link DRAG_TRAVEL_PX} because this gesture starts on the content,
- * where the same few pixels could still turn out to be a scroll: the drawer must not
- * start moving under a reader who meant to flick the result up.
+ * Downward movement needed to promote content overscroll into a drawer drag.
  */
 const OVERSCROLL_PROMOTE_PX = 8
 
 /**
- * The chrome.
- *
- * Everything positioned here floats over the map.
- * Nothing occupies a column of the page.
+ * Render the floating map controls and result panel.
  */
 export function GeocoderControls({
 	runtime,

@@ -1,13 +1,3 @@
-/**
- * @copyright Sister Software
- * @license AGPL-3.0
- * @author Teffen Ellis, et al.
- *
- *   Tests for the #727 phase-4c street-name-evidence rerank policy (`street-evidence.ts`). Covers the
- *   fold interface, the G1 type-vocabulary guard, and the v2 pick policy's four cases (keep / fix /
- *   G1-skip / G2-cap / fail-open) that the FR fragment board measured at 96 fixes / 3 breaks.
- */
-
 import {
 	foldStreetSurface,
 	isPureTypeVocabulary,
@@ -17,11 +7,6 @@ import {
 } from "@mailwoman/resolver/street"
 import { describe, expect, test } from "vitest"
 
-/**
- * A mock evidence provider: a fixed set of folded street names that "exist".
- *
- * Fails open on anything else.
- */
 const mockEvidence = (existing: string[]): StreetLocalityEvidence => {
 	const set = new Set(existing.map(foldStreetSurface))
 
@@ -42,13 +27,13 @@ describe("foldStreetSurface", () => {
 	test("normalizes hyphens and apostrophes to spaces (the fold interface — the v1 break class)", () => {
 		expect(foldStreetSurface("Rue Pillet-Will")).toBe("rue pillet will")
 		expect(foldStreetSurface("Chemin d'En Galinier")).toBe("chemin d en galinier")
-		// A hyphenated index entry and an un-hyphenated one fold to the same key.
+
 		expect(foldStreetSurface("Pillet-Will")).toBe(foldStreetSurface("Pillet Will"))
 	})
 })
 
 describe("isPureTypeVocabulary (G1)", () => {
-	test("bare type/particle surfaces are pure — no name, no evidence credit", () => {
+	test("Bare type/particle surfaces are pure — neither name nor evidence credit", () => {
 		expect(isPureTypeVocabulary(foldStreetSurface("rue"))).toBe(true)
 		expect(isPureTypeVocabulary(foldStreetSurface("chemin de la"))).toBe(true)
 		expect(isPureTypeVocabulary(foldStreetSurface("route de"))).toBe(true)
@@ -73,7 +58,6 @@ describe("pickByStreetEvidence — the v2 policy", () => {
 	})
 
 	test("FIX: moves off a wrong rank-1 to the in-index sibling", () => {
-		// rank-1 "Puget" (not a street) loses to rank-3 "Chemin Puget Terrein" (in index), within margin.
 		const evidence = mockEvidence(["Chemin Puget Terrein"])
 		const cands = [cand("Puget", 5), cand("Puget Terrein", 4.9), cand("Chemin Puget Terrein", 4.6)]
 		const pick = pickByStreetEvidence(cands, evidence)
@@ -83,8 +67,6 @@ describe("pickByStreetEvidence — the v2 policy", () => {
 	})
 
 	test("G1: does NOT credit a truncated pure-type sibling even though it exists in the index", () => {
-		// "rue" is in the index but is pure type vocab → skipped.
-		// Gold "Rue Guarnieri" is the real pick.
 		const evidence = mockEvidence(["rue", "Rue Guarnieri"])
 		const cands = [cand("rue", 5), cand("Rue Guarnieri", 4.5)]
 		const pick = pickByStreetEvidence(cands, evidence)
@@ -93,7 +75,6 @@ describe("pickByStreetEvidence — the v2 policy", () => {
 	})
 
 	test("G2: does NOT promote an in-index candidate beyond the margin cap", () => {
-		// Gold "Rue Paul Marzin" exists but sits 4.6 below rank-1 (> 2.5 cap) → keep rank-1 (fail-open).
 		const evidence = mockEvidence(["Rue Paul Marzin"])
 		const cands = [cand("Paul", 6), cand("Rue Paul Marzin", 1.4)]
 		const pick = pickByStreetEvidence(cands, evidence)
@@ -103,7 +84,7 @@ describe("pickByStreetEvidence — the v2 policy", () => {
 
 	test("G2: DOES promote when the in-index candidate is within the margin cap", () => {
 		const evidence = mockEvidence(["Rue Paul Marzin"])
-		const cands = [cand("Paul", 6), cand("Rue Paul Marzin", 4)] // 2.0 gap ≤ 2.5
+		const cands = [cand("Paul", 6), cand("Rue Paul Marzin", 4)]
 		const pick = pickByStreetEvidence(cands, evidence)
 		expect(pick.index).toBe(1)
 		expect(pick.moved).toBe(true)
@@ -125,7 +106,7 @@ describe("pickByStreetEvidence — the v2 policy", () => {
 	test("custom marginCap is honored", () => {
 		const evidence = mockEvidence(["Rue Paul Marzin"])
 		const cands = [cand("Paul", 6), cand("Rue Paul Marzin", 1.4)]
-		// With a wide cap the deep candidate is now eligible.
+
 		const pick = pickByStreetEvidence(cands, evidence, { marginCap: 10 })
 		expect(pick.index).toBe(1)
 	})
@@ -152,7 +133,7 @@ describe("demote-only exclusions", () => {
 		expect(pick.index).toBe(1)
 		expect(pick.moved).toBe(true)
 		expect(pick.demoted).toEqual([0])
-		// The candidate array is never mutated and nothing is removed.
+
 		expect(candidates).toHaveLength(2)
 	})
 

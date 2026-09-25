@@ -3,20 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `<ResultCamera>` — applies the {@link MapCameraTarget} a {@link MapPlaceRenderSpec} computes, by
- *   animating the live map to it. This is the one deliberately-imperative touch in the phase-2 overlays,
- *   and it is justified: maplibre exposes animated camera moves (`flyTo`) and viewport-fitting
- *   (`fitBounds`, which needs the map's pixel dimensions + padding) only imperatively — react-map-gl has
- *   no declarative prop for "animate to these bounds". It is applied the v8-idiomatic way, through
- *   `useMap()` (exactly as `DashboardMap`/`GeoJSONClipboardLayer` reach the map), never a threaded handle.
- *
- *   A consumer that prefers a hard, declarative jump can instead feed the target through
- *   {@link cameraToViewState} into a controlled `<MapCanvas viewState>` and skip this component — the
- *   `center` case has that declarative path. only `bounds` strictly requires this. Renders nothing.
- *
- *   `target` is expected to be the stable, memoized `camera` off a `useMapPlaceRender` spec, so listing it
- *   as the effect dependency re-runs the camera move exactly when the resolved place changes — no
- *   value-key dance, no dependency-lint suppression.
+ *   Apply a resolved place's camera target through MapLibre's imperative `flyTo` or `fitBounds` APIs.
+ *   Renders no DOM; controlled-map consumers can instead use `cameraToViewState` for center targets.
  */
 
 import type { FitBoundsOptions } from "maplibre-gl"
@@ -26,23 +14,8 @@ import { useMap } from "react-map-gl/maplibre"
 import type { MapCameraTarget } from "#map/place-render"
 
 /**
- * The `fitBounds` options for a `bounds` target, and the reason this is a named function
- * rather than an object literal at the call site.
- *
- * `duration` is present only on the non-animated path, and its absence on the animated one is required.
- * Maplibre's `Camera.flyTo` (which `fitBounds` funnels into via `_fitInternal`) branches
- * on `'duration' in options`, not on the value: an explicitly-passed `duration: undefined`
- * therefore survives the key test and is coerced with `+undefined` → `NaN`.
- *
- * Every ease frame then computes `k = easing(elapsed / NaN)` → `NaN`,
- * the flight-path math yields a `NaN` world coordinate, and the first frame throws
- * `Invalid LngLat object: (NaN, NaN)` out of the RAF loop.
- * Before the map has moved at all, and with no `move` event to notice it by.
- *
- * Measured 2026-08-05 against maplibre-gl 5.24.0, same bounds and same map:
- * `{padding: 40, duration: undefined}` → `map._easeOptions.duration = NaN` + the throw;
- * `{padding: 40}` → `3937.7 ms` + a normal flight.
- * So pass the key or don't, never pass it holding `undefined`.
+ * Build bounds options without an undefined `duration` key.
+ * MapLibre branches on key presence, so `duration: undefined` can produce a NaN camera flight.
  */
 export function fitBoundsOptionsFor(padding: number, animate: boolean): FitBoundsOptions {
 	return animate ? { padding } : { padding, duration: 0 }

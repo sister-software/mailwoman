@@ -1,15 +1,3 @@
-/**
- * @copyright Sister Software
- * @license AGPL-3.0
- * @author Teffen Ellis, et al.
- *
- *   Unit tests for the `mailwoman autocomplete` command.
- *
- *   Fixture FST is built in-memory with a tiny hand-coded trie so tests don't depend on a live WOF
- *   DB. The trie is built using `normalizeTokens` (exactly as the real builder does) to honour the
- *   symmetry interface from issue #190.
- */
-
 import { tempRootPath } from "@mailwoman/core/data-root"
 import { writeLocalBuffer, writeLocalFile } from "@mailwoman/core/fs/writers"
 import { autocomplete, FSTMatcher, normalizeTokens, serializeFST } from "@mailwoman/resolver-wof-sqlite/fst"
@@ -17,8 +5,6 @@ import type { PlacetypeID } from "@mailwoman/resolver-wof-sqlite/fst"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import { resolveFSTPath, runAutocomplete } from "mailwoman/autocomplete-core"
 import { beforeAll, describe, expect, it, vi } from "vitest"
-
-// MARK: Fixture helpers
 
 interface FixturePlace {
 	wofID: number
@@ -35,9 +21,6 @@ interface FSTNodeInternal {
 
 type FixtureEntry = FixturePlace & { lat: number; lon: number }
 
-/**
- * Build a minimal FSTMatcher from a list of places, using normalizeTokens exactly as the builder.
- */
 function buildFixtureMatcher(places: FixturePlace[]): FSTMatcher {
 	const entries: FixtureEntry[] = places.map((p) => ({ ...p, lat: 0, lon: 0 }))
 	const nodes: FSTNodeInternal[] = [{ edges: new Map(), places: [] }]
@@ -110,13 +93,10 @@ let fixtureBinPath: string
 beforeAll(async () => {
 	fixtureMatcher = buildFixtureMatcher(FIXTURE_PLACES)
 
-	// Write the serialized fixture to a temp file so runAutocomplete (which reads from disk) can be tested end-to-end.
 	const buf = serializeFST(fixtureMatcher)
 	fixtureBinPath = tempRootPath(`mailwoman-fst-fixture-${Date.now()}.bin`)
 	await writeLocalFile(buf, fixtureBinPath)
 })
-
-// MARK: normalizeTokens symmetry smoke-test
 
 describe("normalizeTokens symmetry", () => {
 	it("lowercases ASCII", () => {
@@ -128,10 +108,6 @@ describe("normalizeTokens symmetry", () => {
 	})
 
 	it("applies NFKC — composed characters are normalized but diacritics are preserved", () => {
-		// normalizeTokens applies nfkc + lowercase + punctuation strip.
-		// It does not decompose or strip diacritics.
-		// That's intentional so that "José" and "Jose" are treated as distinct tokens
-		// at both build time and query time (symmetry preserved).
 		const tokens = normalizeTokens("San José")
 		expect(tokens).toEqual(["san", "josé"])
 	})
@@ -140,8 +116,6 @@ describe("normalizeTokens symmetry", () => {
 		expect(normalizeTokens("   ")).toEqual([])
 	})
 })
-
-// MARK: In-memory autocomplete (FSTMatcher directly, no disk I/O)
 
 describe("autocomplete — in-memory fixture", () => {
 	it("returns suggestions for prefix 'New'", () => {
@@ -174,9 +148,6 @@ describe("autocomplete — in-memory fixture", () => {
 	})
 
 	it("prefix 'San' yields San Francisco as the top result (highest referential)", () => {
-		// The FST is token-based: "San Fr" would require a token edge for "fr" which doesn't exist.
-		// The correct prefix is the full first token "San" — the BFS expansion then finds
-		// "Francisco" and "Jose" as the one-token continuations, ranked by importance.
 		const result = autocomplete(fixtureMatcher, "San", { maxSuggestions: 5 })
 		expect(result.suggestions.length).toBeGreaterThan(0)
 		expect(result.suggestions[0]!.name).toBe("San Francisco")
@@ -194,8 +165,6 @@ describe("autocomplete — in-memory fixture", () => {
 		expect(result.suggestions.length).toBeLessThanOrEqual(1)
 	})
 })
-
-// MARK: runAutocomplete — disk round-trip
 
 describe("runAutocomplete — disk round-trip", () => {
 	it("reads the fixture bin and returns completions for 'New'", async () => {
@@ -231,13 +200,10 @@ describe("runAutocomplete — disk round-trip", () => {
 		const entries = await runAutocomplete("United", { fstPath: fixtureBinPath, limit: 5 })
 		const us = entries.find((e) => e.wofID === 85_633_793)
 		expect(us).toBeDefined()
-		// Float32 round-trip may introduce tiny epsilon.
-		// Check within tolerance.
+
 		expect(us!.referential).toBeCloseTo(0.99, 1)
 	})
 })
-
-// MARK: resolveFSTPath
 
 describe("resolveFSTPath", () => {
 	it("returns the explicit path when given one", () => {
@@ -248,10 +214,6 @@ describe("resolveFSTPath", () => {
 		vi.stubEnv("MAILWOMAN_FST_BIN", undefined)
 
 		try {
-			// Lowercase on both halves.
-			// The name `gazetteer-pipeline/fst.ts` actually writes.
-			// This assertion previously restated the resolver's own spelling,
-			// so it agreed with the code and with no artifact.
 			expect(resolveFSTPath().toString()).toBe(wofDatabasePath("fst-per-locale", "fst-en-us.bin").toString())
 		} finally {
 			vi.unstubAllEnvs()

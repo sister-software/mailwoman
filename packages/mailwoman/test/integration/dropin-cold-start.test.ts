@@ -1,42 +1,3 @@
-/**
- * @copyright Sister Software
- * @license AGPL-3.0
- * @author Teffen Ellis, et al.
- *
- *   Cold-start integration test for the drop-in servers (`@mailwoman/photon`, `@mailwoman/nominatim`,
- *   `@mailwoman/libpostal`) and the MCP server (`@mailwoman/mcp`) — Tasks 7 and 14 of the docs reorg. Spawns each
- *   compiled `cli.js` and asserts the doctor-grade cold-start interface the tutorial docs print verbatim:
- *
- *   - `photon`/`nominatim` need a gazetteer to answer queries. With none present, `serve` must exit non-zero
- *     within 30 s and its stderr must name the fix (`mailwoman data pull`) — never an unhandled-rejection
- *     stack trace. This was previously a bare, WAF-blocked `curl` line (measured 2026-08-03: an unranged GET
- *     against the public bucket 403s) — see `resolver-backend.ts`'s `buildNoGazetteerMessage`.
- *   - `libpostal` needs only the model weights — no gazetteer, no data pull; `serve` must bind and answer
- *     `GET /` with 200 (the "lowest-dependency drop-in" the readme claims). On a consumer install the published
- *     package ships the binaries, so a bare data root is the complete cold start. that half of the claim belongs
- *     to the clean-install smoke. IN-repo the workspace package is bare by design (#1733: `link-dev-weights`
- *     populates the data-root overlay, never the tracked package), so the test seeds its scratch root's overlay
- *     from whatever weights this environment resolves and proves the data-independence half. a box that resolves
- *     no weights at all skips with the resolver's own message rather than failing on its environment.
- *   - `mcp` speaks JSON-RPC over stdio rather than http, and loads its deps lazily, so its cold start fails
- *     inside a tool call rather than at boot: the server must still connect and list its tools with no data at
- *     all, and the first model-backed tool call must answer with the same `mailwoman data pull` fix as a tool
- *     error — not the internal `resolveExtracts: at least one database is required`, which is what it said before
- *     Task 14. A second, network-free test asserts `@mailwoman/mcp` declares `@mailwoman/neural-weights-en-us`;
- *     it did not until 2026-08-03, so a standalone `npm install @mailwoman/mcp` could never load the model
- *     (measured against the published 8.6.0 — the same defect Task 7 fixed in `@mailwoman/libpostal`). Nothing
- *     inside this monorepo can catch that one at runtime, because yarn hoists every workspace sibling into
- *     `node_modules` whether a package declares it or not.
- *
- *   These assertions run in every environment and download nothing (a bare `mkdtemp` data root, never
- *   populated). The full loop — actually `data pull candidate` (~1.65 GB) and confirm photon/nominatim also
- *   bind + answer 200 against it, plus the Paris/Texas routing retest (#task-7's carry-forward finding: the FTS
- *   default backend misroutes a French address to its US homonym. the candidate backend does not) — is conditional
- *   behind `$MAILWOMAN_COLD_START_FULL=1` (unset in CI). Run it manually once per change to this cold-start
- *   path; `$MAILWOMAN_COLD_START_DATA_ROOT` lets a repeat local run reuse an already-pulled data root instead of
- *   re-downloading.
- */
-
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { createSymbolicLink, makeDirectories } from "@mailwoman/core/fs/writers"
@@ -56,8 +17,6 @@ const fixtures = new AsyncDisposableStack()
 
 afterAll(() => fixtures.disposeAsync())
 
-// #region Paths + budgets
-
 const PHOTON_CLI = workspacePath("photon", "out", "cli.js")
 const NOMINATIM_CLI = workspacePath("nominatim", "out", "cli.js")
 const LIBPOSTAL_CLI = workspacePath("libpostal", "out", "cli.js")
@@ -71,63 +30,22 @@ const hasMCPCLI = await pathExists(MCP_CLI)
 const hasLibpostalCLI = await pathExists(LIBPOSTAL_CLI)
 const hasMailwomanCLI = await pathExists(MAILWOMAN_CLI)
 
-// Dedicated test-only ports, clear of the documented defaults (2322/8080/8081)
-// and of the ports a manual cold-start check might already be using.
-// One named constant per server so the string arg (CLI `--port`) and the numeric
-// arg (`waitForHealthy`/`fetch`) can never drift apart.
 const PHOTON_TEST_PORT = 29_322
 const PHOTON_FULL_TEST_PORT = 29_323
 const NOMINATIM_TEST_PORT = 29_380
 const NOMINATIM_FULL_TEST_PORT = 29_383
 const LIBPOSTAL_TEST_PORT = 29_381
 
-/**
- * Wall-clock budget for the missing-data preflight to exit.
- *
- * It fails fast (before touching the neural runtime), so this is a generous ceiling
- * rather than the measured cost.
- * See `mailwoman/commands/geocode.test.ts` for the node-boot baseline (~2.7 s) this margins against.
- */
 const PREFLIGHT_TIMEOUT_MS = 30_000
 
-/**
- * Wall-clock budget for a server to bind and answer its health route.
- *
- * Model load (ONNX + tokenizer +, for photon/nominatim, opening the resolver backend) is the dominant cost.
- * Measured under 3 s warm on an idle box, so 30 s leaves comfortable margin under load.
- */
 const HEALTHY_TIMEOUT_MS = 30_000
 
-/**
- * Vitest's own per-test ceiling.
- *
- * See the note in `corpus-cli.test.ts`: must exceed the child's own timeout plus whatever
- * this test queues behind the CLI-spawn lock (up to 120 s under contention).
- *
- * Generous costs nothing on a passing test.
- */
 const TEST_TIMEOUT_MS = 150_000
 
-/**
- * The `data pull candidate` step in the conditional suite streams ~1.65 GB.
- * This budget is network-bound rather than CPU-bound.
- */
 const PULL_TIMEOUT_MS = 600_000
 
-/**
- * The conditional test's own vitest timeout: the pull, plus two server boots
- * and a geocode call, each independently bounded.
- */
 const CONDITIONAL_TEST_TIMEOUT_MS = PULL_TIMEOUT_MS + 3 * HEALTHY_TIMEOUT_MS + 30_000
 
-// #endregion
-
-// #region Server lifecycle helpers
-
-/**
- * A spawned long-running server plus its captured output — captured live (not just at exit)
- * so a failed health check's error message shows what the process actually printed.
- */
 interface SpawnedServer {
 	child: ChildProcess
 	stdout: string
@@ -138,7 +56,7 @@ function spawnServer(
 	cliPath: string,
 	args: string[],
 	env: NodeJS.ProcessEnv,
-	// The http drop-ins never read stdin, so it stays closed for them. `@mailwoman/mcp` is its stdin — the JSON-RPC transport runs over it — so the MCP round-trip below opens it.
+
 	stdin: "ignore" | "pipe" = "ignore"
 ): SpawnedServer {
 	const child = spawnProcess("node", [cliPath, ...args], { env, stdio: [stdin, "pipe", "pipe"] })
@@ -155,13 +73,6 @@ function spawnServer(
 	return server
 }
 
-/**
- * Poll `GET /` until it answers 200 (every drop-in's landing route — always registered,
- * unconditional on data-root state) or `deadlineMs` elapses.
- *
- * Also fails fast if the child exits before ever becoming healthy.
- * A crash loop should not eat the whole timeout budget.
- */
 async function waitForHealthy(server: SpawnedServer, port: number, deadlineMs: number): Promise<void> {
 	const deadline = Date.now() + deadlineMs
 
@@ -177,9 +88,7 @@ async function waitForHealthy(server: SpawnedServer, port: number, deadlineMs: n
 			const res = await fetch(`http://127.0.0.1:${port}/`)
 
 			if (res.ok) return
-		} catch {
-			// Not listening yet — keep polling.
-		}
+		} catch {}
 
 		await new Promise((resolve) => {
 			setTimeout(resolve, 200)
@@ -191,10 +100,6 @@ async function waitForHealthy(server: SpawnedServer, port: number, deadlineMs: n
 	)
 }
 
-/**
- * Sigterm + wait for exit (bounded by a sigkill fallback) — asserts the process
- * actually goes away rather than just that it answered once.
- */
 async function stopServer(server: SpawnedServer): Promise<void> {
 	if (server.child.exitCode !== null || server.child.signalCode !== null) return
 
@@ -213,17 +118,6 @@ async function stopServer(server: SpawnedServer): Promise<void> {
 	})
 }
 
-/**
- * Drive an MCP stdio server through one round trip: `initialize`, `notifications/initialized`,
- * then each requested JSON-RPC call in order, resolving to the results in the same order.
- *
- * Hand-rolled rather than pulled from `@modelcontextprotocol/sdk` because the point of the test is the wire.
- * A client object that reconnects, retries or reshapes an error would hide
- * exactly the behaviour being asserted.
- *
- * The transport is newline-delimited JSON both ways (`StdioServerTransport`),
- * so a line-buffered reader is the whole protocol.
- */
 async function mcpRoundTrip(
 	cliPath: string,
 	env: NodeJS.ProcessEnv,
@@ -248,9 +142,6 @@ async function mcpRoundTrip(
 
 			if (!line) continue
 
-			// A partial line parses to null and is simply skipped — the next chunk completes it,
-			// and `server.stdout` accumulates the whole stream.
-			// Degrading is the interface here rather than an error.
 			const message = tryParsingJSON<{ id?: number; result?: Record<string, unknown> }>(line)
 			const resolve = message && typeof message.id === "number" ? pending.get(message.id) : undefined
 
@@ -295,12 +186,6 @@ async function mcpRoundTrip(
 	return { results, stderr: server.stderr }
 }
 
-// #endregion
-
-/**
- * Fresh, empty data root — never populated, so the "missing data" + "libpostal
- * needs none" tests download nothing.
- */
 async function freshDataRoot(): Promise<string> {
 	return fixtures.use(await temporaryDirectory("mw-cold-start-")).path.toString()
 }
@@ -313,7 +198,7 @@ afterEach(async () => {
 	}
 })
 
-describe.skipIf(!hasPhotonCLI)("mailwoman-photon serve — cold start, no data", () => {
+describe.skipIf(!hasPhotonCLI)("Mailwoman-photon serve — cold start without data", () => {
 	test(
 		"exits non-zero within 30s and stderr names the mailwoman data pull fix",
 		async () => {
@@ -335,7 +220,7 @@ describe.skipIf(!hasPhotonCLI)("mailwoman-photon serve — cold start, no data",
 	)
 })
 
-describe.skipIf(!hasNominatimCLI)("mailwoman-nominatim serve — cold start, no data", () => {
+describe.skipIf(!hasNominatimCLI)("Mailwoman-nominatim serve — cold start without data", () => {
 	test(
 		"exits non-zero within 30s and stderr names the mailwoman data pull fix",
 		async () => {
@@ -363,15 +248,6 @@ describe.skipIf(!hasLibpostalCLI)("mailwoman-libpostal serve — cold start, zer
 		async (ctx) => {
 			const dataRoot = await freshDataRoot()
 
-			// The claim under test is "weights only, zero data artifacts",
-			// not "the workspace package carries weights".
-			// A consumer install satisfies the weights half natively
-			// (the published package ships the binaries. The clean-install smoke owns that claim).
-			// A dev checkout deliberately does not (#1733: `link-dev-weights` populates the
-			// data-root overlay, never the tracked package — the YN0035/worktree hazards),
-			// so seed the scratch root's overlay from whatever this environment resolves.
-			// The child then proves the data-independence half on every box,
-			// through the same overlay rung a dev run uses.
 			const { resolveWeights } = await import("@mailwoman/neural/weights")
 
 			let seed: { modelPath: string; tokenizerPath: string; modelCardPath?: string | undefined }
@@ -423,16 +299,10 @@ describe.skipIf(!hasLibpostalCLI)("mailwoman-libpostal serve — cold start, zer
 	)
 })
 
-describe("mailwoman-mcp — cold start over stdio, no data", () => {
+describe("Mailwoman-mcp — cold start over stdio without data", () => {
 	test("declares @mailwoman/neural-weights-en-us, so a standalone npm install can load the model", async () => {
 		const manifest = await readPackageJSON(MCP_PACKAGE_JSON)
 
-		// The regression this pins: `@mailwoman/mcp@8.6.0` shipped without it
-		// (checked against the registry 2026-08-03), so `npm install @mailwoman/mcp` in
-		// a clean directory installed no weights package and every model-backed tool
-		// answered `Could not resolve @mailwoman/neural-weights-en-us`.
-		// A runtime assertion cannot see this — yarn hoists the sibling workspace
-		// regardless — so the manifest is the test.
 		expect(manifest.dependencies?.["@mailwoman/neural-weights-en-us"]).toBe("workspace:*")
 	})
 
@@ -454,7 +324,6 @@ describe("mailwoman-mcp — cold start over stdio, no data", () => {
 					]
 				)
 
-				// Listing tools needs neither the model nor a gazetteer — the whole point of the lazy deps.
 				const [list, call] = results as [
 					{ tools: Array<{ name: string }> },
 					{ isError?: boolean; content: Array<{ text: string }> },
@@ -463,7 +332,6 @@ describe("mailwoman-mcp — cold start over stdio, no data", () => {
 				expect(list.tools.map((t) => t.name)).toContain("mailwoman_parse")
 				expect(list.tools.map((t) => t.name)).toContain("mailwoman_layer_manifest")
 
-				// Calling one does, and the failure has to name the fix rather than the internal database error.
 				expect(call.isError).toBe(true)
 				expect(call.content[0]!.text).toContain("mailwoman data pull candidate")
 				expect(call.content[0]!.text).not.toContain("resolveExtracts")
@@ -472,8 +340,6 @@ describe("mailwoman-mcp — cold start over stdio, no data", () => {
 		TEST_TIMEOUT_MS
 	)
 })
-
-// #region Conditional: real data pull + Paris/Texas retest
 
 const isFull = $public.MAILWOMAN_COLD_START_FULL === "1"
 
@@ -484,8 +350,7 @@ describe.skipIf(!isFull || !hasMailwomanCLI || !hasPhotonCLI || !hasNominatimCLI
 			"mailwoman data pull candidate + photon/nominatim serve bind and answer 200; Paris routes to France not Texas",
 			async () => {
 				const reuseRoot = $public.MAILWOMAN_COLD_START_DATA_ROOT
-				// A `--data-root` supplied through the environment is the caller's and is never removed.
-				// The one this test makes is registered on the file's fixture stack by `freshDataRoot`.
+
 				const dataRoot = reuseRoot ?? (await freshDataRoot())
 
 				await withCLISpawnLockAsync(() =>
@@ -495,9 +360,6 @@ describe.skipIf(!isFull || !hasMailwomanCLI || !hasPhotonCLI || !hasNominatimCLI
 					})
 				)
 
-				// photon: auto-detects the convention-path candidate.db — no $MAILWOMAN_CANDIDATE_DB export needed.
-				// Since #1444 that fallback lives in `resolveCandidateDBPath` itself, so it is no
-				// longer a photon/nominatim special case: every entry point reads the convention path.
 				await withCLISpawnLockAsync(async () => {
 					const server = spawnServer(
 						PHOTON_CLI,
@@ -524,17 +386,12 @@ describe.skipIf(!isFull || !hasMailwomanCLI || !hasPhotonCLI || !hasNominatimCLI
 					await stopServer(server)
 				})
 
-				// The ledgered Paris/Texas finding: `mailwoman geocode` (unlike the drop-ins)
-				// resolves the candidate gazetteer only via $MAILWOMAN_CANDIDATE_DB —
-				// the export step `buildNoGazetteerMessage` prints for it.
 				const { stdout } = await withCLISpawnLockAsync(() =>
 					runFile("node", [MAILWOMAN_CLI, "geocode", "12 Rue de Rivoli, 75001 Paris"], {
 						timeout: PREFLIGHT_TIMEOUT_MS,
 						env: childEnv({
 							MAILWOMAN_DATA_ROOT: dataRoot,
-							// The path `data pull candidate` above wrote to, read from its one home
-							// rather than composed here: a literal would drift from the writer, which is what
-							// moved the gazetteer under the data root's `db/` group without moving this line.
+
 							MAILWOMAN_CANDIDATE_DB: conventionCandidateDBPath(dataRoot),
 						}),
 					})
@@ -543,7 +400,7 @@ describe.skipIf(!isFull || !hasMailwomanCLI || !hasPhotonCLI || !hasNominatimCLI
 				const result = parseJSONStrict<{ lat: number; lon: number; countryCode: string | null }>(stdout)
 
 				expect(result.countryCode).toBe("FR")
-				// Paris, France — not Paris, TX (32.96, -96.84).
+
 				expect(result.lat).toBeCloseTo(48.8566, 1)
 				expect(result.lon).toBeCloseTo(2.3428, 1)
 			},
@@ -551,5 +408,3 @@ describe.skipIf(!isFull || !hasMailwomanCLI || !hasPhotonCLI || !hasNominatimCLI
 		)
 	}
 )
-
-// #endregion

@@ -1,16 +1,3 @@
-/**
- * @copyright Sister Software.
- * @license AGPL-3.0
- * @author Teffen Ellis, et al.
- *
- *   No fixture PBF exists under `osm/` test fixtures, so per the task brief this locks the two pure
- *   pure helpers instead: {@link matchOSMPOITagRule} (the and/or tag-rule matcher, over synthetic tag dicts)
- *   and {@link buildTelecomPOISQL} (the ogrsql string builder). Neither spawns `ogr2ogr` — the actual
- *   `extractOSMPOIs` process-spawn integration is unexercised here and requires the build-local ladder
- *   (a real Geofabrik `.osm.pbf` + gdal on the path); see the task report for a transcript verifying
- *   the SQL this module builds against a hand-authored `.osm` XML fixture with the system `ogr2ogr`.
- */
-
 import {
 	buildTelecomPOISQL,
 	extractOSMPOIs,
@@ -46,20 +33,20 @@ test("TELECOM_TAG_RULES: encodes exactly the six decision-2 rules", () => {
 test("matchOSMPOITagRule: telecom_exchange matches either OR branch", () => {
 	expect(matchOSMPOITagRule({ man_made: "telephone_exchange" })).toBe("telecom_exchange")
 	expect(matchOSMPOITagRule({ telecom: "exchange" })).toBe("telecom_exchange")
-	// both branches at once still resolves to the same category (first rule wins, harmlessly)
+
 	expect(matchOSMPOITagRule({ man_made: "telephone_exchange", telecom: "exchange" })).toBe("telecom_exchange")
 })
 
 test("matchOSMPOITagRule: telecom_cabinet requires BOTH tags (AND, not OR)", () => {
 	expect(matchOSMPOITagRule({ man_made: "street_cabinet", street_cabinet: "telecom" })).toBe("telecom_cabinet")
-	// only one of the two conjuncts present -> no match
+
 	expect(matchOSMPOITagRule({ man_made: "street_cabinet" })).toBeNull()
 	expect(matchOSMPOITagRule({ street_cabinet: "telecom" })).toBeNull()
 })
 
 test("matchOSMPOITagRule: tower_comms requires BOTH man_made=mast AND tower:type=communication", () => {
 	expect(matchOSMPOITagRule({ man_made: "mast", "tower:type": "communication" })).toBe("tower_comms")
-	// a mast with no comms qualifier (e.g. A lighting mast) must not match
+
 	expect(matchOSMPOITagRule({ man_made: "mast" })).toBeNull()
 	expect(matchOSMPOITagRule({ man_made: "mast", "tower:type": "lighting" })).toBeNull()
 })
@@ -85,15 +72,14 @@ test("buildTelecomPOISQL: selects promoted columns bare and hstore keys via hsto
 	const sql = buildTelecomPOISQL("points")
 
 	expect(sql).toContain("FROM points")
-	// name + man_made are promoted OGR fields per gdal's default osmconf.ini — bare column references.
+
 	expect(sql).toContain("SELECT name,")
 	expect(sql).toMatch(/\bman_made='telephone_exchange'/)
 	expect(sql).toMatch(/\bman_made AS man_made\b/)
-	// custom telecom tags aren't promoted.
-	// They're read out of the other_tags hstore.
+
 	expect(sql).toContain(`hstore_get_value(other_tags,'telecom') AS telecom`)
 	expect(sql).toContain(`hstore_get_value(other_tags,'street_cabinet') AS street_cabinet`)
-	// tower:type's colon can't survive as a bare alias, so it's laundered.
+
 	expect(sql).toContain(`hstore_get_value(other_tags,'tower:type') AS tower_type`)
 })
 
@@ -118,7 +104,7 @@ test("buildTelecomPOISQL: pure — identical rules produce byte-identical SQL", 
 	expect(buildTelecomPOISQL("points", TELECOM_TAG_RULES)).toBe(buildTelecomPOISQL("points", TELECOM_TAG_RULES))
 })
 
-test("buildTelecomPOISQL: honors a custom rule table (single OR-less rule, no hstore keys)", () => {
+test("BuildTelecomPOISQL: honors a custom rule table (single OR-less rule without hstore keys)", () => {
 	const sql = buildTelecomPOISQL("points", [{ categoryID: "x", all: [["man_made", "y"]] }])
 
 	expect(sql).toBe("SELECT name, man_made AS man_made FROM points WHERE (man_made='y')")
@@ -149,10 +135,6 @@ test("extractOSMPOIs: also rejects a hostile rule table before ever spawning ogr
 })
 
 test("buildTelecomPOISQL: a key promoted on one layer only is read the right way on each", () => {
-	// gdal's default osmconf.ini promotes `amenity` on `multipolygons` and not on `points`,
-	// and a promoted key is dropped from that layer's `other_tags`.
-	// Reading it through hstore on `multipolygons` returned 0 rows against 178 real ones
-	// on the Île-de-France extract — a whole layer of matches reported as absent.
 	const rules = [{ categoryID: "pharmacy", all: [["amenity", "pharmacy"] as [string, string]] }]
 
 	expect(buildTelecomPOISQL("points", rules)).toBe(

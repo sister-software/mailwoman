@@ -1,11 +1,3 @@
-/**
- * @copyright Sister Software
- * @license AGPL-3.0
- * @author Teffen Ellis, et al.
- *
- *   Test intent rules in original and lowercase forms, including cases where intent kinds appear only as alternatives.
- */
-
 import { stringifyJSON } from "@mailwoman/core/json"
 import type { QueryKind } from "@mailwoman/core/pipeline"
 import { classifyKindSync } from "@mailwoman/kind-classifier/classify"
@@ -21,9 +13,6 @@ function shapeOf(text: string): { input: NormalizedInputLite; shape: QueryShapeL
 	return { input: { raw: text, normalized: text }, shape: computeQueryShape(text) }
 }
 
-/**
- * Collect the top kind and all alternatives.
- */
 function kindsOf(text: string): Set<QueryKind> {
 	const { input, shape } = shapeOf(text)
 	const verdict = classifyKindSync(input, shape)
@@ -31,15 +20,11 @@ function kindsOf(text: string): Set<QueryKind> {
 	return new Set<QueryKind>([verdict.kind, ...verdict.alternatives.map((a) => a.kind)])
 }
 
-/**
- * Return the original and lowercase forms of a query.
- */
 function registers(text: string): string[] {
 	return text === text.toLowerCase() ? [text] : [text, text.toLowerCase()]
 }
 
-describe("bare_toponym — one place-name, no address grammar", () => {
-	// Representative bare-name cases from the hard-case board.
+describe("Bare_toponym — one place-name without address grammar", () => {
 	const POSITIVE = [
 		"Fulda",
 		"Jena",
@@ -58,7 +43,7 @@ describe("bare_toponym — one place-name, no address grammar", () => {
 
 	for (const query of POSITIVE) {
 		for (const register of registers(query)) {
-			test(`fires on ${stringifyJSON(register)}`, () => {
+			test(`fires for ${stringifyJSON(register)}`, () => {
 				const { input, shape } = shapeOf(register)
 
 				expect(scoreBareToponym(input, shape)).toBeGreaterThan(0)
@@ -74,14 +59,14 @@ describe("bare_toponym — one place-name, no address grammar", () => {
 		"PO Box 1234",
 		"corner of 5th and Main",
 		"12 rue de Rome Paris",
-		// Admin context belongs to `locality_only`, not `bare_toponym`.
+
 		"Paris, FR",
 		"Athens, OH",
 	]
 
 	for (const query of NEGATIVE) {
 		for (const register of registers(query)) {
-			test(`silent on ${stringifyJSON(register)}`, () => {
+			test(`does not fire for ${stringifyJSON(register)}`, () => {
 				const { input, shape } = shapeOf(register)
 
 				expect(scoreBareToponym(input, shape)).toBe(0)
@@ -101,12 +86,12 @@ describe("bare_toponym — one place-name, no address grammar", () => {
 	})
 })
 
-describe("route_pair — two toponyms, no grammar between them", () => {
+describe("Route_pair — two toponyms without grammar between them", () => {
 	const POSITIVE = ["Paris London", "Tokyo Osaka", "Berlin Munich", "Bordeaux Lyon"]
 
 	for (const query of POSITIVE) {
 		for (const register of registers(query)) {
-			test(`fires on ${stringifyJSON(register)}`, () => {
+			test(`fires for ${stringifyJSON(register)}`, () => {
 				const { input, shape } = shapeOf(register)
 
 				expect(scoreRoutePair(input, shape)).toBeGreaterThan(0)
@@ -116,7 +101,6 @@ describe("route_pair — two toponyms, no grammar between them", () => {
 	}
 
 	const NEGATIVE = [
-		// These are multiword places, not route pairs.
 		"New York",
 		"San Francisco",
 		"Santa Monica",
@@ -127,19 +111,19 @@ describe("route_pair — two toponyms, no grammar between them", () => {
 		"Port Elizabeth",
 		"Lake Charles",
 		"Saint Denis",
-		// Address structure disqualifies route-pair intent.
+
 		"350 5th Ave, New York, NY 10118",
 		"12 rue de Rome Paris",
 		"10118",
 		"Paris London Berlin",
-		// Commas mark administrative context.
+
 		"Athens, Georgia",
 		"Portland, ME",
 	]
 
 	for (const query of NEGATIVE) {
 		for (const register of registers(query)) {
-			test(`silent on ${stringifyJSON(register)}`, () => {
+			test(`does not fire for ${stringifyJSON(register)}`, () => {
 				const { input, shape } = shapeOf(register)
 
 				expect(scoreRoutePair(input, shape)).toBe(0)
@@ -171,7 +155,7 @@ describe("near_me — a relation to the asker, with the asker missing", () => {
 
 	for (const query of POSITIVE) {
 		for (const register of registers(query)) {
-			test(`fires on ${stringifyJSON(register)}`, () => {
+			test(`fires for ${stringifyJSON(register)}`, () => {
 				const { input, shape } = shapeOf(register)
 
 				expect(scoreNearMe(input, shape)).toBeGreaterThan(0)
@@ -181,19 +165,18 @@ describe("near_me — a relation to the asker, with the asker missing", () => {
 	}
 
 	const NEGATIVE = [
-		// A named anchor makes these answerable without user location.
 		"gas station near Austin",
 		"restaurants near Times Square",
 		"coffee in Paris",
 		"350 5th Ave, New York, NY 10118",
 		"Paris",
-		// Relative descriptions of named landmarks belong to the landmark rule.
+
 		"near the Empire State Building",
 	]
 
 	for (const query of NEGATIVE) {
 		for (const register of registers(query)) {
-			test(`silent on ${stringifyJSON(register)}`, () => {
+			test(`does not fire for ${stringifyJSON(register)}`, () => {
 				const { input, shape } = shapeOf(register)
 
 				expect(scoreNearMe(input, shape)).toBe(0)

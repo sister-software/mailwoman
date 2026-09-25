@@ -3,12 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `<CompareToggle>` — the "Compare" checkbox plus the compare-version `<select>` from the demo's
- *   control panel (`_app.tsx:1281-1339`), as a dumb presentational unit. Turning it on reveals a second
- *   version picker (the primary version filtered out); the actual second parse is a host concern the
- *   composed demo surfaces through `panels.compare`. Props in, two events out.
- *
- *   node-safe: pure React, no maplibre.
+ *   Provide a compare-mode checkbox and optional second-version selector.
+ *   The host performs the comparison; this component only reports user selections.
  */
 
 import type { ReactNode } from "react"

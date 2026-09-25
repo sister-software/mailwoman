@@ -1,34 +1,3 @@
-/**
- * @copyright Sister Software
- * @license AGPL-3.0
- * @author Teffen Ellis, et al.
- *
- *   The committed canonical-form suite, checked against the corpus it was drawn from. No model, no gazetteer —
- *   two jsonl files, the pure law module and Stage 1, so this runs wherever the repo does.
- *
- *   the point is that nothing here is authored. Every `base` must be the verbatim `input` of the committed
- *   board row its `rowRef` names, and every `variant` must be exactly the named transformation applied to that
- *   base. That matters more in this law than in any of its siblings: the composed and decomposed spellings of
- *   `Köln` render identically, so a hand-typed variant is a value no reviewer can check by eye. Two things
- *   hold the line — the variant is re-derived here, and the committed file writes every non-ascii code point
- *   of a variant escaped (`Ko\u0308ln`), which makes the decomposition visible in a diff and leaves the file
- *   itself byte-stable under any editor that normalizes what it saves.
- *
- *   and that no ARM is missing BY accident. Every absent arm has to name the applicability rule that refuses
- *   it, and both declared rules have to refuse something real. A suite that could quietly drop the arms it
- *   fails would report a smaller violation count, and a smaller count is indistinguishable from a law that
- *   holds.
- *
- *   the coverage reading is pinned rather than merely printed. `eligibleByState.nfd` is zero because every committed
- *   board row is composed, which is the measured reason this suite states the decompose arm and no other. The
- *   day a decomposed row is committed that number moves, this test fails, and the failure says which arm just
- *   became stateable — which is the whole of what the pin is for.
- *
- *   stage 1 is asserted here too. Both forms of every committed base must reach the same normalized text, so a
- *   live violation of this law is a defect downstream of normalization rather than in it. That is the first
- *   question a violation raises, and it is answered without loading a model.
- */
-
 import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { normalize } from "@mailwoman/normalize"
 import { type ConformanceFixture, loadConformanceFixtures } from "mailwoman/eval-harness/conformance/fixture"
@@ -62,9 +31,6 @@ beforeAll(async () => {
 	corpusInputs = cases.map((seedCase) => seedCase.input)
 })
 
-/**
- * Split `cases/de/regression.jsonl#de-r9-nippes-koeln` into the file it names and the case id inside it.
- */
 function splitRowRef(rowRef: string): { file: string; caseID: string } {
 	const [file, caseID] = rowRef.split("#")
 
@@ -135,7 +101,7 @@ describe("the committed canonical-form suite", () => {
 		}
 	})
 
-	it("grades a coordinate at the committed row's own tolerance, and pins one nowhere else", () => {
+	it("Grades a coordinate at the committed row's own tolerance, and pins one nowhere else", () => {
 		for (const fixture of fixtures) {
 			const seedCase = corpus.get(splitRowRef(fixture.rowRef!).caseID)!
 
@@ -176,9 +142,6 @@ describe("the committed canonical-form suite", () => {
 	it("gives both declared rules something real to refuse", () => {
 		const fired = new Set<string>()
 
-		// Read over the whole corpus rather than over the suite's own bases: every base here is
-		// canonically variant by selection, so `no-canonical-variance` could never fire on one,
-		// and a rule read only against the rows that were chosen for it is a rule nothing refuses.
 		for (const input of corpusInputs) {
 			for (const form of CANONICAL_FORMS) {
 				const reading = canonicalApplicability(input, form)

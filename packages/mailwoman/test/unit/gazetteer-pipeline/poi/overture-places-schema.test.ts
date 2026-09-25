@@ -1,19 +1,3 @@
-/**
- * @copyright Sister Software
- * @license AGPL-3.0
- * @author Teffen Ellis, et al.
- *
- *   Unit tests for the pure Overture places-theme column-choice logic `ingestPlaces` uses
- *   (`chooseCategoryColumn` / `hasBrandColumn` / `chooseCountryExpression`) — exercised directly over
- *   synthetic `describe` result rows, no DuckDB/network involved. `ingestPlaces` itself (the DuckDB S3
- *   read) isn't covered here. see the task report for why that side stays untested (no network in CI).
- *
- *   `chooseCountryExpression` fixtures cover three release shapes: an (imagined) older release with a
- *   top-level `country` column, the real 2026-05-20.0 places release which has neither a top-level
- *   `country` column nor a `categories`-only shape but does have `addresses`, and a pathological release
- *   with neither `country` nor `addresses` (must throw).
- */
-
 import {
 	chooseCategoryColumn,
 	chooseCountryExpression,
@@ -42,9 +26,6 @@ const NEWER_RELEASE_COLUMNS: DescribeColumn[] = [
 	{ column_name: "country" },
 ]
 
-/**
- * The real 2026-05-20.0 places-theme shape: no top-level `country`, but an `addresses` list<struct<...>>.
- */
 const PLACES_2026_05_20_COLUMNS: DescribeColumn[] = [
 	{ column_name: "id" },
 	{ column_name: "names" },
@@ -57,9 +38,6 @@ const PLACES_2026_05_20_COLUMNS: DescribeColumn[] = [
 	{ column_name: "sources" },
 ]
 
-/**
- * Pathological: neither a top-level `country` nor an `addresses` column to derive one from.
- */
 const NO_COUNTRY_SOURCE_COLUMNS: DescribeColumn[] = [
 	{ column_name: "id" },
 	{ column_name: "names" },

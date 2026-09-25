@@ -1,9 +1,3 @@
-/**
- * @copyright Sister Software
- * @license AGPL-3.0
- * @author Teffen Ellis, et al.
- */
-
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { workspacePath } from "@mailwoman/core/paths"
@@ -23,10 +17,6 @@ import { describe, expect, it, test } from "vitest"
 
 const TOKENIZER_MODEL_PATH = workspacePath("neural", "test", "fixtures", "tokenizer-v0.1.0.model")
 
-// Production tokenizer, conditional (mirrors weights.test.ts's `haveModel` skipIf idiom).
-// The bare-▁-orphan splits below only occur in its vocab rather than the small fixture's.
-// Not present in stripped-down CI, so this whole block skips there.
-// It runs on the lab host where $MAILWOMAN_DATA_ROOT is populated.
 const PRODUCTION_TOKENIZER_PATH = dataRootPath("models", "tokenizer", "v0.9.0-multisplice", "tokenizer.model")
 const haveProductionTokenizer = await pathExists(PRODUCTION_TOKENIZER_PATH)
 
@@ -158,7 +148,7 @@ describe("buildFSTEmissionPriors", () => {
 		}
 	})
 
-	it("handles subword pieces correctly", () => {
+	it("Handles subword pieces correctly", () => {
 		const fst = mockFST(new Map([["springfield", [{ wofID: 6, placetype: "locality", referential: 0.45 }]]]))
 
 		const pieces = [
@@ -172,15 +162,6 @@ describe("buildFSTEmissionPriors", () => {
 	})
 
 	it("folds trailing punctuation into the preceding word's bias, not into a separate placeholder", () => {
-		// The word boundary is ▁ only: a punctuation-only piece with no leading ▁ is
-		// unconditionally interior to whatever word is still active.
-		// There is deliberately no look-ahead distinguishing "mid-word hyphen" from
-		// "trailing comma before a new ▁ word".
-		// The grouper cannot see the next piece, and the splits that matter
-		// ("Stockton-on-Tees" etc.) don't need it.
-		// So the comma below joins the "Washington" group and carries its bias
-		// rather than getting an all-zero placeholder row of its own.
-		// Nothing is lost by the coarser rule: "▁DC" opens its own group regardless.
 		const fst = mockFST(new Map([["washington", [{ wofID: 7, placetype: "locality", referential: 0.85 }]]]))
 
 		const pieces = [
@@ -191,27 +172,21 @@ describe("buildFSTEmissionPriors", () => {
 
 		const matrix = buildFSTEmissionPriors(fst, pieces, STAGE2_BIO_LABELS)
 		expect(matrix[0]![labelCol("B-locality")]).toBeCloseTo(0.85 * 3, 2)
-		// The comma (piece 1) is now part of the "Washington" word group — it gets the same
-		// bias as an I-locality continuation piece rather than a zero row.
+
 		expect(matrix[1]![labelCol("I-locality")]).toBeCloseTo(0.85 * 3, 2)
-		// "DC" never matches this mock FST ("washington" is the only indexed path) — untouched.
+
 		expect(matrix[2]!.every((v) => v === 0)).toBe(true)
 	})
 
-	it("length-scales street suppression for a single-token match (default `suppression` mode), positive bias intact (#1142)", () => {
-		// A lone place-name token ("Sweeney") is weak street-head evidence.
-		// The default `suppression` mode scales the street/house-number suppression by match
-		// length (1-token ×0.25) so the model's own "Ranch Road → street" reading can win,
-		// while the positive locality bias is left at full strength.
+	it("Length-scales street suppression for a single-token match (default `suppression` mode), positive bias intact", () => {
 		const fst = mockFST(new Map([["sweeney", [{ wofID: 9, placetype: "locality", referential: 0.5 }]]]))
 		const pieces = makePieces("Sweeney")
-		const supp = buildFSTEmissionPriors(fst, pieces, STAGE2_BIO_LABELS) // default: suppression
-		// positive locality bias unscaled (importance * maxBias)
+		const supp = buildFSTEmissionPriors(fst, pieces, STAGE2_BIO_LABELS)
+
 		expect(supp[0]![labelCol("B-locality")]).toBeCloseTo(0.5 * 3, 2)
-		// street suppression scaled to 0.25 of the -1.5 default
+
 		expect(supp[0]![labelCol("B-street")]).toBeCloseTo(-1.5 * 0.25, 2)
 
-		// `off` gives the full flat suppression (-1.5); `both` also scales the positive bias.
 		const off = buildFSTEmissionPriors(fst, pieces, STAGE2_BIO_LABELS, { importanceLengthScaleMode: "off" })
 		expect(off[0]![labelCol("B-street")]).toBeCloseTo(-1.5, 2)
 		expect(off[0]![labelCol("B-locality")]).toBeCloseTo(0.5 * 3, 2)
@@ -220,7 +195,7 @@ describe("buildFSTEmissionPriors", () => {
 	})
 })
 
-describe("buildFSTEmissionPriors — street-context check (#1142, syntactic context only, never importance magnitude)", () => {
+describe("BuildFSTEmissionPriors — street-context check (syntactic context only, never importance magnitude)", () => {
 	const gazetteer = () =>
 		mockFST(
 			new Map([
@@ -239,7 +214,7 @@ describe("buildFSTEmissionPriors — street-context check (#1142, syntactic cont
 			])
 		)
 
-	it("suffix adjacency ('Washington Blvd') scales the positive bias ×0.25 (default); suppression keeps #1173 length-scaling", () => {
+	it("Suffix adjacency ('Washington Blvd') scales the positive bias ×0.25 (default); suppression keeps length-scaling", () => {
 		const pieces = makePieces("Washington Blvd")
 
 		const conditional = buildFSTEmissionPriors(gazetteer(), pieces, STAGE2_BIO_LABELS, {
@@ -247,9 +222,9 @@ describe("buildFSTEmissionPriors — street-context check (#1142, syntactic cont
 		})
 
 		expect(conditional[0]![labelCol("B-locality")]).toBeCloseTo(0.8 * 3 * 0.25, 2)
-		// Suppression path untouched by the eval: 1-token match → -1.5 × 0.25 (#1173).
+
 		expect(conditional[0]![labelCol("B-street")]).toBeCloseTo(-1.5 * 0.25, 2)
-		// "Blvd" itself never matches the gazetteer — its row stays zero.
+
 		expect(conditional[1]!.every((v) => v === 0)).toBe(true)
 	})
 
@@ -263,7 +238,7 @@ describe("buildFSTEmissionPriors — street-context check (#1142, syntactic cont
 		expect(conditional[1]![labelCol("B-locality")]).toBeCloseTo(0.8 * 3 * 0.25, 2)
 	})
 
-	it("house-number left ('500 Washington') scales the positive bias — 'the house number is the license' (#1143)", () => {
+	it("House-number left ('500 Washington') scales the positive bias — 'the house number is the license'", () => {
 		const pieces = makePieces("500 Washington")
 
 		const conditional = buildFSTEmissionPriors(gazetteer(), pieces, STAGE2_BIO_LABELS, {
@@ -308,7 +283,7 @@ describe("buildFSTEmissionPriors — street-context check (#1142, syntactic cont
 		expect(conditional[0]![labelCol("B-locality")]).toBeCloseTo(0.8 * 3, 2)
 	})
 
-	it("no street context anywhere in the parse → whole matrix byte-identical to unrestricted", () => {
+	it("No street context anywhere in the parse → whole matrix byte-identical to unrestricted", () => {
 		const pieces = makePieces("Hello Washington Goodbye")
 		const unrestricted = buildFSTEmissionPriors(gazetteer(), pieces, STAGE2_BIO_LABELS)
 
@@ -331,29 +306,24 @@ describe("buildFSTEmissionPriors — street-context check (#1142, syntactic cont
 })
 
 describe("normalizeFSTToken", () => {
-	it("lowercases and strips hyphens (Stockton-on-Tees → stocktonontees)", () => {
+	it("Lowercases and strips hyphens (Stockton-on-Tees → stocktonontees)", () => {
 		const result = normalizeFSTToken("Stockton-on-Tees")
 		expect(result).toBe("stocktonontees")
 	})
 
 	it("leaves spaces intact (Zs, not punctuation) — hyphen/space equivalence comes from the caller's split-then-join", () => {
-		// Spaces (U+0020) are Unicode category Zs (separator), not P or S,
-		// so normalizeFSTToken leaves them intact.
-		// Each word is normalized separately via groupPiecesIntoWords, then words are joined
-		// with no separator — that's where "Stockton on Tees" becomes "stocktonontees"
-		// (same as "Stockton-on-Tees" after hyphen strip).
 		const stockton = normalizeFSTToken("Stockton")
 		const on = normalizeFSTToken("on")
 		const tees = normalizeFSTToken("Tees")
 		expect(stockton + on + tees).toBe("stocktonontees")
 	})
 
-	it("preserves diacritics (Álava → álava, not alava)", () => {
+	it("Preserves diacritics (Álava → álava, not alava)", () => {
 		const result = normalizeFSTToken("Álava")
 		expect(result).toBe("álava")
 	})
 
-	it("strips punctuation including apostrophes (BISHOP'S → bishops)", () => {
+	it("Strips punctuation including apostrophes (BISHOP'S → bishops)", () => {
 		const result = normalizeFSTToken("BISHOP'S")
 		expect(result).toBe("bishops")
 	})
@@ -369,19 +339,16 @@ describe("normalizeFSTToken", () => {
 	})
 
 	it("applies NFKC normalization (ligatures and compatibility forms)", () => {
-		// nfkc unifies compatibility forms.
-		// For example, the nfkc form resolves superscript and subscript characters to their base forms.
-		const result = normalizeFSTToken("ﬁnance") // 'ﬁ' is U+FB01 (fi ligature)
+		const result = normalizeFSTToken("ﬁnance")
 		expect(result).toBe("finance")
 	})
 })
 
 describe("groupPiecesIntoWords with normalizeFSTToken", () => {
-	it("normalizes individual word groups correctly", () => {
+	it("Normalizes individual word groups correctly", () => {
 		const pieces = [{ piece: "▁Stockton" }, { piece: "-" }, { piece: "▁on" }, { piece: "-" }, { piece: "▁Tees" }]
 		const groups = groupPiecesIntoWords(pieces)
-		// Whitespace-delimited grouping.
-		// Hyphens are punctuation, so they form separate empty groups
+
 		const nonEmptyGroups = groups.filter((g) => g.fstToken !== "")
 		expect(nonEmptyGroups.map((g) => g.fstToken)).toEqual(["stockton", "on", "tees"])
 	})
@@ -394,18 +361,10 @@ describe("groupPiecesIntoWords with normalizeFSTToken", () => {
 })
 
 describe("groupPiecesIntoWords — interior punctuation (real fixture tokenizer)", () => {
-	// Interior punctuation (a hyphen/apostrophe with no leading ▁) must continue
-	// the current word, never reset it.
-	// A punctuation-only piece that sets `current = null` silently drops every
-	// subsequent piece up to the next ▁.
-	// These five real-tokenizer splits are where that happens.
-	// See the module docstring's "word boundary is ▁ only" section.
-
 	it('groups "Stockton-on-Tees" into a single word ("stocktonontees"), not a truncated fragment', async () => {
 		const tokenizer = await MailwomanTokenizer.loadFromFile(TOKENIZER_MODEL_PATH)
 		const { pieces } = tokenizer.encode("Stockton-on-Tees")
-		// Real split: ["▁Stock","ton","-","on","-","T","e","es"] — "on"/"Tees" have no leading ▁
-		// and would have been dropped by the pre-fix code the instant it hit the first bare "-".
+
 		const groups = groupPiecesIntoWords(pieces)
 		const nonEmptyGroups = groups.filter((g) => g.fstToken !== "")
 		expect(nonEmptyGroups.map((g) => g.fstToken)).toEqual(["stocktonontees"])
@@ -430,8 +389,7 @@ describe("groupPiecesIntoWords — interior punctuation (real fixture tokenizer)
 	it('groups "Bishop\'s Stortford" into two words ("bishops", "stortford") — the apostrophe is absorbed, the space is not', async () => {
 		const tokenizer = await MailwomanTokenizer.loadFromFile(TOKENIZER_MODEL_PATH)
 		const { pieces } = tokenizer.encode("Bishop's Stortford")
-		// Real split: ["▁Bis","hop","'","s","▁St","ort","ford"] — the apostrophe (no leading ▁)
-		// continues "Bishop", the following ▁St closes it and opens a genuinely new word.
+
 		const groups = groupPiecesIntoWords(pieces)
 		const nonEmptyGroups = groups.filter((g) => g.fstToken !== "")
 		expect(nonEmptyGroups.map((g) => g.fstToken)).toEqual(["bishops", "stortford"])
@@ -446,14 +404,6 @@ describe("groupPiecesIntoWords — interior punctuation (real fixture tokenizer)
 	})
 
 	it('recovers "on" in "Stockton on the Forest" via pending-word-start', async () => {
-		// A bare "▁" piece is a word boundary carrying no content of its own
-		// (real split here: ["▁Stock","ton","▁","on","▁the","▁Forest"]).
-		// It closes "Stockton" and leaves `current === null` pending, so the next piece
-		// ("on", with no leading ▁ of its own) opens a fresh word instead of being dropped.
-		// This is not a fixture-vocab curiosity: the pattern is live and widespread in the
-		// production tokenizer (v0.9.0-multisplice) — "Newcastle upon Tyne", "Weston super Mare",
-		// "Kingston upon Hull" and a trailing "IL" all split this way.
-		// See the skipIf-conditional production-tokenizer block below.
 		const tokenizer = await MailwomanTokenizer.loadFromFile(TOKENIZER_MODEL_PATH)
 		const { pieces } = tokenizer.encode("Stockton on the Forest")
 		const groups = groupPiecesIntoWords(pieces)
@@ -461,14 +411,10 @@ describe("groupPiecesIntoWords — interior punctuation (real fixture tokenizer)
 		expect(nonEmptyGroups.map((g) => g.fstToken)).toEqual(["stockton", "on", "the", "forest"])
 	})
 
-	it('still yields ["stockton", "", "lancashire"]-shaped groups for "Stockton , Lancashire" (comma stands alone, no fusion)', async () => {
+	it('Still yields ["stockton", "", "lancashire"]-shaped groups for "Stockton, Lancashire" (comma stands alone without fusion)', async () => {
 		const tokenizer = await MailwomanTokenizer.loadFromFile(TOKENIZER_MODEL_PATH)
 		const { pieces } = tokenizer.encode("Stockton , Lancashire")
-		// Real split: ["▁Stock","ton","▁",",","▁Lan","ca","shire"] — the space
-		// before the comma tokenizes as its own bare "▁" piece, and the comma itself
-		// (no leading ▁, no active word) stands alone too.
-		// Two raw empty groups land between "Stockton" and "Lancashire" rather than one, but the property
-		// that matters — the two real words never fuse into a single group/window — holds either way.
+
 		const groups = groupPiecesIntoWords(pieces)
 		expect(groups.filter((g) => g.fstToken === "")).toHaveLength(2)
 		const nonEmptyGroups = groups.filter((g) => g.fstToken !== "")
@@ -477,15 +423,7 @@ describe("groupPiecesIntoWords — interior punctuation (real fixture tokenizer)
 })
 
 describe("groupPiecesIntoWords — byte-fallback placeholder never leaks into fstToken (paired-punctuation audit)", () => {
-	// The small fixture tokenizer's deliberately tiny vocab hits SentencePiece
-	// byte-fallback (`<0xHH>` pieces) on curly quotes, guillemets, and even ascii
-	// braces/brackets rather than just non-Latin scripts.
-	// `hasAlnum` must never read the placeholder text ("<0x7B>" — hex digits and letters) as real
-	// alnum content: it would inject garbage into fstToken ("0x7bblock" instead of "block"),
-	// corrupting every FST/pair-index probe key for a place name written with one of these characters.
-	// See `.superpowers/sdd/task-9-audit-report.md`.
-
-	it('folds "{Block C}, Leeds" to clean words, no "0x7b"/"0x7d" garbage', async () => {
+	it('Folds "{Block C}, Leeds" to clean words without "0x7b"/"0x7d" garbage', async () => {
 		const tokenizer = await MailwomanTokenizer.loadFromFile(TOKENIZER_MODEL_PATH)
 		const { pieces } = tokenizer.encode("{Block C}, Leeds")
 		const groups = groupPiecesIntoWords(pieces)
@@ -493,7 +431,7 @@ describe("groupPiecesIntoWords — byte-fallback placeholder never leaks into fs
 		expect(nonEmptyGroups.map((g) => g.fstToken)).toEqual(["block", "c", "leeds"])
 	})
 
-	it('folds curly-quoted "“The Grange”, Fishburn" the SAME as straight-quoted (no hex garbage, no dropped word)', async () => {
+	it('Folds curly-quoted "“The Grange”, Fishburn" the SAME as straight-quoted (neither hex garbage nor dropped word)', async () => {
 		const tokenizer = await MailwomanTokenizer.loadFromFile(TOKENIZER_MODEL_PATH)
 		const { pieces } = tokenizer.encode("“The Grange”, Fishburn")
 		const groups = groupPiecesIntoWords(pieces)
@@ -513,10 +451,6 @@ describe("groupPiecesIntoWords — byte-fallback placeholder never leaks into fs
 describe.skipIf(!haveProductionTokenizer)(
 	"groupPiecesIntoWords — bare-▁-orphan recovery, PRODUCTION tokenizer vocabulary",
 	() => {
-		// The bare-▁ split is more common in the production tokenizer (v0.9.0-multisplice)
-		// than in the small test fixture: it hits short common words ("on", "upon", "super")
-		// and a trailing single-letter abbreviation ("IL").
-		// Each case below asserts full group recovery rather than merely a non-empty result.
 		const cases: Array<{ raw: string; expected: string[] }> = [
 			{ raw: "Stockton on the Forest", expected: ["stockton", "on", "the", "forest"] },
 			{ raw: "Newcastle upon Tyne", expected: ["newcastle", "upon", "tyne"] },
@@ -535,18 +469,18 @@ describe.skipIf(!haveProductionTokenizer)(
 	}
 )
 
-describe("street-shaped surface check on the C4 mapped tiers (#1903)", () => {
+describe("Street-shaped surface check on the C4 mapped tiers", () => {
 	test.each([
 		[["king", "street", "east"], true],
 		[["king", "street", "west"], true],
 		[["madison", "square"], true],
 		[["8th", "avenue", "south"], true],
 		[["valencia", "road"], true],
-		// The covering-surface classes the C4 mapping exists for stay unrestricted.
+
 		[["biggin", "hill"], false],
 		[["soho"], false],
 		[["camden", "town"], false],
-		// A generic alone is not a street name, with or without a directional.
+
 		[["square"], false],
 		[["street"], false],
 		[["square", "west"], false],

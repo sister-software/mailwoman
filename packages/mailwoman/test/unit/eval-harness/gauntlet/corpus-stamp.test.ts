@@ -1,16 +1,3 @@
-/**
- * @copyright Sister Software.
- * @license AGPL-3.0
- * @author Teffen Ellis, et al.
- *
- *   The stale-artifact reproduction, at fixture scale: build a `regression.db` from corpus state A, move the
- *   corpus to state B, and check that a runner refuses to grade against it.
- *
- *   The real 2026-08-06 incident needed a stale `out/` tree to reach. That is not reproducible in a test — but
- *   the shape is exactly this: the DB says one corpus, the disk says another, and until this stamp existed
- *   nothing in the pipeline could tell them apart.
- */
-
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalTextFile, makeDirectories } from "@mailwoman/core/fs/writers"
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -46,9 +33,6 @@ function row(id: string, input: string): string {
 	})
 }
 
-/**
- * Write a throwaway corpus tree (one `xx/regression.jsonl`) and return its root.
- */
 async function scratchCorpus(...rows: string[]): Promise<PathBuilder> {
 	const root = fixtures.use(await temporaryDirectory("gauntlet-stamp-")).path
 
@@ -99,8 +83,6 @@ describe("the build stamp", () => {
 
 		await buildRegressionDB({ casesDir: stateA, output })
 
-		// State B: the same tree, one row edited — the shape of an operator fixing an
-		// expectation and re-running the check without rebuilding.
 		const stateB = await scratchCorpus(row("xx-a", "1 Test Avenue"))
 		const kdb = open(output)
 
@@ -108,7 +90,6 @@ describe("the build stamp", () => {
 			/built from a DIFFERENT corpus/
 		)
 
-		// The diagnosis is the point: both hashes and both counts, plus what to do about it.
 		const error = await assertCorpusStampFresh(kdb, await loadRegressionCases(stateB)).catch((caught: Error) => caught)
 
 		expect(error).toBeInstanceOf(Error)
@@ -121,7 +102,6 @@ describe("the build stamp", () => {
 		const output = await scratchDB()
 		using writer = new DatabaseClient<GauntletDatabase>(output)
 
-		// A pre-2026-08-06 artifact: cases, no meta table.
 		await createGauntletTable(writer)
 
 		const corpus = await scratchCorpus(row("xx-a", "1 Test Street"))
@@ -132,7 +112,7 @@ describe("the build stamp", () => {
 	})
 })
 
-describe("the emptiness guard", () => {
+describe("The emptiness condition", () => {
 	it("refuses to build from a corpus directory with no country dirs", async () => {
 		await using emptyDirectory = await temporaryDirectory("gauntlet-empty-")
 		const empty = emptyDirectory.path.toString()

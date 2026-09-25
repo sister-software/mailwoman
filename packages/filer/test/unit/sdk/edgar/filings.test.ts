@@ -1,11 +1,3 @@
-/**
- * @copyright Sister Software.
- * @license AGPL-3.0
- * @author Teffen Ellis, et al.
- * @file Test CIK resolution, 10-K selection, and Exhibit 21 discovery without live network requests.
- *   SEC calls use stubs; parsing uses authored data and a vendored EDGAR manifest.
- */
-
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import {
@@ -70,7 +62,7 @@ describe("parseCompanyTickers", () => {
 	})
 
 	it("throws a descriptive error naming the row key on a malformed entry", () => {
-		const raw = { "0": { cik_str: 320_193, ticker: "AAPL" } } // missing title
+		const raw = { "0": { cik_str: 320_193, ticker: "AAPL" } }
 
 		expect(() => parseCompanyTickers(raw)).toThrow(/malformed row "0"/)
 	})
@@ -92,7 +84,7 @@ describe("fetchCompanyTickers", () => {
 })
 
 describe("parseCIKLookupData", () => {
-	it("parses the real file format — NAME:CIK: per line, no ticker", () => {
+	it("Parses the real file format — NAME:CIK: per line without ticker", () => {
 		const entries = parseCIKLookupData("CELLCO PARTNERSHIP:0001175215:\nWINDSTREAM ALABAMA, LLC:0001377589:\n")
 		expect(entries).toHaveLength(2)
 		expect(entries[0]).toEqual({ cik: toCIK("0001175215"), title: "CELLCO PARTNERSHIP", ticker: "" })
@@ -134,7 +126,6 @@ describe("resolveCIKCandidates — the no-name-only-match check (required, 3a's 
 	})
 
 	it("reports ONE candidate for a registrant filed under several share classes", () => {
-		// The SEC ticker index has one row per ticker; share classes may repeat a CIK.
 		const shareClasses: CompanyTickerEntry[] = [
 			{ cik: toCIK("0001611983")!, ticker: "LBRDA", title: "Liberty Broadband Corp" },
 			{ cik: toCIK("0001611983")!, ticker: "LBRDB", title: "Liberty Broadband Corp" },
@@ -148,7 +139,6 @@ describe("resolveCIKCandidates — the no-name-only-match check (required, 3a's 
 	})
 
 	it("does not let share classes manufacture a tie that suppresses `limit`", () => {
-		// Duplicate share classes must not fill the top-score tie and bypass `limit`.
 		const tickers: CompanyTickerEntry[] = [
 			{ cik: toCIK("0001611983")!, ticker: "LBRDA", title: "Liberty Broadband Corp" },
 			{ cik: toCIK("0001611983")!, ticker: "LBRDK", title: "Liberty Broadband Corp" },
@@ -208,7 +198,7 @@ describe("resolveCIKCandidates — the no-name-only-match check (required, 3a's 
 	it("`limit` still trims the low-scoring tail when there is no tie at the top", () => {
 		const tickers: CompanyTickerEntry[] = [
 			{ cik: toCIK("0000320193")!, ticker: "AAPL", title: "Apple Inc." },
-			// This lower-scoring match verifies that `limit` trims a genuine ranking.
+
 			{ cik: toCIK("0000320194")!, ticker: "AAPQ", title: "Apple Group Holdings Inc" },
 		]
 
@@ -239,7 +229,7 @@ function submissionsPayload(
 describe("parseTenKFilings", () => {
 	const CIK = toCIK(320_193)!
 
-	it("keeps only form === 10-K rows, dropping 10-K/A and everything else", () => {
+	it("Keeps only form === 10-K rows, dropping 10-K/A and everything else", () => {
 		const raw = submissionsPayload(320_193, [
 			{ form: "10-K", accessionNumber: "0000320193-23-000106", filingDate: "2023-11-03", primaryDocument: "a.htm" },
 			{ form: "8-K", accessionNumber: "0000320193-23-000050", filingDate: "2023-08-01", primaryDocument: "b.htm" },
@@ -269,7 +259,7 @@ describe("parseTenKFilings", () => {
 			filings: {
 				recent: {
 					form: ["10-K", "10-K"],
-					accessionNumber: ["0000320193-23-000106"], // One entry short.
+					accessionNumber: ["0000320193-23-000106"],
 					filingDate: ["2023-11-03", "2022-11-01"],
 					primaryDocument: ["a.htm", "b.htm"],
 				},
@@ -331,7 +321,6 @@ describe("Exhibit 21 document discovery", () => {
 	it("reads every document in the manifest, not only the exhibits", () => {
 		const documents = parseFilingDocuments(LUMEN_CIK, "0000018926-26-000014", headerHTML)
 
-		// The manifest has 161 document blocks; its header reports 162 public documents.
 		expect(documents).toHaveLength(161)
 		expect(documents[0]).toMatchObject({ type: "10-K", filename: "lumn-20251231.htm" })
 	})

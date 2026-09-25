@@ -3,35 +3,10 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The authority-designation route, observation-only: after the resolver has produced a coordinate, an
- *   authority's own designation for that coordinate is recorded beside the answer — the zone the
- *   authority's map assigns, the product and version it was read from, and the coverage record stating
- *   that the authority made a determination there.
- *
- *   the route reads. IT never answers. It takes a finished coordinate and returns a record. Nothing here
- *   is consulted while an answer is being chosen, no candidate is read, no result is added, removed or
- *   re-ordered, and no abstain is reached or avoided because of it. A geocode with the route configured is
- *   the same geocode plus one advisory, which is a statement about construction rather than about a
- *   measurement.
- *
- *   presence is the switch, and IT is A layer path. There is no boolean: a boolean would make the caller's
- *   factory construct the reader itself and put a sealed layer open on the default construction path. A
- *   session resolves the layer path, opens it if the file is there, and hands the route in. a session that
- *   finds no file hands in nothing and is byte-identical to one built before this route existed.
- *
- *   what IT reports, and what IT refuses TO. Three readings come out of the layer and only two of them
- *   reach a caller. A `designated` reading carries the authority's zone code. A `designated_absence`
- *   carries the authority's own definition of the absent case — for the EA product that is Flood Zone 1.
- *   The Planning Practice Guidance defines Flood Zone 1 as land outside Zones 2 and 3. An empty answer
- *   inside England is therefore a designation rather than a gap. An `unknown` reading raises nothing: outside the
- *   authority's footprint there is no coverage row, and a marker there would be an advisory about a
- *   determination nobody made.
- *
- *   the observation is about the MAP, never about the property. The EA states that its data is "not
- *   suitable for showing whether an individual property is at risk of flooding". So the wording reports
- *   which zone the authority's map assigns at the location — a fact about the map — and the product's own
- *   exclusions ride on every observation, because a caller cannot see from a zone code that the answer is
- *   silent about surface water, groundwater and defended-area residual risk.
+ *   Add an authority's flood designation as an observation after geocoding.
+ *   The route never changes answer selection. It reports designated and designated-absence
+ *   readings inside mapped coverage; unknown locations produce a named refusal.
+ *   Observations describe the map, not individual property risk, and carry source limitations.
  */
 
 import {
@@ -54,13 +29,7 @@ import {
 } from "#observations/layer-record"
 
 /**
- * One authority designation, recorded beside an answer.
- *
- * Everything a reader needs to check the claim is here: which authority, which product
- * and vintage, the code in that authority's own vocabulary with the authority's own
- * definition of it, how containment was established, and the coverage record — cell,
- * basis, completeness — that licenses an absence reading.
- * A reader holding the code alone cannot tell whether it was earned.
+ * Authority designation, coverage, and provenance recorded beside an answer.
  */
 export interface AuthorityDesignationObservation {
 	/**
@@ -106,10 +75,7 @@ export interface AuthorityDesignationObservation {
 }
 
 /**
- * Why a coordinate produced no observation.
- *
- * Every one of these is a silence the route owes an account of.
- * An unnamed silence and a silence for the right reason read identically on a receipt.
+ * Named reasons a coordinate produced no observation.
  */
 export const DESIGNATION_REFUSALS = [
 	/**
@@ -127,7 +93,7 @@ export const DESIGNATION_REFUSALS = [
 export type DesignationRefusal = (typeof DESIGNATION_REFUSALS)[number]
 
 /**
- * What the route decided about one coordinate: an observation, or a named silence.
+ * Observation or named refusal for one coordinate.
  */
 export type DesignationDecision =
 	| { fired: true; observation: AuthorityDesignationObservation }
@@ -136,13 +102,7 @@ export type DesignationDecision =
 export interface AuthorityDesignationRoute extends Disposable {
 	identity: FloodLayerIdentity
 	/**
-	 * Decide one resolved coordinate.
-	 *
-	 * Pure with respect to the pipeline: it reads the layer and returns a record.
-	 *
-	 * `null` and `undefined` are both accepted because a geocode result has nullable `lat`/`lon`.
-	 * A caller that had to narrow them first would be narrowing on this route's behalf,
-	 * and a coordinate-less answer is a named refusal here rather than a caller's problem.
+	 * Read the layer for one coordinate; missing coordinates return a named refusal.
 	 */
 	observe: (latitude: number | null | undefined, longitude: number | null | undefined) => DesignationDecision
 }

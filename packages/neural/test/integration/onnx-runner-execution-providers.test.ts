@@ -1,23 +1,7 @@
-/**
- * @copyright Sister Software
- * @license AGPL-3.0
- * @author Teffen Ellis, et al.
- *
- *   The guarded execution-provider selection in ONNXRunner. ORT's GPU providers (cuda/webgpu) throw at
- *   session-create when their runtime/driver is absent rather than soft-falling-back, so ONNXRunner
- *   retries on CPU. Mocks `ort.InferenceSession.create` — no model, no GPU needed.
- */
-
 import { ONNXRunner } from "@mailwoman/neural/onnx-runner"
 import ort from "onnxruntime-node"
 import { afterEach, describe, expect, test, vi } from "vitest"
 
-/**
- * `ort.InferenceSession` is onnxruntime's own class and this repo does not own its shape,
- * so no double can be assignable in either direction.
- *
- * The runner reads `inputNames` and `run`; those are what the fake supplies.
- */
 const fakeSession = (): ort.InferenceSession => {
 	return {
 		run(): Promise<ort.InferenceSession.ReturnType> {
@@ -81,11 +65,11 @@ describe("ONNXRunner execution providers (guarded)", () => {
 
 		expect(runner).toBeDefined()
 		expect(spy).toHaveBeenCalledTimes(2)
-		expect(epsOf(spy.mock.calls[0]!)).toEqual(["cuda", "cpu"]) // GPU attempt
-		expect(epsOf(spy.mock.calls[1]!)).toEqual(["cpu"]) // guarded CPU retry
+		expect(epsOf(spy.mock.calls[0]!)).toEqual(["cuda", "cpu"])
+		expect(epsOf(spy.mock.calls[1]!)).toEqual(["cpu"])
 	})
 
-	test("a genuine cpu failure is NOT swallowed by the guard", async () => {
+	test("A genuine cpu failure is NOT swallowed by the condition", async () => {
 		vi.spyOn(ort.InferenceSession, "create").mockRejectedValue(new Error("corrupt model"))
 
 		await expect(ONNXRunner.fromBytes(new Uint8Array([1]), { warmup: true })).rejects.toThrow("corrupt model")

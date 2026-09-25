@@ -1,22 +1,3 @@
-/**
- * @copyright Sister Software
- * @license AGPL-3.0
- * @author Teffen Ellis, et al.
- *
- *   End-to-end smoke test for `WebONNXRunner` using the real `@mailwoman/neural-weights-en-us`
- *   package + the production tokenizer + the production decoder. Runs in Node — `onnxruntime-web`'s
- *   wasm execution provider works there too. WebGPU is skipped via `useWebGPU: false` since Node
- *   doesn't have a WebGPU adapter to fall back from.
- *
- *   What this test guards:
- *
- *   - The runner loads a real production ONNX model end-to-end.
- *   - `infer(tokenIDs)` returns logits with the expected shape.
- *   - The classifier composed with this runner produces an `AddressTree` for a simple address.
- *   - WebONNXRunner is interchangeable with ONNXRunner from the classifier's POV — same `parse()`
- *       output shape, no API divergence.
- */
-
 import { readLocalBuffer, pathExists } from "@mailwoman/core/fs/readers"
 import { NeuralAddressClassifier } from "@mailwoman/neural/classifier"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
@@ -25,11 +6,6 @@ import { resolveWeights } from "@mailwoman/neural/weights"
 import { readLabelsFromModelCard } from "@mailwoman/neural/weights-channels"
 import { describe, expect, test } from "vitest"
 
-// CI doesn't ship the v0.2.0 model files — they're operator-supplied via
-// `scripts/link-dev-weights.ts` after a training run.
-// Skip the real-model tests when the weights package's `model.onnx` isn't on disk.
-// The runner's structural behavior still gets exercised by `web-onnx-runner.unit.test.ts`,
-// which mocks the runtime and needs no model.
 async function probeWeights(): Promise<{ modelPath: string; tokenizerPath: string; modelCardPath?: string } | null> {
 	try {
 		const r = await resolveWeights({})
@@ -49,14 +25,13 @@ describe.skipIf(!haveWeights)("WebONNXRunner", () => {
 	test("loads a real model and produces logits of the expected shape", async () => {
 		const modelBytes = new Uint8Array(await readLocalBuffer(weights!.modelPath))
 		const runner = await WebONNXRunner.fromBytes(modelBytes, { useWebGPU: false })
-		const tokenIDs = [1, 2, 3, 4, 5] // arbitrary. the SP vocab assigns these to common pieces
+		const tokenIDs = [1, 2, 3, 4, 5]
 		const result = await runner.infer(tokenIDs)
 
 		expect(result.numLabels).toBeGreaterThan(0)
 		expect(result.logits).toHaveLength(tokenIDs.length)
 		expect(result.logits[0]?.length).toBe(result.numLabels)
 
-		// Logits should be finite numbers (no NaN/Infinity from a misconfigured runtime).
 		for (const row of result.logits) {
 			for (const v of row) {
 				expect(Number.isFinite(v)).toBe(true)
@@ -64,7 +39,7 @@ describe.skipIf(!haveWeights)("WebONNXRunner", () => {
 		}
 	})
 
-	test("classifier.parse() works with a WebONNXRunner injected", async () => {
+	test("Classifier.parse works with a WebONNXRunner injected", async () => {
 		const modelBytes = new Uint8Array(await readLocalBuffer(weights!.modelPath))
 
 		const [tokenizer, runner] = await Promise.all([
@@ -72,19 +47,13 @@ describe.skipIf(!haveWeights)("WebONNXRunner", () => {
 			WebONNXRunner.fromBytes(modelBytes, { useWebGPU: false }),
 		])
 
-		// Thread the trained label vocabulary from the model card, same as loadFromWeights.
-		// The dev-linked weights are a Stage 3 bundle whose emission width exceeds
-		// the compile-time STAGE2_BIO_LABELS default.
 		const labels = await readLabelsFromModelCard(weights!.modelCardPath)
 		const classifier = new NeuralAddressClassifier({ tokenizer, runner, labels })
 
 		const tree = await classifier.parse("123 Main St, Springfield, IL 62704")
 		expect(tree.raw).toBe("123 Main St, Springfield, IL 62704")
 		expect(tree.roots.length).toBeGreaterThan(0)
-		// Spot-check that at least one node carries one of the expected component tags.
-		// The actual labels depend on the model's quality — this test exercises the wiring
-		// rather than the model's recall.
-		// A future PR can add accuracy checks against the golden set.
+
 		const allTags = collectTags(tree.roots)
 		expect(allTags.size).toBeGreaterThan(0)
 	})

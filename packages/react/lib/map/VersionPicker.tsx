@@ -3,13 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `<VersionPicker>` — the model-version `<select>` from the demo's control panel (`_app.tsx:1230-1254`),
- *   as a dumb presentational unit: the available bundles + current selection come in as props, the choice
- *   goes out through `onSelect`. No load state, no manifest fetch — the host (via `useReleaseRuntime`) owns
- *   that. Renders nothing when there is fewer than two versions to choose between.
- *
- *   node-safe: pure React + a `<select>`, no maplibre. It rides the `@mailwoman/react/map` subpath only
- *   because it is a demo-specific control rather than because it needs WebGL.
+ *   Presentational selector for available model versions.
+ *   The host owns loading and selection state; fewer than two versions renders nothing.
  */
 
 import type { ReactNode } from "react"

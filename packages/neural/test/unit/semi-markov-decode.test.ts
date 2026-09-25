@@ -1,13 +1,3 @@
-/**
- * @copyright Sister Software
- * @license AGPL-3.0
- * @author Teffen Ellis, et al.
- *
- *   The JS k-best decode is verified against brute-force enumeration of every valid segmentation, the
- *   same discipline the python side got (`tests/mailwoman_train/test_span_scorer.py`). A DP that is
- *   subtly wrong still returns plausible-looking spans. The oracle is the point.
- */
-
 import { makeGlibcLcgFloat64 } from "@mailwoman/core/random"
 import {
 	decodeSegmentationsKBest,
@@ -31,14 +21,9 @@ function grammar(overrides: Partial<SemiCRFTransitions> = {}): SemiCRFTransition
 	}
 }
 
-/**
- * Deterministic pseudo-random scores — a fixed table beats a seeded RNG for reproducibility.
- */
 function scores(seqLen: number, maxSpan: number, seed = 1): number[][][] {
 	const step = makeGlibcLcgFloat64(seed)
-	// The scores this fixture expects came from this exact stream, so it is the FLOAT64 generator
-	// rather than `makeGlibcLcgInt32`, which shares its constants and produces a different sequence.
-	// Verified identical to the loop this replaced over 10,000 steps from five seeds.
+
 	const next = (): number => (step() / 2_147_483_648) * 4 - 2
 
 	return Array.from({ length: seqLen }, () =>
@@ -46,9 +31,6 @@ function scores(seqLen: number, maxSpan: number, seed = 1): number[][][] {
 	)
 }
 
-/**
- * Every valid segmentation of [0, seqLen) — O segments length 1, others up to maxSpan.
- */
 function bruteForce(seqLen: number, maxSpan: number): Array<Array<[number, number, number]>> {
 	const out: Array<Array<[number, number, number]>> = []
 
@@ -147,7 +129,7 @@ describe("decodeSegmentationsKBest", () => {
 		}
 	})
 
-	it("every hypothesis covers the sequence exactly — no gap, no overlap", () => {
+	it("Every hypothesis covers the sequence exactly — neither gap nor overlap", () => {
 		const got = decodeSegmentationsKBest(scores(6, 3, 5), 6, grammar({ maxSpan: 3 }), 6)
 		expect(got.length).toBeGreaterThan(0)
 
@@ -179,9 +161,6 @@ describe("decodeSegmentationsKBest", () => {
 	})
 
 	it("respects a maxSpan narrower than the score tensor", () => {
-		// Grammar says 1.
-		// The tensor offers 3.
-		// Nothing longer than 1 may be emitted.
 		for (const h of decodeSegmentationsKBest(scores(4, 3, 17), 4, grammar({ maxSpan: 1 }), 4)) {
 			for (const s of h.segments) {
 				expect(s).toHaveLength(1)

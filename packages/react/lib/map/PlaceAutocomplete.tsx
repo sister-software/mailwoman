@@ -3,13 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `<PlaceAutocomplete>` — the "Did you mean" suggestion listbox from the demo (`_app.tsx:1394-1418`), as
- *   a dumb presentational unit. It renders the current suggestions with the keyboard-highlighted active
- *   descendant. the state + keyboard nav live in {@link usePlaceAutocomplete}. Renders `null` when there
- *   is nothing to suggest, so the row only appears when useful. Wire the ids from the hook so the input's
- *   `aria-controls` / `aria-activedescendant` match this listbox.
- *
- *   node-safe: pure React, no maplibre.
+ *   Render an accessible suggestion listbox; state and keyboard navigation live in the hook.
  */
 
 import type { ReactNode } from "react"

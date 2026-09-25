@@ -1,10 +1,3 @@
-/**
- * @copyright Sister Software.
- * @license AGPL-3.0
- * @author Teffen Ellis, et al.
- * @file Test streaming BDC provider-list parsing, including preservation of repeated provider IDs and row values.
- */
-
 import { resolvePackageDirectory } from "@mailwoman/core/module/resolvers"
 import { parseProviderList, type ProviderListRow } from "@mailwoman/filer/sdk/provider-list"
 import type { PathBuilder } from "path-ts"
@@ -34,7 +27,7 @@ describe("parseProviderList", () => {
 		expect(rows).toHaveLength(5)
 	})
 
-	it("yields EVERY row for a provider_id appearing with two different FRNs — no dedup, no last-wins (decision 6)", async () => {
+	it("Yields EVERY row for a provider_id appearing with two different FRNs — neither dedup nor last-wins (decision 6)", async () => {
 		const rows = await collect(SAMPLE_CSV)
 		const providerRows = rows.filter((row) => row.providerID === 130_077)
 
@@ -42,7 +35,7 @@ describe("parseProviderList", () => {
 		expect(providerRows.map((row) => row.frn)).toEqual(["0001753557", "0009999999"])
 	})
 
-	it("yields EVERY row for a provider_id appearing with two different holding-company strings — no dedup, no last-wins (decision 6)", async () => {
+	it("Yields EVERY row for a provider_id appearing with two different holding-company strings — neither dedup nor last-wins (decision 6)", async () => {
 		const rows = await collect(SAMPLE_CSV)
 		const providerRows = rows.filter((row) => row.providerID === 140_088)
 

@@ -1,11 +1,3 @@
-/**
- * @copyright Sister Software
- * @license AGPL-3.0
- * @author Teffen Ellis, et al.
- * @file The autocomplete ladder's pure half (#2154): which prefixes a row yields, and how a row's rungs fold into the
- *   first-hit, churn and abstention readings. No engine, no FST.
- */
-
 import {
 	ladderRungs,
 	readRow,
@@ -117,7 +109,7 @@ describe("summarizeArm", () => {
 		}
 	}
 
-	it("summarizes the headline rows only, with the denominators stated", () => {
+	it("Summarizes the headline rows only, with the denominators stated", () => {
 		const summary = summarizeArm("parse_resolve", [row("a", true, 5, 0), row("b", true, 5, 1), row("c", false, 5, 0)])
 
 		expect(summary.rows).toBe(2)

@@ -3,20 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `<Geocoder>` — the whole geocoder, composed. It is the map analogue of `PipelineExplorer`
- *   and takes the same DI shape: an injected {@link GeocoderRuntime} (the host owns ONNX / httpvfs / R2 /
- *   the composed map style) plus a {@link GeocoderPanels} bag (the host's ModelVisualizer / VersionCompare /
- *   About / Permalink). Everything here is composition + a `ClientOnly` boundary:
- *
- *     - the floating {@link GeocoderControls} panel (version / compare / backend / query+autocomplete / result),
- *     - the declarative {@link MapCanvas} with the phase-2 overlays ({@link OverlayLayers}) and the
- *       resolved-place marker/outline/camera ({@link ResolvedPlaceLayers}) driven by the parse state,
- *     - the hooks that wire them: {@link useGeocode} (parse + viewport bias + map place),
- *       {@link usePlaceAutocomplete}, {@link useCompareState}.
- *
- *   Because it pulls {@link MapCanvas} (→ `react-map-gl` → `maplibre-gl`, WebGL + DOM at import), it lives on
- *   the `@mailwoman/react/map` subpath only — never the package root. The whole thing renders in Storybook
- *   over a fake runtime (offline stub style + canned geocode) with no network, no ONNX, no gazetteer.
+ *   Compose the map, controls, runtime hooks, and host-provided panels.
+ *   Render behind a client-only boundary because the map requires browser APIs.
+ *   Import from `@mailwoman/react/map`; this module depends on MapLibre.
  */
 
 import { type ReactNode, useCallback, useEffect, useRef, useState } from "react"
@@ -120,21 +109,8 @@ function GeocoderInner({
 	// so the same poll that publishes the test handle also puts it in state — one poll, two consumers.
 	const [map, setMap] = useState<ReturnType<MapRef["getMap"]> | null>(null)
 
-	// The map announces itself.
-	// Nothing polls for it.
-	// `onLoad` carries the instance, so the compass and the layer control render on the
-	// frame the map is ready rather than up to an interval later.
-	//
-	// Test injection point: the e2e viewport-bias suite drives the real map
-	// (pan + zoom past the bias threshold) before submitting, and a browser test cannot reach a React ref.
-	// So the same handle is republished on `globalThis.__mailwomanMapCanvas`,
-	// and cleared on unmount so a torn-down geocoder leaves no stale handle.
-	// The id of the lowest basemap layer that draws data.
-	// Where the graticule is inserted, so the grid sits under the map rather than over it.
-	// Read from the loaded style rather than hardcoded: the basemap is a published artifact
-	// and its first layer is its business rather than ours.
-	// `background` is skipped because inserting before it would put the grid behind
-	// an opaque fill and show nothing at all.
+	// Publish the loaded map for browser tests and controls.
+	// Place the graticule above the background and below data layers.
 	const [baseLayerID, setBaseLayerID] = useState<string | undefined>(undefined)
 
 	const onMapLoad = useCallback((event: { target: ReturnType<MapRef["getMap"]> }) => {
@@ -154,9 +130,6 @@ function GeocoderInner({
 		[]
 	)
 
-	// Read the viewport bias at submit time — through the map handle, never a threaded state
-	// value, so granting/zooming mid-session doesn't re-create the parse callback.
-	// Below the min-bias zoom, a whole-globe center is noise → null.
 	const getBias = useCallback((): MapBias | null => {
 		const live = mapRef.current?.getMap()
 
@@ -226,8 +199,8 @@ function GeocoderInner({
 				onSelectVersion={onSelectVersion}
 				onForceWASMChange={onForceWASMChange}
 				developer={developer}
-			/>
-
+			// Publish the loaded map for controls and browser tests.
+			// Place the graticule before the first non-background style layer.
 			{panels.debugDrawer ? panels.debugDrawer({ result: geocode.result }) : null}
 		</div>
 	)

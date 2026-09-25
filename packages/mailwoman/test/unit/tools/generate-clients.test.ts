@@ -6,20 +6,6 @@ import {
 	rustCargoToml,
 	rustLibRs,
 } from "mailwoman/tools/generate-clients"
-/**
- * @copyright Sister Software
- * @license AGPL-3.0
- * @author Teffen Ellis, et al.
- *
- *   Cheap unit coverage for `generate-clients.ts`'s pure logic only — the surface list + the
- *   template-string builders (pyproject.toml, `__init__.py`, Cargo.toml, `lib.rs`). The pipeline
- *   itself (`generateClients`) is spawn-heavy end to end (node CLIs, `uvx`, `uv build`, `cargo
- *   check`) — that's covered by an actual local run and by the client-generation CI job rather than
- *   re-simulated here with mocks. What is worth pinning cheaply:
- *   that the four-surface list stays in sync, and that the generated file templates actually
- *   interpolate the version and name every module — a typo here (e.g. forgetting the `mailwoman`
- *   module in `lib.rs`) would silently ship a three-surface client.
- */
 import { expect, test } from "vitest"
 
 test("CLIENT_SURFACES is the fixed four-surface set (three drop-ins + the native mailwoman module)", () => {
@@ -32,8 +18,6 @@ test("pythonPyproject interpolates the given version and names the mailwoman-cli
 	expect(toml).toContain('name = "mailwoman-client"')
 	expect(toml).toContain('version = "5.10.1"')
 
-	// The four generated subpackages must all be carved out of the ruff pass.
-	// A missed entry here means ruff lints/reformats generated code as if it were hand-maintained.
 	for (const surface of CLIENT_SURFACES) {
 		expect(toml).toContain(`mailwoman_client/${surface}`)
 	}
@@ -46,7 +30,7 @@ test("pythonInitPy defines an ergonomics class for every surface", () => {
 	expect(source).toContain("class NominatimClient(_NominatimBase):")
 	expect(source).toContain("class LibpostalClient(_LibpostalBase):")
 	expect(source).toContain("class MailwomanClient(_MailwomanBase):")
-	expect(source).toContain('DEFAULT_BASE_URL = "http://127.0.0.1:3000"') // mailwoman serve's default port
+	expect(source).toContain('DEFAULT_BASE_URL = "http://127.0.0.1:3000"')
 })
 
 test("rustCargoToml interpolates the given version and names the mailwoman-client crate", () => {
@@ -65,7 +49,6 @@ test("rustLibRs declares a generate_api! module + a *_local() constructor for ev
 		expect(source).toContain(`progenitor::generate_api!("openapi/${surface}.json");`)
 	}
 
-	// mailwoman has no hosted trial (self-host only, unlike photon) — local() only, no hosted().
 	expect(source).toContain("pub fn mailwoman_local() -> mailwoman::Client {")
 	expect(source).not.toContain("mailwoman_hosted")
 })
@@ -77,17 +60,9 @@ test("emitterCLIPath resolves every surface to the compiled bin its manifest dec
 	for (const surface of CLIENT_SURFACES) {
 		const cli = await emitterCLIPath(surface)
 
-		// Inside the workspace rather than at a repo-root segment named for it — the 2026-08-14 regroup's shape.
 		expect(cli.split(sep)).toContain("packages")
 		expect(cli.split(sep)).toContain(surface)
 
-		// The assertion, and the one this test did not make before: the file the
-		// emitter will be run as has to be there.
-		// It checked that the workspace's package.json existed instead, so when the
-		// prefix-directory pass moved mailwoman's `lib/cli.ts` to `lib/cli/index.ts` —
-		// making its emit `out/cli/index.js` while the other three kept `out/cli.js` —
-		// this stayed green and the release run failed on it.
-		// A path that is merely well-shaped is not a path that resolves.
 		expect(await pathExists(cli), `${surface}: ${cli} does not exist — run \`yarn compile\``).toBe(true)
 	}
 })

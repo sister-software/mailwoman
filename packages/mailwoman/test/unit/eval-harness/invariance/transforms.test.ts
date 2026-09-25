@@ -1,11 +1,3 @@
-/**
- * @copyright Sister Software
- * @license AGPL-3.0
- * @author Teffen Ellis, et al.
- *
- *   Unit tests for the invariance mini-suite's perturbation classes — pure functions, no model, no I/O.
- */
-
 import { canonicalizeAbbreviations, getTransform, TRANSFORMS } from "mailwoman/eval-harness/invariance/transforms"
 import { describe, expect, it } from "vitest"
 
@@ -86,11 +78,7 @@ describe("abbreviation-swap", () => {
 		expect(swap("St Ives, Cornwall")).toBeNull()
 	})
 
-	it("the Saint-prefix guard isn't index-0-only — protects a mid-string 'St <Name>' and swaps the real suffix instead", () => {
-		// The reviewer's reproduction: a naive index-0-only guard misses "St" here
-		// (it's the third token rather than the first) and corrupts "St Andrews" into "Street Andrews".
-		// The fix must both (a) leave "St Andrews" alone and (b) still find the
-		// standalone "Street" suffix token later in the string.
+	it("The Saint-prefix condition isn't index-0-only — protects a mid-string 'St <Name>' and swaps the real suffix instead", () => {
 		expect(swap("The Vicarage, St Andrews Street, Cambridge")).toBe("The Vicarage, St Andrews St, Cambridge")
 	})
 
@@ -103,9 +91,6 @@ describe("abbreviation-swap", () => {
 	})
 
 	it("does NOT treat a phrase-final 'St,' (own trailing punctuation) as a Saint-prefix, even before a capitalized place name", () => {
-		// "St" here closes the street phrase right before the next comma-delimited component.
-		// The own-trailing-punctuation discriminator rather than the following-word one, is what correctly
-		// lets this swap even though "Portland" (like "Andrews") is a capitalized non-suffix word.
 		expect(swap("6220 SE Salmon St, Portland, OR 97215, USA")).toBe("6220 SE Salmon Street, Portland, OR 97215, USA")
 	})
 })
@@ -134,10 +119,7 @@ describe("whitespace-jitter", () => {
 		expect(getTransform("whitespace-jitter").apply("Rathausplatz")).toBeNull()
 	})
 
-	it("returns null when whitespace is present but none of it is a literal space (guard must match the mutation)", () => {
-		// The mutation only doubles literal " " characters.
-		// A guard that accepts any `\s` (tabs, etc.) but finds no space to double is a silent
-		// no-op invariant — the transform claims it ran but nothing actually changed.
+	it("Returns null when whitespace is present but none of it is a literal space (condition must match the mutation)", () => {
 		expect(getTransform("whitespace-jitter").apply("A\tB")).toBeNull()
 	})
 })

@@ -1,27 +1,3 @@
-/**
- * @copyright Sister Software
- * @license AGPL-3.0
- * @author Teffen Ellis, et al.
- *
- *   The fixture rung: build a real sealed artifact from hand-built geometry, then read it.
- *
- *   four things are pinned here and each is silent when wrong.
- *
- *   1. the meaning-OF-zero rule, checked three ways rather than asserted once. Every coverage row must fail
- *      `supportsExclusion`. a builder handing a stronger basis to the coverage writer must be refused. and an
- *      artifact carrying one must be refused at open time. The sibling flood layer reports a point inside its
- *      footprint and outside every polygon as the authority's Zone 1 designation. This layer must report the
- *      same geometry as `unknown` with no designation, because a location with no zoning polygon is one of at
- *      least four different things.
- *   2. the vocabulary decision AS storage. The local code is stored byte-identically, the crosswalk sits
- *      beside it rather than instead of it, and a generic type the publisher uses without declaring is
- *      recorded as observed-but-undeclared rather than coerced or dropped.
- *   3. the hole roles. It arrive the way the real service publishes them — each ring its own part. Therefore, a
- *      point inside a hole must read as outside the zone.
- *   4. the two postures that are guards rather than fields: the coverage basis above, and the `build-local`
- *      tier, which the builder refuses to raise while the licence is unresolved.
- */
-
 import { statPath } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { LayerTier } from "@mailwoman/core/layers"
@@ -59,26 +35,16 @@ let databasePath: PathBuilder
 let result: BuildZoningResult
 let lookup: ZoningLookup
 
-/**
- * A point inside the first fixture zone.
- * Where both plans have a polygon.
- */
 const INSIDE_ZONE_A = {
 	latitude: FIXTURE_ORIGIN.lat + FIXTURE_SIDE / 2,
 	longitude: FIXTURE_ORIGIN.lon + FIXTURE_SIDE / 2,
 }
 
-/**
- * A point far from every fixture zone, in the same waters.
- */
 const OUTSIDE_EVERY_ZONE = {
 	latitude: FIXTURE_ORIGIN.lat + 0.2,
 	longitude: FIXTURE_ORIGIN.lon + 0.2,
 }
 
-/**
- * Build one artifact from a feature list, into its own scratch directory.
- */
 async function build(
 	features: ZoningSourceFeature[] = fixtureFeatures(),
 	out = "zoning-ireland.db"
@@ -120,7 +86,6 @@ describe("the sealed artifact", () => {
 		expect(result.jurisdictions).toBe(1)
 		expect(result.plans).toBe(2)
 
-		// 0o444 — sealed, per the layer interface's build-then-swap discipline.
 		expect((await statPath(databasePath)).mode & 0o777).toBe(0o444)
 	})
 
@@ -151,30 +116,24 @@ describe("the sealed artifact", () => {
 		)
 	})
 
-	it("indexes a polygon smaller than a cell rather than dropping it", () => {
+	it("Indexes a polygon smaller than a cell rather than dropping it", () => {
 		using database = new DatabaseClient<ZoningDatabase>(databasePath, { readOnly: true })
 
 		const sliver = database.prepare("SELECT count(*) AS n FROM zoning_cell WHERE area_id = ?").get("4") as {
 			n: number
 		}
 
-		// A polyfill keyed on cell centres returns nothing for a 5 m square,
-		// and a feature indexed to nothing reads downstream as an absence.
-		// The failure the per-part zero-cell guard exists to make impossible.
-		// At resolution 9, that would be 86.8% of the real product's polygons.
 		expect(sliver.n).toBeGreaterThan(0)
 	})
 
-	it("keeps the crosswalk edge table EMPTY, because the mapping is not a function of the pair", () => {
+	it("Keeps the crosswalk edge table EMPTY, because the mapping is not a function of the pair", () => {
 		using database = new DatabaseClient<ZoningDatabase>(databasePath, { readOnly: true })
 
 		const edges = database.prepare("SELECT count(*) AS n FROM zoning_crosswalk_edge").get() as { n: number }
 		const extents = database.prepare("SELECT count(*) AS n FROM zoning_mapped_extent").get() as { n: number }
 
 		expect(edges.n).toBe(0)
-		// And the footprint table too: the publisher states its coverage detail only
-		// inside a map viewer, so there is no footprint to record and its emptiness is
-		// what keeps the coverage basis at `source_present`.
+
 		expect(extents.n).toBe(0)
 		expect(lookup.identity.mappedExtents).toEqual([])
 	})
@@ -189,15 +148,14 @@ describe("the vocabulary decision", () => {
 		expect(designation!.localCode).toBe("R2 - Existing Residential")
 		expect(designation!.crosswalk?.scheme).toBe("IE-GZT")
 		expect(designation!.crosswalk?.code).toBe("R2")
-		// The publisher's own label for the generic type, from its declared domain.
+
 		expect(designation!.crosswalk?.label).toBe("Existing residential")
 		expect(designation!.crosswalk?.declared).toBe(true)
 	})
 
-	it("records a generic type the publisher uses without declaring, rather than coercing or dropping it", () => {
+	it("Records a generic type the publisher uses without declaring, rather than coercing or dropping it", () => {
 		using database = new DatabaseClient<ZoningDatabase>(databasePath, { readOnly: true })
 
-		// Ireland declares 54 generic types and its data uses 55: `N/A` appears on a handful of rows and in no domain.
 		const row = database
 			.prepare("SELECT declared, observed_rows FROM zoning_vocabulary WHERE scheme = ? AND code = ?")
 			.get("IE-GZT", "N/A") as { declared: number; observed_rows: number } | undefined
@@ -206,7 +164,6 @@ describe("the vocabulary decision", () => {
 		expect(row!.declared).toBe(0)
 		expect(row!.observed_rows).toBe(1)
 
-		// And the reader reports it as undeclared on the reading itself, so a consumer sees the difference too.
 		const unzonedCentre = {
 			latitude: FIXTURE_ORIGIN.lat + FIXTURE_SIDE / 2,
 			longitude: FIXTURE_ORIGIN.lon + 4.5 * FIXTURE_SIDE,
@@ -215,16 +172,13 @@ describe("the vocabulary decision", () => {
 		const reading = lookup.lookup(unzonedCentre.latitude, unzonedCentre.longitude)
 
 		expect(reading.designations[0]!.crosswalk?.declared).toBe(false)
-		// Its label is the code itself, because the row carried no description,
-		// never a label this package wrote for a code the publisher never declared.
+
 		expect(reading.designations[0]!.crosswalk?.label).toBe("N/A")
 	})
 
 	it("keeps a declared code the data never uses, at zero observed rows", () => {
 		using database = new DatabaseClient<ZoningDatabase>(databasePath, { readOnly: true })
 
-		// The domain is the publisher's statement of what a value may be rather than a census of what it is.
-		// `SDZ` is the real product's example: declared as a plan level and used on no row.
 		const row = database
 			.prepare("SELECT declared, observed_rows FROM zoning_vocabulary WHERE scheme = ? AND code = ?")
 			.get("IE-PLAN-LEVEL", "SDZ") as { declared: number; observed_rows: number } | undefined
@@ -259,9 +213,6 @@ describe("the vocabulary decision", () => {
 	})
 
 	it("measures the crosswalk as NON-FUNCTIONAL over an (authority, code) pair", () => {
-		// The same local code assigned two different generic types by the same authority, which is
-		// the whole argument for carrying the local code verbatim and for the edge table being empty.
-		// Nationally: 52 of 795 pairs.
 		expect(result.crosswalk.pairs).toBeGreaterThan(0)
 		expect(result.crosswalk.nonFunctionalPairs).toBe(1)
 		expect(result.crosswalk.worst[0]?.crosswalkCodes).toEqual(["R2", "R3"])
@@ -285,7 +236,6 @@ describe("the vocabulary decision", () => {
 			)
 		).toThrow(/take more than one generic type/u)
 
-		// No edges, no refusal — the guard is about writing them rather than about the mapping being a function.
 		expect(() => assertCrosswalkIsNotATable([["CO", "Special Policy Area", ["C2.1", "M1"]]], 0)).not.toThrow()
 	})
 })
@@ -308,9 +258,6 @@ describe("the plan is part of the claim", () => {
 		const reading = lookup.lookup(INSIDE_ZONE_A.latitude, INSIDE_ZONE_A.longitude)
 		const designation = reading.designations[0]!
 
-		// `currentPlan = 1` means not superseded.
-		// Whether the window has closed is `validTo`, and the comparison against a date is the
-		// caller's — 2,363 of the real product's 85,330 rows carry a `validTo` already in the past.
 		expect(designation.plan.currentPlan).toBe(1)
 		expect(designation.plan.validFrom).toBeTruthy()
 		expect(designation.plan.validTo).toBeTruthy()
@@ -346,7 +293,6 @@ describe("the meaning-of-zero rule", () => {
 		expect(reading.designations[0]!.localCode).toBe(GZT_UNZONED_LOCAL_CODE)
 		expect(reading.designations[0]!.unzoned).toBe(true)
 
-		// And an ordinary designation is not unzoned, so the flag is a reading rather than a default.
 		expect(lookup.lookup(INSIDE_ZONE_A.latitude, INSIDE_ZONE_A.longitude).designations[0]!.unzoned).toBe(false)
 	})
 
@@ -358,7 +304,6 @@ describe("the meaning-of-zero rule", () => {
 
 		expect(lookup.lookup(holeCentre.latitude, holeCentre.longitude).kind).toBe(ZoningReadingKind.Unknown)
 
-		// And the ground around the hole is zoned, so the hole is a hole rather than the whole feature going missing.
 		expect(lookup.lookup(FIXTURE_ORIGIN.lat + 2.1 * FIXTURE_SIDE, FIXTURE_ORIGIN.lon + FIXTURE_SIDE * 0.1).kind).toBe(
 			ZoningReadingKind.Designated
 		)
@@ -374,10 +319,6 @@ describe("the meaning-of-zero rule", () => {
 		expect(rows.length).toBeGreaterThan(0)
 		expect(result.coverageBasis).toBe(CoverageBasis.SourcePresent)
 
-		// the failing test the issue asks FOR: not one assertion on one row, but the whole
-		// table read back and every row checked through the interface's own predicate.
-		// A code path that read `supportsExclusion` as true for this layer would have to make
-		// one of these rows carry a stronger basis, and this fails the moment it does.
 		for (const row of rows) {
 			expect(row.basis).toBe(CoverageBasis.SourcePresent)
 			expect(supportsExclusion({ basis: row.basis as CoverageBasis })).toBe(false)
@@ -402,16 +343,12 @@ describe("the meaning-of-zero rule", () => {
 	it("refuses to OPEN an artifact whose coverage would license a negative claim", () => {
 		const path = scratch.path("tampered.db")
 
-		// The sealed artifact is copied and one coverage row is promoted to `designated`,
-		// which is exactly what a builder generalizing the flood layer's rule would have produced.
-		// The reader must refuse rather than answer confidently.
 		using source = new DatabaseClient<ZoningDatabase>(databasePath, { readOnly: true })
 
 		source.exec(`VACUUM INTO '${path}'`)
 
 		using tampered = new DatabaseClient<ZoningDatabase>(path)
 
-		// Keyed on `h3_cell` rather than on `rowid`, because `layer_coverage` is `without rowid` and has none.
 		tampered.exec(
 			`UPDATE layer_coverage SET basis = '${CoverageBasis.Designated}' ` +
 				"WHERE h3_cell = (SELECT min(h3_cell) FROM layer_coverage)"
@@ -433,8 +370,6 @@ describe("the provenance grade", () => {
 
 		expect(grades).toEqual(["authoritative"])
 
-		// The check is what makes the grade a constraint rather than a convention.
-		// `not NULL` alone accepts `''`, and a blank matches neither half of every read that splits on grade.
 		const path = scratch.path("grade-check.db")
 		using source = new DatabaseClient<ZoningDatabase>(databasePath, { readOnly: true })
 
@@ -450,9 +385,6 @@ describe("the provenance grade", () => {
 			/CHECK constraint failed/u
 		)
 
-		// And the one grade this artifact does not hold is still a legal value.
-		// The constraint is about the vocabulary, and keeping the grades apart is
-		// the artifact's job rather than the column's.
 		expect(() => copy.exec("UPDATE zoning_area SET provenance_grade = 'inferred' WHERE area_id = '1'")).not.toThrow()
 	})
 
@@ -473,15 +405,11 @@ describe("the provenance grade", () => {
 describe("the area cross-check", () => {
 	it("reports the hole-blind reading beside the nested one, and it is larger", () => {
 		expect(result.area.allExteriorKM2).toBeGreaterThan(result.area.nestedKM2)
-		// The signed sum is the nested reading under this service's convention,
-		// which is the receipt that the orientation was read rather than assumed.
+
 		expect(result.area.signedKM2).toBeCloseTo(result.area.nestedKM2, 6)
 	})
 
 	it("leaves the publisher's figure ABSENT where it was not read, rather than defaulting it to its own", () => {
-		// A receipt printing "publisher 205.4 km², 0.000% apart" for a check that never
-		// ran is the one shape a reader cannot tell from a pass.
-		// The fixture build supplies no publisher figure, so the reading's witness is absent.
 		expect(result.area.witness).toBe("absent")
 	})
 
@@ -490,8 +418,6 @@ describe("the area cross-check", () => {
 
 		const one = fixtureFeature(9, [[exteriorRing(lon, lat, lon + FIXTURE_SIDE, lat + FIXTURE_SIDE)]])
 
-		// Twice the area the rings actually cover.
-		// The shape a hole read as an exterior ring produces.
 		const doubled = 2 * one.rings.signedAreaM2
 
 		await expect(

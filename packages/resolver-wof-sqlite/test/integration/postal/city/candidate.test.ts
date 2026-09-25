@@ -1,16 +1,3 @@
-/**
- * @copyright Sister Software
- * @license AGPL-3.0
- * @author Teffen Ellis, et al.
- *
- *   #741 postcode-keyed postal-city side-index on the candidate backend. Builds a fixture
- *   candidate.db (via `buildCandidateTable`) with Nashville (high pop) + a far Antioch, CA
- *   distractor, attaches a `postal_city_candidate` row (`antioch`, 37013 → Nashville), and pins the
- *   probe's behaviour: an exact `(name_key, postcode)` hit resolves the postal city to its
- *   geographic locality. a bare query (no postcode), a postcode miss, a non-locality request, and a
- *   candidate.db without the side-index are all untouched (byte-stable).
- */
-
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { buildCandidateTable } from "@mailwoman/resolver-wof-sqlite/build-candidate"
 import { WOFCandidateTableLookup } from "@mailwoman/resolver-wof-sqlite/candidate-lookup"
@@ -50,9 +37,6 @@ function buildFixtureAdmin(path: PathBuilderLike): void {
 	`)
 }
 
-/**
- * Attach the #741 side-index with one edge: the postal city "Antioch" at 37013 → Nashville (id 1).
- */
 async function attachPostalCityIndex(path: PathBuilderLike): Promise<void> {
 	using kdb = new DatabaseClient<PostalCityCandidateDatabase>(path)
 
@@ -68,7 +52,7 @@ async function attachPostalCityIndex(path: PathBuilderLike): Promise<void> {
 			latitude: 36.17,
 			longitude: -86.78,
 		})
-		.execute() // closes the underlying `raw` handle
+		.execute()
 }
 
 beforeEach(async () => {
@@ -83,12 +67,12 @@ afterEach(async () => {
 	scratch[Symbol.asyncDispose]()
 })
 
-describe("WOFCandidateTableLookup postal-city side-index (#741)", () => {
+describe("WOFCandidateTableLookup postal-city side-index", () => {
 	test("WITHOUT the side-index, a postal-city query resolves to the far distractor (the gap)", async () => {
 		using lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
 
 		const hits = await lk.findPlace({ text: "Antioch", placetype: "locality", postcode: "37013", country: "US" })
-		expect(hits[0]!.name).toBe("Antioch") // the CA distractor — no side-index to redirect
+		expect(hits[0]!.name).toBe("Antioch")
 		expect(hits[0]!.lat).toBeCloseTo(38, 1)
 	})
 
@@ -128,8 +112,7 @@ describe("WOFCandidateTableLookup postal-city side-index (#741)", () => {
 		expect(hits.every((h) => h.name !== "Nashville")).toBe(true)
 	})
 
-	test("a candidate.db WITHOUT the side-index is byte-stable (no probe, no crash)", async () => {
-		// candidatePath has no postal_city_candidate table here (attach not called).
+	test("A candidate.db WITHOUT the side-index is byte-stable (no probe without throwing)", async () => {
 		using lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
 
 		const hits = await lk.findPlace({ text: "Antioch", placetype: "locality", postcode: "37013", country: "US" })

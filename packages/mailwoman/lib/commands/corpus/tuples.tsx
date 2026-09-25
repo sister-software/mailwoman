@@ -3,20 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mailwoman corpus tuples` — write the `(postcode, locality, region, country)` tuples the `trailing-region`
- *   recipe reads, one JSON line per tuple.
- *
- *   The extraction lived as a one-off whose output survived and whose code did not; `@mailwoman/corpus/tools`'s
- *   `postcode-triples` restored the code, and this command is its entry point, so a country's tuples can be rebuilt
- *   when the extraction changes. The `parent-join` source follows each `postalcode-intl.db` code's parent into the admin
- *   gazetteer and emits one tuple per region surface in the languages the region's addresses are written in (#1673);
- *   the `geonames` source reads a fetched GeoNames postal export. Both stamp the country's attested postcode placement
- *   and refuse a country whose placement nothing attests.
- *
- *   The `admin-pairs` source answers the pair without a postcode, straight from the admin gazetteer, for a country no
- *   postcode source reaches — the recipe's bare `«locality», «region»[, «country»]` form needs none. It stamps the
- *   `--locale` the caller names, because the gazetteer says which languages a country writes and not which one a given
- *   region surface came from.
+ *   Write postcode/locality/region/country tuples for the trailing-region recipe.
+ *   Sources are postal-code parent joins, GeoNames exports, or admin-only locality pairs.
+ *   Admin pairs require an explicit locale; postcode sources use attested country placement.
  */
 
 import { countryDisplayNames } from "@mailwoman/codex/country"
@@ -29,9 +18,7 @@ import { type CommandSpec, CommandTaskResult, type CommandComponent, splitCountr
 import { suffixTail } from "#dev-tools/coord-panel"
 
 /**
- * The three buckets `--stratify-shape` spends the budget across, from the same
- * {@link suffixTail} the probes over this recipe's output report by — so a share measured
- * in the tuples and a rate measured on a panel speak about one split.
+ * Classify locality shapes using the same suffix rule as the evaluation probes.
  */
 function localityShape(triple: { locality: string }): string {
 	if (suffixTail(triple.locality)) return "suffix-tail"

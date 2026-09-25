@@ -1,27 +1,3 @@
-/**
- * @copyright Sister Software
- * @license AGPL-3.0
- * @author Teffen Ellis, et al.
- *
- *   Tests for the candidate ancestors sidecar (`candidate_ancestor` + `candidate_interval`,
- *   candidate-ancestors-schema.ts) — the containment lineage behind
- *   {@link WOFCandidateTableLookup.ancestors} and the #1717 admin-coherence check. Builds the Weimar
- *   fixture (the issue's own defect class: a DE locality and a more-populous US namesake, each under
- *   its own region) through the real {@link buildCandidateTable}, then asserts the disciplines the
- *   two consumers depend on:
- *
- *   1. **Chain round-trip** — closure rows are denormalized (placetype + display name + shared-fold
- *      key) and `ancestors()` serves them nearest-first, no join.
- *   2. **Interval truth table** — ancestor / descendant / sibling / self / disjoint verdicts from
- *      the pre/post labels via the shared {@link intervalContains};
- *   3. **Enumerate-with-chains** — every candidate under one `name_key` is enumerable with its
- *      chain from the one artifact (the account-layer probe);
- *   4. **DAG canonicalization** — a multi-parent place keeps every parent in the closure rows while
- *      the interval forest commits to the one canonical parent.
- *   5. **Capability honesty** — an artifact without the sidecar reports `ancestors` absent, and a
- *      canonical-parent cycle degrades to unlabeled places, never a hung or corrupt build.
- */
-
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { allRows, getRow } from "@mailwoman/core/utils"
 import { buildCandidateTable } from "@mailwoman/resolver-wof-sqlite/build-candidate"
@@ -49,12 +25,6 @@ const WEIMAR_US = 202
 const LOUISIANA = 301
 const AMBIVILLE = 300
 
-/**
- * The Weimar fixture: two same-named localities under different regions
- * (the DE one beneath a county for a 3-link chain), a sibling locality,
- * a two-region DAG place, plus the noise the build must exclude — a self row,
- * a continent row, and an edge to a place with no current spr row.
- */
 function buildFixtureAdmin(path: PathBuilderLike): void {
 	using db = new DatabaseClient<WOFDatabase>(path)
 
@@ -155,13 +125,10 @@ describe("the candidate ancestors sidecar", () => {
 			WEIMAR_DE
 		)
 
-		// Nearest-first: county → region → country.
-		// The self row, the continent row and the edge to the absent place 999 contributed nothing.
 		expect(rows.map((r) => r.parent_spr_id)).toEqual([WEIMARER_LAND, THURINGEN, GERMANY])
 		expect(rows.map((r) => r.placetype)).toEqual(["county", "region", "country"])
 		expect(rows.map((r) => r.depth)).toEqual([1, 2, 3])
-		// Denormalized display name + the shared normalizeLocalityForKey fold.
-		// The same fold the candidate keys and the coherence check use, agreeing by construction.
+
 		expect(rows[1]!.parent_name).toBe("Thüringen")
 		expect(rows[1]!.parent_name_key).toBe(normalizeLocalityForKey("Thüringen"))
 	})
@@ -179,27 +146,24 @@ describe("the candidate ancestors sidecar", () => {
 			{ id: GERMANY, placetype: "country", name: "Germany" },
 		])
 
-		// Memoized: the second read is the same array, and a string id folds to the same place.
 		expect(lk.ancestors!(WEIMAR_DE)).toBe(chain)
 		expect(lk.ancestors!(String(WEIMAR_US)).map((a) => a.name)).toEqual(["Texas", "United States"])
-		// No recorded ancestry (a country) and an unknown id both answer empty, never throw.
+
 		expect(lk.ancestors!(GERMANY)).toEqual([])
 		expect(lk.ancestors!(424_242)).toEqual([])
 	})
 
-	test("#2268: findPlace carries the depth-1 ancestor, so a same-settlement pair is legible in one answer", async () => {
+	test(": findPlace carries the depth-1 ancestor, so a same-settlement pair is legible in one answer", async () => {
 		using lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
 
 		const hits = await lk.findPlace({ text: "Weimar", placetype: ["locality", "localadmin"], limit: 5 })
 		const byID = new Map(hits.map((hit) => [hit.id, hit]))
 
-		// Each bearer names its own nearest ancestor — the DE one a county, the US one a region —
-		// which is what lets a consumer holding both rows tell two ids apart from two tiers of one place.
 		expect(byID.get(WEIMAR_DE)?.parent_id).toBe(WEIMARER_LAND)
 		expect(byID.get(WEIMAR_US)?.parent_id).toBe(TEXAS)
 	})
 
-	test("#2268: an artifact without the sidecar emits NO parent_id — absence is the artifact's, not a root claim", async () => {
+	test(": an artifact without the sidecar emits NO parent_id — absence is the artifact's, not a root claim", async () => {
 		using patch = new DatabaseClient<WOFDatabase>(candidatePath)
 
 		patch.exec(`DROP TABLE ${CANDIDATE_ANCESTOR_TABLE}; DROP TABLE ${CANDIDATE_INTERVAL_TABLE};`)
@@ -226,22 +190,20 @@ describe("the candidate ancestors sidecar", () => {
 		const texas = intervalOf(db, TEXAS)!
 		const weimarUS = intervalOf(db, WEIMAR_US)!
 
-		// ancestor → descendant, at any distance and with no tier knowledge on either side
 		expect(intervalContains(thuringen, weimarDE)).toBe(true)
 		expect(intervalContains(germany, weimarDE)).toBe(true)
 		expect(intervalContains(texas, weimarUS)).toBe(true)
-		// descendant does not contain its ancestor
+
 		expect(intervalContains(weimarDE, thuringen)).toBe(false)
-		// siblings under one region
+
 		expect(intervalContains(weimarDE, erfurt)).toBe(false)
 		expect(intervalContains(erfurt, weimarDE)).toBe(false)
-		// self: containment degenerates to identity
+
 		expect(intervalContains(weimarDE, weimarDE)).toBe(true)
-		// disjoint across hierarchies — the Weimar-class verdict itself
+
 		expect(intervalContains(thuringen, weimarUS)).toBe(false)
 		expect(intervalContains(texas, weimarDE)).toBe(false)
 
-		// Descendant enumeration is a contiguous range scan.
 		const descendants = allRows<{ spr_id: number }>(
 			db.prepare(`SELECT spr_id FROM ${CANDIDATE_INTERVAL_TABLE} WHERE pre > ? AND post < ? ORDER BY spr_id`),
 			thuringen.pre,
@@ -251,7 +213,7 @@ describe("the candidate ancestors sidecar", () => {
 		expect(descendants.map((d) => d.spr_id)).toEqual([WEIMAR_DE, ERFURT, WEIMARER_LAND])
 	})
 
-	test("every candidate under one name_key enumerates WITH its chain from the one artifact (#1722)", () => {
+	test("Every candidate under one name_key enumerates WITH its chain from the one artifact", () => {
 		using db = new DatabaseClient<WOFDatabase>(candidatePath, { readOnly: true })
 
 		const rows = allRows<{
@@ -275,8 +237,6 @@ describe("the candidate ancestors sidecar", () => {
 		const regionKeyOf = (sprID: number): string | undefined =>
 			rows.find((r) => r.spr_id === sprID && r.parent_placetype === "region")?.parent_name_key ?? undefined
 
-		// Both bearers of the key are present — the outranked DE original included — and each
-		// is discriminated by its region-class containment, from one probe over one artifact.
 		expect(new Set(rows.map((r) => r.spr_id))).toEqual(new Set([WEIMAR_DE, WEIMAR_US]))
 		expect(regionKeyOf(WEIMAR_DE)).toBe(normalizeLocalityForKey("Thüringen"))
 		expect(regionKeyOf(WEIMAR_US)).toBe(normalizeLocalityForKey("Texas"))
@@ -290,22 +250,15 @@ describe("the candidate ancestors sidecar", () => {
 			AMBIVILLE
 		)
 
-		// The complete containment record: both regions, then the country.
-		// Texas (lower id at the same tier) sorts first, which makes it the canonical depth-1 parent.
 		expect(parents.map((p) => p.parent_spr_id)).toEqual([TEXAS, LOUISIANA, USA])
 
 		const ambiville = intervalOf(db, AMBIVILLE)!
 		const texas = intervalOf(db, TEXAS)!
 		const louisiana = intervalOf(db, LOUISIANA)!
 
-		// The interval verdict is "contained along the canonical hierarchy": true under Texas,
-		// false under Louisiana even though the closure rows attest the Louisiana edge.
-		// A consumer needing the non-canonical hierarchy consults the closure rows.
-		// That is the recorded division of labor rather than a defect.
 		expect(intervalContains(texas, ambiville)).toBe(true)
 		expect(intervalContains(louisiana, ambiville)).toBe(false)
 
-		// One interval row per place — the forest stayed a forest.
 		const { n } = getRow<{ n: number }>(
 			db.prepare(`SELECT COUNT(*) AS n FROM ${CANDIDATE_INTERVAL_TABLE} WHERE spr_id = ?`),
 			AMBIVILLE
@@ -315,8 +268,6 @@ describe("the candidate ancestors sidecar", () => {
 	})
 
 	test("an artifact without the sidecar reports the capability ABSENT — never [] dressed as an answer", () => {
-		// The tests may patch the built (unsealed) fixture directly — the same shape
-		// as an older candidate.db that predates the sidecar.
 		using db = new DatabaseClient<WOFDatabase>(candidatePath)
 		db.exec(`DROP TABLE ${CANDIDATE_ANCESTOR_TABLE}; DROP TABLE ${CANDIDATE_INTERVAL_TABLE};`)
 
@@ -325,13 +276,11 @@ describe("the candidate ancestors sidecar", () => {
 		expect(lk.ancestors).toBeUndefined()
 	})
 
-	test("a canonical-parent cycle degrades to unlabeled places — closure rows kept, no hang, no labels", async () => {
+	test("A canonical-parent cycle degrades to unlabeled places — closure rows kept, neither hang nor labels", async () => {
 		const input = scratch.path("cycle-admin.db")
 		const output = scratch.path("cycle-candidate.db")
 		using db = new DatabaseClient<WOFDatabase>(input)
 
-		// Two localities each naming the other as an ancestor (corrupt source ancestry),
-		// beside one healthy chain that must still label.
 		db.exec(`
 			CREATE TABLE spr (
 				id INTEGER PRIMARY KEY, name TEXT, placetype TEXT, country TEXT,
@@ -356,8 +305,6 @@ describe("the candidate ancestors sidecar", () => {
 
 		const result = await buildCandidateTable({ input, output })
 
-		// The cycle members keep their closure rows (the record is real) but receive no labels.
-		// The healthy chain labels normally (Healthy + Sane State = 2 forest nodes).
 		expect(result.ancestorPlaces).toBe(3)
 		expect(result.intervalPlaces).toBe(2)
 

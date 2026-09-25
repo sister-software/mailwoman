@@ -1,31 +1,4 @@
-/**
- * @copyright Sister Software
- * @license AGPL-3.0
- * @author Teffen Ellis, et al.
- *
- *   Coverage reconciliation (#621) — the library home for what `registry/tools/
- *   coverage-reconciliation.ts` does inline, so the CLI (`registry --reconcile`) and any consumer
- *   can reuse it.
- *
- *   Given entities already resolved across sources (#618), classify each by which kind of source its
- *   records come from. You tag each source label as either an **eligibility** source (it denotes
- *   membership in some base set — e.g. registered providers/facilities) or a **funding/enrollment**
- *   source (it denotes participation in a program). Three buckets fall out per entity:
- *
- *   - **enrolled** — resolves to both an eligibility and a funding record.
- *   - **eligible rather than enrolled** — an eligibility record with no funding record resolving to it (the
- *       anti-join).
- *   - **funded rather than in the eligibility set** — a funding record with no eligibility record resolving to
- *       it.
- *
- *   This is strictly a **set-membership reconciliation, never a determination.** We produce the
- *   reconciled join and surface the candidate set. what a gap means — and whether it is real, a
- *   sampling artifact, or actionable — is entirely the data consumer's call. Nothing here is an
- *   allegation. {@link reconciliationReport} bakes that caveat in by construction.
- *
- *   Pairs with {@link toMapHTML}: {@link reconciliationGeoJSON} tags each feature with its `bucket`,
- *   which the map auto-detects and colors categorically.
- */
+
 
 import { formatPersonName } from "@mailwoman/record/name"
 import type { GeoFeatureCollection, PointLiteral } from "@mailwoman/spatial"
@@ -33,47 +6,29 @@ import type { GeoFeatureCollection, PointLiteral } from "@mailwoman/spatial"
 import { toFeature } from "#geojson"
 import type { EntityGeoData, ReconciliationBucket, ResolvedEntity } from "#types"
 
-/**
- * Which source labels denote eligibility vs funding/enrollment.
- */
+
 export interface ReconcileConfig {
-	/**
-	 * Source labels denoting membership in the base/eligibility set.
-	 */
+	
 	eligibilitySources: readonly string[]
-	/**
-	 * Source labels denoting enrollment / funding / program participation.
-	 */
+	
 	fundingSources: readonly string[]
 }
 
-/**
- * One entity, classified.
- */
+
 export interface ReconciledEntity {
 	entity: ResolvedEntity
-	/**
-	 * Distinct provenance labels the entity's records span, sorted.
-	 */
+	
 	sources: string[]
 	bucket: ReconciliationBucket
 }
 
 export interface ReconciliationResult {
-	/**
-	 * Entities that carry at least one eligibility- or funding-tagged source, each bucketed.
-	 */
+	
 	reconciled: ReconciledEntity[]
 	counts: Record<ReconciliationBucket, number>
 }
 
-/**
- * Bucket an entity from the source labels its records span.
- *
- * @returns `null` when the entity carries no eligibility- or funding-tagged source
- * (it is outside this reconciliation — e.g. a source the caller didn't assign a role)
- * so callers can exclude it rather than silently miscount it.
- */
+
 export function bucketOf(sources: Iterable<string>, config: ReconcileConfig): ReconciliationBucket | null {
 	const elig = new Set(config.eligibilitySources)
 	const fund = new Set(config.fundingSources)
@@ -99,11 +54,7 @@ export function bucketOf(sources: Iterable<string>, config: ReconcileConfig): Re
 	return null
 }
 
-/**
- * Classify resolved entities into reconciliation buckets.
- *
- * Entities with no eligibility- or funding-tagged source are excluded (see {@link bucketOf}).
- */
+
 export function reconcileCoverage(entities: readonly ResolvedEntity[], config: ReconcileConfig): ReconciliationResult {
 	const reconciled: ReconciledEntity[] = []
 
@@ -127,11 +78,7 @@ export function reconcileCoverage(entities: readonly ResolvedEntity[], config: R
 	return { reconciled, counts }
 }
 
-/**
- * A display name for a reconciled entity's representative record.
- *
- * The organization's canonical form, else the person name, else the record id.
- */
+
 export function repName(entity: ResolvedEntity): string {
 	const rep = entity.representative
 	const person = formatPersonName(rep.name, "short")
@@ -139,11 +86,7 @@ export function repName(entity: ResolvedEntity): string {
 	return rep.organization?.canonical ?? (person || rep.id)
 }
 
-/**
- * GeoJSON of every located reconciled entity, each feature tagged with its `bucket` +
- * `sources` — the shape {@link toMapHTML} colors categorically by bucket.
- * Entities without a coordinate are skipped.
- */
+
 export function reconciliationGeoJSON(result: ReconciliationResult): GeoFeatureCollection<PointLiteral, EntityGeoData> {
 	return {
 		type: "FeatureCollection",
@@ -154,38 +97,19 @@ export function reconciliationGeoJSON(result: ReconciliationResult): GeoFeatureC
 }
 
 export interface ReconciliationReportOptions {
-	/**
-	 * H1 title.
-	 *
-	 * Default: "Coverage reconciliation — eligibility ↔ enrollment".
-	 */
+	
 	title?: string
-	/**
-	 * An italic scope paragraph under the title (what the sources are, how they were scoped).
-	 */
+	
 	scopeNote?: string
-	/**
-	 * A paragraph about the scorer choice (e.g. Why the FS baseline rather than the dedup GBT).
-	 */
+	
 	scorerNote?: string
-	/**
-	 * A paragraph about sampling/capping, woven into the caveat.
-	 */
+	
 	sampleNote?: string
-	/**
-	 * How many "eligible rather than enrolled" rows to spot-check.
-	 *
-	 * Default 15.
-	 */
+	
 	spotCheckLimit?: number
 }
 
-/**
- * A markdown reconciliation report: the bucket counts, the enrolled-rate floor,
- * an anti-join spot-check, and — always, by construction — the neutral caveat.
- *
- * The deliverable is the anti-join SET rather than a rate, and never an allegation.
- */
+
 export function reconciliationReport(result: ReconciliationResult, options: ReconciliationReportOptions = {}): string {
 	const { counts, reconciled } = result
 	const title = options.title ?? "Coverage reconciliation — eligibility ↔ enrollment"

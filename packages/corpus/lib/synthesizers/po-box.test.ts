@@ -1,9 +1,3 @@
-/**
- * @copyright Sister Software
- * @license AGPL-3.0
- * @author Teffen Ellis, et al.
- */
-
 import { makeLcg } from "@mailwoman/core/random"
 import {
 	composePoBoxPhrase,
@@ -17,7 +11,6 @@ import type { CanonicalRow } from "@mailwoman/corpus/types"
 import { alignRow } from "@mailwoman/corpus/utils"
 import { describe, expect, it } from "vitest"
 
-// Seed generators for reproducible tests.
 describe("synthesizePoBoxRow", () => {
 	it("US: replaces street with PO Box leader + number", () => {
 		const row = synthesizePoBoxRow(
@@ -71,7 +64,7 @@ describe("synthesizePoBoxRow", () => {
 		expect(row!.components.po_box!).toMatch(/^(Casilla|Casilla de Correo|CC) 55$/)
 	})
 
-	it("NZ: Private Bag / Private Box leaders, region-less format (#517)", () => {
+	it("NZ: Private Bag / Private Box leaders, region-less format", () => {
 		const row = synthesizePoBoxRow(
 			{ locality: "Auckland", region: "", postcode: "1010", country: "NZ" },
 			{ random: makeLcg(5), pickNumber: () => "12" }
@@ -80,12 +73,11 @@ describe("synthesizePoBoxRow", () => {
 		expect(row).not.toBeNull()
 		expect(row!.locale).toBe("en-NZ")
 		expect(row!.components.po_box!).toMatch(/^(PO Box|P\.O\. Box|Post Office Box|Private Bag|Private Box) 12$/)
-		expect(row!.components.region).toBeUndefined() // NZ has no region token.
+		expect(row!.components.region).toBeUndefined()
 		expect(row!.raw).toBe(`${row!.components.po_box}, Auckland 1010`)
 	})
 
 	it("PMB variant: when locale supports it and street is provided", () => {
-		// Select the PMB form.
 		const row = synthesizePoBoxRow(
 			{
 				locality: "New York",
@@ -127,7 +119,6 @@ describe("synthesizePoBoxRow", () => {
 	})
 
 	it("refuses a country no layout names, rather than writing it in US order", () => {
-		// Unknown vocabulary falls back to en-US, but this country has no layout.
 		expect(poBoxTemplateLocale("ZZ")).toBe("en-US")
 
 		const row = synthesizePoBoxRow(
@@ -155,12 +146,11 @@ describe("synthesizePoBoxRow", () => {
 			{ random: () => 0, pickNumber: () => "5" }
 		)
 
-		// Include both the designator and number in the component.
 		expect(row!.components.po_box!.split(/\s+/).length).toBeGreaterThanOrEqual(2)
 	})
 })
 
-describe("synthesizeMilitaryPoBoxRow (#517)", () => {
+describe("SynthesizeMilitaryPoBoxRow", () => {
 	it("generates a unit-line po_box + APO/FPO/DPO locality + AA/AE/AP region + theatre ZIP", () => {
 		const row = synthesizeMilitaryPoBoxRow({ random: makeLcg(7) })
 		expect(row.template).toBe("military-po-box")
@@ -170,14 +160,12 @@ describe("synthesizeMilitaryPoBoxRow (#517)", () => {
 		expect(["AA", "AE", "AP"]).toContain(row.components.region)
 		expect(row.components.postcode!).toMatch(/^\d{5}$/)
 
-		// Each component must appear exactly in the address for BIO alignment.
 		for (const v of [row.components.po_box, row.components.locality, row.components.region, row.components.postcode]) {
 			expect(row.raw).toContain(v!)
 		}
 	})
 
-	it("aligns cleanly through alignRow (po_box + locality + region + postcode, no quarantine)", () => {
-		// These seeds exercise both lines with and without a BOX segment.
+	it("Aligns cleanly through alignRow (po_box + locality + region + postcode without quarantine)", () => {
 		for (const seed of [11, 23, 42, 7, 100]) {
 			const row = synthesizeMilitaryPoBoxRow({ random: makeLcg(seed) })
 
@@ -185,7 +173,7 @@ describe("synthesizeMilitaryPoBoxRow (#517)", () => {
 				...row,
 				source: "synth-po-box",
 				source_id: `mil:${seed}`,
-				// Derive country from the generated locale.
+
 				country: row.locale.split("-")[1] ?? "US",
 				corpus_version: "0.0.0-test",
 				license: "synthetic fixture — not distributed",
@@ -204,12 +192,10 @@ describe("synthesizeMilitaryPoBoxRow (#517)", () => {
 
 describe("maybeNoisifyBoxNumber", () => {
 	it("returns original number when random > 0.1", () => {
-		// This value does not trigger a transformation.
 		expect(maybeNoisifyBoxNumber("12345", () => 0.5)).toBe("12345")
 	})
 
 	it("applies noise when random <= 0.1", () => {
-		// Use a deterministic sequence to exercise the noise path.
 		let attempts = 0
 
 		const rng = (() => {
@@ -219,7 +205,7 @@ describe("maybeNoisifyBoxNumber", () => {
 		})()
 
 		const result = maybeNoisifyBoxNumber("12345", rng)
-		// The result remains a string even when the transform is a no-op.
+
 		expect(typeof result).toBe("string")
 	})
 })
@@ -242,7 +228,6 @@ describe("poBoxTemplateLocale", () => {
 	})
 
 	it("stays template-scoped: a locale without a PO-box template falls back to en-US", () => {
-		// Use en-US vocabulary because DE has no template.
 		expect(supportedLocales()).not.toContain("de-DE")
 		expect(poBoxTemplateLocale("DE")).toBe("en-US")
 		expect(poBoxTemplateLocale("Germany")).toBe("en-US")

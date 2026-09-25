@@ -1,26 +1,3 @@
-/**
- * @copyright Sister Software
- * @license AGPL-3.0
- * @author Teffen Ellis, et al.
- *
- *   The committed whitespace suite, checked against the corpus it was drawn from. No model, no gazetteer —
- *   two jsonl files and the pure law module, so this runs wherever the repo does.
- *
- *   the point is that nothing here is authored. Every `base` must be the verbatim `input` of the committed
- *   board row its `rowRef` names, and every `variant` must be exactly the named transformation applied to
- *   that base. A hand-typed variant is how a "whitespace" row quietly acquires a dropped comma, and the law
- *   then reports on a transformation nobody declared — so the suite is re-derived here rather than trusted.
- *
- *   and that no ARM is missing BY accident. The cross product of thirteen board rows and six transformations
- *   is what the law claims to state. every absent arm has to name the applicability rule that refuses it, and
- *   both declared rules have to refuse at least one real arm. A suite that could quietly drop the arms it
- *   fails would report a smaller violation count, and a smaller count is indistinguishable from a law that
- *   holds.
- *
- *   The base rows are additionally required to be `status: pass` on the board. A whitespace violation stated
- *   over a row the pipeline already fails says nothing about spacing.
- */
-
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { type ConformanceFixture, loadConformanceFixtures } from "mailwoman/eval-harness/conformance/fixture"
 import {
@@ -45,9 +22,6 @@ beforeAll(async () => {
 	corpus = new Map((await loadRegressionCases()).map((seedCase) => [seedCase.id, seedCase]))
 })
 
-/**
- * Split `cases/gb/regression.jsonl#gb-downing-us-scoped` into the file it names and the case id inside it.
- */
 function splitRowRef(rowRef: string): { file: string; caseID: string } {
 	const [file, caseID] = rowRef.split("#")
 

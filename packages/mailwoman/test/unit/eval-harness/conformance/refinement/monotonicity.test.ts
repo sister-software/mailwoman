@@ -1,17 +1,3 @@
-/**
- * @copyright Sister Software
- * @license AGPL-3.0
- * @author Teffen Ellis, et al.
- *
- *   The refinement-monotonicity law module: the named coarsenings, the chain reading, and every refusal the
- *   audit owes. Pure — no fixture file, no corpus, no engine. The committed suite is checked against the
- *   corpus in `refinement-monotonicity-suite.test.ts`.
- *
- *   the derivations are asserted against their own `null`. A step that returns the text unchanged would let a
- *   row state the identity law under a refinement name, and it would hold trivially — so every step reports
- *   an inapplicable input as an absence, and each of those absences is a case here.
- */
-
 import type { ConformanceFixture } from "mailwoman/eval-harness/conformance/fixture"
 import {
 	auditRefinementSuite,
@@ -95,8 +81,6 @@ describe("classifying a pair", () => {
 	})
 
 	it("settles an overlap by declaration order rather than by whichever branch ran last", () => {
-		// "12 Rue" is one segment, so only the numeric step can act; "A, 12 B" is reachable by the
-		// leading-segment step, and the numeric one cannot touch it because "A," carries no digit.
 		expect(classifyRefinementStep("Rue", "12 Rue")).toBe("drop-leading-numeric-token")
 		expect(classifyRefinementStep("12 B", "A, 12 B")).toBe("drop-leading-segment")
 	})

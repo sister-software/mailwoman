@@ -1,38 +1,23 @@
-/**
- * @copyright Sister Software
- * @license AGPL-3.0
- * @author Teffen Ellis, et al.
- *
- *   Pure render-spec tests — bare node, no map. They pin the decision cascade that replaces the demo's
- *   imperative redraw effect: which outline + camera each resolved-place shape produces, the tier-over-
- *   polygon precedence, the postcode-with/without-bbox split, the bare-point fallthrough, and the
- *   declarative `cameraToViewState` path. A fake `ResolvedMapPlace` stands in for the runtime result.
- */
-
 import { cameraToViewState, computeMapPlaceRenderSpec, type ResolvedMapPlace } from "@mailwoman/react/map/place-render"
 import { expect, test } from "vitest"
 
-/**
- * A minimal resolved place.
- * Spread over with the fields a given branch needs.
- */
 function place(overrides: Partial<ResolvedMapPlace>): ResolvedMapPlace {
 	return { id: 1, name: "Somewhere", placetype: "locality", lat: 40, lon: -74, score: 1, ...overrides }
 }
 
-test("street address_point tier → exact-radius circle + fly to zoom 17", () => {
+test("Street address_point tier → exact-radius circle + fly to zoom 17", () => {
 	const spec = computeMapPlaceRenderSpec(place({ tier: "address_point", uncertaintyM: 10 }))
 	expect(spec.markers).toEqual([[-74, 40]])
 	expect(spec.outline?.type).toBe("Polygon")
 	expect(spec.camera).toEqual({ kind: "center", center: [-74, 40], zoom: 17 })
 })
 
-test("street interpolated tier → fly to the looser zoom 15", () => {
+test("Street interpolated tier → fly to the looser zoom 15", () => {
 	const spec = computeMapPlaceRenderSpec(place({ tier: "interpolated", uncertaintyM: 120 }))
 	expect(spec.camera).toEqual({ kind: "center", center: [-74, 40], zoom: 15 })
 })
 
-test("a pre-fetched crisp polygon → draw it and fit its bounds (padding 40)", () => {
+test("A pre-fetched crisp polygon → draw it and fit its bounds (padding 40)", () => {
 	const geometry = {
 		type: "Polygon" as const,
 		coordinates: [
@@ -62,19 +47,18 @@ test("a pre-fetched crisp polygon → draw it and fit its bounds (padding 40)", 
 test("street tier takes precedence over a pre-fetched polygon", () => {
 	const geometry = { type: "Polygon" as const, coordinates: [[[0, 0]]] }
 	const spec = computeMapPlaceRenderSpec(place({ tier: "address_point", uncertaintyM: 10, geometry }))
-	// The street path returns a center camera.
-	// The polygon path would have returned bounds.
+
 	expect(spec.camera.kind).toBe("center")
 	expect(spec.outline).not.toBe(geometry)
 })
 
-test("anchor-centroid postcode (no bbox) → ~3 km circle + fly to zoom 11", () => {
+test("Anchor-centroid postcode (no bbox) → ~3 km circle + fly to zoom 11", () => {
 	const spec = computeMapPlaceRenderSpec(place({ placetype: "postcode" }))
 	expect(spec.outline?.type).toBe("Polygon")
 	expect(spec.camera).toEqual({ kind: "center", center: [-74, 40], zoom: 11 })
 })
 
-test("a bbox with real extent → bbox-sized circle + fit the bbox", () => {
+test("A bbox with real extent → bbox-sized circle + fit the bbox", () => {
 	const bbox = { minLat: 39.9, maxLat: 40.1, minLon: -74.1, maxLon: -73.9 }
 	const spec = computeMapPlaceRenderSpec(place({ bbox }))
 	expect(spec.outline?.type).toBe("Polygon")
@@ -102,7 +86,7 @@ test("a sub-visible bbox (span ≤ 0.001°) falls through to a bare point at zoo
 	expect(spec.camera).toEqual({ kind: "center", center: [-74, 40], zoom: 12 })
 })
 
-test("no bbox, no tier, non-postcode → bare point at zoom 12", () => {
+test("Neither bbox nor tier, non-postcode → bare point at zoom 12", () => {
 	const spec = computeMapPlaceRenderSpec(place({}))
 	expect(spec.outline).toBeNull()
 	expect(spec.camera).toEqual({ kind: "center", center: [-74, 40], zoom: 12 })

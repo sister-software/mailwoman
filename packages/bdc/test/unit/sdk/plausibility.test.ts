@@ -1,12 +1,3 @@
-/**
- * @copyright Sister Software.
- * @license AGPL-3.0
- * @author Teffen Ellis, et al.
- *
- *   Test claim resolution, evidence, coverage confidence, and §7-2b criteria with temporary
- *   Springfield BDC and POI databases. POI fixtures use H3 resolution 9 by default.
- */
-
 import type { BDCDatabase } from "@mailwoman/bdc/schema"
 import { buildBDCDatabase } from "@mailwoman/bdc/sdk/build-bdc"
 import { res9ShortCellToRes6Parent } from "@mailwoman/bdc/sdk/filing-landscape"
@@ -61,7 +52,6 @@ const SPRINGFIELD_RES9_SHORT = shortCellToInt(SPRINGFIELD_RES9_FULL)
 const SPRINGFIELD_RES6_PARENT_FULL = cellToParent(SPRINGFIELD_RES9_FULL, 6) as H3Cell
 const SPRINGFIELD_RES6_PARENT_SHORT = res9ShortCellToRes6Parent(SPRINGFIELD_RES9_SHORT)
 
-// A sibling res-9 cell with no BDC rows.
 const SPRINGFIELD_SIBLING_RES9_FULL = cellToChildren(SPRINGFIELD_RES6_PARENT_FULL, 9).find(
 	(cell) => cell !== SPRINGFIELD_RES9_FULL
 ) as H3Cell
@@ -79,9 +69,6 @@ function blockCentroids(geoid: string): { lat: number; lon: number } | undefined
 	return geoid === GEOID_SPRINGFIELD ? SPRINGFIELD_CENTROID : undefined
 }
 
-/**
- * Provide one corroborating fiber row and one non-corroborating DSL row.
- */
 function fixtureRows(): BDCAvailabilityRow[] {
 	return [
 		{
@@ -107,9 +94,6 @@ function fixtureRows(): BDCAvailabilityRow[] {
 	]
 }
 
-/**
- * Temporary BDC database with an open reader.
- */
 type BDCFixture = TemporaryDirectory & { db: DatabaseClient<BDCDatabase> }
 
 async function buildBDCFixture(): Promise<BDCFixture> {
@@ -149,9 +133,6 @@ function cellFor(latitude: number, longitude: number): number {
 	return shortCellToInt(latLngToCell(latitude, longitude, 9) as H3Cell)
 }
 
-/**
- * Temporary POI database directory.
- */
 type POIFixture = TemporaryDirectory & { databasePath: PathBuilder }
 
 async function buildPOILookupFixture(rows: readonly POIFixtureRow[]): Promise<POIFixture> {
@@ -198,9 +179,6 @@ async function buildPOILookupFixture(rows: readonly POIFixtureRow[]): Promise<PO
 	return scratch.moveWith({ databasePath })
 }
 
-/**
- * Build a POI manifest and coverage fixture at the requested H3 resolution.
- */
 async function openpoischemadb(resolutionOverride = 9): Promise<DatabaseClient<layerschemadatabase>> {
 	const kdb = DatabaseClient.temp<layerschemadatabase>()
 
@@ -225,9 +203,6 @@ async function openpoischemadb(resolutionOverride = 9): Promise<DatabaseClient<l
 	return kdb
 }
 
-/**
- * Open both test layers with coverage for Springfield's res-6 cell.
- */
 async function openBoth(): Promise<AsyncDisposableStack & { deps: PlausibilityDeps }> {
 	const stack = new AsyncDisposableStack()
 	const bdc = stack.use(await buildBDCFixture())
@@ -235,7 +210,6 @@ async function openBoth(): Promise<AsyncDisposableStack & { deps: PlausibilityDe
 	const poischemadb = stack.use(await openpoischemadb())
 	const poiLookup = stack.use(new POILookup({ databasePath: poi.databasePath }))
 
-	// Mark Springfield's res-6 cell as covered.
 	await writeLayerCoverage(poischemadb, [{ h3Cell: SPRINGFIELD_RES6_PARENT_SHORT, completeness: 1, observedRows: 1 }])
 
 	return Object.assign(stack, {
@@ -366,14 +340,13 @@ describe("plausibilityCheck — bdc layer absent/insufficient (decision 6)", () 
 		expect(bundle.vintage).toBeNull()
 		expect(bundle.evidence_found).toContainEqual({ type: "abstain", reason: "requires_bdc_layer", layer: "bdc" })
 		expect(bundle.evidence_found.some((e) => e.type === "filing")).toBe(false)
-		// The layer is absent, not merely unsurveyed.
+
 		expect(bundle.coverage_detail.filing).toBe("layer_missing")
 	})
 
 	it("abstains insufficient_survey_data (not requires_bdc_layer) when bdc.db is open but this exact cell was never surveyed, and vintage IS populated", async () => {
 		await using bdc = await buildBDCFixture()
 
-		// Chicago is outside the fixture's surveyed area.
 		const remote: PointLiteral = { type: "Point", coordinates: [-87.6298, 41.8781] }
 
 		const bundle = await plausibilityCheck(
@@ -390,7 +363,7 @@ describe("plausibilityCheck — bdc layer absent/insufficient (decision 6)", () 
 		})
 
 		expect(bundle.evidence_found.some((e) => e.type === "filing")).toBe(false)
-		// The layer exists, but this cell is unsurveyed.
+
 		expect(bundle.coverage_detail.filing).toBe("cell_unsurveyed")
 	})
 })
@@ -418,7 +391,6 @@ describe("plausibilityCheck — filing evidence + corroboration", () => {
 		const dslEntry = filingEntries.find((e) => e.filing.provider_id === PROVIDER_DSL)!
 		expect(dslEntry.corroborates).toBe(false)
 
-		// Non-corroboration is not a negative verdict.
 		expect(filingEntries.every((e) => e.type === "filing")).toBe(true)
 	})
 
@@ -464,7 +436,6 @@ describe("plausibilityCheck — filing evidence + corroboration", () => {
 	it("positive absence: a covered res-6 parent with zero filings in the queried res-9 cell emits no filing evidence, and still counts as covered", async () => {
 		await using bdc = await buildBDCFixture()
 
-		// Verify that the sibling has a different res-9 cell but the same res-6 parent.
 		expect(SPRINGFIELD_SIBLING_RES9_FULL).not.toBe(SPRINGFIELD_RES9_FULL)
 		expect(res9ShortCellToRes6Parent(shortCellToInt(SPRINGFIELD_SIBLING_RES9_FULL))).toBe(SPRINGFIELD_RES6_PARENT_SHORT)
 
@@ -475,9 +446,9 @@ describe("plausibilityCheck — filing evidence + corroboration", () => {
 
 		expect(bundle.evidence_found.some((e) => e.type === "filing")).toBe(false)
 		expect(bundle.evidence_found.some((e) => e.type === "abstain")).toBe(false)
-		// DSL has no physical channel, so filing coverage alone yields low confidence.
+
 		expect(bundle.coverage_confidence).toBe("low")
-		// DSL has no physical channel; this is not a POI coverage gap.
+
 		expect(bundle.coverage_detail).toEqual({ filing: "covered", physical: "not_applicable" })
 	})
 })
@@ -499,7 +470,6 @@ describe("plausibilityCheck — physical evidence + poi layer absence (decision 
 			layer: "poi",
 		})
 
-		// Fiber has a physical category, but no POI layer is configured.
 		expect(bundle.coverage_detail.physical).toBe("layer_missing")
 	})
 
@@ -514,11 +484,11 @@ describe("plausibilityCheck — physical evidence + poi layer absence (decision 
 		)
 
 		expect(bundle.evidence_found.some((e) => e.type === "physical_plant")).toBe(false)
-		// DSL has no physical-plant category.
+
 		expect(bundle.coverage_detail.physical).toBe("not_applicable")
 	})
 
-	it("a geoid-only claim (no point/address) skips physical evidence entirely — no abstain, no entry — even with deps.poi present", async () => {
+	it("A geoid-only claim (no point/address) skips physical evidence entirely — neither abstain nor entry — even with deps.poi present", async () => {
 		await using poi = await buildPOILookupFixture([TELECOM_EXCHANGE_NEAR])
 		using poischemadb = await openpoischemadb()
 		using poiLookup = new POILookup({ databasePath: poi.databasePath })
@@ -538,7 +508,6 @@ describe("plausibilityCheck — physical evidence + poi layer absence (decision 
 			false
 		)
 
-		// A geoid-only claim cannot search the available POI layer.
 		expect(bundle.coverage_detail.physical).toBe("no_coordinate")
 	})
 })
@@ -568,7 +537,6 @@ describe("plausibilityCheck — full composition (both layers present)", () => {
 		await using both = await openBoth()
 		const { deps } = both
 
-		// Both fixtures cover Springfield, not this point.
 		const remote: PointLiteral = { type: "Point", coordinates: [-87.6298, 41.8781] }
 
 		const bundle = await plausibilityCheck(
@@ -581,7 +549,6 @@ describe("plausibilityCheck — full composition (both layers present)", () => {
 		expect(bundle.evidence_found).toContainEqual({ type: "abstain", reason: "insufficient_survey_data", layer: "bdc" })
 	})
 
-	// Give the layers different spatial coverage to test mixed states.
 	it("MIXED: filing covered, physical layer entirely missing (no poi dep) -> low", async () => {
 		await using bdc = await buildBDCFixture()
 
@@ -591,7 +558,7 @@ describe("plausibilityCheck — full composition (both layers present)", () => {
 				technologyCode: BroadbandTechnologyCode.OpticalCarrierFiber,
 				claimedDownloadMbps: 1000,
 			},
-			{ bdcDB: bdc.db } // Fiber has a physical category, but no POI layer is configured.
+			{ bdcDB: bdc.db }
 		)
 
 		expect(bundle.coverage_confidence).toBe("low")
@@ -611,7 +578,6 @@ describe("plausibilityCheck — full composition (both layers present)", () => {
 		using poischemadb = await openpoischemadb()
 		using poiLookup = new POILookup({ databasePath: poi.databasePath })
 
-		// Mark the remote point covered only in POI.
 		const remote: PointLiteral = { type: "Point", coordinates: [-87.6298, 41.8781] }
 		const remoteCell = cellFor(41.8781, -87.6298)
 
@@ -631,11 +597,11 @@ describe("plausibilityCheck — full composition (both layers present)", () => {
 	})
 })
 
-describe("plausibilityCheck — per-layer coverage-spine resolution assertion", () => {
+describe("PlausibilityCheck — per-layer coverage-spine resolution assertion", () => {
 	it("throws when poi.db's recorded resolution disagrees with BDC_H3_RESOLUTION, with both layers wired", async () => {
 		await using bdc = await buildBDCFixture()
 		await using poi = await buildPOILookupFixture([TELECOM_EXCHANGE_NEAR])
-		// BDC records resolution 9; this POI fixture records 6.
+
 		using poischemadb = await openpoischemadb(6)
 		using poiLookup = new POILookup({ databasePath: poi.databasePath })
 
@@ -653,7 +619,7 @@ describe("plausibilityCheck — per-layer coverage-spine resolution assertion", 
 
 	it("throws when poi.db's recorded resolution disagrees with BDC_H3_RESOLUTION, with poi wired ALONE (no bdcDB)", async () => {
 		await using poi = await buildPOILookupFixture([TELECOM_EXCHANGE_NEAR])
-		// Check POI resolution even without a BDC dependency.
+
 		using poischemadb = await openpoischemadb(6)
 		using poiLookup = new POILookup({ databasePath: poi.databasePath })
 
@@ -686,7 +652,7 @@ describe("plausibilityCheck — per-layer coverage-spine resolution assertion", 
 
 	it("does not throw when only poi is wired and its own recorded resolution matches BDC_H3_RESOLUTION", async () => {
 		await using poi = await buildPOILookupFixture([TELECOM_EXCHANGE_NEAR])
-		using poischemadb = await openpoischemadb() // Default 9 matches BDC_H3_RESOLUTION.
+		using poischemadb = await openpoischemadb()
 		using poiLookup = new POILookup({ databasePath: poi.databasePath })
 
 		await expect(
@@ -702,19 +668,14 @@ describe("plausibilityCheck — per-layer coverage-spine resolution assertion", 
 	})
 })
 
-/**
- * Map each §7-2b acceptance criterion to a focused assertion, reusing the fixtures
- * and broader tests above where possible.
- */
 describe("§7-2b criteria", () => {
 	describe("Criterion 1 — positive-evidence-only invariant (required)", () => {
-		it("well-covered area, no filing, no nearby plant -> zero evidence entries, and confidence that reflects the REAL coverage (never insufficient_survey_data)", async () => {
+		it("Well-covered area, neither filing nor nearby plant -> zero evidence entries, and confidence that reflects the REAL coverage (never insufficient_survey_data)", async () => {
 			await using bdc = await buildBDCFixture()
-			await using poi = await buildPOILookupFixture([]) // no plant anywhere
+			await using poi = await buildPOILookupFixture([])
 			using poischemadb = await openpoischemadb()
 			using poiLookup = new POILookup({ databasePath: poi.databasePath })
 
-			// Mark the POI parent covered; the sibling has BDC coverage but no filings.
 			await writeLayerCoverage(poischemadb, [
 				{ h3Cell: SPRINGFIELD_RES6_PARENT_SHORT, completeness: 1, observedRows: 0 },
 			])
@@ -728,10 +689,9 @@ describe("§7-2b criteria", () => {
 				{ bdcDB: bdc.db, poi: { lookup: poiLookup, schemadb: poischemadb } }
 			)
 
-			// Covered absence produces no negative evidence.
 			expect(bundle.evidence_found).toEqual([])
 			expect(bundle.coverage_detail).toEqual({ filing: "covered", physical: "covered" })
-			// Covered absence differs from an unsurveyed cell.
+
 			expect(bundle.coverage_confidence).toBe("high")
 		})
 
@@ -739,7 +699,6 @@ describe("§7-2b criteria", () => {
 			await using both = await openBoth()
 			const { deps } = both
 
-			// This point is outside both fixtures' coverage.
 			const remote: PointLiteral = { type: "Point", coordinates: [-87.6298, 41.8781] }
 
 			const bundle = await plausibilityCheck(
@@ -750,7 +709,6 @@ describe("§7-2b criteria", () => {
 			expect(bundle.coverage_detail).toEqual({ filing: "cell_unsurveyed", physical: "cell_unsurveyed" })
 			expect(bundle.coverage_confidence).toBe("insufficient_survey_data")
 
-			// Mirror the abstention assertion from the broader both-axes-unknown test.
 			expect(bundle.evidence_found).toContainEqual({
 				type: "abstain",
 				reason: "insufficient_survey_data",
@@ -758,9 +716,6 @@ describe("§7-2b criteria", () => {
 			})
 		})
 
-		/**
-		 * Pin public unions and bundle keys at compile time; reject verdict-like values at runtime.
-		 */
 		const PLAUSIBILITY_BUNDLE_KEYS = {
 			claim: true,
 			evidence_found: true,
@@ -801,9 +756,6 @@ describe("§7-2b criteria", () => {
 			h3_cell_approximation: true,
 		} satisfies Record<PlausibilityBundle["block_resolution"], true>
 
-		/**
-		 * Match values that resemble negative verdicts.
-		 */
 		const VERDICT_LIKE_PATTERN =
 			/implaus|disprov|contradic|invalid|false|deny|reject|negat|unsupport|unverif|not_?found|no_service|unavailable/i
 
@@ -816,7 +768,6 @@ describe("§7-2b criteria", () => {
 				...Object.keys(BLOCK_RESOLUTION_VALUES),
 			]
 
-			// Ensure the exhaustive union pins are not empty.
 			expect(allValues).toHaveLength(16)
 
 			for (const value of allValues) {
@@ -824,8 +775,7 @@ describe("§7-2b criteria", () => {
 			}
 		})
 
-		it("PLAUSIBILITY_BUNDLE_KEYS (the key-set pin) is non-empty — a hollowed-out pin object would make the compile-time guard above vacuous", () => {
-			// The `satisfies` clause checks key completeness at compile time; this guards only against an empty pin.
+		it("PLAUSIBILITY_BUNDLE_KEYS (the key-set pin) is non-empty — a hollowed-out pin object would make the compile-time condition above vacuous", () => {
 			expect(Object.keys(PLAUSIBILITY_BUNDLE_KEYS)).toHaveLength(6)
 		})
 	})
@@ -845,7 +795,7 @@ describe("§7-2b criteria", () => {
 			)
 
 			expect(bundle.coverage_confidence).toBe("high")
-			// Recheck coverage details and abstention from the broader co-presence test.
+
 			expect(bundle.coverage_detail).toEqual({ filing: "covered", physical: "covered" })
 			expect(bundle.evidence_found.some((e) => e.type === "filing" && e.corroborates)).toBe(true)
 			expect(bundle.evidence_found.some((e) => e.type === "physical_plant")).toBe(true)
@@ -853,7 +803,7 @@ describe("§7-2b criteria", () => {
 		})
 	})
 
-	describe("Criterion 3 — layer absent: abstain, no fabricated evidence (fuller proof: 'bdc layer absent/insufficient' and 'physical evidence + poi layer absence' suites above)", () => {
+	describe("Criterion 3 — layer absent: abstain without fabricated evidence (fuller proof: 'bdc layer absent/insufficient' and 'physical evidence + poi layer absence' suites above)", () => {
 		it("poi layer absent -> abstain requires_build_local_layer, and no physical_plant (the only distance-related evidence shape) is fabricated", async () => {
 			const bundle = await plausibilityCheck(
 				{

@@ -3,12 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `<BackendControl>` — the neural-backend indicator + "Force wasm" checkbox from the demo's control
- *   panel (`_app.tsx:1255-1280`), as a dumb presentational unit. It shows which backend the runtime
- *   resolved to (WebGPU / wasm, with the int8 size the host formats into the label) and lets the visitor
- *   opt out of WebGPU. Props in, one boolean event out — the host re-loads the bundle on the toggle.
- *
- *   node-safe: pure React, no maplibre.
+ *   Show the active inference backend and let visitors force WASM.
+ *   The host handles backend changes; this component is presentational.
  */
 
 import type { ReactNode } from "react"
