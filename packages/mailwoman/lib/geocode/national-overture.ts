@@ -12,7 +12,14 @@ import type { PathBuilderLike } from "path-ts"
 
 import type { RegionDatabases } from "#geocode/regions"
 
-const COUNTRY_TO_STREET_LOCALE = new Map<string, StreetLocale>([["tw", "zh"]])
+const COUNTRY_TO_STREET_LOCALE = new Map<string, StreetLocale>([
+	["tw", "zh"],
+	// ANNCSU writes the street type out in front of the name, and the `it` rule
+	// expands an abbreviated type and keeps it.
+	// See `normalizeStreetForKeyLocale` for why it is kept rather than dropped: over the
+	// 2026-05-20.0 release, dropping it merges 4.375% of Italy's distinct (comune, street) pairs.
+	["it", "it"],
+])
 
 const registry = createStreetLocaleRegistry(
 	COUNTRY_TO_STREET_LOCALE,
@@ -28,7 +35,33 @@ export function streetLocaleForOvertureCountry(countryCode: string): StreetLocal
 	return registry.localeFor(countryCode)
 }
 
-const COUNTRY_TO_LICENSE = new Map<string, string>([["tw", "CDLA-Permissive-2.0 AND OGDL-Taiwan-1.0"]])
+/**
+ * The SPDX expression each country's national address-point database is published under:
+ * Overture's theme license, and the upstream register's own.
+ *
+ * Neither half comes from the parquet.
+ * Measured over the 2026-05-20.0 and 2026-06-17.0 releases, the `sources[].license` field reads
+ * NULL for every row of every country here, Taiwan included, so the second half of each expression
+ * rests on research into the publisher's own terms rather than on anything the file states.
+ *
+ * What the file does supply is `sources[].dataset`, which identifies the
+ * publisher the research has to be about.
+ *
+ * The first half is `CDLA-Permissive-2.0` because Overture licenses its themes separately
+ * and the addresses theme is composed from permissively licensed sources.
+ * Do not carry ODbL onto a row from this theme: that obligation reaches the
+ * OSM-derived themes, divisions and transportation.
+ */
+const COUNTRY_TO_LICENSE = new Map<string, string>([
+	// `sources[].dataset` reads `OpenAddresses/<bureau> Civil Affairs` across the fifteen bureaus.
+	["tw", "CDLA-Permissive-2.0 AND OGDL-Taiwan-1.0"],
+	// `sources[].dataset` reads `OpenAddresses/Istat e dall'Agenzia delle Entrate` on all 25,914,431 rows,
+	// which is ANNCSU, the national street and house-number register those two agencies publish jointly.
+	// CC-BY-4.0 is the term recorded for it in #2300 and it carries the same standing as
+	// Taiwan's OGDL entry: a reading of the publisher's terms, awaiting the immutable
+	// terms evidence that the counsel tranche collects per source.
+	["it", "CDLA-Permissive-2.0 AND CC-BY-4.0"],
+])
 
 /**
  * Returns the SPDX license expression that a country's national address-point database is published under.

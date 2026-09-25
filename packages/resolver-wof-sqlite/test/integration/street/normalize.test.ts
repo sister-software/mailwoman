@@ -213,6 +213,57 @@ describe("normalizeStreetForKeyLocale — the pl/vn/id branches (the 2026-08-19 
 	})
 })
 
+describe("normalizeStreetForKeyLocale — the it branch (ANNCSU rooftop keying)", () => {
+	it("it: KEEPS the leading type, where pl drops it", () => {
+		// Dropping it merges 44,451 of Italy's 1,015,913 distinct (comune, street) pairs,
+		// 4.375%, measured over Overture's `addresses-it.parquet` at 2026-05-20.0.
+		// The merged pairs are distinct streets: these four are real collisions from that measurement.
+		expect(normalizeStreetForKeyLocale("Via Bevegni", "it")).toBe("via bevegni")
+		expect(normalizeStreetForKeyLocale("Salita Bevegni", "it")).toBe("salita bevegni")
+
+		expect(normalizeStreetForKeyLocale("Via dei Pioppi", "it")).toBe("via dei pioppi")
+		expect(normalizeStreetForKeyLocale("Vicolo dei Pioppi", "it")).toBe("vicolo dei pioppi")
+	})
+
+	it("it: expands an abbreviated leading type, so a typed query reaches the stored key", () => {
+		// ANNCSU writes the type out — `str.` on 775 of 25,914,431 rows is the only
+		// abbreviation it uses — so this map is for the query side.
+		expect(normalizeStreetForKeyLocale("V.le Roma", "it")).toBe("viale roma")
+		expect(normalizeStreetForKeyLocale("VIALE ROMA", "it")).toBe("viale roma")
+
+		expect(normalizeStreetForKeyLocale("P.zza Garibaldi", "it")).toBe("piazza garibaldi")
+		expect(normalizeStreetForKeyLocale("Piazza Garibaldi", "it")).toBe("piazza garibaldi")
+
+		expect(normalizeStreetForKeyLocale("Str. Provinciale", "it")).toBe("strada provinciale")
+		expect(normalizeStreetForKeyLocale("C.so Vittorio Emanuele", "it")).toBe("corso vittorio emanuele")
+	})
+
+	it("it: the three spellings of località reach one key", () => {
+		// The register writes all three: `localita'` on 543,854 rows, `località` on 1,694, `localita` on 41.
+		// The shared fold already strips both the accent and the apostrophe, so the branch
+		// adds nothing here and this test is what would catch the fold changing under it.
+		expect(normalizeStreetForKeyLocale("LOCALITA' Governatori", "it")).toBe("localita governatori")
+		expect(normalizeStreetForKeyLocale("Località Governatori", "it")).toBe("localita governatori")
+		expect(normalizeStreetForKeyLocale("Localita Governatori", "it")).toBe("localita governatori")
+		expect(normalizeStreetForKeyLocale("Loc. Governatori", "it")).toBe("localita governatori")
+	})
+
+	it("it: an elision apostrophe inside a name behaves the same on both sides", () => {
+		// `dell'`, `sant'` and `d'` appear in 1,613,571 of the 25,914,431 rows.
+		// The fold drops the apostrophe rather than splitting the token, and it does
+		// so for the stored key and the query alike, so the two still meet.
+		expect(normalizeStreetForKeyLocale("Via dell'Argine", "it")).toBe("via dellargine")
+		expect(normalizeStreetForKeyLocale("VIA DELL ARGINE", "it")).toBe("via dell argine")
+	})
+
+	it("it: a bare name with no type keeps its single token", () => {
+		// The expansion reads the first token only when another follows it, so a one-word name
+		// that happens to match the map is left alone rather than rewritten into a type.
+		expect(normalizeStreetForKeyLocale("Lungarno", "it")).toBe("lungarno")
+		expect(normalizeStreetForKeyLocale("Str", "it")).toBe("str")
+	})
+})
+
 describe("the zh branch — the Taiwanese register's Han keys", () => {
 	it("keys a street as its Han fold: no whitespace, kanji section numerals as written", () => {
 		expect(normalizeStreetForKeyLocale("重慶南路一段", "zh")).toBe("重慶南路一段")

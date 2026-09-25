@@ -145,7 +145,7 @@ export function normalizeStreetForKey(street: string): StreetKey {
  * Names the rule set {@link normalizeStreetForKeyLocale} uses to fold a street
  * name into an address-point key.
  */
-export type StreetLocale = "us" | "en" | "fr" | "de" | "nl" | "pl" | "vn" | "id" | "zh"
+export type StreetLocale = "us" | "en" | "fr" | "de" | "it" | "nl" | "pl" | "vn" | "id" | "zh"
 
 function foldHan(input: string): string {
 	return input.normalize("NFKC").replaceAll("臺", "台").replaceAll(/\s+/g, "").toLowerCase()
@@ -200,6 +200,38 @@ const FR_STREET_ABBREV = new Map<string, string>([
 
 const PL_LEADING_TYPE = new Set(["ul", "ulica", "al", "aleja", "aleje", "pl", "plac", "os", "osiedle"])
 
+/**
+ * Italian street types in the abbreviated spellings a person types, mapped to the spelling ANNCSU publishes.
+ *
+ * The expansion serves the query side rather than the build side.
+ * Measured over Overture's `addresses-it.parquet` at the `2026-05-20.0` release,
+ * 25,914,431 street rows, the register writes the type out in full: the only
+ * abbreviated leading token is `str.`, on 775 rows.
+ *
+ * Someone typing `V.le Roma` reaches the same key as the stored `VIALE ROMA` only because of this map.
+ *
+ * `fold` has already removed the full stops by the time these are matched, so the keys carry none.
+ */
+const IT_STREET_TYPE_ABBREV = new Map<string, string>([
+	["v", "via"],
+	["vle", "viale"],
+	["vl", "viale"],
+	["vic", "vicolo"],
+	["vlo", "vicolo"],
+	["str", "strada"],
+	["pza", "piazza"],
+	["pzza", "piazza"],
+	["p", "piazza"],
+	["ple", "piazzale"],
+	["cso", "corso"],
+	["c", "corso"],
+	["lgo", "largo"],
+	["loc", "localita"],
+	["fraz", "frazione"],
+	["cda", "contrada"],
+	["lungarno", "lungarno"],
+])
+
 const ID_STREET_ABBREV = new Map<string, string>([
 	["jl", "jalan"],
 	["jln", "jalan"],
@@ -239,6 +271,20 @@ export function normalizeStreetForKeyLocale(street: string, locale: StreetLocale
 				if (t.endsWith("str") && !t.endsWith("strasse")) {
 					tokens[i] = t.replace(/str$/, "strasse")
 				}
+			}
+			break
+		case "it":
+			// The leading type is expanded and KEPT, where `pl` drops its leading type.
+			// Measured over Overture's `addresses-it.parquet`, `2026-05-20.0`: dropping it merges
+			// 44,451 of the 1,015,913 distinct (comune, street) pairs, 4.375%, and the merged
+			// pairs are distinct streets — `via bevegni` with `salita bevegni` in Sant'Olcese,
+			// `vicolo dei pioppi` with `via dei pioppi` in Cologno Monzese.
+			//
+			// Only the first token is looked up.
+			// An Italian type word states the street's kind and stands at the front, so expanding
+			// a matching word deeper in the name would rewrite part of the name itself.
+			if (tokens.length > 1) {
+				tokens[0] = IT_STREET_TYPE_ABBREV.get(tokens[0]!) ?? tokens[0]!
 			}
 			break
 		case "nl":
