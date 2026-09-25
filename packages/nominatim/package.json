@@ -64,11 +64,11 @@
 		"@mailwoman/sqlite": "workspace:*",
 		"@mailwoman/timezone-lookup": "workspace:*",
 		"@mailwoman/un-locode-lookup": "workspace:*",
-		"hono": "^4.13.7",
+		"hono": "^4.13.8",
 		"mailwoman": "workspace:*",
 		"path-ts": "^2.5.0",
 		"spliterator": "^7.11.0",
-		"zod": "^4.5.4"
+		"zod": "^4.6.5"
 	},
 	"devDependencies": {
 		"@mailwoman/core": "workspace:*"
