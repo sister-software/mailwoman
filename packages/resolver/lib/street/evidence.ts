@@ -2,49 +2,41 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- *
- *   Street-name existence is positive-only evidence for choosing between sibling parses. It never
- *   changes the model score and a missing lookup result leaves the model ranking unchanged.
  */
 
 import type { Exclusion } from "@mailwoman/evidence"
 
 /**
- * A street-name existence probe.
- *
- * Backend-agnostic.
- * The FR instance is BAN street-centroids, a future US instance is tiger,
- * etc. (per the registry-backed-structured-prediction doctrine tiers).
+ * Answers whether a street name exists, optionally within a locality or postcode,
+ * for the countries a backend such as BAN street centroids covers.
  */
 export interface StreetLocalityEvidence {
 	/**
-	 * True when `streetSurface` exists as a street name — optionally scoped to a locality or postcode
-	 * when the hypothesis carries one (fragments usually don't. Unscoped is the measured mode).
+	 * Returns whether the raw street surface exists as a street name, within `scope`
+	 * when given; the implementation folds the surface itself.
 	 *
-	 * The implementation is responsible for folding the surface with {@link foldStreetSurface}
-	 * so the caller passes raw text.
-	 *
-	 * Positive evidence only: return `false` on any doubt — a missing index, an unsupported country,
-	 * a read error — so {@link pickByStreetEvidence} fails open to the model's ranking.
-	 * Absence is never a veto.
+	 * It must return `false` on any doubt, such as a missing index or read error,
+	 * because absence is never a veto.
 	 */
 	hasStreetName(streetSurface: string, scope?: StreetEvidenceScope): boolean
+
 	/**
-	 * ISO-2 (upper-case) countries this instance can answer for.
-	 *
-	 * Anything else → no evidence, never a veto.
+	 * The uppercase ISO 3166-1 alpha-2 countries this instance can answer for.
 	 */
 	readonly countries: ReadonlySet<string>
 }
 
+/**
+ * Narrows a street-name existence probe to a locality, a postcode, or both.
+ */
 export interface StreetEvidenceScope {
 	locality?: string
 	postcode?: string
 }
 
 /**
- * Shared index-build and lookup fold: strip diacritics, lowercase, replace hyphens
- * and apostrophes, and collapse space.
+ * Folds a street surface for both index build and lookup by stripping diacritics,
+ * lowercasing, turning hyphens and apostrophes into spaces, and collapsing whitespace.
  */
 export function foldStreetSurface(surface: string): string {
 	return surface
@@ -56,15 +48,6 @@ export function foldStreetSurface(surface: string): string {
 		.trim()
 }
 
-/**
- * FR street-type + particle vocabulary — the G1 guard.
- *
- * A street surface made only of these words carries no name
- * (bare `rue`/`chemin` is a truncation, and it is in the index), so it warrants no evidence credit.
- * Folded forms (particles are pre-folded: `l'` → `l`).
- *
- * Kept small and lexical — it is a dictionary fact rather than a tuned weight (the anti-Pelias line).
- */
 const FR_STREET_TYPE_WORDS: ReadonlySet<string> = new Set([
 	"rue",
 	"avenue",
@@ -102,8 +85,8 @@ const FR_STREET_TYPE_WORDS: ReadonlySet<string> = new Set([
 ])
 
 /**
- * True when the folded surface contains no token outside {@link FR_STREET_TYPE_WORDS} —
- * i.e. it is pure type/particle.
+ * Returns true when a folded street surface is empty or consists only of French
+ * street-type words and particles, such as "rue de la".
  */
 export function isPureTypeVocabulary(foldedSurface: string): boolean {
 	const tokens = foldedSurface.split(" ").filter((value) => value.length)
@@ -114,100 +97,90 @@ export function isPureTypeVocabulary(foldedSurface: string): boolean {
 }
 
 /**
- * One candidate parse for the street-evidence rerank — its street surface +
- * its (within-input comparable) score.
+ * Describes one candidate parse for {@link pickByStreetEvidence}, whose score is
+ * comparable only against other candidates for the same input.
  */
 export interface StreetCandidate<T = unknown> {
 	/**
-	 * The candidate's street surface (raw. Folded internally).
-	 *
-	 * Empty string = no street parsed → never the evidence pick.
+	 * The candidate's raw street surface; an empty string means no street was parsed,
+	 * so the candidate cannot win on evidence.
 	 */
 	streetSurface: string
+
 	/**
-	 * The parse score, comparable to its siblings from the same input.
-	 *
-	 * Higher is better.
+	 * The parse score, where higher is better.
 	 */
 	score: number
+
 	/**
-	 * Opaque caller payload carried through to the result (the segmentation, the tree, …).
+	 * An opaque caller value, such as the segmentation or tree, carried through to the result.
 	 */
 	payload?: T
 }
 
+/**
+ * Configures {@link pickByStreetEvidence}, where `marginCap` (default 2.5) bounds how far
+ * below rank 1 a winner may score and `exclusions` is indexed like the candidates.
+ */
 export interface PickByStreetEvidenceOpts {
 	/**
-	 * Locality/postcode scope forwarded to {@link StreetLocalityEvidence.hasStreetName}
-	 * (fragments usually carry none).
+	 * The locality or postcode scope forwarded to {@link StreetLocalityEvidence.hasStreetName}.
 	 */
 	scope?: StreetEvidenceScope
+
 	/**
-	 * G2 — the margin cap.
+	 * The largest score gap below rank 1 at which evidence may still promote a candidate, defaulting to 2.5.
 	 *
-	 * A candidate whose score is more than this far below rank-1 is never promoted by evidence
-	 * (without it, evidence reaches deep down the list and moves off correct rank-1 parses).
-	 * Default 2.5 — the value the v2 board measured (148 fixes / 3 breaks).
-	 *
-	 * Uncalibrated across models: re-fit when the span head retrains, since raw
-	 * score margins are not comparable across models.
-	 *
-	 * (Plan #1134 pre-registers an isotonic ambiguity check to replace it.)
+	 * Raw score margins differ between models, so the value needs refitting when the span head is retrained.
 	 */
 	marginCap?: number
+
 	/**
-	 * One entry per candidate, positionally aligned.
+	 * One entry per candidate, in the same order; a non-null entry moves that candidate
+	 * behind every non-excluded one without removing it.
 	 *
-	 * A non-null entry demotes that candidate by one bit.
-	 * It is considered only after every un-excluded sibling.
-	 *
-	 * It is never removed: with every candidate excluded the pick is still rank-1,
-	 * because the worst case this policy accepts is the model's own ranking.
-	 *
-	 * Omitted or all-null reproduces the measured v2 policy exactly.
+	 * If every candidate is excluded, the fallback pick is still rank 1.
 	 */
 	exclusions?: ReadonlyArray<Exclusion | null>
 }
 
+/**
+ * Reports the candidate {@link pickByStreetEvidence} chose, its index, whether it
+ * displaced rank 1, and the indexes demoted by exclusions.
+ */
 export interface StreetEvidencePick<T = unknown> {
 	/**
-	 * The chosen candidate — the first evidence-passing sibling, or rank-1 when none passes (fail-open).
+	 * The first candidate that passes the evidence checks, or the first non-excluded
+	 * candidate when none passes.
 	 */
 	candidate: StreetCandidate<T>
+
 	/**
-	 * Index of the chosen candidate in the input array.
+	 * The chosen candidate's index in the input array.
 	 */
 	index: number
+
 	/**
-	 * True when evidence moved the pick off rank-1 (a rank-2-beats-rank-1 correction — loggable training signal).
+	 * Whether the pick is not rank 1, either through evidence or because rank 1 was excluded.
 	 */
 	moved: boolean
+
 	/**
-	 * Indices an exclusion demoted, in input order.
-	 *
-	 * Empty when no exclusion applied — a loggable record of what the coverage check
-	 * licensed, distinct from what evidence found.
+	 * The input indexes that exclusions demoted, in input order, recorded
+	 * separately from what the evidence found.
 	 */
 	demoted: number[]
 }
 
 /**
- * The measured v2 rerank policy.
+ * Picks the first candidate, in score order, whose street name exists in the evidence index,
+ * is not pure type vocabulary, and scores within `marginCap` of rank 1.
  *
- * Given candidates in parse-score order (rank-1 first) and an evidence probe,
- * return the first candidate whose street surface passes all of: (1) exists in the index,
- * (2) G1 — not pure type vocabulary, (3) G2 — within `marginCap` of rank-1.
- * If none passes, return rank-1 (fail-open).
+ * An excluded candidate is demoted behind every other candidate but never removed,
+ * and when nothing qualifies the first non-excluded candidate wins.
  *
- * Positive evidence only.
- * The model's order is preserved among equal-evidence candidates.
- *
- * This is the `resolver/rerank.ts` anti-Pelias discipline applied to the name signal: one bit, no blending.
- *
- * `opts.exclusions` adds one more bit in the same fold: a coverage-licensed absence
- * demotes its candidate behind every un-excluded sibling and never removes it.
- *
- * @param candidates Parse candidates, rank-1 first (the caller sorts by score descending).
+ * @param candidates Parse candidates sorted by score, rank 1 first.
+ * @throws When `candidates` is empty.
  */
 export function pickByStreetEvidence<T>(
 	candidates: ReadonlyArray<StreetCandidate<T>>,
@@ -233,8 +206,6 @@ export function pickByStreetEvidence<T>(
 		}
 	}
 
-	// An excluded candidate is considered only after every un-excluded sibling.
-	// It is never dropped.
 	const order = demoted.length ? [...considered, ...demoted] : considered
 
 	for (const i of order) {
@@ -242,10 +213,8 @@ export function pickByStreetEvidence<T>(
 
 		if (!c.streetSurface) continue
 
-		// G2: the margin is measured from rank-1's score, whatever position the candidate is considered at.
 		if (topScore - c.score > marginCap) continue
 
-		// G1: a pure street-type/particle surface (bare `rue`) carries no name — no evidence credit.
 		if (isPureTypeVocabulary(foldStreetSurface(c.streetSurface))) continue
 
 		if (evidence.hasStreetName(c.streetSurface, opts.scope)) {
@@ -253,8 +222,6 @@ export function pickByStreetEvidence<T>(
 		}
 	}
 
-	// Fail-open: the first un-excluded candidate, which is rank-1 unless an exclusion
-	// demoted it, and rank-1 again when every candidate is excluded.
 	const fallback = order[0] ?? 0
 
 	return { candidate: candidates[fallback]!, index: fallback, moved: fallback > 0, demoted }

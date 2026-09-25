@@ -2,9 +2,6 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- *
- *   Compare control, null, and candidate models in order. A dirty self-control invalidates attribution; the null
- *   separates fine-tuning cost from added-data effects. The D-rule blocks regressions in protected countries.
  */
 
 import { dRuleCountries, type ProtectedCountry, readScopeConfig } from "@mailwoman/core/scope-config"
@@ -31,17 +28,14 @@ export interface ArcLeg {
 	net: number
 	differed: number
 	of: number
+
 	/**
-	 * Regressions grouped by country for the D-rule check.
+	 * Counts regressed rows by country for the D-rule check, with rows that lack a country counted under `??`.
 	 */
 	regressedByCountry: Record<string, number>
-	/**
-	 * Inputs that regressed.
-	 */
+
 	regressedInputs: string[]
-	/**
-	 * Inputs that improved.
-	 */
+
 	improvedInputs: string[]
 	runID?: string
 }
@@ -54,13 +48,16 @@ export interface ArcResult {
 	control?: ArcLeg
 	null?: ArcLeg
 	candidate: ArcLeg
+
 	/**
-	 * Candidate regressions minus null regressions; undefined when no null leg ran.
+	 * Subtracts the null leg's regressions from the candidate's, and is absent when no null leg ran.
 	 */
 	attributableRegressions?: number
 	attributableNet?: number
+
 	/**
-	 * False when the self-control invalidates attribution; candidate results are still reported.
+	 * Is false when the self-control leg disagreed with itself, so no candidate number
+	 * counts as evidence even though the candidate results are still reported.
 	 */
 	attributable: boolean
 	dRuleViolations: Array<{ country: string; n: number; reason: string }>
@@ -105,16 +102,24 @@ function legFrom(label: string, weights: string, result: Record<string, unknown>
  */
 export type RunShape = "fine-tune" | "from-scratch"
 
+/**
+ * Options for {@link runArc}, naming the weights caches for the candidate and for the
+ * optional self-control and null legs, each compared against the shipped weights.
+ */
 export interface ArcOptions {
 	candidate: string
 	shape?: RunShape
+
 	/**
-	 * Staged shipped weights, run through the candidate path.
-	 * Dereference symlinks before staging.
+	 * Points to a weights cache holding a staged copy of the shipped weights,
+	 * which runs through the candidate path to show the rig is quiet.
+	 * Dereference symlinks when staging it.
 	 */
 	control?: string
+
 	/**
-	 * Fine-tune placebo using the same base and settings without added data.
+	 * Points to the weights cache of a placebo fine-tune that uses the same base
+	 * and settings but no added data.
 	 */
 	null?: string
 	inputs?: unknown

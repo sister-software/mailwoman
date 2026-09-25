@@ -2,21 +2,15 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- *
- *   The shared frame of the PCN1/PIX1/PFX1 binary family (little-endian): a u32 magic, a u32
- *   headerLen, then headerLen bytes of UTF-8-encoded JSON. Each format's records follow the frame
- *   and stay with their owning module — the single-file writer+reader discipline is per format. this
- *   module only keeps the three from restating the frame itself. Pure JS, no Node imports: the
- *   browser runtime loads the same artifacts.
  */
 
 import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
 
 /**
- * Sequential little-endian reader over a byte buffer.
+ * Reads little-endian values sequentially from a byte buffer, advancing `offset` after each read.
  *
- * Reads advance `offset`; an out-of-bounds fixed-width read throws the `DataView`
- * `RangeError`, which is the truncation signal the format readers rely on.
+ * A fixed-width read past the end throws the `DataView` `RangeError` that format readers
+ * treat as truncation, but `bytes()` silently returns a shorter slice.
  */
 export class ByteCursor {
 	readonly #bytes: Uint8Array
@@ -80,10 +74,9 @@ export class ByteCursor {
 }
 
 /**
- * Serialize the frame: magic, headerLen, and the header as UTF-8 JSON.
+ * Serializes a binary frame header: the `u32` magic, the header length, and the header as UTF-8 JSON.
  *
- * A format's serializer sizes its buffer as `frame.length + <record bytes>` and copies the frame
- * in at offset 0, so the emitted bytes are identical to the hand-rolled writes this replaces.
+ * Format serializers copy this frame to offset 0 and write their records after it.
  */
 export function writeFramedHeader(magic: number, header: unknown): Uint8Array {
 	const headerBytes = new TextEncoder().encode(stringifyJSON(header))
@@ -98,11 +91,10 @@ export function writeFramedHeader(magic: number, header: unknown): Uint8Array {
 }
 
 /**
- * Validate the magic and decode the header JSON, returning the header plus a
- * {@link ByteCursor} positioned at the first record byte.
+ * Checks the magic and decodes the JSON header, returning it with a
+ * {@link ByteCursor} at the first record byte.
  *
- * `badMagicMessage` is the format's own wording.
- * Each reader's message is an error interface its tests pin.
+ * It throws `badMagicMessage` verbatim on a magic mismatch, because each format's tests pin its own wording.
  */
 export function readFramedHeader<Header>(
 	magic: number,

@@ -25,6 +25,10 @@ import { MapCanvas } from "./MapCanvas.tsx"
 import { OverlayLayers } from "./OverlayLayers.tsx"
 import { ResolvedPlaceLayers } from "./ResolvedPlaceLayers.tsx"
 
+/**
+ * Configures {@linkcode Geocoder} with the host-injected runtime and panels,
+ * plus optional presets, an initial query, and camera and bias behavior.
+ */
 export interface GeocoderProps {
 	/**
 	 * The injected geocoder runtime (map style + overlays + parse + version/backend).
@@ -199,8 +203,7 @@ function GeocoderInner({
 				onSelectVersion={onSelectVersion}
 				onForceWASMChange={onForceWASMChange}
 				developer={developer}
-			// Publish the loaded map for controls and browser tests.
-			// Place the graticule before the first non-background style layer.
+			/>
 			{panels.debugDrawer ? panels.debugDrawer({ result: geocode.result }) : null}
 		</div>
 	)

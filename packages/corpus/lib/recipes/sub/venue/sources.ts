@@ -2,8 +2,6 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- *
- *   Locale-specific vocabulary, identifier rules, and source pools for `sub-venue`.
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
@@ -23,8 +21,6 @@ import {
 	type SubVenuePromotion,
 } from "#tools"
 
-// #region Lexicon
-
 /**
  * Resolve the packaged lexicon path.
  */
@@ -39,23 +35,10 @@ export async function readSubVenueLexicon(path: string = defaultLexiconPath()): 
 	return await readLocalJSONFile<SubVenueLexiconTable>(path)
 }
 
-// #endregion
-
-// #region Name filters
-
-/**
- * Maximum venue-name length; longer values are likely descriptions.
- */
 const MAX_VENUE_NAME_LENGTH = 44
 
-/**
- * Minimum venue-name length.
- */
 const MIN_NAME_LENGTH = 4
 
-/**
- * Maximum token count for attested sub-venue names.
- */
 const MAX_ATTESTED_TOKENS = 4
 
 /**
@@ -64,22 +47,16 @@ const MAX_ATTESTED_TOKENS = 4
 export function isCleanName(name: string): boolean {
 	if (name.length < MIN_NAME_LENGTH || name.length > MAX_VENUE_NAME_LENGTH) return false
 
-	// Reject punctuation used to separate route qualifiers.
 	if (/[/;,:()[\]<>|]/.test(name)) return false
 
 	if (!/\p{L}/u.test(name)) return false
 
-	// Reject lowercase single-token codes.
 	if (!name.includes(" ") && name === name.toLowerCase()) return false
 
 	return true
 }
 
-/**
- * Leading words that indicate street types or stop descriptions.
- */
 const NON_VENUE_HEAD_WORDS: ReadonlySet<string> = new Set([
-	// en
 	"street",
 	"road",
 	"lane",
@@ -95,7 +72,7 @@ const NON_VENUE_HEAD_WORDS: ReadonlySet<string> = new Set([
 	"near",
 	"nr",
 	"stop",
-	// fr
+
 	"rue",
 	"boulevard",
 	"chemin",
@@ -105,7 +82,7 @@ const NON_VENUE_HEAD_WORDS: ReadonlySet<string> = new Set([
 	"route",
 	"quai",
 	"place",
-	// es / ca
+
 	"calle",
 	"carrer",
 	"avenida",
@@ -114,7 +91,7 @@ const NON_VENUE_HEAD_WORDS: ReadonlySet<string> = new Set([
 	"plaza",
 	"paseo",
 	"camino",
-	// de
+
 	"straße",
 	"strasse",
 	"weg",
@@ -122,9 +99,6 @@ const NON_VENUE_HEAD_WORDS: ReadonlySet<string> = new Set([
 	"gasse",
 ])
 
-/**
- * English street-type words rejected at the end of names.
- */
 const STREET_TAIL_WORDS: ReadonlySet<string> = new Set([
 	"street",
 	"road",
@@ -163,18 +137,15 @@ export function isVenueSlotName(name: string): boolean {
 	return !STREET_TAIL_WORDS.has(tail) && !GERMAN_STREET_TAIL.test(tail)
 }
 
-// #endregion
-
-// #region Promotions
-
 /**
  * Locale-specific designator and surface, with its shape constraints.
  */
 export interface PromotedSurface {
 	designatorID: string
 	phrase: string
+
 	/**
-	 * Title-cased rendering form.
+	 * The title-cased form used when rendering the designator.
 	 */
 	surface: string
 	identifierRequired: boolean
@@ -206,11 +177,6 @@ export function containsPhrase(lowerName: string, phrase: string): boolean {
 	}
 }
 
-/**
- * Identifier shapes suitable for sampling.
- *
- * Exclude the `other` bucket, which contains malformed or unrelated codes.
- */
 const USABLE_IDENTIFIER_SHAPES: ReadonlySet<string> = new Set([
 	"digit",
 	"letter",
@@ -219,17 +185,13 @@ const USABLE_IDENTIFIER_SHAPES: ReadonlySet<string> = new Set([
 	"range",
 ])
 
-/**
- * Sign identifier atom: a short number, one letter, letter-number, or number-letter.
- *
- * Multi-letter prefixes are excluded because they commonly encode network
- * or campus codes rather than visible sign identifiers.
- */
 const SIGN_IDENTIFIER_ATOM = /^(?:[0-9]{1,3}|[A-Za-z]|[A-Za-z][0-9]{1,3}|[0-9]{1,3}[A-Za-z]{1,2})$/
 
 /**
- * Check whether a value is a sign identifier or a range of two; shape
- * classification alone does not validate it.
+ * Reports whether a value is a short sign identifier, such as `12`, `B` or `A3`,
+ * or a range of two joined by `-` or `/`.
+ *
+ * Shape classification alone accepts values this rejects, so callers check both.
  */
 export function isSignIdentifier(value: string): boolean {
 	const parts = value.split(/[/-]/)
@@ -240,10 +202,10 @@ export function isSignIdentifier(value: string): boolean {
 }
 
 /**
- * Check whether an extract name matches an allowed promoted shape: `<phrase> <identifier>`,
- * or an eligible English `<modifier> <phrase>`.
+ * Reports whether a lowercased name uses a promoted phrase as `<phrase> <identifier>`,
+ * or as an English `<modifier> <phrase>` when the designator allows it.
  *
- * A phrase mention alone does not attest a sub-venue; validate its follower as an identifier.
+ * A bare mention of the phrase does not count, because it does not show the name is a sub-venue.
  */
 export function hasPromotedShape(
 	lowerName: string,
@@ -283,10 +245,8 @@ export function matchesPromotedShape(
 }
 
 /**
- * Return locale-eligible `unit` surfaces.
- *
- * English uses shipped designators; promotions add localized forms and rejections
- * prevent this recipe from generating positives for rejected terms.
+ * Returns the `unit` designator surfaces eligible for a locale: shipped designators
+ * for English plus the locale's promoted phrases, minus any rejected ones.
  */
 export function promotedSurfacesFor(
 	locale: string,
@@ -330,7 +290,7 @@ export function promotedSurfacesFor(
 			phrase: promotion.phrase,
 			surface: titleCase(promotion.phrase),
 			identifierRequired: promotion.shape === "identifier-required",
-			// Promotions do not expand modifier eligibility; only English legs use it.
+
 			modifierEligible: Boolean(designator?.modifierEligible) && promotion.shape !== "identifier-required",
 		})
 	}
@@ -348,10 +308,6 @@ export function rejectedPhrasesFor(
 	return promotions.filter((p) => p.decision === "reject" && p.locale === locale).map((p) => p.phrase)
 }
 
-// #endregion
-
-// #region Identifier sampling
-
 interface ShapeBucket {
 	shape: string
 	observations: number
@@ -366,15 +322,8 @@ export interface IdentifierModel {
 	pooled: ShapeBucket[]
 }
 
-/**
- * Sign-oriented designators used for the pooled fallback; exclude platform and station network codes.
- */
 const POOLED_IDENTIFIER_DESIGNATORS: readonly string[] = ["gate", "terminal", "campus"]
 
-/**
- * Minimum observations required to use a region/designator distribution;
- * smaller samples use the regional pool.
- */
 const MIN_OWN_SHAPE_OBSERVATIONS = 20
 
 /**
@@ -409,10 +358,8 @@ export function buildIdentifierModel(lexicon: SubVenueLexiconTable, region: stri
 }
 
 /**
- * Sample an identifier using the designator's distribution when sufficiently populated,
- * otherwise the regional pool.
- *
- * Weight shapes by observation count and choose an example uniformly within the selected shape.
+ * Samples an identifier for a designator, weighting shapes by observation count
+ * and using the regional pool when the designator has too few observations of its own.
  */
 export function sampleIdentifier(model: IdentifierModel, designatorID: string, random: () => number): string | null {
 	const own = model.byDesignator.get(designatorID) ?? []
@@ -421,48 +368,48 @@ export function sampleIdentifier(model: IdentifierModel, designatorID: string, r
 
 	if (!buckets.length) return null
 
-	// Preserve the existing strict bucket boundary and seeded output.
 	const bucket = weightedPick(buckets, random, (b) => b.observations, { inclusive: false })
 
 	return sample(bucket.examples, random)
 }
-
-// #endregion
-
-// #region Pools
 
 /**
  * Source pools loaded once per recipe leg.
  */
 export interface LegPools {
 	context: LocaleBaseTuple[]
+
 	/**
-	 * Real names for the venue slot, such as stations, airports, campuses, hospitals, and rail venues.
+	 * Real venue-tier names that fit the venue slot, such as stations, airports, campuses and hospitals.
 	 */
 	venues: string[]
+
 	/**
-	 * Extract names matching promoted surfaces and their shape constraints.
+	 * Extract names that contain a promoted surface in its required shape.
 	 */
 	attested: string[]
+
 	/**
-	 * Names containing locale-rejected surfaces, used in negative venue rows.
+	 * Venue names containing a locale-rejected phrase, used in negative venue rows.
 	 */
 	rejectedVenues: string[]
+
 	/**
-	 * Names containing a designator as part of a longer name; label the whole string as `venue`, not `unit`.
+	 * Names with a designator inside a longer proper name, so the whole string is labeled `venue`, not `unit`.
 	 */
 	longerNames: string[]
+
 	/**
-	 * Names containing a promoted phrase without its required shape,
-	 * teaching the model the promotion boundary.
+	 * Venue names containing a promoted phrase without its required shape,
+	 * which teach the promotion boundary.
 	 */
 	unpromotedShapes: string[]
 }
 
 /**
- * Name pools supplied by a source.
+ * Holds the name pools one source contributes to a recipe leg.
  *
- * Only extracts provide `attested` and `unpromotedShapes`, because POI data has no tier or localized names.
+ * Only OSM extracts fill `attested` and `unpromotedShapes`, because POI data has no tier or localized names.
  */
 export type NamePools = Pick<LegPools, "venues" | "attested" | "rejectedVenues" | "longerNames" | "unpromotedShapes">
 
@@ -488,9 +435,6 @@ export interface PoolQuery {
 	english: boolean
 }
 
-/**
- * Check whether a designator occurs inside a longer proper name without a numeric identifier.
- */
 function isLongerProperName(low: string, name: string, designatorPhrases: readonly string[]): boolean {
 	return designatorPhrases.some((phrase) => containsPhrase(low, phrase) && !low.startsWith(phrase) && !/\d/.test(name))
 }
@@ -549,10 +493,6 @@ export async function readExtractPools(path: string, query: PoolQuery): Promise<
 	}
 }
 
-/**
- * POI categories used for venue examples and confound negatives.
- * Resolve IDs from `poi_category_codes` at runtime.
- */
 const POI_VENUE_CATEGORIES: readonly string[] = [
 	"airport",
 	"airport_terminal",
@@ -572,9 +512,9 @@ const POI_CONFOUND_CATEGORIES: readonly string[] = [
 ]
 
 /**
- * Read venue and confound pools from `poi.db`.
+ * Reads the venue and confound name pools for one country from `poi.db`.
  *
- * Its limited country coverage means an empty result does not prove global absence.
+ * `poi.db` covers few countries, so an empty result does not mean the names do not exist.
  */
 export function readPOIPools(dbPath: PathBuilderLike, country: string, query: PoolQuery): NamePools {
 	using db = new DatabaseClient<POIDatabase>(dbPath, { readOnly: true })
@@ -591,7 +531,6 @@ export function readPOIPools(dbPath: PathBuilderLike, country: string, query: Po
 
 	if (!wanted.length) throw new Error(`poi.db at ${dbPath} has none of the expected categories`)
 
-	// Scan once for all requested categories; separate queries would repeat the table scan.
 	const rows = db
 		.prepare(
 			`select name, category_id from poi where country = ? and name is not null and category_id in (${wanted.map(() => "?").join(",")})`
@@ -643,5 +582,3 @@ export function mergeNamePools(a: NamePools, b: NamePools): NamePools {
 		unpromotedShapes: [...a.unpromotedShapes, ...b.unpromotedShapes],
 	}
 }
-
-// #endregion

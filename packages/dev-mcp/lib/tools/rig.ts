@@ -2,8 +2,6 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- *
- *   MCP interface for observing and controlling the local comparison rigs.
  */
 
 import { z } from "zod"
@@ -11,6 +9,9 @@ import { z } from "zod"
 import { ENGINE_RIGS, rigQuery, rigStart, rigStatus, rigStop, type EngineRigName } from "#engine/rigs"
 import type { DevTool, DevToolDeps } from "#tool-kit"
 
+/**
+ * Defines the `mwdev_rig` tool, which checks, starts, stops and queries the local Pelias and Photon rigs.
+ */
 export const rigTool = (_deps: DevToolDeps): DevTool => ({
 	name: "mwdev_rig",
 	description:

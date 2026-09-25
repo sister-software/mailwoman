@@ -2,10 +2,6 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- *
- *   The classifier's configuration + per-parse option interfaces, split from `classifier.ts` when that file hit its
- *   max-lines ceiling for the third time in one day — these are pure types with zero behavior, and the class file
- *   re-exports them so every existing import keeps working.
  */
 
 import type { SystemCode } from "@mailwoman/codex"
@@ -28,262 +24,199 @@ import type { StreetMorphologyPriorOpts } from "#street-morphology-prior"
 import type { MailwomanTokenizer } from "#tokenizer"
 import type { WordConsistencyOpts } from "#word-consistency"
 
+/**
+ * Configures a neural address classifier: the model runner, its tokenizer or character
+ * encoder, the decode grammar, and the optional lexicons and priors.
+ */
 export interface NeuralAddressClassifierConfig {
 	/**
-	 * The SentencePiece tokenizer.
+	 * The SentencePiece tokenizer for a subword model.
 	 *
-	 * Exactly one of `tokenizer` and `charEncoder` is set: a char-path model has no
-	 * SentencePiece vocabulary and its units are code points.
+	 * Set either this or `charEncoder`; a char-path model has no SentencePiece vocabulary.
 	 */
 	tokenizer?: MailwomanTokenizer
+
 	/**
-	 * The char-path encoder (#2164): the sealed character vocabulary and the
-	 * (S, W, ctx) interface the model was trained under.
+	 * The character vocabulary and encoder interface for a char-path model, whose units are code points.
 	 *
-	 * The runner must carry `inferChars`.
+	 * The runner must implement `inferChars`.
 	 */
 	charEncoder?: { vocabulary: CharVocabulary; interface: CharEncoderInterface }
 	runner: NeuralRunner
+
 	/**
-	 * Label vocabulary in the order the model emits them.
+	 * The label vocabulary in the order the model emits it.
 	 *
-	 * Defaults to Stage 2 (v0.3.0).
-	 * Stage 2 strictly extends Stage 1 at the same indices, so a v0.2.0 Stage 1 model
-	 * loaded with this default still decodes correctly.
-	 * Its emissions only span the first 15 entries.
+	 * Defaults to the Stage 2 BIO labels, which extend Stage 1 at the same indices,
+	 * so a Stage 1 model also decodes correctly under the default.
 	 */
 	labels?: readonly string[]
+
 	/**
-	 * Decoding strategy:
+	 * The decoding strategy, default `viterbi`.
 	 *
-	 * - `"viterbi"` (default) — linear-chain CRF Viterbi with the BIO structural mask.
-	 *   Prevents orphan-`I-*` sequences.
-	 *   If `transitions` is provided, uses learned scores on top.
-	 * - `"argmax"` — per-token argmax.
-	 *   Faster but produces structurally invalid sequences.
-	 *   Use only for debugging / comparison.
+	 * `viterbi` decodes under the BIO structural mask, so no orphan `I-*` label survives.
+	 * `argmax` labels each piece independently, can emit invalid sequences, and is meant only for debugging.
 	 */
 	decode?: "viterbi" | "argmax"
+
 	/**
-	 * Optional learned CRF transition scores.
-	 *
-	 * Square matrix of size `labels.length × labels.length`.
-	 * Added on top of the structural BIO mask.
-	 *
-	 * Future weights releases ship this.
-	 * Today's v3.0.0 weights don't, so the structural mask alone is used.
+	 * Learned CRF transition scores, a `labels.length` × `labels.length` matrix
+	 * added to the structural BIO mask.
 	 */
 	transitions?: number[][]
+
 	/**
-	 * Optional learned start-of-sequence transition scores per label.
+	 * Learned start-of-sequence transition score per label.
+	 *
+	 * It replaces the structural BIO start mask rather than adding to it.
 	 */
 	startTransitions?: number[]
+
 	/**
-	 * Optional learned end-of-sequence transition scores per label.
+	 * Learned end-of-sequence transition score per label.
+	 *
+	 * It replaces the structural BIO end mask rather than adding to it.
 	 */
 	endTransitions?: number[]
+
 	/**
-	 * #727 stage-2: the parsed semi-Markov segment-transition grammar (`semi-crf-transitions.json`), for the span head's
-	 * k-best decode.
+	 * The semi-Markov segment-transition grammar from `semi-crf-transitions.json`,
+	 * exposed as `spanGrammar` for the span head's name-evidence rerank.
 	 *
-	 * `loadFromWeights` populates it when the bundle ships the sidecar.
-	 *
-	 * Exposed as `spanGrammar` so the phase-4c name-evidence rerank can consume
-	 * it without re-reading the file.
-	 * Absent on a pre-v3 bundle.
+	 * `loadFromWeights` sets it when the bundle ships the file; a pre-v3 bundle has none.
 	 */
 	semiCRFGrammar?: SemiCRFTransitions
+
 	/**
-	 * Path to the per-locale FST gazetteer binary shipped in the resolved weights package
-	 * (`fst-<locale>.bin`), surfaced verbatim from {@link resolveWeights} — path only
-	 * (neural has no resolver-wof-sqlite dependency. The caller's layer deserializes).
+	 * The path to the per-locale FST gazetteer (`fst-<locale>.bin`) in the resolved weights package.
 	 *
-	 * Exposed via {@link NeuralAddressClassifier.fstPath} so the mailwoman runtime pipeline
-	 * can auto-load the gazetteer into `opts.fst` at pipeline construction.
+	 * The classifier carries only the path; the runtime pipeline deserializes it into `ParseOpts.fst`.
 	 */
 	fstPath?: PathBuilderLike
+
 	/**
-	 * Path to the locale-general street-morphology FST binary shipped beside the resolved
-	 * weights (`fst-street-morphology.bin`), surfaced verbatim from {@link resolveWeights} —
-	 * path only, same posture as {@link NeuralAddressClassifierConfig.fstPath}.
+	 * The path to the locale-general street-morphology FST (`fst-street-morphology.bin`)
+	 * beside the resolved weights.
 	 *
-	 * Exposed via {@link NeuralAddressClassifier.streetMorphologyPath} so the runtime
-	 * pipeline's street-context check (#1315) deserializes the sealed artifact
-	 * instead of rebuilding it from the libpostal dictionaries per process.
+	 * The runtime pipeline's street-context check loads it instead of rebuilding
+	 * it from the libpostal dictionaries.
 	 */
 	streetMorphologyPath?: string
+
 	/**
-	 * Path to the `model.onnx` this instance actually loaded, surfaced verbatim from
-	 * {@link resolveWeights} — path only, same posture as {@link NeuralAddressClassifierConfig.fstPath}.
-	 * Exposed via {@link NeuralAddressClassifier.modelPath}.
+	 * The path to the `model.onnx` this instance loaded, reported through `resolvedWeights`.
 	 *
-	 * Resolution walks several rungs and an unusable rung is skipped rather than reported,
-	 * so which model answered is not derivable from the options a caller passed:
-	 * `resolveWeights` honours an explicit `cacheRoot` only when that directory holds the
-	 * binaries, and otherwise falls through to the installed workspace package.
-	 * A caller grading a candidate therefore cannot tell a graded candidate from
-	 * a graded default without reading this back.
+	 * Weight resolution falls through several locations, so a caller cannot infer
+	 * which model answered from the options it passed.
 	 */
 	modelPath?: string
+
 	/**
-	 * Which rung of the resolution ladder produced {@link NeuralAddressClassifierConfig.modelPath}.
-	 *
-	 * `explicit`, `cache:<package>`, `overlay:<package>`, or the installed package name.
-	 *
-	 * The path alone answers "which file"; this answers "and was that the file I asked for",
-	 * which is the question a mis-staged candidate turns on.
+	 * The resolution step that produced `modelPath`: `explicit`, `cache:<package>`,
+	 * `package:<package>`, or `overlay:<locale>`.
 	 */
 	weightsSource?: string
+
 	/**
-	 * Optional postcode-anchor lookup (#239/#240).
+	 * The postcode-anchor lookup for a model trained with the anchor
+	 * channel (`anchor_features`/`anchor_confidence`).
 	 *
-	 * When set, `parse` builds per-piece anchor features from the text + this lookup
-	 * and feeds them to the runner, for models trained with the anchor channel
-	 * (exported with the `anchor_features`/`anchor_confidence` ONNX inputs).
-	 * Omit for plain models.
-	 *
-	 * Load via `loadAnchorLookup` from `./anchor-inference.js`.
+	 * Omit it for other models.
 	 */
 	postcodeAnchorLookup?: AnchorLookup
+
 	/**
-	 * Which substrings the anchor channel looks up (`AnchorSpanMode`, 2026-08-05).
+	 * Which substrings the anchor channel looks up, read from the model card's `requires.anchor.span_mode`.
 	 *
-	 * Defaults to `alnum-run`, byte-identical to every parse before that date;
-	 * `shaped` is paired like `suppressGazetteerNearPostcode` and belongs only to a
-	 * model trained against a lookup with letter-containing keys.
-	 * Read from `requires.anchor.span_mode`.
+	 * Defaults to `alnum-run`; `shaped` belongs only to a model trained against
+	 * a lookup with letter-containing keys.
 	 */
 	postcodeAnchorSpanMode?: AnchorSpanMode
+
 	/**
-	 * Optional gazetteer-anchor lexicon (#464, knowledge-ladder rung 3.2).
-	 *
-	 * When set, `parse` builds per-token candidate-tag-set clues (country/region/po_box/cedex/homograph)
-	 * from the text + this lexicon and feeds them to the runner, for models trained with the
-	 * gazetteer-anchor channel (exported with the `gazetteer_features`/`gazetteer_confidence` ONNX inputs).
-	 * Omit for plain models.
-	 *
-	 * Load via `parseGazetteerLexicon` from `./gazetteer-inference.js`.
+	 * The gazetteer-anchor lexicon for a model trained with the gazetteer channel
+	 * (`gazetteer_features`/`gazetteer_confidence`), which paints candidate-tag
+	 * clues such as country, region and PO box.
 	 */
 	gazetteerLexicon?: GazetteerLexicon
+
 	/**
-	 * Optional country-lexicon (#1104).
+	 * The country-surface lexicon for a model trained with the country
+	 * channel (`country_features`/`country_confidence`).
 	 *
-	 * When set, `parse` builds per-piece country-surface clues (`[country_surface, country_ambiguous]`)
-	 * from the text + this lexicon and feeds them to the runner, for models trained with the
-	 * country channel (exported with the `country_features`/`country_confidence` ONNX inputs).
-	 * Omit for plain models.
-	 *
-	 * Load via `parseCountryLexicon` from `./country-inference.js`.
-	 * Unlike the gazetteer country slot, this channel is not zeroed by `suppressGazetteerNearPostcode`.
+	 * Unlike the gazetteer channel, this channel is not zeroed by `suppressGazetteerNearPostcode`.
 	 */
 	countryLexicon?: CountryLexicon
+
 	/**
-	 * Optional street-type evidence lexicon (Option-A bundle, Phase 2).
+	 * The street-type evidence lexicon for a model trained with the `street_type_*` inputs.
 	 *
-	 * When set, `parse` paints per-piece street-type clues and feeds them to the runner, for bundle-trained
-	 * models (exported with the `street_type_features`/`street_type_confidence` ONNX inputs).
-	 * Same JSON schema + parser as the gazetteer lexicon.
+	 * It is withheld when `ParseOpts.inputMode` is `formatted`.
 	 */
 	streetTypeLexicon?: GazetteerLexicon
+
 	/**
-	 * Optional locality-surface evidence lexicon (Option-A bundle) — `locality_surface_*` ONNX inputs.
+	 * The locality-surface evidence lexicon for a model trained with the `locality_surface_*` inputs.
+	 *
+	 * It is withheld when `ParseOpts.inputMode` is `formatted`.
 	 */
 	localitySurfaceLexicon?: GazetteerLexicon
+
 	/**
-	 * Channel choreography (#464, v0.9.13 postcode fix): when true, zero the gazetteer clue on pieces
-	 * adjacent to a postcode-anchor hit (needs both `gazetteerLexicon` and `postcodeAnchorLookup`).
+	 * Whether to zero the gazetteer clue on pieces next to a postcode-anchor hit,
+	 * which needs both `gazetteerLexicon` and `postcodeAnchorLookup`.
 	 *
-	 * Targets the region-clue→postcode CRF interference (~3pp US postcode).
-	 *
-	 * Pairing is essential: set this IFF the model was trained with the matching
-	 * train-time choreography (`data.gazetteer_choreography`).
-	 * The 2026-06-10 diagnostic showed the harm is weight-baked — applying this at inference on a model
-	 * trained _without_ train-choreography does not recover postcode and adds train/inference skew.
-	 *
-	 * Only enable for a consolidation-era model trained with the train-time half.
+	 * Set it only for a model trained with the matching `data.gazetteer_choreography`;
+	 * on any other model it adds train/inference skew without recovering postcode accuracy.
 	 */
 	suppressGazetteerNearPostcode?: boolean
+
 	/**
-	 * Default address-system conventions mode for every parse (see `ParseOpts.addressSystemConventions`
-	 * for semantics — `"auto"` reads the model's locale head. A `SystemCode` pins it).
-	 *
-	 * Per-parse opts override this.
-	 * Omit for the byte-stable pre-#511 default (no detection, no mask).
+	 * The default address-system conventions mode for every parse; see `ParseOpts.addressSystemConventions`.
 	 */
 	addressSystemConventions?: "auto" | SystemCode
+
 	/**
-	 * Punctuation-gap span bridging (the v4.4.0 corrective. See `span-bridge.ts`).
+	 * Whether to merge adjacent same-tag spans separated only by short punctuation, so "P.O.
+	 * Box" decodes as one span.
 	 *
-	 * The corpus label format cannot express punctuation inside a span, so dotted
-	 * surfaces ("P.O. Box", "C.P.") decode as fragments.
-	 * When true, adjacent same-tag spans separated only by short punctuation gaps are merged after decode.
-	 *
-	 * Per-parse opts override.
-	 * Omit for the byte-stable pre-v4.4.0 behavior.
+	 * The corpus label format cannot mark punctuation inside a span, which is why
+	 * the model fragments these surfaces.
 	 */
 	bridgePunctuationGaps?: boolean
+
 	/**
-	 * Stage 2.7 span proposer (M2+M3 from the punctuation survey, #518).
+	 * The span-proposer configuration, on by default.
 	 *
-	 * When set, every parse runs `proposeSpans` (`@mailwoman/core/pipeline`) over the raw text
-	 * and consumes the typed proposals two ways: (a) as additive emission priors — the phrase-prior path.
-	 * The classifier conditions on the boundary hypotheses and can still disagree,
-	 * and (b) annotation/quoted span boundaries feed the span bridge as merge-crossing
-	 * constraints (no same-tag merge may straddle a structural delimiter).
-	 *
-	 * Build the lexicon with `buildCodexSpanLexicon` (`./span-proposer-lexicon.js`).
-	 *
-	 * Per-parse opts override.
-	 *
-	 * Default on (operator ruling 2026-06-12, after the #518 measurement closed both v0-win
-	 * quadrants with no class down): omitting this builds the codex lexicon lazily with
-	 * the frozen measured scales (biasScale 5.0 / annotationBiasScale 12.0).
-	 * Pass `false` for the proposer-free baseline (the pre-2026-06-12 byte-stable default).
+	 * Omitting it builds the codex lexicon lazily with the prior's default scales,
+	 * and `false` disables the proposer.
+	 * Proposals become additive emission priors, and annotation and quoted spans
+	 * block span-bridge merges across them.
 	 */
 	spanProposer?: SpanProposerConfig | false
 
 	/**
-	 * Default placetype-pair index (placetype-pair-prior arc — see `ParseOpts.placetypePair`
-	 * for the full matching interface, including the probe-mode default).
+	 * The default placetype-pair prior options, overridden per parse by `ParseOpts.placetypePair`.
 	 *
-	 * Set by `loadFromWeights` when the resolved weights package ships a country-matching
-	 * `pair-index-<cc>.bin` (the hard country restriction — see that method).
-	 * Per-parse `opts.placetypePair` overrides this default.
-	 *
-	 * Omitting both is the byte-stable no-prior default (undefined → zero matrix).
-	 *
-	 * `#decode` always injects the current parse's `inputText` into whichever object
-	 * wins (config default or per-parse override) — see `placetype-pair-prior.ts`'s
-	 * `PlacetypePairPriorOpts.inputText` — so neither this field nor a per-parse
-	 * override needs to carry its own text.
+	 * `loadFromWeights` sets it only when the weights ship a `pair-index-<cc>.bin`
+	 * whose country matches the locale.
 	 */
 	placetypePair?: PlacetypePairPriorOpts
 
 	/**
-	 * Default PCN1 placetype census — observability only.
+	 * The default PCN1 placetype census, which only adds observations to
+	 * `traceParse`'s `placetypeCensus` record.
 	 *
-	 * Set by `loadFromWeights` when the build-local artifact exists for the resolved locale's country
-	 * (`loadPlacetypeCensus`, which documents why it is build-local and not a weights sibling).
-	 * It rides the placetype-pair prior's parent-candidate probes and its only effect
-	 * is a `placetypeCensus` record on `traceParse`'s prior list: no emission bias,
-	 * no transition adjustment, no decode change, present or absent.
-	 *
-	 * Consequently it does nothing when the pair prior itself is off (no index → no parent
-	 * candidates to probe alongside) and nothing on a plain `parse()` (no trace to write into).
-	 * Per-parse `opts.placetypeCensus` overrides; `false` disables an auto-wired default for one call.
+	 * It never changes the decode, and it is probed only while tracing with the placetype-pair prior active.
 	 */
 	placetypeCensus?: PlacetypeCensusLike
 
 	/**
-	 * Per-word BIO consistency repair (#727 + the admin-token fragmentation class).
+	 * The default for the per-word repair that forces every piece of a whitespace-delimited
+	 * word to one tag by a confidence-weighted vote.
 	 *
-	 * Default off → byte-identical.
-	 * When enabled, every `▁`-delimited word's pieces are forced to one tag by a
-	 * confidence-weighted vote over the post-prior emissions (see word-consistency.ts).
-	 *
-	 * Pass a `WordConsistencyOpts` object to enable with the #727 confidence thresholds
-	 * (floor / byte-fallback skip / slash grouping); `true` = the unrestricted vote.
-	 * Per-parse `ParseOptions.enforceWordConsistency` overrides this default.
+	 * Omitting it uses `WORD_CONSISTENCY_SHIP_DEFAULT`; the repair never runs on the char path.
 	 */
 	enforceWordConsistency?: boolean | WordConsistencyOpts
 }
@@ -293,7 +226,7 @@ export interface NeuralAddressClassifierConfig {
  */
 export interface SpanProposerConfig extends SpanProposalPriorOpts {
 	/**
-	 * Codex-backed designator vocabulary (`buildCodexSpanLexicon`).
+	 * The designator vocabulary for `proposeSpans`, built with `buildCodexSpanLexicon`.
 	 */
 	lexicon: SpanProposerLexicon
 }
@@ -308,271 +241,155 @@ export interface ParseWithLogitsResult {
 }
 
 /**
- * Per-call opts for `parse()`.
- *
- * Threading a precomputed `QueryShape` here turns on the soft-prior bias path in the
- * Viterbi decoder (Stage 2.4 boundary → Stage 3 encoder integration).
+ * Per-call options for `parse()`, where a prior set here overrides the classifier's
+ * configured default for that call.
  */
 export interface ParseOpts {
 	/**
-	 * Precomputed `QueryShape` for this input (from `@mailwoman/query-shape`'s `computeQueryShape`).
-	 *
-	 * Known-format hits in the shape produce additive emission biases toward the matching BIO label.
-	 * Typed structurally — no runtime dependency on `@mailwoman/query-shape`.
+	 * A precomputed query shape whose known-format hits add emission biases toward the matching BIO label.
 	 */
 	queryShape?: QueryShapeLike
+
 	/**
-	 * Maximum bias magnitude in log-odds units.
+	 * The maximum query-shape bias in log-odds, default 1.
 	 *
-	 * Default 1.0 — adds up to ~e^1 ≈ 2.7× odds to the favored label.
-	 * Confidence-scaled, so a 0.6-confidence format hit gets +0.6 max bias.
+	 * Each hit's bias is scaled by its confidence, so a 0.6-confidence hit adds at most 0.6.
 	 */
 	queryShapeBiasScale?: number
+
 	/**
-	 * The input register (operator Decision A, 2026-07-28. Canonical docs on
-	 * `@mailwoman/core/pipeline`'s `InputMode`).
+	 * The input register, default `fragmented`.
 	 *
-	 * `formatted` runs the evidence-bundle channels (street_type/locality_surface) deliberately
-	 * off — the trained absence identity, a declared ablation rather than a missing feed —
-	 * because the bundle lifts fragments and damages full-address parses.
-	 * Default `"fragmented"` for bare library calls (today's feed-when-configured semantics);
-	 * the production pipeline always passes the mode explicitly
-	 * (kind-classifier-derived when the caller didn't set one).
-	 *
-	 * Typed structurally — no runtime dependency on `@mailwoman/core`.
+	 * `formatted` withholds the street-type and locality-surface lexicons,
+	 * because those channels help fragments but damage full-address parses.
 	 */
 	inputMode?: "fragmented" | "formatted"
+
 	/**
-	 * Pre-built FST gazetteer matcher.
-	 *
-	 * When provided, gazetteer matches produce additive emission biases.
+	 * The FST gazetteer matcher whose matches add emission biases.
 	 */
 	fst?: FSTMatcherLike
+
 	/**
-	 * Bias magnitude for FST gazetteer matches.
+	 * The bias magnitude for FST gazetteer matches, default 1.
 	 *
-	 * Default 1.0.
-	 *
-	 * @internal Instrument knob (D3, ROAD_TO_MAILWOMAN_V8_1_0 §5.3) — exists so the eval harnesses can decompose the
-	 *   FST channel rather than consumer configuration. The shipped calibration is the default; `createRuntimePipeline`
-	 *   consumers never set this.
+	 * @internal Evaluation harnesses set it to decompose the FST channel; the runtime pipeline never does.
 	 */
 	fstBiasScale?: number
+
 	/**
-	 * Match-length scaling mode for the FST importance bias (#1142).
+	 * The match-length scaling mode for the FST importance bias, default `suppression`.
 	 *
-	 * Default `suppression`.
-	 *
-	 * @internal Instrument knob (D3) — measurement decomposition only. the default is the shipped calibration.
+	 * @internal Evaluation harnesses set it to decompose the FST channel.
 	 */
 	fstImportanceLengthScaleMode?: ImportanceLengthScaleMode
+
 	/**
-	 * Positive-bias multiplier for the FST street-context check (#1142) — applied when a matched place
-	 * name sits in a syntactically street-headed position (street-type adjacency / house-number-left).
+	 * The multiplier on the positive FST bias when a matched place name sits in a
+	 * street-headed position, such as next to a street type.
 	 *
-	 * Only consulted when both `fst` and `fstStreetMorphology` are provided.
-	 * Classifier-level default 0.25.
+	 * The classifier default is 0.25, but the runtime pipeline pins 0, which suppresses the bias entirely.
+	 * It applies only when both `fst` and `fstStreetMorphology` are set.
 	 *
-	 * The pipeline ships 0 (full suppression — D2 remediation, measured 2026-07-26:
-	 * homonym at exact P0 parity, golden + every other board identical to 0.25).
-	 *
-	 * @internal Instrument knob (D3) — measurement decomposition only; `createRuntimePipeline` pins the shipped value.
+	 * @internal
 	 */
 	fstStreetContextPositiveScale?: number
+
 	/**
-	 * Master switch for the street-context check (#1142).
+	 * Whether the FST street-context check runs, default true.
 	 *
-	 * Default true — the check is active whenever both `fst` and `fstStreetMorphology` are provided.
-	 * Pass `false` to run the morphology emission prior without the check
-	 * (the behavior that preceded it); used to decompose the two channels in measurement.
+	 * Pass `false` to keep the street-morphology prior without the check when measuring the two separately.
 	 *
-	 * @internal Instrument knob (D3) — measurement decomposition only.
+	 * @internal
 	 */
 	fstStreetContextRequirement?: boolean
+
 	/**
-	 * Pre-built street-morphology FST matcher.
+	 * The street-morphology FST matcher.
 	 *
-	 * When provided, street-type affixes (Avenue, rue, Calle, Straße, …) produce additive
-	 * emission biases toward `street_prefix`/`street_suffix` on the matched tokens
-	 * and toward `street` / away from `dependent_locality` on the adjacent name tokens.
-	 * Closes the v0.6.1 dependent_locality vacuum.
-	 *
-	 * See `docs/articles/concepts/street-supplement-architecture.md` for the layered design.
+	 * Matched street-type affixes are biased toward `street_prefix` or `street_suffix`,
+	 * and adjacent name tokens toward `street` and away from `dependent_locality`.
 	 */
 	fstStreetMorphology?: FSTMatcherLike
+
 	/**
-	 * Override bias magnitudes for the morphology prior.
+	 * Overrides for the street-morphology prior's bias magnitudes.
 	 */
 	fstStreetMorphologyOpts?: StreetMorphologyPriorOpts
+
 	/**
-	 * When true, run the deterministic postcode regex repair pass (v0.7 #35) on the
-	 * decoded label sequence before tree-building.
+	 * Whether to snap or add postcode spans that match a known postcode shape after decoding.
 	 *
-	 * Detects postcode-shaped substrings (GB/CA/NL/US/FR/… patterns) and snaps/adds
-	 * the postcode span to the matched shape, fixing the SentencePiece-fragmentation
-	 * failures catalogued in the 2026-05-29 postcode diagnostic.
-	 * Off by default — opt-in until the v0.7 promotion eval confirms it.
-	 *
-	 * See `./postcode-repair.ts`.
+	 * The pass also runs whenever the detected address system declares a postcode shape.
 	 */
 	postcodeRepair?: boolean
 
 	/**
-	 * Per-word BIO consistency repair (#727 + the admin-token fragmentation class).
+	 * A per-parse override of the config's `enforceWordConsistency`.
 	 *
-	 * Overrides the classifier's `enforceWordConsistency` config default for this parse.
-	 * Pass a `WordConsistencyOpts` object to enable with the confidence thresholds;
-	 * `true` = the unthresholded vote.
-	 *
-	 * See word-consistency.ts.
+	 * An options object sets the vote thresholds, and `true` runs the unthresholded vote.
 	 */
 	enforceWordConsistency?: boolean | WordConsistencyOpts
 
 	/**
-	 * When true, run the deterministic secondary-unit regex repair pass on the
-	 * decoded label sequence before tree-building.
-	 *
-	 * Detects designator-shaped substrings ("Apt 4B", "Ste 12", "Unit 9400", bare "#104", …)
-	 * and snaps/adds the unit span, fixing the unit-drop weakness the three-arena
-	 * capability eval surfaced (postal secondary-unit 0% neural).
-	 * Off by default — opt-in until the v0.7.2 arena re-run quantifies its delta.
-	 *
-	 * See `./unit-repair.ts`.
+	 * Whether to snap or add secondary-unit spans such as "Apt 4B", "Ste 12"
+	 * or "#104" after decoding, default false.
 	 */
 	unitRepair?: boolean
+
 	/**
-	 * When true and the input is detected all-caps (registry/compliance data like
-	 * `214 jones RD, elkhart, TX 75839`), title-case the input before the model sees it.
+	 * Whether to title-case all-caps ASCII input before the model sees it, default true.
 	 *
-	 * The model trains on mixed-case text, so all-caps is partly OOD.
-	 * It drops/mis-bounds tokens (#690: `palestine` → locality `alestine`;
-	 * all-caps locality 3/5 vs title-case 5/5).
-	 *
-	 * Conditioned on detection, so mixed-case input is untouched (byte-stable).
-	 *
-	 * Off by default.
-	 * On all-caps input the output values are title-cased (the shouting is normalized away —
-	 * better, and the resolver name-matches case-insensitively regardless).
+	 * The model trains on mixed-case text.
+	 * Mixed-case input is untouched, and values from all-caps input come out title-cased.
 	 */
 	normalizeCase?: boolean
+
 	/**
-	 * Optional span-confidence calibrator (task #59).
+	 * A calibrator that maps each decoded span's confidence to a calibrated probability of correctness.
 	 *
-	 * When provided, each decoded span's `conf=` is mapped through it
-	 * (isotonic lookup table → calibrated probability of correctness).
-	 * OPT-IN — omit for the byte-stable default softmax confidence.
-	 *
-	 * Build one via `createCalibrator` (`@mailwoman/core/decoder`)
-	 * from `data/eval/calibration/isotonic-<locale>-<version>.json`.
+	 * Omit it to keep the raw softmax confidence.
 	 */
 	calibrate?: Calibrator
+
 	/**
-	 * Per-parse override of the config-level `bridgePunctuationGaps` (see that doc).
+	 * A per-parse override of the config's `bridgePunctuationGaps`.
 	 */
 	bridgePunctuationGaps?: boolean
+
 	/**
-	 * Per-parse switch for the config-level `spanProposer` (see that doc).
+	 * Whether to run the configured span proposer for this parse, default true.
 	 *
-	 * `false` disables the configured proposer for this parse; `true`/omitted runs it when configured.
-	 * Cannot enable the stage without a configured lexicon.
+	 * `true` cannot enable a proposer that the config disabled.
 	 */
 	spanProposer?: boolean
+
 	/**
-	 * Address-system conventions enforcement (#511 Tier A / the rules-as-constraints part of #478).
+	 * The address-system conventions to enforce: `auto` detects the system from the
+	 * model's locale head, and a `SystemCode` pins it.
 	 *
-	 * - `"auto"` — detect the system from the model's locale head
-	 *   (`locale_logits` output, v1.1.0+ exports. Silently no-ops on models without it)
-	 *   and apply that system's codex conventions: forbidden tags become a hard emission mask
-	 *   before Viterbi, and a conventions postcode shape enables the snap-only postcode repair pass.
-	 * - A `SystemCode` (`"fr"`, `"us"`, …) — apply that system's conventions unconditionally
-	 *   (callers that already know the locale, e.g. the pipeline's BCP-47 region).
-	 * - Omit — byte-stable default: no detection, no mask (pre-#511 behavior).
-	 *
-	 * The detection threshold is deliberately high (0.8): the mask must never fire on a guess.
-	 * Measured motivation: the 2026-06-10 v1.1.0 promotion eval, where US suffix logic fired inside
-	 * French parses (`street_suffix: "Rue"`) and digit-splits corrupted leading FR postcodes.
+	 * Enforcement masks the system's forbidden tags before Viterbi and runs postcode repair
+	 * when the system declares a postcode shape.
+	 * `auto` acts only at 0.8 confidence or higher, so the mask never fires on a guess,
+	 * and it does nothing on a model without a locale head.
 	 */
 	addressSystemConventions?: "auto" | SystemCode
 
 	/**
-	 * Per-call override for the config-level `placetypePair` default
-	 * (see {@link NeuralAddressClassifierConfig.placetypePair}).
+	 * A per-parse override of the config's `placetypePair`; `false` disables an
+	 * auto-wired default for this call.
 	 *
-	 * Explicit `false` disables an auto-wired config default for this one call —
-	 * the same typed-disable shape as {@link spanProposer} above
-	 * (`SpanProposerConfig | false` at the config level; `false` per-call),
-	 * applied here to the object-valued config instead of a boolean flag.
-	 * The typed `false` is the only real disable signal: an object-only field leaves a caller substituting
-	 * a never-matching `PairIndexLike` stub (`neural/test/weights.test.ts`'s `NO_MATCH_PAIR_INDEX` idiom) —
-	 * functionally equivalent but not type-checkable as intent.
-	 *
-	 * `opts?.placetypePair ?? This.cfg.placetypePair` (see `#decode`) resolves `false`
-	 * correctly with no special case: `??` only falls through on `null`/`undefined`,
-	 * never on `false`, so an explicit `false` here wins over any config default.
-	 *
-	 * Placetype-pair emission bias (placetype-pair-prior arc).
-	 * When provided, candidates are probed against a PIX1 pair index of (child, parent) place-name
-	 * pairs harvested from a real address register (the GB extract: PPD `city`/`district`).
-	 *
-	 * A candidate that resolves against some other, disjoint candidate anywhere in the input
-	 * gets an additive bias toward the pair's resolved `ComponentTag` — e.g. "Shoreditch"
-	 * biased toward `dependent_locality` when "London" also appears in the input,
-	 * because the index has recorded ("shoreditch", "london") → `dependent_locality`.
-	 *
-	 * **`probeMode` — the `"auto"` probe chain (default) vs the explicit
-	 * `"segment"`/`"anchored"`/`"window"` overrides.** How a "candidate" is built matters a great deal.
-	 * The default `"auto"` chain (v1.1, 2026-07-24 anchored adjacent-pair design) runs the segment path
-	 * when the input has ≥2 comma-delimited segments — byte-identical to explicit `"segment"` there,
-	 * by construction — and the anchored-adjacent path on comma-free input (where segment mode is
-	 * deterministically inert. Any anchored bias is strictly additive against that zero baseline).
-	 *
-	 * `"segment"` (the v1 default) restricts candidates to whole comma-delimited segments;
-	 * `"window"` mode (contiguous 1..3-word sliding sub-segments — see `placetype-pair-prior.ts`'s
-	 * `WINDOW_MAX_WORDS` docstring for the measured distribution that set that ceiling) is opt-in only.
-	 * Window mode is not a default because, measured against a 6,500-row venue-confound falsifier board
-	 * (real UK business names that embed a real place name — "Bitterne Charcoal Grill" embeds "Bitterne")
-	 * at the real artifact's δ=6.0, it produced a **52.123% false-positive rate** (2026-07-22)
-	 * against a pre-registered FP=0 bar: a sub-segment window has no venue-boundary awareness
-	 * and fires just as readily inside a longer venue/business phrase as it does on a bare place name.
-	 *
-	 * Segment mode structurally can't make that mistake — "Bitterne Charcoal Grill" has no internal comma,
-	 * so its only candidate key is the 3-word fold, which never equals a 1-word census entry.
-	 * See `placetype-pair-prior.ts`'s module docstring ("Probe mode" section) for the full interface,
-	 * both modes' measured trade-offs, and the re-enablement bar for window mode as a default.
-	 *
-	 * Country-agnostic at the API surface: this module does not restrict by country itself.
-	 * The caller is responsible for passing the index built for the input's locale
-	 * (a GB-built index probed against a US address will simply never match, composing harmlessly).
-	 *
-	 * Default resolution: **an omitted field does not unconditionally mean "no prior".** `#decode`
-	 * resolves this as `opts?.placetypePair ?? This.cfg.placetypePair` — when `loadFromWeights`
-	 * auto-wired a config-level default (the country-restricted construction for en-gb-shaped caches),
-	 * an omitted per-call field falls through to that default and the prior fires.
-	 * The no-prior path holds only when neither this field nor the config default is set
-	 * (e.g. `loadFromWeights({ locale: "en-us" })`, which ships no `pair-index-*.bin` sibling to auto-wire).
-	 *
-	 * Pass explicit `false` to force the prior off for one call regardless of an auto-wired
-	 * config default (see this field's own doc comment above for the typed-disable interface).
-	 * Evidence: the rung-3 promotion eval (2026-07-22) measured 100% recall / 0.0% false-positive
-	 * rate at δ=6.0 on the curated probe set that motivated this prior. **Superseded by the
-	 * shipped δ calibration** (2026-07-22): the real `pair-index-gb.bin` artifact ships δ=5.0
-	 * (a held-out register-row + venue-confound sweep, feed-8k's calibrated optimum. feed-2k calibrates
-	 * to 4.5 but fails the FR-fragment bare-locality bar) in its header, so `biasScale` below
-	 * exists only as a fallback for a hand-built `PairIndexLike` test double that omits `delta`.
+	 * The prior biases a place name toward the tag a pair index recorded for it alongside another name
+	 * in the input, such as "Shoreditch" toward `dependent_locality` when "London" also appears.
+	 * The index must be built for the input's country; an index for another country never matches.
 	 */
 	placetypePair?: PlacetypePairPriorOpts | false
 
 	/**
-	 * Per-call override for the config-level `placetypeCensus` default
-	 * (see {@link NeuralAddressClassifierConfig.placetypeCensus}) —
-	 * same typed-disable shape as {@link placetypePair}.
+	 * A per-parse override of the config's `placetypeCensus`; `false` disables
+	 * an auto-wired default for this call.
 	 *
-	 * Observability only: whichever way this resolves, the decode is byte-identical.
-	 * It selects whether `traceParse`'s `placetypeCensus` prior record carries census
-	 * observations, nothing more, which is exactly what makes `false` useful.
-	 *
-	 * It is how a test parses the same input twice, once with the census wired and once without,
-	 * and asserts the emissions/path/tokens didn't move (`placetype-census-observability.test.ts`).
+	 * It changes only what `traceParse` records, never the decode.
 	 */
 	placetypeCensus?: PlacetypeCensusLike | false
 }

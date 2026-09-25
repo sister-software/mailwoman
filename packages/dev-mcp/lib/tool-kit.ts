@@ -2,8 +2,6 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- *
- *   Shared provenance types, input schemas, and formatting helpers for developer tools.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -64,6 +62,9 @@ export function inputSetProvenance(set: ResolvedInputSet): Provenance["input_set
 	}
 }
 
+/**
+ * Builds the provenance record for a result from the engine that produced it and the input set it measured.
+ */
 export function provenanceFor(
 	engine: {
 		engineID: string
@@ -87,9 +88,6 @@ export function provenanceFor(
 	}
 }
 
-/**
- * Literal input with caller-supplied truth coordinates.
- */
 const LITERAL_INPUT_WITH_TRUTH_SCHEMA = z.object({
 	input: z.string().min(1),
 	lat: z.number().describe("Truth latitude. Say where it came from in `why` — an invented pin grades nothing."),
@@ -116,9 +114,7 @@ const LITERAL_INPUTS_DESCRIPTION =
 	"file, rather than writing rows and discovering the score afterwards."
 
 /**
- * Input selection for measurement tools.
- *
- * Defaults to the regression board; literal inputs require a rationale.
+ * Validates the input-set selection that measurement tools accept, defaulting to the regression board.
  */
 export const INPUT_SET_SCHEMA = z
 	.union([
@@ -179,9 +175,9 @@ export const INPUT_SET_SCHEMA = z
 	.describe('Which inputs to measure. `{"kind":"board"}` is the full 558-row regression board and is the default.')
 
 /**
- * Configuration pins in CLI naming.
+ * Validates engine configuration pins, named as the CLI names them.
  *
- * Unset values retain production defaults; they do not mean "off".
+ * An unset key keeps the production default; it does not turn the feature off.
  */
 export const ENGINE_CONFIG_SCHEMA = z
 	.object({
@@ -218,12 +214,18 @@ export const ENGINE_CONFIG_SCHEMA = z
 	.strict()
 	.describe("Every pin, in the CLI's vocabulary. Unset means the PRODUCTION DEFAULT, never off.")
 
+/**
+ * Holds the shared services that each dev MCP tool factory receives.
+ */
 export interface DevToolDeps {
 	registry: EngineRegistryLike
 	jobs: JobRegistry
 	startedAt: number
 }
 
+/**
+ * Describes one dev MCP tool as registered with the server.
+ */
 export interface DevTool {
 	name: string
 	description: string
@@ -244,10 +246,10 @@ export type TwoArms =
 	| { base?: undefined; candidate?: undefined; error: Record<string, unknown> }
 
 /**
- * Acquire baseline and candidate engines, rejecting a candidate whose weights did not load.
+ * Acquires a baseline engine and a candidate engine.
  *
- * Configuration keys can be silently ignored, so verify the resolved engine
- * rather than assuming the pin took.
+ * It returns an error when `weightsCache` resolves to the baseline's engine,
+ * because the pin was then silently ignored.
  */
 export async function acquireTwoArms(
 	registry: EngineRegistryLike,
@@ -278,16 +280,15 @@ export async function acquireTwoArms(
 	return { base, candidate }
 }
 
+/**
+ * Returns the flat component map of a geocode run's result, typed as string values for reporting.
+ */
 export function componentsOf(run: GeocodeRun): Record<string, string> {
 	return run.result.components as Record<string, string>
 }
 
 /**
- * The rendered evidence rows for a run, or a stated absence.
- */
-/**
- * Return diagnostic parse fields without large numeric matrices.
- * Set `full_parse_trace: true` to include raw matrices.
+ * Returns the parse trace without its large numeric matrices, keeping only each channel's confidence.
  */
 export function slimParseTrace(parse: NonNullable<GeocodeRun["trace"]>["parse"]): Record<string, unknown> {
 	const { logits, emissions, anchor, gazetteer, country, ...rest } = parse
@@ -309,9 +310,6 @@ export function slimParseTrace(parse: NonNullable<GeocodeRun["trace"]>["parse"])
 	}
 }
 
-/**
- * Render an intent refusal separately from a parse failure.
- */
 function droppedRow(run: GeocodeRun): string[] {
 	const dropped = (run.result as { dropped_components?: Array<{ tag: string; value: string; kept: string }> })
 		.dropped_components
@@ -331,7 +329,6 @@ function refusalRow(run: GeocodeRun): string[] {
 
 	if (!markers?.length) return []
 
-	// Serialize evidence and include the firing mechanism; the marker kind alone is insufficient.
 	const named = markers
 		.map((marker) => {
 			const evidence = marker.evidence ? ` ${stringifyJSON(marker.evidence)}` : ""
@@ -346,6 +343,9 @@ function refusalRow(run: GeocodeRun): string[] {
 	]
 }
 
+/**
+ * Renders a geocode run's trace as human-readable rows, or explains in `absent_reason` why no trace exists.
+ */
 export function renderTrace(run: GeocodeRun): { rendered: string[]; absent_reason?: string } {
 	if (!run.trace) {
 		return {
@@ -370,11 +370,6 @@ export function renderTrace(run: GeocodeRun): { rendered: string[]; absent_reaso
 	}
 }
 
-/**
- * Render one line per resolver lookup, including query, checks, selection, and candidate ranks.
- *
- * Distinguish no lookups from traces that lack resolver records.
- */
 function resolverRows(trace: NonNullable<GeocodeRun["trace"]>): string[] {
 	const records = trace.resolver
 
@@ -465,8 +460,9 @@ export function firingSignals(rows: ComparedRow[]): Record<string, { a: number; 
 }
 
 /**
- * One input measured under both arms.
- * `differed` and `grade` report separate facts.
+ * Represents one input measured under both comparison arms.
+ *
+ * `differed` and `grade` are independent: output can change without the grade changing.
  */
 export interface ComparedRow {
 	id: string
@@ -480,28 +476,30 @@ export interface ComparedRow {
 	b: unknown
 	issues_a: string[]
 	issues_b: string[]
+
 	/**
-	 * Whether place-identity chains differ; present only when both arms provide them.
+	 * Whether the place-identity chains differ; absent unless both arms report `place_ids`.
 	 */
 	identity_differed?: boolean
+
 	/**
-	 * Whether result tiers differ; present only when both arms provide a tier.
+	 * Whether the result tiers differ; absent unless both arms report a tier.
 	 */
 	tier_differed?: boolean
 }
 
 /**
- * Valid stratification keys.
- * `truth_tolerance_m` applies only to coordinate-graded rows.
+ * Names a field that comparison results can be stratified by.
+ *
+ * `truth_tolerance_m` applies only to rows graded against a coordinate.
  */
 export type StratumKey = "country" | "address_kind" | "status" | "truth_tolerance_m" | "truth_type"
 
-/**
- * Allowed strata for runtime validation of untyped handler input.
- */
 const STRATUM_KEYS: readonly StratumKey[] = ["country", "address_kind", "status", "truth_tolerance_m", "truth_type"]
 
 /**
+ * Asserts that `by` is a known {@linkcode StratumKey}.
+ *
  * @throws If `by` is not a known stratum.
  */
 export function assertStratumKey(by: string): asserts by is StratumKey {
@@ -557,8 +555,9 @@ export function stratify(rows: ComparedRow[], by: StratumKey): Record<string, un
 }
 
 /**
- * Summarize a completed job.
- * Checks expose no result until `verdict.json` is written.
+ * Summarizes a background job's report for display.
+ *
+ * A running check has nothing to summarize, because it writes `verdict.json` only when it finishes.
  */
 export function summarizeJob(
 	state: string,

@@ -2,36 +2,21 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- *
- *   `useReleaseRuntime` — the headless load-orchestration hook shared by every mailwoman browser surface (the
- *   inline doc-embeds via `RuntimeEmbed`, and the geocoder). It owns the version-selection state
- *   machine, the per-version load sequencing, cancellation, and the ready / loading / error state — but
- *   nothing model- or map-specific. The actual asset fetchers (the ONNX classifier factory, the httpvfs
- *   WOF opener, the FST fetch, the releases.json fetch) are injected by the host as async functions, so
- *   this module imports only React: no `onnxruntime-web`, no `sql.js-httpvfs`, no `maplibre-gl`, no
- *   `fetch`-specific plumbing. That keeps it node-import-safe and root-exportable from
- *   `@mailwoman/react` — the exact interface `PipelineRuntime` established, generalized to the loader itself.
- *
- *   The hook is generic over `TAssets` (the opaque bundle the host's `loadAssets` returns — classifier,
- *   FST, WOF lookup, calibrator, …) and `TRelease` (the host's release-manifest entry). The package
- *   never inspects either. it just holds, reveals, and re-loads them across version/backend switches.
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 
 /**
- * The minimal interface a release-manifest entry must satisfy.
- *
- * Hosts extend this with their own fields.
+ * Describes the minimal fields a release-manifest entry needs, which hosts extend with their own.
  */
 export interface ReleaseBase {
 	/**
-	 * The version tag this entry describes (matched against `selectedVersion`).
+	 * Identifies the entry when a version is selected.
 	 */
 	version: string
+
 	/**
-	 * Optional display label a version picker shows.
-	 * Falls back to `version`.
+	 * Sets the version picker's display label, which falls back to `version`.
 	 */
 	label?: string
 }
@@ -41,181 +26,173 @@ export interface ReleaseBase {
  */
 export interface ReleaseManifest<TRelease extends ReleaseBase = ReleaseBase> {
 	/**
-	 * The version selected on first load (before the user picks another).
+	 * Names the version selected when the manifest first loads.
 	 */
 	defaultVersion: string
-	/**
-	 * Every selectable release.
-	 */
+
 	releases: TRelease[]
 }
 
 /**
- * The progress channel handed to the host's `loadAssets`.
+ * Provides the abort signal and progress setters passed to a host's `loadAssets`.
  *
- * The host reports load progress + the resolved backend + the staged step labels/index through
- * these setters (all no-op once the load is superseded/aborted), while the hook owns the terminal
- * state (revealing the assets + clearing progress on success, surfacing the error on failure).
+ * The setters become no-ops once the load is aborted or superseded, and the hook
+ * itself sets the final ready or error state.
  */
 export interface AssetsLoadContext {
 	/**
-	 * Aborts when this load is superseded (version/backend switch) or the provider unmounts.
+	 * Aborts when a version or backend switch supersedes this load, or when the component unmounts.
 	 */
 	signal: AbortSignal
+
 	/**
-	 * Whether the host should force the CPU/wasm backend (opt out of WebGPU) for this load.
+	 * Says whether this load should use the CPU WASM backend instead of WebGPU.
 	 */
 	forceWASM: boolean
+
 	/**
-	 * Set the human-readable progress line (e.g. `Loading v7 model (~28 MB)…`).
+	 * Sets the human-readable progress line, such as `Loading v7 model (~28 MB)…`.
 	 */
 	setProgress: (progress: string) => void
+
 	/**
-	 * Set the staged-loader step labels (e.g. `["Loading classifier", "Loading FST gazetteer"]`).
+	 * Sets the labels of the staged loader's steps.
 	 */
 	setStepLabels: (labels: string[]) => void
+
 	/**
-	 * Advance the staged-loader step index (0-based).
+	 * Sets the zero-based index of the current loader step.
 	 */
 	setStepIndex: (index: number) => void
+
 	/**
-	 * Report the backend the neural runtime resolved to (e.g. `webgpu (27 MB int8)`).
+	 * Reports the backend the neural runtime resolved to, such as `webgpu (27 MB int8)`.
 	 */
 	setBackend: (backend: string) => void
+
 	/**
-	 * Report bytes received over bytes expected for the asset downloading right now, in [0, 1].
+	 * Reports the fraction, in [0, 1], of the current download received so far, or `null`
+	 * when nothing is downloading or the response declares no length.
 	 *
-	 * Pass `null` when nothing is in flight or the response declares no length.
-	 *
-	 * The staged step index cannot carry this: the model is fetched before the first step
-	 * is entered, so a step-derived bar holds one value for the whole transfer.
-	 * This is what moves during it.
+	 * The step index cannot show this because the model is fetched before the first step begins.
 	 */
 	setByteFraction: (fraction: number | null) => void
 }
 
 /**
- * The injected loaders the hook orchestrates.
- *
- * Nothing here is model- or map-aware — the host owns all that.
+ * Supplies the host's manifest loader, asset loader and optional asset disposer
+ * to {@link useReleaseRuntime}.
  */
 export interface ReleaseRuntimeConfig<TAssets, TRelease extends ReleaseBase = ReleaseBase> {
 	/**
-	 * Fetch + normalize the releases manifest.
-	 *
-	 * Returns `null` when no manifest is available (the surface then shows nothing selectable).
-	 * Rejecting surfaces `errorMessage`.
-	 *
-	 * Runs once on mount.
+	 * Fetches the releases manifest once on mount, returning `null` when none is
+	 * available so nothing is selectable.
+	 * A rejection is reported through `errorMessage`.
 	 */
 	loadManifest: (signal: AbortSignal) => Promise<ReleaseManifest<TRelease> | null>
+
 	/**
-	 * Load the full asset bundle for one release.
+	 * Loads the asset bundle for one release, reporting progress through `ctx`;
+	 * it runs on every version or `forceWASM` change.
 	 *
-	 * The classifier, FST, WOF lookup, calibrator, whatever the host needs.
-	 *
-	 * Runs on every version or `forceWASM` change.
-	 * Report progress via `ctx`; return the bundle.
-	 *
-	 * Rejecting surfaces `errorMessage`.
-	 * Bail early when `ctx.signal.aborted` — the hook discards a superseded result regardless.
+	 * A rejection is reported through `errorMessage`, and the hook discards
+	 * and disposes a result that resolves after `ctx.signal` aborts.
 	 */
 	loadAssets: (release: TRelease, ctx: AssetsLoadContext) => Promise<TAssets>
+
 	/**
-	 * Give a superseded bundle's resources back, when the bundle holds any the garbage
-	 * collector does not own — an ONNX session's wasm heap, a SQLite worker, a GPU buffer.
+	 * Releases resources the garbage collector does not own, such as an ONNX
+	 * session's WASM heap or a GPU buffer.
 	 *
-	 * Called for the bundle being replaced when the version or the backend force changes,
-	 * for a bundle whose load was aborted after it had already resolved, and on unmount.
-	 * Without it each reload left a whole model resident: dropping the last JavaScript
-	 * reference to a session frees the wrapper and nothing else, and Safari answers
-	 * a page that accumulates those by reloading the tab.
+	 * The hook calls it for a replaced bundle, for a bundle that resolved after its load
+	 * was aborted, and on unmount; without it, every reload leaves a model resident.
 	 */
 	disposeAssets?: (assets: TAssets) => void | Promise<void>
+
 	/**
-	 * The progress line shown before the manifest arrives. @default "Loading releases…"
+	 * Sets the progress line shown before the manifest arrives, defaulting to `Loading releases…`.
 	 */
 	initialProgress?: string
 }
 
 /**
- * The state `useReleaseRuntime` produces — the load-orchestration state a surface renders + re-projects.
- *
- * This is the loader state, deliberately distinct from {@link GeocoderRuntime}
- * (the injected runtime interface `<Geocoder>` consumes).
- * A host builds a {@link GeocoderRuntime} by pairing this loader state
- * (assets + backend + version) with the map surface (style, overlays, bias, parse).
- * See the map subpath's `GeocoderRuntime`.
+ * Describes the release-loading state {@link useReleaseRuntime} returns,
+ * which a host pairs with its map surface to build a `GeocoderRuntime`.
  */
 export interface ReleaseLoaderState<TAssets, TRelease extends ReleaseBase = ReleaseBase> {
 	/**
-	 * The releases manifest, once fetched.
+	 * Holds the releases manifest, which is `null` until it loads or when none is available.
 	 */
 	manifest: ReleaseManifest<TRelease> | null
+
 	/**
-	 * The currently-selected version, or `null` before the manifest resolves.
+	 * Names the selected version, which is `null` before the manifest loads.
 	 */
 	selectedVersion: string | null
+
 	/**
-	 * The release entry matching `selectedVersion` (convenience over `manifest.releases.find`).
+	 * Holds the manifest entry matching `selectedVersion`, or `null` when none matches.
 	 */
 	selectedRelease: TRelease | null
+
 	/**
-	 * The loaded asset bundle for the selected version, or `null` while (re)loading.
+	 * Holds the asset bundle for the selected version, which is `null` while it loads.
 	 */
 	assets: TAssets | null
-	/**
-	 * Whether the asset bundle is loaded and ready to use.
-	 */
+
 	ready: boolean
+
 	/**
-	 * Human-readable load progress (`""` when idle/ready).
+	 * Describes load progress for display, and is empty once loading finishes or fails.
 	 */
 	loadingProgress: string
+
 	/**
-	 * Staged-loader step index (0-based; `-1` before the first step).
+	 * Gives the zero-based loader step index, which is `-1` before the first step.
 	 */
 	loadingStepIndex: number
-	/**
-	 * Staged-loader step labels.
-	 */
+
 	loadingStepLabels: string[]
+
 	/**
-	 * Bytes received over bytes expected for the asset downloading right now, in [0, 1];
-	 * `null` when nothing is in flight or the response declares no length.
+	 * Gives the fraction, in [0, 1], of the current download received so far, or `null`
+	 * when nothing is downloading or the length is unknown.
 	 */
 	loadingByteFraction: number | null
+
 	/**
-	 * A load error (manifest or asset), distinct from any per-parse error a consumer tracks separately.
+	 * Holds a manifest or asset load error, separate from any parse error a consumer tracks.
 	 */
 	errorMessage: string | null
+
 	/**
-	 * The backend the neural runtime resolved to (e.g. `webgpu (27 MB int8)`), or `""` before it's known.
+	 * Names the backend the neural runtime resolved to, such as `webgpu (27 MB int8)`,
+	 * or is `""` before it is known.
 	 */
 	activeBackend: string
+
 	/**
-	 * Whether the CPU/wasm backend is currently forced.
+	 * Says whether the CPU WASM backend is forced instead of WebGPU.
 	 */
 	forceWASM: boolean
+
 	/**
-	 * Switch to a different version (clears any error, then reloads the asset bundle).
+	 * Switches to another version, clearing any error and reloading the asset bundle.
 	 */
 	selectVersion: (version: string) => void
+
 	/**
-	 * Force (or unforce) the CPU/wasm backend — reloads the asset bundle.
+	 * Forces or releases the CPU WASM backend, which reloads the asset bundle.
 	 */
 	setForceWASM: (forceWASM: boolean) => void
 }
 
 /**
- * Drive the shared version → asset-bundle load state machine over a host-injected loader.
+ * Loads the release manifest on mount, then loads the selected release's assets
+ * whenever the version or `forceWASM` changes.
  *
- * Sequence: on mount `loadManifest` runs and its `defaultVersion` becomes the selection.
- * Each version (or `forceWASM`) change reloads the bundle via `loadAssets`,
- * the previous load aborted first.
- *
- * The assets are revealed atomically when `loadAssets` resolves
- * (so `ready` flips exactly once per load), and consumers wait on `ready`.
+ * Each reload aborts the previous load and disposes the old assets, and `ready`
+ * becomes true only once the new assets have fully loaded.
  */
 export function useReleaseRuntime<TAssets, TRelease extends ReleaseBase = ReleaseBase>(
 	config: ReleaseRuntimeConfig<TAssets, TRelease>
@@ -233,18 +210,12 @@ export function useReleaseRuntime<TAssets, TRelease extends ReleaseBase = Releas
 	const [loadingByteFraction, setLoadingByteFraction] = useState<number | null>(null)
 	const [forceWASM, setForceWASMState] = useState(false)
 
-	// Latest-ref the injected loaders: a host that re-creates them each render (an inline arrow)
-	// must not retrigger the load effects, which key only on version/backend.
-	// The effects read `.current` at run time.
 	const loadManifestRef = useRef(config.loadManifest)
 	const loadAssetsRef = useRef(config.loadAssets)
 	const disposeAssetsRef = useRef(config.disposeAssets)
-	// The bundle currently owning resources, held in a ref because the cleanup that must dispose it cannot see state.
+
 	const liveAssetsRef = useRef<TAssets | null>(null)
 
-	// Latest manifest for the version-load effect, so it can resolve the release without
-	// depending on `manifest` identity, which would double-fire the load the instant the manifest
-	// first arrives (the selection transition null → defaultVersion already fires it once).
 	const manifestRef = useRef<ReleaseManifest<TRelease> | null>(null)
 
 	useEffect(() => {
@@ -254,7 +225,6 @@ export function useReleaseRuntime<TAssets, TRelease extends ReleaseBase = Releas
 		manifestRef.current = manifest
 	}, [config.disposeAssets, config.loadAssets, config.loadManifest, manifest])
 
-	// Mount: fetch the manifest, then select the default version.
 	useEffect(() => {
 		const controller = new AbortController()
 
@@ -277,7 +247,6 @@ export function useReleaseRuntime<TAssets, TRelease extends ReleaseBase = Releas
 		return () => controller.abort()
 	}, [])
 
-	// Load the per-version asset bundle when the version (or the backend force) changes.
 	useEffect(() => {
 		if (!selectedVersion) return
 
@@ -296,9 +265,6 @@ export function useReleaseRuntime<TAssets, TRelease extends ReleaseBase = Releas
 
 		void (async () => {
 			try {
-				// Release the outgoing bundle before building its replacement,
-				// so the two models are never resident at once.
-				// The peak is what kills a tab rather than the steady state.
 				const outgoing = liveAssetsRef.current
 
 				liveAssetsRef.current = null
@@ -326,8 +292,6 @@ export function useReleaseRuntime<TAssets, TRelease extends ReleaseBase = Releas
 				const loaded = await loadAssetsRef.current(release, ctx)
 
 				if (signal.aborted) {
-					// It resolved anyway, so it allocated anyway.
-					// Dropping it here is what leaked a model on every rapid version switch.
 					await disposeAssetsRef.current?.(loaded)
 
 					return
@@ -347,7 +311,6 @@ export function useReleaseRuntime<TAssets, TRelease extends ReleaseBase = Releas
 		return () => controller.abort()
 	}, [selectedVersion, forceWASM])
 
-	// Unmount: the last bundle has nobody left to supersede it.
 	useEffect(() => {
 		return () => {
 			const live = liveAssetsRef.current

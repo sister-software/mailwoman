@@ -2,10 +2,6 @@
  * @copyright Sister Software.
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- *
- *   Acquire Northern Ireland BT postcodes from OpenStreetMap with one Overpass query.
- *   Save the response verbatim in a dated directory for reproducible builds.
- *   The ODbL database is build-local and must not be published; attribution is embedded in its metadata.
  */
 
 import { APIClient } from "@mailwoman/core/api"
@@ -16,74 +12,25 @@ import { md5Hex } from "@mailwoman/core/utils"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 
 /**
- * The public Overpass API endpoint.
- *
- * Volunteer-run.
- * See https://operations.osmfoundation.org/policies/api/.
- * The acquisition makes exactly one request against it.
+ * Points at the public, volunteer-run Overpass API, which the NI acquisition queries exactly once.
  */
 export const OVERPASS_ENDPOINT = "https://overpass-api.de/api/interpreter"
 
 /**
- * The Kumi Systems mirror, recorded as a checked negative rather than as a fallback.
+ * Points at the Kumi Systems Overpass mirror, which is not the default because it
+ * timed out on queries the main instance answered quickly.
  *
- * It is the mirror the OSM wiki points at for heavy queries, so it is the obvious thing
- * to reach for when the main instance 504s, and on 2026-08-05 it was the wrong move.
- * Three of three attempts returned http 504: the whole-NI area query at 97 s,
- * the whole-NI bbox query at 115 s, and — decisively — a two-tenths-of-a-degree probe bbox
- * at 95 s that `overpass-api.de` answered 200 in 8 s from the same machine minutes later.
- *
- * A mirror that cannot serve an 8-second query is an unhealthy host rather than a capacity answer.
- * Pass it via {@link AcquireNIPostcodesOptions.endpoint} if it recovers.
- *
- * Do not promote it to default on the strength of the wiki page.
+ * Pass it via {@link AcquireNIPostcodesOptions.endpoint} only if it has recovered.
  */
 export const OVERPASS_ENDPOINT_KUMI = "https://overpass.kumi.systems/api/interpreter"
 
 /**
- * The one query.
+ * Holds the Overpass query that fetches every OSM element tagged with a `BT` postcode,
+ * whose md5 goes into the database's provenance.
  *
- * Verbatim, because its md5 goes into the database's provenance and a reader
- * must be able to re-run exactly this text.
- *
- * ## The spatial filter is a bbox rather than `area["ISO3166-2"="GB-NIR"]`
- *
- * The area form — `area["ISO3166-2"="GB-NIR"]->.ni. nwr(area.ni)["addr:postcode"~"^BT"].` —
- * is the obvious way to write this, and both attempts at it on 2026-08-05 ended
- * in an http 504 from `overpass-api.de`'s gateway.
- * An `(area)` filter has no index to ride: Overpass enumerates the region's elements
- * and tests each, so the whole of Northern Ireland is a full scan.
- *
- * The bbox rides the spatial index instead, and the same instance answered this
- * query 200 with 6,681,108 bytes in 36 s.
- *
- * Be careful how much that proves.
- * Over the same fifteen-minute window `overpass-api.de` returned 504 for the bbox form too
- * (once, at 7 s) while answering an identical curl seconds earlier, and later returned 429.
- *
- * The instance was flapping, so the area form is not proven too expensive, only observed to fail twice.
- *
- * The bbox form is preferred on two independent grounds regardless: it is index-backed,
- * and re-issuing a whole-region scan against a flaking volunteer endpoint is the wrong kind of retry.
- *
- * The bbox loses nothing, because **`BT` is a Northern Ireland-exclusive postcode area**.
- * The tag filter is already the NI selector, and the bbox exists only to make it index-cheap.
- *
- * The corners are a deliberate superset of NI: a tight box could clip a border townland,
- * and a `BT` postcode on the Republic side of the line is still a `BT` postcode,
- * which is exactly the fact this database attests.
- *
- * ## The rest
- *
- * `nwr` takes nodes, ways and relations, because OSM carries `addr:postcode` on
- * standalone address nodes and on building polygons alike; `out center;` collapses each
- * way/relation to its centroid so every element arrives as one point.
- *
- * The tag filter is `~"^BT"` — case-sensitive, which is Overpass's default for `~`.
- * A lowercase `bt3 9qq` in OSM is therefore invisible to this query.
- *
- * That is deliberate: it is the filter the 2026-08-05 census was taken with, so the build's
- * numbers reconcile against that census rather than against a different population.
+ * It filters by a bbox rather than an NI area because `BT` is exclusive to Northern
+ * Ireland and a bbox uses Overpass's spatial index.
+ * The match is case-sensitive, so a lowercase `bt3 9qq` in OSM is not returned.
  */
 export const NI_POSTCODE_OVERPASS_QUERY = [
 	"[out:json][timeout:300];",
@@ -102,32 +49,19 @@ export const OSM_LICENSE = "Open Database License (ODbL) 1.0"
 export const OSM_LICENSE_URL = "https://opendatacommons.org/licenses/odbl/1-0/"
 
 /**
- * The attribution OSM requires of anyone redistributing its data or a work produced from it.
- *
- * Not optional, and not satisfied by a link in a readme — it rides in the artifact.
+ * Holds the attribution OSM requires in any redistributed data or derived work,
+ * which this pipeline embeds in the artifact itself.
  */
 export const OSM_ATTRIBUTION =
 	"© OpenStreetMap contributors. Data licensed under the Open Database License (ODbL) 1.0 " +
 	"(https://opendatacommons.org/licenses/odbl/1-0/); see https://www.openstreetmap.org/copyright."
 
 /**
- * Why this database is build-local, in one sentence plus the receipts.
+ * Explains, for the database's metadata, why the NI OSM postcode database is
+ * built locally and never published.
  *
- * ODbL §4.4 makes a Derived Database share-alike: publish one and you must publish it under ODbL.
- * Mailwoman's shipped gazetteer is assembled from permissive sources
- * (WOF, Overture, OpenAddresses, GeoNames, Code-Point Open) precisely so that no consumer
- * inherits a share-alike obligation from installing an npm package.
- *
- * Folding OSM-derived rows into a shipped database would push that obligation onto every consumer
- * of `mailwoman`, which is the outcome the whole permissive sourcing discipline exists to avoid.
- *
- * So the artifact stays on the machine that builds it.
- * The enforcement is not a policy document: `DEFAULT_POSTCODE_DATABASES` is resolved through
- * `existsSync`, and nothing copies this file into a tarball, an R2 bucket, or the demo.
- *
- * An operator who wants NI coverage runs the builder and accepts ODbL on their own artifact.
- * The same opt-in-per-country posture `@mailwoman/osm` already documents,
- * and the same tier `poi.db` sits in.
+ * ODbL share-alike binds derived databases, and shipped mailwoman gazetteers use only
+ * permissive sources so consumers inherit no such obligation.
  */
 export const NI_OSM_BUILD_LOCAL_NOTE =
 	"BUILD-LOCAL TIER — this artifact is never published. OSM data is ODbL 1.0, whose share-alike clause (§4.4) binds a " +
@@ -143,24 +77,23 @@ export const NI_OSM_BUILD_LOCAL_NOTE =
 export interface OverpassElement {
 	type: string
 	id: number
+
 	/**
-	 * Present on nodes.
+	 * The node's latitude; ways and relations carry `center` instead.
 	 */
 	lat?: number
 	lon?: number
+
 	/**
-	 * Present on ways/relations under `out center` — the geometry's centre.
+	 * The geometry's centre, present on ways and relations under `out center`.
 	 */
 	center?: { lat: number; lon: number }
 	tags?: Record<string, string>
 }
 
 /**
- * The Overpass JSON envelope.
- *
- * `osm3s.timestamp_osm_base` is the data extract this response reflects.
- * A far more useful provenance stamp than the wall clock at retrieval,
- * and it is why the response is kept whole rather than reduced.
+ * Describes the Overpass JSON envelope, whose `osm3s.timestamp_osm_base` records
+ * which OSM extract the response reflects.
  */
 export interface OverpassResponse {
 	version?: number
@@ -174,19 +107,10 @@ export interface OverpassResponse {
 }
 
 /**
- * Build the Overpass client.
+ * Creates the paced, non-retrying `APIClient` used for Overpass requests.
  *
- * `APIClient` per `agents.md`: this is a small-body API request against a rate-limited
- * volunteer host — the exact population the rule binds.
- * `minRequestIntervalMs` is set even though the acquisition issues one request,
- * because an unpaced client is a trap for the next caller who loops it.
- *
- * Retry is deliberately off (the `APIClient` default): an Overpass 429/504 means the
- * server is shedding load, and the correct response to that is to come back later by hand
- * rather than to have a script re-issue a whole-region scan, which is exactly what happened
- * on 2026-08-05, when the instance flapped through five 504s and a 429 before answering.
- * `timeout` is 10 minutes, comfortably past the query's own `[timeout:300]` plus
- * the transfer of a ~7 MB body (measured: 36 s end to end).
+ * Retry stays off because an Overpass 429 or 504 means the volunteer host is
+ * shedding load and should be retried later by hand.
  */
 export function createOverpassClient(): APIClient {
 	return new APIClient({
@@ -195,93 +119,98 @@ export function createOverpassClient(): APIClient {
 		axios: {
 			timeout: 600_000,
 			headers: {
-				// Overpass's fair-use policy asks that clients identify themselves.
 				"User-Agent": "mailwoman-gazetteer/1.0 (+https://mailwoman.ai)",
 			},
 		},
 	})
 }
 
+/**
+ * Configures {@link acquireNIPostcodes}, including where to save the response
+ * and whether to reuse an existing one.
+ */
 export interface AcquireNIPostcodesOptions {
 	/**
-	 * Directory the response lands in.
+	 * The directory that receives `response.json` and its sidecars.
 	 *
-	 * The convention is a new dated directory per acquisition
-	 * (`$MAILWOMAN_DATA_ROOT/osm-ni-postcodes/<yyyy-MM-DD>/`), so an acquisition
-	 * never overwrites an earlier one.
+	 * Use a new dated directory per acquisition so an earlier extract is never overwritten.
 	 */
 	destDir: PathBuilderLike
+
 	/**
-	 * Reuse an existing `response.json` instead of re-querying.
+	 * Whether to reuse an existing `response.json` instead of querying, default true.
 	 *
-	 * The default and the point: Overpass is a volunteer endpoint and the saved
-	 * response is the reproducibility artifact.
-	 * Set `false` only to take a deliberate new extract into a new dated directory.
+	 * Overpass is a volunteer endpoint and the saved response is the reproducibility artifact,
+	 * so set `false` only to take a deliberate new extract into a new directory.
 	 */
 	reuseExisting?: boolean
 	client?: APIClient
+
 	/**
-	 * Override the Overpass instance.
-	 *
-	 * Default {@link OVERPASS_ENDPOINT}; the endpoint actually used is recorded in `acquisition.json`
-	 * and in the database's `meta`, because which mirror answered is part of the provenance.
+	 * The Overpass instance to query, default {@link OVERPASS_ENDPOINT},
+	 * recorded in `acquisition.json` as provenance.
 	 */
 	endpoint?: string
+
 	/**
-	 * Retrieval clock, stamped into `acquisition.json`.
-	 *
-	 * Passed in so the module never reads the clock implicitly.
+	 * The retrieval time stamped into `acquisition.json`, default the current time.
 	 */
 	now?: Date
 	onPhase?: (phase: string, detail?: string) => void
 }
 
+/**
+ * Describes the saved Overpass response from {@link acquireNIPostcodes},
+ * with its checksums and whether an existing file was reused.
+ */
 export interface AcquireNIPostcodesResult {
 	/**
-	 * Absolute path of the saved response.
-	 * The only file the builder reads.
+	 * The path of the saved `response.json`.
 	 */
 	responsePath: PathBuilder
+
 	/**
-	 * Absolute path of the retrieval-metadata sidecar.
+	 * The path of the `acquisition.json` retrieval-metadata sidecar.
 	 */
 	acquisitionPath: PathBuilder
 	bytes: number
+
 	/**
-	 * Md5 of the response bytes on disk.
+	 * The md5 of the response bytes on disk.
 	 */
 	md5: string
+
 	/**
-	 * Md5 of {@link NI_POSTCODE_OVERPASS_QUERY} — the query fingerprint that
-	 * travels into the database's `meta`.
+	 * The md5 of the current {@link NI_POSTCODE_OVERPASS_QUERY}.
 	 */
 	queryMD5: string
+
 	/**
-	 * The Overpass instance that answered.
+	 * The configured Overpass instance.
+	 *
+	 * On a reused response this is the option's value, not necessarily the instance that
+	 * originally answered; a first-hand `acquisition.json` records that.
 	 */
 	endpoint: string
+
 	/**
-	 * True when the bytes were already on disk, so no request was made.
+	 * True when the response was already on disk, so no request was made.
 	 */
 	reused: boolean
 }
 
 /**
- * Fingerprint of the query text.
- *
- * Exported so the builder can record it without re-hashing prose.
+ * Returns the md5 of {@link NI_POSTCODE_OVERPASS_QUERY}, which the builder records as provenance.
  */
 export function niPostcodeQueryMD5(): string {
 	return md5Hex(NI_POSTCODE_OVERPASS_QUERY)
 }
 
 /**
- * Run the one Overpass query and save its response verbatim to `<destDir>/response.json`, with an `.md5`
- * sidecar and an `acquisition.json` recording endpoint, query text, query md5 and retrieval time.
+ * Runs the NI postcode Overpass query and saves the response to `<destDir>/response.json`
+ * with an md5 sidecar and an `acquisition.json` provenance record.
  *
- * The response is taken as an `arraybuffer` and written unmodified — no parse, no re-serialize.
- * A JSON round-trip would silently renormalize number formatting and key order, and
- * then the md5 in the provenance would describe bytes nobody can reproduce.
+ * The response bytes are written unparsed, so the recorded md5 matches what Overpass actually sent.
  */
 export async function acquireNIPostcodes(options: AcquireNIPostcodesOptions): Promise<AcquireNIPostcodesResult> {
 	const { reuseExisting = true, endpoint = OVERPASS_ENDPOINT } = options
@@ -302,13 +231,6 @@ export async function acquireNIPostcodes(options: AcquireNIPostcodesOptions): Pr
 
 			phase("reuse", `${responsePath} already present (md5 ${md5})`)
 
-			// A response with no sidecar beside it is provenance-less, and an operator who
-			// copied only the bytes into place should not get a database that says "unknown".
-			// Reconstruct what is recoverable and SAY that it was reconstructed: the retrieval
-			// instant becomes the file's mtime, which is when those bytes were written,
-			// and the flag keeps that distinguishable from a first-hand stamp.
-			// (The meaning-of-zero rule in its provenance form — a recovered value
-			// and a recorded one are different claims and must not read alike.)
 			if (!(await tryStat(acquisitionPath))) {
 				phase("sidecar", "acquisition.json missing — reconstructing from the response file's mtime")
 
@@ -333,13 +255,11 @@ export async function acquireNIPostcodes(options: AcquireNIPostcodesOptions): Pr
 	const response = await client.fetch<ArrayBuffer>({
 		url: endpoint,
 		method: "POST",
-		// Overpass takes the query as a form field named `data`.
+
 		data: new URLSearchParams({ data: NI_POSTCODE_OVERPASS_QUERY }).toString(),
 		headers: { "Content-Type": "application/x-www-form-urlencoded" },
 		responseType: "arraybuffer",
-		// The dated directory is the cache.
-		// A second response body in the disk cache would only be a second copy that
-		// can drift from the artifact the builder reads.
+
 		cache: false,
 	} as Parameters<APIClient["fetch"]>[0])
 
@@ -376,24 +296,14 @@ export interface NIAcquisitionSidecar {
 	licenseURL: string
 	attribution: string
 	tier: string
+
 	/**
-	 * Present and `true` only when the sidecar was rebuilt from a response file found already on disk.
-	 *
-	 * So its `retrievedAt` is the file's mtime rather than an observed request time.
-	 *
-	 * Absent means first-hand.
+	 * True when the sidecar was rebuilt for a response already on disk, so `retrievedAt`
+	 * is the file's mtime rather than an observed request time.
 	 */
 	reconstructed?: boolean
 }
 
-/**
- * Write `acquisition.json`.
- *
- * The licence block is written here rather than assembled by the caller
- * so that every path that produces a sidecar produces the same one.
- * The ODbL attribution is an obligation, and an obligation that depends on
- * which branch wrote the file is an obligation waiting to be missed.
- */
 async function writeAcquisitionSidecar(
 	path: PathBuilder,
 	input: {

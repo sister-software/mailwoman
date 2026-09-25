@@ -2,58 +2,6 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- *
- *   The negative-evidence route, observation-only: where the compiled artifact asserts that the
- *   answered category affords an activity and the coverage layer surveyed the cell the search was centred
- *   on, an answer holding nothing in that cell may be recorded as an absence — a coverage-qualified
- *   statement that the thing asked for is not there, carrying the assertion's provenance and the coverage
- *   cell's basis together.
- *
- *   the route reads. IT never answers. It takes a finished {@linkcode POIIntentOutcome} and returns a
- *   record beside it. Nothing here is wired into the pipeline, no result is added, removed, re-ordered or
- *   suppressed, and no abstain is reached or avoided because of it. The pipeline that produced the outcome
- *   is byte-identical to the pipeline that runs with this module unloaded, which is what makes the
- *   inertness receipt a statement about construction rather than about a measurement.
- *
- *   both halves OF the conjunction are required, and each has its own refusal. The artifact half
- *   answers "what does this category afford, and on whose authority" — a category no concept both affords
- *   with and maps to is not a category this route can say anything about. The coverage half answers "may a
- *   miss here be read as absence" — {@linkcode supportsExclusion} over the cell's own basis, never over
- *   `completeness` alone, because `source_present` records that the source returned rows and says nothing
- *   about what it missed. Outside exclusion-grade coverage the route is silent: a `[]` there is silence rather than absence, and that asymmetry is the whole interface.
- *
- *   A coverage layer is class-scoped, and the table does not SAY SO. `layer_coverage` carries a
- *   completeness per cell and no class, so a completeness measured over pharmacies would license an
- *   absence claim about cafés if nothing stopped it. What stops it is read from the artifact rather than
- *   declared: the layer's own `poi_category_codes` names every class it holds, and the route refuses
- *   unless that set is exactly one class and the answered category is it. A layer holding many classes has
- *   a pooled completeness that cannot support a per-class exclusion, and saying so is the refusal.
- *
- *   A searched union must be covered whole. The POI branch searches every category the subject reaches, so
- *   an activity afforded by two establishment classes puts two classes in one search. The layer surveys
- *   one, and its completeness says nothing about the other — so "no establishment affording this activity
- *   is here" would be a claim about premises the survey never looked for, which is the unsupported
- *   negative evidence this route exists to refuse. The refusal is `category_not_surveyed` and the
- *   same reading as the single-class case: the searched set has to be the surveyed class. Widening the
- *   layer to survey the second class is what would make such a cell decidable again.
- *
- *   the coverage resolution is derived rather than assumed. `layer_manifest.spine_keys.h3.resolution` states the
- *   resolution the layer's rows are keyed at (res 9 for `poi.db`); the coverage cells are coarser (res 6).
- *   A reader that probed coverage at the manifest's resolution would miss every cell and read the misses
- *   as unsurveyed — a false negative shaped exactly like the real absence this route exists to detect. So
- *   the resolution is recovered from the stored cells themselves: a short cell sets every digit past its
- *   own resolution to `7`. It no valid digit is. Therefore, exactly one resolution expands it into a valid
- *   index. Measured over the pilot layer: 290 of 290 cells expand at resolution 6 and at no other.
- *
- *   where the observation goes. Through the one carrier both routes share — `observation-marker.ts` turns
- *   an absence observation into a `QueryIntentMarker`, the additive advisory whose interface states that a
- *   marker never changes which answer wins. A second private path from here to the caller would be the
- *   duplication that carrier exists to prevent.
- *
- *   `mailwoman` and `@mailwoman/geographic-model` must bump in one coordinated release. `yarn pack` freezes
- *   `workspace:*` to whatever the sibling reads at pack time, so a `mailwoman` packed ahead of the sibling's
- *   bump pins a version that will never be republished. The artifact reader stays behind a dynamic import
- *   so a caller who never builds a route never loads it.
  */
 
 import { type CoverageCell, type LayerManifest, readLayerCoverage, readLayerManifest } from "@mailwoman/core/layers"
@@ -75,44 +23,28 @@ import type { PathBuilderLike } from "path-ts"
 
 import { readCommittedModel } from "#observations/committed-model"
 import { resolvePOISearchCenter } from "#poi/executor"
-/**
- * The relation an affordance is asserted under.
- *
- * The one the frozen vertical defines, and the only one this route reads.
- *
- * The semantic route reads the same relation for the opposite direction (phrase → category);
- * this one reads it from the category back to the activity it affords.
- */
+
 const AFFORDS_RELATION = "affords"
 
-/**
- * The external vocabulary the answered category id belongs to.
- */
 const POI_TAXONOMY_VOCABULARY = "poi-taxonomy"
 
 /**
- * One coverage-qualified absence, recorded beside an answer.
- *
- * Everything a reader needs to check the claim is here, from both sides.
- * From the artifact: which concept the answered category names, which activity it affords,
- * under what modality, and on whose authority — the assertion's own provenance and the mapping's.
- *
- * From the coverage layer: the cell, its basis, the completeness that basis rests on,
- * the rows the layer holds there, and the layer's own manifest identity.
- * A reader holding one half alone cannot tell whether the claim was earned.
+ * Records one coverage-qualified absence beside a POI answer, carrying both the artifact's
+ * affordance provenance and the coverage layer's evidence for the cell.
  */
 export interface AbsenceObservation {
 	/**
-	 * The answered POI category id — the `externalID` the mapping translates the concept into.
+	 * The answered POI category ID, which is the mapping's `externalID` for the concept.
 	 */
 	categoryID: string
+
 	/**
-	 * The concept the category names in the compiled artifact.
+	 * The ID of the concept the category maps to in the compiled model.
 	 */
 	concept: string
+
 	/**
-	 * The activity the concept affords, and which the observation therefore
-	 * states is not obtainable in the cell.
+	 * The activity the concept affords, which the observation states is not obtainable in the cell.
 	 */
 	activity: string
 	assertion: {
@@ -128,15 +60,13 @@ export interface AbsenceObservation {
 		provenance: SourceProvenance
 	}
 	modelVersion: string
+
 	/**
 	 * The coverage side of the claim: which cell, on what basis, and what the layer holds there.
 	 */
 	coverage: {
 		/**
-		 * The 48-bit short-cell integer the layer stores, and the full index it
-		 * expands to at the layer's coverage resolution.
-		 *
-		 * The integer is what a reader queries the table with, the index is what a reader can draw.
+		 * The short-cell integer the coverage table is keyed by; `h3CellIndex` is the full index it expands to.
 		 */
 		h3Cell: number
 		h3CellIndex: string
@@ -144,11 +74,11 @@ export interface AbsenceObservation {
 		basis: CoverageBasis
 		completeness: number
 		observedRows: number
+
 		/**
-		 * The class the layer holds, read from its own `poi_category_codes`.
+		 * The single class the coverage layer holds, read from its `poi_category_codes`.
 		 *
-		 * Equal to `categoryID` on every observation — carried anyway, because the equality
-		 * is the guard and a receipt that does not show it cannot be checked.
+		 * It always equals `categoryID`; it is recorded so a reader can check that guard.
 		 */
 		surveyedCategoryID: string
 		layer: {
@@ -165,86 +95,52 @@ export interface AbsenceObservation {
 		}
 		databasePath: string
 	}
+
 	/**
-	 * The point the search was centred on.
-	 * The executor's own, never re-derived.
+	 * The point the POI executor centred its search on, as `resolvePOISearchCenter` returns it.
 	 */
 	searchCenter: { latitude: number; longitude: number }
+
 	/**
-	 * How many rows the answer returned in total, and how many of them fell inside the observed cell.
+	 * How many rows the answer returned in total.
 	 *
-	 * The second is always zero on an observation: a returned row inside the cell contradicts
-	 * the coverage row, and the route refuses rather than choosing which reader to believe.
+	 * `resultsInCell` is always zero on an observation, because a returned row inside
+	 * the cell contradicts the coverage row and the route refuses instead.
 	 */
 	resultsReturned: number
 	resultsInCell: number
 }
 
 /**
- * Why a query produced no absence observation.
+ * Lists the named reasons a query can produce no absence observation.
  *
- * Every one of these is a silence the route owes an account of.
- * An unnamed silence and a silence for the right reason read identically on a receipt,
- * and the control rows are graded on exactly which one occurred.
+ * Each silence is named so that a receipt can tell a correct refusal from an unexplained one.
  */
 export const ABSENCE_REFUSALS = [
-	/**
-	 * The coordinator never took the POI branch, or took it and abstained.
-	 * There is no answer to qualify.
-	 */
 	"no_poi_answer",
-	/**
-	 * The POI branch answered, but the executor never ran (intent-only mode).
-	 *
-	 * A search that did not happen returns nothing for a reason that has nothing to do with the world.
-	 */
+
 	"executor_did_not_run",
-	/**
-	 * The subject was a brand or a free-text name.
-	 *
-	 * The artifact maps categories, so a non-category subject reaches no assertion.
-	 */
+
 	"subject_not_a_category",
-	/**
-	 * The compiled artifact carries no concept that both maps to this category
-	 * and asserts `affords` against an activity.
-	 */
+
 	"no_affordance_assertion",
-	/**
-	 * The coverage layer does not hold this class, so its completeness says nothing about it.
-	 */
+
 	"category_not_surveyed",
-	/**
-	 * The search was un-anchored, so there is no cell to qualify.
-	 */
+
 	"no_search_center",
-	/**
-	 * The layer carries no coverage row for the cell the search was centred on —
-	 * unmapped, which is unknown and never absence.
-	 */
+
 	"cell_unsurveyed",
-	/**
-	 * The cell has a coverage row whose basis is `source_present`.
-	 *
-	 * The source looked and returned rows.
-	 * That is presence evidence and supports no exclusion.
-	 */
+
 	"basis_supports_no_exclusion",
-	/**
-	 * The layer holds rows in the cell, so the cell is not empty.
-	 *
-	 * Whether the search reached them is a retrieval question rather than an absence.
-	 */
+
 	"cell_not_empty",
-	/**
-	 * The layer's coverage row says the cell is empty and the answer returned a row inside it.
-	 *
-	 * The two readers disagree, and an absence claim asserted over a disagreement is
-	 * the confident wrong answer this whole route exists to avoid.
-	 */
+
 	"coverage_contradicted_by_answer",
 ] as const
 
+/**
+ * Names one reason from {@linkcode ABSENCE_REFUSALS} that the route declined to record an absence.
+ */
 export type AbsenceRefusal = (typeof ABSENCE_REFUSALS)[number]
 
 /**
@@ -255,78 +151,71 @@ export type AbsenceDecision =
 	| { fired: false; refusal: AbsenceRefusal }
 
 /**
- * What the route is, stated for a receipt: which artifact and which coverage
- * layer it reads, and what it can speak to.
- *
- * A receipt recording only that "the route was on" cannot distinguish a route that found nothing from
- * a route built against the wrong layer, and those produce the same silence for opposite reasons.
+ * Describes which artifact and coverage layer a route reads, so a receipt can tell a
+ * route that found nothing from one built against the wrong layer.
  */
 export interface AbsenceRouteIdentity {
 	modelVersion: string
+
 	/**
-	 * Every POI category id the artifact both maps and asserts an affordance for, in code-point order.
+	 * Every POI category ID the model both maps and asserts an affordance for, in code-point order.
 	 */
 	affordingCategoryIDs: string[]
 	coverageDatabasePath: string
 	coverageLayer: LayerManifest
+
 	/**
-	 * The class the coverage layer holds.
-	 * The only category this route may speak about.
+	 * The single class the coverage layer holds, and the only category this route may speak about.
 	 */
 	surveyedCategoryID: string
 	coverageResolution: number
 	coverageCells: number
+
 	/**
-	 * Cells recorded surveyed-and-empty: the exclusion payload, and the count worth reading first.
+	 * Cells recorded as surveyed and empty on a basis that supports exclusion,
+	 * which bounds how often the route can fire.
 	 */
 	exclusionGradeEmptyCells: number
 }
 
+/**
+ * Represents an open absence route that decides, for each POI outcome,
+ * whether to record an absence observation or a named refusal.
+ * Dispose it to close the coverage database.
+ */
 export interface AbsenceObservationRoute extends Disposable {
 	identity: AbsenceRouteIdentity
+
 	/**
-	 * Decide one answered query.
-	 *
-	 * Pure with respect to the pipeline: it reads the outcome and the coverage layer and returns a record.
+	 * Decides one answered query from the outcome and the coverage layer, without changing the outcome.
 	 */
 	observe: (outcome: POIIntentOutcome | undefined) => Promise<AbsenceDecision>
 }
 
+/**
+ * Configures {@linkcode createAbsenceObservationRoute} with the sealed coverage layer to read,
+ * and optionally a compiled model to use in place of the committed one.
+ */
 export interface AbsenceObservationRouteOptions {
 	/**
-	 * The sealed layer whose `layer_coverage` rows qualify the absence.
+	 * The sealed single-class layer whose `layer_coverage` rows qualify the absence.
 	 *
-	 * Required: there is no default coverage layer, and a route that guessed one would
-	 * qualify an absence against a survey nobody asked for.
+	 * It has no default, because a guessed layer would qualify an absence against a survey nobody chose.
 	 */
 	coverageDatabasePath: PathBuilderLike
+
 	/**
-	 * Override the compiled artifact, for a test that wants a synthetic model.
-	 *
-	 * Absent reads the committed one.
+	 * A compiled model to use instead of the committed one, typically a synthetic model in tests.
 	 */
 	model?: CompiledGeographicModel
 }
 
-/**
- * One category the artifact can speak about: the concept it names, the affordance assertion,
- * and the mapping that ties the external identifier to the concept.
- */
 interface AffordingCategory {
 	concept: ConceptRecord
 	assertion: RelationAssertion
 	mapping: ExternalMappingRecord
 }
 
-/**
- * Index the artifact by external category id, keeping only categories that both map
- * into `poi-taxonomy` and carry an `affords` assertion.
- *
- * A category reaching more than one affordance is not resolved here.
- * The first in concept code-point order is taken and the count is not hidden,
- * because choosing among affordances would be a preference this program does not author.
- * The frozen vertical reaches exactly one.
- */
 function indexAffordingCategories(model: CompiledGeographicModel): Map<string, AffordingCategory> {
 	const byExternalID = new Map<string, AffordingCategory>()
 
@@ -354,21 +243,7 @@ function indexAffordingCategories(model: CompiledGeographicModel): Map<string, A
 }
 
 /**
- * The resolution a layer's coverage cells were captured at, recovered from the cells themselves.
- *
- * A short cell does not name its own resolution, so it cannot simply be read.
- * It can be recovered: the digits past a cell's own resolution are all `7`.
- *
- * It is not a valid digit.
- * Therefore, exactly one resolution expands a given short cell into a valid index.
- *
- * Every stored cell is probed rather than a sample of them, and a table whose cells disagree throws.
- * A mixed-resolution coverage table has no single resolution to probe at, and picking
- * one would silently answer "unsurveyed" for every cell at the other.
- *
- * The implementation lives IN `@mailwoman/spatial` because a second layer reader needed it
- * and the two failure modes it refuses are silent in a copy.
- * This name and its message prefix are kept so callers and their receipts read the same.
+ * Recovers the single H3 resolution at which a layer's coverage cells were stored.
  *
  * @throws {Error} When the table is empty, when a cell expands at no resolution, or when the cells disagree.
  */
@@ -376,9 +251,6 @@ export function recoverCoverageResolution(cells: readonly number[]): number {
 	return recoverShortCellResolution(cells, "absence route")
 }
 
-/**
- * The classes a POI layer holds, read from its own code table.
- */
 async function readSurveyedCategories(db: DatabaseClient<POIDatabase>): Promise<string[]> {
 	const rows = await db.selectFrom("poi_category_codes").select("category").execute()
 
@@ -386,13 +258,9 @@ async function readSurveyedCategories(db: DatabaseClient<POIDatabase>): Promise<
 }
 
 /**
- * Build the route against one compiled artifact and one sealed coverage layer.
+ * Opens an absence route against one compiled model and one sealed single-class coverage layer.
  *
- * Everything that would make the route answer a well-formed wrong thing is refused here
- * rather than at query time: a layer with no coverage rows, a layer holding more than one class,
- * a coverage table whose resolution cannot be recovered, an artifact that defines no `affords` relation.
- * Each of those would otherwise present as a route that simply never fires, which on a
- * receipt is indistinguishable from a region that genuinely has nothing to say.
+ * It throws at construction on any configuration that would otherwise make the route silently never fire.
  */
 export async function createAbsenceObservationRoute(
 	options: AbsenceObservationRouteOptions
@@ -430,10 +298,6 @@ export async function createAbsenceObservationRoute(
 		const coverageResolution = recoverCoverageResolution(cellRows.map((row) => row.h3_cell))
 
 		const exclusionGradeEmptyCells = cellRows.filter(
-			// A NULL column is an artifact built before `basis` existed.
-			// It was recording source presence, so that is what it counts as here,
-			// never a stronger basis than the builder actually had, which is the resolution
-			// `readLayerCoverage` applies to the same column.
 			(row) => row.observed_rows === 0 && supportsExclusion({ basis: row.basis ?? CoverageBasis.SourcePresent })
 		).length
 
@@ -467,16 +331,6 @@ interface DecisionContext {
 	identity: AbsenceRouteIdentity
 }
 
-/**
- * The conjunction, in refusal order.
- *
- * Order is chosen so the reason a receipt records is the first thing that was missing
- * rather than the last thing checked: the artifact half before the coverage half,
- * and within the coverage half, "we never surveyed here" before "the survey supports
- * no exclusion" before "the survey found something".
- * A control row is graded on which of these it hit, so an order that reported a later
- * reason would let a row pass its control for a reason nobody registered.
- */
 async function decide(outcome: POIIntentOutcome | undefined, context: DecisionContext): Promise<AbsenceDecision> {
 	if (!outcome || outcome.type !== "intent") return { fired: false, refusal: "no_poi_answer" }
 
@@ -491,10 +345,6 @@ async function decide(outcome: POIIntentOutcome | undefined, context: DecisionCo
 
 	if (!afforded) return { fired: false, refusal: "no_affordance_assertion" }
 
-	// Every searched category must be the surveyed one.
-	// The coverage layer surveys a single category, so a union reaching past it has no survey
-	// behind the classes it added — "nothing here" would then be a claim about premises nobody
-	// looked for, which is the one thing a coverage-qualified absence exists to refuse.
 	if (!categoryIDs.every((id) => id === context.identity.surveyedCategoryID)) {
 		return { fired: false, refusal: "category_not_surveyed" }
 	}
@@ -512,9 +362,6 @@ async function decide(outcome: POIIntentOutcome | undefined, context: DecisionCo
 
 	if (!cell) return { fired: false, refusal: "cell_unsurveyed" }
 
-	// `readLayerCoverage` resolves a NULL column to `source_present`, so a cell that
-	// reaches here always names its basis, but the field is optional on the parsed type,
-	// and `supportsExclusion` is what narrows it to the two that qualify.
 	const basis = cell.basis
 
 	if (!basis || !supportsExclusion(cell)) return { fired: false, refusal: "basis_supports_no_exclusion" }

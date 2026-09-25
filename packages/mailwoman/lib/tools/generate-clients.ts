@@ -1,5 +1,3 @@
-
-
 import { pathExists } from "@mailwoman/core/fs/readers"
 import {
 	copyFileTo,
@@ -17,15 +15,21 @@ import type { Check } from "#cli-kit"
 import { readMailwomanVersion } from "#cli/kit/metadata"
 import { runProcessOrFail } from "#cli/kit/shared"
 
-
+/**
+ * The HTTP surfaces that each get an emitted OpenAPI spec and a generated Python and Rust client.
+ */
 export const CLIENT_SURFACES = ["photon", "nominatim", "libpostal", "mailwoman"] as const
 
 type ClientSurface = (typeof CLIENT_SURFACES)[number]
 
-
 const FLAVORS = ["3.1", "3.0"] as const
 
-
+/**
+ * Resolves a surface's compiled CLI entry point from its `package.json` `bin`,
+ * which is the OpenAPI emitter this pipeline runs.
+ *
+ * Reading `bin` rather than a literal emit path keeps it correct when a workspace's build layout moves.
+ */
 export async function emitterCLIPath(surface: ClientSurface): Promise<string> {
 	const { bin } = await readPackageJSON<{ bin?: string | Record<string, string> }>(
 		workspacePath(surface, "package.json")
@@ -40,9 +44,7 @@ export async function emitterCLIPath(surface: ClientSurface): Promise<string> {
 	return workspacePath(surface, entry)
 }
 
-
 const LICENSE_FILENAMES = ["LICENSE.md", "COMMERCIAL-LICENSE.md"] as const
-
 
 async function copyLicenseFiles(destDir: PathBuilder): Promise<void> {
 	for (const filename of LICENSE_FILENAMES) {
@@ -50,12 +52,10 @@ async function copyLicenseFiles(destDir: PathBuilder): Promise<void> {
 	}
 }
 
-
 interface SpecPaths {
 	v31: Record<ClientSurface, string>
 	v30: Record<ClientSurface, string>
 }
-
 
 interface GenerateClientsReceipt {
 	version: string
@@ -69,30 +69,40 @@ interface GenerateClientsReceipt {
 	elapsedSeconds: number
 }
 
+/**
+ * Options for {@link generateClients}; `outDir` defaults to `clients-build/` at the
+ * repo root, and `skipVerify` skips the Python and Rust build checks.
+ */
 export interface GenerateClientsOptions {
-	
+	/**
+	 * The output root, which defaults to the gitignored `clients-build/` at the repo root.
+	 */
 	outDir?: PathBuilderLike
-	
+
+	/**
+	 * Whether to skip the Python and Rust build checks, which makes the output unfit as a release proof.
+	 */
 	skipVerify?: boolean
 	onPhase?: (phase: string, detail?: string) => void
 }
 
+/**
+ * The outcome of {@link generateClients}: one check per pipeline step, stopping at
+ * the first failure, plus a receipt of what was written.
+ */
 export interface GenerateClientsResult {
 	ok: boolean
 	checks: Check[]
 	receipt: GenerateClientsReceipt
 }
 
-
 function fail(message: string): never {
 	throw new Error(message)
 }
 
-
 function run(cmd: string, args: string[], options: { cwd?: PathBuilderLike } = {}): void {
 	runProcessOrFail(cmd, args, { ...options, echo: true })
 }
-
 
 async function checkCompiled(): Promise<void> {
 	const missing: string[] = []
@@ -110,7 +120,6 @@ async function checkCompiled(): Promise<void> {
 	}
 }
 
-
 async function emitSpecs(specsDir: PathBuilder, phase: (p: string, d?: string) => void): Promise<SpecPaths> {
 	await makeDirectories(specsDir)
 
@@ -121,7 +130,6 @@ async function emitSpecs(specsDir: PathBuilder, phase: (p: string, d?: string) =
 		const cli = await emitterCLIPath(surface)
 
 		for (const flavor of FLAVORS) {
-			
 			const out = specsDir(`${surface}-${flavor}.json`).toString()
 
 			phase("emit-spec", `${surface} ${flavor} → ${out}`)
@@ -133,7 +141,6 @@ async function emitSpecs(specsDir: PathBuilder, phase: (p: string, d?: string) =
 
 	return { v31, v30 }
 }
-
 
 async function generatePythonModules(
 	specPaths: SpecPaths,
@@ -159,12 +166,14 @@ async function generatePythonModules(
 		])
 	}
 
-	
 	for (const surface of CLIENT_SURFACES) {
 		await removePathIfPresent(packageDir(surface, ".ruff_cache"))
 	}
 }
 
+/**
+ * Renders the `pyproject.toml` for the `mailwoman-client` Python package at `version`.
+ */
 export function pythonPyproject(version: string): string {
 	return `[project]
 name = "mailwoman-client"
@@ -248,6 +257,10 @@ docstring-code-format = true
 `
 }
 
+/**
+ * Renders the hand-written `mailwoman_client/__init__.py`, which wraps each generated
+ * subpackage in a client class with a default `base_url`.
+ */
 export function pythonInitPy(): string {
 	return `"""mailwoman-client — typed Python clients for Mailwoman's drop-in geocoding APIs + the native /v1/* surface.
 
@@ -426,7 +439,6 @@ function pythonReadme(): string {
 	return lines.join("\n")
 }
 
-
 async function assemblePythonPackage(
 	pythonDir: PathBuilder,
 	version: string,
@@ -437,12 +449,9 @@ async function assemblePythonPackage(
 	await writeLocalFile(pythonReadme(), pythonDir("README.md"))
 	await writeLocalFile(pythonInitPy(), pythonDir("mailwoman_client", "__init__.py"))
 	await writeLocalTextFile("", pythonDir("mailwoman_client", "py.typed"))
-	
-	
-	
+
 	await copyLicenseFiles(pythonDir)
 }
-
 
 async function verifyPython(
 	pythonDir: PathBuilder,
@@ -469,7 +478,6 @@ async function verifyPython(
 		fail(`uv build did not produce a .tar.gz under ${distDir}`)
 	}
 
-	
 	const wheelPath = distDir(wheel).toString()
 
 	phase("python-import-check", wheelPath)
@@ -487,6 +495,9 @@ async function verifyPython(
 	return { wheel: wheelPath, sdist: distDir(sdist).toString() }
 }
 
+/**
+ * Renders the `Cargo.toml` for the `mailwoman-client` Rust crate at `version`.
+ */
 export function rustCargoToml(version: string): string {
 	return `[package]
 name = "mailwoman-client"
@@ -527,6 +538,10 @@ tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
 `
 }
 
+/**
+ * Renders the crate's `src/lib.rs`, which generates one module per surface from
+ * its vendored OpenAPI 3.0 spec at compile time.
+ */
 export function rustLibRs(): string {
 	const lines = [
 		"//! Typed Rust clients for Mailwoman's four HTTP surfaces — the three drop-in geocoding APIs",
@@ -713,7 +728,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 `
 }
 
-
 async function assembleRustCrate(
 	specPaths: SpecPaths,
 	rustDir: PathBuilder,
@@ -734,17 +748,19 @@ async function assembleRustCrate(
 	await writeLocalFile(rustLibRs(), rustDir("src", "lib.rs"))
 	await writeLocalFile(rustReadme(), rustDir("README.md"))
 	await writeLocalFile(rustExample(), rustDir("examples", "basic.rs"))
-	
+
 	await copyLicenseFiles(rustDir)
 }
-
 
 function verifyRust(rustDir: PathBuilder, phase: (p: string, d?: string) => void): void {
 	phase("cargo-check", rustDir.toString())
 	run("cargo", ["check", "--examples"], { cwd: rustDir })
 }
 
-
+/**
+ * Emits every surface's OpenAPI specs, generates and assembles the Python package
+ * and Rust crate, then build-checks both unless `skipVerify` is set.
+ */
 export async function generateClients(opts: GenerateClientsOptions = {}): Promise<GenerateClientsResult> {
 	const t0 = performance.now()
 	const phase = opts.onPhase ?? (() => {})
@@ -768,7 +784,6 @@ export async function generateClients(opts: GenerateClientsOptions = {}): Promis
 		{
 			check: "emit 8 specs (4 surfaces × 3.1 + 3.0) → clients-build/specs/",
 			run: async () => {
-				
 				await removePathIfPresent(outDir)
 				await makeDirectories(outDir)
 				specPaths = await emitSpecs(specsDir, phase)

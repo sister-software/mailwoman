@@ -2,9 +2,6 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- *
- *   Measure the distance from OpenAddresses points to matching postcode centroids. This evaluates locality-level
- *   parent-borrow accuracy, not rooftop accuracy.
  */
 
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
@@ -15,9 +12,6 @@ import { haversineKm } from "@mailwoman/spatial"
 import { resolvePath } from "path-ts"
 import { JSONSpliterator } from "spliterator"
 
-/**
- * Distance within which a postcode anchor counts as correct, in kilometres.
- */
 const ANCHOR_TOLERANCE_KM = 25
 
 interface Args {
@@ -53,9 +47,6 @@ function parseArgs(): Args {
 	return { evalPath, country, databases }
 }
 
-/**
- * Compatible input row shape across evaluation-file versions.
- */
 interface EvalRow {
 	expected?: { postcode?: string; lat?: number; lon?: number }
 	postcode?: string

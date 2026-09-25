@@ -2,11 +2,6 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- *
- *   `usePOISearch` — the headless core of the POI explorer. Owns the taxonomy-runtime load, the
- *   debounced classify → subject → OverpassQL derivation, and the "Search live" state machine. The
- *   runtime loader and the live-search probe are both injectable, so stories/tests drive it with mocks
- *   and no network or db. Presentation is entirely the caller's concern.
  */
 
 import { matchPOISubject } from "@mailwoman/kind-classifier"
@@ -19,65 +14,74 @@ import { useDebouncedValue } from "#common/useDebouncedValue"
 import { loadPOIRuntime } from "#poi/runtime"
 import type { LiveSearchState, LoadPOIRuntime, POIExplorerResult, POILiveSearch, POIRuntime } from "#poi/types"
 
+/**
+ * Configures {@link usePOISearch}: the query text, an injectable runtime loader
+ * and live search, whether brands may search live, and the debounce delay.
+ */
 export interface UsePOISearchOptions {
 	/**
-	 * The current query text (controlled by the caller).
+	 * The current query text, owned and updated by the caller.
 	 */
 	text: string
+
 	/**
-	 * Runtime loader. @default loadPOIRuntime
+	 * Loads the taxonomy runtime once on mount, default `loadPOIRuntime`.
 	 */
 	loadRuntime?: LoadPOIRuntime
+
 	/**
-	 * Injected live-search probe.
-	 *
-	 * Absent ⇒ the live-results affordance is disabled.
+	 * The live-search probe; without it, live search is unavailable.
 	 */
 	runLiveSearch?: POILiveSearch
+
 	/**
-	 * Whether the injected probe can serve brand subjects (fetch by Wikidata QID).
+	 * Whether the probe can search for brand subjects by Wikidata ID, default false.
 	 *
-	 * Default false: brand subjects show the intent + QID chip but no live-search affordance.
-	 * The docs' httpvfs probe leaves this off — brand-wide row hydration is pathological
-	 * over byte-range (measured) — so brand live search is a server-side-backend capability.
-	 *
-	 * Category live search is unaffected either way.
+	 * Enable it only for a server-side backend; fetching every row for a brand over
+	 * an HTTP range-request database is too slow.
+	 * Category live search is unaffected.
 	 */
 	brandLiveSearch?: boolean
+
 	/**
-	 * Debounce before (re)classifying. @default 250
+	 * The delay in milliseconds before the text is classified, default 250.
 	 */
 	debounceMs?: number
 }
 
+/**
+ * Describes the state {@link usePOISearch} returns: runtime readiness, the classification
+ * for the current text, and the live-search state with its trigger.
+ */
 export interface UsePOISearch {
 	/**
 	 * True once the taxonomy runtime has loaded.
 	 */
 	runtimeReady: boolean
+
 	/**
-	 * The intent result for the current (debounced) query, or null for empty input.
+	 * The classification for the current debounced text, or null for empty text
+	 * and while classification is pending.
 	 */
 	result: POIExplorerResult | null
+
 	/**
-	 * State of the on-demand live poi.db search.
+	 * The state of the live search for the current debounced text, `idle` until one runs.
 	 */
 	liveSearch: LiveSearchState
+
 	/**
-	 * Whether a live search can run right now (a probe is wired + there's a resolved subject with an anchor).
+	 * Whether a live search can run now: a probe is wired and the subject is
+	 * live-capable with a non-empty place anchor.
 	 */
 	canSearchLive: boolean
+
 	/**
-	 * Kick off a live search for the current subject.
-	 *
-	 * No-op when {@link canSearchLive} is false.
+	 * Starts a live search for the current subject, doing nothing when `canSearchLive` is false.
 	 */
 	searchLive: () => Promise<void>
 }
 
-/**
- * Compute the OverpassQL export for a matched subject, capturing any emitter error rather than throwing.
- */
 function buildOverpass(
 	runtime: POIRuntime,
 	categoryID: string,
@@ -102,6 +106,14 @@ function buildOverpass(
 	}
 }
 
+/**
+ * Classifies debounced query text as a POI category or brand request and optionally
+ * runs a live search around the text's remaining place anchor.
+ *
+ * Results are keyed to the query that produced them, so a stale result is never shown for newer text.
+ * Live search requires a non-empty anchor and is unavailable for categories that need a locally
+ * built layer, or for brands unless `brandLiveSearch` is set and the brand has a Wikidata ID.
+ */
 export function usePOISearch({
 	text,
 	loadRuntime = loadPOIRuntime,
@@ -110,28 +122,14 @@ export function usePOISearch({
 	debounceMs = 250,
 }: UsePOISearchOptions): UsePOISearch {
 	const [runtime, setRuntime] = useState<POIRuntime | null>(null)
-	/**
-	 * The classify result keyed BY the query that produced it.
-	 *
-	 * The visible result is derived during render (`storedResult.query === trimmedText ? … : null`),
-	 * so a new query invalidates the old answer by derivation.
-	 * The effect never writes state synchronously to "reset", which is the
-	 * react(set-state-in-effect) shape the lint bump rightly flags.
-	 */
+
 	const [storedResult, setStoredResult] = useState<{ query: string; value: POIExplorerResult } | null>(null)
-	/**
-	 * Live-search state, keyed the same way: launched FOR a query, visible only while that query stands.
-	 */
+
 	const [storedLive, setStoredLive] = useState<{ query: string; state: LiveSearchState } | null>(null)
 
 	const debouncedText = useDebouncedValue(text, debounceMs)
 	const trimmedText = debouncedText.trim()
 
-	// The load fires exactly once on mount regardless of whether
-	// the caller passes a fresh `loadRuntime` closure each render
-	// (an inline `async () => …` would otherwise retrigger the effect → reload → re-render loop).
-	// `useEffectEvent` reads the latest closure without joining the dependency list.
-	// The runtime is a load-once resource.
 	const loadRuntimeEvent = useEffectEvent(() => loadRuntime())
 
 	useEffect(() => {
@@ -148,9 +146,6 @@ export function usePOISearch({
 		}
 	}, [])
 
-	// Classify the debounced query and derive the subject + OverpassQL (async, so it lives in an effect).
-	// Every state write below happens after an await — invalidation on query change is
-	// handled by the key derivation above rather than by a synchronous reset here.
 	useEffect(() => {
 		if (!runtime) return
 
@@ -174,9 +169,6 @@ export function usePOISearch({
 				return
 			}
 
-			// Brand subject: the lexicon carries the brand's canonical name as `categoryID` + its Wikidata QID.
-			// No category record, no OverpassQL (brands are searched by QID against the
-			// layer's `brand_wikidata` index rather than OSM tags).
 			if ((matched.match.kind ?? "category") === "brand") {
 				setStoredResult({
 					query: trimmed,
@@ -226,16 +218,11 @@ export function usePOISearch({
 		}
 	}, [trimmedText, runtime])
 
-	// Derived visibility: an answer stands only while its query does.
-	// A new query reads as null/idle with no reset write anywhere.
 	const result = storedResult?.query === trimmedText ? storedResult.value : null
 	const liveSearch: LiveSearchState = storedLive?.query === trimmedText ? storedLive.state : { status: "idle" }
 
 	const subject = result?.subject
 
-	// A subject is live-searchable when a probe is wired, it has an anchor, and: a category that
-	// isn't build-local, or a brand with a QID and a brand-capable probe (`brandLiveSearch`).
-	// Brands without a QID / without a brand probe show the intent + QID chip but no live affordance.
 	const subjectLiveCapable =
 		subject !== undefined &&
 		(subject.kind === "brand" ? brandLiveSearch && subject.wikidata !== undefined : !subject.buildLocal)
@@ -262,8 +249,7 @@ export function usePOISearch({
 						}
 					: {
 							categoryID: subject.category.id,
-							// Fan the canonical seed id out over its Overture leaves.
-							// The same translation the Node reader uses.
+
 							overtureCategoryIDs: runtime.lookup.resolveOvertureCategories(subject.category.id),
 							anchor: subject.remainder,
 						}

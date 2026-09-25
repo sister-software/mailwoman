@@ -2,8 +2,6 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file The NPPES dedup benchmark's markdown report. Pure: every figure comes from the input, because eval figures are
- *   never hand-typed into docs.
  */
 
 import type { TermFrequencyTable } from "@mailwoman/match"
@@ -14,9 +12,6 @@ import type { Score } from "#tools/nppes/scoring"
 import { COLOCATION_KM } from "#tools/nppes/truth-grains"
 import { pct } from "#tools/shared"
 
-/**
- * F1 gap within which two blocking strategies are treated as equivalent.
- */
 const BLOCKING_PARITY_TOLERANCE = 0.015
 
 /**
@@ -32,7 +27,7 @@ export interface SettingScore {
  */
 export interface SweepArm {
 	/**
-	 * Link threshold, in bits.
+	 * The link threshold, in bits.
 	 */
 	t: number
 	res: Pick<ResolveResult, "candidatePairs" | "droppedBlocks">
@@ -44,37 +39,40 @@ export interface SweepArm {
  */
 export interface NPPESReportInput {
 	state: string
+
 	/**
-	 * Sampled NPIs — the true-entity count at the NPI grain.
+	 * The number of sampled NPIs, which is the true entity count at the NPI grain.
 	 */
 	keptNpis: number
 	recordCount: number
+
 	/**
-	 * Records whose address placed.
+	 * The number of records whose address was placed.
 	 */
 	geocoded: number
 	trainEM: boolean
+
 	/**
-	 * The corpus-wide table the progression was fed.
-	 * Only its `total`/`distinct` are reported.
+	 * The corpus-wide address-frequency table fed to the progression, of
+	 * which only `total` and `distinct` are reported.
 	 */
 	addressFrequency: TermFrequencyTable
+
 	/**
-	 * The setting progression in order.
-	 *
-	 * The first row is the bare baseline, the last the full stack.
+	 * The setting progression from the bare baseline to the full stack,
+	 * which the report expects to hold at least four rows.
 	 */
 	progression: readonly SettingScore[]
+
 	/**
-	 * Zero-config `resolveEntities(records)` — reported apart from the progression because its
-	 * address-frequency table is input-scoped, which on a sub-sample is intentionally sparse.
+	 * The zero-config `resolveEntities` score, reported apart because its input-scoped
+	 * frequency table is sparse on a sub-sample.
 	 */
 	defaultOutOfBox: Score
 	sweep: readonly SweepArm[]
+
 	/**
-	 * The best-F1 arm.
-	 *
-	 * Must be an element of {@linkcode sweep} — the table stars it by identity.
+	 * The best-F1 arm, which must be an element of `sweep` because the table marks it by identity.
 	 */
 	best: SweepArm
 	entityCount: number
@@ -90,14 +88,16 @@ export interface NPPESReportInput {
 	gbtOrg: Score
 	gbtOrgCoord: Score
 	gbtOrgH3: Score
+
 	/**
-	 * The optional `--candidate` A/B row.
+	 * The optional `--candidate` A/B row, or `null` when no candidate was given.
 	 */
 	candidate: { label: string; npi: Score; entity: Score } | null
 	h3Res: number
+
 	/**
-	 * Sampled NPIs whose primary practice address placed.
-	 * The population the coordinate grain can act on.
+	 * The number of sampled NPIs whose primary practice address was placed,
+	 * which bounds what the coordinate grain can act on.
 	 */
 	geocodedNpis: number
 }
@@ -135,13 +135,10 @@ export function renderNPPESDedupReport(input: NPPESReportInput): string {
 		geocodedNpis,
 	} = input
 
-	const baseline = progression[0]! // no settings — the prior-prior behaviour
-	// The last progression row — the whole A1–A5 stack, never compared on F1 against the others.
-	// Named for what it is: a row called `best` invites reading a stack-wide delta as
-	// one setting's marginal effect, which is how the authorized-official sentence
-	// below came to quote a five-setting number.
+	const baseline = progression[0]!
+
 	const fullStack = progression.at(-1)!
-	const base = sweep[0]! // threshold 0, full setting stack
+	const base = sweep[0]!
 
 	const signed = (x: number) => `${x >= 0 ? "+" : ""}${x.toFixed(1)}pp`
 

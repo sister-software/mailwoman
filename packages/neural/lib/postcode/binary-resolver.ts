@@ -2,57 +2,28 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- *
- *   Browser-side postcode resolver for the anchor (#240). A pure-JS, zero-dependency
- *   `PostcodeResolver` backed by a compact flat binary instead of SQLite, so the postcode anchor
- *   runs in the wasm/browser parser behind the same `lookup()` interface as the server-side
- *   `WOFPostcodeLookup`.
- *
- *   This file owns both ends of the format — `serializePostcodeBinary` (run in Node by
- *   `scripts/build-postcode-binary.ts`) and `PostcodeBinaryResolver` (run in the browser) — so the
- *   layout can never drift between writer and reader.
- *
- *   Binary layout (little-endian): magic "PCB1" (4 bytes) u32 recordCount u8 countryCount, then
- *   countryCount × 2 ascii bytes (the country table) u8 keyWidth (max postcode length in bytes)
- *   records recordCount × { key[keyWidth] ascii right-padded with 0x00, u8 countryIdx, i16 latQ,
- *   i16 lonQ }, sorted by key bytes ascending. A postcode present in two countries appears as two
- *   adjacent records (same key, different countryIdx).
- *
- *   Coordinates are quantized to i16: latQ = round(lat/90 × 32767), lonQ = round(lon/180 × 32767),
- *   giving ~300 m resolution — ample for a "which city/region" anchor. A record with latQ = lonQ =
- *   0 means "known postcode, no centroid" (membership only), matching the SQLite resolver's
- *   convention.
  */
 
 import type { AnchorLookup } from "#anchor-inference"
 import type { PostcodePlace } from "#postcode/anchor"
 
-/**
- * "PCB1" little-endian (P=0x50 C=0x43 B=0x42 1=0x31)
- */
 const MAGIC = 0x31_42_43_50
-/**
- * CountryIdx(1) + latQ(2) + lonQ(2)
- */
+
 const REC_TAIL = 5
 
 /**
- * Latitude quantization scale — `latQ = round(lat / 90 × 32767)`, giving ~300 m resolution.
- *
- * The single home for the PCB1/PFX1 grid: `postcode-prefix-index.ts` imports these
- * so the two formats decode coordinates identically.
+ * Sets the latitude scale of the i16 coordinate grid (about 300 m resolution),
+ * shared with the prefix index so both formats decode identically.
  */
 export const LAT_Q = 32_767 / 90
 
 /**
- * Longitude quantization scale — the longitude half of the PCB1/PFX1 grid.
- * See {@link LAT_Q}.
+ * Sets the longitude scale of the i16 coordinate grid, the counterpart of {@link LAT_Q}.
  */
 export const LON_Q = 32_767 / 180
 
 /**
- * Quantize a coordinate onto the i16 grid, clamped to the representable range
- * so an out-of-range input can never overflow the record's i16 write.
+ * Quantizes a coordinate onto the i16 grid, clamping it so an out-of-range input cannot overflow the record.
  */
 export function quantizeCoordinate(value: number, scale: number): number {
 	return Math.max(-32_767, Math.min(32_767, Math.round(value * scale)))
@@ -65,6 +36,10 @@ export function dequantizeCoordinate(quantized: number, scale: number): number {
 	return quantized / scale
 }
 
+/**
+ * Describes one postcode record passed to {@link serializePostcodeBinary},
+ * with a two-letter country code and a representative point.
+ */
 export interface PostcodeBinaryEntry {
 	postcode: string
 	country: string
@@ -72,10 +47,6 @@ export interface PostcodeBinaryEntry {
 	lon: number
 }
 
-/**
- * Right-pad an ascii postcode to `width` with NUL; `\0` sorts below any real char,
- * so shorter keys order before longer ones with the same prefix, which is what we want.
- */
 function encodeKey(s: string, width: number, out: Uint8Array, offset: number): void {
 	for (let i = 0; i < width; i++) {
 		out[offset + i] = i < s.length ? s.charCodeAt(i) & 0x7f : 0
@@ -83,11 +54,8 @@ function encodeKey(s: string, width: number, out: Uint8Array, offset: number): v
 }
 
 /**
- * Serialize postcode entries into the flat binary.
- *
- * Entries are sorted by (postcode, country) so equal postcodes land in adjacent records.
- * Run in Node.
- * Consumed by {@link PostcodeBinaryResolver}.
+ * Serializes postcode entries into the PCB1 binary read by {@link PostcodeBinaryResolver},
+ * sorted by postcode and then country so matching postcodes are adjacent.
  */
 export function serializePostcodeBinary(entries: readonly PostcodeBinaryEntry[]): Uint8Array {
 	// oxlint-disable-next-line unicorn/no-array-sort -- sorts a freshly-built array. toSorted would double-allocate on a hot path
@@ -146,10 +114,8 @@ export function serializePostcodeBinary(entries: readonly PostcodeBinaryEntry[])
 }
 
 /**
- * Pure-JS, browser-safe postcode resolver over the flat binary.
- *
- * Implements the same `lookup()` interface as the SQLite `WOFPostcodeLookup`,
- * so `extractPostcodeAnchors` is agnostic to which backs it.
+ * Looks up postcodes by binary search over a PCB1 binary, in Node or the browser,
+ * with the same `lookup()` interface as the SQLite `WOFPostcodeLookup`.
  */
 export class PostcodeBinaryResolver {
 	readonly #buf: Uint8Array
@@ -180,9 +146,6 @@ export class PostcodeBinaryResolver {
 		this.#recBase = o
 	}
 
-	/**
-	 * Compare the keyWidth bytes of record `i` against a padded query key.
-	 */
 	#cmpKey(i: number, key: Uint8Array): number {
 		const base = this.#recBase + i * this.#recSize
 
@@ -196,11 +159,10 @@ export class PostcodeBinaryResolver {
 	}
 
 	lookup(postcode: string): PostcodePlace[] {
-		if (postcode.length > this.#keyWidth) return [] // longer than any stored key → impossible
+		if (postcode.length > this.#keyWidth) return []
 		const key = new Uint8Array(this.#keyWidth)
 		encodeKey(postcode, this.#keyWidth, key, 0)
 
-		// Binary search for the first record whose key >= the query.
 		let lo = 0
 		let hi = this.#count
 
@@ -214,7 +176,6 @@ export class PostcodeBinaryResolver {
 			}
 		}
 
-		// Collect the contiguous run of equal keys (one per country).
 		const out: PostcodePlace[] = []
 
 		for (let i = lo; i < this.#count && this.#cmpKey(i, key) === 0; i++) {
@@ -231,20 +192,17 @@ export class PostcodeBinaryResolver {
 	}
 
 	/**
-	 * Decode the whole binary into an {@link AnchorLookup} (`Map<postcode, AnchorEntry>`) for the
-	 * neural anchor channel (#239/#240): each postcode → a uniform posterior over its member countries
+	 * Decodes the whole binary into an anchor lookup that maps each postcode to its
+	 * member countries and the mean of its non-zero centroids.
 	 *
-	 * - The mean of its non-zero centroids.
-	 *   This is the browser-side equivalent of the pilot postcode→anchor lookup the model
-	 *   trained against, built live from the shipped binary instead of a precomputed JSON.
-	 *   Records are stored sorted by (postcode, country), so equal keys are contiguous.
+	 * Each member country gets weight 1 rather than a normalized share,
+	 * and a postcode with no non-zero centroid gets `0, 0`.
 	 */
 	toAnchorLookup(): AnchorLookup {
 		const out: AnchorLookup = new Map()
 		let i = 0
 
 		while (i < this.#count) {
-			// Decode this record's postcode key (ascii, 0x00-right-padded).
 			const keyBase = this.#recBase + i * this.#recSize
 			let postcode = ""
 
@@ -255,7 +213,6 @@ export class PostcodeBinaryResolver {
 				postcode += String.fromCharCode(c)
 			}
 
-			// Walk the contiguous run of records sharing this key (one per member country).
 			const posterior: Record<string, number> = {}
 			let latSum = 0
 			let lonSum = 0
@@ -276,7 +233,7 @@ export class PostcodeBinaryResolver {
 
 				if (!same) break
 				const tail = base + this.#keyWidth
-				posterior[this.#countries[this.#buf[tail]!]!] = 1 // uniform — anchorFeatureVector renormalizes
+				posterior[this.#countries[this.#buf[tail]!]!] = 1
 				const lat = dequantizeCoordinate(this.#view.getInt16(tail + 1, true), LAT_Q)
 				const lon = dequantizeCoordinate(this.#view.getInt16(tail + 3, true), LON_Q)
 

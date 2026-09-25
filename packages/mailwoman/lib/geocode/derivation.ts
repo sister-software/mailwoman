@@ -2,23 +2,21 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file The resolver-interior trace, projected into the derivation a result can carry. Each lookup record becomes one
- *   constraint: what was looked up, what the gazetteer answered, and how the pick was made. The trace already records
- *   the candidates, the per-stage ranks and every check, with no sink meaning no bookkeeping — so this is a projection
- *   of a record that exists, never a second record.
  */
 
 import type { ResolveNodeTrace, ResolveOpts } from "@mailwoman/core/resolver"
 import { type DerivationNode, type DerivationProjection, observation, projectDerivation } from "@mailwoman/evidence"
 
 /**
- * The source name the trace's observations carry.
- *
- * The trace does not record the gazetteer extract's vintage, so the observation carries `null` there.
- * The answer's provenance names the artifact.
+ * The source name on observations built from a resolve trace, whose vintage is `null`
+ * because the trace does not record the gazetteer extract's version.
  */
 export const TRACE_SOURCE = "gazetteer"
 
+/**
+ * Converts one resolve-trace record into a derivation node that says
+ * which place was picked, or why nothing was.
+ */
 export function traceToDerivationNode(record: ResolveNodeTrace): DerivationNode {
 	const label = `${record.tag}=${record.value}`
 
@@ -48,16 +46,20 @@ export function traceToDerivationNode(record: ResolveNodeTrace): DerivationNode 
 	}
 }
 
+/**
+ * A trace sink to pass to the resolver, paired with `attach`, which adds the
+ * derivation built from its records to a result.
+ */
 export interface TraceCollector {
 	/**
-	 * The sink to hand the resolver: the caller's own, wrapped so the records also feed the projection.
+	 * The sink to pass to the resolver, which forwards each record to the caller's sink
+	 * and keeps it for the derivation.
 	 */
 	traceSink: ResolveOpts["traceSink"]
+
 	/**
-	 * Attach the projected derivation to a finished result when a sink was supplied.
-	 * Otherwise return the result unchanged, without a field.
-	 *
-	 * The one branch lives here so the geocode core carries none.
+	 * Adds the derivation built from the collected records to `result`, or returns
+	 * `result` unchanged when the caller supplied no sink.
 	 */
 	attach<T extends { epistemic_status: DerivationProjection["status"]; uncertainty_m: number | null }>(
 		result: T
@@ -65,10 +67,10 @@ export interface TraceCollector {
 }
 
 /**
- * Wrap a caller's trace sink so the same records also feed the derivation projection.
+ * Wraps a caller's trace sink so its records also build the result's `derivation`.
  *
- * No sink means no wrapper, no records and no `derivation` field: the walk does zero bookkeeping
- * and stays byte-identical, and the opt-in cost is never made unconditional here.
+ * Without a caller sink it records nothing and `attach` returns the result unchanged,
+ * so tracing stays opt-in.
  */
 export function traceCollector(callerSink: ResolveOpts["traceSink"]): TraceCollector {
 	const records: ResolveNodeTrace[] = []

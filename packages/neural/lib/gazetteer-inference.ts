@@ -2,32 +2,21 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- *
- *   Inference-side gazetteer-anchor features (#464, knowledge-ladder rung 3.2) — the TS mirror of the
- *   Python training pipeline (`mailwoman_train/gazetteer_anchor.py`). Both consumers load the same
- *   codex-generated lexicon (`scripts/build-gazetteer-anchor-lexicon.mjs` →
- *   `data/gazetteer/anchor-lexicon-v1.json`) whose `rules` encode the match semantics as data, so
- *   the two implementations cannot drift. The model conditions on per-token candidate-tag-set clues
- *   fed alongside `input_ids`; this builds them from a raw address + its SentencePiece pieces.
- *
- *   The clue informs, the model decides (model-first). `gazetteer-inference.test.ts` pins the matcher
- *   against the Python fixture: the homograph clue is symmetric, "in" ≠ "IN", multi-word countries
- *   paint every word.
  */
 
 import type { TokenizedPiece } from "#tokenizer"
 
 /**
- * The candidate-tag-set feature width: country/region/po_box/cedex/homograph (the lexicon's slot count).
+ * The width of the gazetteer candidate-tag channel, used for the ONNX zero fallback
+ * when a gazetteer-trained model runs without clue data.
  *
- * Used for the ONNX zero-fallback when a gazetteer-trained model is run with no clue data.
- * Must match the lexicon JSON's `feature_dim` and the trained model's `gazetteer_feature_dim`.
+ * It must match the lexicon's `feature_dim` and the model's `gazetteer_feature_dim`.
  */
 export const GAZETTEER_FEATURE_DIM = 5
 
 /**
- * Street-type evidence channel width (Option-A bundle) — the runner zero-fallback +
- * lexicon feature_dim interface.
+ * The width of the street-type evidence channel, used for the runner's zero fallback
+ * and checked against the lexicon's `feature_dim`.
  */
 export const STREET_TYPE_FEATURE_DIM = 1
 
@@ -44,27 +33,31 @@ export interface GazetteerLexicon {
 	slots: readonly string[]
 	bits: Record<string, number>
 	maxNgram: number
+
 	/**
-	 * Case-insensitive: key = word_norm lowercased → bitmask.
+	 * Maps a lowercased n-gram to its slot bitmask for case-insensitive matching.
 	 */
 	entries: Map<string, number>
+
 	/**
-	 * Case-sensitive: key = word_norm uppercased → bitmask (surface must already be uppercase).
+	 * Maps an uppercase single-word code to its slot bitmask, matched case-sensitively against the surface.
 	 */
 	codeEntries: Map<string, number>
+
 	/**
-	 * V3.23 digit guard (`rules.digit_guard`): a matched span paints nothing
-	 * when any span word or the nearest non-empty neighbor word carries a decimal digit —
-	 * evidence painted beside a house number swallowed the digit into the span.
+	 * Whether a matched span paints nothing when a span word or its nearest
+	 * non-empty neighbor contains a decimal digit.
 	 *
-	 * Rides the lexicon so train/inference stay symmetric by construction.
-	 * False on pre-v3.23 artifacts.
+	 * It is read from the artifact's `rules.digit_guard` so training and inference
+	 * apply the same rule, and it is `false` on older artifacts.
 	 */
 	digitGuard: boolean
 }
 
 /**
- * Parse the lexicon JSON (already `JSON.parse`d — keeps this module browser-safe. Caller reads).
+ * Validates an already-parsed gazetteer lexicon JSON object and converts it to a {@link GazetteerLexicon}.
+ *
+ * It takes parsed JSON rather than a path so the module stays browser-safe.
  */
 export function parseGazetteerLexicon(raw: {
 	feature_dim: number
@@ -75,9 +68,6 @@ export function parseGazetteerLexicon(raw: {
 	code_entries: Record<string, number>
 	rules?: { digit_guard?: boolean }
 }): GazetteerLexicon {
-	// Loud validation (#481): a malformed lexicon previously surfaced as a crash deep inside
-	// buildGazetteerFeatures (or worse, silently zero-filled clues — the fake-affix-crash class).
-	// Unknown refs fail loud, never silent.
 	if (typeof raw?.feature_dim !== "number" || raw.feature_dim <= 0) {
 		throw new Error(`gazetteer lexicon: feature_dim must be a positive number, got ${raw?.feature_dim}`)
 	}
@@ -107,12 +97,8 @@ export function parseGazetteerLexicon(raw: {
 	}
 }
 
-// Strict Unicode-Nd (mirrors Python str.isdecimal — isdigit would also accept superscripts \p{Nd} rejects).
 const hasDecimal = (word: string): boolean => /\p{Nd}/u.test(word)
 
-/**
- * True when any matched word, or the nearest non-empty neighbor word on either side, carries a digit.
- */
 function digitAdjacent(words: readonly NormWord[], i: number, matchedN: number): boolean {
 	for (let k = i; k < i + matchedN; k++) {
 		if (hasDecimal(words[k]!.text)) return true
@@ -134,9 +120,6 @@ function digitAdjacent(words: readonly NormWord[], i: number, matchedN: number):
 	return k < words.length && hasDecimal(words[k]!.text)
 }
 
-/**
- * Word_norm for one word: strip leading/trailing non-letter/digit chars (keep internal).
- */
 function stripWord(word: string): string {
 	let start = 0
 	let end = word.length
@@ -158,9 +141,9 @@ function bitsToRow(bits: number, lexicon: GazetteerLexicon): number[] {
 }
 
 interface NormWord {
-	begin: number // char offset of the first kept char
-	end: number // char offset after the last kept char
-	text: string // the stripped surface (case-preserved)
+	begin: number
+	end: number
+	text: string
 }
 
 /**
@@ -223,7 +206,6 @@ export function gazetteerCharPaint(text: string, lexicon: GazetteerLexicon): num
 			const key = parts.join(" ").toLowerCase()
 			let bits = lexicon.entries.get(key) ?? 0
 
-			// code_entries is case-sensitive: the surface must already be uppercase ("IN" ≠ "in").
 			if (n === 1) {
 				// oxlint-disable-next-line oxc/bad-bitwise-operator -- genuine bitmask accumulation rather than a mistyped logical or
 				bits |= lexicon.codeEntries.get(parts[0]!) ?? 0
@@ -238,8 +220,6 @@ export function gazetteerCharPaint(text: string, lexicon: GazetteerLexicon): num
 		}
 
 		if (matchedN) {
-			// Digit guard: a guarded match consumes its span
-			// (no sub-ngram re-matching — mirrors the Python painter exactly) but paints nothing.
 			if (lexicon.digitGuard && digitAdjacent(words, i, matchedN)) {
 				i += matchedN
 
@@ -263,20 +243,11 @@ export function gazetteerCharPaint(text: string, lexicon: GazetteerLexicon): num
 }
 
 /**
- * Channel choreography (#464, v0.9.13 postcode fix. DeepSeek 2026-06-10): zero the
- * gazetteer clue on pieces within `window` of a postcode-anchor hit.
+ * Returns a copy of the gazetteer features with the clue zeroed on pieces within `window`
+ * of a postcode-span piece, which is any piece with `anchorConfidence > 0`.
  *
- * The clue fires on the region token (`CA`/`GA`) immediately before a US postcode.
- * Its additive vector strengthens `B-region`, which makes the
- * `B-region → B-postcode` CRF transition less competitive and drops the postcode
- * (~3pp, US-only — FR postcode precedes the locality, no region neighbor).
- *
- * Suppressing the clue adjacent to the postcode removes the interference
- * while leaving every other clue intact.
- *
- * @returns A new features/confidence pair (does not mutate).
- * `anchorConfidence[i] > 0` marks postcode-span pieces.
- * Pairs with the train-time half (`gazetteer_anchor.suppress_gazetteer_near_postcode`) — enable both or neither.
+ * A region clue just before a US postcode otherwise strengthens `B-region` enough to cost the postcode
+ * its tag, and the training-side `suppress_gazetteer_near_postcode` must be enabled to match.
  */
 export function suppressGazetteerNearPostcode(
 	gazetteer: { features: number[][]; confidence: number[] },
@@ -307,10 +278,11 @@ export function suppressGazetteerNearPostcode(
 }
 
 /**
- * Project a per-char bitmask paint onto SP pieces by the same char→piece rule the labels use:
- * a piece takes the bits of the first non-whitespace char it covers, `0` when it covers none.
+ * Projects per-character bitmasks onto tokenizer pieces, giving each piece the bits
+ * of its first non-whitespace character, or `0` if it has none.
  *
- * Shared by every channel built on {@link gazetteerCharPaint} so the projection cannot drift between them.
+ * Every channel built on {@link gazetteerCharPaint} uses this so the projection
+ * matches the label projection.
  */
 export function projectCharBitsToPieces(
 	text: string,
@@ -329,10 +301,8 @@ export function projectCharBitsToPieces(
 }
 
 /**
- * Per-piece gazetteer features + confidence for `text`, projected onto its SP `pieces` by the same
- * char→piece rule the labels use (a piece takes the bits of the first non-whitespace char it covers).
- *
- * @returns `(pieces × featureDim)` features + `(pieces,)` confidence (1.0 wherever any bit fires).
+ * Builds per-piece gazetteer features and confidences for `text`, with confidence
+ * `1` wherever any lexicon bit fires.
  */
 export function buildGazetteerFeatures(
 	text: string,

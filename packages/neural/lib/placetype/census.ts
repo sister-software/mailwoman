@@ -2,53 +2,14 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- *
- *   PCN1 placetype census (hierarchy-evidence campaign, R4c). Per gazetteer parent surface, the
- *   distribution of its children's projected `ComponentTag`s — "this parent has 33 boroughs and 642
- *   neighbourhoods, i.e. 675 dependent-locality-class children". The general form of the shipped
- *   PIX1 pair index: where PIX1 answers "is this child known under this parent?", PCN1 answers "does
- *   this parent have children of this kind at all?" — the conditional prior that turns a globally
- *   rare tag into a conditionally common one (see plan/reference/placetype-evidence.mdx).
- *
- *   Why both artifacts exist, rather than folding the census's links into the pair index: a pair
- *   entry asserts a surface is a dependent locality, so every batch of them needs a venue-confound
- *   board before it ships (the law-1 directional class — "East Acton" opening a venue name). A
- *   census node asserts nothing about any surface. it can only tilt a reading the model already
- *   entertains under a parent it already identified. That makes the census the safe way to cover
- *   the long tail the pair batches will never individually clear.
- *
- *   This file owns both ends of the format — `serializePlacetypeCensus` (Node, build tooling) and
- *   `PlacetypeCensusResolver` (browser and server alike) — the same single-file discipline as
- *   `pair-index-resolver.ts` and `postcode-binary-resolver.ts`, so the layout can never drift
- *   between writer and reader.
- *
- *   Binary layout (little-endian): magic "PCN1" (4 bytes), u32 headerLen, headerLen bytes of
- *   UTF-8-encoded JSON (`PlacetypeCensusHeader`), u32 nodeCount, then nodeCount records of:
- *
- *   ```
- *   u16 parentLen, parent utf8[parentLen], u8 entryCount, entryCount × (u8 tagIdx, u32 count)
- *   ```
- *
- *   sorted by `parent` in UTF-16 code-unit order. `tagIdx` indexes `COMPONENT_TAGS` (u8, asserted at
- *   serialize time). Per-node entries are sorted by descending count, so a reader that wants only
- *   the dominant class can stop at the first entry.
- *
- *   `parent` is expected to be already folded by the caller (`normalizeFSTToken`, the same fold PIX1
- *   uses — `foldVersion` in the header records which), so one query-time fold serves both artifacts.
  */
 
 import { COMPONENT_TAGS, type ComponentTag } from "@mailwoman/codex/component"
 
 import { readFramedHeader, writeFramedHeader } from "#binary-frame"
 
-/**
- * Tags addressable by the single-byte index the census packs.
- */
 const MAX_TAGS_PER_BYTE = 256
 
-/**
- * "PCN1" little-endian (P=0x50 C=0x43 N=0x4e 1=0x31)
- */
 const MAGIC = 0x31_4e_43_50
 const KNOWN_SCHEMA_VERSION = 1
 
@@ -57,70 +18,71 @@ const KNOWN_SCHEMA_VERSION = 1
  */
 export interface PlacetypeCensusNode {
 	/**
-	 * Folded parent place name (e.g. `"london"`).
+	 * Gives the folded parent place name, such as `london`.
 	 */
 	parent: string
+
 	/**
-	 * Child counts by projected tag.
-	 *
-	 * The placetype→`ComponentTag` projection is the builder's job
-	 * (see `gazetteer-pipeline/placetype-census.ts`), so this artifact never
-	 * carries a placetype vocabulary of its own.
+	 * Counts children per component tag; the builder projects placetypes onto tags,
+	 * so the artifact carries no placetype vocabulary.
 	 */
 	counts: Partial<Record<ComponentTag, number>>
+
 	/**
-	 * Sum of `counts` — the node's denominator, precomputed so a consumer never has to re-sum to get a share.
+	 * Sums `counts` to give the denominator of every share at this node.
 	 */
 	total: number
 }
 
+/**
+ * Holds the JSON header of a PCN1 placetype census, including the per-tag country
+ * base rates that {@link PlacetypeCensusLike.lift} divides by.
+ */
 export interface PlacetypeCensusHeader {
 	/**
-	 * ISO country code this census was built for.
+	 * Gives the ISO country code the census was built for.
 	 */
 	country: string
 	schemaVersion: 1
+
 	/**
-	 * Which fold the parent surfaces were built against — matches `PairIndexHeader.foldVersion`,
-	 * so a consumer folds once and probes both artifacts.
+	 * Gives the fold version of the parent surfaces, which matches `PairIndexHeader.foldVersion`
+	 * so one folded string probes both artifacts.
 	 */
 	foldVersion: 1
+
 	/**
-	 * MD5s of the source artifact(s) this census was built from, for provenance.
+	 * Lists the MD5s of the source artifacts the census was built from.
 	 */
 	sourceMD5s: string[]
+
 	/**
-	 * ISO date the census was built.
+	 * Gives the ISO date of the build.
 	 */
 	buildDate: string
+
 	/**
-	 * Global share of each projected tag across every counted child in the country.
+	 * Gives the share of each tag across every counted child in the country,
+	 * which {@link PlacetypeCensusLike.lift} divides by.
 	 *
-	 * The denominator a consumer needs to turn a node's share into a lift (`nodeShare / baseRate`).
-	 *
-	 * Shipped in the header rather than recomputed by the consumer because the base rate
-	 * is a property of the build (which placetypes were counted, over which source),
-	 * and a consumer re-deriving it from the node table would silently get a different number:
-	 * the node table only carries parents that cleared the build's inclusion rule,
-	 * so its totals are not the country's totals.
+	 * The build records it because the node table holds only parents that passed the
+	 * inclusion rule, so re-summing the nodes gives a different number.
 	 */
 	baseRates: Partial<Record<ComponentTag, number>>
+
 	/**
-	 * Optional soft-prior bias magnitude a census hit contributes at decode time.
+	 * Sets the soft-prior bias a census hit would contribute at decode time.
 	 *
-	 * Absent until a calibration task measures one.
-	 * The census ships as a probeable artifact first (R4c is data + loader + offline probe, no decode wiring),
-	 * and a defaulted number here would let an uncalibrated bias reach the decoder unnoticed.
+	 * It stays absent until calibration measures one, so no uncalibrated bias can reach the decoder.
 	 */
 	delta?: number
 }
 
 /**
- * Serialize a placetype census to PCN1 bytes.
+ * Serializes a placetype census to PCN1 bytes.
  *
- * Asserts its input is deduplicated by `parent` and throws otherwise — collapsing duplicate
- * parents here would hide a build bug (two extractions merged without summing their counts)
- * behind a silently plausible artifact.
+ * It throws on duplicate parents rather than merging them, because a duplicate
+ * signals a build that failed to sum its counts.
  */
 export function serializePlacetypeCensus(header: PlacetypeCensusHeader, nodes: readonly PlacetypeCensusNode[]): Buffer {
 	if (COMPONENT_TAGS.length > MAX_TAGS_PER_BYTE) {
@@ -200,35 +162,26 @@ export function serializePlacetypeCensus(header: PlacetypeCensusHeader, nodes: r
 }
 
 /**
- * Minimal subset of {@link PlacetypeCensusResolver} a consumer module reads —
- * structural typing so callers depend on the shape rather than the class
- * (the same `…Like` convention as `PairIndexLike` / `QueryShapeLike`).
+ * Describes the census reads a consumer needs: whether a parent is known,
+ * and a tag's lift over the country base rate.
  *
- * The observability rung (`placetype-pair-prior.ts`'s census probe) needs exactly
- * these two: presence (`probe`) and magnitude (`lift`).
- *
- * `share` is deliberately not on this interface.
- * Within-parent share was measured at ~100% for the dominant class everywhere,
- * so a share-proportional consumer reads a constant.
- *
- * `lift` (share ÷ the country base rate) is the only one of the two that varies with the
- * parent, and naming just it keeps a future consumer from reaching for the flat one.
+ * It omits raw within-parent share, which is nearly constant for the dominant class
+ * and so carries little signal.
  */
 export interface PlacetypeCensusLike {
 	probe(parent: string): PlacetypeCensusNode | null
 	lift(parent: string, tag: ComponentTag): number
+
 	/**
-	 * The census header's ISO country code, when the implementation carries a header.
-	 *
-	 * Optional for the same reason `PairIndexLike.country` is: a hand-built test double may omit it.
+	 * Gives the ISO country code from the census header, and is optional
+	 * so a hand-built test double can omit it.
 	 */
 	readonly country?: string
 }
 
 /**
- * Map-backed reader over PCN1 bytes.
- *
- * Pure JS, no Node imports — the browser runtime loads the same artifact.
+ * Reads PCN1 bytes into an in-memory map, without Node imports so that the
+ * browser runtime can load the same artifact.
  */
 export class PlacetypeCensusResolver implements PlacetypeCensusLike {
 	readonly header: PlacetypeCensusHeader
@@ -285,32 +238,28 @@ export class PlacetypeCensusResolver implements PlacetypeCensusLike {
 	}
 
 	/**
-	 * Exposes the header's ISO country code so the resolver conforms to {@link PlacetypeCensusLike}.
-	 *
-	 * The country restriction at the load site reads it to refuse a census built for
-	 * a different country than the locale being parsed.
+	 * Gives the ISO country code from the header, which the loader checks
+	 * so that a census built for another country is refused.
 	 */
 	get country(): string {
 		return this.header.country
 	}
 
 	/**
-	 * Look up one folded parent surface.
+	 * Looks up the census node for one folded parent surface.
 	 *
-	 * @returns `null` when the parent has no census node — absence is not evidence
-	 * (the meaning-of-zero rule): a missing node means the gazetteer has no counted
-	 * children there, which is usually coverage, .
-	 * Therefore, a consumer must treat `null` as neutral and never as a prohibition.
+	 * A `null` result usually reflects gazetteer coverage rather than an impossible
+	 * parent, so treat it as neutral evidence.
 	 */
 	probe(parent: string): PlacetypeCensusNode | null {
 		return this.#nodes.get(parent) ?? null
 	}
 
 	/**
-	 * The share of `parent`'s counted children projecting onto `tag`.
-	 * `0` when the parent is unknown or the tag is unseen there.
+	 * Returns the share of `parent`'s counted children that carry `tag`, or `0`
+	 * when the parent is unknown or the tag is unseen there.
 	 *
-	 * Positive evidence only: read a `0` as "no support from this artifact", never as "this tag is wrong".
+	 * A `0` means this artifact offers no support, not that the tag is wrong.
 	 */
 	share(parent: string, tag: ComponentTag): number {
 		const node = this.#nodes.get(parent)
@@ -321,12 +270,9 @@ export class PlacetypeCensusResolver implements PlacetypeCensusLike {
 	}
 
 	/**
-	 * `share(parent, tag)` divided by the country's global base rate for `tag` —
-	 * how much more likely this tag is under this parent than under a parent drawn at random.
-	 *
-	 * `1` means "no different from the country at large", `0` means no support.
-	 * Returns `0` (not `Infinity`) when the base rate is absent, so a missing
-	 * denominator can never manufacture unbounded evidence.
+	 * Returns {@link PlacetypeCensusResolver.share} divided by the country base rate for `tag`,
+	 * so `1` means no different from the country at large and `0` means no support.
+	 * A missing base rate returns `0` rather than `Infinity`.
 	 */
 	lift(parent: string, tag: ComponentTag): number {
 		const baseRate = this.header.baseRates[tag]

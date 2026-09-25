@@ -2,12 +2,6 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- *
- * Resolve neural weight-package artifacts.
- *
- * Weights packages ship `model.onnx` + `tokenizer.model` next to `package.json`.
- * In dev, package dirs can be metadata-only, so callers can use explicit paths
- * or link local binaries into the weights package.
  */
 
 import { cacheRootPathBuilder, databaseRootPath, dataRootPath, weightsOverlayPath } from "@mailwoman/core/data-root"
@@ -53,10 +47,8 @@ export function weightsPackageName(locale?: Intl.UnicodeBCP47LocaleIdentifier): 
 }
 
 /**
- * Build `<cacheRoot>/node_modules/@mailwoman/neural-weights-<locale>`.
- *
- * This helper defines the npm `--prefix` cache layout in one place
- * and does not existence-check the directory.
+ * Returns the npm `--prefix` install directory of a locale's weights package under
+ * `cacheRoot`, without checking that it exists.
  */
 export function weightsCachePackageDir(cacheRoot: PathBuilderLike, locale?: string): PathBuilder {
 	const normalized = PathBuilder.from(cacheRoot)
@@ -64,73 +56,82 @@ export function weightsCachePackageDir(cacheRoot: PathBuilderLike, locale?: stri
 	return normalized("node_modules", weightsPackageName(locale))
 }
 
+/**
+ * Options for {@link resolveWeights}.
+ *
+ * Passing `cacheRoot` confines resolution to that cache, and passing `modelPath` with
+ * a tokenizer or char vocabulary bypasses package lookup entirely.
+ */
 export interface ResolveWeightsOpts {
 	/**
-	 * Locale tag used to pick the weights package.
+	 * The locale tag that selects the weights package, defaulting to `en-us`.
 	 */
 	locale?: string
+
 	/**
-	 * Explicit `model.onnx` path.
+	 * An explicit `model.onnx` path.
 	 */
 	modelPath?: PathBuilderLike
+
 	/**
-	 * Explicit `tokenizer.model` path.
+	 * An explicit `tokenizer.model` path.
 	 */
 	tokenizerPath?: PathBuilderLike
+
 	/**
-	 * Explicit `char-vocab.json` for char-encoder models.
+	 * An explicit `char-vocab.json` path for char-encoder models.
 	 */
 	charVocabPath?: PathBuilderLike
+
 	/**
-	 * Explicit `model-card.json` path for explicit model/tokenizer runs.
-	 * Falls back to a card beside `modelPath`.
+	 * An explicit `model-card.json` path for an explicit-path run, falling back to a card beside `modelPath`.
 	 */
 	modelCardPath?: PathBuilderLike
+
 	/**
-	 * Base package `model-card.json` when using `mailwoman.baseWeights`.
+	 * Not read by {@link resolveWeights}, which finds the base card through the
+	 * package's `mailwoman.baseWeights` declaration.
 	 */
 	baseModelCardPath?: string
+
 	/**
-	 * Serving tier: `server` (default) or `pocket` (anchor-only).
+	 * The serving tier, where `pocket` omits every lexicon and keeps only the
+	 * postcode anchor; defaults to `server`.
 	 */
 	tier?: "server" | "pocket"
+
 	/**
-	 * Optional override for the probed weights cache root.
+	 * A weights cache root that, when set, confines resolution to that cache
+	 * and throws if the locale's package is not installed there.
 	 */
 	cacheRoot?: PathBuilderLike | null
+
 	/**
-	 * Optional override for the probed data-root overlay root.
+	 * The data-root overlay directory to probe instead of the default one.
 	 */
 	overlayRoot?: PathBuilderLike
 }
 
 /**
- * Source directory class for a resolved artifact.
+ * Names the kind of directory a resolved weights artifact came from,
+ * as reported in {@link WeightsArtifactReport}.
  */
 export const WeightsOrigin = {
-	/**
-	 * A path the caller supplied outright.
-	 */
 	Explicit: "explicit",
-	/**
-	 * The resolved weights package's own directory.
-	 */
+
 	Package: "package",
-	/**
-	 * Base package reached through `mailwoman.baseWeights`.
-	 */
+
 	Base: "base",
-	/**
-	 * The data-root overlay ({@link weightsOverlayRoot}).
-	 * A dev checkout whose package carries no binaries.
-	 */
+
 	Overlay: "overlay",
-	/**
-	 * The user-level weights cache written by `mailwoman parse --download-weights`.
-	 */
+
 	Cache: "cache",
 } as const
 
+/**
+ * Names the kind of directory a resolved weights artifact came from,
+ * as reported in {@link WeightsArtifactReport}.
+ */
 export type WeightsOrigin = (typeof WeightsOrigin)[keyof typeof WeightsOrigin]
 
 /**
@@ -142,89 +143,104 @@ export interface WeightsArtifactReport {
 	origin: WeightsOrigin | null
 }
 
+/**
+ * Describes the weights files that {@link resolveWeights} located, with `source` naming
+ * the rung that supplied them and `artifacts` recording each file's origin.
+ */
 export interface ResolvedWeights {
 	modelPath: string
+
 	/**
-	 * SentencePiece model path.
-	 * For char encoders, use `charVocabPath` instead.
+	 * The SentencePiece model path, which a char-encoder model does not use; read `charVocabPath` instead.
 	 */
 	tokenizerPath: string
 	encoder: EncoderDescriptor
 	charVocabPath?: string
+
 	/**
-	 * Resolved `model-card.json` path, if present.
+	 * The resolved `model-card.json`, which may come from the base package when the locale package has none.
 	 */
 	modelCardPath?: string
+
 	/**
-	 * Base package `model-card.json` path, if present and distinct.
+	 * The base package's `model-card.json`, present only when it exists and differs from `modelCardPath`.
 	 */
 	baseModelCardPath?: string
+
 	/**
-	 * Path to `crf-transitions.json` alongside the resolved model.
-	 *
-	 * `undefined` when the file doesn't exist (pre-v0.6.0 bundles or CE-only training).
+	 * The `crf-transitions.json` beside the model, or `undefined` for a bundle trained without a CRF.
 	 */
 	crfTransitionsPath?: string
+
 	/**
-	 * Path to `semi-crf-transitions.json`, if present.
+	 * The `semi-crf-transitions.json` beside the model, when present.
 	 */
 	semiCRFTransitionsPath?: string
+
 	/**
-	 * Postcode→anchor source path and format hint.
+	 * The postcode-to-anchor source, where `binary` marks a `postcode-<cc>.bin`
+	 * rather than an `anchor-lookup.json`.
 	 */
 	anchorLookupPath?: { path: string; binary: boolean }
+
 	/**
-	 * Gazetteer-anchor lexicon path, if enabled and present.
+	 * The gazetteer-anchor lexicon, present when it exists and the tier is not `pocket`.
 	 */
 	gazetteerLexiconPath?: string
+
 	/**
-	 * Country-surface lexicon path, if enabled and present.
+	 * The country-surface lexicon, present when it exists and the tier is not `pocket`.
 	 */
 	countryLexiconPath?: string
+
 	/**
-	 * Street-type evidence lexicon path, if enabled and present.
+	 * The street-type evidence lexicon, present when it exists and the tier is not `pocket`.
 	 */
 	streetTypeLexiconPath?: string
+
 	/**
-	 * Locality-surface evidence lexicon path, if enabled and present.
+	 * The locality-surface evidence lexicon, present when it exists and the tier is not `pocket`.
 	 */
 	localitySurfaceLexiconPath?: string
+
 	/**
-	 * Per-locale gazetteer FST path, if present.
+	 * The per-locale gazetteer FST, when present.
 	 */
 	fstPath?: string
+
 	/**
-	 * Street-morphology FST path, with base fallback.
+	 * The street-morphology FST from the package, falling back to the base package.
 	 */
 	streetMorphologyPath?: string
+
 	/**
-	 * Country-specific placetype-pair index path, if present.
+	 * The placetype-pair index for the locale's country, when present.
 	 */
 	pairIndexPath?: string
+
 	/**
-	 * Resolution source label.
+	 * The resolution rung that supplied the weights, such as `package:…`, `overlay:…`,
+	 * `cache:…` or `explicit`, with `+base` appended when a base package filled in.
 	 */
 	source: string
+
 	/**
-	 * Package directory used for sibling artifact resolution.
+	 * The package directory that sibling artifacts were resolved against; absent for explicit paths.
 	 */
 	packageDir?: PathBuilder
+
 	/**
-	 * Fixed report of all known artifacts and their origins.
+	 * Each probed artifact with its resolved path and origin, including the ones not found.
 	 */
 	artifacts: WeightsArtifactReport[]
 }
 
-/**
- * Classify a resolved artifact by parent directory match.
- */
 function originOf(
 	path: PathBuilderLike | null | undefined,
 	dirs: Partial<Record<WeightsOrigin, PathBuilderLike | undefined | null>>
 ): WeightsOrigin | null {
 	if (!path) return null
 
-	// Compare runtime-normalized parent directories.
 	const parent: string = resolvePath(dirname(path))
 
 	for (const [origin, dir] of Object.entries(dirs)) {
@@ -235,13 +251,9 @@ function originOf(
 		}
 	}
 
-	// Unknown origin.
 	return null
 }
 
-/**
- * Build an artifact report from resolved paths.
- */
 function buildArtifactReport(
 	entries: ReadonlyArray<readonly [name: string, path: PathBuilderLike | null | undefined]>,
 	dirs: Partial<Record<WeightsOrigin, PathBuilderLike | null | undefined>>
@@ -249,9 +261,6 @@ function buildArtifactReport(
 	return entries.map(([name, path]) => ({ name, path: path ?? null, origin: originOf(path, dirs) }))
 }
 
-/**
- * {@link ResolveWeightsOpts} with the explicit paths in the string form {@link ResolvedWeights} reports.
- */
 type ExplicitPathOpts = Omit<ResolveWeightsOpts, "modelPath" | "tokenizerPath" | "charVocabPath" | "modelCardPath"> & {
 	modelPath?: string
 	tokenizerPath?: string
@@ -259,6 +268,13 @@ type ExplicitPathOpts = Omit<ResolveWeightsOpts, "modelPath" | "tokenizerPath" |
 	modelCardPath?: string
 }
 
+/**
+ * Locates the model, tokenizer and companion artifacts for a locale.
+ *
+ * It tries explicit paths, then the installed package, the data-root overlay,
+ * the download cache and finally the locale's script-family base, and it throws with
+ * every probed location when none has the model binaries.
+ */
 export async function resolveWeights(input: ResolveWeightsOpts): Promise<ResolvedWeights> {
 	const opts: ExplicitPathOpts = {
 		...input,
@@ -283,7 +299,6 @@ export async function resolveWeights(input: ResolveWeightsOpts): Promise<Resolve
 			throw new Error(`Explicit charVocabPath does not exist: ${opts.charVocabPath}`)
 		}
 
-		// Prefer explicit model card, then a co-located card.
 		const coLocatedCard = resolvePath(dirname(opts.modelPath), "model-card.json")
 		const modelCardPath = opts.modelCardPath ?? ((await pathExists(coLocatedCard)) ? coLocatedCard : undefined)
 		const encoder = await readEncoderFromModelCard(modelCardPath)
@@ -315,7 +330,6 @@ export async function resolveWeights(input: ResolveWeightsOpts): Promise<Resolve
 		}
 	}
 
-	// Package names use lowercase BCP-47 tags.
 	const locale = (opts.locale ?? "en-us").toLowerCase()
 	const packageName = weightsPackageName(locale)
 
@@ -323,9 +337,7 @@ export async function resolveWeights(input: ResolveWeightsOpts): Promise<Resolve
 
 	const cacheHasBinaries = async () => packageHasBinaries(cacheDir)
 
-	// 0. Explicit cacheRoot is authoritative and never falls back.
 	if (opts.cacheRoot) {
-		// Missing package install in explicit cache gets a specific error.
 		if (!(await pathExists(cacheDir))) {
 			tried.push(cacheDir)
 
@@ -341,7 +353,6 @@ export async function resolveWeights(input: ResolveWeightsOpts): Promise<Resolve
 		return await resolveFromPackageDir(cacheDir, locale, opts, `cache:${packageName}`, tried)
 	}
 
-	// 1. Installed package (workspace or node_modules).
 	let emptyPackageDir: PathBuilder | undefined
 
 	try {
@@ -353,17 +364,13 @@ export async function resolveWeights(input: ResolveWeightsOpts): Promise<Resolve
 			tried
 		)
 	} catch (error) {
-		// Empty-but-resolvable package falls through to overlay/cache probes.
 		if (error instanceof Error && error.message.includes("missing model files")) {
 			emptyPackageDir = resolvePackageDirectory(packageName)
 		}
 	}
 
-	// 2. Data-root overlay.
 	const overlayDir = opts.overlayRoot ? resolvePathBuilder(opts.overlayRoot, locale) : weightsOverlayDir(locale)
 
-	// Probe overlays by directory existence.
-	// The base fallback is handled downstream.
 	if (await pathExists(overlayDir)) {
 		try {
 			return await resolveFromPackageDir(overlayDir, locale, opts, `overlay:${locale}`, tried)
@@ -372,12 +379,10 @@ export async function resolveWeights(input: ResolveWeightsOpts): Promise<Resolve
 		}
 	}
 
-	// 3. User-level weights cache (requires binaries).
 	if (await cacheHasBinaries()) {
 		return await resolveFromPackageDir(cacheDir, locale, opts, `cache:${packageName}`, tried)
 	}
 
-	// CJK locales can fall back to script-family base locales.
 	const familyBase = scriptFamilyBase(locale)
 
 	if (familyBase && familyBase !== locale) {
@@ -398,11 +403,6 @@ export async function resolveWeights(input: ResolveWeightsOpts): Promise<Resolve
 	)
 }
 
-/**
- * Resolve all known artifacts from a weights package directory.
- *
- * @throws When the model files themselves are missing.
- */
 async function resolveFromPackageDir(
 	packageDir: PathBuilder,
 	locale: Intl.UnicodeBCP47LocaleIdentifier,
@@ -413,7 +413,6 @@ async function resolveFromPackageDir(
 	let modelPath = opts.modelPath ?? resolvePath(packageDir, "model.onnx")
 	let tokenizerPath = opts.tokenizerPath ?? resolvePath(packageDir, "tokenizer.model")
 
-	// Base-overlay dedup: allow overlay packages to reuse base model/tokenizer.
 	const baseDir = await resolveBaseWeightsDir(packageDir, locale, opts.cacheRoot !== undefined)
 
 	if (!opts.modelPath) {
@@ -433,7 +432,6 @@ async function resolveFromPackageDir(
 	const modelCardCandidate = resolvePath(packageDir, "model-card.json")
 	const baseModelCardCandidate = baseDir ? resolvePath(baseDir, "model-card.json") : undefined
 
-	// The card determines tokenizer vs char-vocab expectations.
 	const encoder = await readEncoderFromModelCard(
 		(await pathExists(modelCardCandidate)) ? modelCardCandidate : baseModelCardCandidate
 	)
@@ -452,7 +450,6 @@ async function resolveFromPackageDir(
 		)
 	}
 
-	// Fallback to base model-card when overlay has none.
 	const modelCardPath = (await pathExists(modelCardCandidate))
 		? modelCardCandidate
 		: baseModelCardCandidate && (await pathExists(baseModelCardCandidate))
@@ -463,7 +460,6 @@ async function resolveFromPackageDir(
 		source = `${source}+base`
 	}
 
-	// Keep base card separately for model-field fallback use.
 	const resolvedBaseModelCardPath =
 		baseModelCardCandidate && (await pathExists(baseModelCardCandidate)) && baseModelCardCandidate !== modelCardPath
 			? baseModelCardCandidate
@@ -475,36 +471,30 @@ async function resolveFromPackageDir(
 	const semiCrfCandidate = resolvePath(packageDir, "semi-crf-transitions.json")
 	const semiCRFTransitionsPath = (await pathExists(semiCrfCandidate)) ? semiCrfCandidate : undefined
 
-	// Soft-feature siblings.
 	const country = locale.split("-")[1] ?? ""
 	const anchorLookupPath = await resolveAnchorLookupSibling(packageDir, country)
-	// Pocket tier is anchor-only.
+
 	const gazetteerCandidate = resolvePath(packageDir, "anchor-lexicon-v1.json")
 
 	const gazetteerLexiconPath =
 		opts.tier === "pocket" ? undefined : (await pathExists(gazetteerCandidate)) ? gazetteerCandidate : undefined
 
-	// Country lexicon sibling.
 	const countryCandidate = resolvePath(packageDir, "country-surface-lexicon-v1.json")
 
 	const countryLexiconPath =
 		opts.tier === "pocket" ? undefined : (await pathExists(countryCandidate)) ? countryCandidate : undefined
 
-	// Evidence-bundle lexicon siblings (server tier).
 	const streetTypeLexiconPath =
 		opts.tier === "pocket" ? undefined : await resolveEvidenceLexicon("street_type", packageDir, modelCardPath)
 
 	const localitySurfaceLexiconPath =
 		opts.tier === "pocket" ? undefined : await resolveEvidenceLexicon("locality_surface", packageDir, modelCardPath)
 
-	// Placetype-pair index sibling (local-only, no base fallback).
 	const pairIndexPath = await resolvePairIndexSibling(packageDir, country)
 
-	// Per-locale FST gazetteer sibling.
 	const fstCandidate = resolvePath(packageDir, `fst-${locale}.bin`)
 	const fstPath = (await pathExists(fstCandidate)) ? fstCandidate : undefined
 
-	// Street-morphology FST sibling with base fallback.
 	const morphologyCandidate = resolvePath(packageDir, "fst-street-morphology.bin")
 	const baseMorphologyCandidate = baseDir ? resolvePath(baseDir, "fst-street-morphology.bin") : undefined
 
@@ -514,7 +504,6 @@ async function resolveFromPackageDir(
 			? baseMorphologyCandidate
 			: undefined
 
-	// Infer artifact origin from the source rung.
 	const rungOrigin: WeightsOrigin = source.startsWith("overlay")
 		? WeightsOrigin.Overlay
 		: source.startsWith("cache")
@@ -566,11 +555,6 @@ async function resolveFromPackageDir(
 	}
 }
 
-/**
- * Resolve postcode→anchor source, preferring PCB1 binary over JSON.
- *
- * @returns Path + binary flag, or `undefined` when absent.
- */
 async function resolveAnchorLookupSibling(
 	packageDir: PathBuilderLike,
 	country: string
@@ -588,9 +572,6 @@ async function resolveAnchorLookupSibling(
 	return undefined
 }
 
-/**
- * Resolve country-specific `pair-index-<cc>.bin` from `packageDir` only.
- */
 async function resolvePairIndexSibling(packageDir: PathBuilder, country: string): Promise<string | null> {
 	if (!country) return null
 
@@ -600,8 +581,8 @@ async function resolvePairIndexSibling(packageDir: PathBuilder, country: string)
 }
 
 /**
- * Resolve build-local placetype census (`placetype-census-<cc>.bin`) from data root.
- * Returns `null` when absent.
+ * Returns the build-local `placetype-census-<cc>.bin` path under the data root
+ * for `country`, or `null` when it is absent.
  */
 export async function resolvePlacetypeCensusPath(country: string): Promise<PathBuilder | null> {
 	if (!country) return null
@@ -612,8 +593,8 @@ export async function resolvePlacetypeCensusPath(country: string): Promise<PathB
 }
 
 /**
- * Load placetype census for `country`.
- * Returns `null` when absent or invalid.
+ * Loads the placetype census for `country`, returning `null` when the file is absent,
+ * unreadable, or built for a different country.
  */
 export async function loadPlacetypeCensus(
 	country: string,
@@ -639,16 +620,12 @@ export async function loadPlacetypeCensus(
 	return null
 }
 
-/**
- * Resolve a locale package's `mailwoman.baseWeights` directory, if any.
- */
 async function resolveBaseWeightsDir(
 	packageDir: PathBuilderLike,
 	locale?: Intl.UnicodeBCP47LocaleIdentifier,
 	cacheRootIsExplicit = false
 ): Promise<PathBuilder | null> {
 	try {
-		// Overlays have no package.json, so read declaration from workspace package.
 		const declarationDir = (await pathExists(resolvePath(packageDir, "package.json")))
 			? packageDir
 			: locale
@@ -662,7 +639,6 @@ async function resolveBaseWeightsDir(
 
 		if (typeof base !== "string" || !base) return null
 
-		// Prefer cache-local sibling base package before global resolution.
 		const siblingBaseDir = resolvePathBuilder(dirname(packageDir), base.split("/").at(-1)!)
 
 		if (await pathExists(resolvePath(siblingBaseDir, "package.json"))) return siblingBaseDir
@@ -671,7 +647,6 @@ async function resolveBaseWeightsDir(
 
 		const basePackageDir = tryResolvePackageDirectory(base)
 
-		// If resolving from overlay, prefer base overlay with linked binaries.
 		const baseLocale = base.replace("@mailwoman/neural-weights-", "")
 		const baseOverlay = weightsOverlayDir(baseLocale)
 

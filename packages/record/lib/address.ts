@@ -2,19 +2,6 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- *
- *   The canonical address record — the matcher's unit of address identity, and the canonical record
- *   the organization and contact records build on.
- *
- *   It is plain data: parser components + the formatter's match key + an optional resolved geocode,
- *   composed into one object. No ORM, no decorators, no schema-generation implementation — if we need a
- *   database we reach for Kysely at the call site rather than a model layer here.
- *
- *   The geocode fields mirror mailwoman's `GeocodeResult` (tier + calibrated uncertainty + hierarchy)
- *   on purpose: that is the location signal the Fellegi-Sunter scorer weights its distance evidence
- *   by — two records sharing a `address_point` coordinate is strong agreement. sharing an
- *   `interpolated` centroid is weak. a PO-box / multi-unit coordinate is barely location agreement
- *   at all (the naaccr precedent, see the geocode-first record-matching concept doc).
  */
 
 import { type ComponentDict, type FormatAddressOptions, formatAddress } from "@mailwoman/codex/address-format"
@@ -29,14 +16,9 @@ export interface GeoCoordinate {
 }
 
 /**
- * The resolution tier that produced a coordinate, mirroring mailwoman's geocoder
- * (`address_point` > `interpolated` > `street` > `admin`).
+ * Names the geocoder resolution tier that produced a coordinate, matching `GeocodeResult.resolution_tier`.
  *
- * Kept as a local plain union so this package stays decoupled from the heavy geocoder runtime.
- * A `GeocodeResult.resolution_tier` maps in directly.
- *
- * (`street` = a street centroid for a street-only query, #1042 — coarser than a
- * house-number estimate, finer than an admin centroid.)
+ * It is a local union so this package does not depend on the geocoder runtime.
  */
 export type ResolutionTier = "address_point" | "interpolated" | "street" | "admin" | "venue" | "plus_code"
 
@@ -55,50 +37,56 @@ export interface HierarchyNode {
 export interface AddressGeocode {
 	coordinate: GeoCoordinate
 	tier: ResolutionTier
+
 	/**
-	 * Calibrated uncertainty radius in meters; `null` for the admin tier (no sub-locality estimate).
+	 * Gives the uncertainty radius in meters, which is `null` on the admin tier
+	 * and whenever the tier reports none.
 	 */
 	uncertaintyMeters: number | null
+
 	/**
-	 * Resolved admin hierarchy, locality → country (most specific first).
+	 * Lists the resolved admin hierarchy from the locality up to the country.
 	 */
 	hierarchy?: HierarchyNode[]
+
 	/**
-	 * A delivery point rather than a building — weakens location agreement even at a precise coordinate.
+	 * Marks a delivery point, such as a PO box, rather than a building,
+	 * so the coordinate does not locate the addressee.
 	 */
 	poBox?: boolean
+
 	/**
-	 * A multi-unit building where many records share one coordinate — weakens unit-level agreement.
+	 * Marks a multi-unit building whose records share one coordinate,
+	 * so the coordinate cannot distinguish units.
 	 */
 	multiUnit?: boolean
 }
 
 /**
- * The canonical address record.
- *
- * Composes the parser's components, the formatter's match key, an optional
- * human-readable form, and an optional resolved geocode.
- * Plain data — no behavior.
+ * Describes the canonical address record: parsed components, the match key,
+ * and optionally the formatted text, raw input and resolved geocode.
  */
 export interface PostalAddress {
 	/**
-	 * Parsed address components (`ComponentTag`-keyed).
+	 * Holds the parsed address components keyed by component tag.
 	 */
 	components: ComponentDict
+
 	/**
-	 * Normalized, deterministic match key for blocking (from `@mailwoman/formatter`).
+	 * Holds the normalized, deterministic match key used for blocking, built by
+	 * `canonicalKey` from `@mailwoman/codex/address-key`.
 	 */
 	canonicalKey: string
+
 	/**
-	 * Optional human-readable single-line form, for display.
+	 * Gives a human-readable single-line form for display.
 	 */
 	formatted?: string
-	/**
-	 * Resolved location, when geocoded.
-	 */
+
 	geocode?: AddressGeocode
+
 	/**
-	 * The original free-text input, when known (provenance).
+	 * Keeps the original free-text input for provenance.
 	 */
 	raw?: string
 }
@@ -108,34 +96,32 @@ export interface PostalAddress {
  */
 export interface ToPostalAddressOptions {
 	/**
-	 * Country (ISO-2 or name) for formatting.
-	 *
-	 * Defaults to the `country` component, else unset.
+	 * Names the country, as an ISO-2 code or a name, used for formatting,
+	 * and defaults to the `country` component.
 	 */
 	country?: string
+
 	/**
-	 * The original free-text input to retain as provenance.
+	 * Supplies the original free-text input to keep as provenance.
 	 */
 	raw?: string
+
 	/**
-	 * Also compute a human-readable `formatted` string.
-	 *
-	 * Default `true`.
+	 * Says whether to compute the `formatted` string, and defaults to `true`.
 	 */
 	format?: boolean
+
 	/**
-	 * Formatting options forwarded to the formatter.
-	 *
-	 * Defaults to single-line (`", "`).
+	 * Passes options to the formatter, defaulting to a single line joined with `", "`.
 	 */
 	formatOptions?: FormatAddressOptions
 }
 
 /**
- * Build a canonical {@linkcode PostalAddress} from parsed components: fills the match
- * key (always) and a human-readable form (unless disabled).
+ * Builds a {@linkcode PostalAddress} from parsed components, always filling the match key
+ * and, unless `format` is `false`, the formatted address.
  *
- * Attach a geocode separately with {@linkcode withGeocode} once the address is resolved.
+ * Attach a geocode separately with {@linkcode withGeocode}.
  */
 export function toPostalAddress(components: ComponentDict, opts: ToPostalAddressOptions = {}): PostalAddress {
 	const country = opts.country ?? components.country ?? ""

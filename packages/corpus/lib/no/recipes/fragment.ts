@@ -2,9 +2,6 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- *
- *   Generate Norwegian street/number fragments and bare locality/postcode counterexamples.
- *   Require reserved digit-board surfaces to prevent train/evaluation overlap.
  */
 
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
@@ -20,9 +17,6 @@ import {
 } from "#recipes/scaffold"
 import { SurfaceOrigin } from "#types"
 
-/**
- * Convert a Norwegian locality to title case.
- */
 const titleNO = (value: string): string =>
 	value
 		.split(/\s+/)
@@ -90,7 +84,6 @@ export const noFragmentRecipe: CorpusRecipe = {
 		const longNumberBoost = Math.max(1, Math.floor(opts.longNumberBoost ?? 1))
 		const longNumberMinDigits = opts.longNumberMinDigits ?? 3
 
-		// Collect locality and postcode counterexamples.
 		const localities = new Set<string>()
 		const postcodes = new Set<string>()
 
@@ -101,7 +94,6 @@ export const noFragmentRecipe: CorpusRecipe = {
 		let emitSeq = 0
 
 		const emit = (raw: string, components: Record<string, string>, klass: string): void => {
-			// Give boosted copies distinct source IDs.
 			const source_id = recipeSourceID("synth-no-fragment", { ...components, k: klass, v: `${read}:${emitSeq++}` })
 
 			const canonical = {
@@ -148,14 +140,12 @@ export const noFragmentRecipe: CorpusRecipe = {
 				continue
 			}
 
-			// Keep evaluation surfaces out of training data.
 			if (excluded.has(foldNOSurface(street))) {
 				contaminated++
 
 				continue
 			}
 
-			// Sample bare locality and postcode counterexamples.
 			if (random() < counterProb) {
 				if (random() < 0.5 && localities.size) {
 					const loc = [...localities][Math.floor(random() * localities.size)]!
@@ -170,12 +160,11 @@ export const noFragmentRecipe: CorpusRecipe = {
 				continue
 			}
 
-			// Emit a bare street or street with house number.
 			if (!number || random() < bareStreetProb) {
 				emit(street, { street }, "bare-street")
 			} else {
 				const klass = number.includes("/") ? "slash-hn" : "street-hn"
-				// Oversample long numbers to reduce postcode misclassification and reinforce the street/number boundary.
+
 				const digits = (number.match(/\d/g) ?? []).length
 				const copies = digits >= longNumberMinDigits ? longNumberBoost : 1
 

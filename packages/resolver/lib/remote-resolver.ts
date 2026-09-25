@@ -2,23 +2,6 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- *
- *   `RemoteResolver` — the `Resolver` interface (`resolveTree`) over http. The adapter the interface
- *   docstring anticipated (Phase 4.4): a client POSTs a parsed `AddressTree` + the serializable
- *   `ResolveOpts` to a resolver service, which owns the gazetteer + situs/interpolation extracts,
- *   runs the cascade, and returns the resolved tree. Two payoffs:
- *
- *   1. **Multi-instance** — stateless parser nodes (the ~30 MB ONNX model) talk to one resolver service
- *        (the multi-GB gazetteer + extracts). `parse` locally, `new RemoteResolver(...).resolveTree`
- *        remotely — same interface the in-process `WOFResolver` satisfies, so it's a drop-in.
- *   2. **Canary** — point it at a second resolver build (or an adapter fronting Pelias/Nominatim/BAN)
- *        and diff the resolved trees through the identical interface.
- *
- *   Pure transport: `fetch` only, no node-specific deps (runs in the browser too). The
- *   `addressPoints` / `interpolation` opts are live SQLite handles — not serializable — so they're
- *   stripped before the post. the resolver service supplies its own from the tree's region (the
- *   data lives server-side, which is the whole point). All other opts (defaultCountry, calibration,
- *   hierarchyCompletion, …) ride along.
  */
 
 import type { AddressTree } from "@mailwoman/core/decoder"
@@ -26,9 +9,8 @@ import { stringifyJSON } from "@mailwoman/core/json"
 import type { ResolveOpts, Resolver } from "@mailwoman/core/resolver"
 
 /**
- * `ResolveOpts` minus the non-serializable live lookup handles.
- *
- * What actually crosses the wire.
+ * Describes the `ResolveOpts` sent over the wire, which omit the live `addressPoints`
+ * and `interpolation` lookup handles because they cannot be serialized.
  */
 export type SerializableResolveOpts = Omit<ResolveOpts, "addressPoints" | "interpolation">
 
@@ -42,36 +24,39 @@ export function serializableResolveOpts(opts?: ResolveOpts): SerializableResolve
 	return rest
 }
 
+/**
+ * Describes the subset of `fetch` that {@link RemoteResolver} calls,
+ * so callers can inject a custom or test implementation.
+ */
 export type RemoteResolverFetch = (
 	url: string,
 	init: { method: string; headers: Record<string, string>; body: string; signal?: AbortSignal }
 ) => Promise<{ ok: boolean; status: number; statusText: string; json(): Promise<unknown> }>
 
+/**
+ * Configures a {@link RemoteResolver}: the endpoint to POST to, an optional `fetch`,
+ * a timeout (10 seconds by default), and extra request headers.
+ */
 export interface RemoteResolverOpts {
 	/**
-	 * Full URL of the resolver service's resolve-tree endpoint, e.g. `http://resolver:7081/v1/resolve`.
+	 * Gives the full URL of the resolver service's resolve-tree endpoint,
+	 * such as `http://resolver:7081/v1/resolve`.
 	 */
 	endpoint: string
+
 	/**
-	 * Injectable fetch (tests / custom agents).
-	 *
-	 * Defaults to the global `fetch`.
-	 *
-	 * Typed by what this module reads — `ok`, `status`, `statusText`, `json()` — rather than the
-	 * full `fetch`, whose `Response` carries a body stream and headers no code here touches.
-	 * The global `fetch` satisfies this shape, and a test double can be an object instead of an assertion.
+	 * Supplies a fetch implementation for tests or custom agents, defaulting to the global `fetch`.
 	 */
 	fetch?: RemoteResolverFetch
+
 	/**
-	 * Per-request timeout in ms.
-	 *
-	 * Default 10000.
+	 * Sets the per-request timeout in milliseconds, defaulting to 10,000.
 	 */
 	timeoutMs?: number
+
 	/**
-	 * Extra headers (auth, tracing).
-	 *
-	 * `Content-Type: application/json` is always set.
+	 * Adds request headers, such as auth or tracing, which are merged over the
+	 * default `Content-Type: application/json`.
 	 */
 	headers?: Record<string, string>
 }
@@ -91,6 +76,12 @@ export interface ResolveTreeResponse {
 	tree: AddressTree
 }
 
+/**
+ * Resolves address trees by POSTing them to a remote resolver endpoint, so a client
+ * can resolve without loading gazetteer databases itself.
+ *
+ * Live lookup handles in `ResolveOpts` are dropped before sending, so the server resolves with its own.
+ */
 export class RemoteResolver implements Resolver {
 	readonly #endpoint: string
 	readonly #fetch: RemoteResolverFetch

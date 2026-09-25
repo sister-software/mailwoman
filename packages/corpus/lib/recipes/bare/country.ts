@@ -1,5 +1,3 @@
-
-
 import { COUNTRY_SURFACE_FORMS, CountryNames, matchCountry } from "@mailwoman/codex/country"
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 
@@ -7,15 +5,12 @@ import { alignAndWrite, type CorpusRecipe, recipeSourceID } from "#recipes/scaff
 import { SourceRegister } from "#registers"
 import { SurfaceOrigin } from "#types"
 
-
 const BARE_COUNTRY_PROVENANCE = {
 	register: SourceRegister.Codex,
 	surface: SurfaceOrigin.Attested,
 }
 
-
 const MIN_NAME_LENGTH = 4
-
 
 function* bareCountrySurfaces(): Generator<{ surface: string; iso2: string }> {
 	const seen = new Set<string>()
@@ -38,13 +33,15 @@ function* bareCountrySurfaces(): Generator<{ surface: string; iso2: string }> {
 	}
 }
 
-
+/**
+ * Generates queries that consist of a country name alone, drawn from ISO names
+ * and curated surface forms of at least four characters, with no country codes.
+ */
 export const bareCountryRecipe: CorpusRecipe = {
 	name: "bare-country",
 	description: "The country name as the whole query (#1651 parse half): ISO names + curated endonyms, no codes",
 	mode: "generate",
 	async run(opts, write) {
-		
 		makeMulberry32(opts.seed)
 		let read = 0
 		let emitted = 0

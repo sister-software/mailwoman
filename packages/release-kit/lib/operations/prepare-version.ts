@@ -11,9 +11,10 @@ import { flag } from "#operations/inputs"
 import { prepareReleaseVersion } from "#release/prepare-version"
 
 /**
- * `release.prepare-version` — writes inside the checkout or the data root.
+ * Defines the `release.prepare-version` operation, which writes the resolved release
+ * version into the checkout's package manifests and release config.
  *
- * Listed in `registry.ts`; the description on the operation is what `mwops` prints.
+ * A dry run behaves like `--check-only`, resolving and validating the version without writing.
  */
 export const prepareVersion = defineOperation({
 	id: "release.prepare-version",

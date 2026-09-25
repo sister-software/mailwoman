@@ -1,7 +1,6 @@
 /**
  * @copyright Sister Software.
  * @license AGPL-3.0
- * @file Corporate-family linkage evaluation report rendering.
  */
 
 import { renderMarkdownTable } from "@mailwoman/core/strings/markdown-table"
@@ -18,16 +17,8 @@ function formatScoreValue(value: number | null): string {
 	return value === null ? "N/A" : value.toFixed(3)
 }
 
-/**
- * Alias the shared table renderer for existing call sites.
- */
 const renderTable = renderMarkdownTable
 
-/**
- * Input-shape notes.
- *
- * The total record makes new parser fields require an explicit report entry.
- */
 const FORM_499_FIELD_NOTES: Record<keyof Form499Row, string> = {
 	form499ID: "",
 	frn: "the truth key, never itself withheld",
@@ -62,9 +53,6 @@ function isPopulated(value: unknown): boolean {
 	return value !== null && value !== undefined && value !== "" && value !== false
 }
 
-/**
- * Count populated values in the corpus rather than relying on hand-entered totals.
- */
 // repo-health-ignore private-name-shadows-export -- This corpus-field count is unrelated to the H3 coverage helper.
 function describeCoverage<Row>(rows: readonly Row[], field: keyof Row, heldOut: boolean): string {
 	if (heldOut) return "**withheld**"
@@ -211,9 +199,6 @@ function renderPairsTable(
 	)
 }
 
-/**
- * Inputs for one evaluation pass.
- */
 interface RenderLinkageEvalReportInput {
 	date: string
 	withheld: LinkageEvalRun
@@ -267,9 +252,6 @@ function renderWhySection(withheld: LinkageEvalRun): string {
 	)
 }
 
-/**
- * State what evidence can change this baseline, based on measured pipeline behavior.
- */
 function renderWhatWouldMoveItSection(): string {
 	return (
 		"It's tempting to call the withheld number a floor that any better evidence would lift. That is not what this " +
@@ -296,6 +278,10 @@ function renderWhatWouldMoveItSection(): string {
 	)
 }
 
+/**
+ * Renders the Markdown report for the corporate-family linkage eval, comparing the run
+ * with `holdingCompany` withheld against the control run that keeps it.
+ */
 export function renderLinkageEvalReport(input: RenderLinkageEvalReportInput): string {
 	const { date, withheld, control, withheldInputs, controlInputs, registrants, truthForm499Rows, truthGroupOf } = input
 
@@ -455,7 +441,3 @@ export function renderLinkageEvalReport(input: RenderLinkageEvalReportInput): st
 
 	return lines.join("\n")
 }
-
-/**
- * Options for {@linkcode filerLinkageEval}.
- */

@@ -2,16 +2,6 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- *
- *   Phrase → brand lookup over `data/brands.json` — the QID-keyed chain-brand table built from a real
- *   `poi.db` by `mailwoman/gazetteer-pipeline/poi/build-brands.ts` (`mailwoman gazetteer build
- *   poi-brands`). Same loader + module-level-singleton shape as `lookup.ts`'s category lookup.
- *
- *   Matching is exact-phrase only, no locale filtering (brand names aren't a locale-synonym concern the way
- *   "chemist"/"drugstore" are) — see `brands-lookup-core.ts` for the shared matching core with the
- *   browser-safe `./table` entry.
- *
- *   Variant aliases are composed by the runtime, keeping these independently published packages separate.
  */
 
 import { createBrandLookupCore } from "#brands/lookup-core"
@@ -21,13 +11,17 @@ import type { BrandRecord, POIBrandSourceLayer, POIBrandTable } from "#types"
 const TABLE = await readPackagedTable<POIBrandTable>("brands.json")
 const CORE = createBrandLookupCore(TABLE)
 
+/**
+ * Re-exports the result type of {@link lookupPOIBrand} so callers of the bundled
+ * table need not import the lookup core.
+ */
 export type { BrandMatch } from "#brands/lookup-core"
 
 /**
- * Exact-phrase brand lookup against `name` + `aliases`.
+ * Finds the brands whose name or alias equals `text`, ignoring case and surrounding whitespace.
  *
- * Confidence is always 1.0 (exact match only).
- * Deduplicated by brand, sorted by `rows` descending — ties broken by `wikidata`.
+ * Each brand appears once with confidence 1, and the matches are sorted by `rows`
+ * descending with ties broken by Wikidata ID.
  */
 export function lookupPOIBrand(text: string) {
 	return CORE.lookupPOIBrand(text)
@@ -58,6 +52,7 @@ export function getAllBrands(): ReadonlyArray<BrandRecord> {
  * Version of the bundled POI brand table, for cache keys and diagnostics.
  */
 export const POI_BRAND_TABLE_VERSION = TABLE.version
+
 /**
  * Source layer the brand table was derived from, recorded so a consumer can tell which snapshot it has.
  */

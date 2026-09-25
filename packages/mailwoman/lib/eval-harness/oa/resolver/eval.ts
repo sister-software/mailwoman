@@ -2,10 +2,6 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- *
- *   OpenAddresses resolver eval on real-point rows.
- *   Compares parser outputs through the same resolver and reports accuracy/error metrics.
- *   Supports optional markdown/json outputs and coordinate-tier variants.
  */
 
 import type { AddressTree } from "@mailwoman/core/decoder"
@@ -37,12 +33,15 @@ import {
 	hasStreetHouseNumber,
 } from "#eval-harness/oa/resolver/tree-hits"
 
+/**
+ * Re-exports the aggregate counter types so that report code can import them from the eval module.
+ */
 export type { Agg, AggPair } from "#eval-harness/oa/resolver/aggregate"
+/**
+ * Re-exports the options type that {@linkcode oaResolverEval} accepts.
+ */
 export type { OAResolverEvalOptions } from "#eval-harness/oa/resolver/options"
 
-/**
- * Max retained diagnostic misses.
- */
 const MAX_DIAGNOSTIC_MISSES = 5000
 
 /**
@@ -56,7 +55,6 @@ export async function oaResolverEval(
 	const evalPath = options.eval || "data/eval/external/openaddresses-us-sample.jsonl"
 	const limit = (options.limit ?? 0) || Infinity
 
-	// Default WOF DBs.
 	const wofPaths = (
 		options.wof || `${wofDatabasePath("admin-global-priority.db")},${wofDatabasePath("postcode-locality-intl.db")}`
 	)
@@ -100,20 +98,18 @@ export async function oaResolverEval(
 		preferCountry: dc,
 	}
 
-	// Neural aggregates.
 	const agg = {
 		neural: newAggPair(),
 	}
 
-	// Neural + anchor aggregate.
 	const neuralAnchorAgg = newAggPair()
 	const neuralAddrPtAgg = newAggPair()
 	let addressPointHits = 0
 	const neuralInterpAgg = newAggPair()
 	let interpHits = 0
 	const diagInterp = $public.MAILWOMAN_DIAG_INTERP === "1"
-	let interpPrecond = 0 // interpolation precondition met
-	let interpFullParseMiss = 0 // precondition met, no exact hit, no interpolation hit
+	let interpPrecond = 0
+	let interpFullParseMiss = 0
 	const diagMisses: string[] = []
 
 	const { runAssembled, assembledPipeline } = await buildAssembledArm(options, { neural, resolver }, reportError)
@@ -121,15 +117,12 @@ export async function oaResolverEval(
 	let neuralPrecond = 0
 	let asmPrecond = 0
 
-	// Optional per-row failure dump.
 	const collectErrors = !!(options.errorsJSON || "")
 	const errorRows: Record<string, unknown>[] = []
 
-	// Optional resolved-row dump.
 	const collectResolvedDump = !!(options.outResolved || "")
 	const resolvedRows: Record<string, unknown>[] = []
 
-	// Optional per-row outcome dump.
 	const collectRows = !!(options.outRows || "")
 	const outRows: Record<string, unknown>[] = []
 
@@ -142,17 +135,14 @@ export async function oaResolverEval(
 			reportError(`  ${i}/${rows.length}`)
 		}
 
-		// Periodic forced GC (`node --expose-gc`).
 		if (i % 50 === 0) {
 			;(globalThis as { gc?: () => void }).gc?.()
 		}
 
-		// Per-row cascade DBs with fallback.
 		const rowDatabases = cascadeProvider ? cascadeProvider.for((row.state || "").toLowerCase() || null) : null
 		const rowAddrPoints = rowDatabases?.addressPoints ?? addressPoints ?? null
 		const rowInterp = rowDatabases?.interpolation ?? interpolation ?? null
 
-		// Shared resolve options.
 		const nOpts = {
 			...(anchorRerank
 				? { ...resolveOpts, anchorPosterior: anchorCountryPosteriorFor(row.input, anchorSources) }
@@ -161,7 +151,6 @@ export async function oaResolverEval(
 			...(rowInterp ? { interpolation: rowInterp } : {}),
 		}
 
-		// Neural arm.
 		let nResolved: Resolved[] = []
 		let nDecorated: AddressTree | null = null
 
@@ -174,9 +163,7 @@ export async function oaResolverEval(
 			timing.parse += resolveStartedAt - parseStartedAt
 			timing.resolve += performance.now() - resolveStartedAt
 			nResolved = collectResolved(nDecorated)
-		} catch {
-			/* unresolved */
-		}
+		} catch {}
 
 		const ns = scoreResolvedRow(row, nResolved, localityMatches)
 		recordInto(agg.neural, row.state, ns)
@@ -198,7 +185,6 @@ export async function oaResolverEval(
 			})
 		}
 
-		// Neural + address points.
 		if (runAddrPt) {
 			const hit = nDecorated ? findAddressPointHit(nDecorated) : null
 			const apErr = hit ? haversineKm(hit.lat, hit.lon, row.lat, row.lon) : ns.err
@@ -210,7 +196,6 @@ export async function oaResolverEval(
 			recordInto(neuralAddrPtAgg, row.state, { ...ns, err: apErr })
 		}
 
-		// Neural + interpolation.
 		if (runInterp) {
 			const exact = nDecorated ? findAddressPointHit(nDecorated) : null
 			const interp = nDecorated ? findInterpolatedHit(nDecorated) : null
@@ -223,7 +208,6 @@ export async function oaResolverEval(
 
 			recordInto(neuralInterpAgg, row.state, { ...ns, err: ipErr })
 
-			// Diagnostic interpolation miss tracking.
 			if (diagInterp && nDecorated) {
 				const { street: s, houseNumber: hn, postcode: pc } = findInterpolationSpans(nDecorated)
 				const precond = !!(s && hn && pc)
@@ -242,7 +226,6 @@ export async function oaResolverEval(
 			}
 		}
 
-		// Neural + postcode anchor.
 		if (useAnchor) {
 			const ac = anchorCoordinateFor(row.input, anchorSources)
 			const fusedErr = ac ? haversineKm(ac.lat, ac.lon, row.lat, row.lon) : ns.err
@@ -253,7 +236,7 @@ export async function oaResolverEval(
 			outRows.push({
 				input: row.input,
 				expected: row.expected,
-				// Include resolved names when present.
+
 				neural: {
 					loc: ns.locMatch,
 					reg: ns.regMatch,
@@ -265,7 +248,6 @@ export async function oaResolverEval(
 			})
 		}
 
-		// Assembled arm.
 		if (assembledPipeline) {
 			try {
 				const { tree } = await assembledPipeline(row.input, { resolveOpts: nOpts })
@@ -276,9 +258,7 @@ export async function oaResolverEval(
 				if (hasStreetHouseNumber(tree)) {
 					asmPrecond++
 				}
-			} catch {
-				/* unresolved */
-			}
+			} catch {}
 		}
 
 		if (collectErrors && !ns.locMatch) {
@@ -325,7 +305,6 @@ export async function oaResolverEval(
 		reportError(`wrote ${resolvedRows.length} resolved rows → ${options.outResolved || ""}`)
 	}
 
-	// Build markdown report.
 	const markdown = await renderOaResolverReport({
 		agg,
 		assembledAgg,

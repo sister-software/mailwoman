@@ -2,30 +2,10 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- *
- *   Gradient-boosted shallow regression trees (logistic loss), pure-Node — the learned scorer #603
- *   names: an offline-trained model (this trainer, or XGBoost/LightGBM exported to the same
- *   {@link GBT} shape) plus a trivial evaluator, no new runtime dependency. It sits behind the
- *   matcher's `scorer` hook to replace the Fellegi-Sunter link weight where labels (or a held-out
- *   truth like an NPI) let a tree learn the over-merge signature the hand-weights miss.
- *
- *   This module is feature-agnostic: feature vectors are caller-defined `number[]` (the record
- *   matcher builds them in `@mailwoman/registry`'s learned-scorer module — one-hot agreement
- *   levels
- *
- *   - Interaction terms + corpus statistics). It only fits ({@link trainGBT}) and scores
- *       ({@link gbtScore}). The trained {@link GBT} is plain JSON (`{trees, lr, base}`), so a model
- *       trains offline once and ships as a data file.
  */
 
-/**
- * Distinct values at or below which every split point is tried exactly rather than by quantile.
- */
 const MAX_EXACT_SPLIT_VALUES = 5
 
-/**
- * Quantile split points evaluated for a continuous feature.
- */
 const QUANTILE_SPLIT_COUNT = 6
 
 /**
@@ -33,13 +13,11 @@ const QUANTILE_SPLIT_COUNT = 6
  */
 export type TreeNode = { leaf: number } | { f: number; thr: number; lo: TreeNode; hi: TreeNode }
 
-// Local by design: `@mailwoman/registry`'s tools/shared.ts exports this sigmoid.
-// Registry depends on match rather than the reverse.
 const sigmoid = (z: number): number => 1 / (1 + Math.exp(-Math.max(-30, Math.min(30, z))))
 
 /**
- * Per-feature candidate split thresholds: midpoints for few-valued/binary features,
- * quantiles for continuous.
+ * Returns each feature's candidate split thresholds: midpoints between values for
+ * features with at most five distinct values, and six quantiles otherwise.
  */
 export function buildThresholds(X: number[][]): number[][] {
 	const dim = X[0]?.length ?? 0
@@ -74,9 +52,6 @@ export function buildThresholds(X: number[][]): number[][] {
 	return out
 }
 
-/**
- * Weighted SSE of target `g` over `rows` around their weighted mean.
- */
 function nodeSSE(rows: number[], g: number[], w: number[]): number {
 	let wsum = 0
 	let wg = 0
@@ -97,9 +72,6 @@ function nodeSSE(rows: number[], g: number[], w: number[]): number {
 	return sse
 }
 
-/**
- * Greedy depth-limited weighted regression tree on target `g` (the boosting residual).
- */
 function fitRegTree(
 	rows: number[],
 	X: number[][],
@@ -170,9 +142,7 @@ function predictTree(t: TreeNode, x: number[]): number {
 }
 
 /**
- * A trained gradient-boosted-tree model: an additive ensemble over a base log-odds.
- *
- * Plain JSON.
+ * A trained gradient-boosted tree ensemble whose trees add to a base log-odds, stored as plain JSON.
  */
 export interface GBT {
 	trees: TreeNode[]
@@ -208,7 +178,7 @@ export function trainGBT(X: number[][], y: number[], w: number[], opts: GBTOpts)
 		}
 	}
 
-	const base = Math.log((wpos + 1) / (wtot - wpos + 1)) // weighted base log-odds
+	const base = Math.log((wpos + 1) / (wtot - wpos + 1))
 	const F = new Array<number>(N).fill(base)
 	const trees: TreeNode[] = []
 
@@ -219,7 +189,6 @@ export function trainGBT(X: number[][], y: number[], w: number[], opts: GBTOpts)
 			g[i] = y[i]! - sigmoid(F[i]!)
 		}
 
-		// negative gradient of logistic loss
 		const tree = fitRegTree(rowsAll, X, g, w, thresholds, opts.depth, opts.minLeaf)
 
 		for (let i = 0; i < N; i++) {
@@ -233,9 +202,8 @@ export function trainGBT(X: number[][], y: number[], w: number[], opts: GBTOpts)
 }
 
 /**
- * GBT score (logit) for one feature vector.
- *
- * Threshold-comparable like the FS weight.
+ * Returns the model's logit for one feature vector, which is compared against a
+ * threshold the same way as a Fellegi-Sunter match weight.
  */
 export function gbtScore(m: GBT, x: number[]): number {
 	let f = m.base

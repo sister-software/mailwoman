@@ -2,8 +2,6 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- *
- *   MCP interface for sequential minimal-pair measurements.
  */
 
 import { z } from "zod"
@@ -26,6 +24,10 @@ const LADDER_SCHEMA = z.object({
 	rungs: RUNGS_SCHEMA,
 })
 
+/**
+ * Builds the `mwdev_minimal_pairs` tool, which runs caller-written ladders of near-identical
+ * inputs through one engine and reports the first rung whose output changes.
+ */
 export const minimalPairsTool = ({ registry }: DevToolDeps): DevTool => ({
 	name: "mwdev_minimal_pairs",
 	description:

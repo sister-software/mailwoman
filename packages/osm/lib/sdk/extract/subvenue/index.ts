@@ -2,59 +2,6 @@
  * @copyright Sister Software.
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- *
- *   Sub-venue structure extractor (#35 wave 1) — stream the venue-interior features (airport
- *   terminals, boarding gates, station platforms) and their containing venues (aerodromes, stations,
- *   campuses) out of a Geofabrik `.osm.pbf` extract via gdal/ogr2ogr, matched against an and/or
- *   tag-rule table and yielded as {@link SubVenueSourceRow}s. Mirrors `extract-poi.ts`'s
- *   process-spawn + GeoJSONSeq-over-stdout idiom. the two differences are the predicate (transport
- *   structure rather than telecom infrastructure) and the localized-name harvest described below.
- *
- *   why this exists. `docs/engineering/sub-venue-corpus-task.mdx` establishes that `North Terminal` /
- *   `Upper Concourse` fail to parse because the `unit` tag was never taught the modifier+designator
- *   shape rather than because a decode weight is too low — closing it by weight would need a bias scale near
- *   11 nats against the 6.0 the stronger designator+identifier evidence needed. The fix is corpus, and
- *   the densest real source of sub-venue naming in existence is airport and rail terminal data. OSM's
- *   `aeroway` key is already the provenance for `terminal` and `gate` in
- *   `neural/venue-structure.ts`'s designator vocabulary, so this extends a source we already reach
- *   rather than adding a dependency.
- *
- *   ── the localized-name harvest, and why `other_tags` is selected wholesale ─────────────────────────
- *   `extract-poi.ts` enumerates the tag keys it needs and reads each through `hstore_get_value`. That
- *   cannot work here: the payload this extractor exists for is the `name:<lang>` family, whose key set
- *   is unbounded (OSM carries `name:ja`, `name:es`, `name:zh-Hant`, …). So the whole `other_tags`
- *   hstore is selected as one column and parsed in JS ({@link parseOSMHstore}), which yields every
- *   localized name a feature carries at no extra query cost. `Terminal Sur`, `ターミナル5`,
- *   `Nordterminal` all arrive this way — the non-English designator surfaces the corpus task calls the
- *   cheapest route to.
- *
- *   ── Promoted vs. hstore tag columns, and why the split is PER-layer here ──────────────────────────
- *   gdal's default `osmconf.ini` (`/usr/share/gdal/osmconf.ini`, gdal 3.8.4 on this box) promotes a
- *   different attribute list per layer, and the two keys this extractor leans on fall on opposite sides
- *   of that split:
- *
- *   - `aeroway` is promoted on `multipolygons` but not on `points`.
- *   - `ref` is promoted on `points` but not on `multipolygons`.
- *
- *   So {@link PROMOTED_KEYS_BY_LAYER} is keyed by layer, and `tagSelectExpr` refuses a layer it has no list
- *   for rather than emitting hstore SQL that runs and matches nothing. Verified against the installed `osmconf.ini` and against a hand-authored `.osm`
- *   XML fixture read with the system `ogr2ogr` (gdal's OSM driver reads plain OSM XML the same way it
- *   reads `.pbf`), which is also what `extract-subvenue.test.ts` pins. A custom `OSM_CONFIG_FILE` that
- *   changes either `attributes=` line breaks the bare-column assumption. not a concern for the shipped
- *   default.
- *
- *   A promoted key is not repeated inside `other_tags`. That is the whole point of promotion — so the
- *   JS-side re-check reads promoted keys off the feature's own properties and everything else out of
- *   the parsed hstore. {@link toSubVenueSourceRow} merges the two before matching.
- *
- *   ── What this does not do ────────────────────────────────────────────────────────────────────────
- *   No parent linkage. A terminal's containing aerodrome is expressed in OSM by geometry (or an
- *   occasional site relation), not by a parent id, so pairing `Terminal 5` with `Heathrow Airport`
- *   needs a spatial join this module deliberately does not attempt. Both tiers are yielded with their
- *   coordinates and a {@link SubVenueTier} discriminator. pairing is the consumer's job.
- *
- *   No `country` either, for the same reason `extract-poi.ts` has none: a Geofabrik extract's country
- *   is a property of the invocation rather than of a feature. Rows carry `country: ""` and the caller stamps it.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -73,6 +20,10 @@ import {
 import { representativePoint } from "#sdk/representative-point"
 import { tagAlias } from "#sdk/tag-columns"
 
+/**
+ * Re-exports the sub-venue tag rules and SQL helpers so extractor callers can
+ * customize rules without importing the rules module directly.
+ */
 export {
 	buildSubVenueSQL,
 	distinctSubVenueTagKeys,
@@ -83,15 +34,11 @@ export {
 } from "#sdk/extract/subvenue/rules"
 
 /**
- * Parse gdal's `other_tags` hstore rendering into a plain dict.
+ * Parses GDAL's `other_tags` hstore text (`"key"=>"value",...`) into a plain object,
+ * returning an empty one for missing input.
  *
- * The format is `"key"=>"value","key2"=>"value2"`, with `\"` and `\\` escaped inside either half.
- * A regex split on `,` is wrong — comma is ordinary text inside a value, and OSM
- * names contain them (`"name"=>"Terminal 1, Departures"`) — so this is a character
- * scanner that only leaves a quoted string on an unescaped quote.
- *
- * @returns an empty dict for `null`/empty input rather than throwing: `other_tags` is absent
- * whenever every tag on a feature was promoted, which is an ordinary outcome rather than a fault.
+ * It scans characters rather than splitting on commas, because OSM values
+ * such as names often contain commas.
  */
 export function parseOSMHstore(text: string | null | undefined): Record<string, string> {
 	const out: Record<string, string> = {}
@@ -100,11 +47,6 @@ export function parseOSMHstore(text: string | null | undefined): Record<string, 
 
 	let i = 0
 
-	/**
-	 * Read one `"…"` literal starting at the next quote, honoring backslash escapes.
-	 *
-	 * @returns `null` at end of input.
-	 */
 	const readQuoted = (): string | null => {
 		while (i < text.length && text[i] !== '"') {
 			i++
@@ -120,9 +62,6 @@ export function parseOSMHstore(text: string | null | undefined): Record<string, 
 			const ch = text[i]!
 
 			if (ch === "\\") {
-				// A backslash escapes the next character verbatim.
-				// The only two gdal emits are `\"` and `\\`, but passing anything else
-				// through unchanged is the lossless choice.
 				if (i + 1 < text.length) {
 					value += text[i + 1]
 				}
@@ -143,7 +82,6 @@ export function parseOSMHstore(text: string | null | undefined): Record<string, 
 			i++
 		}
 
-		// Unterminated literal — treat what we read as the value rather than dropping the whole feature.
 		return value
 	}
 
@@ -152,8 +90,6 @@ export function parseOSMHstore(text: string | null | undefined): Record<string, 
 
 		if (key === null) break
 
-		// Step over the `=>` separator.
-		// A malformed pair just resolves to the next quoted run.
 		const value = readQuoted()
 
 		if (value === null) break
@@ -163,15 +99,6 @@ export function parseOSMHstore(text: string | null | undefined): Record<string, 
 	return out
 }
 
-/**
- * Language codes harvested off `name:<lang>` keys.
- *
- * Deliberately permissive — OSM carries BCP-47-ish subtags (`zh-Hant`, `pt-BR`) alongside bare
- * ISO 639 codes, and the lexicon build downstream is the right place to decide which it trusts.
- * What this rejects is the `name:*` keys that are not languages: `name:left`,
- * `name:right`, `name:prefix`, `name:signed`, `name:etymology` and friends,
- * which are documented OSM semantics with nothing linguistic about them.
- */
 const NON_LANGUAGE_NAME_SUFFIXES = new Set([
 	"left",
 	"right",
@@ -207,61 +134,51 @@ export function harvestLocalizedNames(tags: Readonly<Record<string, string | und
 }
 
 /**
- * One extracted transport structure.
- *
- * The shape a sub-venue lexicon build and a corpus extract both read.
+ * Describes one extracted transport structure, such as a platform or gate,
+ * as read by the sub-venue lexicon build and corpus extracts.
  */
 export interface SubVenueSourceRow {
 	/**
-	 * The designator the matched rule attests — `terminal`, `gate`, `platform`,
-	 * `station`, `airport`, `campus`.
+	 * Names the matched rule's designator, such as `terminal`, `gate`, `platform` or `airport`.
 	 */
 	designatorID: string
 	tier: SubVenueTier
+
 	/**
-	 * The feature's default `name` tag, `null` when unnamed.
-	 *
-	 * A gate is very often unnamed and carries only `ref`.
+	 * Holds the default `name` tag, or `null` when the feature is unnamed,
+	 * which is common for a gate that carries only `ref`.
 	 */
 	name: string | null
+
 	/**
-	 * The feature's `ref` tag — the identifier half of `Gate A12` / `Terminal 2F`,
-	 * which OSM keeps out of `name` far more consistently than it keeps it in.
+	 * Holds the `ref` tag, the identifier in a label such as `Gate A12`,
+	 * which OSM usually keeps out of `name`.
 	 */
 	ref: string | null
+
 	/**
-	 * `name:<lang>` → value, the localized surfaces.
-	 *
-	 * Empty when the feature carries none.
+	 * Maps the language subtag of each `name:<lang>` tag to its value, and is empty
+	 * when the feature has none.
 	 */
 	localizedNames: Record<string, string>
 	latitude: number
 	longitude: number
+
 	/**
-	 * `key=value` of the rule branch that matched, so a row's provenance survives into the lexicon.
+	 * Records the matched rule's tag as `key=value`, so each row's provenance survives into the lexicon.
 	 */
 	matchedTag: string
+
 	/**
-	 * Always `""` — see the module docstring.
-	 *
-	 * The caller stamps the invocation's country.
+	 * Is always `""` from the extractor, because a PBF feature does not carry
+	 * its country; the caller stamps it.
 	 */
 	country: string
 }
 
 /**
- * Decode one ogr2ogr GeoJSONSeq feature into a {@link SubVenueSourceRow}, or `null`
- * when it satisfies no rule, carries no usable geometry, or has no name of any
- * kind (no `name`, no `ref`, no `name:<lang>`).
- *
- * The last condition is the yield filter that matters: unnamed geometry is the
- * majority of `railway=platform` and `aeroway=gate` in OSM, and a lexicon built
- * from names has nothing to learn from a row that has none.
- *
- * `promotedProps` are the feature's own GeoJSON properties (aliased tag columns plus `name`/`ref`);
- * everything else comes out of the parsed `other_tags` hstore.
- * The two are merged before matching because a key's side of that split is a
- * property of the layer rather than of the rule.
+ * Converts one ogr2ogr GeoJSONSeq feature into a {@link SubVenueSourceRow}, or returns `null`
+ * when it matches no rule, has no usable geometry, or has no `name`, `ref` or `name:<lang>`.
  */
 export function toSubVenueSourceRow(
 	feature: { properties?: Record<string, unknown>; geometry?: { type?: string; coordinates?: unknown } },
@@ -272,8 +189,6 @@ export function toSubVenueSourceRow(
 	const hstore = parseOSMHstore(typeof p["other_tags"] === "string" ? p["other_tags"] : null)
 	const tags: Record<string, string | undefined> = { ...hstore }
 
-	// Aliased rule columns win over the hstore: on a layer that promotes the key, the hstore has no
-	// entry for it at all, and on a layer that does not, the alias was read from the hstore anyway.
 	for (const key of tagKeys) {
 		const raw = p[tagAlias(key)]
 
@@ -313,11 +228,6 @@ export function toSubVenueSourceRow(
 	}
 }
 
-/**
- * Run ogr2ogr against one layer, yielding matched {@link SubVenueSourceRow}s from its GeoJSONSeq stdout.
- *
- * Mirrors `extract-poi.ts`'s `runPOILayer` process-spawn / stderr-capture / exit-code idiom exactly.
- */
 async function* runSubVenueLayer(
 	pbfPath: string,
 	layer: string,
@@ -340,14 +250,11 @@ async function* runSubVenueLayer(
 }
 
 /**
- * Stream every named transport structure matching `rules` (default {@link SUBVENUE_TAG_RULES})
- * out of a `.osm.pbf` extract's `points` + `multipolygons` layers.
+ * Streams every named transport structure matching `rules` from a `.osm.pbf`
+ * extract's `points` and `multipolygons` layers.
  *
- * A feature mapped as both a node and an area (common for large terminals) yields twice,
- * once per layer, with different coordinates.
- * De-duplication is the consumer's call.
- *
- * The lexicon build counts distinct surfaces and does not care, while a corpus extract would.
+ * A feature mapped as both a node and an area yields twice with different coordinates,
+ * so consumers that need unique features must de-duplicate.
  */
 export async function* extractOSMSubVenues(
 	pbfPath: string,
@@ -358,32 +265,23 @@ export async function* extractOSMSubVenues(
 	}
 }
 
+/**
+ * Configures {@link writeSubVenueJSONL}, including an optional country code stamped onto every row.
+ */
 export interface WriteSubVenueJSONLOptions {
 	pbfPath: string
 	outPath: string
+
 	/**
-	 * ISO 3166-1 alpha-2 stamped onto every row.
-	 *
-	 * A Geofabrik extract's country is a property of the invocation — see the module
-	 * docstring — so it arrives here rather than out of a feature.
+	 * Sets the ISO 3166-1 alpha-2 code stamped onto every row, since an extract's
+	 * country comes from the invocation rather than the features.
 	 */
 	country?: string
 	rules?: SubVenueTagRule[]
 }
 
 /**
- * Run the extractor over one `.osm.pbf` and write the rows as jsonl, one object per line.
- *
- * The step between a Geofabrik download and `mailwoman corpus sub-venue-lexicon`,
- * factored out of the ad-hoc script wave 1 used because wave 2 runs it five times.
- * Backpressure is honoured (`drain`).
- *
- * The Japan extract is 184,000 rows and 40 MB, and an unawaited `write` loop buffers all of it.
- *
- * Measured on this box: 340 MB of Hessen produced 27,234 rows in 44 s, 2.5 GB of Japan
- * produced 183,999 in 371 s, both dominated by ogr2ogr rather than by this loop.
- *
- * @returns the row count.
+ * Extracts sub-venue rows from one `.osm.pbf` file and writes them as JSONL, returning the row count.
  */
 export async function writeSubVenueJSONL(options: WriteSubVenueJSONLOptions): Promise<number> {
 	await using out = createNewlineWriter(options.outPath)

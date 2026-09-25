@@ -2,32 +2,6 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- *
- *   Acquire one survey area's published archive — 13 to 41 MB streamed to disk and unzipped.
- *
- *   The transfer itself lives in `@mailwoman/core/utils`, and `streamToDisk` explains why a file transfer of
- *   this size keeps raw `fetch` instead of going through `APIClient`, plus the `.part`-rename rule. What is
- *   soil's, and stays here, is the URL shape, the cache key, and the two facts below that the shared
- *   transfer is told rather than assumes: the progress stride and what a 400 means. The metadata reads
- *   around this one do go through `APIClient` — see `client.ts`.
- *
- *   Freshness is `sacatalog.saverest`, never a length probe, and the host leaves no choice. It answers `head`
- *   with http 405 (`allow: GET`) and ignores `Range`: a request with `Range: bytes=0-0` returned http 200 and
- *   transferred the whole 27,598,377 bytes in 7.23 s. So "check the size first" starts a real download. The
- *   cache is keyed on the version date the tabular service reports instead, and a vintage already on disk is
- *   never re-fetched. The `Range` behaviour is path-specific rather than host-wide — `/DataAvailability/`
- *   does answer 206 — so a client must probe per path rather than conclude from one.
- *
- *   the filename embeds the version date and A wrong one is an http 400. Not a 404: asking for a date the
- *   host does not hold reads as a malformed request rather than a missing file, which is why the date comes
- *   from the catalogue rather than from a guess. The square brackets must be sent literally, so the URL is
- *   built with them percent-encoded.
- *
- *   two cache variants exist and the bare one is wanted. `wss_SSA_IA153_[2025-09-09].zip` is 25,474,922 bytes;
- *   `wss_SSA_IA153_soildb_IA_2003_[2025-09-09].zip` is 27,598,377 and differs only by an empty Microsoft Access
- *   template container for a workflow this program does not use. Confirmed on a second area (`IA015`:
- *   38,981,269 against 41,104,724 bytes) and on a third that ships no template at all (`TX299`, 13,455,641
- *   bytes, 97 files, no `.mdb`).
  */
 
 import { tryStat } from "@mailwoman/core/fs/readers"
@@ -37,55 +11,40 @@ import { streamToDisk } from "@mailwoman/core/utils"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 
 /**
- * The download service's survey-area cache.
- *
- * Documented at `https://websoilsurvey.sc.egov.usda.gov/DSD/Download/help`,
- * which lists `GET /{CacheName}/{FileName}`.
+ * Points to the Web Soil Survey download cache that serves survey-area archives.
  */
 export const WSS_SSA_CACHE_URL = "https://websoilsurvey.sc.egov.usda.gov/DSD/Download/Cache/SSA"
 
 /**
- * The archive URL for one survey area at one version date.
- *
- * The brackets are percent-encoded rather than sent raw: they are not valid in a URL path,
- * and a client that sends them literally depends on the fetcher tolerating them.
+ * Returns the archive URL for one survey area at one version date, with the brackets
+ * around the date percent-encoded because they are not valid in a URL path.
  */
 export function surveyAreaArchiveURL(areaSymbol: string, versionDate: string): string {
 	return `${WSS_SSA_CACHE_URL}/wss_SSA_${areaSymbol}_%5B${versionDate}%5D.zip`
 }
 
+/**
+ * Configures {@link downloadSurveyArea}, which caches the archive and its
+ * extracted tree under `cacheRoot/<versionDate>`.
+ */
 export interface DownloadSurveyAreaOptions {
 	areaSymbol: string
+
 	/**
-	 * The version date from `sacatalog.saverest`, as `yyyy-MM-DD`.
+	 * The survey area's version date from `sacatalog.saverest`, formatted as `YYYY-MM-DD`.
 	 */
 	versionDate: string
+
 	/**
-	 * Where vintages are kept.
-	 *
-	 * Each version date gets its own directory, so a new refresh never overwrites the old
-	 * one in place and a re-run against the same vintage never re-transfers.
+	 * The cache directory, where each version date gets its own subdirectory so a new
+	 * vintage never overwrites an old one and a repeat run downloads nothing.
 	 */
 	cacheRoot: PathBuilderLike
 	onProgress?: (message: string) => void
 }
 
-/**
- * Bytes between progress reports.
- *
- * Smaller than the shared default because these archives are 13–41 MB, and the default
- * stride would leave the smallest of them reporting once.
- */
 const PROGRESS_STRIDE_BYTES = 8 * 1024 * 1024
 
-/**
- * What this host answers for a version date it does not hold.
- *
- * Not a 404: it reads as a malformed request rather than a missing file.
- * The message below reports that status.
- *
- * The date comes from the catalogue rather than a guess.
- */
 const UNKNOWN_VERSION_STATUS = 400
 
 /**
@@ -94,29 +53,28 @@ const UNKNOWN_VERSION_STATUS = 400
 export interface SurveyAreaArchive {
 	areaSymbol: string
 	versionDate: string
+
 	/**
-	 * The extracted `<areasymbol>/` directory, holding `spatial/` and `tabular/`.
+	 * The extracted `<areasymbol>/` directory, which holds `spatial/` and `tabular/`.
 	 */
 	root: PathBuilder
 	spatialDirectory: PathBuilder
 	tabularDirectory: PathBuilder
+
 	/**
-	 * The archive as transferred.
-	 *
-	 * Kept so a re-run costs nothing and so the bytes are re-checkable.
+	 * The downloaded ZIP archive, kept so a repeat run skips the transfer and the bytes can be rechecked.
 	 */
 	archivePath: PathBuilder
 }
 
 /**
- * Download and unzip one survey area, returning where its pieces landed.
+ * Downloads and unzips one survey area into the cache, skipping steps already done,
+ * and returns where its pieces are.
  *
- * Downloads to a `.part` file and renames only on a clean finish, so an interrupted
- * transfer never presents as a complete archive.
- * The same discipline the database build uses, for the same reason.
+ * The download goes through a `.part` file, so an interrupted transfer never looks like a complete archive.
  *
- * @throws {Error} When the host answers anything but 200, or when the extracted tree
- * does not hold the two directories every survey area publishes.
+ * @throws {Error} When the host answers anything but 200, or when the extracted
+ * tree lacks the `spatial` or `tabular` directory.
  */
 export async function downloadSurveyArea(options: DownloadSurveyAreaOptions): Promise<SurveyAreaArchive> {
 	const vintageDirectory = PathBuilder.from(options.cacheRoot)(options.versionDate)
@@ -138,15 +96,13 @@ export async function downloadSurveyArea(options: DownloadSurveyAreaOptions): Pr
 					status === UNKNOWN_VERSION_STATUS
 						? " — this host answers 400 rather than 404 for a version date it does not hold, so check the date against sacatalog.saverest"
 						: undefined,
-				// Every progress line names the area, because a full acquisition interleaves hundreds of them.
+
 				...(options.onProgress
 					? { onProgress: (message: string) => options.onProgress?.(`${options.areaSymbol}: ${message}`) }
 					: {}),
 			})
 		}
 
-		// The archive holds its files under an `<areasymbol>/` root already, so it unzips
-		// into the vintage directory rather than into a directory named for itself.
 		await runFile("unzip", ["-o", "-q", archivePath, "-d", vintageDirectory])
 	} else {
 		options.onProgress?.(`${options.areaSymbol}: already extracted for ${options.versionDate}`)

@@ -2,10 +2,6 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- *
- *   The markdown report for `oa-resolver-eval`. Split out because it is a separable concern — the eval
- *   measures, this renders — and because eval figures are never hand-typed into docs: every number in
- *   `docs/articles/evals/` comes from a run of this emitter.
  */
 
 import { tempRootPathBuilder } from "@mailwoman/core/data-root"
@@ -42,9 +38,10 @@ export interface OaReportInput {
 }
 
 /**
- * Render the run's markdown report.
+ * Renders the OpenAddresses resolver evaluation report as Markdown from the run's aggregates and flags.
  *
- * Pure — every number comes from `input`.
+ * When interpolation diagnostics are on and there are misses, it also writes them
+ * to `interp-misses.txt` under the temp root.
  */
 export async function renderOaResolverReport(input: OaReportInput): Promise<string> {
 	const {
@@ -148,8 +145,6 @@ export async function renderOaResolverReport(input: OaReportInput): Promise<stri
 				`- interp HITS: ${interpHits} → of full-parse non-exact rows, hit rate ${((100 * interpHits) / Math.max(1, interpFullParseMiss + interpHits)).toFixed(1)}%`
 			)
 
-			// Error CDF over the neural+interp coordinate (DeepSeek: "where's the cliff?").
-			// Cumulative % of all rows within each radius — the within-100m DoD metric + the shape of the tail.
 			const ierrs = neuralInterpAgg.overall.errs
 			lines.push("")
 			lines.push(`error CDF (neural+interp, n=${ierrs.length}) — cumulative % within radius:`)
@@ -159,9 +154,6 @@ export async function renderOaResolverReport(input: OaReportInput): Promise<stri
 				lines.push(`  ≤ ${m} m: ${((100 * within) / Math.max(1, ierrs.length)).toFixed(1)}%`)
 			}
 
-			// Dump all full-parse misses for the standalone database-membership categorization
-			// (segment-not-found vs in-database-range-miss vs normalization).
-			// Bump cap done at collection site.
 			if (diagMisses.length) {
 				const missesPath = tempRootPathBuilder("interp-misses.txt")
 				await writeLocalTextFile(diagMisses.join("\n"), missesPath)

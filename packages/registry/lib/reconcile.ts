@@ -1,34 +1,54 @@
-
-
 import { formatPersonName } from "@mailwoman/record/name"
 import type { GeoFeatureCollection, PointLiteral } from "@mailwoman/spatial"
 
 import { toFeature } from "#geojson"
 import type { EntityGeoData, ReconciliationBucket, ResolvedEntity } from "#types"
 
-
+/**
+ * Which source labels denote eligibility vs funding/enrollment.
+ */
 export interface ReconcileConfig {
-	
+	/**
+	 * Source labels that denote membership in the eligibility set.
+	 */
 	eligibilitySources: readonly string[]
-	
+
+	/**
+	 * Source labels that denote enrollment, funding or program participation.
+	 */
 	fundingSources: readonly string[]
 }
 
-
+/**
+ * One entity, classified.
+ */
 export interface ReconciledEntity {
 	entity: ResolvedEntity
-	
+
+	/**
+	 * The distinct, sorted source labels across the entity's records.
+	 */
 	sources: string[]
 	bucket: ReconciliationBucket
 }
 
+/**
+ * Holds the entities that {@link reconcileCoverage} placed in a bucket, with a count per bucket.
+ */
 export interface ReconciliationResult {
-	
+	/**
+	 * Entities with at least one eligibility or funding source, each assigned a bucket.
+	 */
 	reconciled: ReconciledEntity[]
 	counts: Record<ReconciliationBucket, number>
 }
 
-
+/**
+ * Places an entity in a reconciliation bucket according to whether its source labels
+ * include eligibility sources, funding sources, or both.
+ *
+ * @returns `null` when the entity has neither kind of source, so callers exclude it rather than miscount it.
+ */
 export function bucketOf(sources: Iterable<string>, config: ReconcileConfig): ReconciliationBucket | null {
 	const elig = new Set(config.eligibilitySources)
 	const fund = new Set(config.fundingSources)
@@ -54,7 +74,10 @@ export function bucketOf(sources: Iterable<string>, config: ReconcileConfig): Re
 	return null
 }
 
-
+/**
+ * Buckets resolved entities by their sources with {@link bucketOf}, and drops those
+ * that have neither eligibility nor funding sources.
+ */
 export function reconcileCoverage(entities: readonly ResolvedEntity[], config: ReconcileConfig): ReconciliationResult {
 	const reconciled: ReconciledEntity[] = []
 
@@ -78,7 +101,10 @@ export function reconcileCoverage(entities: readonly ResolvedEntity[], config: R
 	return { reconciled, counts }
 }
 
-
+/**
+ * Returns a display name for an entity's representative record: the organization's
+ * canonical name, else the person's name, else the record id.
+ */
 export function repName(entity: ResolvedEntity): string {
 	const rep = entity.representative
 	const person = formatPersonName(rep.name, "short")
@@ -86,7 +112,10 @@ export function repName(entity: ResolvedEntity): string {
 	return rep.organization?.canonical ?? (person || rep.id)
 }
 
-
+/**
+ * Converts the located reconciled entities to point features tagged with their bucket,
+ * the shape {@link toMapHTML} colors by bucket.
+ */
 export function reconciliationGeoJSON(result: ReconciliationResult): GeoFeatureCollection<PointLiteral, EntityGeoData> {
 	return {
 		type: "FeatureCollection",
@@ -96,20 +125,42 @@ export function reconciliationGeoJSON(result: ReconciliationResult): GeoFeatureC
 	}
 }
 
+/**
+ * Configures the title, optional notes and spot-check length of {@link reconciliationReport}.
+ */
 export interface ReconciliationReportOptions {
-	
+	/**
+	 * The report's level-one heading, default "Coverage reconciliation — eligibility ↔ enrollment".
+	 */
 	title?: string
-	
+
+	/**
+	 * An italic paragraph under the title describing the sources and how they were scoped.
+	 */
 	scopeNote?: string
-	
+
+	/**
+	 * A paragraph explaining the choice of match scorer.
+	 */
 	scorerNote?: string
-	
+
+	/**
+	 * A sentence about sampling or capping, prepended to the closing caveat.
+	 */
 	sampleNote?: string
-	
+
+	/**
+	 * How many "eligible, not enrolled" entities the spot-check lists, default 15.
+	 */
 	spotCheckLimit?: number
 }
 
-
+/**
+ * Renders a Markdown reconciliation report with the bucket counts, the enrolled rate,
+ * a spot-check of eligible-but-not-enrolled entities, and a fixed caveat.
+ *
+ * The enrolled rate is reported as a floor, because incomplete resolution can only miss links.
+ */
 export function reconciliationReport(result: ReconciliationResult, options: ReconciliationReportOptions = {}): string {
 	const { counts, reconciled } = result
 	const title = options.title ?? "Coverage reconciliation — eligibility ↔ enrollment"

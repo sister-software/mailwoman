@@ -2,10 +2,6 @@
  * @copyright Sister Software.
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- *
- *   Compare French street recall with and without postcode context using OSM addresses.
- *   This is the promotion battery leg for the `fr.bare_street_intact` floor.
- *   Run through `packages/mailwoman/lib/dev-tools/fr/parse-recall.run.ts`.
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
@@ -27,11 +23,6 @@ import { TextSpliterator } from "spliterator"
 
 const STREET_TAGS = new Set(["street", "street_prefix", "street_suffix"])
 
-/**
- * The frozen 40-row OSM sample the bare-street floor is graded on.
- *
- * A package sibling, so the same file is named from the source tree and from `out/`.
- */
 const FR_BARE_STREET_FIXTURE_PATH = resolvePackagePath(
 	"mailwoman",
 	"lib",
@@ -40,16 +31,8 @@ const FR_BARE_STREET_FIXTURE_PATH = resolvePackagePath(
 	"fr-bare-street-40.jsonl"
 )
 
-/**
- * Maximum bare-street failures shown in the report.
- */
 const MAX_REPORTED_FAILURES = 12
 
-/**
- * Resolve a weights sibling, preferring candidate, data-root, then package paths.
- *
- * Throws with attempted paths; missing artifacts must not become misleading scores.
- */
 async function resolveWeightsSibling(fileName: string, weightsCache?: string): Promise<PathBuilderLike> {
 	const candidates = [
 		...(weightsCache ? [`${weightsCache}/node_modules/@mailwoman/neural-weights-en-us/${fileName}`] : []),
@@ -76,38 +59,48 @@ async function resolveWeightsSibling(fileName: string, weightsCache?: string): P
  */
 export interface FRParseRecallOptions {
 	/**
-	 * Candidate ONNX and tokenizer paths; otherwise use installed weights.
+	 * Points to a candidate ONNX model, which is used only when `tokenizer` is also set;
+	 * otherwise the installed en-US weights load.
 	 *
-	 * Candidate runs also load model-independent sibling artifacts.
+	 * A candidate run also loads the postcode anchor and gazetteer lexicon found beside the weights.
 	 */
 	model?: string
 	tokenizer?: PathBuilderLike
+
 	/**
-	 * Default `neural-weights-en-us/model-card.json`.
+	 * Points to the model card that supplies the candidate's labels, defaulting
+	 * to `packages/neural-weights-en-us/model-card.json`.
 	 */
 	modelCard?: string
+
 	/**
-	 * Optional label printed in the `[pair]` provenance line.
+	 * Sets the label printed in the `[pair]` provenance line, which is omitted when the label is empty.
 	 */
 	label?: string
+
 	/**
-	 * Frozen fixture used by the promotion leg, including in database-free CI.
+	 * Points to a frozen JSONL fixture of French bare-street rows that needs no database,
+	 * defaulting to the bundled `fr-bare-street-40.jsonl`.
 	 */
 	fixture?: string
+
 	/**
-	 * Rebuild the fixture from the live OSM database.
+	 * Reads rows from the local French OSM address-point database instead of the fixture.
 	 */
 	fromDB?: boolean
+
 	/**
-	 * Emit machine-readable rates to this path for `promotion-eval.ts`.
+	 * Gives a path where the intact counts and rates are written as JSON.
 	 */
 	json?: string
+
 	/**
-	 * Candidate weights root for resolving its anchor and lexicon siblings.
+	 * Points to a candidate weights root that is searched first for the anchor and lexicon files.
 	 */
 	weightsCache?: string
+
 	/**
-	 * Optional minimum bare-intact rate, in percent.
+	 * Sets the minimum bare-street intact rate, in percent, as a numeric string.
 	 */
 	floor?: string
 }
@@ -154,14 +147,11 @@ function streetKeyOf(tree: { roots: readonly StreetKeyNode[] }): string {
 }
 
 /**
- * Measure the FR bare-vs-anchored street parse-recall delta and enforce the `fr.bare_street_intact` floor.
+ * Measures how often French street names survive parsing with and without a postcode,
+ * and checks the bare rate against `options.floor` when given.
  *
- * The report lines go to `report` and the `fail` line to `reportError`,
- * mirroring the stdout/stderr split the check captured.
- * It wrote `${stdout}${stderr}` into `fr-bare-street.md`, so the two sinks stay separate
- * and are concatenated in that order.
- *
- * The floor verdict comes back as {@linkcode FRParseRecallResult.pass} instead of the old `process.exit(1)`.
+ * The floor verdict is returned as {@linkcode FRParseRecallResult.pass},
+ * and only the failure line goes to `reportError`.
  */
 export async function frParseRecall(
 	options: FRParseRecallOptions = {},
@@ -185,8 +175,6 @@ export async function frParseRecall(
 					readOnly: true,
 				})
 
-				// Distinct streets with a city + postcode, sampled across the table (not one street repeated).
-				// Deterministic (group BY + order BY, no random) — the same database yields the same 40 rows.
 				return allRows<FRRow>(
 					db.prepare(
 						`SELECT street_raw, number, locality_norm, postcode FROM address_point
@@ -277,9 +265,6 @@ export async function frParseRecall(
 	const source = args.fromDB ? "live-database" : args.fixture
 
 	if (args.json) {
-		// snake_case wire keys, 2-space indent, trailing newline.
-		// The sidecar shape is a interface with whatever reads it next.
-		// The migration keeps it byte-for-byte.
 		await writeLocalTextFile(
 			prettyJSON({
 				bare_intact: bareOk,

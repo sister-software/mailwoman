@@ -2,17 +2,6 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- *
- *   `usePlaceAutocomplete` — the headless "Did you mean" combobox lifted from the demo god component
- *   (`_app.tsx:820-900`). It walks the host-supplied `autocomplete` over the locality segment the visitor
- *   is typing (the text after the last comma), owns the suggestion list + keyboard-highlighted active
- *   descendant, and rewrites the input on pick (replacing just that segment). No FST, no fetch of its own
- *   — the `autocomplete` fetcher is injected (the package never imports `@mailwoman/resolver-wof-sqlite`),
- *   so this stays node-safe and testable with a synchronous fake.
- *
- *   Returns the `<input>` aria/combobox props to spread onto the reused {@link QueryForm} input plus an
- *   `onInputKeyDown` (↑/↓ move the highlight, Enter accepts it and suppresses submit, Esc dismisses), and
- *   the presentational {@link PlaceAutocomplete} listbox renders `suggestions` / `activeIndex`.
  */
 
 import { type KeyboardEvent, useCallback, useEffect, useState } from "react"
@@ -20,27 +9,32 @@ import { type KeyboardEvent, useCallback, useEffect, useState } from "react"
 import { useDebouncedValue } from "#common/useDebouncedValue"
 import type { Suggestion } from "#map/types"
 
+/**
+ * Configures {@linkcode usePlaceAutocomplete} with the controlled input text and the suggestion source.
+ */
 export interface UsePlaceAutocompleteOptions {
 	/**
-	 * The current input text.
+	 * The controlled input text, whose segment after the last comma is the query.
 	 */
 	text: string
+
 	/**
-	 * Setter for the input text (a pick rewrites the last-comma segment).
+	 * The input text setter, which a pick calls with the last segment replaced.
 	 */
 	setText: (text: string) => void
+
 	/**
-	 * The host's autocomplete fetcher (FST prefix-walk).
-	 *
-	 * Absent → the combobox is inert.
+	 * The host's suggestion fetcher; when absent, the combobox never suggests anything.
 	 */
 	autocomplete?: (query: string) => Promise<Suggestion[]>
+
 	/**
-	 * Minimum query length before suggesting. @default 2
+	 * The minimum query length before suggesting, defaulting to 2.
 	 */
 	minChars?: number
+
 	/**
-	 * Debounce before firing the fetcher. @default 150
+	 * The debounce delay in milliseconds before the fetcher runs, defaulting to 150.
 	 */
 	debounceMs?: number
 }
@@ -57,70 +51,78 @@ export interface AutocompleteInputProps {
 	autoComplete: "off"
 }
 
+/**
+ * Holds the suggestion list, keyboard and selection handlers, and combobox ARIA
+ * props that {@linkcode usePlaceAutocomplete} returns.
+ */
 export interface UsePlaceAutocomplete {
 	/**
-	 * The current suggestions (empty when nothing matches — the listbox then hides).
+	 * The current suggestions, empty when nothing matches or the list was dismissed.
 	 */
 	suggestions: Suggestion[]
+
 	/**
-	 * The keyboard-highlighted suggestion index; `-1` when none is highlighted.
+	 * The keyboard-highlighted suggestion index, or `-1` when none is highlighted.
 	 */
 	activeIndex: number
+
 	/**
-	 * Set the highlighted index (the listbox calls this on mouse-enter).
+	 * Sets the highlighted index, such as when the pointer enters an option.
 	 */
 	setActiveIndex: (index: number) => void
+
 	/**
-	 * Keydown handler for the input: ↑/↓ highlight, Enter accepts (+ suppresses submit), Esc dismisses.
+	 * Handles input keys: arrows move the highlight, Enter picks it and suppresses
+	 * form submission, and Escape dismisses the list.
 	 */
 	onInputKeyDown: (event: KeyboardEvent<HTMLInputElement>) => void
+
 	/**
-	 * Accept a suggestion by value (rewrites the last-comma segment, closes the list).
+	 * Accepts a suggestion value by replacing the last comma segment and closing the list.
 	 */
 	pick: (value: string) => void
+
 	/**
-	 * Close the list without picking.
+	 * Closes the list without picking, keeping it closed until the query changes.
 	 */
 	dismiss: () => void
+
 	/**
-	 * Aria/combobox props for the input the suggestions describe.
+	 * The combobox ARIA props to spread onto the input.
 	 */
 	inputProps: AutocompleteInputProps
+
 	/**
-	 * The listbox element id (matches `inputProps["aria-controls"]`).
+	 * The listbox element ID, which matches `inputProps["aria-controls"]`.
 	 */
 	listboxID: string
+
 	/**
-	 * Build the option element id for suggestion `index`.
+	 * Returns the option element ID for the suggestion at `index`.
 	 */
 	optionID: (index: number) => string
 }
 
 const LISTBOX_ID = "mw-demo-suggest-list"
 
-/**
- * Stable empty list for the derived no-suggestions state.
- *
- * A fresh `[]` per render would churn the identity every consumer and every
- * useCallback dependency list sees.
- */
 const NO_SUGGESTIONS: Suggestion[] = []
 const optionID = (index: number) => `mw-demo-suggest-${index}`
 
-/**
- * Extract the locality segment being typed — the text after the last comma, trimmed.
- */
 function localitySegment(text: string): string {
 	return (text.includes(",") ? text.slice(text.lastIndexOf(",") + 1) : text).trim()
 }
 
-/**
- * Replace the locality segment (after the last comma) with `name`, preserving the address prefix.
- */
 function replaceSegment(current: string, name: string): string {
 	return current.includes(",") ? `${current.slice(0, current.lastIndexOf(",") + 1)} ${name}` : name
 }
 
+/**
+ * Fetches debounced place suggestions for the text after the input's last comma,
+ * and replaces only that segment when a suggestion is picked.
+ *
+ * A segment that starts with a digit gets no suggestions, so house numbers
+ * and postcodes never reach `autocomplete`.
+ */
 export function usePlaceAutocomplete({
 	text,
 	setText,
@@ -128,22 +130,8 @@ export function usePlaceAutocomplete({
 	minChars = 2,
 	debounceMs = 150,
 }: UsePlaceAutocompleteOptions): UsePlaceAutocomplete {
-	/**
-	 * The last completed fetch, keyed by the query that produced it.
-	 *
-	 * Visibility is derived from this during render rather than pushed through sync setStates in the effect.
-	 * The effect's only job is the async fetch, so every state write in it happens after an await
-	 * and the react(set-state-in-effect) rule is satisfied by structure rather than by exception.
-	 */
 	const [fetched, setFetched] = useState<{ query: string; suggestions: Suggestion[] } | null>(null)
-	/**
-	 * The query whose list was dismissed or picked.
-	 *
-	 * Suppression as data, replacing the one-shot ref flag: a pick stores the query the rewritten text
-	 * will produce, so the post-pick fetch is skipped and the place just chosen is never re-suggested.
-	 * One divergence from the ref version, accepted and small: after Esc, retyping the
-	 * exact same string keeps the list hidden until the query changes.
-	 */
+
 	const [dismissed, setDismissed] = useState<string | null>(null)
 	const [activeIndex, setActiveIndex] = useState(-1)
 
@@ -186,8 +174,7 @@ export function usePlaceAutocomplete({
 			const next = replaceSegment(text, value)
 
 			setText(next)
-			// Suppress the fetch the rewritten text would trigger.
-			// The segment being typed is the picked name.
+
 			setDismissed(localitySegment(next))
 			setFetched(null)
 			setActiveIndex(-1)

@@ -2,9 +2,6 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- *
- *   Compare effective configuration changes with declared variables. Warn about undeclared or unchanged pins without
- *   blocking the comparison.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -13,44 +10,48 @@ import { runFileSync } from "@mailwoman/core/process"
 import { effectiveKeyFor } from "#engine/registry"
 
 /**
- * Configuration-isolation states.
+ * Enumerates how cleanly a two-arm comparison isolates its declared configuration variables.
  *
- * This module does not diagnose individual row changes; use `mwdev_trace` for that.
+ * `clean` means only declared keys moved, `ambiguous` means undeclared keys moved too,
+ * `no_variable` means nothing moved, and `cross_engine` means the arms are different
+ * systems and no delta can be attributed to a pin.
  */
 export const VariableIsolation = {
-	/**
-	 * Only declared keys differ.
-	 */
 	Clean: "clean",
-	/**
-	 * At least one undeclared key differs.
-	 */
+
 	Ambiguous: "ambiguous",
-	/**
-	 * Effective configurations match; output differences have another cause.
-	 */
+
 	NoVariable: "no_variable",
-	/**
-	 * Arms use different geocoders.
-	 */
+
 	CrossEngine: "cross_engine",
 } as const
 
+/**
+ * Names one {@link VariableIsolation} state.
+ */
 export type VariableIsolation = (typeof VariableIsolation)[keyof typeof VariableIsolation]
 
+/**
+ * Reports which effective configuration keys differ between two comparison arms, how they
+ * compare with the declared keys, and the warnings a reader needs before attributing the delta.
+ */
 export interface ConfoundReading {
 	variable_isolation: VariableIsolation
+
 	/**
-	 * Keys that differ, whether or not they were declared.
+	 * Lists the effective configuration keys that differ between the arms, whether or not they were declared.
 	 */
 	variable_effective: string[]
 	declared: string[]
+
 	/**
-	 * Declared keys that are identical across both arms.
+	 * Lists the declared keys whose effective values are identical in both arms.
 	 */
 	declared_but_unmoved: string[]
+
 	/**
-	 * Undeclared keys that changed.
+	 * Lists the keys that differ between the arms without being declared, each of
+	 * which is a possible confound.
 	 */
 	moved_but_undeclared: string[]
 	warnings: string[]
@@ -71,12 +72,12 @@ export function checkConfounds(
 	declared: string[]
 ): ConfoundReading {
 	const moved = differingKeys(effectiveA, effectiveB)
-	// Translate CLI keys to effective config keys.
+
 	const declaredSet = new Set(declared.map(effectiveKeyFor))
 	const movedSet = new Set(moved)
 
 	const movedButUndeclared = moved.filter((key) => !declaredSet.has(key))
-	// Keep the caller's spelling in warnings.
+
 	const declaredButUnmoved = declared.filter((key) => !movedSet.has(effectiveKeyFor(key))).toSorted()
 	const warnings: string[] = []
 
@@ -171,11 +172,14 @@ export function worktreePairReading(
 	}
 }
 
-/**
- * Score fields whose scales differ across backends.
- */
 const INCOMPARABLE_FIELDS = new Set(["resolver_score", "score", "prominence"])
 
+/**
+ * Throws when asked to compare a score field whose scale differs between resolver backends.
+ *
+ * Within either backend the wrong answers' scores also overlap the correct answers',
+ * so no threshold on these fields is meaningful.
+ */
 export function assertComparableField(field: string): void {
 	if (INCOMPARABLE_FIELDS.has(field)) {
 		throw new Error(
@@ -187,8 +191,9 @@ export function assertComparableField(field: string): void {
 }
 
 /**
- * Measure commit and file differences, or return `null` when either worktree
- * is dirty or the git query fails.
+ * Counts the commits and changed files between two worktree arms' recorded commits.
+ *
+ * It returns `null` when either arm lacks a commit, either was dirty, or git fails.
  */
 export function worktreeTreeDelta(
 	repoRoot: string,

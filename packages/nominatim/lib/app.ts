@@ -2,9 +2,6 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- *
- *   The Nominatim-compatible Hono app: cors + error safety net + routes + the emitted OpenAPI
- *   document. Engine-agnostic — the CLI wires the real engine. tests inject fixtures.
  */
 
 import { OpenAPIHono } from "@hono/zod-openapi"
@@ -20,31 +17,25 @@ import { registerNominatimRoutes } from "#routes"
  */
 export interface NominatimAppOptions {
 	/**
-	 * Emit permissive cors headers (`Access-Control-Allow-Origin: *`) on every response
-	 * and answer preflight `options` with `204`.
+	 * Whether every response carries `Access-Control-Allow-Origin: *` and preflight requests
+	 * are answered, defaulting to `true` so browser clients can call cross-origin.
 	 *
-	 * Default `true` — browser-embedded geocoder clients need it: a cross-origin
-	 * XHR is blocked without it (#1017).
-	 * Set `false` when a reverse proxy already owns the cors headers.
+	 * Set it to `false` when a reverse proxy already sets the CORS headers.
 	 */
 	cors?: boolean
 
 	/**
-	 * The engine stamp to carry on every response: `engine` on each jsonv2 result
-	 * and geojson collection, and the `Server` + `Link: rel="license"` headers everywhere.
+	 * The engine stamp added to each JSON result and GeoJSON collection,
+	 * and to the `Server` and `Link: rel="license"` headers.
 	 *
-	 * Absent when an embedding application builds the app without the `mailwoman` package.
-	 * The `nominatim` bin always passes one.
+	 * An embedding application may omit it, but the `nominatim` CLI always passes one.
 	 */
 	engine?: EngineStamp
 }
 
 /**
- * The document info stamped into the emitted OpenAPI document.
- *
- * Exported (not inlined) so the CLI's `openapi` subcommand can call `emitOpenAPIDocuments`
- * with the same info the mounted `/openapi.json` route (below, via {@link attachOpenAPIDocs})
- * uses — one source of truth, no risk of the two drifting.
+ * Supplies the OpenAPI document info shared by the served `/openapi.json` route
+ * and the CLI's `openapi` subcommand, so the two documents cannot drift apart.
  */
 export const NOMINATIM_DOC_INFO: OpenAPIDocInfo = {
 	...(await readServedDocumentInfo(import.meta.url, "@mailwoman/nominatim")),
@@ -73,10 +64,6 @@ export const NOMINATIM_DOC_INFO: OpenAPIDocInfo = {
 export function createNominatimApp(engine: NominatimEngine, options: NominatimAppOptions = {}): OpenAPIHono {
 	const app = new OpenAPIHono()
 
-	// Browser-embedded geocoder clients need cors or their cross-origin XHR is blocked
-	// before completing (#1017).
-	// GET-only — nominatim has no mutating routes, so unlike libpostal's cors
-	// there is no post in the methods list.
 	if (options.cors !== false) {
 		app.use(cors({ origin: "*", allowMethods: ["GET", "OPTIONS"], allowHeaders: ["*"], maxAge: 86_400 }))
 	}
@@ -85,9 +72,6 @@ export function createNominatimApp(engine: NominatimEngine, options: NominatimAp
 		app.use(engineHeaders(options.engine))
 	}
 
-	// Safety net: a malformed query or an engine fault must never crash the
-	// process into a stack-trace 500 — the clean legacy JSON error instead
-	// (`{error}` — not photon's FeatureCollection+message envelope).
 	app.onError((_error, c) => c.json({ error: "internal error" }, 500))
 
 	registerNominatimRoutes(app, engine, options.engine)

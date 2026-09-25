@@ -2,38 +2,11 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- *
- *   nrcs's own words, as data: the product identity, the licence sentence it ships inside every archive,
- *   the acknowledgement it asks for, and the caveats that decide what a reading may claim.
- *
- *   the rating vocabulary is not here, because the authority ships IT. `msdomdet.txt` inside each survey
- *   area's tabular export carries the declared domain for every `Choice` column, with the authority's own
- *   prose definition of each member — capability classes 1 through 8, subclasses `c`/`e`/`s`/`w`, the 28
- *   farmland classifications, the six component kinds. So the layer reads the domain out of the file it
- *   ingested rather than transcribing it from the National Soil Survey Handbook, and an out-of-domain value
- *   throws: an unknown code is a source-schema change, which is the event a reader most needs to hear
- *   about, and coercing it to a nearest neighbour or to NULL converts "the source changed" into "there is
- *   nothing here".
- *
- *   the farmland vocabulary is conditional and the condition is the claim. 28 declared values, of which 24
- *   carry an "if" — `Prime farmland if drained`, `Prime farmland if irrigated and reclaimed of excess salts
- *   and sodium`. A boolean `arable` column would be this layer's invention rather than the authority's
- *   statement, so the string is stored whole.
- *
- *   and two OF its categories travel while the others do not. 7 CFR 657.5 defines prime farmland and unique
- *   farmland nationally against nine specific criteria; §657.5(c) and (d) hand "additional farmland of
- *   statewide importance" and "of local importance" to state and local agencies respectively. So
- *   `Farmland of statewide importance` in Iowa and in Georgia are not the same claim, and a consumer that
- *   pooled them into one rank would be pooling incompatible vocabularies. {@link FarmlandScope} carries
- *   that distinction into the artifact rather than leaving it in a document.
  */
 
 /**
- * The layer-name prefix.
- *
- * The suffix names the region the build covers, because the manifest's declared extent
- * and the coverage rows describe the same set and that set is a list of published
- * survey areas rather than "the United States".
+ * Every soil layer name starts with this prefix, and the reader refuses an
+ * artifact whose layer name lacks it.
  */
 export const SOIL_LAYER_NAME_PREFIX = "soil-capability-nrcs-ssurgo-"
 
@@ -50,40 +23,28 @@ export function soilLayerName(region: string): string {
 export const SOIL_PILOT_REGION = "ia"
 
 /**
- * The acknowledgement string the shipped fgdc metadata asks for, verbatim as
- * the metadata gives the agency name.
- *
- * This is not decoration: the use constraints say the agency "should be acknowledged as the data
- * source in products derived from these data", so it rides in `layer_manifest.attribution`.
+ * Holds the agency acknowledgement that the SSURGO use constraints require,
+ * written into `layer_manifest.attribution`.
  */
 export const SSURGO_ATTRIBUTION = "U.S. Department of Agriculture, Natural Resources Conservation Service"
 
 /**
- * The licence expression written into `layer_manifest.license`.
+ * Holds the public-domain licence expression written into `layer_manifest.license`.
  *
- * A public-domain identifier, and the grant behind it is the producing agency's own sentence
- * rather than a catalogue field: data.gov's entry points at `usa.gov/publicdomain/label/1.0/`,
- * which redirects to a page that declines a blanket grant and tells the reader to check with the agency.
- * The agency was checked at the strongest available place — the fgdc metadata nrcs ships
- * inside the archive — and it says {@link SSURGO_PUBLIC_INFORMATION_SENTENCE}.
+ * The grant rests on {@link SSURGO_PUBLIC_INFORMATION_SENTENCE} in each archive's
+ * FGDC metadata, not on the data.gov entry.
  */
 export const SSURGO_LICENSE = "LicenseRef-USGov-Public-Domain"
 
 /**
- * The sentence that makes this layer shippable, verbatim from the `useconst` element
- * of the fgdc metadata inside every survey-area archive.
+ * Holds the public-information grant quoted from each survey area's FGDC use constraints.
  *
- * The ingest asserts it is present in each area's metadata.
- * A survey area whose use constraints no longer say this is a licence change,
- * and a build that absorbed one would ship an artifact under terms nobody checked.
+ * The survey-area loader refuses an area whose metadata lacks it, because that absence is a licence change.
  */
 export const SSURGO_PUBLIC_INFORMATION_SENTENCE = "This is public information"
 
 /**
- * The use constraints in full, as the metadata states them.
- *
- * Carried so a reader can check the licence claim against the authority's own words
- * rather than against this package's summary of them.
+ * Holds the full SSURGO use constraints, quoted from the FGDC metadata.
  */
 export const SSURGO_USE_CONSTRAINTS =
 	"The U.S. Department of Agriculture, Natural Resources Conservation Service, should be acknowledged as the data " +
@@ -93,14 +54,10 @@ export const SSURGO_USE_CONSTRAINTS =
 	"responsible for the appropriate application."
 
 /**
- * What a reading is not, in the authority's own words.
+ * Lists the limitations NRCS states for SSURGO, quoted verbatim, which every soil reading carries.
  *
- * Carried on every reading, because a caller cannot see from a capability class
- * that the survey declines to speak about a specific site.
- *
- * The first two sentences are why §3.1 of the survey forbids a point-level
- * determination: the map is authoritative about an area at its own scale
- * and explicitly declines to be authoritative about a point.
+ * They are why a reading describes the map unit covering a point and never
+ * makes a site-specific determination.
  */
 export const SSURGO_PRODUCT_LIMITS: ReadonlyArray<string> = [
 	"The depicted soil boundaries, interpretations, and analysis derived from them do not eliminate the need for onsite sampling, testing, and detailed study of specific sites for intensive uses. Thus, these data and their interpretations are intended for planning purposes only.",
@@ -111,12 +68,8 @@ export const SSURGO_PRODUCT_LIMITS: ReadonlyArray<string> = [
 ]
 
 /**
- * The coverage statement a `designated` basis rests on: what nrcs declares
- * complete inside a published survey area.
- *
- * It is the mapping at the survey's own scale rather than a site-specific determination,
- * which is why the observation reports what the survey assigns to the map unit
- * covering a location and never whether the land can be farmed.
+ * States that soil mapping is complete at survey scale inside a published
+ * survey area and absent outside one.
  */
 export const SSURGO_COVERAGE_STATEMENT =
 	"Soil surveys are published by survey area. Inside a published survey area the soil mapping is complete at the " +
@@ -134,63 +87,41 @@ export const SSURGO_STATEMENT_URL =
 export const SSURGO_SOURCE = "nrcs.usda.gov/SSURGO"
 
 /**
- * The projection every ssurgo survey-area shapefile declares.
- *
- * The `.prj` is an esri WKT naming `GCS_WGS_1984`, which gdal resolves to this authority code .
- * Therefore, no reprojection is needed before H3, and a survey area declaring anything
- * else is a product change rather than a variation to absorb.
+ * Gives the EPSG code every SSURGO survey-area shapefile declares, which the ingest requires by default.
  */
 export const SSURGO_SOURCE_EPSG = 4326
 
 /**
- * Whether a farmland classification's criteria are set nationally or by a state or local agency.
+ * Enumerates the authorities that can set a farmland classification's criteria.
  *
- * 7 CFR 657.5 defines prime and unique farmland against nine national criteria;
- * (c) and (d) delegate statewide and local importance.
- * A consumer comparing two states may compare the national categories
- * and must not compare the delegated ones.
+ * `None` covers land that is not prime farmland and land with no classification.
  */
 export const FarmlandScope = {
-	/**
-	 * Criteria set by 7 CFR 657.5(a)–(b).
-	 *
-	 * Comparable across the country.
-	 */
 	Federal: "federal",
-	/**
-	 * Criteria "determined by the appropriate State agency or agencies" — 7 CFR 657.5(c).
-	 */
+
 	State: "state",
-	/**
-	 * Criteria "identified by the local agency or agencies concerned" — 7 CFR 657.5(d).
-	 */
+
 	Local: "local",
-	/**
-	 * The value states no farmland importance at all.
-	 */
+
 	None: "none",
 } as const
 
+/**
+ * Represents one {@link FarmlandScope} value, as stored in the `farmland_scope` column.
+ */
 export type FarmlandScope = (typeof FarmlandScope)[keyof typeof FarmlandScope]
 
 /**
- * Which scope a declared `farmlndcl` value falls under, decided on the phrase the regulation itself uses.
+ * Classifies a `farmlndcl` value into a {@link FarmlandScope} by the phrase the regulation uses.
  *
- * Matching on the phrase rather than on an enumerated list of the 28 values is deliberate:
- * the domain grows — the conditional tail is generated by combining a base category with a condition —
- * and a new `Farmland of statewide importance, if …` must land in {@link FarmlandScope.State}
- * on the day it appears rather than silently defaulting to the comparable bucket.
+ * It matches phrases rather than listing values, so a new conditional value such as
+ * `Farmland of statewide importance, if …` still lands in the right scope.
  */
 export function farmlandScope(value: string | null | undefined): FarmlandScope {
 	if (!value) return FarmlandScope.None
 
 	const lowered = value.toLowerCase()
 
-	// first, because it contains the phrase the federal test looks for.
-	// `Not prime farmland` is a declared value stating no farmland importance at all,
-	// and a substring test that ran the other way round would call it federally
-	// comparable prime farmland, which it is the exact negation of.
-	// It is also the most common value in the domain: 192,120 of the 339,191 national map units carry it.
 	if (lowered.startsWith("not prime farmland")) return FarmlandScope.None
 
 	if (lowered.includes("statewide importance")) return FarmlandScope.State
@@ -203,25 +134,15 @@ export function farmlandScope(value: string | null | undefined): FarmlandScope {
 }
 
 /**
- * Map-unit symbols nrcs uses for a delineation it has drawn and has no soil mapping behind.
- *
- * These are polygons rather than holes.
- * The same wall-to-wall discipline that makes them separable from land outside a survey area entirely.
- *
- * Measured nationally through Soil Data Access: 37 map units carry `notcom`
- * (`No Digital Data Available`) and 7 carry `notpub` (`Not Public Information`).
+ * Lists the upper-case map-unit symbols NRCS gives a delineation that it has drawn
+ * but has no soil mapping for.
  */
 export const SSURGO_NO_MAPPING_SYMBOLS: ReadonlySet<string> = new Set(["NOTCOM", "NOTPUB"])
 
 /**
- * Map-unit names for the same case, where the symbol does not carry it.
+ * Lists the lower-case map-unit names that mark a delineation with no soil mapping when its symbol does not.
  *
- * Measured nationally: 72 map units are named `Area not surveyed, access denied`.
- *
- * Matched case-insensitively on the whole name.
- * A prefix match would catch a future `Area not surveyed, access denied — pending`
- * and would also catch nothing else, but it would equally catch a real soil name beginning
- * with those words, and there is no such thing to be gained by guessing.
+ * The match is on the whole name, because a prefix could also match a real soil name.
  */
 export const SSURGO_NO_MAPPING_NAMES: ReadonlySet<string> = new Set([
 	"area not surveyed, access denied",
@@ -230,38 +151,28 @@ export const SSURGO_NO_MAPPING_NAMES: ReadonlySet<string> = new Set([
 ])
 
 /**
- * The interpretation rule whose overall value this layer carries, exactly as `cointerp.mrulename` spells it.
+ * Names the `cointerp.mrulename` of the productivity index this layer carries.
  *
- * Its `interphr` is an index in [0, 1] — measured 0.001 to 0.991 nationally,
- * 0.022 to 0.990 on `IA153` — and it is never blended with the capability class:
- * they are two ratings from one authority answering different questions,
- * and combining them would produce a number nrcs does not publish.
+ * The index stays separate from the capability class, because combining them
+ * would produce a number NRCS does not publish.
  */
 export const NCCPI_V3_RULE_NAME = "NCCPI - National Commodity Crop Productivity Index (Ver 3.0)"
 
 /**
- * The interpretation depth at which a rule reports its own overall value.
- *
- * Sub-rules sit at greater depths and are the submodels (corn, soybeans, small grains, cotton),
- * which this layer does not carry.
+ * Gives the `cointerp.ruledepth` at which a rule reports its overall value rather than a crop submodel.
  */
 export const COINTERP_OVERALL_RULE_DEPTH = "0"
 
 /**
- * How the per-cell shares were produced, recorded on every row.
+ * Identifies the area-times-component-percentage weighting that produced the per-cell shares.
  *
- * The survey names this as a required record because the weighting mixes two different
- * things — polygon geometry, which the survey does know, and component percentages,
- * which are a proportion without a location.
- * "60% of this cell's area lies in map units whose components are class 2"
- * and "the components in this cell sum to 60% class 2" are different claims,
- * and a reader holding only a share cannot tell which one it is holding.
+ * A share therefore says how much of a cell lies in map units with a rating,
+ * not where in the cell the rating applies.
  */
 export const SOIL_SHARE_WEIGHTING = "cell_area_x_comppct_r"
 
 /**
- * The one-sentence expansion of {@link SOIL_SHARE_WEIGHTING}, stored beside it
- * so the artifact explains itself.
+ * Explains {@link SOIL_SHARE_WEIGHTING} in prose, stored beside it in the artifact.
  */
 export const SOIL_SHARE_WEIGHTING_DESCRIPTION =
 	"Each map-unit delineation contributes the area of the cell it covers; that area is split across the delineation's " +

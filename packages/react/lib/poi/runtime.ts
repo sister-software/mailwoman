@@ -2,11 +2,6 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- *
- *   The default POI runtime loader + presentation helpers. `loadPOIRuntime` dynamically imports the
- *   ~2k-record Overture taxonomy snapshot (so bundlers code-split it into its own chunk, fetched only
- *   when the explorer actually mounts) and wires the kind classifier over it. Pure + browser-safe: no
- *   network, no DOM — the whole intent path runs offline.
  */
 
 import { createKindClassifier } from "@mailwoman/kind-classifier"
@@ -16,18 +11,10 @@ import { createPOIBrandLookup, createPOITaxonomyLookup } from "@mailwoman/poi-ta
 import type { POIRuntime } from "#poi/types"
 
 /**
- * Build the POI runtime, dynamically importing the taxonomy + brand JSON
- * so the tables land in their own chunk.
+ * Loads the browser POI runtime, importing the taxonomy and brand tables dynamically
+ * so they land in their own chunk instead of every consumer's bundle.
  *
- * A static import would inline the whole snapshot into every consumer's bundle.
- *
- * The lexicon unions categories then brands, mirroring the Node runtime's `poiTaxonomyLookup`
- * precedence: a phrase that matches a taxonomy category wins (the curated set);
- * only on a category miss does the chain-brand table fire, returning a `kind: "brand"`
- * match carrying the brand's canonical name + Wikidata QID.
- * (The Node path also chains `@mailwoman/variant-aliases` regional slang. The
- * browser tester leaves that out. One fewer package + data table for a demo,
- * and the QID-keyed brand table already covers the headline brands.)
+ * Its lexicon tries exact categories and then brands only, a subset of the Node `poiTaxonomyLookup` chain.
  */
 export async function loadPOIRuntime(): Promise<POIRuntime> {
 	const [table, brandTable] = await Promise.all([
@@ -38,8 +25,6 @@ export async function loadPOIRuntime(): Promise<POIRuntime> {
 	const lookup = createPOITaxonomyLookup(table as Parameters<typeof createPOITaxonomyLookup>[0])
 	const brands = createPOIBrandLookup(brandTable as Parameters<typeof createPOIBrandLookup>[0])
 
-	// Adapt the taxonomy + brand lookups to the `POIPhraseLookup` shape the classifier
-	// expects: categories first, brands on a category miss.
 	const lexicon: POIPhraseLookup = (phrase, locale) => {
 		const categoryHits = lookup.lookupPOICategory(phrase, locale)
 
@@ -76,8 +61,7 @@ export const POI_PRESETS = [
 ] as const
 
 /**
- * Query the POI explorer opens on.
- * The first preset, so the two stay in step.
+ * Holds the query the POI explorer opens on, taken from the first preset so the two stay in step.
  */
 export const POI_DEFAULT_TEXT = POI_PRESETS[0].value
 

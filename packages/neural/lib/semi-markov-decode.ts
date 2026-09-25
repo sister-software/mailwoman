@@ -2,27 +2,6 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- *
- *   #727 stage-2 Phase 3 — the k-best semi-Markov segment decode, JS side.
- *
- *   The counterpart to `corpus-python`'s `SemiMarkovCRF.decode`: the model scores every span up to
- *   `maxSpan` tokens per segment type (the `span_scores` ONNX output), a segment-level transition
- *   table carries the address grammar, and this decodes whole segmentations — scoring "these k tokens
- *   are one street" as a single decision rather than letting it emerge from independent token votes.
- *
- *   Deliberately outside the ONNX graph (the Phase-2 design): span enumeration + this DP need dynamic
- *   shapes, which the graph can't express cheaply and the browser shouldn't pay for. Fetching the
- *   scores costs ~0.75ms (CPU, S=128); this decode runs over the pruned candidate set.
- *
- *   K-best rather than 1-best, from day one: the whole point of the arc is a list of hypotheses with
- *   comparable scores for the resolver to rerank (a rank-2 parse that resolves to a real place beats
- *   a rank-1 that resolves to a country centroid). Scores within one input share the partition
- *   function, so they are directly comparable. across inputs they are not (that needs the Phase-4
- *   isotonic pass).
- *
- *   The segment-type axis is never hardcoded here — it arrives from the weights bundle's
- *   `semi-crf-transitions.json` (the PLACETYPE_ORDER dual-maintenance class: a retrained head that
- *   reorders types would otherwise silently mislabel every decode).
  */
 
 /**
@@ -30,25 +9,28 @@
  */
 export interface SemiCRFTransitions {
 	/**
-	 * Segment-type axis, index-aligned with the `span_scores` inner dim.
-	 *
-	 * Index 0 is always `O`.
+	 * The segment types, index-aligned with the type axis of `span_scores`; index 0 must be `O`.
 	 */
 	segmentTypes: string[]
+
 	/**
-	 * Max span length in tokens — the `L` axis of `span_scores`.
+	 * The maximum span length in tokens, which is the length axis of `span_scores`.
 	 */
 	maxSpan: number
+
 	/**
-	 * `transitions[from][to]` — additive score for a `from`→`to` segment-type transition.
+	 * The additive score for a segment of type `from` followed by one of type `to`,
+	 * indexed as `transitions[from][to]`.
 	 */
 	transitions: number[][]
+
 	/**
-	 * `startTransitions[t]` — additive score for a segmentation whose first segment is type `t`.
+	 * The additive score for a segmentation whose first segment has each type.
 	 */
 	startTransitions: number[]
+
 	/**
-	 * `endTransitions[t]` — additive score for a segmentation whose last segment is type `t`.
+	 * The additive score for a segmentation whose last segment has each type.
 	 */
 	endTransitions: number[]
 }
@@ -63,33 +45,22 @@ export interface DecodedSegment {
 }
 
 /**
- * One whole-segmentation hypothesis.
- *
- * `score` is comparable to its siblings from the same input.
+ * One complete segmentation of the input and its score, which is comparable only
+ * with other hypotheses decoded from the same input.
  */
 export interface SegmentationHypothesis {
 	score: number
 	segments: DecodedSegment[]
 }
 
-/**
- * Finite sentinel rather than -Infinity: an all-masked row would otherwise produce -inf - (-inf) = NaN.
- *
- * Mirrors `_NEG_INF` in `corpus-python/src/mailwoman_train/span_scorer.py`
- * (the v0.5.0 bf16 CRF NaN scar — do not hand this arithmetic an opportunity).
- */
 const NEG_INF = -1e4
 
-/**
- * `O` is index 0 by construction (`_derive_segment_types` in span_scorer.py).
- */
 const O_TYPE_ID = 0
 
 /**
- * Parse the `semi-crf-transitions.json` sidecar.
+ * Parses and validates the `semi-crf-transitions.json` sidecar into a decode grammar.
  *
- * @throws On a shape mismatch rather than decoding with a half-valid grammar —
- * a silently-wrong transition table trains nothing but corrupts every decode.
+ * @throws On any shape mismatch, because a half-valid transition table would silently corrupt every decode.
  */
 export function parseSemiCRFTransitions(raw: unknown): SemiCRFTransitions {
 	const o = raw as Record<string, unknown>
@@ -125,16 +96,11 @@ export function parseSemiCRFTransitions(raw: unknown): SemiCRFTransitions {
 }
 
 /**
- * K-best semi-Markov decode over `spanScores`.
+ * Returns up to `k` best segmentations of `[0, seqLen)` from the `span_scores`
+ * model output, each covering every token exactly once.
  *
- * `spanScores[i][l][t]` scores the segment starting at token `i`, of length `l + 1`,
- * typed `t` — the exact layout of the `span_scores` ONNX output.
- * `O` segments are length 1 by construction (every non-entity token is its own `O`),
- * which keeps the state space small and matches the training-side DP that produced the scores.
- *
- * State = (token index, last non-O segment type); the top-`k` paths are kept per state. Returns up to `k` complete
- * segmentations, best first.
- * Every returned segmentation covers `[0, seqLen)` exactly — no gaps, no overlaps.
+ * `spanScores[i][l][t]` scores a segment of type `t` starting at token `i` with length
+ * `l + 1`, and `O` segments are always one token long, matching training.
  */
 export function decodeSegmentationsKBest(
 	spanScores: number[][][],
@@ -145,9 +111,8 @@ export function decodeSegmentationsKBest(
 	const numTypes = grammar.segmentTypes.length
 	const maxSpan = Math.min(grammar.maxSpan, spanScores[0]?.length ?? 0)
 
-	// dp[j] : lastType -> up-to-k best partial segmentations covering [0, j).
 	const dp: Array<Map<number, SegmentationHypothesis[]>> = Array.from({ length: seqLen + 1 }, () => new Map())
-	// -1 is the BOS pseudo-type. startTransitions carries its outgoing scores.
+
 	dp[0]!.set(-1, [{ score: 0, segments: [] }])
 
 	const push = (column: Map<number, SegmentationHypothesis[]>, key: number, entry: SegmentationHypothesis): void => {
@@ -159,7 +124,6 @@ export function decodeSegmentationsKBest(
 			return
 		}
 
-		// Insertion sort into a k-bounded, descending list — cheaper than sort() per push at k ≤ 10.
 		let i = list.length
 
 		while (i > 0 && list[i - 1]!.score < entry.score) {
@@ -181,10 +145,8 @@ export function decodeSegmentationsKBest(
 
 			if (!perLength) continue
 
-			// Extend every partial path ending at `i` by the segment [i, j), once per candidate type.
 			const extend = (lastType: number, entry: SegmentationHypothesis): void => {
 				for (let t = 0; t < numTypes; t++) {
-					// O segments are length 1 by construction.
 					if (t === O_TYPE_ID && spanLen !== 1) continue
 					const segScore = perLength[t] ?? NEG_INF
 					const trans = lastType === -1 ? grammar.startTransitions[t]! : grammar.transitions[lastType]![t]!
@@ -208,8 +170,6 @@ export function decodeSegmentationsKBest(
 
 	for (const [lastType, entries] of dp[seqLen]!) {
 		if (lastType === -1) continue
-
-		// an empty segmentation is not a reading
 
 		for (const entry of entries) {
 			finals.push({ score: entry.score + grammar.endTransitions[lastType]!, segments: entry.segments })

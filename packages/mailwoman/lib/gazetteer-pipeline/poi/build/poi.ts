@@ -2,12 +2,6 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- *
- *   Build `poi.db` from Overture Parquet or injected rows.
- *   The build streams rows, encodes categories, creates clustered H3 storage and indexes,
- *   writes coverage and manifest data, then seals the database.
- *   Overture ingestion and database materialization are separate so the latter can be tested
- *   without DuckDB or network access.
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers"
@@ -39,6 +33,9 @@ import { sealDatabase } from "@mailwoman/sqlite/sealed-db"
 import { cellToParent, latLngToCell, polygonToCells } from "h3-js"
 import { dirname, resolvePath, type PathBuilderLike } from "path-ts"
 
+/**
+ * Re-exports the Overture Places ingest so the POI build command can load ingest and build from one module.
+ */
 export {
 	chooseCategoryColumn,
 	chooseCountryExpression,
@@ -50,20 +47,18 @@ export {
 	type IngestPlacesResult,
 } from "#gazetteer-pipeline/poi/build/overture"
 
+/**
+ * Re-exports the pinned Overture release that the POI ingest uses when no release is given.
+ */
 export { DEFAULT_RELEASE } from "#gazetteer-pipeline/poi/defaults"
 
-/**
- * Coverage is aggregated one level coarser than the row spine — a res-6 cell covers a whole metro area.
- */
 const COVERAGE_H3_RESOLUTION = 6
-/**
- * Rows committed per `begin`/`commit` batch during the staging load (the candidate-builder discipline).
- */
+
 const STAGE_BATCH_SIZE = 10_000
 
 /**
- * One Overture Places row, decoded to the flat shape the loader consumes —
- * the injected-iterator injection point.
+ * Describes one Overture Places row in the flat shape {@link buildPOIDatabase} loads,
+ * whether streamed from Parquet or injected by a caller.
  */
 export interface POISourceRow {
 	name: string | null
@@ -76,31 +71,18 @@ export interface POISourceRow {
 	gersID: string | null
 }
 
-/**
- * Reads a country Parquet materialized by {@link ingestPlaces} back into {@link POISourceRow}s via DuckDB.
- */
 async function* streamPOIRows(parquetPaths: readonly string[]): AsyncIterable<POISourceRow> {
-	// Lazy DuckDB import — this generator is only invoked when the caller didn't
-	// inject `rows` (buildPOIDatabase's test path never reaches here), preserving the
-	// "DuckDB touches only the ingest/read functions" rule.
 	const { DuckDBInstance } = await import("@duckdb/node-api")
 	const instance = await DuckDBInstance.create()
 	const db = await instance.connect()
 
 	try {
 		for (const parquetPath of parquetPaths) {
-			// stream the parquet scan in DuckDB DataChunks (~2048 rows each)
-			// rather than materialising the whole result.
-			// A full four-country build (millions of US rows) blew the ~4GB V8 heap that way
-			// (OOM 2026-07-18, `DuckDBNodeAddon::get_data_from_pointer` → `napi_create_buffer_copy`).
-			// stream()+fetchChunk() keeps JS memory bounded to one chunk at a time,
-			// matching the address-points.tsx / coverage-core.ts precedent (OOM 2026-06-14).
 			const stream = await db.stream(
 				`SELECT name, category, brand_wikidata, lat, lon, country, confidence, gers_id
 				 FROM read_parquet('${parquetPath}')`
 			)
 
-			// A streamed DataChunk carries no column names of its own, so pull them off the result once.
 			const colNames = stream.columnNames()
 
 			for (let chunk = await stream.fetchChunk(); chunk && chunk.rowCount > 0; chunk = await stream.fetchChunk()) {
@@ -135,12 +117,7 @@ async function* streamPOIRows(parquetPaths: readonly string[]): AsyncIterable<PO
 }
 
 /**
- * A simple lon/lat rectangle.
- *
- * The shape a Geofabrik extract's declared bounding box takes.
- *
- * Not a general polygon (OSM extracts are rectangular extracts); {@link bboxCoverageCells}
- * turns it into a 4-vertex ring for `polygonToCells`.
+ * Describes a lon/lat rectangle, such as the declared bounding box of an OSM extract.
  */
 export interface BBox {
 	minLon: number
@@ -150,9 +127,10 @@ export interface BBox {
 }
 
 /**
- * Return res-6 cells covered by an extract bbox, including cells with zero rows.
+ * Lists every res-6 H3 cell covering a bounding box with its observed row count,
+ * including cells with no rows.
  *
- * Rows outside the bbox are omitted; callers must supply the extract's full extent.
+ * Rows that fall in cells outside the box are dropped, so the box must be the extract's full extent.
  */
 export function bboxCoverageCells(
 	bbox: BBox,
@@ -164,16 +142,6 @@ export function bboxCoverageCells(
 	for (const row of rows) {
 		if (!Number.isFinite(row.latitude) || !Number.isFinite(row.longitude)) continue
 
-		// Derive the coverage cell from the same res-9 cell the row is keyed by —
-		// `cellToParent(res9Cell, resolution)` — never a direct `latLngToCell(row, resolution)`.
-		// Matches the default (non-override) coverage path below (~:592) and every reader
-		// (`res9ShortCellToRes6Parent` in bdc/sdk/filing-landscape.ts, plausibility.ts, nearest-infrastructure.ts).
-		// H3's cell hierarchy is not geometrically exact, so the direct derivation
-		// disagrees with the hierarchy-parent one for a real fraction of points
-		// (~6.56% measured over 20k conus points) — the identical builder/reader divergence
-		// class fixed in bdc 2a fix-round-1 (see filing-landscape.ts's module docstring).
-		// Getting this wrong means a row's observed count lands on a neighbouring cell, or is
-		// silently dropped when its direct-res-6 cell isn't a member of the bbox polyfill below.
 		const res9Cell = latLngToCell(row.latitude, row.longitude, POI_H3_RESOLUTION) as H3Cell
 		const cell = cellToParent(res9Cell, resolution) as H3Cell
 		const h3Cell = shortCellToInt(cell)
@@ -181,7 +149,6 @@ export function bboxCoverageCells(
 		observed.set(h3Cell, (observed.get(h3Cell) ?? 0) + 1)
 	}
 
-	// polygonToCells's default (non-GeoJSON) coordinate order is [lat, lng] per vertex.
 	const ring: number[][] = [
 		[bbox.minLat, bbox.minLon],
 		[bbox.minLat, bbox.maxLon],
@@ -198,86 +165,75 @@ export function bboxCoverageCells(
 	})
 }
 
-/**
- * `source` literal → the manifest `license`/`attribution` pair to write.
- *
- * Keyed by {@link BuildPOIOptions.source} so the default
- * (`overture-places`, when `source` is omitted) writes the Overture pair.
- * An omitted `source` must produce a manifest byte-identical to an explicit `"overture-places"` one.
- */
 const SOURCE_MANIFEST_DEFAULTS = {
 	"overture-places": { license: "CDLA-Permissive-2.0", attribution: "Overture Maps Foundation" },
 	osm: { license: "ODbL-1.0", attribution: "OpenStreetMap contributors" },
 } as const satisfies Record<string, { license: string; attribution: string }>
 
+/**
+ * Configures {@link buildPOIDatabase}, which reads `rows` when given and otherwise streams `parquetPaths`.
+ *
+ * The coverage cells default to cells observed in the data unless `coverageCellsOverride`
+ * supplies them, for example from {@link bboxCoverageCells}.
+ */
 export interface BuildPOIOptions {
 	/**
-	 * Per-country Parquet paths from {@link ingestPlaces} — read via DuckDB.
-	 *
-	 * Ignored when `rows` is given.
-	 * Required unless `rows` is given.
+	 * The per-country Parquet files from `ingestPlaces`, read through DuckDB
+	 * and required unless `rows` is given.
 	 */
 	parquetPaths?: readonly string[]
+
 	/**
-	 * Injected row source — the injection point.
-	 *
-	 * When given, the DuckDB read is skipped entirely (tests never touch DuckDB).
+	 * An injected row source that replaces the Parquet read entirely.
 	 */
 	rows?: AsyncIterable<POISourceRow> | Iterable<POISourceRow>
+
 	/**
-	 * Output `poi.db` path.
-	 *
-	 * Removed + rebuilt if already present (build-on-copy at the file level. See module docstring).
+	 * The output `poi.db` path, which is deleted and rebuilt if it already exists.
 	 */
 	out: PathBuilderLike
+
 	/**
-	 * Overture release this build's rows came from — becomes the manifest's `sourceVintage`.
+	 * The source release the rows came from, recorded as the manifest's `sourceVintage`.
 	 */
 	release: string
+
 	/**
-	 * `git rev-parse --short head` — passed in by the command rather than read from the repo here.
+	 * The short git SHA of the build, passed in by the caller.
 	 */
 	buildSHA: string
+
 	/**
-	 * Layer manifest's own `version` field.
-	 *
-	 * Defaults to `release` — the layer has no independent versioning yet.
+	 * The manifest's `version`, defaulting to `release`.
 	 */
 	version?: string
+
 	/**
-	 * ISO-8601 manifest timestamp.
-	 *
-	 * Defaults to `new Date().toISOString()` — callers wanting reproducible builds pass it.
+	 * The ISO-8601 manifest timestamp, defaulting to the current time; pass it for reproducible builds.
 	 */
 	createdAt?: string
+
 	/**
-	 * Manifest `source` + the license/attribution pair it implies (see {@link SOURCE_MANIFEST_DEFAULTS}).
-	 *
-	 * Default `"overture-places"`.
+	 * The manifest source, which also selects the licence and attribution, defaulting to `"overture-places"`.
 	 */
 	source?: "overture-places" | "osm"
+
 	/**
-	 * Manifest distribution tier.
+	 * The manifest distribution tier, defaulting to {@link LayerTier.Shipped}.
 	 *
-	 * Default {@link LayerTier.Shipped}.
-	 * The `--source osm` build branch passes {@link LayerTier.BuildLocal}
-	 * (ODbL share-alike. See `osm/readme.md`).
+	 * The default does not follow `source`, so an OSM build must pass
+	 * {@link LayerTier.BuildLocal} itself because ODbL is share-alike.
 	 */
 	tier?: LayerTier
+
 	/**
-	 * Decision 5: when given, replaces the rows-derived res-6 coverage with this
-	 * pre-computed set (typically {@link bboxCoverageCells} over the extract's bbox),
-	 * `observedRows` taken as-is (0 permitted).
+	 * Replaces the coverage cells derived from rows, for example with
+	 * {@link bboxCoverageCells} over the extract's bounding box.
 	 *
-	 * Default: undefined, meaning "coverage = the cells a row actually fell into".
-	 *
-	 * `completeness` and `basis` are per-cell and optional, defaulting to the `1` /
-	 * `source_present` pair the rest of this pipeline writes.
-	 * A cell only reaches an exclusion-grade basis ({@link CoverageBasis.Surveyed} or
-	 * {@link CoverageBasis.Designated}) by naming one here, alongside the completeness that basis measured.
-	 *
-	 * The default is the weakest reading precisely so that a builder which has not
-	 * measured anything cannot claim otherwise.
+	 * Each cell's `observedRows` is kept as given, even 0, and `completeness`
+	 * and `basis` default to 1 and {@link CoverageBasis.SourcePresent}.
+	 * A cell reaches an exclusion-grade basis such as {@link CoverageBasis.Surveyed}
+	 * only by naming it here, so an unmeasured build cannot claim one.
 	 */
 	coverageCellsOverride?: Iterable<{
 		h3Cell: number
@@ -288,35 +244,44 @@ export interface BuildPOIOptions {
 	onProgress?: (phase: string, message: string) => void
 }
 
+/**
+ * Reports the output path, row, skip, category and coverage-cell counts,
+ * and per-country row counts of a POI build.
+ */
 export interface BuildPOIResult {
 	out: string
+
 	/**
-	 * Rows materialized into the final `poi` table.
+	 * The number of rows written to the final `poi` table.
 	 */
 	rows: number
+
 	/**
-	 * Rows dropped for non-finite lat/lon — never inserted.
+	 * The number of rows dropped for a non-finite latitude or longitude.
 	 */
 	skipped: number
+
 	/**
-	 * Distinct categories dictionary-encoded (excludes the reserved `0` uncategorized code).
+	 * The number of distinct dictionary-encoded categories, excluding the reserved uncategorized code 0.
 	 */
 	categories: number
+
 	/**
-	 * ISO country code → rows kept for it (skipped rows are not counted).
+	 * The number of kept rows per ISO country code.
 	 */
 	countries: Map<string, number>
+
 	/**
-	 * Res-6 coverage cells written.
+	 * The number of coverage cells written.
 	 */
 	coverageCells: number
 }
 
 /**
- * Build `poi.db`: stage → dictionary-encode → materialize the clustered table →
- * FTS → layer manifest/coverage → analyze/vacuum → seal.
+ * Builds and seals `poi.db` from POI rows, replacing any existing file at `out`.
  *
- * See the module docstring for the two-phase split and the build-on-copy deviation from the task brief.
+ * It stages and dictionary-encodes the rows, materializes the H3-clustered table,
+ * and writes the FTS index and the layer manifest and coverage.
  */
 export async function buildPOIDatabase(opts: BuildPOIOptions): Promise<BuildPOIResult> {
 	const progress = opts.onProgress ?? (() => {})
@@ -342,7 +307,7 @@ export async function buildPOIDatabase(opts: BuildPOIOptions): Promise<BuildPOIR
 
 	{
 		using kdb = new DatabaseClient<POIDatabase>(opts.out)
-		// Build-tuning pragmas (raw — Kysely doesn't model pragma), matching build-candidate.ts's discipline.
+
 		kdb.exec("PRAGMA page_size=8192; PRAGMA journal_mode=OFF; PRAGMA synchronous=OFF; PRAGMA cache_size=-2000000;")
 
 		progress("stage", "creating staging + dictionary tables")
@@ -355,7 +320,6 @@ export async function buildPOIDatabase(opts: BuildPOIOptions): Promise<BuildPOIR
 			let id = categoryCodes.get(category)
 
 			if (id === undefined) {
-				// 0 is reserved for "uncategorized" — first real category gets 1.
 				id = categoryCodes.size + 1
 				categoryCodes.set(category, id)
 			}
@@ -363,12 +327,6 @@ export async function buildPOIDatabase(opts: BuildPOIOptions): Promise<BuildPOIR
 			return id
 		}
 
-		/**
-		 * ISO country code → rows kept for it (skipped rows are not counted).
-		 */
-		/**
-		 * Res-6 short-cell int → observed row count, aggregated during the load (one pass, no second scan).
-		 */
 		const coverage = new Map<number, number>()
 
 		const insStage = kdb.prepare(`INSERT INTO poi_stage VALUES (${POI_COLUMNS.map(() => "?").join(", ")})`)
@@ -477,25 +435,6 @@ export async function buildPOIDatabase(opts: BuildPOIOptions): Promise<BuildPOIR
 			createdAt: opts.createdAt ?? new Date().toISOString(),
 		})
 
-		// Coverage is source-level rather than survey completeness: a res-6 cell we have Overture Places
-		// rows in is recorded at completeness 1.0 (Overture claims global coverage for the theme);
-		// this is not a claim about how complete Overture's own Places extraction is within that cell.
-		// A cell absent from `layer_coverage` means no rows were observed there at all.
-		// The meaning-of-zero rule (missing = unknown, never `{completeness: 0}`).
-		//
-		// `coverageCellsOverride` (decision 5, the `--source osm` branch) replaces this rows-derived set
-		// entirely with a pre-computed one (typically `bboxCoverageCells` over the extract's bbox) —
-		// see `BuildPOIOptions.coverageCellsOverride`'s docstring.
-		// Default path (no override) is unchanged.
-		// `basis: source_present` states in the artifact what the paragraph above states in prose:
-		// the 1.0 is "Overture returned rows here", not "everything here is known".
-		// A consumer building an exclusion reads the basis and refuses.
-		// One reading `completeness` alone would have concluded the opposite.
-		//
-		// An override entry may carry its own `completeness`/`basis`.
-		// The only way a cell in this pipeline reaches an exclusion-grade basis.
-		// Omitting either falls back to the source-present pair above, so a caller that
-		// has not measured completeness cannot claim one by accident.
 		coverageCells = opts.coverageCellsOverride
 			? [...opts.coverageCellsOverride].map((c) => ({
 					h3Cell: c.h3Cell,
@@ -514,9 +453,7 @@ export async function buildPOIDatabase(opts: BuildPOIOptions): Promise<BuildPOIR
 
 		progress("finalize", "ANALYZE + VACUUM")
 		kdb.exec("ANALYZE")
-		// page_size must be set right before vacuum (node:sqlite initializes the file at the 4096 default
-		// on `new DatabaseSync`, so the earlier pragma is a no-op until a vacuum rebuilds at the new size).
-		// The same discipline build-candidate.ts uses.
+
 		kdb.exec("PRAGMA page_size=8192")
 		kdb.exec("VACUUM")
 	}

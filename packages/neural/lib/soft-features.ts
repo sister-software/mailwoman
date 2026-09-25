@@ -2,20 +2,6 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- *
- *   The soft-feature channels (#718) — the per-piece anchor + gazetteer clues the model conditions on
- *   alongside `input_ids`. This module is the single, pure, browser-safe home for the channel
- *   choreography that used to live inline in `NeuralAddressClassifier.#decode`: build the postcode
- *   anchor, build the gazetteer clue, and (when paired with the matching train-time half) suppress
- *   the gazetteer clue adjacent to a postcode-anchor hit.
- *
- *   It is the essential interface surface for the ProductionScorer (#718): the scorer asserts which
- *   channels are fed, this function decides how they are fed. Keeping it a pure function means both
- *   the classifier and any harness build features identically. There is exactly one choreography.
- *
- *   No `fs`, no Node builtins: the caller hands in the already-parsed lookup/lexicon (mirrors
- *   `anchor-inference.ts` / `gazetteer-inference.ts`, which are themselves pure for the same
- *   reason).
  */
 
 import {
@@ -37,140 +23,97 @@ export interface SoftFeatureChannel {
 }
 
 /**
- * The soft-feature channels fed to the runner.
- *
- * Each is present only when its source is configured.
+ * Holds the soft-feature channels fed to the runner, each present only when its source is configured.
  */
 export interface SoftFeatures {
 	/**
-	 * Postcode-anchor channel (#239/#240).
-	 * Present iff `postcodeAnchorLookup` was supplied.
+	 * The postcode-anchor channel, present when a `postcodeAnchorLookup` was supplied.
 	 */
 	anchor?: SoftFeatureChannel
+
 	/**
-	 * Gazetteer-anchor channel (#464).
-	 * Present iff `gazetteerLexicon` was supplied.
-	 *
-	 * Already choreographed: when `suppressGazetteerNearPostcode` is set and an anchor channel
-	 * exists, the clue is zeroed adjacent to postcode-anchor hits before it's returned here.
+	 * The gazetteer-anchor channel, already zeroed next to postcode-anchor hits when suppression is enabled.
 	 */
 	gazetteer?: SoftFeatureChannel
+
 	/**
-	 * Country-lexicon channel (#1104).
-	 * Present iff `countryLexicon` was supplied.
+	 * The country-lexicon channel, present when a `countryLexicon` was supplied.
 	 *
-	 * Deliberately not subject to `suppressGazetteerNearPostcode`: unlike the
-	 * gazetteer's country slot, this channel fires on a trailing "…12345 USA"
-	 * (where the gazetteer clue is zeroed by the near-postcode choreography).
-	 *
-	 * See `country-inference.ts`.
+	 * Near-postcode suppression never applies to it, so it still fires on a trailing `12345 USA`.
 	 */
 	country?: SoftFeatureChannel
+
 	/**
-	 * Street-type evidence channel (Option-A bundle, Phase 2).
-	 * Present iff `streetTypeLexicon` was supplied.
-	 *
-	 * Painted by the same generic painter as the gazetteer channel
-	 * (the lexicons share one schema); no choreography.
-	 * The bundle's anti-over-trust discipline is the train-side curriculum
-	 * rather than a decode-side transform.
+	 * The street-type evidence channel, present when a `streetTypeLexicon` was supplied.
 	 */
 	streetType?: SoftFeatureChannel
+
 	/**
-	 * Locality-surface evidence channel (Option-A bundle, Phase 2).
-	 * Present iff `localitySurfaceLexicon` was supplied.
+	 * The locality-surface evidence channel, present when its lexicon was supplied
+	 * and the street-type channel is absent or matched something.
 	 */
 	localitySurface?: SoftFeatureChannel
 }
 
 /**
- * Sources + choreography for {@link buildSoftFeatures}.
- *
- * Mirrors the classifier's config fields.
+ * Supplies the lexicons, anchor lookup and settings that {@link buildSoftFeatures} uses,
+ * mirroring the classifier's config fields.
  */
 export interface SoftFeatureSources {
 	/**
-	 * Postcode→anchor lookup (#239/#240).
-	 *
-	 * Omit to skip the anchor channel.
+	 * The postcode-to-anchor lookup; omit it to skip the anchor channel.
 	 */
 	postcodeAnchorLookup?: AnchorLookup
+
 	/**
-	 * Which substrings the anchor channel looks up (2026-08-05 train-parity fix).
+	 * Which substrings the anchor channel looks up, defaulting to `alnum-run`.
 	 *
-	 * Defaults to `alnum-run`, the shipped behaviour.
-	 * Pairing is essential, the same way `suppressGazetteerNearPostcode` is:
-	 * `shaped` reproduces the train painter's span rule, so it belongs only to a model
-	 * trained against a lookup with letter-containing keys.
-	 *
-	 * Declared by the model card (`requires.anchor.span_mode`), never guessed.
+	 * It must match the model card's `requires.anchor.span_mode`, because `shaped`
+	 * suits only a model trained against letter-containing keys.
 	 */
 	postcodeAnchorSpanMode?: AnchorSpanMode
+
 	/**
-	 * Gazetteer-anchor lexicon (#464).
-	 *
-	 * Omit to skip the gazetteer channel.
+	 * The gazetteer-anchor lexicon; omit it to skip the gazetteer channel.
 	 */
 	gazetteerLexicon?: GazetteerLexicon
+
 	/**
-	 * Country-lexicon (#1104).
-	 *
-	 * Omit to skip the country channel.
+	 * The country-surface lexicon; omit it to skip the country channel.
 	 */
 	countryLexicon?: CountryLexicon
+
 	/**
-	 * Channel choreography (#464, v0.9.13 postcode fix): zero the gazetteer clue
-	 * on pieces adjacent to a postcode-anchor hit.
+	 * Whether to zero the gazetteer clue on pieces adjacent to a postcode-anchor hit,
+	 * which needs both the lexicon and the anchor lookup.
 	 *
-	 * Needs both a `gazetteerLexicon` and a `postcodeAnchorLookup` to take effect
-	 * (the suppression is keyed off the anchor's confidence).
-	 * Pairing is essential — enable this IFF the model was trained with the matching train-time choreography.
-	 *
-	 * See `suppressGazetteerNearPostcode` in `gazetteer-inference.ts`.
-	 *
-	 * Does not touch the country channel.
+	 * Enable it only for a model trained with the same suppression.
 	 */
 	suppressGazetteerNearPostcode?: boolean
+
 	/**
-	 * Street-type evidence lexicon (Option-A bundle).
-	 *
-	 * Omit to skip the channel.
-	 * Same JSON schema as the gazetteer.
+	 * The street-type evidence lexicon, in the gazetteer lexicon schema; omit it to skip the channel.
 	 */
 	streetTypeLexicon?: GazetteerLexicon
+
 	/**
-	 * Locality-surface evidence lexicon (Option-A bundle).
-	 *
-	 * Omit to skip the channel.
+	 * The locality-surface evidence lexicon; omit it to skip the channel.
 	 */
 	localitySurfaceLexicon?: GazetteerLexicon
 }
 
 /**
- * Build the soft-feature channels for `text`/`pieces` from the configured sources —
- * the exact choreography previously inlined in `NeuralAddressClassifier.#decode`:
+ * Builds the soft-feature channels for `text` and its `pieces` from whichever sources are configured.
  *
- * 1. Anchor channel from `postcodeAnchorLookup` (no-op when unset).
- * 2. Gazetteer channel from `gazetteerLexicon` (no-op when unset).
- * 3. If both channels exist and `suppressGazetteerNearPostcode`, zero the gazetteer
- *    clue adjacent to postcode-anchor hits.
- * 4. Country channel from `countryLexicon` (no-op when unset) — independent
- *    of the near-postcode choreography.
- *
- * Pure + byte-stable: the returned channels are identical to the pre-#718 inline path,
- * so wiring this into `#decode` is a behavior-preserving refactor.
+ * The gazetteer clue is zeroed next to postcode-anchor hits when
+ * `suppressGazetteerNearPostcode` is set, and the locality-surface channel is built only
+ * when the street-type lexicon is absent or matched something.
  */
 export function buildSoftFeatures(
 	text: string,
 	pieces: ReadonlyArray<TokenizedPiece>,
 	sources: SoftFeatureSources
 ): SoftFeatures {
-	// ship obligation (A2 of ROAD_TO_V9 §1).
-	// This is the one place in the codebase where the loaded lookup and the card-declared span
-	// mode are both in hand, so it is where the mispairing can be seen, and it covers every
-	// construction path (Node loader, browser loader, a harness building a classifier by hand),
-	// not just the one loader a check in `loadFromWeights` would have caught.
-	// Latched to once per process, so the per-parse cost is a boolean read.
 	warnShapedKeyerObligationOnce(sources.postcodeAnchorLookup, sources.postcodeAnchorSpanMode, undefined)
 
 	const anchor = sources.postcodeAnchorLookup
@@ -194,18 +137,6 @@ export function buildSoftFeatures(
 		? buildGazetteerFeatures(text, pieces, sources.streetTypeLexicon)
 		: undefined
 
-	// street-context check for the locality channel (2026-07-29, the 8.2.0 pre-ship
-	// gauntlet catch. Precedent: the #1315 FST street-context check).
-	// Locality-surface evidence feeds only when the street painter found context on this input.
-	// On a bare place-name lookup ("Melbourne", "Sydney, Australia") homograph-flagged
-	// locality evidence rotates the parse (locality → region/ street — the
-	// Washington-DC class, surviving in the fragment register on world-city homographs)
-	// while the resolver already owns that register outright.
-	// Withholding = the curriculum-trained absence identity, the same declared-ablation
-	// semantics as formatted mode.
-	// Street-containing fragments — every measured win class
-	// (homonym/bare-street/particle rows all carry a street-type word) — keep the full bundle.
-	// The street channel itself needs no check: it paints nothing on a street-word-less input by construction.
 	const streetContext = streetType !== undefined && streetType.confidence.some((c) => c > 0)
 
 	const localitySurface =

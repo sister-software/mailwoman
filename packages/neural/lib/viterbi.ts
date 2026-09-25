@@ -2,41 +2,13 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- *
- *   Linear-chain CRF Viterbi decoder in TypeScript.
- *
- *   its own subpath on purpose — do not fold this into the package barrel. `@mailwoman/neural`'s root export
- *   pulls onnxruntime, and the docs bundle needs the decoder without the runtime. The decode is pure
- *   arithmetic over scores someone else produced, which is exactly why it can be reached without them.
- *
- *   Replaces per-token argmax in the classifier when transition scores are available. Mirrors the
- *   Python training-time / eval-time path so JS runtime decode agrees with the model card's
- *   metrics.
- *
- *   Two transition matrix modes:
- *
- *   1. **Structural-only** (no weights changes required) — build from the BIO label vocabulary using
- *        `buildBIOTransitionMask()`. Forbids `O → I-X`, `B-X → I-Y` (X ≠ Y), and sequence-start →
- *        `I-X`. Permits everything else. This alone prevents orphan-I decoding ("Saint Petersburg →
- *        Petersburg" bug) at runtime — a strict improvement over argmax.
- *   2. **Learned** (requires a future weights release that ships `crf-transitions.json`) — load the
- *        trained transition matrix from the model card. Adds learned soft priors on top of the
- *        structural mask. Currently not exported from the training-side ONNX bundle.
  */
 
 const NEG_INF = -1e9
 
 /**
- * Build the BIO structural transition mask given the label vocabulary in order.
- *
- * Rules:
- *
- * - `X → O` always permitted (0)
- * - `X → B-Y` always permitted (0)
- * - `X → I-Y` permitted only if `X` is `B-Y` or `I-Y` (0); otherwise -inf
- *
- * @returns A `numLabels × numLabels` matrix where `mask[from][to]` is the additive
- * log-score (0 for permitted, NEG_INF for forbidden).
+ * Builds a `numLabels × numLabels` additive log-score mask that permits every transition
+ * except entering `I-Y` from anything other than `B-Y` or `I-Y`.
  */
 export function buildBIOTransitionMask(labels: readonly string[]): number[][] {
 	const n = labels.length
@@ -65,10 +37,7 @@ export function buildBIOStartMask(labels: readonly string[]): number[] {
 }
 
 /**
- * End-of-sequence transitions.
- *
- * By default all labels are valid endings (returns zeros).
- * Override if the trained model has learned end transitions.
+ * Returns an all-zero end-of-sequence mask, since any BIO label is a valid final label.
  */
 export function buildBIOEndMask(labels: readonly string[]): number[] {
 	return labels.map(() => 0)
@@ -88,83 +57,66 @@ function isValidTransition(from: string, to: string): boolean {
 	return true
 }
 
-/**
- * A position-scoped transition bonus (transition-beta build, 2026-07-24): `+bonus` on every
- * transition into `toLabel` at exactly `timestep` — from any predecessor label (at `timestep === 0`
- * the "predecessor" is the sequence start, so the bonus lands on the start transition instead).
- *
- * The placetype-pair prior emits one per pair hit at the child span's first piece
- * when its index header carries `transitionBeta`; the hook itself is generic —
- * a sparse list of adjustments, no knowledge of who produced them.
- *
- * Because the bonus is predecessor-independent, it cannot change which predecessor
- * wins for `toLabel` at `timestep`.
- * It changes whether paths entering `toLabel` there outscore paths that stay fused through a
- * competing run (the task-8 probe's path-fusion mechanism: a locally-winning emission bias
- * can still lose globally when the forced `I-`/fresh-`B-` continuation costs more than the
- * local emission bias recovers. A transition-entry bonus pays that structural toll directly).
- */
 interface ViterbiTransitionAdjustment {
-	/**
-	 * Timestep whose incoming transition is adjusted.
-	 */
 	timestep: number
-	/**
-	 * Label index (into the emission row / transition matrix axes) the adjusted transition lands on.
-	 */
+
 	toLabel: number
-	/**
-	 * Additive bonus (log-score units, like the transition matrix itself).
-	 */
+
 	bonus: number
 }
 
+/**
+ * Supplies the per-token emission scores, the `from × to` transition scores,
+ * and optional start, end and per-timestep transition bonuses for {@link viterbi}.
+ *
+ * When several adjustments target the same timestep and label, only the largest bonus applies.
+ */
 export interface ViterbiInput {
 	/**
-	 * `emissions[t][k]` — log-emission for label k at timestep t.
-	 *
-	 * Pass raw logits or log-softmaxes.
+	 * The log-emission score `emissions[t][k]` for label `k` at timestep `t`,
+	 * as raw logits or log-softmax values.
 	 */
 	emissions: number[][]
+
 	/**
-	 * `transitions[from][to]` — additive log-score.
-	 *
-	 * Use `buildBIOTransitionMask` if unsure.
+	 * The additive log-score `transitions[from][to]`, such as the mask from {@link buildBIOTransitionMask}.
 	 */
 	transitions: number[][]
+
 	/**
-	 * Per-label log-score for being the first label.
+	 * The per-label log-score for starting the sequence, defaulting to zeros.
 	 */
 	startTransitions?: number[]
+
 	/**
-	 * Per-label log-score for being the last label.
+	 * The per-label log-score for ending the sequence, defaulting to zeros.
 	 */
 	endTransitions?: number[]
+
 	/**
-	 * Position-scoped transition bonuses (see {@link ViterbiTransitionAdjustment}).
-	 *
-	 * Omitted/empty = the exact pre-transition-beta decode.
-	 * No behavioral term is added anywhere.
+	 * Timestep-scoped transition bonuses; when omitted or empty, the decode adds no adjustment.
 	 */
 	transitionAdjustments?: ReadonlyArray<ViterbiTransitionAdjustment>
 }
 
+/**
+ * Holds the highest-scoring label-index path and its total score.
+ */
 export interface ViterbiResult {
 	/**
-	 * Best label index per timestep.
+	 * The best label index at each timestep.
 	 */
 	path: number[]
+
 	/**
-	 * Total path score (log-prob).
+	 * The total log-score of the path.
 	 */
 	score: number
 }
 
 /**
- * Viterbi decode: find the highest-scoring label sequence under the CRF.
- *
- * Time: O(seq_len × num_labels²).
- * Space: O(seq_len × num_labels) for the backpointer table.
+ * Finds the highest-scoring label sequence under the CRF emissions
+ * and transitions in O(seqLen × numLabels²) time.
  */
 export function viterbi(input: ViterbiInput): ViterbiResult {
 	const { emissions, transitions } = input
@@ -176,9 +128,6 @@ export function viterbi(input: ViterbiInput): ViterbiResult {
 	const startTrans = input.startTransitions ?? new Array<number>(numLabels).fill(0)
 	const endTrans = input.endTransitions ?? new Array<number>(numLabels).fill(0)
 
-	// Sparse per-timestep lookup for the position-scoped transition bonuses.
-	// Null when none were passed.
-	// The hot loop below then never consults it (the pre-transition-beta code path, exactly).
 	let adjustAt: Map<number, Map<number, number>> | null = null
 
 	if (input.transitionAdjustments?.length) {
@@ -192,18 +141,13 @@ export function viterbi(input: ViterbiInput): ViterbiResult {
 				adjustAt.set(adj.timestep, byLabel)
 			}
 
-			// Two adjustments landing on the same (timestep, toLabel) cell compose by MAX rather than sum.
-			// The emission side's `applyWindowBias` uses the same Math.max discipline,
-			// and overlapping window-mode candidates must not stack the bonus.
 			byLabel.set(adj.toLabel, Math.max(byLabel.get(adj.toLabel) ?? NEG_INF, adj.bonus))
 		}
 	}
 
-	// dp[t][k] = best log-score ending at (timestep t, label k)
 	const dp: number[][] = []
 	const back: number[][] = []
 
-	// t = 0 — an adjustment at timestep 0 lands on the start transition (the sequence start is the only "predecessor" a first label has).
 	const firstAdjust = adjustAt?.get(0)
 	const first = new Array<number>(numLabels)
 
@@ -232,8 +176,6 @@ export function viterbi(input: ViterbiInput): ViterbiResult {
 				}
 			}
 
-			// The bonus is predecessor-independent, so it distributes over the max — adding it
-			// after the argmax over j is exact rather than an approximation.
 			cur[k] = bestScore + (tAdjust?.get(k) ?? 0) + emissions[t]![k]!
 			ptr[k] = bestPrev
 		}
@@ -242,7 +184,6 @@ export function viterbi(input: ViterbiInput): ViterbiResult {
 		back.push(ptr)
 	}
 
-	// Pick the best ending state.
 	let bestEndScore = NEG_INF
 	let bestEnd = 0
 
@@ -255,7 +196,6 @@ export function viterbi(input: ViterbiInput): ViterbiResult {
 		}
 	}
 
-	// Trace back.
 	const path = new Array<number>(T)
 	path[T - 1] = bestEnd
 
@@ -267,10 +207,8 @@ export function viterbi(input: ViterbiInput): ViterbiResult {
 }
 
 /**
- * Convenience: argmax over per-token softmax (existing behavior).
- *
- * Provided so callers can opt in to Viterbi only when transitions are available,
- * falling back to this cleanly.
+ * Picks the highest-scoring label for each token independently, the fallback decode
+ * when no transition matrix is available.
  */
 export function perTokenArgmax(emissions: readonly number[][]): number[] {
 	return emissions.map((row) => {
@@ -289,11 +227,8 @@ export function perTokenArgmax(emissions: readonly number[][]): number[] {
 }
 
 /**
- * Fused argmax + softmax-at-the-argmax over one logit row: the winning label index
- * and its softmax probability, without materializing the full distribution.
- *
- * The argmax path's per-token decode (`NeuralAddressClassifier`'s `decode: "argmax"` mode)
- * reads `.idx`; `.conf` is the winner's probability.
+ * Returns the winning label index of one logit row and its softmax probability
+ * without materializing the full distribution.
  */
 export function argmaxWithConfidence(row: number[]): { idx: number; conf: number } {
 	let maxIdx = 0
@@ -318,10 +253,8 @@ export function argmaxWithConfidence(row: number[]): { idx: number; conf: number
 }
 
 /**
- * Softmax of a logit row (returns probabilities summing to 1).
- *
- * Used to compute per-token confidence after Viterbi picks the label sequence.
- * The confidence is the softmax probability of the Viterbi-chosen label at that timestep.
+ * Converts a logit row to probabilities that sum to 1, subtracting the maximum
+ * first for numerical stability.
  */
 export function softmax(row: readonly number[]): number[] {
 	let max = row[0]!

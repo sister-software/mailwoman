@@ -2,36 +2,6 @@
  * @copyright Sister Software.
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- *
- *   Ordnance Survey **Code-Point Open** acquisition — the GB unit-postcode register, and the licensed
- *   replacement for the GeoNames `GB_full` rows the tail database has been riding on (see
- *   `../geonames-tail.ts`, whose `GB_LICENSE_NOTE` is the reason this module exists).
- *
- *   Code-Point Open is an OS OpenData product: no API key, no account, no click-through. The OS Data
- *   Hub exposes it through the public **OS Downloads API**, which is two GETs —
- *   `/products/CodePointOpen` for the version stamp, `/products/CodePointOpen/downloads` for the file
- *   list. The list is the useful one: it carries the upstream **md5 and byte size**, so a download can
- *   be verified against OS's own digest rather than against a number we wrote down. That is what
- *   {@link downloadCodePointOpen} does, and it is why the acquisition doesn't just `curl` a static URL.
- *
- *   verified 2026-08-05: both endpoints answer unauthenticated. Product version `2026-05`, CSV archive
- *   `codepo_gb.zip`, 14,446,552 bytes, md5 `ad0e258f056cee7bd81a50dc626c4f69`. The same md5 was already
- *   sitting in `$MAILWOMAN_DATA_ROOT/codepoint/2026-07-22/` from an earlier manual pull, which dates the
- *   release: OS has not re-issued the file between 2026-07-22 and 2026-08-05.
- *
- *   ## Layout
- *
- *   This is an `sdk/`-shaped trio (fetch → extract → parse, exactly like `ban/sdk`) that deliberately
- *   does not live in its own workspace. Code-Point Open has one consumer — the GB postcode database
- *   builder two directories up — and `gazetteer-pipeline/postcode/` already owns every other postcode
- *   database's build. A top-level `codepoint/` workspace would add a publish surface, an exports map, two
- *   tsconfigs and a row in the agents.md table to acquire one 14 MB zip that nothing outside this
- *   pipeline will ever import.
- *
- *   ## Licence
- *
- *   OGL v3, and the attribution is not optional — see {@link codePointAttribution}. The year in the
- *   block is the year of OUR publication, which is why it is a function and not a string constant.
  */
 
 import { APIClient } from "@mailwoman/core/api"
@@ -42,9 +12,7 @@ import { prettyJSON } from "@mailwoman/core/json"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 
 /**
- * The OS Downloads API root.
- *
- * Public, unauthenticated for OpenData products.
+ * Points at the root of the OS Downloads API, which serves OpenData products without authentication.
  */
 export const OS_DOWNLOADS_API_BASE = "https://api.os.uk/downloads/v1"
 
@@ -54,10 +22,9 @@ export const OS_DOWNLOADS_API_BASE = "https://api.os.uk/downloads/v1"
 export const CODEPOINT_PRODUCT_ID = "CodePointOpen"
 
 /**
- * The licence Code-Point Open is published under.
+ * Names the licence Code-Point Open is published under.
  *
- * Named exactly as OS names it, because the database's `meta` table stores
- * this verbatim and a consumer greps it.
+ * The spelling matches OS exactly, because the database `meta` table stores it verbatim.
  */
 export const CODEPOINT_LICENSE = "Open Government Licence v3.0"
 
@@ -67,20 +34,10 @@ export const CODEPOINT_LICENSE = "Open Government Licence v3.0"
 export const CODEPOINT_LICENSE_URL = "https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/"
 
 /**
- * The three-line attribution block OS requires of anyone redistributing
- * Code-Point Open, plus the OGL reference.
+ * Builds the attribution OS requires for redistributing Code-Point Open: one line
+ * each for OS, Royal Mail and National Statistics, plus the OGL.
  *
- * All three lines are mandatory and each names a different rightsholder:
- * OS for the geometry, **Royal Mail** for the postcodes themselves, and **National
- * Statistics** for the ONS administrative codes carried on every row.
- * Shipping only the OS line — the common mistake, and the one GeoNames' readme makes
- * in reverse by naming only Royal Mail — is not compliance.
- *
- * `year` is the year of your publication rather than the year of the OS release.
- * OGL attribution tracks the redistribution.
- *
- * That is the whole reason this is a function.
- * The archive's own `Doc/licence.txt` in the 2026-05 extract reads `2026` on all three lines.
+ * `year` is the year of the redistribution rather than of the OS release.
  */
 export function codePointAttribution(year: number): string {
 	return [
@@ -96,31 +53,34 @@ export function codePointAttribution(year: number): string {
  */
 export interface CodePointDownload {
 	/**
-	 * Upstream md5 of the archive — the digest {@link downloadCodePointOpen} verifies against.
+	 * Holds the OS-published MD5 of the archive, which {@link downloadCodePointOpen}
+	 * verifies the downloaded bytes against.
 	 */
 	md5: string
+
 	/**
-	 * Archive size in bytes.
+	 * Gives the archive size in bytes.
 	 */
 	size: number
+
 	/**
-	 * The download URL.
-	 *
-	 * Ends in `&redirect`; OS 302s to a CDN object.
+	 * Gives the download URL, which redirects to a CDN object.
 	 */
 	url: string
+
 	/**
-	 * `CSV` or `GeoPackage`.
+	 * Names the archive format, such as `CSV` or `GeoPackage`.
 	 */
 	format: string
+
 	/**
-	 * Coverage area.
-	 *
-	 * Code-Point Open publishes a single `GB` area — see {@link CODEPOINT_COVERAGE_NOTE}.
+	 * Names the coverage area; Code-Point Open publishes only `GB`, which excludes
+	 * Northern Ireland (see {@link CODEPOINT_COVERAGE_NOTE}).
 	 */
 	area: string
+
 	/**
-	 * The archive filename, e.g. `codepo_gb.zip`.
+	 * Gives the archive file name, such as `codepo_gb.zip`.
 	 */
 	fileName: string
 }
@@ -131,33 +91,20 @@ export interface CodePointDownload {
 export interface CodePointProduct {
 	id: string
 	name: string
+
 	/**
-	 * OS's release label, e.g. `2026-05`.
-	 *
-	 * Distinct from the internal `dataset version number` in the archive's `Doc/metadata.txt`
-	 * (`2026.2.0` for this extract) — both are recorded.
+	 * Gives the OS release label, such as `2026-05`, which differs from the dataset
+	 * version in the archive's `Doc/metadata.txt`.
 	 */
 	version: string
 }
 
 /**
- * What "GB" means on this product, stated here because it is the single most consequential
- * fact about it and the one a reader is most likely to assume wrongly.
+ * States that Code-Point Open covers England, Scotland and Wales only,
+ * not Northern Ireland, the Isle of Man or the Channel Islands.
  *
- * Code-Point Open covers **England, Scotland and Wales only**.
- * It does not cover Northern Ireland, and it does not cover the Isle of Man or the Channel Islands.
- *
- * The country codes on the 2026-05 rows are exactly three — `E92000001`, `S92000003`,
- * `W92000004` — with no `N92000002` among 1,747,841 rows.
- * NI postcodes (the `BT` area) are administered by Land & Property Services
- * and are not in any OS OpenData product.
- *
- * ONS's OGL grant for postcode products explicitly excludes NI data.
- * So a database built from this source has a real, permanent `BT` hole,
- * and the hole is a licensing fact rather than a data-quality one.
- *
- * Report it.
- * Do not fill it from an unlicensed source.
+ * The missing `BT` postcodes are a licensing gap, so they must be reported
+ * rather than filled from another source.
  */
 export const CODEPOINT_COVERAGE_NOTE =
 	"Code-Point Open covers England, Scotland and Wales only (country codes E92000001/S92000003/W92000004). " +
@@ -166,83 +113,11 @@ export const CODEPOINT_COVERAGE_NOTE =
 	"See NORTHERN_IRELAND_OPTIONS_NOTE for why the gap cannot be filled from a free source."
 
 /**
- * What it would actually take to fill the Northern Ireland hole — researched 2026-08-05,
- * because the obvious answer is wrong in a way that would get us in trouble.
+ * Explains why Northern Ireland postcode centroids cannot be filled from a
+ * free source, and which options remain.
  *
- * The obvious answer is onspd: the ONS Postcode Directory is free, is published on
- * the Open Geography Portal under OGL, and does carry BT postcodes with coordinates
- * (derived from LPS's Pointer, on the Irish National Grid).
- * Take it and the gap closes.
- *
- * That reading is wrong, and the wrongness is explicit in ONS's own words
- * rather than a matter of interpretation.
- * From the ONS licences page, covering onspd and nspl alike: "You may re-use this information
- * **(not including logos or Northern Ireland data)** free of charge", and BT rows ship
- * only with "a Northern Ireland End User Licence (for internal business use only)".
- *
- * The onspd User Guide (May 2021, §3) said it flatter still: "Open Government
- * Licensing terms do not apply to NI postcodes."
- *
- * And the LPS End User Licence itself is not merely a commercial-use check.
- * It is personal (§1.2 "personal to you and the licence granted herein is for your benefit only"),
- * internal-only (§2 "solely for your own internal business use … all other uses are prohibited"),
- * and non-sublicensable (§9 "you may not novate, assign, transfer, sub-contract
- * or otherwise part with this Licence").
- *
- * Shipping BT rows in a published package is therefore out under any reading, commercial
- * or not, and that applies equally to the onspd re-publishers (doogal, FreeMapTools),
- * whose own terms reproduce the same exclusion.
- * Nisra's Central Postcode Directory is free but no better: its MOU forbids passing copies
- * to third parties and permits only internal use and non-commercial statistics.
- *
- * There is also no NI counterpart to Code-Point Open to fall back on.
- * LPS's osni Open Data catalogue is 77 datasets, all OGL v3, and contains boundaries,
- * terrain, raster mapping and two gazetteers (place names, street names) —
- * no postcode centroids and no address points.
- *
- * That is a checked negative from the catalogue rather than an assumption.
- *
- * So the real options are three, and only one of them is free:
- *
- * (a) Licence Pointer from LPS.
- * The authoritative NI address database, ~1 M points with UPRNs.
- *
- * The osni mapshop lists full NI coverage at £9,224 excl.
- * VAT.
- *
- * Orders over £3,000 need a formal licence application with a ≥12-month term.
- *
- * This is the only route to complete NI centroids in a permissively-licensed package.
- * (b) Ship NI as ODbL from OpenStreetMap `addr:postcode`.
- *
- * Coverage is partial and uneven, and ODbL's share-alike would infect the artifact.
- * The same posture `@mailwoman/osm` already sits in, awaiting counsel.
- *
- * Note the OSM community explicitly forbids importing LPS/onspd centroids into OSM,
- * so this cannot be laundered.
- *
- * (c) Ship no NI postcode centroids.
- * Fall back to the OGL-clean osni Streetnames gazetteer (every NI street with Irish Grid coordinates)
- * for street-level NI resolution.
- *
- * **(b) landed 2026-08-05, at the build-local tier** —
- * `../ni-osm-database.ts`, `mailwoman gazetteer build postcode-ni-osm`.
- * The share-alike problem is solved by not publishing: the database is built on the
- * operator's own machine and reaches the resolver only through `DEFAULT_POSTCODE_DATABASES`'s
- * `existsSync` filter, so no npm consumer ever receives an ODbL byte.
- *
- * Measured coverage is 4,757 of the 50,032 live NI postcodes (9.5 %), across 250 of
- * 886 sectors and 80 of 80 districts, from 12,327 OSM address elements.
- * Partial, and additive rather than risky: since #1480 an unknown postcode abstains,
- * so a `BT` code the database lacks behaves exactly as it did when there was no database at all.
- *
- * This database — Code-Point Open, the published one — still does (c), and must:
- * its `BT` hole is a licensing fact and filling it from an ODbL source would be
- * exactly the contamination the tier split exists to prevent.
- * Scale of what (c) gives up: onspd Feb 2025 counts 50,032 live NI postcodes (62,980 including terminated).
- *
- * The incumbent GeoNames snapshot's 48,990 BT rows sit between the May 2020 and May 2021
- * live figures, i.e. a live-only extract roughly five years stale and ~2 % short of current.
+ * ONSPD and NSPL exclude their `BT` coordinates from the OGL, so this published
+ * database must keep its `BT` gap.
  */
 export const NORTHERN_IRELAND_OPTIONS_NOTE =
 	"Northern Ireland (BT) postcode centroids CANNOT be filled from a free source. ONSPD/NSPL carry BT coordinates " +
@@ -283,9 +158,7 @@ export async function fetchCodePointProduct(client: APIClient = createOSDownload
 }
 
 /**
- * List the downloadable archives.
- *
- * Two entries as of 2026-05: CSV and GeoPackage, both whole-GB.
+ * Lists the Code-Point Open archives that the OS Downloads API offers, one per format.
  */
 export async function fetchCodePointDownloads(
 	client: APIClient = createOSDownloadsClient()
@@ -298,66 +171,75 @@ export async function fetchCodePointDownloads(
 	return data
 }
 
+/**
+ * Configures {@link downloadCodePointOpen}.
+ *
+ * By default it fetches the CSV archive and reuses an existing file whose MD5
+ * already matches the published one.
+ */
 export interface DownloadCodePointOptions {
 	/**
-	 * Directory the archive lands in.
+	 * Names the directory that receives the archive, its `.md5` sidecar and `acquisition.json`.
 	 *
-	 * The caller owns it — the convention is a new dated directory per acquisition
-	 * (`$MAILWOMAN_DATA_ROOT/codepoint/<yyyy-MM-DD>/`) so an acquisition never overwrites an earlier one.
+	 * A later download into the same directory overwrites them, so use a new
+	 * directory per acquisition to keep earlier ones.
 	 */
 	destDir: PathBuilderLike
+
 	/**
-	 * Which archive to take.
-	 *
-	 * `CSV` is what the database builder parses; `GeoPackage` carries the same
-	 * rows behind a gdal dependency we do not need.
+	 * Selects the archive format, defaulting to `CSV`, the only format the database builder parses.
 	 */
 	format?: "CSV" | "GeoPackage"
+
 	/**
-	 * Reuse an existing client (and its pacer) instead of constructing one.
+	 * Supplies an existing client to reuse, including its request pacing.
 	 */
 	client?: APIClient
+
 	/**
-	 * Skip the download when the destination already exists and matches the upstream md5.
-	 *
-	 * The default.
-	 * Set `false` to force a re-pull.
+	 * Skip the download when the destination file already matches the upstream MD5; defaults to `true`.
 	 */
 	reuseExisting?: boolean
 	onPhase?: (phase: string, detail?: string) => void
 }
 
+/**
+ * Describes the archive that {@link downloadCodePointOpen} downloaded or reused,
+ * with its verified MD5 and the product version.
+ */
 export interface DownloadCodePointResult {
-	/**
-	 * Absolute path of the downloaded archive.
-	 */
 	archivePath: PathBuilder
+
 	/**
-	 * Bytes on disk.
+	 * Gives the archive size in bytes.
 	 */
 	bytes: number
+
 	/**
-	 * Md5 computed from the bytes we wrote — verified equal to {@link CodePointDownload.md5}.
+	 * Holds the MD5 of the archive on disk, already verified equal to {@link CodePointDownload.md5}.
 	 */
 	md5: string
+
 	/**
-	 * OS's release label for the product at acquisition time.
+	 * Gives the product's OS release label at acquisition time.
 	 */
 	version: string
+
 	/**
-	 * The Downloads API record this came from.
+	 * Holds the Downloads API record the archive came from.
 	 */
 	download: CodePointDownload
+
 	/**
-	 * True when the bytes were already on disk and matched, so no request was made.
+	 * Is true when the archive on disk already matched, so nothing was downloaded.
 	 */
 	reused: boolean
 }
 
 /**
- * Stream the archive to disk and verify its MD5 against the Downloads API record.
+ * Downloads a Code-Point Open archive into `destDir` and verifies its MD5 against the Downloads API record.
  *
- * Metadata uses `APIClient`; the archive transfer bypasses its JSON response cache.
+ * The function also writes an `.md5` sidecar and an `acquisition.json` provenance file beside the archive.
  */
 export async function downloadCodePointOpen(options: DownloadCodePointOptions): Promise<DownloadCodePointResult> {
 	const { format = "CSV", reuseExisting = true } = options
@@ -379,9 +261,6 @@ export async function downloadCodePointOpen(options: DownloadCodePointOptions): 
 	await makeDirectories(destDir)
 	const archivePath = destDir(download.fileName)
 
-	// Reuse-by-md5, near-verbatim in `uprn-layer.ts`'s `downloadOpenUPRN`.
-	// Kept separate because that one (re)writes the acquisition sidecars on the
-	// reuse path and this one does not.
 	if (reuseExisting) {
 		const existing = await md5File(archivePath).catch(() => null)
 
@@ -394,7 +273,6 @@ export async function downloadCodePointOpen(options: DownloadCodePointOptions): 
 
 	phase("download", `${download.fileName} (${download.size.toLocaleString()} bytes)`)
 
-	// Raw `fetch`: an OS Code-Point Open archive, streamed to disk below rather than held in memory.
 	const response = await fetch(download.url)
 
 	if (!response.ok || !response.body) {
@@ -422,8 +300,6 @@ export async function downloadCodePointOpen(options: DownloadCodePointOptions): 
 		)
 	}
 
-	// The sidecar makes the archive self-describing on disk: a later reader can tell which
-	// OS release these bytes are without re-querying an API whose answer will have moved on.
 	await writeLocalTextFile(`${md5}  ${download.fileName}\n`, destDir(`${download.fileName}.md5`))
 
 	await writeLocalTextFile(

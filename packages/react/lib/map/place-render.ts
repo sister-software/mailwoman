@@ -2,21 +2,6 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- *
- *   `computeMapPlaceRenderSpec` — the pure core that replaces the docs demo's ~100-line imperative
- *   marker/bbox/camera redraw effect (`_app.tsx:601-705`). It takes an already-resolved place (the async
- *   polygon-DB fetch is a host/runtime concern — a later phase — so a crisp polygon arrives pre-fetched
- *   as `place.geometry`) and returns a declarative render spec: the marker position(s), the outline
- *   geometry to draw, and the camera target. No map instance, no DOM, no `react-map-gl` — so it is
- *   node-testable (see `place-render.node.test.ts`). The declarative components in this folder render
- *   the spec. a controlled-viewport consumer applies the camera.
- *
- *   The decision cascade is a faithful, side-effect-free transcription of the imperative effect:
- *     1. street tier (situs / interp)  → exact-radius circle, fly to a tight zoom
- *     2. crisp admin polygon (pre-fetched) → draw the polygon, fit its bounds
- *     3. anchor-centroid postcode (no bbox) → ~3 km "around here" circle, fly to zoom 11
- *     4. bbox with real extent            → bbox-sized approximate circle, fit the bbox
- *     5. bare point                       → no outline, fly to zoom 12
  */
 
 import type { ResolvedPlaceView } from "@mailwoman/core/pipeline/client-result"
@@ -30,52 +15,45 @@ import type { BoundsTuple, PlaceBBox, PlaceGeometry } from "#map/geometry"
 export type LngLat = [number, number]
 
 /**
- * The street-level resolution tier (#377): `address_point` = exact building;
- * `interpolated` = tiger estimate.
+ * Identifies how a street-level result was located: `address_point` is an exact
+ * building point and `interpolated` is a TIGER range estimate.
  */
 export type PlaceTier = "address_point" | "interpolated"
 
 /**
- * The resolved-place shape the map render consumes.
- *
- * The pipeline {@link ResolvedPlaceView} plus the map-only extras the demo's `ResolvedHit`
- * carries (bbox, street tier + uncertainty), and an optional PRE-fetched crisp polygon.
- *
- * Extending `ResolvedPlaceView` keeps the map render aligned with the shared parse result.
- * The extras are additive.
+ * Describes a resolved place as the map renders it: the shared {@link ResolvedPlaceView}
+ * plus an optional bbox, street tier with uncertainty radius, and pre-fetched polygon.
  */
 export interface ResolvedMapPlace extends ResolvedPlaceView {
 	/**
-	 * The place's bounding box, when the gazetteer carries one (admin places).
-	 *
-	 * Absent for anchor-centroid postcodes.
+	 * The place's bounding box when the gazetteer carries one, which anchor-centroid postcodes do not.
 	 */
 	bbox?: PlaceBBox
+
 	/**
-	 * Street-level tier, when this hit came from the situs/interp tier rather than the WOF admin cascade.
+	 * The street-level tier, set only when the result came from address points
+	 * or interpolation rather than the admin cascade.
 	 */
 	tier?: PlaceTier
+
 	/**
-	 * Honest uncertainty radius in meters for a street-level tier (10 m situs floor. Calibrated interp).
+	 * The uncertainty radius in meters for a street-level result, drawn as a circle when `tier` is set.
 	 */
 	uncertaintyM?: number
+
 	/**
-	 * The crisp admin polygon, when the host has already fetched it from the sibling polygon DB.
-	 *
-	 * Its presence drives the polygon path.
-	 * The async fetch itself stays out of this pure function (a runtime concern in a later phase).
+	 * The admin polygon, when the host has already fetched it; its presence makes
+	 * the outline and camera follow the polygon.
 	 */
 	geometry?: PlaceGeometry
 }
 
 /**
- * The camera target the render computes.
+ * Describes where the map camera should go: a `center` point at a zoom,
+ * or `bounds` to fit with pixel padding.
  *
- * `center` (fly to a point at a zoom) has a declarative equivalent.
- * A consumer can feed it to a controlled `viewState` (see {@link cameraToViewState}).
- *
- * `bounds` (fit a box with pixel padding) does not.
- * `fitBounds` needs the map's pixel dimensions, so it is applied imperatively by `<ResultCamera>`.
+ * Only `center` can be applied declaratively through {@link cameraToViewState}, because
+ * fitting bounds needs the map's pixel size and so `<ResultCamera>` applies it imperatively.
  */
 export type MapCameraTarget =
 	| { kind: "center"; center: LngLat; zoom: number }
@@ -86,26 +64,21 @@ export type MapCameraTarget =
  */
 export interface MapPlaceRenderSpec {
 	/**
-	 * Marker position(s) as `[lon, lat]`.
-	 *
-	 * Single-element today.
-	 * An array leaves room for multi-marker later.
+	 * The marker positions as `[lon, lat]`, currently always a single marker.
 	 */
 	markers: LngLat[]
+
 	/**
-	 * The outline geometry (polygon / circle) to draw, or `null` when the place renders as a bare point.
+	 * The polygon or circle outline to draw, or `null` when the place renders as a bare point.
 	 */
 	outline: PlaceGeometry | null
+
 	/**
-	 * The camera target — animate or fit to this.
+	 * The point to center on or the bounds to fit.
 	 */
 	camera: MapCameraTarget
 }
 
-/**
- * Zoom levels the imperative effect flew to, kept named so the cascade reads as intent
- * rather than magic numbers.
- */
 const ZOOM = {
 	addressPoint: 17,
 	interpolated: 15,
@@ -113,29 +86,18 @@ const ZOOM = {
 	point: 12,
 } as const
 
-/**
- * Padding (px) `fitBounds` insets a fitted box by, matching the ported effect.
- */
 const FIT_PADDING = 40
 
-/**
- * The minimum lat/lon span (degrees) a bbox must exceed to be treated as a real extent rather than a point.
- */
 const MIN_EXTENT_DEG = 0.001
 
 /**
- * Map a resolved place to its declarative render spec.
+ * Computes the markers, outline and camera target for a resolved place without side effects.
  *
- * Pure — same input, same output, no side effects.
- * The `place` arrives fully resolved (crisp polygon pre-fetched into `place.geometry` when available),
- * so this is the honest inverse of the old redraw effect with the imperative
- * map mutation and the async DB load removed.
+ * It expects any crisp polygon to be pre-fetched into `place.geometry`, since it performs no loading.
  */
 export function computeMapPlaceRenderSpec(place: ResolvedMapPlace): MapPlaceRenderSpec {
 	const markers: LngLat[] = [[place.lon, place.lat]]
 
-	// 1. Street tier (#377): the honest uncertainty circle (exact meter radius) + a tight zoom.
-	//    Takes precedence over the admin polygon/bbox paths — a precise point gets no admin boundary.
 	if (place.tier && place.uncertaintyM != null) {
 		return {
 			markers,
@@ -148,7 +110,6 @@ export function computeMapPlaceRenderSpec(place: ResolvedMapPlace): MapPlaceRend
 		}
 	}
 
-	// 2. Crisp admin polygon (host pre-fetched it from the polygon DB) — draw the real boundary and fit it.
 	if (place.geometry) {
 		return {
 			markers,
@@ -157,8 +118,6 @@ export function computeMapPlaceRenderSpec(place: ResolvedMapPlace): MapPlaceRend
 		}
 	}
 
-	// 3. Anchor-centroid postcode: no bbox, no polygon — a default ~3 km circle says
-	//    "approximately here" without inventing a boundary.
 	if (!place.bbox && place.placetype === "postcode") {
 		return {
 			markers,
@@ -167,8 +126,6 @@ export function computeMapPlaceRenderSpec(place: ResolvedMapPlace): MapPlaceRend
 		}
 	}
 
-	// 4. A bbox with real extent — draw an approximate circle sized from the bbox
-	//    (a rectangle would read as a wrong, real boundary) and fit the bbox.
 	const bbox = place.bbox
 
 	if (bbox && Math.max(bbox.maxLat - bbox.minLat, bbox.maxLon - bbox.minLon) > MIN_EXTENT_DEG) {
@@ -179,7 +136,6 @@ export function computeMapPlaceRenderSpec(place: ResolvedMapPlace): MapPlaceRend
 		}
 	}
 
-	// 5. A bare point (no tier, no polygon, no meaningful bbox) — just a marker and a mid zoom.
 	return {
 		markers,
 		outline: null,
@@ -188,14 +144,10 @@ export function computeMapPlaceRenderSpec(place: ResolvedMapPlace): MapPlaceRend
 }
 
 /**
- * The declarative camera path: reshape a `center` target into a `viewState` patch a
- * controlled `<MapCanvas viewState>` can apply directly (a hard jump, no animation).
+ * Converts a `center` camera target into a `viewState` patch that a controlled
+ * `<MapCanvas>` applies as a jump.
  *
- * Returns `null` for a `bounds` target — fitting a box to the viewport needs the map's pixel dimensions.
- * It only the live map has.
- *
- * Therefore, that case is applied imperatively by `<ResultCamera>`.
- * Pure + node-testable.
+ * It returns `null` for a `bounds` target, which `<ResultCamera>` must fit imperatively.
  */
 export function cameraToViewState(
 	camera: MapCameraTarget

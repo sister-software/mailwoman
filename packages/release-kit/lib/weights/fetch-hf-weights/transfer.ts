@@ -3,23 +3,6 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- *
- *   Materialize a release's weights artifacts from the public Hugging Face bucket — the `--source hf`
- *   half of the #1894 preflight, and the recipe `.github/workflows/publish.yml` now calls in place of
- *   the curl-and-cp block it used to carry inline. One recipe, two callers: the preflight points it at
- *   a staging tree, the publish job points it at the checkout. `copy-weights.ts` is the same shape for
- *   the operator's data root. both take a destination root and touch nothing else.
- *
- *   what is fetched is derived rather than listed. A `neural-weights-<locale>` package's `files` array is its
- *   author stating which artifacts the tarball carries, and `git ls-files` says which of those a
- *   checkout already has. the difference is exactly the set something must materialize — the same
- *   predicate `verify-tarball.ts` refuses a publish over (`literalFilesEntries`, shared with it). The
- *   v9.2.0 release published 49 of 51 workspaces before that audit refused
- *   `@mailwoman/neural-weights-en-au`, whose four declared lexicons the YAML's hand-maintained copy
- *   list did not name. A derived list cannot fall behind a manifest that way.
- *
- *   no credentials, no writes anywhere but the destination root. The bucket is public — the same files
- *   the browser demo loads. Nothing here writes to Hugging Face, npm, git, or R2.
  */
 
 import { APIClient } from "@mailwoman/core/api"
@@ -29,37 +12,14 @@ import { resolvePath } from "path-ts"
 
 import type { WeightsArtifactPlan } from "#weights/fetch-hf-weights/plan"
 
-/**
- * The bucket client.
- *
- * The house rule routes API requests through `APIClient` and exempts multi-gigabyte file
- * transfers, where a buffered body is untenable and response caching is nonsense.
- * These objects sit on the API side of that line: the largest is `model.onnx` at 39,419,629 bytes
- * and the whole set is under ~70 MB (measured 2026-08-25 against the v9.1.0 directory),
- * each one is md5-checked after arrival, and each is fetched exactly once per run.
- *
- * So a buffered body costs one artifact's worth of memory and a stream would add nothing.
- *
- * What `APIClient` does provide is the reason the YAML this replaces passed
- * `--retry 6 --retry-all-errors` to every curl: Hugging Face throttles the public
- * bucket from CI, and a 429 read as a missing artifact is the one answer that would
- * have a release believe its weights were never staged.
- *
- * No pacer, deliberately.
- * One run is a score of concurrent HEADs and then sequential whole-object GETs against
- * a public CDN the browser demo already reads at higher concurrency.
- *
- * Retry is the only rate control this path has ever needed, and an invented
- * interval would be a number no measurement supports.
- */
 const bucketClient = new APIClient({ displayName: "release-hf-weights", retry: true })
 
 /**
- * Head-probe one bucket object.
+ * Sends a HEAD request for one bucket object and returns `null` when it exists
+ * or the failure message otherwise.
  *
- * @returns The failure's message rather than a bare boolean: a throttled or unroutable
- * probe is indistinguishable from an unstaged artifact at the call site, and "missing" is
- * the answer that would send an operator to re-run a staging step that already succeeded.
+ * The message is returned instead of a boolean because a throttled or unroutable
+ * probe must not be reported as a missing artifact.
  */
 export async function probeRemote(url: string): Promise<string | null> {
 	try {
@@ -72,10 +32,7 @@ export async function probeRemote(url: string): Promise<string | null> {
 }
 
 /**
- * Download one bucket object whole.
- *
- * Axios's node adapter answers `arraybuffer` with a `Buffer`; its fetch adapter
- * answers with an `ArrayBuffer`, so both shapes are accepted.
+ * Downloads one bucket object whole as a `Buffer`, whichever buffer type the HTTP adapter returns.
  */
 export async function downloadRemote(url: string): Promise<Buffer> {
 	const response = await bucketClient.fetch<ArrayBuffer | Buffer>({ url, responseType: "arraybuffer" })
@@ -85,15 +42,8 @@ export async function downloadRemote(url: string): Promise<Buffer> {
 }
 
 /**
- * Write `bytes` to a workspace file.
- *
- * Unlink first.
- * `writeFileSync` follows a symlink at the destination and writes through it, leaving the
- * symlink in place, and the registry refuses a tarball containing one (http 415, YN0035).
- *
- * A dev checkout's weights workspaces are full of symlinks, and the staging tree can
- * inherit one, so the discipline applies to both destinations.
- * Same rule as `copy-weights.ts`; see agents.md "symlinks in the publish tarball".
+ * Writes `bytes` to a workspace file after removing whatever is at the destination, because
+ * writing through an existing symlink leaves a symlink that the package registry rejects.
  */
 export async function writeArtifact(destination: string, bytes: Buffer): Promise<void> {
 	await makeDirectories(resolvePath(destination, ".."))

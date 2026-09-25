@@ -2,42 +2,12 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- *
- *   Resolution-plausibility guard (#727 / v7 excision arc).
- *
- *   The 2026-07-15 coordinate-parity study
- *   (`docs/articles/evals/2026-07-15-v7-parity-floor-diagnosis.md`) found the neural parser is
- *   coordinate-safe on well-formed input (98.6% within 1 km of the rules parser through the same
- *   resolver) but produces a garbage-geocode tail on the bare-fragment / bare-state-name / US-highway
- *   classes — inputs like `California` or `6000, NSW, Australia` that resolve to nothing finer than a
- *   country centroid.
- *
- *   This guard is the cheap post-resolve check for that tail: a resolved tree whose finest resolved
- *   place is only a `country` centroid is implausible for a structured address. It reads only the
- *   decorated tree — no gazetteer, no extra query — so it is free to run on every resolve. It is
- *   deliberately direction-agnostic about what the caller does with the signal: serve the result with
- *   a low-confidence marker, prefer a sibling parse hypothesis (the #727 k-best rerank), or decline to
- *   emit a coordinate. It is not a rules-fallback trigger — the v7 excision deletes the rules parser
- *   outright (operator ruling 2026-07-15), so no consumer may route through legacy rules on a trip.
- *
- *   It deliberately does not flag region-tier resolutions: a US state or a province centroid
- *   (`Texas` → the TX centroid) is a legitimate coarse geocode rather than garbage. Only "resolved no finer
- *   than a country" trips it.
  */
 
 import type { ComponentTag } from "@mailwoman/codex/component"
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import type { CountryBBoxFact } from "@mailwoman/core/resolver"
 
-/**
- * Resolution granularity, coarse → fine.
- *
- * A resolved node's {@link AddressNode.tag} places it on this ladder.
- * The geocode a caller serves comes from the finest resolved node.
- *
- * Tags absent here (unit, po_box, intersection halves, …) are treated as
- * street-tier specificity when resolved.
- */
 const RESOLUTION_TIER: Partial<Record<ComponentTag, number>> = {
 	country: 0,
 	region: 1,
@@ -53,26 +23,24 @@ const RESOLUTION_TIER: Partial<Record<ComponentTag, number>> = {
 }
 
 /**
- * A resolved place lifted off the tree.
- *
- * The coordinate a caller would serve, plus its granularity tag.
+ * Holds the coordinate a caller would serve for a resolved tree, with the tag of the node that supplied it.
  */
 export interface ResolvedCoordinate {
 	tag: ComponentTag
 	lat: number
 	lon: number
+
 	/**
-	 * Canonical place URI (`wof:…`) when the resolver supplied one.
+	 * The canonical place URI, such as `wof:…`, when the resolver supplied one.
 	 */
 	placeID?: string
 }
 
 /**
- * Walk a resolved {@link AddressTree} and return the finest resolved place —
- * the node carrying a resolver-supplied coordinate at the deepest granularity tier.
+ * Returns the resolved coordinate at the finest granularity tier in the tree,
+ * preferring the earliest node on a tie.
  *
- * @returns `null` when nothing resolved (no node carries a `lat`/`lon`).
- * Ties break toward the first node in document order.
+ * @returns `null` when no node carries a `lat`/`lon`.
  */
 export function finestResolvedCoordinate(tree: AddressTree): ResolvedCoordinate | null {
 	let best: ResolvedCoordinate | null = null
@@ -101,39 +69,11 @@ export function finestResolvedCoordinate(tree: AddressTree): ResolvedCoordinate 
 }
 
 /**
- * Coarse per-country bounding boxes `[latMin, latMax, lonMin, lonMax]` for
- * the cross-country guard (guard B).
+ * Lists coarse per-country bounding boxes, as `[latMin, latMax, lonMin, lonMax]`,
+ * for artifacts whose manifest declares none.
  *
- * These are deliberately rough.
- * A guard needs "obviously the wrong country", not cartography — and they mirror the boxes the
- * 2026-07-15 coordinate-parity receipt harness measured with (`scratchpad/coord-parity.mjs`).
- * The US box spans Alaska → the mainland east coast.
- *
- * Continental FR only.
- * Etc.
- *
- * A country absent here simply never trips the guard (fail-open).
- *
- * Fallback role (survey candidate #2): these boxes are also baked into
- * the candidate gazetteer's `country_bbox` manifest table at build time
- * (`mailwoman/gazetteer-pipeline/coverage-manifest.ts` owns the measured record).
- * When a caller supplies artifact-declared boxes ({@link PlausibilityOpts.countryBBoxes}),
- * those replace this table wholesale.
- *
- * The artifact speaks for itself, and a country absent from the artifact's table
- * fails open exactly like an absent key here.
- *
- * This constant is the fallback for artifacts predating the manifest.
- * Grow the manifest record rather than this.
- *
- * A box bounds the country's outlying territory rather than its populated core: one trimmed
- * to the mainland refuses the Kermadecs for NZ, Minamitorishima for JP, Lampedusa for IT.
- * A country whose extent crosses the antimeridian cannot be expressed as one box,
- * so NZ spans the full longitude range and constrains latitude only.
- *
- * Every country whose locale ships weights has a box, checked in `plausibility.test.ts`
- * against `release.config.json`.
- * An absent key fails open, so a missing box and a passing guard are the same answer here.
+ * Each box covers outlying territory rather than the populated core,
+ * and a country without a box never trips the guard.
  */
 export const COUNTRY_BBOX: Readonly<Record<string, readonly [number, number, number, number]>> = {
 	US: [18, 72, -180, -66],
@@ -161,14 +101,9 @@ export const COUNTRY_BBOX: Readonly<Record<string, readonly [number, number, num
 }
 
 /**
- * True when the coordinate lies outside `countryCode`'s coarse bbox.
- *
- * Unknown country codes are fail-open (false).
- *
- * When `bboxes` (artifact-declared boxes, {@link GazetteerArtifactCoverage.countryBBoxes})
- * is supplied it replaces the built-in {@link COUNTRY_BBOX} table wholesale —
- * absence from the artifact's table fails open, same semantic as an absent constant key.
- * Omitted → the constant, byte-identical to the pre-manifest behavior.
+ * Reports whether a coordinate lies outside the country's bounding box,
+ * using `bboxes` in place of {@link COUNTRY_BBOX} when supplied.
+ * A country with no box returns `false`.
  */
 export function outsideExpectedCountry(
 	countryCode: string,
@@ -198,49 +133,46 @@ export function outsideExpectedCountry(
  */
 export interface PlausibilityVerdict {
 	implausible: boolean
+
 	/**
-	 * Set when `implausible` is true.
+	 * Why the resolution is implausible, set only when `implausible` is true.
 	 *
-	 * `country-centroid` = resolved no finer than a country (guard A); `outside-expected-country`
-	 * = the served coordinate lies outside the expected country's bbox (guard B).
+	 * `country-centroid` means nothing finer than a country resolved, and `outside-expected-country`
+	 * means the coordinate falls outside the expected country's bounding box.
 	 */
 	reason?: "country-centroid" | "outside-expected-country"
+
 	/**
-	 * The coordinate the verdict was drawn from, when anything resolved.
+	 * The coordinate the verdict was based on, present when anything resolved.
 	 */
 	coordinate?: ResolvedCoordinate
 }
 
+/**
+ * Configures {@linkcode isImplausibleResolution} with the country the address should
+ * fall in and optional artifact-declared bounding boxes.
+ */
 export interface PlausibilityOpts {
 	/**
-	 * ISO-2 country the resolution is expected to land in, when the caller knows it
-	 * (a locale hint, a parsed country, a fixture's gold country).
+	 * The ISO 3166-1 alpha-2 country the resolution should land in, such as a locale hint or parsed country.
 	 *
-	 * Enables guard B: a coordinate outside this country's coarse bbox is implausible.
-	 * The cross-country-jump class guard A structurally cannot catch
-	 * (`1210a IA 10 W IA` → a coordinate ~10,000 km from the US was country-centroid-free
-	 * and sailed through until guard B landed here, 2026-07-17. Previously the check lived only
-	 * in the receipt harness, so the shipped residual read 5/321 while the receipt said 3/321).
+	 * Setting it enables the bounding-box check, which catches cross-country jumps
+	 * that the country-centroid check cannot.
 	 */
 	expectedCountry?: string
+
 	/**
-	 * Artifact-declared guard-B boxes (the loaded gazetteer's `country_bbox` manifest,
-	 * via `resolver.artifactCoverage?.countryBBoxes`).
-	 *
-	 * When supplied they replace the built-in {@link COUNTRY_BBOX} table wholesale.
-	 * Omitted → the constant (byte-identical fallback for artifacts predating the manifest).
+	 * Artifact-declared country bounding boxes that replace the built-in
+	 * {@link COUNTRY_BBOX} table entirely when supplied.
 	 */
 	countryBBoxes?: ReadonlyMap<string, CountryBBoxFact>
 }
 
 /**
- * Decide whether a resolved tree's geocode is implausible for a structured address —
- * the cheap guard the v7 hybrid check runs after routing an input to the neural parser (#38).
+ * Decides whether a resolved tree's coordinate is implausible: a bare country centroid,
+ * or a point outside `expectedCountry`'s bounding box.
  *
- * Trips when the finest resolved place is a bare `country` centroid (guard A),
- * or — when the caller supplies `expectedCountry` — when the served coordinate
- * falls outside that country's coarse bbox (guard B).
- * An unresolved tree (nothing to serve) is plausible: there is no garbage to serve.
+ * An unresolved tree is plausible, because it serves no coordinate.
  */
 export function isImplausibleResolution(tree: AddressTree, opts: PlausibilityOpts = {}): PlausibilityVerdict {
 	const coordinate = finestResolvedCoordinate(tree)

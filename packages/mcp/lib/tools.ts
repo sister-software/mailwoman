@@ -2,46 +2,12 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- *
- *   The MCP tool table — pure, transport-free. `server.ts` adapts this to the `@modelcontextprotocol/sdk`'s
- *   registration API; `cli.ts` builds the real `MCPToolDeps` from the mailwoman library. Kept separate so this
- *   file (the actual product surface) is testable without any MCP plumbing — `tools.test.ts` calls
- *   `buildToolTable` directly with stub deps.
- *
- *   One tool per capability the exotic-POI/BDC arcs' other packages expose to a human/CLI caller — see
- *   `buildToolTable`'s return value for the authoritative, current list (this comment intentionally states no count,
- *   so it can't go stale as tools are added):
- *
- *   - `mailwoman_parse` — the runtime pipeline's parse (optionally POI-aware).
- *   - `mailwoman_geocode` — the street-level geocode cascade (`mailwoman/geocode-core`).
- *   - `mailwoman_poi_search` — POI-intent extraction + (when a poi.db is wired) execution.
- *   - `mailwoman_overpass_export` — OverpassQL export emitter (`mailwoman/poi-overpass`) — "we print the query.
- *     we never run it".
- *   - `mailwoman_layer_manifest` — read a spatial-layer database's provenance manifest + coverage summary
- *     (`@mailwoman/core/layers`).
- *   - `mailwoman_bdc_filing_landscape` — read a bdc.db layer's provider/technology/speed-bucket filing census over a
- *     set of census blocks or H3 cells (`@mailwoman/bdc`'s `filingLandscape`).
- *   - `mailwoman_plausibility_check` — score one claimed broadband-service assertion against BDC filing evidence and
- *     nearby telecom infrastructure (`@mailwoman/bdc`'s `plausibilityCheck`), returning a positive-evidence-only bundle
- *     with an always-present `coverage_confidence`. A missing/absent `bdc_database_path`/`poi_database_path` degrades
- *     to a typed abstain entry in the bundle, never a throw (decision 6).
- *   - `mailwoman_filer_lookup` — read the FCC filer identity crosswalk (`@mailwoman/filer`'s
- *     `filerLookup`) for one identifier (FRN, Form 499 ID, or BDC provider ID): every other identifier it shares an
- *     authoritative edge with, its current attributes, its authoritative entity cluster, and any inferred links —
- *     reported separately, never merged into the cluster. `as_of` is always present (defaults to today).
- *   - `mailwoman_filer_family` — read a corporate family's membership (`@mailwoman/filer/sdk`'s
- *     `familyRollup`) from a filer.db layer database, given a `family_id` or a `node_id`. Distinct from an entity
- *     cluster (same filer, different identifiers) — a corporate family spans several different filers under a
- *     holding/parent/subsidiary/management relationship. The handler passes `familyRollup`'s result through
- *     unchanged: no reshaping, filtering, or summarizing of who-owns-whom data.
  */
 
 import { z } from "zod"
 
 /**
- * The library surface every tool handler dispatches to.
- *
- * `cli.ts` builds the real implementation.
+ * Defines the library operations that MCP tool handlers call, which `cli.ts` implements.
  */
 export interface MCPToolDeps {
 	parse: (text: string, opts?: { poi?: boolean }) => Promise<unknown>
@@ -70,14 +36,10 @@ export interface MCPToolDeps {
 }
 
 /**
- * One MCP tool.
+ * Describes one MCP tool as registered with the server.
  *
- * `inputSchema` is a plain Zod object (not `any` — this repo's oxlint config errors on
- * `typescript/no-explicit-any`) — `z.ZodRawShape` is zod's own umbrella type for "any object
- * shape", so this stays generic over the concrete per-tool schemas without reaching for `any`.
- * `handler` re-parses `args` through the same schema (cheap. Zod objects are small here)
- * rather than trusting an unchecked cast, so the array of heterogeneous tools stays
- * type-safe internally despite the necessarily-uniform external shape.
+ * Each `handler` re-parses `args` through its own `inputSchema` instead of trusting a cast,
+ * because the table's uniform signature erases the per-tool types.
  */
 export interface MCPToolDef {
 	name: string
@@ -260,9 +222,8 @@ const FilerFamilyInputSchema = z.object({
 })
 
 /**
- * Build the tool table for a concrete `MCPToolDeps` implementation.
- *
- * Pure — no transport, no I/O of its own.
+ * Builds the MCP tool table over the given dependencies, without opening a transport
+ * or performing I/O itself.
  */
 export function buildToolTable(deps: MCPToolDeps): MCPToolDef[] {
 	return [

@@ -2,11 +2,6 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- *
- *   POI intent stage assembly (spec §3.1–3.2). This is the only module that joins the pieces:
- *   `@mailwoman/poi-taxonomy` (the lexicon), `@mailwoman/kind-classifier` (subject matching), and
- *   the pipeline interface from core. Wired by `createRuntimePipeline({ poiQueryKind: true })`;
- *   dormant otherwise.
  */
 
 import type {
@@ -35,10 +30,10 @@ interface POINameSearch {
 }
 
 /**
- * Adapt a POI FTS reader into positive, exact-name evidence for the kind classifier.
+ * Adapts a POI full-text reader into a phrase lookup that reports a POI name
+ * only on a normalized exact match.
  *
- * FTS supplies candidates.
- * The normalized equality check is the check, so a fuzzy/token-overlap result can never reroute an address.
+ * FTS only supplies candidates, so a fuzzy or token-overlap hit can never reroute an address.
  */
 export function createPOINameLookup(searcher: POINameSearch): POIPhraseLookup {
 	return (phrase) => {
@@ -57,25 +52,14 @@ export function createPOINameLookup(searcher: POINameSearch): POIPhraseLookup {
 }
 
 /**
- * The union phrase → subject lookup (part 2 of the brand-lexicon work): `@mailwoman/poi-taxonomy`
- * categories first (existing behavior, unchanged), then the taxonomy's own brand table
- * (`lookupPOIBrand`, exact-phrase, no locale filtering), then `@mailwoman/variant-aliases`'
- * brand-kind regional slang (locale-restricted, e.g. "mcdo" → fr-FR/fr-CA/fr-be)
- * chained through `resolveBrandName` to recover the QID.
+ * Looks a phrase up as a POI category (exact, then locale-normalized, then typo-tolerant),
+ * then as a brand, then as a locale-restricted brand alias such as "mcdo".
  *
- * Precedence on a phrase that matches both a category and a brand: the category wins.
- * Deterministic, and intentional.
- *
- * `@mailwoman/poi-taxonomy`'s categories are the curated set.
- * A brand phrase collision (none observed in the shipped table as of the 2026-07-20 build)
- * would be a data quality bug in the brand table rather than a case to special-case here.
+ * A phrase that matches both a category and a brand always resolves as the category.
  */
 export const poiTaxonomyLookup: POIPhraseLookup = (phrase, locale) => {
 	let categoryHits = lookupPOICategory(phrase, locale)
 
-	// The taxonomy stays exact-phrase.
-	// This adapter supplies a deliberately small English morphology layer for query heads.
-	// Positive evidence is still required: the singularized phrase must itself hit the taxonomy.
 	if (!categoryHits.length && (!locale || locale.toLowerCase().startsWith("en"))) {
 		const words = phrase.trim().split(/\s+/)
 		const tail = words.at(-1)
@@ -145,7 +129,6 @@ export const poiTaxonomyLookup: POIPhraseLookup = (phrase, locale) => {
 		}))
 	}
 
-	// Regional brand slang is locale-restricted — nothing to chain without a detected/asserted locale.
 	if (!locale) return []
 
 	const isBrandAlias = (hit: AliasLookupResult): hit is AliasLookupResult & { alias: BrandAlias } =>
@@ -166,20 +149,26 @@ export const poiTaxonomyLookup: POIPhraseLookup = (phrase, locale) => {
 	})
 }
 
+/**
+ * Supplies {@link createPOIIntentStage} with its phrase lookup, the parser for the anchor
+ * remainder, and an optional executor that turns an intent into an outcome.
+ */
 export interface POIIntentStageDeps {
 	lookup: POIPhraseLookup
+
 	/**
-	 * Parses the anchor remainder ("Springfield IL") through the address pipeline.
+	 * Parses the anchor remainder, such as "Springfield IL", through the address pipeline.
 	 *
-	 * Callers must hand in a pipeline without the poi stage (recursion guard) — `createRuntimePipeline` does.
+	 * The pipeline must not include the POI stage, or parsing recurses;
+	 * `createRuntimePipeline` supplies one without it.
 	 */
 	parseAnchor: (text: string, opts?: PipelineOpts) => Promise<PipelineResult>
+
 	/**
-	 * The executor (`poi-executor.ts`'s `createPOIExecutor`).
+	 * The executor, usually from `createPOIExecutor`, that turns a matched intent
+	 * into results or an abstention.
 	 *
-	 * When present, the stage runs the matched intent through it and returns whatever
-	 * it decides (results attached, or an abstain).
-	 * Absent, the stage yields the bare `{ type: "intent", intent }`, unexecuted.
+	 * Without it, the stage returns the intent unexecuted.
 	 */
 	execute?: (intent: POIIntent) => POIIntentOutcome
 }
@@ -208,9 +197,7 @@ export function createPOIIntentStage(
 							}
 						: {
 								kind: "category",
-								// Every category the subject reached, deduplicated and left in
-								// the lookup's own enumeration order.
-								// The executor searches their union, so a repeated id would probe the same leaves twice.
+
 								categoryIDs: [...new Set(matched.matches.map((hit) => hit.categoryID))],
 								matched: matched.match.matchedPhrase,
 							},
@@ -225,12 +212,6 @@ export function createPOIIntentStage(
 			intent.anchor = { text: matched.remainder, tree: anchor.tree }
 		}
 
-		// The place binding (#1999).
-		// A hit's `countryScope` is a claim about establishments, so it is judged
-		// against the country the anchor resolved to — which exists only now,
-		// after the anchor parse — and never against the caller's locale.
-		// Recorded on the intent whether or not it removed anything, so a receipt can say
-		// which country the set was bound to and what fell out.
 		if (intent.subject.kind === "category") {
 			const binding = bindCountryScope(matched.matches, resolvePOIAnchorCountry(intent))
 
@@ -253,19 +234,11 @@ export function createPOIIntentStage(
 }
 
 /**
- * What the anchor's country does to a reached set: which categories stay searchable and which fall out.
+ * Splits the categories a phrase reached into those whose hits hold in the anchor's country
+ * and those excluded, or returns null when no hit is country-scoped.
  *
- * A category stays when any hit reaching it holds where the anchor is.
- * An unscoped hit holds everywhere, a scoped one holds when its list names the anchor's country.
- *
- * A `null` anchor country admits no scoped hit: a claim the curator scoped to a
- * place cannot be checked without knowing the place, and searching as though it held
- * would answer with a category the data there may not carry.
- *
- * Order is the lookup's own enumeration, and it still states no preference.
- *
- * `null` when no hit carries a scope at all.
- * There was nothing to bind, and a receipt should not record a binding that decided nothing.
+ * A null anchor country admits no scoped hit, because a curator's scoped claim
+ * cannot be checked without knowing the place.
  */
 export function bindCountryScope(
 	matches: ReadonlyArray<POIPhraseMatch>,

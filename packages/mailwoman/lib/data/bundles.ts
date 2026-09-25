@@ -2,8 +2,6 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- *
- *   Registry of downloadable public-data artifacts, local paths, and rights metadata. Data commands handle I/O.
  */
 
 import { databaseRootPath } from "@mailwoman/core/data-root"
@@ -21,74 +19,89 @@ export const PUBLIC_BUCKET_BASE_URL = "https://public.mailwoman.ai/mailwoman/"
  */
 export interface BundleArtifact {
 	/**
-	 * Object key relative to {@link PUBLIC_BUCKET_BASE_URL}.
+	 * Gives the object key relative to {@link PUBLIC_BUCKET_BASE_URL}.
 	 */
 	remotePath: string
+
 	/**
-	 * Destination relative to the data root's `db/` directory.
-	 *
-	 * Resolve it with {@link bundleArtifactPath}.
-	 * Family-tagged artifacts may use a manifest-pinned versioned path.
+	 * Gives the destination relative to the data root's `db/` directory,
+	 * which {@link bundleArtifactPath} resolves. {@link resolveBundleArtifacts} rewrites
+	 * a family-tagged artifact's path to its manifest-pinned version.
 	 */
 	localPath: string
+
 	/**
-	 * Whether an MD5 sidecar is available.
+	 * Says whether the host publishes a `<remotePath>.md5` sidecar that `data pull` verifies against.
 	 */
 	md5Sidecar: boolean
+
 	/**
-	 * Approximate byte size for plans and status output; not an integrity check.
+	 * Records the surveyed size in bytes, which plans and progress output display.
+	 *
+	 * `data status` without `--check-remote` compares the local file size against
+	 * it exactly, so it must match the published file.
 	 */
 	approxBytes: number
+
 	/**
-	 * Release family for per-state US databases.
+	 * Names the release family of a per-state US database, which selects its
+	 * pinned version in the release manifest.
 	 */
 	family?: "address-points" | "interpolation"
+
 	/**
-	 * State or territory slug for this artifact.
+	 * Gives the lowercase US state or territory slug, such as `ca`, which `--only` can also match.
 	 */
 	stateSlug?: string
 }
 
 /**
- * Publishers, terms, conditions, and unresolved rights questions for a bundle.
- */
-/**
  * Optional schema for checking publisher provenance in artifact data.
  */
 export interface BundleSourceCensus {
 	/**
-	 * Table containing per-record or layer-level provenance.
+	 * Names the table whose publisher stamps are tallied, either the per-record
+	 * `address_point` or the one-row `layer_manifest`.
 	 */
 	table: "address_point" | "layer_manifest"
+
 	/**
-	 * Publisher column.
+	 * Names the column holding the publisher stamp, where a null value tallies as `unstamped`.
 	 */
 	column: "source"
+
 	/**
-	 * Whether the table has one row per record or one row per artifact.
+	 * Says whether a tally counts records (`per-row`) or the single manifest
+	 * row of each artifact (`manifest`).
 	 */
 	shape: "per-row" | "manifest"
+
 	/**
-	 * Artifact family when a bundle contains multiple families.
+	 * Selects the family to census when a bundle mixes families, so artifacts of
+	 * other families count as out of scope.
 	 */
 	family?: BundleArtifact["family"]
 }
 
+/**
+ * Describes a bundle's licensing: who published the data, the terms it is under,
+ * what users must do, and the rights questions still open.
+ */
 export interface BundleRights {
-	/**
-	 * Publisher names.
-	 */
 	publishers: readonly string[]
+
 	/**
-	 * Publisher terms, one entry per source where needed.
+	 * Lists the license terms, with one entry per source where the sources differ.
 	 */
 	terms: readonly string[]
+
 	/**
-	 * Operator obligations.
+	 * Lists the obligations the operator must meet, which print as `you must:` lines.
 	 */
 	conditions: readonly string[]
+
 	/**
-	 * Unresolved rights questions.
+	 * Lists the rights questions still open, which print as `unresolved:` lines.
 	 */
 	unresolved: readonly string[]
 }
@@ -100,20 +113,16 @@ export interface DataBundle {
 	name: string
 	description: string
 	artifacts: BundleArtifact[]
-	/**
-	 * Required rights metadata.
-	 */
+
 	rights: BundleRights
+
 	/**
-	 * Optional publisher-provenance census schema.
+	 * Says where to count publisher stamps in the artifacts, and is absent
+	 * when the artifacts carry no publisher column.
 	 */
 	sourceCensus?: BundleSourceCensus
 }
 
-/**
- * Approximate sizes of hosted state street databases.
- * `vi` has no interpolation artifact.
- */
 const US_STREET_DATABASE_SIZES: Record<string, { situs: number; interp?: number }> = {
 	ak: { situs: 78_602_240, interp: 26_771_456 },
 	al: { situs: 660_025_344, interp: 256_548_864 },
@@ -169,9 +178,6 @@ const US_STREET_DATABASE_SIZES: Record<string, { situs: number; interp?: number 
 	wy: { situs: 51_003_392, interp: 37_691_392 },
 }
 
-/**
- * Build US street-artifact entries from the size table.
- */
 function usStreetArtifacts(): BundleArtifact[] {
 	const artifacts: BundleArtifact[] = []
 
@@ -340,10 +346,8 @@ export function artifactURL(artifact: BundleArtifact, baseURL: string = PUBLIC_B
 }
 
 /**
- * Apply manifest-pinned versions to family-tagged artifact paths.
- *
- * Fixed-path artifacts and unpinned families are unchanged.
- * This function performs no filesystem checks.
+ * Rewrites family-tagged per-state artifacts to the local paths of the versions
+ * pinned in `manifest`, leaving other artifacts unchanged.
  */
 export function resolveBundleArtifacts(bundle: DataBundle, manifest: DataReleaseManifest | null): BundleArtifact[] {
 	return bundle.artifacts.map((artifact) => {
@@ -368,8 +372,8 @@ export function bundleArtifactPath(dataRoot: PathBuilderLike, artifact: BundleAr
 }
 
 /**
- * Filter artifacts by remote path, local path, or state slug.
- * An absent filter returns all artifacts.
+ * Filters artifacts to those whose remote or local path contains `only` or whose state
+ * slug equals it, case-insensitively, returning all artifacts when `only` is absent.
  */
 export function filterArtifacts(artifacts: readonly BundleArtifact[], only: string | undefined): BundleArtifact[] {
 	if (!only) return [...artifacts]
@@ -402,9 +406,11 @@ export interface RemoteArtifactState {
 }
 
 /**
- * Check whether an artifact needs downloading: prefer MD5 comparison, then size.
+ * Decides whether an artifact needs downloading by comparing MD5 when the
+ * remote has one, and otherwise size.
  *
- * If neither is available, assume it is current; callers should report that verification was unavailable.
+ * It returns `false` when neither can be compared, so callers should report
+ * that the artifact was not verified.
  */
 export function needsDownload(local: LocalArtifactState, remote: RemoteArtifactState): boolean {
 	if (!local.exists) return true

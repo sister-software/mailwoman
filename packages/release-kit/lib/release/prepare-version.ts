@@ -2,26 +2,6 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- *
- *   Phase-1 of the PR-based release flow: write the target version into the root `package.json` +
- *   every workspace listed in `.release-it.json` — and do nothing else. No git, no tags, no npm. The
- *   caller (`publish.yml`'s `prepare` job) commits the result onto a `release/v<version>` branch and
- *   opens the release PR. the tag + npm publish happen in the separate `publish` phase only after
- *   that PR has merged through the "Production Integrity" ruleset (PR + green `test` required on
- *   `main` — the ruleset that rejects release-it's direct push).
- *
- *   The workspace list is read from `.release-it.json` — the same list the per-workspace publish
- *   loop derives (#756: one source of truth, so this operation can't drift from what actually
- *   publishes). Semver parsing/increment is the `semver` package.
- *
- *   Output interface: the operation answers `resolvedVersion`, and the CLI adapter prints
- *   `RESOLVED_VERSION=<x.y.z>` — the workflow greps this line (no $GITHUB_OUTPUT / env access here).
- *
- *   Inputs:
- *
- *   - `version` (required) — `patch|minor|major` (increment from the root version) or an explicit
- *       target, which must be strictly greater than the current root version.
- *   - `checkOnly` — resolve + validate + report, but write nothing (the dry-run path).
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
@@ -34,6 +14,10 @@ import semver from "semver"
 import { bumpReleaseConfigVersion } from "#release/config-version"
 import { releaseWorkspaces } from "#release/stage"
 
+/**
+ * Options for {@link prepareReleaseVersion}; `version` is `patch`, `minor`, `major`
+ * or an explicit semver, and `checkOnly` validates without writing.
+ */
 export interface PrepareReleaseVersionOptions {
 	repoRoot: string
 	version: string
@@ -41,13 +25,17 @@ export interface PrepareReleaseVersionOptions {
 	log: (line: string) => void
 }
 
+/**
+ * The version before and after a {@link prepareReleaseVersion} run, and how many
+ * files it wrote (zero in check-only mode).
+ */
 export interface PrepareReleaseVersionReport {
 	currentVersion: string
 	resolvedVersion: string
+
 	/**
-	 * Versioned files written: root + every release workspace + `release.config.json`.
-	 *
-	 * Zero under `checkOnly`.
+	 * The number of versioned files written, counting the root, each release workspace
+	 * and `release.config.json`; zero under `checkOnly`.
 	 */
 	filesWritten: number
 }
@@ -56,6 +44,12 @@ function fail(message: string): never {
 	throw new Error(`prepare-release-version: ${message}`)
 }
 
+/**
+ * Bumps the root manifest, every release workspace manifest and `release.config.json` to one target version.
+ *
+ * @throws When the target is not greater than the current version, or when any of
+ * those files already disagree on the current version.
+ */
 export async function prepareReleaseVersion(
 	options: PrepareReleaseVersionOptions
 ): Promise<PrepareReleaseVersionReport> {
@@ -91,14 +85,10 @@ export async function prepareReleaseVersion(
 		targetVersion = explicit
 	}
 
-	// The same workspace list the publish loop uses (#756) — root + these is the full bump surface.
-	// The canonical reader (stage.ts) refuses an empty or malformed list.
 	const workspaces = await releaseWorkspaces(repoRoot)
 
 	const manifestPaths = [rootManifestPath, ...workspaces.map((ws) => resolvePath(repoRoot, ws, "package.json"))]
 
-	// Validate the whole set before writing anything.
-	// A half-bumped tree is worse than a failed run.
 	const parsed: Array<{ path: string; manifest: Record<string, unknown> }> = []
 
 	for (const path of manifestPaths) {
@@ -120,13 +110,6 @@ export async function prepareReleaseVersion(
 		}
 	}
 
-	// `release.config.json#version` carries the same unified release number
-	// (releasing.md, its own $comment) and lagged two releases running
-	// (#1024, then v9.2.0 shipping while it read 9.1.0) because nothing bumped it.
-	// It is validated with the sync set but written by a one-line textual replacement.
-	// The file is oxfmt-formatted, and the stringify write path used for the manifests
-	// would reformat it wholesale, moving the `weights` block a code-only release must
-	// never touch (release-config-bump.test.ts pins the exact-one-line interface).
 	const releaseConfigPath = resolvePath(repoRoot, "release.config.json")
 	const releaseConfigText = await readLocalTextFile(releaseConfigPath)
 	const releaseConfig = parseJSONStrict<{ version?: string }>(releaseConfigText)

@@ -2,28 +2,10 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- *
- *   Pure map geometry for the geocoder demo — the resolved-place outline math, lifted verbatim from the
- *   docs demo's `_map-helpers.ts`. Zero imports: no React, no `react-map-gl`, no `maplibre-gl`, no DOM.
- *   Every function takes plain numbers and returns plain GeoJSON, so the whole module runs (and is
- *   tested) under bare node — see `geometry.node.test.ts`.
- *
- *   why not `@mailwoman/spatial`: the only truly-spatial primitive here is the bbox half-diagonal (a
- *   great-circle-ish distance). `@mailwoman/spatial` exposes `haversineKm`, but only via its root barrel,
- *   which pulls `@mailwoman/core` + `h3-js` + `wkx` — a heavy, partly node-only graph — into what must
- *   stay a lightweight, browser-only map bundle (the `@mailwoman/react/map` subpath). The original
- *   `_map-helpers.ts` made the same call: a planar `kmPerDeg` approximation, local, no dependency. We
- *   preserve it so the ported behavior is byte-identical and the browser graph stays clean.
  */
 
-/**
- * Segments used to approximate a circle as a polygon ring.
- */
 const CIRCLE_SEGMENTS = 64
 
-/**
- * Mean km per degree of latitude (WGS84 average).
- */
 const KM_PER_DEG_LAT = 111.32
 
 /**
@@ -48,16 +30,10 @@ export interface PlaceBBox {
  */
 export type BoundsTuple = [[number, number], [number, number]]
 
-/**
- * Km per degree of longitude at a given latitude — the meridians converge toward the poles.
- */
 function kmPerDegLon(lat: number): number {
 	return KM_PER_DEG_LAT * Math.cos((lat * Math.PI) / 180)
 }
 
-/**
- * A closed 64-segment (65-point) GeoJSON ring of `radiusKM` around `[lon, lat]`, with latitude correction.
- */
 function circleRing(lat: number, lon: number, radiusKM: number): number[][] {
 	const perLon = kmPerDegLon(lat)
 	const ring: number[][] = []
@@ -72,11 +48,8 @@ function circleRing(lat: number, lon: number, radiusKM: number): number[][] {
 }
 
 /**
- * Approximate-extent circle for places without a crisp polygon: centered on the place point,
- * radius from the bbox half-diagonal (clamped 0.5–50 km). 64-point ring with latitude
- * correction — visually a circle anywhere outside the poles.
- *
- * With no bbox (anchor-centroid postcodes carry no extent) it defaults to a ~ZIP-sized 3 km radius.
+ * Returns a circle approximating the extent of a place that has no polygon, with a radius
+ * of half the bbox diagonal clamped to 0.5–50 km, or 3 km when there is no bbox.
  */
 export function approxCircleGeometry(lat: number, lon: number, bbox?: PlaceBBox): PlaceGeometry {
 	const halfDiagKm = bbox
@@ -89,12 +62,8 @@ export function approxCircleGeometry(lat: number, lon: number, bbox?: PlaceBBox)
 }
 
 /**
- * A circle of an exact radius in meters, for the street-level uncertainty (#377):
- * a 10 m situs floor or a calibrated interp radius.
- *
- * Unlike {@link approxCircleGeometry} (clamped to a ~ZIP-sized 0.5 km floor for admin fallbacks),
- * this honors small radii so an exact building reads as a tight dot
- * (an ~8 m floor keeps a 10 m situs circle visible).
+ * Returns a circle with the given radius in meters for street-level uncertainty, floored at 8 m
+ * so that a precise point stays visible, unlike {@link approxCircleGeometry}'s 0.5 km floor.
  */
 export function radiusCircleGeometry(lat: number, lon: number, radiusM: number): PlaceGeometry {
 	const radiusKM = Math.max(0.008, radiusM / 1000)
@@ -103,13 +72,10 @@ export function radiusCircleGeometry(lat: number, lon: number, radiusM: number):
 }
 
 /**
- * Bounding box of a Polygon / MultiPolygon, for `fitBounds`.
+ * Returns the bounding box of a Polygon or MultiPolygon for `fitBounds`.
  *
- * Walks the nested coordinate arrays, so it handles both a single-ring polygon
- * and a multi-part polygon uniformly.
- * Antimeridian-crossing geometry is not normalized (the naive min/max is returned) —
- * matching the ported behavior.
- * Callers that need a wrapped bbox must handle it upstream.
+ * Geometry that crosses the antimeridian gets a naive min/max box, so callers
+ * that need a wrapped box must handle it themselves.
  */
 export function geomBounds(geometry: PlaceGeometry): PlaceBBox {
 	let minLon = Infinity

@@ -2,18 +2,6 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- *
- *   Pure-Node matcher scale eval — the number behind "no Elasticsearch, no server."
- *
- *   The differentiator vs Pelias/Nominatim + a bolt-on ER stack is that the whole resolve (block →
- *   Fellegi-Sunter → cluster) runs in one Node process with no external service. This measures how
- *   far that goes: synthetic geo-clustered records (so geo-blocking produces realistic candidate
- *   pairs rather than one giant block or all singletons), resolved at increasing N, timing wall-clock +
- *   peak RSS. Geocoding is not in scope here (it's the per-record cost measured elsewhere) — this
- *   isolates the matcher's block/score/cluster cost as a function of N.
- *
- *   Run: `mailwoman registry matcher-scale [--sizes 10000,50000,100000,250000,500000] [--dup 3]
- *   [--em] [--out-md <md>]`
  */
 
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
@@ -26,36 +14,27 @@ import { resolveEntities, type SourceRecord } from "#index"
  */
 export interface MatcherScaleOptions {
 	/**
-	 * Record counts to sweep.
-	 *
-	 * Default `[10000, 50000, 100000, 250000, 500000]`.
+	 * Lists the record counts to measure, defaulting to 10,000, 50,000, 100,000, 250,000 and 500,000.
 	 */
 	sizes?: number[]
+
 	/**
-	 * Average records per distinct place.
-	 *
-	 * Default 3.
+	 * Sets the average number of records per distinct synthetic place, defaulting to 3.
 	 */
 	dup?: number
+
 	/**
-	 * Fit the FS m/u with EM per size (slower).
-	 *
-	 * Default false.
+	 * Fits the Fellegi-Sunter m and u probabilities with EM at each size,
+	 * which is slower, and defaults to `false`.
 	 */
 	em?: boolean
+
 	/**
-	 * Also write the markdown report here.
+	 * Gives a path where the Markdown report is also written.
 	 */
 	outMd?: string
 }
 
-/**
- * Generate N synthetic records clustered into ~N/DUP distinct "places".
- *
- * Each place gets a coordinate in the continental-US box, a canonical key, and an org name.
- * Its DUP duplicates carry a lightly-varied name and a jittered coordinate, so geo-cell +
- * canonical-key blocking groups them and scoring links them — the realistic shape of a dedup workload.
- */
 function generate(n: number, dup: number, seed = 1): SourceRecord[] {
 	const rnd = makeLcg(seed || 1)
 	const places = Math.max(1, Math.round(n / dup))
@@ -63,11 +42,10 @@ function generate(n: number, dup: number, seed = 1): SourceRecord[] {
 
 	for (let i = 0; i < n; i++) {
 		const place = i % places
-		const latitude = 25 + rnd() * 24 // ~25–49 N
-		const longitude = -124 + rnd() * 57 // ~-124 to -67 W
+		const latitude = 25 + rnd() * 24
+		const longitude = -124 + rnd() * 57
 		const variant = i < places ? "" : rnd() < 0.5 ? " llc" : " inc"
 
-		// duplicates drift the name slightly
 		records[i] = {
 			id: String(i),
 			organization: { canonical: `org ${place}${variant}`, raw: `Org ${place}` },
@@ -91,16 +69,17 @@ const mb = (bytes: number) => `${(bytes / 1024 / 1024).toFixed(0)} MB`
 const sec = (ms: number) => `${(ms / 1000).toFixed(2)} s`
 
 /**
- * Pure-Node matcher scale eval — see the module doc.
+ * Measures entity-resolution time, candidate pairs and memory on synthetic records
+ * of increasing size, all in one Node process.
  *
- * Emits the markdown report to stdout.
+ * The Markdown report is printed to stdout, returned, and also written to `outMd` when that option is set.
  */
 export async function matcherScale(
 	options: MatcherScaleOptions = {},
 	report?: (line: string) => void
 ): Promise<{ markdown: string }> {
 	const SIZES = options.sizes?.length ? options.sizes : [10_000, 50_000, 100_000, 250_000, 500_000]
-	const DUP = options.dup ?? 3 // avg records per distinct place
+	const DUP = options.dup ?? 3
 	const EM = options.em ?? false
 	const OUT_MD = options.outMd || ""
 
@@ -119,9 +98,6 @@ export async function matcherScale(
 		const records = generate(n, DUP)
 		const t0 = performance.now()
 
-		// learnedScorer:false — this measures the FS-baseline pipeline throughput baseline
-		// (the learned scorer is now default-on. Its per-pair tree eval is a separate cost
-		// rather than what this scale number tracks).
 		const { entities, candidatePairs } = resolveEntities(records, {
 			collapseSpatial: true,
 			trainEM: EM,
@@ -133,7 +109,6 @@ export async function matcherScale(
 		rows.push({ n, records: records.length, entities: entities.length, candidatePairs, wallMs, rssBytes })
 		report?.(`    N=${n}: ${sec(wallMs)}, ${candidatePairs} pairs → ${entities.length} entities, RSS ${mb(rssBytes)}`)
 
-		// Encourage reclamation between sizes (RSS is a shared-process high-water — see the report note).
 		if (globalThis.gc) {
 			globalThis.gc()
 		}

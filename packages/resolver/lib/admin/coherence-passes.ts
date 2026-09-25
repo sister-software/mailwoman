@@ -2,11 +2,6 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- *
- *   The three post-walk admin coherence passes (#263 / #822 / the region-country pass) — split from
- *   `resolve.ts` on the `bare-toponym-race.ts` precedent: the walk file holds the walk, this one
- *   holds the joint-consistency re-picks that run after it. Each pass's interface, triggers, and
- *   byte-stability guarantees are documented on the pass itself; `resolveTree` sequences them.
  */
 
 import { matchCountry, matchSubdivision } from "@mailwoman/codex/country"
@@ -16,16 +11,8 @@ import type { ResolvedPlace, ResolverBackend } from "@mailwoman/core/resolver"
 
 import { decorateNode, isResolvedWithCoord } from "#decorate-node"
 
-/**
- * The region-band placetypes a lineage names a region by — `region` and its macro widening,
- * the same set the lookup filter admits for a `region` request.
- */
 const REGION_LINEAGE_PLACETYPES: ReadonlySet<string> = new Set(PLACETYPE_FILTER_GROUPS["region"] ?? ["region"])
 
-/**
- * The numeric or string id behind a node's `placeID` (`wof:85679553` → `85679553`),
- * or undefined when the node resolved to no place.
- */
 function placeIDValue(node: AddressNode): string | undefined {
 	const match = /^[a-z]+:(.+)$/u.exec(node.placeID ?? "")
 
@@ -33,32 +20,11 @@ function placeIDValue(node: AddressNode): string | undefined {
 }
 
 /**
- * Refuse a pick admitted from outside its parent's scope whose own lineage names a
- * different region than the one the walk resolved above it.
+ * Un-resolves a parent-fallback pick whose stamped ancestors name a region other than
+ * the resolved region above it, marking it `parent_fallback_refused`.
  *
- * The walk scopes a child lookup to its resolved parent.
- * When that scoped probe misses, two widenings exist so an incomplete hierarchy
- * (a real place whose ancestor chain lacks its region) still resolves: the resolver's retry
- * without the parent, and the candidate backend's interior region-scope fallback (#1731),
- * which re-admits rows from outside the region and stamps them `regionScopeMiss`.
- *
- * Both also admit a namesake under another region: `臺南市北區` resolved 臺南市 (Tainan City),
- * found no 北區 under it — the candidate table carries no Han key for Tainan's —
- * and the widening answered Hsinchu's 北區, 214 km away, which the coherence report
- * then marked `region: contradicted` while the point stood.
- * Of the 289 held-out Taiwanese 鄉鎮市區, 21 resolved this way at 15.6–238 km
- * when the register was read as bare `縣市鄉鎮市區` lines.
- *
- * The two cases a widening conflates are told apart by the pick's stamped ancestors:
- * an incomplete chain names no region and is kept, the case the widenings exist for.
- * A chain that names a region other than the resolved parent is a different place and is un-resolved
- * here, so the admin ladder answers the parent's own point rather than a namesake elsewhere.
- *
- * Only widened picks are examined (`metadata.parent_fallback`, stamped by the walk for either mechanism),
- * and only when the parent region resolved to a place identity.
- * No-op without the ancestor sidecar, since a chain that cannot be read is not a contradiction.
- *
- * The classifier attribution stays on the node; `parent_fallback_refused` records what happened.
+ * A pick whose ancestor chain names no region is kept, because the fallback
+ * exists for places with incomplete hierarchies.
  */
 export function applyParentFallbackContradiction(roots: readonly AddressNode[]): void {
 	const visit = (node: AddressNode, regionAncestor: AddressNode | null): void => {
@@ -102,25 +68,11 @@ export function applyParentFallbackContradiction(roots: readonly AddressNode[]):
 }
 
 /**
- * Admin descendant-consistency (#263) — the joint-consistency resolve, scoped to the admin assignment.
+ * Re-picks a resolved region and its unresolved child locality as a pair, choosing
+ * the region candidate that actually contains a same-named locality.
  *
- * The greedy walk resolves a region on its own (name + population), so "ME" picks Messina
- * (IT) over Maine, then scopes "Portland" to Messina's descendants, finds nothing,
- * and the result falls back to the region centroid (Sicily).
- * The region's same-named runner-ups (Maine, Missouri, …) were already captured
- * as `alternatives`; this pass asks the question the greedy order skipped —
- * _which "ME" has a "Portland" under it?_ — and re-picks the (region, locality) pair
- * where a same-named locality descends from a same-named region candidate.
- *
- * Geography decides.
- * No country prior, no list.
- *
- * Fires only for a resolved region whose child locality fell through (the unresolved-locality signal),
- * so a well-resolved tree ("Springfield, IL" → Illinois, Springfield) is byte-identical.
- * Costs one unscoped locality lookup per triggering pair.
- *
- * Needs {@link ResolverBackend.ancestors}; no-op without it.
- * See `ResolveOpts.adminCoherence`.
+ * This recovers cases such as "Portland, ME" where the region was picked in isolation
+ * before the locality was known, and it leaves trees with a resolved locality untouched.
  */
 export async function applyAdminCoherence(roots: readonly AddressNode[], backend: ResolverBackend): Promise<void> {
 	const visit = async (node: AddressNode, regionAncestor: AddressNode | null): Promise<void> => {
@@ -145,34 +97,13 @@ export async function applyAdminCoherence(roots: readonly AddressNode[], backend
 	}
 }
 
-/**
- * Re-pick a (region, locality) pair so the locality descends from the region.
- *
- * `alternatives` on the node are the `ResolvedPlace` runner-ups `decorateNode` attached
- * (typed `unknown[]` in the decoder, which can't import resolver types. The cast is sound).
- * Picks the first same-named locality (already score-ordered) that descends from
- * a same-named region candidate, then swaps both nodes.
- *
- * Leaves both untouched when no consistent pair exists (a genuinely un-gazetteered locality — "Portland,
- * VT" with no Portland in Vermont — stays as the region centroid rather than a foreign namesake).
- */
 async function reconcileAdminPair(
 	regionNode: AddressNode,
 	localityNode: AddressNode,
 	backend: ResolverBackend
 ): Promise<void> {
-	// Exact region matches only: the alternatives for a 2-letter token are loose
-	// ("ME" also surfaces Missouri/Michigan/Mississippi as fuzzy M-state runner-ups).
-	// Restricting to exact name/alias matches (Maine/Messina/Medway for "ME") keeps the join honest.
-	// `exactMatch` is stamped by exactMatchTiering.
 	const regionCands = ((regionNode.alternatives as ResolvedPlace[] | undefined) ?? []).filter((r) => r.exactMatch)
 
-	// For each exact region candidate, ask the gazetteer directly: is there a same-named locality under it?
-	// The `parentID` scope is the descendant test (over the #832-repaired ancestors table),
-	// and it finds the instance regardless of its global population rank — "Springfield,
-	// ME" reaches the small Springfield in Maine that an unscoped top-N window would drop.
-	// First region with an exact-named descendant wins.
-	// The region candidates are score-ordered, so a tie breaks toward the more prominent place.
 	for (const region of regionCands) {
 		const scoped = await backend.findPlace({
 			text: localityNode.value,
@@ -204,7 +135,6 @@ async function reconcileAdminPair(
 		}
 	}
 
-	// #267 follow-up: the token may name a country whose namesake is a more-populous foreign region — "Tbilisi, Georgia" parses region("Georgia") → the US state, but Tbilisi descends from Georgia the country. When no region candidate holds the locality, try same-named country candidates: a foreign capital under its country out-votes the state namesake. Needs the country + the locality's ancestry in the gazetteer (the #267 admin fold). The re-picked region node then carries the country place. The locality coordinate wins.
 	const countryCands = (await backend.findPlace({ text: regionNode.value, placetype: "country", limit: 3 })).filter(
 		(c) => c.exactMatch
 	)
@@ -235,7 +165,6 @@ async function reconcileAdminPair(
 		}
 	}
 
-	// #1023: the admin gazetteer may carry no `country`-placetype node for the token and the same-named foreign locality may be orphaned (parent_id = -1). The 2026-07-07 rebuild flattened Georgia's admin hierarchy to localities-only, so the country-node lookup above finds nothing and the `parentID` descendant test can never reach Tbilisi. Fall back to matchCountry: normalize the token to an ISO-3166 alpha-2 and scope the locality by the gazetteer's `country` column (set even on an orphaned row). Same primitive reconcileExplicitCountry (#822) uses, so the region-parsed namesake path ("Tbilisi, Georgia") converges with the country-parsed one ("Vienna, Austria"). matchCountry returns null for a US state name/abbrev ("Illinois" / "ME" / "IL"), so a real US (region, locality) pair never reaches here. This stays inert on the domestic path.
 	const mc = matchCountry(regionNode.value)
 
 	if (mc) {
@@ -256,27 +185,12 @@ async function reconcileAdminPair(
 			)
 
 			localityNode.metadata = { ...localityNode.metadata, admin_coherence_repicked: true }
-			// The token named a foreign country the admin gazetteer has no node for, but the
-			// greedy walk had already decorated the region node with the US-state namesake.
-			// Revert that stale decoration so the node stops asserting the wrong-country coordinate +
-			// `resolver_country` (which would otherwise leak into the result's `countryCode`);
-			// the re-picked locality carries the winning coordinate, and the region node falls
-			// back to the parsed "Georgia" token, unresolved (the admin DB has nothing truer).
+
 			revertResolverDecoration(regionNode)
 		}
 	}
 }
 
-/**
- * Undo a resolver decoration on a node: restore the classifier attribution
- * {@link decorateNode} displaced into `metadata.classifier_source(_id)`
- * and drop the resolver-supplied coordinate/identity/alternatives.
- *
- * Used by the #1023 country fall-through when the region token turns out to name a
- * foreign country the admin gazetteer holds no node for.
- * The greedy walk had bound it to the US-state namesake, and that stale claim
- * must not survive the locality re-pick.
- */
 function revertResolverDecoration(node: AddressNode): void {
 	const meta = { ...node.metadata }
 	const priorSource = meta["classifier_source"]
@@ -306,34 +220,11 @@ function revertResolverDecoration(node: AddressNode): void {
 }
 
 /**
- * Explicit-country coherence (#822) — the joint-consistency resolve keyed on
- * the query's own explicit country token.
+ * Re-picks a locality to the same-named place inside the country the address names,
+ * when that country is the locality's nearest admin context.
  *
- * The greedy walk resolves a locality on name + population alone, so "Vienna, Austria"
- * picks the populous US namesake (Vienna WV) and ignores the "Austria" the address named.
- * This pass asks the question the greedy order skipped — _which "Vienna" is in the country
- * the address names?_ — and re-picks the locality to the same-named place under that country.
- *
- * The country code comes from the parser's own `country` emission via codex's ISO-3166 table
- * (a name→code normalization of a token the model already classified rather than a routing prior or safelist);
- * the gazetteer's `country` column does the geographic confirmation.
- * No pin, no list.
- * Generalizes to every country.
- *
- * Disjoint from {@link applyAdminCoherence} by the region guard: that pass owns the case
- * where a region scopes the locality.
- * This one fires only when the explicit country is the locality's nearest admin context
- * (no region between), and then regardless of the locality's resolution state.
- *
- * So it covers both the resolved-but-foreign locality (Sydney → the greedy AU pick was wrong)
- * and the unresolved locality the span-rescore tier would otherwise back-fill
- * with the US namesake (Vienna → Vienna WV).
- * Byte-stable when the locality already resolved in-country (the id guard) or the named country
- * holds no same-named locality (the fail-safe — what also guards "Turkey, TX": no country
- * token ⇒ no trigger. And an in-country lookup that finds nothing keeps the greedy result).
- *
- * Costs one country-scoped locality lookup per triggering pair.
- * See `ResolveOpts.adminCoherence`.
+ * It leaves the locality alone when it already resolved to that place or
+ * when the named country holds no same-named locality.
  */
 export async function applyExplicitCountryCoherence(
 	roots: readonly AddressNode[],
@@ -342,17 +233,8 @@ export async function applyExplicitCountryCoherence(
 	const visit = async (node: AddressNode, countryToken: AddressNode | null, regionAbove: boolean): Promise<void> => {
 		const countryHere = node.tag === "country" && node.value.trim().length ? node : countryToken
 
-		// A region suppresses the country re-pick only when it resolved: the suppression's rationale is
-		// that applyAdminCoherence + the region's `parentID` scope already disambiguate the locality
-		// ("Springfield, IL" must not re-pick to the most populous US Springfield), and an unresolved
-		// region disambiguates nothing — 'NIC-38' (an ISO-3166-2 code the gazetteer holds no node for)
-		// silently swallowed the explicit 'Nicaragua', and El Sauce resolved a US namesake.
-		// This pass runs post-walk, so resolution state is known.
 		const regionHere = regionAbove || ((node.tag === "region" || node.tag === "subregion") && isResolvedWithCoord(node))
 
-		// Fire only when the explicit country is the locality's nearest resolved admin context.
-		// Fires regardless of the locality's resolution state, so it PRE-empts the span-rescore tier
-		// (which would otherwise back-fill the unresolved locality with the US namesake).
 		if (countryHere && !regionHere && (node.tag === "locality" || node.tag === "dependent_locality")) {
 			await reconcileExplicitCountry(countryHere, node, backend)
 		}
@@ -367,21 +249,6 @@ export async function applyExplicitCountryCoherence(
 	}
 }
 
-/**
- * Re-pick a resolved locality to its same-named place under the explicitly-named country.
- *
- * `matchCountry` turns the country token into an ISO-3166 alpha-2
- * (returns null for an unrecognized token → no-op); the backend then surfaces the
- * in-country namesake the population-first unscoped window buried.
- * Leaves the node untouched when the country is unrecognized, the named country has
- * no exact same-named locality (the fail-safe), or the locality already resolved
- * to that place (the id guard → byte-stable).
- *
- * The country node itself stays as the parser emitted it.
- * The named well-covered countries carry no `country`-placetype row in the admin
- * gazetteer, so there is nothing to decorate it with.
- * The locality coordinate is what the re-pick fixes.
- */
 async function reconcileExplicitCountry(
 	countryNode: AddressNode,
 	localityNode: AddressNode,
@@ -402,9 +269,6 @@ async function reconcileExplicitCountry(
 
 	if (!lc) return
 
-	// Already the in-country place?
-	// (placeID encodes the WOF id.)
-	// Then the greedy walk was right — byte-stable.
 	if (localityNode.placeID === `wof:${lc.id}`) return
 
 	decorateNode(
@@ -417,63 +281,22 @@ async function reconcileExplicitCountry(
 }
 
 /**
- * Region-country coherence.
+ * Re-picks the region and locality into a foreign country when the region token is that
+ * country's subdivision and the default-country filter left it unresolved.
  *
- * The joint-consistency resolve keyed on a region token the locale-inferred
- * default-country filter could not resolve.
- *
- * Companion to {@link applyExplicitCountryCoherence} (which keys on an explicit country token)
- * and disjoint from {@link applyAdminCoherence} (which needs a region that did resolve):
- * this pass owns the mirror case, where the region qualifier is a foreign subdivision
- * the default-country hard filter (`spr.country = ?`) discarded.
- *
- * "Montreal QC" under a US locale: the walk applies `defaultCountry="US"` as a hard candidate filter to
- * every admin lookup, so the region "QC" (a Canadian subdivision) resolves to nothing and is dropped.
- * The one signal that would redirect the country to CA — and the locality "Montreal"
- * is force-matched to the populous US namesake (Montreal, WI).
- *
- * The greedy order threw away the evidence that could correct it.
- *
- * The fix expands the region token to its country via codex's ISO-3166-2 subdivision table
- * (`matchSubdivision`: "QC" → `{ name: "Quebec", country: "CA" }`, handling the FTS index's
- * missing "QC" alt-name code-side), then asks the two questions the greedy walk skipped: does that
- * subdivision genuinely resolve under its own country, and is there a same-named locality under it?
- * Only when both hold does it swap the region and locality to the in-country pair.
- *
- * Geography confirms.
- * The subdivision table is a soft name→country prior rather than a routing decision.
- *
- * Evidence-conditional to stay byte-stable on the domestic path.
- * It fires only when (a) a default country is in force, (b) the region node is unresolved
- * (the default-country filter came up empty — a US region resolves fine under `US`, so a
- * well-formed US query never trips this), (c) the token is a subdivision of a different country
- * than the default, and (d) both the foreign region and a same-named foreign locality resolve.
- *
- * "Springfield, IL" / "Portland, ME": the region resolves under `US`,
- * so check (b) fails and the tree is untouched.
- * Costs one region + one locality lookup per triggering pair.
- *
- * See `ResolveOpts.adminCoherence`.
+ * Both the foreign region and a same-named locality under that country must resolve,
+ * so domestic queries whose region resolves are never changed.
  */
 export async function applyRegionCountryCoherence(
 	roots: readonly AddressNode[],
 	backend: ResolverBackend,
 	defaultCountry: string | undefined
 ): Promise<void> {
-	// No default country → no hard country filter was applied, so no region qualifier was discarded by one.
-	// The bug this pass corrects is specific to the locale-inferred default country.
-	// Without it, there is nothing to rescue.
 	if (!defaultCountry) return
 
 	const visit = async (node: AddressNode, regionAncestor: AddressNode | null): Promise<void> => {
-		// Track the nearest region ancestor regardless of its resolution state (the trigger is an unresolved region).
 		const regionHere = node.tag === "region" || node.tag === "subregion" ? node : regionAncestor
 
-		// Fire for an unresolved region (the default-country filter came up empty) whose companion
-		// locality node exists — regardless of the locality's resolution state, so it covers both
-		// the resolved-but-foreign namesake (Montreal → the greedy US pick, Montreal WI) and the
-		// unresolved locality the span-rescore tier would otherwise back-fill with a US namesake.
-		// The in-country lookups below are the evidence check.
 		if (
 			regionHere &&
 			!isResolvedWithCoord(regionHere) &&
@@ -493,19 +316,6 @@ export async function applyRegionCountryCoherence(
 	}
 }
 
-/**
- * Re-pick an (unresolved region, resolved-but-foreign-namesake locality) pair to
- * the in-country instance the default-country filter hid.
- *
- * `matchSubdivision` turns the region token into `{ name, country }`
- * (null for anything that isn't a US state or CA province → no-op); the region's full name
- * then resolves it under that country (expanding the abbreviation the gazetteer FTS index lacks),
- * and the locality is re-scoped to the same country.
- * Leaves both nodes untouched unless every check holds.
- *
- * The subdivision names a different country than the default, the region resolves under it,
- * and a same-named locality exists there — so the domestic path stays byte-identical.
- */
 async function reconcileRegionCountry(
 	regionNode: AddressNode,
 	localityNode: AddressNode,
@@ -516,21 +326,12 @@ async function reconcileRegionCountry(
 
 	if (!sub) return
 
-	// The subdivision must belong to a different country than the locale default.
-	// A US-state token under a US default (sub.country === defaultCountry) never reaches the swap.
-	// The pass is inert on the domestic path.
 	if (sub.country.toUpperCase() === defaultCountry.toUpperCase()) return
 
-	// The locality already resolved in the subdivision's country?
-	// Then the greedy walk was already right — byte-stable.
 	const localityCountry = (localityNode.metadata?.["resolver_country"] as string | undefined)?.toUpperCase()
 
 	if (localityCountry === sub.country.toUpperCase()) return
 
-	// Confirm the subdivision genuinely resolves under its own country, by its full
-	// name (expands "QC" → "Quebec", the form the FTS index carries).
-	// No resolvable region → no evidence the token is a real foreign subdivision.
-	// Abstain.
 	const regionScoped = await backend.findPlace({
 		text: sub.name,
 		placetype: "region",
@@ -542,9 +343,6 @@ async function reconcileRegionCountry(
 
 	if (!rc) return
 
-	// Is there a same-named locality under that country?
-	// (the descendant test, by country column — the same primitive reconcileExplicitCountry uses.)
-	// No in-country namesake → keep the greedy result (fail-safe).
 	const scoped = await backend.findPlace({
 		text: localityNode.value,
 		placetype: "locality",
@@ -556,7 +354,6 @@ async function reconcileRegionCountry(
 
 	if (!lc) return
 
-	// Adopt the in-country pair: the region gets the foreign subdivision, the locality its same-named foreign instance.
 	decorateNode(
 		regionNode,
 		rc,

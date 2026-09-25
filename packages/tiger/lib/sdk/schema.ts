@@ -2,18 +2,20 @@
  * @copyright Sister Software.
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- *
- *   tiger SQLite schema, as a string so it loads in both `tsx` source mode and the compiled CLI
- *   (`tsc` doesn't copy `.sql` assets into `out/`). Geometry is GeoJSON text — not SpatiaLite. The
- *   prior SpatiaLite path (`load_extension` of a hardcoded macOS dylib + WKB `geom` columns) never
- *   loaded on Linux. plain text keeps the build dependency-free and `node:sqlite`-native (read it
- *   back with `JSON.parse`).
  */
 
 import { sql, type Kysely } from "kysely"
 
+/**
+ * Re-exports Kysely's `Generated` column marker alongside the table types,
+ * so schema consumers need not import Kysely for it.
+ */
 export { type Generated } from "kysely"
 
+/**
+ * The Kysely row type for `tabblock20`, one row per 2020 Census tabulation block
+ * with its geography codes, counts and geometry.
+ */
 export interface TIGERBlockTable {
 	GEOID: string
 	state_code: string
@@ -31,10 +33,9 @@ export interface TIGERBlockTable {
 }
 
 /**
- * Kysely row type for `pl_block` — Census 2020 P.L. 94-171 table P2 (Hispanic-or-Latino by race),
- * one row per tabulation block, keyed on the same 15-char `geoid` as {@link TIGERBlockTable}.
- *
- * The eight category columns partition `pop_total`.
+ * The Kysely row type for `pl_block`, one row per tabulation block from the 2020 P.L.
+ * 94-171 tables P2 and H1, keyed on the same `GEOID` as {@link TIGERBlockTable}.
+ * The eight race and ethnicity columns partition `pop_total`.
  */
 export interface PLBlockTable {
 	GEOID: string
@@ -47,19 +48,21 @@ export interface PLBlockTable {
 	nhpi: number
 	other: number
 	multi: number
+
 	/**
-	 * P.L. 94-171 table H1 — total housing units in the block.
+	 * Total housing units in the block, from P.L. 94-171 table H1.
 	 */
 	housing_units: number
+
 	/**
-	 * H1 occupied.
+	 * Occupied housing units from table H1.
 	 *
-	 * `occupied + vacant === housing_units` by construction.
-	 * The reader refuses a row where it is not.
+	 * `occupied + vacant` always equals `housing_units`, because the reader refuses any row where it does not.
 	 */
 	occupied: number
+
 	/**
-	 * H1 vacant.
+	 * Vacant housing units from table H1.
 	 */
 	vacant: number
 }
@@ -98,45 +101,16 @@ export interface TIGERDatabase {
 }
 
 /**
- * Marker so callers can opt into `Generated` columns later without importing kysely here.
+ * The build-tuning pragmas to execute before {@link initializeTIGERSchema},
+ * since `page_size` and `auto_vacuum` take effect only on an empty database.
  */
-
-/**
- * Build-tuning PRAGMAs, run raw before any table is created
- * (`page_size`/`auto_vacuum` only take effect on an empty DB, and pragma has no Kysely builder).
- *
- * The consumer execs this, then calls {@link initializeTIGERSchema} for the tables + indexes.
- */
-export const TIGER_PRAGMAS = /* sql */ `
+export const TIGER_PRAGMAS = `
 PRAGMA auto_vacuum = INCREMENTAL;
 PRAGMA page_size = 4096;
 PRAGMA cache_size = 10000;
 PRAGMA journal_mode = WAL;
 `
 
-/**
- * Create the tiger tables + indexes via the Kysely schema-builder (the house idiom).
- *
- * Idempotent (`if not exists`).
- * Pass a {@link DatabaseClient} (or any `Kysely`) over the tiger DB.
- * Run {@link TIGER_PRAGMAS} first.
- *
- * `us_state`/`tract` aren't in {@link TIGERDatabase} (created here but not queried via Kysely).
- * `createTable` takes any table name, so that's fine.
- *
- * The `text(N)` length hints in the prior raw DDL were documentary only
- * (SQLite uses text affinity regardless); the lengths live on the {@link TIGERBlockTable} interface instead.
- */
-/**
- * Refuse a `pl_block` built before the H1 columns existed.
- *
- * `createTable(...).ifNotExists()` leaves an older table as it is, and the next load would
- * fail on the first insert with a message about a column rather than about the cause.
- * The table is derived (the redistricting command reloads it state by state), so the action
- * is a rebuild: drop it and re-run `mailwoman tiger redistricting` for each state you hold.
- *
- * Databases are never patched in place.
- */
 async function assertPLBlockShape(db: Kysely<TIGERDatabase>): Promise<void> {
 	const columns = await sql<{ name: string }>`select name from pragma_table_info('pl_block')`.execute(db)
 	const names = new Set(columns.rows.map((row) => row.name))
@@ -150,6 +124,12 @@ async function assertPLBlockShape(db: Kysely<TIGERDatabase>): Promise<void> {
 	}
 }
 
+/**
+ * Creates the TIGER tables and indexes if they do not exist.
+ *
+ * It throws when an existing `pl_block` lacks the H1 housing columns,
+ * because that derived table must be dropped and reloaded.
+ */
 export async function initializeTIGERSchema(db: Kysely<TIGERDatabase>): Promise<void> {
 	await db.schema
 		.createTable("us_state")
@@ -188,9 +168,6 @@ export async function initializeTIGERSchema(db: Kysely<TIGERDatabase>): Promise<
 		.addColumn("geometry", "text", (c) => c.notNull())
 		.execute()
 
-	// No index on geoid alone — it's the primary KEY, which already carries a unique index.
-	// The prior schema's idx_tabblock20_geoid duplicated that for nothing
-	// (double insert cost, double footprint).
 	await db.schema.createIndex("idx_tabblock20_state_code").ifNotExists().on("tabblock20").column("state_code").execute()
 
 	await db.schema
@@ -225,7 +202,7 @@ export async function initializeTIGERSchema(db: Kysely<TIGERDatabase>): Promise<
 		.addColumn("housing_units", "integer", (c) => c.notNull())
 		.addColumn("occupied", "integer", (c) => c.notNull())
 		.addColumn("vacant", "integer", (c) => c.notNull())
-		// pl_block is small (no geometry) and always probed by its geoid PK (1:1 join to tabblock20), so cluster it without rowid — one B-tree probe per join, no separate rowid + PK-index pair.
+
 		.modifyEnd(sql`without rowid`)
 		.execute()
 

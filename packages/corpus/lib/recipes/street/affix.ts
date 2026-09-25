@@ -2,9 +2,6 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- *
- *   Generate US street examples with separate direction, name, and suffix labels.
- *   Vermont is held out for `--golden`; optional non-US rows add native-order balance.
  */
 
 import type { ComponentTag } from "@mailwoman/codex/component"
@@ -29,8 +26,6 @@ import { readCSVRecords, readOATuples, recipeSourceID, type CorpusRecipe } from 
 import type { CanonicalRow } from "#types"
 import { alignRow } from "#utils"
 
-// Hold out Vermont; use other listed states for training.
-
 interface USSource {
 	zip: PathBuilderLike
 	csv: string
@@ -53,7 +48,6 @@ const EVAL_SOURCE: USSource = {
 	region: "VT",
 }
 
-// Optional non-US balance sources, rendered in native order without affix labels.
 interface BalanceSource {
 	zip: PathBuilderLike
 	csv: string
@@ -97,18 +91,10 @@ const MULTILOCALE_EVAL_SOURCES: readonly BalanceSource[] = [
 	{ zip: dataRootPath("oa-cache", "de__berlin.zip"), csv: "de/berlin.csv", iso2: "DE", region: "", order: "eu" },
 ]
 
-/**
- * Supported directional abbreviations.
- */
 const DIRECTIONAL_ABBRS = Object.values(DirectionalAbbreviation)
-/**
- * Fraction of streets receiving an injected direction when none is present.
- */
+
 const INJECT_PREFIX_PROB = 0.3
 
-/**
- * US address tuple from a cached OA archive.
- */
 interface USTuple {
 	house_number: string
 	street: string
@@ -118,9 +104,6 @@ interface USTuple {
 	base_source_id: string
 }
 
-/**
- * Non-US balance tuple with postcode and native order.
- */
 interface BalanceTuple {
 	house_number: string
 	street: string
@@ -131,14 +114,8 @@ interface BalanceTuple {
 	order: string
 }
 
-/**
- * Canonical direction and abbreviation consumed by `renderDirectional`.
- */
 type Prefix = Pick<NonNullable<ReturnType<typeof matchLeadingDirectional>>, "canonical" | "abbreviation">
 
-/**
- * Read US address tuples from a cached OA archive.
- */
 async function readTuples(source: USSource): Promise<USTuple[]> {
 	return readOATuples(source, {
 		extra: (fields, _row, key) => ({
@@ -159,9 +136,6 @@ const title = (s: string): string =>
 const isSuffixOrDirectional = (word: string): boolean =>
 	matchTrailingSuffix(word) !== null || matchLeadingDirectional(word) !== null
 
-/**
- * Split a street into prefix, name, and recognized trailing suffix; return `null` if the split is invalid.
- */
 function parseStreet(
 	street: string,
 	opts: { allowNameProneTail?: boolean } = {}
@@ -170,7 +144,7 @@ function parseStreet(
 
 	if (words.length < 2) return null
 	let prefix: Prefix | null = null
-	// Keep at least a name and suffix after a leading direction.
+
 	const lead = matchLeadingDirectional(street)
 
 	if (lead && words.length > 2) {
@@ -178,7 +152,6 @@ function parseStreet(
 		words = words.slice(1)
 	}
 
-	// Require a trailing USPS suffix and a name.
 	const trail = matchTrailingSuffix(words.join(" "))
 
 	if (!trail || words.length < 2) return null
@@ -196,15 +169,21 @@ function parseStreet(
 	return { prefix, name, suffix }
 }
 
+/**
+ * Names the two street shapes the suffix-boundary recipe balances.
+ *
+ * In `terminal-only`, a name-prone suffix word precedes the real suffix and belongs to
+ * the name; in `terminal-contrast`, the name-prone word is itself the final suffix.
+ */
 export type SuffixBoundaryClass = "terminal-only" | "terminal-contrast"
 
-// Terminal-only surfaces need at least three words, e.g. `Blue Hill Rd`.
 const TERMINAL_ONLY_MIN_WORDS = 3
 
 /**
- * Classify street surfaces as terminal-only or terminal-contrast for #1569.
+ * Classifies a street as `terminal-only` or `terminal-contrast`, or returns `null` when it is neither.
  *
- * Prefer terminal-contrast when both final words are name-prone because only the final token is the suffix.
+ * A street whose final word is name-prone is `terminal-contrast` even when the word
+ * before it is also name-prone, because only the final token is the suffix.
  */
 export function classifySuffixBoundaryStreet(street: string): SuffixBoundaryClass | null {
 	const words = street.trim().split(/\s+/)
@@ -223,9 +202,6 @@ export function classifySuffixBoundaryStreet(street: string): SuffixBoundaryClas
 	return penultimate && NAME_PRONE_US_SUFFIXES.has(penultimate.canonical) ? "terminal-only" : null
 }
 
-/**
- * Render an affix-split street with randomized abbreviations and title casing.
- */
 function renderStreet(
 	random: () => number,
 	parsed: { prefix: Prefix | null; name: string; suffix: string }
@@ -234,7 +210,6 @@ function renderStreet(
 	const parts: string[] = []
 	const components: Partial<Record<ComponentTag, string>> = { street: name }
 
-	// Preserve the parsed direction or inject one to strengthen the prefix signal.
 	let prefix = parsed.prefix
 
 	if (!prefix && random() < INJECT_PREFIX_PROB) {
@@ -243,23 +218,20 @@ function renderStreet(
 	}
 
 	if (prefix) {
-		const rendered = renderDirectional(prefix, random() < 0.5 ? "abbr" : "full", "Aa") // Title-case output.
+		const rendered = renderDirectional(prefix, random() < 0.5 ? "abbr" : "full", "Aa")
 		components.street_prefix = rendered
 		parts.push(rendered)
 	}
 
 	parts.push(name)
 
-	// Randomize abbreviated or expanded suffix form.
 	const full = title(parsed.suffix)
 
-	// The canonical form is uppercase; match the title-cased name.
 	const abbr = matchCase(
 		US_STREET_SUFFIX_PREFERRED_ABBR[parsed.suffix as keyof typeof US_STREET_SUFFIX_PREFERRED_ABBR],
 		"Aa"
 	)
 
-	// Convert the abbreviation to title case.
 	const renderedSuffix = random() < 0.5 ? abbr : full
 	components.street_suffix = renderedSuffix
 	parts.push(renderedSuffix)
@@ -267,16 +239,8 @@ function renderStreet(
 	return { street: parts.join(" "), components }
 }
 
-/**
- * Example recipient and venue names used by the layout shell.
- */
 const VENUES = ["John Doe", "Jane Smith", "Acme Inc", "Wayne Enterprises", "Maria Garcia", "Riverside Clinic"]
 
-/**
- * Real facility names for the suffix-boundary venue shell.
- *
- * Read HRSA public-domain site names verbatim, excluding commas because they delimit address fields.
- */
 const VENUE_POOL_CSV = dataRootPath(
 	"corpus",
 	"sources",
@@ -284,7 +248,6 @@ const VENUE_POOL_CSV = dataRootPath(
 	"Health_Center_Service_Delivery_and_LookAlike_Sites.csv"
 )
 
-// Facility-name length window: shorter reads as an initialism, longer as a sentence.
 const VENUE_NAME_MIN_LENGTH = 3
 const VENUE_NAME_MAX_LENGTH = 60
 
@@ -293,7 +256,6 @@ async function readVenuePool(csvPath: PathBuilderLike): Promise<string[]> {
 	const pool: string[] = []
 
 	for await (const record of readCSVRecords(csvPath)) {
-		// The CSV reader normalizes either source header spelling to `site_name`.
 		const name = (record.site_name ?? "").trim().replaceAll(/\s+/gu, " ")
 
 		if (
@@ -316,9 +278,6 @@ async function readVenuePool(csvPath: PathBuilderLike): Promise<string[]> {
 
 const tail = (loc: string, reg: string, pc: string): string => (pc ? `${loc}, ${reg} ${pc}` : `${loc}, ${reg}`)
 
-/**
- * Layout proportions and venue choices for {@link renderRow}.
- */
 interface RenderRowOpts {
 	venues?: readonly string[]
 	cutoffs?: readonly [number, number, number]
@@ -365,9 +324,6 @@ export function renderRow(
 	}
 }
 
-/**
- * Read up to `limit` postcode-bearing tuples from a non-US source.
- */
 async function readBalanceTuples(source: BalanceSource, limit: number): Promise<BalanceTuple[]> {
 	return readOATuples(source, {
 		limit,
@@ -381,20 +337,13 @@ async function readBalanceTuples(source: BalanceSource, limit: number): Promise<
 	})
 }
 
-/**
- * Render a non-US balance row in native order without affix labels or a country token.
- */
 function renderBalanceRow(t: BalanceTuple): { raw: string; components: Partial<Record<ComponentTag, string>> } {
 	const { house_number: hn, street, locality: loc, postcode: pc, order } = t
-	// Omit region because it is not rendered in the raw address.
+
 	const components: Partial<Record<ComponentTag, string>> = { house_number: hn, street, locality: loc, postcode: pc }
 
-	const raw =
-		order === "fr"
-			? `${hn} ${street}, ${pc} ${loc}` // French uses number-street, postcode-city order.
-			: `${street} ${hn}, ${pc} ${loc}`
+	const raw = order === "fr" ? `${hn} ${street}, ${pc} ${loc}` : `${street} ${hn}, ${pc} ${loc}`
 
-	// Germany, Italy, and the Netherlands use street-number, postcode-city order.
 	return { raw, components }
 }
 
@@ -412,7 +361,6 @@ export const streetAffixRecipe: CorpusRecipe = {
 		},
 	],
 	async run(opts, write) {
-		// Preserve the previous recipe's seeded output.
 		const random = makeMulberry32(opts.seed)
 		const count = opts.count ?? 50_000
 		const source = opts.sourceName ?? "synth-affix"
@@ -456,7 +404,6 @@ export const streetAffixRecipe: CorpusRecipe = {
 			const { street, components: streetComponents } = renderStreet(random, parsed)
 			const { fmt, raw, components } = renderRow(random, base, street, streetComponents)
 
-			// Each affix label must appear verbatim in the raw address for alignment.
 			const surfaces = [streetComponents.street_prefix, streetComponents.street, streetComponents.street_suffix].filter(
 				(s): s is string => Boolean(s)
 			)
@@ -510,14 +457,13 @@ export const streetAffixRecipe: CorpusRecipe = {
 			emitted++
 		}
 
-		// Append non-US native-order postcode rows after US affix rows, preserving the US `--count` and source weight.
 		let balanceEmitted = 0
 		let balanceSkipped = 0
 		const balanceISO: Record<string, number> = {}
 
 		if (multilocaleCount > 0) {
 			const mlSources = opts.golden ? MULTILOCALE_EVAL_SOURCES : MULTILOCALE_SOURCES
-			const perSource = Math.ceil((multilocaleCount * 3) / mlSources.length) // Read extra tuples to meet the target.
+			const perSource = Math.ceil((multilocaleCount * 3) / mlSources.length)
 			const mlPool: BalanceTuple[] = []
 
 			for (const s of mlSources) {
@@ -538,7 +484,6 @@ export const streetAffixRecipe: CorpusRecipe = {
 				const t = mlPool[Math.floor(random() * M)]!
 				const { raw, components } = renderBalanceRow(t)
 
-				// Require each labeled component to appear in the raw address.
 				if (![components.street, components.locality, components.postcode].every((s) => !!s && raw.includes(s))) {
 					balanceSkipped++
 
@@ -594,16 +539,15 @@ export const streetAffixRecipe: CorpusRecipe = {
 	},
 }
 
-// Minimum venue variety for the shell to avoid template-like rows.
 const VENUE_POOL_MIN_SIZE = 500
-// Target share for terminal-only rows while both classes remain open.
+
 const TERMINAL_ONLY_SHARE = 0.8
 
 /**
- * #1569 recipe using non-Vermont OA streets and an 80/20 terminal-only/contrast mix.
- * Uses real HRSA venue names; repetition is capped at four passes and excluded from augmentation.
+ * Generates US rows that teach where a street name ends and its suffix begins,
+ * mixing about 80% `terminal-only` and 20% `terminal-contrast` streets.
  *
- * Do not retrain until affix relabeling is idempotent for decomposed streets.
+ * It trains on non-Vermont OpenAddresses streets and reserves Vermont for the golden set.
  */
 export const suffixBoundaryRecipe: CorpusRecipe = {
 	name: "suffix-boundary",
@@ -615,7 +559,6 @@ export const suffixBoundaryRecipe: CorpusRecipe = {
 		const source = opts.sourceName ?? "synth-suffix-boundary"
 		const sources = opts.golden ? [EVAL_SOURCE] : TRAIN_SOURCES
 
-		// Require a sufficiently large real-facility venue pool.
 		const venuePool = await readVenuePool(VENUE_POOL_CSV)
 
 		if (venuePool.length < VENUE_POOL_MIN_SIZE) {
@@ -727,7 +670,6 @@ export const suffixBoundaryRecipe: CorpusRecipe = {
 
 			if (!emitOne(rowClass, base, parsed, `suffix-boundary:${rowClass}`)) continue
 
-			// Add a contrast row from the same street stem so the model must rely on the terminal suffix, not name identity.
 			if (
 				rowClass === "terminal-only" &&
 				classCounts["terminal-contrast"] < classTargets["terminal-contrast"] &&

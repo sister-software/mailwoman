@@ -2,21 +2,6 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- *
- *   SQLite-backed postcode lookup for the postcode anchor (#240). A thin exact-match resolver over
- *   one or more `postalcode-*.db` extracts (the `spr` schema built by `build-unified-wof --placetypes
- *   postalcode`, then centroid-backfilled by `scripts/backfill-postcode-centroids.ts`).
- *
- *   This is the production implementation of the `PostcodeResolver` interface consumed by
- *   `@mailwoman/neural`'s `extractPostcodeAnchors`. It is deliberately dumb: an indexed exact-match
- *   on the postcode string across every extract, unioned. No FTS, no ranking, no proximity — the
- *   anchor only needs "does this string exist as a postcode, in which countries, near where". A
- *   future wasm build swaps this for an FST-backed resolver behind the same `lookup()` interface.
- *
- *   Why multiple extracts instead of the multi-extract `WOFSQLitePlaceLookup`: that resolver routes a
- *   query to one extract by placetype, but every postcode extract shares `placetype='postalcode'`, so a
- *   single query could only ever hit one country's extract. The anchor needs the union across
- *   countries to build its country posterior, so it queries each extract directly.
  */
 
 import { DatabaseClient } from "@mailwoman/sqlite/client"
@@ -25,9 +10,8 @@ import type { PathBuilderLike } from "path-ts"
 import type { WOFDatabase } from "#schema"
 
 /**
- * A gazetteer hit.
- *
- * `lat`/`lon` of 0 means the postcode is known but has no centroid (no admin parent).
+ * One postcode row from the WOF gazetteer, where a `lat`/`lon` of 0 means the
+ * postcode is known but has no centroid.
  */
 export interface PostcodePlace {
 	country: string
@@ -38,12 +22,15 @@ export interface PostcodePlace {
 const LOOKUP_SQL =
 	"SELECT country, latitude AS lat, longitude AS lon FROM spr WHERE name = ? AND placetype = 'postalcode' AND is_current != 0"
 
+/**
+ * Looks up current WOF `postalcode` places by exact name across one or more read-only gazetteer databases.
+ */
 export class WOFPostcodeLookup {
 	readonly #dbs: DatabaseClient<WOFDatabase>[]
 	readonly #stmts: ReturnType<DatabaseClient["prepare"]>[]
 
 	/**
-	 * Open each extract read-only and prepare its exact-match statement.
+	 * Opens each database read-only and prepares its exact-match statement.
 	 */
 	constructor(dbPaths: readonly PathBuilderLike[]) {
 		this.#dbs = dbPaths.map((p) => new DatabaseClient<WOFDatabase>(p, { readOnly: true }))
@@ -51,7 +38,7 @@ export class WOFPostcodeLookup {
 	}
 
 	/**
-	 * Exact-match the postcode across every extract and union the rows.
+	 * Returns the union of exact-name matches for `postcode` across every database, without deduplication.
 	 */
 	lookup(postcode: string): PostcodePlace[] {
 		const out: PostcodePlace[] = []

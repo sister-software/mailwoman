@@ -2,28 +2,6 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file `scope.config.json` and `scope.mdx`'s tier table name the same countries, and every shipping locale is placed.
- *
- *   The defect this was written for is a hand-written list drifting from the table it claims to encode.
- *   `D_RULE_COUNTRIES` read `["FR", "GB", "DE"]` under a docstring saying iron rule 6 guarded those locales
- *   unconditionally, while the tier table put US and FR in tier 1 — so a candidate that regressed US rows raised no
- *   D-rule reason at all. Nothing failed, because a list that does not name a country answers nothing for it and every
- *   consumer reads that as an absence rather than an error. The list is now derived from the register, and this check
- *   is what keeps the register and the declaration from becoming two lists again.
- *
- *   IT checks membership rather than evidence. The table's third column is prose with citations — coordinate panels, n, issue
- *   links — and generating that from JSON would move paragraphs into a config to satisfy a parser. The doc owns the
- *   evidence. the register owns which countries each tier holds. this refuses a disagreement in either direction.
- *
- *   the second invariant is the one the first cannot SEE. Two registers can agree with each other and both omit a
- *   country that ships. GB, IN and NZ are in that state today: three published weights packages, no tier between them,
- *   because the table was declared on 2026-07-02 and the overlays shipped after it. So a shipping locale must be
- *   tiered or named in `untieredShippingLocales` with a reason someone can read. The same posture
- *   `SANCTIONED_RELEASE_ABSENCES` takes toward a workspace held out of the release list, and for the same reason: a
- *   flag is checkable, a silence is not.
- *
- *   The register is read rather than imported: it sits at the repository root, and a package that reached it at
- *   runtime would break the moment it ran from a published tarball.
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
@@ -37,28 +15,14 @@ import { type Diagnostic, DiagnosticSeverity, type RepoCheck } from "#check"
 const DECLARATION = "docs/engineering/SCOPE.mdx"
 const REGISTER = "scope.config.json"
 
-/**
- * A tier row opens with the tier number in bold, `| **1 — first-class, floor-enforced** | US, FR | …`.
- *
- * The em dash and the label are the doc's prose and are deliberately not matched:
- * a row renamed is not a row moved.
- */
 const TIER_ROW = /^\|\s*\*\*(\d)\s/
 
-/**
- * A country code as the table spells one.
- *
- * The locales cell is a comma-separated list and nothing else, so anything that is not two
- * uppercase letters in that cell is a parse failure rather than a country to skip quietly.
- */
 const COUNTRY_CODE = /^[A-Z]{2}$/
 
 /**
- * Tier number → the countries `scope.mdx` places in it.
+ * Parses the tier table in `SCOPE.mdx` into a map from tier number to the country codes listed in that tier.
  *
- * Membership is multi-valued by design — CZ and PL hold a tier-2 and a tier-4 entry at once,
- * because tiers 4 and 5 name a delivery mechanism rather than a stronger claim —
- * so this answers per tier and never inverts to country → tier.
+ * A country can appear in more than one tier, so the map must not be inverted to look up a country's tier.
  */
 export function declaredTiers(markdown: string): Map<string, string[]> {
 	const tiers = new Map<string, string[]>()
@@ -90,8 +54,8 @@ function difference(left: readonly string[], right: readonly string[]): string[]
 }
 
 /**
- * The `locale-scope` check: one error per country the declaration and the register disagree about,
- * one per shipping locale placed in neither, and one per stale entry in either list of stated reasons.
+ * Checks that `scope.config.json` matches the `SCOPE.mdx` tier table, that every shipping locale
+ * is tiered or has a stated reason, and that the reason lists hold no empty or stale entries.
  */
 export const localeScopeCheck: RepoCheck = {
 	id: "locale-scope",

@@ -2,9 +2,6 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- *
- *   Shared lifecycle helpers for sealed gazetteer builds: staging, publishing, FTS,
- *   finalization, and acquisition provenance. Keep staging pragmas byte-identical.
  */
 
 import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
@@ -31,11 +28,10 @@ export function applyStagingPragmas<DB>(db: DatabaseClient<DB>): void {
 }
 
 /**
- * Remove a staging database and its WAL/SHM sidecars.
+ * Removes a staging database and its WAL and SHM sidecars.
  *
- * Run before a build (a stale partial staging file would be reopened as a half-ingested database)
- * and after the `vacuum into` publish (the staging tree is scratch, and the sidecars
- * would otherwise outlive the file they belong to).
+ * Call it before a build as well as after publishing, because a stale staging
+ * file would be reopened as a half-ingested database.
  */
 export async function removeStagingArtifacts(ingestPath: string): Promise<void> {
 	for (const stale of [ingestPath, `${ingestPath}-wal`, `${ingestPath}-shm`]) {
@@ -46,10 +42,9 @@ export async function removeStagingArtifacts(ingestPath: string): Promise<void> 
 }
 
 /**
- * Freeze the staging database: checkpoint the WAL away, drop back to a sidecar-free
- * journal mode, and give the query planner its statistics.
+ * Checkpoints the staging database's WAL, switches it to a sidecar-free journal mode, and runs `ANALYZE`.
  *
- * Run after the last write and before {@link vacuumDatabaseInto}.
+ * Call it after the last write and before {@link vacuumDatabaseInto}.
  */
 export function freezeStagingDatabase<DB>(db: DatabaseClient<DB>): void {
 	db.exec("PRAGMA wal_checkpoint(TRUNCATE)")
@@ -58,9 +53,8 @@ export function freezeStagingDatabase<DB>(db: DatabaseClient<DB>): void {
 }
 
 /**
- * Publish the frozen staging database to `out` via `vacuum into`, replacing any
- * previous artifact at that path first.
- * `vacuum into` refuses to overwrite.
+ * Publishes the staging database to `out` with `VACUUM INTO`, first removing any
+ * existing file there because `VACUUM INTO` refuses to overwrite.
  */
 export async function vacuumDatabaseInto<DB>(db: DatabaseClient<DB>, out: string): Promise<void> {
 	if (await pathExists(out)) {
@@ -71,8 +65,7 @@ export async function vacuumDatabaseInto<DB>(db: DatabaseClient<DB>, out: string
 }
 
 /**
- * The FTS pass over a freshly published (not yet sealed) database: open it,
- * build `place_search` + `place_bbox`, close it.
+ * Opens a published database, builds its full-text search and bounding-box indexes, and closes it.
  */
 export async function buildDatabaseFTS<DB>(
 	out: string,
@@ -85,10 +78,9 @@ export async function buildDatabaseFTS<DB>(
 }
 
 /**
- * The close ceremony for a builder that writes its output database IN place (no staging + `vacuum into`):
- * drop to a sidecar-free journal mode, analyze, check integrity, compact.
- *
- * The caller seals afterwards.
+ * Finishes a database built in place rather than staged, by switching to a sidecar-free
+ * journal mode, analyzing, checking integrity, and vacuuming.
+ * The caller seals the database afterwards.
  */
 export function finalizeSealedBuild<DB>(db: DatabaseClient<DB>, path: string): void {
 	db.exec("PRAGMA journal_mode = DELETE")
@@ -99,18 +91,15 @@ export function finalizeSealedBuild<DB>(db: DatabaseClient<DB>, path: string): v
 }
 
 /**
- * What a database records when a rebuild cannot recover a provenance field.
+ * Marks a provenance field that a rebuild could not recover.
  *
- * A sentinel string rather than an empty one: a consumer reading `source_release: ""`
- * cannot tell "no release label exists" from "nobody looked", and the meaning-of-zero
- * rule says those are different claims.
+ * It is a sentinel rather than an empty string so that a consumer can tell "unknown" from "no value exists".
  */
 export const UNKNOWN_PROVENANCE = "unknown (offline rebuild, no acquisition.json)"
 
 /**
- * Recover the `acquisition.json` sidecar an acquisition step wrote beside its download.
- *
- * Absent is not fatal — the caller substitutes {@link UNKNOWN_PROVENANCE} and says so in the database.
+ * Reads the `acquisition.json` sidecar that an acquisition step wrote beside its download,
+ * returning `null` when it is missing or unparseable.
  */
 export async function readAcquisitionSidecar<Sidecar>(sourceDir: PathBuilderLike): Promise<Sidecar | null> {
 	const raw = await readLocalTextFile(PathBuilder.from(sourceDir)("acquisition.json")).catch(() => null)

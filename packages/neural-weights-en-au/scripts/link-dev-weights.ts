@@ -3,24 +3,6 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- *
- *   Materialize the en-au overlay's dev artifacts. The steps live in
- *   `@mailwoman/resolver-wof-sqlite/weights-overlay-linker`; this file is the manifest.
- *
- *   #1179 overlay form: en-au declares `mailwoman.baseWeights: "@mailwoman/neural-weights-en-us"`, so
- *   `resolveWeights` falls through to the en-us package for `model.onnx` / `tokenizer.model`. This overlay links no
- *   model or tokenizer — it removes any leftover local pair so the base fallback engages (a stale local file would
- *   shadow the base fallback and silently serve outdated bytes. the fr-fr manifest's header records the incident).
- *
- *   What en-au owns locally: `country-surface-lexicon-v1.json`, a checked-in repo file the country channel loads to
- *   constrain the resolver, plus the evidence lexicons its card names (the same pair the `files` array ships). en-au
- *   is initial: no postcode-au.bin (no WOF AU postcode extract exists), no pair-index-au.bin (PIX1 not yet calibrated
- *   for AU), no anchor-lexicon (the anchor channel is off). The overlay exists so `--locale en-AU` resolves and the
- *   resolver's country scope constrains the candidate lookup — that alone fixes the WA→Washington-State homonym class
- *   the first-pass benchmark diagnosed.
- *
- *   freshness guard: none needed — no derived artifacts are built, and a checked-in lexicon symlinked in place cannot
- *   go stale.
  */
 
 import { committedSoftFeedLinks, materializeDevOverlay } from "@mailwoman/resolver-wof-sqlite/weights-overlay-linker"

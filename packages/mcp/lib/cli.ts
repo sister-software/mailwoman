@@ -3,49 +3,6 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- *
- *   `mailwoman-mcp` — boot the MCP server over stdio. Wires the real `MCPToolDeps` (`tools.ts`) from the mailwoman
- *   library: `createRuntimePipeline` for parse/POI-intent, `geocode-core`'s `geocodeAddress` for geocode,
- *   `mailwoman/poi-overpass`'s `emitOverpassQL` for the export tool, `@mailwoman/core/layers` for the layer
- *   manifest tool, and `@mailwoman/bdc`'s `filingLandscape`/`plausibilityCheck` for the two BDC tools.
- *
- *   Deps are lazy: nothing here loads the neural weights or opens a gazetteer db at startup — an MCP client
- *   connects, lists tools, and may never call one (or may call only the layer-database tools, none of which touch the
- *   classifier). The shared classifier+resolver are built once, on the first call to any tool that needs them, and
- *   cached for the process lifetime. `mailwoman_overpass_export` does need them despite never executing a query — it
- *   parses the input to find the subject and anchor before it can emit OverpassQL.
- *
- *   **Laziness moves the first failure into a tool call, so `loadCore` owns the friendly-failure messages** that
- *   `photon`/`nominatim`/`mailwoman serve` print at boot. Both are thrown rather than printed: `server.ts` catches a handler
- *   throw and returns it as an `isError` tool result, so a thrown message reaches the agent where a `console.error` +
- *   `process.exit(1)` would just kill the transport mid-conversation. See `loadCore` for the two.
- *
- *   **Graceful layer-absent guards (decision 6).** Both BDC-backed tools treat a missing/unreadable
- *   database file as absence, never a raw `node:sqlite` throw ("unable to open database file"): `bdcFilingLandscape`
- *   requires bdc.db unconditionally, so a missing file becomes one friendly thrown `Error` naming the layer;
- *   `plausibilityCheck`'s `bdcDB`/`poi` deps are each optional, so a missing/absent `bdc_database_path`/
- *   `poi_database_path` degrades to the same typed-abstain evidence entry (`{type:"abstain",
- *   reason:"requires_bdc_layer"|"requires_build_local_layer"}`) the scorer already produces for an omitted dep. The
- *   guards themselves (`assertBDCDatabaseExists`, `openBDCDatabaseIfPresent`, `openPlausibilityPOIDeps`) live in
- *   `./layer-guards.ts`, not here — they're pure, transport-independent logic with no need for the stdio connection
- *   this file opens at import time (which is exactly why this file can't be unit-tested directly. see
- *   `layer-guards.test.ts` for their branch coverage).
- *
- *   `mailwoman_filer_lookup` follows the same "requires the layer unconditionally" discipline as
- *   `mailwoman_bdc_filing_landscape` (`assertFilerDatabaseExists` + `openFilerDatabaseIfPresent`, mirroring
- *   `assertBDCDatabaseExists` + the BDC open) — `filerLookup` itself has no optional-dep abstain shape (criterion 4 makes
- *   it throw rather than answer unstamped), so a missing filer.db becomes one friendly thrown Error naming the layer.
- *
- *   `mailwoman_filer_family` follows the identical discipline, reusing the same two guards — `familyRollup`
- *   has no optional-dep abstain shape either (it throws on a bad `familyID`/`nodeID` XOR or a pre-`filer_family`
- *   schema), so filer.db is required unconditionally here too. Its result — always `FamilyRollup[]`, never `null` or
- *   a bare object — is passed through untouched: this data is who-owns-whom, and a silent reshape here would be a
- *   fabricated relationship claim.
- *
- *   ```sh
- *   mailwoman-mcp                       # geocode/poi_search degrade gracefully with no poi.db wired
- *   mailwoman-mcp --poi-db poi.db       # mailwoman_poi_search additionally executes against poi.db
- *   ```
  */
 
 import { filingLandscape, plausibilityCheck, type BDCDatabase } from "@mailwoman/bdc"
@@ -85,23 +42,8 @@ const { values } = parseArguments({
 	allowPositionals: true,
 })
 
-/**
- * `--poi-db` wires `mailwoman_poi_search` (and, via the same pipeline,
- * `mailwoman_parse`'s `poi: true` path) to a real `poi.db`.
- *
- * Absent → intent-only (parses the query, extracts the subject/anchor, never executes a lookup).
- */
 const poiDatabasePath = values["poi-db"]
 
-/**
- * The shared classifier + resolver, built exactly once on the first call that
- * needs them (see the module header).
- *
- * `NeuralAddressClassifier.loadFromWeights` auto-resolves the bundled `en-US` weights.
- * The resolver backend prefers a configured candidate gazetteer (`$MAILWOMAN_CANDIDATE_DB`)
- * and otherwise falls back to the admin-only WOF extracts already on the data root —
- * same selection `nominatim`/`photon`'s CLIs make.
- */
 let corePromise:
 	| Promise<{
 			classifier: ScriptRoutedClassifier<NeuralAddressClassifier>
@@ -110,15 +52,6 @@ let corePromise:
 	  }>
 	| undefined
 
-/**
- * The four tools that need {@link loadCore} — every path
- * through `getPlainPipeline`/`getPoiPipeline`/`resolveGeocode`.
- *
- * `mailwoman_layer_manifest`, `mailwoman_bdc_filing_landscape`, `mailwoman_filer_lookup`
- * and `mailwoman_filer_family` never call it, so they keep working when this fails;
- * `mailwoman_plausibility_check` only reaches it when it geocodes.
- * Named in both guard messages below because an agent that just got one needs to know what it can still do.
- */
 const CORE_BACKED_TOOLS = "mailwoman_parse, mailwoman_geocode, mailwoman_poi_search, mailwoman_overpass_export"
 
 const CORE_FREE_TOOLS =
@@ -141,15 +74,6 @@ function loadCore(): Promise<{
 
 		const candidateDB = await resolveCandidateDBPath()
 
-		// #1009 friendly-failure discipline, the MCP shape of it. `server.ts` turns a thrown Error into an
-		// `isError` tool result carrying `error.message`, so the message an agent reads is whatever
-		// is thrown here, which made the raw internal `resolveExtracts: at least one extract is required`
-		// the first thing a stranger saw from `mailwoman_parse` on a fresh install
-		// (measured 2026-08-03 against a standalone `npm install @mailwoman/mcp`).
-		// Same preflight as `photon`/`nominatim`/`mailwoman serve`, and the same discovery:
-		// #1444 moved the `<data-root>/db/wof/candidate.db` convention fallback into
-		// `resolveCandidateDBPath`, so this bare call picks a pulled gazetteer up with nothing exported.
-		// The `MAILWOMAN_DATA_ROOT` in the client's `env` block is enough on its own.
 		if (!candidateDB && !wofPaths.length) {
 			throw new Error(
 				`${buildNoGazetteerMessage({
@@ -162,12 +86,6 @@ function loadCore(): Promise<{
 		const backend = await createResolverBackend(resolverMod, { wofPaths, candidateDB })
 		const resolver = createWOFResolver(backend)
 
-		// Same discipline for the model weights.
-		// `@mailwoman/neural-weights-en-us` is a declared dependency of this package as of
-		// 2026-08-03 — before that a standalone `npm install @mailwoman/mcp` resolved nothing
-		// and every core-backed tool answered with `resolveWeights`' raw not-found text.
-		// The guard keeps that text (it already names the exact fix command) and adds what
-		// an agent mid-conversation needs next: which tools are down and which are not.
 		let classifier: ScriptRoutedClassifier<NeuralAddressClassifier>
 
 		try {
@@ -190,13 +108,7 @@ function loadCore(): Promise<{
 type Pipeline = (raw: string) => Promise<PipelineResult>
 
 let plainPipeline: Pipeline | undefined
-/**
- * Keyed by the poi.db path used to build it (`""` = intent-only, no db).
- *
- * `mailwoman_poi_search` can be called with a `poiDatabasePath` that differs
- * from the server's `--poi-db`, in which case a fresh one-off pipeline is built
- * and cached under that path instead of reusing the default.
- */
+
 const poiPipelines = new Map<string, Pipeline>()
 
 async function getPlainPipeline(): Promise<Pipeline> {
@@ -227,15 +139,6 @@ async function getPoiPipeline(dbPath: string | undefined): Promise<Pipeline> {
 	return pipeline
 }
 
-/**
- * `plausibilityCheck`'s geocode dep — reuses the same shared classifier+resolver
- * `deps.geocode` builds from (see the module header's laziness note).
- *
- * `deriveGeocodeRegister`/the formatted register is the geocode dep's concern,
- * so it is wired at this CLI/MCP layer rather than inside `plausibility.ts`.
- * The real return type (`GeocodeResult`) is structurally assignable to `plausibility.ts`'s
- * minimal `GeocodeLike` — no adapter needed.
- */
 async function resolveGeocode(address: string) {
 	const { classifier, resolver, databases } = await loadCore()
 
@@ -261,11 +164,6 @@ const deps: MCPToolDeps = {
 	},
 
 	async overpassExport(query) {
-		// Intent-only is enough here.
-		// The export just needs the parsed subject/anchor, never executed results
-		// ("we print the query. We never run it", poi-overpass.ts).
-		// Reuses the server's wired poi pipeline (a real poi.db doesn't change the emitted OverpassQL)
-		// instead of forcing a second one-off pipeline.
 		const pipeline = await getPoiPipeline(poiDatabasePath)
 		const result = await pipeline(query)
 		const outcome = result.poiIntent
@@ -280,8 +178,6 @@ const deps: MCPToolDeps = {
 
 		const { subject } = outcome.intent
 
-		// One tag per category the subject reaches, and only when every member carries one: a union emitted
-		// from the subset that happens to have an `osmTag` is a narrower query than the POI branch ran.
 		const osmTags =
 			subject.kind === "category"
 				? subject.categoryIDs.map((id) => getPOICategory(id)?.osmTag).filter((tag) => tag !== undefined)
@@ -311,9 +207,6 @@ const deps: MCPToolDeps = {
 	},
 
 	async bdcFilingLandscape(q) {
-		// Decision 6: `mailwoman_bdc_filing_landscape` requires bdc.db unconditionally
-		// (no optional-dep abstain shape exists for this tool), so a missing file becomes a friendly thrown
-		// Error naming the layer, never the raw `node:sqlite` "unable to open database file" message.
 		await assertBDCDatabaseExists("mailwoman_bdc_filing_landscape", q.databasePath)
 
 		using db = new DatabaseClient<BDCDatabase>(q.databasePath, { readOnly: true })
@@ -343,9 +236,6 @@ const deps: MCPToolDeps = {
 	},
 
 	async filerLookup(q) {
-		// Decision 6 / criterion 4: filerLookup has no optional-dep abstain shape —
-		// it throws rather than answer unstamped — so filer.db is required unconditionally,
-		// same discipline as bdc.db is for mailwoman_bdc_filing_landscape.
 		await assertFilerDatabaseExists("mailwoman_filer_lookup", q.databasePath)
 
 		using db = (await openFilerDatabaseIfPresent(q.databasePath))!
@@ -371,8 +261,6 @@ const deps: MCPToolDeps = {
 	},
 
 	async filerFamily(q) {
-		// Same discipline as mailwoman_filer_lookup — familyRollup has no optional-dep
-		// abstain shape either, so filer.db is required unconditionally.
 		await assertFilerDatabaseExists("mailwoman_filer_family", q.databasePath)
 
 		using db = (await openFilerDatabaseIfPresent(q.databasePath))!

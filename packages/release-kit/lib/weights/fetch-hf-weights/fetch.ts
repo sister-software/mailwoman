@@ -3,23 +3,6 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- *
- *   Materialize a release's weights artifacts from the public Hugging Face bucket — the `--source hf`
- *   half of the #1894 preflight, and the recipe `.github/workflows/publish.yml` now calls in place of
- *   the curl-and-cp block it used to carry inline. One recipe, two callers: the preflight points it at
- *   a staging tree, the publish job points it at the checkout. `copy-weights.ts` is the same shape for
- *   the operator's data root. both take a destination root and touch nothing else.
- *
- *   what is fetched is derived rather than listed. A `neural-weights-<locale>` package's `files` array is its
- *   author stating which artifacts the tarball carries, and `git ls-files` says which of those a
- *   checkout already has. the difference is exactly the set something must materialize — the same
- *   predicate `verify-tarball.ts` refuses a publish over (`literalFilesEntries`, shared with it). The
- *   v9.2.0 release published 49 of 51 workspaces before that audit refused
- *   `@mailwoman/neural-weights-en-au`, whose four declared lexicons the YAML's hand-maintained copy
- *   list did not name. A derived list cannot fall behind a manifest that way.
- *
- *   no credentials, no writes anywhere but the destination root. The bucket is public — the same files
- *   the browser demo loads. Nothing here writes to Hugging Face, npm, git, or R2.
  */
 
 import { pathExists, readLocalBuffer } from "@mailwoman/core/fs/readers"
@@ -37,23 +20,24 @@ import {
 } from "#weights/fetch-hf-weights/plan"
 import { downloadRemote, probeRemote, verifyChecksum, writeArtifact } from "#weights/fetch-hf-weights/transfer"
 
+/**
+ * Configures {@link fetchHFWeights}: the repo root to read release config from,
+ * the model version (defaulting to the base model's), and the progress logger.
+ */
 export interface FetchHFWeightsOptions {
 	/**
-	 * The checkout the recipe is read from — manifests, model cards, committed lexicons.
-	 *
-	 * Never written to unless it is also the destination.
+	 * The checkout that manifests, model cards and committed lexicons are read from,
+	 * which is never written unless it is also the destination.
 	 */
 	repoRoot?: PathBuilderLike
+
 	/**
-	 * The model-card version naming the bucket directory.
-	 *
-	 * Defaults to the base package's card, which is what CI read.
+	 * The model-card version that names the bucket directory, defaulting to the base package's model card.
 	 */
 	version?: string
+
 	/**
-	 * Where progress lines go.
-	 *
-	 * Defaults to stderr.
+	 * Receives progress lines, defaulting to stderr.
 	 */
 	log?: (line: string) => void
 }
@@ -63,12 +47,11 @@ function writeStderr(line: string): void {
 }
 
 /**
- * Materialize every planned artifact under `destRoot`.
+ * Downloads each distinct planned weights object once and writes it, checksum-verified,
+ * into every workspace that declares it, along with artifacts sourced from the checkout.
  *
- * Fetches each distinct bucket object once and writes it to every workspace that
- * declares it — the `cp` fan-out the YAML spelled out by hand.
- * Head-probes the whole remote set first so an unstaged version fails in one pass with
- * every missing object named, rather than after the first 39 MB download dies on a 404.
+ * It probes every remote object before downloading anything, so an unstaged
+ * version fails once with all missing objects named.
  */
 export async function fetchHFWeights(
 	destRoot: string,
@@ -79,8 +62,7 @@ export async function fetchHFWeights(
 	const resolvedVersion = version ?? (await readBaseModelVersion(repoRoot))
 	const base = await hfVersionBase(repoRoot, resolvedVersion)
 	const plans = await planWeightsMaterialization(repoRoot, { version: resolvedVersion })
-	// Distinct bucket objects by URL: several packages share one Latin object,
-	// and a family's object shares only a basename with it.
+
 	const objects = new Map<string, { base: string; remoteName: string }>()
 
 	for (const plan of plans) {

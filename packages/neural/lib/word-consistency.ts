@@ -2,110 +2,52 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- *
- *   Per-word BIO tag-consistency repair (#727 + the fr.country / admin-token fragmentation class).
- *
- *   The model emits per-piece BIO labels. On rows where an admin token is adjacent to a non-latin
- *   (byte-fallback) locality, carries diacritics, or is all-caps/reordered, the per-piece labels
- *   can disagree within a single word — `vermont` → `VER`[B-locality] + `mont`[B-region], `Lozère`
- *   → `Loz`[locality] + `ère`[B-region] — and the span decoder reads that as a tag-change
- *   mid-token, fracturing the admin component. The model already knows the word's tag (99.7% of
- *   normal rows are unanimous); the defect is the lack of a word-level consistency constraint.
- *
- *   Fix (DeepSeek-Pro consult `contested-frag`, 2026-06-19): a SentencePiece word — a `▁`-started
- *   piece + its non-`▁` continuations — must carry one tag. The tag is chosen by a
- *   confidence-weighted vote rather than first-piece-wins: sum each piece's softmax mass per tag type
- *   (B-X
- *
- *   - I-X collapsed; `O` included) across the word, argmax the type, and force `B-<type>` then
- *       `I-<type>` (or all `O`). The near-certain `ère`→region then pulls the whole word to region,
- *       healing both the fragment and the `Loz` bleed. Operates only within a `▁`-delimited word,
- *       so cross-word multi-token names ("Saint Paul" → two words) are untouched and the decoder's
- *       existing cross-word merge still joins them.
- *
- *   Safety: a word whose pieces already agree IN type is left byte-identical — enforced structurally
- *   (the vote never runs on a type-consistent word. single-piece words are trivially consistent).
- *   Until 2026-07-15 this held only when the vote happened to agree with the decoder, which let the
- *   heal RE-decode consistent words from local type-mass and override viterbi (`▁Broadway`
- *   B-street→O. all-street `Gamle` →locality) — the mechanism behind the 2026-06-19 street
- *   regression below. The vote includes `O`, so a disagreeing word can still resolve to all-`O`.
- *
- *   Promotion-eval outcome (2026-06-19, fr-admin-split-eval + per-locale-f1, MAILWOMAN_WORD_CONSISTENCY=1): not
- *   a clean win — net-regressed street −12.6 on the adversarial golden — so it shipped default-off,
- *   with a confidence-thresholded variant hypothesized as the path to a clean win.
- *
- *   Re-diagnosis (2026-07-15): the regression was not vote noise. It was two defects in this module.
- *   (1) The heal re-decoded words whose pieces already agreed whenever the local type-mass preferred
- *   another type, overriding viterbi (`▁Broadway` B-street→O. all-street `Gamle`→locality). Fixed
- *   structurally: the vote now only runs on words whose pieces disagree in type. (2) Punctuation
- *   continuation pieces joined the preceding word's vote group (`Ave` + `,`), and their `O` mass
- *   manufactured fake disagreements that killed real spans — the `WordConsistencyOpts.splitOnPunctuation`
- *   promotion eval. With both fixed (+ `skipByteFallbackWords`), the heal is a clean win with no confidence floor:
- *   golden us street 82.0→82.2, fr macro 42.2→51.5, adversarial flat. parity house_number .767→.808,
- *   postcode →1.000, street .543→.573. error analysis within the 2pp threshold. Ships on at the pipeline call
- *   sites via `WORD_CONSISTENCY_SHIP_DEFAULT` (core/pipeline/types.ts). A `minMeanConfidence` floor
- *   was measured NET-negative on the parity corpus (fragment rows are low-confidence but heal
- *   correctly) — it exists as an opt, unused by the ship default.
  */
 
 import { SPACE_SENTINEL } from "#tokenizer"
 import { softmax } from "#viterbi"
 
+/**
+ * Limits which words {@link enforceWordConsistency} relabels.
+ *
+ * Omitting the options relabels every word whose pieces disagree on entity type.
+ */
 export interface WordConsistencyOpts {
 	/**
-	 * Skip the heal when the vote's mean p(bestType) across the word is below this floor.
+	 * Leaves a word unchanged when the winning type's mean probability across its
+	 * pieces falls below this floor; `0` or unset never skips.
 	 *
-	 * The unrestricted variant's failure mode (the 2026-06-19 promotion eval) was amplifying
-	 * noise on rows where the per-piece confidence is itself unreliable.
-	 * A low-confidence vote is exactly that signature.
-	 * `0` (default) never skips.
+	 * A low-confidence vote marks rows where per-piece confidence is unreliable,
+	 * and relabelling those amplifies noise.
 	 */
 	minMeanConfidence?: number
+
 	/**
-	 * Skip healing any word containing a raw byte-fallback piece (`<0xNN>`).
-	 *
-	 * On byte-soup words the confidence-weighted-vote premise ("the surviving pieces are trustworthy") breaks.
-	 * See the module docstring's outcome outcome.
-	 * Default false.
+	 * Leaves any word containing a byte-fallback piece (`<0xNN>`) unchanged, because its
+	 * surviving pieces are not trustworthy voters, and defaults to `false`.
 	 */
 	skipByteFallbackWords?: boolean
+
 	/**
-	 * Treat a pure-punctuation piece (no letters/digits) as a word-group separator, like whitespace.
+	 * Treats a punctuation-only piece as a word separator, like whitespace, and defaults to `false`.
 	 *
-	 * Punctuation is never word-content for tag purposes, but SentencePiece can emit
-	 * it as a continuation piece that joins the preceding word's group — `Ave` + `,` —
-	 * where its `O` label manufactures a fake intra-word disagreement and the vote kills
-	 * the real span (the 2026-07-15 golden `street_suffix`→O class).
-	 * Also keeps the halves of a slash compound (`12/345` = unit 12 + house number 345) voting independently.
-	 *
-	 * Default false.
+	 * Otherwise a continuation piece such as the `,` in `Ave,` joins the word,
+	 * and its `O` label can outvote a real span.
+	 * Splitting also lets the halves of a slash compound such as `12/345` vote independently.
 	 */
 	splitOnPunctuation?: boolean
 }
 
-/**
- * A piece that is punctuation-only (no letter or digit in any script).
- */
 const PUNCTUATION_ONLY = /^[^\p{L}\p{N}]+$/u
 
-/**
- * A raw SentencePiece byte-fallback piece (`<0xE3>` …) — emitted for characters absent from the vocab.
- */
 const BYTE_FALLBACK = /^<0x[0-9A-Fa-f]{2}>$/
 
 /**
- * Interpret the `MAILWOMAN_WORD_CONSISTENCY` env string as a heal setting.
+ * Parses the `MAILWOMAN_WORD_CONSISTENCY` environment value into a setting
+ * for {@link enforceWordConsistency}.
  *
- * `"1"` = the original unconditional vote.
- *
- * The other two values are spelled here because they are the wire interface
- * rather than prose: the string an operator sets has to appear verbatim
- * or this docstring stops describing the parser below it.
- * Renaming the value is a separate, operator-approved change (#2077).
- *
- * `"conditional"` = the #727 thresholded preset (slash grouping + byte-fallback skip, no confidence floor);
- * `"conditional:<floor>"` adds a `minMeanConfidence` floor (e.g. `"conditional:0.5"`).
- * Anything else (unset included) = off.
+ * `"1"` enables the unconditional vote, `"conditional"` or `"conditional:<floor>"` enables
+ * the conditional preset with an optional confidence floor, and any other value disables it.
  */
 export function parseWordConsistencyEnv(value: string | undefined): boolean | WordConsistencyOpts {
 	if (value === "1") return true
@@ -124,24 +66,27 @@ export function parseWordConsistencyEnv(value: string | undefined): boolean | Wo
 	return false
 }
 
+/**
+ * Holds the relabelled piece indices from {@link enforceWordConsistency}, the vote
+ * confidence of each changed piece, and the number of words changed.
+ */
 export interface WordConsistencyResult {
 	/**
-	 * A new per-piece label-index array, word-consistent (input is not mutated).
+	 * Holds the relabelled per-piece label indices in a new array.
 	 */
 	labelIndices: number[]
+
 	/**
-	 * PieceIndex → mean p(chosen type) across the word, for pieces in a word that was healed.
+	 * Maps each piece in a relabelled word to the winning type's mean probability across that word.
 	 */
 	healedConfidence: Map<number, number>
+
 	/**
-	 * Count of words whose labels were rewritten (0 = byte-identical to the input).
+	 * Counts the words relabelled, so `0` means `labelIndices` equals the input.
 	 */
 	healedWords: number
 }
 
-/**
- * The tag type of a BIO label: `"region"` from `B-region`/`I-region`; `"O"` from `O`.
- */
 function labelType(label: string): string {
 	if (label === "O") return "O"
 	const dash = label.indexOf("-")
@@ -150,21 +95,17 @@ function labelType(label: string): string {
 }
 
 /**
- * Rewrite per-piece label indices so every `▁`-delimited word carries one tag,
- * chosen by a confidence-weighted vote over the post-prior `emissions`.
+ * Relabels SentencePiece pieces so that each `▁`-delimited word carries a single entity type,
+ * chosen by a vote over the softmaxed `emissions` of its pieces.
  *
- * See the module docstring.
+ * The word's first piece gets the `B-` label and the rest get `I-`,
+ * and without `opts` every mixed word is relabelled.
  *
- * @param pieces SentencePiece pieces (the `▁`-marked surface is the word-boundary signal).
- * @param emissions Per-piece × per-label scores after all priors/masks
- * (the distribution the argmax would see).
- * Softmaxed per piece for the vote so each piece's confidence carries its weight.
- * @param labels The BIO label vocabulary (index ↔ label).
- * @param labelIndices The current per-piece decision (viterbi path or argmax).
- * Not mutated.
- * @param opts Optional conditions on the heal (confidence floor, byte-fallback skip, slash grouping) —
- * the #727-tracked "confidence-thresholded variant".
- * Omitted = the original unconditional behavior, byte-identical.
+ * @param pieces SentencePiece pieces, whose `▁` markers give the word boundaries.
+ * @param emissions Per-piece label scores after all priors and masks have been applied.
+ * @param labels The BIO label vocabulary, indexed like `emissions`.
+ * @param labelIndices The current per-piece decision, which is not mutated.
+ * @param opts Optional conditions that limit which words are relabelled.
  */
 export function enforceWordConsistency(
 	pieces: ReadonlyArray<{ piece: string }>,
@@ -173,9 +114,6 @@ export function enforceWordConsistency(
 	labelIndices: readonly number[],
 	opts?: WordConsistencyOpts
 ): WordConsistencyResult {
-	// Type → {B index, I index}.
-	// The standalone O index.
-	// Per-label-index → type.
 	const typeB = new Map<string, number>()
 	const typeI = new Map<string, number>()
 
@@ -197,11 +135,6 @@ export function enforceWordConsistency(
 	const healedConfidence = new Map<number, number>()
 	let healedWords = 0
 
-	// Group pieces into words.
-	// A word = a `▁`-started piece + its non-`▁` continuations.
-	// A bare `▁` (whitespace-only) piece is a separator.
-	// It ends the current word and joins no word (its label is left as-is,
-	// matching the decoder's "zero-width O is not a boundary" handling).
 	const words: number[][] = []
 	let cur: number[] = []
 
@@ -219,16 +152,12 @@ export function enforceWordConsistency(
 		const content = isSentinel ? pc.slice(SPACE_SENTINEL.length) : pc
 
 		if (content.trim() === "") {
-			// Separator (bare `▁` or whitespace) — ends the current word, belongs to none.
 			flush()
 
 			continue
 		}
 
 		if (opts?.splitOnPunctuation && PUNCTUATION_ONLY.test(content)) {
-			// Punctuation separator — `12/345`'s halves vote independently.
-			// A trailing `,` never joins `Ave`'s group.
-			// The piece itself joins no word (its label is left as-is, like whitespace).
 			flush()
 
 			continue
@@ -238,9 +167,6 @@ export function enforceWordConsistency(
 			flush()
 			cur = [i]
 		} else {
-			// Continuation.
-			// (An orphan continuation with no started word — shouldn't happen since the input's
-			// first piece is `▁`-marked — defensively starts its own word.)
 			cur.push(i)
 		}
 	}
@@ -248,20 +174,12 @@ export function enforceWordConsistency(
 	flush()
 
 	for (const w of words) {
-		// The heal arbitrates intra-word disagreement only.
-		// A word whose pieces already share one type (a single-piece word trivially does) is
-		// the decoder's global decision — re-deciding it from local type-mass is a re-decode
-		// rather than a consistency repair, and is exactly what regressed golden street
-		// (`▁Broadway` B-street→O, consistent `Gamle` street→locality, 2026-07-15).
 		const currentTypes = new Set(w.map((pi) => idxType[labelIndices[pi]!] ?? "O"))
 
 		if (currentTypes.size <= 1) continue
 
-		// Byte-fallback condition: on a word with raw byte pieces the per-piece confidences
-		// the vote relies on are themselves unreliable — leave the word untouched.
 		if (opts?.skipByteFallbackWords && w.some((pi) => BYTE_FALLBACK.test(pieces[pi]!.piece))) continue
 
-		// Confidence-weighted vote: sum each piece's softmax mass per type (B-X + I-X) across the word.
 		const score = new Map<string, number>()
 
 		for (const pi of w) {
@@ -283,7 +201,6 @@ export function enforceWordConsistency(
 			}
 		}
 
-		// Target label index per piece: B-<type> for the first piece, I-<type> for the rest (or O).
 		const targets = w.map((_pi, k) => {
 			if (bestType === "O") return oIdx
 
@@ -292,13 +209,9 @@ export function enforceWordConsistency(
 
 		const changed = w.some((pi, k) => out[pi] !== targets[k])
 
-		if (!changed) continue // word already consistent → byte-identical, leave it
+		if (!changed) continue
 		const meanConf = bestScore / w.length
 
-		// mean p(bestType) — length-invariant (DeepSeek t3)
-
-		// Confidence floor: a low-confidence vote is the noise-amplification signature the 2026-06-19
-		// promotion eval caught — skip the heal rather than force an unreliable consensus.
 		if (opts?.minMeanConfidence && meanConf < opts.minMeanConfidence) continue
 
 		healedWords++

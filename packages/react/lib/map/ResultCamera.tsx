@@ -15,12 +15,16 @@ import type { MapCameraTarget } from "#map/place-render"
 
 /**
  * Build bounds options without an undefined `duration` key.
+ *
  * MapLibre branches on key presence, so `duration: undefined` can produce a NaN camera flight.
  */
 export function fitBoundsOptionsFor(padding: number, animate: boolean): FitBoundsOptions {
 	return animate ? { padding } : { padding, duration: 0 }
 }
 
+/**
+ * Configures {@link ResultCamera} with the camera target to apply and whether to animate the move.
+ */
 export interface ResultCameraProps {
 	/**
 	 * The camera target to animate to.

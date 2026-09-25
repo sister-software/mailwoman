@@ -2,37 +2,6 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- *
- *   Learned-scorer probe (#603) — does a model over the Fellegi-Sunter feature vector separate
- *   matches from non-matches better than the FS scorer itself? This is the honest, rigorous answer
- *   to "is the learned-scorer path worth it?" before investing in a full GBM/training pipeline.
- *
- *   The over-merge (co-located distinct providers fused. co-located same-entity name-drift split) is
- *   a field-interaction effect FS can't express: it scores each field independently. A learned
- *   model with interaction features (spatial-agreement × name-disagreement) can. We test that
- *   directly, with a clean methodology — no clustering confound, no leakage:
- *
- *   1. Generate the same NPI-keyed records as the dedup benchmark (real registry + name-drift +
- *        address-variation), geocoded.
- *   2. Block → candidate pairs. For each: the FS agreement pattern + engineered interaction features.
- *        the label is same-NPI.
- *   3. Split the NPIs into train / test. A pair is train iff both endpoints are train-NPIs, test iff
- *        both test-NPIs — so no NPI's records leak across the split.
- *   4. Train two learned scorers on the train pairs: an L2 logistic regression (linear) and
- *        gradient-boosted shallow trees (non-linear — the model #603 names). Both pure-Node.
- *   5. Score the test pairs with (a) the EM-fitted FS scorer, (b) the LR, (c) the GBT. Report pairwise
- *        ROC-AUC + best-threshold F1 for each, averaged over N seeds. AUC is threshold-free: does
- *        the learned scorer rank matches above non-matches better than FS — and does the tree beat
- *        the linear model (i.e. is there non-linear signal the hand-crafted interaction features
- *        miss)?
- *
- *   Honest caveats are printed: in-domain (TX), a modest sample, pairwise (not the clustering
- *   metric). The definitive test is a GBM A/B on the dedup clustering metric with a
- *   train-TX/eval-held-out-state split (#603 Tier 2); this probe bounds the pairwise-ranking improvement
- *   cheaply first.
- *
- *   Run: `mailwoman registry scorer-eval pairwise [--npis 1500] [--seeds 8] [--wof <admin.db>]
- *   [--data-root <dir>] [--seed 1] [--out-md <md>]`
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
@@ -45,30 +14,15 @@ import { buildDefaultModel, createMatchFeaturizer, defaultBlockingKeys, ingestRo
 import type { EvalGeocoderFactory } from "#tools/eval-geocoder"
 import { buildNPPESSample } from "#tools/nppes/sample"
 import { pct, sgn, stateOption, std, trainLogisticRegression } from "#tools/shared"
-/**
- * Smallest mean gap counted as a real difference rather than seed noise.
- */
+
 const MIN_MEANINGFUL_DELTA = 0.005
 
-/**
- * Mean gap at which a win is called outright rather than leaning.
- */
 const CLEAR_WIN_DELTA = 0.01
 
-/**
- * F1 gap at which a win is called outright.
- */
 const CLEAR_WIN_F1_DELTA = 0.02
 
-/**
- * Z at or above which the difference is treated as strong evidence rather than suggestive.
- */
 const STRONG_EVIDENCE_Z = 3
 
-/**
- * Share of NPIs assigned to train.
- * The rest are held out for test.
- */
 const TRAIN_SPLIT_FRACTION = 0.67
 
 /**
@@ -76,49 +30,46 @@ const TRAIN_SPLIT_FRACTION = 0.67
  */
 export interface ScorerPairwiseEvalOptions {
 	/**
-	 * The injected geocoder factory (the command wires `mailwoman/geocode-core`; see `./eval-geocoder.ts`).
+	 * Creates the geocoder that places each sampled record's address.
 	 */
 	createGeocoder: EvalGeocoderFactory
+
 	/**
-	 * Record-matcher sources directory.
-	 *
-	 * Default `$MAILWOMAN_DATA_ROOT/record-matcher/sources`.
+	 * The record-matcher sources directory, defaulting to `record-matcher/sources` under the data root.
 	 */
 	sources?: string
+
 	/**
-	 * State filter.
-	 *
-	 * Default TX.
+	 * The state to sample providers from, defaulting to `TX`.
 	 */
 	state?: string
+
 	/**
-	 * NPIs sampled.
-	 *
-	 * Default 1500.
+	 * The number of NPIs to sample, defaulting to 1500.
 	 */
 	npis?: number
+
 	/**
-	 * Base prng seed.
-	 *
-	 * Default 1.
+	 * The base PRNG seed, defaulting to 1; each split adds its index to it.
 	 */
 	seed?: number
+
 	/**
-	 * Train/test splits averaged.
-	 *
-	 * Default 8.
+	 * The number of train/test splits to average over, defaulting to 8.
 	 */
 	seeds?: number
+
 	/**
-	 * Also write the markdown report here.
+	 * A path to which the markdown report is also written.
 	 */
 	outMd?: string
 }
 
 /**
- * Learned-scorer pairwise probe (#603) — see the module doc.
+ * Compares Fellegi-Sunter, logistic-regression and gradient-boosted-tree pair scorers on an NPPES sample,
+ * labelling pairs by shared NPI and averaging ROC-AUC and best F1 over several train/test seeds.
  *
- * Emits the markdown report to stdout.
+ * It prints the markdown report, writes it to `outMd` when given, and returns it.
  */
 export async function scorerPairwiseEval(
 	options: ScorerPairwiseEvalOptions,
@@ -133,7 +84,6 @@ export async function scorerPairwiseEval(
 	const REGISTRY = `${SOURCES}/nppes_npi-registry_20260607.tsv`
 	const OTHER_NAMES = `${SOURCES}/nppes_other-names_20260607.tsv`
 
-	// Build the same NPI-keyed sample used by the dedup benchmark.
 	const { rows, keptNpis, addressFrequency } = await buildNPPESSample(
 		{ registryPath: REGISTRY, otherNamesPath: OTHER_NAMES, state: STATE, maxNpis: NPIS },
 		report
@@ -142,9 +92,6 @@ export async function scorerPairwiseEval(
 	report?.("[C] geocoding…")
 	const geocoder = await options.createGeocoder()
 
-	// `auth`/`taxonomy` ride as attributes so the shared featurizer's #625 roll-up
-	// features can read the authorized official.
-	// The FS arm ignores them (no discriminators configured).
 	const mapping: ColumnMapping = {
 		id: "npi",
 		name: "name",
@@ -160,16 +107,12 @@ export async function scorerPairwiseEval(
 
 	geocoder[Symbol.dispose]()
 
-	// Block records and extract the collapsed-spatial and address-frequency features.
-	// Comparisons.
-	// EM-fit it for the FS baseline. ---
 	report?.("[D] blocking + features…")
 	const model = buildDefaultModel({ collapseSpatial: true, addressFrequency })
 	const { pairs } = block(records, defaultBlockingKeys())
 	const patterns = pairs.map(([a, b]) => agreementPattern(model.comparisons, a, b))
 	const fsModel = estimateParameters(model, patterns).model
 
-	// The shared production featurizer (createMatchFeaturizer) — train ≡ eval ≡ inference, one definition.
 	const featurize = createMatchFeaturizer({ comparisons: model.comparisons, addressFrequency })
 
 	interface Sample {
@@ -192,13 +135,6 @@ export async function scorerPairwiseEval(
 		gbtScored: Scored[]
 	}
 
-	/**
-	 * One train/test split (by NPI): train the L2 logistic regression on the train pairs,
-	 * then score the held-out test pairs with both the LR and the EM-fitted FS scorer.
-	 *
-	 * The FS model is seed-independent (fit unsupervised on all pairs); only the LR weights
-	 * and the test subset move with the seed, so repeating over seeds bounds split variance.
-	 */
 	function runSplit(seed: number): SplitScored {
 		const rnd = makeLcg(seed || 1)
 		const npiSplit = new Map<string, "train" | "test">()
@@ -216,7 +152,6 @@ export async function scorerPairwiseEval(
 
 			if (!sa || sa !== sb) return
 
-			// cross-split or unknown → drop (no leakage)
 			const sample: Sample = {
 				x: featurize(a, b),
 				y: a.id === b.id ? 1 : 0,
@@ -229,7 +164,6 @@ export async function scorerPairwiseEval(
 		const posWeight = train.filter((s) => s.y === 1).length / Math.max(1, train.length)
 		const sampleWeights = train.map((s) => (s.y === 1 ? 1 - posWeight : posWeight))
 
-		// L2-regularized logistic regression (batch gradient descent), rare class up-weighted — the shared trainer.
 		const lrScore = trainLogisticRegression(
 			train.map((s) => s.x),
 			train.map((s) => s.y),
@@ -237,7 +171,6 @@ export async function scorerPairwiseEval(
 			dim
 		)
 
-		// Gradient-boosted trees on the same train pairs + class weights — the non-linear arm.
 		const gbt = trainGBT(
 			train.map((s) => s.x),
 			train.map((s) => s.y),
@@ -255,13 +188,12 @@ export async function scorerPairwiseEval(
 		}
 	}
 
-	// Evaluate LR and FS on held-out pairs with ROC-AUC and best-threshold F1.
 	function auc(scored: Array<{ s: number; y: number }>): number {
 		const pos = scored.filter((d) => d.y === 1)
 		const neg = scored.filter((d) => d.y === 0)
 
 		if (!pos.length || !neg.length) return Number.NaN
-		// Mann-Whitney U via rank.
+
 		const sorted = [...scored].toSorted((p, q) => p.s - q.s)
 		let rank = 1
 		let rankSum = 0
@@ -331,11 +263,11 @@ export async function scorerPairwiseEval(
 	const meanDelta = mean(deltas)!
 	const avgTestN = mean(splits.map((r) => r.testN))!
 	const avgTestPos = mean(splits.map((r) => r.lrScored.filter((d) => d.y === 1).length))!
-	const seMean = std(deltas) / Math.sqrt(SEEDS) // standard error of the mean ΔAUC
-	const zScore = seMean > 0 ? meanDelta / seMean : 0 // ΔAUC in standard errors above zero
-	const f1Delta = mean(lrF1s)! - mean(fsF1s)! // operating-point F1 gain (LR − FS)
+	const seMean = std(deltas) / Math.sqrt(SEEDS)
+	const zScore = seMean > 0 ? meanDelta / seMean : 0
+	const f1Delta = mean(lrF1s)! - mean(fsF1s)!
 	const unanimous = lrWins === SEEDS
-	// GBT (non-linear) arm.
+
 	const gbtAucs = splits.map((r) => auc(r.gbtScored))
 	const gbtF1s = splits.map((r) => bestF1(r.gbtScored).f1)
 	const gbtVsFs = splits.map((_, i) => gbtAucs[i]! - fsAucs[i]!)
@@ -345,7 +277,6 @@ export async function scorerPairwiseEval(
 	const meanGbtVsLr = mean(gbtVsLr)!
 	const f1DeltaGbt = mean(gbtF1s)! - mean(fsF1s)!
 
-	// operating-point F1 gain (GBT − FS)
 	for (const r of splits) {
 		const dl = auc(r.lrScored) - auc(r.fsScored)
 		const dg = auc(r.gbtScored) - auc(r.fsScored)
@@ -395,8 +326,6 @@ export async function scorerPairwiseEval(
 		"",
 	]
 
-	// Linear vs tree: does a non-linear model extract more than the LR?
-	// (The probe's open question.)
 	const treeVerdict =
 		meanGbtVsLr > MIN_MEANINGFUL_DELTA && gbtBeatsLr >= SEEDS - 1
 			? `**The tree extends the linear gain** — GBT beats the LR by ΔAUC ${sgn(meanGbtVsLr)}${f4(meanGbtVsLr)} ` +

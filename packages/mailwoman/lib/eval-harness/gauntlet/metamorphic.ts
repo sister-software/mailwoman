@@ -2,11 +2,6 @@
  * @copyright Sister Software.
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- *
- *   Check output relations under input perturbations without stored expected answers.
- *   INV requires stable coordinates and tier; DIR tests postcode removal; BAND allows bounded
- *   movement for corrupting edits. Known deterministic misses remain visible as tracked xfails.
- *   Run with `mailwoman eval gauntlet --layer metamorphic`.
  */
 
 import { abbreviationDictionary } from "@mailwoman/normalize"
@@ -15,69 +10,36 @@ import { haversineKm } from "@mailwoman/spatial"
 import { buildGauntletDeps, runOne } from "#eval-harness/gauntlet/harness"
 import { type GauntletLayerOptions, layerDepsOptions } from "#eval-harness/gauntlet/regression"
 
-/**
- * Minimum token length eligible for mutation.
- */
 const MIN_MUTABLE_BODY_LENGTH = 5
 
-/**
- * Maximum distance for invariant perturbations.
- */
 const INV_EPSILON_KM = 0.001
-/**
- * Maximum distance after dropping a postcode.
- */
+
 const DIR_NEAR_KM = 5
-/**
- * Maximum distance for corrupting perturbations.
- */
+
 const BAND_NEAR_KM = 5
 
 interface Base {
 	input: string
-	/**
-	 * Drives the DIR (drop-postcode) test.
-	 * All bases drive INV + band.
-	 */
+
 	postcode: boolean
-	/**
-	 * Selects the abbreviation dictionary for the `abbrev` INV perturbation.
-	 */
+
 	locale: string
 }
 
-/**
- * Base inputs.
- *
- * The postcode'd ones drive the DIR (drop-postcode) test.
- * All drive INV + band.
- */
 const BASES: Base[] = [
 	{ input: "181 Rue du Chevaleret, Paris", postcode: false, locale: "fr-FR" },
 	{ input: "181 Rue du Chevaleret, 75013 Paris", postcode: true, locale: "fr-FR" },
 	{ input: "1600 Pennsylvania Ave NW, Washington DC", postcode: false, locale: "en-US" },
 	{ input: "1600 Pennsylvania Ave NW, Washington DC 20500", postcode: true, locale: "en-US" },
 	{ input: "350 5th Ave, New York, NY", postcode: false, locale: "en-US" },
-	{ input: "Unter den Linden 77, 10117 Berlin", postcode: true, locale: "de-DE" }, // DE rooftop tier (D10)
-	{ input: "Damrak 1, 1012 LG Amsterdam", postcode: false, locale: "nl-NL" }, // NL rooftop tier (D10); NL postcode ≠ \d{5}, so INV-only
-	// Added for the abbrev + number-spell classes (the original 7 carry no expandable
-	// suffix, no ordinal, no spell-able house number).
-	// Verified landmark coordinates cited in the design doc.
-	// The metamorphic relations are self-referential (perturbed-vs-clean),
-	// so the base only needs to resolve sanely.
-	{ input: "350 Fifth Avenue, New York, NY", postcode: false, locale: "en-US" }, // Empire State Building (≈40.7484, -73.9857)
-	{ input: "100 Centre Street, New York, NY", postcode: false, locale: "en-US" }, // Manhattan Municipal Building (≈40.7132, -74.0041)
-	{ input: "2 Boulevard du Palais, 75001 Paris", postcode: false, locale: "fr-FR" }, // Palais de la Cité (≈48.8556, 2.3450)
+	{ input: "Unter den Linden 77, 10117 Berlin", postcode: true, locale: "de-DE" },
+	{ input: "Damrak 1, 1012 LG Amsterdam", postcode: false, locale: "nl-NL" },
+
+	{ input: "350 Fifth Avenue, New York, NY", postcode: false, locale: "en-US" },
+	{ input: "100 Centre Street, New York, NY", postcode: false, locale: "en-US" },
+	{ input: "2 Boulevard du Palais, 75001 Paris", postcode: false, locale: "fr-FR" },
 ]
 
-/**
- * Expanded→abbreviated inverse of the shared `normalize/abbreviations.ts` table
- * (imported, never duplicated — "no required trivia").
- *
- * Single-letter abbreviations (N/S/E/W/R) are dropped: they're ambiguous with initials,
- * and the invariant tests only unambiguous multi-char suffix swaps.
- * First-wins on ambiguous long forms (FR `Boulevard` maps from both `Bd` and `Bvd` → `Bd`).
- */
 function inverseAbbrev(locale: string): Map<string, string> {
 	const inv = new Map<string, string>()
 
@@ -94,11 +56,6 @@ function inverseAbbrev(locale: string): Map<string, string> {
 	return inv
 }
 
-/**
- * Replace the first expandable long-form token with its abbreviation (`Avenue`→`Ave`).
- *
- * Null if none present.
- */
 function abbreviate(input: string, locale: string): string | null {
 	const inv = inverseAbbrev(locale)
 	const tokens = input.split(/(\s+)/)
@@ -118,11 +75,6 @@ function abbreviate(input: string, locale: string): string | null {
 	return null
 }
 
-/**
- * The longest maximal run of letters, length ≥5, leftmost on ties.
- *
- * Null if none — nothing safe to corrupt.
- */
 function longestAlphaToken(s: string): { start: number; body: string } | null {
 	let best: { start: number; body: string } | null = null
 	const re = /\p{L}+/gu
@@ -141,20 +93,14 @@ function longestAlphaToken(s: string): { start: number; body: string } | null {
 	return best
 }
 
-/**
- * Adjacent-char swap at the middle of the longest alphabetic token.
- *
- * Deterministic, no RNG.
- * Null if not applicable.
- */
 function transposeMiddle(s: string): string | null {
 	const tok = longestAlphaToken(s)
 
 	if (!tok) return null
 
 	const chars = [...tok.body]
-	const mid = Math.floor(chars.length / 2) // ≥2 for len ≥5
-	// Prefer the pair (mid-1, mid); if those chars are identical the swap is a no-op, so fall to (mid, mid+1).
+	const mid = Math.floor(chars.length / 2)
+
 	let i = mid - 1
 
 	if (chars[i] === chars[i + 1]) {
@@ -171,9 +117,6 @@ function transposeMiddle(s: string): string | null {
 	return s.slice(0, tok.start) + swapped.join("") + s.slice(tok.start + tok.body.length)
 }
 
-/**
- * Single-char substitution at the middle of the longest alphabetic token (→`x`, or `z` when already `x`).
- */
 function substituteMiddle(s: string): string | null {
 	const tok = longestAlphaToken(s)
 
@@ -192,9 +135,6 @@ function substituteMiddle(s: string): string | null {
 	return s.slice(0, tok.start) + body + s.slice(tok.start + tok.body.length)
 }
 
-/**
- * Numeral↔spelled ordinal street names (`5th`↔`Fifth`).
- */
 const ORDINALS: ReadonlyArray<readonly [string, string]> = [
 	["1st", "First"],
 	["2nd", "Second"],
@@ -210,11 +150,6 @@ const ORDINALS: ReadonlyArray<readonly [string, string]> = [
 	["12th", "Twelfth"],
 ]
 
-/**
- * Swap the first ordinal-street token between numeral and spelled form (`5th Ave`↔`Fifth Ave`).
- *
- * Null if none.
- */
 function swapOrdinal(s: string): string | null {
 	const numToWord = new Map(ORDINALS.map(([n, w]) => [n.toLowerCase(), w]))
 	const wordToNum = new Map(ORDINALS.map(([n, w]) => [w.toLowerCase(), n]))
@@ -235,11 +170,6 @@ function swapOrdinal(s: string): string | null {
 	return null
 }
 
-/**
- * Spell out the leading house-number token (`100`→`One Hundred`).
- *
- * Bounded map — never a general algorithm.
- */
 const HOUSE_SPELL = new Map<string, string>([["100", "One Hundred"]])
 
 function spellHouseNumber(s: string): string | null {
@@ -259,28 +189,17 @@ interface Perturbation {
 	f: (s: string, base: Base) => string | null
 }
 
-/**
- * Label-preserving perturbations.
- * The output must be invariant (≤1m, same tier).
- */
 const INV: Perturbation[] = [
 	{ name: "lower", f: (s) => s.toLowerCase() },
 	{ name: "upper", f: (s) => s.toUpperCase() },
 	{ name: "ws", f: (s) => s.replaceAll(" ", "  ") },
 	{ name: "trail-dot", f: (s) => `${s}.` },
-	{ name: "comma-tight", f: (s) => s.replaceAll(", ", ",") }, // surface-form: drop the space after a comma
-	// Delimiter-free invariant (#1101): a whitespace-only address
-	// (commas removed, tokens still space-separated) must resolve identically —
-	// whitespace-only is 64% of the parity gold.
-	// The fix half (punctuation-drop training augmentation) closes any deterministic failure this surfaces.
-	// A failing base lands in KNOWN_INV_XFAIL with a #1101 note until then.
+	{ name: "comma-tight", f: (s) => s.replaceAll(", ", ",") },
+
 	{ name: "comma-drop", f: (s) => s.replaceAll(",", "") },
-	{ name: "abbrev", f: (s, base) => abbreviate(s, base.locale) }, // expanded→abbreviated suffix (trained both ways)
+	{ name: "abbrev", f: (s, base) => abbreviate(s, base.locale) },
 ]
 
-/**
- * Corrupting perturbations — output may shift, but must stay within the band (≤5km).
- */
 const BAND: Perturbation[] = [
 	{ name: "transpose", f: (s) => transposeMiddle(s) },
 	{ name: "typo-sub", f: (s) => substituteMiddle(s) },
@@ -288,22 +207,10 @@ const BAND: Perturbation[] = [
 	{ name: "num-house", f: (s) => spellHouseNumber(s) },
 ]
 
-/**
- * Known deterministic invariance failures, tracked as non-blocking xfails.
- *
- * The runner flags tracked cases that begin passing so stale entries can be removed.
- */
 const KNOWN_INV_XFAIL = new Map<string, string>()
 
-/**
- * Known deterministic band misses, tracked as non-blocking xfails.
- * Tracked cases that begin passing are reported for removal.
- */
 const KNOWN_BAND_XFAIL = new Map<string, string>()
 
-/**
- * Strip a 5-digit (US/FR) postcode token for the DIR test.
- */
 const dropPostcode = (s: string) =>
 	s
 		.replace(/\b\d{5}\b/, "")
@@ -325,9 +232,10 @@ function bump(m: Map<string, Tally>, name: string, key: keyof Tally): void {
 }
 
 /**
- * Run the metamorphic layer.
+ * Runs the gauntlet's metamorphic checks over the base addresses and prints a per-perturbation report.
  *
- * @returns `pass` (no new INV/DIR/band violation beyond the tracked xfails).
+ * It passes only when no invariance, drop-postcode or corruption-band check
+ * fails beyond the tracked expected failures.
  */
 export async function runMetamorphicLayer(options: GauntletLayerOptions = {}): Promise<{ pass: boolean }> {
 	const deps = await buildGauntletDeps(layerDepsOptions(options))
@@ -349,13 +257,10 @@ export async function runMetamorphicLayer(options: GauntletLayerOptions = {}): P
 	for (const base of BASES) {
 		const canon = await runOne(base.input, deps)
 
-		// INV: every label-preserving perturbation must reproduce the canonical coordinate + tier.
 		for (const p of INV) {
 			const perturbed = p.f(base.input, base)
 
 			if (perturbed == null) continue
-
-			// perturbation not applicable to this base (e.g. No expandable suffix)
 
 			invChecks++
 			bump(invTally, p.name, "checks")
@@ -387,7 +292,6 @@ export async function runMetamorphicLayer(options: GauntletLayerOptions = {}): P
 			}
 		}
 
-		// DIR: dropping the postcode must still resolve near the with-postcode anchor.
 		if (base.postcode) {
 			dirChecks++
 			const dropped = await runOne(dropPostcode(base.input), deps)
@@ -406,15 +310,12 @@ export async function runMetamorphicLayer(options: GauntletLayerOptions = {}): P
 			}
 		}
 
-		// band: a corrupting perturbation may shift the parse, but must land within the tolerance band.
 		for (const p of BAND) {
 			const perturbed = p.f(base.input, base)
 
 			if (perturbed == null || perturbed === base.input) continue
 
 			if (canon.lat == null) continue
-
-			// no clean anchor to measure a band against
 
 			bandChecks++
 			bump(bandTally, p.name, "checks")
@@ -447,7 +348,6 @@ export async function runMetamorphicLayer(options: GauntletLayerOptions = {}): P
 
 	deps[Symbol.dispose]()
 
-	// Anti-rot: a tracked xfail that did not fire has been fixed — surface it so the list can't accrete stale entries.
 	const newlyPassing = [
 		...[...KNOWN_INV_XFAIL].filter(([key]) => !xfailHit.has(key)),
 		...[...KNOWN_BAND_XFAIL].filter(([key]) => !bandXfailHit.has(key)),
@@ -508,8 +408,6 @@ export async function runMetamorphicLayer(options: GauntletLayerOptions = {}): P
 		}
 	}
 
-	// The check fails on new regressions only.
-	// A newly-passing xfail is a bookkeeping nudge rather than a failure.
 	const pass = invFails === 0 && dirFails === 0 && bandFails === 0
 	const trackedTotal = xfailHit.size + bandXfailHit.size
 

@@ -2,26 +2,6 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- *
- *   The yardstick figure — "the dedup F1 climbs as the entity-truth gets honest."
- *
- *   The #625 finding, made visual: the matcher's measured dedup quality depends almost entirely on
- *   which ruler you grade it against rather than on the model. NPI-as-truth over-segments (one org holds
- *   many NPIs), so the matcher's correct co-located same-org merges are scored as errors. Grade the
- *   identical clusters against a gold-set-validated org-name truth and the F1 climbs — the ruler
- *   ceasing to charge for correct merges rather than the model changing — peaking when the ruler keys on
- *   the geocoded building (the geocode-first coordinate) rather than the address string (+14.5pp
- *   NPI → coord).
- *
- *   A slope chart over four rulers (NPI → site → org-name → org-name-coord) for the shipped GBT
- *   scorer and the FS baseline. Numbers are the committed measurement in
- *   `docs/records/evals/matcher-dedup/2026-06-16-dedup-dual-level-benchmark.md` (1000 TX NPIs → 2757 records).
- *
- *   Emits a self-contained SVG (the docs' committed-chart-asset convention — see
- *   `docs/records/evals/charts/*.svg`), no browser required.
- *
- *   Run: `mailwoman registry viz yardstick-figure
- *   [--out-svg docs/records/evals/charts/dedup-yardstick.svg]`
  */
 
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
@@ -32,14 +12,11 @@ import { escapeHTML } from "@mailwoman/core/strings/escape"
  */
 export interface YardstickFigureOptions {
 	/**
-	 * Output SVG path.
-	 *
-	 * Default `docs/records/evals/charts/dedup-yardstick.svg` (relative to cwd).
+	 * Sets the output SVG path relative to the working directory, defaulting
+	 * to `docs/records/evals/charts/dedup-yardstick.svg`.
 	 */
 	outSVG?: string
 }
-
-// ── The committed measurement (2026-06-16-dedup-dual-level-benchmark.md). ────────────────────────
 
 interface Grain {
 	key: "NPI" | "site" | "org-name" | "org-name-coord"
@@ -60,23 +37,15 @@ const GRAINS: Grain[] = [
 	},
 ]
 
-/**
- * F1 per (model, grain), in %.
- */
 const F1: Record<string, [number, number, number, number]> = {
-	GBT: [53.6, 55.3, 60.7, 68.1], // shipped default
-	FS: [45.1, 42.7, 52.3, 60.3], // FS full stack baseline
+	GBT: [53.6, 55.3, 60.7, 68.1],
+	FS: [45.1, 42.7, 52.3, 60.3],
 }
 
-/**
- * Over-merged cluster counts per (model, grain) — the genuine-precision story for GBT.
- */
 const OVERMERGE: Record<string, [number, number, number, number]> = {
 	GBT: [109, 208, 92, 76],
 	FS: [144, 253, 129, 114],
 }
-
-// ── Geometry. ───────────────────────────────────────────────────────────────────────────────────
 
 const W = 760
 const H = 430
@@ -114,7 +83,6 @@ export async function yardstickFigure(
 		`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" font-family="ui-sans-serif, system-ui, sans-serif" font-size="11"><rect width="${W}" height="${H}" fill="white"/>`
 	)
 
-	// Title + subtitle.
 	push(
 		`<text x="${W / 2}" y="24" text-anchor="middle" font-size="15" font-weight="600">The dedup F1 climbs as the entity-truth gets honest</text>`
 	)
@@ -123,7 +91,6 @@ export async function yardstickFigure(
 		`<text x="${W / 2}" y="42" text-anchor="middle" font-size="11.5" fill="#555">Identical matcher output (the same clusters) graded against four rulers — 1000 TX NPIs → 2757 records, NPI held out</text>`
 	)
 
-	// Y gridlines + labels.
 	for (let v = Y_MIN; v <= Y_MAX; v += 5) {
 		const y = yFor(v)
 
@@ -138,7 +105,6 @@ export async function yardstickFigure(
 		`<text transform="translate(20, ${(plotT + plotB) / 2}) rotate(-90)" text-anchor="middle" font-size="12" fill="#374151">entity-resolution F1</text>`
 	)
 
-	// X category ticks + labels + the class-count + note strip.
 	GRAINS.forEach((g, i) => {
 		const x = xFor(i)
 
@@ -162,7 +128,6 @@ export async function yardstickFigure(
 		})
 	})
 
-	// Model slope lines + points.
 	for (const m of MODELS) {
 		const f1s = F1[m.key]!
 		const pts = f1s.map((f, i) => `${xFor(i).toFixed(1)},${yFor(f).toFixed(1)}`).join(" ")
@@ -175,7 +140,7 @@ export async function yardstickFigure(
 			const x = xFor(i)
 			const y = yFor(f)
 			push(`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${m.key === "GBT" ? 5 : 4}" fill="${m.color}"/>`)
-			// value label: above for GBT, below for FS, to avoid collision
+
 			const dy = m.key === "GBT" ? -10 : 16
 
 			push(
@@ -184,7 +149,6 @@ export async function yardstickFigure(
 		})
 	}
 
-	// Legend (top-right, in the right margin).
 	const lx = plotR + 16
 	let ly = plotT + 6
 
@@ -197,7 +161,6 @@ export async function yardstickFigure(
 		ly += 18
 	}
 
-	// The headline callout — the full climb for the shipped model, ending at the geocode-first key.
 	const gCoord = yFor(F1.GBT![3])
 	const gNPI = yFor(F1.GBT![0])
 
@@ -211,12 +174,10 @@ export async function yardstickFigure(
 			`</g>`
 	)
 
-	// Bracket the GBT climb on the right edge of the plot (NPI → coord, the full honest range).
 	push(
 		`<path d="M ${(plotR - 4).toFixed(1)} ${gNPI.toFixed(1)} L ${(plotR + 2).toFixed(1)} ${gNPI.toFixed(1)} L ${(plotR + 2).toFixed(1)} ${gCoord.toFixed(1)} L ${(plotR - 4).toFixed(1)} ${gCoord.toFixed(1)}" fill="none" stroke="#3578e5" stroke-width="1" opacity="0.5"/>`
 	)
 
-	// Footer caveat — the gold-set anchor.
 	push(
 		`<text x="${plotL}" y="${H - 10}" font-size="9.5" fill="#9ca3af">Gold set (2026-06-16-dedup-gold-set-tx120): 120/120 hard co-located pairs = same org, 0 genuine over-merges. The coordinate (geocode-first building key) is the tightest honest ruler; NPI charges correct same-org merges as errors.</text>`
 	)

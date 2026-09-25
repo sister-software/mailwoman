@@ -2,9 +2,6 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- *
- *   Resolve and probe the same artifacts used by the runtime. Open databases read-only for each call and close them
- *   afterward.
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
@@ -61,25 +58,28 @@ export interface LookupArgs {
 	source: LookupSource
 	queries: string[]
 	locale?: string
+
 	/**
-	 * Probe each locale's FST artifact.
-	 * Applies only to FST sources.
+	 * Names locales whose FST artifacts are probed separately and reported under
+	 * `by_locale`, and applies only to FST sources.
 	 */
 	locales?: string[]
 	country?: string
 	limit?: number
 	config?: EngineConfig
+
 	/**
-	 * For candidate lookups, compare results against a second database
-	 * and report per-query row and ranking changes.
+	 * Names a second candidate database that receives the same queries, so the result
+	 * reports per-query row and ranking deltas; it applies only to candidate lookups.
 	 */
 	compareCandidateDB?: string
 }
 
 /**
- * Probe a source and close any artifacts opened.
+ * Runs the queries against one lookup source and closes every artifact it opened.
  *
- * Missing artifacts return `unavailable_reason`, not per-query misses.
+ * A source whose artifact is missing returns no rows and an `unavailable_reason`,
+ * so it never reads as a miss for every query.
  */
 export async function runLookup(
 	registry: EngineRegistryLike,
@@ -114,7 +114,6 @@ export async function runLookup(
 
 		case LookupSource.Candidate: {
 			return await withArtifact(source, await resolveCandidateDB(config, dataRoot), async (db, path) => {
-				// Join split importance scores when the companion database exists.
 				const importancePath = wofDatabaseRoot(dataRoot)("admin-global-priority-importance.db").toString()
 
 				const importanceDB = (await pathExists(importancePath))
@@ -240,23 +239,14 @@ export async function runLookup(
 	}
 }
 
-/**
- * Resolve the candidate database like the runtime, preserving a missing
- * explicitly pinned path for diagnostics.
- */
 async function resolveCandidateDB(config: EngineConfig, dataRoot: PathBuilderLike): Promise<string | undefined> {
 	const resolved = await resolveCandidateDBPath(config.candidate_db, dataRoot)
 
 	if (resolved || !config.candidate_db || config.candidate_db === "none") return resolved
 
-	// Preserve the pinned path so the open error identifies it.
 	return config.candidate_db
 }
 
-/**
- * Open a sealed artifact for one lookup and always close it.
- * Unavailable artifacts return no rows.
- */
 async function withArtifact<T extends LookupResult>(
 	source: LookupSource,
 	path: string | undefined,
@@ -277,16 +267,10 @@ async function withArtifact<T extends LookupResult>(
 	}
 }
 
-/**
- * Explain that an unavailable source is not evidence of a query miss.
- */
 const UNAVAILABLE_NOTE =
 	"No row is reported, because a source whose artifact is missing answers 'no' to everything — which would read as " +
 	"absence for every query rather than as an unavailable source."
 
-/**
- * Probe all resolvable WOF extracts and report any that could not be opened.
- */
 async function runWOFLookup(args: LookupArgs, dataRoot: PathBuilderLike): Promise<LookupResult> {
 	const paths = resolveWOFDatabasePaths(args.config?.resolve_db, dataRoot)
 	const extracts: WOFExtract<WOFDatabase>[] = []
@@ -344,9 +328,6 @@ async function runWOFLookup(args: LookupArgs, dataRoot: PathBuilderLike): Promis
 	}
 }
 
-/**
- * Probe a locale's postcode anchor artifact using its model-card span mode.
- */
 async function runPostcodeLookup(args: LookupArgs): Promise<LookupResult> {
 	const locale = args.locale ?? args.config?.locale ?? "en-us"
 	let resolved: Awaited<ReturnType<typeof resolveWeights>>
@@ -400,9 +381,6 @@ async function runPostcodeLookup(args: LookupArgs): Promise<LookupResult> {
 	}
 }
 
-/**
- * Load binary anchors through the indexed resolver; parse and wrap JSON anchors for the same interface.
- */
 async function loadAnchorArtifact(artifact: { path: string; binary: boolean }): Promise<PostcodeAnchorResolver> {
 	if (artifact.binary) {
 		return new PostcodeBinaryResolver(new Uint8Array(await readLocalBuffer(artifact.path)))
@@ -421,9 +399,6 @@ async function loadAnchorArtifact(artifact: { path: string; binary: boolean }): 
 	}
 }
 
-/**
- * Probe the FST artifacts loaded by a session with the gazetteer prior enabled.
- */
 async function runFSTLookup(registry: EngineRegistryLike, args: LookupArgs): Promise<LookupResult> {
 	const notes =
 		args.source === LookupSource.FST
@@ -437,7 +412,6 @@ async function runFSTLookup(registry: EngineRegistryLike, args: LookupArgs): Pro
 	if (args.locales?.length) {
 		const byLocale: NonNullable<LookupResult["by_locale"]> = {}
 
-		// Build locales sequentially; the registry evicts sessions at its configured cap.
 		for (const locale of args.locales) {
 			byLocale[locale] = await probeLocaleFST(registry, args, locale)
 		}
@@ -459,9 +433,6 @@ async function runFSTLookup(registry: EngineRegistryLike, args: LookupArgs): Pro
 	}
 }
 
-/**
- * Probe one locale and report a missing artifact explicitly.
- */
 async function probeLocaleFST(
 	registry: EngineRegistryLike,
 	args: LookupArgs,

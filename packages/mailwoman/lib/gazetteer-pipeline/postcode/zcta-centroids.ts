@@ -2,20 +2,12 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- *
- *   Fill placeholder US postcode coordinates from Census ZCTAs, then GeoNames postal data.
- *   Preserve existing coordinates and record per-row source provenance.
- *   GeoNames-derived coordinates require CC-BY 4.0 attribution in distributed databases.
  */
 
 import { readUnquotedTSVText } from "@mailwoman/core/fs/delimited"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 
-/**
- * Columns a US Census gazetteer row carries.
- * Short rows are truncated and skipped.
- */
 const GAZETTEER_ROW_COLUMNS = 7
 
 /**
@@ -24,23 +16,22 @@ const GAZETTEER_ROW_COLUMNS = 7
 export const ZCTA_SOURCE = "census-zcta-2024"
 
 /**
- * Provenance label for rows filled from the GeoNames US postal file (CC-BY 4.0).
- *
- * Any DB that ships rows with this source tag must attribute "GeoNames (CC-BY 4.0)".
+ * Tags centroid rows filled from the GeoNames US postal file, which is CC-BY 4.0,
+ * so any database shipping such rows must attribute "GeoNames (CC-BY 4.0)".
  */
 export const GEONAMES_US_SOURCE = "geonames-us"
 
+/**
+ * Holds one postcode centroid in WGS84 degrees.
+ */
 export interface ZCTACentroid {
 	lat: number
 	lon: number
 }
 
 /**
- * Parse a Census zcta Gazetteer file (tab-delimited. Header `geoid ... Intptlat intptlong`)
- * into a 5-digit-code → centroid map.
- *
- * Skips the header, non-5-digit GEOIDs, non-finite coordinates, and `(0,0)` rows
- * (a placeholder must never fill a placeholder).
+ * Parses a Census ZCTA Gazetteer TSV into a map from 5-digit code to its internal point,
+ * skipping `(0,0)` rows so a placeholder never fills a placeholder.
  */
 export function parseZCTACentroids(text: string): Map<string, ZCTACentroid> {
 	const out = new Map<string, ZCTACentroid>()
@@ -61,12 +52,10 @@ export function parseZCTACentroids(text: string): Map<string, ZCTACentroid> {
 }
 
 /**
- * Fill `(0,0)`-placeholder US postcode rows in a WOF postcode database's `spr` table
- * from the zcta centroid map, recording per-row provenance in `centroid_source`.
+ * Fills current US postcode rows in `spr` that still sit at `(0,0)` from the given
+ * centroid map and records each filled row's provenance in `centroid_source`.
  *
- * Rows with a real coordinate are never touched.
- * Placeholders without a zcta stay placeholder (and get no provenance row).
- * Idempotent.
+ * Rows with a real coordinate are never touched, so the fill is idempotent.
  *
  * @returns The number of rows filled.
  */
@@ -75,8 +64,6 @@ export function fillPlaceholderCentroids(
 	zcta: ReadonlyMap<string, ZCTACentroid>,
 	source: string = ZCTA_SOURCE
 ): number {
-	// Raw DDL by design: this is a sync helper that borrows `db` and is exercised by a sync, heavily-
-	// asserted test, so routing one if-not-exists provenance table through async Kysely isn't worth it.
 	db.exec(`CREATE TABLE IF NOT EXISTS centroid_source (id INTEGER PRIMARY KEY, source TEXT NOT NULL)`)
 
 	const placeholders = db
@@ -115,22 +102,11 @@ export function fillPlaceholderCentroids(
 }
 
 /**
- * Parse a GeoNames postal file (TSV, no header. Columns: country(0), postcode(1), place(2),
- * adm1-name(3), adm1-code(4), adm2-name(5), adm2-code(6), adm3-name(7), adm3-code(8),
- * lat(9), lon(10), accuracy(11)) into a postcode → mean-centroid map.
+ * Parses a headerless GeoNames postal TSV into a map from postcode to the mean
+ * of its place coordinates, skipping `(0,0)` rows.
  *
- * Multiple rows for the same postcode (one per place sharing the code) are averaged.
- * Non-finite coordinates and `(0,0)` placeholder rows are skipped.
- *
- * Source: download.geonames.org/export/zip/<CC>.zip → `<CC>.txt`.
- * License: CC-BY 4.0.
- *
- * Attribution required in any DB that ships the resulting coordinates.
- *
- * Deliberately not `geonames-postal.ts`'s `geonamesPostalRows`: this reader is
- * synchronous over an in-memory string (its tests call it directly), and its
- * `Number` + `(0, 0)`-skip validity rules differ from that iterator's `pyFloat` port —
- * swapping either would move the database's mean centroids.
+ * It deliberately does not reuse `geonamesPostalRows`, whose different number
+ * parsing would shift the stored mean centroids.
  */
 export function parseGeonamesCentroids(text: string): Map<string, ZCTACentroid> {
 	const acc = new Map<string, { lat: number; lon: number; n: number }>()
@@ -163,24 +139,16 @@ export function parseGeonamesCentroids(text: string): Map<string, ZCTACentroid> 
 }
 
 /**
- * Fill `(0,0)`-placeholder US postcode rows from GeoNames postal centroids,
- * stamping provenance as `geonames-us`.
+ * Fills current US postcode rows in `spr` that are still `(0,0)` from GeoNames centroids, so census
+ * ZCTA and WOF coordinates are never overwritten, and stamps each filled row as `geonames-us`.
  *
- * Runs only on rows that are still `(0,0)`, never overwrites a census-zcta or WOF coordinate.
- * Idempotent (the update re-checks `latitude=0 and longitude=0`).
- *
- * Returns the number of rows filled.
- *
- * GeoNames is CC-BY 4.0: any DB that ships rows with source `geonames-us` must
- * attribute "GeoNames (CC-BY 4.0)".
+ * @returns The number of rows filled.
  */
 export function fillGeonamesPlaceholders(
 	db: DatabaseClient<WOFDatabase>,
 	geonames: ReadonlyMap<string, ZCTACentroid>,
 	source: string = GEONAMES_US_SOURCE
 ): number {
-	// Raw DDL by design: this is a sync helper that borrows `db` and is exercised by a sync, heavily-
-	// asserted test, so routing one if-not-exists provenance table through async Kysely isn't worth it.
 	db.exec(`CREATE TABLE IF NOT EXISTS centroid_source (id INTEGER PRIMARY KEY, source TEXT NOT NULL)`)
 
 	const placeholders = db
