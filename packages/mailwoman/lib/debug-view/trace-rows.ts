@@ -18,6 +18,7 @@
  *   against a pane width without owning any of the vocabulary.
  */
 
+import { bareBIOTag } from "@mailwoman/codex/component"
 import { softmax } from "@mailwoman/neural/viterbi"
 
 import type { GeocodeTrace } from "#geocode/session"
@@ -174,7 +175,7 @@ export function decodeRow(trace: GeocodeTrace | undefined): string {
 	const sequence: string[] = []
 
 	for (const token of tokens) {
-		const label = token.label.replace(/^[BI]-/u, "")
+		const label = bareBIOTag(token.label)
 
 		if (label !== "O" && sequence.at(-1) !== label) {
 			sequence.push(label)

@@ -7,6 +7,7 @@
  *   gaps remain separate because they can mark a component boundary.
  */
 
+import { bareBIOTag } from "@mailwoman/codex/component"
 import type { DecoderToken } from "@mailwoman/core/decoder"
 
 /**
@@ -93,8 +94,8 @@ export function bridgePunctuationGaps(
 			}
 
 			const prev = back >= 0 ? out[back]! : undefined
-			const tag = token.label.replace(/^[BI]-/, "")
-			const prevTag = prev?.label.replace(/^[BI]-/, "")
+			const tag = bareBIOTag(token.label)
+			const prevTag = prev === undefined ? undefined : bareBIOTag(prev.label)
 			const skipped = out.slice(back + 1)
 			const skippedInsideGap = prev !== undefined && skipped.every((t) => t.start >= prev.end && t.end <= token.start)
 

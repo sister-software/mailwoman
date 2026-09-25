@@ -89,6 +89,17 @@ export const BIO_LABELS = ["O", ...COMPONENT_TAGS.flatMap((tag) => [`B-${tag}`, 
 export type BIOLabel = (typeof BIO_LABELS)[number]
 
 /**
+ * The tag carried by a BIO label, with its `B-` or `I-` prefix removed.
+ *
+ * `O` has no tag and is returned unchanged, so a caller comparing the result against
+ * a tag set reads the outside label rather than an empty string.
+ * A caller that must separate "outside" from "inside a tag" tests for `O` itself.
+ */
+export function bareBIOTag(label: string): string {
+	return label.replace(/^[BI]-/u, "")
+}
+
+/**
  * The street-name family in assembly order: prefix, particle, name, suffix.
  *
  * The order is part of the interface.

@@ -39,7 +39,7 @@
  */
 
 import type { BIOLabel } from "@mailwoman/codex/component"
-import { BIO_LABELS } from "@mailwoman/codex/component"
+import { bareBIOTag, BIO_LABELS } from "@mailwoman/codex/component"
 import { buildAddressTree, type DecoderToken, type AddressTree } from "@mailwoman/core/decoder"
 import {
 	decodeSegmentationsKBest,
@@ -163,7 +163,7 @@ function spliceStreetTree(
 	const argmaxStreetIdx = new Set<number>()
 
 	for (let i = 0; i < tokens.length; i++) {
-		const tag = tokens[i]!.label.replace(/^[BI]-/, "")
+		const tag = bareBIOTag(tokens[i]!.label)
 
 		if (STREET_SEGMENT_TYPES.has(tag)) {
 			argmaxStreetIdx.add(i)
@@ -247,7 +247,7 @@ export async function rerankByStreetEvidence(
 	// Postcode is not an anchor: adding it removed a little US collateral
 	// but mislabels 4-digit years as postcode, killing the date-name board (0.550→0.215) —
 	// too blunt for a real gain, so the anchor set stays country+region only.
-	if (trace.tokens.some((t) => ANCHOR_TAGS.has(t.label.replace(/^[BI]-/, "")))) {
+	if (trace.tokens.some((t) => ANCHOR_TAGS.has(bareBIOTag(t.label)))) {
 		return { tree: buildAddressTree(trace.text, trace.tokens), moved: false, rank: 0, streetSurface: "" }
 	}
 

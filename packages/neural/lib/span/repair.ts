@@ -19,6 +19,7 @@
  *   pull them up here.
  */
 
+import { bareBIOTag } from "@mailwoman/codex/component"
 import type { DecoderToken } from "@mailwoman/core/decoder"
 
 /**
@@ -169,9 +170,11 @@ export function tokenIndicesOverlapping(tokens: readonly DecoderToken[], start: 
 
 /**
  * Extract the bare tag from a BIO label ("B-locality" → "locality", "O" → null).
+ *
+ * Unlike {@link bareBIOTag}, `O` reads as the absence of a tag rather than as a tag named `O`.
  */
 export function tagOf(label: string): string | null {
-	return label === "O" ? null : label.slice(2)
+	return label === "O" ? null : bareBIOTag(label)
 }
 
 /**

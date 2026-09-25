@@ -7,6 +7,7 @@
  *   inputs, and the report names every input whose first token is not decoded as a postcode.
  */
 
+import { bareBIOTag } from "@mailwoman/codex/component"
 import { BARE_POSTCODE_EVAL_CASES, type BarePostcodeEvalFamily } from "@mailwoman/corpus/recipes/bare/postcode/eval"
 import type { NeuralParseTrace } from "@mailwoman/neural"
 
@@ -24,7 +25,7 @@ export interface BarePostcodeCapabilityResult {
 function headTag(trace: NeuralParseTrace): string {
 	const index = trace.path[0]
 
-	return index === undefined ? "(none)" : (trace.labels[index] ?? "(none)").replace(/^[BI]-/u, "")
+	return index === undefined ? "(none)" : bareBIOTag(trace.labels[index] ?? "(none)")
 }
 
 /**
