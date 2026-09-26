@@ -3,31 +3,27 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The shop as data: the one Product, the two Prices, the shape of a Payment Link, the portal's features and the
- *   webhook's events. `provision.ts` reconciles a Stripe account against it, test mode and live mode alike, so the
- *   objects the worker depends on are defined here and nowhere in a dashboard. The plan codes are the Price lookup keys,
- *   which is how a provisioned Price is found again without an id in git.
+ * The shop as data: `provision.ts` reconciles a Stripe account against it, test mode and live mode alike, so the objects the worker depends on are defined here and nowhere in a dashboard, and the plan codes are the Price lookup keys, so a provisioned Price is found again without an id in git.
  */
 
 import type { CommercialPlan } from "#plans"
 
 /**
- * The agreement version the Payment Links carry as metadata and the worker records on every license.
- *
- * Bumping it is a new terms page, new Payment Links, and a new value in each
- * environment's `AGREEMENT_VERSION`.
+ * The agreement version the Payment Links carry as metadata and the worker
+ * records on every license: bumping it is a new terms page, new Payment Links,
+ * and a new value in each environment's `AGREEMENT_VERSION`.
  */
 export const AGREEMENT_VERSION = "commercial-2026-10"
 
 /**
- * The Payment Link custom field that collects the licensee's legal name.
- * The worker reads the session field by this key.
+ * The Payment Link custom field that collects the licensee's legal name
+ * and that the worker reads the session by.
  */
 export const LICENSEE_FIELD_KEY = "licensee_legal_name"
 
 /**
- * The Payment Link metadata key Stripe copies onto each Checkout Session.
- * The worker reads the agreement version from it.
+ * The Payment Link metadata key Stripe copies onto each Checkout Session,
+ * which the worker reads the agreement version from.
  */
 export const AGREEMENT_METADATA_KEY = "agreement_version"
 
@@ -43,22 +39,18 @@ export const SHOP_MARK = "commercial-license"
 
 /**
  * What Checkout collects from a buyer beyond the payment, spread into a Payment Link
- * and into a Checkout Session built for a rehearsal alike: the licensee's legal name,
- * a billing address, consent to the terms, and the metadata the worker reads a session by.
- *
- * One function, so the two cannot drift.
+ * and into a Checkout Session built for a rehearsal alike, so the two cannot drift.
  */
 export interface CheckoutCollection {
 	custom_fields: Array<{ key: string; label: { type: "custom"; custom: string }; type: "text" }>
 	billing_address_collection: "required"
 	consent_collection: { terms_of_service: "required" }
 	/**
-	 * The promotion-code field on the checkout page.
-	 * The codes themselves live in the dashboard.
+	 * The promotion-code field on the checkout page; the codes themselves live in the dashboard.
 	 */
 	allow_promotion_codes: true
 	/**
-	 * No card when nothing is due: a 100%-off first invoice collects none,
+	 * No card when no payment is due: a 100%-off first invoice collects none,
 	 * and Stripe asks for one at the first invoice that charges.
 	 */
 	payment_method_collection: "if_required"
@@ -66,9 +58,8 @@ export interface CheckoutCollection {
 }
 
 /**
- * The fields of the collection a Payment Link can change after creation.
- *
- * The provisioner holds an existing link to these, and a change to any other field is a new link.
+ * The fields of the collection a Payment Link can change after creation: the provisioner
+ * holds an existing link to these, and a change to any other field is a new link.
  */
 export const RECONCILED_LINK_FIELDS = {
 	allow_promotion_codes: true,
@@ -107,7 +98,7 @@ export interface ShopPlan {
 }
 
 /**
- * The published prices: $250 a month, $2,400 a year (`docs/articles/pricing.mdx`).
+ * The published prices, also stated in `docs/articles/pricing.mdx`.
  */
 export const SHOP_PLANS: readonly ShopPlan[] = [
 	{ code: "commercial-monthly-v1", interval: "month", unitAmount: 25_000, currency: "usd" },

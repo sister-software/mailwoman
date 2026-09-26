@@ -185,7 +185,7 @@ The building at 123 Main Street contains 20 apartments. The human omitted the un
 
 A ZIP code is a delivery route rather than a point. But several mapping services return a centroid when given only a ZIP code — and label it "the address." The human copies the coordinates. The parser now has what looks like a high-confidence geocode that is a ZIP-level approximation, off by up to several miles.
 
-This is an input-quality problem rather than a parser problem, but the parser is the first system that can detect it: if the input is `90210` and nothing else, the parser should return `postcode=90210` at high confidence and `locality` at low confidence — not `locality=Beverly Hills` at high confidence inferred from the postcode.
+This is an input-quality problem rather than a parser problem, but the parser is the first system that can detect it: if the input is `90210` and no other component, the parser should return `postcode=90210` at high confidence and `locality` at low confidence — not `locality=Beverly Hills` at high confidence inferred from the postcode.
 
 ### Autocomplete contamination
 

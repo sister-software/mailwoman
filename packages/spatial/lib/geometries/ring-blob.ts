@@ -355,7 +355,7 @@ export interface DegreeExtent {
  * Both show up here on the first feature, before a whole layer is written to the wrong side of the planet.
  *
  * Shared BY every polygon ingest, because it is rectangle arithmetic over the ring types
- * and knows nothing about any product.
+ * and makes no assumption about any product.
  * `marginDegrees` is the caller's, because a declared extent is itself a rounded published
  * value and how tightly a source hugs its own is a fact about that source.
  *
@@ -413,8 +413,8 @@ export interface EncodedArea {
  * because a sample point that is not actually inside the polygon turns an
  * agreement check into a check on the sampler.
  *
- * Shared BY every polygon layer'S verify, because it is bounding-box arithmetic
- * over the ring blob and knows nothing about any product.
+ * Shared BY every polygon layer'S verify, because it is bounding-box arithmetic over
+ * the ring blob and makes no assumption about any product.
  * `gridSteps` is the one thing that differs between them: a layer whose polygons
  * are narrow strips needs a finer grid than one whose polygons are compact,
  * and the value is part of a layer's sampling receipt.

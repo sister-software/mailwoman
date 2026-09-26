@@ -26,7 +26,7 @@
  *
  *   and gdal cannot be asked TO preserve this. Its GeoJSON writer enforces the RFC 7946 winding
  *   unconditionally — `-lco RFC7946=no` is not a GeoJSONSeq option and `--config OGR_ORGANIZE_POLYGONS skip`
- *   changes nothing — so a reprojected GeoJSON stream returns Meath as 107 counter-clockwise exteriors
+ *   makes no change, so a reprojected GeoJSON stream returns Meath as 107 counter-clockwise exteriors
  *   totalling 2,371.9 km² against the Department's 2,232.1 km². The same conversion written as WKT keeps the
  *   source's 5/102 split intact, which is why `sdk/ingest.ts` streams WKT.
  */
@@ -152,7 +152,7 @@ function containsMajority(ring: ReadonlyArray<readonly number[]>, outer: Readonl
  * @param featureID Named in every refusal, so a build log says which feature
  * rather than only that one failed.
  * @throws {Error} When the feature carries no ring at all.
- * That is the one case with no reading: a feature reduced to nothing reads downstream
+ * That is the one case with no reading: a feature reduced to no rings reads downstream
  * as an absence of zoning, which is the one answer this layer must never invent.
  * A feature whose rings all read as holes does have a reading —
  * see {@link ResolvedRingRoles.exteriorByMagnitude}.

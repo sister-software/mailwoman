@@ -381,7 +381,8 @@ export async function createZoningAreaTable(db: ZoningSchemaHandle): Promise<voi
 			"zoning_area_provenance_grade_declared",
 			sql`provenance_grade in ('authoritative', 'inferred') and trim(provenance_grade) != ''`
 		)
-		// The local code is what this layer exists to repeat, so an empty one is refused at the storage layer rather than only at the ingest: a blank would read as a zone the authority named nothing.
+		// The local code is what this layer exists to repeat, so an empty one is refused at the storage
+		// layer rather than only at the ingest: a blank would read as a zone the authority left unnamed.
 		.addCheckConstraint("zoning_area_local_code_not_blank", sql`trim(local_code) != ''`)
 		.execute()
 }

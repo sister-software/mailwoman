@@ -2,10 +2,10 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file A `{@link}` or `{@linkcode}` naming a symbol nothing declares. The tag reads as a promise that the thing
+ * @file A `{@link}` or `{@linkcode}` naming a symbol with no declaration. The tag reads as a promise that the thing
  *   exists, and an agent following one implements the name instead of finding the code: `readPackageJSONFile` was
  *   never a declaration anywhere in this repository, only a `@see {@linkcode …}` target, and it was written twice
- *   before anyone noticed there was nothing to find.
+ *   before anyone noticed there was no declaration to find.
  *
  *   what IT checks. Only a bare identifier target — `{@link foo}`, `{@linkcode Foo.bar}` — against the set of names
  *   the tree declares or imports anywhere. A URL target, a path, and a `{@link foo | text}` label are all left alone.

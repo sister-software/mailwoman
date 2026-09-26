@@ -7,7 +7,7 @@
  *
  *   A manifest is only worth its accuracy — `data inventory` already found three shipped artifacts whose
  *   `build_cmd` names a path the workspace regroup moved, and one naming a gitignored scratchpad script.
- *   Those pass every "has a manifest" check and document nothing. So what is asserted here is not that the
+ *   Those pass every "has a manifest" check and document no build fact. So what is asserted here is not that the
  *   fields are populated but that each one is true of the build that produced it.
  */
 

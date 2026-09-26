@@ -3,10 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   End-to-end proof of the shim/worker split: a real MCP client spawns the real bin, calls a real tool through the
- *   forked worker, restarts the worker MID-session, and keeps working — the property the split exists for. No stubs
- *   anywhere: a stubbed worker would prove the test's own idea of the IPC protocol, and protocol drift between shim
- *   and worker is precisely the failure this file must catch.
+ *   End-to-end: no stubs, because protocol drift between shim and worker is the failure this file must catch.
  */
 
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
@@ -18,9 +15,8 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest"
 const CLI_PATH = resolvePackagePath("@mailwoman/dev-mcp", "lib", "cli", "index.ts")
 
 /**
- * Worker boot imports the whole mailwoman graph.
- *
- * Under vitest concurrency that is seconds rather than milliseconds.
+ * Worker boot imports the whole mailwoman graph, which is seconds rather than
+ * milliseconds under vitest concurrency.
  */
 const BOOT_TIMEOUT_MS = 120_000
 
@@ -53,8 +49,6 @@ describe("the never-stale shim", () => {
 			expect(names).toContain("mwdev_inputs")
 			expect(names).toContain("mwdev_restart")
 
-			// The schemas crossed the IPC boundary as plain JSON Schema — spot-check one
-			// is an object schema rather than a serialization accident.
 			const inputsTool = tools.find((tool) => tool.name === "mwdev_inputs")
 
 			expect(inputsTool?.inputSchema).toMatchObject({ type: "object" })
@@ -97,23 +91,13 @@ describe("the never-stale shim", () => {
 
 			expect(report.previous_pid).toBe(beforeStatus.pid)
 			expect(report.new_pid).not.toBe(beforeStatus.pid)
-			// A restart is not a source change: the same tree yields the same tool SET.
-			//
-			// Deliberately not `new_boot_fingerprint === previous_boot_fingerprint`.
-			// That digest covers the newest source mtime and `git status --porcelain`
-			// (`tree-fingerprint.ts`), so it moves whenever anything writes into the checkout,
-			// and under `yarn test` 866 other files run alongside this one, at least one of
-			// which re-populates the weights overlay by design.
-			// The assertion held only while nothing else touched the tree, which is true
-			// in isolation and false in the suite it runs in.
+			// The boot fingerprint covers the newest source mtime and `git status --porcelain`,
+			// so it moves whenever anything writes into the checkout; assert the tool SET instead.
 			expect(report.tools_changed).toBe(false)
 
-			// The plumbing each fork owns, which is load-independent: a worker reports the
-			// fingerprint it booted against, and the restart report carries each fork's
-			// own value rather than re-reading one for both.
+			// Each fork reports the fingerprint it booted against, so this comparison is load-independent.
 			expect(report.previous_boot_fingerprint).toBe(beforeStatus.boot_tree_fingerprint)
 
-			// The fresh worker serves: same client, same session, new module graph.
 			const after = await client.callTool({ name: "mwdev_daemon", arguments: { action: "status" } })
 			const afterStatus = after.structuredContent as Status
 
@@ -137,11 +121,9 @@ describe("the never-stale shim", () => {
 	it(
 		"rejects mis-shaped arguments at the schema, not deep inside the handler",
 		async () => {
-			// The split moved the SDK's validation out of the call path.
-			// The worker must re-impose it.
-			// A client holding a pre-restart schema sends exactly this shape — an array
-			// parameter as its JSON text — and the failure it gets back must name the arguments
-			// rather than a TypeError from whatever the handler tried to do with the string.
+			// The split moved the SDK's argument validation off the call path, so the worker must
+			// re-impose it: a client holding a pre-restart schema sends an array parameter as
+			// JSON text, and the failure must name the arguments rather than surface a TypeError.
 			const result = await client.callTool({
 				name: "mwdev_run",
 				arguments: { tally: '["tier"]' },

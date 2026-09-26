@@ -29,7 +29,7 @@ console.log(decodeAsJSON(tree))
 
 ## What it does
 
-Mailwoman is **not** an LLM and nothing about it is generative. It is a small
+Mailwoman is **not** an LLM and none of it is generative. It is a small
 transformer encoder (~30M params) doing BIO token classification over a 33-label
 address schema — boring NER, which is a feature for short, structured strings.
 
@@ -175,7 +175,7 @@ for the worked example.
 
 ### Which place the coordinate comes from
 
-When nothing finer than an administrative centroid resolved, result assembly walks a ladder and takes the first rung that has a coordinate. That ladder is **not fixed** — it leads with the postcode when the postcode is the finer thing, and with the locality otherwise:
+When no place finer than an administrative centroid resolved, result assembly walks a ladder and takes the first rung that has a coordinate. That ladder is **not fixed** — it leads with the postcode when the postcode is the finer thing, and with the locality otherwise:
 
 ```
 GB unit / NL PC6 / CA urban LDU   →   postcode, locality, dependent_locality, region, country

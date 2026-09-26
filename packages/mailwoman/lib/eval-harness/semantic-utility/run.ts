@@ -6,7 +6,7 @@
  *   The live half of the semantic-utility probe (#1928): load the frozen pre-registration, run its target
  *   and control rows through the same pipeline construction the POI board uses, and emit a receipt.
  *
- *   this module decides nothing IT did not read. Every row, every threshold and the baseline it compares
+ *   this module decides only what IT read. Every row, every threshold and the baseline it compares
  *   against come from `probe-definition.json`, which {@linkcode loadProbeDefinition} refuses to hand over
  *   if its content hash has moved. The runner adds an ARM label and the measurements; #1929 supplies one
  *   semantic observation and runs the same command, and #1930 reads the two receipts.
@@ -19,7 +19,7 @@
  *
  *   an ARM label is not A measurement OF what RAN. `semanticRoute` records whether the injected route was
  *   actually built, and what it was built from. A route dropped on the way in produces exactly the numbers
- *   a route that changed nothing produces, and the two are opposite findings. Every firing is recorded
+ *   a route that changed no behavior produces, and the two are opposite findings. Every firing is recorded
  *   beside its row as an observation carrying the assertion, its modality and every provenance record
  *   behind it, so the receipt states on whose authority each answered row's category was chosen.
  */

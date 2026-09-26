@@ -38,7 +38,7 @@ agrees on how the string is encoded, and Unicode allows the same visible text to
 than one way. The letter `é` can be one code unit (NFC, precomposed) or two (NFD, a bare `e`
 followed by a combining acute accent). A span of `[10, 15)` lands in a different place depending
 on which encoding the string uses. If the offsets are computed over one form and the raw text is
-stored in another, every label is shifted by the number of combining marks before it. Nothing
+stored in another, every label is shifted by the number of combining marks before it. No stage
 reports an error, and the model trains on misaligned labels.
 
 The assertion therefore checks a real requirement: character-offset labels are meaningful only

@@ -48,7 +48,7 @@ export interface POIBoardOptions {
 	enforce?: boolean
 	/**
 	 * Extra phrase lookup that the pipeline consults after the committed lexicon
-	 * and the POI name lookup both find nothing.
+	 * and the POI name lookup both find no entry.
 	 *
 	 * It is passed through as `CreateRuntimePipelineOpts.poiSemanticLookup`.
 	 *

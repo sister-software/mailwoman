@@ -57,7 +57,7 @@ describe("the family registry", () => {
 
 	it("keeps a claimed language clear of another family's packaged locales", () => {
 		// The packaged lookup runs first, so a language claimed by one family while another packages
-		// a locale in it would make the language claim cover nothing and the two paths disagree.
+		// a locale in it would make the language claim cover no locale and the two paths disagree.
 		for (const family of FAMILIES) {
 			for (const language of family.languages ?? []) {
 				for (const other of FAMILIES) {
@@ -105,7 +105,7 @@ describe("the family registry", () => {
 
 	it("answers undefined for a locale no family serves, rather than defaulting to Latin", () => {
 		// A locale with no declared graph is a finding the `weights-family` check reports.
-		// Reading it as the Latin family would decode its rows on a graph nothing says serves them.
+		// Reading it as the Latin family would decode its rows on a graph no family declares for them.
 		expect(familyForLocale("pt-br")).toBeUndefined()
 		expect(familyForScript("Cyrl")).toBeUndefined()
 	})
@@ -128,7 +128,7 @@ describe("familyFallbackFor", () => {
 	})
 
 	it("answers undefined for the three cases that are not a fallback", () => {
-		// A family id resolves to itself, so it falls back to nothing.
+		// A family id resolves to itself, so it has no fallback.
 		expect(familyFallbackFor("cjk")).toBeUndefined()
 		expect(familyFallbackFor("en-us")).toBeUndefined()
 		// A Latin overlay names its base in its manifest, so resolution follows

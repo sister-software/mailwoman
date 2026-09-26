@@ -94,10 +94,7 @@ describe("the committed address-source register", () => {
 	})
 
 	it("gives every source its own license decision, so one reading cannot grant many", () => {
-		// The register was built with one shared `unchecked-national-terms` id over 247 of the 389 sources.
-		// Electing terms against that id would have granted all 247 on one reading of one publisher's page.
-		// Each source now points at a decision of its own, which is what makes an
-		// election a statement about one publication.
+		// Each source points at a decision of its own, so an election is a statement about one publication.
 		const bySource = new Map<string, string[]>()
 
 		for (const source of register.sources) {
@@ -117,9 +114,6 @@ describe("the committed address-source register", () => {
 	})
 
 	it("refuses a copy whose publisher name was edited after the build", async () => {
-		// The worked case: a prose sweep rewrote `Contracts Finder / Find a Tender` to
-		// `Interfaces Finder / Find a Tender` on three rows, and the structural audit passed
-		// because it checks shape rather than whether a name is the publisher's (#2352).
 		// One character is enough to move the digest.
 		await using scratch = await temporaryDirectory("mw-register-edited-")
 		const edited = { ...register, sources: register.sources.map((source) => ({ ...source })) }
@@ -137,9 +131,7 @@ describe("auditAddressSourceRegister", () => {
 	const base: AddressSourceRegister = {
 		registerID: "test",
 		version: "0.0.0",
-		// A literal nobody generated, so it carries no meaningful digest.
-		// The structural audit does not read the field — `readAddressSourceRegister`
-		// checks it, against a file a build wrote.
+		// A literal nobody generated, so it carries no meaningful digest; the structural audit does not read the field.
 		contentDigest: "",
 		provenance: { source: "test" },
 		unresolved: ["addressRole", "upstreamLineage", "coverage", "personalDataReview"],
@@ -305,8 +297,6 @@ describe("applyLicenseDecisions", () => {
 	})
 
 	it("preserves every field of the recorded decision, which is what a rebuild used to lose", () => {
-		// The register is generated and rewritten whole, so before this merge a decision
-		// recorded in the OUTPUT was erased by the next build with no error.
 		// Each of these four fields is one the corpus acceptance rules require.
 		const applied = applyLicenseDecisions(generated, new Map([[elected.licenseID, elected]]))
 		const survivor = applied[0] as typeof elected
@@ -334,17 +324,16 @@ describe("applyLicenseDecisions", () => {
 	})
 
 	it("refuses a decision naming a licence the register does not carry", () => {
-		// Such a decision licenses nothing.
-		// Applying it silently would leave the register asserting a grant no source points at,
-		// which is the shape a typo or a removed source takes.
+		// Applying such a decision silently would leave the register asserting a grant no
+		// source points at, the shape a typo or a removed source takes.
 		expect(() =>
 			applyLicenseDecisions(generated, new Map([["no-such-licence", { ...elected, licenseID: "no-such-licence" }]]))
 		).toThrow(/does not carry/u)
 	})
 
 	/**
-	 * The smallest register the audit accepts, so these cases read the audit's verdict
-	 * on the applied decision rather than on the rest of the fixture.
+	 * The smallest register the audit accepts, so these cases read the audit's
+	 * verdict on the applied decision alone.
 	 */
 	function registerWith(licenses: readonly LicenseDecision[]): AddressSourceRegister {
 		return {
@@ -389,9 +378,8 @@ describe("applyLicenseDecisions", () => {
 	})
 
 	it("fails the audit when the recorded decision is incomplete, so the build refuses it", () => {
-		// `buildSourceRegister` throws when the audit reports a problem, so an incomplete
-		// decision never reaches the committed register.
-		// This is why the merge validates nothing itself.
+		// `buildSourceRegister` throws when the audit reports a problem, so an incomplete decision
+		// never reaches the committed register and the merge performs no validation itself.
 		const incomplete = {
 			licenseID: "unchecked-national-terms",
 			state: LicenseReviewState.Elected,
@@ -460,10 +448,8 @@ describe("permission by operation", () => {
 	})
 
 	/**
-	 * A grant permitting every act ingest performs and silent on publishing a model trained on it.
-	 *
-	 * That is the ordinary shape of a national open-data license, which addresses reuse of
-	 * the data rather than redistribution of a statistical model derived from it.
+	 * A grant permitting every act ingest performs and silent on publishing a model
+	 * trained on it, the ordinary shape of a national open-data license.
 	 */
 	const ingestOnly: ElectedLicense = {
 		licenseID: "terms-under-review",
@@ -484,8 +470,8 @@ describe("permission by operation", () => {
 	})
 
 	it("refuses model release on that same grant, because the terms never mention it", () => {
-		// A permissive dataset may be used without becoming publication-cleared.
-		// The grant is unchanged and the act being asked about is different.
+		// A permissive dataset may be used without becoming publication-cleared;
+		// the grant is unchanged and the act being asked about is different.
 		const problems = ingestEligibilityProblems(source, registerWith(ingestOnly), MODEL_RELEASE_OPERATIONS)
 
 		expect(problems).toHaveLength(2)
@@ -534,9 +520,7 @@ describe("permission by operation", () => {
 	})
 
 	/**
-	 * A license grant answers whether the publisher permits an act.
-	 *
-	 * Whether the records are about identifiable people is governed by different law
+	 * Whether records are about identifiable people is governed by different law
 	 * and reached through a different analysis, so an elected grant must not admit
 	 * a source whose personal-data question nobody asked.
 	 */
@@ -596,14 +580,9 @@ describe("permission by operation", () => {
 	})
 
 	/**
-	 * The grant shapes counsel is reading, written as the per-operation record would hold them.
-	 *
-	 * These are fixtures rather than elections.
-	 * No decision is recorded for any source, and nothing here elects one.
-	 *
-	 * What they establish is that the model can express each shape a real national
-	 * grant takes, and that the shape decides which acts it admits rather than a
-	 * single permissive or restrictive label doing so.
+	 * The grant shapes counsel is reading, written as the per-operation record would
+	 * hold them; the fixtures establish that the shape decides which acts it admits
+	 * rather than a single permissive or restrictive label doing so.
 	 */
 	describe("real grant shapes", () => {
 		const everyIngestAct = {
@@ -615,7 +594,7 @@ describe("permission by operation", () => {
 
 		it("admits every act under an attribution-only grant that names commercial reuse", () => {
 			// Licence Ouverte 2.0's shape: reuse for commercial or non-commercial purposes, worldwide,
-			// with one condition, and no reciprocal licensing requirement for a derivative work.
+			// with one condition and no reciprocal licensing requirement for a derivative work.
 			const attributionOnly: ElectedLicense = {
 				licenseID: "terms-under-review",
 				state: LicenseReviewState.Elected,
@@ -635,8 +614,8 @@ describe("permission by operation", () => {
 		})
 
 		it("admits a grant whose permission carries a condition, with the condition recorded beside it", () => {
-			// A modification-notice grant permits the act and requires a statement that the work was changed.
-			// The condition lives in `because` rather than becoming a refusal, because the act is permitted.
+			// A modification-notice grant permits the act and requires a statement that the
+			// work was changed, which lives in `because` rather than becoming a refusal.
 			const modificationNotice: ElectedLicense = {
 				licenseID: "terms-under-review",
 				state: LicenseReviewState.Elected,
@@ -659,9 +638,8 @@ describe("permission by operation", () => {
 		})
 
 		it("refuses model redistribution under a share-alike grant while admitting ingest", () => {
-			// The ODbL half of a dual-licensed dataset.
-			// Ingest is permitted and publishing a model trained on it is the act the reciprocal
-			// condition reaches, so the two answers differ under one grant.
+			// The ODbL half of a dual-licensed dataset: ingest is permitted and publishing a model trained
+			// on it is the act the reciprocal condition reaches, so the two answers differ under one grant.
 			const shareAlike: ElectedLicense = {
 				licenseID: "terms-under-review",
 				state: LicenseReviewState.Elected,
@@ -686,9 +664,8 @@ describe("permission by operation", () => {
 		})
 
 		it("records which half of a dual grant was elected, so the other half's conditions are not inherited", () => {
-			// A dual-licensed publication offers a choice.
-			// Electing one half is a decision with a reason, and the decision's own fields carry
-			// which half and why rather than a reader inferring it from the operations.
+			// A dual-licensed publication offers a choice; the decision's own fields carry
+			// which half was elected and why rather than a reader inferring it from the operations.
 			const elected: ElectedLicense = {
 				licenseID: "terms-under-review",
 				state: LicenseReviewState.Elected,
@@ -701,9 +678,8 @@ describe("permission by operation", () => {
 			expect(electedLicenseLabel(elected)).toBe("Licence Ouverte / Open Licence 2.0")
 			expect(elected.electedBecause).toContain("attribution-only half")
 
-			// Electing the permissive half says nothing about publishing a model,
-			// which nobody read these terms against.
-			// It reads unreviewed rather than inheriting either half's answer.
+			// Electing the permissive half makes no statement about publishing a model, which nobody
+			// read these terms against, so it reads unreviewed rather than inheriting either half's answer.
 			expect(permissionFor(elected, SourceOperation.RedistributeModel).permission).toBe(OperationPermission.Unreviewed)
 		})
 	})

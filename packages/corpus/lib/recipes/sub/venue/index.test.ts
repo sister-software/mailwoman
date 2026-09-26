@@ -4,12 +4,6 @@
  * @author Teffen Ellis, et al.
  *
  *   Fixture rung of the `sub-venue` recipe's verification ladder (fixtures → smoke → full build).
- *
- *   What is pinned here is the part no downstream count can catch. A composition report tells you the
- *   recipe output has 84,000 positives. it cannot tell you that one of them is a bare `Halle`, which the
- *   de-DE board says is a city of 240,000 people. So the promotion gate, the `identifier-required`
- *   shape constraint, the per-region identifier draw and the word-boundary rule that separates
- *   `Gate` from `Briggate` are asserted directly, against the committed lexicon.
  */
 
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
@@ -45,7 +39,6 @@ describe("promotedSurfacesFor", () => {
 		expect(surfaces).toContain("terminal")
 		expect(surfaces).toContain("concourse")
 		expect(surfaces).toContain("pier")
-		// 0 real of 3,273 in the GB extract — 3,204 of them bus stops named after a village hall.
 		expect(surfaces).not.toContain("hall")
 	})
 
@@ -55,7 +48,6 @@ describe("promotedSurfacesFor", () => {
 		expect(surfaces).not.toContain("wing")
 		expect(surfaces).not.toContain("pier")
 		expect(surfaces).not.toContain("hall")
-		// The rest of the shipped list is untouched by the US board.
 		expect(surfaces).toContain("terminal")
 		expect(surfaces).toContain("concourse")
 		expect(surfaces).toContain("gate")
@@ -66,7 +58,6 @@ describe("promotedSurfacesFor", () => {
 
 		expect(surfaces).toContain("hall")
 		expect(surfaces).toContain("terminal")
-		// 894 of 946 hits are Paris city gates and their Métro stations, and shape cannot separate them.
 		expect(surfaces).not.toContain("porte")
 		expect(surfaces).not.toContain("wing")
 	})
@@ -82,7 +73,6 @@ describe("promotedSurfacesFor", () => {
 	})
 
 	it("gives a non-English locale no English shipped surfaces", () => {
-		// The shipped list is English. es-ES gets exactly what its board earned.
 		expect(promotedSurfacesFor("es-ES", lexicon).map((s) => s.phrase)).toEqual(["terminal"])
 	})
 
@@ -109,9 +99,6 @@ describe("matchesPromotedShape", () => {
 	})
 
 	it("refuses a German hall whose follower is a WORD, not an identifier", () => {
-		// The 2026-08-05 smoke put `Halle Wohnstadt Nord` in the attested pool under a looser rule.
-		// `Wohnstadt` is a name.
-		// The de-DE board turns on an identifier following the phrase.
 		expect(matchesPromotedShape("halle wohnstadt nord", halle)).toBe(false)
 		expect(matchesPromotedShape("halle rosengarten", halle)).toBe(false)
 		expect(matchesPromotedShape("halle-südstadt", halle)).toBe(false)
@@ -131,7 +118,6 @@ describe("matchesPromotedShape", () => {
 		const gate = promotedSurfacesFor("en-GB", lexicon).find((s) => s.phrase === "gate")!
 		const terminal = promotedSurfacesFor("en-GB", lexicon).find((s) => s.phrase === "terminal")!
 
-		// `Inn`, `de` and `East` all clear a 1–4-character test and all classify as `other`.
 		expect(matchesPromotedShape("the gate inn", gate, shippedModifiers, true)).toBe(false)
 		expect(matchesPromotedShape("humberstone gate east", gate, shippedModifiers, true)).toBe(false)
 		expect(matchesPromotedShape("terminal de aviación", terminal, shippedModifiers, true)).toBe(false)
@@ -160,8 +146,7 @@ describe("isSignIdentifier", () => {
 			expect([value, isSignIdentifier(value)]).toEqual([value, true])
 		}
 
-		// Multi-letter prefixes are campus / platform / stop codes rather than identifiers.
-		// `AG1` is a Sheffield bus stop on a street called Arundel Gate.
+		// Multi-letter prefixes are campus, platform or stop codes rather than identifiers.
 		for (const value of ["AG1", "AG124", "BS04", "PWP2", "WSW3687", "RQ8", "CHU", "Inn", "de"]) {
 			expect([value, isSignIdentifier(value)]).toEqual([value, false])
 		}
@@ -190,7 +175,6 @@ describe("sampleIdentifier", () => {
 			}
 		}
 
-		// The lexicon measures 463 of 655 GB gate refs as bare digits (71%).
 		expect(digits / 2000).toBeGreaterThan(0.6)
 		expect(digits / 2000).toBeLessThan(0.82)
 	})
@@ -206,7 +190,6 @@ describe("sampleIdentifier", () => {
 			}
 		}
 
-		// 174 of 493 ES gate refs are ranges (B18-B20, D42-D43).
 		expect(ranges / 2000).toBeGreaterThan(0.2)
 	})
 
@@ -233,8 +216,6 @@ describe("sampleIdentifier", () => {
 	it("falls back to the region's pooled distribution for a designator with no refs of its own", () => {
 		const model = buildIdentifierModel(lexicon, "FR")
 
-		// `concourse` has zero identifierShapes rows in any region.
-		// The FR pool still answers.
 		expect(sampleIdentifier(model, "concourse", makeMulberry32(3))).toBeTruthy()
 	})
 })
@@ -256,7 +237,6 @@ describe("buildPositiveForms", () => {
 
 			if (/halle/i.test(form.text)) {
 				halleRows++
-				// Every Halle carries an identifier after it, and nothing before it.
 				expect(form.text).toMatch(/^Halle\s+\S+$/)
 			}
 		}
@@ -304,8 +284,6 @@ describe("buildPositiveForms", () => {
 			const form = buildSubVenueForm(leg, promoted, model, shippedModifiers, [], random)
 
 			if (form?.form !== "modifier-designator") continue
-			// "East Gate" and "Building Society Place" are streets.
-			// `gate` and `building` are not modifier-eligible, and neither is the newly-promoted `pier`.
 			expect(form.designatorID).not.toBe("gate")
 			expect(form.designatorID).not.toBe("building")
 			expect(form.designatorID).not.toBe("pier")
@@ -338,7 +316,6 @@ describe("isBoardReserved", () => {
 		expect(isBoardReserved("12 Briggate, Leeds, LS1 6ER")).toBe(true)
 		expect(isBoardReserved("Gate House, 1 Farringdon Street")).toBe(true)
 		expect(isBoardReserved("12 East Gate, Warwick")).toBe(true)
-		// A different -gate street of the same class is exactly what the recipe is allowed to teach.
 		expect(isBoardReserved("14 Stonegate, York")).toBe(false)
 	})
 })

@@ -124,4 +124,4 @@ instrument rather than oscillating a knob (v3.0.0 → v3.0.1 is the worked examp
 ## What unblocks when floors pass
 
 `hold/v1-parse-neural-check-blocked` (swap wiring, verified) → plans 4–5 → v7. The whole excision
-tail is mechanical from that point; nothing else is waiting on anything but the model.
+tail is mechanical from that point; no other task is waiting on anything but the model.

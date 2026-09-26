@@ -3,57 +3,26 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `familyRollup` — the corporate-family reader. A corporate family (a holding/parent/
- *   subsidiary/management tree spanning several different filers) is a rollup spec §4.1 keeps deliberately
- *   separate from an entity cluster (same filer, different identifiers — `cluster-filers.ts` /
- *   `filer-lookup.ts`'s `cluster` field). This module reads only `filer_family`; it never touches
- *   `filer_cluster` or the authoritative-edge entity-clustering path, so a family membership can never be
- *   returned here as an entity-cluster member, and this reader cannot be the source of the conflation check
- *   1 (`filer-lookup.test.ts`'s `describe("§7-3b criteria")`) exists to catch.
+ * `familyRollup` — the corporate-family reader. A corporate family (a holding/parent/subsidiary/management tree
+ * spanning several different filers) is a rollup spec §4.1 keeps deliberately separate from an entity cluster; this
+ * module reads only `filer_family` and never `filer_cluster`, so a family membership can never be returned here as an
+ * entity-cluster member.
  *
- *   Query shape mirrors `filerLookup`'s XOR discipline: exactly one of `familyID`/`nodeID` is required.
- *   Given a `familyID`, this returns that one family's membership (0 or 1 elements — see the return-shape
- *   note below). Given a `nodeID`, it resolves every family (if any) that node belongs to as of that date
- *   and returns the full rollup for each. A node can legitimately belong to more than one family at once
- *   (a filer whose holding company differs from its management company gets two different family
- *   memberships), and this is a normal shape rather than an exceptional one to guess around or refuse:
- *   `filerLookup.ts`'s own `families` field answers the identical "which families does this node belong to"
- *   question with an array, so throwing here would make the two surfaces disagree about whether a normal
- *   multi-family shape is exceptional.
+ * Exactly one of `familyID`/`nodeID` is required, mirroring `filerLookup`'s XOR discipline. The return is always
+ * `FamilyRollup[]`, never `null`: empty when no row is found, at most one element for a `familyID` (a `family_id`
+ * names exactly one family), and possibly more for a `nodeID`, because a node can legitimately belong to more than one
+ * family at once.
  *
- *   **Return shape: always `FamilyRollup[]`, never `null` or a bare
- *   object.** Empty when nothing is found — by `familyID`, when that family has no member row in force
- *   `asOf` the date (including when it has never existed at all); by `nodeID`, when that node belongs to no
- *   family as of that date. A `familyID` query returns at most one element (a `family_id` names exactly one
- *   family); a `nodeID` query may return more than one.
+ * Manifest-first like `filerLookup`: `readFilerManifest` runs before any `filer_family` query, {@linkcode
+ * assertFamilySchemaVersion} refuses a pre-`filer_family` artifact with a rebuild-pointing error, and `asOf` defaults
+ * to today via `filer-lookup.ts`'s {@linkcode todayISODate} rather than a second definition of it.
  *
- *   Manifest-first, same as `filerLookup`: `readFilerManifest` runs before any `filer_family` query, so this
- *   reader never answers with a made-up or missing `vintage`. Immediately after, {@linkcode
- *   assertFamilySchemaVersion} (`filer-lookup.ts`) refuses an artifact
- *   whose `schema_version` predates `filer_family` with a descriptive, rebuild-pointing error. `asOf`
- *   defaults to today via {@linkcode todayISODate}, imported from `filer-lookup.ts` rather than redefined
- *   here, so every reader in this SDK shares one definition of "today."
+ * The half-open temporal predicate is copied verbatim from `filer-lookup.ts` — `valid_from <= asOf and (valid_to is
+ * NULL or valid_to > asOf)` — because every reimplementation is another place for the readers to diverge.
  *
- *   Temporal scoping copies `filer-lookup.ts`'s exact half-open predicate verbatim — `valid_from <= asOf and
- *   (valid_to is NULL or valid_to > asOf)` — rather than reimplementing it: dropping the `valid_to` half, or
- *   making either bound inclusive, are easy mistakes that read as correct, and every reimplementation is
- *   another place to make one and another place for the readers to diverge.
- *
- *   **edgar-sourced families need no change here.** `build-filer.ts`'s edgar ingest writes
- *   `filer_family` rows shaped identically to every other writer's, so this module's query — generic over
- *   `relationship` and never keyed to a specific `source` — already answers a `familyID`/`nodeID` query for a
- *   `cik:`-named family exactly as it would for a `holding_company_name:`-named one. The one dependency this
- *   module has on a source-specific decision is `readFamilyDisplayNames` (`filer-lookup.ts`), which admits an
- *   inferred accompanying edge (edgar's subsidiary-name→FRN corroboration is inference by design, never
- *   authoritative) — see that function's own docstring for why admitting one cannot misattribute a display
- *   name to the wrong member.
- *
- *   **`members` grade themselves via `assertion`/`match_score`, not via `source`.** edgar's is the repo's
- *   first inferred family membership, and `source` cannot grade it — `edgar-exhibit-21` writes an
- *   authoritative disclosure edge and an inferred corroboration in the same build, so the source name spans
- *   both grades and a caller reading strength off it would need a private table of which sources are
- *   inferential. Criterion 2's "inferred never merges with authoritative" therefore reaches this rollup the same
- *   way it reaches `filerLookup`'s `cluster`/`inferred_links` split. See {@link FamilyRollupMember}.
+ * `members` grade themselves via `assertion`/`match_score` rather than `source`, because edgar's `edgar-exhibit-21`
+ * writes an authoritative disclosure edge and an inferred corroboration in the same build, so one source name spans
+ * both grades. See {@link FamilyRollupMember}.
  */
 
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
@@ -62,9 +31,8 @@ import { assertFamilySchemaVersion, readFamilyDisplayNames, readFamilyMembers, t
 import { readFilerManifest, type FilerDatabase } from "#schema"
 
 /**
- * Exactly one of `familyID`/`nodeID` is required — {@linkcode familyRollup} throws otherwise.
- *
- * `asOf` defaults to today (see {@linkcode todayISODate}).
+ * Exactly one of `familyID`/`nodeID` is required — {@linkcode familyRollup}
+ * throws otherwise — and `asOf` defaults to today.
  */
 export interface FamilyRollupQuery {
 	familyID?: string
@@ -73,64 +41,39 @@ export interface FamilyRollupQuery {
 }
 
 /**
- * One member of a corporate family, `asOf` the query's date.
- *
- * `relationship` is one of {@link FilerRelationship} (`schema.ts`), and `source`
- * is the `filer_family` row's own provenance.
- * Never collapsed on a repeat `node_id`: two different sources independently asserting
- * the same node's membership in the same family both survive as separate entries,
- * the same provenance-plurality convention every other reader in this SDK follows.
+ * One member of a corporate family as of the query's date, never collapsed on a repeat `node_id`:
+ * two sources independently asserting the same membership both survive as separate entries,
+ * the provenance-plurality convention every reader in this SDK follows.
  */
 export interface FamilyRollupMember {
 	node_id: string
 	relationship: string
 	/**
-	 * One of {@link FilerEdgeAssertion} (`schema.ts`) — how strongly this member's membership is evidenced.
-	 *
-	 * Carried here even though `source` is already present, because `source` provably cannot answer
-	 * the question: `edgar-exhibit-21` writes an authoritative disclosure edge and an inferred
-	 * corroboration in the same build, so one source name spans both grades, and any caller
-	 * reading strength off `source` would need a private table of which sources are inferential.
-	 * The same implicit-knowledge scheme `relationship` was added to end
-	 * when relationship kind lived in the target node's `identifier_type`.
+	 * How strongly this member's membership is evidenced; carried even though `source`
+	 * is present because `edgar-exhibit-21` writes an authoritative edge and an inferred
+	 * corroboration in the same build, so one source name spans both grades.
 	 */
 	assertion: string
 	/**
-	 * The inferred match's score; `null` on an authoritative membership.
-	 *
-	 * See {@link FamilyRollupMember.assertion}.
+	 * The inferred match's score, `null` on an authoritative membership.
 	 */
 	match_score: number | null
 	source: string
 }
 
 /**
- * {@linkcode familyRollup}'s per-family result shape — a corporate family's full membership, `asOf`-scoped.
+ * {@linkcode familyRollup}'s per-family result shape, the inverse of `filer-lookup.ts`'s
+ * `FilerLookupFamily`: it carries no `cluster_id`-shaped key and keeps `relationship`
+ * per-member because it answers who belongs to this family.
  *
- * Deliberately carries no `cluster_id`-shaped key and no single top-level `relationship`,
- * unlike the other family type this SDK exports, `filer-lookup.ts`'s `FilerLookupFamily`,
- * which answers "which families does one node belong to."
+ * `distinct_member_count` is `members` deduped by `node_id`, while `members` itself is
+ * never deduped (provenance plurality), so `members.length` over-counts whenever more
+ * than one row corroborates the same member; it counts distinct nodes rather than rows,
+ * so widening `filer_family`'s primary key cannot inflate it.
  *
- * This is the inverse view, "who belongs to this family," so `relationship` lives per-member instead.
- *
- * `distinct_member_count` is `members` deduped by `node_id`.
- * `members` itself is never deduped (provenance plurality: two different sources
- * asserting the same node's membership both survive as separate entries, as do two
- * different raw spellings one member reported for the same family), so `members.length`
- * alone over-counts whenever more than one row corroborates the same member.
- *
- * This mirrors `filerLookup.ts`'s `cluster.members`, which is already deduped (one entry per node).
- * Without this field, a caller sizing a family by array length would get an
- * inconsistent answer depending on which rollup they read.
- *
- * It counts distinct member nodes, never rows, so widening `filer_family`'s primary key cannot inflate it.
- *
- * `display_names` (`family_id` alone is a canonicalized slug, and losing the raw name entirely
- * was a real product loss for the headline "these filers report holding company H" output)
- * is {@linkcode readFamilyDisplayNames}'s output over this family's current members.
- * See that function's docstring for the exact join and for why a multi-spelling family
- * (two raw names canonicalizing to the same `family_id`) surfaces every spelling,
- * sorted, rather than picking one.
+ * `display_names` is {@linkcode readFamilyDisplayNames}'s output over this family's current
+ * members, and a multi-spelling family (two raw names canonicalizing to the same `family_id`)
+ * surfaces every spelling, sorted, rather than picking one.
  */
 export interface FamilyRollup {
 	family_id: string
@@ -142,16 +85,8 @@ export interface FamilyRollup {
 }
 
 /**
- * Read a `familyID`'s rollup at `asOf`.
- *
- * `null` when it has no member row in force at that date (including when it has never existed at all).
- *
- * Pulled out of {@linkcode familyRollup} so the `nodeID` path can call it once per
- * distinct family a node belongs to, instead of duplicating the member-query logic.
- * Reuses `filer-lookup.ts`'s {@linkcode readFamilyMembers}/{@linkcode readFamilyDisplayNames}
- * rather than inlining its own copies.
- *
- * `filerLookup`'s `families` field needs the identical two queries for the identical reason.
+ * Read a `familyID`'s rollup at `asOf`, or `null` when no member row is in force at
+ * that date (including when the family has never existed).
  */
 async function readFamilyRollup(
 	db: DatabaseClient<FilerDatabase>,
@@ -184,14 +119,9 @@ async function readFamilyRollup(
 }
 
 /**
- * Read every corporate family a `familyID`/`nodeID` resolves to.
- *
- * See the module docstring for the full interface (XOR query, manifest-first,
- * schema-version guard, temporal scoping, the always-array return shape).
- *
- * A `familyID` query returns at most one element.
- * A `nodeID` query may return more than one (a node legitimately belonging to more
- * than one family is a normal shape, never an error).
+ * Read every corporate family a `familyID`/`nodeID` resolves to; a `familyID` query
+ * returns at most one element, while a `nodeID` query may return several because a node
+ * legitimately belonging to more than one family is a normal shape rather than an error.
  */
 export async function familyRollup(
 	db: DatabaseClient<FilerDatabase>,
@@ -203,10 +133,9 @@ export async function familyRollup(
 		throw new Error("familyRollup: exactly one of `familyID`, `nodeID` is required")
 	}
 
-	// Manifest-first (matches filerLookup's discipline) — throws before any filer_family query runs at all.
+	// Manifest-first, matching `filerLookup`: this throws before any `filer_family` query runs.
 	const manifest = await readFilerManifest(db)
 
-	// same guard as filerLookup — refuse a pre-filer_family artifact descriptively.
 	assertFamilySchemaVersion(manifest.schema_version, "familyRollup")
 
 	const asOf = query.asOf ?? todayISODate()
@@ -219,10 +148,8 @@ export async function familyRollup(
 
 	const nodeID = query.nodeID!
 
-	// Resolve every family this node belongs to as of asOf.
-	// Same half-open predicate as every other temporal read in this module.
-	// Never throws on >1 result: a node carrying both a HoldingCompany and a ManagementCompany
-	// family membership is a normal, builder-emitted shape.
+	// Never throws on more than one result: a node carrying both a HoldingCompany
+	// and a ManagementCompany membership is a normal, builder-emitted shape.
 	const nodeFamilyRows = await db
 		.selectFrom("filer_family")
 		.select("family_id")
@@ -238,11 +165,9 @@ export async function familyRollup(
 	for (const familyID of distinctFamilyIDs) {
 		const rollup = await readFamilyRollup(db, familyID, asOf, manifest.source_vintage)
 
-		// Not expected to ever be null here — nodeFamilyRows just confirmed this node has
-		// an in-force row for this exact familyID at this exact asOf, so readFamilyRollup's
-		// own identical predicate will find at least that one member row.
-		// Guarded anyway rather than asserted, since silently trusting that invariant across two separate
-		// queries is the same class of shortcut this crosswalk's design otherwise refuses to take.
+		// Not expected to be null — the query above already confirmed an in-force row for
+		// this family at this `asOf` — but guarded rather than asserted, because trusting
+		// that invariant across two separate queries is a shortcut this design refuses.
 		if (rollup) {
 			rollups.push(rollup)
 		}

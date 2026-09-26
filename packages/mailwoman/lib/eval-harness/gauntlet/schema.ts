@@ -78,9 +78,9 @@ export interface GauntletCaseTable {
 	 * Expected resolved place id (null = place not asserted).
 	 *
 	 * Graded against `hierarchy[0].placeID` — see `check-case.ts`.
-	 * Stored from the corpus's first migration and read by nothing until 2026-08-06 (#1507),
+	 * Stored from the corpus's first migration and read by no code until 2026-08-06 (#1507),
 	 * which is worth knowing about any expectation column: it can sit in the schema,
-	 * the builder and the DDL, look asserted, and assert nothing.
+	 * the builder and the DDL, look asserted, and assert no fact.
 	 */
 	expect_place_id: string | null
 	/**
@@ -169,7 +169,7 @@ export interface GauntletCaseTable {
  * on 2026-08-06 `eval gauntlet-build regression-db` rebuilt it from a stale compiled tree
  * (an `out/` loader still exposing the deleted pre-jsonl case array), printed "built",
  * and every check afterwards graded a corpus nobody had.
- * Nothing in the DB could contradict it.
+ * No record in the DB could contradict it.
  *
  * The stamp is that contradiction — the same posture as #1488's FST freshness stamps.
  */

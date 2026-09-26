@@ -7,7 +7,7 @@
  *
  *   The failure this pins is silent and cross-artifact. Ids were `idBase + rowIndex` over a threaded DuckDB scan, so
  *   the same division took a different id in each build: `8000001092006` is _Dolok Merawan, Indonesia_ in one shipped
- *   artifact and _Skałówki, Poland_ in another. Nothing errors — a stored id simply starts naming a different place,
+ *   artifact and _Skałówki, Poland_ in another. No error is raised — a stored id simply starts naming a different place,
  *   which is how an eval row scored a miss against two backends that had both answered correctly.
  */
 

@@ -3,27 +3,16 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Start a long-running command in its own session and exit, so nothing that kills this process can reach the child.
+ *   Start a long-running command in its own session and exit, so no signal that kills this process can reach the
+ *   child.
  *
- *   what this is FOR. A Modal training launch is a local client talking to a remote container. Modal's `-d` does not
- *   make that client disposable. Its own banner says detached mode "only keeps the last triggered Modal function alive
- *   after the parent process has been killed" — and when the client dies Modal cancels the input:
+ *   `spawn(…, { detached: true })` calls `setsid(2)`, placing the child in a new session and group, so a group
+ *   signal has no member to reach; `unref()` then lets this process exit while the child continues.
  *
- *       [modal-client] Received a cancellation signal while processing input (…)
- *       [modal-client] Successfully canceled input (…)
+ *   `nohup` is not equivalent: it ignores SIGHUP and leaves the child in the same group, so a group kill still lands.
  *
- *   The container stops mid-training and the run is lost back to its last checkpoint. It has happened twice: a shell
- *   `timeout` around the launch on 2026-07-15, and an agent background task stopped by a host memory guard, which is
- *   the case this file exists to make impossible.
- *
- *   how IT works, and why the shell spellings do not. A harness stops a background task by signalling its process
- *   group. `spawn(…, { detached: true })` calls `setsid(2)` in the child, which places it in a new session and a new
- *   group. Therefore, a group signal has no member to reach; `unref()` then lets this process exit while the child continues.
- *   `nohup` is not equivalent. It ignores sighup and leaves the child in the same group, so a group kill still lands.
- *   `setsid` is equivalent and is not on the Bash guard's admitted command list.
- *
- *   The child's output goes to `--log`, because a detached child cannot inherit a terminal that is about to disappear.
- *   The pid and the log path print here so a caller can watch either one.
+ *   The child's output goes to `--log`, because a detached child cannot inherit a terminal that is about to
+ *   disappear.
  *
  *   Run: node packages/mailwoman/lib/dev-tools/launch-detached.run.ts --log <file> -- <command> [arg ...]
  */
@@ -56,9 +45,8 @@ const [command, ...args] = positionals as [string, ...string[]]
 
 await makeDirectories(dirname(logPath))
 
-// A raw descriptor rather than a `WriteStream`: `createWriteStream` opens lazily, so its `fd`
-// is still null at the moment `spawn` reads the stdio array, and the child inherits nothing.
-// Appending, so a relaunch of a resumed run keeps the earlier attempt's output in the same file.
+// A raw descriptor rather than a `WriteStream`, which opens lazily so its `fd` is still null
+// when `spawn` reads the stdio array; appending keeps a relaunch's output in the same file.
 const log = await open(logPath, "a")
 
 const child = spawnProcess(command, args, {
@@ -69,9 +57,8 @@ const child = spawnProcess(command, args, {
 
 child.unref()
 
-// This process owns the handle.
-// The child holds its own copy of the descriptor across the fork, so closing here does not disturb it.
-// Leaving it open would keep the event loop alive and defeat the point of `unref`.
+// This process owns the handle; the child holds its own copy across the fork,
+// and leaving it open would keep the event loop alive and defeat the point of `unref`.
 await log.close()
 
 console.log(`launched pid ${child.pid} in its own session`)

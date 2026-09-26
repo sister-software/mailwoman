@@ -16,7 +16,7 @@
  *        which merges stderr into its `.md` — as executable structure rather than a comment, checked
  *        against the shape each migrated module actually presents.
  *
- *   Weightless by construction (#582): nothing here loads a model, so it runs in CI. The numeric
+ *   Weightless by construction (#582): no code here loads a model, so it runs in CI. The numeric
  *   equivalence proof is the twice-run check receipt rather than a unit test.
  */
 

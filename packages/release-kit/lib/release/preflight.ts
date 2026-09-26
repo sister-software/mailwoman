@@ -7,7 +7,7 @@
  *   isolated root, materialize the weights artifacts there, then pack and audit all release
  *   workspaces with the same `packWorkspaceForPublish` + `verifyTarball` path CI publishes with.
  *   Performs zero git, GitHub, npm-registry, R2, or Hugging Face writes. an interrupted run leaves
- *   every tracked file byte-identical because nothing ever writes into the checkout (see
+ *   every tracked file byte-identical because no code ever writes into the checkout (see
  *   `stage.ts` for why staging rather than try/finally, is the mechanism).
  *
  *   Two sources, one audit. `--source repo` (the default) materializes weights from the machine's data
@@ -124,7 +124,7 @@ export async function releasePreflight(options: ReleasePreflightOptions): Promis
 
 	// 2. Stage + materialize + audit.
 	//    Both sources write into the staging tree only, so the two legs differ
-	// in where the bytes come from and in nothing the audit can see.
+	// in where the bytes come from and in no other way the audit can see.
 	log(`staging tracked tree → ${stagingRoot}`)
 	await stageReleaseTree(repoRoot, stagingRoot)
 

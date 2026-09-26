@@ -32,7 +32,7 @@ That's it. Three steps, each deterministic, each trivially updateable when a new
 ## What you lose
 
 - **Everything finer than the postcode's resolution.** In rural US, this is miles. In dense urban areas, a ZIP code can cover multiple distinct neighborhoods with different demographic profiles. Aggregating by ZIP centroid loses the fine-grained signal.
-- **Addresses without postcodes.** Ireland before 2015 (Eircode launch). Hong Kong. Rural routes in developing countries. Military addresses (APO/FPO). The regex extracts nothing, the lookup returns nothing, the geocoder fails.
+- **Addresses without postcodes.** Ireland before 2015 (Eircode launch). Hong Kong. Rural routes in developing countries. Military addresses (APO/FPO). The regex extracts no field, the lookup returns no result, the geocoder fails.
 - **Multi-city postcodes.** ZIP code 33334 covers Oakland Park, Wilton Manors, and Fort Lauderdale. The centroid is in one of them. The other two are wrong. The geocoder returns one city for a postcode that serves three.
 - **Postcodes that change.** USPS changes ~5,000 ZIP codes per year. A postcode-to-coordinate table built in 2024 has stale entries in 2026. The table must be updated continuously to stay current.
 - **No validation of the rest of the address.** The geocoder returns a coordinate for `90210` regardless of whether the street exists in Beverly Hills. `123 Fake St, Beverly Hills, CA 90210` geocodes to the 90210 centroid, silently accepting a nonexistent street.

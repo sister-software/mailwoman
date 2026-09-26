@@ -84,7 +84,7 @@ the card's `files_md5`. The runbook treats `wof-build-manifest.json` as a log be
 By that criterion the overlay cannot lag in the #1015 sense. A stale entry fails its digest check instead of
 being used.
 
-With this change, nothing symlinks into a tracked package directory any more. Those symlinks are the shared
+With this change no process symlinks into a tracked package directory any more. Those symlinks are the shared
 cause of three known hazards: `yarn test` mutating tracked directories as a side effect of
 `weights.test.ts`, the `fs.copyFile`-through-a-symlink trap in `copy-weights.ts`, and the publish tarball
 symlink refusal (`YN0035`). **The `publish-workspace.ts` dereference net stays.** Its usual cause is removed,
@@ -94,7 +94,7 @@ but AGENTS.md says not to remove it, and it still dereferences any symlink that 
 
 Only `model` and `tokenizer` throw. The other ~11 siblings resolve `existsSync → undefined` and tolerate
 absence by design. A checkout that finds those two files therefore parses successfully without lexicons,
-the FST, or the pair index. It scores worse and reports nothing.
+the FST, or the pair index. It scores worse and reports no problem.
 
 The rung introduces this risk, so it must not ship without a report.
 
@@ -132,7 +132,7 @@ Unit, against a temporary data root and a fake package directory:
 - package with binaries → resolves from the package; overlay never probed
 - package empty, overlay populated → resolves from the overlay, `source` says so
 - package empty, overlay empty, user cache populated → falls through to the cache (the lookup still uses the cache)
-- package empty, nothing anywhere → throws and lists the package dir, the overlay and the cache
+- package empty, with no artifact anywhere → throws and lists the package dir, the overlay and the cache
 - overlay model present, tokenizer absent → throws rather than half-resolving
 - sibling report distinguishes a sibling resolved from `package` versus `overlay` versus absent
 - overlay artifact whose digest is absent from `files_md5` → link refuses
@@ -142,7 +142,7 @@ Unit, against a temporary data root and a fake package directory:
 Integration:
 
 - a git worktree of HEAD resolves weights with no setup step (the case that prompted this)
-- `link` is idempotent: a second run changes nothing and says so
+- `link` is idempotent: a second run makes no change and says so
 
 Regression:
 

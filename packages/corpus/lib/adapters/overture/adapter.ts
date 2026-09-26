@@ -3,31 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `overture`: Overture Maps Addresses adapter (epic #470 — the conditional corpus adapter, realized
- *   2026-06-20). Overture's global Addresses theme is the single-schema, well-normalized address
- *   dataset that fixes OpenAddresses' per-country patchiness (OA dropped Spain. OA-DE omits the
- *   Bundesland) — it even re-hosts the OA Spain data the standalone OA bucket no longer serves.
- *
- *   This adapter consumes a per-country line-delimited JSON dump of the corpus-relevant fields (`{
- *   street, number, unit, postcode, locality }`), produced by `scripts/ingest-overture-addresses.ts
- *   --corpus-jsonl` (which does the DuckDB / S3 heavy lifting and flattens `address_levels` → the
- *   municipality locality). The split keeps `@mailwoman/corpus` — a runtime dep of the `mailwoman`
- *   CLI — free of the heavy native `@duckdb/node-api`; the adapter just streams jsonl line-by-line,
- *   exactly like `openaddresses`.
- *
- *   The `street` surface carries the locale's street keyword verbatim (`"calle julan"`, `"VIA
- *   roma"`). We map it to `street` whole and let the downstream affix-relabel split `street_prefix`
- *   — the same path every other source rides. This source exists because the model was
- *   en-us/fr-trained and never saw non-en/fr street formats (the 2026-06-19 EU parse-blocker
- *   measured loc-correct ES 21% / IT 59% / NL 64% vs FR/US ~98%).
- *
- *   `--country` is required (the jsonl is per-country and the rows omit a country field), matching
- *   `openaddresses`. License is Overture's cdla-Permissive-2.0 (attribution. not share-alike).
- *
- *   | Field | ComponentTag | | --------- | ---------------------------------------------- | |
- *   `street` | `street` (keyword incl.; affix-relabel splits prefix) | | `number` | `house_number`
- *   (skipped when "S-N"/"S/N" = sin número) | | `unit` | `unit` (if non-empty) | | `postcode`|
- *   `postcode` | | `locality`| `locality` (Overture address_levels municipality, or postal_city) |
+ * `overture`: Overture Maps Addresses adapter; the `street` value keeps the locale's street keyword
+ * verbatim, and the downstream affix-relabel splits `street_prefix` from it.
  */
 
 import { formatAddressRow } from "@mailwoman/codex/address-format"
@@ -42,29 +19,20 @@ import { SourceRegister } from "#registers"
 import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter, SurfaceOrigin } from "#types"
 
 /**
- * Registry id for this adapter.
- *
- * Stamped into every row it emits, so a corpus record can be traced back to the dataset it came from.
+ * Registry id stamped into every row this adapter emits, so a corpus record traces back to its dataset.
  */
 export const OVERTURE_ADAPTER_ID = "overture"
 /**
- * License carried by this source (cdla-Permissive-2.0), attached to each row
- * so downstream consumers inherit the terms rather than having to look them up.
+ * License carried by this source (`cdla-Permissive-2.0`, attribution-only
+ * rather than share-alike), attached to every row.
  */
 export const OVERTURE_DEFAULT_LICENSE = "CDLA-Permissive-2.0"
 
-/**
- * Seed for the country-append draw when the caller names none.
- */
 const DEFAULT_COUNTRY_SEED = 20_260_922
 
 /**
- * One attested written form of a country's name.
- *
- * Raises rather than emitting nothing when the codex has no entry.
- * A requested fraction that silently produced no country rows would read later as
- * a check failure with no cause attached, which is how the 2026-07-18 Brazil arm's
- * `country` regression stayed unexplained for a night.
+ * One attested written form of a country's name; raises rather than returning empty
+ * when the codex has no entry, so a requested fraction cannot silently produce no country rows.
  */
 function countrySurfaceForm(country: string, random: () => number): string {
 	const forms = COUNTRY_SURFACE_FORMS[country as keyof typeof COUNTRY_SURFACE_FORMS]
@@ -90,18 +58,9 @@ interface OvertureCorpusRow {
 }
 
 /**
- * Whether an Overture `unit` value is a secondary-unit designator — something with a
- * digit in it, or one bare word (`EG`, `Penthouse`) — rather than a name.
- *
- * Overture-SG writes the estate or building name in this field
- * (91,818 of 142,210 rows carry a multi-word name such as `serangoon garden estate`) and the
- * literal `NIL` on 47,407 more, where every other country's rows carry a digit-containing unit
- * or nothing (DE 3,084 digit-containing of 40,837 non-empty. NL and ES none name-shaped).
- * A name taught as `unit` teaches that a trailing proper name is one, which is the
- * shape of the `#NNN`-unit defect the corpus exists to fix.
- *
- * Such a value is dropped here.
- * A register recipe that wants the building name as a `venue` reads the jsonl itself.
+ * Whether an Overture `unit` value is a secondary-unit designator (a digit or a single bare word)
+ * rather than a name; Overture-SG puts an estate name in this field on 91,818 of 142,210 rows
+ * and the literal `NIL` on 47,407 more, so a name taught as `unit` would teach a trailing proper name.
  */
 export function unitFieldIsDesignator(value: string): boolean {
 	const trimmed = value.trim()
@@ -127,8 +86,7 @@ export function createOvertureAdapter(): CorpusAdapter {
 		defaultLicense: OVERTURE_DEFAULT_LICENSE,
 		addressRole: AddressRole.Premise,
 		// Overture rows carry their own `sources[].dataset` and `sources[].license`,
-		// so a row's real upstream is on the row.
-		// This declares the aggregator rather than asserting a national grant.
+		// so this declares the aggregator rather than asserting a national grant.
 		register: SourceRegister.Overture,
 		surface: SurfaceOrigin.Attested,
 		description: "Overture Maps Addresses (global): per-country JSONL of street/number/postcode/locality.",
@@ -144,9 +102,7 @@ export function createOvertureAdapter(): CorpusAdapter {
 			const countryFraction = opts.countryFraction ?? 0
 			const random = makeMulberry32(opts.seed ?? DEFAULT_COUNTRY_SEED)
 
-			// TextSpliterator streams string lines (parseLine keeps tolerating
-			// blank/`#`/malformed lines by returning null); the path string lets the lib
-			// own + dispose the file handle, including on an early `break`.
+			// The path string lets `TextSpliterator` own and dispose the file handle, including on an early `break`.
 			const lines = TextSpliterator.fromAsync(opts.inputPath)
 
 			let emitted = 0
@@ -192,9 +148,8 @@ export function createOvertureAdapter(): CorpusAdapter {
 					components.locality = locality
 				}
 
-				// Overture address rows are country-implicit: the country lives in the file's name and on no row.
-				// Placing the surface form in `components` rather than appending it to the rendered
-				// string lets each country's own layout decide where the country goes.
+				// Overture rows are country-implicit, so the surface form goes into `components`
+				// and each country's layout decides where the country lands in the rendered string.
 				if (countryFraction > 0 && random() < countryFraction) {
 					components.country = countrySurfaceForm(country, random)
 				}

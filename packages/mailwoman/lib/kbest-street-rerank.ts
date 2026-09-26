@@ -172,7 +172,7 @@ function spliceStreetTree(
 
 	const streetSegs = hyp.segments.filter((s) => STREET_SEGMENT_TYPES.has(grammar.segmentTypes[s.typeID] ?? ""))
 
-	// No street in the winning hypothesis → nothing to splice.
+	// No street in the winning hypothesis → no segments to splice.
 	// The argmax tree stands.
 	if (!streetSegs.length) {
 		return buildAddressTree(trace.text, tokens)

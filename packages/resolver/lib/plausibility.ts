@@ -137,8 +137,8 @@ export interface PlausibilityVerdict {
 	/**
 	 * Why the resolution is implausible, set only when `implausible` is true.
 	 *
-	 * `country-centroid` means nothing finer than a country resolved, and `outside-expected-country`
-	 * means the coordinate falls outside the expected country's bounding box.
+	 * `country-centroid` means no resolution finer than a country occurred, and
+	 * `outside-expected-country` means the coordinate falls outside the expected country's bounding box.
 	 */
 	reason?: "country-centroid" | "outside-expected-country"
 

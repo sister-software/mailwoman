@@ -12,7 +12,7 @@
  *   A deprecated identifier states less than it appears to. `AGPL-3.0` names neither the `-only` nor the `-or-later`
  *   variant, and `summarizeLicense` in `@mailwoman/core/license` reports it `recognized: false` with an empty
  *   obligation list. A reader who checks the obligations without checking the flag sees a package that requires
- *   nothing.
+ *   no obligations.
  *
  *   A workspace omitting the commercial branch contradicts the public license page, which states that every release
  *   ships under both.
@@ -78,7 +78,7 @@ export const packageLicenseCheck: RepoCheck = {
 		const rootDeclared = await readDeclaredLicense(context.repoRoot, "package.json")
 
 		if (typeof rootDeclared !== "string") {
-			// Without the root's expression there is nothing to compare the workspaces against,
+			// Without the root's expression there is no expression to compare the workspaces against,
 			// and reporting 75 identical failures would bury the one that has to be fixed first.
 			return [rootDeclared]
 		}

@@ -288,7 +288,7 @@ export const GZT_COVERAGE_LIMIT =
  * The local code with which an authority explicitly marks land as unzoned.
  *
  * Only a row with this code means unzoned.
- * A location with no row says nothing about zoning.
+ * A location with no row makes no statement about zoning.
  */
 export const GZT_UNZONED_LOCAL_CODE = "UNZ - Unzoned"
 

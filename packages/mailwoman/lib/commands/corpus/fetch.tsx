@@ -3,10 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mailwoman corpus fetch <source>` — reproducible bulk-download of the open-data sources the
- *   corpus build consumes (disk-loss recovery, weekly refresh, fresh-environment bootstrap). Each
- *   source writes its raw files plus a sibling `manifest.json` (origin URL, timestamp, byte count,
- *   sha256). See `@mailwoman/corpus/tools` `fetch/index.ts` for the source registry + license tiers.
+ *   `mailwoman corpus fetch <source>` — reproducible bulk-download of the open-data sources the corpus
+ *   build consumes; each source writes its raw files plus a sibling `manifest.json` (origin URL,
+ *   timestamp, byte count, sha256).
  */
 
 import { extractDelimited } from "@mailwoman/core/scripting/arguments"
@@ -131,7 +130,7 @@ async function runSource(source: FetchSourceID, options: Options): Promise<Fetch
 			return fetchGeonamesDumps(
 				{
 					...base,
-					// Undefined = every country the source's own countryInfo.txt catalogs. Present dumps are skipped.
+					// Undefined means every country the source's own countryInfo.txt catalogs; present dumps are skipped.
 					countries: options.countries === undefined ? undefined : extractDelimited(options.countries),
 				},
 				reportToStderr
@@ -140,9 +139,9 @@ async function runSource(source: FetchSourceID, options: Options): Promise<Fetch
 			return fetchGeonamesPostal(
 				{
 					...base,
-					// Undefined rather than an empty list, when the flag is absent.
-					// The module's own default set is the answer for 'fetch what the corpus wants',
-					// and an empty array would fetch nothing while looking deliberate.
+					// Undefined rather than an empty list when the flag is absent:
+					// the module's own default set is the answer for "fetch what the corpus wants",
+					// and an empty array would fetch no countries while looking deliberate.
 					countries: options.countries === undefined ? undefined : extractDelimited(options.countries),
 				},
 				reportToStderr

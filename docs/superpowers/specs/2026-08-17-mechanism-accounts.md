@@ -12,7 +12,7 @@ narrow view, so the assistant's in-context reasoning has become a required part 
 product. Nobody wants that dependency.
 
 Aggregate metrics cause that dependency. Distance-from-truth discards diagnostic information. The
-#1711 city-only stratum reported `89.1% vs 96.9%, p = 0.084`, which read as underpowered with nothing
+#1711 city-only stratum reported `89.1% vs 96.9%, p = 0.084`, which read as underpowered with no finding
 to investigate. The same stratum contained a six-row defect from a single mechanism
 (`Weimar, Thüringen` → Weimar, **Texas**, 8,627 km, with the disambiguator in the input). It also
 contained a truth-provenance flaw that flipped the sign of a column when corrected (#1725). Both
@@ -27,7 +27,7 @@ eventually blocks change. A hand-authored taxonomy of failure classes would repe
 level up. Two commitments prevent it:
 
 1. **Expectations pin outcomes, never mechanisms.** A board row asserts "this input resolves near
-   here" and nothing else. No row ever asserts "fails with class X" or "takes path Y." Explanations
+   here" and no other fact. No row ever asserts "fails with class X" or "takes path Y." Explanations
    are recomputed from the current system on every run and can change when the code changes. No
    mechanistic assertions accumulate that a better model of addresses would have to break.
 2. **Failure shapes are mechanism states, never address shapes.** The vocabulary comes from the

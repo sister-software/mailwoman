@@ -17,7 +17,7 @@ avoid re-implementation in tracks 2b/2c/C5/C6/B.
 | `mailwoman/sdk/google/GoogleGeocoder.ts`                | Google geocoder client w/ HTTP cache                                                                                                                                                                                                                    | Cross-check tooling only                                            | M               | Conflicts with product positioning; TypeORM cache layer; low priority    |
 | `api/routes/geolocation.ts`                             | CF-Worker `request.cf` approximate-location route                                                                                                                                                                                                       | C5 signup UX pattern                                                | S               | Workers-specific                                                         |
 
-## Confirmed greenfield (nothing to salvage)
+## Confirmed greenfield (no artifact to salvage)
 
 - **C6 eyeball-carrier DB**: zero BGP/PeeringDB/ASN/RouteViews code anywhere in Nexus.
 - **Subsidy data** (CAF/RDOF), **ECFS/ULS**: zero hits — matches the 2a spec's "in fact new work" note.

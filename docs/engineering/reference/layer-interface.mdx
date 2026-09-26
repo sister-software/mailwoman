@@ -73,9 +73,9 @@ in order of importance.
 2. **The qualified column name resolves the objection.** The objection to declaring `h3` was that
    it points a consumer at the index rather than at the domain table. Writing
    `flood_zone_cell.h3_cell` instead of a bare `h3_cell` states that in the field a consumer
-   already reads. It costs nothing, because `SpineKeys.h3.column` has always been author-named
+   already reads. It incurs no cost, because `SpineKeys.h3.column` has always been author-named
    free text.
-3. **A fourth spine-key kind would add nothing.** `street` was added because the situs
+3. **A fourth spine-key kind would add no value.** `street` was added because the situs
    `address_point` and `street_segment` tables lack a cell, a WOF id and an address-id, which was a
    measured absence. A polygon layer has a cell key. It also has a second tier, and a tier is not
    an addressing scheme.
@@ -112,7 +112,7 @@ coverage resolution. Read each one from where it is stored, and never infer one 
 This was measured on the EA flood layer, and it applies to every later polygon builder, because the
 failure comes from the tool and not from that product.
 
-**h3's WASM heap cannot be reset from JavaScript, and when it is exhausted, it returns nothing.**
+**h3's WASM heap cannot be reset from JavaScript, and when it is exhausted, it returns the null pointer.**
 `polygonToCellsExperimental` sizes its output buffer with `_calloc`. A failing `_calloc` returns
 the null pointer, and in WASM, address zero is ordinary writable memory. The call therefore reports
 success, and the reader returns an array of zeros. An exhausted allocator answers "no cells"
@@ -174,14 +174,14 @@ A layer reports what an authority designates at a resolved coordinate through a
 coverage row and the layer's manifest identity.
 
 **The marker reports the verdict's own top kind.** By convention, `QueryIntentMarker.kind` is a kind
-the verdict carries. A designation is not raised by query intent, because nothing about an address
+the verdict carries. A designation is not raised by query intent, because no address component
 asks for a flood zone, so it has no kind of its own. Reporting the top kind satisfies the interface
 literally. `declared_ambiguity` set the precedent for a marker raised at resolve time rather than by
 the classifier. This marker goes one step further and has no kind of its own. That choice is
 documented and accepted. The alternative, widening the carrier with an optional-kind marker
 variant, would create a second advisory shape without any benefit a reader can use.
 
-**The layer raises nothing where the authority made no determination.** Outside the authority's
+**The layer raises no advisory where the authority made no determination.** Outside the authority's
 footprint there is no coverage row, and an advisory there would report a determination that nobody
 made. `supportsExclusion` applies the same asymmetry: positive evidence needs no coverage row, and
 a claim of absence does.
@@ -199,10 +199,10 @@ the same platform three months apart, and they show both directions:
   `designated_absence`.
 - **`packages/coastal`.** The same authority publishes coastal-erosion zones and **no coverage
   statement**. A location in England without an erosion polygon may be inland, which covers most of
-  the country and about which the product says nothing. It may also be on the coast and outside the
+  the country and about which the product makes no statement. It may also be on the coast and outside the
   mapped risk area, which is the designation a caller wants. The published layers cannot distinguish
   these cases. Every coverage row therefore has `basis = source_present`, the layer has no absence
-  reading, and the observation reports nothing where no polygon contains the point.
+  reading, and the observation reports no entry where no polygon contains the point.
 - **`packages/zoning`.** This is the hardest of the three, and it shows why the rule depends on the
   SOURCE and not on the subject. A location without a zoning polygon can mean at least four
   different things: it is outside any adopted plan area, it is inside one on land the plan does not
@@ -263,7 +263,7 @@ ship only the builder.
   Wikidata CC0, Foursquare labels Apache-2.0). We build these layers and publish them to R2/npm
   like the gazetteer.
 - **`build-local`**: share-alike sources (ODbL: OSM POIs, Overture's _base_ theme). We ship the
-  **builder CLI**, the user builds the layer on their own disk, and we distribute nothing under
+  **builder CLI**, the user builds the layer on their own disk, and we distribute no data under
   ODbL. The unpublished `osm/` workspace follows the same model. When a build-local layer is
   absent, the answer is "requires the locally-built layer," never a degraded or invented result.
 - **`private`**: the user's own data (CRM, survey notes, parcel relationships), conforming to the
@@ -296,7 +296,7 @@ cell recorded at `1.0` because an authority designates the set complete and a ce
 `1.0` because the source happened to return rows there support entirely different conclusions. Only
 `designated` (an authority declares the set complete) and `surveyed` (we measured completeness
 against an independent reference) can support an **exclusion**, which is a claim that the thing
-asked for is absent. `source_present` supports presence and nothing else. It shows that the source
+asked for is absent. `source_present` supports presence and no exclusion. It shows that the source
 was checked for the cell, and the source may still have missed rows there. A caller building negative evidence
 calls `supportsExclusion(cell)` first and stops when it returns false. It never reads
 `completeness` alone, because the exclusion would then fire identically on a cell measured as empty
@@ -395,8 +395,8 @@ A new layer must meet these interface requirements, in order:
   area-weighted class distribution rather than a single winning class, with four separate absence
   shares, so that "unmapped", "not rated", "the rating does not apply" and "rated unsuitable" stay
   distinct. It also reverses the polygon case's geometry: its delineations are small relative to its
-  cells, so the containment index alone answers almost nothing, and `compactCells` compacts almost
-  nothing (measured at resolution 9: 97.6% of cells partial, 369 whole cells compacting to 315).
+  cells, so the containment index alone resolves almost no cell, and `compactCells` compacts almost
+  no cells (measured at resolution 9: 97.6% of cells partial, 369 whole cells compacting to 315).
 - [`@mailwoman/coastal`](../../../packages/coastal/README.md): the worked scenario-scoped example.
   Twelve published layers cover the same frontages and must never be pooled, so every stored row and
   every reading records the scenario it belongs to. It is also the first layer where the coverage

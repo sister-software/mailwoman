@@ -113,7 +113,7 @@ function getDictionary(locale: string | undefined): ReadonlyArray<AbbreviationEn
 	// Every `es-*` region: es-ES, es-MX, es-AR, … all abbreviate Avenida the same way.
 	// Before this existed they fell through to en-US, whose table has no `Av` entry,
 	// so `Av.` simply survived.
-	// The visible symptom was "nothing happens", which is why the collision only surfaced on the `und` path.
+	// The visible symptom was "no change happens", which is why the collision only surfaced on the `und` path.
 	if (lc.startsWith("es")) return ES_ES_DICT
 
 	return EN_US_DICT

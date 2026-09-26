@@ -209,7 +209,7 @@ describe("census observability — what lands on the trace", () => {
 })
 
 // End-to-end on the real en-us bundle: the mechanism-level assertions above prove the
-// prior's own output is unchanged, but only a full decode proves nothing downstream
+// prior's own output is unchanged, but only a full decode proves no downstream code
 // (the transition conversion, the repair passes, the tree build) reads the census.
 // Conditioned on the dev weights being linked.
 // `link-dev-weights.ts` puts both the model and `pair-index-us.bin` in place, and the pair index is
@@ -221,7 +221,7 @@ describe("census observability — what lands on the trace", () => {
 // where they live is the resolver's answer (package, data-root overlay, or user cache)
 // and not a directory this file can name.
 // A skip-guard keyed on the wrong directory does not fail.
-// It skips, and the suite reports success while testing nothing.
+// It skips, and the suite reports success while testing no assertion.
 const resolved = await (async () => {
 	try {
 		return await resolveWeights({ locale: "en-us" })

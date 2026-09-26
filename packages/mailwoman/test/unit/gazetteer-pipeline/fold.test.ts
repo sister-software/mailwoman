@@ -103,7 +103,7 @@ test("foldGeonamesIntoAdmin: overwrites a stale prior copy, sealed or not", asyn
 })
 
 test("foldGeonamesIntoAdmin: refuses a fold that would drop the source's existing alias coverage", async () => {
-	// #1514. `buildAdmin` bakes a 161-country fold into every admin artifact, and the fold rewrites its whole id range — so folding a narrower list against one deletes the difference. The 2026-08-05 build did exactly that with the old 14-country default and nothing said a word.
+	// #1514. `buildAdmin` bakes a 161-country fold into every admin artifact, and the fold rewrites its whole id range — so folding a narrower list against one deletes the difference. The 2026-08-05 build did exactly that with the old 14-country default and no check said a word.
 	const adminIn = root.path("admin-prefolded.db")
 
 	await buildSealed(adminIn, (db) => {

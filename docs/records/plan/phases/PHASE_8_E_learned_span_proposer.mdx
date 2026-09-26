@@ -36,7 +36,7 @@ A learned proposer is the bitter-lesson-safe approach: train a small (1-2M param
 
 Training data comes from Thread B (corpus-v0.4.0) in two forms:
 
-1. **Derived labels from the existing BIO corpus.** Each contiguous run of same-tag tokens is one phrase; map the BIO tag to a `PhraseKind` via a lookup table (e.g. `B-locality ... I-locality` → LOCALITY_PHRASE). These labels cost nothing at training time and need no new labeling. The mapping is lossy at the edges (POI tags collapse to VENUE_PHRASE), but the loss falls in the structural-shape vocabulary, which this model does not need to distinguish.
+1. **Derived labels from the existing BIO corpus.** Each contiguous run of same-tag tokens is one phrase; map the BIO tag to a `PhraseKind` via a lookup table (e.g. `B-locality ... I-locality` → LOCALITY_PHRASE). These labels cost no extra work at training time and need no new labeling. The mapping is lossy at the edges (POI tags collapse to VENUE_PHRASE), but the loss falls in the structural-shape vocabulary, which this model does not need to distinguish.
 2. **Synthetic adversarial expansion.** The kryptonite-catalogue generation pipeline (Thread B) prompt-engineers DeepSeek to produce inputs where the rule-based grouper systematically gets boundaries wrong. The learned model trains on those cases as hard negatives.
 
 Validation uses a held-out subset of the kryptonite catalogue plus the v0.4.0 bio_slip class (the 6% of cases where boundaries were demonstrably wrong in production).

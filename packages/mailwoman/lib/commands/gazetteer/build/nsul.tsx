@@ -3,17 +3,11 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mailwoman gazetteer build nsul` — the GB uprn → unit-postcode register (`nsul.db`): the ONS
- *   National Statistics uprn Lookup joined to OS Open uprn's coordinates, under the layer interface.
- *   Reads a hand-acquired archive from a vintage-dated `<data-root>/db/nsul/<yyyy-MM>/` directory
- *   (there is no download step, since the portal item is fetched by hand beside its `.md5` sidecar and
- *   `item.json`), verifies it against the sidecar, and writes a sealed, atomically-swapped artifact.
- *   Nothing on the parse/resolve path reads it yet. the runtime surface is a separate proposal
- *   (#1975, F4).
+ *   Reads a hand-acquired archive from a vintage-dated `<data-root>/db/nsul/<yyyy-MM>/` directory (there is no download
+ *   step), verifies it against the sidecar, and writes a sealed, atomically-swapped artifact.
  *
- *   Coverage is England, Scotland and Wales. Northern Ireland postcode data is outside ONS's open
- *   terms, and the layer's own coverage rows say so. See `gazetteer-pipeline/nsul-layer.ts` for the
- *   checks (md5, exact header per region, the eleven-region set, accounting identity, row floor).
+ *   Coverage is England, Scotland, and Wales; Northern Ireland postcode data is outside ONS's open terms, and the
+ *   layer's own coverage rows say so.
  *
  *   The pipeline module is lazy-imported so `--help` never faults without the optional
  *   `@mailwoman/resolver-wof-sqlite` peer.
@@ -92,7 +86,7 @@ const GazetteerBuildNSUL: CommandComponent<typeof spec> = ({ options }) => {
 		)
 	}
 
-	return null // progress streams to stderr until the summary lands
+	return null
 }
 
 export default GazetteerBuildNSUL

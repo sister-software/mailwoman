@@ -144,7 +144,7 @@ export async function validateAddress(raw) {
 ```
 
 The directional strip in `trailingSuffixOf` is easy to miss. `Pennsylvania Ave NW` ends in `NW`, so a
-direct trailing-suffix lookup returns nothing and rejects a correct address. Post-directionals come
+direct trailing-suffix lookup returns no match and rejects a correct address. Post-directionals come
 after the suffix, so strip them before the lookup.
 
 ## Verify
@@ -220,14 +220,14 @@ That run had `candidate.db` plus the DC address-point database on disk (the setu
 rows return `admin` and the check below cannot distinguish them. The precision data is what makes this
 test meaningful.
 
-`address_point` means a rooftop record for that house number matched. `admin` means nothing finer than
+`address_point` means a rooftop record for that house number matched. `admin` means no level finer than
 the city matched, and the returned coordinate is the city centroid. Adding
 `result.resolution_tier === "address_point"` to your check changes its meaning from "well-formed" to
 "we hold a record for it". That is the closest this system comes to checking existence.
 
 A matching record still does not establish deliverability. A rooftop record says a structure was
 surveyed at that address. It does not say that mail is accepted there, that the unit number is right,
-or who the occupant is. Nothing in Mailwoman contacts a carrier. If you need to know whether a parcel
+or who the occupant is. No part of Mailwoman contacts a carrier. If you need to know whether a parcel
 will arrive, use a postal carrier's address-verification service.
 
 ## Limits

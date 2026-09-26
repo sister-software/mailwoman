@@ -28,7 +28,7 @@ def test_a_code_is_counted_under_the_tag_it_opens() -> None:
 
 
 def test_a_code_inside_a_longer_span_is_not_an_attestation() -> None:
-    # `NL` continuing a venue name says nothing about what the token means alone, and counting it would
+    # `NL` continuing a venue name makes no statement about the token alone; counting it would
     # credit the same evidence to two readings.
     rows = [_row(["Cafe", "NL"], ["B-venue", "I-venue"])]
 

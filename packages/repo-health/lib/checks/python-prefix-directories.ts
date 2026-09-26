@@ -13,7 +13,7 @@
  *   - The delimiter is `_`, which is what a Python module name uses where a TypeScript one uses `-`.
  *   - There is no workspace exclusion. A TypeScript directory name can be an npm package name, and
  *     `packages/neural-weights-en-gb` is published under that name. no Python directory here carries that kind of
- *     interface, so nothing needs the exemption.
+ *     interface, so no directory needs the exemption.
  *   - `__init__.py` and `__main__.py` never join a group. Both are Python's own names — the first marks a package and
  *     the second is what `python -m` runs — and neither is this repository's to arrange. They share no prefix with
  *     each other either, since the dunder is not an underscore-delimited segment a reader would group by.

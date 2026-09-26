@@ -92,8 +92,8 @@ function collectBinTargets(bin: unknown): string[] {
 /**
  * Returns the `bin` targets that the tarball does not contain.
  *
- * Nothing else reconciles `bin` with `files`, so an unbuilt target would publish cleanly
- * and fail only when a user runs it.
+ * No other check reconciles `bin` with `files`, so an unbuilt target would publish
+ * cleanly and fail only when a user runs it.
  */
 export function collectMissingBinTargets(bin: unknown, shipped: Set<string>): string[] {
 	return collectBinTargets(bin).filter((target) => !isShipped(normalizeEntry(target), shipped))

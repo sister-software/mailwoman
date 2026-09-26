@@ -3,18 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Where a graded confidence comes from — the surfaces `reliability.ts` curves.
- *
- *   Two are wired, and they are genuinely different measurements rather than one function over two inputs, which the
- *   shared curve can hide. The decode surface reads the per-token softmax the parser already computes, folded to the
- *   unit a consumer reads (the assembled component); its truth is an input set's component labels. The coarse-placer
- *   surface reads a calibrated classifier's own output probability against a held-out country label. They share a
- *   reliability diagram because a reliability diagram is the same diagram. they share nothing else. A third surface —
- *   the locale head, the kind verdict, an evidence channel — should be added the same way rather than by widening
- *   either of these.
- *
- *   Both report what they could not grade. A curve over 40 of 558 rows and a curve over 558 are different
- *   measurements, and the ECE alone cannot tell them apart.
+ * Where a graded confidence comes from — the surfaces `reliability.ts` curves; each reports what it could not grade,
+ * because a curve over part of a set and a curve over all of it differ in ways the ECE alone cannot tell apart.
  */
 
 import type { DecoderToken } from "@mailwoman/core/decoder"
@@ -27,43 +17,38 @@ import type { ResolvedInput } from "#input-sets"
 import type { Observation } from "#reliability/index"
 
 /**
- * What to do with a produced component the truth row never mentions.
- *
- * `exclude` (default) keeps it out of the curve and counts it separately —
- * correct whenever truth is partial, which is every corpus wired here.
- * `wrong` grades it as an error, correct only against complete truth.
- *
- * On a partial corpus it measures the corpus rather than the model.
+ * What to do with a produced component the truth row never mentions; `exclude`
+ * counts it separately, correct on the partial truth every wired corpus carries,
+ * while `wrong` grades it as an error that measures the corpus rather than the model.
  */
 export const UnassertedPolicy = {
 	Exclude: "exclude",
 	Wrong: "wrong",
 } as const
 
+/**
+ * The policy for grading a produced component no truth row asserts.
+ */
 export type UnassertedPolicy = (typeof UnassertedPolicy)[keyof typeof UnassertedPolicy]
 
 /**
- * How a component's confidence is folded out of its tokens.
- *
- * `min` is the weakest link.
- * A span is only as trustworthy as its least certain piece — and is the default
- * because that is the reading an eval should use.
- *
- * `mean` exists because it is what `AddressNode.confidence` already reports (`build-tree.ts`),
- * so a caller calibrating the number a tree consumer actually reads can ask for it.
- *
- * The two diverge most on long spans.
- * It is where an eval decision is usually being made.
- *
- * Therefore, the choice travels with every result rather than being assumed.
+ * How a component's confidence is folded out of its tokens; `min` is the default
+ * weakest-link reading an eval should use, while `mean` matches the `AddressNode.confidence`
+ * a tree consumer reads, so the choice travels with every result.
  */
 export const ComponentAggregate = {
 	Min: "min",
 	Mean: "mean",
 } as const
 
+/**
+ * The fold applied to a component's token confidences.
+ */
 export type ComponentAggregate = (typeof ComponentAggregate)[keyof typeof ComponentAggregate]
 
+/**
+ * Rows a surface could not grade, with the reason and a few examples.
+ */
 export interface ExcludedRows {
 	reason: string
 	n: number
@@ -71,15 +56,9 @@ export interface ExcludedRows {
 }
 
 /**
- * Produced components no truth row asserted — the confidence mass riding on unverified output.
- *
- * Reported beside the curve rather than inside it.
- * On a partial-truth corpus these are mostly correct components nobody wrote an
- * assertion for, so folding them in as errors measures the corpus.
- *
- * Dropping them silently hides how much of the parse the curve does not cover.
- *
- * Neither is a number worth quoting, so both facts are returned.
+ * Produced components no truth row asserted — confidence mass riding on unverified output,
+ * reported beside the curve because folding it in as errors measures the corpus
+ * and dropping it hides how much the curve does not cover.
  */
 export interface UnassertedCohort {
 	n: number
@@ -87,12 +66,13 @@ export interface UnassertedCohort {
 	by_tag: Record<string, number>
 }
 
+/**
+ * A surface's graded observations plus what it could not grade.
+ */
 export interface SurfaceSample {
 	observations: Observation[]
 	/**
-	 * Rows the surface could not grade, and why.
-	 *
-	 * Reported rather than deducted in silence.
+	 * Rows the surface could not grade, and why; reported rather than deducted in silence.
 	 */
 	excluded: ExcludedRows[]
 	/**
@@ -103,45 +83,29 @@ export interface SurfaceSample {
 }
 
 /**
- * The subset of a geocode run's fields this file reads.
- *
- * Declared structurally so the surface can be exercised without a warm engine.
- * A full `GeocodeSession` is several gigabytes of prerequisite to test a fold.
+ * The subset of a geocode run's fields this file reads, declared structurally
+ * so the surface can be exercised without a warm engine.
  */
 export interface GeocodeRunLike {
 	result: { components?: Record<string, string | undefined> }
 	trace?: { parse?: { tokens: DecoderToken[] } }
 }
 
+/**
+ * The engine surface {@link decodeReliabilitySample} needs.
+ */
 export interface EngineLike {
 	session: { geocode(input: string): Promise<GeocodeRunLike> }
 }
 
 /**
- * Reliability of the decode distribution, at the unit a consumer reads.
+ * Reliability of the decode distribution at the unit a consumer reads: the per-token softmax
+ * folded across the tokens carrying each tag ({@link ComponentAggregate}) and graded
+ * against the input set's component labels with the harness's own `componentMatches`.
  *
- * The model emits a per-token softmax.
- * A consumer reads an assembled component.
- *
- * So the confidence is folded across the tokens carrying each tag ({@link ComponentAggregate})
- * and graded against the input set's component labels with the harness's own rule.
- * `componentMatches`, exact case-folded equality, shared rather than re-typed, because a local copy of
- * the correctness rule is how a calibration number quietly stops describing what the board describes.
- *
- * A produced tag the truth row does not mention is not graded by default.
- * The strict reading — predicting a component that should not exist is exactly the
- * error a calibrated confidence must not hide — holds only against complete truth,
- * and no corpus wired here carries it: the regression board asserts a median of one
- * component key per row (534 of 591 rows assert any, max 8), golden a median of 4
- * and parity a median of 2, against the ~7 keys a full US address has.
- *
- * On truth that partial, a row asserting `locality` alone would grade six
- * correctly-parsed components as hallucinations.
- *
- * So the unasserted tags are counted as their own cohort rather than folded in or thrown away:
- * a reader asking the hallucination question can see how much confidence rides on
- * unverified components without that mass setting the curve. {@link UnassertedPolicy.Wrong}
- * restores strict validation for a corpus that genuinely asserts every component.
+ * Unasserted produced tags are counted as their own cohort rather than folded in
+ * or thrown away, because no corpus wired here asserts every component;
+ * {@link UnassertedPolicy.Wrong} restores strict validation for one that does.
  */
 export async function decodeReliabilitySample(
 	engine: EngineLike,
@@ -180,11 +144,8 @@ export async function decodeReliabilitySample(
 		for (const [tag, value] of Object.entries(produced)) {
 			if (!value) continue
 
-			// Both BIO positions.
-			// A tag appearing in two separate spans folds into one observation,
-			// because the result shape holds one value per tag.
-			// So one confidence is what a consumer sees, and splitting it here would weight
-			// a fragmented span more heavily than a clean one.
+			// Both BIO positions, because the result shape holds one value per tag
+			// and one confidence is what a consumer sees.
 			const carrying = tokens.filter((token) => token.label === `B-${tag}` || token.label === `I-${tag}`)
 
 			if (!carrying.length) continue
@@ -254,23 +215,13 @@ export async function decodeReliabilitySample(
 }
 
 /**
- * Reliability of the coarse placer's own output probability against a held-out country label.
+ * Reliability of the coarse placer's own output probability against a held-out country label,
+ * measured at `abstainBelow: 0` so every row yields a confidence — the production
+ * threshold would censor exactly the low-confidence rows the curve is about.
  *
- * A different surface from the decode softmax, needing its own curve before anyone
- * fits a correction to it: the two are separate heads over separate features,
- * and a correction fitted to one does nothing for the other.
- *
- * `abstainBelow: 0` so every row yields a confidence.
- * Production sets that to the threshold under test, which would censor exactly
- * the low-confidence rows the curve is about.
- *
- * A curve measured at the production threshold reports only the region
- * where the eval already agreed with itself.
- *
- * The default corpus is the held-out `test` split, held out from both the training set and the
- * `val` split the temperature was fit on, so the number is not the fit reporting on itself.
- * Pointing this at `val` or `train` destroys that property without any other symptom,
- * so the resolved path travels with the result.
+ * The default corpus is the held-out `test` split, held out from both the training set
+ * and the `val` split the temperature was fit on; pointing this at `val`
+ * or `train` destroys that property without any other symptom.
  */
 export async function coarsePlacerReliabilitySample(corpusPath: string): Promise<SurfaceSample> {
 	if (!(await pathExists(corpusPath))) {
@@ -287,8 +238,8 @@ export async function coarsePlacerReliabilitySample(corpusPath: string): Promise
 	const observations: Observation[] = []
 	const unusable: string[] = []
 
-	// Streamed rather than read whole: the held-out split is ~146k rows, and splitting
-	// it materializes every line before the first prediction runs.
+	// Streamed rather than read whole, because the held-out split is ~146k rows
+	// and splitting it materializes every line before the first prediction.
 	for await (const row of JSONSpliterator.fromAsync<{ raw?: string; country?: string }>(corpusPath)) {
 		if (!row?.raw || !row.country) {
 			unusable.push(stringifyJSON(row).slice(0, 60))
@@ -301,9 +252,9 @@ export async function coarsePlacerReliabilitySample(corpusPath: string): Promise
 		observations.push({
 			confidence: prediction.confidence,
 			correct: prediction.country === row.country,
-			// An abstain is a prediction here, named rather than dropped: at abstainBelow
-			// 0 the placer still declines on an out-of-set input, and dropping those rows
-			// would report a precision the eval does not deliver.
+			// An abstain is a prediction here, named rather than dropped, because at
+			// abstainBelow 0 the placer still declines on an out-of-set input and dropping
+			// those rows would report a precision the eval does not deliver.
 			strata: { expected: row.country, predicted: prediction.country ?? "(abstain)" },
 		})
 	}
@@ -311,8 +262,8 @@ export async function coarsePlacerReliabilitySample(corpusPath: string): Promise
 	return {
 		observations,
 		excluded: [excludedRows("line carried no raw/country pair", unusable)].filter((entry) => entry.n > 0),
-		// No analogue here: the placer emits exactly one prediction per row against exactly
-		// one label, so there is no unasserted output for the truth to be silent about.
+		// No analogue here: the placer emits exactly one prediction per row against one label,
+		// so there is no unasserted output for the truth to be silent about.
 		unasserted: null,
 		notes: [
 			`corpus: ${corpusPath}`,

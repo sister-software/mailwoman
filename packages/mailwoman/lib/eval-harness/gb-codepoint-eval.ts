@@ -3,26 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   GB postcode-resolution evaluation against OS Code-Point Open — the first UK accuracy measurement this project can
- *   run without licensed data, and the measurement's own limits stated up front:
- *
- *   1. **The truth and the gazetteer share a source.** Our GB postcode tier is built from Code-Point Open
- *      (`codepoint-database.ts`), so grading against Code-Point centroids does not measure independent coordinate
- *      accuracy. What it does measure is the pipeline end-to-end: does a messy, real-shaped postcode string come back
- *      as the right unit-postcode point through parse → retrieval → resolution? That is the engine's claim. the
- *      data's accuracy is Ordnance Survey's.
- *   2. **The coordinate conversion cancels.** Truth is converted OSGB36 → WGS84 by the same `@mailwoman/spatial`
- *      routine the database build uses, so a systematic conversion bias would be invisible here. The conversion is
- *      pinned against the OSTN15 test set in its own suite. this eval adds nothing to that claim.
- *   3. **Premise-level accuracy is out of reach.** A unit postcode is tens of houses. there is no open GB register
- *      to grade a rooftop answer against. The distance thresholds below are therefore postcode-scale (≤1 km) rather
- *      than rooftop-scale.
- *
- *   Sample: a seeded, stratified draw across every Code-Point area file (every area contributes equally, so London
- *   does not drown Orkney). Rows with positional-quality 90 (no coordinate available) are skipped, matching the
- *   database build. Each sampled postcode runs three input legs — as published ("SW10 0AA"), lowercased and unspaced
- *   ("sw100aa", the user register), and country-suffixed ("SW10 0AA, UK") — under two locales: the production
- *   default and en-GB.
+ *   GB postcode-resolution evaluation against OS Code-Point Open, whose centroids are also the GB gazetteer source,
+ *   so this measures the parse → retrieval → resolution pipeline at postcode scale rather than independent coordinate accuracy.
  *
  *   Contains OS data © Crown copyright and database right 2026 (Code-Point Open, OGL v3).
  *
@@ -60,19 +42,14 @@ interface LegResult {
 const THRESHOLDS_KM = [1, 5, 25] as const
 
 /**
- * Positional-quality value meaning "no coordinate available" — dropped, matching `codepoint-database.ts`.
+ * Positional-quality value meaning "no coordinate available", dropped to match `codepoint-database.ts`.
  */
 const PQ_NO_COORDINATE = 90
 
 /**
- * Every postcode in the acquisition, folded to unspaced-uppercase — the existence oracle for the typo leg.
- *
- * A mutated final letter frequently lands on a real neighbouring unit
- * ("AB55 4BD" → "AB55 4BE"), and resolving those is correct behavior.
- * Only a mutant absent from the register demands abstention.
- *
- * Reasoning "the mutant almost never exists" was measured wrong on the first run
- * (346/600 resolved), which is why this set exists.
+ * Every postcode in the acquisition, folded to unspaced-uppercase — the existence oracle
+ * for the typo leg, where a mutant landing on a real neighbouring unit must resolve
+ * and only one absent from the register demands abstention.
  */
 async function allPostcodes(csvDir: PathBuilder): Promise<Set<string>> {
 	const out = new Set<string>()
@@ -102,7 +79,6 @@ async function samplePostcodes(csvDir: PathBuilder, perArea: number, seed: numbe
 		// oxlint-disable-next-line mailwoman/prefer-spliterator -- bounded input, one pass
 		for (const line of (await readLocalTextFile(csvDir(file))).split("\n")) {
 			if (!line) continue
-			// Columns: PC,PQ,EA,no,… — quoted postcode, then numerics.
 			// Code-Point carries no embedded commas inside quotes, so a plain split is faithful to this source.
 			const cols = line.split(",")
 			const pq = Number(cols[1])
@@ -118,7 +94,6 @@ async function samplePostcodes(csvDir: PathBuilder, perArea: number, seed: numbe
 			rows.push({ area: basename(file, ".csv"), postcode, lat: wgs.latitude, lon: wgs.longitude })
 		}
 
-		// Seeded draw without replacement — deterministic across runs for a given stamp + seed.
 		for (let i = 0; i < perArea && rows.length; i++) {
 			const idx = Math.floor(random() * rows.length)
 
@@ -135,19 +110,13 @@ function legsFor(postcode: string): Array<{ leg: string; input: string }> {
 		{ leg: "as_published", input: postcode },
 		{ leg: "lower_unspaced", input: postcode.toLowerCase().replaceAll(" ", "") },
 		{ leg: "uk_suffixed", input: `${postcode}, UK` },
-		// The leg that can fail, with the pass condition depending on whether the mutant exists:
-		// a real neighbouring unit must resolve like any postcode.
-		// A mutant absent from the register demands abstention.
-		// A "corrected" postcode is a different postcode (the BT3 9QQ → S3 9QQ trap class).
+		// A mutant absent from the register demands abstention; a real neighbouring unit must resolve like any postcode.
 		{ leg: "typo", input: mutateFinalLetter(postcode) },
 	]
 }
 
 /**
- * Deterministically swap the final letter for its alphabet successor (Z→A),
- * skipping letters GB unit postcodes never use in final position
- * (C, I, K, M, O, V are excluded from the alphabet there — stepping into one guarantees
- * the mutant is invalid, which is fine. The pass condition is abstention either way).
+ * Swap the final letter for its alphabet successor (Z→A), skipping the letters GB unit postcodes never use in final position.
  */
 function mutateFinalLetter(postcode: string): string {
 	const last = postcode.at(-1)!

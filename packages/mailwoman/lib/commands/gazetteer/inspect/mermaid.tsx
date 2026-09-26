@@ -6,9 +6,7 @@
  *   `mailwoman wof mermaid <localRepoDir> <placetype>` — render a Mermaid flowchart of the WOF
  *   placetype hierarchy rooted at the given placetype.
  *
- *   Reads from the local `whosonfirst-placetypes` clone produced by `mailwoman wof sync`. Pass
- *   `--roles` to restrict the chart to specific roles (e.g. `common`, `common_optional`) and
- *   `--output` to write the markup to a file instead of stdout.
+ *   Reads from the local `whosonfirst-placetypes` clone that `mailwoman wof sync` produces.
  */
 
 import { Spinner } from "@inkjs/ui"
@@ -25,10 +23,8 @@ import { type CommandSpec, CommandTaskResult, type CommandComponent, parseRoles,
 const BATCH_SIZE = availableParallelism()
 
 /**
- * Auto-discover d3-scale-chromatic's sequential interpolators so callers can pass e.g.
- * `--interpolator viridis` and we map it to `interpolateViridis`.
- *
- * Categorical scales (`scheme*`) are deliberately excluded — they're string[]s rather than (t)=>string.
+ * Categorical scales (`scheme*`) are deliberately excluded because they are `string[]`s
+ * rather than `(t) => string`.
  */
 async function loadD3Interpolators(): Promise<Record<string, InterpolateColorCallback>> {
 	const d3Chromatic = await import("d3-scale-chromatic")
@@ -115,8 +111,8 @@ const WOFMermaid: CommandComponent<typeof spec, [string, string]> = ({ args, opt
 		if (options.out) {
 			await writeLocalFile(chart + "\n", options.out)
 		} else {
-			// Write Mermaid directly to stdout so long classDef / linkStyle lines aren't
-			// word-wrapped by Ink's <Text> renderer — Mermaid won't parse a broken line.
+			// Write Mermaid directly to stdout so Ink's <Text> renderer does not word-wrap
+			// long classDef / linkStyle lines, which Mermaid cannot parse.
 			process.stdout.write(chart + "\n")
 		}
 
@@ -135,8 +131,6 @@ const WOFMermaid: CommandComponent<typeof spec, [string, string]> = ({ args, opt
 		)
 	}
 
-	// Stdout path: markup is written above via process.stdout.write.
-	// Render nothing through Ink.
 	return null
 }
 

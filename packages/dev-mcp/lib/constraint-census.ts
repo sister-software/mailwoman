@@ -3,26 +3,20 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The constraint census — what our checks cost, measured per constraint rather than per row.
+ * The constraint census — what our checks cost, measured per constraint rather than per row.
  *
- *   `census.ts` asks whether a mechanism in the parse path fires at all (L0/L1). This asks the resolver-path question
- *   underneath it: of the lookups that resolved nothing, which constraint was in force, and did we hold the row
- *   anyway. Both are needed and neither substitutes for the other. A constraint can be perfectly alive and still be
- *   the reason an answer was lost.
+ * `census.ts` asks whether a mechanism in the parse path fires at all (L0/L1); this asks the
+ * resolver-path question underneath it: of the lookups that resolved no candidate, which constraint was
+ * in force, and did we hold the row anyway.
  *
- *   the split that makes this A measurement rather than a miss count: a lookup that missed in band X while the same
- *   key sits in band Y is a reachability failure. The gazetteer had the row and the query went to the wrong shelf.
- *   A key that exists nowhere is a coverage fact. Both currently reach a caller as `null`, and they call for opposite
- *   work: one is a retrieval fix, the other is a data acquisition. They are never summed here.
+ * The split that makes this a measurement rather than a miss count: a lookup that missed in band X
+ * while the same key sits in band Y is a reachability failure — the gazetteer had the row and the query
+ * went to the wrong shelf — while a key that exists nowhere is a coverage fact. Both reach a caller as
+ * `null` and call for opposite work, a retrieval fix versus data acquisition, so they are never summed.
  *
- *   The raw material has existed since #1721 and nothing consumed it: `ResolveNodeTrace.checks` records mechanism
- *   events in execution order, and `picked: null` is — in that type's own words — "a claim rather than an omission". The
- *   first run over the board found `parent_fallback_retry` firing 194 times and converting zero, because it relaxes
- *   the parent while the band is what blocks (#1756).
- *
- *   keyed with `normalizeLocalityForKey`, the fold the candidate build writes and its readers probe. A `toLowerCase()`
- *   approximation silently moves rows from the reachability column into the coverage one, which is the exact error
- *   this census exists to stop other people making.
+ * Keys are folded with `normalizeLocalityForKey`, the fold the candidate build writes and its readers
+ * probe; a `toLowerCase()` approximation silently moves rows from the reachability column into the
+ * coverage one.
  */
 
 import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street"
@@ -34,7 +28,7 @@ import { openSealedArtifact } from "#lookup/index"
 import { provenanceFor, type Provenance } from "#tool-kit"
 
 /**
- * One lookup that resolved nothing, with the constraint that was in force
+ * One lookup that resolved no candidate, with the constraint that was in force
  * and what the gazetteer holds regardless.
  */
 interface ConstraintMiss {
@@ -44,25 +38,20 @@ interface ConstraintMiss {
 	value: string
 	name_key: string
 	/**
-	 * The placetype band the query was scoped to.
-	 *
-	 * Chosen by the model'S TAG, which is the whole point: a wrong tag makes a row we hold
-	 * unreachable, and the miss is indistinguishable from the row not existing.
+	 * The placetype band the query was scoped to, chosen by the model's tag: a wrong tag makes
+	 * a row we hold unreachable, and the miss is indistinguishable from the row not existing.
 	 */
 	band: string
 	checks: string[]
 	/**
-	 * Bands holding this key other than the one probed, measured with no constraint applied at all.
-	 *
-	 * Empty means the key exists nowhere in the gazetteer, which is a coverage fact
-	 * rather than a retrieval failure.
+	 * Bands holding this key other than the one probed, measured with no constraint applied; empty
+	 * means the key exists nowhere in the gazetteer, a coverage fact rather than a retrieval failure.
 	 */
 	elsewhere: string[]
 	/**
-	 * Candidates present on a null pick means the rows came back and lost downstream.
-	 * None means the probe itself returned an empty set.
-	 *
-	 * Calling a scoring filter an empty gazetteer is the misreading this separates.
+	 * Candidates on a null pick mean the rows came back and were lost downstream;
+	 * none means the probe itself returned an empty set — calling a scoring filter
+	 * an empty gazetteer is the misreading this separates.
 	 */
 	had_candidates: boolean
 }
@@ -70,11 +59,9 @@ interface ConstraintMiss {
 /**
  * What the census reader needs of a connection it is handed: one prepared read, and a way to end it.
  *
- * Structural rather than `DatabaseClient` itself because `OpenCensusArtifact` is injectable.
- * The tests supply a fake that answers fixed rows without opening a file.
- *
- * `destroy` rather than `close` is what a `DatabaseClient` offers, so the real
- * opener satisfies this without an adapter.
+ * Structural rather than `DatabaseClient` itself because `OpenCensusArtifact` is
+ * injectable, and `destroy` (what a `DatabaseClient` offers) rather than `close`,
+ * so the real opener satisfies this without an adapter.
  */
 interface CensusDatabase {
 	prepare(sql: string): { all(nameKey: string): Array<Record<string, unknown>> }
@@ -88,9 +75,8 @@ interface CheckReading {
 	fired: number
 	resolved_nothing: number
 	/**
-	 * Of the misses under this constraint set, how many hold the key in another band.
-	 *
-	 * The subset a retrieval change could convert, as opposed to the subset that needs data we do not have.
+	 * Of the misses under this constraint set, how many hold the key in another band — the subset
+	 * a retrieval change could convert, as opposed to the subset that needs data we do not have.
 	 */
 	reachable_elsewhere: number
 }
@@ -102,22 +88,19 @@ export interface ConstraintCensusResult {
 	n_lookups: number
 	n_resolved_nothing: number
 	/**
-	 * We hold the row and could not reach it.
-	 *
-	 * A retrieval fix, and the only column a cross-band retry can move.
+	 * We hold the row and could not reach it — a retrieval fix, and the only
+	 * column a cross-band retry can move.
 	 */
 	n_reachability: number
 	/**
-	 * The key exists nowhere in the gazetteer.
-	 *
-	 * A coverage fact, never counted as a retrieval failure and never summed with the column above.
+	 * The key exists nowhere in the gazetteer — a coverage fact, never counted as a
+	 * retrieval failure and never summed with the column above.
 	 */
 	n_coverage: number
 	checks: CheckReading[]
 	/**
-	 * Reachability classes, largest first: which band was probed, and which bands actually hold the key.
-	 *
-	 * The largest class is the one a cross-band retry should try first.
+	 * Reachability classes, largest first: which band was probed and which bands actually
+	 * hold the key; the largest class is the one a cross-band retry should try first.
 	 */
 	by_band: Array<{ probed: string; found_in: string[]; n: number; examples: ConstraintMiss[] }>
 	inert_checks: string[]
@@ -126,11 +109,9 @@ export interface ConstraintCensusResult {
 }
 
 /**
- * Above this, an eval that never once accompanies a successful pick is called inert
- * rather than merely unlucky.
- *
- * Small on purpose: the claim is about a mechanism that has never worked, and at n below
- * this the honest report is "not enough firings to say", which the rendering states instead.
+ * Above this, a check that never once accompanies a successful pick is called inert
+ * rather than merely unlucky; small on purpose, because below it the honest report is
+ * "not enough firings to say", which the rendering states instead.
  */
 const INERT_MIN_FIRINGS = 20
 
@@ -184,7 +165,7 @@ function render(result: Omit<ConstraintCensusResult, "rendered">): string {
 }
 
 /**
- * Walk an input set through one traced engine and aggregate every lookup that resolved nothing.
+ * Walk an input set through one traced engine and aggregate every lookup that resolved no candidate.
  */
 export async function runConstraintCensus(
 	registry: EngineRegistryLike,
@@ -192,9 +173,8 @@ export async function runConstraintCensus(
 	dependencies: { openArtifact?: OpenCensusArtifact } = {}
 ): Promise<ConstraintCensusResult> {
 	const set = await resolveInputSet(args.inputs ?? { kind: "board" })
-	// Tracing is the census's entire input, and the band probe is what separates reachability from coverage.
-	// Both are forced on regardless of what the caller passed.
-	// Neither can change an answer, so neither is a change.
+	// Tracing and the band probe are forced on: both are inputs the census cannot
+	// do without and neither can change an answer.
 	const engine = await registry.acquire({ ...args.config, trace: true, diagnose_unreachable: true })
 
 	const opened = await (dependencies.openArtifact ?? openSealedArtifact)(

@@ -3,32 +3,11 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Builder for the demo map's "fog of war" address-coverage overlay — an H3 hexbin tileset that
- *   shades each area by how much address-point data we hold (covered → clear, empty → gray fog).
- *   Backs the `mailwoman coverage build` command. kept React-free here so the logic is testable and
- *   the command is a thin Ink wrapper (mirrors `geocode-core.ts`).
+ *   Fog of war: each cell carries `fog = 1 − coverage` in [0,1] (0 clear, 1 gray), plus
+ *   `fog_opt = fog ** OPTIMISTIC_GAMMA` for the demo's optimistic toggle.
  *
- *   Pipeline: attach the per-state address-point databases (+ interpolation databases) read-only → DuckDB's
- *   H3 community extension bins points to a fine resolution and rolls up to coarser ones →
- *   boundaries stream to ndjson → `tippecanoe` bakes one `coverage` source-layer into a single
- *   PMTiles. Publish the result with `mailwoman tiles publish`.
- *
- *   FOG model — each cell carries two baked values in [0,1] (0 = covered/clear, 1 = empty/gray): •
- *   fine cell: fog = 1 − blended coverage score (address-point density, plus a weaker
- *   street-segment interpolation signal so a street-only cell reads as partial coverage, never a
- *   full gap). • coarse cell: fog = 1 − the mean child coverage — "on average, how covered are the
- *   blocks here" — so a region reads clear when zoomed out and the specific gaps surface as you
- *   zoom into the fine res. • `fog_opt = fog ** OPTIMISTIC_GAMMA` (γ>1) lifts partial coverage
- *   toward clear for an optimistic "looks covered until you zoom in" reading. the demo toggles
- *   between `fog` and `fog_opt`.
- *
- *   Each resolution is baked in its own non-overlapping zoom band (per-feature tippecanoe
- *   minzoom/maxzoom); the finest is baked at a single tile-max level and MapLibre overzooms above
- *   it (hexes are identical geometry at every zoom), so we don't duplicate millions of hexes across
- *   z13–22.
- *
- *   DuckDB is a dynamic import (dev/maintainer-only dep) so the published CLI doesn't force a heavy
- *   native dependency on end users who only ever run parse/geocode.
+ *   DuckDB is a dynamic import so the published CLI does not force a heavy native dependency on
+ *   users who only ever run parse/geocode.
  */
 
 import { pathExists, statPath } from "@mailwoman/core/fs/readers"
@@ -46,21 +25,9 @@ import { stringifyJSON } from "@mailwoman/core/json";
 const ANTIMERIDIAN_SPAN_DEGREES = 180
 
 export interface CoverageBuildOptions {
-	/**
-	 * Comma-separated state slugs (e.g. "CA,TX") or "all" to glob the data root.
-	 */
 	states: string
-	/**
-	 * State slugs to exclude (e.g. ["AK"] — antimeridian hex-wrap).
-	 */
 	excludeStates: string[]
-	/**
-	 * Root holding `address-points-us-<st>.db` databases.
-	 */
 	dataRoot: string
-	/**
-	 * Root holding `interpolation-us-<st>.db` databases, or null to skip the street-segment signal.
-	 */
 	interpRoot: string | null
 	/**
 	 * Finest H3 resolution (the fog floor). 9 ≈ 174 m (street/block).
@@ -86,27 +53,15 @@ export interface CoverageBuildOptions {
 	 * Weight (<1) of the street-segment signal relative to address points.
 	 */
 	interpWeight: number
-	/**
-	 * Optimistic-mode exponent for `fog_opt = fog ** gamma`.
-	 */
 	optimisticGamma: number
 	/**
-	 * GeoNames postal file (12-col tab-separated).
-	 *
-	 * The global postcode coverage signal that clears the "where do we need data" holes.
-	 *
-	 * Null to skip.
-	 * A postcode is area-scale, so centroids bin at the domain resolution and a domain
-	 * cell holding ≥1 postcode reads as postcode-resolvable (covered).
+	 * GeoNames postal file (12-col tab-separated), or null to skip; postcodes are area-scale,
+	 * so centroids bin at the domain resolution.
 	 */
 	geonamesPostalFile: string | null
 	/**
-	 * WOF SQLite DB (the admin gazetteer) holding `spr` (place coords + placetype) +
-	 * `place_population` / `place_importance` — the civilization/salience backdrop.
-	 *
-	 * Settlement places, weighted by salience, mark "where civilization is":
-	 * a salient place we DON'T cover is a gray hole = work to do.
-	 * Null to skip the global holes layer (US rooftop fine map is independent of it).
+	 * WOF SQLite DB holding `spr` and `place_importance`, or null to skip the global
+	 * holes layer; a salient place we do not cover is a gray hole.
 	 */
 	wofDB: string | null
 	/**
@@ -122,14 +77,9 @@ export interface CoverageBuildOptions {
 	 */
 	postcodeExcludeCountries: string[]
 	/**
-	 * Highest zoom baked.
-	 *
-	 * MapLibre overzooms above it.
+	 * Highest zoom baked; MapLibre overzooms above it.
 	 */
 	tileMaxZoom: number
-	/**
-	 * Output `.pmtiles` path.
-	 */
 	out: string
 	/**
 	 * Keep the intermediate ndjson (for re-tiling without re-aggregating).
@@ -166,9 +116,6 @@ interface StateDatabase {
  */
 const RES_ONSET_ZOOM: Record<number, number> = { 4: 0, 5: 0, 6: 5, 7: 7, 8: 9, 9: 10, 10: 12, 11: 14 }
 
-/**
- * Resolve the database set + matching interpolation databases.
- */
 async function resolveStates(opts: CoverageBuildOptions): Promise<StateDatabase[]> {
 	const exclude = new Set(opts.excludeStates.map((s) => s.toUpperCase()))
 	const files = await Globerator.from("address-points-us-??.db", { cwd: opts.dataRoot, absolute: false }).toArray()
@@ -421,7 +368,7 @@ export async function buildCoverageTiles(
 	// A salient place we don't cover is a gray hole = work to do.
 	// We model it as fog = salience·(1−cov): • salience ∈ [0,1] — WOF settlement places
 	// weighted by population/importance (a 1-ring halo), so
-	//     a big uncovered city is a dark hole, a hamlet a faint one, the empty steppe nothing.
+	//     a big uncovered city is a dark hole, a hamlet a faint one, the empty steppe a blank.
 	//   • cov ∈ [0,1] — postcode presence (GeoNames) clears the hole (a postcode = we can geocode here).
 	//     US is excluded — the rooftop fine map above already covers it at street level.
 	// Only cells with residual fog (uncovered salient places) are emitted, so the layer

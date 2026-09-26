@@ -5,20 +5,19 @@
     modal run -m launch.train_remote::digit_prior --config-name=<recipe>.yaml
     modal run -m launch.train_remote::piece_prior --config-name=<recipe>.yaml
 
-These differ from `launch/audits.py` in what they are for: an audit produces a receipt a launch
-requires, and a census answers a question nobody has a receipt for yet. Two disciplines hold across
-all four. Each counts by pulling rows through the LOADER the trainer uses rather than reading
-parquet and reimplementing the sampler — reimplementing it is how the first digit count went wrong
-— except `country_census_raw`, which reads raw parquet precisely because the loader is the thing
-under suspicion. And each prints the census before the conditional table, so a country with no rows
-reads as "no data" rather than "a probability of zero".
+These differ from `launch/audits.py`: an audit produces a receipt a launch requires, and a census
+answers a question nobody has a receipt for yet. Each counts by pulling rows through the LOADER the
+trainer uses rather than reading parquet and reimplementing the sampler — except
+`country_census_raw`, which reads raw parquet because the loader is the thing under suspicion. And
+each prints the census before the conditional table, so a country with no rows reads as "no data"
+rather than "a probability of zero".
 """
 
 from __future__ import annotations
 
 from .app import VOL_MOUNT, app, training_image, vol
 
-#: The recipes live beside the training package on the volume. a census reads the one that trained
+#: The recipes live beside the training package on the volume; a census reads the one that trained
 #: the model it is asking about rather than a local copy.
 CONFIGS = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/configs"
 
@@ -37,7 +36,7 @@ def diagnose_corpus(
 
     Pass ``--corpus-dir`` to point at an overlay. Pass ``--verify-country DE --verify-source
     synth-german`` to additionally PULL a few rows through the real filter and confirm they survive
-    — a source whose rows are all filtered out is a run that trains on nothing and reports success.
+    — a source whose rows are all filtered out is a run that trains on no rows and reports success.
     This is the pre-launch "verify the loader sees the source, then launch" check.
     """
     import json
@@ -74,8 +73,8 @@ def diagnose_corpus(
     paths = _parquet_paths(corpus_root, "train")
     print(f"\n_parquet_paths returned {len(paths)} train parquet files")
 
-    # A file counts under every source it carries, which is what the loader's index does. Counting each file once
-    # under its first row's source hid the sources that never open a file.
+    # A file counts under every source it carries, which is what the loader's index does; counting each file
+    # once under its first row's source hides the sources that never open a file.
     by_source: Counter[str] = Counter()
     rows_by_source: Counter[str] = Counter()
     multi = 0
@@ -102,7 +101,6 @@ def diagnose_corpus(
     for src, count in by_source.most_common():
         print(f"  {src:35s} {count:4d} files  {rows_by_source[src]:>12,} rows")
 
-    # Pre-launch verification: do rows of the target country/source actually survive the filter?
     if verify_country or verify_source:
         from mailwoman_train.data.loader import iter_rows
         from mailwoman_train.labels import locale_id
@@ -191,9 +189,8 @@ def country_census_raw(
         for src, k in (by_source.get(c) or Counter()).most_common(5):
             print(f"        via {src}: {k:,}")
 
-    # completeness audit — corpus countries vs the config's admitted set. The Norway bug was one
-    # silent drop. this asks what else. Two failure modes:
-    #   (a) present-but-dropped: rows in the corpus, absent from country_weights -> silently trained on nothing.
+    # Completeness audit: corpus countries vs the config's admitted set. Two failure modes:
+    #   (a) present-but-dropped: corpus rows absent from country_weights -> silently trained on no rows.
     #   (b) admitted-but-absent: in country_weights, ~zero corpus rows -> the config promises a locale it can't deliver.
     import yaml as _yaml
 
@@ -232,14 +229,11 @@ def digit_prior(
     """Which tag owns a bare digit-containing token, as the SAMPLER draws it?
 
     The question is whether the model's `39A -> postcode` habit contradicts its training prior or
-    reflects it. A previous count said P(house_number | bare digit)=0.810 vs P(postcode|·)=0.101 —
-    but that was one synthetic recipe output, read off disk, unweighted. The prior the model actually sees
-    is the weighted multinomial over ~700 parquet files, after the country filter, the coarse filter,
-    and the augmentations. Those are not decorations: `augment_glue_prob` alone rewrites token
-    boundaries, which is the thing under investigation.
-
-    So this pulls rows through `iter_rows` — the same entry point the trainer uses, with the config's
-    own weights — rather than reimplementing the sampler.
+    reflects it. The prior the model actually sees is the weighted multinomial over ~700 parquet
+    files, after the country filter, the coarse filter, and the augmentations — and `augment_glue_prob`
+    alone rewrites token boundaries, which is the thing under investigation. So this pulls rows through
+    `iter_rows`, the same entry point the trainer uses, with the config's own weights, rather than
+    reimplementing the sampler.
 
     Reports P(tag | token) for two families:
       - Bare digit-ish tokens matching `\\d+[A-Za-z]?` (39A, 121, 44B).
@@ -410,19 +404,16 @@ def piece_prior(
 ) -> None:
     """The digit prior at the unit the MODEL actually sees — the SentencePiece piece.
 
-    `digit_prior` counted P(tag | token) and found P(postcode | a 2- or 3-digit token) = 0.0000 in
-    every country with data. That looked like the model contradicting its corpus. It is not. The
-    model never sees a token. it sees pieces, and emits one label per piece. Digits tokenize roughly
-    one piece per character, so a 5-digit postcode `[9|0|2|1|0]` mints four `I-postcode` labels while
-    a 2-digit house number `[1|4]` mints one `I-house_number`. Longer runs are postcodes and longer
-    runs mint proportionally more continuation labels, so the continuation label distribution can
-    invert the token distribution — mechanically, by length. Counting at the wrong unit is how the
-    first reading came out backwards.
+    The model never sees a token; it sees pieces and emits one label per piece. Digits tokenize
+    roughly one piece per character, so a 5-digit postcode `[9|0|2|1|0]` mints four `I-postcode`
+    labels while a 2-digit house number `[1|4]` mints one `I-house_number`. Longer runs are postcodes
+    and mint proportionally more continuation labels, so the continuation label distribution can
+    invert the token distribution mechanically, by length.
 
-    That is the hypothesis. This measures it, at the unit, through `iter_encoded` — the same call
-    the trainer makes, so the tokenizer and the BIO expansion are the real ones rather than
-    arithmetic about them. (A hand-derivation predicted P(postcode | continuation) = 0.688 assuming
-    fertility == digit count. multi-digit pieces like `16` exist, so the real number can differ.)
+    This measures it at that unit through `iter_encoded`, the same call the trainer makes, so the
+    tokenizer and the BIO expansion are the real ones. (A hand-derivation predicted
+    P(postcode | continuation) = 0.688 assuming fertility == digit count; multi-digit pieces like `16`
+    exist, so the real number can differ.)
 
     Reports, for digit-containing pieces only:
       - P(tag | START piece of a digit run)        vs the model's measured B-house_number 0.604
@@ -449,7 +440,7 @@ def piece_prior(
     cfg_path = Path(CONFIGS) / config_name
     cfg = yaml.safe_load(cfg_path.read_text())
     data_cfg = DataConfig(**cfg["data"])
-    # `tokenizer_dir` names the directory. the SentencePiece model is the file inside it.
+    # `tokenizer_dir` names the directory; the SentencePiece model is the file inside it.
     tok = Tokenizer(Path(data_cfg.tokenizer_dir) / "tokenizer.model")
 
     print(f"config     : {cfg_path.name}")
@@ -485,7 +476,6 @@ def piece_prior(
                 j += 1
             run = pieces[i:j]
             runlabels = [ID_TO_LABEL[lab] for lab in labels[i:j]]
-            # digit count in the run, for the fertility check
             ndigits = sum(len(DIGIT.findall(p)) for p in run)
             fertility[ndigits][len(run)] += 1
 
@@ -545,8 +535,7 @@ def piece_prior(
 SEQUENCE_RECEIPT_CAP = 5000
 """How many distinct component sequences a receipt records per split.
 
-Every country measured so far holds far fewer — 42 for GB, 31 for US — so the cap bounds a receipt
-for a country whose label vocabulary turns out to be large, and truncates nothing today.
+The cap bounds a receipt for a country whose label vocabulary turns out to be large, and
 `component_sequences_recorded` states how many the receipt actually holds beside
 `distinct_component_sequences`, so a truncated receipt says so.
 """
@@ -570,10 +559,10 @@ def locale_supply_census(
     row count reads as supply it does not have. And a corpus can carry one street rendered a hundred
     ways, which is one street.
 
-    So this counts four things a row count cannot give, over a full scan rather than a sample.
-    A distinct count is the one statistic a sample cannot extrapolate:
+    So this counts four things a row count cannot give, over a full scan rather than a sample, since
+    a distinct count is the one statistic a sample cannot extrapolate:
 
-    - **rows**, per split, which is the number already in hand from the epoch-mixture audit.
+    - **rows**, per split, the number already in hand from the epoch-mixture audit.
     - **distinct raw surfaces**, the strings the tokenizer actually sees. Rows over surfaces is how
       much of the corpus is the same text written again.
     - **distinct `source_id`s**, the underlying records. `SourceProvenance.source_id` is documented
@@ -583,24 +572,17 @@ def locale_supply_census(
       vocabulary the country teaches: a corpus of 800,000 rows carrying four sequences teaches four
       forms.
 
-    Digests rather than strings in the two large sets. A full GB scan holds roughly 15.6 million raw
+    Digests rather than strings in the two large sets: a full GB scan holds roughly 15.6 million raw
     surfaces, and 8-byte digests keep the sets inside this function's memory where the strings would
-    not. A blake2b collision at this cardinality is far below the precision any decision here needs.
+    not, at a collision rate far below the precision any decision here needs.
 
     Rows are counted by `surface`, the field that says how the text was produced: `attested` is the
     publisher's own string, `composed` is a template over one real record's fields, and `invented`
-    names no published record. The earlier reading counted a row as synthetic whenever it carried a
-    recipe name, which reported HM Land Registry records rendered by `synth-gb` as fabricated.
-    `register` names the publication each row's record came from, so supply is countable per
-    register rather than per adapter.
-
-    The old reading, kept only as the reason the split exists. A synthesized row carried `synth_method`, and counting
-    the two together would answer "how much data is there" with a number partly produced by the
-    recipe under test.
+    names no published record. `register` names the publication each row's record came from, so
+    supply is countable per register rather than per adapter.
 
     Reads raw parquet rather than the loader, because the question is what the corpus contains. What
-    a run draws from it is `audit_epoch_mixture`, and the two answer different questions: that one
-    measures the sampler, this one measures the supply.
+    a run draws from it is `audit_epoch_mixture`: that one measures the sampler, this one the supply.
     """
     import json
     import sys
@@ -680,9 +662,9 @@ def locale_supply_census(
                 if has_street:
                     street_rows += 1
 
-                # The split assignment holds a row out by its `region` component, so a street row carrying no region
-                # can never reach the validation or test split however the holdouts are declared. This counter is the
-                # ceiling on street-level validation a region holdout could ever draw for this country (#2353).
+                # The split assignment holds a row out by its `region` component, so a street row carrying no
+                # region can never reach the validation or test split however the holdouts are declared. This
+                # counter is the ceiling on street-level validation a region holdout could ever draw.
                 if has_street and "region" in present:
                     street_and_region_rows += 1
 
@@ -700,9 +682,8 @@ def locale_supply_census(
             "distinct_surfaces": len(surfaces),
             "distinct_source_ids": len(record_ids),
             "distinct_component_sequences": len(sequences),
-            # Every sequence the split carries. A country's sequence vocabulary is small — 42 for GB, 31 for US — and
-            # the question the receipt gets asked is which shapes a country never teaches, which a truncated list
-            # cannot answer. The cap bounds the receipt for a country whose vocabulary turns out to be large.
+            # Every sequence the split carries: the receipt is asked which shapes a country never teaches, which
+            # a truncated list cannot answer. The cap bounds the receipt for a country whose vocabulary is large.
             "component_sequences": dict(sequences.most_common(SEQUENCE_RECEIPT_CAP)),
             "component_sequences_recorded": min(len(sequences), SEQUENCE_RECEIPT_CAP),
             "by_source": dict(by_source.most_common()),

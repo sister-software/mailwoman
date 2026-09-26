@@ -6,7 +6,7 @@
  *
  *   Both ways it failed before were hard to read. An unroutable name returned zero hits, which is indistinguishable
  *   from "this country has no places": an extract reaches routing only through the name `deriveSchemaName` derives from
- *   its filename. Therefore, a file spelled one letter off the placetype it serves answers with nothing while holding every
+ *   its filename. Therefore, a file spelled one letter off the placetype it serves answers no rows while holding every
  *   row that was asked for. A routable name threw from deep inside a select instead.
  *
  *   The two `spr`-only fixtures below differ only in that prefix — `postalcode-x.db` routes, `postcode-x.db` does
@@ -57,7 +57,7 @@ const writeSprOnly = (path: PathBuilderLike): void => {
 }
 
 /**
- * An extract with nothing in it, under a name that routes.
+ * An extract with no data in it, under a name that routes.
  *
  * A truncated or zero-byte file reads exactly like this.
  */
@@ -86,7 +86,7 @@ beforeAll(async () => {
 	// Routes nowhere — spelled `postcode` where the placetype is `postalcode`.
 	writeSprOnly(dir.path("postcode-x.db"))
 	writeRelationOnly(dir.path("postcode-locality-intl.db"))
-	// Routes by name and carries nothing at all.
+	// Routes by name and carries no data at all.
 	// The shape `postalcode-fr.db` had on disk.
 	writeEmpty(dir.path("postalcode-empty.db"))
 })

@@ -51,7 +51,7 @@ There are eight kinds, and the classifier always returns the whole ranked list i
 | -------------------- | ---------------------------------------------------------------------- |
 | `structured_address` | A conventional postal address, several segments                        |
 | `postcode_only`      | A postcode and little else                                             |
-| `locality_only`      | A short place name and nothing else                                    |
+| `locality_only`      | A short place name and no other part                                   |
 | `po_box`             | A post office box or its regional equivalent                           |
 | `intersection`       | Two streets joined by `and`, `&`, `@` or `at`                          |
 | `landmark`           | A named venue, or a relative description like `behind the gas station` |
@@ -116,7 +116,7 @@ mailwoman parse "5th and Main"
 ```
 
 The parse returns one component per street, and the formatter joins them with an ampersand when it
-renders. There is no intersection resolver either, and nothing computes where the two streets cross.
+renders. There is no intersection resolver either, and no step computes where the two streets cross.
 The coordinate again comes from whatever place name is present:
 
 ```bash

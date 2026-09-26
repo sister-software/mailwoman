@@ -38,9 +38,8 @@ def build_optimizer(
     Schedules compose for free: LambdaLR scales each group's own base rate by the same multiplier,
     so every group keeps its shape and the ratios between them hold.
 
-    Frozen parameters are excluded. With no overrides there is one group, identical to what every
-    earlier recipe produced. The base group is dropped when a run freezes everything outside a
-    carve-out and nothing is left for it.
+    Frozen parameters are excluded; with no overrides there is one group. The base group is dropped
+    when a run freezes everything outside a carve-out and no parameter is left for it.
 
     Returns the optimizer and a list naming each group, in order. The names come back as a return
     value rather than being stored on the groups themselves because loading a checkpoint replaces
@@ -55,12 +54,11 @@ def build_optimizer(
         carveouts.append((("span_scorer.", "semi_crf."), span_head_learning_rate, "span_head_learning_rate"))
     if classifier_learning_rate is not None:
         # deploc_head rides the classifier carveout: it is the output head for dependent_locality,
-        # so the fresh head resurrects at the same hot LR the reinitialized classifier rows use —
-        # one variable under test (separate head versus flat-head reinit), same rate. The
-        # street-type and locality-surface projections ride it for the same reason: a fresh input
+        # so the fresh head resurrects at the same hot LR the reinitialized classifier rows use.
+        # The street-type and locality-surface projections ride it for the same reason: a fresh input
         # channel needs the hot rate to learn to use its signal within a short probe, while the
-        # encoder fine-tunes at the base rate. Every extra prefix is a no-op when its module is
-        # off, because `classifier.` still matches and the group is never empty.
+        # encoder fine-tunes at the base rate. Every extra prefix is a no-op when its module is off,
+        # because `classifier.` still matches and the group is never empty.
         carveouts.append(
             (
                 (
@@ -105,9 +103,8 @@ def reinit_label_rows(model: Any, labels: list[str]) -> None:
     """Reset the named BIO labels' classifier rows to the mean of the LIVE rows.
 
     The dead-tag mechanism: initializing from a checkpoint where a tag never fires leaves its
-    output row deeply negative, and class weights only scale a vanishing gradient (v382 and v383
-    were both no-ops). Mean-of-live re-init puts the row back on the decision surface, where the
-    resurrection rate can steer it.
+    output row deeply negative, and class weights only scale a vanishing gradient. Mean-of-live
+    re-init puts the row back on the decision surface, where the resurrection rate can steer it.
     """
     rows = [LABEL_TO_ID[label] for label in labels]
     with torch.no_grad():

@@ -46,7 +46,7 @@ The plan has six work areas, each with its own thread. Cross-thread dependencies
   - **License hygiene**: DeepSeek outputs are AGPL-compatible for our use case. Document the generation pipeline + prompts so the corpus is reproducible.
 - **Output:** `corpus-v0.4.0` (added to `corpus-v0.3.0` rows rather than replacing them). The change only adds adapters, so existing weights remain valid.
 - **Blocks:** Threads A, C.
-- **Blocked by:** nothing. It can start immediately.
+- **Blocked by:** no item. It can start immediately.
 
 ### C. Classifier with top-k output + phrase-prior conditioning
 
@@ -89,7 +89,7 @@ The plan has six work areas, each with its own thread. Cross-thread dependencies
   - Rule-based version ships first as proof-of-concept; learned version is v0.5.0 stretch if time permits, otherwise v0.5.1
 - **Output:** new workspace + new stage in `runPipeline`. Existing pipeline behavior unchanged when caller does not opt in (backward-compatible).
 - **Blocks:** Thread C (classifier conditioning), Thread D (reconcile consumes proposals).
-- **Blocked by:** nothing. The rule-based version can start immediately.
+- **Blocked by:** no item. The rule-based version can start immediately.
 
 ### F. Process improvements landed during v0.4.0 to harden — **SHIPPED**
 

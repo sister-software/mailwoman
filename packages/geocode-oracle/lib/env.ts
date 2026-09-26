@@ -13,7 +13,7 @@ import { z } from "zod"
  * Google Maps Platform key for the reference-geocoder oracle (`geocode-oracle/lib/sdk/google-client.ts`).
  *
  * Verification tooling only.
- * Nothing on the parse path reads this, and `@mailwoman/geocode-oracle` is a private
+ * No code on the parse path reads this, and `@mailwoman/geocode-oracle` is a private
  * workspace precisely so it cannot become a runtime dependency of a published package.
  *
  * Billed PER request: the client caches for 30 days and paces at 60/minute by default for that reason.

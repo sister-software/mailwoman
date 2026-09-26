@@ -6,7 +6,7 @@ _Phase 0 deliverable of the documentation-architecture cleanup. Status: **draft 
 
 ## Principles
 
-1. **Reorganization never changes publicness.** Moving a page into the Archive section changes its navigation rather than its visibility. Nothing currently excluded from the build becomes public — and nothing currently public gets unpublished — as a side effect of the cleanup. Every publicness change is its own explicit decision, recorded in the inventory.
+1. **Reorganization never changes publicness.** Moving a page into the Archive section changes its navigation rather than its visibility. No page currently excluded from the build becomes public — and no page currently public gets unpublished — as a side effect of the cleanup. Every publicness change is its own explicit decision, recorded in the inventory.
 2. **Existing exclusions stand.** `reviews/**`, eval postmortems, and night-shift session reports stay excluded (`docs/docusaurus.config.ts`). They are internal working records, excluded deliberately.
 3. **Dated records stay published and permalink-stable.** Anything already public under `plan/phases/`, `evals/`, or the `research/` blog keeps its URL and its point-in-time content. Archive pages are visibly dated and out of the default reader path, but searchable.
 4. **Promotion (excluded → public) requires all of:** no internal references (private repos, funding, unreleased work, third-party names in unflattering contexts); no security-sensitive detail; evidentiary value — a maintained page wants to cite it. Operator signs off per page.

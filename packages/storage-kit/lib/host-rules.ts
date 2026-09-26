@@ -47,8 +47,8 @@ export function renderUdevRule(vendorID: string, productID: string): string {
  * and drives host commands from scripts.
  * Not appropriate for a shared host, a server, or any account trusted less than root.
  *
- * Nothing needs it: without it, `storage prepare` prompts for a password like any
- * other sudo command, and only an unattended caller is blocked.
+ * No operation needs it: without it, `storage prepare` prompts for a password like
+ * any other sudo command, and only an unattended caller is blocked.
  */
 export function renderSudoersRule(targetUser: string, nodePath: string, cliPath: string): string {
 	return [

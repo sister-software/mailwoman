@@ -5,12 +5,11 @@
  *
  *   Finds repository paths in markdown inline code spans that do not exist on disk.
  *
- *   Many backticked strings that contain a slash are not file paths. {@linkcode refusalFor} sorts those into refusal
- *   classes before resolution, and the census reports the refusal counts beside the broken citations.
+ *   Many backticked strings that contain a slash are not file paths, so {@linkcode refusalFor} sorts them into refusal classes before resolution.
  */
 
-// The Docs workflow runs `check/docs-structure.ts`, which imports this file, before `yarn install`.
-// Only Node builtins can resolve at that point.
+// This file is imported by `check/docs-structure.ts`, which the Docs workflow runs
+// before `yarn install`, so only Node builtins can resolve.
 /* oxlint-disable typescript/no-restricted-imports -- runs before `yarn install`; see above */
 import { readFile } from "node:fs/promises"
 import * as path from "node:path"
@@ -22,18 +21,14 @@ import { pathExists } from "./exists.ts"
 const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url))
 
 /**
- * The docs package root.
- *
- * It is the part of this file's path before the last `scripts/` segment,
- * so it stays correct if this file moves to another depth.
+ * The docs package root, taken as this file's path before the last `scripts/` segment
+ * so it holds at any depth.
  */
 const DOCS_ROOT = SCRIPT_DIR.slice(0, SCRIPT_DIR.lastIndexOf(`${path.sep}scripts${path.sep}`))
 
 /**
- * The top-level repository directories that a citation can start with.
- *
- * A citation is recognized by its first segment, because a package subpath such as
- * `mailwoman/gazetteer-pipeline` has the same shape as a repository path.
+ * The top-level repository directories a citation can start with, recognized by the
+ * first segment because a package subpath has the same shape.
  */
 const REPOSITORY_ROOTS = new Set([
 	".claude",
@@ -49,28 +44,18 @@ const REPOSITORY_ROOTS = new Set([
 ])
 
 /**
- * Path segments that hold generated output.
- *
- * Whether such a path exists depends on whether the checkout has been built,
- * so these citations are refused.
+ * Path segments that hold generated output, refused because their existence depends on
+ * whether the checkout has been built.
  */
 const GENERATED_SEGMENTS = new Set([".docusaurus", ".yarn", "build", "dist", "node_modules", "out"])
 
-/**
- * This pattern matches a single- or double-backtick code span on one line.
- */
 const CODE_SPAN = /(`{1,2})([^`\n]+?)\1/g
 
-/**
- * This pattern matches a filename that starts with an ISO date, which marks a point-in-time record.
- */
 const DATED_FILENAME = /(^|\/)\d{4}-\d{2}-\d{2}[-.]/
 
 /**
- * Directories whose documents are point-in-time records even though their filenames have no date.
- * Each entry maps the directory prefix to the reason.
- *
- * A record describes the tree as it was when written, so its broken paths are counted as refusals.
+ * Directories whose documents are point-in-time records even though their filenames have
+ * no date, so a broken citation under one is refused rather than reported.
  */
 const RECORD_TREES = new Map([
 	["docs/records/plan/", "the superseded implementation plan"],
@@ -96,29 +81,11 @@ export function isPointInTimeRecord(file: string): boolean {
  * The reasons a path-like code span is excluded from resolution.
  */
 export const CitationRefusal = {
-	/**
-	 * The first segment is outside `REPOSITORY_ROOTS`, or the text has only one segment.
-	 */
 	NotRepositoryRooted: "not-repository-rooted",
-	/**
-	 * An ellipsis replaces omitted segments (`corpus-python/.../configs/v1.8.0.yaml`).
-	 */
 	Elided: "elided",
-	/**
-	 * The text contains a glob, a `<placeholder>`, a `{brace}` or a `$variable`.
-	 */
 	Pattern: "pattern",
-	/**
-	 * The path passes through generated output such as `out/`, `dist/` or `node_modules/`.
-	 */
 	Generated: "generated",
-	/**
-	 * The text contains whitespace or a `|`, which marks a command line.
-	 */
 	NotAPath: "not-a-path",
-	/**
-	 * The citing document is a point-in-time record, and the path did not resolve.
-	 */
 	Record: "record",
 } as const
 
@@ -131,17 +98,8 @@ export type CitationRefusal = (typeof CitationRefusal)[keyof typeof CitationRefu
  * A backticked citation whose target does not exist.
  */
 export interface BrokenCitation {
-	/**
-	 * The file that contains the citation, relative to the repository root.
-	 */
 	file: string
-	/**
-	 * The path as written, without its position suffix or anchor.
-	 */
 	target: string
-	/**
-	 * The 1-based line where the citation starts.
-	 */
 	line: number
 }
 
@@ -149,17 +107,8 @@ export interface BrokenCitation {
  * The census result: resolved citations, refusals by class, and broken citations.
  */
 export interface CitationCensus {
-	/**
-	 * The number of citations that resolved to a file or directory.
-	 */
 	resolved: number
-	/**
-	 * The number of refused candidates for each {@linkcode CitationRefusal}.
-	 */
 	refused: Record<CitationRefusal, number>
-	/**
-	 * The citations that resolved to nothing.
-	 */
 	broken: BrokenCitation[]
 }
 
@@ -185,20 +134,16 @@ export function refusalFor(text: string): CitationRefusal | null {
 }
 
 /**
- * Return the file path of a citation after removing any `#anchor` and position suffix.
- *
- * Position suffixes take the forms `:129`, `:129:4` and `:129-131`.
- * A trailing slash is kept.
+ * The file path of a citation with any `#anchor` and position suffix
+ * (`:129`, `:129:4`, `:129-131`) removed, keeping a trailing slash.
  */
 export function citationTarget(text: string): string {
 	return text.replace(/#.*$/, "").replace(/:\d+(?:[:-]\d+)*$/, "")
 }
 
 /**
- * Count the backticked repository paths in `files` and resolve each against `repoRoot`.
- *
- * Citations resolve against the repository root.
- * Markdown links in `./links.ts` resolve against the citing file's directory.
+ * Count the backticked repository paths in `files` and resolve each against `repoRoot`,
+ * unlike the markdown links in `./links.ts` that resolve against the citing file's directory.
  */
 export async function censusPathCitations(
 	files: string[],

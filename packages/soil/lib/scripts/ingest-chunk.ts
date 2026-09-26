@@ -34,15 +34,15 @@ await runIngestChunkScript({
 				fidFrom: Number(requiredArgument("soil ingest-chunk", "fid-from", values["fid-from"])),
 				fidTo: Number(requiredArgument("soil ingest-chunk", "fid-to", values["fid-to"])),
 				// A range's own count is not knowable up front — `ogrinfo` reports the layer's total
-				// and nothing narrower — so the chunk asserts nothing about its size
+				// and no narrower count — so the chunk makes no assertion about its size
 				// and the parent checks the per-area sum against the shapefile's.
 				declaredFeatureCount: 0,
 			}),
 			indexResolution: chunk.indexResolution,
 			coverageResolution: chunk.coverageResolution,
 			// An empty string is an empty set rather than "every map unit": a build
-			// where nothing lacks soil mapping passes one, and `"".split(",")` yields one empty
-			// element that has to be dropped rather than joined against as a mukey.
+			// where every map unit has soil mapping passes one, and `"".split(",")` yields one
+			// empty element that has to be dropped rather than joined against as a mukey.
 			noMappingMukeys: new Set((values["no-mapping-mukeys"] ?? "").split(",").filter((mukey) => mukey.length)),
 			onProgress: chunk.onProgress,
 		}),

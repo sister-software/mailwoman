@@ -7,7 +7,7 @@
 
 Three related failures surfaced this week:
 
-1. **Shipped artifacts are mutable.** Every SQLite DB we build is meant to be read-only, but nothing enforces it. Scripts like `backfill-ancestors-from-hierarchy.ts` exist to reopen a built DB read-write and patch it. The policy lives in memories and docstrings, and the filesystem does not enforce it.
+1. **Shipped artifacts are mutable.** Every SQLite DB we build is meant to be read-only, but no mechanism enforces it. Scripts like `backfill-ancestors-from-hierarchy.ts` exist to reopen a built DB read-write and patch it. The policy lives in memories and docstrings, and the filesystem does not enforce it.
 2. **The recipe does not reproduce the artifact.** The live `admin-global-priority.db` accumulated state from ad-hoc augment scripts (`augment-admin-*`, `build-coverage-expansion`, …) that no recorded recipe reproduces. The #1015 full rebuild reproduced the _manifest recipe_ and so **lost the country/region nodes of ~95 countries** (#1023/#1026). A coverage-count check (rows + distinct countries) passed despite the structural regression.
 3. **The build steps are scattered.** Building the admin gazetteer correctly takes one 700-line script plus four post-build steps in a specific order (`add-region-abbrevs` → `place_abbr` → `build-fts`, with `backfill-ancestors` folded in but the others not). Only RELEASING.md prose and a lagging manifest document the order. The #1015 rebuild missed two of the steps on the first pass. `mailwoman wof prepare` is a stale partial duplicate, and `mailwoman gazetteer build` builds a _different_ artifact (the candidate table). A fresh clone cannot tell which command builds which artifact.
 

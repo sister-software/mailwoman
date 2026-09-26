@@ -5,7 +5,7 @@
  *
  *   Unit tests for the decision-6 layer-absent guards. The guards live in their own module rather than
  *   in `cli.ts` precisely because these three functions are pure, transport-independent
- *   logic: nothing in them needs the stdio connection `cli.ts` opens at import time (the actual reason `cli.ts`
+ *   logic: no code in them needs the stdio connection `cli.ts` opens at import time (the actual reason `cli.ts`
  *   itself can't be imported by vitest). Each guard gets its three branches exercised directly: path `undefined`,
  *   path set but the file missing, path set and the file present.
  */

@@ -6,7 +6,7 @@
  *   Pairwise grouping precision/recall/F1 (§7-3b decision 4) — scores a predicted "same group"
  *   judgment against a truth partition over the same id universe. Built for {@linkcode filerLinkageEval}
  *   (`linkage-eval.ts`), which scores the corporate-family membership a `filer.db` build asserts
- *   (`filer_family`) against held-out `holdingCompany` truth. The types here are generic. Nothing below is
+ *   (`filer_family`) against held-out `holdingCompany` truth. The types here are generic. No code below is
  *   filer-specific — because the same shape ("does this grouping recover a held-out one?") recurs anywhere
  *   this SDK adds a linkage eval.
  *
@@ -28,13 +28,13 @@
  *   denominator to `0` for both precision and recall, silently. This module reports `null` instead — "the
  *   prediction made no positive calls at all" and "every positive call the prediction made was wrong" are
  *   different, honest facts, and collapsing them into the same `0` would misreport a linkage that
- *   predicted nothing (this module's own primary use case — see {@linkcode filerLinkageEval}'s scorecard)
+ *   made no positive call (this module's own primary use case — see {@linkcode filerLinkageEval}'s scorecard)
  *   as indistinguishable from one that confidently predicted the wrong thing everywhere.
  *
  *   **`f1` propagates that `null` rather than collapsing it.** `f1` is the one field a reader quotes as
  *   the headline, so an `f1: 0` fallback whenever `truePositivePairs === 0` throws the distinction above
  *   away again at exactly the point it matters most. Worked example: a perfect prediction over an
- *   all-singleton truth partition (nothing to merge, nothing merged) has no defined precision and no
+ *   all-singleton truth partition (no pair to merge and no pair merged) has no defined precision and no
  *   defined recall, so an `f1` of `0` would be arithmetically indistinguishable from a linkage that got
  *   every call wrong. So `f1` is `null` whenever
  *   `precision` or `recall` is `null`, `0` when both are defined and `truePositivePairs === 0` (a genuine,
@@ -152,7 +152,7 @@ export function scorePairwiseGrouping<ID>(
 
 	// `null` in, `null` out — never `0`.
 	// `0` is reserved for the case both components are defined and the prediction
-	// still recovered nothing, which is a measurement.
+	// still recovered no positive pair, which is a measurement.
 	// An undefined component is the absence of one.
 	let f1: number | null = null
 

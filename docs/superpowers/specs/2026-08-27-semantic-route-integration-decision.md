@@ -12,7 +12,7 @@ for).
 Stop condition 2 says a large downstream phase needs a concrete product requirement supported by its
 own evidence, and that a recorded GO does not count as one. This record supplies that requirement and
 states how strong the evidence is. It decides the surface, the dependency direction, the default
-posture, the bar any default change must clear, and the rollback plan. It implements nothing.
+posture, the bar any default change must clear, and the rollback plan. It implements no code.
 
 Two measurements were taken while writing it. Both can be reproduced from §11, and both changed the
 decision. The first is reassuring: over **9,324 distinct committed inputs**, the route as merged
@@ -29,7 +29,7 @@ alphabetical order decides which one it takes.
 2. **The consuming surface is `createRuntimePipeline`'s existing `poiSemanticLookup` option**,
    consulted last and supplying positive evidence only. This record freezes the order PR #1955
    established (§3.1).
-3. **The dependency direction is `mailwoman` → `@mailwoman/geographic-model`, and nothing else.**
+3. **The dependency direction is `mailwoman` → `@mailwoman/geographic-model`, and no other dependency.**
    The boundary record's §6 constraint on `@mailwoman/core` is **left standing, unamended** (§3.2,
    §10). The `devDependency` becomes a real dependency only in a change published by the same
    coordinated release that moves `@mailwoman/geographic-model` off `0.0.0` (§3.3).
@@ -185,7 +185,7 @@ subject lookup stays three rungs and the order is frozen by this record:
 
 1. `poiTaxonomyLookup` — the committed category lexicon.
 2. `poiNameLookup` — the POI name rung, when a `poi.db` is wired.
-3. the injected route — **only** where both returned nothing.
+3. the injected route — **only** where both returned no result.
 
 The route supplies positive evidence only. A miss returns `[]`. The route can add a subject where
 there was none, but it can never remove one or displace a committed hit. When the route is absent,
@@ -212,7 +212,7 @@ cycle, and adds no new fan-out.**
 
 - The POI branch already lives in `mailwoman`: `poi-intent.ts`, `poi-executor.ts`, and the pipeline
   factory itself. `@mailwoman/core` keeps the interface types (`POIIntent`, `POIResult`,
-  `POIIntentOutcome`) and nothing that would need world semantics.
+  `POIIntentOutcome`) and no type that would need world semantics.
 - `@mailwoman/kind-classifier` calls the lexicon, but the lexicon is **injected** through
   `createKindClassifier({ poiLexicon })`. It needs no dependency either.
 - `@mailwoman/geographic-model` already depends on `@mailwoman/poi-taxonomy`, which `mailwoman`
@@ -252,7 +252,7 @@ is in the bump set. `AGENTS.md` describes the same frozen-workspace hazard from 
 the supported surface. That change is not published until the same coordinated release also
 publishes `@mailwoman/geographic-model` at the shared version. The workspace is in
 `.release-it.json`'s list. That list is both the publish set **and** the bump set. One `yarn release`
-therefore does both, and the dependency versions always match. Nothing here needs a hand-publish, and nothing
+therefore does both, and the dependency versions always match. No step here needs a hand-publish, and no step
 here permits one.
 
 The dynamic import may stay or go once the edge is real. Publishing no longer requires it. Keeping
@@ -410,7 +410,7 @@ The diagnostic-strength surface therefore works as follows. The semantic observa
 `QueryIntentMarker` (`mechanism: "semantic:affords"`, with `evidence` carrying the assertion id,
 modality, mapping and both provenance records). The recognition route stays opt-in, and the compiled
 artifact keeps growing under the amendment process. A caller can then see on whose authority the
-category was chosen, and nothing changes on the default path. The same plumbing suits the opt-in
+category was chosen, and no behavior changes on the default path. The same plumbing suits the opt-in
 surface regardless of the phase-2 verdict, and #1965's absence observations need the same channel.
 That is why §8.3 lists it as a prerequisite rather than a fallback.
 
@@ -423,7 +423,7 @@ conformance instruments remain as the durable product of the phase.
 
 ## 8. Prerequisites for the supported opt-in surface
 
-This record authorizes the work below and nothing beyond it. Each item needs its own issue, and none
+This record authorizes the work below and no other work. Each item needs its own issue, and none
 is implemented here.
 
 ### 8.1 The plural affordance must be answered without an authored preference
@@ -456,7 +456,7 @@ that says whether a lookup's several hits are one set to search together or a pr
 head is the subject. The committed phrase index keeps the preference-list reading, which belongs to
 #1933 and is unchanged. `matchPOISubject` carries the whole set, `POIIntent`'s category subject holds
 `categoryIDs`, and the executor probes them in one `#searchKRing` call. The reader's own distance sort
-ranks the union, and nothing on the path authors a weight or a per-category preference. W1-3 landed
+ranks the union, and no stage on the path authors a weight or a per-category preference. W1-3 landed
 after it, and the compiled model reads `0.3.0`. At the Coalinga anchor, `pharmacy` returns zero rows,
 `drugstore` returns two, and the union answers `drugstore` at 0.77 km.
 
@@ -522,7 +522,7 @@ later integration decision".
 dependency on `@mailwoman/geographic-model`, now or as a consequence of anything §8 authorizes. §6's
 reason still holds: core ships the pipeline interface and roughly 9 MB of reference data to every
 consumer, so every drop-in API would inherit a world-semantics dependency there. §3.2 also shows that
-the integration needs nothing from core. The POI branch lives in `mailwoman`, and
+the integration needs no API from core. The POI branch lives in `mailwoman`, and
 `@mailwoman/kind-classifier` receives its lexicon by injection.
 
 No other exclusion in §6 changes. Ranking behavior is unchanged, and no authored weight, boost,

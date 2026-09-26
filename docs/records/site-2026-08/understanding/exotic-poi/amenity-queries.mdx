@@ -42,7 +42,7 @@ The geocoder isn't translating labels between languages. "Gas station", "servo",
 
 **Nominatim** (OSM's geocoder) handles amenity queries well because OSM tags every amenity with a standardized key-value pair. `amenity=fuel` maps to every gas station in OSM. Nominatim's search API accepts free-text queries and matches them against OSM tags and names. `gas station near Paris` returns OSM-tagged fuel stations near Paris.
 
-The limitation: Nominatim only searches OSM. If a gas station is not in OSM, it doesn't exist to Nominatim. OSM's amenity coverage is excellent in Western Europe and sparse in much of the rest of the world. A query for `gas station` in rural India may return nothing because no one has mapped the gas stations there.
+The limitation: Nominatim only searches OSM. If a gas station is not in OSM, it doesn't exist to Nominatim. OSM's amenity coverage is excellent in Western Europe and sparse in much of the rest of the world. A query for `gas station` in rural India may return no result because no one has mapped the gas stations there.
 
 **Google's Places API** handles amenity queries through Google's proprietary place taxonomy. The API accepts a `type` parameter (e.g., `gas_station`, `atm`, `pharmacy`) and returns ranked results. Google's taxonomy is larger and more consistent than OSM's, but it is proprietary — you cannot inspect how a category is defined, add new categories, or correct misclassifications.
 

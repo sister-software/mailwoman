@@ -8,9 +8,9 @@
  *
  *   A retired workspace is the case the registered list cannot reach. Removing a workspace takes its manifest and its
  *   source, and leaves the `out/` tree and `tsconfig.tsbuildinfo` that `tsc` had already written beside them. Those
- *   sit under a directory `packages/*` still matches, so `sherif` reports it and nothing cleans it. A full clean now
+ *   sit under a directory `packages/*` still matches, so `sherif` reports it and no operation cleans it. A full clean now
  *   sweeps those directories too, and the sweep removes only generated names and then the directory itself, once
- *   nothing else is left in it.
+ *   no other entry is left in it.
  */
 
 import { tryStat } from "@mailwoman/core/fs/readers/stat"
@@ -148,7 +148,7 @@ export const cleanOperation = defineOperation({
 			}
 
 			// The shell goes only when the generated names were all it held.
-			// A dry run has removed nothing, so the reading discounts the names it would have taken.
+			// A dry run has removed no entry, so the reading discounts the names it would have taken.
 			const generated = new Set<string>([...directoryNames, ...buildMetadataNames])
 
 			const remaining = (

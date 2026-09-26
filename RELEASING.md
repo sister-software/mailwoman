@@ -66,7 +66,7 @@ artifacts there. It then packs and audits every `.release-it.json` workspace thr
 `packWorkspaceForPublish` + `verifyTarball` path that the publish workflow uses, and it collects every
 failure in one sweep. It also checks the named-absence identity: the root workspaces minus the release
 list must equal the six sanctioned absences by name (see `packages/release-kit/lib/release/stage.ts`).
-Add `--keep` or `--staging <dir>` to inspect the tree afterwards. The preflight writes nothing to git,
+Add `--keep` or `--staging <dir>` to inspect the tree afterwards. The preflight writes no state to git,
 GitHub, npm, R2 or HF, and an interrupted run cannot dirty the checkout.
 
 The two sources differ only in where the bytes come from:
@@ -91,10 +91,10 @@ never fetched, because it stays in the bucket, the runtime never reads it, and n
 yarn mwops release rights-audit
 ```
 
-The audit reads files and changes nothing. It prints the source register's admissions and refusals,
+The audit reads files and changes no state. It prints the source register's admissions and refusals,
 each published weights package's artifacts, digests, attribution and lineage, and any frozen training
 manifest. It then separates what the pass established from what it left open. Read the `Unresolved`
-section first. An empty `Unresolved` section means "this pass found nothing it could not read" and does
+section first. An empty `Unresolved` section means "this pass found no source it could not read" and does
 not mean the sources are cleared.
 
 The generated `LICENSE.md` and `PROVENANCE.json` reach a tarball because each workspace's `files`
@@ -534,7 +534,7 @@ curl -s .../en-us/v<NEW>/model.onnx | md5sum                     # HF and R2, bo
 
 `--pair-indexes` above stages the binaries on **Hugging Face**. The copies that the browser demo reads require a
 separate push. They reach the bucket only through `publish-demo-assets-to-r2.py`, from a `--src` tree you
-assemble by hand. Nothing else produces them. `publish.yml` downloads them from HF into the weights workspaces
+assemble by hand. No other tool produces them. `publish.yml` downloads them from HF into the weights workspaces
 for the npm tarballs, and the docs runtime-assets plugin copies them into the Pages deploy for dev preview only.
 
 Stage them under a generation segment:
@@ -553,7 +553,7 @@ Stage them under a generation segment:
   purge.
 - `publish-demo-assets-to-r2.py` now refuses a `--src` that puts a pair-index binary at the flat key, so the
   script enforces this rule.
-- The flat keys stay in place, frozen, and nothing new is written to them. The demo HEAD-probes the versioned
+- The flat keys stay in place, frozen, and no new key is written to them. The demo HEAD-probes the versioned
   path and falls back to the flat keys with a `console.warn` until the first release train stages a
   generation. After that, delete `resolvePairIndexBaseURL`'s legacy branch (and `LEGACY_PAIR_INDEX_BASE_URL`).
 
@@ -808,7 +808,7 @@ The `pypi` job uses Trusted Publishing / OIDC in the `pypi` environment. PyPI's 
 `publish-clients.yml` filename, so never rename the file without updating the PyPI-side publisher config. The
 `cargo` job uses the `cargo` environment, whose `CARGO_REGISTRY_TOKEN` environment secret is the credential.
 The `publish_python` / `publish_cargo` dispatch inputs (default true) make single-registry retries cheap,
-because nothing regenerates. See `docs/records/site-2026-08/api.mdx` "Client libraries" for what the clients
+because no generator reruns. See `docs/records/site-2026-08/api.mdx` "Client libraries" for what the clients
 are. This section describes them from the release operator's side.
 
 > **Sequencing: do not publish clients before the next npm release.** The generated clients stamp
@@ -830,7 +830,7 @@ Every dispatch of `publish.yml`, including a `dry_run`, regenerates both clients
 artifacts (`mailwoman-client-python`: the wheel + sdist; `mailwoman-client-rust`: a tarball of the assembled
 crate). That step always runs. It is the same local, receipt-verified pipeline as `mailwoman clients generate`
 (below), so a broken generator, or a spec that changed in a way `progenitor`/`openapi-python-client` cannot
-handle, fails the job on every dispatch and not only when someone remembers to check. Nothing in `publish.yml`
+handle, fails the job on every dispatch and not only when someone remembers to check. No step in `publish.yml`
 ever reaches a registry.
 
 **A red `clients` job marks the release run as FAILED. That result is a record and does not roll anything
@@ -896,7 +896,7 @@ node packages/mailwoman/out/cli/index.js clients generate
 The command emits all 8 OpenAPI documents, generates the Python package, and assembles the Rust crate. It
 then verifies that both build (`uv build` + a wheel import-check; `cargo check --examples`). This is the same
 7-check pipeline that the `clients` CI job replays on every dispatch. Output lands under the gitignored
-`clients-build/`, and nothing it produces is committed. `--skip-verify` exists for a faster template-only
+`clients-build/`, and no output it produces is committed. `--skip-verify` exists for a faster template-only
 loop, but never use it to validate a real change, because verification is the purpose of the command.
 
 ## What's not automated yet

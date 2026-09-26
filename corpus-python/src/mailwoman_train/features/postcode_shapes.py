@@ -1,26 +1,19 @@
 """Postcode-SHAPE detection at TRAIN time, on the spans inference detects.
 
 The postcode anchor is painted at INFERENCE on postcode-SHAPED spans — `@mailwoman/neural`'s postcode
-repair runs its shape table over the raw text, because it has no gold. At train time the anchor was
-painted only on gold ``B/I-postcode`` spans, so the model trained with the anchor firing only on real
-postcodes and never on a house-number-that-looks-like-a-ZIP ("12345 Main St") — exactly the case it
-faceplants on at inference. This module reads the same table the inference side reads, so
-``anchor_paint_mode="shaped"`` paints at train time on the same spans, congruent by construction.
+repair runs its shape table over the raw text, because it has no gold. This module reads the same
+table the inference side reads, so ``anchor_paint_mode="shaped"`` paints at train time on the same
+spans, congruent by construction.
 
 THE TABLE IS DATA rather than CODE. It lives at ``packages/codex/lib/postcode/shapes.json``, and
 ``postcode-shapes.json`` beside this file is a byte-identical copy of it. Two copies, because a Modal
-container receives only ``corpus-python/src`` and cannot read the repository's packages. one AUTHORED
+container receives only ``corpus-python/src`` and cannot read the repository's packages. One AUTHORED
 copy, because ``test_postcode_shapes`` fails on any byte of difference.
-
-The arrangement replaces two hand-typed tables, one per language, kept in step by a comment reading
-"keep the two in lockstep". That did not hold twice: the IE Eircode row was TypeScript-only for a
-month and the BR CEP row for five weeks, and both times this side painted one fewer shape than
-inference with nothing failing.
 
 WHAT THIS SIDE READS. Every row except those the record marks ``javascriptOnly``. There is one: the
 〒-marked Japanese row, whose ``(?<=〒\\s?)`` is a variable-width lookbehind — legal in JavaScript,
 refused by Python's ``re``. The record says so in the row itself, so the omission is a stated
-constraint rather than a gap somebody has to rediscover. the tests assert both that the row is
+constraint rather than a gap somebody has to rediscover; the tests assert both that the row is
 skipped and that every row the record does not mark compiles here.
 """
 
@@ -71,10 +64,9 @@ class PostcodeMatch(NamedTuple):
 def collect_matches(text: str) -> list[PostcodeMatch]:
     """Collect non-overlapping postcode-shaped substrings, longest-match-wins (then priority).
 
-    Mirrors ``@mailwoman/neural``'s ``collectMatches``: gather every pattern's matches, then accept
-    greedily by (length DESC, priority ASC), rejecting anything overlapping an accepted match — so a
-    US ZIP+4 ("94610-2737") claims its span before the shorter NL-shaped tail ("2737 CA") can.
-    Returned in start order (irrelevant to painting, but deterministic).
+    Mirrors ``@mailwoman/neural``'s ``collectMatches``: accept greedily by (length DESC, priority
+    ASC), rejecting anything overlapping an accepted match — so a US ZIP+4 ("94610-2737") claims its
+    span before the shorter NL-shaped tail ("2737 CA") can. Returned in start order.
     """
     candidates: list[PostcodeMatch] = []
     for priority, (_label, kind, pat) in enumerate(POSTCODE_PATTERNS):

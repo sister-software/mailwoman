@@ -3,16 +3,15 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   An admin tail carrying a postcode is a locality query (#2342).
+ * An admin tail carrying a postcode is a locality query.
  *
- *   These cases run through the real `computeQueryShape` rather than a hand-built shape. The defect was a
- *   disagreement between what the shape reports and what the rule assumes: a postcode makes the whole input
- *   alphanumeric and registers a known-format hit, and `scoreLocalityOnly` rejected on both. A hand-built shape
- *   would let a test assert the rule's assumption instead of the production reading.
+ * The cases run through the real `computeQueryShape` rather than a hand-built shape, so a test asserts the
+ * production reading rather than the rule's assumption: a postcode makes the whole input alphanumeric and
+ * registers a known-format hit, and `scoreLocalityOnly` rejected on both.
  *
- *   The verdict decides the parse register (`deriveInputMode`), and the `formatted` register withholds the
- *   street-type and locality-surface lexicons — the evidence that separates a place name from a street name. So
- *   the verdict on these rows decides whether the decoder gets to see that evidence at all.
+ * The verdict decides the parse register (`deriveInputMode`), whose `formatted` register withholds the
+ * street-type and locality-surface lexicons, so the verdict on these rows decides whether the decoder sees
+ * that evidence at all.
  */
 
 import { classifyKindSync } from "@mailwoman/kind-classifier/classify"
@@ -26,8 +25,8 @@ function kindOf(text: string): string {
 
 describe("withoutPostcodeSpans", () => {
 	it("removes a postcode matched by several formats at once", () => {
-		// `26292` is reported three times — us_zip, fr_postcode, de_postcode — at identical offsets.
-		// Removing each hit in turn deletes 15 characters instead of 5 and shifts every later offset.
+		// `26292` is reported three times — us_zip, fr_postcode, de_postcode — at identical offsets,
+		// so removing each hit in turn would delete 15 characters instead of 5 and shift every later offset.
 		const text = "Thomas, WV 26292"
 
 		expect(withoutPostcodeSpans(text, computeQueryShape(text))).toBe("Thomas WV")
@@ -40,9 +39,9 @@ describe("withoutPostcodeSpans", () => {
 	})
 
 	it("returns input carrying no postcode unchanged", () => {
-		// Nothing was removed, so no separator was orphaned and none is collapsed.
-		// Returning the input verbatim also keeps the length `scoreLocalityOnly` measures
-		// identical to the one it measured before this rule existed.
+		// No text was removed, so no separator was orphaned and none is collapsed;
+		// returning the input verbatim also keeps the length `scoreLocalityOnly`
+		// measures identical to before this rule existed.
 		const text = "Thomas, WV"
 
 		expect(withoutPostcodeSpans(text, computeQueryShape(text))).toBe(text)
@@ -61,9 +60,8 @@ describe("an admin tail carrying a postcode", () => {
 	})
 
 	it.each([
-		// A locality whose last word is USPS street-suffix vocabulary.
-		// These are 379 of the 1,132 rows on the shape-stratified panel, so a rule that
-		// rejects the suffix word rejects the bucket this fix exists for.
+		// A locality whose last word is USPS street-suffix vocabulary — 379 of the 1,132 shape-stratified
+		// rows — so a rule that rejects the suffix word rejects the bucket these cases cover.
 		"Pine Grove, WV 26419",
 		"Folly Beach, SC 29439",
 		"Wiley Ford, WV 26767",
@@ -78,9 +76,9 @@ describe("an admin tail carrying a postcode", () => {
 	})
 
 	it("declines when the postcode hit falls outside the last segment", () => {
-		// The detectors are speculative and multi-country.
-		// `3215 SE` reports as an nl_postcode, and removing it would leave `Clinton St, Portland OR` —
-		// alpha, and a locality query where a street address was typed.
+		// The detectors are speculative and multi-country: `3215 SE` reports as an
+		// `nl_postcode`, and removing it would leave `Clinton St, Portland OR` alpha
+		// and a locality query where a street address was typed.
 		expect(kindOf("3215 SE Clinton St, Portland OR")).toBe("structured_address")
 
 		// The same restriction declines a postcode-led tail, which no US address writes and
@@ -90,8 +88,8 @@ describe("an admin tail carrying a postcode", () => {
 
 	it("declines input carrying no letter, which the character class alone calls alpha", () => {
 		// `computeQueryShape("???")` reports `alpha`, because `foldInputClass` answers
-		// `alpha` for input carrying no classified token.
-		// Neither `locality_only` nor its `bare_toponym` refinement may read that as a place name.
+		// `alpha` for input carrying no classified token; neither `locality_only`
+		// nor its `bare_toponym` refinement may read that as a place name.
 		expect(kindOf("???")).toBe("vague")
 		expect(kindOf("!!!")).toBe("vague")
 	})
@@ -99,8 +97,8 @@ describe("an admin tail carrying a postcode", () => {
 
 describe("an address carrying street material", () => {
 	it.each([
-		// A leading house number is the structural cue the kind classifier routes on.
-		// It is present here and absent from every row above.
+		// A leading house number is the structural cue the kind classifier routes on,
+		// present here and absent from every row above.
 		"153 Holloway Rd, London N7 8LX",
 		"350 5th Ave, New York, NY 10118",
 		"1600 Pennsylvania Ave NW, Washington, DC 20500",

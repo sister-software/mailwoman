@@ -1,14 +1,12 @@
-"""The typed environment. Nothing else in this package reads `os.environ`.
+"""The typed environment. No other module in this package reads `os.environ`.
 
 The counterpart of `packages/core/lib/env/schema.ts`, with the same split: `public()` carries
 non-secret operational configuration, `private()` carries credentials. A package that reads its own
 variable declares it here, beside the reader, so the set of variables this code depends on is one
 list rather than a grep.
 
-Why a module instead of scattered `os.environ.get` calls: the nine call sites this replaced each
-read `MAILWOMAN_DATA_ROOT` with a hard-coded fallback to one developer's data directory. A default
-turns "not configured" into "configured to a path that exists on one machine", and the failure then
-surfaces as an empty corpus rather than as a missing setting.
+A default turns "not configured" into "configured to a path that exists on one machine", and the
+failure then surfaces as an empty corpus rather than as a missing setting.
 """
 
 from __future__ import annotations
@@ -31,8 +29,8 @@ def _platform_temp_root() -> Path:
 
     MEASURED on Linux, and the reason this is not `platformdirs.user_runtime_dir`: `env-paths`
     answers `/tmp/<user>/mailwoman` while `user_runtime_dir` answers `/run/user/<uid>/mailwoman`.
-    The other three roots agree between the two libraries. this one does not, and a TypeScript tool
-    writing to one while a Python tool reads the other finds nothing.
+    The other three roots agree between the two libraries; this one does not, and a TypeScript tool
+    writing to one while a Python tool reads the other finds no entry.
 
     `env-paths` joins the username on Linux and omits it on macOS, which is mirrored here.
     """
@@ -56,9 +54,7 @@ class PublicEnv:
     data_root: Path
     #: Configuration files. Platform default when unset, matching the TypeScript side.
     config_root: Path
-    #: Reusable downloaded and generated caches. Platform default when unset.
     cache_root: Path
-    #: Named temporary outputs and staging. Platform default when unset.
     temp_root: Path
 
 

@@ -9,7 +9,7 @@ records every required finding. Verdicts come first and receipts after.
 
 1. **Latin: keep SentencePiece unigram.** No better-fitting tokenizer exists under our constraints
    (browser WASM, deterministic char offsets, int8 ONNX, 40M-param scale). The survey found two
-   changes that cost nothing in accuracy. The first was **vocabulary pruning**: shipped-eval
+   changes that leave accuracy unchanged. The first was **vocabulary pruning**: shipped-eval
    utilization was about 6.7% with a 24% ceiling, and the embedding table is about 72.5% of model
    parameters. **Correction 2026-07-31: the full-feed measurement falsified the 24% ceiling (86.27%
    of pieces fired over all 684M rows), so the pruning change is abandoned. See

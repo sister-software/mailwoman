@@ -4,34 +4,21 @@
  * @author Teffen Ellis, et al.
  * @file What a command is called, separated from where its file sits.
  *
- *   The router used to read a command's name off its filename, which made the layout an interface: moving
- *   `gazetteer/build/postcode-codepoint.tsx` into `build/postcode/` renamed the command, silently, and
- *   `mailwoman gazetteer build postcode-codepoint` — a name written into built databases as their `builder`
- *   provenance — stopped existing. A file's location is this repository's business. a command's name is the user's.
- *
- *   So a prefix directory is transparent to the command path: `build/postcode/codepoint.js` answers
- *   `build postcode-codepoint`. That is the same convention `repo-health`'s `prefix-directories` check enforces —
- *   siblings sharing a hyphen prefix live in a directory named for it — read from the other end, which is why moving
- *   those files is free.
- *
- *   A namespace directory is unaffected: `gazetteer/` holds `build`, `inspect` and `verify`, none of which is
- *   `gazetteer-`something, so `gazetteer` stays a path segment the user types.
+ *   A prefix directory is transparent to the command path — `build/postcode/codepoint.js` answers
+ *   `build postcode-codepoint`, the convention `repo-health`'s `prefix-directories` check enforces — while a
+ *   namespace directory such as `gazetteer/` stays a path segment the user types.
  */
 
 /**
- * Every filesystem path a command segment can name, fewest splits first.
- *
- * `postcode-codepoint` answers `["postcode-codepoint"]` and `["postcode", "codepoint"]`;
- * the literal spelling is tried before any directory reading, so a command whose file sits
- * where its name says costs nothing to resolve.
+ * Every filesystem path a command segment can name, fewest splits first —
+ * `postcode-codepoint` answers `["postcode-codepoint"]` and `["postcode", "codepoint"]` —
+ * with the literal spelling tried before any directory reading.
  */
 export function commandPathCandidates(segment: string): string[][] {
 	const parts = segment.split("-")
 	const candidates: string[][] = []
 
-	// One bit per hyphen: keep it, or make it a directory boundary.
-	// Ordered by how many boundaries each answer takes, so the literal name comes first
-	// and the deepest nesting last.
+	// One bit per hyphen: set makes a directory boundary, clear keeps the hyphen in the segment.
 	for (let mask = 0; mask < 2 ** (parts.length - 1); mask++) {
 		const built: string[] = [parts[0] ?? ""]
 
@@ -50,14 +37,9 @@ export function commandPathCandidates(segment: string): string[][] {
 }
 
 /**
- * Whether `directory` is a prefix directory for a command declaring `name`.
- *
- * The case where the directory is part of the layout rather than part of what the user types.
- *
- * `gazetteer/inspect/fst.tsx` declares `fst`, so `inspect` is a namespace the user types.
- * `gazetteer/build/postcode/codepoint.tsx` declares `postcode-codepoint`, so `postcode` is layout.
- *
- * Nothing but the declared name separates the two.
+ * Whether `directory` is layout rather than something the user types, which the declared name
+ * alone separates: `gazetteer/inspect/fst.tsx` declaring `fst` makes `inspect` a namespace,
+ * while `gazetteer/build/postcode/codepoint.tsx` declaring `postcode-codepoint` makes `postcode` layout.
  */
 export function isPrefixDirectory(directory: string, name: string): boolean {
 	return name.startsWith(`${directory}-`)
@@ -66,15 +48,9 @@ export function isPrefixDirectory(directory: string, name: string): boolean {
 const DECLARED_NAME = /\bspec\s*=\s*\{\s*name\s*:\s*["'`]([^"'`]+)["'`]/u
 
 /**
- * The command name a compiled module declares, read rather than imported.
- *
- * Importing a command module to learn its name runs the module: it pulls Ink, a resolver,
- * sometimes a database handle, and `mw gazetteer build` — which needs nothing
- * but a list of names — stopped answering at all.
- * Reading the text has no side effect and no cost worth measuring.
- *
- * A module whose spec this cannot find falls back to its filename,
- * which is what the name was before any of this.
+ * The command name a compiled module declares, read from its text rather than imported
+ * because importing a command module runs it and pulls Ink, a resolver, and sometimes a
+ * database handle; a module whose spec cannot be found falls back to its filename.
  */
 export function declaredCommandName(source: string, fallback: string): string {
 	return DECLARED_NAME.exec(source)?.[1] ?? fallback

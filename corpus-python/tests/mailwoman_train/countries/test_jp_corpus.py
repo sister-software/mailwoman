@@ -1,9 +1,4 @@
-"""Fixtures for the Phase-3 JP corpus recipe — rung 1 of the fixtures → smoke → full ladder.
-
-Every expected string here is hand-readable Japanese: a reviewer can check 香川県高松市八島町二丁目3-16
-by eye, which is the whole reason the Phase-0 de-risk was cheap. The span assertions are written as
-(tag, span text) pairs rather than raw offsets so a failure says what was mislabeled.
-"""
+"""Fixtures for the JP corpus recipe, with span assertions written as (tag, span text) pairs so a failure says what was mislabeled."""
 
 from __future__ import annotations
 
@@ -37,7 +32,6 @@ def spans_of(record: dict) -> list[tuple[str, str]]:
 
 
 def test_halfwidth_kana_fold_composes_dakuten_and_shortens_the_string() -> None:
-    # The length-changing case the steal list names: ﾃ + ﾞ (2 code points) folds to デ (1).
     assert fold_halfwidth_kana("ﾃﾞ") == "デ"
     assert len(fold_halfwidth_kana("ﾃﾞ")) == 1
     # The shape it actually meets in the data (14,739 number values).
@@ -48,19 +42,19 @@ def test_hyphen_class_is_folded_in_numbers_and_left_alone_in_names() -> None:
     assert normalize_number("3ー16") == "3-16"
     assert normalize_number("3−16") == "3-16"
     assert normalize_number("3－16") == "3-16"
-    # U+30FC inside a katakana name is a prolonged-sound mark rather than a hyphen. Folding it corrupts
-    # the name, so normalize_name must leave it.
+    # U+30FC inside a katakana name is a prolonged-sound mark rather than a hyphen, so normalize_name
+    # must leave it.
     assert normalize_name("コーポ丘の上") == "コーポ丘の上"
 
 
 def test_interior_ideographic_space_is_removed_from_a_name() -> None:
-    # 135 street values carry a U+3000 between the machi and the aza. Left in, it lands inside a
-    # district span. the written form closes it up.
+    # 135 street values carry a U+3000 between the machi and the aza; left in, it lands inside a
+    # district span, so the written form closes it up.
     assert normalize_name("西与賀町　字今津乙") == "西与賀町字今津乙"
 
 
 def test_name_normalization_leaves_itaiji_alone() -> None:
-    # Deliberate: the canonical collapse tables are CC BY-SA, so nothing derived from them ships.
+    # Deliberate: the canonical collapse tables are CC BY-SA, so no table derived from them ships.
     assert normalize_name("渡邊") == "渡邊"
     assert normalize_name("渡辺") == "渡辺"
 
@@ -106,8 +100,8 @@ def test_bare_chome_leaves_an_empty_district() -> None:
 
 
 def test_non_trailing_chome_is_left_whole() -> None:
-    # 2,316 rows carry 丁目 somewhere other than the end. Re-rendering a form we have not read is
-    # how a corpus grows labels nobody verified — so it stays one district span.
+    # 2,316 rows carry 丁目 somewhere other than the end; re-rendering a form we have not read grows
+    # labels nobody verified, so it stays one district span.
     assert split_street("一丁目北") == ("一丁目北", None)
 
 
@@ -142,8 +136,8 @@ def test_arabic_chome_register_converts_only_the_chome() -> None:
 
 
 def test_compact_folded_register_is_one_whole_house_number_span() -> None:
-    # D4: the compact form carries no per-part surface evidence, so it is one span. This register is
-    # the only place the 3-part compact number exists — the source has zero of them.
+    # The compact form carries no per-part surface evidence, so it is one span; this register is the
+    # only place the 3-part compact number exists.
     record = render(URBAN, "compact_folded")
     assert record["raw"] == "香川県高松市八島町2-3-16"
     assert spans_of(record) == [
@@ -216,7 +210,7 @@ def test_a_row_without_a_chome_cannot_offer_the_chome_registers() -> None:
 
 
 def test_a_number_we_cannot_reparse_stays_in_its_own_surface() -> None:
-    # 103,299 rows look like 362B-2 / 761乙号-2. Re-rendering those as designators would invent
+    # 103,299 rows look like 362B-2 / 761乙号-2; re-rendering those as designators would invent
     # structure, so they render native-only.
     assert available_registers(None, "761乙号-2") == ("native",)
     assert available_registers(2, "362B-2") == ("native",)
@@ -231,9 +225,9 @@ def test_verify_accepts_every_register() -> None:
 
 
 def test_stage3_jp_is_a_superset_so_the_universal_tags_are_still_legal() -> None:
-    # Worth pinning: stage3-jp = STAGE3's 16 + the JP seven. `region`/`locality`/`street` do not
-    # vanish, they just get no support from this corpus — a zero the build report has to name rather
-    # than a collapse the loader would hide.
+    # stage3-jp = STAGE3's 16 + the JP seven; `region`/`locality`/`street` do not vanish, they get no
+    # support from this corpus, a zero the build report must name rather than a collapse the loader
+    # would hide.
     assert {"region", "locality", "street"} <= TAG_SET
     assert {"prefecture", "municipality", "district", "block"} <= TAG_SET
 
@@ -241,8 +235,8 @@ def test_stage3_jp_is_a_superset_so_the_universal_tags_are_still_legal() -> None
 def test_verify_rejects_a_tag_outside_the_active_label_set() -> None:
     record = render(URBAN, "native")
     record["span_tags"] = list(record["span_tags"])
-    # A STAGE4 tag: defined in labels.py, absent from stage3-jp, and therefore silently collapsed
-    # to O at load if the builder ever emitted one (#1349's failure mode).
+    # A STAGE4 tag: defined in labels.py, absent from stage3-jp, and therefore silently collapsed to
+    # O at load if the builder ever emitted one.
     record["span_tags"][0] = "unit_designator"
     with pytest.raises(RuntimeError, match="outside stage3-jp"):
         verify_record(record, TAG_SET)
@@ -319,7 +313,7 @@ def kenall(tmp_path) -> object:
 def test_town_level_join_beats_the_municipality_catch_all(tmp_path) -> None:
     index = kenall(tmp_path)
     assert index.lookup("北海道", "札幌市中央区", "旭ケ丘") == ("0640941", "town")
-    # Without a town match the fallback is the NNN-0000 catch-all — the only thing the probe ever got.
+    # Without a town match the fallback is the NNN-0000 catch-all.
     assert index.lookup("北海道", "札幌市中央区", "存在しない町") == ("0600000", "municipality")
 
 
@@ -353,12 +347,12 @@ def test_water_fill_caps_the_dominant_bucket() -> None:
     # Tokyo cannot drown Tottori: the cap is the level rather than the share.
     counts = {"tokyo": 1_992_163, "tottori": 40_000, "kagawa": 120_000}
     cap = water_fill(counts, 300_000)
-    assert cap == 140_000  # 140,000 + 40,000 + 120,000 = 300,000 exactly
+    assert cap == 140_000
     assert sum(min(cap, n) for n in counts.values()) <= 300_000
-    assert sum(min(cap + 1, n) for n in counts.values()) > 300_000  # and it is the LARGEST such cap
+    assert sum(min(cap + 1, n) for n in counts.values()) > 300_000
 
 
-# region The kana municipality register (#2165)
+# region The kana municipality register
 
 
 def test_kana_stem_is_the_shortest_hiragana_variant_and_keeps_the_kanji_generic() -> None:
@@ -367,7 +361,7 @@ def test_kana_stem_is_the_shortest_hiragana_variant_and_keeps_the_kanji_generic(
     stem = pick_kana_stem("厚木市", ["あつぎ", "あつぎし", "厚木", "厚木町"])
     assert stem == "あつぎ"
     assert kana_surface("厚木市", stem) == "あつぎ市"
-    # An official name that is already kana has nothing to substitute.
+    # An official name that is already kana has no character to substitute.
     assert pick_kana_stem("かすみがうら市", ["かすみがうら"]) is None
     # No hiragana variant at all → no register.
     assert pick_kana_stem("大阪市", ["大阪"]) is None

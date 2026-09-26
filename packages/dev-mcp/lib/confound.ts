@@ -10,10 +10,9 @@ import { runFileSync } from "@mailwoman/core/process"
 import { effectiveKeyFor } from "#engine/registry"
 
 /**
- * Enumerates how cleanly a two-arm comparison isolates its declared configuration variables.
- *
+ * Enumerates how cleanly a two-arm comparison isolates its declared configuration variables:
  * `clean` means only declared keys moved, `ambiguous` means undeclared keys moved too,
- * `no_variable` means nothing moved, and `cross_engine` means the arms are different
+ * `no_variable` means no key moved, and `cross_engine` means the arms are different
  * systems and no delta can be attributed to a pin.
  */
 export const VariableIsolation = {
@@ -38,21 +37,9 @@ export type VariableIsolation = (typeof VariableIsolation)[keyof typeof Variable
 export interface ConfoundReading {
 	variable_isolation: VariableIsolation
 
-	/**
-	 * Lists the effective configuration keys that differ between the arms, whether or not they were declared.
-	 */
 	variable_effective: string[]
 	declared: string[]
-
-	/**
-	 * Lists the declared keys whose effective values are identical in both arms.
-	 */
 	declared_but_unmoved: string[]
-
-	/**
-	 * Lists the keys that differ between the arms without being declared, each of
-	 * which is a possible confound.
-	 */
 	moved_but_undeclared: string[]
 	warnings: string[]
 }
@@ -175,9 +162,8 @@ export function worktreePairReading(
 const INCOMPARABLE_FIELDS = new Set(["resolver_score", "score", "prominence"])
 
 /**
- * Throws when asked to compare a score field whose scale differs between resolver backends.
- *
- * Within either backend the wrong answers' scores also overlap the correct answers',
+ * Throws when asked to compare a score field whose scale differs between resolver backends;
+ * within either backend the wrong answers' scores also overlap the correct answers',
  * so no threshold on these fields is meaningful.
  */
 export function assertComparableField(field: string): void {
@@ -191,9 +177,8 @@ export function assertComparableField(field: string): void {
 }
 
 /**
- * Counts the commits and changed files between two worktree arms' recorded commits.
- *
- * It returns `null` when either arm lacks a commit, either was dirty, or git fails.
+ * Counts the commits and changed files between two worktree arms' recorded commits;
+ * returns `null` when either arm lacks a commit, either was dirty, or git fails.
  */
 export function worktreeTreeDelta(
 	repoRoot: string,

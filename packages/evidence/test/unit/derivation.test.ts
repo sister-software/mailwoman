@@ -2,7 +2,7 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file The derivation projection names every constraint in order and fabricates nothing.
+ * @file The derivation projection names every constraint in order and fabricates no constraint.
  */
 
 import {

@@ -10,10 +10,10 @@
  *
  *   `../codepoint/fetch.ts`'s `NORTHERN_IRELAND_OPTIONS_NOTE` researched the `BT` gap and found three
  *   options: (a) licence LPS Pointer for ~£9,224, (b) take OSM `addr:postcode` under ODbL, (c) ship
- *   nothing. Every free, complete, permissively-licensed source was checked and ruled out — onspd and
+ *   no postcode data. Every free, complete, permissively-licensed source was checked and ruled out — onspd and
  *   nspl carve NI out of their OGL grant in ONS's own words, the LPS End User Licence is personal and
  *   non-sublicensable, and LPS's 77-dataset osni Open Data catalogue contains no postcode centroids at
- *   all. So the choice is (a), (b) or nothing, and this is (b).
+ *   all. So the choice is (a), (b) or no postcode data, and this is (b).
  *
  *   OSM attests 4,757 of the 50,032 live NI postcodes — **9.5 %**. That is not a defect to be improved
  *   away. it is what volunteer mapping has recorded, and the number is baked into the artifact's `meta`
@@ -307,7 +307,7 @@ export async function buildPostcodeNIOSM(options: BuildPostcodeNIOSMOptions = {}
 		db.exec("COMMIT")
 
 		// Every row's parent_id is -1 (OSM address points carry no WOF hierarchy),
-		// so this writes the self row per place and nothing else.
+		// so this writes the self row per place and no other row.
 		// Not decorative: the resolver's parent-constraint scopes a lookup with
 		// `spr.id IN (select id from ancestors where ancestor_id = ?)`, and a place
 		// absent from `ancestors` can never satisfy it.
@@ -376,7 +376,7 @@ export async function buildPostcodeNIOSM(options: BuildPostcodeNIOSMOptions = {}
  * What can be checked is internal consistency plus two bounds that a broken validator
  * would blow through, and those are worth more than they look: the `codepoint-database.ts`
  * check learned the hard way that a tolerance derived from the failure it is meant to
- * catch catches nothing, so every check here is against a fixed number.
+ * catch catches no failure, so every check here is against a fixed number.
  *
  * 1. Every tagged element is either a point or an accounted drop.
  *    A parser that silently skips a shape fails here.

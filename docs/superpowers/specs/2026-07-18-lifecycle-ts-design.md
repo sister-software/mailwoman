@@ -173,7 +173,7 @@ ServiceRegistry()`. The old static singleton that `extends Service` with
   silently overwrote the entry and leaked the first instance.
 - **Dispose aborts `signal` before disposing** so that in-flight resolvers can
   stop early.
-- **The registry logs nothing by default.** `onWarning` is the only logging hook, and mailwoman passes
+- **The registry logs no messages by default.** `onWarning` is the only logging hook, and mailwoman passes
   `ConsoleLogger` at the call site.
 
 ### Injectable constructors — declared dependencies

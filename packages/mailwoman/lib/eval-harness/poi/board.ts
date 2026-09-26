@@ -443,7 +443,7 @@ export function evaluateFloors(report: FloorInput): FloorEvaluation {
 		const floor = POI_BOARD_FLOORS[key]
 		const total = bucket?.total ?? 0
 		const pass = bucket?.pass ?? 0
-		// A category with no rows fails its floor, because an empty category proves nothing.
+		// A category with no rows fails its floor, because an empty category proves no fact.
 		const observed = total > 0 ? pass / total : 0
 
 		return { key, label, observed, floor, met: total > 0 && observed >= floor, fraction: `${pass}/${total}` }

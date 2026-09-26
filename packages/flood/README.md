@@ -24,7 +24,7 @@ outside England the same emptiness is unknown. Wales, Scotland and Northern Irel
 different authority and a different zone scheme; Wales's four-zone TAN15 scheme is not
 interchangeable with England's.
 
-**Nothing here is a statement about a property.** The layer reports which zone the authority's map
+**This layer makes no statement about a property.** The layer reports which zone the authority's map
 assigns at a location, which is a fact about the map. The EA states that its data is "not suitable
 for showing whether an individual property is at risk of flooding", and every reading carries the
 product's own exclusions — a Zone 1 answer is silent about surface water, groundwater, sewer
@@ -110,7 +110,7 @@ and the build is bounded by construction.
 - **The published `flood_zone` values are `FZ2` and `FZ3`** rather than "Flood Zone 2" / "Flood Zone 3".
   The metadata prose describes the column the second way; the shipped geodatabase declares it as a
   3-character string. Measured over the whole file: 540,282 `FZ2`, 273,345 `FZ3`, 813,627 together.
-  A builder written against the prose finds nothing.
+  A builder written against the prose finds no matching entry.
 - **The source is EPSG:27700 rather than WGS84.** OSGB36 / British National Grid, in meters. Read as
   degrees it lands in the Gulf of Guinea. The ingest asserts the declared authority code and then
   asserts every reprojected vertex against the collection's own declared extent, which is what
@@ -125,7 +125,7 @@ and the build is bounded by construction.
   whose bounding-box estimate fits the budget, and the resolution it got is stored on the row.
 - **`HEAD` returns 405 and `Range` is ignored** on the download host, so a size probe starts a real
   367 MB transfer. Freshness is the catalogue's ISO revision date, never a length probe.
-- **A missing datum grid shifts the whole layer, and nothing says so.** With
+- **A missing datum grid shifts the whole layer, and no warning reports it.** With
   `uk_os_OSTN15_NTv2_OSGBtoETRS.tif` absent, ogr2ogr placed the first feature's first vertex at
   `1.698151293, 52.648130027`; with the grid installed it placed it at `1.698174628, 52.648157259` —
   3.4 m apart. Both are ordinary WGS84 coordinates and both pass a bounding-box check. It surfaced
@@ -163,7 +163,7 @@ index tier is small against 5.5 GB of geometry either way. Six times the ray-cas
 two-thirds of one percent of the artifact is not a close call.
 
 Resolution 7 is excluded outright: 75 whole cells over the whole of England means the index
-summarizes essentially nothing.
+has almost no cells to summarize.
 
 ## What the full build produces
 
@@ -181,7 +181,7 @@ Verification against the authority's own OGC API Features service, on 58 sampled
 edge, where a six-decimal rendering and a nine-decimal one fall on opposite sides. The negative half:
 **8/8 points outside England read `unknown`**, none read a zone.
 
-## The h3 heap runs out, and it fails by returning nothing
+## The h3 heap runs out, and it fails by returning no cells
 
 The finding every polygon builder on this spine inherits, stated with what it cost here.
 

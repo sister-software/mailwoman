@@ -178,8 +178,8 @@ Both are `APIClient`s with disk caching under `$MAILWOMAN_DATA_ROOT/geocode-orac
 minute, and `minRequestIntervalMs` set alongside the budget. Google requires
 `$private.GOOGLE_MAPS_API_KEY` and is **billed**; Census needs no credential.
 
-Its header states the boundary this spec inherits: _"Not truth, and not a check. … Nothing here should
-ever decide whether a build ships; a human reads it and decides what to pin."_
+Its header states the boundary this spec inherits: these providers are not ground truth and must not
+decide whether a build ships; a human reads the answer and decides what to pin.
 
 ### 2.6 `packages/mailwoman/lib/dev-tools/*.run.ts` — the sanctioned probes
 
@@ -217,7 +217,7 @@ That state must outlive agent restarts, context compactions and subagent spawns,
 share it. The MCP shim holds no engine state. It forwards requests and is cheap to restart.
 
 If no daemon is reachable, the shim starts one and waits. `mwdev_daemon({action:"status"})` reports
-which case applied. A single-process `--embedded` mode exists for CI, where nothing is shared and a
+which case applied. A single-process `--embedded` mode exists for CI, where no state is shared and a
 warm engine has no value.
 
 **Why one worker process per configuration.** There are three reasons:
@@ -235,7 +235,7 @@ the measurement. On a shared multi-GB WOF SQLite, throughput peaked at **2 worke
 _degraded_ after that: 4 workers matched baseline and 6 gave no gain, because memory bandwidth and the
 shared DB limit throughput rather than core count. The supervisor therefore defaults to a small concurrency budget and
 serializes within an engine. `session.run()` in `onnxruntime-node` blocks the thread it is on, so
-in-worker parallelism adds nothing.
+in-worker parallelism adds no gain.
 
 ### 3.2 The engine registry
 
@@ -312,7 +312,7 @@ caches a stamp verdict.
 **(c) A drifted or under-fed model artifact.** Two existing guards live in `gauntlet/harness.ts`.
 `assertShippedModelMatchesCard` (#1024, `:137`) refuses when the materialized `model.onnx` md5
 disagrees with the model-card's `files_md5`, because a config/card drift once shipped a superseded
-model past a check that reported nothing. `assertDeclaredAnchorBins` (#1516, `:184`) refuses when a
+model past a check that reported no discrepancy. `assertDeclaredAnchorBins` (#1516, `:184`) refuses when a
 weights package is missing the anchor artifact **its own card declares**, because that failure
 produces no signal of its own. The channel resolves off, the run scores three or four cases lower, and
 the operator interprets the drop as a model regression.
@@ -632,7 +632,7 @@ a justification string. The shortest input to type is the well-powered one.
 `n = 30`, and two arguments overturned it. First, the threshold was a convention rather than a
 measurement (`parity-corpus.ts` uses 8 for bucket stability). Second, and more important, a refusal an
 agent cannot override gives it a reason to write a probe script, which is the behavior this surface
-exists to remove. Agents bypass a tool that refuses, and a bypassed tool measures nothing.
+exists to remove. Agents bypass a tool that refuses, and a bypassed tool produces no measurement.
 
 The rule therefore controls where the bound appears instead of refusing. The bound goes **inside the
 summary string**, in the same sentence as the count, because §5.8 establishes that the summary is what
@@ -904,7 +904,7 @@ constrains this package in particular because it is a _lab_ tool:
 - requires an explicit opt-in in the daemon's config file rather than a tool argument;
 - carries a per-daemon-lifetime call cap that the tool reports as it consumes;
 - inherits the existing disk cache under `$MAILWOMAN_DATA_ROOT/geocode-oracle/google` (30-day TTL) and
-  60 req/min pacing, so a repeated panel costs nothing;
+  60 req/min pacing, so a repeated panel costs no additional request;
 - is **never** a scored arm and never a grading truth. `packages/geocode-oracle/lib/index.ts`'s own header
   is explicit: _"Not truth, and not a check … Nothing here should ever decide whether a build ships."_
   A comparison with an oracle arm always reports `grade: "diff-only"` and `verdict: null`, and its
@@ -980,7 +980,7 @@ These questions need a decision from the operator. Each one changes the design.
    occasionally running the machine out of memory mid-benchmark)?
 
 3. ~~**Is the undeclared-confound refusal (§6.3) worth its friction?**~~ **DECIDED 2026-08-16 — warn.**
-   Agents bypass a refusal they cannot override, and a bypassed tool guards nothing. The warning lists
+   Agents bypass a refusal they cannot override, and a bypassed tool enforces no invariant. The warning lists
    the changed keys and sets `attribution: "ambiguous"`. See §6.3.
 
 4. ~~**Is the small-panel aggregate refusal (§5.2) set at the right threshold?**~~ **DECIDED 2026-08-16 —
@@ -1080,7 +1080,7 @@ on Ink.
 
 Other code cannot reach the trace, for two reasons.
 
-**Nothing outside `debug-view/` consumes the trace.** Apart from the session that defines it, every
+**No code outside `debug-view/` consumes the trace.** Apart from the session that defines it, every
 importer of `GeocodeTrace` lives in that directory: `command.tsx`, `DebugSessionApp.tsx`,
 `DebugFrame.tsx`, `output-lines.ts`, and `trace-rows.ts`. No JSON output path carries it, and neither
 `@mailwoman/api` nor `@mailwoman/mcp` exposes it. `mw geocode --json` returns the answer, never the
@@ -1133,7 +1133,7 @@ tool with a different cost rather than a larger `n` on this one.
 > **§3.1 update, 2026-08-18.** The supervisor/socket split was replaced by a different reduction than
 > the one sketched here, based on measured need. Staleness was the limiting cost, more than warmth: the
 > refusal on source edits locked the tool developer out for most of two working days. The shipped
-> design is a stdio shim that never goes stale (`cli.ts`, which imports nothing from the repo runtime).
+> design is a stdio shim that never goes stale (`cli.ts`, which imports no module from the repo runtime).
 > The shim forks a restartable worker (`worker.ts`, which loads the whole module graph) over IPC.
 > `mwdev_restart` is a shim-owned tool that emits `tools/list_changed` after a swap. This matches the
 > pattern other MCP projects use (mcp-reloader, reloaderoo, mcp-hmr). `process.execve` was evaluated
@@ -1160,13 +1160,13 @@ Build exactly this:
 
 | Tool                      | Why it is in the first increment                                                                                                         |
 | ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| `mwdev_daemon` (§4.1)     | Nothing else works without a lifecycle and the tree fingerprint (§3.4).                                                                  |
+| `mwdev_daemon` (§4.1)     | No other tool works without a lifecycle and the tree fingerprint (§3.4).                                                                 |
 | `mwdev_run` (§4.3)        | The warm engine over `{kind:"board"}` by default. This is the whole §5.1 mechanism: the full corpus is the shortest legal thing to type. |
 | `mwdev_trace` (§4.5, §10) | Two exports and a pass-through. Cheapest high-value tool in the spec, and it retires four of the nine probe scripts on its own.          |
 
 Everything else waits: `compare`, `gauntlet`, `check`, `bench`, `cli`, `job`, `lookup`, `inputs`, the run
 store, recorded arms, external arms and the oracles. Seven of the ten §9 questions depend on one of
-those and cost nothing to defer: regression.db writes, the memory budget, oracle billing, who starts
+those and cost no work to defer: regression.db writes, the memory budget, oracle billing, who starts
 Pelias, retention, board-case writes, and `run_id` tracing.
 
 **How to evaluate the increment.** The question is not whether it is faster. The speedup is already

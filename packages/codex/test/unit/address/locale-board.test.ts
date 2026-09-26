@@ -5,9 +5,8 @@
  *
  *   One real address per locale this project publishes weights for, with the surface it must render to.
  *
- *   This board exists because the engine it replaces got five of these eleven wrong, and nothing measured it. The
- *   OpenCage templates are written for OpenStreetMap's tag vocabulary and are correct for the anglophone and
- *   German-order locales. they insert a comma into Spain's street line, drop Italy's province, reorder India's tail,
+ *   The OpenCage templates are written for OpenStreetMap's tag vocabulary and are correct for the anglophone and
+ *   German-order locales. They insert a comma into Spain's street line, drop Italy's province, reorder India's tail,
  *   and print both CJK locales backwards with commas inserted — `1-9-1, 丸の内, 千代田区, 東京都 100-0005` where the
  *   convention is `〒100-0005 東京都千代田区丸の内1-9-1`.
  *
@@ -164,7 +163,7 @@ describe("a partly-filled address drops what it cannot print, and its connectors
 	})
 
 	it("keeps the stronger separator when the middle of a line is missing", () => {
-		// Adjacent survivors collapse to the first, which is the behaviour the engine this replaces produced.
+		// Adjacent survivors collapse to the first.
 		expect(render("US", { ...base, locality: "New York", postcode: "10118" })).toBe("350 Fifth Avenue, New York, 10118")
 	})
 
@@ -255,9 +254,8 @@ describe("a rendering says what it placed and what it could not", () => {
 		})
 
 		expect(rendering.placed).toContain("locality")
-		// France's layout prints no region: the postcode line absorbs it.
-		// That is a fact the render holds, where a substring search over the output
-		// could not tell it from a value that never arrived.
+		// France's layout prints no region — the postcode line absorbs it — and the render holds that fact,
+		// where a substring search over the output could not tell it from a value that never arrived.
 		expect(rendering.unplaced).toEqual(["region"])
 	})
 

@@ -83,7 +83,7 @@ describe.skipIf(!present)("Node↔browser candidate parity over the real artifac
 		const browserHits = await browser!.findPlace({ text: "NYC", placetype: "locality", limit: 5 })
 
 		// The artifact carries no `nyc` key: every Node hit is a typo-corrector row
-		// (exactMatch=false), and the browser — which has no fuzzy tier — returns nothing.
+		// (exactMatch=false), and the browser — which has no fuzzy tier — returns no hit.
 		// If this test starts failing with browser hits, the browser gained a fuzzy tier:
 		// extend the parity panel to cover it.
 		expect(nodeHits.every((h) => h.exactMatch !== true)).toBe(true)

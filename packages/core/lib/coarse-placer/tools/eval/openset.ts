@@ -8,7 +8,7 @@
  */
 
 /* oxlint-disable sister-software/prefer-region-over-marks -- these markers label steps inside one
-   procedure rather than sections of declarations. A region there folds nothing a reader wants folded. */
+   procedure rather than sections of declarations. A region there folds no code a reader wants folded. */
 
 import { basename, type PathBuilderLike, resolvePath, resolvePathBuilder } from "path-ts"
 import { JSONSpliterator } from "spliterator"
@@ -20,14 +20,7 @@ import { defaultDataDir, defaultModelDir, readLatinOffmapRows } from "#coarse-pl
 import { readLocalJSONFile } from "#fs/readers"
 import { writeLocalFile } from "#fs/writers"
 
-/**
- * The number of quantile steps in each threshold sweep.
- */
 const QUANTILE_SWEEP_STEPS = 200
-
-/**
- * The target percentage for both in-map accuracy and held-out catch rate.
- */
 const TARGET_PERCENT = 90
 
 type ScoreKey = "maxprob" | "p_inmap" | "energy" | "maxlogit" | "maha"
@@ -56,23 +49,17 @@ interface ParetoPoint {
  */
 export interface EvalOpenSetOptions {
 	/**
-	 * The model artifact directory.
-	 * The default is `$MAILWOMAN_DATA_ROOT/coarse-placer/model`.
+	 * The model artifact directory, default `$MAILWOMAN_DATA_ROOT/coarse-placer/model`.
 	 */
 	model?: PathBuilderLike
 	/**
-	 * The dataset directory.
-	 * The default is `<repo>/data/coarse-placer`.
+	 * The dataset directory, default `<repo>/data/coarse-placer`.
 	 */
 	data?: PathBuilderLike
 	/**
-	 * The number of training rows per class used to fit the Mahalanobis score.
-	 * The default is 2,000.
+	 * Training rows per class used to fit the Mahalanobis score.
 	 */
 	fitPerClass?: number
-	/**
-	 * A path to write the Markdown report to.
-	 */
 	outMd?: string
 }
 
@@ -153,7 +140,6 @@ export async function evalOpenSet(
 	const C = meta.classes.length
 	const D = meta.featureDim
 	const OTHER = meta.classes.indexOf("OTHER")
-	// The indices of the in-map classes.
 	const IN = meta.classes.map((_, i) => i).filter((i) => i !== OTHER)
 	const nIn = IN.length
 
@@ -203,7 +189,6 @@ export async function evalOpenSet(
 		}
 	}
 
-	// Each country maps to its mean in-map logit vector.
 	const means = new Map<string, Float64Array>()
 	const counts = new Map<string, number>()
 

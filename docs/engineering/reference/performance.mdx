@@ -22,7 +22,7 @@ part of that 14.6x, and every one fails for the same reason: the forward pass ne
 on anything. ONNX Runtime already uses **8.02 cores on a single batch=1 inference**, so no idle
 capacity remains to use.
 
-## Concurrency does nothing
+## Concurrency yields no speedup
 
 Throughput stays at 1.00x from one worker to sixteen, for both parse and full geocode:
 
@@ -58,7 +58,7 @@ binding behaves differently.
 
 The obvious counterexample is [deepparse](https://deepparse.org/), which parses at 3.1 ms/addr
 batched against 32.5 ms sequential, a 10x improvement. That 10x comes from amortizing per-call Python
-and torch overhead. Mailwoman does not have that overhead, so batching has nothing to amortize. Our
+and torch overhead. Mailwoman does not have that overhead, so batching has no such overhead to amortize. Our
 sequential path (~300 addr/s) already matches deepparse's batched throughput (320 addr/s) and has
 4.7x lower latency than its sequential path.
 
@@ -139,7 +139,7 @@ Avoid two mistakes, both of which produced a wrong answer during the original sw
   investigating.
 - **Instrument the real runner.** The forward-pass split needs `classifier.cfg.runner`.
   Instrumenting the wrong field reports 0 ms and 0%, which looks like a measurement but means the
-  code measured nothing. This is the same class of bug as
+  code measured no work. This is the same class of bug as
   [the meaning of zero](./the-meaning-of-zero.mdx).
 
 The probes live in `scratchpad/` on the branch that produced this page: `batch-export-probe.py`,

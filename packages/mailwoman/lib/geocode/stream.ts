@@ -16,7 +16,7 @@
  * ```
  *
  * Each worker rebuilds the classifier / WOF lookup / resolver / databases from {@link GeocodeStreamConfig}
- * (paths + locale) at startup — nothing but config crosses out, only the enriched record crosses back.
+ * (paths + locale) at startup — only config crosses out, only the enriched record crosses back.
  * Records arrive in completion order. Worth threading only because geocoding is ms-scale per row
  * (~23ms measured) — far above the cross-thread cost. for light normalization, stop after normalizeCSV.
  *

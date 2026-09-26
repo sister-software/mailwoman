@@ -3,29 +3,16 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mailwoman gazetteer build postcode-prefix <database>` — build a PFX1 postcode-prefix index
- *   (postcode-structure arc, B3-1) from a postcode database already in the data root.
+ *   `mailwoman gazetteer build postcode-prefix <database>` — build a PFX1 postcode-prefix index from a
+ *   postcode database already in the data root.
  *
- *   Two databases, and they are deliberately two files rather than one `postcode-prefix-gb.bin`:
+ *   `gb-codepoint` (OS Code-Point Open, OGL v3) and `gb-ni-osm` (OpenStreetMap, ODbL 1.0) are
+ *   deliberately two files rather than one `postcode-prefix-gb.bin`: folding the NI nodes into the
+ *   Code-Point file would put a share-alike obligation on an OGL artifact that no downstream check could
+ *   see.
  *
- *   - `gb-codepoint` → `postcode-prefix-gb-esw.bin`. 2,863 outward codes from OS Code-Point Open
- *       (OGL v3, shippable tier), each with a centroid and its measured `radiusP95Km`. Code-Point Open
- *       covers England, Scotland and Wales only — the scope slug says so, because a file named for the
- *       whole country while missing a constituent one is the coverage confusion the database's own meta
- *       spends three keys warning about.
- *   - `gb-ni-osm` → `postcode-prefix-gb-ni.bin`. 80 BT districts from OpenStreetMap, ancestry-only,
- *       no coordinates. ODbL 1.0, so build-local: folding these nodes into the Code-Point file would
- *       put a share-alike obligation on an OGL artifact, and nothing downstream could see it had
- *       happened. That licence split — not the format — is why the two GB registers stay apart.
- *
- *   Self-verifying (the sealed-artifact spirit, PCN1's posture): after writing, the command re-reads
- *   the file — not the buffer still in memory, which would only verify the serializer against itself
- *   — through a fresh `PostcodePrefixIndexResolver`, and reports the round-trip totals: node count,
- *   summed `unitCount`, the median per-prefix `radiusP95Km`. Those three numbers are B3-1's bar, so
- *   the bar is graded by reading the artifact rather than by the builder's memory of it.
- *
- *   Output goes to a new dated path under `$MAILWOMAN_DATA_ROOT/postcode-prefix/`. Nothing is
- *   overwritten, and the file is sealed read-only afterwards.
+ *   Output goes to a new dated path under `$MAILWOMAN_DATA_ROOT/postcode-prefix/`, and the file is
+ *   sealed read-only afterwards.
  */
 
 import { readLocalBuffer, pathExists } from "@mailwoman/core/fs/readers"
@@ -39,43 +26,28 @@ import type { PostcodePrefixLevel } from "#gazetteer-pipeline/postcode/prefix"
 
 /**
  * Read-only mode bits for the finished artifact — the same seal `sealDatabase` puts on a built database.
- *
- * A prefix index is a build output rather than a file anything edits in place.
  */
 const SEALED_MODE = 0o444
 
 /**
- * How many example prefixes a summary line names before eliding.
- *
- * Cosmetic — it keeps the withheld-ancestry line inside one terminal row
- * when the count runs to dozens (Code-Point Open: 41).
+ * Keeps the withheld-ancestry line inside one terminal row when the count runs
+ * to dozens (Code-Point Open: 41).
  */
 const EXAMPLES_PER_LINE = 6
 
 interface DatabaseRecipe {
-	/**
-	 * Database filename under `<data-root>/db/wof/`.
-	 */
 	sourceFile: string
 	country: string
-	/**
-	 * Sub-national scope slug — the header field and the filename suffix.
-	 */
 	scope: string
 	level: PostcodePrefixLevel
 	/**
 	 * WOF polygon database under `<data-root>/db/wof/`, for a recipe whose ancestry
 	 * is point-in-polygon rather than a documented area table.
-	 *
-	 * Absent means the recipe does not use geometry.
 	 */
 	polygonFile?: string
 	/**
-	 * Prefixes probed after write.
-	 *
-	 * Per database, never shared: probing Code-Point prefixes against a freshly
-	 * built NI index prints reassuring-looking misses that verify nothing
-	 * (the lesson the pair-index command's en-nz first build taught).
+	 * Probed after write; per database, never shared, because probing one register's prefixes
+	 * against another index prints reassuring-looking misses that verify no fact.
 	 */
 	probePrefixes: readonly string[]
 }
@@ -103,9 +75,6 @@ const DATABASE_RECIPES = {
 		polygonFile: "wof-polygons-us-full.db",
 		// One prefix per behaviour the arm can produce, so a probe line that goes
 		// quiet identifies the failed rule.
-		// `605` and `946` assert a state; `205` is the DC/MD/VA straddle that asserts the
-		// country alone; `995` is Alaska, whose honest radiusP95Km runs to hundreds of km
-		// and is the reason a coordinate may never ship without one.
 		probePrefixes: ["605", "946", "205", "995"],
 	},
 } as const satisfies Record<string, DatabaseRecipe>
@@ -172,8 +141,8 @@ const GazetteerBuildPostcodePrefix: CommandComponent<typeof spec, [DatabaseName]
 			options.out ?? dataRootPath("postcode-prefix", `postcode-prefix-${recipe.scope}-${day}.bin`)
 		)
 
-		// The database's own meta is the authority on where it came from and what it does not cover —
-		// re-deriving that prose here would let the two drift, and the database is the one that knows.
+		// The database's own meta is the authority on where it came from and what it does
+		// not cover, so re-deriving that prose here would let the two drift.
 		const source = built.meta.source ?? "(unrecorded — the database's meta carries no `source`)"
 		const attribution = built.meta.attribution ?? "(unrecorded — the database's meta carries no `attribution`)"
 		const tier: PostcodePrefixTier = built.meta.tier === "build-local" ? "build-local" : "shipped"
@@ -219,10 +188,8 @@ const GazetteerBuildPostcodePrefix: CommandComponent<typeof spec, [DatabaseName]
 		await movePath(tmpPath, outPath)
 		await changeMode(outPath, SEALED_MODE)
 
-		// ── Self-verifying readback: B3-1's bar, graded by re-reading the file
-		// rather than the buffer still in memory.
-		// Reading the buffer would verify the serializer against itself and prove nothing
-		// about what landed on disk — the whole point of a round-trip bar.
+		// Self-verifying readback: reading the buffer would verify the serializer against itself,
+		// so the round-trip bar is graded from the bytes on disk.
 		const resolver = new PostcodePrefixIndexResolver(await readLocalBuffer(outPath))
 		const readNodes = [...resolver.nodes()]
 		const readUnits = readNodes.reduce((sum, node) => sum + node.unitCount, 0)

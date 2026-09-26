@@ -1,20 +1,12 @@
 #!/usr/bin/env node
 //
-// fr-ban-panel — a 100-address French panel drawn from the Base Adresse Nationale, graded against BAN's own rooftop coordinate, in two surface forms.
+// fr-ban-panel — a 100-address French panel drawn from the Base Adresse Nationale, graded against BAN's own rooftop coordinate in two surface forms.
 //
-// what this measures, and what IT does not
+// The extract this grades against is the same register the answer is looked up in, so the panel is circular and measures whether an address finds its own row — a parse or routing failure, never coordinate accuracy.
 //
-// The French rooftop tier is the Base Adresse Nationale. `mailwoman data pull fr` downloads an extract built from BAN, and this panel grades Mailwoman's answer against the same register the answer was looked up in. That is circular, and it is stated on the published page beside every number it touches. What survives the circularity is still worth measuring: whether the pipeline parses the address into the spans the rooftop probe needs, whether it scopes the probe to the right commune, and whether it does both when the surface form is rearranged. A miss here is a parse or a routing failure, never a coordinate-accuracy failure. So read this panel as "does the address find its own row", not as "how accurate is the coordinate".
+// The two arms are the canonical French order (`28 Avenue de l'Opéra, 75002 Paris`) and the same tokens with the postcode and commune moved to the front.
 //
-// two arms
-//
-//   clean "28 Avenue de l'Opéra, 75002 Paris" — the canonical French order. Reordered "75002 Paris, 28 Avenue de l'Opéra" — postcode and commune moved to the front.
-//
-// The second arm is the surface-form robustness test. Nothing about the target changed. Only the order of the same tokens did.
-//
-// determinism
-//
-// The panel is a committed file (`fr-ban-sample.json`), not a fresh draw, so two runs on two machines grade the same 100 rows. `--resample` regenerates it from a local BAN extract using the seed below. The draw is a seeded pass over rowids, so the same seed against the same BAN release reproduces the same panel byte for byte. A different BAN release renumbers the rows and will produce a different panel, which is why the sample is committed rather than drawn at run time.
+// The panel is a committed file (`fr-ban-sample.json`), so two runs on two machines grade the same 100 rows; `--resample` regenerates it from a local BAN extract with the seed below.
 //
 // usage
 //
@@ -50,55 +42,39 @@ import { basename, PathBuilder, resolvePath } from "path-ts"
 const HERE = PathBuilder.from(import.meta.dirname)
 
 /**
- * The weights locale.
- *
- * The `fr-FR` package is a data-only overlay: it ships the French postcode, pair-index
- * and FST artifacts and takes `model.onnx` from the base package, which is what
- * `versions.modelCard` against `versions.model` records in the result file.
+ * The weights locale, a data-only `fr-FR` overlay that ships the French artifacts
+ * and takes `model.onnx` from the base package.
  */
 const LOCALE = "fr-FR"
 
 /**
- * The committed draw seed.
- *
- * Changing it changes the panel, so it is a constant and not a flag.
+ * The committed draw seed, a constant rather than a flag because changing it changes the panel.
  */
 const SEED = 20_260_804
 
-/**
- * Rows in the panel.
- */
 const PANEL_SIZE = 100
 
 /**
- * Rowids drawn before deduplication.
- *
- * One row is kept per postcode, so the draw has to over-sample: dense postcodes
- * (a Paris arrondissement carries tens of thousands of points) are hit repeatedly and counted once.
+ * Rowids drawn before deduplication, over-sampled because one row is kept per postcode
+ * and dense postcodes are hit repeatedly.
  */
 const DRAW_SIZE = 1200
 
 /**
- * Rows averaged to place a postcode's centroid.
- *
- * Capped so a dense postcode does not dominate the run.
+ * Rows averaged to place a postcode's centroid, capped so a dense postcode does not dominate the run.
  */
 const CENTROID_SAMPLE = 2000
 
 /**
- * A returned coordinate within this distance of BAN's own is counted as the exact row.
- *
- * One meter is below the precision BAN publishes, so a hit at this radius means
- * the same row was found rather than a neighbouring one.
+ * A returned coordinate within this distance of BAN's own counts as the exact row,
+ * one meter being below the precision BAN publishes.
  */
 const EXACT_ROW_KM = 0.001
 
 /**
- * A resolved coordinate this far from its postcode's centroid counts as routed to the right postcode area.
- *
- * French postcodes are not one size — a Paris arrondissement spans about 2 km,
- * a rural postcode can span 20 — so this is a routing check and not a precision claim.
- * The precision claim is the distance table.
+ * A resolved coordinate this far from its postcode's centroid counts as routed
+ * to the right postcode area, a routing check rather than a precision claim
+ * because French postcodes span from about 2 km to 20.
  */
 const ROUTING_KM = 15
 
@@ -113,8 +89,6 @@ const { values: flags } = parseArguments({
 	},
 })
 
-// This file is served at /benchmarks/fr-ban-panel.mjs and runs in a reader's project, where
-// `@mailwoman/core/env` — the blessed env helper inside this repo — is not a dependency.
 // oxlint-disable-next-line sister-software/no-process-globals -- shipped doc asset. runs outside this repo
 const dataRoot = flags["data-root"] ?? process.env.MAILWOMAN_DATA_ROOT
 
@@ -124,25 +98,18 @@ if (!dataRoot) {
 	// oxlint-disable-next-line sister-software/no-process-globals -- shipped doc asset
 	process.exit(1)
 
-	// `process.exit` is typed `never`, but only when the checker can see this branch ends.
-	// Throwing states it.
+	// Throwing states the branch's end, since `process.exit` is typed `never` only when the checker can see it.
 	throw new Error("unreachable")
 }
 
 /**
- * The checked data root.
- *
- * Module-level narrowing does not reach into a function body, so the guard's result
- * is bound once here rather than re-asserted at every use.
+ * The checked data root, bound once because module-level narrowing does not reach into function bodies.
  */
 const DATA_ROOT = PathBuilder.from(dataRoot)
 
 const banPath = banDatabaseRoot(DATA_ROOT)("address-points-fr.db")
 const candidatePath = wofDatabaseRoot(DATA_ROOT)("candidate.db")
 
-/**
- * The committed sample file: the draw's provenance plus the rows it produced.
- */
 interface PanelFile {
 	source: string
 	generated: string
@@ -151,9 +118,6 @@ interface PanelFile {
 	rows: PanelRow[]
 }
 
-/**
- * A panel row as the committed sample file carries it.
- */
 interface PanelRow {
 	number: string
 	street: string
@@ -165,10 +129,8 @@ interface PanelRow {
 }
 
 /**
- * One graded answer.
- *
- * `km` is null when the pipeline returned no coordinate, which is a different reading
- * from a coordinate that landed far away — {@link summarize} keeps the two apart.
+ * One graded answer, whose `km` is null when the pipeline returned no coordinate,
+ * which {@link summarize} keeps apart from a far-away one.
  */
 interface GradedRecord {
 	km: number | null
@@ -179,12 +141,8 @@ interface GradedRecord {
 //#region Address rendering
 
 /**
- * Title-case a BAN `locality_norm` value.
- *
- * The column is lowercased and accent-stripped by the extract builder,
- * so `orleans` renders as `Orleans` and never as `Orléans`.
- * That loss is real and the published page carries it as a caveat: every panel
- * row asks the pipeline for an unaccented commune.
+ * Title-case a BAN `locality_norm` value, which the extract builder lowercases
+ * and strips of accents, so every panel row asks for an unaccented commune.
  */
 function titleCase(norm: string): string {
 	return norm.replaceAll(
@@ -193,16 +151,10 @@ function titleCase(norm: string): string {
 	)
 }
 
-/**
- * The canonical French order: house number, street, postcode, commune.
- */
 function cleanForm(row: PanelRow): string {
 	return `${row.number} ${row.street}, ${row.postcode} ${titleCase(row.locality)}`
 }
 
-/**
- * The robustness arm: the same tokens with the postcode and commune moved to the front.
- */
 function reorderedForm(row: PanelRow): string {
 	return `${row.postcode} ${titleCase(row.locality)}, ${row.number} ${row.street}`
 }
@@ -232,8 +184,8 @@ async function resample(): Promise<void> {
 		const rowid = 1 + Math.floor(random() * maxRowid)
 		const hit = rowStatement.get(rowid)
 
-		// A drawn rowid can miss (a vacuumed gap) or land on a row with no postcode or commune to render.
-		// Both are skipped rather than retried, so the draw stays a pure function of the seed.
+		// A drawn rowid can miss or lack a postcode or commune, and both are skipped
+		// rather than retried so the draw stays a pure function of the seed.
 		if (!hit?.postcode || !hit.locality_norm || !hit.street_raw || !hit.number) continue
 
 		if (seenPostcode.has(hit.postcode)) continue
@@ -280,28 +232,15 @@ async function resample(): Promise<void> {
 //#region Versions
 
 /**
- * The three versions a differing re-run has to be able to tell apart: the code,
- * the model, and the reference data.
- *
- * Without them a reader whose numbers disagree with the published ones cannot tell data drift
- * from code drift, which is the whole value of publishing the result file next to the script.
- *
- * `resolveWeights` runs the same resolution order the classifier does,
- * so this reports the artifact that was loaded rather than the one that was asked for,
- * including the base-package fallback the `fr-FR` overlay takes for its `model.onnx`.
- * Paths are dereferenced because a development checkout symlinks them into the workspace,
- * and the symlink name says nothing about which checkpoint is behind it.
- *
- * The BAN release itself is recorded separately, on the committed panel file,
- * because it is a property of the addresses rather than of the run.
+ * The code, model, and reference-data versions a differing re-run must tell apart,
+ * reporting the artifact `resolveWeights` actually loaded rather than the one asked for
+ * and dereferencing paths past development symlinks.
  */
 async function versionStamp() {
 	const require = createRequire(import.meta.url)
 	const resolved = await resolveWeights({ locale: LOCALE })
 
-	// `resolveWeights` answers `undefined` when the bundle ships no card.
-	// The stamp is the point of this function, so a missing card is a failure to report
-	// rather than a field to omit.
+	// The stamp is the point of this function, so a missing card is a failure to report rather than a field to omit.
 	if (!resolved.modelCardPath) throw new Error("fr-ban-panel: the resolved weights bundle carries no model card.")
 
 	const card = await readLocalJSONFile<{ name: string; version: string }>(resolved.modelCardPath)
@@ -322,11 +261,8 @@ async function versionStamp() {
 function summarize(records: GradedRecord[]) {
 	const distances = records.flatMap((r) => (r.km === null ? [] : [r.km]))
 	const within = (km: number): number => records.filter((r) => r.km !== null && r.km <= km).length
-	// Bucketed on the tier that answered, which is `none` for a row that returned no coordinate:
-	// `resolution_tier` reports where the cascade ended rather than whether it produced anything.
-	// Therefore, it still reads "admin" on a row that answered nothing.
-	// Every row on this panel resolved, so the two bucketings agree here.
-	// The guard is in place so they cannot silently disagree on a future run.
+	// Bucketed on the tier that answered with `none` for a row that returned no coordinate,
+	// because `resolution_tier` reports where the cascade ended rather than whether it produced anything.
 	const tiers: Record<string, number> = {}
 
 	for (const record of records) {
@@ -377,8 +313,8 @@ async function run() {
 					classifier,
 					resolver,
 					nationalDatabases: banExtracts.for,
-					// Pinned: this panel is a French dataset run through a French pipeline, so it
-					// measures resolution inside France and makes no claim about country disambiguation.
+					// Pinned to `FR`, so the panel measures resolution inside France
+					// and makes no claim about country disambiguation.
 					defaultCountry: "FR",
 				})
 			} catch (error) {

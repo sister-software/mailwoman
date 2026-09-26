@@ -6,7 +6,7 @@
  *   The half of the activity lexicon's audit that needs artifacts the vocabulary itself does not depend on.
  *
  *   `@mailwoman/activity-lexicon` declares zero dependencies, so it can check that a derived form's base is
- *   present and that a citation is not empty, and nothing more. The claims that matter most are the ones
+ *   present and that a citation is not empty, and no more. The claims that matter most are the ones
  *   pointing outside it: a committed query row, a synonym in the committed POI taxonomy, a clause of the
  *   compiled concept's own description. Those are checked here, where all three artifacts are held.
  *

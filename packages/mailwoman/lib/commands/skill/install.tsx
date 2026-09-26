@@ -3,37 +3,6 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mailwoman skill install [--dest <dir>]` — copies the packaged Claude Code skill
- *   (`skills/mailwoman/`, shipped inside this package) into `<dest>/.claude/skills/mailwoman/`.
- *   `--dest` defaults to the current working directory, so running this from a consumer project's
- *   root wires the skill into that project's `.claude/skills/` directory, exactly where Claude Code
- *   discovers project-level skills.
- *
- *   Idempotent via a clean-slate install: each run `rmSync`s the destination directory first, then
- *   `cpSync(..., { recursive: true, force: true })`s the packaged skill into it. The `rmSync` step is
- *   what makes "safe to re-run" true in general rather than just today — `cpSync` alone is a merge copy: it
- *   overwrites a file that exists on both sides but never deletes a destination file that a newer
- *   shipped skill version dropped. That gap is latent right now (the skill is one file, so there's
- *   nothing to leave behind) but would silently strand stale content the day the skill grows a second
- *   file and a later version renames or removes it upstream. Removing the whole destination first
- *   turns "merge" into "replace," which is what a reinstall should mean.
- *
- *   No destination-side symlink can precede the copy in this pipeline, so the `unlink`-then-`copyFile`
- *   discipline `packages/release-kit/lib/weights/copy-weights.ts` needs (agents.md's "Pitfall: symlinks in the publish
- *   tarball") does not apply here: `rmSync` removes whatever sits at `destDir` — a symlink, a real
- *   directory, or nothing — as an unlink of that path itself, never by following it, so `cpSync`
- *   always writes into a directory it just created fresh. There is no step here that could write
- *   through a stale symlink the way a naive `fs.copyFile` onto an existing destination link would.
- *
- *   package-relative resolution (source vs. compiled tree — see `core/utils/repo.ts`'s
- *   `__isCompiledTree` note): `skills/mailwoman/` ships as raw markdown via `package.json`'s `files`
- *   array, so tsc never emits a copy of it into `out/` — it sits at the same package-relative path
- *   (`<package root>/skills/mailwoman/`) whether this command runs from source or compiled. Only this
- *   file's own distance to that root changes between the two trees: source mode is
- *   `mailwoman/commands/skill/install.tsx` (package root two levels up); compiled is
- *   `mailwoman/out/commands/skill/install.js` (package root three levels up, past `out/`). Both
- *   candidates are tried and the one that exists on disk wins — the same bridge
- *   `eval-harness/baseline-assert.ts`'s `resolveBaselineFilePath` uses for its sibling JSON asset.
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers"
@@ -63,12 +32,6 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-/**
- * The packaged skill's source directory, resolved relative to this package's root.
- *
- * See the module docstring for why two candidate distances are tried —
- * exactly one exists on disk in any given tree.
- */
 async function resolveSkillSourceDir(): Promise<string> {
 	const dir = resolvePackagePath("mailwoman", "skills", "mailwoman")
 
@@ -92,8 +55,7 @@ async function installSkill(dest: string | undefined): Promise<InstallOutcome> {
 		const sourceDir = await resolveSkillSourceDir()
 		const destDir = resolvePath(dest ?? ".", ".claude", "skills", "mailwoman")
 
-		// Clean-slate rather than merge.
-		// See the module docstring for why a bare cpSync isn't enough.
+		// Remove the whole destination first: copyPath merges and would strand files a newer skill drops.
 		await removePathIfPresent(destDir)
 		await copyPath(sourceDir, destDir)
 

@@ -101,7 +101,8 @@ export interface VerifyReleaseMetadataOptions {
 /**
  * The directory `docs/docusaurus.config.ts` publishes (`path: "articles"`).
  *
- * A status page outside it is not the page a reader opens, so citing the shipped model there proves nothing.
+ * A status page outside it is not the page a reader opens, so citing the shipped
+ * model there establishes no published fact.
  */
 const PUBLISHED_DOCS_ROOT = "docs/articles/"
 

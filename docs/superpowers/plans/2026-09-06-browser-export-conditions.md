@@ -345,7 +345,7 @@ yarn oxlint packages/core/lib/objects.ts
 yarn vitest --run --config vitest.slow.config.ts packages/neural/test/integration/browser-bundle.test.ts -t "core/objects"
 ```
 
-Expected: oxlint reports nothing; the row passes with zero static edges. If `prefer-home` reports the predicate, the `HELPER_HOMES` row it names is the home to import from instead; there is none today.
+Expected: oxlint reports no issue; the row passes with zero static edges. If `prefer-home` reports the predicate, the `HELPER_HOMES` row it names is the home to import from instead; there is none today.
 
 - [ ] **Step 3: Run core's own unit tests for the module**
 

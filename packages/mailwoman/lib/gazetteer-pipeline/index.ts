@@ -71,7 +71,7 @@ import { buildSHA, stampLayerManifest } from "#gazetteer-pipeline/stamp-manifest
  * `postalcode-ni-osm.db` is ODbL and is never published, so on every machine but the one
  * that built it the `pathExists` filter in {@link resolvePostcodeDatabases} removes it
  * and the set degrades to the permissive databases alone.
- * Nothing else enforces the tier, and nothing else needs to.
+ * No other code enforces the tier, and no other code needs to.
  *
  * What is left out: the WOF **`postalcode-gb.db`** (2,719,772 rows, 694 MB —
  * superseded by Code-Point Open, the same underlying survey under a clean licence).
@@ -504,7 +504,7 @@ export async function promoteCandidate(
 			await removePath(linkPath)
 		}
 	} catch {
-		// nothing there yet
+		// no link there yet
 	}
 
 	await createSymbolicLink(candidateDB, linkPath)

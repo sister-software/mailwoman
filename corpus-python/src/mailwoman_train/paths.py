@@ -16,7 +16,6 @@ from pathlib import Path
 
 from .env import public
 
-#: This is the package directory, `<repo>/corpus-python/src/mailwoman_train`.
 _PACKAGE_ROOT = Path(__file__).resolve().parent
 
 
@@ -38,7 +37,7 @@ def cache_root_path(*parts: str) -> Path:
 def temp_root_path(*parts: str) -> Path:
     """Return a path under `$MAILWOMAN_TEMP_ROOT` for a named intermediate file.
 
-    Use `tempfile` for scratch files that nothing reads afterwards.
+    Use `tempfile` for scratch files that no later step reads.
     """
     return public().temp_root.joinpath(*parts)
 

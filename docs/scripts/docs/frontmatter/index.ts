@@ -3,20 +3,13 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Shared plumbing for the docs structural checks (docs-architecture cleanup, Phase 4): walk
- *   `docs/articles`, parse each page's frontmatter block, and derive the Docusaurus doc id. Used by
- *   `check-docs-structure.ts` (the CI check) and `list-stale-docs.ts` (the quarterly freshness
- *   sweep).
+ *   Shared plumbing for the docs structural checks: walk `docs/articles`, parse each page's frontmatter block, and derive the Docusaurus doc id.
  *
- *   The frontmatter parser is deliberately minimal — top-level `key: scalar` lines only, quotes
- *   stripped. Nested values (`tags:` arrays, block scalars) record the key as declared but carry no
- *   value. That covers every field the checks read (`role`, `status`, `title`, `id`, `review-by`,
- *   …) without pulling a YAML dependency into what must stay a no-install fast path in CI.
+ *   The frontmatter parser is deliberately minimal — top-level `key: scalar` lines only, quotes stripped, with nested values recording the key but no value — so no YAML dependency reaches the pre-install CI path.
  */
 
-// Node builtins on purpose.
-// `check-docs-structure.ts` reaches this file, and the Docs workflow runs it before `yarn install`.
-// Same reason the frontmatter parser above stays hand-rolled: nothing here may need an install.
+// This file is reached by `check-docs-structure.ts`, which the Docs workflow runs
+// before `yarn install`, so only Node builtins may resolve.
 /* oxlint-disable typescript/no-restricted-imports -- runs before `yarn install`; see above */
 import { readdir, readFile } from "node:fs/promises"
 import * as path from "node:path"
@@ -26,18 +19,12 @@ import { fileURLToPath } from "node:url"
 const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url))
 
 /**
- * The docs package root, taken as the part of this module's path before its
- * `scripts/` segment rather than by counting `..` upward.
- *
- * A count encodes how deep under `scripts/` this file happens to sit, so moving it
- * down one level resolves to a directory that does not exist.
- * The failure this replaces, where the content root read as `docs/scripts/docs/articles`.
- * Truncating at the segment holds at any depth.
+ * The docs package root, taken as this module's path before its `scripts/` segment so it holds at any depth.
  */
 const DOCS_ROOT = SCRIPT_DIR.slice(0, SCRIPT_DIR.lastIndexOf(`${path.sep}scripts${path.sep}`))
 
 /**
- * Absolute path to the docs-plugin content root (`docs/articles`).
+ * Absolute path to the docs-plugin content root `docs/articles`.
  */
 export const ARTICLES_DIR = path.join(DOCS_ROOT, "articles")
 
@@ -46,34 +33,24 @@ export const ARTICLES_DIR = path.join(DOCS_ROOT, "articles")
  */
 export interface DocPage {
 	/**
-	 * Path relative to `docs/articles`, posix separators — e.g. `concepts/bio-labels.mdx`.
+	 * Path relative to `docs/articles` with posix separators.
 	 */
 	relativePath: string
-	/**
-	 * Absolute filesystem path.
-	 */
 	absolutePath: string
 	/**
-	 * The Docusaurus doc id: the directory part of the file path plus the frontmatter `id:`
-	 * override (which replaces only the final segment) or the extension-less basename —
-	 * e.g. `recipes/timezones.md` with `id: timezone-lookup` → `recipes/timezone-lookup`.
+	 * The Docusaurus doc id: the file path's directory plus the frontmatter `id:`
+	 * override for the final segment, or the extension-less basename.
 	 */
 	id: string
-	/**
-	 * Top-level scalar frontmatter fields, quotes stripped.
-	 */
 	frontmatter: Map<string, string>
 	/**
-	 * Every top-level frontmatter key, including keys whose values are nested/non-scalar.
+	 * Every top-level frontmatter key, including nested/non-scalar ones that `frontmatter` omits.
 	 */
 	declaredKeys: Set<string>
 }
 
 const FRONTMATTER_KEY_PATTERN = /^([A-Za-z][A-Za-z0-9_-]*):(.*)$/
 
-/**
- * Strip one layer of matched surrounding quotes from a scalar value.
- */
 function unquote(value: string): string {
 	if (value.length >= 2 && (value[0] === '"' || value[0] === "'") && value.endsWith(value[0]!)) {
 		return value.slice(1, -1)
@@ -84,8 +61,6 @@ function unquote(value: string): string {
 
 /**
  * Parse the leading `---`-fenced frontmatter block of a markdown source.
- *
- * @returns top-level scalar fields plus the set of all declared top-level keys.
  */
 export function parseFrontmatter(source: string): { fields: Map<string, string>; declaredKeys: Set<string> } {
 	const fields = new Map<string, string>()
@@ -93,14 +68,9 @@ export function parseFrontmatter(source: string): { fields: Map<string, string>;
 
 	let opened = false
 
-	// This module runs in the PRE-install "Docs structure checks" CI check (docs-build.yml), whose
-	// interface is node built-ins only. No install has happened when it executes. A spliterator
-	// import here is ERR_MODULE_NOT_FOUND on every CI run (2026-08-04). Frontmatter blocks are a
-	// handful of short lines. the whole-buffer split costs nothing at this scale.
-	// oxlint-disable-next-line mailwoman/prefer-spliterator -- pre-install, built-ins-only CI over a handful of frontmatter lines
+	/* oxlint-disable-next-line mailwoman/prefer-spliterator -- pre-install, built-ins-only CI over a handful of frontmatter lines */
 	for (const line of source.split("\n")) {
 		if (!opened) {
-			// A file without the opening fence has no frontmatter at all.
 			if (line.trim() !== "---") break
 
 			opened = true
@@ -112,7 +82,7 @@ export function parseFrontmatter(source: string): { fields: Map<string, string>;
 
 		const match = FRONTMATTER_KEY_PATTERN.exec(line)
 
-		if (!match) continue // Nested/continuation line (indented, `- ` item, …) — not a top-level key.
+		if (!match) continue
 
 		const [, key, rawValue] = match
 		declaredKeys.add(key!)
@@ -154,10 +124,8 @@ export async function collectDocPages(): Promise<DocPage[]> {
 }
 
 /**
- * Mirrors the docs plugin's `exclude` globs in `docs/docusaurus.config.ts`
- * (search for `exclude:` under `path: "articles"`) — pages the build never publishes,
- * so they can't collide or orphan on the live site.
- * Keep the two in sync when the config's exclusions change.
+ * Mirrors the docs plugin's `exclude` globs in `docs/docusaurus.config.ts`,
+ * and must stay in sync with them.
  */
 export function isExcludedFromBuild(page: DocPage): boolean {
 	if (page.relativePath.startsWith("reviews/")) return true
@@ -172,12 +140,7 @@ export function isExcludedFromBuild(page: DocPage): boolean {
 }
 
 /**
- * The evals and retrospectives trees are a delegated workstream (see the coordination
- * boundary in `docs/superpowers/plans/2026-07-14-documentation-architecture-cleanup.md`);
- * their role/status adoption ships with its own check.
- *
- * Only the duplicate-title check reads them.
- * A title collision is site-wide by nature.
+ * The evals and retrospectives trees are a delegated workstream that only the duplicate-title check reads.
  */
 export function isDelegatedWorkstream(page: DocPage): boolean {
 	return page.relativePath.startsWith("evals/") || page.relativePath.startsWith("retrospectives/")

@@ -7,18 +7,18 @@
  *
  *   `Brixton Hill, United Kingdom` parses as `{ street_suffix: "Hill", locality: "Brixton", country: … }`. The suffix
  *   is real English — `Hill` is a street type in `Ludgate Hill` and `Primrose Hill` — so the street-type channel fires
- *   on the token wherever it appears, and there is nothing street-shaped in the input to hold it. The resolver is then
+ *   on the token wherever it appears, and the input offers no street-shaped token to hold it. The resolver is then
  *   handed `Brixton` and finds a different place 300 km away, while the correct record sits under a name the parse
  *   never asks for.
  *
  *   `validate-tree.ts` has named this shape since v0.7 task #37 — `stranded-dependent`, "a `street_suffix` floating
- *   with no `street` anywhere" — and nothing ever consumed it; `validateTree` is called only by its own test. So the
+ *   with no `street` anywhere" — and no consumer ever acted on it, `validateTree` is called only by its own test. So the
  *   diagnosis was written down years before the repair, which is the argument for the repair rather than against it.
  *
  *   adjacency is the whole guard, and it is what keeps this from being a guess. The suffix must be contiguous with the
  *   locality — whitespace only between the spans — so `12 Hill, London` (a genuine one-word street, suffix nowhere
  *   near the locality) is untouched, while `Brixton Hill` and `Notting Hill` reunite. A stranded suffix that neighbours
- *   nothing is left exactly as it is: this pass fixes a split, it does not delete evidence.
+ *   no adjacent span is left exactly as it is: this pass fixes a split, it does not delete evidence.
  */
 
 import { type AddressNode, type AddressTree, collectNodes } from "@mailwoman/core/decoder"

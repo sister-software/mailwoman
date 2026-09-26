@@ -14,7 +14,7 @@
  *   the rest PIN what this layer says and, more importantly, what IT refuses TO. A designation becomes one
  *   additive marker naming the verdict's own top kind. the authority'S own code is in the sentence with the
  *   generic type beside it rather than instead of it. the plan and its window ride on the evidence. and a
- *   location with no zoning polygon raises nothing. That last one is the hardest case of the meaning-of-zero
+ *   location with no zoning polygon raises no marker. That last one is the hardest case of the meaning-of-zero
  *   rule: an absent zoning polygon is one of at least four different things, and the publisher proves the
  *   asymmetry by stating `UNZ - Unzoned` as a positive value where it means it.
  */

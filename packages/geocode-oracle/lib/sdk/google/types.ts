@@ -2,113 +2,49 @@
  * @copyright Sister Software.
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file The subset of the Google Geocoding API's JSON response this package actually consumes.
+ * @file The subset of the Google Geocoding API's JSON response this package consumes; hand-written because `@googlemaps/google-maps-services-js` is an optional `spatial` dependency a supported install can lack.
  *
- *   why these are hand-written rather than imported from `@googlemaps/google-maps-services-js`, which
- *   is already in this monorepo's tree (`spatial` lists it as a dev + optional dependency and
- *   type-imports `LatLng`/`LatLngLiteral` from it):
- *
- *     1. It is an optional dependency of `spatial`, which means a tree where it failed to install is a
- *        supported tree. A client whose entire correctness rests on the response shape should not have
- *        its response shape vanish under an install flag.
- *     2. The isp-nexus original that this port descends from had to write `axiosInstance: this.axios as
- *        any` with the comment "Fixes outdated type definitions" to get the library to accept an Axios
- *        instance at all. Its types were already drifting from the wire in 2024.
- *     3. The `status` union below is the required part of this file (see {@linkcode
- *        GoogleGeocoderStatus}), and it is small enough to state exactly. Depending on a package for
- *        it adds nothing and hides it.
- *
- *   The runtime dependency on `@googlemaps/google-maps-services-js` is dropped entirely — see
- *   `google-client.ts`'s header for why the library's `Client` was actively harmful under
- *   {@linkcode APIClient}.
- *
- *   Field names are Google's wire keys (`snake_case`), which the house acronym-casing rule
- *   deliberately does not touch: they are string interfaces rather than identifiers we chose.
+ * Field names are Google's wire keys (`snake_case`), which the house acronym-casing rule leaves alone.
  */
 
 /**
- * The `status` field every Geocoding API response carries — Google's IN-band error channel.
- *
- * This is the single most important thing about this API.
- * Every one of these arrives under **http 200**, including the ones that mean
- * "your key is invalid" and "you are over quota".
- *
- * A client that only inspects the http status treats a `REQUEST_DENIED` as a successful
- * geocode with zero results, caches it, and reports an empty answer forever.
- * `google-client.ts` maps each of these onto a `ResourceError` with a synthetic http status
- * so callers branch on `error.status` / `isTransientResourceError(error)` exactly
- * as they do for every other client in this repo.
+ * Google's in-band error channel: every value arrives under HTTP 200, so branching on HTTP
+ * status alone records `REQUEST_DENIED` as a successful geocode with zero results.
  *
  * @see https://developers.google.com/maps/documentation/geocoding/requests-geocoding#StatusCodes
  */
 export const GoogleGeocoderStatus = {
-	/**
-	 * At least one result was returned, and no errors occurred.
-	 */
 	OK: "OK",
 	/**
-	 * The geocode succeeded but returned no results.
-	 *
-	 * A legitimate, cacheable answer: the address does not resolve, and asking
-	 * again tomorrow will not change that.
+	 * A legitimate, cacheable answer: the address does not resolve.
 	 */
 	ZeroResults: "ZERO_RESULTS",
-	/**
-	 * The daily request quota for the billing account is exhausted.
-	 */
 	OverDailyLimit: "OVER_DAILY_LIMIT",
 	/**
-	 * The per-second/per-minute request rate was exceeded.
-	 * Transient — the one status here worth retrying.
+	 * Transient; the one status here worth retrying.
 	 */
 	OverQueryLimit: "OVER_QUERY_LIMIT",
-	/**
-	 * The request was rejected: usually a missing, invalid, restricted, or unbilled API key.
-	 */
 	RequestDenied: "REQUEST_DENIED",
-	/**
-	 * The request is malformed — no `address`/`latlng`/`place_id`, or an unparseable one.
-	 */
 	InvalidRequest: "INVALID_REQUEST",
 	/**
-	 * A server-side error.
-	 *
-	 * Google's own documentation says to retry.
+	 * A server-side error; Google's documentation says to retry.
 	 */
 	UnknownError: "UNKNOWN_ERROR",
 } as const
 
 /**
  * The `status` field every Geocoding API response carries.
- *
- * See {@linkcode GoogleGeocoderStatus}.
  */
 export type GoogleGeocoderStatus = (typeof GoogleGeocoderStatus)[keyof typeof GoogleGeocoderStatus]
 
 /**
- * How precise Google considers the returned coordinate.
- *
- * Maps onto mailwoman's `ResolutionTier` in `google-parser.ts`.
- * That mapping is what lets an oracle run fill a `SeedCase.expectTier`.
+ * How precise Google considers the returned coordinate; `google-parser.ts` maps each value
+ * onto mailwoman's `ResolutionTier` so an oracle run can fill a `SeedCase.expectTier`.
  */
 export const GoogleLocationType = {
-	/**
-	 * A precise geocode for a specific street address.
-	 */
 	Rooftop: "ROOFTOP",
-	/**
-	 * Interpolated between two precise points along a street segment.
-	 *
-	 * The same technique the Census geocoder uses for every one of its matches.
-	 */
 	RangeInterpolated: "RANGE_INTERPOLATED",
-	/**
-	 * The geometric centre of a result: a street centreline, a polyline, or a polygon (a region or parcel).
-	 */
 	GeometricCenter: "GEOMETRIC_CENTER",
-	/**
-	 * Approximate — in practice an administrative or postal-area centroid.
-	 */
 	Approximate: "APPROXIMATE",
 } as const
 
@@ -118,31 +54,20 @@ export const GoogleLocationType = {
 export type GoogleLocationType = (typeof GoogleLocationType)[keyof typeof GoogleLocationType]
 
 /**
- * One `address_components` entry.
- *
- * `types` is an array because Google tags a single component with every category that
- * applies to it (a component is routinely both `locality` and `political`).
+ * One `address_components` entry; `types` is an array because Google tags a single component
+ * with every category that applies (a component is routinely both `locality` and `political`).
  */
 export interface GoogleAddressComponent {
-	/**
-	 * The full text of the component — `"New South Wales"`, `"Île-de-France"`.
-	 */
 	long_name: string
 	/**
-	 * The abbreviated form where one exists, otherwise identical to `long_name` — `"NSW"`, `"IDF"`, `"US"`.
+	 * Abbreviated where one exists, otherwise identical to `long_name`.
 	 */
 	short_name: string
-	/**
-	 * Every category Google assigns this component.
-	 */
 	types: string[]
 }
 
 /**
- * A `{ lat, lng }` pair.
- *
- * Structurally identical to `@googlemaps/google-maps-services-js`'s `LatLngLiteral`,
- * which is what `GeoPoint`'s constructor overload and `GeoPoint.toGoogleLatLngLiteral()` speak.
+ * A `{ lat, lng }` pair, kept structurally identical to the `LatLngLiteral` `GeoPoint` speaks.
  */
 export interface GoogleLatLngLiteral {
 	lat: number
@@ -163,8 +88,7 @@ export interface GoogleBounds {
 export interface GoogleGeometry {
 	location: GoogleLatLngLiteral
 	/**
-	 * Absent on some responses, which is why the tier mapping treats a missing value
-	 * as "unknown" rather than defaulting to a tier.
+	 * Absent on some responses, which the tier mapping treats as unknown rather than defaulting.
 	 */
 	location_type?: GoogleLocationType | string
 	viewport?: GoogleBounds
@@ -178,16 +102,9 @@ export interface GoogleGeometry {
  * A result's Open Location Code block.
  */
 export interface GooglePlusCode {
-	/**
-	 * The globally unambiguous form, e.g. `"8FW4V75V+8Q"`.
-	 *
-	 * This is the one carried onto `OracleGeocodeResult.plusCode`.
-	 */
 	global_code: string
 	/**
-	 * The shortened form relative to a named locality, e.g. `"V75V+8Q Paris, France"`.
-	 *
-	 * Only present when a suitable reference locality exists.
+	 * The shortened form relative to a named locality, present only when one exists.
 	 */
 	compound_code?: string
 }
@@ -202,21 +119,15 @@ export interface GoogleGeocodeResult {
 	 */
 	formatted_address: string
 	geometry: GoogleGeometry
-	/**
-	 * Google's stable identifier for the matched place.
-	 */
 	place_id: string
 	plus_code?: GooglePlusCode
 	/**
-	 * Every category Google assigns the result (as opposed to its components) —
-	 * `"street_address"`, `"premise"`, `"postal_code"`, `"establishment"`.
+	 * Every category Google assigns the result rather than its components.
 	 */
 	types: string[]
 	/**
-	 * Set (and only set) when Google could not match the query as given and fell back to something looser.
-	 *
-	 * Absent means exact, which is why {@linkcode OracleGeocodeResult.partialMatch}
-	 * coerces rather than passes through.
+	 * Set only when Google could not match the query as given and fell back to something looser;
+	 * absent means exact, which `OracleGeocodeResult.partialMatch` coerces rather than passes through.
 	 */
 	partial_match?: boolean
 	/**
@@ -226,18 +137,15 @@ export interface GoogleGeocodeResult {
 }
 
 /**
- * The full response body.
- *
- * `results` is always present (empty on `ZERO_RESULTS`); `error_message` only
- * accompanies a failing `status`.
+ * The full response body; `results` is always present (empty on `ZERO_RESULTS`)
+ * and `error_message` only accompanies a failing `status`.
  */
 export interface GoogleGeocodeResponse {
 	results: GoogleGeocodeResult[]
 	status: GoogleGeocoderStatus | string
 	/**
-	 * Google's human-readable explanation of a failing `status`.
-	 *
-	 * Never contains the API key — it is safe to surface in an error message, and `google-client.ts` does.
+	 * Google's human-readable explanation of a failing `status`; never contains the API key,
+	 * so it is safe to surface in an error message.
 	 */
 	error_message?: string
 }

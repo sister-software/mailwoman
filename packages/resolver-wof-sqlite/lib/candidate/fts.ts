@@ -5,7 +5,7 @@
  *
  *   FTS5-trigram fuzzy index over the candidate gazetteer's `name_key` — the typo-tolerant fallback
  *   the exact `name_key` B-tree probe structurally can't do (a misspelling breaks the normalized
- *   key, so the contiguous-probe lookup returns nothing). It indexes the normalized key (not the
+ *   key, so the contiguous-probe lookup returns no candidate). It indexes the normalized key (not the
  *   raw `name`), so a diacritic-stripped query (`munchen`) trigram-matches the stored `munchen`
  *   rather than missing a raw `München`. The trigram tokenizer makes `match` a substring/fuzzy
  *   operation. the reader ({@link WOFCandidateTableLookup}) or's the query's trigrams to fetch a

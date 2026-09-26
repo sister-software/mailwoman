@@ -99,7 +99,7 @@ locality name, so locality scope cannot be matched directly against this table. 
 limitation of this increment (see open questions). Queries without a postcode fall back to a
 statewide street-name match, which is direct but ambiguous for common names ("Main
 Street" exists in several towns). The lookup abstains when the statewide candidates span
-multiple postcodes and nothing distinguishes them.
+multiple postcodes and no signal distinguishes them.
 
 ## Query algorithm (`resolver-wof-sqlite/interpolation.ts`)
 
@@ -108,7 +108,7 @@ Given `{ street, number, postcode? }`:
 1. **Normalize** street via `normalizeStreetForKey`; parse `number` as a non-negative
    integer. A non-numeric number gets no answer, because this tier does not guess.
 2. **Candidate fetch:** rows with `street_norm` equal and `min_hn ≤ n ≤ max_hn`,
-   postcode-scoped when a postcode is given. A given ZIP that scopes to nothing is a
+   postcode-scoped when a postcode is given. A given ZIP that scopes to no candidate is a
    miss rather than a statewide guess. The statewide retry was built and measured (2026-06-11
    VT eval). It added +2.3pp coverage but degraded the tail (p99 1.0 → 20.8 km, max 204 km,
    because a statewide-unique name can belong to a distant town), so it was reverted. Queries
@@ -244,12 +244,12 @@ Method 2 clear the check on its bracketed stratum?
 ## Open questions
 
 1. **Workspace split.** This increment implements inside `resolver-wof-sqlite` (the module is
-   small, shares the normalizer + geo helpers, and ships nothing by default). The scoping
+   small, shares the normalizer + geo helpers, and ships no artifact by default). The scoping
    note leaned toward a new `@mailwoman/resolver-interpolation` workspace, because the
    data lifecycle differs (TIGER yearly vintages vs WOF), as the demo's slim/fat split showed.
    **Operator decision needed** before this grows beyond a pilot: stay (one fewer package, shared
    normalizer stays intra-package) vs split (independent versioning of the TIGER data
-   interface). Nothing in this increment blocks either answer.
+   interface). No item in this increment blocks either answer.
 2. **Odd/even fidelity.** Vermont measures 99.99% of address-carrying sides
    parity-consistent (8 `mixed` of 137,256), but a clean from/to pair doesn't prove the
    real houses obey it, and TIGER does not guarantee it nationally. The `mixed` bucket and

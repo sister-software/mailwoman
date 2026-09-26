@@ -32,7 +32,7 @@ Each row is rendered in two surface forms:
 | `clean`     | `28 Avenue de l'Opéra, 75002 Paris` | The canonical French order                         |
 | `reordered` | `75002 Paris, 28 Avenue de l'Opéra` | The same tokens with postcode and commune in front |
 
-Nothing about the target changes between arms. Only the order does.
+No property of the target changes between arms. Only the order does.
 
 Three numbers need their definitions stated before you read them:
 
@@ -43,7 +43,7 @@ Three numbers need their definitions stated before you read them:
   spans about 2 km, a rural postcode can span 20 — so this is a check against gross misrouting and
   not a precision claim. The precision claim is the distance row above it.
 - **Tier** is which artifact answered: `address_point` is the BAN rooftop database, `admin` is the
-  gazetteer centroid the cascade falls back to when the rooftop probe finds nothing.
+  gazetteer centroid the cascade falls back to when the rooftop probe finds no match.
 
 The country is pinned to `FR`. This panel is a French dataset run through a French pipeline, so it
 measures resolution inside France and makes no claim about country disambiguation. The Belgian panel
@@ -81,7 +81,7 @@ reordered   91440 Bures-Sur-Yvette, 33 Avenue du Centre   → street parsed as "
 ```
 
 In the canonical order the street is followed by a comma and then the postcode, and the trailing
-common noun of the street name is dropped from the span. Moved to the end of the string with nothing
+common noun of the street name is dropped from the span. Moved to the end of the string with no token
 after it, the same street name survives whole, the rooftop probe finds its row, and the tier goes from
 `admin` to `address_point`. The truncation is the defect; the reordering does not fix it so much as
 avoid the position where it fires.

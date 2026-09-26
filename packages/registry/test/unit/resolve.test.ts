@@ -103,7 +103,7 @@ describe("resolveEntities", () => {
 
 	it("an explicit scorer takes precedence over learnedScorer (#603)", () => {
 		// Both set → the explicit scorer wins.
-		// It rejects every pair, so nothing merges even though the bundled learned model is also requested.
+		// It rejects every pair, so no pair merges even though the bundled learned model is also requested.
 		const { entities } = resolveEntities(records, {
 			learnedScorer: true,
 			scorer: () => Number.NEGATIVE_INFINITY,

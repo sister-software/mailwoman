@@ -133,7 +133,7 @@ This is the precision tier for the United States. It returns an exact building c
 
 **Upstream sources.** Overture's Addresses theme, which for the US combines the National Address Database (68%, US public domain) and OpenAddresses (32%, government open data). A 2026-06-14 measurement found **zero** OpenStreetMap/ODbL rows in the US set, so the build applies no license filter by default. Per-row provenance is `overture:<dataset>` or `openaddresses`.
 
-**Obligation.** Attribution. NAD is public domain and requires nothing, and the named OpenAddresses sources require credit. `mailwoman situs attribution-manifest` regenerates an `ATTRIBUTION.json` from the extracts on disk. Pass that document to your downstream users.
+**Obligation.** Attribution. NAD is public domain and requires no attribution, and the named OpenAddresses sources require credit. `mailwoman situs attribution-manifest` regenerates an `ATTRIBUTION.json` from the extracts on disk. Pass that document to your downstream users.
 
 **Tier:** shipped. The extracts are served with byte-range requests from R2 at `https://public.mailwoman.ai/mailwoman/street/us/<slug>/situs.db` for 52 slugs: all 50 states plus DC and the US Virgin Islands.
 
@@ -225,7 +225,7 @@ Measured extracts, from the 2026-06-29 build session:
 
 **Tier:** build-local. `@mailwoman/timezone-lookup` is published to npm at 8.3.0. It ships the builder and the reader, but not a `.db`.
 
-**Approximate size / row count.** Not recorded. The build prints a feature count at runtime, and nothing saves it.
+**Approximate size / row count.** Not recorded. The build prints a feature count at runtime, and no step saves it.
 
 **Build.**
 `npx @mailwoman/timezone-lookup build --geojson combined-with-oceans.json --out timezone.db`.
@@ -296,7 +296,7 @@ These packages are the parser itself, distributed as data-only npm packages that
 
 ## Broadband filings — `bdc.db` (planned)
 
-**Status: designed but not built.** This is Phase 2a of the broadband-plausibility vertical. It is listed so the design is public. Nothing is available to download.
+**Status: designed but not built.** This is Phase 2a of the broadband-plausibility vertical. It is listed so the design is public. No artifact is available to download.
 
 **Intended contents.** FCC Broadband Data Collection availability filings at census-block grain. Each row would have the provider id, technology code, advertised up/down speeds, latency flag, business/residential code, the 15-character block GEOID, and the Fabric BSL `location_id` as an **opaque join key only**. The spine keys would be `wof_id` and res-9 `h3` from the block centroid. They would deliberately **not** include `address_id`, because a block-grained filing does not describe an individual address. Any per-address answer would be an inference across the block and flagged as such.
 

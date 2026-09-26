@@ -3,17 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mailwoman data status [<bundle...>]` — present/missing/stale per bundle artifact (#task-6), the
- *   read-only sibling of `data pull`. With no bundle names given, reports on every bundle in
- *   `data-bundles.ts`'s registry.
- *
- *   offline BY default: an artifact already on disk (`resolveDatabasePath` for a versioned `us`
- *   per-state database, `existsSync` otherwise) is reported "present" against the surveyed size baked
- *   into the registry (`BundleArtifact.approxBytes`) — a local size-only integrity check (catches a
- *   truncated/corrupt file), not a live version comparison. `--check-remote` upgrades this to a real
- *   head `Content-Length` probe via `APIClient` (one small paced request per artifact that'S already
- *   present — nothing is fetched for an artifact reported missing, so the flag stays cheap even
- *   against the `us` bundle's 103 files).
+ *   Offline by default: an artifact on disk is reported "present" against the registry's surveyed `approxBytes`, a
+ *   size-only integrity check that catches truncation but is not a version comparison, and `--check-remote` upgrades it
+ *   to a live head `Content-Length` probe via `APIClient`.
  */
 
 import type { APIClient } from "@mailwoman/core/api"
@@ -56,9 +48,8 @@ export const spec = {
 } as const satisfies CommandSpec
 
 /**
- * Live `Content-Length` for one artifact, or `undefined` on any failure (404, timeout, network) —
- * the caller falls back to the recorded {@link BundleArtifact.approxBytes}
- * rather than treating a probe failure as a verdict.
+ * A probe failure yields `undefined` so the caller falls back to the recorded
+ * {@link BundleArtifact.approxBytes} rather than treating it as a verdict.
  */
 async function headContentLength(client: APIClient, artifact: BundleArtifact): Promise<number | undefined> {
 	try {

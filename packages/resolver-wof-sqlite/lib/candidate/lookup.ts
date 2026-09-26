@@ -427,7 +427,7 @@ export class WOFCandidateTableLookup implements PlaceLookup, Disposable {
 			}
 		}
 
-		// Try stripped-key injection only when exact-key containment found nothing.
+		// Try stripped-key injection only when exact-key containment found no row.
 		if (
 			!injected.length &&
 			!rows.some((row) => row.containedByQualifier) &&

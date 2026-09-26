@@ -86,7 +86,7 @@ node mailwoman/out/cli.js wof graph <localRepoDir> planet --compact --output pla
 node mailwoman/out/cli.js wof graph <localRepoDir> country --roles common
 ```
 
-The renderer is `generatePlacetypeGraph` in `core/resources/whosonfirst/placetypes/graph.ts`. It uses the same recursive `findChildren(roles)` walk, but it records visited nodes and emitted (parent, child) pairs in sets, so nothing is emitted twice. It stays O(nodes + edges) for any root.
+The renderer is `generatePlacetypeGraph` in `core/resources/whosonfirst/placetypes/graph.ts`. It uses the same recursive `findChildren(roles)` walk, but it records visited nodes and emitted (parent, child) pairs in sets, so no pair is emitted twice. It stays O(nodes + edges) for any root.
 
 ### `commands/wof/prepare/index.tsx` — batch GeoJSON processing
 

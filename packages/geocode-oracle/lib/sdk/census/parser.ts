@@ -56,8 +56,8 @@ export const CENSUS_RESOLUTION_TIER: ResolutionTier = "interpolated"
  * so it admits a trailing letter and a hyphenated half (`123A`, `40-12`).
  *
  * A Census `matchedAddress` is machine-normalized USPS output where the number is a plain digit run.
- * This pattern matches that and nothing else, which is the right strictness for
- * a value that is about to be asserted on.
+ * This pattern matches that alone, which is the right strictness for a value
+ * that is about to be asserted on.
  *
  * If a third caller ever needs the loose form here, take the dependency then.
  */
@@ -127,7 +127,7 @@ export function buildStreetComponents(components: CensusAddressComponents): Comp
  * Build the full `ComponentTag` dictionary for one match.
  *
  * `country` is hardcoded to `US`.
- * The Census geocoder covers the United States and its territories and nothing else.
+ * The Census geocoder covers the United States and its territories and no other country.
  *
  * There is no field to read it from, and leaving it unset would make the formatter render a country-less
  * line and the `canonicalKey` differ from every other US address in the repo for no reason.

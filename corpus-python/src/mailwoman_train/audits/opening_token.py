@@ -1,33 +1,16 @@
 """Count what a row's OPENING token teaches, at both the draw level and the emitted level.
 
-WHY THIS EXISTS. A claim that one reading of an opening outweighs another is a claim about counts, and a
-count is only comparable when its definition and its sampling level travel with it. A figure of 443.7
-rows per pass was carried through three documents with neither, which is what this module replaces: it
-counts both readings under definitions stated here, at both levels. Therefore, the comparison rests on stated
-terms rather than a remembered convention.
+A count is only comparable when its definition and sampling level travel with it, so the narrow
+openings are named here and counted at both levels. Reading an opening more or less narrowly does not
+shade the answer, it REVERSES it, which is why the whole-row counters exist alongside the opening ones.
 
-WHAT IT FOUND, and why the narrow definitions matter. Reading "that opening" more or less narrowly does
-not shade the answer, it REVERSES it. Over 1,000,000 emitted rows of the v5.6.0 mixture:
+The two levels disagree: pass 1 counts rows straight off the sampler, while pass 2 expands the same
+stream through the augmentation policy and counts what fills the trainer's row budget. Augmentation
+expands long addresses, so a short-row source keeps a smaller part of a fixed budget, and a ratio
+mixing the two levels is meaningless.
 
-    opening                            house_number   postcode
-    any digit group                         249,934     93,665   2.67:1 toward house_number
-    exactly three digits                     53,451     18,140   2.95:1 toward house_number
-    three then two digits                       273     18,140     66:1 toward POSTCODE
-    the same, as a COMPLETE two-token row          0        508   no contrary evidence at all
-
-So an opening-level ratio cannot explain why `100 00` reads as a house number: at that exact opening the
-mixture already favours postcode 66 to 1. 17,632 of those 18,140 rows are in-context surfaces like
-`100 00 Praha, Czechia`, which do not transfer to the bare input. What separates the two is that the
-failing row ENDS after two tokens — hence the whole-row counters, which is the count that moved from
-zero.
-
-BOTH LEVELS, BECAUSE THEY DISAGREE. Pass 1 counts rows straight off the sampler. Pass 2 expands the same
-stream through the augmentation policy and counts what fills the trainer's row budget, which is what the
-model reads. Augmentation expands long addresses, so a short-row source keeps a smaller part of a fixed
-budget and the two levels differ by more than 20% for one. A ratio mixing them is meaningless.
-
-The sampling mirrors `audit_epoch_mixture` exactly — same stream, same seed convention, same budget — so
-a count here is comparable with an exposure reported there. The one deliberate difference is
+The sampling mirrors `audit_epoch_mixture` exactly — same stream, same seed convention, same budget —
+so a count here is comparable with an exposure reported there. The one deliberate difference is
 `augment_exclude_sources`, which that module does not apply and the trainer does.
 """
 
@@ -117,8 +100,7 @@ def census(
 
     ``augment_exclude_sources`` is honoured because both passes run `emit.emit_row`, the same function
     the trainer runs: a listed source bypasses augmentation entirely, so it emits exactly what it drew
-    while its neighbours expand. `audit_epoch_mixture` reimplemented that step and omitted the
-    exclusion until #2243. all three now share one function.
+    while its neighbours expand.
     """
 
     def stream(rng: random.Random) -> Iterator[dict[str, Any]]:
@@ -210,7 +192,7 @@ def run(config_path: Path, *, json_path: Path | None = None, draws: int | None =
     resolve_config_reps(cfg, corpus_dir)
 
     # Raise rather than fall back to a default epoch length: a census counted over a different number
-    # of rows than the audit reports is not comparable with it, and nothing downstream would say so.
+    # of rows than the audit reports is not comparable with it, and no downstream check would say so.
     epoch_rows = draws or getattr(cfg.data, "train_rows_per_epoch", None)
     if not epoch_rows:
         raise ValueError("config has no train_rows_per_epoch — pass --draws for the epoch length")

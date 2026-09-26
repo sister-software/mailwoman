@@ -13,8 +13,8 @@
  *   That literal held only while the dev linker materialized binaries into that package. The moment they
  *   live anywhere else — a data-root overlay, the user weights cache, a consumer's node_modules — the path
  *   misses, `existsSync` is false, the whole block is skipped, and the check grades a model it never
- *   verified. The classifier below it resolves properly and loads the model regardless, so nothing errors
- *   and nothing is reported: a silent ungating, which is #1024's own failure mode reproduced by the fix's
+ *   verified. The classifier below it resolves properly and loads the model regardless, so no error surfaces
+ *   and no report is produced: a silent ungating, which is #1024's own failure mode reproduced by the fix's
  *   own path literal.
  *
  *   This is a source check rather than a behavioural one because the property is about how the path is
@@ -55,7 +55,7 @@ describe("the #1024 shipped-model guard", () => {
 
 		// A `--candidate` run grades a different artifact on purpose and is exempt.
 		// If that exemption ever widens to cover the default, the guard is off for every run
-		// and nothing else in the suite would notice.
+		// and no other check in the suite would notice.
 		expect(source).toContain("if (!opts.modelPath && !opts.tokenizerPath && !opts.weightsCacheRoot)")
 		expect(source).toContain("assertShippedModelMatchesCard(md5)")
 	})

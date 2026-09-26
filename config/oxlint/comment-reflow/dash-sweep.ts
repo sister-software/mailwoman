@@ -5,13 +5,7 @@
  * @author Teffen Ellis, et al.
  * @file The dash sweep: comment sentences that join two clauses with a dash, rewritten as two sentences.
  *
- *   `CommentSemicolons` closed the semicolon at error level and nothing closed the dash, so a sentence that wanted to
- *   join two independent clauses reached for one instead. The count at the time this landed was 33 semicolons in
- *   comments against roughly 7,400 dashes doing a semicolon's work.
- *
- *   Only that use moves. A paired dash around an aside stays, and so does a dash introducing a noun phrase. Roughly a
- *   third of the joints convert. What is left is appositive, or has a right-hand clause opening with a word that
- *   cannot start a sentence, and both want an author rather than a script.
+ *   Only that use moves: a paired dash around an aside stays, and so does a dash introducing a noun phrase.
  *
  *   Paragraphs are joined before rewriting and emitted as one line each. `mailwoman/comment-reflow` re-breaks them
  *   afterwards, so line layout is deliberately not this script's business: run `yarn fix:oxlint` after a sweep.
@@ -43,13 +37,8 @@ const IMPERATIVES = /^(?:see|read|revisit|compare|note|use|prefer|check|run|trea
 /**
  * A clause that cannot open a sentence, but reads correctly once the dash is a comma.
  *
- * `which` opens a relative clause and `and` a coordination, so a full stop in front
- * of either stands a fragment up where the sentence only wanted a comma.
- * `never` and `only` head an antithesis and take the same comma.
- *
- * `not` is deliberately absent.
- * A comma in front of it reads as the antithesis it is, but the `Negation` rule refuses `, not` at
- * error level, and `CommentDashJoint` leaves a dash in front of a noun phrase alone, so the dash stays.
+ * `not` is deliberately absent: the `Negation` rule refuses `, not` at error level,
+ * and `CommentDashJoint` leaves a dash in front of a noun phrase alone, so the dash stays.
  */
 const COMMA_OPENERS =
 	/^(?:which|and|but|or|nor|yet|rather|while|whereas|though|although|because|since|including|never|with|for|leaving|making|giving|taking)\b/i
@@ -58,8 +47,6 @@ const COMMA_OPENERS =
  * Characters of left half a joint needs before its dash becomes a full stop.
  *
  * Below this the left half is a label rather than a clause, and a full stop behind it stands a fragment up.
- * Measured against this repository's own comments, where the shortest left half that
- * reads as a sentence on its own runs to about this many characters.
  */
 const LEFT_HALF_FLOOR = 24
 
@@ -72,8 +59,6 @@ const COMMA_CLAUSE_FLOOR = 3
 
 /**
  * Words a right half needs before it can stand as a sentence of its own.
- *
- * Four or fewer is a noun phrase in every case read while this was written.
  */
 const SENTENCE_CLAUSE_FLOOR = 5
 
@@ -129,10 +114,6 @@ function openClause(clause: string): string {
 
 /**
  * Rewrite one sentence whose dash is doing a semicolon's work, or return it as it stands.
- *
- * Every guard here is a reason to leave the sentence alone: a dash inside a code span
- * or a bracket belongs to something else's grammar, a short left half cannot stand as a
- * sentence, and a right half without a finite verb is an apposition rather than a clause.
  */
 export function sweepSentence(sentence: string): string {
 	const dashes = sentence.match(/[—–]/g)
@@ -187,10 +168,7 @@ export function sweepSentence(sentence: string): string {
 }
 
 /**
- * Capitalise a sentence that opens in lower case.
- *
- * Nothing downstream can tell one of these from a clause.
- * The reflow rule needs the capital to see a sentence, and a reader needs it for the same reason.
+ * Capitalise a sentence that opens in lower case, which `mailwoman/comment-reflow` needs to see a sentence.
  */
 function openSentences(text: string): string {
 	return text.replaceAll(/([.!?])(\s+)([a-z][a-z'’-]*)(?=\s|[.,;:)]|$)/g, (whole, stop, gap, word, offset: number) => {
@@ -309,7 +287,6 @@ function liftTagSentence(body: readonly string[], tags: readonly string[]) {
  *
  * A generator that emits `// TODO(…)` inside a template literal has comment-shaped text
  * that is not a comment, and rewriting it changes what the program prints.
- * Two such sites in `release-kit` and `registry` are why this exists.
  * Only a parse tells the two apart.
  */
 function literalSpans(source: string, fileName: string): Array<[number, number]> {

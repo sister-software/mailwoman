@@ -30,7 +30,7 @@
  *   counts the parent adds up. Chunks run one at a time against that file, so there is no concurrent writer
  *   and no locking to reason about. The jurisdiction, plan and vocabulary rows are returned rather than
  *   written: they are per-chunk partials that have to be merged before insertion, and 30 authorities, 63
- *   plans and about 880 vocabulary rows cross a process boundary for nothing.
+ *   plans and about 880 vocabulary rows cross a process boundary for no gain.
  */
 
 import {
@@ -367,7 +367,7 @@ export async function ingestZoningChunk(
 
 /**
  * One feature's own contribution, for a caller that wants the numbers without a database —
- * the fixture rung's arithmetic and nothing else.
+ * the fixture rung's arithmetic and no more.
  */
 export function featureAreaReadings(feature: ZoningSourceFeature): {
 	signed: number

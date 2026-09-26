@@ -77,7 +77,7 @@ The first λ sweep (v4.1.0, venue weight 2.0, lr 1e-5, 2k steps) produced **no s
 λ values were byte-identical to the base on the six target fixtures, and GB board venue moved from
 53.8% to 54.5%, which is noise. The exposure arithmetic explains the design defect. At weight 2.0
 the venue extract is about 1.4% of samples, so the run saw about 7k venue rows (about 2.4k GB) in 2k
-steps at a fine-tune learning rate. The probe cannot test λ if the increment changes nothing, so the
+steps at a fine-tune learning rate. The probe cannot test λ if the increment leaves the outputs unchanged, so the
 sweep result is void. It does not show that λ is unconstrained.
 
 **Named revision (the one allowed):** raise `synth-house-venue` to **12.0** for the fine-tune feed,

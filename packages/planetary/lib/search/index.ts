@@ -138,7 +138,7 @@ export interface LoadSearchIndexOptions {
  * Fetch the artifact and open it.
  *
  * @throws on a failed fetch or bytes that are not a sealed ancestrie, so a wrong version
- * pin fails at startup rather than answering nothing to every query.
+ * pin fails at startup rather than answering no result to every query.
  */
 export async function loadSearchIndex(url: string, options: LoadSearchIndexOptions = {}): Promise<PlanetarySearch> {
 	let bytes: Uint8Array

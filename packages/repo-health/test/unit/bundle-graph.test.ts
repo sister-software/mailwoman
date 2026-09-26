@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The bundle-graph check against the tree this test sits in, plus a row that must fail: a check that reports nothing
- *   is only evidence once it has been seen to report something, and `@mailwoman/core/fs/readers` imports
+ *   The bundle-graph check against the tree this test sits in, plus a row that must fail: a check that reports no
+ *   diagnostic is only evidence once it has been seen to report something, and `@mailwoman/core/fs/readers` imports
  *   `node:fs/promises` statically by design.
  */
 

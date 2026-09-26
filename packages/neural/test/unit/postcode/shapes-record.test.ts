@@ -6,7 +6,7 @@
  *   The postcode-shape record is read by two runtimes: this package's postcode repair, and the Python trainer, which
  *   paints the train-side anchor on the spans the repair finds. Held as two typed tables they drifted twice — the IE
  *   Eircode row was TypeScript-only for a month, the BR CEP row for five weeks — and each time the trainer painted one
- *   fewer shape than inference, with nothing failing.
+ *   fewer shape than inference, with no test failing.
  *
  *   The table is now data, authored once in `@mailwoman/codex`. The trainer cannot import that package (a Modal
  *   container receives only `corpus-python/src`), so it carries a byte-identical copy. The Python suite checks that

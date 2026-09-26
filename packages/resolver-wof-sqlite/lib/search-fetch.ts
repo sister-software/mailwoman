@@ -185,7 +185,13 @@ export function fetchSearchRows<DB>(options: {
 	// Formula: rank_adjusted = bm25 - populationBoost * min(1.0, log10(1 + pop) / scaleLog10)
 	// Lower rank_adjusted = better (matches SQLite's bm25 convention of "more negative = better").
 	//
-	// #905 — do not reach for bm25 column weights here. Measured falsification (2026-07-02): FTS5's bm25 length normalization is polluted by the row's total document size, so identical 1-token `name` docs read −16.0 (empty alt_names) vs −0.43 (2.7 KB alt_names) even with the alt_names column weighted to zero. No weighting isolates name relevance in this schema. The famous- holder guarantee lives in the population-ordered companion fetch below instead, and the exact tier breaks ties by population in the post-scoring sort.
+	// Do not reach for bm25 column weights here.
+	// FTS5's bm25 length normalization is polluted by the row's total document size,
+	// so identical 1-token `name` docs read −16.0 (empty alt_names) vs −0.43
+	// (2.7 KB alt_names) even with the alt_names column weighted to zero.
+	// No weighting isolates name relevance in this schema.
+	// The population-ordered companion fetch below carries the famous-holder guarantee,
+	// and the exact tier breaks ties by population in the post-scoring sort.
 	const orderByExpr = extractHasPopulation
 		? `(bm25(place_search) - ? * MIN(1.0, COALESCE(log10(1.0 + ${PLACE_POPULATION_TABLE}.population), 0) / ?))`
 		: "bm25(place_search)"
@@ -222,7 +228,14 @@ export function fetchSearchRows<DB>(options: {
 
 	const rawRows = allRows<RawSearchRow>(stmt, ...params)
 
-	// #905 companion fetch: the same `match`, ordered by population alone. For name floods ("Paris" matches thousands of gap-fill villages) the bm25-based window above cannot admit the famous holder. Its bm25 is length-poisoned by the row's alias bulk (measured ~15 pts, vs a +4.0 boost cap), so FR Paris never even reaches post-scoring. This fetch makes the prominent holders of a name pool-complete BY construction. The exact-tier sort below decides whether they win. Skipped without a population index (nothing to order by).
+	// Companion fetch: the same `match`, ordered by population alone.
+	// For name floods ("Paris" matches thousands of gap-fill villages) the bm25-based
+	// window above cannot admit the famous holder.
+	// Its bm25 is length-poisoned by the row's alias bulk (measured ~15 pts, vs a +4.0 boost cap),
+	// so FR Paris never even reaches post-scoring.
+	// This fetch makes the prominent holders of a name pool-complete by construction.
+	// The exact-tier sort below decides whether they win.
+	// Skipped without a population index (no column to order by).
 	if (extractHasPopulation) {
 		const popStmt = db.prepare(`
 			SELECT

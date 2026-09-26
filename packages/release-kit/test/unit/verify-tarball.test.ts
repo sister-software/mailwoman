@@ -42,7 +42,7 @@ describe("collectMissingFileEntries", () => {
 	})
 
 	it("skips globs — a pattern matching nothing is legal", () => {
-		// A data-only package has no `.ts` files, so a glob that matches nothing must pass.
+		// A data-only package has no `.ts` files, so a glob that matches no file must pass.
 		expect(collectMissingFileEntries(["*.ts", "**/*.tsx", "data/*.json"], new Set(["./package.json"]))).toEqual([])
 	})
 

@@ -41,7 +41,7 @@ gold "Marienberg Erzgeb" resolved "Marienberg"   point inside Marienberg ✓
 
 OpenAddresses tags these with the regional district — _Vogtländischer Kreis_, _Sachsen_, _Erzgebirge_ — and Who's On First's canonical name doesn't carry the suffix. So `Plauen Vogtl` ≠ `Plauen`, the string check fails, and the model eats a miss for resolving an address to _exactly the right town_. Twenty-five points of "collapse" was our ruler refusing to call Plauen Plauen.
 
-**Berlin was broken** — just not the way we'd been retraining for. Of 1,500 Berlin addresses, 955 resolved to nothing at all. The model drops the locality entirely in the city-state layout `…, Berlin, Berlin 10115`, where the city and the state are the same word: one `Berlin` gets labeled the region, the other vanishes, and the resolver has nothing to place. That's a real bug. It is also specific to Berlin, Hamburg, and Bremen, and it has nothing whatsoever to do with the postcode anchor or word order — which is precisely why three anchor-and-order retrains never laid a finger on it.
+**Berlin was broken** — just not the way we'd been retraining for. Of 1,500 Berlin addresses, 955 resolved to no coordinate at all. The model drops the locality entirely in the city-state layout `…, Berlin, Berlin 10115`, where the city and the state are the same word: one `Berlin` gets labeled the region, the other vanishes, and the resolver has no locality to place. That's a real bug. It is also specific to Berlin, Hamburg, and Bremen, and it is entirely unrelated to the postcode anchor or word order — which is precisely why three anchor-and-order retrains never laid a finger on it.
 
 ## What native German was doing
 

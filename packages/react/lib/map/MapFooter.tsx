@@ -19,7 +19,7 @@ export interface MapFooterProps {
 	/**
 	 * Beside the identity: what is loading right now.
 	 *
-	 * Absent when nothing is.
+	 * Absent when no load is in progress.
 	 */
 	status?: ReactNode
 	/**

@@ -3,22 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Generate `@mailwoman/codex`'s per-country layout table from the two reference sources, so the table is derived
- *   rather than transcribed and a refresh of either source shows up as a reviewable diff.
- *
- *   two sources, because neither alone says what a layout needs:
- *
- *   1. **libaddressinput** (`core/data/chromium-i18n/ssl-address/<CC>.json`, Apache-2.0, already shipped and already
- *      refreshable through `mailwoman dev download ssl-address`) supplies the line skeleton in its `fmt` field — which
- *      fields print, in what order, with the line breaks between them.
- *   2. **`street-orders.ts`**, beside this file, supplies the street order, because libaddressinput models the street
- *      address as one opaque `%A` field and says nothing about whether the house number leads or follows. That table
- *      was read once from the OpenCage `address-formatting` templates and committed as data, so this generator needs no
- *      third-party package. its own header says how to refresh it.
- *
- *   The hand-authored layouts in `codex/lib/address/layouts/index.ts` take precedence for the locales this project
- *   publishes weights for: those are checked against real addresses on a board, and a generated skeleton is a starting
- *   point rather than a verdict.
+ *   Generate `@mailwoman/codex`'s per-country layout table from libaddressinput's `fmt` skeleton and
+ *   `street-orders.ts`, which supplies the street order `%A` leaves opaque, so the table is derived rather than
+ *   transcribed.
  *
  *   Usage: `node packages/mailwoman/lib/dev-tools/codex/address-layouts.ts`
  */
@@ -37,27 +24,17 @@ import {
 } from "#dev-tools/codex/street-orders"
 import { NO_SUB_LOCALITY_LINE_COUNTRIES } from "#dev-tools/codex/sub-locality-line"
 
-/**
- * Libaddressinput's per-country record, narrowed to the field a layout reads.
- */
 interface AddressMetadata {
 	readonly fmt?: string
 	/**
 	 * The latin-script print order, where the country writes one differently from its own script.
-	 *
-	 * Eight of the 252 shipped records carry one that differs from `fmt`: CN, HK, JP, KP, KR, MO, TH, TW.
-	 * Hong Kong is the worked case — `%S%n%C%n%A%n%O%n%N` largest-first against
-	 * `%N%n%O%n%A%n%C%n%S` smallest-first — and reading `fmt` alone gave the Chinese
-	 * field order carried by Latin separators, an order no register uses.
 	 */
 	readonly lfmt?: string
 }
 
 /**
- * Libaddressinput placeholder → the slot a layout names.
- *
- * `%A` is the street line, which each system expands into this project's finer tags.
- * Therefore, it maps to a marker the emitter replaces with a street node.
+ * Libaddressinput placeholder → the slot a layout names, where `%A` maps to a
+ * marker the emitter replaces with a street node.
  */
 const FIELD: Readonly<Record<string, string>> = {
 	N: "attention",
@@ -72,28 +49,14 @@ const FIELD: Readonly<Record<string, string>> = {
 }
 
 /**
- * The countries whose layout is hand-authored and checked on the locale board.
- *
- * A generated skeleton never overwrites one of these.
- *
- * Read from `ADDRESS_LAYOUTS` itself.
- * A list here is the same membership stated twice, and the two fall out of step silently:
- * a country authored in the table but missing from the list is emitted into both,
- * which `layout-table-source.test.ts` catches, and one listed but never authored
- * loses its layout, which nothing catches.
+ * The countries whose hand-authored layout a generated skeleton never overwrites,
+ * read from `ADDRESS_LAYOUTS` itself so the membership is not stated twice.
  */
 const HAND_AUTHORED = new Set(Object.keys(ADDRESS_LAYOUTS))
 
 /**
- * Whether the lines rendered so far print the largest unit first — the region ahead of the street.
- *
- * Read off the skeleton rather than from a country list.
- * The generator runs before the layout it is writing exists, so it cannot consult
- * `@mailwoman/codex`'s `LARGEST_FIRST_SYSTEMS`, which derives from those layouts.
- * The `fmt` in hand carries the same statement.
- *
- * A hand-kept list here held JP, CN, TW and KR while the dataset printed largest-first for IR,
- * KP and KZ as well, and those three took a trailing country line.
+ * Whether the rendered lines print the largest unit first, read off the skeleton
+ * because the generator runs before the layouts it would otherwise consult.
  */
 function printsLargestFirst(lines: readonly string[]): boolean {
 	const region = lines.findIndex((line) => line.includes("${region}"))
@@ -103,12 +66,8 @@ function printsLargestFirst(lines: readonly string[]): boolean {
 }
 
 /**
- * Render one `fmt` into the template source a layout is written as, or null
- * when it names no field this project models.
- *
- * Every slot the source names is added to `slots`, so the emitted file destructures exactly what it uses.
- * A destructured slot no layout reaches is an unused binding, which the linter
- * reports against a file nobody edits.
+ * Render one `fmt` into template source, adding every slot it names to `slots`
+ * so the emitted file destructures exactly what it uses.
  */
 function layoutSource(
 	fmt: string,
@@ -162,19 +121,8 @@ function layoutSource(
 
 	if (!lines.length) return null
 
-	// The sub-locality line is authored wherever `%D` is absent, because the formatter
-	// this table replaces printed one for 202 of its 213 countries.
-	// It goes directly above the locality, which is where every template that has one puts it;
-	// `NO_SUB_LOCALITY_LINE_COUNTRIES` names the eleven that print none.
-	//
-	// "Above" is the envelope's sense — nearer the street than the locality is — and
-	// which side of the locality line that is depends on the skeleton's direction.
-	// A smallest-first skeleton prints the street before the locality, so the line goes before the locality.
-	// A largest-first one prints the locality before the street, so the line goes after it,
-	// and after the whole line, since a skeleton like `%S%C` keeps the region and the locality
-	// together, and a district spliced ahead of that line would print above the region.
-	// A skeleton that puts the street and the locality on one line (`%A %C`) takes the
-	// slot inside that line, between the two, for the same reason.
+	// The sub-locality line is authored wherever `%D` is absent, placed directly
+	// above the locality in the skeleton's own direction.
 	if (!NO_SUB_LOCALITY_LINE_COUNTRIES.has(code) && !named.has("dependent_locality")) {
 		const street = `\${${streetNode}}`
 		const localityLine = lines.findIndex((line) => line.includes("${locality}"))
@@ -197,11 +145,8 @@ function layoutSource(
 		}
 	}
 
-	// The country line is authored rather than transcribed: libaddressinput leaves `%R` out
-	// of nearly every `fmt` because its consumers add the destination country themselves.
-	// It closes a small-first address and opens a large-first one, and it renders only
-	// when a caller supplies the name.
-	// An intra-country row carries none and prints none.
+	// The country line is authored rather than transcribed, because libaddressinput leaves `%R`
+	// out of nearly every `fmt`; it opens a largest-first address and closes a smallest-first one.
 	if (!named.has("country")) {
 		named.add("country")
 
@@ -236,10 +181,9 @@ for (const file of await Globerator.files("json", {
 	const metadata = await readLocalJSONFile<AddressMetadata>(specsDirectory(file))
 	const order = STREET_ORDERS[code] ?? "number-first"
 
-	// The Latin skeleton is emitted for a hand-authored country too.
-	// The hand-authored table states one order per country, so a country whose two scripts
-	// disagree has no way to carry the second there, and Hong Kong is the case that shows it:
-	// its hand-authored layout is the Latin one, which leaves the Chinese order unreachable.
+	// The Latin skeleton is emitted for a hand-authored country too, because the
+	// hand-authored table states one order per country and a country whose two scripts
+	// disagree has no way to carry the second there.
 	if (metadata.lfmt && metadata.fmt && metadata.lfmt !== metadata.fmt) {
 		const latin = layoutSource(metadata.lfmt, code, order, usedSlots)
 		const local = layoutSource(metadata.fmt, code, order, usedSlots, true)

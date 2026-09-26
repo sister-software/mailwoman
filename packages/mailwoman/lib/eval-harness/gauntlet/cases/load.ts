@@ -12,7 +12,7 @@
  *
  *   order is defined rather than incidental: country dir ascending, then case `id` ascending within the file. The
  *   loader re-sorts rather than trusting file order, so a hand-appended row at the bottom of a file cannot
- *   change what the corpus is — only what a text diff looks like. Nothing downstream depends on the old
+ *   change what the corpus is — only what a text diff looks like. No downstream step depends on the old
  *   chronological array order. the ablation board id hashes a sorted fingerprint (`ablation.ts`), and the
  *   regression runner grades per row.
  *
@@ -114,7 +114,7 @@ async function loadCorpusFile(source: PathBuilder, expectedCC: string): Promise<
 		}
 
 		// The dir is the country claim.
-		// A row filed under the wrong `cc` still loads and still runs, so nothing downstream would ever notice.
+		// A row filed under the wrong `cc` still loads and still runs, so no downstream check would ever notice.
 		// The listing it was filed under would just be quietly wrong.
 		if (result.data.country.toLowerCase() !== expectedCC) {
 			throw new CorpusRowError(

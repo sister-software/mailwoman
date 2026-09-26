@@ -339,7 +339,7 @@ export default function DemoRedirect() {
 
 - [ ] **Step 2: Config, plugin, dependencies**
 
-`docusaurus.config.ts`: the navbar CTA and the footer item point at `https://earth.mailwoman.ai`; the `demo-assets` plugin path becomes `runtime-assets`; the sitemap ignore patterns keep `/debug` and `/trace` (they are redirect pages) and add `/demo`. `docs/plugins/runtime-assets/plugin.ts` keeps the maplibre worker staging (for `DashboardMap`), the sql.js staging through `stageSQLJSAssets` (for the explainers that resolve), the workspace aliases, and the SSR policy; `stagePairIndexes` goes if nothing in docs reads a pair index any more (`grep -rn "pair-index" docs/src`). Then:
+`docusaurus.config.ts`: the navbar CTA and the footer item point at `https://earth.mailwoman.ai`; the `demo-assets` plugin path becomes `runtime-assets`; the sitemap ignore patterns keep `/debug` and `/trace` (they are redirect pages) and add `/demo`. `docs/plugins/runtime-assets/plugin.ts` keeps the maplibre worker staging (for `DashboardMap`), the sql.js staging through `stageSQLJSAssets` (for the explainers that resolve), the workspace aliases, and the SSR policy; `stagePairIndexes` goes if no code in docs reads a pair index any more (`grep -rn "pair-index" docs/src`). Then:
 
 ```bash
 yarn install
@@ -362,7 +362,7 @@ cd docs && yarn build > /tmp/docs-build.log 2>&1; echo "EXIT=$?" >> /tmp/docs-bu
 yarn workspace @mailwoman/docs typecheck
 ```
 
-Expected: `docs/src/shared` holds the two maplibre files; `pages/demo/index.tsx`, `pages/debug.tsx`, `pages/trace.tsx` are the redirects; the grep over `packages` prints nothing; the docs build exits 0 with no broken link (the pages that linked `/demo` still resolve to the redirect page); the `build` Playwright project passes.
+Expected: `docs/src/shared` holds the two maplibre files; `pages/demo/index.tsx`, `pages/debug.tsx`, `pages/trace.tsx` are the redirects; the grep over `packages` prints no match; the docs build exits 0 with no broken link (the pages that linked `/demo` still resolve to the redirect page); the `build` Playwright project passes.
 
 - [ ] **Step 5: Commit**
 

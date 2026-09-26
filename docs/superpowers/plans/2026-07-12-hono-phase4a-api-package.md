@@ -155,7 +155,7 @@ Route/wire interface:
 
   Then run the tests and see them fail, implement `routes.ts` and `app.ts`, get the tests passing, compile, and run oxfmt. Write a short, factual README covering the engine interface, an endpoints table, and a serveNode snippet with hostname. Commit `feat(api): the native /v1 surface — parse, geocode, batch, resolve, format, health, metrics`.
 
-- [ ] Final step: the redocly receipt. Boot nothing. Emit the document to the scratchpad with `node -e`, lint it, and capture the output in the report. It must report zero errors, which is the Global Constraints check.
+- [ ] Final step: the redocly receipt. Boot no server. Emit the document to the scratchpad with `node -e`, lint it, and capture the output in the report. It must report zero errors, which is the Global Constraints check.
 
 ---
 

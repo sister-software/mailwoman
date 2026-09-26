@@ -115,7 +115,7 @@ describe("readAdmittedCountries", () => {
 
 	it("throws on a missing config rather than answering with an empty admitted set", async () => {
 		// An empty set is a real answer.
-		// A config can admit nothing.
+		// A config can admit no country.
 		// Returning it for a file nobody could open gives the caller one value for two
 		// different facts, and the caller reports whichever it assumes.
 		await expect(readAdmittedCountries(root("nope.yaml"))).rejects.toThrow(/no training config at/)
@@ -147,7 +147,7 @@ describe("readBoardCoverage", () => {
 	})
 
 	it("counts PASSING rows apart from tracked ones", async () => {
-		// A country whose rows are all `improvement_target` has nothing verified, and reporting
+		// A country whose rows are all `improvement_target` has no verified row, and reporting
 		// its row count as coverage is the mistake this separation exists to prevent.
 		const board = await readBoardCoverage(root("cases"))
 
@@ -225,7 +225,7 @@ describe.skipIf(!(await pathExists(CORPUS)))("buildCorpusCensus against a real d
 describe("buildCorpusCensus refuses an empty count", () => {
 	it("throws rather than reporting zero rows for a manifest that lists train files", async () => {
 		// The #2322 shape, and the part of it that cost the most: a refresh writes its result, so a
-		// census that read nothing replaced a cache holding 681,901,687 rows with every country at zero.
+		// census that read no rows replaced a cache holding 681,901,687 rows with every country at zero.
 		// A manifest naming train files and a total of zero cannot both be true,
 		// so the zero is the instrument failing rather than a measurement.
 		await using directory = await temporaryDirectory("mw-census-empty-")
@@ -417,7 +417,7 @@ describe("resolveTrainingConfig", () => {
 
 	it("throws for a family the register does not name, rather than answering with another family's config", () => {
 		// Answering with the Latin config would report 25 Latin admissions under a third
-		// family's name, and nothing downstream would disagree with it.
+		// family's name, and no later stage would disagree with it.
 		expect(() => resolveTrainingConfig(scope, { family: "deva" })).toThrow(/names no training config/)
 	})
 })

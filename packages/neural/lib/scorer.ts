@@ -238,7 +238,7 @@ export interface CreateScorerOpts {
 	 * The serving tier whose certified capabilities the conventions check reads,
 	 * which defaults to `"server"`.
 	 *
-	 * The check does nothing for a tier the card does not certify.
+	 * The check has no effect for a tier the card does not certify.
 	 */
 	tier?: string
 

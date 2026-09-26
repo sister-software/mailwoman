@@ -18,7 +18,7 @@
  *
  * Marks are deleted, never spaced.
  * `[^a-z0-9 ]` alone maps the combining cedilla that NFD has just produced to a space,
- * so `Besançon` keys as `besanc on` and matches nothing it should.
+ * so `Besançon` keys as `besanc on` and matches no entry it should.
  *
  * The gazetteer side of the same comparison deletes them — 0 of 32,539 distinct
  * `locality_base` keys in `street-centroids-fr.db` carry a mark — so spacing puts

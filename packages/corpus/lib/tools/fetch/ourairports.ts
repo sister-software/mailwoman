@@ -3,37 +3,10 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Fetch the OurAirports CSV dumps — the venue side of the sub-venue corpus arc (#35).
+ * Fetch the OurAirports CSV dumps — the venue side of the sub-venue corpus arc.
  *
- *   Source : https://davidmegginson.github.io/ourairports-data/ (the project's own GitHub Pages
- *            mirror of the nightly export; `ourairports.com/data/` redirects here).
- *   License: public domain. OurAirports places its data in the public domain and asks only for a
- *            courtesy credit — no attribution obligation rides on a derived recipe output, which makes this
- *            the one transport source in the arc with no licensing question at all. Tier A.
- *
- *   ## What it is good for, and what it is not
- *
- *   `airports.csv` is every airport on earth with icao/iata codes, coordinates, `municipality`, and
- *   `iso_country` — 12.7 MB, ~83,000 rows as of 2026-08-04. That is the containing venue for a
- *   `<sub-venue>, <venue>, <street>, <locality>, <postcode>` corpus line, and it is better at that job
- *   than OSM: every row is named, the name is canonical, and `municipality` gives the locality without
- *   a spatial join.
- *
- *   It carries no interior structure. There is no terminal, concourse, gate or pier table — the
- *   corpus task says as much ("Good for the venue side of each pair, weaker on interior structure")
- *   and a row-level read confirms it. Pair it with the OSM `aeroway` extractor
- *   (`@mailwoman/osm/sdk`'s `extractOSMSubVenues`), which is where the sub-venue half comes from.
- *
- *   ## Why `downloadToFile` and not `APIClient`
- *
- *   `agents.md` routes http through `APIClient`, and that rule is about API requests — small bodies,
- *   repeated calls, rate-limited hosts. This is four static file transfers against a GitHub Pages CDN
- *   with no rate limit and nothing to pace, run once per refresh. It uses the same `downloadToFile`
- *   every other module in this `fetch/` family uses, which is where the retry and timeout live.
- *   The Wikidata sibling (`wikidata-subvenue.ts`) is an API client and is built on `APIClient`
- *   accordingly. the split between the two is the one `agents.md` draws.
- *
- *   Invoke via `mailwoman corpus fetch ourairports --out-root <path>`.
+ * Source: https://davidmegginson.github.io/ourairports-data
+ * License: public domain, with a courtesy credit requested.
  */
 
 import { APIClient } from "@mailwoman/core/api"
@@ -46,22 +19,12 @@ import { downloadToFile, writeManifest } from "#tools/fetch/download/index"
 const SLUG = "ourairports"
 
 /**
- * The GitHub Pages mirror the project itself publishes.
- *
- * `ourairports.com/data/*.csv` 302s here, so pointing at the mirror directly saves
- * a redirect and is the URL the project's own readme gives.
+ * The project's own GitHub Pages mirror, which `ourairports.com/data/*.csv` redirects to.
  */
 const BASE_URL = "https://davidmegginson.github.io/ourairports-data"
 
 /**
- * The files worth having, and why each one.
- *
- * `airports.csv` is the payload.
- * The other three are small joins that turn its codes into text: `countries.csv` and `regions.csv`
- * expand `iso_country`/`iso_region` into names (a corpus line needs "Germany", not "DE"),
- * and `runways.csv` is the only file carrying per-airport sub-structure of any kind —
- * runway designators, which are not sub-venue designators (nobody addresses mail to a runway)
- * but are worth having on disk as the negative class if the sub-venue recipe ever needs one.
+ * `airports.csv` is the payload; the other three join its codes to text or carry the negative class.
  */
 const FILES = ["airports.csv", "countries.csv", "regions.csv", "runways.csv"] as const
 
@@ -75,9 +38,7 @@ interface OurAirportsFileEntry {
 	/**
 	 * The upstream `Last-Modified`, when the CDN gave one.
 	 *
-	 * This is the data's vintage; `downloaded_at` is only when we asked.
-	 * `corpus/agents.md` has the standing warning that a file's mtime is not its data's vintage —
-	 * recording the upstream header is how a later refresh decision gets made on the right number.
+	 * It is the data's vintage; `downloaded_at` is only when we asked.
 	 */
 	last_modified: string | null
 }
@@ -91,10 +52,8 @@ interface OurAirportsManifest {
 }
 
 /**
- * Read the upstream `Last-Modified` with a head.
- *
- * @returns `null` on any failure — provenance metadata is nice to have
- * and must never fail a download that otherwise succeeded.
+ * @returns `null` on any failure, because provenance metadata must never fail
+ * a download that otherwise succeeded.
  */
 async function readLastModified(url: string): Promise<string | null> {
 	try {

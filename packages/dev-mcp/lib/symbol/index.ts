@@ -9,19 +9,15 @@ import type { PathBuilderLike } from "path-ts"
  */
 
 /**
- * Matches a top-level function declaration.
- *
- * Both declaration patterns anchor to column zero, because an indented declaration
- * is in a nested scope that nothing else can reuse.
+ * Matches a top-level function declaration; the pattern anchors to column zero
+ * because an indented declaration sits in a nested scope no other consumer can reuse.
  */
 const FUNCTION_PATTERN = /^(?:export\s+)?(?:async\s+)?function\s+(\w+)/gm
 
 /**
- * Matches a top-level constant whose value is a function.
- *
- * The type annotation group is lazy so that the `=>` inside an annotation such as
- * `const f: (a: number) => number = …` does not end the match.
- * The right-hand side must start with `function`, `(` or a type parameter, which excludes lookup tables.
+ * Matches a top-level constant whose value is a function; the lazy type annotation keeps
+ * an `=>` inside an annotation from ending the match, and the right-hand side must
+ * start with `function`, `(` or a type parameter to exclude lookup tables.
  */
 const FUNCTION_CONSTANT_PATTERN =
 	/^(?:export\s+)?const\s+(\w+)\s*(?::.*?)?=\s*(?:async\s+)?(?:function\b|\(|<[A-Za-z])/gm
@@ -68,14 +64,11 @@ export interface DeclarationSite {
 export interface FindDeclarationsOptions {
 	cwd: PathBuilderLike
 	/**
-	 * The ripgrep executable.
-	 * Tests override it to exercise the missing-binary path.
+	 * The ripgrep executable; tests override it to exercise the missing-binary path.
 	 */
 	binary?: string
 	/**
-	 * The paths to search.
-	 *
-	 * The default is the whole tree, which ripgrep filters by `.gitignore`.
+	 * The paths to search; the default is the whole tree, which ripgrep filters by `.gitignore`.
 	 */
 	searchPaths?: readonly string[]
 }
@@ -91,39 +84,31 @@ const RIPGREP_NO_MATCH = 1
 const OUTPUT_LINE_PATTERN = /^([^\n:]+):(\d+):(.*)$/gm
 
 /**
- * Returns true for a bare identifier.
- *
- * Search patterns are built only from identifiers, so they need no regex escaping.
+ * Returns true for a bare identifier; search patterns are built only from identifiers,
+ * so they need no regex escaping.
  */
 function isIdentifier(name: string): boolean {
 	return /^\w+$/.test(name)
 }
 
 /**
- * Splits an identifier into its camelCase components.
- *
- * For example, `readPackageJSONFile` yields `read`, `Package`, `JSON` and `File`.
- * An acronym stays one component, and digits attach to the capitals before them, so `getH3Cell` yields `H3`.
+ * Splits an identifier into its camelCase components, keeping an acronym as one component
+ * and attaching digits to the capitals before them, so `getH3Cell` yields `H3`.
  */
 function nameComponents(name: string): string[] {
 	return name.match(/[A-Z]+\d*(?![a-z])|[A-Z]?[a-z0-9]+|[A-Z]/gu) ?? []
 }
 
 /**
- * The minimum number of components in a contained name.
- *
- * Single components such as `read` or `file` match almost every name, so the floor is two.
+ * The minimum number of components in a contained name; the floor is two
+ * because single components such as `read` match almost every name.
  */
 const COMPONENT_FLOOR = 2
 
 /**
- * Returns the shorter names contained in a name: every contiguous run of at least
- * `floor` components, excluding the whole name.
- *
- * A duplicate often adds an affix to an existing name, as `readPackageJSONFile` does to `readPackageJSON`.
- * Searching for these runs finds the existing name from the longer one.
- *
- * The search runs in one direction only, so writing a shorter name does not report a longer one.
+ * Returns the shorter names contained in a name — every contiguous run of at least `floor` components,
+ * excluding the whole name — because a duplicate often adds an affix to an existing name;
+ * the search runs one way only, so writing a shorter name does not report a longer one.
  */
 export function containedNameCandidates(name: string, floor = COMPONENT_FLOOR): string[] {
 	const components = nameComponents(name)
@@ -135,8 +120,8 @@ export function containedNameCandidates(name: string, floor = COMPONENT_FLOOR): 
 
 			const [head = "", ...rest] = components.slice(start, end)
 
-			// The first component is lowercased as a name would be, so `JSON` becomes `json`.
-			// A component that starts with a digit cannot start a name.
+			// The first component is lowercased as a name would be, since a component
+			// starting with a digit cannot start a name.
 			if (/^\d/u.test(head)) continue
 
 			const leading = /^[A-Z]+\d*$/u.test(head) ? head.toLowerCase() : head.charAt(0).toLowerCase() + head.slice(1)
@@ -149,9 +134,8 @@ export function containedNameCandidates(name: string, floor = COMPONENT_FLOOR): 
 }
 
 /**
- * Returns every top-level declaration of each name, and of the shorter names each one contains.
- *
- * A name with no declaration has no key in the map.
+ * Returns every top-level declaration of each name and of the shorter names each one
+ * contains; a name with no declaration has no key in the map.
  */
 export function findDeclarations(
 	names: readonly string[],
@@ -183,9 +167,8 @@ export function findDeclarations(
 }
 
 /**
- * Returns the two declaration patterns with `nameExpression` in the name position.
- *
- * Callers build `nameExpression` from `\w` and identifiers, so it needs no escaping.
+ * Returns the two declaration patterns with `nameExpression` in the name position;
+ * callers build it from `\w` and identifiers, so it needs no escaping.
  */
 function declarationPatterns(nameExpression: string): string[] {
 	return [
@@ -195,9 +178,8 @@ function declarationPatterns(nameExpression: string): string[] {
 }
 
 /**
- * Groups ripgrep's output lines into sites by name, keeping only names that `accept` allows.
- *
- * The name comes from `extractDeclaredSymbols`, so both functions share one definition of a declaration.
+ * Groups ripgrep's output lines into sites by name, keeping only names `accept` allows and taking
+ * the name from `extractDeclaredSymbols` so both functions share one definition of a declaration.
  */
 function collectSites(output: string, accept: (name: string) => boolean): Map<string, DeclarationSite[]> {
 	const found = new Map<string, DeclarationSite[]>()
@@ -232,9 +214,8 @@ function collectSites(output: string, accept: (name: string) => boolean): Map<st
 }
 
 /**
- * Returns every declared function whose name contains `query`, ignoring case.
- *
- * A query that is not a bare identifier fragment returns no results.
+ * Returns every declared function whose name contains `query`, ignoring case;
+ * a query that is not a bare identifier fragment returns no results.
  */
 export function searchDeclarations(
 	query: string,
@@ -260,8 +241,8 @@ function runRipgrep(
 		"--no-heading",
 		"--color",
 		"never",
-		// The `*.ts` glob excludes `.tsx` files, which ripgrep's `ts` type would include.
-		// The exclusion globs come after it because a later glob wins.
+		// The `*.ts` glob excludes `.tsx` files, which ripgrep's `ts` type would include;
+		// the exclusion globs come after it because a later glob wins.
 		"--glob",
 		"*.ts",
 		"--glob",
@@ -302,17 +283,14 @@ export interface SymbolFinding {
  */
 export interface SelectReportableOptions {
 	/**
-	 * The repository-relative path of the file being written.
-	 * Its own declarations are ignored.
+	 * The repository-relative path of the file being written; its own declarations are ignored.
 	 */
 	writingFile: string
 }
 
 /**
- * Keeps only the names that are exported from some other file.
- *
- * Generic local names such as `main` or `run` are rarely exported,
- * so this rule filters them without a stoplist.
+ * Keeps only the names exported from some other file; generic local names such as `main`
+ * or `run` are rarely exported, so this rule filters them without a stoplist.
  */
 export function selectReportable(
 	found: Map<string, DeclarationSite[]>,
@@ -346,10 +324,9 @@ function readStringField(input: Record<string, unknown>, key: string): string | 
 }
 
 /**
- * Returns the text a Write or Edit call is about to add, or `null` when there is none.
- *
- * An Edit contributes only its replacement text, so existing declarations in the file are not reported.
- * An unrecognized payload returns `null` instead of throwing, because this runs in a hook.
+ * Returns the text a Write or Edit call is about to add, or `null` when there is none —
+ * an Edit contributes only its replacement text, and an unrecognized payload returns `null`
+ * rather than throwing because this runs in a hook.
  */
 export function readWriteIntent(payload: unknown): WriteIntent | null {
 	if (!payload || typeof payload !== "object") return null
@@ -371,10 +348,9 @@ export function readWriteIntent(payload: unknown): WriteIntent | null {
 }
 
 /**
- * Renders findings as a note for the author, with each site's signature and export status.
- *
- * The note reports matches and does not tell the author to reuse them.
- * Two functions with the same name can differ in units or dependencies.
+ * Renders findings as a note for the author, with each site's signature and export status,
+ * reporting matches without telling the author to reuse them because two functions
+ * with the same name can differ in units or dependencies.
  */
 export function formatFindings(findings: readonly SymbolFinding[], declaredNames: readonly string[] = []): string {
 	if (!findings.length) return ""

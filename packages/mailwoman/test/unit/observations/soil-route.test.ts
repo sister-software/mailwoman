@@ -14,7 +14,7 @@
  *   the rest PIN the three readings' journey TO A caller: a rated cell becomes one additive marker naming
  *   the verdict's own top kind and carrying the share the class rests on, a mapped-but-unrated cell becomes
  *   the same marker with no class and the absence shares that say why, and a location outside every built
- *   survey area raises nothing — an advisory there would report a survey nobody ran.
+ *   survey area raises no marker — an advisory there would report a survey nobody ran.
  */
 
 import type { AddressNode } from "@mailwoman/core/decoder"
@@ -91,7 +91,7 @@ const INSIDE_MIXED = {
 }
 
 /**
- * Inside the unrated map unit — the survey mapped this ground and rated nothing here.
+ * Inside the unrated map unit — the survey mapped this ground and assigned no rating here.
  */
 const INSIDE_UNRATED = {
 	latitude: FIXTURE_ORIGIN.lat + FIXTURE_SIDE / 2,

@@ -3,39 +3,23 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   @file The sub-venue lexicon's record schema and the shipped vocabulary it is seeded from — the
- *   emitted artifact's shape plus the designator, modifier and Wikidata-concept tables every build
- *   starts out holding.
+ * @file The sub-venue lexicon's record schema and the shipped vocabulary it is seeded from.
  *
- *   The shape follows `@mailwoman/poi-taxonomy`'s `taxonomy.json` idiom exactly — typed records plus a
- *   flat phrase array keyed back to a record id, which is what makes a longest-match phrase index cheap
- *   to build over it. {@link SubVenueSurface} is this table's `SynonymEntry`.
- *
- *   The seeds duplicate `neural/venue-structure.ts` knowingly: `@mailwoman/corpus` does not depend on
- *   `@mailwoman/neural` (the dependency runs the other way for the training path, and pulling
- *   onnxruntime into a corpus build to read three string arrays would be absurd), so the shipped
- *   vocabulary is re-declared here. That is a drift surface and it is stated rather than hidden —
- *   `sub-venue-lexicon.test.ts` pins the seed's contents literally, so a change in either place fails a
- *   test rather than passing silently.
+ * The seeds duplicate `neural/venue-structure.ts` knowingly: `@mailwoman/corpus` does not depend on
+ * `@mailwoman/neural`, so the shipped vocabulary is re-declared here, and `sub-venue-lexicon.test.ts`
+ * pins the seed literally so a change in either place fails a test.
  */
 
 import type { SubVenuePromotion } from "#tools/sub/venue/promotions"
 
 /**
- * This table's own data version.
- *
- * Bump when the source vintages or the build semantics change.
- *
- * `0.2.0` — wave 2: per-region attestation, the phrase-attribution fix (finding 3 above),
- * derived head nouns, the Overture source, and the `promotions[]` receipts section.
+ * This table's own data version; bump when the source vintages or the build semantics change.
  */
 export const SUBVENUE_LEXICON_VERSION = "0.2.0"
 
 /**
- * Which side of the containment relation a designator names.
- *
- * Mirrors `@mailwoman/osm/sdk`'s `SubVenueTier`; re-declared for the same
- * dependency-direction reason as the seed.
+ * Which side of the containment relation a designator names; mirrors `@mailwoman/osm/sdk`'s
+ * `SubVenueTier`, re-declared for the same dependency-direction reason as the seed.
  */
 export const LexiconTier = {
 	SubVenue: "subvenue",
@@ -49,34 +33,24 @@ export type LexiconTier = (typeof LexiconTier)[keyof typeof LexiconTier]
  */
 export interface SubVenueDesignator {
 	/**
-	 * Canonical id, lowercase English.
-	 *
-	 * Matches `neural/venue-structure.ts`'s `VENUE_STRUCTURE_DESIGNATORS` wherever the two overlap.
+	 * Canonical id, lowercase English; matches `neural/venue-structure.ts`'s
+	 * `VENUE_STRUCTURE_DESIGNATORS` wherever the two overlap.
 	 */
 	id: string
 	tier: LexiconTier
 	/**
-	 * Whether this designator may be preceded by a {@link SubVenueModifier} — the `North Terminal` shape.
-	 *
-	 * A subset, and the exclusions are required: `gate` and `building` form ordinary street names in
-	 * exactly this shape ("East Gate" is a real GB street, "Building Society Place" is a real street),
-	 * so admitting them turns a correct street parse into a sub-venue one.
-	 * Setting this true means claiming no street is named `<modifier> <id>`.
-	 *
-	 * Check before you do.
+	 * Whether this designator may be preceded by a {@link SubVenueModifier} — the `North Terminal` shape;
+	 * `gate` and `building` are excluded because `<modifier> <id>` is also an ordinary street
+	 * name ("East Gate"), so admitting them turns a correct street parse into a sub-venue one.
 	 */
 	modifierEligible: boolean
 	/**
-	 * Whether the shipped span proposer already recognizes this designator.
-	 *
-	 * `false` means the lexicon proposes it and nothing consumes it yet.
+	 * Whether the shipped span proposer recognizes this designator; `false` means no consumer reads it yet.
 	 */
 	shipped: boolean
 	/**
-	 * Where the term comes from, one entry per attesting source: `wof:placetype`,
-	 * `osm:aeroway=terminal`, `wikidata:Q849706`, `overture:airport_terminal`.
-	 *
-	 * Sorted, so a regenerate is stable.
+	 * Where the term comes from, one entry per attesting source (`wof:placetype`, `osm:aeroway=terminal`,
+	 * `wikidata:Q849706`, `overture:airport_terminal`), sorted so a regenerate is stable.
 	 */
 	provenance: string[]
 }
@@ -92,30 +66,15 @@ export interface SubVenueModifier {
 
 /**
  * One surface form: a phrase, the record it names, and where it was attested.
- *
- * This is the table's `SynonymEntry`.
- * The flat array a phrase index is built over.
  */
 export interface SubVenueSurface {
 	/**
-	 * The phrase, lowercased for Latin-script languages and left as written otherwise —
-	 * case-folding is meaningless for Han and Kana, which the script guard excludes.
-	 *
-	 * It does not exclude Turkish: `İ` (U+0130) is `\p{Script=Latin}`, so the guard admits it
-	 * and `toLowerCase` folds it to `i` plus a combining dot above.
-	 * A Turkish surface therefore round-trips through a form its own locale would not write.
-	 *
-	 * Nothing shipped depends on that today.
-	 * A Turkish designator would.
+	 * The phrase, lowercased for Latin script and left as written otherwise; the Turkish `İ`
+	 * (U+0130) is `\p{Script=Latin}` and folds to `i` plus a combining dot above, so it round-trips
+	 * through a form its own locale would not write (no shipped code depends on that today).
 	 */
 	phrase: string
-	/**
-	 * The {@link SubVenueDesignator.id} or {@link SubVenueModifier.id} this phrase is a surface of.
-	 */
 	recordID: string
-	/**
-	 * Which record table `recordID` points into.
-	 */
 	recordKind: "designator" | "modifier"
 	/**
 	 * BCP-47-ish language subtag as the source wrote it (`en`, `ja`, `zh-Hant`, `pt-BR`),
@@ -123,11 +82,9 @@ export interface SubVenueSurface {
 	 */
 	lang: string
 	/**
-	 * ISO 3166-1 alpha-2 of the data the phrase was attested in, `""` for vocabulary
-	 * sources that attest a term's existence rather than its use anywhere.
-	 *
-	 * This is the axis promotion is decided on: `hall` is attested 3,274 times in `GB`
-	 * and every promotion of it lives or dies on a per-region census, never a global one.
+	 * ISO 3166-1 alpha-2 of the data the phrase was attested in, `""` for vocabulary sources
+	 * that attest a term's existence rather than its use; this is the axis promotion is
+	 * decided on (`hall` is attested 3,274 times in `GB`), never a global census.
 	 */
 	region: string
 	/**
@@ -136,32 +93,23 @@ export interface SubVenueSurface {
 	 */
 	source: string
 	/**
-	 * Whether a human has approved this surface for parsing use IN its region.
-	 *
-	 * Everything machine-derived starts `false` and is flipped only by a matching {@link SubVenuePromotion}.
-	 * A consumer that gates a parse must filter on this.
-	 *
-	 * See `sub-venue-lexicon.ts`'s module docstring for what a promotion decides and why it is per-locale.
+	 * Whether a human has approved this surface for parsing use in its region; everything
+	 * machine-derived starts `false` and only a matching {@link SubVenuePromotion} flips it,
+	 * so a consumer that gates a parse must filter on this.
 	 */
 	curated: boolean
 	/**
-	 * How many source features attested this exact phrase, when the source counts (OSM, Overture).
-	 *
+	 * How many source features attested this exact phrase when the source counts (OSM, Overture);
 	 * `0` for vocabulary sources, which attest a term's existence rather than its frequency.
 	 */
 	observations: number
 	/**
-	 * The rule-assigned designator of the features that carried this phrase,
-	 * with a count each — `platform:3205 campus:49` for GB's `hall`.
-	 * Empty for vocabulary sources.
+	 * The rule-assigned designator of the features that carried this phrase, with a count
+	 * each (`platform:3205 campus:49` for GB's `hall`); empty for vocabulary sources.
 	 *
-	 * This is the confound axis.
-	 * A `hall` on a `platform` row is a British bus stop named after a village hall.
-	 *
-	 * A `hall` on a `terminal` row is a real German departure hall.
-	 *
-	 * Without it, a surface's `observations` count is a magnitude with no sign.
-	 * See the repo's "meaning of zero" rule, which applies just as hard to a large number.
+	 * Without it an `observations` count is a magnitude with no sign
+	 * (`hall` on a `platform` row is a British bus stop named after a village hall;
+	 * on a `terminal` row it is a real German departure hall).
 	 */
 	context: Record<string, number>
 }
@@ -169,23 +117,16 @@ export interface SubVenueSurface {
 /**
  * The measured shape of a designator's identifier half — what follows `Gate`/`Terminal` in real data.
  *
- * Derived from OSM `ref` values rather than from names, and that is why the
- * artifact has a section for it at all.
- * Every one of Berlin's 26 `aeroway=gate` features is unnamed and carries only a `ref`:
- * `13`, `6`, `0/1`, `14/15`, `16-18`.
- *
- * So `Gate A12` is a rendering (`<designator> <ref>`) rather than a string anyone has
- * written down, and a recipe that wants to generate the designator+identifier form
- * needs the identifier distribution rather than a list of phrases.
+ * Derived from OSM `ref` values rather than names: every one of Berlin's 26 `aeroway=gate` features
+ * is unnamed and carries only a `ref`, so `Gate A12` is a rendering (`<designator> <ref>`)
+ * rather than a string anyone wrote down, and generating that form needs the identifier distribution.
  */
 export interface IdentifierShape {
 	designatorID: string
 	/**
-	 * ISO 3166-1 alpha-2 of the extract this distribution was measured in.
-	 *
-	 * Per-region because the shapes differ: GB gates are 70% bare digits, Japanese platform
-	 * refs are overwhelmingly bare digits with a different range, and a recipe that generates
-	 * `Gate <ref>` for a French address should sample France's distribution.
+	 * ISO 3166-1 alpha-2 of the extract this distribution was measured in; per-region because the
+	 * shapes differ (GB gates are 70% bare digits, Japanese platform refs a different range),
+	 * so a recipe for a French address should sample France's distribution.
 	 */
 	region: string
 	/**
@@ -195,7 +136,7 @@ export interface IdentifierShape {
 	shape: string
 	observations: number
 	/**
-	 * Up to eight real values, sorted, so a recipe author can see what the class actually contains.
+	 * Up to eight real values, sorted.
 	 */
 	examples: string[]
 }
@@ -223,24 +164,19 @@ export interface SubVenueLexiconTable {
 	identifierShapes: IdentifierShape[]
 	/**
 	 * Every curation decision taken against this table, promotion and rejection,
-	 * each with the census that backs it.
-	 *
-	 * A rejection is as required as a promotion: it is what stops the next reader
-	 * re-proposing `hall` for en-GB.
+	 * each with the census that backs it; a rejection is as required as a promotion
+	 * because it stops the next reader re-proposing `hall` for en-GB.
 	 */
 	promotions: SubVenuePromotion[]
 }
 
 /**
- * The vocabulary that already ships in `neural/venue-structure.ts`, re-declared.
+ * The vocabulary that already ships in `neural/venue-structure.ts`, re-declared
+ * below for the module docstring's dependency-direction reason.
  *
- * See the module docstring for why this duplication exists.
- *
- * `tier` is added here (the shipped list has no such field): the seven WOF placetypes
- * plus `terminal`/`gate` are all venue-interior, except `campus` and `building`,
- * which name a whole venue as often as a part of one.
- * They are marked `subvenue` anyway, because that is the role the span proposer uses them in.
- * `Building 43, Googleplex` is a unit inside a venue.
+ * `tier` is added here: the seven WOF placetypes plus `terminal`/`gate` are all venue-interior,
+ * while `campus` and `building` name a whole venue as often as a part of one
+ * but are marked `subvenue` because that is the role the span proposer uses them in.
  */
 export const SHIPPED_DESIGNATOR_SEED: ReadonlyArray<{
 	id: string
@@ -279,20 +215,8 @@ export const SHIPPED_MODIFIER_SEED: readonly string[] = [
 /**
  * Designators the lexicon adds beyond what ships, each with the source that attests it.
  *
- * `platform`, `station` and `airport` come from the OSM extractor's rule table
- * and are the rail/aviation venue-side vocabulary the corpus line needs.
- * `hall` and `satellite` come from Wikidata concepts and from `wof-osm-placetype-map.mdx`'s
- * own "plausible additions" note, which lists `hall` explicitly.
- *
- * `pier` joins them in wave 2 on 282 Overture attestations in the `pier`
- * category plus 162 in the GB extract.
- * The corpus task names `Pier C` as a target shape, so the record has to exist
- * before a recipe can generate it.
- *
  * None is `modifierEligible`: that claim needs a confound board per term and per locale,
- * and `sub-venue-promotions.ts` is where those live.
- * A promotion marks a surface usable.
- * It does not widen the modifier grammar.
+ * and a promotion marks a surface usable without widening the modifier grammar.
  */
 export const PROPOSED_DESIGNATORS: ReadonlyArray<{
 	id: string
@@ -308,11 +232,8 @@ export const PROPOSED_DESIGNATORS: ReadonlyArray<{
 ]
 
 /**
- * `designatorID` → Wikidata QID, mirroring `fetch/wikidata-subvenue.ts`'s `SUBVENUE_CONCEPTS`.
- *
- * Re-declared here so the builder stays a pure function over parsed input
- * rather than reaching into a fetch module for a constant.
- * The test pins the two against each other.
+ * `designatorID` → Wikidata QID, mirroring `fetch/wikidata-subvenue.ts`'s `SUBVENUE_CONCEPTS`;
+ * the builder stays a pure function over parsed input, and the test pins the two against each other.
  */
 export const CONCEPT_QIDS: Readonly<Record<string, string>> = {
 	terminal: "Q849706",

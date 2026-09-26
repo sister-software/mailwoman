@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  * @file The shape a repairable check takes, and the line between the two registries.
  *
- *   `RepoCheck` returns diagnostics and can do nothing else. That admission rule is in its type and stays there. A
+ *   `RepoCheck` returns diagnostics and can do no more. That admission rule is in its type and stays there. A
  *   `RepoFix` is the separate, opt-in half: it answers one check's diagnostics with a list of module moves, and it
  *   still cannot write anything, because planning and applying are different operations and only `#move/apply`
  *   performs the second. `mwops health fix <check>` is the caller, the way `mwops health baseline debt` is the caller

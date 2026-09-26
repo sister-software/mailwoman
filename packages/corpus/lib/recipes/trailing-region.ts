@@ -3,67 +3,16 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `trailing-region` — the `«locality», «region», «country»` admin tail, the Portopetro class
- *   (board row `es-op3-southeast-portopetro`): `…, 07691 Portopetro, Illes Balears, Spain` parsed
- *   with the region mislabeled `locality` and the true locality dropped entirely. Spanish sources
- *   are postcode-complete and rarely write the region, so the trailing-region segment is
- *   under-attested and the model reads the last populous name as the locality.
+ *   `trailing-region` — the `«locality», «region»[, «country»]` admin tail, built from real
+ *   `(locality, region)` WOF ancestor pairs.
  *
- *   Tuples are real `(locality, region)` ancestor pairs from the WOF admin DB (the fr-hood-pairs
- *   extraction shape). Two surface forms per pair — with and without the trailing country — so the
- *   region is attested both as the middle and the final segment. A bare `«region»` form is
- *   deliberately absent: that surface is the bare-toponym class with its own rules, and teaching it
- *   here as `region` would fight the locality/region ambiguity the dominance race arbitrates.
+ *   A tuple's `postcodePlacement` selects where the postcode sits: `leading` (the default, so a
+ *   tuples file written before the field existed is unchanged), `after_locality`, or `after_region`.
  *
- *   The recipe is country-agnostic. the country tail surface comes from the tuple's `country`
- *   field ("Spain", "United Kingdom") so one recipe serves every extraction.
- *
- *   postcode-prefixed forms (2026-08-20, #1748). The two bare forms above were the whole recipe, and the
- *   board row this recipe was written for is not bare. It reads `…, 07691 Portopetro, Illes Balears,
- *   Spain`. Measured over both built recipe outputs: 88,904 rows, zero containing a postcode. So the model
- *   learned the bare tail correctly and had never once seen the shape it was failing on, which is why no
- *   decode change moved it.
- *
- *   The collapse is two-staged and neither trigger is a street, which is what makes this cheap to teach:
- *
- *       Portopetro, Illes Balears, Spain             locality ✓  region ✓
- *       07691 Portopetro, Illes Balears, Spain       locality ✓  region discarded
- *       15, 07691 Portopetro, Illes Balears, Spain   locality displaced by the region
- *
- *   A postcode alone drops the region (every locale measured); a house number then displaces the
- *   locality. So the added surfaces are postcode-prefixed and house-number-plus-postcode-prefixed, and
- *   the recipe still needs no street names.
- *
- *   postcode placement. The three surfaces above are the leading form, and for a long time they were the
- *   only one, so this recipe taught only the countries that write the postcode first. That is a real gap
- *   and not a stylistic one, because the same digits change TAG with position. Measured on the shipped
- *   model: `Barcelona 6001, Anzoátegui, Venezuela` tags `6001` as `house_number` and loses the locality
- *   into the street, while `6001 Barcelona, Anzoátegui, Venezuela` tags it `postcode` and recovers
- *   `locality: Barcelona`. `Sandton 2196` vs `2196 Sandton` behaves the same way, and no decode-time
- *   change moves it — `postcodeShapeCoherence: true` leaves all eight VE board rows byte-identical.
- *
- *   So the tuple's `postcodePlacement` selects the surface, and it keeps apart two trailing conventions
- *   that are not the same shape: VE writes `Barcelona 6001, Anzoátegui, Venezuela` (the code on the
- *   locality segment) and IN writes `…, Bengaluru, Karnataka 560038, India` (on the region segment).
- *   Each of the three placements matches a board row verbatim. A tuple with no placement means `leading`,
- *   so a tuples file written before the field existed produces the rows it always did.
- *
- *   left context (v25). A tuple may carry a `dependentLocality`, and when it does the surface becomes
- *   `«dep_locality», «locality»…`. This is not decoration: without it every row in the recipe output begins with
- *   the locality, and at a 9.4% share that taught the model the first named segment is the locality.
- *   Measured on the v4.8.0 candidate — `Ye Three Lords, 27 Minories, London EC3N 1DE` came back
- *   `locality: "Ye Three Lords"` with venue and street both gone, `Le Colimaçon, 44 Rue Vieille du
- *   Temple, 75004 Paris` came back `locality: "Le Colimaçon"`, and 11 of 25 regressions were venue-led
- *   rows across seven countries. The house-number prefix does not supply this: a number before the
- *   locality does not teach that a name can precede one. `no-fragment.ts`'s header records the same
- *   trap from the other direction.
- *
- *   The (postcode, locality, region) triples are real — `postalcode-intl.db` parents joined to admin
- *   localities and their region ancestors — with one filter that had to be measured rather than assumed.
- *   A handful of localities act as catch-all parents: `Schwedt/Oder` claims 9,222 postcodes, `Korb`
- *   4,846, against a p50 of 1 and a p99 of 53. Eight such hubs held 47% of the join. Capping at the p99
- *   drops them and keeps 17,908 triples. The house number is synthetic because a house number asserts no
- *   fact about a place. the postcode is not, because it does.
+ *   A bare `«region»` form is deliberately absent: teaching it as `region` would fight the
+ *   locality/region ambiguity the dominance race arbitrates. A `dependentLocality`, when present,
+ *   becomes `«dep_locality», «locality»…`; without it every row begins with the locality and teaches
+ *   the model that the first named segment is the locality.
  */
 
 import { lookupCanadianProvince } from "@mailwoman/codex/ca"
@@ -81,24 +30,13 @@ import {
 import { SurfaceOrigin } from "#types"
 
 /**
- * The code an address line in this country writes the region as, or null where the name is written out.
+ * The region code an address line in this country writes, or `null` where the region name is written out.
  *
- * A subdivision belongs here only when its code is a posted surface.
- * A Canadian province code is (`ca/province.ts` states the contrast with Germany
- * and France in its own header), and so is a US state's.
+ * A subdivision belongs here only when its code is a posted surface: Canadian province
+ * and US state codes are, a Bundesland or a région is not.
  *
- * A Bundesland or a région is not, and teaching `BY` for Bayern would attest a form nobody writes.
- *
- * Several Canadian codes collide with ISO alpha-2 country codes — `NL` with the
- * Netherlands, `PE` with Peru — so a code left unattested here is not merely missing:
- * the model reads it as the country it does know.
- *
- * US state codes reach the model in volume through the US sources, but only
- * ever with a street in front of the city.
- * Measured on 604 distinct cities through the production path, `Washington, DC 20003` answers
- * a locality 54.3% of the time against 99.7% for `123 Main St, Washington, DC 20003` (#2303).
- *
- * So the code is attested and the surface this recipe writes is not.
+ * Several Canadian codes collide with ISO alpha-2 country codes (`NL`, `PE`),
+ * so a code left unattested here reads as the country.
  */
 function regionCodeSurface(cc: string, region: string): string | null {
 	const country = cc.toUpperCase()
@@ -110,9 +48,6 @@ function regionCodeSurface(cc: string, region: string): string | null {
 
 /**
  * Recipe registered with the corpus builder.
- *
- * See the file header for the parse behaviour it exists to exercise,
- * and `description` below for the surface form it generates.
  */
 export const trailingRegionRecipe: CorpusRecipe = {
 	name: "trailing-region",
@@ -138,8 +73,7 @@ export const trailingRegionRecipe: CorpusRecipe = {
 			const country = String(t.country ?? "").trim()
 			const dependentLocality = String(t.dependentLocality ?? "").trim()
 
-			// A pair whose region equals its locality (Santa Cruz de Tenerife inside Santa Cruz de Tenerife)
-			// teaches nothing about the boundary this recipe exists for.
+			// A pair whose region equals its locality carries no signal about the boundary this recipe teaches.
 			if (!locality || !region || locality === region) {
 				skipped++
 
@@ -149,23 +83,13 @@ export const trailingRegionRecipe: CorpusRecipe = {
 			const withCountry = read % 2 === 0 && country.length > 0
 			const postcode = String(t.postcode ?? "").trim()
 
-			// A tuple carrying a postcode emits the structured tail.
-			// The shape the bare-only recipe output never contained.
-			// Every fourth such row also carries a house number, which is the second trigger:
-			// the postcode discards the region, the house number then displaces the locality.
+			// The house number is the second trigger: the postcode discards the region,
+			// the house number then displaces the locality.
 			const withHouseNumber = postcode.length > 0 && read % 4 === 1
 			const houseNumber = withHouseNumber ? String((read % 97) + 1) : ""
 
 			const components: Record<string, string> = { locality, region }
 
-			// left context.
-			// Without it every row begins with the locality, and the recipe teaches
-			// that the first named segment is the locality.
-			// Measured on the v4.8.0 candidate: `Ye Three Lords, 27 Minories, London EC3N 1DE`
-			// came back `locality: "Ye Three Lords"` with the venue and street gone,
-			// and 11 of its 25 regressions were venue-led rows across seven countries.
-			// The house-number prefix does not supply it, because a number before the
-			// locality does not teach that a name can precede one.
 			if (dependentLocality && dependentLocality !== locality) {
 				components["dependent_locality"] = dependentLocality
 			}
@@ -183,16 +107,13 @@ export const trailingRegionRecipe: CorpusRecipe = {
 			}
 
 			const placement = (t.postcodePlacement as PostcodePlacement | undefined) ?? "leading"
-			// Both trailing placements put the code inside the admin tail.
-			// They differ in which segment carries it.
 			const bareLocality = postcode && placement === "after_locality" ? `${locality} ${postcode}` : locality
 
 			const localitySegment =
 				components["dependent_locality"] === undefined ? bareLocality : `${dependentLocality}, ${bareLocality}`
 
-			// A minority of eligible rows write the code.
-			// Both forms are posted and the name is what the resolver matches on,
-			// so the code alternates with it rather than replacing it.
+			// The code alternates with the region name rather than replacing it:
+			// both forms are posted and the resolver matches on the name.
 			const regionCode = read % 3 === 2 ? regionCodeSurface(String(t.cc ?? ""), region) : null
 			const regionSurface = regionCode ?? region
 
@@ -206,19 +127,11 @@ export const trailingRegionRecipe: CorpusRecipe = {
 				? `${localitySegment}, ${regionSegment}, ${country}`
 				: `${localitySegment}, ${regionSegment}`
 
-			// A leading postcode joins the head, ahead of the locality.
-			// The other two are already in the tail, so the head carries at most the house number.
 			const leadingPostcode = postcode && placement === "leading" ? `${postcode} ` : ""
 			const head = withHouseNumber ? `${houseNumber}, ${leadingPostcode}` : leadingPostcode
 			const raw = `${head}${tail}`
-			// A distinct source for the structured rows.
-			// The sampler buckets by `source` and weights each bucket, so emitting these
-			// under `synth-trailing-region` would pool them with the 88,904 bare rows
-			// and make the new surface unweightable.
-			// Its reps per row would silently be whatever the bare source's weight bought.
-			// `--source-name` overrides both, and for the same reason one rung up: a rebuild of one
-			// country's surfaces (#1673's corrected Spanish names) pooled under the shipped label would
-			// draw exactly the reps per row the rows it was built to outweigh are already drawing.
+			// A distinct source for the structured rows: the sampler buckets by `source`,
+			// so pooling them with the bare rows would make their weight unsettable.
 			const sourceLabel = postcode ? structuredSource : bareSource
 			const source_id = recipeSourceID(sourceLabel, { ...components, v: String(read) })
 

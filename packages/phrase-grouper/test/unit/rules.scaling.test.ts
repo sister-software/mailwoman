@@ -32,7 +32,7 @@ import {
 import { describe, expect, test } from "vitest"
 
 /**
- * Every token is capitalized place-name content and nothing terminates the run —
+ * Every token is capitalized place-name content and no token terminates the run —
  * the worst case for a forward walk, and the shape a pasted document produces.
  */
 const CAPS_RUN_UNIT = "Aa "

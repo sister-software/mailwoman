@@ -42,11 +42,11 @@ export function formatAblationCell(cell: AblationCell | undefined): string {
  * Render one cell under the expectation model: `trueFail/ladderGraded`.
  *
  * Absence has one more source here than in {@linkcode formatAblationCell}.
- * A cell can have real support and still have nothing the ladder could grade
+ * A cell can have real support and still have no case the ladder could grade
  * (no gazetteer, or an anchor that resolved no place id).
  *
  * That is `ladderGradedCount: 0`, and it renders as {@linkcode ABLATION_ABSENT}
- * rather than `0/0`, which would read as "nothing failed here".
+ * rather than `0/0`, which would read as "no check failed here".
  */
 export function formatAblationLadderCell(cell: AblationCell | undefined): string {
 	if (!cell || cell.support === 0 || cell.ladderGradedCount === 0) return ABLATION_ABSENT

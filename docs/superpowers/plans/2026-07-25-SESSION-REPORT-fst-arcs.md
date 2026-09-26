@@ -76,7 +76,7 @@ that's a standing obligation.
 6. **Presence vs importance is a measured question rather than a principle.** Fork B used gazetteer
    _presence_ to reach importance-zero places — but the marquee case (Sainte-Livrade-sur-Lot) never
    recovered (FST coverage/tokenization), while presence is exactly what let surname
-   collisions fire. Presence bought ~nothing measured; R1b's importance-aware check is what made the
+   collisions fire. Presence bought ~no measured gain; R1b's importance-aware check is what made the
    mechanism safe.
 
 ## 4. Open items / handoffs

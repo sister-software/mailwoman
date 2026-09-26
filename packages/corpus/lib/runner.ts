@@ -3,30 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Adapter runner — drives a `CorpusAdapter` to completion and writes intermediate jsonl + a
- *   per-adapter manifest.
- *
- *   Output layout under `outputDir`:
- *
- *   ```
- *   <outputDir>/<adapter.id>/
- *   canonical.jsonl       # one row per line, in emission order
- *   manifest.json         # adapter id, version, row count, sha256, license, started_at, ended_at
- * ```
- *
- *   The runner is responsible for everything an adapter is **not** responsible for:
- *
- *   - Stamping `corpus_version` on every row (adapters must not set it).
- *   - Stamping the adapter's `addressRole` on every row that omits one, so a single-role source declares its role once
- *       and a multi-role source overrides per row.
- *   - Applying `canonicalDedupKey` and skipping duplicates.
- *   - Streaming sha256 over jsonl bytes so the manifest checksum doesn't require a re-read.
- *   - Honoring backpressure on the output write stream.
- *   - Counting + emitting periodic progress to an optional callback.
- *   - Honoring `signal` (delegates to adapter's iteration boundary).
- *
- *   The runner does not perform alignment, tokenization, synthesis, or the Parquet write. Those
- *   steps run later, consuming the jsonl files this writes.
+ *   Adapter runner — drives a `CorpusAdapter` to completion and writes `canonical.jsonl` plus a
+ *   `MANIFEST.json` per adapter. It does not align, tokenize, synthesize, or write Parquet.
  */
 
 import { isAlpha2CodeShape } from "@mailwoman/codex/country"
@@ -42,29 +20,17 @@ import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "#types"
  * Snapshot of the runner's state, emitted on every progress tick.
  */
 export interface RunnerProgress {
-	/**
-	 * Adapter being driven.
-	 */
 	adapterID: string
 
 	/**
-	 * Total rows the adapter has yielded (before dedup).
+	 * Total rows the adapter has yielded, before dedup.
 	 */
 	yielded: number
 
-	/**
-	 * Rows actually written to jsonl (after dedup).
-	 */
 	written: number
 
-	/**
-	 * Bytes written to jsonl so far.
-	 */
 	bytes: number
 
-	/**
-	 * Wall-clock milliseconds since the run started.
-	 */
 	elapsed_ms: number
 }
 
@@ -72,67 +38,43 @@ export interface RunnerProgress {
  * Per-invocation options for `runAdapter`.
  */
 export interface RunAdapterOptions {
-	/**
-	 * Adapter to drive.
-	 */
 	adapter: CorpusAdapter
 
-	/**
-	 * Options handed to the adapter (input path, country filter, limit, signal).
-	 */
 	adapterOptions: AdapterOptions
 
 	/**
-	 * Root output directory.
-	 * The runner creates `<outputDir>/<adapter.id>/` under it.
+	 * Root output directory; the runner creates `<outputDir>/<adapter.id>/` under it.
 	 */
 	outputDir: PathBuilderLike
 
 	/**
-	 * Corpus version stamped onto every row.
-	 *
-	 * Locked together with the tokenizer version.
+	 * Corpus version stamped onto every row, locked together with the tokenizer version.
 	 */
 	corpusVersion: string
 
 	/**
 	 * The `source` id stamped on every emitted row, when it differs from the adapter's own id.
 	 *
-	 * One adapter can produce slices that a training config has to weight apart.
-	 * The `overture` adapter reads every country through the same code, and a run that weights
-	 * Brazilian rows at the weight the European rows carry dilutes both: the 2026-07-18 arm
-	 * created `overture-latam` for exactly that reason and had no way to ask the runner for it.
-	 *
-	 * A source id is a wire identifier, stored on every row of every built corpus
-	 * and keyed by `source_weights`.
-	 * Naming a new one is additive.
-	 *
-	 * Re-using a name that a built corpus already carries makes this run's rows
-	 * indistinguishable from that corpus's, so pass one the config means.
-	 *
-	 * Absent, rows carry `adapter.id`, which is what every run before this option produced.
+	 * A source id is a wire identifier keyed by `source_weights`, so re-using a name
+	 * a built corpus already carries makes this run's rows indistinguishable from
+	 * that corpus's; absent, rows carry `adapter.id`.
 	 */
 	sourceName?: string
 
 	/**
-	 * Optional progress callback.
-	 *
-	 * Invoked every `progressEvery` rows yielded (default 1000) and once at the end of the run.
-	 * Errors thrown from this callback abort the run.
+	 * Invoked every `progressEvery` rows yielded and once at the end; a thrown error aborts the run.
 	 */
 	onProgress?: (snapshot: RunnerProgress) => void
 
 	/**
-	 * Yielded-row interval at which `onProgress` fires.
-	 *
-	 * Defaults to 1000.
-	 * The terminal tick is always emitted regardless of this value.
+	 * Yielded-row interval at which `onProgress` fires; defaults to 1000,
+	 * and the terminal tick is always emitted.
 	 */
 	progressEvery?: number
 }
 
 /**
- * Return value of `runAdapter`: the same shape as `manifest.json` on disk.
+ * Return value of `runAdapter`, the same shape as the manifest written to disk.
  */
 export interface AdapterRunManifest {
 	adapter_id: string
@@ -151,12 +93,7 @@ export interface AdapterRunManifest {
 }
 
 /**
- * Drive a single adapter to completion.
- *
- * @throws If the output directory cannot be created, if a row arrives with a
- * missing required field, or if the abort signal fires.
- * @returns the manifest describing the run.
- * Writes `canonical.jsonl` + `manifest.json` under `outputDir/<adapter.id>/`.
+ * Drive a single adapter to completion, writing its jsonl and manifest under `outputDir/<adapter.id>/`.
  */
 export async function runAdapter(opts: RunAdapterOptions): Promise<AdapterRunManifest> {
 	const { adapter, adapterOptions, outputDir, corpusVersion } = opts
@@ -202,14 +139,12 @@ export async function runAdapter(opts: RunAdapterOptions): Promise<AdapterRunMan
 
 			const stamped: CanonicalRow = {
 				...row,
-				// After `assertEmittedRow`, which holds every adapter to emitting its own id.
-				// The rename is the runner's, so an adapter cannot quietly claim to be another one.
+				// The rename is the runner's, after `assertEmittedRow` has held the adapter to emitting its own id.
 				source: opts.sourceName ?? row.source,
 				corpus_version: corpusVersion,
 				addressRole: row.addressRole ?? adapter.addressRole,
 				// `register` is nullable and null is a statement rather than an absence,
-				// so an adapter that means "this row names no published record" says so by setting it.
-				// Only an undefined field takes the adapter's declaration.
+				// so only an undefined field takes the adapter's declaration.
 				register: row.register === undefined ? adapter.register : row.register,
 				surface: row.surface ?? adapter.surface,
 			}
@@ -255,10 +190,8 @@ export async function runAdapter(opts: RunAdapterOptions): Promise<AdapterRunMan
 		await once(stream, "close")
 	}
 
-	// The check inside the loop fires only on a row arriving after the abort,
-	// and every adapter honors `signal` by returning instead.
-	// Without this line the manifest records a truncated `canonical.jsonl` as a finished run,
-	// which is the whole resume condition in `build.ts`.
+	// Every adapter honors `signal` by returning instead, so without this a truncated
+	// `canonical.jsonl` would be recorded as a finished run.
 	adapterOptions.signal?.throwIfAborted()
 
 	const endedAt = new Date()
@@ -287,11 +220,7 @@ export async function runAdapter(opts: RunAdapterOptions): Promise<AdapterRunMan
 }
 
 /**
- * Drive every adapter in a registry sequentially.
- *
- * Stops on the first failure (caller can filter the registry before calling if partial-failure is desired).
- *
- * @returns The manifests in registry insertion order.
+ * Drive every adapter in a registry sequentially, stopping on the first failure.
  */
 export async function runAllAdapters(
 	registry: AdapterRegistry,
@@ -314,14 +243,6 @@ export async function runAllAdapters(
 	return out
 }
 
-/**
- * Validate an emitted row.
- *
- * Cheap.
- * Runs once per row.
- *
- * Catches adapter bugs early so the jsonl doesn't end up half-malformed.
- */
 function assertEmittedRow(adapter: CorpusAdapter, row: CanonicalRow): void {
 	if (row.source !== adapter.id) {
 		throw new Error(`adapter ${adapter.id}: row.source must equal adapter.id (got ${stringifyJSON(row.source)})`)
@@ -339,11 +260,8 @@ function assertEmittedRow(adapter: CorpusAdapter, row: CanonicalRow): void {
 		throw new Error(`adapter ${adapter.id}: row.country is empty for source_id=${row.source_id}`)
 	}
 
-	// The shape as well as the presence.
-	// `country_weights` is keyed by this value and every country filter compares it, so a code outside
-	// the shape trains on nothing and matches no filter while every count of those rows reads ordinary.
-	// The shape rather than ISO membership, because `ZZ` and `XK` are both legitimate here
-	// and neither is an ISO member.
+	// `country_weights` and every country filter key on this value, and the shape
+	// rather than ISO membership because `ZZ` and `XK` are legitimate non-members.
 	if (!isAlpha2CodeShape(row.country)) {
 		throw new Error(
 			`adapter ${adapter.id}: row.country ${stringifyJSON(row.country)} is not two upper-case letters ` +
@@ -358,13 +276,8 @@ function assertEmittedRow(adapter: CorpusAdapter, row: CanonicalRow): void {
 }
 
 /**
- * Promise-ify a single event emission.
- *
- * Used to await `drain` / `close` on the write stream.
- * Exported for `build.ts`, whose stage streams await `close` the same way.
- *
- * Unlike a bare two-listener race, the loser listener is detached so a long-lived
- * stream does not accumulate one orphan handler per wait.
+ * Promise-ify a single `drain` or `close` emission, detaching the loser listener
+ * so a long-lived stream does not accumulate an orphan handler per wait.
  */
 export function once(emitter: WriteStream, event: "drain" | "close"): Promise<void> {
 	return new Promise((resolve, reject) => {

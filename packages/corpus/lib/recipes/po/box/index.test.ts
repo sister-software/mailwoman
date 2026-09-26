@@ -2,13 +2,9 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file `po-box` — the two knobs that let one recipe emit an output for one class.
- *
- *   The military rows (#517) are self-contained: they draw no tuple, so `--variants 0` with
- *   `--military-ratio 1` asks for them and nothing else. Both knobs had a defect measured on 2026-09-09 —
- *   `--variants 0` read as one through the CLI's `Number(x) || 1`, and `--source-name` was ignored — and
- *   together they produced a recipe output of 10,558 rows under the shipped label where 5,279 under its own were
- *   asked for. The tests below pin each.
+ * @file `po-box` — the two knobs that let one recipe emit an output for one class; the military rows
+ *   are self-contained and draw no tuple, so `--variants 0` with `--military-ratio 1` asks for them
+ *   and no other variant.
  */
 
 import { poBoxRecipe } from "@mailwoman/corpus/recipes/po/box/index"
@@ -47,11 +43,8 @@ describe("po-box military rows", () => {
 	})
 
 	it("writes strictly more at variants 1 than at variants 0 — the discriminator the CLI defect erased", async () => {
-		// Asserting an exact count here would be asserting the Spanish po-box template:
-		// these tuples name a country the rendered line does not contain, so every tuple-driven
-		// row quarantines on `component-not-found:country` and never reaches the output.
-		// What the CLI defect destroyed is the difference between the two settings,
-		// and that is what this pins — `Number("0") || 1` made the two indistinguishable.
+		// An exact count here would assert the Spanish po-box template: these tuples name a country
+		// the rendered line omits, so every tuple-driven row quarantines on `component-not-found:country`.
 		const zero = await run(TUPLES, [], { variants: 0, militaryRatio: 1 })
 		const one = await run(TUPLES, [], { variants: 1, militaryRatio: 1 })
 
@@ -67,9 +60,8 @@ describe("po-box military rows", () => {
 
 describe("po-box source labelling", () => {
 	it("takes `--source-name`, so a military-only output carries its own reps per row", async () => {
-		// `synth-po-box` is absent from the shipped Latin config's mixture,
-		// so rows under that label are dropped at load.
-		// An output built for the #517 class needs a source of its own or it cannot be weighted at all.
+		// `synth-po-box` is absent from the shipped Latin config's mixture, so rows under that label are
+		// dropped at load and an output with its own class needs a source of its own to be weighted at all.
 		const { rows } = await run(TUPLES, [], { variants: 0, militaryRatio: 1, sourceName: "synth-po-box-military" })
 
 		expect(rows.every((row) => row.source === "synth-po-box-military")).toBe(true)

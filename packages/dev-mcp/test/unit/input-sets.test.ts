@@ -11,22 +11,17 @@ import { resolveInputSet } from "@mailwoman/dev-mcp/input-sets"
 import { describe, expect, it } from "vitest"
 
 /**
- * The board and parity corpora are committed, so they grade everywhere.
- *
- * The panel and golden sets live under `$MAILWOMAN_DATA_ROOT` and are absent in CI,
- * so their suites are presence-conditional the way `weights.test.ts` checks on the dev model.
- *
- * A skipped suite is not a passing one: these assertions hold only on a machine
- * carrying the artifacts, and CI's green tick says nothing about them.
+ * Whether the panel artifact is present; the panel and golden sets live under
+ * `$MAILWOMAN_DATA_ROOT` and are absent in CI, so their suites are presence-conditional
+ * and a skipped suite is not a passing one.
  */
 const havePanel = await pathExists(dataRootPath("pelias-rig", "panel", "panel-v2.jsonl"))
 const havePanel21 = await pathExists(dataRootPath("pelias-rig", "panel", "panel-v2.1.jsonl"))
 const haveGolden = await pathExists(dataRootPath("eval", "golden", "v0.1.3", "dev", "us.jsonl"))
 /**
- * The `us` holdout source only.
- *
- * `fr` is a 5.06 GB CSV that a reservoir draw reads end to end — measured at 45.5 s against `us`'s
- * 113 ms — so exercising it in a unit suite would cost more than every other test here combined.
+ * The `us` holdout source only, because `fr` is a 5.06 GB CSV that a reservoir draw
+ * reads end to end — 45.5 s against `us`'s 113 ms — and exercising it in a unit
+ * suite would cost more than every other test here combined.
  */
 const haveHoldoutUS = await pathExists(dataRootPath("corpus", "staging", "fdic-us.csv"))
 
@@ -38,7 +33,6 @@ describe("resolveInputSet — board", () => {
 		expect(set.n).toBeGreaterThan(500)
 		expect(set.populationN).toBeUndefined()
 		// Recomputed per resolve, never cached.
-		// A cached stamp verdict is the 2026-08-06 failure with extra steps.
 		expect(set.corpusHash).toMatch(/^[0-9a-f]{64}$/)
 	})
 
@@ -103,8 +97,8 @@ describe.skipIf(!havePanel)("resolveInputSet — panel", () => {
 	})
 
 	it("carries truth_type per row rather than blending it away", async () => {
-		// The benchmark plan's own rule: a headline "@1km lives or dies on truth_type".
-		// A caller that cannot see it reports a number about its own row mix.
+		// The benchmark plan's own rule: a headline @1km lives or dies on truth_type,
+		// and a caller that cannot see it reports a number about its own row mix.
 		const set = await resolveInputSet({ kind: "panel", version: "v2" })
 
 		expect(set.inputs.some((row) => row.truthType === "rooftop")).toBe(true)
@@ -122,7 +116,6 @@ describe.skipIf(!havePanel)("resolveInputSet — panel", () => {
 
 describe.skipIf(!havePanel21)("resolveInputSet — panel v2.1", () => {
 	it("resolves the re-sourced v2.1 panel with a coordinate on every row", async () => {
-		// v2.1 = v2 with the 25 city-only rows whose truth was copied from the hard-case board (`packages/mailwoman/lib/eval-harness/fixtures/hard-case-board.jsonl`, scored by `packages/mailwoman/lib/dev-tools/score/hard-case-board.run.ts`) (circular truth, #1725) re-sourced to independent Wikidata centroids. Same 420 rows, same order. v2 stays immutable.
 		const set = await resolveInputSet({ kind: "panel", version: "v2.1" })
 
 		expect(set.n).toBe(420)
@@ -133,8 +126,6 @@ describe.skipIf(!havePanel21)("resolveInputSet — panel v2.1", () => {
 
 describe.skipIf(!haveGolden)("resolveInputSet — golden", () => {
 	it("counts component expectations rather than reporting them as nothing", async () => {
-		// First run of this resolver reported `none: 4255` on a 4,255-row set, because the
-		// census only knew how to read a SeedCase and golden rows carry `components` instead.
 		const set = await resolveInputSet({ kind: "golden" })
 
 		expect(set.hasTruth.components).toBe(set.n)
@@ -150,9 +141,8 @@ describe.skipIf(!haveGolden)("resolveInputSet — golden", () => {
 
 describe("resolveInputSet — parity", () => {
 	it("skips tombstones, matching the harness's own live count", async () => {
-		// `parity-corpus.ts` filters `!dropped && expect` and prints "321 live
-		// fixtures (55 tombstones skipped)".
-		// Resolving all 376 would feed fixtures a neural parser must not be graded against into the denominator.
+		// Resolving all 376 would feed fixtures a neural parser must not be graded against
+		// into the denominator, so `parity-corpus.ts` filters `!dropped && expect`.
 		const set = await resolveInputSet({ kind: "parity" })
 
 		expect(set.n).toBe(321)
@@ -169,7 +159,7 @@ describe("resolveInputSet — parity", () => {
 
 describe.skipIf(!haveGolden)("a corpus that cannot be read", () => {
 	it("refuses rather than resolving to an empty set", async () => {
-		// An empty set measures zero differences, which reads as "no effect" rather than "nothing ran".
+		// An empty set measures zero differences, which reads as "no effect" rather than "no run occurred".
 		await expect(resolveInputSet({ kind: "golden", version: "v9.9.9-nonexistent" })).rejects.toThrow(
 			/resolved no rows|not found/
 		)
@@ -186,9 +176,9 @@ describe.skipIf(!haveHoldoutUS)("resolveInputSet — holdout", () => {
 	})
 
 	it("is a random draw, not a declared subset — the two support opposite claims", async () => {
-		// A declared subset is chosen by a predicate and generalizes to nothing beyond it.
-		// This is the one set in this file whose rate estimates the population's,
-		// and the sentence a caller relays has to say so.
+		// A declared subset generalizes to no population beyond its predicate,
+		// while this is the one set in this file whose rate estimates the population's,
+		// so the sentence a caller relays has to say so.
 		const set = await resolveInputSet({ kind: "holdout", source: "us", n: 25, seed: 7 })
 
 		expect(set.selection).not.toBe("subset")
@@ -223,9 +213,8 @@ describe.skipIf(!haveHoldoutUS)("resolveInputSet — holdout", () => {
 
 	it("refuses an unknown source rather than resolving to an empty set", async () => {
 		// `source` arrives from an MCP tool call as untrusted JSON, so the refusal is
-		// a runtime check on a value the signature forbids.
-		// `Reflect.set` puts the value in the field the way the transport does, without asserting to
-		// the compiler that "de" is a HoldoutSource, which is the claim under test, and a false one.
+		// a runtime check on a value the signature forbids, and `Reflect.set` puts it
+		// in the field without asserting "de" is a HoldoutSource.
 		const unknownSource: Extract<InputSetRef, { kind: "holdout" }> = { kind: "holdout" }
 
 		Reflect.set(unknownSource, "source", "de")

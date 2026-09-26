@@ -1,0 +1,16 @@
+## Mailwoman house style: name the result instead of stating it as the absence of a thing.
+##
+## "The lookup returns nothing" makes the reader infer what happens when the lookup
+## resolves no candidate. Name the result: "the lookup returns no candidate", "the
+## lookup returns an empty list", "the field is absent".
+##
+## The token is broad on purpose, for the same reason `CommaNo.yml` is broad: a narrow
+## allow-list lets the vague phrasing move into a new sentence shape. A sentence where
+## the word is literal data, a quoted external string, or a recorded measurement belongs
+## in an exception section rather than in a rewrite.
+extends: existence
+message: "'%s' states the result as an absence. Name the value, condition, or behavior that holds."
+level: error
+ignorecase: true
+tokens:
+  - '\bnothing\b'

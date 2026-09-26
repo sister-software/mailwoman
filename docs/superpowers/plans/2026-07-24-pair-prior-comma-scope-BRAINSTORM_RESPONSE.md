@@ -186,7 +186,7 @@ line, following the module's own discipline for widening.
 The subtractive-cost trick has no clean analogue here, for a specific reason. It exists to charge
 back boosts granted to _prefixes_ of a hypothesis that later leaves the trie. Our flat per-position
 bias never grants partial credit, because a window either probes exact folded keys or gets zero.
-The "hallucination off the trie" failure mode therefore cannot occur, and there is nothing to
+The "hallucination off the trie" failure mode therefore cannot occur, and there is no boost to
 subtract. In addition, non-autoregressive BIO+Viterbi decoding has no prefix-commitment point where
 the charge would attach.
 

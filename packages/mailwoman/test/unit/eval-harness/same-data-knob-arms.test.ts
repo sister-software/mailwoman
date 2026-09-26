@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   The knob arms reader rejects every arms file whose replay would read as a real measurement while
- *   testing nothing: a misspelled option, a function-valued option, a wrong value type, a repeated label.
+ *   testing no behavior: a misspelled option, a function-valued option, a wrong value type, a repeated label.
  */
 
 import { parseKnobArms } from "mailwoman/eval-harness/same-data/knob-arms"

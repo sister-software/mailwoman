@@ -18,7 +18,7 @@ import { expect, test } from "vitest"
  * Writes a temporary checkout that holds only the given `neural-weights-*` manifests, keyed by locale.
  *
  * The directory is moved out of the disposal scope because the check reads it after this function returns.
- * Nothing deletes it afterwards.
+ * No code deletes it afterwards.
  */
 async function fixtureContext(manifests: Record<string, unknown>): Promise<RepoContext> {
 	const temporary = (await temporaryDirectory("weights-family-")).move()

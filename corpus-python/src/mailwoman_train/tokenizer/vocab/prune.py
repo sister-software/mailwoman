@@ -1,27 +1,9 @@
-"""Task #25 (SP vocab-pruning probe) — the artifact surgery pair.
+"""SP vocab-pruning artifact surgery: rebuild ``tokenizer.model`` and the int8 ``model.onnx`` from a keep set.
 
-Given the fired-count measurement (`utilization.py` beside this file) plus the eval-surface fired set,
-build the pruned tokenizer.model + pruned int8 model.onnx per the pre-registered keep rule
-(docs/superpowers/plans/2026-07-31-sp-vocab-pruning-preregistration.md):
-
-    K = specials ∪ byte-fallback ∪ single-codepoint pieces ∪ fired(train) ∪ fired(evals)
-
-Tokenizer surgery is the #825 `tokenizer_splice.py` idiom inverted: strip pruned pieces from the
-SentencePiece model proto, order-preserving. Unigram invariant: a piece that never won a Viterbi
-path contributes nothing to any other path's score, so segmentation is identical for every input
-whose best path avoided the pruned set — asserted downstream (bar B1), not hoped.
-
-ONNX surgery operates on the INT8 artifact directly: row-gather `token_embeddings.weight_quantized`
-by the old→new id map with scale/zero-point untouched — kept rows stay byte-identical, which is
-what makes bar B2 (logit bit-parity) provable rather than approximate. Never prune-then-requantize.
-
-Usage:
-    python -m mailwoman_train.tokenizer.vocab.prune \
-        --tokenizer neural-weights-en-us/tokenizer.model \
-        --onnx $MAILWOMAN_DATA_ROOT/models/quantized/model-v401-base-step-060000-int8.onnx \
-        --train-counts $MAILWOMAN_DATA_ROOT/scratch-vocab-prune/utilization-v0150-venue.npz \
-        --eval-fired $MAILWOMAN_DATA_ROOT/scratch-vocab-prune/eval-fired.json \
-        --out-dir $MAILWOMAN_DATA_ROOT/scratch-vocab-prune/pruned-v1
+Tokenizer surgery strips pruned pieces order-preserving; a piece that never won a Viterbi path
+contributes no score to any other path, so segmentation is identical for every input whose best
+path avoided the pruned set. ONNX surgery row-gathers ``token_embeddings.weight_quantized`` by the
+old→new id map with scale and zero-point untouched, so kept rows stay byte-identical.
 """
 
 from __future__ import annotations
@@ -52,9 +34,8 @@ def main() -> None:
     vocab_size = sp.get_piece_size()
 
     counts = np.load(args.train_counts)["counts"]
-    # These four checks guard artifact surgery: each one catches a mismatch that would otherwise
-    # write a tokenizer or a graph whose pieces and embedding rows disagree. `assert` disappears
-    # under `python -O`, which is exactly when a silently wrong artifact would ship.
+    # These checks use raises, not asserts, so a silently wrong artifact cannot ship under
+    # `python -O`.
     if counts.shape != (vocab_size,):
         raise ValueError(f"counts shape {counts.shape} != vocab {vocab_size}")
     eval_fired = set(json.loads(Path(args.eval_fired).read_text())["fired_ids"])
@@ -63,8 +44,8 @@ def main() -> None:
     keep[counts > 0] = True
     keep[list(eval_fired)] = True
 
-    # Specials: ids 0-3 (pad/unk/bos/eos) plus any piece the proto marks non-normal (control /
-    # unused / byte). Byte-fallback pieces are type byte — kept via the same check.
+    # Any piece the proto marks non-normal — control, unused or byte — is kept; byte-fallback
+    # pieces are type byte.
     proto = sp_pb2.ModelProto()
     proto.ParseFromString(Path(args.tokenizer).read_bytes())
     if len(proto.pieces) != vocab_size:
@@ -78,8 +59,8 @@ def main() -> None:
             keep[i] = True
             continue
 
-        # The reachability floor: every single-codepoint piece stays (▁-only prefix stripped —
-        # a "▁x" piece is the word-initial form of one codepoint and stays too).
+        # Reachability floor: every single-codepoint piece stays, with the ▁ prefix stripped so a
+        # word-initial form of one codepoint also stays.
         literal = piece.piece.removeprefix("▁")
 
         if len(literal) <= 1:
@@ -98,7 +79,6 @@ def main() -> None:
     out_dir = Path(args.out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    # --- tokenizer surgery (order-preserving strip) ---
     pruned = sp_pb2.ModelProto()
     pruned.CopyFrom(proto)
     del pruned.pieces[:]
@@ -109,7 +89,6 @@ def main() -> None:
     tokenizer_out = out_dir / "tokenizer.model"
     tokenizer_out.write_bytes(pruned.SerializeToString())
 
-    # --- ONNX surgery (int8 row-gather, quant params untouched) ---
     model = onnx.load(args.onnx)
     swapped = False
 

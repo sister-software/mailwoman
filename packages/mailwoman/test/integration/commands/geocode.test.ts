@@ -55,7 +55,7 @@ const TX_INTERPOLATION_DB = interpolationDatabasePath("interpolation-us-tx.db")
  * Eight concurrent spawns reach 8.75 s, 87% of the old budget, and vitest runs test files in parallel.
  * That is why these "flaked": not randomness, a deterministic threshold sitting
  * just under a floor nobody had measured.
- * A generous budget costs nothing on a passing test.
+ * A generous budget adds no time to a passing test.
  */
 const CLI_SPAWN_TIMEOUT_MS = 45_000
 

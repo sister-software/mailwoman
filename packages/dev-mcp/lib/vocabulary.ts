@@ -3,39 +3,14 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Can the tokenizer represent this input at all?
- *
- *   A parse defect on a non-Latin locale has two very different causes that look identical from the outside: the corpus
- *   never taught the format, or the vocabulary cannot express the string and the model is learning a byte sequence
- *   instead of a word. Proposing corpus rows for the second is working against the representation, and nothing in a
- *   trace says which one you are looking at — the trace shows pieces, and `<0xC6>` reads as noise rather than as the
- *   finding.
- *
- *   SentencePiece marks exactly what it could not represent by falling back to raw UTF-8 bytes, so the question is one
- *   measurement. The worked example is Vietnamese (#1744): `Đường` — the word that marks a street, the way `Street`
- *   does in English — encodes as `Đ|<0xC6>|<0xB0>|<0xE1>|<0xBB>|<0x9D>|ng`, five raw bytes through the middle, so no
- *   piece in the vocabulary means `Đường` and no corpus can teach it as a unit. On five VN addresses (204 characters)
- *   against the en-us tokenizer, 40.6% of pieces were byte fallbacks and 0.94 pieces fell per character, against 3.7%
- *   and 0.41 for the same addresses transliterated.
- *
- *   both figures move with the sample, which is the reason `control` exists rather than a remembered threshold — a
- *   two-line probe of the same language measures 34.4%, and neither number means anything except beside its arm.
- *
- *   A rate alone is not A finding either, which is why the per-character report is not optional. Vietnamese is not
- *   missing from the vocabulary — `Đ`, `ạ`, `ô`, `ă`, `ê` are all present. What is missing, across that five-address
- *   sample, is twelve characters, every one a vowel carrying two marks (`ư ầ ậ ế ễ ệ ố ồ ộ ờ ợ ừ`); a smaller sample
- *   names a subset of the same set. "Add Vietnamese" and "add these codepoints" are different decisions, and only the
- *   second is one somebody can price.
- *
- *   Normalization form does not matter here and the tool does not offer it as a knob: SentencePiece normalizes
- *   internally, and NFC and NFD were measured to give byte-identical piece counts on the same string.
+ * Whether the tokenizer can represent an input at all: SentencePiece marks what it cannot represent by falling back
+ * to raw UTF-8 bytes, and the per-character report is required because a fallback share has no meaning without a
+ * control arm.
  */
 
 /**
- * SentencePiece renders a byte it cannot represent as `<0xNN>`.
- *
- * This is the whole measurement.
- * Everything else is aggregation over it.
+ * SentencePiece renders a byte it cannot represent as `<0xNN>`; this is the whole
+ * measurement and everything else is aggregation over it.
  */
 const BYTE_PIECE = /^<0x[0-9A-Fa-f]{2}>$/
 
@@ -45,21 +20,20 @@ interface VocabularyLine {
 	characters: number
 	byteFallbacks: number
 	/**
-	 * Pieces per character.
-	 *
-	 * Latin text against this tokenizer runs around 0.4.
-	 * A figure near or above 1.0 means the string is being spelled out rather than tokenized.
+	 * Pieces per character; Latin text against this tokenizer runs around 0.4, and a figure near
+	 * or above 1.0 means the string is being spelled out rather than tokenized.
 	 */
 	piecesPerCharacter: number
 	/**
-	 * The piece sequence, joined by `|`.
-	 *
-	 * Present only when asked for.
-	 * It is the part that shows where a word shatters, and the part that makes a reply long.
+	 * The piece sequence, joined by `|`, present only when asked for; it shows
+	 * where a word shatters and is what makes a reply long.
 	 */
 	sequence?: string
 }
 
+/**
+ * Vocabulary coverage for a set of inputs, with an optional control arm and per-character coverage.
+ */
 export interface VocabularyReport {
 	tokenizerPath: string
 	lines: VocabularyLine[]
@@ -69,18 +43,15 @@ export interface VocabularyReport {
 		byteFallbacks: number
 		piecesPerCharacter: number
 		/**
-		 * Byte fallbacks as a share of pieces.
-		 *
-		 * The headline number, and meaningless without a comparison arm —
-		 * pass `control` so the reply carries one.
+		 * Byte fallbacks as a share of pieces; the headline number is meaningless without
+		 * a comparison arm, so pass `control` so the reply carries one.
 		 */
 		byteFallbackShare: number
 	}
 	control?: VocabularyReport["totals"]
 	/**
-	 * Per-character coverage over every letter in the input.
-	 *
-	 * The actionable half: a list of codepoints is a decision, a percentage is not.
+	 * Per-character coverage over every letter in the input, the actionable half:
+	 * a list of codepoints is a decision, a percentage is not.
 	 */
 	characters?: {
 		inVocabulary: string[]
@@ -121,13 +92,9 @@ function total(lines: readonly VocabularyLine[]): VocabularyReport["totals"] {
 }
 
 /**
- * Which letters in `texts` the vocabulary can express on their own.
- *
- * Judged one character at a time on purpose.
- * A character that falls back inside a word might merely be an unlucky segmentation.
- *
- * A character that falls back alone is absent from the vocabulary,
- * which is the fact a vocabulary decision needs.
+ * Which letters in `texts` the vocabulary can express on their own, judged one character at
+ * a time: a character that falls back inside a word might merely be an unlucky segmentation,
+ * while one that falls back alone is absent from the vocabulary.
  */
 function characterCoverage(
 	tokenizer: Tokenizer,
@@ -150,13 +117,14 @@ function characterCoverage(
 	return { inVocabulary, byteFallback }
 }
 
+/**
+ * Inputs for {@link runVocabulary}, including the optional comparison arm.
+ */
 export interface VocabularyOptions {
 	texts: readonly string[]
 	/**
-	 * A comparison arm — the same content the tokenizer handles well,
-	 * usually the same addresses transliterated.
-	 *
-	 * Without one a fallback share is a number with nothing to be high or low against.
+	 * A comparison arm — the same content the tokenizer handles well, usually the same addresses
+	 * transliterated — without which a fallback share is a number with no comparison arm to be high or low against.
 	 */
 	control?: readonly string[]
 	tokenizerPath?: string
@@ -166,10 +134,9 @@ export interface VocabularyOptions {
 }
 
 /**
- * Measure vocabulary coverage.
- *
- * The tokenizer is resolved through `resolveWeights` like every other consumer, so the answer
- * describes the tokenizer the runtime would actually load rather than a file someone typed a path to.
+ * Measure vocabulary coverage; the tokenizer is resolved through `resolveWeights`
+ * like every other consumer, so the answer describes the tokenizer the runtime would
+ * actually load rather than a file someone typed a path to.
  */
 export async function runVocabulary(options: VocabularyOptions): Promise<VocabularyReport> {
 	const { MailwomanTokenizer } = await import("@mailwoman/neural/tokenizer")

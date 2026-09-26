@@ -115,7 +115,7 @@ export function App() {
 
 	// A chip carries a feature name, which is what the artifact indexes.
 	// The first hit for an exact name is that feature.
-	// A name the artifact does not carry selects nothing rather than framing the closest other feature.
+	// A name the artifact does not carry selects no feature rather than framing the closest other feature.
 	const pickByName = useCallback(
 		(name: string) => {
 			const hit = search.index?.query(name, 1).find((candidate) => candidate.name === name)
@@ -167,7 +167,7 @@ export function App() {
 				/>
 			</div>
 
-			{/* Every floating control in one column, so nothing lands on top of anything else. */}
+			{/* Every floating control in one column, so no control lands on top of anything else. */}
 			<MapControlStack label="Map controls">
 				<MapControlGroup>
 					<MapControlButton

@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   The admin-containment partition (#1717 stage 2) — the one ordering function both deciding sites
- *   call, per the #861 rule (shared constants prove nothing. the #861 parity interface diverged at
+ *   call, per the #861 rule (shared constants prove no parity. the #861 parity interface diverged at
  *   exactly the points a constant cannot express). The candidate backend partitions its row set
  *   before the limit window (so a contained candidate can reach the walk at all), and the resolver
  *   walk partitions again after its fame/anchor re-ranks (so `rankByImportance` cannot hand the top

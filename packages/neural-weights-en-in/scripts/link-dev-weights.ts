@@ -6,7 +6,7 @@
  *   Dev-weights linker for `@mailwoman/neural-weights-en-in` (hierarchy campaign R10).
  *
  *   The build itself lives in `@mailwoman/resolver-wof-sqlite/weights-overlay-linker` — this overlay declares
- *   `mailwoman.baseWeights`, so it symlinks nothing and its only job is building the index that makes
+ *   `mailwoman.baseWeights`, so it symlinks no weights and its only job is building the index that makes
  *   `resolveWeights({locale: "en-in"})` surface `pairIndexPath` in local dev.
  *
  *   Note the country code is `in`, not the locale tag: this builds `pair-index-in.bin`.

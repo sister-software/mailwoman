@@ -4,8 +4,7 @@
  * @author Teffen Ellis, et al.
  * @file The comment-reflow rule: which comments are eligible, and where a trailing one lands.
  *
- * Adapted from oxlint-plugin-comment-reflow (MIT, © Diego Haz). The eligibility and trailing-comment plumbing is
- * upstream's. The width options and the breaker behind them are ours.
+ * Adapted from oxlint-plugin-comment-reflow (MIT, © Diego Haz).
  */
 
 import type { Comment, CreateRule, ESTree, SourceCode } from "@oxlint/plugins"
@@ -33,8 +32,6 @@ const containers = new Set([
 	"JSXOpeningElement",
 	"JSXEmptyExpression",
 	// A comment on its own line inside a data literal is prose like any other.
-	// Upstream's list stopped at objects, which left every ignore list, pattern table and tuple in this
-	// repository unformatted — and a sweep that joins such a paragraph has nothing to re-break it.
 	"ArrayExpression",
 	"TSTupleType",
 	"CallExpression",
@@ -115,7 +112,7 @@ function protectedComment(source: SourceCode, comment: Comment) {
 /**
  * The lines of a starred block that are missing their `*`, by offset within the block.
  *
- * The opener and the closer are skipped, and so is a line holding nothing but whitespace:
+ * The opener and the closer are skipped, and so is a line holding only whitespace:
  * a blank line in a starred block is written bare as often as it is written with a star.
  */
 function missingStarLines(lines: readonly string[]): { at: number; width: number }[] {
@@ -133,10 +130,7 @@ function missingStarLines(lines: readonly string[]): { at: number; width: number
 }
 
 /**
- * The rule itself, registered as `mailwoman/comment-reflow` by `oxlint.plugin.ts`.
- *
- * Adapted from oxlint-plugin-comment-reflow (MIT, © Diego Haz), whose eligibility
- * and trailing-comment plumbing this keeps.
+ * Registered as `mailwoman/comment-reflow` by `oxlint.plugin.ts`.
  */
 export const reflowRule: CreateRule = {
 	meta: {

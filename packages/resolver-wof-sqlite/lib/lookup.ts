@@ -317,7 +317,7 @@ export class WOFSQLitePlaceLookup implements PlaceLookup, Disposable {
 		// The unroutable half is the worse of the two.
 		// An extract reaches routing only through the name `deriveSchemaName` derives from
 		// its filename, so a file spelled one letter off the placetype it serves answers
-		// with nothing while holding every row that was asked for.
+		// with no result while holding every row that was asked for.
 		//
 		// Two independent things bring an extract under the guard, and it needs both.
 		// Carrying `spr` is a claim to be a place extract.
@@ -329,7 +329,7 @@ export class WOFSQLitePlaceLookup implements PlaceLookup, Disposable {
 		// Testing only the name would exempt a correctly-named build input.
 		// An extract needs to fail neither test to be exempt.
 		//
-		// Exempt by design: `postcode-locality-<cc>.db` carries a relation table and nothing else,
+		// Exempt by design: `postcode-locality-<cc>.db` carries only a relation table,
 		// matches no routed placetype, and is part of the documented default extract list.
 		for (const s of this.#extracts) {
 			if (s.schemaName === "main") continue

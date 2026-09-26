@@ -5,8 +5,7 @@
  * @file Comment reflow: paragraph detection, markup preservation, and the line breaker.
  *
  * Paragraph detection, markup preservation and the rule plumbing began as oxlint-plugin-comment-reflow (MIT,
- * © Diego Haz). The line breaker is ours: upstream fills greedily to one width, which is what produced the
- * orphans and the mid-parenthetical breaks. See `chooseBreaks` for the penalty model that replaced it.
+ * © Diego Haz).
  */
 
 /**
@@ -46,8 +45,6 @@ export interface ReflowOptions {
 
 /**
  * The options the rule runs with when a config names none.
- *
- * 90 and 120 are this repository's measure and ceiling, and `tabWidth: 2` is what oxfmt renders.
  */
 export const defaultOptions: Required<ReflowOptions> = {
 	printWidth: 120,
@@ -59,7 +56,6 @@ export const defaultOptions: Required<ReflowOptions> = {
 
 /**
  * Penalties in the breaker's cost function.
- * Tuned against the monorepo's own comments.
  */
 const weights = {
 	/**
@@ -116,8 +112,7 @@ const weights = {
 } as const
 
 /**
- * Count Unicode code points.
- * A tab advances to the next `tabWidth` stop.
+ * Count Unicode code points, with a tab advancing to the next `tabWidth` stop.
  */
 export function columns(text: string, tabWidth: number = defaultOptions.tabWidth): number {
 	let width = 0
@@ -131,10 +126,6 @@ export function columns(text: string, tabWidth: number = defaultOptions.tabWidth
 
 /**
  * Comments carrying a tool directive or legal text must remain byte-for-byte intact.
- *
- * The tool names are only half of a directive, so each has to be followed by the word that makes it one.
- * Upstream matched the name alone, which made every comment citing `…-v8-cjk-regs.md` or a
- * Vite config exempt, and an exempt comment is one this rule never touches and never reports.
  */
 export function isProtected(text: string): boolean {
 	const directive =
@@ -146,7 +137,6 @@ export function isProtected(text: string): boolean {
 	return directive.test(text) || legal.test(text)
 }
 
-// Read balanced inline constructs without changing their internal whitespace.
 function balancedEnd(text: string, start: number, open: string, close: string, quoteStrings = false) {
 	let depth = 0
 	let quote = ""
@@ -256,7 +246,6 @@ interface WrapLimits {
 /**
  * An abbreviation ending in a period is not a sentence boundary.
  *
- * The list is the ones that actually occur in this repository's prose.
  * A missed entry costs a break opportunity, never a mangled sentence.
  */
 const ABBREVIATIONS =
@@ -355,20 +344,6 @@ function measure(tokens: readonly string[], tabWidth: number): TokenFacts[] {
 /**
  * Set one sentence, choosing its breaks by minimizing a penalty over every legal breaking
  * rather than filling each line until the next word does not fit.
- *
- * Greedy filling is what strands a two-word tail on a line of its own
- * and what splits a parenthetical in half.
- * It cannot price a break until it has already taken it.
- *
- * A line wants to end at `target`.
- * Falling short costs the square of the gap.
- *
- * Running into the balance zone up to `max` costs twice that square, and eight times
- * it past ten columns in, so those columns are bought rather than spent.
- * A parenthetical that would otherwise be split is worth about seventeen of them.
- *
- * Breaking after a comma or before a conjunction earns a credit, which is
- * what puts the break on punctuation.
  */
 function chooseBreaks(tokens: readonly string[], limits: WrapLimits, firstWidth: number, continuationWidth: number) {
 	const facts = measure(tokens, limits.tabWidth)
@@ -383,7 +358,7 @@ function chooseBreaks(tokens: readonly string[], limits: WrapLimits, firstWidth:
 	const lineWidth = (from: number, to: number) =>
 		(from === 0 ? firstWidth : continuationWidth) + prefix[to]! - prefix[from]! - (from > 0 ? 1 : 0)
 
-	// Cost of setting tokens [from, to) as one line, `last` when nothing follows it.
+	// Cost of setting tokens [from, to) as one line, `last` when no token follows it.
 	const cost = (from: number, to: number, last: boolean) => {
 		const width = lineWidth(from, to)
 
@@ -458,12 +433,6 @@ function chooseBreaks(tokens: readonly string[], limits: WrapLimits, firstWidth:
 
 /**
  * Split prose into sentences at a terminator followed by something that opens one.
- *
- * Tokenizing first is what makes this safe: a code span, a link and a `{@link}` are
- * single tokens, so a period inside one is never a boundary.
- * A terminator inside parentheses is not one either.
- *
- * An aside carries its own full stop and the sentence continues past the closing bracket.
  */
 function splitSentences(text: string): string[] {
 	const tokens = words(text)
@@ -505,10 +474,6 @@ function splitSentences(text: string): string[] {
 
 /**
  * Group a paragraph's sentences into the paragraphs it should have become.
- *
- * The lead sentence stands alone: it says what the thing is, and everything after it qualifies that.
- * The rest travel in pairs, which is the density the hand-written comments in
- * this codebase's ancestor settled on.
  */
 function groupSentences(sentences: readonly string[], perParagraph: number, leadAlone: boolean): string[][] {
 	if (sentences.length < 2) return [sentences.slice()]
@@ -642,11 +607,8 @@ function isStructure(line: string) {
 }
 
 /**
- * How a block's prose is divided once it has been reflowed.
- *
  * `paragraphs` is off for a run of `//` comments: a blank line there is a `//` on its own,
  * which reads as a gap in the code rather than a paragraph break.
- * Those get one sentence per line and nothing else.
  */
 interface ParagraphShape {
 	paragraphs: boolean
@@ -850,10 +812,7 @@ function limitsFor(options: Required<ReflowOptions>, overhead: number): WrapLimi
 /**
  * A comment that says its piece in one sentence on one line within `printWidth` is left as it is.
  *
- * The measure only governs prose that has to break, so pulling a 108-column
- * one-liner onto two lines buys nothing and costs a line.
- * Two sentences on one line are a different matter: that is the shape the rule
- * exists to undo, whatever the width.
+ * Two sentences on one line are the shape the rule exists to undo, whatever the width.
  */
 function fitsOnOneLine(lines: readonly string[], overhead: number, options: Required<ReflowOptions>) {
 	if (lines.filter((line) => line.trim()).length !== 1) return false
@@ -867,8 +826,7 @@ function fitsOnOneLine(lines: readonly string[], overhead: number, options: Requ
 }
 
 /**
- * Format a group of standalone line comments.
- * The first indent is external.
+ * Format a group of standalone line comments; the caller supplies the first line's indent.
  */
 export function reflowLineComments(
 	values: readonly string[],
@@ -891,7 +849,8 @@ export function reflowLineComments(
 
 /**
  * Format an entire block token, preserving code and nonstandard block layouts.
- * sourceLineWidth includes surrounding syntax when checking a single-line block.
+ *
+ * `sourceLineWidth` includes surrounding syntax when checking a single-line block.
  */
 export function reflowBlockComment(
 	raw: string,

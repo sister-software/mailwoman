@@ -9,7 +9,7 @@
  *   `whenStyleReady` guard: react-map-gl owns the "add source/layer once the style is loaded, remove on
  *   unmount" lifecycle, so the hand-rolled `isStyleLoaded()` / `styledata` races disappear.
  *
- *   Pass the `outline` straight from a {@link MapPlaceRenderSpec}; a `null` outline renders nothing (the
+ *   Pass the `outline` straight from a {@link MapPlaceRenderSpec}; a `null` outline renders no geometry (the
  *   bare-point case). node-import safety: imports `react-map-gl/maplibre` — `@mailwoman/react/map` only.
  */
 
@@ -25,7 +25,7 @@ const OUTLINE_COLOR = "#e0367c"
 
 export interface ResultOverlayProps {
 	/**
-	 * The outline geometry to draw, or `null` to draw nothing (the bare-point result).
+	 * The outline geometry to draw, or `null` to draw no geometry (the bare-point result).
 	 */
 	outline: PlaceGeometry | null
 	/**

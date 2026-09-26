@@ -7,7 +7,7 @@
  *
  *   The defect: `resolveWeights` probed the literal `locality-surface-lexicon-v6.json` while both the
  *   shipped v4.0.1 recipe and the v4.2.0 candidate train against v7. Serving fed the channel a
- *   different lexicon generation than training painted, and nothing said so — the v6 file exists, the
+ *   different lexicon generation than training painted, and no check reported it — the v6 file exists, the
  *   channel loads, the parse works. The Run B check had to stage v7's content under the v6 filename to
  *   score faithfully.
  *

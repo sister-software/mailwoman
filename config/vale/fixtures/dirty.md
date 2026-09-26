@@ -107,3 +107,5 @@ This is a test rather than a production system.
 This is a test, not a production system.
 
 `CommaNo.yml` and `NamesVerb.yml` must each fire on the rest of this line: the build runs in one process, no server, and the flag names the output file.
+
+The resolver returns nothing when the query names no candidate.

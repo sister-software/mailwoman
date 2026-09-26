@@ -3,28 +3,24 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mailwoman gazetteer polygons` — build the crisp-polygon sibling for the demo's map. (The slim
- *   `wof-hot.db` points source is retired 2026-06-20. The admin tier resolves against the
- *   candidate table now. build polygons with `--admin` below, keyed by the same WOF spr ids the
- *   candidate table returns.) The demo's map draws the WOF rectangle (`place_bbox`) today. this
- *   packs the real admin geometry — simplified — so the demo can draw an actual boundary, loaded
- *   lazily only when a result is shown.
+ *   `mailwoman gazetteer polygons` — build the crisp-polygon sibling for the demo's map. The demo
+ *   draws the WOF rectangle (`place_bbox`) today; this packs the real admin geometry — simplified — so
+ *   the demo can draw an actual boundary, loaded lazily only when a result is shown.
  *
  *   Source: the per-id WOF GeoJSON repos at
  *   `<repos>/whosonfirst-data-admin-<cc>/data/<id-per-region>/<id>.geojson`, where the database path is
- *   the id split into 3-char chunks (101909779 → 101/909/779/101909779.geojson). Only admin
- *   placetypes carry polygons. postcodes resolve to a point marker, so they're skipped. We pull the
- *   in-scope ids straight from the already-built points/admin DB so the two stay in lockstep.
+ *   the id split into 3-char chunks (101909779 → 101/909/779/101909779.geojson). Only admin placetypes
+ *   carry polygons; postcodes resolve to a point marker and are skipped. In-scope ids are pulled
+ *   straight from the already-built points/admin DB so the two stay in lockstep.
  *
- *   Each ring is Douglas-Peucker simplified (default tol ~0.004° ≈ 400 m) to keep the file shippable
- *   — admin polygons are huge at full resolution. Output: `polygons(id integer primary KEY, geom
+ *   Each ring is Douglas-Peucker simplified (default tol ~0.004° ≈ 400 m) to keep the file shippable,
+ *   since admin polygons are huge at full resolution. Output is `polygons(id integer primary KEY, geom
  *   text)` where geom is a GeoJSON geometry the demo feeds straight into a MapLibre source.
  *
- *   Source modes: `--points <wof-hot.db>` keeps the demo sidecar in lockstep with the slim points DB
- *   (small, shippable). `--admin <admin-global-priority.db>` instead pulls every admin row from the
- *   full gazetteer (optionally `--countries US,DE`) — the broad-coverage build the node-side
- *   reverse geocoder (#484) wants: the slim DB excludes localadmin, which is where US town polygons
- *   actually live (VT: 255/255 localadmin have real polygons, 0 reached the demo sidecar).
+ *   `--points <wof-hot.db>` keeps the demo sidecar in lockstep with the slim points DB (small,
+ *   shippable); `--admin <admin-global-priority.db>` instead pulls every admin row from the full
+ *   gazetteer (optionally `--countries US,DE`) — the slim DB excludes localadmin, which is where US
+ *   town polygons actually live.
  */
 
 import { wofReposPath } from "@mailwoman/core/data-root"
@@ -86,17 +82,13 @@ interface SprRow {
 
 interface RawGeometry {
 	type: string
-	// Polygon → LinearRing[]; MultiPolygon → LinearRing[][].
-	// Typed loosely at the JSON boundary.
+	// Polygon → LinearRing[]; MultiPolygon → LinearRing[][] — typed loosely at the JSON boundary.
 	coordinates: LinearRing[] | LinearRing[][]
 }
 
 /**
- * Where a country's admin record sits under a repositories root.
- *
- * `--repos` defaults to the owner directory (`<data-root>/src/wof-repos/whosonfirst-data`),
- * so the repository name is appended flat to whatever root the caller gave.
- * The id-to-path rule itself belongs to `wofIDPathSegments`.
+ * `--repos` defaults to the owner directory, so the repository name is appended flat to
+ * whatever root the caller gave; the id-to-path rule itself belongs to `wofIDPathSegments`.
  */
 function geojsonPath(repos: string, country: string, id: number): string {
 	return resolvePath(repos, wofRepoName("admin", country), "data", ...wofIDPathSegments(id)).toString()
@@ -117,10 +109,7 @@ function segDist(p: Position, a: Position, b: Position): number {
 }
 
 /**
- * Douglas-Peucker on a ring of [lon,lat].
- *
- * Keeps endpoints.
- * Preserves closure.
+ * Douglas-Peucker on a ring of [lon,lat], keeping endpoints and preserving closure.
  */
 function dp(ring: LinearRing, tol: number): LinearRing | null {
 	if (ring.length <= MIN_RING_VERTICES) return ring
@@ -160,10 +149,9 @@ function dp(ring: LinearRing, tol: number): LinearRing | null {
 }
 
 /**
- * Simplify a Polygon / MultiPolygon geometry.
- * Drop rings that collapse.
+ * Simplify a Polygon / MultiPolygon geometry, dropping rings that collapse.
  *
- * @returns Null if nothing left.
+ * @returns Null if no entry is left.
  */
 function simplify(geom: RawGeometry, tol: number): RawGeometry | null {
 	const ringSet = (poly: LinearRing[]): LinearRing[] =>
@@ -221,10 +209,8 @@ const GazetteerPolygons: CommandComponent<typeof spec> = ({ options }) => {
 			...(countries ?? [])
 		).filter((r) => ADMIN_PLACETYPES.has(r.placetype))
 
-		// Build to a temp sibling, then atomically swap into place (scripts/agents.md:
-		// a DB is a readonly artifact — never write the live path in case the build dies halfway).
-		// The original .mjs wrote `out` directly.
-		// This hardens it without changing the result.
+		// Build to a temp sibling and atomically swap into place, because a database is a read-only
+		// artifact and the live path must never be written in case the build dies halfway.
 		const tmpOut = `${out}.tmp-${process.pid}`
 
 		for (const stale of [tmpOut, `${tmpOut}-wal`, `${tmpOut}-shm`, `${tmpOut}-journal`]) {
@@ -234,8 +220,7 @@ const GazetteerPolygons: CommandComponent<typeof spec> = ({ options }) => {
 		}
 
 		const kdb = new DatabaseClient<PolygonDatabase>(tmpOut)
-		// DDL via the Kysely schema-builder.
-		// The hot insert loop below stays on the raw `kdb` handle.
+		// DDL goes through the Kysely schema-builder; the hot insert loop stays on the raw `kdb` handle.
 
 		await createPolygonsTable(kdb)
 

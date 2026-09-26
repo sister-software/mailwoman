@@ -12,7 +12,7 @@
  *
  *   This is a measurement layer rather than a check. It never joins the combined verdict (`run.ts` lists only
  *   regression + metamorphic), it has no stored expected values, and its verdict says only whether the
- *   instrument ran. A map of all-zero cells is "not measured", never "nothing broke" (meaning-of-zero).
+ *   instrument ran. A map of all-zero cells is "not measured", never "no check failed" (meaning-of-zero).
  *
  *   Three ancestors, generalized rather than duplicated:
  *
@@ -45,14 +45,14 @@
  *   circular.
  *
  *   Three outcomes are passes: the answer held at the base rung, it coarsened to a rung the surviving evidence still
- *   justifies, or it abstained where the surviving evidence justifies nothing (bare `Springfield`: 144 distinct places,
+ *   justifies, or it abstained where the surviving evidence justifies no pick (bare `Springfield`: 144 distinct places,
  *   no population winner). Substitution stays a hard fail at every rung — a coordinate cannot redeem a slot refilled by
  *   the wrong token.
  *
  *   The pre-2026-08-05 fields (`brokenCount`, `unresolvedCount`, `displacementKm*`) are unchanged and still computed
  *   against the anchor: the two gradings sit side by side in every artifact, which is what makes the regrade
  *   comparable. `unresolvedCount` is not split in place; `correctlyAbstainedCount` and `lostCount` are the split, added
- *   alongside it (meaning-of-zero: an abstention asks the operator for nothing, a loss asks for a recall fix).
+ *   alongside it (meaning-of-zero: an abstention asks the operator for no action, a loss asks for a recall fix).
  *
  *   Run: mailwoman eval gauntlet --layer ablation [--components postcode,street] [--limit 20] [--out DIR]
  */
@@ -204,7 +204,7 @@ export function deleteSpan(input: string, at: number, length: number): string {
  *
  * 1. `empty` — the asserted value is the empty string.
  *    `us-dc-pennsylvania` asserts `postcode: ""` to pin that the slot stays empty.
- *    There is nothing to delete, and treating it as a deletion would manufacture support.
+ *    There is no value to delete, and treating it as a deletion would manufacture support.
  * 2. `not-verbatim` — the asserted value is not in the input (an assertion about the
  *    resolved value, e.g. `country: "United States"` against an input saying `USA`).
  *    Deleting it would require guessing which span it came from.
@@ -403,7 +403,7 @@ function timestampDir(now: Date): PathBuilder {
  *
  * @returns `pass` — which reports only whether the instrument ran (at least one measured cell).
  * A map is not a check.
- * Nothing here can fail a ship.
+ * No result here can fail a ship.
  */
 export async function runAblationLayer(
 	options: AblationLayerOptions = {}
@@ -458,7 +458,7 @@ export async function runAblationLayer(
 	const deps = await buildGauntletDeps(layerDepsOptions(options))
 	const gazetteer = await AblationGazetteer.create()
 
-	// loud, because a ladder-less run and a run where nothing degraded produce the
+	// loud, because a ladder-less run and a run where no rung degraded produce the
 	// same all-`held` shape until you read `ladderGradedCount`.
 	// The map still measures the anchor-graded columns without it.
 	console.error(
@@ -594,8 +594,8 @@ export async function runAblationLayer(
 					ladderGaps: built.ladder ? built.ladder.gaps.map((g) => `${g.placetype} ${g.name}: ${g.reason}`) : [],
 				})
 
-				// Two different nulls, and the progress line must not conflate them:
-				// `no-anchor` is the row failing to resolve as written (nothing to measure against),
+				// Two different nulls, and the progress line must not conflate them: `no-anchor`
+				// is the row failing to resolve as written (no anchor to measure against),
 				// `unresolved` is the deletion costing the answer.
 				const moved =
 					scored.displacementKm != null
@@ -658,7 +658,7 @@ export async function runAblationLayer(
 
 	printSummary(cells, rows, { boardID, measuredAt, anchorsRun, outDir: outDir.toString(), pinLine, skips })
 
-	// The instrument rather than a check: a map of zero cells means the run measured nothing, and a "pass"
+	// The instrument rather than a check: a map of zero cells means the run measured no row, and a "pass"
 	// printed over an empty map is precisely the reading the meaning-of-zero rule exists to forbid.
 	return { pass: cells.length > 0, outDir: outDir.toString(), cells }
 }

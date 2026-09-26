@@ -5,25 +5,14 @@
  *
  *   Where along a ladder of near-identical inputs the answer changes, and which component changed first.
  *
- *   Every other measurement here varies the configuration and holds the input fixed: `mwdev_compare` swaps arms,
- *   `counterfactual.ts` flips one change. This varies the input and holds the configuration fixed, which is the only
- *   way to attribute a failure to a token rather than a setting. Both defects it was built from were diagnosed this
- *   way by hand:
+ *   Every other measurement here varies the configuration and holds the input fixed; this varies the input and holds the
+ *   configuration fixed, which is the only way to attribute a failure to a token rather than a setting.
  *
- *       Portopetro, Illes Balears, Spain              locality ok   region ok
- *       07691 Portopetro, Illes Balears, Spain        locality ok   region discarded
- *       15, 07691 Portopetro, Illes Balears, Spain    locality displaced by the region
+ *   Rungs are the caller's: no code here generates them, because generating them means asserting a component order, and a
+ *   generator silently wrong about order for one locale would produce a confident table about a ladder nobody wrote.
  *
- *   Read down that ladder and the diagnosis is not "Spain is weak". It is that a leading postcode discards the
- *   region and a house number then displaces the locality, in two separate stages, with no street involved. The
- *   aggregate score for ES says none of that.
- *
- *   rungs are the caller'S. Nothing here generates them, because generating them means asserting a component order,
- *   and a generator that is silently wrong about order for one locale would produce a confident table about a ladder
- *   nobody wrote. The caller supplies the minimal pairs. this measures them.
- *
- *   A tag that is absent on a rung is reported absent. Gained, lost and changed are three different facts about a
- *   component, and collapsing them into "different" is what makes a diff table unreadable.
+ *   A tag absent on a rung is reported absent — gained, lost and changed are three different facts about a component,
+ *   and collapsing them into "different" is what makes a diff table unreadable.
  */
 
 import { haversineKm } from "@mailwoman/spatial"
@@ -31,10 +20,8 @@ import { haversineKm } from "@mailwoman/spatial"
 import type { EngineConfig, EngineRegistryLike } from "#engine/registry"
 
 /**
- * How far the resolved point must move before the rung is called a divergence, in kilometres.
- *
- * Borrowed from the counterfactual threshold for the same reason it was chosen there:
- * below the tightest distance anything here grades at, a move cannot change a verdict,
+ * Borrowed from the counterfactual threshold for the same reason: below the
+ * tightest distance anything here grades at, a move cannot change a verdict,
  * so reporting it fills the table with coordinate jitter.
  */
 const MOVED_KM = 1
@@ -67,22 +54,14 @@ interface RungReading {
 	lon: number | null
 	tier: string
 	/**
-	 * The #1649 intent check's verdict, when it fired on this rung.
-	 *
-	 * A refused rung has no components and no coordinate, and is otherwise indistinguishable
-	 * from an input the parser could make nothing of.
-	 * It is the opposite: the eval discards a completed tree.
-	 *
-	 * `Cafe at St Mary's, Oxford` parses to `locality=Oxford › dependent_locality=St Mary's › street=Cafe`
-	 * and is then refused as a thing-query, while `The Cafe at St Mary's, Oxford` is not.
-	 * So a ladder over the two reads as a parse collapse unless the refusal is named here.
+	 * The intent check's verdict, when it fired on this rung: a refused rung has no components
+	 * and no coordinate, and is otherwise indistinguishable from an input the parser could
+	 * make no sense of — but it is the opposite, because the eval discarded a completed tree.
 	 */
 	refused?: string
 	/**
-	 * What changed against the previous rung.
-	 *
-	 * Null on step 0, where there is no previous rung, which is a different fact from a
-	 * delta whose every list is empty, and the rendering keeps them apart.
+	 * Null on step 0, where there is no previous rung — a different fact from a
+	 * delta whose every list is empty.
 	 */
 	delta: RungDelta | null
 	error?: string
@@ -92,9 +71,8 @@ interface LadderReading {
 	label: string
 	rungs: RungReading[]
 	/**
-	 * The first rung whose components or coordinate differ from the rung below it.
-	 *
-	 * `null` means the whole ladder answered identically with reportable result.
+	 * The first rung whose components or coordinate differ from the rung below it;
+	 * `null` means the whole ladder answered identically.
 	 */
 	first_divergence: { step: number; input: string; tags: string[]; moved_km: number | null } | null
 	rendered: string
@@ -135,8 +113,7 @@ function diffRungs(previous: RungReading, current: RungReading): RungDelta {
 		}
 	}
 
-	// A null coordinate on either side is not distance zero.
-	// Abstention is its own outcome and the tier fields carry it.
+	// A null coordinate on either side is not distance zero: abstention is its own outcome and the tier fields carry it.
 	const moved =
 		previous.lat !== null && previous.lon !== null && current.lat !== null && current.lon !== null
 			? haversineKm(previous.lat, previous.lon, current.lat, current.lon)
@@ -153,8 +130,6 @@ function diffRungs(previous: RungReading, current: RungReading): RungDelta {
 }
 
 /**
- * The ladder as a table, with the input beside its own result on every line.
- *
  * The rendering is the deliverable rather than a convenience: a reader deciding whether a defect
  * is real needs the addresses in view, and a JSON blob of component maps does not put them there.
  */
@@ -180,9 +155,8 @@ function renderLadder(reading: Omit<LadderReading, "rendered">): string {
 
 		const cells = tags.map((tag, i) => (rung.components[tag] ?? ABSENT).padEnd(widths[i]!))
 		const mark = reading.first_divergence?.step === rung.step ? " ←" : ""
-		// A refusal is stated on the row itself.
-		// Its cells are all `absent`, which without this reads as a parse that found nothing
-		// rather than a completed parse that was thrown away.
+		// A refusal is stated on the row itself: its cells are all `absent`, which without this
+		// reads as a parse that found no result rather than a completed parse that was thrown away.
 		const refusal = rung.refused ? `  REFUSED as ${rung.refused} — parse discarded, not failed` : ""
 
 		lines.push(`  ${rung.input.padEnd(inputWidth)}  ${cells.join("  ")}  ${rung.tier}${mark}${refusal}`)
@@ -215,10 +189,9 @@ export interface MinimalPairsResult {
 }
 
 /**
- * Walk each ladder through one engine and report where its answer first moves.
- *
- * One engine for the whole call, deliberately: a ladder measured across two engines
- * cannot attribute a change to the input, which is the only thing this measures.
+ * Walk each ladder through one engine and report where its answer first moves;
+ * one engine for the whole call, deliberately, because a ladder measured across
+ * two engines cannot attribute a change to the input.
  */
 export async function runMinimalPairs(
 	registry: EngineRegistryLike,

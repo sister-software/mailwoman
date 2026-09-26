@@ -106,7 +106,7 @@ formatAddressRow({ locality: "Paris", region: "Île-de-France", postcode: "75008
 //   }
 ```
 
-It returns `null` when nothing rendered.
+It returns `null` when the render produced no output.
 
 ### `canonicalKey(components, options?)`
 
@@ -160,7 +160,7 @@ models for are hand-authored and checked against real addresses on a committed b
 
 **One rule governs rendering:**
 
-> A node that renders nothing removes itself, and its connector goes with it.
+> A node that renders no output removes itself, and its connector goes with it.
 
 A connector between two slots needs a rendered slot on each side. A connector at a line's edge
 has only one side, so it binds to the single slot it touches. That is how Japan's 〒 disappears

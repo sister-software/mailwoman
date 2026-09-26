@@ -314,7 +314,7 @@ export function applyEntityTiers(
  * The head is the text before the first spaced dash, with any trailing parenthetical removed.
  * For example, "The North Face - Covent Garden" becomes "The North Face".
  *
- * It returns null when nothing was removed or when the head is a single word,
+ * It returns null when no text was removed or when the head is a single word,
  * because a one-word head matches too broadly.
  */
 function venueHeadSegment(venueRaw: string): string | null {
@@ -352,7 +352,7 @@ function venueHeadSegment(venueRaw: string): string | null {
 }
 
 /**
- * Runs {@link probeVenueNearAnchor}, then retries by comparing name heads when it finds nothing.
+ * Runs {@link probeVenueNearAnchor}, then retries by comparing name heads when it finds no match.
  *
  * The retry compares {@link venueHeadSegment} of the query and of each row.
  * It still requires a single match within the radius, so a chain with two nearby branches returns `null`.

@@ -49,7 +49,7 @@ The model was never trained to handle these cases. The v0.4.0 weights didn't cha
 
 ### Pattern 2: Empty predictions
 
-When the model emits nothing for a component that the golden set expects, the failure is typically a training-distribution effect — the model learned a positional prior that doesn't apply to the eval set.
+When the model emits no label for a component that the golden set expects, the failure is typically a training-distribution effect — the model learned a positional prior that doesn't apply to the eval set.
 
 In v0.4.0, 65% of postcode false-negatives were empty predictions on mid-position postcodes like `Paris 75008`. The NAD downweight (the most aggressive change in the source rebalance) removed "postcode-first" positional patterns from the training mix. The model learned to tag mid-position numeric tokens as `house_number` instead of `postcode`.
 

@@ -5,34 +5,22 @@
  * @file Deterministic {@linkcode ClockLike} implementations shared by the `core/api` suites and by
  *   downstream clients' tests (`filer/sdk/sec-client.test.ts`).
  *
- *   Lifted from `98c4dda1:filer/sdk/sec-client.test.ts`, where the two-clock split was worked out: a
- *   naive clock is fine for sequential assertions and actively masks concurrency bugs, so anything
+ *   A naive clock is fine for sequential assertions and actively masks concurrency bugs, so anything
  *   testing how concurrent waiters interleave needs the deadline-ordered one.
  */
 
 import type { ClockLike } from "#api/clock"
 
 /**
- * How much real time {@linkcode VirtualClock.runUntilSettled} tolerates with
- * nothing pending before declaring the work stuck.
+ * How much real time {@linkcode VirtualClock.runUntilSettled} tolerates with no
+ * work pending before declaring the work stuck.
  *
  * Finite, so a genuinely blocked test reports what happened instead of timing out.
  *
- * This used to be a budget of 1000 idle event-loop turns, on the stated assumption
- * that "a real `readFile` resolves in a handful of turns".
- * Turns are not time: an idle turn is a `setImmediate` round-trip costing microseconds, so the
- * whole budget expired in single-digit milliseconds while the I/O it was waiting for took tens.
- *
- * On an unloaded machine the race happened to go the right way.
- * Under load it did not, and the guard fired on working code — observed
- * 2026-08-02 on the lab at load 15.25 and then on a hosted GitHub runner,
- * in `filer/sdk/sec-client.test.ts` and `bdc/sdk/client.test.ts`.
- *
  * Measured with `performance.now()`, not `Date.now()`: consumers run under
- * `vi.useFakeTimers({ toFake: ["Date"] })`, which freezes `Date` while leaving
- * `performance` and `setTimeout` real.
- * A Date-based budget would never expire inside those blocks, so genuinely stuck
- * work would hang exactly where this is supposed to report it.
+ * `vi.useFakeTimers({ toFake: ["Date"] })`, which freezes `Date` while leaving `performance`
+ * and `setTimeout` real, so a Date-based budget would never expire inside those blocks
+ * and genuinely stuck work would hang exactly where this is supposed to report it.
  */
 const IDLE_BUDGET_MS = 5000
 
@@ -43,14 +31,9 @@ const IDLE_BUDGET_MS = 5000
  * a few turns and should not pay a timer.
  * Past that the wait is on something real, and continuing to spin actively harms it: back-to-back
  * `setImmediate` turns monopolize the event loop and starve the very I/O the loop is waiting for.
- *
- * That feedback loop is why the old guard got worse exactly when the machine was busiest.
  */
 const IDLE_SPIN_TURNS = 50
 
-/**
- * Real backoff between idle polls once {@linkcode IDLE_SPIN_TURNS} is exhausted.
- */
 const IDLE_BACKOFF_MS = 1
 
 /**
@@ -96,8 +79,8 @@ export interface FakeClock extends ClockLike {
 /**
  * A simple, immediately-resolving fake clock.
  *
- * Fine for every sequential assertion (nothing racing the clock), but not sufficient
- * for a concurrency test — see {@linkcode VirtualClock}.
+ * Fine for every sequential assertion (no concurrent work racing the clock),
+ * but not sufficient for a concurrency test — see {@linkcode VirtualClock}.
  */
 export function createFakeClock(startAt = 0): FakeClock {
 	let current = startAt
@@ -120,9 +103,9 @@ export function createFakeClock(startAt = 0): FakeClock {
  * A virtual-time clock that resolves concurrent `sleep()`s one AT A time, strictly in
  * deadline order, only when explicitly driven via {@linkcode VirtualClock.advance}.
  *
- * Unlike {@linkcode createFakeClock}, which bumps `now()` synchronously the instant
- * `sleep()` is called (fine when nothing else races the clock, but not a faithful
- * model of "N callers all waiting on the same deadline").
+ * Unlike {@linkcode createFakeClock}, which bumps `now()` synchronously the
+ * instant `sleep()` is called (fine when no other operation races the clock,
+ * but not a faithful model of "N callers all waiting on the same deadline").
  *
  * This fidelity is exactly what a pacing regression needs: a coarser clock that resolves
  * every same-deadline sleeper "at once" cannot distinguish a fixed pacer from a broken one —
@@ -191,7 +174,7 @@ export class VirtualClock implements ClockLike {
 	 * A paced client whose limit sits downstream of an on-disk cache spends several real
 	 * event-loop turns in `readFile` before it ever registers its `sleep()`.
 	 *
-	 * A caller that drains once and then advances finds nothing pending, jumps the clock
+	 * A caller that drains once and then advances finds no sleep pending, jumps the clock
 	 * past the deadlines that are registered a moment later, and the test hangs.
 	 *
 	 * This polls instead: drain, and if any sleep is pending, advance to the earliest deadline.
@@ -247,9 +230,8 @@ export class VirtualClock implements ClockLike {
 					)
 				}
 
-				// Past the spin window the wait is on something real.
-				// Back off so it can be serviced — spinning here starves the I/O we are waiting for,
-				// which is why the old turn-budgeted guard failed hardest on the busiest machines.
+				// Past the spin window the wait is on something real: back off so it can be serviced,
+				// since spinning here starves the I/O we are waiting for.
 				if (idleTurns > IDLE_SPIN_TURNS) {
 					await realDelay(IDLE_BACKOFF_MS)
 				}

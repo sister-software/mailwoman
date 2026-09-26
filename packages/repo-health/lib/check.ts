@@ -5,7 +5,7 @@
  *
  *   The shape every repository health check takes: it inspects the checkout and returns diagnostics. The admission
  *   rule is in the type. A check has no way to mutate, generate, publish, benchmark or probe, because `run` returns
- *   diagnostics and nothing else is asked of it.
+ *   diagnostics and no other result is asked of it.
  */
 
 /**

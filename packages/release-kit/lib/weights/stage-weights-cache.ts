@@ -14,7 +14,7 @@
  *   with the shipped bundle's channels — the #566/#685 trap one level up. Staging the whole set into a
  *   throwaway directory is what makes "this is the bundle, graded as a bundle" checkable.
  *
- *   Symlinks by default (nothing is copied, nothing in the data root is touched). `--from` seeds the
+ *   Symlinks by default (no file is copied and no file in the data root is touched). `--from` seeds the
  *   layout from an existing workspace package; `--file`, `--omit` and `--card` then diverge it. That
  *   `seed + diverge` shape is what an A/B needs: the two arms differ in exactly the files named on the
  *   command line, and the diff is the command line.

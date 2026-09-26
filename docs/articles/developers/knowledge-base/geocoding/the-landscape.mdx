@@ -33,7 +33,7 @@ easier.
 Normalize both sides and compare them. Lowercase the text, strip punctuation, expand the standard
 abbreviations, and drop the tokens your database does not store. Then take the best fuzzy match above a
 threshold. Against a bounded, curated set this is accurate, fast and easy to debug, and it takes an
-afternoon to build. Nothing in this section of the docs argues against it, and a team that ships it and
+afternoon to build. The docs here do not argue against it, and a team that ships it and
 moves on has made a good decision.
 
 Two other simplifications have the same property:
@@ -47,7 +47,7 @@ Two other simplifications have the same property:
 
 All three approaches have the same limit: they work only on addresses you already know about. For a
 new customer, a building finished last month, or an address in a format the abbreviation table does not
-cover, the normalizer returns nothing and the postcode pattern extracts nothing. There is no partial
+cover, the normalizer returns no match and the postcode pattern extracts no postcode. There is no partial
 match to escalate on. The approaches also do not signal which case occurred, so a failure produces no
 output and no error.
 

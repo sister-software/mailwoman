@@ -6,9 +6,8 @@
  *   `mwdev_interface`'s measurement: parse an input set, validate each tree against the decoder's own structural
  *   interface, and report which violation classes fire — including the ones that do not.
  *
- *   The tree validated is `GeocodeRun.tree`, which is the tree AS the resolver sees IT — after the postcode and
- *   stranded-affix repairs. So this counts what survives the repairs rather than what the raw decode emitted, which is
- *   the number that matters: a violation the repairs already clean up costs a consumer nothing.
+ *   The tree validated is `GeocodeRun.tree` as the resolver sees it, after the postcode and stranded-affix repairs, so
+ *   this counts what survives them: a violation the repairs already clean up has no consumer impact.
  */
 
 import type { EngineConfig, EngineRegistryLike } from "#engine/registry"
@@ -36,8 +35,8 @@ export async function runInterfaceCensus(
 
 			rows.push({ id: item.id, input: item.input, tree: run.tree })
 		} catch {
-			// A row the engine cannot parse contributes nothing to any tally: counting it
-			// as valid would manufacture interface compliance out of a crash.
+			// A row the engine cannot parse contributes to no tally: counting it as valid
+			// would manufacture interface compliance out of a crash.
 			errored.push(item.id)
 		}
 	}
@@ -84,8 +83,7 @@ function summarize(census: ReturnType<typeof censusTrees>, powerSentence: string
 			`(${((worst.stranding_rate ?? 0) * 100).toFixed(1)}%).`
 		: "No strict dependent was stranded on any row."
 
-	// A table of tags at zero reads as a clean bill of health.
-	// For a tag no row ever produced, it is not one.
+	// A tag no row ever produced is not a clean bill of health.
 	const blindSentence = census.never_produced.length
 		? ` ${census.never_produced.length} strict dependents never appeared at all (${census.never_produced.join(", ")}), ` +
 			"so their zero stranding counts measure nothing."

@@ -38,8 +38,8 @@ or `house_number` label, which are the rows that teach an address rather than a 
 can hold millions of rows while its street-row count reads 0. CN reads 11,357,947 and 0.
 
 **Admission** is `country_weights` in the training config, a hard filter. A code absent from it
-trains on nothing whatever the corpus holds. A code present in it with no corpus row trains on
-nothing either, by the other route.
+trains on no rows whatever the corpus holds. A code present in it with no corpus row trains on
+no rows either, by the other route.
 
 **Gazetteer** counts admin places available to resolve, and `rooftop` marks the two jurisdictions
 whose rooftop database a consumer can obtain. Every other rooftop database is build-local.
@@ -325,7 +325,7 @@ are data-only overlays over it.
 `IN` (18,179,272), `BR` (1,146,913), `PK` (159,994), `LU` (150,000), `SG` (142,083), `VN` (62,898), `BD` (15,705), `NZ` (11,957), `LB` (1,109), `TR` (1,097), `GE` (1,088), `PE` (1,073), `JO` (1,066), `VE` (22), `AS` (1)
 
 Each of these holds corpus rows and appears in neither shipped graph's `country_weights`, so those
-rows train nothing that ships. This is the mechanism that left Norway untaught while its rows sat in
+rows train no shipped model. This is the mechanism that left Norway untaught while its rows sat in
 the corpus. A jurisdiction here that also carries a weights package is served by a data-only overlay
 over a graph that was never taught it.
 
@@ -333,7 +333,7 @@ over a graph that was never taught it.
 
 `IN` `BR` `PK` `LU` `SG` `VN` `BD` `NZ` `LB` `TR` `GE` `PE` `JO` `VE` `AS` `AD` `AE` `AF` `AG` `AI` `AL` `AO` `AR` `AW` `BA` `BB` `BF` `BI` `BJ` `BM` `BN` `BQ` `BS` `BT` `BW` `BY` `BZ` `CD` `CF` `CG` `CK` `CO` `CR` `CV` `CW` `CY` `DJ` `DM` `DO` `EG` `ER` `FK` `FM` `FO` `GD` `GH` `GM` `GT` `GW` `HK` `ID` `IL` `IM` `IO` `IS` `KH` `KW` `KY` `MA` `ML` `MN` `MP` `MS` `MU` `MW` `MY` `NA` `NE` `NG` `NI` `OM` `PG` `PH` `PM` `PR` `RU` `RW` `SA` `SB` `SC` `SH` `SM` `SO` `SR` `ST` `SV` `SX` `TH` `TK` `TM` `TO` `TT` `UA` `VG` `VI` `VU` `ZA`
 
-Admission is not teaching. Each of these trains on nothing until the corpus holds a row for it.
+Admission is not teaching. Each of these trains on no rows until the corpus holds a row for it.
 
 It stops admitting 0 of the jurisdictions a shipped graph admits.
 

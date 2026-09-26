@@ -1475,7 +1475,7 @@ Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>"
 **Interfaces:**
 
 - Consumes: `useDemoEmbed()` (`docs/src/contexts/DemoEmbed.tsx:81` — `{ classifier, ready, loadingProgress }`), `DemoEmbedProvider` (needs `sqljsBaseURL="/mailwoman/sqljs"`), `ModelVisualizer` (Task 4), `MailwomanClassifierLike.traceParse` (Task 3).
-- Produces: the `/trace` page. Nothing downstream depends on it in this plan.
+- Produces: the `/trace` page. No later task depends on it in this plan.
 
 - [ ] **Step 1: Implement `LiveModelVisualizer.tsx`**
 

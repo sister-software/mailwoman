@@ -3,11 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The root manifest's `workspaces` field, expanded to the directories it names. Yarn accepts globs in that field and
- *   the repository writes `packages/*` beside the literal `docs`; every reader that walks the workspaces goes through
- *   here so a glob is expanded once, the same way, and a literal entry that names no manifest is an error rather than
- *   an empty result. Only a single trailing `*` segment is supported: the repository never writes another shape, and
- *   a pattern this reader cannot expand must refuse, because "matched nothing" would read as "no workspaces".
+ *   The root manifest's `workspaces` field, expanded to the directories it names: only a single trailing `*` segment is
+ *   supported, a literal entry that names no manifest is an error rather than an empty result, and a pattern this reader
+ *   cannot expand must refuse rather than report no matches.
  */
 
 import { type PathBuilderLike, resolvePath } from "path-ts"
@@ -25,10 +23,8 @@ async function isWorkspaceDirectory(repoRoot: PathBuilderLike, directory: string
 
 export interface ReadWorkspaceDirectoriesOptions {
 	/**
-	 * Skip a literal entry whose directory carries no manifest instead of failing.
-	 *
-	 * A checkout at an older ref may predate a workspace the field names.
-	 * A reader that resolves that ref's own tree wants absence rather than an error.
+	 * Skip a literal entry whose directory carries no manifest instead of failing,
+	 * for reading a checkout at an older ref that predates a workspace the field names.
 	 *
 	 * @default false
 	 */
@@ -68,8 +64,8 @@ export async function readWorkspaceDirectories(
 
 		if (!parent) throw new Error(`workspace pattern ${stringifyJSON(entry)} is not a single trailing "*" segment`)
 
-		// Only a directory can be a workspace.
-		// A file beside them (a readme) is skipped before anything is stat-ed under it.
+		// Only a directory can be a workspace, so a file beside them (a readme) is skipped
+		// before anything is stat-ed under it.
 		const children = (
 			await Globerator.from("*", {
 				cwd: resolvePath(repoRoot, parent),
@@ -108,26 +104,11 @@ export async function isRegisteredWorkspace(repoRoot: PathBuilderLike, directory
 }
 
 /**
- * Directories under a `parent/*` pattern that carry no `package.json`, in name order.
- *
- * {@link readWorkspaceDirectories} drops these, and dropping them is right:
- * a directory with no manifest is no workspace.
- * What it leaves is a directory nothing reaches.
- *
- * Retiring a workspace removes its manifest and its source, and `tsc` has already written `out/`
- * and a `tsconfig.tsbuildinfo` beside them, so the emit outlives the workspace that produced it.
- *
- * Three directories reached that state: `packages/formatter` through 5cc5f6ab9, the workspace
- * 8a40475c4 renamed to `@mailwoman/locale-hint`, and `packages/neural-web` through 349a5003c.
- * `sherif` reports each one as `packages-without-package-json`, because the
- * pattern still matches the directory.
- *
- * A literal workspace entry is not examined.
- * `readWorkspaceDirectories` refuses one whose manifest is absent rather than skipping it,
- * so a literal entry never produces this shape.
+ * Directories under a `parent/*` pattern that carry no `package.json`, the complement
+ * of {@link readWorkspaceDirectories}: a directory with no manifest is no workspace,
+ * but a retired workspace's compiled `out/` remains.
  */
 // repo-health-ignore export-name-affix -- answers the complement of the shared reader's filter.
-// It names what the glob matched and the manifest test refused.
 export async function retiredWorkspaceDirectories(repoRoot: PathBuilderLike): Promise<string[]> {
 	const manifest = await readPackageJSON(resolvePath(repoRoot, "package.json"))
 	const entries = Array.isArray(manifest.workspaces) ? manifest.workspaces : (manifest.workspaces?.packages ?? [])

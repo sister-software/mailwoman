@@ -31,7 +31,7 @@ In the second, the receptionist reads your note, works out that "accounts" is th
 rest is a person's name, goes to the accounts department's own list, and looks up the name there. Fewer
 pages get opened. The answer comes with its reasoning: you know it came from the accounts list, so you
 know what it means. The cost is that someone must understand your note first. If they read "accounts"
-as a surname, they go to the wrong list and come back with nothing at all. You do not even get an approximate answer.
+as a surname, they go to the wrong list and come back with no entry at all. You do not even get an approximate answer.
 
 Every geocoder works like one of those two receptionists.
 
@@ -59,7 +59,7 @@ everything, queried as text.
 
 - **Fuzzy recall over a huge corpus.** For a misspelled name, half an address, or a landmark instead
   of a street, the index still returns a ranked result, because scoring is continuous. A design that
-  parses first has nothing to look up when the parse fails.
+  parses first has no span to look up when the parse fails.
 - **Inputs that are not addresses.** "The station", "castle museum", or a venue name containing a
   place name are documents in the index like any other. They are not addresses, and a parser has no
   label for them.
@@ -105,8 +105,8 @@ the labeling half without the lookup half, which is why it is a parser and not a
 
 **What it costs.** Someone must train the labeler on a labeled corpus for each locale. Where that corpus
 is thin, the labels are wrong, and no amount of gazetteer data repairs them. When labeling goes wrong,
-the result is empty and nothing flags the error. A span labeled `street` that was really a locality is
-looked up in the street index, matches nothing, and returns an empty result instead of an approximate
+the result is empty and no field flags the error. A span labeled `street` that was really a locality is
+looked up in the street index, matches no record, and returns an empty result instead of an approximate
 one. The search architecture would have returned something. A query that is not an address at all has
 no useful labeling, so it has no useful lookup.
 
@@ -135,7 +135,7 @@ and is not re-measured there. A missing number is not a small number.
 index (Redis and ranked matching, without a parser), and it has no memory problem, because it indexes one
 country's address register instead of the whole planet. When the corpus is scoped down, the
 architectural cost of the search design mostly disappears. If all your addresses are in one country
-and that country publishes a register, Addok is a strong option, and nothing on this page argues
+and that country publishes a register, Addok is a strong option, and this page does not argue
 against it.
 
 **Disk space also costs something.** Mailwoman's US rooftop tier is 41.3 GB if you download all of
@@ -153,13 +153,13 @@ The choice depends on what your input looks like. The hardware table does not de
 
 If your queries are exploratory (search boxes, partial strings, landmarks, "the thing near the
 station"), the search architecture fits the job, and a parser is the wrong tool because such a query can
-contain nothing to parse. If your queries are addresses from a form, a CRM export or a delivery manifest, and
+contain no address to parse. If your queries are addresses from a form, a CRM export or a delivery manifest, and
 you need fields as well as a point, the labeling architecture fits the job. A ranked document list
 would have to be post-processed into fields anyway.
 
 The two designs can also be combined. A pipeline can label first, use the constrained lookup when it
 succeeds, and fall back to a ranked full-text search over the raw string when the labeling produces
-nothing usable. That design is workable, and it carries both sets of costs.
+no usable spans. That design is workable, and it carries both sets of costs.
 
 ## Related
 

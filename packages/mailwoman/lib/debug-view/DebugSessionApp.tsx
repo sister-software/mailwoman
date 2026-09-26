@@ -11,7 +11,7 @@
  *   `alternateScreen: true`, and Ink enters before its first frame and leaves from `unmount()` — which its
  *   `signal-exit` subscription reaches on a signal death too. The buffer is what makes the full-height frame safe at
  *   all: Ink emits `\x1b[2J\x1b[3J\x1b[H` for a frame as tall as the terminal, and `3J` wipes the scrollback (the
- *   #1577 damage `geocode.tsx`'s one-shot path exists to avoid). On the alternate screen that clear costs nothing.
+ *   #1577 damage `geocode.tsx`'s one-shot path exists to avoid). On the alternate screen that clear costs no scrollback.
  *   the buffer has no scrollback of its own, and leaving it restores the primary buffer untouched. So this component
  *   may render a full-height frame from its first frame. there is no primary buffer underneath to guard.
  *
@@ -318,7 +318,7 @@ export function DebugSessionApp({ initialInput, options }: DebugSessionAppProps)
 				const columns = stdout.columns || prior.columns
 				const rows = stdout.rows || prior.rows
 
-				// Same dimensions ⇒ same object, so a resize event that changed nothing
+				// Same dimensions ⇒ same object, so a resize event that changed no dimension
 				// costs no re-render and no re-rendered map frame.
 				return columns === prior.columns && rows === prior.rows ? prior : { columns, rows }
 			})

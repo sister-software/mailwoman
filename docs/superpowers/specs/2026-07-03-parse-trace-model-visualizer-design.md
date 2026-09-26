@@ -18,7 +18,7 @@ Three needs share one missing artifact:
 Today the interior of a parse is discarded. `NeuralAddressClassifier.#decode`
 (`neural/classifier.ts`) computes every intermediate — soft-feature channels, raw logits, locale
 head, post-prior emissions, viterbi path, repair mutations — and returns only tokens (+ raw
-logits/pieces via `parseWithLogits`). Nothing downstream can show _why_ a token got its tag.
+logits/pieces via `parseWithLogits`). No downstream stage can show _why_ a token got its tag.
 
 ## Decision summary
 

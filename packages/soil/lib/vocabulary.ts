@@ -167,7 +167,7 @@ export const COINTERP_OVERALL_RULE_DEPTH = "0"
  * The code of the area-times-component-percentage weighting that produced the per-cell shares.
  *
  * Component percentages have no location, so a share gives how much of a cell lies in
- * rated map units and says nothing about where in the cell the rating applies.
+ * rated map units and makes no statement about where in the cell the rating applies.
  */
 export const SOIL_SHARE_WEIGHTING = "cell_area_x_comppct_r"
 

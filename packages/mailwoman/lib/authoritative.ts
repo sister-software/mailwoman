@@ -3,17 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Threads a configured authoritative provider's answer onto a geocode result (#1901). The block is
- *   additive and separate: the provider's assertions ride beside Mailwoman's own answer, and nothing
- *   here rewrites the open result's coordinate, components, or tier — a consumer that wants the
- *   provider's identity reads the block and decides for itself. That separation is what makes the
- *   byte-equivalence guarantee trivial: with no provider configured, this module is never called and
- *   the result is the one every caller already gets.
- *
- *   A provider that throws is a transport failure (network, auth, timeout) and is reported as
- *   `status: "transport_error"` with the message — never silently dropped, because a dropped failure
- *   is indistinguishable from "the provider was not configured", and that is the
- *   measurement-boundary lie this repository keeps finding.
+ * Threads a configured authoritative provider's answer onto a geocode result as an additive, separate block — no code here rewrites the open result's coordinate, components, or tier — and a provider that throws is reported as `status: "transport_error"` with the message rather than silently dropped, because a dropped failure is indistinguishable from "the provider was not configured".
  */
 
 import type { ComponentTag } from "@mailwoman/codex/component"
@@ -25,13 +15,8 @@ import type {
 } from "@mailwoman/core/resolver"
 
 /**
- * One provider match on the wire — the snake_case projection of {@link AuthoritativeMatch}, field for field.
- *
- * Absent fields were absent from the provider's answer.
- * Nothing is defaulted in.
- *
- * Unexported: consumers reach it as `AuthoritativeAssertion["matches"]`,
- * and the export-hygiene check limits the surface to actual importers.
+ * The snake_case wire projection of {@link AuthoritativeMatch}, field for field,
+ * with no field defaulted in when the provider's answer omitted it.
  */
 interface AuthoritativeAssertionMatch {
 	provider_place_id: string
@@ -45,10 +30,9 @@ interface AuthoritativeAssertionMatch {
 }
 
 /**
- * The result-level block.
- *
- * `status` is the response status plus `transport_error`; `matches` is present exactly when the provider
- * returned candidates (one for `matched`, all of them in the provider's order for `ambiguous`).
+ * The result-level block: `status` is the provider's response status plus `transport_error`,
+ * and `matches` is present exactly when the provider returned candidates —
+ * one for `matched`, all of them in the provider's order for `ambiguous`.
  */
 export interface AuthoritativeAssertion {
 	provider: string
@@ -65,9 +49,8 @@ export interface AuthoritativeAssertion {
 }
 
 /**
- * The subset of a geocode result this module reads to build the provider's query.
- *
- * Structural, so the helper never imports the result type and the dependency stays one-way.
+ * The subset of a geocode result this module reads: structural, so the helper never
+ * imports the result type and the dependency stays one-way.
  */
 export interface AuthoritativeEvidence {
 	locality: string | null
@@ -93,10 +76,9 @@ const EVIDENCE_TAGS: ReadonlyArray<[keyof AuthoritativeEvidence, ComponentTag]> 
 ]
 
 /**
- * Build the provider query from the assembled result's components.
- *
- * Spans are deliberately absent here.
- * The flat result no longer carries them, and the interface marks them optional for exactly this assembly.
+ * Builds the provider query from the assembled result's components; spans are
+ * deliberately absent, both because the flat result no longer carries them and
+ * because the interface marks them optional for exactly this assembly.
  */
 export function authoritativeQueryFrom(
 	rawQuery: string,
@@ -137,10 +119,9 @@ function projectMatch(match: AuthoritativeMatch): AuthoritativeAssertionMatch {
 }
 
 /**
- * Consult the provider and project its answer to the wire block.
- *
- * Never throws: a thrown lookup comes back as the `transport_error` block
- * so the last geocode answer remains available after a provider outage.
+ * Consults the provider and projects its answer to the wire block, never throwing:
+ * a thrown lookup comes back as the `transport_error` block so the last geocode
+ * answer remains available after a provider outage.
  */
 export async function consultAuthoritativeProvider(
 	provider: AuthoritativeProvider,

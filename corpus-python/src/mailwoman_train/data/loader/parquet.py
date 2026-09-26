@@ -20,10 +20,9 @@ from ..augment import SPAN_KEYS
 
 _REQUIRED_COLUMNS: tuple[str, ...] = ("raw", "tokens", "labels", "country", "source")
 
-# v0.5.0 char-offset label columns (#519). Presence is decided PER file by schema: a v0.5.0
-# parquet file carries all three (and every row must be non-null in all three); a frozen pre-v0.5.0
-# file carries none (rows ride the legacy token path). A file with some of the three is
-# corrupt — loud failure, never a silent fallback.
+# Char-offset label columns. Presence is decided per file by schema: a file carries all three, with
+# every row non-null in all three, or none, and rows then ride the legacy token path. A file with
+# some of the three is corrupt.
 _SPAN_COLUMNS: tuple[str, ...] = SPAN_KEYS
 
 
@@ -47,23 +46,18 @@ def _file_row_iter(
     max_weight: float,
     coarse_filter: bool,
 ) -> Iterator[dict[str, Any]]:
-    """Yield filter-accepted rows from a single parquet file, with row-group + row shuffle.
+    """Yield filter-accepted rows from a single parquet file, with row-group and row shuffle.
 
-    Applies the country-weight acceptance test, (when ``coarse_filter`` is set) the
-    coarse-label check, and — when ``expected_source`` is given — a per-row source equality
-    check. The per-row source check matters for the 2 "transition" files in corpus
-    v0.2.0 (part-0016 and part-0259) where one source's data ends and the next begins
-    mid-file. without it the per-source iterator would yield rows from the wrong source.
+    Applies the country-weight acceptance test, the coarse-label check when ``coarse_filter`` is set,
+    and a per-row source equality check when ``expected_source`` is given — a file can span sources,
+    so without it the per-source iterator would yield rows from the wrong source.
 
-    Does **not** apply source weighting — source weighting is handled at the multinomial
-    sampler level in ``_raw_row_stream``, so that the observed mix matches ``source_weights``
-    exactly (rather than the ``raw_share × accept_share`` shape that per-row source
-    acceptance produces, which under v0.2.0's heavy raw-share skew toward BAN proved
-    unreliable as a steering mechanism — PR #44).
+    Does **not** apply source weighting; that is the multinomial sampler in ``_raw_row_stream``, which
+    makes the observed mix match ``source_weights`` exactly.
     """
     pf = pq.ParquetFile(path)
-    # Span-column presence is a per-file schema fact (#519): all three or none. Partial = a
-    # corrupt file. reading the survivors would silently train the wrong labels.
+    # Span-column presence is a per-file schema fact: all three or none. A partial file is corrupt,
+    # and reading the survivors would silently train the wrong labels.
     schema_names = set(pf.schema_arrow.names)
     span_present = [c for c in _SPAN_COLUMNS if c in schema_names]
     if span_present and len(span_present) != len(_SPAN_COLUMNS):
@@ -117,11 +111,9 @@ def _file_row_iter(
                         f"null span column(s) {nulls} in a span-schema file — never a silent "
                         "fallback to token labels"
                     )
-                # Empty is the other way a span-schema file lies, and it is the quieter one. A writer
-                # that projects rows without the span triple emits `[]` for all three, which passes the
-                # null check above; `char_label_array_from_spans(raw, [], [], [])` then returns an
-                # all-`O` array and every such row trains as "nothing here is an address component".
-                # A row whose BIO labels carry a tag cannot honestly have no spans.
+                # Empty is the quieter way a span-schema file lies: a writer that projects rows without
+                # the span triple emits `[]` for all three, which passes the null check above and then
+                # trains as all-`O`. A row whose BIO labels carry a tag cannot honestly have no spans.
                 if all(not v for v in spans.values()) and any(lbl != "O" for lbl in bio_labels):
                     raise ValueError(
                         f"corrupt row in {path} (row-group {rg}, raw={row['raw']!r}): "
@@ -144,18 +136,14 @@ def _source_iter(
 ) -> Iterator[dict[str, Any]]:
     """Yield rows from a sequence of parquet files, restricted to ``expected_source``.
 
-    Files are visited in shuffled order. within each file, row-groups and row indices
-    are also shuffled (see ``_file_row_iter``). One row-group's worth of rows is held
-    in memory at a time per source, so total RAM is bounded by the number of distinct
-    sources rather than by any file-pool parameter.
+    Files, row-groups and row indices are all visited in shuffled order (see ``_file_row_iter``). One
+    row-group's worth of rows is held in memory at a time per source, so total RAM is bounded by the
+    number of distinct sources rather than by any file-pool parameter.
 
-    A bounded draw reads one row-group, and that is the whole of #2347. Measured on
-    `corpus-v0.5.0`: a row-group holds 50,000 rows, a source's epoch draw was 17,269, and rows are
-    ordered by country within a source — `wof-admin/part-0000.parquet` row-group 0 is JP/CN/FR/US
-    while row-groups 10 and 19 are 100% US. So a draw sees between 1 and 11 countries whatever order
-    the files are visited in, and shuffling file order alone moves which row-group that is rather
-    than widening it. `docs/engineering/reference/corpus-draw-coverage.mdx` records the measurement
-    and the two candidate repairs with their costs.
+    A draw reads one row-group, and rows are ordered by country within a source, so a draw sees only
+    the countries in that row-group; shuffling file order moves which row-group that is without
+    widening it. ``docs/engineering/reference/corpus-draw-coverage.mdx`` records the measurement and
+    the candidate repairs.
     """
     order = list(paths)
     rng.shuffle(order)

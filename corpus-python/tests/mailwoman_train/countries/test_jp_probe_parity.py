@@ -1,20 +1,4 @@
-"""One seeded JP probe build, pinned across every artifact it writes.
-
-Nothing exercised this. The builder reads a 19.59M-point Overture-JP parquet and a cp932 KEN_ALL
-extract, neither of which the suite has, so the whole path — the per-prefecture reservoirs, the
-round-robin draw, the postcode join, the held-out board and the sealed char vocab — has never run
-under pytest.
-
-One `random.Random` feeds the board reservoir, each prefecture's reservoir, the per-prefecture
-shuffle, the draw shuffle, the postcode coin for every rendered row and the board's own postcode
-coin. Adding, dropping or reordering a draw reshuffles which addresses a seeded build trains on,
-and no artifact says so. This pins every one of them: the rendered rows in emission order, the
-board, the vocabulary and the report.
-
-The fixture supplies all 47 prefectures because the builder RAISES below that, and it names each
-municipality by searching for the bucket it must land in. The board split is md5 of the
-municipality, so a fixture that does not construct board municipalities pins an empty board.
-"""
+"""One seeded JP probe build, pinned across every artifact it writes, because one `random.Random` feeds every draw and reordering one reshuffles which addresses a seeded build trains on."""
 
 from __future__ import annotations
 
@@ -33,11 +17,9 @@ from mailwoman_train.countries.jp.probe_corpora import (
     muni_bucket,
 )
 
-#: Committed beside this file, captured from the code as it stood before a split. Regenerating it
-#: after a change makes the test compare the new code against itself, so regenerate only when the
-#: current code is already verified against the existing reference.
-#:
-#: Regenerate with: uv run python -m tests.mailwoman_train.countries.test_jp_probe_parity
+#: Committed beside this file; regenerate with `uv run python -m
+#: tests.mailwoman_train.countries.test_jp_probe_parity` only when the current code is already
+#: verified against the existing reference, or the test compares the new code against itself.
 REFERENCE = Path(__file__).parent / "jp-probe-reference.json"
 
 REFERENCE_README = [
@@ -70,20 +52,15 @@ FIXTURE_SCHEMA = pa.schema(
 #: prefecture to reach its target, and the reservoir caps at three times that.
 ROWS_PER_POOL_MUNI = 5
 
-#: Small enough to run in a test, large enough that the train split still covers all 47
-#: prefectures after the draw is shuffled — which the builder RAISES on.
+#: Small enough to run in a test, large enough that the train split still covers all 47 prefectures
+#: after the draw is shuffled, which the builder RAISES on.
 TRAIN_ROWS = 470
 VAL_ROWS = 47
 BOARD_ROWS = 20
 
 
 def municipality_names(prefecture: str) -> tuple[list[str], str]:
-    """Three pool municipalities and one board municipality for a prefecture.
-
-    The split is `muni_bucket`, an md5 of the name — so a name cannot be chosen for a side, only
-    searched for. Without the search the board reservoir stays empty and the held-out check pins
-    nothing.
-    """
+    """Three pool municipalities and one board municipality for a prefecture; the side is `muni_bucket`, an md5 of the name, so a name can only be searched for rather than chosen."""
     pool: list[str] = []
     board: str | None = None
     index = 0
@@ -203,11 +180,7 @@ def test_the_fixture_reaches_the_board_and_the_postcode_join(built: dict[str, An
 
 
 def write_reference() -> None:
-    """Capture the current build as the reference the tests above compare against.
-
-    Run this only when the current code already passes against the existing reference — otherwise
-    the artifact records whatever the code does now, and the tests assert nothing.
-    """
+    """Capture the current build as the reference the tests above compare against; run it only when the current code already passes against the existing reference, or the artifact records whatever the code does now."""
     import tempfile
 
     patch = pytest.MonkeyPatch()

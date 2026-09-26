@@ -3,18 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The fixture rung: build a real sealed artifact from hand-built geometry, then read it.
- *
- *   the meaning-OF-zero inversion is the point OF this file, and it is checked in three ways rather than
- *   asserted once. Every coverage row must fail `supportsExclusion`; a builder handing a stronger basis to
- *   the coverage writer must be refused. and an artifact carrying one must be refused at open time. The
- *   sibling flood layer reports a point inside its footprint and outside every polygon as the authority's
- *   Zone 1 designation. This layer must report the same geometry as `unknown` with no designation, because
- *   ncerm publishes no coverage statement and an absent polygon may simply be inland.
- *
- *   the twelve scenarios staying separable is the second thing pinned here. The fixture puts two scenarios
- *   over the same ground with different distances, so a build that pooled them would answer one point with
- *   two contradictory numbers under one name.
+ *   The fixture rung: build a real sealed artifact from hand-built geometry, then read it. NCERM publishes no
+ *   coverage statement, so a point inside the footprint but outside every polygon is `unknown` with no
+ *   designation rather than the authority's Zone 1.
  */
 
 import { CoastalContainmentPath, CoastalErosionLookup, CoastalReadingKind } from "@mailwoman/coastal"
@@ -55,8 +46,7 @@ let result: BuildCoastalResult
 let lookup: CoastalErosionLookup
 
 /**
- * A point inside the first fixture band.
- * Where both scenarios have a polygon.
+ * A point inside the first fixture band, where both scenarios have a polygon.
  */
 const INSIDE_BAND_A = {
 	latitude: FIXTURE_ORIGIN.lat + FIXTURE_SIDE / 2,
@@ -154,8 +144,8 @@ describe("the sealed artifact", () => {
 			.prepare("SELECT count(*) AS n FROM coastal_zone_cell WHERE area_id = ?")
 			.get(`${NFI}:4`) as { n: number }
 
-		// A polyfill keyed on cell centres returns nothing for a 5 m square,
-		// and a feature indexed to nothing reads downstream as an absence.
+		// A polyfill keyed on cell centres returns no cells for a 5 m square,
+		// and a feature indexed to no cell reads downstream as an absence.
 		// The failure the per-part zero-cell guard exists to make impossible.
 		expect(sliver.n).toBeGreaterThan(0)
 	})
@@ -224,10 +214,6 @@ describe("the meaning-of-zero inversion", () => {
 		expect(rows.length).toBeGreaterThan(0)
 		expect(result.coverageBasis).toBe(CoverageBasis.SourcePresent)
 
-		// the failing test the issue asks FOR: not one assertion on one row, but the whole
-		// table read back and every row checked through the interface's own predicate.
-		// A code path that read `supportsExclusion` as true for this layer would have to make
-		// one of these rows carry a stronger basis, and this fails the moment it does.
 		for (const row of rows) {
 			expect(row.basis).toBe(CoverageBasis.SourcePresent)
 			expect(supportsExclusion({ basis: row.basis as CoverageBasis })).toBe(false)
@@ -252,9 +238,6 @@ describe("the meaning-of-zero inversion", () => {
 	it("refuses to OPEN an artifact whose coverage would license a negative claim", () => {
 		const path = scratch.path("tampered.db")
 
-		// The sealed artifact is copied and one coverage row is promoted to `designated`,
-		// which is exactly what a builder generalizing the flood layer's rule would have produced.
-		// The reader must refuse rather than answer confidently.
 		using source = new DatabaseClient<CoastalDatabase>(databasePath, { readOnly: true })
 
 		source.exec(`VACUUM INTO '${path}'`)
@@ -357,7 +340,7 @@ describe("the declared domains", () => {
 		}
 
 		// A single space rather than an empty string.
-		// A reader testing `=== ""` finds nothing and reports these as ordinary.
+		// A reader testing `=== ""` finds no empty string and reports these as ordinary.
 		expect(row.mt_policy).toBe(" ")
 		expect(row.published_year).toBe(0)
 	})

@@ -19,7 +19,7 @@ You have written the word-list version of this. A set of known street suffixes, 
 abbreviations, a table of city names — and a tokenizer that splits on whitespace so the tokens line
 up with the table keys.
 
-It works until it meets a word the table has never seen, and then it has nothing at all to say. Not a
+It works until it meets a word the table has never seen, and then it offers no opinion at all. Not a
 weaker opinion: no opinion, because the lookup either hits or misses. `Pennsylvana`, typed by a
 person in a hurry, is as unknown to a word table as `Xzqjrt`. And the table itself has no natural
 size — every new country, every new spelling, every business name is another key, and a table with
@@ -27,7 +27,7 @@ millions of keys is not a table any more, it is the corpus.
 
 The fix is the printer's type case rather than the dictionary. Keep a fixed inventory of fragments,
 and spell every word out of them. Rare words cost more fragments; unseen words still get spelled.
-Nothing is unrepresentable.
+No input is unrepresentable.
 
 ## Pieces rather than words
 
@@ -43,7 +43,7 @@ Two properties matter downstream.
 by the inventory, so bounding it at 73,143 is what keeps the shipped model a 39.4 MB file rather than
 a multi-gigabyte one.
 
-**Nothing is out of vocabulary.** When a character is not covered by any piece, the tokenizer falls
+**No input is out of vocabulary.** When a character is not covered by any piece, the tokenizer falls
 back to encoding it byte by byte. A Cyrillic street name or a stray emoji produces pieces rather than
 a failure. Those pieces carry no learned meaning — byte fallback is what stops the pipeline from
 crashing, and it is not coverage of the script. [What the model cannot do](./what-the-model-cannot-do.mdx)

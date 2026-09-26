@@ -28,7 +28,7 @@
  *
  *   Uses structural typing for the QueryShape value so a caller may pass any compatible object. The shape
  *   itself is never imported. The format-name convention is imported from its owner rather than restated,
- *   because a restated convention drops the formats added after it was restated and reports nothing.
+ *   because a restated convention drops the formats added after it was restated and reports no error.
  */
 
 /**
@@ -88,8 +88,8 @@ const FORMAT_TO_LABEL: ReadonlyMap<string, string> = new Map([["po_box", "B-po_b
  * The BIO label {@linkcode buildEmissionPriors} biases for one format hit,
  * or `undefined` when the format names no label.
  *
- * A hit whose format the detector produces but nothing here maps contributes zero bias and
- * raises nothing, so `formatCoverage` in the unit suite asserts every detector format resolves.
+ * A hit whose format the detector produces but no map entry covers contributes zero bias
+ * and raises no error, so `formatCoverage` in the unit suite asserts every detector format resolves.
  */
 function formatLabel(format: string): string | undefined {
 	return isPostcodeFormat(format) ? "B-postcode" : FORMAT_TO_LABEL.get(format)
@@ -204,7 +204,7 @@ function applyScopedLocalityBias(
 	if (bLocCol === undefined) return
 
 	for (const abbrev of abbrevs) {
-		// Guard 2: nothing may follow the abbreviation token.
+		// Guard 2: no token may follow the abbreviation token.
 		if (tokens.some((tok) => tok.start > abbrev.start + abbrev.span.length)) continue
 
 		const candidates = tokens.map((tok, t) => ({ tok, t })).filter(({ tok }) => tok.end <= abbrev.start)

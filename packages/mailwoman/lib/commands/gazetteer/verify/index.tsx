@@ -3,19 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mailwoman gazetteer verify` — the structural promotion eval, standalone: node census vs the
- *   committed baseline (#1026), coverage floor, region-abbrev/place_abbr spot-checks (#440/#1015),
- *   FTS/bbox coverage, degenerate-extent spot-check (#1015), and the reverse EU panel. Exits non-zero
- *   on any failure — do not swap an artifact that fails here. `build admin` runs this automatically.
- *   the standalone command is for verifying an existing DB (e.g. before promoting a staging artifact).
- *
- *   It also prints a derived-artifact freshness section (2026-08-05): which FST binaries were built
- *   from this exact database and which were built from some earlier generation of it. That section
- *   never touches the exit code. The admin DB is a sealed artifact a rebuild replaces, so every FST
- *   derived from it goes stale silently and on its own schedule — the 2026-08-04 swap left
- *   `fst-global-priority.bin` at a 2026-05-28 build and nothing anywhere noticed. A stale FST is a
- *   decode-time bias list that is merely old rather than a reason to refuse a database that is fine, and dev
- *   trees must keep running. so it warns, names the rebuild command, and gets out of the way.
+ *   Structural promotion eval for the admin gazetteer: exits non-zero on any failure, so do not swap
+ *   an artifact that fails here; the derived-FST freshness section is advisory and never affects the verdict.
  */
 
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
@@ -58,8 +47,8 @@ const GazetteerVerify: CommandComponent<typeof spec> = ({ options }) => {
 			}
 
 			if (options.fstFreshness) {
-				// Lazy: the FST module pulls the resolver + the libpostal dictionaries,
-				// and a verify run that skips this section should not pay for either.
+				// Lazy: the FST module pulls the resolver and libpostal dictionaries a
+				// skipped section should not pay for.
 				const { checkAdminDerivedFSTFreshness } = await import("#gazetteer-pipeline/fst")
 				const rows = await checkAdminDerivedFSTFreshness(dbPath)
 				const stale = rows.filter((row) => row.staleReason)

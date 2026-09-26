@@ -97,7 +97,7 @@ const MIN_EXTENT_DEG = 0.001
 /**
  * Computes the markers, outline and camera target for a resolved place.
  *
- * The function loads nothing, so the caller must put any fetched polygon in `place.geometry` first.
+ * The function loads no data, so the caller must put any fetched polygon in `place.geometry` first.
  */
 export function computeMapPlaceRenderSpec(place: ResolvedMapPlace): MapPlaceRenderSpec {
 	const markers: LngLat[] = [[place.lon, place.lat]]

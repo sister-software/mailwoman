@@ -16,8 +16,8 @@
  *   the obvious index would have dropped, each of which would read downstream as an absence of zoning. Both
  *   are reported per resolution and the `partial` share rides beside them.
  *
- *   one stream, every resolution. Re-reading the export per candidate costs a full pass each and buys
- *   nothing. The classification is per feature, so every candidate index folds the same feature in turn. The
+ *   one stream, every resolution. Re-reading the export per candidate costs a full pass each and buys no further
+ *   information. The classification is per feature, so every candidate index folds the same feature in turn. The
  *   cost is memory: each resolution holds its own cell sets, and the finest candidate dominates. A caller that
  *   runs out of headroom runs the candidates in separate invocations.
  */
@@ -87,7 +87,7 @@ export async function measureZoningCellResolutions(
 
 	// A range or an authority selector narrows the population on purpose,
 	// so the declared total is only a check on a whole pass.
-	// Narrowed runs report what they read and assert nothing about it.
+	// Narrowed runs report what they read and make no assertion about it.
 	const narrowed =
 		options.limit !== undefined || options.authorityCode !== undefined || options.objectIDFrom !== undefined
 

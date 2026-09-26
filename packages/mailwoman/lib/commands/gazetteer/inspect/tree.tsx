@@ -6,9 +6,7 @@
  *   `mailwoman wof tree <localRepoDir> <placetype>` — emit a nested JSON tree of the WOF placetype
  *   hierarchy rooted at the given placetype.
  *
- *   Reads from the local `whosonfirst-placetypes` clone produced by `mailwoman wof sync`. `--roles`
- *   restricts descendants to specific roles; `--output` writes to a file instead of stdout;
- *   `--compact` disables pretty-printing.
+ *   Reads from the local `whosonfirst-placetypes` clone that `mailwoman wof sync` produces.
  */
 
 import { Spinner } from "@inkjs/ui"
@@ -68,8 +66,8 @@ const WOFTree: CommandComponent<typeof spec, [string, string]> = ({ args, option
 		if (options.out) {
 			await writeLocalFile(serialized + "\n", options.out)
 		} else {
-			// Write JSON directly to stdout so Ink's <Text> renderer doesn't word-wrap long
-			// lines (compact mode is one very long line. Pretty mode is fine either way).
+			// Write JSON directly to stdout so Ink's <Text> renderer does not word-wrap
+			// long lines, since compact mode emits one very long line.
 			process.stdout.write(serialized + "\n")
 		}
 	})
@@ -86,8 +84,6 @@ const WOFTree: CommandComponent<typeof spec, [string, string]> = ({ args, option
 		)
 	}
 
-	// Stdout path: JSON is written above via process.stdout.write.
-	// Render nothing through Ink.
 	return null
 }
 

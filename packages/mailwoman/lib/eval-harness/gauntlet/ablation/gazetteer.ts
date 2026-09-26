@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   The {@linkcode AblationGazetteerProbe} implementation: the two databases the ablation layer's expectation model
- *   reads, and nothing else.
+ *   reads, and no other database.
  *
  *   - `wof/admin-global-priority.db` — `spr` + `ancestors`. The ladder comes from here: a resolved place id → its
  *       containment chain, with each ancestor's centroid and bbox. The walk is `ancestorLineage`'s (shared with the
@@ -16,7 +16,7 @@
  *
  *   Both are opened read-only and both are optional: a machine without them gets `available: false` and the layer falls
  *   back to anchor-only grading, loudly. A silently ladder-less run would report every variant as ungraded and look
- *   identical to a run where nothing degraded.
+ *   identical to a run where no rung degraded.
  *
  *   The queries stay raw `.prepare()` (the resolver-reader convention, agents.md): they are synchronous point probes on
  *   a read-only artifact, called once per rung and once per component per variant.
@@ -71,7 +71,7 @@ interface CandidateRow {
  * `spr`'s bbox columns are `not NULL default 0`, so an unset extent reads as `min == max`.
  * The meaning-of-zero trap this model must not fall into.
  *
- * Fold that to `null` at the reader, once, so nothing downstream can mistake it for an extent of zero.
+ * Fold that to `null` at the reader, once, so no consumer downstream can mistake it for an extent of zero.
  */
 function bboxOf(
 	minLat: number | null,
@@ -164,7 +164,7 @@ export class AblationGazetteer implements AblationGazetteerProbe {
 	 * The dynamic import keeps this optional dependency off ordinary evaluation paths, and
 	 * `@mailwoman/resolver-wof-sqlite`'s index is not something a `mailwoman --help` should pay for.
 	 * The reverse geocoder shares this object's already-open admin handle (`adminDatabase`),
-	 * so it opens nothing and disposal stays the single owner.
+	 * so it opens no handle and disposal stays the single owner.
 	 *
 	 * No polygon sidecar is passed: there is no global `wof-polygons.db`, so containment
 	 * is the approximate (nearest-centroid descent) mode — good enough to name a chain,
@@ -204,7 +204,7 @@ export class AblationGazetteer implements AblationGazetteerProbe {
 	 *
 	 * The existence check a constructor cannot perform is the caller's: `missingPaths`
 	 * is the answer {@linkcode AblationGazetteer.create} computed with `pathExists`,
-	 * and the constructor opens nothing while any path is named there.
+	 * and the constructor opens no handle while any path is named there.
 	 */
 	constructor(
 		opts: { ancestryPath?: PathBuilderLike; candidatePath?: PathBuilderLike; missingPaths?: readonly string[] } = {}

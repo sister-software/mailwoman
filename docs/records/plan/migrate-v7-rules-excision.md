@@ -2,8 +2,7 @@
 
 v7.0.0 removes the legacy rule-based parser and its shared substrate. The neural sequence
 labeler has been the primary parse path since v3; v7 deletes the dead rules engine that sat
-behind it. If you use the `mailwoman` CLI or the high-level library API, **nothing changes** —
-the neural pipeline is unaffected. The breaking changes below only touch consumers that imported
+behind it. If you use the `mailwoman` CLI or the high-level library API, **behavior is unchanged**. The neural pipeline is unaffected. The breaking changes below only touch consumers that imported
 the low-level rule-classifier packages directly.
 
 ## 1. `@mailwoman/classifiers` is removed

@@ -37,7 +37,7 @@ def format_report(
     check: float = CHECK,
     all_municipalities: bool = False,
 ) -> str:
-    """The printed read. The check line is the blended fraction and nothing else."""
+    """The printed read. The check line is the blended fraction and no other figure."""
     lines = [
         f"board rows: {result['rows']}; unresolved (pred pair not in table): {result['unresolved']}"
         f" (of which gold-exact, centroid within {accept_km:g} km by the row's own kanji: {result.get('gold_exact_unresolved', 0)})"
@@ -132,8 +132,6 @@ def resolve_tags_for(args: argparse.Namespace, label_set: Any) -> tuple[str, str
 def main() -> None:
     args = parse_args()
 
-    # Imported here rather than at module scope, so the pure scoring arithmetic stays importable
-    # (and testable) without the torch install.
     import torch
 
     from ...nn.encoder import MailwomanCoarseEncoder

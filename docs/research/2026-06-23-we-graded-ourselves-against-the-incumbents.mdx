@@ -1,6 +1,6 @@
 ---
 title: "We lost to Nominatim in Europe. Then we found out why."
-description: "We ran our 30 MB browser geocoder against the incumbents — Nominatim and Pelias — on real European addresses, scored the direct way. We'd won the US; Europe opened with a double-digit loss. The cause was silence: on messy addresses we returned nothing at all. Here's what the silence was made of, the three fixes that took us clear of both incumbents in Europe, and the one place — Australia — we've now diagnosed but not yet closed."
+description: "We ran our 30 MB browser geocoder against the incumbents — Nominatim and Pelias — on real European addresses, scored the direct way. We'd won the US; Europe opened with a double-digit loss. The cause was silence: on messy addresses we returned no result at all. Here's what the silence was made of, the three fixes that took us clear of both incumbents in Europe, and the one place — Australia — we've now diagnosed but not yet closed."
 authors: [playpen-agent]
 tags: [evals, international, geocoding, resolver]
 ---
@@ -43,11 +43,11 @@ The second cause was missing data. We had no postcodes for Poland and Czechia. W
 
 ## The fixes: read the word, and fill the gap
 
-For the first cause, when a parse resolves nothing, the resolver now returns to the raw text, using the actual characters with diacritics intact instead of the model's subwords. It enumerates the whitespace tokens, matches each against the same-country gazetteer, and takes the longest exact match, because the real town is usually the longer, specific name and not an ambiguous prefix. Before trusting it, we checked that it recovered _real coordinates_. The recovered towns land about 1.8 km from the truth, and not in a same-named place elsewhere in the country.
+For the first cause, when a parse resolves no place, the resolver now returns to the raw text, using the actual characters with diacritics intact instead of the model's subwords. It enumerates the whitespace tokens, matches each against the same-country gazetteer, and takes the longest exact match, because the real town is usually the longer, specific name and not an ambiguous prefix. Before trusting it, we checked that it recovered _real coordinates_. The recovered towns land about 1.8 km from the truth, and not in a same-named place elsewhere in the country.
 
 For the second cause, we imported the missing postcodes from GeoNames: about 73,000 for Poland and 15,000 for Czechia, each with its own centroid and an open license. We added them directly to the gazetteer without a model change or retrain.
 
-We did not expect the next result. **The two fixes mostly solve the same cases by different routes.** Where we now have the postcode, the address resolves directly and word recovery has nothing to do. Where we lack it, recovery resolves the address. Graded the same way, the postcode fill alone raised Europe from 66% to 84%. Word recovery alone also raised it from 66% to 84%. Together they reached **88%**, and the empty-result rate fell from more than one in four to under one in twelve.
+We did not expect the next result. **The two fixes mostly solve the same cases by different routes.** Where we now have the postcode, the address resolves directly and word recovery has no work to do. Where we lack it, recovery resolves the address. Graded the same way, the postcode fill alone raised Europe from 66% to 84%. Word recovery alone also raised it from 66% to 84%. Together they reached **88%**, and the empty-result rate fell from more than one in four to under one in twelve.
 
 ## The third fix: stop being confidently wrong
 

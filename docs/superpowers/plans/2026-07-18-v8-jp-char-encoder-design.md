@@ -38,7 +38,7 @@ data_loader wiring:
 
 ## (b) Unification: one code route, two trained artifacts for v8, defer single-model to v9
 
-1. **The code path is unified (D1).** The only fork is data-side segmentation (`whitespace_spans` versus per-char), and both branches feed the same `encode_row_units`, CharCNN, and ONNX signature. Two routes would add nothing. The design is safe for v9 because the plumbing never forks.
+1. **The code path is unified (D1).** The only fork is data-side segmentation (`whitespace_spans` versus per-char), and both branches feed the same `encode_row_units`, CharCNN, and ONNX signature. Two routes would add no value. The design is safe for v9 because the plumbing never forks.
 2. **v8 ships separate trained artifacts, routed by script.** The Latin SentencePiece model stays byte-identical, so its regression is provably zero. The router computes a Unicode-block histogram in query-shape. A CJK-dominant query goes to the char model, and every other query goes to the SentencePiece model.
 3. **Whether one char model can serve all scripts is an open question, and Leg 2 answers it cheaply.** Leg 2 trains a bare char model (ctx=0, char-word) on the Latin corpus and compares it with bare SentencePiece on the Latin coord boards. If they match within noise, v9 considers unification, which means one artifact, dropping the router, and cross-script transfer. The costs are Latin dilution (seen in #825), loss of the provable-zero regression, and multilingual balancing. Unification is a v9 decision that needs a measured receipt. It is never the v8 default.
 

@@ -55,7 +55,7 @@ and a source whose terms refuse use in the same way.
 | ------------------------ | ---------------------------------------------------------- | ------------------------------ |
 | AusTender copyright page | `www.tenders.gov.au/Content/Copyright`, retried 2026-09-21 | HTTP 403 to an automated fetch |
 
-That page needs a person with a browser or an authenticated retrieval. The result says nothing about what those
+That page needs a person with a browser or an authenticated retrieval. The result makes no statement about what those
 terms grant.
 
 **One earlier entry is withdrawn.** NLOD 2.0 was recorded here as returning HTTP 406 from

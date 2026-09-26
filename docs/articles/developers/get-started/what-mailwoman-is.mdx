@@ -38,7 +38,7 @@ This design has three consequences:
   running, the parser is running. A network outage cannot affect a parse, because a parse makes no
   network connection to us.
 - **There is no meter.** You are not billed per address. Re-parsing the same string a thousand times
-  because a user kept editing a form field costs a thousand function calls and nothing else.
+  because a user kept editing a form field costs a thousand function calls and no billed request.
 - **The addresses stay where they are.** A parse call opens no network socket, so customer addresses
   never reach our infrastructure, and your compliance review does not need to cover that transfer.
   [Security and compliance](../../about/security-and-compliance.mdx) gives the details, including

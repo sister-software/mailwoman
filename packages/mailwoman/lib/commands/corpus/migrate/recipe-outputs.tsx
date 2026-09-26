@@ -2,12 +2,6 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- *
- *   `mailwoman corpus migrate-recipe-outputs` — rewrite recipe output jsonl files onto the current row schema, in place.
- *
- *   Each file is migrated to a sibling `<name>.migrated` and then moved over the original, so a refused file leaves its
- *   original intact. A row that already carries `surface` passes through unchanged, so a second run over a migrated
- *   file rewrites nothing.
  */
 
 import { extractDelimited } from "@mailwoman/core/scripting/arguments"

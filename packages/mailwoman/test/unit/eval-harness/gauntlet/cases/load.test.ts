@@ -273,7 +273,7 @@ const CORPUS_SIZE = 1029
  * Moved 2026-08-24 — → this — by two same-day additions, the first of which shipped unpinned:
  * the Brest referential split (#1886. `by-cs-brest` scoped to Belarus, `fr-cs-brest-bare`
  * pinning the oracle-ratified bare answer. 649 → 650) merged with CI skipped,
- * so nothing caught the stale pin until the next branch ran the suite.
+ * so no test caught the stale pin until the next branch ran the suite.
  * Then `gb-cs-whitby` (650 → 651), the row that brackets `ENCYCLOPEDIC_BOOST_CAP` from below.
  *
  * Moved 2026-09-01 — `9151f474…` → `8eacc945…` — by prose only, which makes it

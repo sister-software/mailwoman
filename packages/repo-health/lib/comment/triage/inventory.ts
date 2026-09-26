@@ -18,7 +18,7 @@ import { inventorySourceComments, type InventoryResult } from "#comment/triage/i
 /**
  * Where the inventory lands when a caller names no path.
  *
- * Under `.cache/` because it is rebuilt from the tree on every run and nothing reads it across checkouts.
+ * Under `.cache/` because it is rebuilt from the tree on every run and no tool reads it across checkouts.
  */
 export const DEFAULT_TRIAGE_DATABASE = ".cache/mailwoman/comment-triage.sqlite"
 

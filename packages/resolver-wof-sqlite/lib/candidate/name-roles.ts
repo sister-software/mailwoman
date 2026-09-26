@@ -27,7 +27,7 @@ export const GLOSS_KEY_THRESHOLD = 50
  * Placetypes the gloss detector never flags.
  *
  * A country or region legitimately carries a name in every language.
- * That is what an exonym set is — so key volume discriminates nothing there.
+ * That is what an exonym set is — so key volume carries no signal there.
  *
  * The detector's population is the non-admin tail, where a place named by a common noun
  * ("Poisson", "Sunday") accumulating 200+ translations is a machine-translated gloss set rather than fame.
@@ -155,7 +155,7 @@ export function stampNameRoles(ctx: {
 	// Detect aliases that are the holder's own primary name in another variant.
 	// Orthography — romanization, spacing/diacritic variant, or abbreviation expansion.
 	// The verdict is per (alias key, primary key) pair, so it runs in JS over the still-unstamped alias rows.
-	// An uncovered script answers no-verdict and stamps nothing
+	// An uncovered script answers no-verdict and stamps no role
 	// (own-name.ts owns the predicate and its measured threshold).
 	// Runs before gloss on purpose: a surface that is the place's own name is not
 	// a translation, whatever the key volume says.

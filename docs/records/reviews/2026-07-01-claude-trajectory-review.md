@@ -10,7 +10,7 @@ The project's question moved from "does the model parse" to "does the system geo
 
 Three facts frame everything below:
 
-1. **The early model climb was real and has flattened.** Micro-F1 went from ~0.72 (v0.2.0) to 84.8 → 85.1 → 86.1 across v4.2 → v4.4, with starved tags rescued outright (street_suffix 48.8 → 96.6, po_box 0 → 89.1). Since v4.4.0 no full per-tag re-score has landed; the ledger rows for 4.2.0–4.4.0 carry `null` headline F1 and nothing newer exists.
+1. **The early model climb was real and has flattened.** Micro-F1 went from ~0.72 (v0.2.0) to 84.8 → 85.1 → 86.1 across v4.2 → v4.4, with starved tags rescued outright (street_suffix 48.8 → 96.6, po_box 0 → 89.1). Since v4.4.0 no full per-tag re-score has landed; the ledger rows for 4.2.0–4.4.0 carry `null` headline F1 and no newer row exists.
 2. **The wins moved downstream of the model.** The largest recent gains came from resolver logic and data relabeling rather than weights: #822 lifted bare "City, Country" resolve from 54.2% → 77.9% with no retrain; the v4.13.0 multi-locale extract lifted EU resolve (IT 79 → 92.7%, PT 52 → 82%, AT 50 → 81.3%). This is healthy, and it is what the parse/resolve split was _for_. It also changed what "progress" means, and neither the measurement nor the roadmap was updated to match.
 3. **Nobody outside the lab can see any of it.** The public demo runs its own `runCascade` that skips the shared joint-consistency resolver passes entirely (#861), and it has trailed the npm model by multiple versions before (#203). The +23.7pp resolve win is invisible at the exact URL the project points people to.
 
@@ -36,7 +36,7 @@ This is not a criticism. Scope expansion driven by real wins is how solo project
 
 ## Risks, ranked
 
-**R1 — Metric substitution without a re-anchor.** The north-star moved from label-F1 to "grade the coordinate, never label-F1" (v4.15.0 promotion doc). The change is defensible because the coordinate is what users get. Since the switch, however, five label-F1 regressions shipped as "coordinate-invisible" (three in v4.13.0, two postcode floors lowered in v4.15.0, each with written justification). Each call was individually sound and documented. The pattern is the risk: the label metric can now erode indefinitely as long as each step is small, because nothing forces a periodic full re-score. The ledger that would catch drift (`evals/scores-by-version.json`) stopped being populated at v4.4.0, and `AGENTS.md` still calls it authoritative.
+**R1 — Metric substitution without a re-anchor.** The north-star moved from label-F1 to "grade the coordinate, never label-F1" (v4.15.0 promotion doc). The change is defensible because the coordinate is what users get. Since the switch, however, five label-F1 regressions shipped as "coordinate-invisible" (three in v4.13.0, two postcode floors lowered in v4.15.0, each with written justification). Each call was individually sound and documented. The pattern is the risk: the label metric can now erode indefinitely as long as each step is small, because no check forces a periodic full re-score. The ledger that would catch drift (`evals/scores-by-version.json`) stopped being populated at v4.4.0, and `AGENTS.md` still calls it authoritative.
 
 **R2 — The hardest model problem is stalled with no probe.** Slavic/accented diacritic tokenization is the dominant open defect: CZ 84% and PL 77% content-gap rates root-caused to mis-tokenization (`Grudziądz` splits at `ą` and eats trailing digits; `Montréal, QC` drops the `C`; `ß` splits). No CPU-only fix exists. The fix is a rendering/retrain change (#825) that has been deferred twice, and the shift notes themselves concluded "only the RENDERING fixes it." Every locale past the original scope makes this defect more expensive to leave open, and there is currently no cheap probe defined that would inform the go/no-go.
 
@@ -52,7 +52,7 @@ This is not a criticism. Scope expansion driven by real wins is how solo project
 
 ## Game plan
 
-The ordering principle: **make the truth visible first, then decide, then spend.** Nothing below requires new architecture. Tracks 1–3 are days of work; Track 4 is the only item that costs training budget, and it comes last on purpose, blocked by everything before it.
+The ordering principle: **make the truth visible first, then decide, then spend.** No item below requires new architecture. Tracks 1–3 are days of work; Track 4 is the only item that costs training budget, and it comes last on purpose, blocked by everything before it.
 
 ### Track 1 — Ship the truth to the demo (days, without a retrain)
 

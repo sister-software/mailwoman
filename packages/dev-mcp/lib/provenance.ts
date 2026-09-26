@@ -3,24 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   what AM I measuring against — the provenance of the artifacts under the engine, before any number is believed.
- *
- *   Every other tool here answers a question about behaviour. This one answers the question that decides whether those
- *   answers mean anything, because a gazetteer artifact carries no complaint when it is wrong: `ingestWOF` globs a
- *   directory and builds whatever is there, so a repo six months stale, a checkout still pulled from upstream over our
- *   corrections, or a database swapped an hour ago all produce a plausible artifact and a confident answer.
- *
- *   Three failures from one evening, none of which any measurement would have surfaced:
- *
- *   - The admin build's Overture pin named a release Overture had pruned. The build ran the full 2.9M-record WOF ingest
- *       and then failed at `fold-overture` with `IO Error: No files found`, which reads as a network fault.
- *   - `inspect sync` could only ever clone upstream, so a sync on any machine would have pulled upstream data straight
- *       over 35 records we correct — successfully, silently.
- *   - The repos root's vintages ranged from 2026-03 to **2017-12**, and no build step could see it.
- *
- *   reports, never repairs. The repairs live in `gazetteer repos-sync` and `gazetteer inspect sync`, which are opt-in
- *   because they change what the next build ingests. A read-only answer is safe to ask at any moment, including in the
- *   middle of someone else's build.
+ * Reports the provenance of the artifacts under the engine and never repairs, because the repairs change what the next
+ * build ingests and a read-only answer is safe to ask at any moment.
  */
 
 import { pathExists, readLink, readLocalJSONFile, statLink, statPath } from "@mailwoman/core/fs/readers"
@@ -31,25 +15,18 @@ interface ArtifactState {
 	path: string
 	exists: boolean
 	/**
-	 * Bytes, or `null` when absent.
-	 *
-	 * A size that moved is the cheapest signal that a swap happened.
+	 * Bytes, or `null` when absent; a size that moved is the cheapest signal that a swap happened.
 	 */
 	bytes: number | null
 	modified: string | null
 	/**
-	 * The link target when the path is a symlink.
-	 *
-	 * `candidate.db` is a pointer by design — `gazetteer promote` swaps it —
-	 * so the target name carries the build's identity and the path alone does not.
+	 * The link target when the path is a symlink; `candidate.db` is a pointer `gazetteer promote`
+	 * swaps, so the target name carries the build's identity and the path alone does not.
 	 */
 	linkTarget: string | null
 	/**
-	 * `true` when the file is read-only, which is how a sealed build is distinguished
-	 * from one still being written.
-	 *
-	 * An unsealed artifact is one a verify step refused, and must never be
-	 * measured against as if it had passed.
+	 * `true` when the file is read-only; an owner-writable artifact is mid-build
+	 * or one a verify step refused, and must never be measured against as if it had passed.
 	 */
 	sealed: boolean | null
 }
@@ -63,22 +40,22 @@ interface RepoVintage {
 	shallow: boolean | null
 }
 
+/**
+ * What a provenance snapshot found: the artifacts, the repo stamp and the admin build log behind the engine.
+ */
 export interface ProvenanceReport {
 	dataRoot: string
 	artifacts: ArtifactState[]
 	/**
-	 * Read from the stamp `gazetteer repos-sync` writes.
-	 *
-	 * Absent when that has never been run here, which is reported as absence
-	 * rather than as "the repos are current".
+	 * Read from the stamp `gazetteer repos-sync` writes, or `null` when that has never been
+	 * run here — absence is reported rather than read as "the repos are current".
 	 */
 	repos: RepoVintage[] | null
 	reposStampPath: string
 	reposStampAge: string | null
 	/**
-	 * The last entries of the admin build log.
-	 *
-	 * What was built, from which Overture release, and whether it was swapped.
+	 * The last entries of the admin build log: what was built, from which Overture
+	 * release, and whether it was swapped.
 	 */
 	buildLog: string[]
 	notes: string[]
@@ -99,26 +76,25 @@ async function artifactState(name: string, path: PathBuilderLike): Promise<Artif
 		bytes: stat.size,
 		modified: stat.mtime.toISOString(),
 		linkTarget: link.isSymbolicLink() ? await readLink(path) : null,
-		// The house convention seals a finished database 0444.
-		// Owner-write means it is not finished.
+		// A finished database is sealed 0444; owner-write means it is not finished.
 		sealed: (stat.mode & 0o200) === 0,
 	}
 }
 
+/**
+ * Options for {@link runProvenance}.
+ */
 export interface ProvenanceOptions {
 	/**
-	 * Extra artifact paths to report beside the standard set — a scratch build under measurement, say.
+	 * Extra artifact paths to report beside the standard set, e.g. a scratch build under measurement.
 	 */
 	extra?: readonly string[]
 	buildLogEntries?: number
 }
 
 /**
- * Assemble the provenance report.
- *
- * Every field is read.
- * Nothing is derived from a convention that might not hold, which is why an absent
- * file is reported as absent rather than defaulted.
+ * Assemble the provenance report, reading every field and reporting an absent
+ * file as absent rather than defaulted.
  */
 export async function runProvenance(options: ProvenanceOptions = {}): Promise<ProvenanceReport> {
 	const { dataRootPath } = await import("@mailwoman/core/data-root")
@@ -127,9 +103,7 @@ export async function runProvenance(options: ProvenanceOptions = {}): Promise<Pr
 
 	const dataRoot = dataRootPath()
 
-	// wof-hot.db belongs to the staged demo rather than the data root.
-	// Use `promotion-eval.ts`'s lookup order so this report states the path that
-	// the demo-cascade test checks (#524).
+	// wof-hot.db belongs to the staged demo rather than the data root, so use `promotion-eval.ts`'s lookup order.
 	const { resolveWOFHotDB } = await import("mailwoman/eval-harness/wof-hot-db")
 
 	const standard: Array<readonly [string, PathBuilderLike]> = [
@@ -156,8 +130,7 @@ export async function runProvenance(options: ProvenanceOptions = {}): Promise<Pr
 			repos = stamp.repos ?? []
 			reposStampAge = (await statPath(reposStampPath)).mtime.toISOString()
 		} catch {
-			// A corrupt stamp is reported as no stamp.
-			// Guessing at its contents would be worse than saying nothing.
+			// A corrupt stamp is reported as no stamp; guessing at its contents would be worse than reporting no value.
 			repos = null
 		}
 	}
@@ -167,10 +140,9 @@ export async function runProvenance(options: ProvenanceOptions = {}): Promise<Pr
 
 	if (await pathExists(buildLogPath)) {
 		try {
-			// The build appends to `notes` — verified against the committed file
-			// rather than assumed from the key's name.
-			// Each entry is one dated line carrying the record counts, the Overture release
-			// and whether it was swapped live.
+			// The build appends one dated line per build to `notes` — carrying the record counts,
+			// the Overture release and whether it was swapped — verified against the
+			// committed file rather than assumed from the key's name.
 			const log = (await readLocalJSONFile(buildLogPath)) as { notes?: unknown }
 			const entries = Array.isArray(log.notes) ? log.notes.filter((n): n is string => typeof n === "string") : []
 

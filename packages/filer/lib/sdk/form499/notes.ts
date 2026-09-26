@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  * @file Form 499's `note1`/`note2`/`note3` columns — the filer lifecycle log.
  *
- *   The Form 499 filer database ships three free-text note columns that nothing in this crosswalk has ever
+ *   The Form 499 filer database ships three free-text note columns that no code in this crosswalk has ever
  *   read. They are not free text. Across the 2025-12-07 vintage's 19,852 filers, 11,533 carry at least one
  *   note and every note in the file matches one OF eight shapes — 3,085 distinct strings, eight templates,
  *   no stragglers. That makes them a structured lifecycle log wearing a prose costume.
@@ -23,7 +23,7 @@
  *   {@linkcode Form499CessationReason.Bankruptcy}: it is a quoted federal record with provenance rather than a
  *   claim this project makes about a company.
  *
- *   **Nothing here infers.** A note that matches no shape is counted in
+ *   **No code here infers.** A note that matches no shape is counted in
  *   {@link Form499Lifecycle.unrecognized} and kept verbatim in `notes`; it never becomes a guessed reason,
  *   and a future vintage that adds a ninth template shows up as a rising count rather than as silence.
  */
@@ -116,8 +116,8 @@ export interface Form499Lifecycle {
 	/**
 	 * The Form 499 filer ID that superseded this one, from `Replaced by filer <id>`.
 	 *
-	 * A supersession edge rather than an ownership one: it says this registration
-	 * became that registration, and nothing about who owns either.
+	 * A supersession edge rather than an ownership one: it says this registration became
+	 * that registration, and makes no statement about who owns either.
 	 */
 	replacedByForm499ID?: string
 	/**

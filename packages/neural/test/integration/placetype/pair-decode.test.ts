@@ -105,7 +105,7 @@ describe("placetype-pair prior — decode-order integration", () => {
 		// With the bias: the placetypePair prior's own B-first/I-rest write
 		// (delta 6.0, dominating the weak magnitude-1 baseline) already makes "shoreditch"'s
 		// three pieces unanimous before enforceWordConsistency runs.
-		// There is nothing left for the heal to do.
+		// The heal has no remaining work.
 		const index = fixedPairIndex("shoreditch", "london", "dependent_locality")
 
 		const biased = await classifier.traceParse(text, {
@@ -172,7 +172,7 @@ describe("placetype-pair prior — decode-order integration", () => {
 describe("placetype-pair prior — TRANSITION-BETA chain integration (path-fusion fixture)", () => {
 	/**
 	 * The task-8 path-fusion lattice, reconstructed on the fixture tokenizer:
-	 * the emission-side δ (6.0) wins nothing — "shoreditch"'s fused street run
+	 * the emission-side δ (6.0) does not win — "shoreditch"'s fused street run
 	 * (8 + 7 + 7 = 22) outscores the biased dependent_locality reading (6 + 6 + 6 = 18) by 4,
 	 * more than the per-piece emission gap but less than β=5.
 	 *

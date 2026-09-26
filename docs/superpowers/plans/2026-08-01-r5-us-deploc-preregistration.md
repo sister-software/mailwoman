@@ -12,7 +12,7 @@ has been carrying as an assumption since the placetype-evidence doc was written:
 decoder, resolver, normalize, kind-classifier, phrase-grouper and geocode paths finds exactly one
 hard emission mask (`-1e9`) — FR `street_suffix` — and `dependent_locality` appears in no
 `forbiddenTags` row in either the TS table or its Python training mirror. `componentsSupported`
-omits the tag for en-US, but nothing reads that field to mask emissions; its only consumer
+omits the tag for en-US, but no code reads that field to mask emissions. Its only consumer
 validates the policy registry. The en-US omission is documentation rather than enforcement.
 
 **The tag is dead in the MODEL, and dead uniformly — not per-country.** Raw pre-prior logits
@@ -52,7 +52,7 @@ it was **discarded**. That is a live US recall defect today, independent of any 
 
 The three positives above are hand-picked. A 49,033-entry US index is a far larger ambiguity
 surface than GB's curated set, and US neighborhood surfaces are heavily homonymous with street and
-venue words ("Park Slope", "Midtown", "Riverside", "Fairview"). Nothing ships until:
+venue words ("Park Slope", "Midtown", "Riverside", "Fairview"). No release ships until:
 
 - **B-R5.1 (no gauntlet regression).** Full gauntlet, graded through per-country overlays
   (`caseCountry` — a base-only harness reproduces the 2026-08-01 instrument artifact), with the US
@@ -105,7 +105,7 @@ correctly refused to build a US index without one), and both boards as reusable 
 decision rather than taken here.** The bars were the technical check and they passed; what they do not
 settle is that this changes DEFAULT parse output for the flagship package — every US address with a
 neighborhood or borough line starts emitting `dependent_locality` where it previously emitted
-nothing and silently dropped the second admin level. That is an improvement and a behaviour change
+no such tag and silently dropped the second admin level. That is an improvement and a behaviour change
 at once, it wants a model-card note and a version, and the GB/NZ precedent (a locale overlay
 package nobody installs by accident) does not cover it.
 

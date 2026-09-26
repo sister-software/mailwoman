@@ -1,11 +1,11 @@
 # Flood-zone risk as a spatial layer — source survey and pilot design
 
-This is the design record for #1983. It is a survey, and it builds nothing. It records which
+This is the design record for #1983. It is a survey, and it performs no build. It records which
 authorities publish flood-hazard data we could carry, what each one's own terms permit and forbid, what
 a layer built from one would be allowed to claim, and which single source and region the first build
 should use. The builder is a follow-up issue, outlined in §7 and not filed here.
 
-The consuming implementation already exists, so nothing below proposes new architecture. The layer
+The consuming implementation already exists, so no section below proposes new architecture. The layer
 interface (`layer_manifest` / `layer_coverage` on the H3 spine) is specified in
 [`../../engineering/reference/layer-interface.mdx`](../../engineering/reference/layer-interface.mdx).
 `packages/bdc` is the worked example of a federal-provider layer. The exclusion-grade coverage pilot
@@ -15,7 +15,7 @@ additive advisory with provenance and leaves ranking unchanged. The missing piec
 sources, and this record supplies it.
 
 **Every external claim below carries its URL and the date it was read.** Where a fact could not be
-established from a primary source, §8 lists it as unverified, with what was tried. Nothing in §8 was
+established from a primary source, §8 lists it as unverified, with what was tried. No entry in §8 was
 filled in with a plausible reading.
 
 ## 1. What this record settles, and what it deliberately does not
@@ -344,7 +344,7 @@ exists.
 ### 2.4 Deliberately not surveyed
 
 - **Member-state flood maps outside England** (France, Germany, and the rest). Each state publishes
-  its own maps under its own terms. None were verified here, and this record claims nothing about them.
+  its own maps under its own terms. None were verified here, and this record makes no claim about them.
 - **Modeled risk products that are not an authority's designation.** The issue puts non-authoritative
   risk modeling out of scope, and this record keeps it out. The layer's value comes from repeating an
   authority, and a modeled score would be a different product with different obligations.
@@ -433,13 +433,13 @@ fractional completeness would invent a measurement nobody took.
 That reasoning only holds if the layer cannot be read as covering a class it does not hold, and the
 interface has already solved this problem. `absence-route.ts` records it: a coverage table carries a
 completeness per cell and no class, so a completeness measured over pharmacies could license a claim
-about cafés if nothing stopped it. The route reads the held class from the artifact and refuses unless
+about cafés if no check stopped it. The route reads the held class from the artifact and refuses unless
 the requested class matches it exactly. The flood layer inherits the same rule: one authority, one
 product, and one zone vocabulary per artifact, read from the manifest, with a reader that refuses
 anything else.
 
-**Cells outside England get no row**, rather than a row with completeness zero. The EA's statement says
-nothing about Wales, Scotland or Northern Ireland, and each has a different authority with a different
+**Cells outside England get no row**, rather than a row with completeness zero. The EA's statement makes no
+claim about Wales, Scotland or Northern Ireland, and each has a different authority with a different
 scheme.
 
 **The EA's own text sets two limits that the coverage row cannot express:**
@@ -454,7 +454,7 @@ scheme.
    of flood defences, unless they increase the area potentially at risk of flooding", and "Locations
    may also be at risk from other sources of flooding, such as high groundwater levels, or failure of
    infrastructure such as sewers and storm drains. These sources are not represented in these
-   datasets." A Zone 1 reading says nothing about surface water, groundwater or residual risk in
+   datasets." A Zone 1 reading makes no claim about surface water, groundwater or residual risk in
    defended areas. The observation must identify the product it read, so a consumer can see what the
    answer covers.
 
@@ -561,7 +561,7 @@ Reference, however the FIRM DB template will not have dashes". The December 2020
 **The schema consequence.** `zone_code` holds the source's value as published. The builder carries the
 authority's declared domain as a closed set and **throws** on a value outside it. An unknown code
 means the source schema changed, which a reader most needs to know. Coercing it to a nearest neighbour
-or to null would turn "the source changed" into "there is nothing here".
+or to null would turn "the source changed" into "there is no data here".
 
 ### 4.2 Tables
 
@@ -643,7 +643,7 @@ such a cell. Two answers are then possible, and both are accurate. The layer can
 against the rings of the few candidate polygons the index already returned. Invariant 6 permits that
 spatial math at an irreducibly geometric runtime edge, in the same class as reverse geocoding. The
 cost is bounded because the index has reduced the candidate set to the polygons one cell touches.
-`pointInPolygonRings` and `bboxAround` in `@mailwoman/spatial` are the primitives, so nothing new is
+`pointInPolygonRings` and `bboxAround` in `@mailwoman/spatial` are the primitives, so no new primitive is
 needed.
 
 The interior/boundary distinction also exists already. `coverage-region.ts` separates a polyfilled

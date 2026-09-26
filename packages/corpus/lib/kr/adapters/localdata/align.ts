@@ -3,21 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Align one permit-registry address string to the address register's key, or answer null (#2204 §5).
- *
- *   Every permit row carries the same premises in both address systems, typed by a clerk:
- *
- *       도로명주소  서울특별시 종로구 종로 233, 1층 일부호 (종로5가)
- *       지번주소    서울특별시 종로구 종로5가 43-1
- *
- *   The road-name form is `<시도> <시군구> <도로명> <건물번호>`, then an optional `, <상세주소>` (floor, unit, building)
- *   and an optional parenthetical `(<법정동>[, <건물명>])`. The lot-number form is
- *   `<시도> <시군구> <법정동> [<리>] [산]<본번>[-<부번>]` followed by whatever the clerk added.
- *
- *   alignment is exact against {@link KeyIndex}, never fuzzy. A string that satisfies the whole key becomes a training
- *   row whose spans are the matched pieces. One that does not is a board row, an address the model will be read on and
- *   never trained on. The rate per file is measured and reported before any row enters a corpus, which is the rule an
- *   `observation` source is admitted under.
+ * Align one permit-registry address string to the address register's key, or answer null; alignment
+ * is exact against {@link KeyIndex} rather than fuzzy, so a string that satisfies the whole key becomes
+ * a training row of matched spans and one that does not becomes a board row.
  */
 
 import { type KeyIndex, sigunguSpan, unitKey } from "#kr/adapters/localdata/key-index"
@@ -38,9 +26,7 @@ const LOT_NUMBER = /^산?\d+(?:-\d+)?(?:번지)?$/u
 const UNIT_TOKEN = /^(?:지하\s?)?(?:B?\d+(?:~\d+)?(?:층|호)|\d+층|B\d+|지하\d*층?|\d+동|[가-힣]?\d*호)(?:,)?$/u
 
 /**
- * The shortest either form can be: 시도, 시군구, and the road or the 법정동.
- *
- * Anything shorter cannot carry the key, whatever else it holds.
+ * The shortest either form can be — 시도, 시군구, and the road or the 법정동; anything shorter cannot carry the key.
  */
 const MINIMUM_TOKENS = 3
 
@@ -64,11 +50,8 @@ interface Span {
 }
 
 /**
- * Record a span, unless it is empty or blank.
- *
- * A blank span is what a clerk's double space produces, and a zero-width one
- * what a token found at its own end produces.
- * Neither is a component, and both would train the model on nothing.
+ * Record a span unless it is empty or blank; a blank span from a clerk's double space
+ * or a zero-width one at a token's own end would train the model on no component.
  */
 function put(spans: Span[], text: string, start: number, end: number, tag: string): void {
 	if (end > start && text.slice(start, end).trim()) {
@@ -190,8 +173,7 @@ export function alignRoadAddress(text: string, index: KeyIndex): Aligned | null 
 
 	put(spans, text, numberAt, numberAt + number.length, "house_number")
 
-	// What follows the number, with or without a comma, is the building name and then the floor/unit.
-	// The same leading-venue, unit-tail reading the lot form uses.
+	// What follows the number, with or without a comma, reads as venue then unit, the same as the lot form.
 	const restTokens = [...tokens.slice(numberAtToken + 1), ...detail.split(/\s+/u).filter((token) => token.length)]
 
 	if (restTokens.length) {

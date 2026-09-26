@@ -48,7 +48,7 @@ function outerRings(geometry: ParsedGeometry): PolygonRings {
 /**
  * The outline's bounding rectangle, for pre-clipping a reference inventory that can only be probed by range.
  *
- * A coarse filter and nothing more.
+ * A coarse filter and no more.
  * It contains the outline and is never the outline.
  *
  * The exact clip is {@link interiorCoverageCellSet}; using this rectangle as the region

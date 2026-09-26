@@ -1,17 +1,6 @@
 """One row encoded with every soft-feed channel on, pinned key by key.
 
-The channel tests beside this one exercise the COLLATE — what `to_tensor_batch` does with the keys
-`encode_row` produced. The assembly itself had no test with more than one channel on: the anchor
-had its own, and the four that follow it were reached only through a training run.
-
-Each channel truncates to `max_length` and zero-pads both halves to the width the labels use, and
-the gazetteer's choreography reads the anchor's confidence out of the dict the anchor block wrote.
-So the blocks are not independent: their ORDER is what makes the choreography see an anchor, and a
-width that pads wrong shows up as a tensor the collate cannot stack rather than as a wrong number.
-
-The tokenizer here is a stub rather than a `skipif` on the real SentencePiece model. A skip on a
-missing artifact reads exactly like a clean result, and this test would then be green on every
-machine that does not have `/data/models/tokenizer/v0.1.0/tokenizer.model` — which is all of CI.
+The blocks are order-dependent: the gazetteer's choreography reads the anchor's confidence out of the dict the anchor block wrote. The tokenizer is a stub rather than a `skipif` on the real SentencePiece model, because a skip on a missing artifact reads like a clean result.
 """
 
 from __future__ import annotations
@@ -27,16 +16,13 @@ from mailwoman_train.features.gazetteer_anchor import GazetteerLexicon
 from mailwoman_train.tokenizer.encode import encode_row
 from mailwoman_train.types import PieceSpan
 
-#: Committed beside this file, captured from the code as it stood before a split.
-#:
-#: Regenerate with: uv run python -m tests.mailwoman_train.tokenizer.test_encode_row_channels
+#: Committed beside this file; regenerate with:
+#: uv run python -m tests.mailwoman_train.tokenizer.test_encode_row_channels
 REFERENCE = Path(__file__).parent / "encode-row-channels-reference.json"
 
-#: The row every case encodes. It carries a postcode the anchor lexicon knows, a locality the
-#: gazetteer knows, a country surface, a street type and a locality surface — one hit per channel,
-#: so a channel that stops painting shows as zeros rather than as an unchanged result.
+#: The row every case encodes, one hit per channel so a channel that stops painting shows as zeros.
 #: The postcode carries no trailing punctuation: the anchor's lookup key is the span's raw surface
-#: space-stripped and uppercased, so "05401," is a miss and the channel would pin as all zeros.
+#: space-stripped and uppercased.
 RAW = "12 Market St, Burlington, VT 05401 USA"
 TOKENS = ["12", "Market", "St,", "Burlington,", "VT", "05401", "USA"]
 LABELS = ["B-house_number", "B-street", "I-street", "B-locality", "B-region", "B-postcode", "B-country"]
@@ -46,12 +32,7 @@ MAX_LENGTH = 24
 
 @dataclass(frozen=True)
 class StubTokenizer:
-    """Enough of `Tokenizer` for `encode_row`: pieces with char offsets, and a pad id.
-
-    Splits on whitespace and then on each non-alphanumeric character, which produces the
-    intra-span punctuation pieces the span label path exists to cover — a comma inside
-    "Burlington," is its own piece here, as it is under SentencePiece.
-    """
+    """Enough of `Tokenizer` for `encode_row`: pieces with char offsets and a pad id, splitting each non-alphanumeric character into its own piece."""
 
     pad_id: int = 0
 
@@ -112,11 +93,7 @@ def encode(**overrides: Any) -> dict[str, list[Any]]:
 
 
 def all_channels() -> dict[str, dict[str, list[Any]]]:
-    """The two label sources, each with every channel on.
-
-    The span path and the token path reach different anchor painters and different label arrays, so
-    a change that moves one and not the other is a change one of them does not describe.
-    """
+    """The two label sources with every channel on; the span and token paths reach different anchor painters and label arrays."""
     starts, ends, tags = [], [], []
     for token, label in zip(TOKENS, LABELS, strict=True):
         if label.startswith("B-"):
@@ -166,7 +143,7 @@ def test_a_row_without_channels_carries_only_the_three_base_keys(encoded: dict[s
 
 
 def test_the_fixture_paints_every_channel(encoded: dict[str, Any]) -> None:
-    """A lexicon that matched nothing would pin zeros and measure none of the painting."""
+    """A lexicon that matched no token would pin zeros and measure none of the painting."""
     actual = encoded["tokens"]
     for key in (
         "anchor_features",
@@ -179,11 +156,7 @@ def test_the_fixture_paints_every_channel(encoded: dict[str, Any]) -> None:
 
 
 def write_reference() -> None:
-    """Capture the current encoding as the reference the tests above compare against.
-
-    Run this only when the current code already passes against the existing reference — otherwise
-    the artifact records whatever the code does now, and the tests assert nothing.
-    """
+    """Capture the current encoding as the reference the tests above compare against; run it only when the current code already passes against the existing reference."""
     payload = {
         "README": [
             "Pins one row encoded with every soft-feed channel on, across a refactor.",

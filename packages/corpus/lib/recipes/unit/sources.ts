@@ -4,13 +4,6 @@
  * @author Teffen Ellis, et al.
  * @file Which cached OpenAddresses extracts the `unit` recipe reads, and the held-out one it never trains on.
  *
- *   Split from the recipe because the two halves read nothing of each other: the sources name a data root and a
- *   cache layout, and the designator synthesis beside them names USPS Pub-28 tables. `module-cohesion` reported the
- *   pair as two declaration communities at modularity 0.54, which is what that reads like from outside.
- *
- *   Vermont is the corpus `defaultHoldout` and appears only as {@link EVAL_SOURCE}. Keeping it in the same file as
- *   the train list is what makes the separation legible: one constant is the training set, the other is the one
- *   state a trained model has never seen.
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
@@ -26,10 +19,7 @@ export interface UnitSource {
 }
 
 /**
- * OA region is empty for US per-state extracts.
- * The region is implied by the file.
- *
- * Every NON-Vermont state cached.
+ * Every non-Vermont state cached; `region` is implied by the file.
  */
 export const TRAIN_SOURCES: readonly UnitSource[] = [
 	{ zip: dataRootPath("oa-cache", "us__ca__berkeley.zip"), csv: "us/ca/berkeley.csv", region: "CA" },
@@ -42,10 +32,7 @@ export const TRAIN_SOURCES: readonly UnitSource[] = [
 ]
 
 /**
- * Vermont, the corpus holdout.
- *
- * `--golden` reads this and nothing else, so the eval measures designator
- * recognition on addresses no training row came from.
+ * Vermont, the corpus holdout — `--golden` reads this and no other source.
  */
 export const EVAL_SOURCE: UnitSource = {
 	zip: dataRootPath("oa-cache", "us__vt__statewide.zip"),

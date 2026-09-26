@@ -6,7 +6,7 @@
  *
  *   The pins here are deliberately the two shapes a report can take that a reader would misread. A package with no
  *   frozen training manifest has to appear in `unresolved` rather than being absent from the report, because absence
- *   from a report reads as nothing to say. And an attribution entry stating no use has to be counted apart from one
+ *   from a report reads as no statement to make. And an attribution entry stating no use has to be counted apart from one
  *   stating a use that is not training, because reporting them together turns an unrecorded fact into a measured one.
  *
  *   The counts are against the committed tree, so a card edit moves them. That is intended: a number in this file

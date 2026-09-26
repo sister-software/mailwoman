@@ -57,7 +57,7 @@ const DEFAULT_MARKER_COLOR: RGB = [255, 80, 80]
 
 /**
  * Minimum ring radius (in device pixels) worth drawing — smaller than this,
- * the midpoint circle algorithm degenerates to a single point or nothing useful.
+ * the midpoint circle algorithm degenerates to a single point or no useful ring.
  */
 const MIN_RING_RADIUS_PX = 2
 

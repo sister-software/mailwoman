@@ -3,11 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Renders a component dict through an address layout into tagged pieces. `formatAddress` joins the pieces
- *   into a string.
- *
- *   The connector rules are described in `layout.ts`. When several connectors survive next to each other, the
- *   first one with punctuation is printed.
+ *   Renders a component dict through an address layout into tagged pieces; `formatAddress` joins the pieces into
+ *   a string, and the connector rules are described in `layout.ts`.
  */
 
 import { isAlternation, isConnector, isLayout, isSlot, type AddressAtom, type AddressLayout } from "#address/layout"
@@ -55,9 +52,6 @@ export interface AddressRendering {
 	readonly unplaced: readonly ComponentTag[]
 }
 
-/**
- * Returns whether an atom's result contains a tagged piece.
- */
 function rendered(result: readonly AddressPiece[] | null): boolean {
 	return result !== null && result.some((piece) => piece.tag !== null)
 }
@@ -114,8 +108,7 @@ function evaluateLine(atoms: readonly AddressAtom[], components: ComponentDict):
 			const left = results.slice(0, index)
 			const right = results.slice(index + 1)
 
-			// An edge connector needs its one neighbour.
-			// An interior connector needs a rendered atom on each side.
+			// An edge connector needs its one neighbour; an interior connector needs a rendered atom on each side.
 			const survives = !left.length
 				? rendered(results[index + 1] ?? null)
 				: !right.length
@@ -137,7 +130,7 @@ function evaluateLine(atoms: readonly AddressAtom[], components: ComponentDict):
 		out.push(...pieces)
 	}
 
-	// Anything still pending trails the last value with nothing after it, so it separates nothing.
+	// Anything still pending trails the last value with no piece after it, so it separates no pair.
 	return out.some((piece) => piece.tag !== null) ? out : []
 }
 

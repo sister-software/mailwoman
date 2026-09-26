@@ -131,7 +131,7 @@ export const weightsFamilyCheck: RepoCheck = {
 
 		// A language that also names another family's packaged locale would make the
 		// two paths through `familyForLocale` disagree: the packaged lookup wins,
-		// and the language list silently covers nothing.
+		// and the language list silently covers no locale.
 		for (const [language, [owner]] of languageOwners) {
 			const packagedElsewhere = FAMILIES.filter(
 				(entry) => entry.family !== owner && entry.locales.some((locale) => locale.split("-")[0] === language)
@@ -245,7 +245,7 @@ export const weightsFamilyCheck: RepoCheck = {
 			if (family?.family === locale) continue
 
 			// An overlay's `baseWeights` and its family must name the same graph.
-			// They are written in different files and nothing else compares them,
+			// They are written in different files and no other check compares them,
 			// so a package could inherit one graph while the registry says another.
 			if (!declaresGraph(manifest) && family && base !== family.graphPackage) {
 				diagnostics.push({

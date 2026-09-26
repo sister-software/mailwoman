@@ -5,26 +5,17 @@
  *
  *   Diff two parses of the same input, over spans rather than over the component map.
  *
- *   The component map is what a comparison reaches for and it loses the thing you need. Two arms that both emit
- *   `locality` tell you nothing about whether the locality moved, and a map keyed by tag cannot represent a span that
- *   slid one token left — it looks identical to a span that was replaced. This is not hypothetical: it is how a
- *   regression that turned
+ *   A map keyed by tag cannot represent a span that slid one token left — it looks identical to a span that was
+ *   replaced — and two arms that both emit `locality` make no statement about whether the locality moved. Spans are
+ *   therefore matched by overlap first and tag second, which tells four events apart:
  *
- *       Ye Three Lords, 27 Minories, London EC3N 1DE
- *
- *   from `venue "Ye Three Lords" · locality London · street Minories` into `locality "Ye Three Lords"` reads as "the
- *   locality changed" in a map diff, when what actually happened is that two spans were destroyed and a third was
- *   retagged onto the text of one of them.
- *
- *   So spans are matched by overlap first and tag second, which lets the four events be told apart:
- *
- *   - `retagged`  — same text, different tag. The venue that became a locality.
- *   - `moved`     — same tag, different span. The locality that slid onto the neighbouring segment.
+ *   - `retagged`  — same text, different tag.
+ *   - `moved`     — same tag, different span.
  *   - `removed` / `added` — a span with no counterpart at all.
  *   - `confidence` — same tag, same span, the model simply became more or less sure.
  *
  *   That last one is why the confidence delta is stored per span rather than as a headline: a row that did not change
- *   its answer but lost 0.3 of confidence on the deciding span is a row about to flip, and an aggregate cannot say so.
+ *   its answer but lost confidence on the deciding span is a row about to flip, and an aggregate cannot say so.
  */
 
 import { flattenTreeNodes } from "#decoder/tree/shape"
@@ -44,9 +35,7 @@ export type SpanDeltaKind = "added" | "removed" | "retagged" | "moved" | "confid
 export interface SpanDelta {
 	kind: SpanDeltaKind
 	/**
-	 * The tag on each side.
-	 *
-	 * Equal unless `kind` is `retagged`, and one side is absent for `added`/`removed`.
+	 * The tag on each side: equal unless `kind` is `retagged`, and one side is absent for `added`/`removed`.
 	 */
 	tagBefore?: string
 	tagAfter?: string
@@ -57,9 +46,7 @@ export interface SpanDelta {
 	confidenceBefore?: number
 	confidenceAfter?: number
 	/**
-	 * `after - before`, present only when both sides are.
-	 *
-	 * Negative means the arm under test is less sure.
+	 * `after - before`, present only when both sides are; negative means the arm under test is less sure.
 	 */
 	confidenceDelta?: number
 	/**
@@ -88,10 +75,8 @@ export interface ParseDiff {
 	input: string
 	spans: SpanDelta[]
 	/**
-	 * The locale/country call and how sure each arm was of it.
-	 *
-	 * A parse that changed nothing else but moved its country confidence across the
-	 * scope threshold will geocode somewhere else entirely.
+	 * The locale/country call and how sure each arm was of it; a parse that changed no other component
+	 * but moved its country confidence across the scope threshold will geocode somewhere else entirely.
 	 */
 	localeCountryBefore?: { country: string; confidence: number }
 	localeCountryAfter?: { country: string; confidence: number }
@@ -127,8 +112,7 @@ function toFlat(tree: AddressTree | null | undefined): Flat[] {
  * How much of the shorter span the two share, in [0, 1].
  *
  * Overlap rather than equality because the interesting failures move a boundary by a token
- * or two, and an equality-keyed match reports those as a delete plus an insert,
- * which is exactly the information loss this file exists to prevent.
+ * or two, and an equality-keyed match reports those as a delete plus an insert.
  */
 function overlap(a: Flat, b: Flat): number {
 	const lo = Math.max(a.start, b.start)
@@ -140,19 +124,17 @@ function overlap(a: Flat, b: Flat): number {
 }
 
 /**
- * The share of overlap below which two spans are treated as unrelated rather than moved.
- *
- * Half the shorter span: a boundary that slid by a token still matches,
- * while two spans that merely touch at their edges do not, and reporting those as a
- * `moved` would invent a relationship the parse does not assert.
+ * The share of overlap below which two spans are treated as unrelated rather than moved:
+ * half the shorter span, so a boundary that slid by a token still matches
+ * while two spans that merely touch at their edges do not.
  */
 const RELATED_OVERLAP = 0.5
 
 /**
  * Diff two parses of the same input.
  *
- * Matching is greedy on overlap, strongest pair first, with tag equality breaking ties.
- * So a span that kept its tag is preferred over one that merely sits in the same place.
+ * Matching is greedy on overlap, strongest pair first, with tag equality breaking ties,
+ * so a span that kept its tag is preferred over one that merely sits in the same place.
  */
 export function diffParse(
 	input: string,
@@ -262,19 +244,15 @@ export function diffParse(
 }
 
 /**
- * Confidence movement below which a same-tag same-span pair is not worth a line of its own.
- *
- * Two hundredths: the decoder's aggregate is a mean over a span's tokens, so a one-token re-scoring
- * moves a long span by a hair and reporting that as a change buries the spans that actually moved.
+ * Confidence movement below which a same-tag same-span pair is not worth a line of its own:
+ * two hundredths, because the decoder's aggregate is a mean over a span's tokens,
+ * so a one-token re-scoring moves a long span by a hair.
  */
 export const CONFIDENCE_NOISE_FLOOR = 0.02
 
 /**
- * Render a diff the way a reader reads one — the address first, then the spans that moved under it.
- *
- * Address-first is the point.
- * An aggregate that reports "18 regressed" without the strings is the shape that let
- * a venue-destroying regression read as a routine count for five runs.
+ * Render a diff the way a reader reads one — the address first, then the spans that moved under it,
+ * because an aggregate that reports "18 regressed" without the strings hides which spans moved.
  */
 export function renderParseDiff(diff: ParseDiff, options: { context?: boolean } = {}): string {
 	const lines: string[] = [diff.input]
@@ -324,7 +302,6 @@ export function renderParseDiff(diff: ParseDiff, options: { context?: boolean } 
 			continue
 		}
 
-		// retagged / moved — both sides exist, so show the transition on one line.
 		const what = span.kind === "retagged" ? `${span.tagBefore} → ${span.tagAfter}` : `${span.tagAfter} moved`
 		const where = span.kind === "moved" ? `  [${span.spanBefore?.join()}] → [${span.spanAfter?.join()}]` : ""
 		const delta = span.confidenceDelta ?? 0

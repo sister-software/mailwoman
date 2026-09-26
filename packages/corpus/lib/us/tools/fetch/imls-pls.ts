@@ -3,25 +3,14 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Re-fetch the IMLS Public Libraries Survey (PLS) outlet-level data. Each US public library branch
- *   (outlet) is one row, ~17K rows with address fields. Source for the `usgov-imls-pls` adapter. US
- *   Public Domain (federal statistical survey).
- *
- *   The FY 2023 release is the most current as of 2026-05. IMLS ships a single ZIP containing CSV,
- *   SAS, and spss variants. We extract the outlet-level CSV (pls_fy*_outlet*.csv or similar) and
- *   discard the rest. The administrative-entity (system-level) CSV is intentionally skipped. It has
- *   no per-branch address detail.
- *
- *   Uses Node's built-in fetch (gzip/brotli) and streaming sha256 instead of curl + sha256sum. The
- *   ZIP is unpacked with the `unzip` binary via `node:child_process` (no clean Node equivalent for
- *   member listing + selective extraction).
- *
- *   Invoke via `mailwoman corpus fetch imls-pls --out-root <path>`. Idempotent: if dest CSV exists
- *   and sha matches manifest, skips download.
+ * Re-fetch the IMLS Public Libraries Survey outlet-level data — one row per US public library branch —
+ * for the `usgov-imls-pls` adapter; the source is US Public Domain (a federal statistical survey).
+ * Extracts the outlet-level CSV from IMLS's single ZIP and discards the rest; the system-level CSV is
+ * skipped for having no per-branch address detail.
  */
 
 /* oxlint-disable sister-software/prefer-region-over-marks -- these markers label steps inside one
-   procedure rather than sections of declarations. A region there folds nothing a reader wants folded. */
+   procedure rather than sections of declarations. A region there folds no element a reader wants folded. */
 
 import { BYTES_PER_KIB, ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { statPath, pathExists } from "@mailwoman/core/fs/readers"
@@ -34,14 +23,7 @@ import type { BaseFetchOptions, FetchSummary, SourceManifest } from "#tools/fetc
 import { downloadToFile, readManifest, writeManifest } from "#tools/fetch/download/index"
 
 /**
- * Bytes per KiB — the divisor for human-readable sizes, and the floor below
- * which a "download" is an error page rather than data.
- */
-
-/**
- * The PLS FY 2023 bulk CSV ZIP (most recent as of 2026-05).
- *
- * If IMLS publishes a newer year, update this URL.
+ * The PLS FY 2023 bulk CSV ZIP; update this URL if IMLS publishes a newer year.
  */
 const ZIP_URL = "https://www.imls.gov/sites/default/files/2025-08/pls_fy2023_csv.zip"
 const SLUG = "usgov-imls-pls"
@@ -94,15 +76,12 @@ export async function fetchIMLSPLS(
 		return { fetched: 0, skipped: 0, failed: 1, failedCodes: [SLUG] }
 	}
 
-	// Discover the outlet-level CSV inside the ZIP.
-	// Outlet files match: pls_fy*outlet*.csv (case-insensitive) Administrative-entity
-	// files match: pls_fy*ae*.csv — we skip those.
+	// Outlet files match `pls_fy*outlet*.csv`; administrative-entity files are skipped.
 	report?.("  Inspecting ZIP contents ...")
 	const entries = (await listZipEntries(zipDest)).map((entry) => entry.name)
 
 	let csvName = entries.find((name) => /pls_fy.*outlet.*\.csv/i.test(name))
 
-	// Fallback: if IMLS renames the file, grab any CSV that is not the ae file.
 	if (!csvName) {
 		csvName = entries.find((name) => /\.csv$/i.test(name) && !/system|state|_ae\b|_se\b/i.test(name))
 	}

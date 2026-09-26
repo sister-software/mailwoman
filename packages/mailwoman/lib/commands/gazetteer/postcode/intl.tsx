@@ -3,38 +3,28 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mailwoman gazetteer postcode-intl` — build a postcode → point database from GeoNames postal data,
- *   for countries WhosOnFirst does not cover (#193). The existing pipeline
- *   (`scripts/backfill-postcode-centroids.ts`) treats GeoNames as a coordinate source keyed by
- *   string onto WOF-sourced postcode _records_. That works wherever WOF ships the postcode entities
- *   (US/NL/FR/DE/IT/ES…). For PL/CZ/PT/AU and the rest of the #193 gap, WOF has zero postcode
- *   records — there's nothing to backfill onto — so GeoNames must supply the record too rather than just
- *   the coordinate.
+ *   `mailwoman gazetteer postcode-intl` — build a postcode → point database from GeoNames postal data
+ *   for countries WhosOnFirst does not cover. The canonical pipeline treats GeoNames as a coordinate
+ *   source keyed by string onto WOF-sourced postcode records; where WOF ships no postcode records there
+ *   is no record to backfill onto, so GeoNames must supply the record as well as the coordinate.
  *
- *   This emits a standalone `spr` database in the exact schema `build-candidate`'s `--postcodes` pass
+ *   It emits a standalone `spr` database in the exact schema `build-candidate`'s `--postcodes` pass
  *   consumes (placetype='postalcode', real centroid + bbox), so it drops into a candidate rebuild
  *   alongside `postalcode-intl.db` with no other change.
  *
- *   Provenance: GeoNames postal is CC-BY 4.0 — any DB shipping these coordinates must attribute
- *   "GeoNames (CC-BY 4.0)". These records carry no WOF id, so they get synthetic ids in a high
- *   range (`SYNTH_ID_BASE`, well above WOF's ~907M ceiling) that can never be mistaken for — or
- *   collide with — a WOF entity id.
+ *   GeoNames postal is CC-BY 4.0 — any DB shipping these coordinates must attribute "GeoNames
+ *   (CC-BY 4.0)". These records carry no WOF id and get synthetic ids that can never collide with one.
  *
- *   Separator variants: a postcode is stored under both its written forms so the candidate name_key
- *   matches whichever form the parse emits — PL writes "26-300" (hyphen), CZ writes "58001" (no
- *   space) though GeoNames stores "580 01".
+ *   A postcode is stored under both its written forms so the candidate name_key matches whichever form
+ *   the parse emits — PL writes "26-300" (hyphen) while CZ writes "58001" though GeoNames stores
+ *   "580 01".
  *
- *   Optionally folds the database straight into a copy of an existing candidate gazetteer (`--fold-into
- *   <src> --fold-out <dst>`), mirroring `build-candidate` pass-4's row construction, so a
- *   demo-ready DB falls out without a full rebuild. The database itself is the durable artifact for
- *   the canonical rebuild. the fold is the fast path to verify + stage.
+ *   `--fold-into <src> --fold-out <dst>` optionally folds the database straight into a copy of an
+ *   existing candidate gazetteer, so a demo-ready DB falls out without a full rebuild; the database
+ *   itself is the durable artifact for the canonical rebuild.
  *
- *   Progress streams to stderr. the final summary is on stdout.
- *
- *   note: the database `--out` DB is written directly (the table is dropped + recreated in place on
- *   re-run), and `--fold-out` is a build-on-copy of `--fold-into`. Neither uses an atomic
- *   temp-swap. This preserves the original `scripts/build-geonames-postcode-database.ts` behavior
- *   verbatim.
+ *   `--out` is written directly (the table is dropped and recreated in place on re-run), and
+ *   `--fold-out` is a build-on-copy of `--fold-into`; neither uses an atomic temp-swap.
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers"
@@ -69,8 +59,7 @@ export const spec = {
 type NormalizeKey = (value: string) => string
 
 /**
- * Synthetic id base — above WOF's ~907M ceiling, so these GeoNames-sourced
- * records never collide with a WOF id.
+ * Above WOF's ~907M ceiling, so these GeoNames-sourced records never collide with a WOF id.
  */
 const SYNTH_ID_BASE = 8_000_000_000
 
@@ -97,10 +86,8 @@ async function readGeonames(file: PathBuilderLike, want: Set<string>): Promise<M
 
 	const acc = new Map<string, PostcodeAcc>()
 
-	// TSV cols: 0=country 1=postcode 2=place 3..8=admin 9=lat 10=lon 11=accuracy.
-	// The GeoNames allCountries postal dump is headerless (header: false) and LF-only upstream,
-	// so field indices map straight through, and empty admin columns are preserved
-	// (v3 no longer drops them), keeping the offsets aligned.
+	// TSV cols: 0=country 1=postcode 2=place 3..8=admin 9=lat 10=lon 11=accuracy; the GeoNames
+	// allCountries postal dump is headerless and LF-only upstream, so field indices map straight through.
 	for await (const fields of TSVSpliterator.fromAsync(file, { header: false, mode: "array" })) {
 		const countryCode = fields[0]
 
@@ -211,12 +198,11 @@ async function buildDatabase(
 	}
 
 	using kdb = new DatabaseClient<WOFDatabase>(outPath)
-	// Regenerated artifact — drop any prior table so a re-run with a different country set
-	// fully replaces it (and synthetic ids restart cleanly without colliding with stale rows).
+	// Regenerated artifact: drop any prior table so a re-run with a different country set
+	// fully replaces it and synthetic ids restart cleanly without colliding with stale rows.
 	await kdb.schema.dropTable("spr").ifExists().execute()
 
-	// Schema mirrors postalcode-intl.db's `spr` exactly.
-	// A drop-in `--postcodes` input for build-candidate.
+	// Schema mirrors postalcode-intl.db's `spr` exactly, as a drop-in `--postcodes` input for build-candidate.
 	await kdb.schema
 		.createTable("spr")
 		.ifNotExists()
@@ -268,8 +254,6 @@ async function buildDatabase(
  * Fold the freshly-built database into a copy of an existing candidate
  * gazetteer, mirroring `build-candidate` pass-4's row construction
  * (placetype_id=9, region_id=0, neg_rank=0, is_primary=1, bbox falls back to the centroid).
- *
- * The fast path to a demo-ready DB without a full rebuild.
  */
 async function foldIntoCandidate(
 	databasePath: PathBuilderLike,
@@ -380,9 +364,8 @@ const GazetteerPostcodeIntl: CommandComponent<typeof spec> = ({ options }) => {
 			throw new CommandError(`Missing GeoNames file: ${geonames}`)
 		}
 
-		// street-normalize lives in the optional `@mailwoman/resolver-wof-sqlite` peer —
-		// load it dynamically so merely importing this command (e.g. `mailwoman --help`)
-		// doesn't fault when the peer isn't installed.
+		// `normalizeLocalityForKey` lives in the optional `@mailwoman/resolver-wof-sqlite` peer,
+		// so it is loaded dynamically to keep `mailwoman --help` from faulting when the peer is absent.
 		const { normalizeLocalityForKey } = await import("@mailwoman/resolver-wof-sqlite/street")
 
 		console.error(`Reading GeoNames postal for ${countries.join(", ")} from ${geonames} …`)
@@ -443,7 +426,6 @@ const GazetteerPostcodeIntl: CommandComponent<typeof spec> = ({ options }) => {
 		)
 	}
 
-	// progress streams to stderr until the summary lands
 	return null
 }
 

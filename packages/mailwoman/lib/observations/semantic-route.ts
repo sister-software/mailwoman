@@ -38,7 +38,7 @@ import { readCommittedModel } from "#observations/committed-model"
  * The only relation this route reads.
  *
  * Construction fails when the model does not define it, so a missing relation is
- * never reported as "nothing affords this activity".
+ * never reported as "no concept affords this activity".
  */
 const AFFORDS_RELATION = "affords"
 
@@ -229,7 +229,7 @@ function reachKinds(model: CompiledGeographicModel, activity: string): ReachedKi
 /**
  * Returns one message per problem found when checking a lexicon against a model.
  *
- * Each problem would make a phrase match silently and answer nothing, so construction fails on any.
+ * Each problem would make a phrase match silently and produce no category, so construction fails on any.
  * The lexicon's own audit runs first because an injected lexicon skipped `readActivityLexicon`.
  */
 function auditRoute(

@@ -12,7 +12,7 @@
  *   1. **The id disagreement.** `candidate.db` and the score source key Whitby, Ontario differently
  *        (`8143502164401` vs `8000001156384`), so an id join drops it — and dropping the foreign
  *        homonym is exactly the outcome the fame prior exists to prevent. Every fixture place here
- *        carries a different id on the two sides, so an id join would score nothing at all.
+ *        carries a different id on the two sides, so an id join would return no score at all.
  *   2. **Same-name fan-out.** One country holds many places of one name. The join must give each its
  *        own score rather than the group's best, and must refuse a same-name place that is simply
  *        somewhere else.
@@ -31,7 +31,7 @@ let sourcePath: PathBuilder
 /**
  * A score source in the shape `admin-global-priority-importance.db` has: `spr` + `place_importance`.
  *
- * Ids here are deliberately nothing like the ids a candidate build would carry.
+ * Ids here are deliberately unlike the ids a candidate build would carry.
  * The join must not depend on them.
  */
 function buildFixtureSource(path: PathBuilderLike): void {

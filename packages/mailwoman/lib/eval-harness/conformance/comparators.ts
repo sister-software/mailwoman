@@ -17,12 +17,12 @@
  *   closed: an identity law that could fall back to distance would pass whenever two different places
  *   happened to sit inside the tolerance, which is precisely the failure the Gauntlet's own place-identity
  *   check was added for — Gaborone resolving to an Austrian hamlet came back with the right parsed locality
- *   and only a coordinate 8,045 km away to say. A namesake inside a 25 km bar would have had nothing
+ *   and only a coordinate 8,045 km away to say. A namesake inside a 25 km bar would have had no evidence
  *   at all.
  *
  *   An axis absent on both sides is `undecidable`, never `equivalent`. Two runs that resolved no place agree
- *   about nothing. two empty parses agree about nothing. two outcomes carrying no mechanism account agree
- *   about nothing. Reporting agreement there would let a law pass on a pair of total failures, and the
+ *   about no fact. two empty parses agree about no fact. two outcomes carrying no mechanism account agree
+ *   about no fact. Reporting agreement there would let a law pass on a pair of total failures, and the
  *   reading would be indistinguishable from a law that genuinely holds. The reading says what it read, and
  *   the runner counts `undecidable` as a violation with the reason attached.
  *
@@ -86,7 +86,7 @@ export interface ConformanceOutcome {
  * and says so rather than reporting the agreement of two absences.
  *
  * `unmeasured` is the narrower one, and only `candidate_admissibility` can report it.
- * The comparator read its axis and found nothing that violates the law, but the observation
+ * The comparator read its axis and found no entry that violates the law, but the observation
  * window was too small to prove the law either, so the reading is neither a hold nor a failure.
  *
  * Both are counted apart from the verdict by `summarizeConformanceRun`: an unmeasured

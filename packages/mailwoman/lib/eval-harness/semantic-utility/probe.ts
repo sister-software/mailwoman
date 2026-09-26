@@ -30,7 +30,7 @@ import {
  * - `no_poi_branch`: the coordinator did not take the POI branch.
  * - `poi_abstain`: the POI branch declined.
  *   The abstain reason is recorded beside the shape.
- * - `poi_intent_no_results`: the POI branch formed an intent and the executor returned nothing.
+ * - `poi_intent_no_results`: the POI branch formed an intent and the executor returned no row.
  * - `poi_intent_results`: the executor returned at least one row.
  *   Only this shape can pass the primary metric, because the comparator reads the top result.
  */

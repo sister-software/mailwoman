@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The coverage footprint, and the one thing about it that is easy to get wrong in a way nothing reports.
+ *   The coverage footprint, and the one thing about it that is easy to get wrong in a way no check reports.
  *
  *   the interior test is conservative, SO where IT is applied decides how much OF A state answers.
  *   `interiorCoverageCells` keeps only cells lying wholly inside a geometry — correct, because a cell

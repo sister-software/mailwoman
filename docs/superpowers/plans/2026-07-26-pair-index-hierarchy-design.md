@@ -131,12 +131,12 @@ backstop.
 
 ### D5 — probe-artifact safety (three independent locks)
 
-1. `delta: 0` means an accidentally wired probe artifact biases nothing. The `--delta` flag
+1. `delta: 0` means an accidentally wired probe artifact adds no bias. The `--delta` flag
    normally has no default. The probe instead pins the one value that is inert.
 2. The filename `pair-index-locality-region-<cc>.bin` does not match the loader's auto-wire pattern
    (`pair-index-<cc>.bin` as a weights-package sibling).
 3. The files live in `$MAILWOMAN_DATA_ROOT/db/wof/pair-index-hierarchy-probe/`, which is the data
-   root rather than a weights workspace. Nothing ships from there.
+   root rather than a weights workspace. No artifact ships from there.
 
 ## Measured sizes (2026-07-26, admin-global-priority.db)
 
@@ -218,7 +218,7 @@ This consumer follows the street-type channel plumbing: `data.street_type_lexico
   input), it probes each edge's index. A hit paints the child window's pieces with that edge's
   feature bit (`known_locality_under_present_region: 1`). It can also paint the parent window's
   pieces with the reciprocal bit. The feature is per-span, presence-only, positive evidence, and
-  absence paints nothing.
+  absence paints no feature bit.
 - **Bundle and check (required by the P-A verdict):** the locality channel enters only alongside
   the street-type channel, with a feature-dropout curriculum. The standing battery includes the
   evidence-ablation invariance check: zeroing the features must cause no regression on unaffected
@@ -302,7 +302,7 @@ error. The script now uses numbered placeholders throughout and has a comment ex
 1. **Reader mode: defer the binary-search/offset-table work.** The training consumer reads the file
    once per run. The decode consumer may never exist, because the bundle arc absorbed the
    locality-evidence role on the input side, and the productionization plan's Phase 4 retires decode
-   priors rather than adding one. Nothing is built speculatively. If a decode use appears, the
+   priors rather than adding one. No component is built speculatively. If a decode use appears, the
    offset table needs only one absence-tolerant header key, and the design already reserves that
    slot.
 2. **namePolicy v2 (eng-preferred): rejected for the pair artifacts.** It adds 30k mostly duplicate

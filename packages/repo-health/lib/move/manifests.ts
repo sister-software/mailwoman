@@ -6,7 +6,7 @@
  *
  *   A subpath key is an interface and stays exactly as written — `@mailwoman/geocode-oracle/sdk/census-client` keeps
  *   its name whatever the file underneath is called. The target does not: it is a path, and a path that has moved
- *   names nothing. Rewriting the target and leaving the key is what lets a file move without a consumer noticing.
+ *   names no file. Rewriting the target and leaving the key is what lets a file move without a consumer noticing.
  *
  *   Each target is generated from the move rather than searched for, so a string is replaced only where it is exactly
  *   the path this file computes. A workspace narrows `rootDir` to `lib/` and emits to `out/`, so one source file is

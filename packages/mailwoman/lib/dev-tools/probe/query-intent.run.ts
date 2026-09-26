@@ -52,7 +52,7 @@
  *   geocode path with a single candidate. No alternatives means no margin to measure, so the marker
  *   could not fire for exactly the class it exists for. **Closed by #1537**, and the cause was upstream
  *   of the intent vocabulary as suspected: the model reads those names as a `street`, so the admin walk
- *   resolves nothing and the #370 span-rescore tier is what recovers them — and it decorated the
+ *   resolves no place and the #370 span-rescore tier is what recovers them — and it decorated the
  *   injected node with an empty runner-up list, discarding the namesakes its own lookup had returned.
  *   Re-measured 2026-08-07, same backend, every coordinate byte-identical:
  *

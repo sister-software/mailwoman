@@ -117,7 +117,7 @@ Each voice contributes its own gradient. The two are added together, with Voice 
 
 We asked **which voice contributes most of the gradient** at the step before the model starts unlearning. We took a saved snapshot of the model from that moment, fed it a few example addresses, and measured the size of each voice's contribution to the gradient separately.
 
-We expected Voice A's gradient to be about 20× larger than Voice B's. That would have meant Voice B contributed almost nothing and the 5% scaling was appropriate.
+We expected Voice A's gradient to be about 20× larger than Voice B's. That would have meant Voice B contributed almost no gradient and the 5% scaling was appropriate.
 
 Instead, **Voice B's raw gradient was 16× larger than Voice A's.**
 
@@ -138,7 +138,7 @@ That is what happened to our model. Above loss 0.41, both voices agreed, and the
 
 ## The fix
 
-The fix follows directly: **remove Voice B from training**, so it contributes nothing to the gradient.
+The fix follows directly: **remove Voice B from training**, so it contributes no gradient.
 
 Voice B still encodes useful structural rules, such as forbidding orphan tags and invalid BIO sequences. We therefore keep Voice B for **inference**, when we use the trained model to parse an address, and leave it out of training.
 

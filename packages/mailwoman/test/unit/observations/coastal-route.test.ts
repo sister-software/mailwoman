@@ -14,7 +14,7 @@
  *   the rest PIN what this layer says and, more importantly, what IT refuses TO. A designation becomes one
  *   additive marker naming the verdict's own top kind, the scenario in the sentence rather than only in the
  *   evidence, and the coverage limit that says an absent polygon is not a reassurance. A location with no
- *   erosion polygon raises nothing — the inversion of the flood route, which raises a marker for a designated
+ *   erosion polygon raises no marker — the inversion of the flood route, which raises a marker for a designated
  *   absence because inside England a location with no flood polygon is Flood Zone 1 by definition. ncerm
  *   publishes no such definition, so silence here is a named refusal rather than an advisory.
  */

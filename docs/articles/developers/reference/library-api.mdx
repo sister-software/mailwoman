@@ -229,7 +229,7 @@ through the pipeline.
 
 `fst` is the option a bare classifier call has to pass, and the one whose absence is hardest to
 notice. The gazetteer index turns a gazetteer match into an additive emission bias, and it is what
-tells the model that a bare token naming a real place is a locality rather than a street. Nothing
+tells the model that a bare token naming a real place is a locality rather than a street. No other code
 loads it for you outside `createRuntimePipeline`: the pipeline reads the index out of the
 classifier's weights package on its first call and passes it to every parse, while a classifier you
 call directly receives no index at all. `geocodeAddress` does not wire it either, and `GeocodeDeps`

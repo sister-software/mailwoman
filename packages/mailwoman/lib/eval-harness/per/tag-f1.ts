@@ -177,7 +177,7 @@ export interface UnfoldedEvalClassifierOptions {
 	weightsCache: string
 	/**
 	 * Gazetteer-anchor lexicon path.
-	 * Empty feeds nothing.
+	 * Empty feeds no lexicon.
 	 */
 	gazetteerLexicon: string
 	/**

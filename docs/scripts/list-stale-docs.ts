@@ -3,18 +3,11 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Quarterly docs freshness sweep (docs-architecture cleanup, Phase 4): list maintained pages
- *   whose `review-by:` frontmatter date has passed, as a ready-to-file Markdown issue body on
- *   stdout. Empty output means nothing is due — the workflow
- *   (`.github/workflows/docs-freshness.yml`) files or updates one "Docs freshness sweep" issue
- *   only when there's a list to file.
+ *   Quarterly docs freshness sweep: list maintained pages whose `review-by:` frontmatter date has passed, as a ready-to-file Markdown issue body on stdout.
  *
- *   Pages without `review-by:` are skipped by design: the field is the opt-in that marks a page as
- *   maintained. Dated evidence — eval reports, phase plans, retrospectives — never carries it, so
- *   the sweep can't churn archival records.
+ *   Pages without `review-by:` are skipped by design, because the field is the opt-in that marks a page as maintained.
  *
- *   Run locally: `yarn workspace @mailwoman/docs freshness-report` (or
- *   `node docs/scripts/list-stale-docs.ts` from the repo root).
+ *   Run locally: `yarn workspace @mailwoman/docs freshness-report` (or `node docs/scripts/list-stale-docs.ts` from the repo root).
  */
 
 import { collectDocPages } from "./docs/frontmatter/index.ts"
@@ -34,7 +27,7 @@ const stalePages: StalePage[] = []
 for (const page of await collectDocPages()) {
 	const reviewBy = page.frontmatter.get("review-by")
 
-	if (!reviewBy) continue // No `review-by:` = not a maintained page — skipped by design.
+	if (!reviewBy) continue
 
 	const match = ISO_DATE_PATTERN.exec(reviewBy)
 

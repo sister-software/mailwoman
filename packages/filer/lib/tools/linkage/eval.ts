@@ -103,7 +103,7 @@ export interface LeakageCensus {
  *
  * This file is a source file rather than a test, so plain `tsc -b` enforces the clause.
  *
- * `SameEntity` is false because two identifiers for one filer say nothing about its owner.
+ * `SameEntity` is false because two identifiers for one filer make no statement about its owner.
  * `ManagementCompany` is false because operational control is not ownership.
  */
 const OWNERSHIP_BY_RELATIONSHIP = {

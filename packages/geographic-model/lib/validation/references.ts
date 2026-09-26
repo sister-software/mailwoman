@@ -58,12 +58,8 @@ interface EdgeCheck {
 }
 
 /**
- * Resolve one subject–relation–object edge and check it against the relation's
- * declared domain and range kinds.
- *
- * Shared by authored assertions, source observations, and derived facts.
- * The three differ in who stands behind them and in what provenance they carry,
- * and the structural question asked of them is the same one.
+ * Resolve one subject–relation–object edge and check it against the relation's declared domain
+ * and range kinds, shared by authored assertions, source observations, and derived facts.
  */
 function checkEdge(issues: ValidationIssue[], edge: EdgeCheck, tables: ReferenceTables): void {
 	const relation = edge.relationID === undefined ? undefined : tables.relations.get(edge.relationID)
@@ -189,11 +185,8 @@ function checkRelation(
 }
 
 /**
- * Follow `isA` upward from one concept and report the trail if it returns to where it started.
- *
- * The direct self-edge is left out of the walk: `checkIsA` already reports that as a
- * self-reference, at the entry that carries it, and a second report saying the same
- * concept cycles through itself tells its author nothing new.
+ * Follow `isA` upward from one concept and report the trail if it returns to where it started,
+ * leaving the direct self-edge to `checkIsA`'s self-reference report.
  */
 function findIsACycle(start: ConceptView, concepts: ReadonlyMap<string, ConceptView>): string[] | undefined {
 	if (start.id === undefined) return undefined

@@ -33,7 +33,7 @@
 
 **Interfaces:**
 
-- Consumes: nothing (leaf scaffold).
+- Consumes: no upstream task (leaf scaffold).
 - Produces: the `@mailwoman/api-kit` workspace resolving from sibling packages; `api-kit/index.ts` re-exporting `./serve.ts` and `./openapi.ts` (files arrive in Task 2 — index starts empty of exports but must exist for the exports map to typecheck).
 
 - [ ] **Step 1: Create `api-kit/package.json`**

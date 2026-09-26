@@ -5,7 +5,7 @@
  *
  *   The register boundary repair over char-aligned tokens. JP: the model's early close at the inner 市 of `中新川郡上市町`
  *   is closed by the six-town register, a real city followed by a 町-initial district is untouched, and a surface that
- *   is already a register name absorbs nothing. KR: the two emissions the CJK model produced on Haeundae rows it never
+ *   is already a register name absorbs no text. KR: the two emissions the CJK model produced on Haeundae rows it never
  *   saw — a split `해:B 운:B` and a truncated `해운대` — both close on `해운대구`, and a compound city extends to its ward.
  */
 

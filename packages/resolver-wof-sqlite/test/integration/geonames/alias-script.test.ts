@@ -8,7 +8,7 @@
  *   The fold is the only path by which a place in a fold country acquires a name in its own writing, so an
  *   admission rule that tests script decides whether a whole country is reachable in its own script at all.
  *   Hong Kong is in the fold set and carried six Han lookup keys, every one of them the country row's own:
- *   `屯門` and `深水埗` name two of its eighteen districts and resolved to nothing.
+ *   `屯門` and `深水埗` name two of its eighteen districts and resolved to no place.
  *
  *   The display name stays Latin. Which names are reachable and which name a row renders are separate
  *   questions, and only the first one is this rule's.
@@ -150,6 +150,6 @@ test("packing noise is still refused, in every script", () => {
 test("the fold reports names REFUSED, so a script gap is visible in the build and not only in the artifact", () => {
 	const hk = events.find((e) => e.country === "HK")
 
-	// The two noise spellings, and nothing else on these rows.
+	// The two noise spellings, and no other entry on these rows.
 	expect(hk?.aliasesRefused).toBe(2)
 })

@@ -2,7 +2,7 @@
 
 The reviewed activity-phrase lexicon for the [mailwoman](https://www.npmjs.com/package/mailwoman) geocoder: the surface forms a person types for an activity (`pick up a prescription` → `obtain_medication`), each entry carrying the committed record that attests it and the locales it applies to.
 
-Recognition only. This package states nothing about the world — which establishments afford an activity, in which country, on whose authority — that knowledge lives in `@mailwoman/geographic-model`, and a phrase here is valid only when it names an activity concept that model carries. Zero runtime dependencies.
+Recognition only. This package makes no statement about the world — which establishments afford an activity, in which country, on whose authority — that knowledge lives in `@mailwoman/geographic-model`, and a phrase here is valid only when it names an activity concept that model carries. Zero runtime dependencies.
 
 ## Provenance discipline
 

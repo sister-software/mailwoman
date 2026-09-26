@@ -16,7 +16,7 @@
  *   Saint-Denis pair is about — is invisible to the decoder. only the max is not. Printing anything else
  *   would overstate what an importance swap can do here.
  *
- *   `miss` means the FST does not accept the surface at all: the gazetteer has nothing to say, which is
+ *   `miss` means the FST does not accept the surface at all: the gazetteer has no entry, which is
  *   absence and not a zero bias. A printed `0` means the FST does know the surface and scores it zero.
  *   The two are different facts and the output keeps them apart.
  *

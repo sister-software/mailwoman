@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   The evidence rows' vocabulary, against a hand-built trace. What these tests are really guarding is the
- *   meaning-of-zero discipline: an unfed channel, a channel that fired on nothing, and a bundle with no locale head
+ *   meaning-of-zero discipline: an unfed channel, a channel that fired on no token, and a bundle with no locale head
  *   are three different statements, and a row that collapsed any pair of them would make its own question
  *   unanswerable.
  */

@@ -68,7 +68,7 @@ export interface NodeTraceRecorder {
 }
 
 /**
- * A {@link NodeTraceRecorder} that records nothing, for walks without a trace sink.
+ * A {@link NodeTraceRecorder} that records no events, for walks without a trace sink.
  */
 export const NOOP_TRACE_RECORDER: NodeTraceRecorder = Object.freeze({
 	bind() {},
@@ -255,7 +255,7 @@ export interface ResolutionState {
 
 	/**
 	 * The callback that receives one trace record per lookup.
-	 * The walk records nothing when it is absent.
+	 * The walk records no events when it is absent.
 	 */
 	traceSink?: (record: ResolveNodeTrace) => void
 

@@ -19,7 +19,7 @@ import type { ZodType } from "zod"
 export const StorageEffect = {
 	/**
 	 * Reads block devices, mount state, or filesystem properties.
-	 * Changes nothing, needs no privilege.
+	 * Makes no changes, needs no privilege.
 	 */
 	Read: "read",
 	/**
@@ -37,7 +37,7 @@ export type StorageEffect = (typeof StorageEffect)[keyof typeof StorageEffect]
  */
 export interface StorageContext {
 	/**
-	 * When true, an operation with a write effect describes what it would do and writes nothing.
+	 * When true, an operation with a write effect describes what it would do and makes no writes.
 	 */
 	dryRun: boolean
 	/**

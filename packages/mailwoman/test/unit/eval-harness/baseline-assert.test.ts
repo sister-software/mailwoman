@@ -128,7 +128,7 @@ describe("profiles", () => {
 	})
 
 	it("maps every profile metric to a baseline that exists", async () => {
-		// A profile pointing at a missing row would check nothing while looking like it checked.
+		// A profile pointing at a missing row would check no baseline while looking like it checked.
 		for (const name of await listProfiles()) {
 			for (const [metricKey, id] of Object.entries((await resolveProfile(name)).observe)) {
 				expect(await findBaseline(id), `profile ${name}.${metricKey} -> unknown baseline ${id}`).toBeDefined()

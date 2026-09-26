@@ -1,4 +1,4 @@
-# The suggestion layer — preregistration for a nudge that would rather say nothing
+# The suggestion layer — preregistration for a nudge that would rather abstain
 
 Opened 2026-08-05 from the operator's sketch of a layer that reads what a person typed and offers a
 better version of it. The layer connects mailfail's garbage board, `@mailwoman/formatter`, and the
@@ -31,7 +31,7 @@ one would collide.
   `cause`. Its docstring states the rule in one line: report the degradation and do not change the
   answer.
 - **`transforms`** (`normalize/types.ts:16`) is the existing before/after record. It is a
-  discriminated union with spans. It has the right shape, but nothing reads it (see A.3).
+  discriminated union with spans. It has the right shape, but no consumer reads it (see A.3).
 
 **The surface is therefore called `suggestions`, each entry is a `Suggestion`, and every entry
 records the `mechanism` that produced it.** The tree already has a convention for that string:
@@ -61,7 +61,7 @@ Every row exists today. The last column says what the suggestion layer would hav
 | `PostalAddress`         | `record/address.ts:75`                      | Carries `raw` (`:95`), `formatted` (`:87`), `canonicalKey` (`:83`) side by side                                                  |
 | `createPostalAddressID` | `address-id/index.ts:128`                   | `<state>.<H3 cell>.<hash>`; `canonicalizeForHash` (`:100`) is the one place the full `normalize` pipeline runs before hashing    |
 
-**Nothing in the repo compares a render against the input it came from.** A grep over round-trip,
+**No code in the repo compares a render against the input it came from.** A grep over round-trip,
 reparse and reformat patterns, and over every call site of `formatAddress`, `canonicalKey` and
 `reconcileComponents`, found no such comparison. The corpus adapters run the inverse direction: they
 build a string from components and then use `reconcileComponents` as a containment filter
@@ -76,17 +76,17 @@ reader. It shows `formatAddress(components: ClassificationMap, opts?)` and descr
 
 ### A.2 The confidence and abstention substrate
 
-| Thing                               | Where                                                                                         | State                                                                                                                     |
-| ----------------------------------- | --------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
-| Per-token softmax confidence        | `neural/classifier.ts:1084`, `:1093`                                                          | `probs[idx]`, or the word-consistency vote's mean when a word was healed                                                  |
-| Span confidence                     | `core/decoder/types.ts:74`, aggregated `build-tree.ts:98-100`                                 | Mean over the span's tokens, optionally through a `Calibrator` (`core/decoder/calibration.ts:9-49`) that nothing supplies |
-| Widened-span merge rule             | `neural/span-bridge.ts:129`                                                                   | `Math.min` of the two rather than the mean                                                                                |
-| `PipelineResult.faults`             | `core/pipeline/types.ts:501`, type `:460`, stages `:444-448`                                  | Three stage values only (`classifier`, `phrase-grouper`, `resolver`); `name` is the thrown value's constructor name       |
-| Fault propagation                   | —                                                                                             | **Stops at the pipeline boundary.** `faults` appears nowhere in `mailwoman/geocode-core.ts`, `api/`, or `apps/`           |
-| `minWinningScore`                   | `core/resolver/types.ts:383`, default `resolve.ts:762`, check `:1112`                         | Default 0. Set by exactly one caller in the tree: `resolver/resolve.test.ts:306`. Built, uncalled                         |
-| Postcode abstention (#1480)         | `resolver-wof-sqlite/candidate-lookup.ts:437-443`, cause `:433-436`                           | Skips the trigram rung for postcode-typed queries. **Stamps nothing** — a silent empty return                             |
-| The stamp idiom                     | `resolver/resolve.ts:329`, `:1155`, `:1168`, `:1175`, `postcode-country-coherence.ts:289-290` | ~20 `metadata` keys, without a registry or a type. The deletion list at `resolve.ts:509-517` is the closest thing         |
-| The one stamp that reaches a caller | `mailwoman/geocode-core.ts:868`, `:144`, `api/schema.ts:153`                                  | `postcode_country_scope`. Its sibling `postcode_country_scope_km` does not                                                |
+| Thing                               | Where                                                                                         | State                                                                                                                   |
+| ----------------------------------- | --------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| Per-token softmax confidence        | `neural/classifier.ts:1084`, `:1093`                                                          | `probs[idx]`, or the word-consistency vote's mean when a word was healed                                                |
+| Span confidence                     | `core/decoder/types.ts:74`, aggregated `build-tree.ts:98-100`                                 | Mean over the span's tokens, optionally via a `Calibrator` (`core/decoder/calibration.ts:9-49`) that no caller supplies |
+| Widened-span merge rule             | `neural/span-bridge.ts:129`                                                                   | `Math.min` of the two rather than the mean                                                                              |
+| `PipelineResult.faults`             | `core/pipeline/types.ts:501`, type `:460`, stages `:444-448`                                  | Three stage values only (`classifier`, `phrase-grouper`, `resolver`); `name` is the thrown value's constructor name     |
+| Fault propagation                   | —                                                                                             | **Stops at the pipeline boundary.** `faults` appears nowhere in `mailwoman/geocode-core.ts`, `api/`, or `apps/`         |
+| `minWinningScore`                   | `core/resolver/types.ts:383`, default `resolve.ts:762`, check `:1112`                         | Default 0. Set by exactly one caller in the tree: `resolver/resolve.test.ts:306`. Built, uncalled                       |
+| Postcode abstention (#1480)         | `resolver-wof-sqlite/candidate-lookup.ts:437-443`, cause `:433-436`                           | Skips the trigram rung for postcode-typed queries. **Stamps no metadata** — a silent empty return                       |
+| The stamp idiom                     | `resolver/resolve.ts:329`, `:1155`, `:1168`, `:1175`, `postcode-country-coherence.ts:289-290` | ~20 `metadata` keys, without a registry or a type. The deletion list at `resolve.ts:509-517` is the closest thing       |
+| The one stamp that reaches a caller | `mailwoman/geocode-core.ts:868`, `:144`, `api/schema.ts:153`                                  | `postcode_country_scope`. Its sibling `postcode_country_scope_km` does not                                              |
 
 The 2026-08-04 characterization
 (`docs/articles/reviews/2026-08-04-resolver-score-abstention.md`) is the standing evidence and its
@@ -95,8 +95,8 @@ garbage one at Youden J = 0.357 (FTS) / 0.573 (candidate), and the two backends 
 **Classifier span confidence gets J = 0.929 / 0.917 on the same populations.** It is already in
 `[0, 1]`, already on the node, and independent of the backend. The signal that should drive
 abstention is therefore upstream of the resolver. The number comes with three caveats. The
-correct-control band was 0.918–0.945 across 149 clean US street addresses. Corroboration cost
-nothing only because every control row was a full street address. The violation side had only
+correct-control band was 0.918–0.945 across 149 clean US street addresses. Corroboration imposed no
+cost only because every control row was a full street address. The violation side had only
 n=14/n=12. S-3 below re-derives all of it on a different population and finds that the caveats were
 understated.
 
@@ -154,7 +154,7 @@ corpus, so a single-record path must either ship a prebuilt table or drop the ad
 
 | Board                       | Where                                                                      | Size      | What it grades today                                                                                       |
 | --------------------------- | -------------------------------------------------------------------------- | --------- | ---------------------------------------------------------------------------------------------------------- |
-| mailfail fixture            | `mailwoman/eval-harness/fixtures/mailfail.jsonl`                           | 105 rows  | **Nothing.** Zero code files reference it                                                                  |
+| mailfail fixture            | `mailwoman/eval-harness/fixtures/mailfail.jsonl`                           | 105 rows  | **No metric.** Zero code files reference it                                                                |
 | — bars                      | same                                                                       | 35/35/35  | `no-component` / `no-resolve` / `no-throw`                                                                 |
 | — classes                   | same                                                                       | 7         | script 21, degenerate 18, adversarial 18, numeric 16, structured 15, symbolic 14, size 3                   |
 | Gauntlet regression         | `mailwoman/eval-harness/gauntlet/cases/regression.ts:50`                   | 192 cases | Assembled coordinate + tier + asserted components. 90 `pass`, 101 `improvement_target`, 1 `known_fail`     |
@@ -176,7 +176,7 @@ records this gap in its own text.
 
 ### A.6 What the inventory says about the sketch
 
-- **Half of the round trip is missing.** Parse, resolve and render all ship, but nothing has ever
+- **Half of the round trip is missing.** Parse, resolve and render all ship, but no code has ever
   computed the diff between the render and the input.
 - **The abstention signal exists, upstream of the resolver.** Span confidence is on the node, in
   `[0, 1]`, on both backends. The check that would use a score (`minWinningScore`) reads the wrong
@@ -184,7 +184,7 @@ records this gap in its own text.
 - **Attribution is the hard part, and three places each lack one field.** Of the eight
   answer-changing mechanisms in A.3, two stamp what they did, and only one of those two reaches a
   caller. The other six either compute the evidence and discard it (the fuzzy Jaccard at
-  `candidate-lookup.ts:450`) or record it behind a flag nothing sets (`traceRepairs`).
+  `candidate-lookup.ts:450`) or record it behind a flag no caller sets (`traceRepairs`).
 - **The entity tier is corpus-shaped**, so the second suggestion tier needs one new function rather
   than a new package.
 - **The garbage board is committed and needs no new data**, so the layer's most important bar can be
@@ -627,7 +627,7 @@ this board.
   a BT code that the unit resolver abstains on. Bar: **zero unit-level completions, zero invented
   coordinates, and the district reported where PFX1 has one.** A mechanism that completes `BT3 9QQ`
   to a Sheffield-adjacent unit has reproduced the defect #1480 fixed.
-- **B2-3 (never worse than saying nothing).** Run both arms, without and with completion, on the
+- **B2-3 (never worse than abstaining).** Run both arms, without and with completion, on the
   same board. Bar: **zero rows where the completed code moves the assembled coordinate further from
   ground truth than the no-completion arm.** Abstaining is never worse than a wrong answer, so any
   regression here violates the D-rule.
@@ -653,7 +653,7 @@ cost and the narrowest scope, and it comes last in the sequence.
 layer calls it only when Mechanism 1 has produced a `canonicalForm` and Mechanism 2 has either
 completed or abstained. The snap either confirms the render against a known entity or declines.
 
-**What it changes about the answer.** Nothing, by construction. A snap that clears `decide`'s upper
+**What it changes about the answer.** No answer value, by construction. A snap that clears `decide`'s upper
 threshold becomes `replace` ops with `mechanism: "match:fellegi_sunter"`. A snap in the `decide`
 grey band becomes an abstention with the score as evidence. The snap never overwrites silently.
 
@@ -776,7 +776,7 @@ using. It is either a correct redundancy or a dead channel, and the two are wort
 
 ### C.6 What needs a retrain
 
-**Nothing in this design needs a retrain.** Every mechanism above is a render-time or resolve-time
+**No mechanism in this design needs a retrain.** Every mechanism above is a render-time or resolve-time
 change. The only model-side dependency is span confidence, which the shipped model already emits on
 every node (`core/decoder/types.ts:74`). The taxonomy in `CONTRIBUTING_MODEL_WORK.mdx` reserves a
 retrain for open-vocab distributional tags, and a diff between two strings is not one.
@@ -785,7 +785,7 @@ Two model-adjacent items are listed here so that nobody mistakes them for part o
 
 - The venue/locality slot swaps S-1b found (`MR & MRS CRAB` → locality `MR`) are parse defects. They
   make the diff noisier, and they are a corpus question rather than a suggestion-layer question.
-- The `Calibrator` boundary (`core/decoder/calibration.ts:9-49`) exists, but nothing supplies a bin
+- The `Calibrator` boundary (`core/decoder/calibration.ts:9-49`) exists, but no caller supplies a bin
   table. Every confidence threshold in this document is therefore a threshold on a raw
   mean-of-softmax, and the 2026-08-04 review's caveat about the 0.918–0.945 band still applies.
   Fitting a calibrator would make the thresholds portable across locales. Because none is fitted,
@@ -798,7 +798,7 @@ Two model-adjacent items are listed here so that nobody mistakes them for part o
 1. **B1-1.** Build the mailfail board (`mailwoman/eval-harness/mailfail-board.ts`, beside
    `digit-board.ts`) and run the naive layer against it. The fixture is committed, the numbers are
    in S-3, and this bar decides whether the layer can be built at all. The board is worth building
-   even if the layer never ships, because the 105 committed rows have graded nothing since
+   even if the layer never ships, because the 105 committed rows have received no grade since
    2026-08-02.
 2. **The three attribution changes (C.4):** the `transforms` widening, `matchType`, and the slot
    report. All three are additive, none changes an answer, and no later bar can be graded without

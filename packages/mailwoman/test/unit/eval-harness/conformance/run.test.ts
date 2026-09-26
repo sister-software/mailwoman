@@ -299,8 +299,8 @@ describe("gauntletObserver", () => {
 		// so a shape-carrying observer is the caller's to supply.
 		// Absent rather than empty.
 		expect(outcome.mechanismShapes).toBeUndefined()
-		// And no resolver trace either: the walk records nothing unless a sink asks it to,
-		// and this observer does not ask.
+		// And no resolver trace either: the walk records no resolver node unless a
+		// sink asks it to, and this observer does not ask.
 		// Absent rather than an empty walk — the distinction `candidate_admissibility` reads.
 		expect(outcome.candidates).toBeUndefined()
 	})
@@ -426,7 +426,7 @@ describe("the unmeasured verdict bucket", () => {
 		expect(summary.unmeasured).toHaveLength(1)
 		expect(summary.failures).toHaveLength(0)
 		expect(summary.decided).toBe(0)
-		// A suite that could measure nothing at all is not a clean suite — the same refusal an empty suite gets.
+		// A suite that could measure no row at all is not a clean suite — the same refusal an empty suite gets.
 		expect(summary.pass).toBe(false)
 	})
 

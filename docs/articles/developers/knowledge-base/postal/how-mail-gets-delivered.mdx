@@ -30,7 +30,7 @@ the machine, and the address is read in both directions by different parties on 
 ## What happens in between
 
 An envelope enters at a processing facility and passes an optical reader. If the reader resolves the
-address, a barcode is sprayed on the envelope and nothing reads the text again. The barcode carries
+address, a barcode is sprayed on the envelope and the text is never read again. The barcode carries
 the machine down to the delivery point, and the walk-sequence sort falls out of it.
 
 The interesting part is what happens when the reader fails. The image is sent to a person. In the US
@@ -54,7 +54,7 @@ Read those four layers as a design and the postal system's attitude to ambiguity
 - The carrier repairs what survives both, using knowledge that exists in one head on one route.
 - What survives all three is returned rather than guessed at.
 
-Nothing in that chain resolves an ambiguous address by picking the most popular candidate. Each layer
+No layer in that chain resolves an ambiguous address by picking the most popular candidate. Each layer
 either resolves the item or hands it up to a more expensive reader with the ambiguity intact. That is
 a system built by people who found out what confident wrong answers cost.
 
@@ -67,7 +67,7 @@ the [92 US places by that name](./falsehoods-about-addresses.mdx) is the most po
 Mailwoman's default geocode path does exactly that, and it is worth being plain about it. A bare
 `Springfield` comes back as Springfield, Missouri — the most populous — at the `admin` tier, with a
 single entry in `candidates`. The underspecification is reported one field over, as
-`kind: locality_only`: the input was a place name with nothing beside it to disambiguate against. A
+`kind: locality_only`: the input was a place name with no other component to disambiguate against. A
 caller reading only the coordinate never sees that, which is the failure mode to design against.
 
 Three habits keep the ladder's discipline where the pipeline keeps it. Report a confidence per

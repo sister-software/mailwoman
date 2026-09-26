@@ -44,7 +44,7 @@ export interface ResultCameraProps {
  * Moves the map to `target`.
  *
  * Mount it as a child of `<Map>`.
- * It renders nothing.
+ * It renders no visual output.
  */
 export function ResultCamera({ target, animate = true }: ResultCameraProps): ReactNode {
 	const map = useMap()

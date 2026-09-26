@@ -1613,7 +1613,7 @@ describe("§7-3b criteria", () => {
 
 	// This block runs the real builder with EDGAR rows.
 	// The EDGAR relationships must stay out of clusters and `identifiers` and must appear in `families`.
-	// The positive check keeps the test from passing when the EDGAR path writes nothing.
+	// The positive check keeps the test from passing when the EDGAR path writes no row.
 	describe("2. EDGAR-sourced families extend checks 1-2", () => {
 		it("an inferred EDGAR subsidiary relationship never leaks into entity clustering or identifiers, but DOES surface as a family via familyRollup/filerLookup.families", async () => {
 			await using scratch = await temporaryDirectory("filer-lookup-check1-")

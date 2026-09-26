@@ -74,7 +74,7 @@ Chakrabarti's "materialized trie" as the closest academically named ancestor.
 **Covers:** the entire completion mechanic — weighted prefix walk, top-k expansion, even
 per-entry payload transport (Lucene) and hierarchy-shaped _key prefixes_ (ES geo context).
 **Does not cover:** any system that _interprets_ the payload as graph edges and walks it. In this
-family, payloads are opaque data, contexts are filters, and outputs are sums. Nothing in this
+family, payloads are opaque data, contexts are filters, and outputs are sums. No system in this
 family treats a `chain [u32;8]` as traversable ancestry.
 
 ---
@@ -129,7 +129,7 @@ family treats a `chain [u32;8]` as traversable ancestry.
 
 - The public interface returns `terms[]` (the description split into components with offsets — for a
   place prediction this reads as name-then-ancestry), `types[]`, `structured_formatting`
-  (main_text/secondary_text) [S]. **Nothing public documents how it is indexed or whether the
+  (main_text/secondary_text) [S]. **No public document describes how it is indexed or whether the
   ancestry is stored or joined**; no engineering paper found. Verdict: its `terms` array is a
   returned ancestry as display strings; internals unknowable from open sources.
 

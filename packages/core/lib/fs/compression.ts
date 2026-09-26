@@ -9,7 +9,7 @@ import {
 
 /**
  * The shape a `node:zlib` zstd transform presents: a duplex that is async-iterable
- * over bytes, which is exactly what a spliterator accepts as a source.
+ * over bytes, which is what a spliterator accepts as a source.
  */
 type ZlibTransform = ZstdCompress
 
@@ -34,10 +34,8 @@ function byteTransform(stream: CompressionStream | DecompressionStream): {
 } {
 	// `pipeThrough` rejects the native transform: its readable side is `NonSharedUint8Array`
 	// and its writable side is `BufferSource`, neither of which matches `ReadableStream<Uint8Array>`.
-	// Wrapping the writer bridges both.
-	// Keep the `new Uint8Array(chunk)` copy.
-	// `Uint8Array<ArrayBufferLike>` may sit on a SharedArrayBuffer, which `BufferSource` excludes.
-	// The copy produces a non-shared buffer.
+	// Keep the `new Uint8Array(chunk)` copy, because `Uint8Array<ArrayBufferLike>` may
+	// sit on a SharedArrayBuffer, and the copy produces a non-shared buffer.
 	const writer = stream.writable.getWriter()
 
 	return {
@@ -77,9 +75,8 @@ export function gunzipChunks(source: AsyncIterable<Uint8Array | string>): Readab
 
 /**
  * The CRC-32 and synchronous gzip `node:zlib` offers, for a checksum over a buffer
- * already in memory and for a response body compressed inside a request handler.
- *
- * Everything streamed goes through {@linkcode gunzipChunks}.
+ * already in memory and for a response body compressed inside a request handler;
+ * everything streamed goes through {@linkcode gunzipChunks}.
  */
 export { crc32, gzipSync } from "node:zlib"
 
@@ -103,13 +100,12 @@ export function unzstd(input: CompressionInput): Uint8Array {
 /**
  * A zstd decompressor as a byte stream, for handing to a spliterator.
  *
- * Returned as a `node:stream` duplex rather than a `ReadableStream` because that is what
- * `AsyncDataResource` already accepts — its `AsyncChunkIterator` arm names "a Node `Readable`
- * (child-process stdout, a gunzip pipe)" explicitly, and a zlib transform is async-iterable over bytes.
- * Pipe a file into this and pass the result straight to `JSONSpliterator.fromAsync`;
- * no adapter belongs in between.
+ * Returned as a `node:stream` duplex rather than a `ReadableStream` because that is
+ * what `AsyncDataResource` already accepts — its `AsyncChunkIterator` arm names "a Node
+ * `Readable` (child-process stdout, a gunzip pipe)" explicitly — so a file can be piped in
+ * and passed straight to `JSONSpliterator.fromAsync`.
  *
- * Nothing here materializes a whole file: a corpus part file is tens of gigabytes decompressed.
+ * It materializes no whole file: a corpus part file is tens of gigabytes decompressed.
  */
 export function zstdDecompressor(): ZlibTransform {
 	return createZstdDecompress()

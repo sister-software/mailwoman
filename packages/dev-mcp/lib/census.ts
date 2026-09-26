@@ -3,28 +3,26 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The activation-coverage census (#1719): is every mechanism in the parse path alive on at least one board row?
+ * The activation-coverage census: is every mechanism in the parse path alive on at least one board row?
  *
- *   The rule this enforces is the operator's, stated 2026-08-16: a pipeline part with no test case that activates it
- *   is itself a kind of failure. House history is the evidence — the FST prior dead because a session never fed it
- *   (#1699), overlays fed the base classifier's FST (#1703), a channel shipped never-trained (#1349), dep_loc dead
- *   uniformly (R5) — and every one of them kept the board green, because soft mechanisms are designed to degrade
- *   silently and outcome tests cannot see a counterfactual. The census asks the question outcome tests cannot: not
- *   "did the rows pass" but "did each mechanism signal on any row at all".
+ * A pipeline part with no test case that activates it is itself a kind of failure: soft mechanisms are
+ * designed to degrade silently and outcome tests cannot see a counterfactual, so the census asks not
+ * "did the rows pass" but "did each mechanism signal on any row at all".
  *
- *   Levels, per mechanism (see #1719 for the full ladder):
+ * Levels, per mechanism:
  *
- *   - **L0 present** — the mechanism's record appears in the trace (the stage ran / the channel was configured). Near
- *     meaningless alone: Weimar carried `fst applied: true` beside three all-zero channels.
- *   - **L1 signaled** — it produced nonzero input to the next stage: a channel fed a nonzero feature, a prior's own
- *     `applied` interface ("moved anything") held, a repair changed labels. This file computes L0 and L1 from one
- *     traced run.
- *   - **L2 moved an outcome** — needs ablation pairs and is not computed here. the gauntlet's ablation layer is the
- *     home for it. Reported as explicitly unmeasured so a reader cannot mistake L1 coverage for outcome relevance.
+ * - **L0 present** — the mechanism's record appears in the trace (the stage ran / the channel was
+ *   configured); near meaningless alone, since a stage can report `applied: true` beside all-zero
+ *   channels.
+ * - **L1 signaled** — it produced nonzero input to the next stage; this file computes L0 and L1 from one
+ *   traced run.
+ * - **L2 moved an outcome** — needs ablation pairs and is not computed here; the gauntlet's ablation
+ *   layer owns it, and it is reported as explicitly unmeasured so a reader cannot mistake L1 coverage
+ *   for outcome relevance.
  *
- *   A mechanism at zero L1 across the whole set is reported as inert with the standing rule attached: every zero needs
- *   either a row that activates it or an allowlisted reason someone can state ({@link CENSUS_ALLOWLIST}). Trust the
- *   subtraction over the story.
+ * A mechanism at zero L1 across the whole set is reported as inert with the standing rule attached:
+ * every zero needs either a row that activates it or an allowlisted reason someone can state
+ * ({@link CENSUS_ALLOWLIST}).
  */
 
 import { TRACE_PRIOR_KINDS, type NeuralParseTrace, type TracePriorKind } from "@mailwoman/neural"
@@ -36,10 +34,9 @@ import { describeObservedRate } from "#power"
 import { inputSetProvenance, provenanceFor } from "#tool-kit"
 
 /**
- * Mechanisms whose L1 zero is expected, each with the reason a reader can check.
- *
- * The census reports them as `allowlisted`, never as inert, and an allowlisted mechanism
- * that unexpectedly fires is reported loudly, because the reason on file is then stale.
+ * Mechanisms whose L1 zero is expected, each with the reason a reader can check;
+ * the census reports them as `allowlisted` rather than inert, and one that unexpectedly
+ * fires is reported loudly because the reason on file is then stale.
  */
 export const CENSUS_ALLOWLIST: Partial<Record<string, string>> = {
 	placetypeCensus:
@@ -53,10 +50,8 @@ export const CENSUS_ALLOWLIST: Partial<Record<string, string>> = {
 }
 
 /**
- * One row's entry in the census.
- *
- * Kept so a reader can go from an inert mechanism to the rows that should have fired it,
- * and from a starvation count to the exact inputs.
+ * One row's entry in the census, so a reader can go from an inert mechanism
+ * to the rows that should have fired it.
  */
 export interface CensusRow {
 	id: string
@@ -90,27 +85,18 @@ export interface CensusAggregate {
 	decode: Record<string, number>
 	detected_systems: Record<string, number>
 	/**
-	 * Rows where every present channel was silent.
-	 *
-	 * The per-row starvation list (#1718), complete and never truncated.
+	 * The per-row starvation list: rows where every present channel was silent, complete and never truncated.
 	 */
 	evidence_silent_rows: string[]
 	/**
-	 * Mechanisms at zero L1 across every row, minus the allowlist.
-	 *
-	 * The finding.
+	 * Mechanisms at zero L1 across every row, minus the allowlist — the finding.
 	 */
 	inert: Array<{ mechanism: string; l0_present: number; note: string }>
-	/**
-	 * Allowlisted mechanisms and whether their expectation held.
-	 */
 	allowlisted: Array<{ mechanism: string; reason: string; expectation_held: boolean }>
 }
 
 /**
- * Aggregate one traced run per row into the census.
- *
- * Pure, so the arithmetic is testable without an engine.
+ * Aggregate one traced run per row into the census; pure, so the arithmetic is testable without an engine.
  */
 export function aggregateCensus(rows: Array<{ id: string; input: string; parse: NeuralParseTrace }>): {
 	aggregate: CensusAggregate
@@ -189,7 +175,6 @@ export function aggregateCensus(rows: Array<{ id: string; input: string; parse: 
 		})
 	}
 
-	// The verdict pass: zero L1 anywhere = inert or allowlisted, never silently fine.
 	for (const [kind, tally] of Object.entries(aggregate.priors)) {
 		const allowReason = CENSUS_ALLOWLIST[kind]
 
@@ -247,8 +232,8 @@ export async function runCensus(registry: EngineRegistryLike, args: Record<strin
 		if (run.trace?.parse) {
 			traced.push({ id: item.id, input: item.input, parse: run.trace.parse })
 		} else {
-			// A row with no trace contributes nothing to any tally — counting it as "nothing
-			// fired" would manufacture inertness out of a bundle that cannot trace.
+			// A row with no trace contributes no entry to any tally — counting it as "no
+			// mechanism fired" would manufacture inertness out of a bundle that cannot trace.
 			untraced.push(item.id)
 		}
 	}

@@ -29,20 +29,18 @@ def _stream_held_out(
     max_weight: float,
     coarse_filter: bool,
 ) -> Iterator[dict[str, Any]]:
-    """Every filter-accepted row of every parquet file, file order shuffled. No source bucketing.
+    """Every filter-accepted row of every parquet file, file order shuffled, with no source bucketing.
 
-    Non-train splits bypass source bucketing entirely (2026-08-09 P0). The bucketing identifies a
-    file's source from its first row and filters every row to it — correct for the source-segregated
-    train corpus, but a mixed-source validation file silently loses every later-source row (the
-    inherited val files are mixed, so "3 val files" was never a coverage receipt). Held-out streams
-    have no source mixture to steer.
+    Bucketing identifies a file's source from its first row and filters every row to it — correct for
+    the source-segregated train corpus, but a mixed-source validation file silently loses its
+    later-source rows. Held-out streams have no source mixture to steer.
     """
     order = [s for s in paths if s.exists()]
     rng.shuffle(order)
     for s in order:
-        # Keep the --golden misuse check the bucketing path used to provide: a label-less
-        # golden file scoring as val would produce garbage metrics silently. `file_source_counts` raises on the
-        # non-string cell such a file carries, which is the same reading one level down.
+        # Keep a --golden misuse check here: a label-less golden file scoring as val would silently
+        # produce garbage metrics, and `file_source_counts` raises on the non-string cell such a file
+        # carries.
         try:
             file_source_counts(s)
         except TypeError as exc:
@@ -63,22 +61,14 @@ def _stream_held_out(
 def _index_by_source(paths: list[Path]) -> dict[str, list[Path]]:
     """Bucket parquet files by every `source` they carry.
 
-    A file appears under each of its sources, and `_file_row_iter` filters per row against the one it was asked
-    for, so a file carrying two is read twice and yields each source only its own rows. That per-row filter has
-    always been there. The defect this replaced was upstream of it: taking the first row's source as the whole
-    file's meant a source that never opens a file was invisible to the index, to `_apply_source_weights`' unnamed
-    guard, and to the epoch audit alike. Measured on `v0.31.0-region-code-and-unit`: 8 of 718 train files carry
-    more than one source, one carries four, and two sources appear in no other file.
+    A file appears under each of its sources, and `_file_row_iter` filters per row against the one it
+    was asked for, so a file carrying two is read twice and yields each source only its own rows.
+    `packages/corpus/lib/parquet/writers.ts` closes a part at `rowsPerFile` rows without breaking it at
+    a source boundary, so a source ends wherever its row count leaves it and the next continues in the
+    same part.
 
-    A file that is missing or unreadable is skipped and named. one with a non-string source raises, because that is
-    a --golden (label-less) file used as a train file and it used to fail later with a cryptic "'<' not supported
-    between NoneType and str" from `sorted()`.
-
-    Why a file carries more than one source at all: `packages/corpus/lib/parquet/writers.ts` closes a part at
-    `rowsPerFile` rows (default 1,000,000) and opens the next one, and it does not break a part at a source boundary.
-    A source therefore ends wherever its row count leaves it, and the next source continues in the same part. Nothing
-    asserts one source per file on the writing side, so this function may not assume one on the reading side — that
-    assumption is the defect it replaced.
+    A file that is missing or unreadable is skipped and named; one with a non-string source raises,
+    because that is a --golden (label-less) file used as a train file.
     """
     by_source: dict[str, list[Path]] = {}
     skipped: list[tuple[Path, str]] = []
@@ -121,20 +111,11 @@ def _apply_source_weights(
 ) -> dict[str, list[Path]]:
     """Drop the sources the weights decline, and refuse the ones they never mention.
 
-    Two different things get dropped here and only one of them is deliberate.
-
-    A source NAMED at zero is the config declining it, and the config has no other way to say so —
-    ``synth-no-street-led: 0.0`` is that sentence. A source the weights never MENTION is an
-    oversight, and it is invisible from every direction: the caller's guard raises only for the
-    mirror case (a positive weight with no parquet file), the sampler cannot miss what it never indexed,
-    and the run log carries no trace. Because intent is expressible, the absence of intent is an
-    error, so an unnamed source refuses on the split whose recipe claims coverage.
-
-    The shape it hides: a regenerated recipe output takes a version suffix in its ``source`` column
-    (``synth-fr-bare-street`` -> ``synth-fr-bare-street-v22``), the config keeps the old key, and
-    training silently continues on the superseded vintage while the current generation sits out.
-    The epoch-mixture audit then reports the old vintage as a REPS OUTLIER, because the whole weight
-    lands on a fraction of the rows — which reads as an aggressive exposure rather than a missing one.
+    A source named at zero is the config declining it deliberately; a source the weights never mention
+    is an oversight, invisible because the sampler cannot miss what it never indexed and the run log
+    carries no trace — so an unnamed source refuses on the split whose recipe claims coverage. The
+    shape it hides: a regenerated source takes a ``-vNN`` suffix, the config keeps the old key, and
+    training silently continues on the superseded vintage.
     """
     unnamed = sorted(src for src in by_source if src not in source_weights)
     if unnamed and split == "train":
@@ -165,14 +146,9 @@ def _stationary_mixture(
 ) -> Iterator[dict[str, Any]]:
     """Draw a source per row from a multinomial fixed for the whole epoch.
 
-    STATIONARY mixture (2026-08-09 P0). The previous loop deleted an exhausted source and
-    renormalized the remaining weights, so ``source_weights`` was only the opening distribution: a
-    small oversampled source (the #1569 30k-row suffix source at weight 12.0) was live for ~3,330 of
-    each ~7,812-step epoch and silent afterwards — the v4.3.3 B1 board oscillated in lockstep with
-    those exposure windows. The multinomial is fixed now: an exhausted source restarts with a fresh
-    shuffled pass (weighted sampling with replacement at the pass level), and the epoch ends once
-    every source has completed >= 1 full pass. The largest source is seen exactly once, and no
-    source ever silently leaves the mixture.
+    An exhausted source restarts with a fresh shuffled pass rather than leaving the mixture, and the
+    epoch ends once every source has completed at least one full pass. The largest source is seen
+    exactly once, and no source ever silently leaves the mixture.
     """
     iters = {src: fresh_iter(src) for src in weights}
     sources = list(iters.keys())
@@ -195,10 +171,8 @@ def _stationary_mixture(
         try:
             row = next(iters[chosen])
         except StopIteration:
-            # A pass that yielded nothing can never yield on a rerun (same rows, same
-            # filters) — a positive-weight source with zero selectable rows is a recipe/
-            # corpus interface violation, the runtime sibling of the unreachable-positive-
-            # weight guard in `_raw_row_stream`. Loud, never a silent drop.
+            # A pass that yielded no rows can never yield on a rerun, so a positive-weight source with
+            # zero selectable rows is a recipe/corpus interface violation, not a silent drop.
             if pass_rows[chosen] == 0:
                 raise ValueError(
                     f"source {chosen!r} has a positive weight but yielded zero selectable rows in a "
@@ -231,45 +205,15 @@ def _raw_row_stream(
 ) -> Iterator[dict[str, Any]]:
     """Internal stream: yields filter-accepted rows, sampled by weighted source multinomial.
 
-    Wrapped by ``iter_rows`` with a reservoir-style shuffle buffer.
+    Wrapped by ``iter_rows`` with a reservoir-style shuffle buffer. The multinomial is fixed for the
+    whole epoch, so the observed mix matches ``source_weights`` exactly per pull regardless of raw
+    share or file layout; non-train splits skip source bucketing and stream every file's rows directly.
 
-    Architecture:
-
-    1. Bucket parquet files by their (single) ``source`` value. Corpus v0.2.0 files are 100%
-       source-segregated, so this is a one-time scan of one row-group header per file.
-    2. For each source, build a per-source row iterator that visits its files in shuffled
-       order. Each iterator yields rows after country + coarse filtering.
-    3. On each pull, sample a source via the ``source_weights`` multinomial (or uniform
-       when ``source_weights`` is None) and yield the next row from that source's iterator.
-       The multinomial is fixed for the whole epoch: an exhausted source restarts with a
-       fresh shuffled pass, and the epoch ends once every source has completed at least one
-       full pass (stationary mixture — see the 2026-08-09 P0 note at the sampling loop).
-       Non-train splits skip all of this and stream every file's rows directly.
-
-    Why this and not per-row source acceptance:
-
-    The naive approach of accepting each row with probability ``source_weights[source] /
-    max(source_weights)`` was the original v0.2.0 implementation (PR #44). It is correct
-    on average — the observed mix converges to ``raw_share × accept_share / norm`` — but
-    under v0.2.0's file layout it fails empirically: the parquet files are 1M-row single-source
-    blocks, so the downstream shuffle buffer fills entirely from the current file's
-    source before any cross-source mixing happens. Long runs of one source within a batch
-    reproduce the positional-heuristic overfit that motivated this issue (#43).
-
-    Source-level multinomial sampling makes the observed mix match ``source_weights``
-    *exactly* per-pull, regardless of raw share or file layout. Memory: one active
-    row-group per source ≈ ``|sources| × 50 MB`` peak — ~300 MB for v0.2.0's 6 train-split
-    sources, well within budget.
+    Memory is one active row-group per source, about ``|sources| × 50 MB`` peak.
     """
     paths = _parquet_paths(corpus_dir, split)
     max_weight = max(country_weights.values())
 
-    # Non-train splits bypass source bucketing entirely (2026-08-09 P0). The bucketing below
-    # identifies a file's source from its first row and filters every row to it — correct for
-    # the source-segregated train corpus, but a mixed-source validation file silently loses
-    # every later-source row (the inherited val files are mixed, so "3 val files" was never a
-    # coverage receipt). Held-out streams have no source mixture to steer. yield every
-    # filter-accepted row of every file, file order shuffled.
     if split != "train":
         yield from _stream_held_out(
             paths,
@@ -283,10 +227,9 @@ def _raw_row_stream(
 
     logger.info("Indexing %d parquet files by source...", len(paths))
     by_source = _index_by_source(paths)
-    # ``source_weights`` describes the desired train mixture. Validation corpora intentionally
-    # contain only a small fixed source subset, so requiring every positive training source there
-    # would make the first scheduled validation fail even though its own files are healthy. Keep
-    # the stale-config guard on the split where the recipe makes its coverage claim.
+    # ``source_weights`` describes the train mixture; validation corpora intentionally hold a small
+    # fixed source subset, so the stale-config guard applies only where the recipe makes its
+    # coverage claim.
     if source_weights is not None and split == "train":
         missing_positive = sorted(src for src, weight in source_weights.items() if weight > 0 and src not in by_source)
         if missing_positive:

@@ -2,33 +2,20 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file The `prefer-home` table: helper shapes that already have a home, and the import each re-typed copy should
- *   become. Read by `oxlint.plugin.ts`, which matches the signatures and writes the message.
- *
- *   Add a row when a review finds the same helper typed twice — the row is the durable half of that review, and the
- *   pre-commit hook then reports the third copy before it is committed.
+ * @file The `prefer-home` table: helper shapes that already have a home, and the import each re-typed copy should become, read by `oxlint.plugin.ts`.
  */
 
 /* oxlint-disable mailwoman/prefer-home -- this file is the table the rule reads. Every constant and subcommand below
    is the signature of a helper, quoted so the rule can recognize a copy. importing the helper here would leave the
-   rule with nothing to match on. */
+   rule with no copy to match on. */
 
 /**
- * A helper shape that already has a home.
- *
- * `signature` is what a re-typed copy looks like in the AST.
- *
- * Five signature kinds cover every row. A `method-chain` names the method calls of the outermost call innermost-first, matched as a suffix of the chain the call stands on (`new Date().toISOString().slice(0, 10)` is `["toISOString", "slice"]`), optionally with the literal arguments the outer call must carry. A `numeric-literal` names the constants a re-typed algorithm cannot avoid writing: Earth's mean radius, a generator's multiplier. A `string-literal` names a substring a re-typed shell-out cannot avoid: the git subcommand it runs, in a plain string, a template literal, or a `$\`…`` command.
- *
- * A `descending-swap-loop` names a control shape rather than a token, for the helpers
- * whose re-typed copy carries no distinctive literal at all.
- * The three token kinds above can only report a re-typed generator, never a re-typed shuffle:
- * the loop writes no constant of its own and calls whatever generator it was handed.
- *
- * A `template-properties` names the components a template literal interpolates, in order.
- * A hand-written address order carries no literal worth matching.
- *
- * Its quasis are a comma and a space — and what identifies it is which components it puts in which sequence.
+ * A helper shape that already has a home, whose `signature` is what a re-typed
+ * copy looks like in the AST: a `method-chain` lists the outermost call's
+ * methods innermost-first, matched as a suffix with optional literal arguments,
+ * a `numeric-literal` or `string-literal` names a literal a copy cannot avoid,
+ * a `descending-swap-loop` names a control shape that carries no distinctive literal,
+ * and a `template-properties` names the components a template interpolates in order.
  */
 export interface HelperHome {
 	readonly id: string
@@ -45,9 +32,6 @@ export interface HelperHome {
 
 /**
  * Every helper shape the `prefer-home` rule knows.
- *
- * Each row was added by a review that found the same helper typed twice.
- * The rule then reports the third copy at commit time.
  */
 export const HELPER_HOMES: readonly HelperHome[] = [
 	{

@@ -31,7 +31,7 @@ paints `#14657d` on translucent cyan, both inside a dark app.
 ### The control panel is light because a Docusaurus selector travelled with it
 
 `packages/earth/lib/panels/geocoder.module.css:22` sets `background: rgba(255, 255, 255, 0.85)`. The dark
-rule beneath it is scoped `:global([data-theme="dark"])`. Nothing under `packages/earth/lib/` or in
+rule beneath it is scoped `:global([data-theme="dark"])`. Neither `packages/earth/lib/` nor
 `packages/earth/index.html` sets `data-theme`, so the light rule wins permanently while `app.css` puts
 `#e6edf3` text on it.
 
@@ -74,7 +74,7 @@ fetches vector tiles from a worker, which a page-level request listener cannot s
 | Nomenclature vector tiles | **0**       |
 | Glyph ranges              | **0**       |
 
-The source resolves, and then nothing requests tiles from it. Everything downstream is healthy. The tile
+The source resolves, and then no layer requests tiles from it. Everything downstream is healthy. The tile
 worker answers `mars.json` and every tile with 200 and an `access-control-allow-origin` that echoes the
 app origin. The tiles carry features at every zoom: 314 in `z0/0/0`, 111 in `z2/1/1`, 53 in `z3/2/3`.
 
@@ -150,7 +150,7 @@ above the address field. The right-hand panel lists internal style-layer counts 
    record. Styleframe compiles it. Styleframe can be replaced, because the output is plain CSS custom
    properties and the input is a published standard.
 2. **`@mailwoman/react` owns the tokens.** The package that uses the vocabulary declares it. The design
-   adds no new workspace, because a new workspace joins seven registers and nothing here needs a separate
+   adds no new workspace, because a new workspace joins seven registers and no part of this work needs a separate
    publish identity.
 3. **Three token layers.** The layers are primitive, semantic, and component. Component rules read
    semantic names only. The current defect is that component rules read raw primitives.
@@ -165,7 +165,7 @@ above the address field. The right-hand panel lists internal style-layer counts 
 7. **The typeface is bound per role, and the binding is expected to change.** A rule never refers to a
    font family directly. It refers to a scale role, and each scale role maps to one of five face roles.
    Iosevka Nexus is currently bound to all five and is not assumed permanent. A swap edits
-   `font.family.*` and nothing else. Map labels carry a separate binding, `font.family.map`, because
+   `font.family.*` and no other token. Map labels carry a separate binding, `font.family.map`, because
    MapLibre draws them from a signed-distance-field range rather than a `@font-face`. Its value must be a
    stack the bucket serves, which today means `Noto Sans Regular`, `Noto Sans Medium` or
    `Noto Sans Italic`.
@@ -273,8 +273,8 @@ to a scale role, and each scale role maps to a face role. Changing the typeface 
 | `font.family.glyph`   | Control glyphs — close, chevron, compass letter, microphone | Monochrome, inherits color and size, sits on the text baseline                        |
 
 Iosevka Nexus satisfies all five today, with its mono variant covering number, code and glyph. That is
-why using a single face has caused no problems yet, and also why nothing currently records which role a
-rule wanted. Binding the roles now makes a future swap an edit to `font.family.*` and nothing else.
+why using a single face has caused no problems yet, and also why no record currently states which role a
+rule wanted. Binding the roles now makes a future swap an edit to `font.family.*` and no other token.
 
 ### Scale roles
 
@@ -364,7 +364,7 @@ The default view shows the wordmark, one line describing what the page does, the
 row, the control stack, and the footer. Results appear in a bottom sheet.
 
 Model version, backend readout, Force WASM, Compare and the style-layer counts move under a **Developer**
-section of the layers panel, reachable by toggle or `?dev=1`. Nothing is deleted, but the expert controls
+section of the layers panel, reachable by toggle or `?dev=1`. No control is deleted, but the expert controls
 no longer appear first.
 
 `geocoder.module.css` loses the orphan `[data-theme="dark"]` rule and both `--ifm-navbar-height` offsets.
@@ -391,7 +391,7 @@ Each phase is deployable on its own.
 | 1a  | `text-font` repair in both styles                                                                                              | Shipped on `9504425c7`. Both styles name a served stack; planetary labels still absent, so this was necessary and not sufficient |
 | 1b  | `setWorkerUrl` in planetary's `main.tsx`, plus the browser guard for vector tiles, glyph ranges and HTML-served worker scripts | Moon and Mars name their features at all — the app's first job, and a precondition for judging any framing or palette change     |
 | 2   | DTCG tokens, styleframe compile, `fonts.css`, docs bridge, cascade layers, delete the orphan selector and the navbar offsets   | Panel readable, brand palette and typeface live, layout unchanged                                                                |
-| 3   | The five chrome components, glass material with fallback, safe-area and motion tokens                                          | Nothing in production yet; stories and tests                                                                                     |
+| 3   | The five chrome components, glass material with fallback, safe-area and motion tokens                                          | No production surface yet, only stories and tests                                                                                |
 | 4   | Earth relayout, Developer demotion                                                                                             | The new front door                                                                                                               |
 | 5   | Mars ramp, star field, framing cap, planetary chrome                                                                           | Moon and Mars distinct and legible                                                                                               |
 | 6   | An SDF glyph range built from a `@font-face` source and published to the bucket                                                | A face chosen for the DOM can also be bound to `font.family.map`, so the globe and the panel read as one product                 |

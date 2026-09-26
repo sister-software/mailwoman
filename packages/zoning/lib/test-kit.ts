@@ -159,7 +159,7 @@ export function fixtureFeatures(): ZoningSourceFeature[] {
 	]
 
 	// About 5.5 m across — smaller than a res-11 cell, let alone a res-9 one.
-	// `polygonToCells` returns nothing for a shape this size, so it is the fixture that
+	// `polygonToCells` returns no cell for a shape this size, so it is the fixture that
 	// proves the index takes cell-touches-polygon rather than centre-in-polygon.
 	const sliver = exteriorRing(lon + 3 * FIXTURE_SIDE, lat, lon + 3 * FIXTURE_SIDE + 0.00005, lat + 0.00005)
 

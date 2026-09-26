@@ -16,7 +16,7 @@
  *   without deciding what becomes of the measurement, and no rule this module could carry would decide
  *   that correctly. So a commented removal is refused with the lines quoted, and a person moves them.
  *
- *   Nothing here writes to disk. The caller gets the new source and decides whether to apply it, which is
+ *   No step here writes to disk. The caller gets the new source and decides whether to apply it, which is
  *   what keeps an irreversible-looking step reviewable as a diff.
  */
 

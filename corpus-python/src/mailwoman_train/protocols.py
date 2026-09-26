@@ -1,13 +1,4 @@
-"""The interfaces the swappable pieces satisfy.
-
-A country's contribution and a training callback are each declared here, so someone adding either
-reads one interface instead of inferring the shape from an existing implementation. Nothing
-inherits from these: they are structural, checked by mypy and by `isinstance` in tests.
-
-Each member below is a shape the tree already carries. A protocol that describes an interface
-nobody implements reads as a promise and enforces nothing, so a member is added here when the
-code it names exists rather than in anticipation of it.
-"""
+"""The structural interfaces a country module, a CLI command, and a training callback satisfy."""
 
 from __future__ import annotations
 
@@ -17,11 +8,10 @@ from typing import Any, Protocol, runtime_checkable
 
 @runtime_checkable
 class CountryModule(Protocol):
-    """What one country contributes to training.
+    """What one country contributes to training, as a module rather than an instance.
 
-    The implementer is a module rather than an instance, which is why the settings are spelled as module
-    constants. `BOARD_BUCKET_MIN` is the municipality-population floor above which rows go to the
-    held-out board rather than the training pool. each country sets its own, because the population
+    `BOARD_BUCKET_MIN` is the municipality-population floor above which rows go to the held-out
+    board rather than the training pool; each country sets its own because the population
     distributions differ.
     """
 
@@ -45,12 +35,7 @@ class CountryModule(Protocol):
 
 @runtime_checkable
 class CLICommand(Protocol):
-    """One subcommand of `python -m mailwoman_train`.
-
-    The implementer is a module under `cli/commands/`. A command declares its own flags, so its
-    body and its interface are read together instead of a hundred lines apart, and adding one
-    touches no other command's code.
-    """
+    """One subcommand of `python -m mailwoman_train`, implemented as a module under `cli/commands/`."""
 
     NAME: str
     """The subcommand as typed, which may be kebab-case where the module name cannot be."""
@@ -66,13 +51,9 @@ class CLICommand(Protocol):
 
 @runtime_checkable
 class TrainCallback(Protocol):
-    """One concern observed during a training run.
-
-    Every hook answers None. A callback never steers the loop: it observes, writes or reports, and
-    one that must stop a run raises. `state` is `Any` rather than a named type because the loop's
-    state object lives in `train.trainer`, and importing it here would put the training loop behind
-    every module that reads an interface.
-    """
+    """One concern observed during a training run; hooks answer None and one that must stop a run
+    raises, and `state` is `Any` to keep the training loop out of every module that reads an
+    interface."""
 
     def on_train_begin(self, state: Any) -> None: ...
 

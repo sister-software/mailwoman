@@ -39,7 +39,7 @@ The KR framework (item 4) uses the same approach.
 ## 3. Hong Kong ALS
 
 **The question:** data.gov.hk's terms grant commercial download, distribution, and reproduction but
-**say nothing about adaptation, derivative works, or sublicensing** (`license_id: null` on the ALS bulk
+**make no statement about adaptation, derivative works, or sublicensing** (`license_id: null` on the ALS bulk
 GeoJSON). Compiling ALS into an FST/gazetteer artifact is adaptation. Is that permitted?
 
 **Facts:** the 2026-07-30 prior-art survey verified these terms. The full survey is in
@@ -158,6 +158,6 @@ on the free channel) and marks every point where an instrument would be needed.
    artifacts does not create a derivative-database relationship. The architecture already assumes it does not
    (item 1's quarantine mechanisms), so this item asks counsel to confirm an existing assumption.
 
-**Interim posture:** nothing ships on the Lite line. The prerequisites that need no lawyer (L4
+**Interim posture:** no artifact ships on the Lite line. The prerequisites that need no lawyer (L4
 and L5 fact-finding, the share-alike build filter for the US situs extracts, and putting the
 artifact builds on a schedule) proceed independently.

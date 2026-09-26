@@ -3,20 +3,12 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `useGeocoderRuntime` — the app's runtime assembly. It builds the real {@link GeocoderRuntime} that
- *   `@mailwoman/react/map`'s geocoder consumes, wiring the browser runtime's async fetchers and factories into the
- *   fully client-side geocoder.
+ * `useGeocoderRuntime` — the app's runtime assembly. It builds the real {@link GeocoderRuntime} that
+ * `@mailwoman/react/map`'s geocoder consumes, injecting the browser runtime's loaders into
+ * `@mailwoman/react`'s `useReleaseRuntime` orchestration and wrapping the loaded assets with the map surface.
  *
- *   The shared load orchestration (version-selection state machine, per-version sequencing, ready/error state) is
- *   owned by `@mailwoman/react`'s `useReleaseRuntime`; this module injects the loaders from `mailwoman/browser-runtime`
- *   into it (the onnx-web classifier, the httpvfs gazetteer, the FST, the releases manifest, the calibration table,
- *   the postcode-anchor lookup). Around that loader it assembles the map surface: the composed cartographer basemap
- *   style, the parse+resolve+street+anchor cascade as a bias-aware `runParseWithBias`, the FST autocomplete, and a
- *   `resolveMapPlace` enricher (bbox / street tier / lazily-fetched crisp polygon) that feeds the declarative
- *   overlays.
- *
- *   This is application code on purpose: `@mailwoman/react` keeps its runtime hook free of the ONNX, httpvfs and
- *   maplibre graph, and this assembly imports all three.
+ * This is application code on purpose: `@mailwoman/react` keeps its runtime hook free of the ONNX, httpvfs and
+ * maplibre graph, and this assembly imports all three.
  */
 
 import { StyleSpecificationComposer, MailwomanBaseTileSetID } from "@mailwoman/cartographer/base"
@@ -69,9 +61,7 @@ import { pruneDBRangeCache } from "#runtime/range-cache"
 import { useGeoBias, type GeoBiasControl } from "#runtime/use/geo-bias"
 
 /**
- * Per-region interp-radius conformal factor (#374); default for unmeasured regions.
- *
- * Mirrors `_app.tsx`.
+ * Per-region interp-radius conformal factor, with `INTERP_RADIUS_DEFAULT` for unmeasured regions.
  */
 const INTERP_RADIUS_BY_REGION: Record<string, number> = { dc: 1.44, ny: 1.53, ca: 1.87, mi: 1.93 }
 const INTERP_RADIUS_DEFAULT = 1.95
@@ -82,19 +72,13 @@ const INTERP_RADIUS_DEFAULT = 1.95
 const STREET_COMPONENT_TAGS = new Set(["street", "street_prefix", "street_prefix_particle", "street_suffix"])
 
 /**
- * The per-state street lookups, loaded together (lazy by region).
- *
- * National (country) extracts carry no interp.
+ * Per-state street lookups loaded together, lazily by region; national (country) extracts carry no interp.
  */
 interface StreetLookups {
 	situs: HTTPVFSAddressPointLookup
 	interp: HTTPVFSInterpolator | undefined
 }
 
-/**
- * Per-candidate map-render extras stashed during a parse (bbox / street tier),
- * read back by `resolveMapPlace`.
- */
 interface CandidateExtras {
 	bbox?: ResolvedPlaceView["bbox"]
 	tier?: "address_point" | "interpolated"
@@ -102,43 +86,20 @@ interface CandidateExtras {
 }
 
 export interface GeocoderRuntimeHandle {
-	/**
-	 * The composed runtime the geocoder consumes.
-	 */
 	runtime: GeocoderRuntime
-	/**
-	 * The selectable releases (for the host compare panel that loads its own second classifier).
-	 */
 	releases: ReleaseInfo[]
-	/**
-	 * Whether the CPU/wasm backend is forced (threaded into the host compare classifier load).
-	 */
 	forceWASM: boolean
-	/**
-	 * The device-location proximity-bias control (the "Use my location" row).
-	 */
 	geoBias: GeoBiasControl
-	/**
-	 * The version's isotonic calibrator (raw softmax → calibrated probability), or `null` if none loaded.
-	 */
 	calibrator: ((raw: number) => number | null) | undefined
 	/**
-	 * Trace the current input through the decode path (for the dev-mode ModelVisualizer drawer).
-	 *
-	 * Resolves `null` when the classifier bundle predates the `traceParse` hook or the trace fails.
-	 * Feature-detect via {@link supportsTrace}.
+	 * Resolves `null` when the classifier bundle predates the `traceParse` hook
+	 * or the trace fails; feature-detect via {@link supportsTrace}.
 	 */
 	traceParse: (input: string) => Promise<ParseTraceLike | null>
-	/**
-	 * Whether the loaded classifier exposes the `traceParse` decode-path hook (enables the dev-mode toggle).
-	 */
 	supportsTrace: boolean
 }
 
 export interface GeocoderRuntimeOptions {
-	/**
-	 * The origins and the same-origin sql.js path the runtime reads from.
-	 */
 	config: EarthConfig
 	/**
 	 * Initial map center as `[lon, lat]`.
@@ -147,27 +108,20 @@ export interface GeocoderRuntimeOptions {
 }
 
 /**
- * Build the real {@link GeocoderRuntime}.
- *
- * Injects the browser runtime's loaders into the shared `useReleaseRuntime`
- * orchestration, then wraps the loaded assets with the map surface
- * (style / overlays / bias-aware parse / autocomplete / calibrator / map-place enricher).
- */
-
-/**
- * Give a superseded bundle's native memory back.
- *
- * Module scope rather than a `useCallback`: it closes over nothing, so a stable
- * identity costs nothing and it cannot churn the hook's effect.
+ * Give a superseded bundle's native memory back; module scope rather than `useCallback`
+ * because it closes over no state, so a stable identity is free and cannot churn the hook's effect.
  */
 function disposeAssets(assets: ReleaseAssets): Promise<void> {
 	return assets.release()
 }
 
+/**
+ * Build the real {@link GeocoderRuntime} by injecting the browser runtime's
+ * loaders into `useReleaseRuntime`.
+ */
 export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOptions): GeocoderRuntimeHandle {
 	const { sqljsBaseURL } = config
 
-	// ── Injected loaders ──────────────────────────────────────────────────────
 	const loadManifest = useCallback(
 		async (): Promise<ReleaseManifest<ReleaseInfo> | null> => fetchReleasesManifest(),
 		[]
@@ -181,8 +135,6 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 
 	const rt = useReleaseRuntime<ReleaseAssets, ReleaseInfo>({ loadManifest, loadAssets, disposeAssets })
 
-	// The service worker keeps one release's gazetteer chunks.
-	// Tell it which.
 	useEffect(() => {
 		if (rt.selectedVersion) {
 			pruneDBRangeCache(rt.selectedVersion)
@@ -198,25 +150,9 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 	)
 
 	/*
-	 * the parse callbacks depend on the bundle they parse with.
-	 *
-	 * There is no mirror.
-	 *
-	 * They used to read `rt.assets` out of a ref so their identity could stay fixed across a load,
-	 * and the ref was written in an effect — which lost a race it could not win.
-	 * React runs effects child-first, and `runtime.ready` is derived from the same
-	 * `rt.assets`, so a descendant effect reacting to `ready` flipping true ran
-	 * before this parent's effect had written the mirror: `?q=` answered "Classifier
-	 * not ready" on a page whose classifier had loaded fine.
-	 *
-	 * Writing the mirror during render instead closed the window and broke a different rule —
-	 * a ref written in render is a value React is entitled to discard.
-	 *
-	 * Naming the values as dependencies has neither problem.
-	 * A callback that parses with a bundle is not the same callback once the bundle changes,
-	 * and saying so is what keeps every consumer in step without a second copy of the truth.
-	 *
-	 * The identity churns once per release load, which is the only moment it means anything.
+	 * These callbacks read `rt.assets` and name it as a dependency: a callback that parses
+	 * with a bundle is not the same callback once the bundle changes, and a ref mirror lost
+	 * a child-first effect race (a ref written during render is a value React may discard).
 	 */
 
 	const geoBias = useGeoBias()
@@ -225,15 +161,14 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 	const extrasRef = useRef<WeakMap<ResolvedPlaceView, CandidateExtras>>(new WeakMap())
 	// Lazy street-tier situs/interp lookups, cached by parsed state/country slug (in-flight promise dedup).
 	const streetLookupsRef = useRef<Map<string, Promise<StreetLookups>>>(new Map())
-	// Lazy crisp-polygon DB + per-id cache.
-	// The cache is state (not a ref) so a landed polygon rebuilds `resolveMapPlace` →
-	// the runtime → `useGeocode`'s mapPlace memo, drawing the geometry.
-	// Cache value: `undefined` = unfetched, `null` = fetched-absent (fall through to bbox), geometry = present.
+	// The cache is state rather than a ref so a landed polygon rebuilds `resolveMapPlace`
+	// through `useGeocode`'s mapPlace memo; value `undefined` = unfetched,
+	// `null` = fetched-absent (fall through to bbox), geometry = present.
 	const polygonDBRef = useRef<Promise<PolygonDB> | null>(null)
 	const polygonInflightRef = useRef<Set<number>>(new Set())
 	const [polygonCache, setPolygonCache] = useState<Map<number, PlaceGeometry | null>>(() => new Map())
 
-	// Reset polygon state on version change (URLs are version-scoped).
+	// URLs are version-scoped, so reset polygon state on version change.
 	useEffect(() => {
 		polygonDBRef.current = null
 		polygonInflightRef.current = new Set()
@@ -241,8 +176,6 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 		setPolygonCache(new Map())
 	}, [rt.selectedVersion])
 
-	// Lazy-load (and cache) the situs + interp httpvfs lookups for a parsed region's state extract.
-	// Ported from `_app.tsx`.
 	const ensureStreetLookups = useCallback(
 		async (slug: string): Promise<StreetLookups | null> => {
 			let p = streetLookupsRef.current.get(slug)
@@ -277,7 +210,6 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 		[sqljsBaseURL]
 	)
 
-	// ── The bias-aware parse+resolve — the god-component `onSubmit` re-expressed as a pure ParseResult factory. ──
 	const runParseWithBias = useCallback(
 		async (input: string, bias: MapBias | null, hooks: { onStage: (stage: number) => void }): Promise<ParseResult> => {
 			const assets = rt.assets
@@ -286,9 +218,8 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 			if (!classifier) throw new Error("Classifier not ready")
 			hooks.onStage(0)
 
-			// Shared classify front-half (#861 / #1278 boundary): 4-way pipeline import →
-			// query-shape/kind → neural runPipeline → flatten, with the two front-half timings captured.
-			// `onStage(1)` fires between shape and classify, exactly as before.
+			// The classify front half: pipeline import → query-shape/kind → neural runPipeline
+			// → flatten, with `onStage(1)` firing between shape and classify.
 			const { tree, nodes, kindResult, timing } = await runClassifyStage(
 				input,
 				{
@@ -300,11 +231,6 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 				{ onClassifierStart: () => hooks.onStage(1) }
 			)
 
-			// `city`, `state`, `postal_code` and `house_number_prefix` are libpostal vocabulary
-			// rather than `ComponentTag`s, so the `|| n.tag === "…"` arms that used to
-			// sit on these four finds could never match.
-			// They compiled only while the flattener returned `{ tag: string }`;
-			// against the real tag union they are type errors.
 			const localityNode = nodes.find((n) => n.tag === "locality")
 
 			const stateNode = nodes
@@ -313,7 +239,6 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 
 			const postcodeNode = nodes.find((n) => n.tag === "postcode")
 
-			// ── Street tier (#377): exact situs point / tiger interpolation, ahead of the admin cascade. ──
 			let streetResolution: StreetResolution | null = null
 
 			const streetParts = nodes
@@ -362,7 +287,6 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 
 			const wofLookup = assets?.lookup ?? null
 
-			// No WOF DB for this release — return the classify-only result (no candidates).
 			if (!wofLookup) {
 				return {
 					input,
@@ -394,9 +318,8 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 				})
 			}
 
-			// Viewport bias (#938): the map center as a soft proximity hint.
-			// The library's decay is population-ceilinged.
-			// The device location (when granted via the "Use my location" button) joins as a weaker second hint.
+			// Viewport bias: the map center as a population-ceilinged soft proximity hint,
+			// with a granted device location joining as a weaker second hint.
 			const resolveBias: ResolveBias = []
 
 			if (bias) {
@@ -411,7 +334,7 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 			const cascadeHits = await runCascade(wofLookup, tree, input, resolveBias)
 			const tResolve = performance.now()
 
-			// Anchor-centroid fallback (postcode-only dead ends): synthesize an approximate hit from postcode-*.bin.
+			// Postcode-only dead end: synthesize an approximate anchor-centroid hit from `postcode-*.bin`.
 			if (!cascadeHits.length && postcodeNode?.value && assets?.anchorLookup) {
 				const anchorHit = assets.anchorLookup.get(String(postcodeNode.value).toUpperCase())
 
@@ -429,16 +352,13 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 
 			const candidates: ResolvedPlaceView[] = projectCascadeHits(cascadeHits)
 
-			// Stash the map-render extras (bbox) keyed by the candidate object.
 			cascadeHits.forEach((c, i) => {
 				extrasRef.current.set(candidates[i]!, { bbox: c.bbox })
 			})
 
-			// Street-level coordinate wins the pin (more precise than any admin centroid).
-			// id=0 → not a WOF place. The `tier` + `uncertaintyM` ride on the candidate
-			// itself (`ResolvedPlaceView` carries both) so the result panel renders the
-			// "precision ≈ interpolated · ±N m" row instead of a "WOF id 0".
-			// The map render still reads them back through `extrasRef` below.
+			// A street-level coordinate wins the pin; `id: 0` marks a non-WOF synthesized place,
+			// `tier` + `uncertaintyM` ride on the candidate so the result panel renders the precision row
+			// instead of a `WOF id 0`, and the map render reads them back through `extrasRef`.
 			if (streetResolution) {
 				const streetCandidate: ResolvedPlaceView & { tier: StreetResolution["tier"]; uncertaintyM: number } = {
 					id: 0,
@@ -459,9 +379,8 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 				candidates.unshift(streetCandidate)
 			}
 
-			// Dual-role (#402): whether the resolved place doubles as another admin tier.
-			// Best-effort + optional (shared with the MDX-embed path).
-			// A synthesized street/anchor pin (`id === 0`) is skipped by the helper.
+			// Whether the resolved place doubles as another admin tier; best-effort,
+			// and the helper skips a synthesized street/anchor pin (`id === 0`).
 			const dualRoles = await resolveDualRoles(wofLookup, candidates[0])
 
 			return {
@@ -485,9 +404,6 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 		[runParseWithBias]
 	)
 
-	/**
-	 * FST autocomplete, the combobox's injected fetcher.
-	 */
 	const autocomplete = useCallback(
 		async (query: string): Promise<Suggestion[]> => {
 			const fst = rt.assets?.fstMatcher
@@ -510,9 +426,6 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 		[rt.assets]
 	)
 
-	/**
-	 * Map-place enricher: candidate → ResolvedMapPlace (bbox / tier / lazily-fetched crisp polygon).
-	 */
 	const resolveMapPlace = useCallback(
 		(candidate: ResolvedPlaceView): ResolvedMapPlace | null => {
 			const extras = extrasRef.current.get(candidate) ?? {}
@@ -524,10 +437,8 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 				uncertaintyM: extras.uncertaintyM,
 			}
 
-			// Crisp admin polygon (like `_app.tsx`): only for a real WOF place with no precise street tier.
-			// The pure `computeMapPlaceRenderSpec` cascade prefers `geometry` when present.
-			// The async fetch stays here (a runtime concern), populating a cache + bumping a nonce
-			// so the enricher re-runs with the geometry in hand.
+			// Crisp admin polygon only for a real WOF place with no street tier, because
+			// `computeMapPlaceRenderSpec` prefers `geometry` and the cache update re-runs this enricher.
 			const release = rt.selectedRelease
 			const version = rt.selectedVersion
 
@@ -565,7 +476,6 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 		[sqljsBaseURL, polygonCache, rt.selectedRelease, rt.selectedVersion]
 	)
 
-	// ── Decode-path trace (dev-mode ModelVisualizer): trace the current input through the loaded classifier. ──
 	const traceParse = useCallback(
 		async (input: string): Promise<ParseTraceLike | null> => {
 			const classifier = rt.assets?.classifier
@@ -581,11 +491,6 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 		[rt.assets]
 	)
 
-	// ── Coverage "fog of war" overlay: the XYZ vector source + default-off fill layers,
-	// handed to the package's declarative `<OverlayLayers>`.
-	// Default-off (`visible: false`); the LayerToggleControl (injected via `panels.mapControls`)
-	// flips each fog reading on.
-	// The tile-worker `race-dots` overlay stays off. ──
 	const overlays = useMemo<OverlaySpec[]>(
 		() => [
 			{
@@ -599,7 +504,6 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 		[config.tileWorkerURL]
 	)
 
-	// ── Version + backend surface (mirror the loader state. The picker/backend controls drive these) ─────────
 	const availableVersions = useMemo(
 		() => (rt.manifest?.releases ?? []).map((r) => ({ version: r.version, label: r.label })),
 		[rt.manifest]
@@ -618,7 +522,6 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 
 	const runtime = useMemo<GeocoderRuntime>(() => {
 		return {
-			// PipelineRuntime surface
 			ready: rt.ready,
 			runParse,
 			parseStageLabels,
@@ -629,7 +532,6 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 				byteFraction: rt.loadingByteFraction,
 			},
 			errorMessage: rt.errorMessage,
-			// Map surface
 			mapStyle,
 			overlays,
 			initialCenter: [initialCenter[0], initialCenter[1]],
@@ -638,7 +540,6 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 			autocomplete,
 			calibrator,
 			resolveMapPlace,
-			// Version + backend
 			availableVersions,
 			selectedVersion: rt.selectedVersion ?? undefined,
 			selectVersion: rt.selectVersion,

@@ -3,13 +3,12 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Ed25519 on `crypto.subtle`, the one implementation Node, a Cloudflare Worker and a browser share. Keys
- *   travel as PEM: PKCS8 for the private half, spki for the public half, which is what `node:crypto` wrote before and
- *   what an operator's signing key file already holds. The PEM codec here is a base64 transform of the DER bytes the
- *   WebCrypto API imports and exports. nothing parses ASN.1.
+ *   Ed25519 on `crypto.subtle`, the one implementation Node, a Cloudflare Worker and a browser share. Keys travel as
+ *   PEM: PKCS8 for the private half and spki for the public half. The PEM codec is a base64 transform of the DER bytes
+ *   the WebCrypto API imports and exports.
  *
- *   Signing is deterministic in Ed25519, so a WebCrypto signature over the same key and bytes equals the `node:crypto`
- *   one byte for byte. the test holds that against a fixture produced before this module existed.
+ *   Ed25519 signing is deterministic, so a WebCrypto signature over the same key and bytes equals `node:crypto`'s byte
+ *   for byte.
  */
 
 import { fromBase64URL, toBase64URL } from "#crypto/base64url"
@@ -33,8 +32,7 @@ function pemToDER(pem: string): Uint8Array<ArrayBuffer> {
 		.replace(/-----END [A-Z ]+-----/u, "")
 		.replaceAll(/\s+/gu, "")
 
-	// Standard base64 with padding.
-	// The url-safe decoder accepts it once the two alphabet characters are mapped.
+	// The url-safe decoder accepts standard base64 once the two alphabet characters are mapped.
 	return fromBase64URL(base64.replaceAll("+", "-").replaceAll("/", "_").replace(/=+$/u, ""))
 }
 
@@ -57,9 +55,8 @@ export function publicKeyDER(publicKeyPEM: string): Uint8Array<ArrayBuffer> {
 export async function generateEd25519KeyPair(): Promise<Ed25519KeyPairPEM> {
 	const pair = await crypto.subtle.generateKey(ALGORITHM, true, ["sign", "verify"])
 
-	// The overload answers a single key for symmetric algorithms.
-	// Ed25519 always answers a pair, and narrowing by shape keeps this module free
-	// of a global type name the Node typings do not declare.
+	// The overload answers a single key for symmetric algorithms; Ed25519 always answers a pair,
+	// and narrowing by shape keeps this module free of a global type name the Node typings do not declare.
 	if (!("privateKey" in pair)) throw new TypeError("Ed25519 key generation answered a single key, not a pair")
 
 	return {
@@ -69,18 +66,14 @@ export async function generateEd25519KeyPair(): Promise<Ed25519KeyPairPEM> {
 }
 
 /**
- * The spki DER header for an Ed25519 public key: a sequence holding the
- * AlgorithmIdentifier (OID 1.3.101.112) and a 32-byte BIT string.
- *
- * Fixed for the algorithm, so the public key's DER is this header plus the point.
+ * The spki DER header for an Ed25519 public key: a sequence holding the AlgorithmIdentifier
+ * (OID 1.3.101.112) and a 32-byte BIT string, so the public key's DER is this header plus the point.
  */
 const SPKI_ED25519_HEADER = new Uint8Array([0x30, 0x2a, 0x30, 0x05, 0x06, 0x03, 0x2b, 0x65, 0x70, 0x03, 0x21, 0x00])
 
 /**
- * The public half of a PKCS8 private key, as spki PEM.
- *
- * A private key's JWK carries its public point as `x`, so an issuer holding only
- * the private key can still say which key id it signs for.
+ * The public half of a PKCS8 private key, as spki PEM; a private key's JWK carries its public
+ * point as `x`, so an issuer holding only the private key can still say which key id it signs for.
  */
 export async function publicKeyFromPrivateKey(privateKeyPEM: string): Promise<string> {
 	const key = await crypto.subtle.importKey("pkcs8", pemToDER(privateKeyPEM), ALGORITHM, true, ["sign"])

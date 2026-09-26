@@ -13,7 +13,7 @@ you to check it, and links the artifacts a security review asks for.
 
 ## What the library sends over the network
 
-A parse or a geocode sends nothing over the network. Those calls read model weights and gazetteer
+A parse or a geocode sends no request over the network. Those calls read model weights and gazetteer
 files from local disk and return. No published package contains telemetry, analytics, crash
 reporting, a version check or a usage ping. Installing Mailwoman runs none of our lifecycle scripts:
 `npm install` fetches tarballs and stops.
@@ -47,7 +47,7 @@ One codebase is available under two licenses:
   others use, those users are entitled to your corresponding source under the same license.
 - **A commercial license**, which releases you from that condition. The reference terms are in
   [`COMMERCIAL-LICENSE.md`](https://github.com/sister-software/mailwoman/blob/main/COMMERCIAL-LICENSE.md).
-  That document is a template and grants nothing. Only the executed agreement is binding. Rates are on
+  That document is a template and grants no rights. Only the executed agreement is binding. Rates are on
   [Pricing](../pricing.mdx).
 
 The code license and the data license are separate. Our license covers the code. Data provenance,
@@ -82,7 +82,7 @@ Two items on that page matter to a review, and we would rather you heard them fr
 
 - **The OpenStreetMap precision tier is built but not enabled** in any published artifact, either
   on npm or in the demo. OSM data is share-alike, and enabling the tier is waiting on legal review.
-  Nothing you install today carries an ODbL obligation from it.
+  No package you install today carries an ODbL obligation from it.
 - **One source's license is recorded inconsistently in our own files.** Who's On First appears as
   CC0 in the provenance catalog and as CC-BY 4.0 in the resolver package's own notes. Until that is
   settled, attribute Who's On First.

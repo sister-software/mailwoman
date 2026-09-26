@@ -32,7 +32,7 @@ async function writeToClipboard(value: string): Promise<void> {
 	try {
 		document.execCommand("copy")
 	} catch {
-		// Nothing else to try — leave `copied` false via the caller's error path.
+		// No fallback remains — leave `copied` false via the caller's error path.
 	} finally {
 		document.body.removeChild(textarea)
 	}

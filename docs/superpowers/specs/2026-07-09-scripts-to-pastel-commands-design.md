@@ -6,9 +6,9 @@
 
 ## Decisions (operator-confirmed 2026-07-09)
 
-1. **Scope:** corpus/scripts, codegen/lint (`mailwoman dev`), registry/tiger/coarse-placer tools, and the eval harness. Release-it hook scripts stay plain because release-it runs them headless and a compile step in the release path would add nothing.
+1. **Scope:** corpus/scripts, codegen/lint (`mailwoman dev`), registry/tiger/coarse-placer tools, and the eval harness. Release-it hook scripts stay plain because release-it runs them headless and a compile step in the release path would add no benefit.
 2. **Logic home:** the owning workspace (`corpus/tools/`, `registry/tools/`, …). Command `.tsx` files are thin wrappers in `mailwoman/commands/`, because Pastel file-routing requires them there.
-3. **WOF bins:** absorb them into `mailwoman gazetteer` and delete all four `resolver-wof-sqlite` bins. **Slim is deprecated, and we verified that nothing loads it.** The demo runtime's `hasWOFDB` branch loads the version-independent candidate table through httpvfs (`docs/src/pages/demo/_app.tsx:431` → `WOFCandidateTableLookup`) and never fetches `wof-hot.db`. The `buildSlimWOFDatabase` module survives only as the resolver-wof-wasm test-fixture builder. **The demo production smoke test must stay green.**
+3. **WOF bins:** absorb them into `mailwoman gazetteer` and delete all four `resolver-wof-sqlite` bins. **Slim is deprecated, and we verified that no code loads it.** The demo runtime's `hasWOFDB` branch loads the version-independent candidate table through httpvfs (`docs/src/pages/demo/_app.tsx:431` → `WOFCandidateTableLookup`) and never fetches `wof-hot.db`. The `buildSlimWOFDatabase` module survives only as the resolver-wof-wasm test-fixture builder. **The demo production smoke test must stay green.**
 4. **Lookup bins (timezone/nuts/un-locode):** these keep lean `parseArgs` as the sanctioned exception. They are consumer-facing micro-packages, and the ink+react+zod+commander dependency weight is too heavy for them. The policy is documented below.
 5. **Duplicated helpers** move into `@mailwoman/core` or the owning package during each phase (operator: "move them to core or their respective packages").
 6. **`sdk/` naming:** `sdk` submodules mean _data acquisition_. `ban/sdk`, `osm/sdk`, and `tiger/sdk` fit. `spatial/sdk` is a borderline data-format case and stays as is. `mailwoman/sdk` breaks the convention because it holds CLI helper types and the parser test harness. Both move out (§4).
@@ -155,7 +155,7 @@ Commands remain compiled TSX. Tool modules in owning workspaces remain plain `.t
 | 4     | registry/tiger/placer groups + record-matcher scripts → registry/tools + tiger dep fix             | `--help` smokes; one figure render; placer eval parity on cached dataset                                                               |
 | 5     | eval: eval-harness module extraction + commands + probe triage → diagnostic/                       | **promotion-eval + gauntlet before/after parity: identical exit codes + artifacts on the same model**; RELEASING.md + skills repointed |
 
-Phase 5 runs last because a release requires these checks to pass, and nothing else should change while they move. Phases 1, 2, and 4 are independent of each other once phase 0 lands.
+Phase 5 runs last because a release requires these checks to pass, and no other change should land while they move. Phases 1, 2, and 4 are independent of each other once phase 0 lands.
 
 ## 6. Risks + interfaces
 

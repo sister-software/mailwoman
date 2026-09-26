@@ -29,7 +29,7 @@ Item 5 is new code outside training, so it is not a suspect. Items 1-4 are the s
 
 Training is a long loop of ~50,000 iterations, during which we watch a number called "loss" go down. The loss went down smoothly for the first ~1000 iterations and then climbed catastrophically. By the time we noticed, the model had unlearned everything useful and was producing garbage.
 
-In software terms, imagine a process that runs fine for the first hour and then enters cascading state corruption that slowly destroys its in-memory data, even though no individual operation looks wrong. Nothing segfaults or throws an exception. The numbers slowly drift from useful to useless.
+In software terms, imagine a process that runs fine for the first hour and then enters cascading state corruption that slowly destroys its in-memory data, even though no individual operation looks wrong. No operation segfaults or throws an exception. The numbers slowly drift from useful to useless.
 
 This pattern has a recognizable shape:
 

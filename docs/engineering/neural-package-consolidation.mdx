@@ -20,7 +20,7 @@ The boundary should be a resolution interface instead.
 | relationship | —                                     | imports `@mailwoman/neural/browser`                                   |
 
 The important thing: `NeuralRunner` (`classifier.ts`) is already a **structural interface**, and
-`ONNXRunner` and `WebONNXRunner` both implement it. Nothing about the classifier knows which runtime
+`ONNXRunner` and `WebONNXRunner` both implement it. The classifier is unaware of which runtime
 it has. The split is packaging rather than architecture — which is why merging is a repackaging job rather
 than a rewrite.
 
@@ -125,7 +125,7 @@ Each step ends green, and each is separately revertable.
 1. **Conditions on `./onnx-runner`**, with a browser counterpart that throws a message naming the
    browser runtime. No files move. The check checks resolution behavior against the docs build.
 2. **Move `web-onnx-runner.ts` and `loader.ts`** into `neural/`, exposed as `./web-onnx-runner`.
-   `neural-web` re-exports them; nothing else changes yet.
+   `neural-web` re-exports them. No other change lands yet.
 3. **Optional peers.** Both runtimes become optional peer deps of `neural`; the monorepo keeps them as
    dev deps so tests and the demo still run.
 4. **Retire the convention scaffolding.** Delete `browser.ts`'s hand-maintained list where conditions
@@ -146,5 +146,5 @@ each works without the other, and that is not true until it is tested.
 
 Break 2 above kept `@mailwoman/neural-web` as a deprecated re-export shim, to be removed a major later. It was
 removed on 2026-09-07 instead, before any major: the workspace re-exported another package's names, which
-`mailwoman/no-cross-package-reexport` refuses everywhere else, and nothing in the repository imported it. 9.3.0 is
+`mailwoman/no-cross-package-reexport` refuses everywhere else, and no package in the repository imported it. 9.3.0 is
 its last publish; a consumer on it imports from `@mailwoman/neural/web-loader` and `@mailwoman/neural/web-onnx-runner`.

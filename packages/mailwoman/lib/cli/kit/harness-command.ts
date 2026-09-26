@@ -5,13 +5,8 @@
  *
  *   The one-shot harness command: run a task, show the ✓/✗ tail while it runs, print its own output.
  *
- *   Built with `createElement`, not JSX, for the reason `shared.ts` gives in its own header. The kit's index is
- *   imported under the dev `node →` condition, which strips `.ts` and cannot read `.tsx`.
- *
- *   adopt IT when A command is open anyway, and never as a sweep. The 22 `eval` commands moved together because the
- *   flow was identical across all of them and the move was reviewable as one diff. the 131 other `useCommandTask`
- *   commands are not a backlog. A command that renders anything but the ✓/✗ tail and one JSON payload keeps the hook,
- *   which is why four of the original 26 still do.
+ *   Built with `createElement`, not JSX: the kit's index is imported under the dev `node →` condition, which
+ *   strips `.ts` and cannot read `.tsx`.
  */
 
 import { prettyJSON } from "@mailwoman/core/json"
@@ -27,43 +22,21 @@ import type { CommandSpec, OptionsOf } from "#cli/native/spec"
  */
 export interface HarnessCommandOptions<Spec extends CommandSpec, T> {
 	/**
-	 * The process exit code, read off the task's result.
-	 *
-	 * Absent means 0 on success.
-	 * An error is 1 either way.
+	 * The process exit code, read off the task's result; absent means 0 on success,
+	 * and an error is 1 either way.
 	 */
 	exitCode?: (result: T) => number
 	/**
-	 * The value to print as JSON, or `undefined` to print nothing.
-	 *
-	 * The options are passed so the condition is named at the call site
-	 * rather than assumed here: a command that prints under `--json` writes
-	 * `(result, options) => (options.json ? Result.report : undefined)`, which keeps
-	 * the flag that decides it in the file that declares it.
-	 * A command whose task narrates on stdout omits this entirely.
-	 *
-	 * Most of the commands under `commands/eval/` do, and rendering anything would duplicate their output.
+	 * The value to print as JSON, or `undefined` to print none; the options are passed
+	 * so the condition is named at the call site rather than assumed here.
 	 */
 	json?: (result: T, options: OptionsOf<Spec>) => unknown
 }
 
 /**
- * Build the command component for a one-shot harness task.
- *
- * Every command under `commands/eval/` had the same shape: call {@linkcode useCommandTask},
- * render {@linkcode CommandTaskResult} while it runs, print the result as JSON
- * under a flag, return `null` otherwise.
- * What differs between them is the task and the result type, so those are what a caller supplies.
- *
- * The control flow moves behind a name, which is the cost.
- * It is paid back because the flow was identical in all of them: a reader who wants
- * it reads this file once instead of confirming twenty-odd copies agree.
- *
- * `_spec` is read only by the type checker, and it is the reason this takes three arguments:
- * it anchors `Spec` so `run`'s options are typed from the command's own declaration
- * and `T` infers from what `run` returns.
- * Naming both explicitly instead — TypeScript has no partial inference —
- * costs every call site the result type spelled out.
+ * `_spec` is read only by the type checker: it anchors `Spec` so `run`'s options are
+ * typed from the command's own declaration and `T` infers from what `run` returns,
+ * since TypeScript has no partial inference.
  */
 export function harnessCommand<Spec extends CommandSpec, T>(
 	_spec: Spec,

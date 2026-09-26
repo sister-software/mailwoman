@@ -70,7 +70,7 @@ export function layerDatabases(dataRoot: PathBuilderLike): LayerDatabaseRef[] {
  * A build that wrote the artifact under another name
  * (the Iowa soil pilot's `soil-ia.db` beside an expected `soil.db`).
  *
- * The session attaches nothing in that case, and the doctor reports the alternates
+ * The session attaches no layer in that case, and the doctor reports the alternates
  * so the absence reads as a name mismatch rather than a coverage fact.
  * An absent directory answers an empty list.
  */

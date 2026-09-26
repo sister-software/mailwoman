@@ -69,7 +69,7 @@ GeoNames alias fold. Repos exist and are substantial for countries we have never
 (larger than the US's 1,858 MB), FR-sized PL at 482 MB, BR 303 MB, NZ 235 MB, IE 114 MB.
 
 So the "dependent_locality in 11 of 244" headline is a true statement about the **artifact** and a
-false one about **WOF**. Nothing here has tested whether WOF is granular enough outside those eleven
+false one about **WOF**. No measurement here has tested whether WOF is granular enough outside those eleven
 countries, because outside them WOF was never asked. Ireland is the sharpest case: this spec framed
 IE's zero as a WOF gap that Overture could fill, and the cheaper reading is that
 `whosonfirst-data-admin-ie` exists, is 114 MB, and has never been cloned.
@@ -135,7 +135,7 @@ compare to WOF") does not reach the tier we care about. Measured depth distribut
 | IT      |              3 (100%) | region → province → comune |
 
 None reach dependent_locality. So `address_levels` can grade WOF at the locality rung and above and
-nothing below it. Two further limits on the same source:
+no rung below it. Two further limits on the same source:
 
 - **GB and IE `addresses-*.parquet` are 532 bytes** — effectively empty. Overture's addresses theme
   is largely OpenAddresses-derived and neither Royal Mail PAF nor Tailte Éireann is open. The
@@ -309,7 +309,7 @@ A count alone routes nowhere. Every thin or empty cell is attributed by walking 
 1. **Recipe gap** — the country is absent from `DEFAULT_WOF_PRIORITY_COUNTRIES`, so no WOF repo was
    ever cloned or ingested for it. Fix: clone the repo and add the country to the recipe. **This is
    the dominant class — 233 of 244 countries — and it was missed in the first draft of this spec.**
-   A recipe-gap cell says nothing about WOF's depth.
+   A recipe-gap cell makes no statement about WOF's depth.
 2. **Allowlist gap** — the placetype is absent from `ADMIN_PLACETYPES`. Fix: one-line recipe change
    plus a rebuild. Covers 25 of 34 placetypes, and applies even to the eleven cloned countries.
 3. **Source gap** — the country is cloned and the placetype allowlisted, but the repo holds no such
@@ -336,12 +336,11 @@ WOF, folded through `foldName` (`resolver/fold-name.ts`), scoped to country:
 
 - **absent** — no WOF row of any placetype carries the surface. actual coverage gap; fix is ingestion.
 - **MISTYPED** — WOF has the surface at a placetype projecting onto a different `ComponentTag`
-  (Shoreditch as `locality` rather than `neighbourhood`). Fix is re-projection or re-parenting, and costs
-  nothing to acquire.
+  (Shoreditch as `locality` rather than `neighbourhood`). Fix is re-projection or re-parenting, and requires no new data.
 - **present** — WOF has it at a rung that projects the same way.
 
 Without this leg the raw ratios are uninterpretable. DE reads 2.5× richer, but if its 67k
-`neighbourhood` rows do not correspond to the surfaces Overture names, that number means nothing.
+`neighbourhood` rows do not correspond to the surfaces Overture names, that number carries no meaning.
 absent and MISTYPED route to two entirely different pieces of work.
 
 ### Pair yield
@@ -398,7 +397,7 @@ Printed in the report, notrecorded here:
 - **Counts are not quality.** Overture divisions rows are OSM-derived and unaudited for duplicates,
   noise, and address-relevance. A count comparison establishes where to look, never that the rows are
   good.
-- **No demand-side grounding below the locality line.** Nothing in this scorecard proves a
+- **No demand-side grounding below the locality line.** No measurement in this scorecard proves a
   sub-locality surface appears in real addresses. `address_levels` bottoms out at municipality
   (Finding 4).
 - **GB and IE have no usable Overture address data at all** (532-byte parquets).

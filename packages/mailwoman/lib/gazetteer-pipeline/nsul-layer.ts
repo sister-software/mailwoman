@@ -23,7 +23,7 @@
  *   ## Streaming
  *
  *   The eleven CSVs total 10.2 GB uncompressed. each is streamed straight out of the archive
- *   (`readZipEntry` → `TextSpliterator`) with nothing but the inflate window and one line in memory, so
+ *   (`readZipEntry` → `TextSpliterator`) with only the inflate window and one line in memory, so
  *   the build never extracts to disk and never holds a region file whole.
  *
  *   ## Coordinates come from `uprn.db`, never from the grid reference
@@ -49,7 +49,7 @@
  *   completeness: 1` — the same cells and basis `uprn.db` writes, so the two layers' coverage tables
  *   describe the same ground. Cells with no rows are left absent: without a GB polygon the builder
  *   cannot tell empty moorland from Northern Ireland or open sea, so per the meaning-of-zero rule it
- *   claims nothing there.
+ *   makes no claim there.
  */
 
 import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"

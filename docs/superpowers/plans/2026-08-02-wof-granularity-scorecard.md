@@ -28,7 +28,7 @@ B produces one.
 - **Data-root paths go through `@mailwoman/core/utils`**, for example `dataRootPath("wof", "admin-global-priority.db")`. Never hardcode `$MAILWOMAN_DATA_ROOT`. Reference `$MAILWOMAN_DATA_ROOT` in prose and help text.
 - **Databases are read-only artifacts.** This plan opens the admin DB only with `{ readOnly: true }`.
 - **The data structure encodes the meaning of zero.** A rung that was measured and found empty is a present row with a zero count. A rung that was never measured is an absent row. The two must never share a representation.
-- **Positive evidence only.** Nothing in this plan checks, masks, or forbids anything at decode time. It measures and reports.
+- **Positive evidence only.** No step in this plan checks, masks, or forbids anything at decode time. It measures and reports.
 - Every new file carries the standard header: `@copyright Sister Software`, `@license AGPL-3.0`, `@author Teffen Ellis, et al.`, followed by a prose docstring explaining why the file exists.
 
 ---
@@ -224,7 +224,7 @@ Expected: PASS, all describe blocks. The three `buildPlacetypeCensus` tests and 
 tests must still pass unchanged. The fixture DB carries only `metroarea` as a non-counting
 placetype, and that projection is untouched.
 
-- [ ] **Step 7: Verify nothing else asserted on the old key set**
+- [ ] **Step 7: Verify no other test asserted on the old key set**
 
 Run: `rg -n "PLACETYPE_PROJECTION" --iglob '!**/out/**'`
 Expected: hits only in `placetype-census.ts`, `placetype-census.test.ts`,
@@ -843,7 +843,7 @@ rung is a present zero, never an absent row."
 meaningful below the locality backbone, which is its denominator. At or above `locality`, a rung
 counts as reached when it has any nodes. Below `locality`, a rung counts as reached when its
 parent-coverage clears the floor. The walk goes deepest-first and returns the first rung that
-qualifies. `null` means the country has nothing at all, which should happen only for a country code
+qualifies. `null` means the country has no data at all, which should happen only for a country code
 with no live rows.
 
 The 5% default is the weakest number in the design, and the spec's open questions flag it. GB, the
@@ -1470,5 +1470,5 @@ Before opening the PR:
 - [ ] `yarn vitest --run mailwoman/gazetteer-pipeline/` passes — census, granularity, and report suites.
 - [ ] The committed scorecard's GB/DE/JP row counts match the spec's Finding 1 and Finding 3 tables exactly.
 - [ ] IE and NZ render `0` at `dependent_locality`, never `—`.
-- [ ] `rg -n "/mnt/" mailwoman/gazetteer-pipeline/granularity*.ts mailwoman/commands/gazetteer/granularity.tsx` returns nothing.
+- [ ] `rg -n "/mnt/" mailwoman/gazetteer-pipeline/granularity*.ts mailwoman/commands/gazetteer/granularity.tsx` returns no match.
 - [ ] `mailwoman gazetteer census --country gb` still succeeds. PR A widened the projection map, and this checks that it did not break the command.

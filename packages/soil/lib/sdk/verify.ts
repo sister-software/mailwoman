@@ -257,7 +257,7 @@ function candidateDelineations(
 			// Two different delineations of the same map unit are two shapes covering
 			// different ground and must both be tested.
 			// Keying on the map unit drops the second, and it drops it silently.
-			// The point test simply finds nothing and the row reads as a disagreement with the authority.
+			// The point test simply finds no delineation and the row reads as a disagreement with the authority.
 			// Measured at Iowa scale: one point in 60, where the artifact's own geometry does contain
 			// the point and the index-driven read could not reach the delineation that holds it.
 			if (seen.has(row.area_id)) continue
@@ -278,7 +278,7 @@ function candidateDelineations(
  * The ray cast decides.
  *
  * The edge distance is measured against every candidate, so a near-miss is reported
- * with a distance rather than with nothing.
+ * with a distance rather than being omitted.
  */
 function localDelineationAt(
 	database: DatabaseClient<SoilDatabase>,

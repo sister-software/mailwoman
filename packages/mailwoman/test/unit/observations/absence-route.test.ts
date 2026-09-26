@@ -9,7 +9,7 @@
  *   No pipeline. The route reads a finished `POIIntentOutcome` and a sealed coverage layer, and both are
  *   supplied here — synthetic outcomes against a scratch layer built through `@mailwoman/core/layers`'s own
  *   writers. That is what lets the asymmetry be stated at its sharpest: the same query, the same empty
- *   answer, two cells that differ in nothing but `basis`, and opposite readings. The pilot layer cannot
+ *   answer, two cells that differ only in `basis`, and opposite readings. The pilot layer cannot
  *   state it, because every one of its 290 cells is `surveyed`.
  *
  *   The committed pre-registration is asserted too. Its hash is what stops a row that failed from being
@@ -93,8 +93,8 @@ afterAll(() => scratchRoot[Symbol.asyncDispose]())
 const built: PathBuilder[] = []
 
 /**
- * A sealed-shaped layer carrying exactly the interface tables the route reads, written through
- * the blessed writers so the scratch artifact and a real one differ in scale and nothing else.
+ * A sealed-shaped layer carrying exactly the interface tables the route reads, written through the
+ * blessed writers so the scratch artifact and a real one differ in scale and no other respect.
  */
 async function scratchLayer(options: ScratchLayerOptions = {}): Promise<PathBuilder> {
 	const path = scratchRoot.path(`layer-${built.length}.db`)

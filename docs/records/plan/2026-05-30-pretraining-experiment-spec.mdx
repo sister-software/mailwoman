@@ -43,7 +43,7 @@ The exported artifact is the **same size and shape** — same 6 layers, 256 hidd
 ~25MB int8. Pre-training only changes the _initialization_ the fine-tune starts
 from (a learned prior instead of random noise). For **ELECTRA specifically**, the
 extra "generator" network used during Phase 1 is **discarded** after
-pre-training — only the discriminator (= our encoder) is kept. Nothing new ships.
+pre-training — only the discriminator (= our encoder) is kept. No new artifact ships.
 It is fully reversible: if it doesn't help, we keep shipping the current model.
 
 ## Objective choice: MLM-40% vs ELECTRA-RTD vs biphasic CLM→MLM

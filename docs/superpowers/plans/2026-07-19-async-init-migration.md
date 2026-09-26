@@ -26,7 +26,7 @@ Claude-Session: https://claude.ai/code/session_01QTpYm118V3tGk4FRhKi8Sr
 **Established facts (verified 2026-07-19, do not re-derive):**
 
 - Only two real consumers of `core/lifecycle/`: `core/scripting/utils/index.ts` (`ServiceRepository`) and `core/api/APIClient.ts` (`ServiceSymbol.isAsyncDisposable`). Every other repo mention of "lifecycle" is prose in comments.
-- **Nothing in the repo ever registers a service** into `ServiceRepository`, so its registry is empty at runtime. `postScriptCleanup`'s dispose call is a forward-compatibility hook. Migrating to `defaultRegistry` preserves observable behavior exactly (an abort followed by a disposal that does nothing).
+- **No code in the repo ever registers a service** into `ServiceRepository`, so its registry is empty at runtime. `postScriptCleanup`'s dispose call is a forward-compatibility hook. Migrating to `defaultRegistry` preserves observable behavior exactly (an abort followed by a disposal that performs no work).
 - `AsyncDisposableLRUCache` has zero consumers and is deleted with the module.
 - `lru-cache` in `core/package.json` (^11.5.2, ~line 318) is used only by the deleted module. `corpus/` imports lru-cache but declares its own `^11.5.2` (verified at corpus/package.json:98), so removing core's copy is safe.
 - The old `ServiceSymbol.isAsyncDisposable` used `Object.hasOwn` on the instance, so it never matched disposables implemented on the prototype. `APIClient`'s cache disposal has therefore never run. The migration makes it run. That behavior change is intended and gets a regression test.
@@ -212,7 +212,7 @@ export function postScriptCleanup(signal: NodeJS.Signals = "SIGTERM", exitCode?:
 }
 ```
 
-Semantics notes (document these in the commit body rather than in code comments): `defaultRegistry.dispose()` aborts the registry's own signal before disposing, so the old timeout-path `abortController.abort(signal)` is redundant. By the time the timeout fires, the abort has already happened at dispose entry. The old `inspect()` listing of the undisposed count has no equivalent, because the new registry does not expose its contents, so it is dropped. The error line is enough. The registry is empty in practice today because nothing registers, so observable behavior is identical.
+Semantics notes (document these in the commit body rather than in code comments): `defaultRegistry.dispose()` aborts the registry's own signal before disposing, so the old timeout-path `abortController.abort(signal)` is redundant. By the time the timeout fires, the abort has already happened at dispose entry. The old `inspect()` listing of the undisposed count has no equivalent, because the new registry does not expose its contents, so it is dropped. The error line is enough. The registry is empty in practice today because no code registers, so observable behavior is identical.
 
 - [ ] **Step 3: Verify the scripting suite + types**
 
@@ -327,7 +327,7 @@ yarn workspace @mailwoman/core pack -o /tmp/claude-1000/-home-lab-Projects-mailw
 tar -tzf /tmp/claude-1000/-home-lab-Projects-mailwoman/52b1cbdf-08a6-4826-93ee-2cbe4006d58b/scratchpad/core-probe.tgz | grep -i lifecycle
 ```
 
-Expected: pack succeeds; the grep finds nothing (no lifecycle files in the tarball).
+Expected: pack succeeds; the grep finds no match (no lifecycle files in the tarball).
 
 - [ ] **Step 4: Push branch + open PR**
 
@@ -355,6 +355,6 @@ https://claude.ai/code/session_01QTpYm118V3tGk4FRhKi8Sr
 
 ## Out of scope
 
-- Registering actual services into `defaultRegistry`. That is future work, and today nothing registers.
+- Registering actual services into `defaultRegistry`. That is future work, and today no code registers.
 - Any refactor of `core/api` or `core/scripting` beyond the two call-sites.
 - Docs-site updates.

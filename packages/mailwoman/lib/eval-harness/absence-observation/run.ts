@@ -7,7 +7,7 @@
  *   the same pipeline construction the POI board uses, ask the negative-evidence route what it makes of
  *   each answer, and emit a receipt.
  *
- *   this module decides nothing IT did not read. Every row and its registered outcome come from
+ *   this module decides no fact it did not read. Every row and its registered outcome come from
  *   `probe-definition.json`, which {@linkcode loadAbsenceProbeDefinition} refuses to hand over if its
  *   content hash has moved. The runner adds the measurements and the artifact identity.
  *

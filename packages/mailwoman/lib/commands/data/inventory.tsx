@@ -3,15 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mailwoman data inventory` — what is in the data root, and which of it can say how it was built.
- *
- *   Phase 1 of the lab-reproducibility sequence. `data status` answers "did the download arrive"; this
- *   answers the different question underneath it — "if this machine were gone, could the artifact be
- *   rebuilt from what it says about itself".
- *
- *   Output goes through {@linkcode writeRawStdout} rather than Ink for the reason `data/index.tsx` gives:
- *   an Ink frame at least as tall as the viewport emits `\x1b[2J\x1b[3J\x1b[H`, and `3J` wipes the
- *   scrollback. A full listing is 200+ lines, so on any terminal it would.
+ *   Output goes through {@linkcode writeRawStdout} rather than Ink because an Ink frame at least as tall as the viewport
+ *   emits `\x1b[2J\x1b[3J\x1b[H`, and `3J` wipes the scrollback.
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
@@ -47,14 +40,8 @@ export const spec = {
 } as const satisfies CommandSpec
 
 /**
- * One line per directory: how many of its databases carry a manifest, and how much disk they hold.
- *
- * The rollup is the actionable view and the flat list is not.
- * The 2026-08-17 first run found 210 databases of which 53 were per-state
- * address-point databases from one builder.
- *
- * So a per-artifact list reads as 53 problems where the rollup reads as one,
- * which is also how many code changes it takes to fix.
+ * The rollup is the actionable view: one builder's identical defect across many artifacts
+ * reads as one problem per directory rather than one problem per file.
  */
 function rollup(entries: readonly InventoryEntry[]): string[] {
 	const by = new Map<string, { total: number; manifested: number; bytes: number }>()
@@ -108,10 +95,8 @@ const InventoryCommand: CommandComponent<typeof spec> = ({ options }) => {
 			...rollup(report.entries),
 		]
 
-		// A manifest whose build command cannot be run documents nothing, and both ways of
-		// failing that were found on the shipped artifacts: a path the workspace regroup moved,
-		// and a path under gitignored `scratchpad/` that exists only on the machine that built it.
-		// Reported separately from the count, because these artifacts pass every "has a manifest" check.
+		// A manifest whose build command cannot run documents no usable build, reported
+		// separately from the count because these artifacts pass every "has a manifest" check.
 		const repoRoot = repoRootPathBuilder()
 
 		const manifested = report.entries.filter((e) => e.provenance === Provenance.Manifested)

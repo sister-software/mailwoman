@@ -3,10 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The structural interfaces the browser runtime composes over. Each `…Like` mirrors a package type by shape so a host
- *   bundle can name the classifier, the FST matcher and the parse trace without importing the packages that define
- *   them. the packages stay dynamic imports on the load path. `AssetLoadProgress` is what a loader reports through
- *   while it fetches one release's assets.
+ *   The structural interfaces the browser runtime composes over: each `…Like` mirrors a package type by shape so a
+ *   host bundle can name the classifier, the FST matcher, and the parse trace while those packages stay dynamic
+ *   imports on the load path.
  */
 
 export interface FSTProvenanceLike {
@@ -26,16 +25,12 @@ export interface FSTMatcherLike {
 		wofID: number
 		placetype: string
 		/**
-		 * The referential likelihood (population-anchored) the decoder bias reads — see ROAD_TO_V9 §2.
-		 *
-		 * Was `importance` through FST format v4, where the same float could be
-		 * either score with nothing to say which.
+		 * The population-anchored likelihood the decoder bias reads.
 		 */
 		referential: number
 		/**
-		 * Encyclopedic (Wikipedia) importance, when the artifact is v5+ and this place has an article.
-		 *
-		 * Displayed, never ranked on; `undefined` is absence rather than 0.
+		 * Wikipedia importance, present only when the artifact is v5+ and the place has an article;
+		 * displayed but never ranked on, and `undefined` is absence rather than 0.
 		 */
 		encyclopedic?: number
 	}>
@@ -46,9 +41,8 @@ export interface FSTMatcherLike {
 export interface MailwomanClassifierLike {
 	parse: (text: string, opts?: { queryShape?: unknown; fst?: FSTMatcherLike }) => Promise<unknown>
 	/**
-	 * Decode-path introspection (spec 2026-07-03).
-	 *
-	 * Optional: deployed bundles built before the `traceParse` hook lack it — feature-detect before calling.
+	 * Optional decode-path introspection; bundles built before the `traceParse`
+	 * hook lack it, so feature-detect before calling.
 	 */
 	traceParse?: (text: string, opts?: { addressSystemConventions?: "auto" }) => Promise<ParseTraceLike>
 }
@@ -80,7 +74,7 @@ export interface TraceRepairLike {
 }
 
 /**
- * Structural mirror of `@mailwoman/neural`'s `NeuralParseTrace` (spec 2026-07-03).
+ * Structural mirror of `@mailwoman/neural`'s `NeuralParseTrace`.
  */
 export interface ParseTraceLike {
 	text: string
@@ -91,8 +85,7 @@ export interface ParseTraceLike {
 	logits: number[][]
 	localeLogits?: number[]
 	/**
-	 * The locale-head axis (country code per `localeLogits` index) — self-describing,
-	 * never hardcode the order.
+	 * The locale-head axis, a country code per `localeLogits` index; never hardcode the order.
 	 */
 	localeCountries?: string[]
 	detectedSystem: string | null
@@ -107,15 +100,13 @@ export interface ParseTraceLike {
 }
 
 /**
- * How a release loader reports progress to its host while assets arrive.
- *
+ * How a release loader reports progress to its host while assets arrive;
  * `@mailwoman/react`'s `AssetsLoadContext` satisfies it structurally.
- * A host without a UI passes no-op setters.
  */
 export interface AssetLoadProgress {
 	/**
-	 * Aborts when this load is superseded or the host goes away.
-	 * The loader stops handing back a lookup once it fires.
+	 * Aborts when this load is superseded or the host goes away; the loader stops
+	 * handing back a lookup once it fires.
 	 */
 	signal: AbortSignal
 	/**
@@ -127,13 +118,9 @@ export interface AssetLoadProgress {
 	setStepIndex: (index: number) => void
 	setBackend: (backend: string) => void
 	/**
-	 * Bytes received over bytes expected for the artifact downloading right now,
-	 * in [0, 1]; `null` once nothing is in flight.
-	 *
-	 * Optional so a host that predates it still satisfies this interface.
-	 *
-	 * The step index cannot report the model: it is fetched before the first step is entered,
-	 * so a step-derived bar holds one value for the whole of a 38 MB transfer.
+	 * Bytes received over bytes expected for the artifact downloading now, in [0, 1], `null`
+	 * when none is in flight, and optional so a host that predates it still satisfies this interface;
+	 * the step index cannot report the model, which is fetched before the first step is entered.
 	 */
 	setByteFraction?: (fraction: number | null) => void
 }

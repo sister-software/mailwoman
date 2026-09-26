@@ -32,4 +32,4 @@ across its versions.
 
 Which GeoNames records reached the `candidate` bundle, and therefore what has to be attributed for
 which rows. GeoNames itself integrates data from other sources, which its about page states in those
-words, and this text says nothing about the terms of those. Nothing here is elected.
+words, and this text makes no statement about the terms of those. No election is made here.

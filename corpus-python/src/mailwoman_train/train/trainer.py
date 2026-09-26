@@ -1,24 +1,10 @@
 """Training loop for the Stage 1 coarse token-classification model.
 
-Per Phase 2 §4 plan:
-
-- Optimizer: AdamW, lr 5e-4, weight decay 0.01.
-- LR schedule: linear warmup ``warmup_steps`` → cosine decay to 0 over ``max_steps``.
-- Batch size: 256 (configurable).
-- Mixed precision: fp16/bf16 on GPU (``precision`` in config); fp32 on CPU.
-- Save checkpoint every N steps to ``output_dir/step-XXXX/``.
-- Track train loss + val loss + val per-component F1 + full-parse exact match in a plain CSV.
-- One logging backend (CSV) — picked per the Phase 2 plan's "don't ship a logging refactor
-  in the middle of training" guidance.
-
-The eval invoked here is a *streaming* val-set eval (token-level F1 over the val parquet
-split). The richer golden-set eval lives in ``eval.py`` and is meant to run post-training.
-
-`train()` below is the ORDER the stages run in, and nothing else: `setup.py` holds what a run
-decides before its first batch, `loop.py` holds the optimizer loop, and the callbacks hold what is
-written as it goes. `tests/mailwoman_train/train/test_train_loop_trace.py` pins the CSV shape, the
-event order and the final per-parameter weights, so a stage that moves is a failing test rather
-than a changed model.
+`train()` below is the order the stages run in: `setup.py` holds what a run decides before its
+first batch, `loop.py` the optimizer loop, and the callbacks what is written as it goes.
+`tests/mailwoman_train/train/test_train_loop_trace.py` pins the CSV shape, the event order and
+the final per-parameter weights, so a stage that moves is a failing test rather than a changed
+model.
 """
 
 from __future__ import annotations
@@ -67,12 +53,10 @@ def _eval_val(
     device: torch.device,
     max_rows: int | None,
 ) -> dict[str, float]:
-    """Streaming val-set eval. Returns mean val loss + token-level macro F1 + (PR3) the
-    cross-pollution regression check and the aux locale-head accuracy when self-conditioning is on.
+    """Streaming val-set eval: mean val loss, token-level macro F1, the cross-pollution regression check and the aux locale-head accuracy when self-conditioning is on.
 
-    ``tokenizer`` is None on the char path (``char_mode: char`` skips SentencePiece entirely) and
-    ``iter_batches`` encodes per character in that case. the val eval runs there like the train loop
-    does. A guard that refused a None tokenizer here stopped every char-mode run at its first eval."""
+    ``tokenizer`` is None on the char path, where ``iter_batches`` encodes per character; a guard
+    that refused one here stopped every char-mode run at its first eval."""
     model.eval()
     loss_total = 0.0
     seen_batches = 0
@@ -110,7 +94,6 @@ def _eval_val(
     metrics = token_f1(preds, labels, num_labels=len(label_set.bio_labels), bio_labels=label_set.bio_labels)
     metrics["val_loss"] = loss_total / seen_batches
     metrics["val_rows"] = rows_seen
-    # PR3 regression check + aux-head accuracy.
     row_locale = torch.cat(all_locale_ids, dim=0) if all_locale_ids else None
     metrics.update(cross_pollution(preds, labels, row_locale))
     if all_locale_preds and row_locale is not None:
@@ -128,8 +111,8 @@ def train(
     callbacks: list[TrainCallback] | None = None,
 ) -> None:
     _set_seed(cfg.train.seed)
-    # MLM pre-training is a different objective + loop. route there (lazy import avoids a
-    # train<->pretrain module cycle). pretrain() writes from_pretrained-loadable checkpoints.
+    # MLM pre-training is a different objective and loop; the lazy import avoids a
+    # train<->pretrain module cycle.
     if getattr(cfg.train, "objective", "supervised") == "mlm":
         from .pretrain import pretrain
 
@@ -137,15 +120,14 @@ def train(
         return
     # Mandatory on gfx1103 — flash/mem-efficient sdpa paths crash bf16 on this GPU.
     force_math_sdpa()
-    # #1677: a reps-targeted source's weight is derived here, from the corpus's row counts and this run's
-    # samples, so the mixture the loader samples is the one the config named in reps per row.
+    # A reps-targeted source's weight is derived from the corpus row counts and this run's samples,
+    # so the loader samples the mixture the config named in reps per row.
     derived_reps = resolve_config_reps(cfg)
     if derived_reps:
         print(format_derivation(derived_reps), flush=True)
     output_dir = Path(cfg.train.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    # Auto-detect latest checkpoint when resume_from == "auto" — convenient for restart-on-hang.
     if resume_from == "auto":
         resume_from = find_latest_checkpoint(output_dir)
 
@@ -191,6 +173,6 @@ def train(
             evaluate=_eval_val,
         )
     finally:
-        # A crashed run still closes its CSV and its tracker, so the partial metrics survive.
+        # A crashed run still closes its CSV and tracker, so the partial metrics survive.
         for callback in callbacks:
             callback.on_train_end(state)

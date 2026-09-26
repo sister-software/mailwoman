@@ -38,7 +38,7 @@ export interface ReleaseManifest<TRelease extends ReleaseBase = ReleaseBase> {
 /**
  * The abort signal and progress setters that the hook passes to a host's `loadAssets`.
  *
- * The setters do nothing once the load is aborted or superseded.
+ * The setters have no effect once the load is aborted or superseded.
  * The hook sets the final ready or error state itself.
  */
 export interface AssetsLoadContext {
@@ -75,7 +75,7 @@ export interface AssetsLoadContext {
 	/**
 	 * Reports the fraction of the current download received so far, in [0, 1].
 	 *
-	 * The value is `null` when nothing is downloading or the response declares no length.
+	 * The value is `null` when no download is in progress or the response declares no length.
 	 *
 	 * The step index cannot show this progress because the model is fetched before the first step begins.
 	 */
@@ -168,7 +168,7 @@ export interface ReleaseLoaderState<TAssets, TRelease extends ReleaseBase = Rele
 	/**
 	 * The fraction of the current download received so far, in [0, 1].
 	 *
-	 * It is `null` when nothing is downloading or the length is unknown.
+	 * It is `null` when no download is in progress or the length is unknown.
 	 */
 	loadingByteFraction: number | null
 

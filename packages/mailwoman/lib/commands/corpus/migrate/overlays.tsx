@@ -3,15 +3,13 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mailwoman corpus migrate-overlays` — rewrite every overlay parquet of a corpus onto the current row schema.
+ *   `mailwoman corpus migrate-overlays` — rewrite every overlay parquet of a corpus onto the current row
+ *   schema, where an overlay slice is one the corpus manifest lists and its base manifest does not, compared
+ *   by `sha256`.
  *
- *   An overlay slice is one the corpus manifest lists and its base manifest does not, compared by `sha256`. A manifest
- *   records no per-slice overlay marker, and the `source` field that `overlay-manifest` writes is absent from overlays
- *   assembled before it existed.
- *
- *   Each migrated file is written beside its original as `<name>.migrated.parquet`. Nothing is swapped: pass the
- *   migrated files to `mailwoman corpus overlay-manifest` to assemble the new corpus, so the existing corpus stays
- *   readable by the code that built it.
+ *   Each migrated file is written beside its original as `<name>.migrated.parquet` and no file is swapped, so the
+ *   existing corpus stays readable by the code that built it; pass the migrated files to
+ *   `mailwoman corpus overlay-manifest` to assemble the new corpus.
  */
 
 import { CommandError } from "@mailwoman/core/scripting/command"

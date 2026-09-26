@@ -3,9 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The freshness check against the well-known register on mailwoman.ai: the one network call the license posture
- *   makes, kept apart from the offline verification in `configured.ts` so that a caller which only needs the offline
- *   answer — the CLI launcher's notice on every invocation — never loads the http client behind this one.
+ *   The freshness check against mailwoman.ai's well-known register is kept apart from the offline verification in
+ *   `configured.ts` so a caller that needs only the offline answer never loads the HTTP client behind this one.
  */
 
 import { APIClient, type APIClientConfig } from "#api/APIClient"
@@ -15,7 +14,7 @@ import type { PublishedLicenseKeys } from "#license/register"
 import { silentLogger } from "#logging/index"
 
 /**
- * The published register of signing keys.
+ * Path of the well-known register that lists published signing keys.
  */
 export const LICENSE_KEYS_WELL_KNOWN_PATH = "/.well-known/mailwoman/license-keys.json"
 
@@ -26,10 +25,8 @@ export function licenseKeysWellKnownURL(): string {
 /**
  * Whether mailwoman.ai still lists a key id as active.
  *
- * Two of the answers are not verdicts, and they stay apart because they call for different actions:
- * `unreachable` is a network answer (no route, a timeout, the site failing), where `unpublished`
- * means the site answered and had no register to give, which is a deployment that dropped the file.
- * Offline verification stands under both, and the doctor says which.
+ * `unreachable` is a network answer while `unpublished` means the site answered without
+ * a register to give, and offline verification stands under both.
  */
 export type LicenseKeyPublication = "listed" | "retired" | "unlisted" | "unpublished" | "unreachable"
 
@@ -46,28 +43,23 @@ const HTTP_BAD_REQUEST = 400
 const HTTP_INTERNAL_SERVER_ERROR = 500
 
 /**
- * The site's own word that nothing is at the path: a 4xx.
- *
- * A 5xx says the site is failing, which is `unreachable`.
+ * The site's own word that no resource is at the path: a 4xx, where a 5xx is `unreachable`.
  */
 function siteAnsweredWithout(error: unknown): boolean {
 	return error instanceof ResourceError && error.status >= HTTP_BAD_REQUEST && error.status < HTTP_INTERNAL_SERVER_ERROR
 }
 
 /**
- * A register, by shape.
- *
- * Anything else the site hands back at the path (a soft 404 page, a redirect's html)
- * is not one, whatever status it came with.
+ * A register, by shape: anything else the site hands back at the path
+ * (a soft 404 page, a redirect's html) is not one, whatever status it came with.
  */
 function isRegister(document: unknown): document is Pick<PublishedLicenseKeys, "keys"> {
 	return typeof document === "object" && document !== null && Array.isArray((document as { keys?: unknown }).keys)
 }
 
 /**
- * Ask the well-known register about one key id.
- *
- * Bounded to a few seconds so a doctor run on a machine without a route to mailwoman.ai does not hang on it.
+ * Ask the well-known register about one key id, bounded to a few seconds
+ * so a doctor run without a route to mailwoman.ai does not hang on it.
  */
 export async function confirmLicenseKeyPublished(
 	kid: string,
@@ -75,8 +67,7 @@ export async function confirmLicenseKeyPublished(
 ): Promise<LicenseKeyPublication> {
 	await using client = new APIClient({
 		displayName: "license-keys",
-		// The doctor and `license verify --json` own stdout.
-		// The client's request line must not land in the document.
+		// The doctor and `license verify --json` own stdout: the client's request line must not land in the document.
 		logger: silentLogger(),
 		axios: { headers: { accept: "application/json" }, timeout: options.timeoutMs ?? 3000, ...options.axios },
 	})

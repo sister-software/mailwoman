@@ -1,6 +1,6 @@
 # Should `sdk/` be renamed — and should the four layer packages become one?
 
-**Date:** 2026-09-01 · **Status:** proposal, decides nothing · **Refs:** #2050 · **Implements:** nothing.
+**Date:** 2026-09-01 · **Status:** proposal, makes no decision · **Refs:** #2050 · **Implements:** no implementation.
 
 This record answers two questions that were deliberately left out of the `sdk/` cleanup so they could be
 decided on measurements rather than inside a file move. The first is whether the remaining ten `lib/sdk/`
@@ -25,7 +25,7 @@ results contradicted the intuitive answer**, so they are recorded here rather th
 2. **If it is renamed anyway, the word is `acquire/`**, because `soil/lib/sdk/acquire.ts` already chose it,
    and the migration must ship with the enforcement rule in the same PR (§3).
 3. **Do not build `layer-kit` for de-duplication.** The four layer packages share eight filenames and
-   **0.18% of their lines**. There is almost nothing to de-duplicate, and a shared package would impose one
+   **0.18% of their lines**. There is almost no code to de-duplicate, and a shared package would impose one
    abstraction over four implementations that differ substantially (§4).
 4. **A shared package may still be worth building for a different reason**, namely a single tested
    interface for the ingest stages. That design argument must be made on its own evidence, and this record
@@ -74,7 +74,7 @@ repeat the first attempt.
 **Neither real defect was a naming defect.** The audit reported three violations, and measurement showed:
 
 - `spatial/lib/sdk/` held a WKT/WKB codec and an `ogrinfo` shell-out. The defect was real and is fixed, but
-  it was a location defect. Nothing imported the code incorrectly, and it only sat in the wrong folder. No
+  it was a location defect. No caller imported the code incorrectly, and it only sat in the wrong folder. No
   dependency rule could have caught it, and none did.
 - The `filer`/`bdc` "drift" was largely a measurement error. The audit's table of external importers
   (`frn` 6, `form499` 5, `common` 5) counts `#sdk/*` specifiers **inside the owning package**.
@@ -87,7 +87,7 @@ repeat the first attempt.
 **`tools/` cannot serve as the destination**, although the audit assumed it could. The directory already
 has at least four meanings: build tooling (`core`, `codex`, `corpus`), MCP tool definitions (`dev-mcp`), a
 CLI command's library half (`filer`, `mailwoman`), and product analysis (`registry`, whose header says "THE
-PRODUCT OUTPUT"). The folder-name form of the enforcement rule, "nothing outside `tools/` may import
+PRODUCT OUTPUT"). The folder-name form of the enforcement rule, "no code outside `tools/` may import
 `tools/`", was written first. It produced **38 violations, and every one was correct behavior**. 33 of
 them were `mailwoman/lib/commands/*` calling their own command's library half. That experiment is why the
 shipped rule is scoped by package identity instead.
@@ -135,7 +135,7 @@ The instrument has two limits, and both caution against over-reading it:
   batched commit loop or a manifest block. The number is a lower bound on duplication rather than a
   measure of it.
 - "same filename, 2.1× size" measures volume rather than shared structure. Two files can differ in length
-  and still share a control-flow skeleton. The table below is evidence against a copy, and it says nothing
+  and still share a control-flow skeleton. The table below is evidence against a copy, and it makes no statement
   about a shared interface.
 
 The same-named files also differ in size:
@@ -212,7 +212,7 @@ reverse**: an internal refactor with four subpaths attached. It never needed to 
 shipped continuously instead. Those four subpaths moved with their modules, and each move is recorded in
 CHANGELOG "Unreleased".
 
-The `sdk/` rename would now need a release of its own for 83 subpaths and nothing else, which strengthens
+The `sdk/` rename would now need a release of its own for 83 subpaths and no other change, which strengthens
 §0.1. Bundle it with the next breaking change that has to happen anyway.
 
 ### 6.1 The completion criterion, and what it cost to state directly

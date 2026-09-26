@@ -223,7 +223,7 @@ describe("FloodZoneLookup — the three readings", () => {
 		expect(reading.definition?.code).toBe("FZ1")
 		expect(reading.definition?.definition).toMatch(/less than 0\.1% annual probability/u)
 
-		// The coverage row is what licenses the reading, and it says the authority designated here and holds nothing.
+		// The coverage row is what licenses the reading, and it says the authority designated here and holds no rows.
 		expect(reading.coverage?.basis).toBe("designated")
 		expect(reading.coverage?.completeness).toBe(1)
 		expect(reading.coverage?.observedRows).toBe(0)

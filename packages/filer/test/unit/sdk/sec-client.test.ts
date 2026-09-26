@@ -2,45 +2,24 @@
  * @copyright Sister Software.
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file Tests for {@linkcode createSECClient} — the SEC edgar client, now built on
+ * @file Tests for {@linkcode createSECClient} — the SEC edgar client, built on
  *   `@mailwoman/core/api`'s {@linkcode APIClient}.
- *
- *   Every test drives a stub Axios adapter and, where timing matters, an injected `ClockLike`: no test
- *   here performs a live network call or a real wall-clock sleep (decision 5). Cache-expiry tests fake
- *   `Date` specifically, because `axios-cache-interceptor` stamps `createdAt` off `Date.now()` rather
- *   than off this client's injectable clock.
- *
- *   The stub adapter and its Axios-shaped error builder live in
- *   `@mailwoman/core/api/test-transport`, beside the test clocks — `bdc/sdk/client.test.ts` had grown
- *   its own near-identical copy, which is what happens when a second client is migrated from the
- *   first's tests. Both are built structurally (`isAxiosError: true` plus `config`/`response`/`code`)
- *   rather than with `new AxiosError(...)`: `filer` depends on neither `axios` nor
- *   `axios-cache-interceptor`, reaching both only through `@mailwoman/core`, and a test file is not a
- *   reason to breach that.
  */
 
 import { createFakeClock, maxCountInSlidingWindow, VirtualClock } from "@mailwoman/core/api/test-clocks"
 import { type StubOutcome, stubTransport, type StubTransport } from "@mailwoman/core/api/test-transport"
-// `ResourceError` is used both as a value (`toBeInstanceOf`) and as a type (`as ResourceErrorShape`).
-// The value arrives via the post-reset dynamic import below.
-// A `const` carries no type side, so the type position needs its own static import.
-// Type-only, so it never evaluates the mocked module chain.
+// `ResourceError` arrives as a value via the post-reset dynamic import below,
+// so the type position needs this type-only static import.
 import type { ResourceError as ResourceErrorShape } from "@mailwoman/core/errors"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { Globerator } from "spliterator/node/fs"
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
-// note: `./sec-client.ts` is imported dynamically below, after `vi.resetModules()`.
-// See the shared-graph guard under the env mock.
-// A static import here would bind the module before the reset and reintroduce
-// the flake this file used to carry.
+// `./sec-client.ts` is imported dynamically below, after `vi.resetModules()`;
+// a static import would bind the module before the reset.
 
-// `$private` (`@mailwoman/core/env`) is a live getter over `{ ...dotEnv, ...process.env }`.
-// The repo's real `.env` already sets `SEC_EDGAR_USER_AGENT`, so `vi.stubEnv` alone can't
-// hide it (see `bdc/sdk/client.test.ts`'s identical finding against `FCC_MAP_*`).
-// Mock the module directly so the no-UA fail-fast test below is isolated from
-// whatever the ambient `.env` actually contains.
-// Every other test in this file passes an explicit `userAgent` option and never reads `$private`.
+// The repo's real `.env` sets `SEC_EDGAR_USER_AGENT` (a live getter over `{ ...dotEnv, ...process.env }`),
+// so `vi.stubEnv` cannot hide it; mock the module directly.
 vi.mock("@mailwoman/filer/env", async (importOriginal) => {
 	const actual = await importOriginal<typeof import("@mailwoman/filer/env")>()
 
@@ -50,20 +29,12 @@ vi.mock("@mailwoman/filer/env", async (importOriginal) => {
 	}
 })
 
-// Shared-graph guard, mirroring `bdc/sdk/client.test.ts`: the root vitest config runs
-// `isolate: false`, so `./sec-client.ts` may already sit in the worker's cache —
-// evaluated without this file's `@mailwoman/filer/env` mock by an earlier file
-// (a cached module never re-evaluates, and `vi.mock` factories are only consulted at evaluation).
-// Reset on the way in so the chain re-evaluates against the mock, and on the way out
-// so the next file in this fork never inherits our mocked env module.
-//
-// Without this the UA fail-fast test passes in isolation and in a serialized run,
-// then fails whenever unrelated test files shift the worker's scheduling, which is
-// exactly how it surfaced (2026-08-02), long after it was introduced.
+// The root vitest config runs `isolate: false`, so `./sec-client.ts` may already sit in the
+// worker's cache evaluated without this file's env mock; reset on the way in so the chain
+// re-evaluates against the mock, and on the way out so the next file never inherits it.
 vi.resetModules()
 afterAll(() => vi.resetModules())
 
-// Dynamic imports after the reset so the module chain evaluates against the env mock.
 const { createSECClient, isImmutableArchiveURL, SEC_DEFAULT_REQUESTS_PER_SECOND, SEC_MAX_REQUESTS_PER_SECOND } =
 	await import("@mailwoman/filer/sdk/sec-client")
 
@@ -274,8 +245,8 @@ describe("createSECClient: on-disk cache", () => {
 	})
 
 	it("expires a MUTABLE (non-archive) URL's cache entry after cacheTTLMs, triggering a re-fetch", async () => {
-		// `axios-cache-interceptor` stamps `createdAt`/expiry off `Date.now()`, not off the
-		// injected `ClockLike`, so cache AGE is driven by faking `Date` specifically.
+		// `axios-cache-interceptor` stamps `createdAt`/expiry off `Date.now()`, not the
+		// injected `ClockLike`, so cache age is driven by faking `Date` specifically.
 		vi.useFakeTimers({ toFake: ["Date"] })
 		vi.setSystemTime(new Date("2026-01-01T00:00:00Z"))
 
@@ -321,11 +292,8 @@ describe("createSECClient: on-disk cache", () => {
 	})
 
 	it("ignores SEC's own Cache-Control, so the archive-forever rule survives a short max-age", async () => {
-		// M-N: deleting `interpretHeader: false` from the client caused 0 test failures
-		// and is reachable IN production — sec.gov serves `Cache-Control` on these endpoints,
-		// and with header interpretation on, the interceptor derives the TTL from the header
-		// and silently overrides the immutable-archive rule.
-		// Every other cache test's stub omitted the header, so nothing noticed.
+		// sec.gov serves `Cache-Control` on these endpoints, so with header interpretation on
+		// the interceptor would derive the TTL from it and override the immutable-archive rule.
 		vi.useFakeTimers({ toFake: ["Date"] })
 		vi.setSystemTime(new Date("2026-01-01T00:00:00Z"))
 
@@ -344,8 +312,6 @@ describe("createSECClient: on-disk cache", () => {
 		expect(await client.get(archiveURL)).toEqual({ v: 1 })
 		expect(transport.calls).toHaveLength(1)
 
-		// Well past the header's 1s max-age.
-		// The path is an archive document, so it must still be served from cache.
 		vi.setSystemTime(new Date("2026-01-01T00:00:30Z"))
 
 		expect(await client.get(archiveURL)).toEqual({ v: 1 })
@@ -353,8 +319,8 @@ describe("createSECClient: on-disk cache", () => {
 	})
 
 	it("treats URLs differing only by query string as DISTINCT cache entries", async () => {
-		// browse-edgar's entire identity is its query string — collapsing `origin + pathname`
-		// into the cache key would silently merge every distinct CIK lookup into one entry.
+		// browse-edgar's entire identity is its query string, so collapsing `origin + pathname`
+		// into the cache key would merge every distinct CIK lookup.
 		const transport = stubTransport([{ body: { cik: "0000320193" } }, { body: { cik: "0000789019" } }])
 
 		const client = createSECClient({
@@ -418,12 +384,9 @@ describe("createSECClient: on-disk cache", () => {
 
 		expect(caught).toBeInstanceOf(ResourceError)
 		expect((caught as Error).message).toContain(archiveURL)
-		// An unchanged bad body cannot be fixed by retrying, so it must not be requeued either.
 		expect(isTransientResourceError(caught)).toBe(false)
 		expect(await Globerator.from("*", { cwd: cacheDir.path }).toArray()).toHaveLength(0)
 
-		// Nothing was poisoned, so a later attempt against the same (archive!)
-		// URL still fetches.
 		const fixed = stubTransport([{ body: { ok: true } }])
 
 		const fixedClient = createSECClient({
@@ -574,29 +537,22 @@ describe("createSECClient: rate limiting", () => {
 			userAgent: TEST_USER_AGENT,
 			cacheDir: cacheDir.path,
 			clock,
-			requestsPerSecond: 100, // attempts to exceed the policy ceiling
+			requestsPerSecond: 100,
 			...transport,
 		})
 
 		await client.get("https://data.sec.gov/rate-test/0.json")
-		expect(clock.sleepCalls).toHaveLength(0) // the very first call is always immediate
+		expect(clock.sleepCalls).toHaveLength(0)
 
 		await client.get("https://data.sec.gov/rate-test/1.json")
-		// Clamped to 10/s (100ms) — not the requested 100/s (10ms).
+		// Clamped to the 10/s ceiling (100ms), not the requested 100/s (10ms).
 		expect(clock.sleepCalls).toEqual([100])
 	})
 
 	it("holds the DEFAULT rate, one under the published ceiling, across a 40-call concurrent fan-out", async () => {
 		const FAN_OUT = 40
-		// The default is SEC_DEFAULT_REQUESTS_PER_SECOND (9), not the ceiling.
-		// Pacing exactly at 10/s put 11 requests inside a sliding second on 3 of 3 real-timer runs.
-		// The grants were spaced right, but the continuation that issues each request
-		// lands 0-2ms late and tips one across the boundary.
-		// Asserting the ceiling here would pin the schedule that measured as a violation.
-		//
-		// The interval is ceiled, matching `createSECClient`: `1000/9` is `111.111…`,
-		// which places the 10th grant at exactly 1000.0ms after the first, so any jitter
-		// admits a 10th arrival (measured 5/5 runs). 112ms moves it to 1008ms.
+		// The interval is ceiled because `1000/9` is `111.111…`, which places the 10th grant
+		// at exactly 1000.0ms after the first and lets any jitter admit a 10th arrival.
 		const INTERVAL_MS = Math.ceil(1000 / SEC_DEFAULT_REQUESTS_PER_SECOND)
 
 		expect(SEC_DEFAULT_REQUESTS_PER_SECOND).toBeLessThan(SEC_MAX_REQUESTS_PER_SECOND)
@@ -606,11 +562,8 @@ describe("createSECClient: rate limiting", () => {
 
 		const client = createSECClient({ userAgent: TEST_USER_AGENT, cacheDir: cacheDir.path, clock, ...transport })
 
-		// arrivals, timestamped inside the adapter — not `clock.sleepCalls`.
-		// The grant schedule is not what a rate limiter sees, and asserting it hid exactly this bug:
-		// the sleeps were 111ms apart and passed, while 10 requests still landed inside one second.
-		// `runUntilSettled` is required because the pacing check now sits downstream of the on-disk cache
-		// lookup, so each request spends real event-loop turns in `readFile` before it registers its sleep.
+		// `runUntilSettled` is required because the pacing check sits downstream of the on-disk cache
+		// lookup, so each request spends real event-loop turns in `readFile` before registering its sleep.
 		await clock.runUntilSettled(
 			Promise.all(Array.from({ length: FAN_OUT }, (_, i) => client.get(`https://data.sec.gov/fanout/${i}.json`)))
 		)
@@ -620,8 +573,6 @@ describe("createSECClient: rate limiting", () => {
 		expect(arrivals).toHaveLength(FAN_OUT)
 		expect(transport.calls).toHaveLength(FAN_OUT)
 
-		// The properties the pacer exists to guarantee: strictly increasing, never closer together
-		// than the interval, and never more than the configured rate inside any sliding second.
 		for (let i = 1; i < arrivals.length; i++) {
 			expect(arrivals[i]! - arrivals[i - 1]!).toBeGreaterThanOrEqual(INTERVAL_MS)
 		}
@@ -738,9 +689,8 @@ describe("createSECClient: bounded retry with backoff on 429/5xx and network-cla
 		["numeric", "60", 60_000],
 		["clamped", "999999", 60_000],
 		["unparseable (fails LONG, never the short exponential)", "not-a-valid-value", 60_000],
-		// RFC 9110's `delay-seconds` is `1*digit` only.
-		// `Number()` is laxer than the grammar, so a naive parse would silently honor
-		// either of these as a plausible-looking wait.
+		// RFC 9110's `delay-seconds` is `1*digit` only, and `Number()` is laxer,
+		// so a naive parse would honor these as a plausible-looking wait.
 		["hex-looking", "0x10", 60_000],
 		["fractional", "1.5", 60_000],
 	])("honors a %s Retry-After over the default exponential backoff", async (_label, header, expected) => {
@@ -756,7 +706,7 @@ describe("createSECClient: bounded retry with backoff on 429/5xx and network-cla
 			cacheDir: cacheDir.path,
 			clock,
 			maxAttempts: 2,
-			baseRetryDelayMs: 500, // must not be what gets slept
+			baseRetryDelayMs: 500,
 			...transport,
 		})
 
@@ -791,10 +741,6 @@ describe("createSECClient: bounded retry with backoff on 429/5xx and network-cla
 	})
 })
 
-// The interface tasks 6-8 depend on.
-// Each branch is decided from `status` and `isTransientResourceError()` alone,
-// never from message text, which is the trap the standalone client's own suite fell
-// into (it matched `/network error/i` to identify a transport failure).
 describe("createSECClient: the caller's failure taxonomy, decided without reading any message", () => {
 	async function failureFor(outcomes: StubOutcome[], maxAttempts = 2): Promise<unknown> {
 		const transport = stubTransport(outcomes)
@@ -838,7 +784,6 @@ describe("createSECClient: the caller's failure taxonomy, decided without readin
 		expect(isTransientResourceError(error)).toBe(true)
 	})
 
-	// The most common bulk-crawl outcome, and the one the standalone client got wrong.
 	it("exhausted network failure → requeue", async () => {
 		const error = await failureFor([{ throws: { message: "socket hang up", code: "ERR_NETWORK" } }])
 

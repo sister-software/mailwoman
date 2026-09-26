@@ -12,7 +12,7 @@ from typing import Any
 import pyarrow.compute as pc
 import pyarrow.parquet as pq
 
-#: The manifest key that older corpora use for their parquet file list. Built corpora are immutable, so the
+#: The manifest key older corpora use for their parquet file list. Built corpora are immutable, so the
 #: reader accepts both keys and the writer emits only `slices`.
 _PRE_RENAME_MANIFEST_KEY = "sh" + "ards"
 
@@ -32,13 +32,13 @@ def manifest_files(data: dict[str, Any]) -> list[dict[str, Any]]:
 def _reroot(raw: Path, corpus_dir: Path, split: str) -> Path | None:
     """Map a stale manifest path to an existing local file, or return ``None``.
 
-    The path segment before ``<split>`` identifies the corpus that owns the file. When it is this
-    corpus, the ``<split>/<file>`` tail is joined under ``corpus_dir``. When it is another corpus,
+    The path segment before ``<split>`` identifies the corpus that owns the file: when it is this
+    corpus the ``<split>/<file>`` tail is joined under ``corpus_dir``, and when it is another corpus,
     such as an overlay's base, the ``<corpus>/<split>/<file>`` tail is joined under the parent of
     ``corpus_dir``.
 
-    Part files are numbered by position, so a base part and an overlay part can share a file name.
-    Re-rooting on the tail alone would read the overlay's part in place of the base's.
+    Part files are numbered by position, so a base part and an overlay part can share a file name;
+    re-rooting on the tail alone would read the overlay's part in place of the base's.
     """
     parts = raw.parts
     at = parts.index(split) if split in parts else None
@@ -48,8 +48,6 @@ def _reroot(raw: Path, corpus_dir: Path, split: str) -> Path | None:
 
         return cand if cand.exists() else None
 
-    # When the segment before the split is missing, repeats the split or matches this corpus, the file belongs to
-    # this corpus.
     if at == 0 or parts[at - 1] == split or parts[at - 1] == corpus_dir.name:
         cand = corpus_dir / Path(*parts[at:])
 
@@ -63,9 +61,9 @@ def _reroot(raw: Path, corpus_dir: Path, split: str) -> Path | None:
 def _parquet_paths(corpus_dir: Path, split: str) -> list[Path]:
     """Return the parquet files for one split, from MANIFEST.json or a directory glob.
 
-    The manifest lists an absolute ``path`` and a ``split`` per file. An overlay's manifest also lists
-    files in its base corpus. Each path is used as-is when it exists and re-rooted by `_reroot` when
-    it does not. The glob over ``corpus_dir/split`` runs only when the manifest resolves no files.
+    The manifest lists an absolute ``path`` and a ``split`` per file; an overlay's also lists files in
+    its base corpus. Each path is used as-is when it exists and re-rooted by `_reroot` when it does
+    not, and the glob runs only when the manifest resolves no files.
     """
     manifest = corpus_dir / "MANIFEST.json"
     if manifest.exists():
@@ -89,9 +87,9 @@ def _parquet_paths(corpus_dir: Path, split: str) -> list[Path]:
                 rerooted += 1
             else:
                 missing.append(str(raw))
-        # A partly resolved manifest means the corpus is broken, for example an overlay without its base.
-        # Training on the files that remain would use the wrong corpus, so this raises. When nothing
-        # resolves, the glob fallback below handles older monolithic corpora.
+        # A partly resolved manifest means the corpus is broken, e.g. an overlay without its base;
+        # training on the files that remain would use the wrong corpus, so this raises. When no path
+        # resolves, the glob fallback handles older monolithic corpora.
         if resolved and missing:
             raise FileNotFoundError(
                 f"MANIFEST declares {declared} '{split}' parquet files but {len(missing)} are unresolvable "
@@ -112,10 +110,9 @@ def _parquet_paths(corpus_dir: Path, split: str) -> list[Path]:
 
 
 def file_source_counts(path: Path) -> dict[str, int]:
-    """Count rows per ``source`` in one parquet file.
-
-    A file can hold several sources, because the writer splits files by row count. The count runs
-    inside Arrow with `value_counts`, which avoids building one Python string per row.
+    """Count rows per ``source`` in one parquet file, which can hold several sources because the writer
+    splits files by row count; the count runs inside Arrow with `value_counts`, avoiding one Python
+    string per row.
 
     Raises `TypeError` on a non-string cell, which usually means a label-less ``--golden`` file was
     passed as a train file.
@@ -135,8 +132,8 @@ def file_source_counts(path: Path) -> dict[str, int]:
 def source_row_counts(corpus_dir: Path, split: str = "train") -> dict[str, int]:
     """Count rows per source across every parquet file in a split.
 
-    The epoch audit divides draws by these counts to report how many times each row of a source was
-    shown. Files whose ``source`` column cannot be read are skipped.
+    The epoch audit divides draws by these counts to report how many times each source row was shown;
+    files whose ``source`` column cannot be read are skipped.
     """
     counts: dict[str, int] = {}
 

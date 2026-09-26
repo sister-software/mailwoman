@@ -29,7 +29,7 @@ export function tagAlias(key: string): string {
  *
  * @throws on a layer with no promoted-key list.
  * Falling back to the hstore expression for an unknown layer would produce SQL that runs
- * and matches nothing, which is the failure the table exists to prevent.
+ * and matches no row, which is the failure the table exists to prevent.
  */
 export function tagSelectExpr(promotedKeysByLayer: PromotedKeysByLayer, layer: string, key: string): string {
 	const promoted = promotedKeysByLayer[layer]

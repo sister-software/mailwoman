@@ -1,6 +1,6 @@
 # Physical constraint as a generative prior — design record for #1975
 
-Status: design record, the first item of #1975's definition of done. Nothing in this record changes
+Status: design record, the first item of #1975's definition of done. This record changes no
 runtime behavior. It decides where the prior sits, what it may express, what it must never be, what
 every exclusion carries, and how the GB prototype is built and graded.
 
@@ -11,7 +11,7 @@ every exclusion carries, and how the GB prototype is built and graded.
 | #1684 experiment 3 (GHSL habitability mask)   | NO-GO on the pre-registered rule: the only mask with a clean control excludes 7 of 46 FIRST_PASS tail rows and 0 of 5 on the current tail; the mask with power also excludes 50 of 420 truth points, which are rural rooftops. A habitability mask does not warrant a place as a candidate filter. Recorded on #1975.                         |
 | License position (operator, 2026-09-03)       | Exploration and validation of these inputs are free. Packages ship separately, so a customer chooses which data-license posture to engage with; `mailwoman doctor` reports the posture of every attached layer (PR #2117). Counsel review stays the condition for shipping beyond `build-local`.                                              |
 | #1571 (inferential resolution)                | Physical plausibility is its fourth constraint source. Its prohibitions bind here: positive evidence only, soft priors, never an inferred point served as retrieved, a bounded region with stated confidence rather than a fabricated coordinate.                                                                                             |
-| Exclusion-grade coverage (PR #1973)           | `supportsExclusion` is true only for `basis = designated` or `surveyed`. `source_present` supports presence and nothing else. A cell with no footprint data is not a cell excluded by physics.                                                                                                                                                |
+| Exclusion-grade coverage (PR #1973)           | `supportsExclusion` is true only for `basis = designated` or `surveyed`. `source_present` supports presence and no exclusion. A cell with no footprint data is not a cell excluded by physics.                                                                                                                                                |
 | Geographic-model boundary (2026-08-26 record) | No ranking weight, boost, penalty, or candidate order may be authored by a world-model record. First production integration of any world fact is diagnostic and observational only.                                                                                                                                                           |
 | Postcode-structure arc (2026-08-05 plan)      | Code-Point Open carries 1,746,976 unit postcodes and zero `BT` (Northern Ireland) units. Its M-2b note cites an NI "census file"; that file is the OSM Overpass acquisition described in section 7, and the 4,758 it counted included one malformed row. GB unit postcodes already build `postcode-gb.bin` and the outward-district ancestry. |
 
@@ -58,7 +58,7 @@ touches exactly two things:
 
 1. The candidate SET, by hard exclusion, only where section 5 permits it.
 2. The result's derivation, by attaching a bounded region and its provenance where the walk resolved
-   nothing finer than the unit postcode.
+   no finer level than the unit postcode.
 
 It never touches `rankByImportance`, the span-rescore weights, the country prior, the
 placetype-pair prior, or any decode-time term in `@mailwoman/neural`. `plausibility.ts`, the

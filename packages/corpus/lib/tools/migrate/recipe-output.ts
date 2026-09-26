@@ -4,22 +4,8 @@
  * @author Teffen Ellis, et al.
  * @file Carry a recipe output written before `recipe`/`register`/`surface` onto the current row schema.
  *
- *   Regenerating a recipe output is the first choice, because a regenerated one records its own invocation. This
- *   exists for the outputs that cannot be regenerated: their `--input` tuple extraction is no longer on disk, and
- *   nothing recorded where it came from. `corpus/tuples/` holds the extraction for some of them and not others.
- *
- *   What this writes is what is known, and nothing more.
- *
- *   `recipe` and `base_source_id` are renames of `synth_method` and `synth_base_id`. No new claim.
- *
- *   `surface` is a property of the recipe that wrote the row, stated in that recipe's source and repeated in
- *   {@linkcode RECIPE_SURFACES}. A recipe that assembles a row from template tables writes `invented`, and one that
- *   renders a real record's fields writes `composed`.
- *
- *   `register` is `mailwoman-derived-tuples` for every row this tool writes, which says the rows came from a derived
- *   extract in this repository and that which publication stands behind it has to be re-established. Naming a
- *   publisher here would be inference recorded as a fact, which is what `requireRegister` refuses at generation time.
- *   A migrated output therefore carries a weaker claim than a regenerated one, and it says so on every row.
+ * `recipe` and `base_source_id` are renames of `synth_method` and `synth_base_id`, so they assert no new claim.
+ * `register` is `mailwoman-derived-tuples` for every row, because naming a publisher would record inference as fact.
  */
 
 import { openWriteStream } from "@mailwoman/core/fs/streams"
@@ -32,11 +18,8 @@ import { SourceRegister } from "#registers"
 import { SurfaceOrigin } from "#types"
 
 /**
- * How each source id's recipe produced its surface.
- *
- * Keyed on the `source` column, which is what a migrated row carries.
- * Each value is read from the recipe that writes that source, so this table and the recipes state
- * one thing in two places and a source absent from it refuses rather than taking a default.
+ * How each source id's recipe produced its surface; a source absent from this
+ * table refuses rather than taking a default.
  */
 export const RECIPE_SURFACES: Record<string, SurfaceOrigin> = {
 	// Assembled from template tables.
@@ -101,9 +84,6 @@ export interface MigrationSummary {
 
 /**
  * The surface for one source id, refusing a source the table does not name.
- *
- * A default here would write a guess onto every row of an output nobody has classified,
- * which is the failure the three columns replaced.
  */
 export function surfaceForSource(source: string): SurfaceOrigin {
 	const surface = RECIPE_SURFACES[source]
@@ -119,10 +99,8 @@ export function surfaceForSource(source: string): SurfaceOrigin {
 }
 
 /**
- * Rewrite one recipe output onto the current row schema.
- *
- * A row that already carries `surface` passes through untouched and is counted,
- * so a half-migrated file converges rather than being rewritten twice.
+ * Rewrite one recipe output onto the current row schema, passing an already-migrated
+ * row through untouched so a half-migrated file converges.
  */
 export async function migrateRecipeOutput(input: PathBuilderLike, output: PathBuilderLike): Promise<MigrationSummary> {
 	const summary: MigrationSummary = { rows: 0, bySource: {}, alreadyMigrated: 0 }

@@ -6,7 +6,7 @@
  *   Converts semantic observations, coverage-qualified absences and layer designations into
  *   `QueryIntentMarker`s on the ordinary result.
  *
- *   A marker is additive and never changes which answer wins, so nothing in this module reads or
+ *   A marker is additive and never changes which answer wins, so no code in this module reads or
  *   returns a candidate, coordinate or ordering. The caller converts and attaches the markers, because
  *   `createRuntimePipeline` receives the semantic route as a plain `POIPhraseLookup`.
  *

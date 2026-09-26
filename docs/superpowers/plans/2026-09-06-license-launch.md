@@ -4,7 +4,7 @@
 
 **Goal:** Sell the first self-service commercial license: the sandbox runs the whole path on Stripe test mode, then production issues licenses signed by a key that a released mailwoman trusts.
 
-**Architecture:** Nothing new is built here. The worker (#2160), the site and CLI (#2162) and the shop registry (`mwops shop`) are complete; launch is provisioning, secrets, one release, one end-to-end run, and the drills the spec requires before `ISSUANCE_ENABLED` flips.
+**Architecture:** No new code is built here. The worker (#2160), the site and CLI (#2162) and the shop registry (`mwops shop`) are complete; launch is provisioning, secrets, one release, one end-to-end run, and the drills the spec requires before `ISSUANCE_ENABLED` flips.
 
 **Spec:** `docs/superpowers/specs/2026-09-05-self-service-commercial-license-design.md`, sections "Prerequisites the code cannot supply", "Key rollout and rotation", "Verification" (the sandbox end-to-end paragraph and the "Before production issuance" paragraph), and issue H of the issue split. Runbook: `packages/license-worker/README.md`.
 
@@ -127,7 +127,7 @@ is tracked and the local build emits it: `actions/upload-pages-artifact` exclude
 #### Receipt: the deployed sandbox, 2026-09-06
 
 Task 2 and Task 3 ran against `https://mailwoman-license-sandbox.sister-software.workers.dev` with Stripe delivering
-every event itself; nothing was replayed or signed by hand.
+every event itself; no event was replayed or signed by hand.
 
 | Step                                                                               | Observed                                                                                                                                                                                                                 |
 | ---------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -146,7 +146,7 @@ every event itself; nothing was replayed or signed by hand.
 The cron surfaced a defect. The two older invoices it minted were the local run's purchases, which this ledger had
 never seen, and one of them (`in_1UCW4vANyI6tE9BzaAvybZrc`) had been fully refunded during that run. The drift sweep
 read only the subscription's status, which a refund leaves `active`. Therefore, the ledger issued `lic_cPAjF5Rawybt-3rDURvvMQ`
-for a refunded payment and reported nothing to correct. The sweep now reads the charge behind each active license's
+for a refunded payment and reported no problem to correct. The sweep now reads the charge behind each active license's
 current token and revokes on a full refund, the same rule the `charge.refunded` handler applies. The deployed sandbox
 corrects that license at the next pass after the fix deploys.
 
@@ -181,4 +181,4 @@ owns that setting, so Task 7 confirms it does not refuse the CLI.
 
 ## Acceptance
 
-The spec's acceptance list, run against production with the first real purchase: one token per paid invoice with `expires` at the period end plus 14 days; a renewal mints one new token that `mailwoman license refresh` fetches; replayed events mint nothing; a refund reads `revoked` online while the offline token keeps its date; a release that predates the shop but trusts the key verifies the token; every hand-issued token still verifies; issuance stops in one variable.
+The spec's acceptance list, run against production with the first real purchase: one token per paid invoice with `expires` at the period end plus 14 days; a renewal mints one new token that `mailwoman license refresh` fetches; replayed events mint no token; a refund reads `revoked` online while the offline token keeps its date; a release that predates the shop but trusts the key verifies the token; every hand-issued token still verifies; issuance stops in one variable.

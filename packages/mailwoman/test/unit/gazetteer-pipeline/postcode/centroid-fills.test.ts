@@ -123,8 +123,8 @@ test("GeoNames postal names each postcode's delivery city, including territories
 
 test("falls back to the combined dump for a country the per-country directory has no file for", async () => {
 	// The US case.
-	// `<data-root>/geonames-postal/` carries CZ, DK, FI and eight others and no US.txt,
-	// so without this branch the whole GeoNames pass short-circuits on existsSync and writes nothing.
+	// `<data-root>/geonames-postal/` carries CZ, DK, FI and eight others and no US.txt, so without
+	// this branch the whole GeoNames pass short-circuits on existsSync and writes no postcode.
 	await using dirDirectory = await temporaryDirectory("centroid-combined-")
 	const dir = dirDirectory.path
 	const databasePath = dir("postalcode-us.db")

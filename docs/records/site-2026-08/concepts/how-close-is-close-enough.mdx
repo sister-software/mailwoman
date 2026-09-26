@@ -37,7 +37,7 @@ Mailwoman [resolves to the finest tier](./how-mailwoman-resolves-a-place.mdx) it
 | `interpolated`  | house-number estimate along the street segment | **0.1 km** | a TIGER segment matches       |
 | `address_point` | rooftop / parcel centroid                      | **0.7 km** | a situs extract has the point |
 
-When a finer tier fires, the geocoder is street-to-rooftop accurate — **98.8% within 100 m** on the non-circular Travis-County E-911 holdout. The admin tier means "right city," nothing finer.
+When a finer tier fires, the geocoder is street-to-rooftop accurate — **98.8% within 100 m** on the non-circular Travis-County E-911 holdout. The admin tier means "right city" and no finer grain.
 
 So the first half of "close enough" is **which tier did we reach**, because the tier _is_ the grain. A matcher that needs buildings should treat an `admin`-tier result as a building it hasn't located, even though the centroid happens to sit a mere 3 km away.
 

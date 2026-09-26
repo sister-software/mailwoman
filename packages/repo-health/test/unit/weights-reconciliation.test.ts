@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  * @file What the reconciliation check refuses, exercised against a scratch tree rather than against today's packages.
  *
- *   A check asserted only on the real tree passes for as long as the tree is clean and says nothing about what it would
+ *   A check asserted only on the real tree passes for as long as the tree is clean and is silent about what it would
  *   catch. Each case here writes the disagreement it describes and asserts the message names it.
  */
 

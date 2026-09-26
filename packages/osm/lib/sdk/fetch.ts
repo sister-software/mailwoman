@@ -14,7 +14,7 @@
  *   `APIClient`, and that rule is about API requests — small bodies, repeated calls, rate-limited
  *   hosts, where its pacing, bounded retry, response caching and `ResourceError` mapping all earn
  *   their keep. This is a multi-gigabyte file transfer streamed straight to disk. Response caching
- *   would be nonsense at that size, pacing has nothing to pace (one request), and axios buffers a
+ *   would be nonsense at that size, pacing has no calls to pace (one request), and axios buffers a
  *   non-stream response type in memory. The primitive that fits a body this large is the one that
  *   never holds it: a web stream piped to a write stream.
  */

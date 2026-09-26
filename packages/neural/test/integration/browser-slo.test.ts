@@ -16,7 +16,7 @@
  *   `@mailwoman/neural/web-onnx-runner` (onnxruntime-web, wasm + optional WebGPU) plus
  *   `@mailwoman/neural/tokenizer` (the SentencePiece core), reached through the package's compiled
  *   `out/` tree, which is what an npm consumer and the docs demo both bundle. Run `yarn compile`
- *   first: a stale `out/` measures stale code and nothing here can tell.
+ *   first: a stale `out/` measures stale code and no check here can detect it.
  *
  *   what is not: `@mailwoman/neural/web-loader` composes those two into a `NeuralAddressClassifier`,
  *   which reaches `@mailwoman/core`. That the whole graph bundles under the `browser` condition is
@@ -629,8 +629,9 @@ declare global {
 	/**
 	 * The page-side API `/app.js` installs.
 	 *
-	 * Declared on the global rather than reached through a cast at each call site, because every
-	 * `page.evaluate` callback is serialized into the browser and can close over nothing from this file.
+	 * Declared on the global rather than reached through a cast at each call site,
+	 * because every `page.evaluate` callback is serialized into the browser
+	 * and can close over no binding from this file.
 	 */
 	// oxlint-disable-next-line no-var -- `declare global` adds a globalThis property only through `var`.
 	var mwSLO: BrowserSLOAPI
@@ -1214,7 +1215,7 @@ describe.skipIf(!canRun)("#378 browser SLO — decomposed cold path", () => {
 			return
 		}
 
-		// Every probe must have returned rows: a key that matches nothing still descends the B-tree,
+		// Every probe must have returned rows: a key that matches no row still descends the B-tree,
 		// so a zero-row session would be a cheaper measurement of a different thing.
 		expect(measurement.gazetteer.rows.every((count) => count > 0)).toBe(true)
 		expect(measurement.gazetteer.requests).toBeGreaterThan(0)

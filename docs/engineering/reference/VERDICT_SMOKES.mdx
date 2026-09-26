@@ -107,7 +107,7 @@ The v0.5.0 C-train bisect campaign added two rules. The original framework misse
 
 ### Smoke effective batch must match the full run
 
-The v0.5.0 ablation smoke at `batch_size=8, grad_accum=1` (eff_batch=8) passed without error: loss descended, val_macro_f1 climbed, and nothing diverged through 1500 steps. The full train at `batch_size=16, grad_accum=8` (eff_batch=128) diverged at step 800.
+The v0.5.0 ablation smoke at `batch_size=8, grad_accum=1` (eff_batch=8) passed without error: loss descended, val_macro_f1 climbed, and the run did not diverge through 1500 steps. The full train at `batch_size=16, grad_accum=8` (eff_batch=128) diverged at step 800.
 
 **The recipe's stability depends on batch geometry.** A smoke that does not reproduce the full run's gradient noise cannot detect this class of failure. The per-step gradient noise at `eff_batch=8` is ~4× larger than at `eff_batch=128`. That extra noise _stabilises_ training against the curvature-conflict instability, because the model cannot settle deep enough into the basin where the conflict appears.
 

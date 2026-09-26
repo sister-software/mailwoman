@@ -22,7 +22,7 @@ have changed it, and there is currently no way to tell from the file.
 Three evidence markers are used throughout:
 
 - **observation**: a command produced it, and the command is shown.
-- **inference**: the evidence supports it, but nothing measured it directly.
+- **inference**: the evidence supports it, but no run measured it directly.
 - **falsified**: I proposed it, tested it, and it was wrong. These are kept in because a reader can
   easily skip them, and repeating a wrong turn is expensive.
 
@@ -104,7 +104,7 @@ population outranks other placetypes. Both checks are required and were measured
 
 **The end-to-end effect is unverified.** The 3,896 is measured at the **ranker**. The 558-row regression board is
 byte-identical before and after, and three inverted probes — the term itself, `compareReferential`, and the
-candidate `ORDER BY` — changed nothing end-to-end on four inputs the sweep says move. A deliberate `throw`
+candidate `ORDER BY` — changed no end-to-end result on four inputs the sweep says move. A deliberate `throw`
 confirmed the harness reads the edits, so the pipeline decides those answers **downstream of candidate
 ordering**, somewhere not yet identified.
 
@@ -204,7 +204,7 @@ is not. Any change based on it needs a board to measure it, rather than a decisi
 
 Three reasons worth stating, because they generalise:
 
-1. **The fan-out is invisible per query.** Nothing asks how many keys one place has, so 19 rows for `to`
+1. **The fan-out is invisible per query.** No query asks how many keys one place has, so 19 rows for `to`
    looks like a busy key rather than a data problem.
 2. **The bad rows are shaped exactly like the good ones.** Both are alt-names in a named language with
    `privateuse=preferred`. Toledo shows why the alias rows are required: abbreviation aliases are how
@@ -217,7 +217,7 @@ Three reasons worth stating, because they generalise:
 
 ## Status
 
-Nothing here is filed. The `Of` half produced a shipped fix (seat preference) whose end-to-end reach is
+No item here is filed. The `Of` half produced a shipped fix (seat preference) whose end-to-end reach is
 still unverified; the `to` half is unfixed and undiagnosed past the mechanism above.
 
 Both rest on two artifacts that cannot state their own provenance. That gap is the most likely way for

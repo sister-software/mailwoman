@@ -30,7 +30,7 @@
 Mailwoman turns free-text postal addresses into structured components (house number,
 street, locality, region, postcode, country) and resolves them to coordinates against an
 open gazetteer. It is a small transformer encoder (~30M params) that performs BIO token
-classification over a 33-label schema. It is **not** an LLM, and nothing about it is
+classification over a 33-label schema. It is **not** an LLM, and no part of it is
 generative. It is conventional named-entity recognition, which suits short, structured strings.
 
 It runs in Node.js and the browser, without Elasticsearch or a multi-gigabyte libpostal

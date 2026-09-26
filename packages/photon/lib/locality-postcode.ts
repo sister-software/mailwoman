@@ -8,7 +8,7 @@
  *   enrichment: a village answer carries the postcode the gazetteer attests for it.
  *
  *   The exactly-one rule is the abstention: a locality contained by several postcodes (any real
- *   city) gets nothing — emitting one of many would state a precision the evidence doesn't hold.
+ *   city) gets no postcode — emitting one of many would state a precision the evidence doesn't hold.
  *   Tolerate-and-degrade like every optional artifact: a machine without the DBs answers undefined
  *   everywhere and the consumer simply doesn't decorate.
  */

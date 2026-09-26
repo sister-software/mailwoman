@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   #1735 pins. The rung's whole interface is its checks: it fires on the recorded contradiction (letter-digit postcode
- *   span, ≥0.9 shape confidence, only misread-family nodes wholly inside it) and on nothing else. The veto cases are
+ *   span, ≥0.9 shape confidence, only misread-family nodes wholly inside it) and on no other input. The veto cases are
  *   the tests that matter. Each one is an input the rung must leave byte-identical.
  */
 

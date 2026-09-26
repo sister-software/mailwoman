@@ -99,7 +99,7 @@ export interface DebugFrameProps {
 	 * The interactive session keeps the previous result on screen when a geocode rejects.
 	 * the failure is one line of news rather than a reason to blank three panes —
 	 * so the note needs a home that is neither the result nor the map.
-	 * Static renders pass nothing.
+	 * Static renders pass no note.
 	 */
 	errorNote?: string | null
 	/**
@@ -445,7 +445,7 @@ function OutputRow(props: { line: OutputLine }): React.ReactElement {
 /**
  * Takes the four fields it reads rather than the whole {@link DebugData} bag, for the same
  * reason {@link MapPane} does: `data` gets a new identity on every rendered map frame,
- * and a pane that re-renders on someone else's pan is a `memo` that adds nothing.
+ * and a pane that re-renders on someone else's pan is a `memo` that adds no value.
  */
 const OutputPane = memo(function OutputPane(props: {
 	result: GeocodeResult
@@ -504,7 +504,7 @@ const OutputPane = memo(function OutputPane(props: {
 // #region Map pane
 
 /**
- * The expensive pane, and the one that depends on nothing the input row changes.
+ * The expensive pane, and the one that depends on no field the input row changes.
  *
  * So it takes the fields it reads rather than the shared {@link DebugData} bag,
  * which is what lets `memo` see stable props across a keystroke.
@@ -563,7 +563,7 @@ const MapPane = memo(function MapPane(props: {
  * then what the focused pane does, then how to leave.
  *
  * A static capture has no keyboard at all, so it says what it is instead of
- * advertising keys that do nothing.
+ * advertising keys that perform no action.
  */
 const KEY_HINTS = "Tab focus   ←↑↓→ pan/scroll   +/- zoom   0 recenter   Enter re-run   q/Esc quit"
 const STATIC_HINT = "static frame — keyboard controls on a TTY"

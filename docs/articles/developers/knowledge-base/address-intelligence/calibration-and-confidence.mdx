@@ -89,7 +89,7 @@ because the in-domain half runs optimistic and averaging the two hides that.
 
 ## It is off by default
 
-The table ships inside the weights package as a small JSON file, and nothing applies it for you. The
+The table ships inside the weights package as a small JSON file, and no step applies it for you. The
 default parse output is the raw score, byte for byte identical to what it would be if calibration did
 not exist, because silently rewriting a number that consumers may have pinned thresholds against is
 not a change a library gets to make without saying so. A caller who wants corrected numbers builds
@@ -117,7 +117,7 @@ residual is real, and it is a rate rather than a set — you cannot inspect your
 for it instead of tuning to remove it.
 
 **Confidence is about the reading rather than about the place.** A high corrected score says the model read
-the string the way the corpus would have labeled it. It says nothing about whether the address
+the string the way the corpus would have labeled it. It makes no statement about whether the address
 exists, whether mail arrives there, or whether the coordinate is any good.
 [What the model cannot do](./what-the-model-cannot-do.mdx) draws that boundary, and
 [Validate an address before you use it](../../how-to/validate-addresses.mdx) is the check that

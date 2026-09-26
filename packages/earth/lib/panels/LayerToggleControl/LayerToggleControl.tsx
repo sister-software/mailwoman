@@ -3,15 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The layer control: the per-group visibility checkboxes inside the chrome's Layers sheet.
- *
- *   Useful while debugging cartography — the protomaps basemap stacks ~70 layers, many of which (POI labels,
- *   hillshade, building outlines) get in the way of seeing what's underneath. The sheet owns the disclosure, so this
- *   renders the list and nothing that opens or closes it.
- *
- *   Groups come from the layer-ID prefix the protomaps theme uses (`roads_*`, `places_*`, `landuse_*`, `buildings_*`,
- *   `boundaries`, …), so the control adapts to whatever layers the current style carries. A layer no pattern matches
- *   falls into a catch-all "Other" group rather than disappearing.
+ *   The sheet owns the disclosure, and groups come from the protomaps theme's layer-ID prefixes, so a layer no pattern matches falls into a catch-all "Other" group rather than disappearing.
  */
 
 import { useCallback, useEffect, useState } from "react"
@@ -19,11 +11,9 @@ import type { MapInstance } from "react-map-gl/maplibre"
 
 import styles from "./styles.module.css"
 
-// Order matters: first match wins.
-// Labels go first so road-label / earth-label / address-label don't get pulled
-// into the Roads / Landuse buckets.
 /**
- * Patterns grouping map layers into the toggles shown in the control, so related layers switch together.
+ * Order matters: first match wins, so labels go first or road-label / earth-label /
+ * address-label get pulled into the Roads / Landuse buckets.
  */
 const LAYER_GROUP_PATTERNS: ReadonlyArray<{ name: string; match: RegExp }> = [
 	{ name: "Labels", match: /(?:_label|^places_|^address_label|^country)/ },
@@ -37,14 +27,10 @@ const LAYER_GROUP_PATTERNS: ReadonlyArray<{ name: string; match: RegExp }> = [
 	{ name: "Hillshade", match: /^hillshade(?:\/|$|-)/ },
 	{ name: "TIGER (tracts)", match: /^tiger-tracts/ },
 	{ name: "TIGER (blocks)", match: /^tiger-blocks/ },
-	// Address-coverage fog overlay (#coverage).
-	// Two separate groups so each fog reading gets its own checkbox — turn on "optimistic"
-	// (looks covered, reveals gaps on zoom) or the measured fraction.
+	// Two separate groups so each fog reading gets its own checkbox.
 	{ name: "Coverage · optimistic fog", match: /^coverage-opt/ },
 	{ name: "Coverage · measured fog", match: /^coverage-honest/ },
-	// Race-by-dot-density overlay (#race-dots).
-	// Per-category default-off layers → one checkbox each, so you can show the full mosaic
-	// or isolate a single group's geography.
+	// Per-category default-off layers, one checkbox each, so the full mosaic or a single group's geography can be shown.
 	{ name: "Race · White", match: /^race-dots-white/ },
 	{ name: "Race · Black", match: /^race-dots-black/ },
 	{ name: "Race · Hispanic", match: /^race-dots-hispanic/ },
@@ -61,10 +47,8 @@ interface LayerGroup {
 }
 
 /**
- * Bucket the style's layers by prefix.
- *
- * The resolver's own output (`mailwoman-*`) is skipped: it is transient result geometry rather
- * than part of the basemap, and a visitor switching it off would lose the marker for their answer.
+ * The resolver's own transient `mailwoman-*` geometry is skipped, because a visitor
+ * switching it off would lose the marker for their answer.
  */
 function readGroups(map: MapInstance): LayerGroup[] {
 	const layers = map.getStyle()?.layers ?? []
@@ -94,7 +78,7 @@ export interface LayerToggleControlProps {
 	/**
 	 * The live map.
 	 *
-	 * `null` before react-map-gl instantiates it, which is when the control renders nothing.
+	 * `null` before react-map-gl instantiates it, which is when the control renders no content.
 	 */
 	map: MapInstance | null
 }
@@ -105,9 +89,8 @@ export function LayerToggleControl({ map }: LayerToggleControlProps) {
 	useEffect(() => {
 		if (!map) return
 
-		// `styledata` fires before the layers are populated, so a render on that alone
-		// produces zero buckets and would replace a good reading with an empty one.
-		// Both events are subscribed and the empty answer is refused.
+		// `styledata` can fire before the layers are populated, so the empty answer
+		// is refused and `idle` is subscribed too.
 		const sync = () => {
 			if (!map.isStyleLoaded()) return
 
@@ -120,9 +103,8 @@ export function LayerToggleControl({ map }: LayerToggleControlProps) {
 
 		map.on("styledata", sync)
 		map.on("idle", sync)
-		// The map is usually already idle when this control mounts, and an idle map sends nothing.
-		// Asking for one more frame produces the `idle` that reads the first set of groups,
-		// so the reading arrives from an event rather than from a write during the effect.
+		// An already-idle map sends no event, so `triggerRepaint()` produces the `idle`
+		// that reads the first groups rather than writing during the effect.
 		map.triggerRepaint()
 
 		return () => {
@@ -138,8 +120,7 @@ export function LayerToggleControl({ map }: LayerToggleControlProps) {
 			const visibility = group.visible ? "none" : "visible"
 
 			for (const layerID of group.layerIDs) {
-				// A layer can leave the style between the read and the click.
-				// The group's other layers still switch.
+				// A layer can leave the style between the read and the click; the group's other layers still switch.
 				try {
 					map.setLayoutProperty(layerID, "visibility", visibility)
 				} catch {

@@ -2,8 +2,6 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- *
- *   Implements `mailwoman gazetteer pair-index`, which builds a per-country placetype-pair index.
  */
 
 import type { ComponentTag } from "@mailwoman/codex/component"
@@ -18,34 +16,29 @@ import { basename, PathBuilder, type PathBuilderLike } from "path-ts"
 import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 
 /**
- * The expected distinct-pair count for a GB build from the PPD CSV alone.
- *
- * A mismatch means the fold changed, so the artifact needs investigation before use.
+ * The expected distinct-pair count for a GB build from the PPD CSV alone; a mismatch
+ * means the fold changed, so the artifact needs investigation before use.
  */
 const EXPECTED_GB_PAIR_COUNT = 19_209
 
 /**
- * The GB pair count before folding, printed for context only.
- *
- * It exceeds {@link EXPECTED_GB_PAIR_COUNT} because the fold merges punctuation
- * variants such as "St Helens" and "St.
+ * The GB pair count before folding, printed for context only; it exceeds {@link EXPECTED_GB_PAIR_COUNT}
+ * because the fold merges punctuation variants such as "St Helens" and "St.
  * Helens".
  */
 const RUNG3_PRE_FOLD_CENSUS_LINE_COUNT = 19_431
 
 /**
- * The expected distinct-pair count for a US build.
- *
- * Every US pair comes from WOF, so a WOF snapshot refresh can legitimately change this number.
- * Update it after inspecting the difference instead of relaxing the check.
+ * The expected distinct-pair count for a US build; every US pair comes from WOF,
+ * so a snapshot refresh can legitimately change this number — update it
+ * after inspecting the difference rather than relaxing the check.
  */
 const EXPECTED_US_PAIR_COUNT = 47_878
 
 /**
- * The known (child, parent) pairs that the command probes after writing, keyed by country code.
- *
- * Each country needs its own pairs, because probing another country's names verifies nothing.
- * The command throws for a country without an entry.
+ * Known (child, parent) pairs probed after write, keyed by country code;
+ * each country needs its own because probing another country's names verifies no name,
+ * and the command throws for a country without an entry.
  */
 const PROBE_PAIRS_BY_COUNTRY: Readonly<Record<string, ReadonlyArray<readonly [city: string, district: string]>>> = {
 	gb: [
@@ -58,7 +51,6 @@ const PROBE_PAIRS_BY_COUNTRY: Readonly<Record<string, ReadonlyArray<readonly [ci
 		// NZ addresses can repeat the town as its own suburb, so the index holds identity pairs.
 		["Mangawhai", "Mangawhai"],
 	],
-	// The US pairs come from WOF boroughs and neighbourhoods.
 	us: [
 		["Astoria", "Queens"],
 		["Park Slope", "Brooklyn"],
@@ -80,7 +72,6 @@ const PROBE_PAIRS_BY_COUNTRY: Readonly<Record<string, ReadonlyArray<readonly [ci
 		["Nippes", "Köln"],
 		["Schwabing", "München"],
 	],
-	// The FR pairs are BAN lieux-dits under their communes.
 	fr: [
 		["Pinsonnac", "Montpeyroux"],
 		["Line", "Salignac-Eyvigues"],
@@ -88,13 +79,10 @@ const PROBE_PAIRS_BY_COUNTRY: Readonly<Record<string, ReadonlyArray<readonly [ci
 }
 
 /**
- * The parent tag for each source that does not report one itself.
- *
- * The `district` column of the `--source` CSV holds the post town in GB and the town above the suburb in NZ.
- * The `--pairs-jsonl` files pair neighbourhoods and villages with their town,
- * and a line can override the tag with its own `parentTag`.
- *
- * The `--borough-db` and `--ban-dir` sources supply a tag with each pair.
+ * The parent tag for each source that does not report one itself: the `--source`
+ * CSV's `district` column is the post town in GB and the town above the suburb in NZ,
+ * while `--borough-db` and `--ban-dir` supply a tag per pair and a `--pairs-jsonl`
+ * line may override its default with `parentTag`.
  */
 const SOURCE_PARENT_TAGS = {
 	registerDistrict: "locality",
@@ -102,19 +90,15 @@ const SOURCE_PARENT_TAGS = {
 } as const satisfies Record<string, ComponentTag>
 
 /**
- * Splits a comma-separated path list.
- *
- * The secondary sources stay separate files so that the header records an MD5 for each one.
+ * The secondary sources stay separate files so the header records an MD5 for each one.
  */
 function splitPathList(value: string | undefined): string[] {
 	return extractDelimited(value)
 }
 
 /**
- * The command specification for `mailwoman gazetteer pair-index`.
- *
- * The `--delta` flag has no default because its value comes from calibration.
- * The `--parent-delta` flag is optional, and omitting it leaves the parent bias off.
+ * The `--delta` flag has no default because its value comes from calibration,
+ * and omitting the optional `--parent-delta` leaves the parent bias off.
  */
 export const spec = {
 	name: "pair-index",
@@ -139,9 +123,6 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-/**
- * Builds the pair index, verifies it and renders a summary.
- */
 const GazetteerPairIndex: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { dataRootPath } = await import("@mailwoman/core/data-root")
@@ -155,8 +136,7 @@ const GazetteerPairIndex: CommandComponent<typeof spec> = ({ options }) => {
 
 		const country = options.country.toLowerCase()
 
-		// Only GB has a default CSV.
-		// Other countries build from the secondary sources.
+		// Only GB has a default CSV; other countries build from the secondary sources.
 		const sourcePath =
 			options.source ?? (country === "gb" ? dataRootPath("ppd", "2026-07-22", "gb-tuples.csv") : undefined)
 
@@ -199,7 +179,6 @@ const GazetteerPairIndex: CommandComponent<typeof spec> = ({ options }) => {
 			}
 		}
 
-		// The GB cross-check adds this count of distinct secondary-source pairs to its baseline.
 		let secondaryPairsAdded = 0
 		let banFiles: readonly PathBuilderLike[] = []
 
@@ -277,8 +256,8 @@ const GazetteerPairIndex: CommandComponent<typeof spec> = ({ options }) => {
 			...(banFileDigests.length ? [md5Hex(banFileDigests.join("\n"))] : []),
 		]
 
-		// An omitted flag writes no header key.
-		// The reader treats an absent key as disabled, which differs from an explicit zero.
+		// An omitted flag writes no header key, and the reader treats an absent key
+		// as disabled, which differs from an explicit zero.
 		const pairIndexHeader: PairIndexHeaderInput = {
 			country,
 			delta: options.delta,
@@ -323,7 +302,6 @@ const GazetteerPairIndex: CommandComponent<typeof spec> = ({ options }) => {
 			),
 		]
 
-		// The cross-check counts pairs before the holdout and is skipped when a holdout is set.
 		const preHoldoutCount = built.entries.length
 		const preFoldSuffix = ` (pre-fold rung-3 census: ${RUNG3_PRE_FOLD_CENSUS_LINE_COUNT.toLocaleString()} lines)`
 

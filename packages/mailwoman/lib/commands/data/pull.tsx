@@ -3,36 +3,15 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mailwoman data pull <bundle...>` — the consumer download path (#task-6): fetch a named data
- *   bundle (`candidate`, `us`, `fr`, `poi` — see `data-bundles.ts` for what each ships) from the
- *   public R2 bucket into the local data root, atomically. This is the command `mailwoman doctor`'s
- *   fix hints now point at instead of a bare `curl` line.
+ *   Head probes and `.md5` sidecars go through `APIClient` (paced, retried, mapped errors); artifact bodies stream
+ *   straight to disk through the raw-`fetch` `streamToDisk`, because response caching, pacing, and in-memory buffering
+ *   do not fit a transfer of tens of MB to several GB.
  *
- *   networking split (agents.md's file-transfer carve-out, applied): the small per-artifact head
- *   probe (`Content-Length`, and — for a bundle that ships one — the `.md5` sidecar text) goes
- *   through `APIClient` (paced, retried, mapped errors — the repo default for API requests). The
- *   artifact body itself — every one of these is tens of MB to several GB — is streamed straight to
- *   disk through the shared raw-`fetch` `streamToDisk` (`@mailwoman/core/utils`): response caching is nonsense at this
- *   size, there's nothing to pace on a one-shot GET, and axios buffers a non-stream response type in
- *   memory.
+ *   Each artifact lands at `<dataRoot>/tmp/`, is verified against the sidecar md5 or head `Content-Length`, sealed, then
+ *   swapped into place, so a crash mid-download can never corrupt an existing install.
  *
- *   Download → verify → atomic move: each artifact lands at `<dataRoot>/tmp/` first, gets checked
- *   against the sidecar md5 (when `BundleArtifact.md5Sidecar` is true — no shipped artifact publishes
- *   one today, see `data-bundles.ts`'s docstring) or the head `Content-Length` (with a loud warning
- *   when neither signal is available), gets sealed (`sealDatabase`), then `swapDatabaseIntoPlace`
- *   moves it into its final convention path — a crash mid-download can never corrupt an existing
- *   install (`core/utils/sealed-db.ts`'s discipline, applied to a download instead of a local build).
- *
- *   `--dry-run` prints the plan with zero network calls: existing-file detection is a plain
- *   filesystem stat (`resolveDatabasePath` for the versioned `us` per-state databases, `existsSync`
- *   otherwise), never a head. `--only <substring>` narrows a bundle to matching artifacts (e.g.
- *   `data pull us --only nh` for one state instead of the whole ~41 GB tier).
- *
- *   A successful `candidate` pull prints the `export MAILWOMAN_CANDIDATE_DB=...` line `mailwoman
- *   doctor` used to be the only place showing — candidate.db resolution is env-restricted
- *   (`resolver-backend.ts`'s `resolveCandidateDBPath`), so writing the file alone doesn't wire it up.
- *   this is the ledgered product finding (FR addresses geocoding to the US on the FTS default) whose
- *   fix path is the candidate backend, so the env line has to be impossible to miss.
+ *   A successful `candidate` pull prints the `export MAILWOMAN_CANDIDATE_DB=...` line because candidate.db resolution
+ *   is env-restricted, so writing the file alone does not wire it up.
  */
 
 import type { APIClient } from "@mailwoman/core/api"
@@ -85,7 +64,7 @@ export const spec = {
 		"dry-run": {
 			type: "boolean",
 			default: false,
-			description: "Print the download plan; touch no network and write nothing",
+			description: "Print the download plan; touch no network and write no data",
 		},
 		only: {
 			type: "string",
@@ -110,21 +89,8 @@ export const spec = {
 } as const satisfies CommandSpec
 
 /**
- * Head the artifact (and, when it publishes one, GET its `.md5` sidecar) via the paced/retried `APIClient`.
- *
- * Failures degrade to an empty state rather than throwing.
- * A head that 404s or times out just means "can't verify", handled downstream as a warning
- * rather than a hard stop (the GET that follows is the real signal on whether the artifact exists).
- *
- * The sidecar GET carries the same `Range: bytes=0-` header `downloadToDisk` needs
- * (see that function's docstring for the measured WAF behavior).
- * A `.md5` sidecar is a tiny text object on the same bucket, and nothing rules out
- * the WAF's ranged-request rule applying to it too.
- *
- * No bundle publishes one today (`data-bundles.ts`'s docstring), so this path
- * is unexercised against live data.
- * A failure here is loud (`console.error`), not swallowed, so the day a sidecar ships, a wrong guess
- * about which requests need `Range` shows up immediately instead of silently degrading forever.
+ * A head that 404s or times out degrades to an empty state rather than throwing,
+ * because the GET that follows is the real signal on whether the artifact exists.
  */
 async function probeRemote(
 	client: APIClient,
@@ -142,7 +108,7 @@ async function probeRemote(
 			state.contentLength = Number(len)
 		}
 	} catch {
-		// No live Content-Length — the caller falls back to a warning rather than forcing a re-fetch decision on it.
+		// No live Content-Length; the caller falls back to a warning rather than forcing a re-fetch decision.
 	}
 
 	if (artifact.md5Sidecar) {
@@ -166,26 +132,9 @@ async function probeRemote(
 }
 
 /**
- * Stream a GET straight to disk.
- *
- * The raw-`fetch` half of the networking split (see the module docstring),
- * through the shared `streamToDisk` (`@mailwoman/core/utils`): `.part` + rename,
- * so an interrupted transfer never presents as a complete artifact.
- *
- * The one addition over the shared transfer is the `Range: bytes=0-` header.
- *
- * Measured 2026-08-03 against the live bucket: a plain GET with no `Range` header on
- * `street/us/nh/situs.db` returned Cloudflare's own 403 "Attention Required" block page —
- * reproduced identically with `curl`, native `fetch`, and `axios`, so it's not a client quirk.
- * A head on the same URL returns 200 fine, and a ranged GET (`curl -r 0-`, or this header) returns 206
- * and streams the complete object end to end (verified byte-for-byte against the known 20,480-byte size).
- *
- * The bucket's intended consumer (`sql.js-httpvfs` in the browser demo) always byte-ranges,
- * so an unranged GET is exactly the request shape nothing else here ever makes.
- * This is almost certainly a WAF rule scoped to that difference rather than a fluke.
- *
- * `bytes=0-` (open-ended from the start) is the fix: satisfies the ranged-request requirement
- * while still asking for, and receiving, the whole file.
+ * A plain GET with no `Range` header against the live bucket returns Cloudflare's
+ * 403 block page while a ranged GET returns 206 and streams the whole object,
+ * so every transfer here carries `Range: bytes=0-`.
  */
 async function downloadToDisk(url: string, destPath: string): Promise<number> {
 	return await streamToDisk({
@@ -235,10 +184,8 @@ async function pullBundles(
 			continue
 		}
 
-		// Before the transfer rather than after it.
-		// Taking a copy is the act the terms govern, so an operator reads them while they can still decline.
-		// A dry run prints the same lines, which is what makes `--dry-run` answer "what
-		// would this oblige me to" as well as "what would it download".
+		// Rights are printed before the transfer because taking a copy is the act the
+		// terms govern, so an operator can still decline.
 		for (const line of describeBundleRights(bundle)) {
 			checks.push({ ok: true, check: `${name}: terms`, detail: line })
 		}
@@ -283,9 +230,8 @@ async function pullBundles(
 
 			try {
 				const remote = await probeRemote(client!, artifact, opts.host)
-				// Staged under this pull's data root (not necessarily the
-				// env-configured one — `--data-root` overrides it), so `dataRootPath`
-				// (which always reads `$MAILWOMAN_DATA_ROOT`) would be wrong here.
+				// Staged under this pull's data root because `--data-root` overrides
+				// `dataRootPath`'s `$MAILWOMAN_DATA_ROOT`.
 				const stageDir = resolvePath(dataRoot, "tmp")
 
 				await makeDirectories(stageDir)

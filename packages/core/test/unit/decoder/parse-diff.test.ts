@@ -4,11 +4,7 @@
  * @author Teffen Ellis, et al.
  * @file `diffParse` — telling the four span events apart.
  *
- *   Every test here is a case a component-MAP diff reports identically, which is why this file exists. The worked
- *   example is real: v4.8.0 turned `Ye Three Lords, 27 Minories, London EC3N 1DE` from
- *   `venue "Ye Three Lords" · locality London · street Minories` into `locality "Ye Three Lords"`. Keyed by tag that
- *   reads as "the locality changed"; what happened is that two spans were destroyed and a third was retagged onto the
- *   text of one of them.
+ *   Every case here is one a component-map diff reports identically: keyed by tag, `venue "Ye Three Lords" · locality London · street Minories` becoming `locality "Ye Three Lords"` reads as "the locality changed" when two spans were destroyed and a third was retagged onto the text of one.
  */
 
 import type { ComponentTag } from "@mailwoman/codex/component"
@@ -17,8 +13,6 @@ import type { AddressNode, AddressTree } from "@mailwoman/core/decoder/types"
 import { describe, expect, it } from "vitest"
 
 /**
- * Build a tree from flat spans.
- *
  * The diff reads through `flattenTreeNodes`, so roots are enough.
  */
 function tree(...nodes: Array<[string, string, number, number, number, string?]>): AddressTree {
@@ -52,16 +46,14 @@ describe("diffParse", () => {
 		const diff = diffParse(INPUT, before, after)
 		const changed = diff.spans.filter(isChange)
 
-		// The venue was retagged onto its own text rather than deleted — a tag-keyed diff cannot say this.
+		// The venue was retagged onto its own text rather than deleted, which a tag-keyed diff cannot say.
 		const retag = changed.find((s) => s.kind === "retagged")
 
 		expect(retag?.tagBefore).toBe("venue")
 		expect(retag?.tagAfter).toBe("locality")
 		expect(retag?.valueAfter).toBe("Ye Three Lords")
-		// And it got much less sure while doing it, which is the tell that it was a coin-flip.
 		expect(retag?.confidenceDelta).toBeCloseTo(-0.29, 2)
 
-		// The street and the real locality were genuinely destroyed.
 		expect(
 			changed
 				.filter((s) => s.kind === "removed")
@@ -71,8 +63,8 @@ describe("diffParse", () => {
 	})
 
 	it("calls a boundary slide a MOVE, not a delete plus an insert", () => {
-		// `Green Point, Cape Town` -> the locality slides one segment left.
-		// Equality-keyed matching reports this as two events and loses the fact that it is one span shifting.
+		// `Green Point, Cape Town` slides the locality one segment left, which equality-keyed
+		// matching reports as two events, losing that one span shifted.
 		const before = tree(["locality", "Cape Town", 20, 29, 0.9])
 		const after = tree(["locality", "Cape Town, 8001", 20, 35, 0.7])
 
@@ -110,8 +102,7 @@ describe("diffParse", () => {
 	})
 
 	it("surfaces a span that kept its tag but LOST its resolver backing", () => {
-		// Same tag, same text, same span, and it stopped being gazetteer-backed.
-		// No tag-level diff can show this.
+		// Same tag, same text, same span, but it stopped being gazetteer-backed, which no tag-level diff can show.
 		const before = tree(["locality", "London", 29, 35, 0.95, "resolver"])
 		const after = tree(["locality", "London", 29, 35, 0.95, "neural"])
 
@@ -123,7 +114,7 @@ describe("diffParse", () => {
 	})
 
 	it("reports a locale-country move even when every span is identical", () => {
-		// A parse that changed nothing else but moved its country confidence across the
+		// A parse that changed no component but moved its country confidence across the
 		// scope threshold geocodes somewhere else entirely.
 		const same = tree(["locality", "London", 29, 35, 0.95])
 
@@ -148,12 +139,9 @@ describe("diffParse", () => {
 		const after = tree(["locality", "Ye Three Lords", 0, 14, 0.62])
 
 		const out = renderParseDiff(diffParse(INPUT, before, after))
-		// A rendered diff is a handful of lines about one address.
 		// oxlint-disable-next-line mailwoman/prefer-spliterator -- small, bounded, and in-memory already
 		const lines = out.split("\n")
 
-		// An aggregate that reports a count without the string is the shape that let a
-		// venue-destroying regression read as routine for five runs.
 		expect(lines[0]).toBe(INPUT)
 		expect(out).toContain("venue → locality")
 		expect(out).toContain('- street="Minories"')

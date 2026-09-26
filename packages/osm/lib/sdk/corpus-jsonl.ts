@@ -8,7 +8,7 @@
  *   stay here, and the corpus package, a runtime dependency of the `mailwoman` CLI, streams a light jsonl.
  *
  *   One row per `addr:housenumber` feature that also carries an `addr:street`. A point with no street is counted rather
- *   than written: a parser corpus row without a street teaches nothing the `wof-admin` rows do not already teach, and
+ *   than written: a parser corpus row without a street teaches no lesson the `wof-admin` rows do not already teach, and
  *   the rooftop builder sizes the same gap for the resolver. Every tag the extract projects rides along, absent ones
  *   omitted, plus the representative coordinate so a board can be drawn from the same file.
  *

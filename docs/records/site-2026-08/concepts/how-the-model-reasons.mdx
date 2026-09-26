@@ -176,7 +176,7 @@ flowchart TD
 The encoder's representation of `Main` is built knowing it's between something
 that looks like a house-number and something that looks like a street suffix.
 That alone gives the encoder a soft signal that `Main` is street-name-shaped.
-The admin FST contributes nothing for `Main` (it's not a WOF place). The
+The admin FST contributes no bias for `Main` (it's not a WOF place). The
 morphology FST sees `St` matches and biases `Main` toward `street` (positive)
 and away from `dependent_locality` (negative). The sum at `Main`'s position
 is dominated by `B-street`. Viterbi chooses the best valid sequence and the

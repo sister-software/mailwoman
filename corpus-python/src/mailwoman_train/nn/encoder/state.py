@@ -1,10 +1,9 @@
 """What `MailwomanCoarseEncoder.__init__` establishes, declared once for every part that reads it.
 
-The encoder's methods live in several modules and each reads attributes the constructor set. One
-declaration here gives every part the same view of what exists and what type it holds, so a method
-can sit beside the methods it belongs with rather than beside the assignments it happens to read.
+The encoder's methods live in several modules and each reads attributes the constructor set; one
+declaration here gives every part the same view of what exists and what type it holds.
 
-Nothing here assigns. A bare annotation creates no class attribute, so `nn.Module.__setattr__`
+No line here assigns. A bare annotation creates no class attribute, so `nn.Module.__setattr__`
 still sees the constructor's assignment as the first one and registers each parameter, buffer and
 submodule exactly as it would with the whole class in one file.
 """
@@ -22,19 +21,17 @@ from ..span_scorer import SemiMarkovCRF, SpanScorer
 class CoarseEncoderState(nn.Module):
     """The attribute surface `MailwomanCoarseEncoder`'s methods share.
 
-    The register_buffer names are typed here for the same reason they were typed on the class:
-    without a declaration mypy reads them as the `Tensor | Module` union torch's `__setattr__`
-    typing produces for an undeclared module attribute.
+    The register_buffer names are typed here because without a declaration mypy reads them as the
+    `Tensor | Module` union torch's `__setattr__` typing produces for an undeclared module
+    attribute.
     """
 
-    # Geometry and label space.
     pad_token_id: int
     max_position_embeddings: int
     hidden_size: int
     num_labels: int
     id_to_label: dict[int, str]
 
-    # Embeddings, body, classifier.
     token_embeddings: nn.Embedding
     position_embeddings: nn.Embedding
     input_dropout: nn.Dropout
@@ -43,19 +40,16 @@ class CoarseEncoderState(nn.Module):
     final_ln: nn.LayerNorm
     classifier: nn.Linear
 
-    # CharCNN front-end.
     use_char_embed: bool
     char_embed_dim: int
     char_kernel_sizes: tuple[int, ...]
     char_vocab_size: int
     char_cnn: CharCNNEmbedding | None
 
-    # Phrase priors.
     use_phrase_priors: bool
     phrase_feature_dim: int
     phrase_input_projection: nn.Linear | None
 
-    # Soft-feed channels. Each is a projection plus a cue embedding, both None when its flag is off.
     use_postcode_anchor: bool
     anchor_feature_dim: int
     inject_first_token: bool
@@ -80,7 +74,6 @@ class CoarseEncoderState(nn.Module):
     locality_surface_projection: nn.Linear | None
     locality_surface_token_embedding: nn.Parameter | None
 
-    # Losses and the CRF.
     use_crf: bool
     label_smoothing: float
     crf_loss_weight: float
@@ -89,7 +82,6 @@ class CoarseEncoderState(nn.Module):
     class_weights: torch.Tensor | None
     crf: LinearChainCRF | None
 
-    # Locale self-conditioning.
     use_locale_conditioning: bool
     num_locales: int
     locale_loss_weight: float

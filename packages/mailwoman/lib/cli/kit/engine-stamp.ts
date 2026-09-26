@@ -3,9 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The process's engine stamp, resolved once. The `mailwoman` package is the one place that can read its own manifest
- *   and the configured key, and an http surface's app factory must not import it (its bin may), so this module builds the
- *   stamp and each bin hands it to its app as an option value.
+ *   The process's engine stamp, resolved once; the `mailwoman` package alone can read its manifest and the
+ *   configured key, and an http surface's app factory must not import it, so each bin builds the stamp and
+ *   hands it to its app as an option value.
  */
 
 import {
@@ -29,10 +29,8 @@ export interface ResolvedEngineStamp {
 let resolved: Promise<ResolvedEngineStamp> | undefined
 
 /**
- * Resolve the stamp for this process.
- *
- * Memoized: the manifest and the configured key do not change while a process runs,
- * and every stamped output must agree.
+ * Memoized for the process, because the manifest and configured key do not change
+ * while it runs and every stamped output must agree.
  */
 export function resolveEngineStamp(): Promise<ResolvedEngineStamp> {
 	resolved ??= (async () => {
@@ -46,9 +44,8 @@ export function resolveEngineStamp(): Promise<ResolvedEngineStamp> {
 }
 
 /**
- * Write the two-line notice to stderr, or nothing when the commercial branch applies.
- *
- * Stderr, so stdout stays machine-readable for every `--json` consumer.
+ * Written to stderr so stdout stays machine-readable for every `--json` consumer;
+ * no notice is written when the commercial branch applies.
  */
 export function printLicenseNotice(resolvedStamp: ResolvedEngineStamp): void {
 	const lines = licenseNoticeLines(resolvedStamp.stamp, resolvedStamp.key)

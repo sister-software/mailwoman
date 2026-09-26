@@ -3,20 +3,12 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   What the model was actually fed, read off a parse trace — the per-row half of the inert-mechanism story (#1718).
+ *   What the model was fed, read off a parse trace.
  *
- *   The distinction this module exists to keep is three-way rather than two-way. A channel can be **absent** (never
- *   configured — the trace carries no record of it), **silent** (fed, and fed all zeros — the retrieval side had
- *   nothing to say about any token), or **fired** (fed at least one nonzero feature). Collapsing absent into silent is
- *   the standing meaning-of-zero mistake: one is a fact about the configuration, the other about this input, and the
- *   actions are different (wire the mechanism vs. extend its data).
+ *   A channel is **absent** (never configured), **silent** (fed all zeros), or **fired** (fed at least one nonzero
+ *   feature); absent and silent must not be collapsed, because the repairs differ: wire the mechanism vs. extend its data.
  *
- *   The predicate that matters downstream: a parse where every present channel is silent was decided by the token
- *   embeddings alone. That is often correct behaviour — the Weimar case parsed correctly with all channels silent —
- *   so the flag is a diagnostic fact for accounts and ledgers, never a health verdict on the row.
- *
- *   Counting is over `features`, not `confidence`: the features are what the model reads (the house count-at-the-unit
- *   rule); the confidence column is derived alongside them and can disagree in principle.
+ *   Counting is over `features` rather than `confidence`, because `features` are what the model reads.
  */
 
 import type { NeuralParseTrace, SoftFeatureChannel, TracePriorKind } from "@mailwoman/neural"
@@ -34,12 +26,8 @@ export interface EvidenceCensus {
 	gazetteer: ChannelReading
 	country: ChannelReading
 	/**
-	 * True when at least one channel was present and every present channel was silent —
-	 * the model decided from token embeddings alone.
-	 *
-	 * False when any channel fired, and also false when no channel was configured at all:
-	 * a session with no channels cannot be starved of them, and reporting it as starved
-	 * would point the reader at retrieval when the fact is about configuration.
+	 * True only when at least one channel was present and every present one was silent;
+	 * a session with no channels is not starved.
 	 */
 	silent: boolean
 }
@@ -71,15 +59,9 @@ export function evidenceCensus(parse: NeuralParseTrace): EvidenceCensus {
 }
 
 /**
- * Which decode-time priors moved the emissions on this parse.
- *
- * `applied` is each prior record's own interface — "whether this prior moved anything" —
- * so this is an L1 signal per prior rather than merely "the stage ran".
- * `emissions_moved` is the cross-check over the whole matrix: true when the decoded
- * emissions differ anywhere from the raw logits, i.e. when some prior wrote something.
- *
- * `applied` kinds with `emissions_moved: false` (or vice versa) would mean a prior's own bookkeeping
- * disagrees with the matrix it claims to have written — worth surfacing, never worth papering over.
+ * `applied` is each prior's own report of whether it moved anything, while
+ * `emissions_moved` cross-checks the whole emissions matrix, so the two disagreeing
+ * means a prior's bookkeeping contradicts what it wrote.
  */
 export interface PriorSignals {
 	present: TracePriorKind[]

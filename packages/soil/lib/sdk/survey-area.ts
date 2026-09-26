@@ -173,7 +173,7 @@ export async function readSurveyAreaAttributes(
 			cokey: row.cokey!,
 			mukey: row.mukey!,
 			// A blank `comppct_r` is a component with no declared weight.
-			// Zero is the truthful reading — it contributes nothing to a weighted share —
+			// Zero is the truthful reading — it contributes no weight to a weighted share —
 			// and it is recorded rather than dropped, so the component still appears.
 			comppct_r: row.comppct_r ? Number(row.comppct_r) : 0,
 			compname: nullable(row.compname),
@@ -231,8 +231,8 @@ export async function readSurveyAreaAttributes(
  * Three signals rather than one, because the source encodes the same fact three ways and each on its
  * own has a gap: the symbol (`notcom`, `notpub`), the name (`Area not surveyed, access denied`),
  * and the structural case of a map unit carrying no components at all.
- * A map unit with no components has nothing to rate whatever it is called, and reading
- * it as "rated nothing" rather than "no mapping" would put it in `unrated_share`.
+ * A map unit with no components has no component to rate whatever it is called, and reading
+ * it as "assigned no rating" rather than "no mapping" would put it in `unrated_share`.
  *
  * A claim that the survey looked and declined, when it did not look.
  */
@@ -248,7 +248,7 @@ function isNoMapping(musym: string, muname: string, componentCount: number): boo
  * Refuse a value outside the authority's own declared domain.
  *
  * An unknown code is a source-schema change, which is the event a reader most needs to hear about.
- * Coercing it to a nearest neighbour or to NULL converts "the source changed" into "there is nothing here".
+ * Coercing it to a nearest neighbour or to NULL converts "the source changed" into "the value is missing".
  *
  * A blank is not a violation: NULL is a real state in every one of these columns and means something
  * specific, for `nirrcapcl` it means the survey did not rate the component, which is not class 8.

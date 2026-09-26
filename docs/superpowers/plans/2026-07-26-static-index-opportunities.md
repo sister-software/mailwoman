@@ -127,7 +127,7 @@ Two hand-maintained tables in source re-derive what the gazetteer build already 
   both copies must be updated together. The degenerate-surface exclusion policy has no record in the
   artifact. Both belong in the FST header. The order table makes the format self-describing and
   removes the duplication. The curation policy line records provenance: which dictionaries and which
-  date. If this goes into the parent session's rebuild, it costs nothing extra. Version-check the
+  date. If this goes into the parent session's rebuild, it adds no extra cost. Version-check the
   format bump.
 
 ### 7. Conventions / per-locale emission masks → artifact (L — defer until it grows)

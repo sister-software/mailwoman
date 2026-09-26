@@ -10,7 +10,7 @@
  *   the caller's `country` as a hard gazetteer filter — and for this query shape the caller's country
  *   is a locale default rather than knowledge (span-rescore.ts already says so, at the #961 block). Measured
  *   through the compiled CLI on 2026-08-10: `geocode --locale en-US 'Zürich'` returns Zurich, Kansas
- *   (population 81), 8,043 km from the gold; `--locale en-GB 'Zürich'` returns nothing at all.
+ *   (population 81), 8,043 km from the gold; `--locale en-GB 'Zürich'` returns no result at all.
  *
  *   The fix is the #912 change, applied where the bare-toponym class is actually decided: when the span
  *   covers the whole unqualified input, probe the gazetteer unscoped and let the locale country be an
@@ -229,7 +229,7 @@ describe("bare-toponym soft country prior (#17)", () => {
 	})
 
 	it("does NOT fire when the span is only PART of the raw input", async () => {
-		// "Weimar Thüringen": the whole-input span finds nothing, so the 1-token fallbacks
+		// "Weimar Thüringen": the whole-input span finds no match, so the 1-token fallbacks
 		// stay scoped, and the DE-scoped 'Weimar' probe is exactly the gold.
 		// A partial span is not a bare toponym.
 		const raw = "Weimar Thüringen"
@@ -285,7 +285,7 @@ describe("bare-toponym soft country prior (#17)", () => {
  *
  * `Whitby` / `Warwick` / `Epping` / `Windsor` all land here, and no country reaches the resolver
  * for them at all (the #912 guard upstream drops the locale default for a bare-locality tree),
- * so the pick is population and nothing else.
+ * so the pick is population and no other signal.
  * Importance is the only key that separates them.
  * See `toponym-prior.ts` for the measured table.
  */
@@ -343,7 +343,7 @@ describe("importance key in the admin walk (#17)", () => {
 
 	it("stands down when a postcode anchor already pinned the country", async () => {
 		// Fame is the prior of last resort.
-		// It answers "which one did you probably mean" only when nothing in the query answered it.
+		// It answers "which one did you probably mean" only when no part of the query answered it.
 		// A #369 anchor posterior is derived from the address's own postcode,
 		// which is evidence, and evidence outranks a prior every time.
 		const withScores = WHITBY.map((c, i) => ({ ...c, importance: i === 0 ? 0.5089 : 0.5496 }))
@@ -583,7 +583,7 @@ describe("bare-country class", () => {
 	it("scopes the country race by the inferred filter's own query country only when explicit", async () => {
 		// Under the inferred posture the caller (the #912 guard) has already withheld the
 		// scope for the bare-locality shape, so the race runs worldwide.
-		// Nothing here asserts an inferred locality filter, because that combination
+		// No case here asserts an inferred locality filter, because that combination
 		// does not reach the resolver in production.
 		const calls: Array<{ text: string; placetype?: unknown; country?: string }> = []
 

@@ -3,20 +3,11 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Reads the EA flood geodatabase as a stream of WGS84 features through ogr2ogr.
- *
- *   GDAL is build tooling only. Nothing downstream of this module depends on it.
- *
- *   The source is in British National Grid (EPSG:27700, metres). The ingest asserts the declared EPSG code
- *   before reading any feature, and it checks every reprojected vertex against the collection's declared
- *   bounding box. The bounding-box check catches a swapped axis order, which the EPSG check cannot see.
- *
- *   Each feature also carries `OGR_GEOM_AREA`, which GDAL computes in source metres before reprojection.
- *   Comparing it with the area of the encoded rings checks ring nesting and hole handling. See
- *   `ringAreaReadings` in `rings.ts`.
- *
- *   The OSGB36 to WGS84 shift is accurate only with the OSTN15 grid. Without the grid, proj silently uses
- *   an approximate offset, so the identity read refuses the build instead.
+ *   Read the EA flood geodatabase as a stream of WGS84 features through ogr2ogr, which is build tooling
+ *   only. The declared EPSG is asserted before any feature, every reprojected vertex is checked against
+ *   the declared bounding box to catch a swapped axis order, and `OGR_GEOM_AREA` is compared with the
+ *   encoded rings to check nesting and holes. Without the OSTN15 grid proj silently uses an approximate
+ *   OSGB36 shift, so the identity read refuses the build.
  */
 
 import { declaredFeatureCount } from "@mailwoman/core/layers"
@@ -50,13 +41,11 @@ export interface FloodIngestOptions {
 	 */
 	geodatabasePath: string
 	/**
-	 * Layer to read.
-	 * Defaults to the EA's published layer name.
+	 * Layer to read, defaulting to the EA's published layer name.
 	 */
 	layer?: string
 	/**
-	 * Maximum number of features to read.
-	 * Fixture and smoke builds set it.
+	 * Maximum number of features to read, set by fixture and smoke builds.
 	 */
 	limit?: number
 	/**
@@ -64,39 +53,31 @@ export interface FloodIngestOptions {
 	 */
 	expectEPSG?: number
 	/**
-	 * The WGS84 extent that every reprojected vertex must fall inside.
-	 * Defaults to the EA collection's declared extent.
+	 * The WGS84 extent every reprojected vertex must fall inside, defaulting to the EA collection's.
 	 */
 	declaredBBox?: readonly [number, number, number, number]
 	/**
-	 * Reads only features whose `OBJECTID` lies in `[objectIDFrom, objectIDTo]`, inclusive.
-	 *
-	 * The builder cannot classify the whole file in one process (see `ingest-chunk.ts`),
-	 * so it reads ranges of `OBJECTID`.
-	 * The ingest uses ID ranges instead of offsets because `OBJECTID` is the source's
-	 * stable key, so a range selects the same features on every run.
+	 * Reads only features whose `OBJECTID` lies in `[objectIDFrom, objectIDTo]`, inclusive,
+	 * because `OBJECTID` is the source's stable key and a range selects the same features on every run.
 	 */
 	objectIDFrom?: number
 	objectIDTo?: number
 }
 
 /**
- * Number of coordinate decimals that ogr2ogr writes.
- *
- * Nine decimals is about 0.1 mm, so rounding adds nothing measurable to the area cross-check.
+ * Number of coordinate decimals that ogr2ogr writes; nine is about 0.1 mm,
+ * so rounding adds no measurable error to the area cross-check.
  */
 const COORDINATE_PRECISION = 9
 
 /**
- * Tolerance in degrees outside the declared extent.
- *
- * The published extent is rounded, so an exact test would be brittle.
- * An unprojected or axis-swapped read lands much farther away and still fails.
+ * Tolerance in degrees outside the declared extent, because the published extent is rounded
+ * while an unprojected or axis-swapped read lands much farther away.
  */
 const BBOX_MARGIN_DEGREES = 0.01
 
 /**
- * Reads the layer's declared EPSG code and feature count before any feature is read.
+ * Reads the layer's declared EPSG code and feature count before any feature.
  *
  * @throws {Error} When the layer is missing or its declared EPSG code differs from `expectEPSG`.
  */
@@ -114,9 +95,6 @@ export async function readFloodSourceIdentity(
 	return { epsg: identity.epsg, featureCount: identity.featureCount, layer: identity.layer }
 }
 
-/**
- * Builds the ogr2ogr SQL query, including the optional `OBJECTID` range.
- */
 function floodSelectSQL(layer: string, options: FloodIngestOptions): string {
 	const select = `SELECT OBJECTID AS area_id, origin, flood_zone, flood_source, OGR_GEOM_AREA AS source_area_m2 FROM ${layer}`
 	const bounds: string[] = []
@@ -144,7 +122,7 @@ interface RawFeature {
 }
 
 /**
- * Streams the layer as WGS84 features and checks each one against the declared extent.
+ * Streams the layer as WGS84 features, checking each against the declared extent.
  *
  * @throws {Error} When ogr2ogr fails, when a feature lacks geometry or a zone value,
  * or when a reprojected vertex falls outside the declared extent.
@@ -172,9 +150,6 @@ export async function* readFloodSourceFeatures(options: FloodIngestOptions): Asy
 	}
 }
 
-/**
- * Validates one raw GeoJSON feature and converts it to a source feature.
- */
 function toSourceFeature(
 	raw: RawFeature,
 	extent: { minLon: number; minLat: number; maxLon: number; maxLat: number }
@@ -204,15 +179,12 @@ function toSourceFeature(
 }
 
 /**
- * A source of flood features together with the source's declared metadata.
- *
- * The builder accepts this interface instead of a path so that fixture builds can
- * supply hand-built geometry without GDAL or network access.
+ * A source of flood features together with the source's declared metadata, accepted instead
+ * of a path so fixture builds can supply hand-built geometry without GDAL or network access.
  */
 export interface FloodFeatureSource {
 	/**
-	 * The feature count the source declares.
-	 * The build throws when it streams a different total.
+	 * The feature count the source declares, which the build checks when it streams a different total.
 	 */
 	declaredFeatureCount: number
 	layer: string
@@ -225,9 +197,8 @@ export interface FloodFeatureSource {
 }
 
 /**
- * Creates a feature source for the published geodatabase.
- *
- * It reads the layer identity immediately and streams features on demand.
+ * Creates a feature source for the published geodatabase, reading the layer identity
+ * immediately and streaming features on demand.
  */
 export async function createGeodatabaseFeatureSource(
 	options: FloodIngestOptions & { declaredFeatureCount?: number }

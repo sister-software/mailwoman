@@ -10,7 +10,7 @@
  *   ADV358 — and they are right to omit these words. Mail is not delivered to a concourse. But the
  *   decoder's job is to pull an address apart with the richest vocabulary available. only the
  *   formatter owes allegiance to a postal system's rendering rules. Those are different jobs, and
- *   the split is structural here: this module feeds `neural/span-proposer-lexicon.ts` and nothing in
+ *   the split is structural here: this module feeds `neural/span-proposer-lexicon.ts` and no module in
  *   `formatter/` reads it, so a decoder that understands "Concourse B" still renders addresses
  *   through Pub 28.
  *

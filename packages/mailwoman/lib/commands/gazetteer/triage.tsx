@@ -3,15 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mailwoman gazetteer triage` — the WOF currency-hole ledger (`gazetteer-pipeline/wof-triage.ts`).
- *
- *   report only. Nothing this command emits changes a resolve. the ledger exists so an upstream coverage hole is
- *   reviewable instead of invisible, and so a decision to supplement one is recorded rather than inferred. The
- *   motivating case is in the module docstring (`Rochester, Kent`, deprecated in a January 2019 batch with no
- *   successor, resolving 474 km away until the currency backfill).
- *
- *   Run it after every WOF pull. The summary alone answers "did upstream just delete a country's worth of places",
- *   which no build step asks today.
+ *   Reports WOF currency holes as a reviewable ledger; no output from this command changes a resolve.
  */
 
 import { makeDirectories, writeLocalJSONLFile } from "@mailwoman/core/fs/writers"
@@ -67,8 +59,6 @@ const GazetteerTriage: CommandComponent<typeof spec> = ({ options }) => {
 		await makeDirectories(dirname(outPath))
 		await writeLocalJSONLFile(emitted, outPath)
 
-		// The review queue's head: uncovered and independently attested, most populous first.
-		// The rows most likely to be an upstream mistake rather than a real cessation.
 		const queue = rows
 			.filter((r) => r.coverage === CoverageVerdict.Uncovered && r.attestation.state === "attested")
 			.toSorted((a, b) => (b.attestation.population ?? 0) - (a.attestation.population ?? 0))

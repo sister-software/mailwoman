@@ -21,7 +21,7 @@ import type { RepoFix } from "#fix"
 export const fixes: ReadonlyArray<RepoFix> = [prefixDirectoriesFix]
 
 /**
- * The fix for a check id, or nothing when that check has no mechanical repair.
+ * The fix for a check id, or no fix when that check has no mechanical repair.
  */
 export function findFix(id: string): RepoFix | undefined {
 	return fixes.find((fix) => fix.id === id)

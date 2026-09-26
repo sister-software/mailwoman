@@ -136,7 +136,7 @@ export const SeedCaseSchema = zod.strictObject({
 		.regex(/^[a-z]{2}-[A-Z]{2}$/)
 		.optional(),
 	expectComponents: zod.record(zod.string(), zod.string()).optional(),
-	// An empty rendering list would assert nothing, so each list needs at least one non-empty string.
+	// An empty rendering list would assert no rendering, so each list needs at least one non-empty string.
 	expectComponentRenderings: zod.record(zod.string(), zod.array(zod.string().min(1)).min(1)).optional(),
 	expectPlaceID: zod.string().optional(),
 	expectPlaceName: zod.string().optional(),

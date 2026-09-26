@@ -1,13 +1,13 @@
-"""The National Tax Agency's corporate-number register (法人番号公表サイト 全件データ) as a NOISY corpus source (#2204 §5).
+"""The National Tax Agency's corporate-number register (法人番号公表サイト 全件データ) as a NOISY corpus source.
 
-The nationwide CSV carries 30 columns per corporation. the address is FIELDED into three — 国内所在地 as 都道府県,
+The nationwide CSV carries 30 columns per corporation. The address is fielded into three — 国内所在地 as 都道府県,
 市区町村 and 丁目番地等 — plus a seven-digit 郵便番号. The first two are register names and align to the Overture-JP
 admin ladder by exact lookup. the third is the typed part (``柏木町４－７``, ``沖見町２丁目``, ``霞が関３丁目１番１号``,
 ``末広町１８４ ビル名 ３Ｆ``): full-width digits and hyphens, the chōme as kanji or full-width digits, then a number in
 whichever register the filer used, then a building name and floor.
 
 Alignment: the (prefecture, municipality) pair must be one Overture keys, and the leading name of 丁目番地等 must be
-a district that municipality lists. Spans are then placed on the RAW string. Nothing is normalized, because the
+a district that municipality lists. Spans are then placed on the RAW string. No value is normalized, because the
 whole value of a noisy row is the surface a person typed — with the JP head's own tags: ``prefecture``,
 ``municipality``, ``district``, ``block`` for a trailing 丁目, ``house_number`` for the number in its typed form
 (designator forms ``N番N号`` are left whole under ``house_number`` here: splitting them into ``sub_block`` /
@@ -58,9 +58,9 @@ _TAIL_START = re.compile(rf"[{_DIGITS}{_KANJI_NUMERAL}]")
 def split_typed_street(street: str, districts: set[str]) -> tuple[str, str, str, str] | None:
     """Split ``丁目番地等`` into (district, chōme, number, rest) at the leftmost split point whose district the register lists.
 
-    A district name may itself carry a kanji numeral (``一条通北２丁目３－２５``), so the split point is not "the first
-    numeral": every numeral position is tried left to right, and the first whose prefix is a listed district and
-    whose tail parses as chōme-then-number wins. Answers None when no split point does.
+    A district name may itself carry a kanji numeral (``一条通北２丁目３－２５``), so every numeral position is tried
+    left to right and the first whose prefix is a listed district and whose tail parses as chōme-then-number wins;
+    answers None when none does.
     """
     for match in _TAIL_START.finditer(street):
         boundary = match.start()

@@ -2,16 +2,8 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file A complete {@link EngineRegistryLike} for tests, with the one or two members a case cares about overridden.
- *
- *   Every tool in this package takes the registry, and almost every test of one needs a registry that does nothing.
- *   Written inline, that stub is an object literal missing most of the interface, which only compiles by asserting —
- *   and an assertion keeps compiling after a method is renamed or its signature changes. Therefore, the stub quietly stops
- *   standing for the thing it doubles. Built here instead, a change to `EngineRegistryLike` fails in one place with
- *   the name of the member that moved.
- *
- *   `acquire` throws by default. A test that needs an engine says so by passing one. a test that reaches the engine
- *   without meaning to gets a message rather than a `undefined` it will misread.
+ * @file A complete {@link EngineRegistryLike} for tests, with the one or two members a case cares about overridden
+ *   and `acquire` throwing unless a case passed an engine.
  */
 
 import type { EffectiveConfig, Engine, EngineRegistryLike } from "@mailwoman/dev-mcp/engine/registry"
@@ -31,9 +23,7 @@ const STUB_FINGERPRINT: TreeFingerprint = {
 }
 
 /**
- * Build a registry double.
- *
- * Pass only the members the case under test actually reads.
+ * Build a registry double; pass only the members the case under test actually reads.
  */
 export function stubEngineRegistry(overrides: Partial<EngineRegistryLike> = {}): EngineRegistryLike {
 	return {
@@ -54,15 +44,9 @@ export function stubEngineRegistry(overrides: Partial<EngineRegistryLike> = {}):
 }
 
 /**
- * Build an engine double.
- *
- * Pass the session behaviour the case reads.
- * Everything else is filled in.
- *
- * `session` is asserted rather than completed on purpose, and it is the only assertion here:
- * `GeocodeSession` is the real pipeline's surface, far wider than any test drives,
- * while the seven members of `Engine` around it are cheap to state and are what
- * a tool reads when it reports which engine answered.
+ * Build an engine double: pass the session behaviour the case reads,
+ * while `session` is asserted rather than completed because `GeocodeSession` is the
+ * real pipeline's surface, far wider than any test drives.
  */
 export function stubEngine(overrides: StubEngineOverrides): Engine {
 	return {
@@ -77,20 +61,15 @@ export function stubEngine(overrides: StubEngineOverrides): Engine {
 }
 
 /**
- * What a case may set on {@link stubEngine}.
- *
- * `session` is required because a tool that acquires an engine always reaches it,
- * and a default one would answer every query with the same silence.
+ * What a case may set on {@link stubEngine}; `session` is required because a tool that acquires
+ * an engine always reaches it, and a default one would answer every query with the same silence.
  */
 export interface StubEngineOverrides {
 	/**
-	 * The session behaviour this case drives, asserted to `GeocodeSession` inside {@link stubEngine}.
-	 *
-	 * `unknown` rather than `Partial<GeocodeSession>`: a partial checks each member
-	 * it does carry against the real signature, and every case here returns a trimmed
-	 * geocode result on purpose, so the partial rejects them all.
-	 * One documented assertion in one place is what this file provides — the eight it replaces each
-	 * asserted the whole registry, so a renamed registry method went unnoticed in all of them.
+	 * The session behaviour this case drives, asserted to `GeocodeSession`
+	 * inside {@link stubEngine}; `unknown` rather than `Partial<GeocodeSession>`
+	 * because a partial checks each member it does carry against the real signature
+	 * and every case here returns a trimmed geocode result on purpose.
 	 */
 	session: unknown
 	engineID?: string

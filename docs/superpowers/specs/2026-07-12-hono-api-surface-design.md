@@ -9,7 +9,7 @@
 Three defects share one root cause:
 
 1. `mailwoman/server/` is an express relic, redundant with the Docusaurus demo pages.
-2. The drop-in packages (`photon/`, `nominatim/`, `libpostal/`) each cram wire types, mapping, and an express Router into a single 200–490-line `index.ts`, with a **handwritten** `openapi.yaml` beside it that nothing ties to the code.
+2. The drop-in packages (`photon/`, `nominatim/`, `libpostal/`) each cram wire types, mapping, and an express Router into a single 200–490-line `index.ts`, with a **handwritten** `openapi.yaml` beside it that no check ties to the code.
 3. `feat/api-clients` vendors ~9.9k lines of generated Python client source plus hand-downgraded 3.0 spec copies for Rust's progenitor — three spec copies per API, zero enforcement that any matches the running server.
 
 Root cause: the spec is written downstream of the code, and clients are vendored downstream of the spec. Every hop is a manually maintained copy.
@@ -42,7 +42,7 @@ Zod schemas (next to routes) ──> Hono route table ──> emitted OpenAPI (3
 - `createRoute({ method, path, request, responses })` binds schema, handler, and OpenAPI metadata in one object.
 - Each surface is a Hono sub-app behind an engine interface — the existing `createPhotonRouter(engine)` pattern carried over as `createPhotonApp(engine)`. Engine interfaces are unchanged; engine implementers are untouched.
 - The OpenAPI document is emitted from the route table — never handwritten — in 3.1 and 3.0 flavors. 3.0 exists solely for generator compatibility (progenitor); it kills `downgrade-spec.py`.
-- Artifacts never flow backward. Nothing generated is imported by source.
+- Artifacts never flow backward. No generated artifact is imported by source.
 
 ### Anti-meta discipline (the isp-nexus guardrails)
 

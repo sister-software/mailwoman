@@ -221,19 +221,19 @@ constructor and a 300-second tolerance, and accepts only these event types:
   the subscription's `licenses` row exists. When the row does not exist yet, because this event outran
   `checkout.session.completed`, it lists the Checkout Session for the subscription and creates the row from it, so
   ordering cannot lose a licensee name. Computes `issued` (the invoice's paid date, UTC) and `expires` (the period end
-  plus `graceDays`, as an inclusive UTC calendar date), persists both, signs, stores the token, and enqueues nothing:
+  plus `graceDays`, as an inclusive UTC calendar date), persists both, signs, stores the token, and enqueues no job:
   the email send happens in the same request, keyed by invoice id, and a failed send leaves the token issued with
   `email_state = failed` for the reconciliation pass to retry.
 - `invoice.payment_failed`, `customer.subscription.updated`, `customer.subscription.deleted` — update `payment_state`
   and `subscription_state`. No token is minted or altered. A deleted subscription marks the license `lapsed` once the
   grace window passes.
 - `charge.refunded` (full) and `charge.dispute.created` — mark the license `revoked` online. A partial refund marks
-  `review` and mints nothing, and the operator decides.
+  `review` and mints no token, and the operator decides.
 - `charge.dispute.closed` — reconciles to Stripe's current payment state.
 
 Every event id is written to `stripe_events` first, in the same D1 batch as its effects, and a duplicate id is a
 no-op 200. Any failure after signature verification answers 500 so Stripe retries. Bad signatures answer 400 and are
-never retried. Nothing logs a body, a customer field, a token, or a secret.
+never retried. No code path logs a body, a customer field, a token, or a secret.
 
 **`GET /v1/checkout-sessions/:sessionID/license`.** The success page's claim. Answers `{ status }` with
 `pending`, `issued`, `failed`, or `revoked`, and for `issued` the token, the licensee, `issued`, `expires`, `lid`, and
@@ -355,7 +355,7 @@ refresh.
 
 Stripe sandbox end to end: Payment Link → Checkout → webhooks → token; `mailwoman license verify` on the current
 release reads `unknown_key` for the sandbox key (the shipped register does not carry it) and `valid` once the test
-register is injected, which is the demonstration that trust is release-bound; a card that fails 3DS mints nothing; a
+register is injected, which is the demonstration that trust is release-bound; a card that fails 3DS mints no token; a
 renewal in Stripe's test clock mints a second token with the next period's dates; a refund flips online status; the
 email resend under the same invoice id is one message.
 

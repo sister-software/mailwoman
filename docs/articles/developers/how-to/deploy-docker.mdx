@@ -158,7 +158,7 @@ const candidateDB = resolveCandidateDBPath()
 ```
 
 `resolveCandidateDBPath` from `mailwoman/resolver-backend` tries an explicit path, then
-`$MAILWOMAN_CANDIDATE_DB`, then `<data root>/db/wof/candidate.db`, and returns nothing unless one of them
+`$MAILWOMAN_CANDIDATE_DB`, then `<data root>/db/wof/candidate.db`, and returns no path unless one of them
 is on disk. The data-root fallback makes the `-e` flag unnecessary. The existence check keeps a run
 without a volume alive. A server that trusted a configured path would try to open a missing file and
 exit at import with `SQLITE_ERROR: unable to open database file`, before binding a port. The published
@@ -186,7 +186,7 @@ claim from step 1 that parsing works without a volume.
 
 One behavior contradicts what the fallback suggests. If `$MAILWOMAN_CANDIDATE_DB` points to a file that
 does not exist, discovery does **not** fall through to the default path. It stops at the first position
-that is set and reports that nothing was found. A stale `-e` flag therefore turns a correctly mounted
+that is set and reports that no gazetteer was found. A stale `-e` flag therefore turns a correctly mounted
 volume into a container with geocoding off. This was measured with the same server on `8.7.0`. Setting
 the variable to `/data/db/wof/candidate.db` without a volume produces the transcript above, even when
 `/tmp/mw-fresh-demo/db/wof/candidate.db` exists.

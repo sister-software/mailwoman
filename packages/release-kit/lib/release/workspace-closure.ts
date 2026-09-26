@@ -81,7 +81,7 @@ export async function walkWorkspaceClosure(
  * Pack each workspace into `tarDir` with the derived publish map and answer the
  * `dependencies` block a throwaway consumer project installs from.
  *
- * Every entry a `file:` tarball, so nothing is resolved from the registry.
+ * Every entry a `file:` tarball, so no entry is resolved from the registry.
  *
  * Sequential on purpose: each pack rewrites its own manifest while yarn reads its siblings.
  */

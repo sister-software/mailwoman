@@ -4,19 +4,8 @@
  * @author Teffen Ellis, et al.
  * @file Route an already-written overlay parquet through the holdout policy.
  *
- *   `mailwoman corpus build` decides a split for every row it aligns, so a base corpus honors
- *   `defaultHoldouts()` by construction. An overlay parquet never passes through that loop: it is
- *   written by a recipe and appended to a manifest as a train file. A country whose only rows of a
- *   given kind live in an overlay therefore has no held-out row of that kind, however the policy
- *   reads.
- *
- *   GB is that country. Every GB street row comes from `synth-gb`, which is an overlay, so the
- *   postcode areas the GB holdout names appear in the train split and nowhere else.
- *
- *   This reads a written parquet rather than a recipe's JSONL, because the carried overlays are
- *   parquet and their recipe outputs are not all still on disk. A parquet row carries no
- *   `components` map, so each component is read back from `raw` over the `span_starts` /
- *   `span_ends` / `span_tags` triple, which is the encoding `alignRow` wrote.
+ * A parquet row carries no `components` map, so each component is read back from `raw` over the `span_starts` /
+ * `span_ends` / `span_tags` triple that `alignRow` wrote.
  */
 
 import type { ComponentTag } from "@mailwoman/codex/component"
@@ -31,17 +20,14 @@ import { type CountryHoldout, defaultHoldouts, type SplitName, splitForRow } fro
 /**
  * The component tags the holdout policy reads.
  *
- * `splitForRow` consults `region`, `postcode` and `locality` and nothing else, so reconstructing
- * the rest of a row's components would cost a string slice per span for no decision.
+ * `splitForRow` consults `region`, `postcode` and `locality` and no other field,
+ * so reconstructing the rest would cost a string slice per span for no decision.
  */
 const HOLDOUT_TAGS = new Set<string>(["region", "postcode", "locality"])
 
 /**
- * The fields {@linkcode holdoutComponents} reads, with the span triple optional.
- *
- * A {@linkcode ParquetRow} declares all three as present and satisfies this.
- * Declaring them optional here is what lets the absent-triple case be constructed without a cast,
- * so the refusal below is reachable from a test rather than only from a corrupt file.
+ * The fields {@linkcode holdoutComponents} reads, with the span triple optional
+ * so the absent-triple refusal is reachable from a test rather than only from a corrupt file.
  */
 export interface SpannedRow {
 	raw: string
@@ -54,9 +40,8 @@ export interface SpannedRow {
 /**
  * Read the components a holdout decision needs back out of one labeled row.
  *
- * Raises on a row whose span triple is absent or not parallel.
- * A row that cannot be read is not a row with no held-out component: treating it as one
- * would put it in the train split, which is the outcome this whole file exists to prevent.
+ * Raises on an absent or non-parallel span triple, because treating an unreadable row
+ * as one with no held-out component would put it in the train split.
  */
 export function holdoutComponents(row: SpannedRow, index: number, input: string): CanonicalRow["components"] {
 	const { raw, span_starts: starts, span_ends: ends, span_tags: tags } = row
@@ -108,10 +93,8 @@ export interface SplitSliceResult {
 	rows: number
 	counts: Record<SplitName, number>
 	/**
-	 * The file written per split.
-	 *
-	 * A split that drew no row is absent rather than an empty parquet, because a manifest
-	 * entry for an empty file reads as a file whose rows were lost.
+	 * The file written per split; a split that drew no row is absent rather than an
+	 * empty parquet, which would read as a file whose rows were lost.
 	 */
 	outputs: Partial<Record<SplitName, string>>
 }
@@ -119,9 +102,7 @@ export interface SplitSliceResult {
 /**
  * Split one overlay parquet into up to three, by the same policy the base build applies.
  *
- * The output names extend the input's, so `part-gb.parquet` becomes `part-gb.train.parquet`,
- * `part-gb.val.parquet` and `part-gb.test.parquet`.
- * The input is left in place.
+ * Each output is named for the input plus its split, and the input is left in place.
  */
 export async function splitOverlaySlice(options: SplitSliceOptions): Promise<SplitSliceResult> {
 	const input = options.input.toString()

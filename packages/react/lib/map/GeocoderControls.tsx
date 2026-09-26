@@ -452,7 +452,7 @@ export function GeocoderControls({
 				{/* The header holds the grab bar and the search field, and it stays pinned while the result scrolls. */}
 				<div className="mw-map-panel__header" onPointerDown={onHeaderPointerDown}>
 					<div className="mw-map-panel__grip">
-						{/* The handle appears only with a result, because there is nothing to expand without one. */}
+						{/* The handle appears only with a result, because there is no content to expand without one. */}
 						{showSheet ? (
 							<button
 								type="button"

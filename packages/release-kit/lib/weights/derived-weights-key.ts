@@ -154,7 +154,7 @@ async function derivedWeightsInputs(): Promise<DerivedWeightsInput[]> {
  * It surfaced as four store directories holding the same eleven artifacts, and as a 41s
  * `pair-index-nz.bin` rebuild on a runner where that exact file was already on disk under a different key.
  *
- * A missing input contributes a `\0absent` marker rather than nothing —
+ * A missing input contributes a `\0absent` marker rather than an empty contribution —
  * "the file is gone" and "the file is empty" must not collide.
  */
 export async function derivedWeightsKeyFrom(inputs: readonly DerivedWeightsInput[]): Promise<string> {

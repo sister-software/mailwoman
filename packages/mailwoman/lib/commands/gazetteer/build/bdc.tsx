@@ -3,29 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mailwoman gazetteer build bdc` — the FCC BDC availability ingest + sealed `bdc.db` layer build
- * . Thin wiring only: list → download → build lives in `@mailwoman/bdc/sdk`
- *   (`buildBDCDatabase`, list-files.ts, download.ts), so it stays unit-testable without Ink or
- *   network in the loop. Mirrors `poi.tsx`'s progress (stderr) / summary (stdout) split.
- *
- *   First version wires Fixed Broadband provider availability only (the primary wireline dataset) — mobile
- *   broadband/voice subcategories are a future flag rather than a scope gap in this command's shape.
- *
- *   `--provider-list-path` (decision 6) opts into populating `bdc_provider` —
- *   `bdc_availability` itself is unaffected either way. When given, `parseProviderList`
- *   (`@mailwoman/filer/sdk`) streams the FCC provider-list CSV as `BuildBDCOptions.providers`, and
- *   filer.db (`--filer-db-path`, default `<data-root>/filer/filer.db`) is opened read-only to resolve
- *   each multi-FRN provider's primary FRN (`readFRNFilingCandidates` + `pickPrimaryFRN`, imported
- *   rather than reimplemented — see `build-bdc.ts`'s `BuildBDCOptions.filerDB` docstring). Omitting
- *   `--provider-list-path` leaves `bdc_provider` empty.
- *
- *   Both paths are `existsSync`-guarded before any download/build work starts:
- *   `populateBDCProviderTable` only runs after `writeLayerManifest`, i.e. at the very END
- *   of a full build — an unguarded typo'd `--provider-list-path` would otherwise surface as a raw enoent
- *   only after a nationwide availability ingest had already finished, discarding hours of work.
- *   `--filer-db-path` given without `--provider-list-path` is a loud error rather than a silent no-op:
- *   filer.db is only ever read to resolve a multi-FRN primary FRN, so it does nothing without a provider
- *   list to resolve FRNs FOR.
+ *   List → download → build lives in `@mailwoman/bdc/sdk`, so this stays thin and unit-testable without Ink or network
+ *   in the loop; progress goes to stderr and the summary to stdout, mirroring `poi.tsx`.
  */
 
 import { formatFileSize, pathExists } from "@mailwoman/core/fs/readers"
@@ -79,10 +58,9 @@ const GazetteerBuildBDC: CommandComponent<typeof spec> = ({ options }) => {
 		const { dataRootPath } = await import("@mailwoman/core/data-root")
 		const { parseProviderList } = await import("@mailwoman/filer/sdk")
 
-		// Fail-fast guards — checked before any network/download work starts.
-		// `populateBDCProviderTable` only runs after the availability ingest and writeLayerManifest,
-		// so without this, a typo'd --provider-list-path would surface only at the very end of a full
-		// national build, discarding hours of work for a check that costs microseconds up front.
+		// Fail-fast guard: `populateBDCProviderTable` runs only after the availability ingest
+		// and `writeLayerManifest`, so a typo'd --provider-list-path would otherwise surface
+		// at the end of a full national build, discarding hours of work.
 		if (options.filerDBPath && !options.providerListPath) {
 			throw new Error(
 				"gazetteer build bdc: --filer-db-path was given without --provider-list-path — filer.db is only read " +
@@ -137,11 +115,8 @@ const GazetteerBuildBDC: CommandComponent<typeof spec> = ({ options }) => {
 			csvPaths.push(await downloadBDCFile(client, file, cacheDir))
 		}
 
-		// The FCC caps this API at ten requests per minute — six seconds a call —
-		// so a national run is throttle-bound by construction and the interesting number is
-		// how much of the wall clock went to waiting rather than transferring.
-		// Printed once the network phase is over, on stderr with the rest of the progress stream,
-		// so a rate change can be assessed against a measurement.
+		// The FCC caps this API at ten requests per minute, so a national run is throttle-bound
+		// and this measurement says how much wall clock went to waiting rather than transferring.
 		console.error(`▸ ${formatBDCThrottleStats(client.throttleStats())}`)
 
 		const out = resolvePath(options.out ?? dataRootPath("bdc", "bdc.db"))
@@ -150,9 +125,6 @@ const GazetteerBuildBDC: CommandComponent<typeof spec> = ({ options }) => {
 
 		console.error(`▸ build: ${out}`)
 
-		// --provider-list-path (decision 6) opts into populating bdc_provider — omitted,
-		// `providers`/ `filerDB` stay undefined and buildBDCDatabase runs its default path.
-		// Both paths were already existsSync-validated above, so this can't enoent.
 		let filerDB: DatabaseClientHandle<FilerDatabase> | undefined
 
 		if (filerDBPath) {
@@ -201,7 +173,7 @@ const GazetteerBuildBDC: CommandComponent<typeof spec> = ({ options }) => {
 		)
 	}
 
-	return null // progress streams to stderr until the summary lands
+	return null
 }
 
 export default GazetteerBuildBDC

@@ -71,7 +71,7 @@ A move cannot see a path assembled from segments. `resolvePackagePath("@mailwoma
 specifier that already resolved nowhere before the move is left unchanged.
 
 The fix runs to a fixpoint. Moving `build-outlier-oa.ts` into `build/` leaves `outlier-oa.ts` beside two siblings that
-now share `outlier-`, so `mwops health fix` recomputes the plan until the check reports nothing.
+now share `outlier-`, so `mwops health fix` recomputes the plan until the check reports no findings.
 
 Build output is excluded from resolution intentionally. Every subpath map lists `types` first, so a stale
 `out/<subpath>.d.ts` can satisfy an import of a source file that has already moved. In one case this let `tsc` report

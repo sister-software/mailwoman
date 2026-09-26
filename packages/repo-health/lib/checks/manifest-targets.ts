@@ -6,8 +6,8 @@
  *
  *   The check maps each `out/` target back to its source. For example, `./out/x.js` comes from `lib/x.ts`,
  *   `lib/x.tsx` or `lib/x/index.ts`, and `docs/` uses `src/` in place of `lib/`. A pattern target passes when the
- *   directory before its `*` holds a tracked file. Only `imports["#*"]` may match nothing, because every workspace
- *   declares it and the data-only weights overlays compile nothing.
+ *   directory before its `*` holds a tracked file. Only `imports["#*"]` may match no file, because every workspace
+ *   declares it and the data-only weights overlays compile no TypeScript.
  *
  *   A tracked source must also fall inside the workspace `tsconfig.json` `include` and `exclude` globs. Otherwise
  *   `tsc -b` skips it, and the tarball lacks the promised `out/` file.

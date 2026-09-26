@@ -6,13 +6,13 @@
  *   Dev-weights linker for `@mailwoman/neural-weights-de-de` (hierarchy campaign R9).
  *
  *   The build itself lives in `@mailwoman/resolver-wof-sqlite/weights-overlay-linker` — this overlay declares
- *   `mailwoman.baseWeights`, so it symlinks nothing and its only job is building the index that makes
+ *   `mailwoman.baseWeights`, so it symlinks no weights and its only job is building the index that makes
  *   `resolveWeights({locale: "de-de"})` surface `pairIndexPath` in local dev.
  *
  *   The index is inert without the `de` entries in `SEGMENT_PARENT_POSTCODE_SHAPES` and
  *   `LEADING_POSTCODE_COUNTRIES` (`neural/placetype-pair-prior.ts`): German addresses write the PLZ
  *   first ("50733 Köln"), so a parent segment folds to a key no bare-Gemeinde entry matches. Measured
- *   during R9 — the artifact alone changed nothing until both landed.
+ *   during R9 — the artifact alone changed no behavior until both landed.
  */
 
 import {

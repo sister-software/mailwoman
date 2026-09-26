@@ -30,7 +30,7 @@ import type { WOFDatabase } from "#schema"
  * The contiguous-leaves discipline of the candidate table itself.
  *
  * Excluded by policy: self rows, and placetypes outside the containment ladder
- * (continent, empire, …: `placetypeDepth` 0) — they discriminate nothing a consumer of this sidecar checks.
+ * (continent, empire, …: `placetypeDepth` 0) — they make no distinction a consumer of this sidecar checks.
  * An edge to a parent with no current `spr` row has no name to denormalize.
  * It is dropped and counted rather than stored blind.
  */

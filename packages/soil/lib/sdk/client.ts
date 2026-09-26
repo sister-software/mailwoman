@@ -79,7 +79,7 @@ export class SoilDataAccessClient extends APIClient<APIClientConfig> {
 	 * such as a state code or one whole area symbol.
 	 *
 	 * @throws {Error} When no survey area matches, because a build over an empty set
-	 * would otherwise report success having written nothing.
+	 * would otherwise report success having written no rows.
 	 */
 	public async readSurveyAreaCatalog(prefix: string): Promise<SurveyAreaCatalogEntry[]> {
 		const escaped = prefix.replaceAll("'", "''")

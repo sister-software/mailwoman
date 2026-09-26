@@ -1,12 +1,12 @@
 # Moving out of `scripts/` — proposal
 
 Status: proposal, revised after operator review on 2026-09-04. The diagnosis (sections 1 and 2) is
-unchanged, and the destination model (sections 3 to 7) is the revised one. Nothing moves until section 8's decisions
+unchanged, and the destination model (sections 3 to 7) is the revised one. No file moves until section 8's decisions
 are confirmed. Measured on `main` at 86f050d99.
 
 ## 1. What is in the drawer
 
-| Family                             | Files                         | Lines  | Referenced by                                                                           | Referenced by nothing                                                                         |
+| Family                             | Files                         | Lines  | Referenced by                                                                           | Referenced by no file                                                                         |
 | ---------------------------------- | ----------------------------- | ------ | --------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
 | release and weights pipeline       | 25 (6 tests)                  | 5,215  | 6 workflows (publish.yml 8 paths), `.release-it.json` 2, `package.json` 2, each other   | 4: `bless-package`, `scaffold-weights-overlay`, `link-weights-overlay`, `stage-weights-cache` |
 | eval and probes                    | 31 `.ts` + 3 `.py` + fixtures | 5,650  | each other only (`value-match.ts`, `two-model-probe.ts` are internal libraries)         | all 31                                                                                        |
@@ -16,7 +16,7 @@ are confirmed. Measured on `main` at 86f050d99.
 
 Citations in records show which eval scripts are still used. 24 of the 31 are cited by at least one
 record under `docs/` or `evals/`, led by `per-locale-f1.ts` (11 citations) and `oa-resolver-eval.ts`
-(8). Ten are cited by nothing: `value-match`, `two-model-probe`, `summarize-arenas`, `score-suffix-boundary`,
+(8). Ten are cited by no record: `value-match`, `two-model-probe`, `summarize-arenas`, `score-suffix-boundary`,
 `pip-containment`, `locality-regression-probe`, `fr-parse-recall`, `fit-per-locale-calibration.py`,
 `de-duplicate-locality-diag`, `build-situs-holdout`. Commit dates cannot show usage here, because the
 August and September repo-wide sweeps touched every file.
@@ -52,7 +52,7 @@ release operation (release-kit)
       └── MCP adapter          →  agents             (release-mcp, separately enabled)
 ```
 
-Capabilities live in domain packages that contain the logic and nothing else. Interfaces are thin
+Capabilities live in domain packages that contain the logic and no adapters. Interfaces are thin
 adapters that expose a capability set to a consumer: a private CLI for CI and humans, an MCP server
 for agents, the public `mailwoman` CLI for users. Neither adapter carries meaningful logic.
 
@@ -170,7 +170,7 @@ word. Delete them unless a record cites them.
   shown to answer the same question, with both row counts in the receipt.
 - Cited by a record but without a command: port to `dev-tools/<name>.run.ts` unchanged, as the
   2026-08-21 scratchpad ports were.
-- Cited by nothing (the ten in section 1): delete. `value-match.ts` and `two-model-probe.ts` are deleted
+- Cited by no record (the ten in section 1): delete. `value-match.ts` and `two-model-probe.ts` are deleted
   with their last consumer.
 - The three Python files and `fixtures/` move to `corpus-python/`.
 

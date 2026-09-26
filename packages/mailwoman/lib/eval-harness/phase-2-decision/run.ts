@@ -6,9 +6,9 @@
  *   The live half of the phase-2 decision (#1967): load the frozen pre-registration, run the instruments its
  *   checks read, and emit one receipt carrying the arithmetic against every bar.
  *
- *   this module decides nothing IT did not read. Lanes, checks, denominators, bars, artifact pins and the one
+ *   this module decides only what IT read. Lanes, checks, denominators, bars, artifact pins and the one
  *   marker query all come from `decision-definition.json`, which {@linkcode loadPhase2Definition} refuses to
- *   hand over if its content hash has moved. The runner supplies measurements and nothing else.
+ *   hand over if its content hash has moved. The runner supplies measurements and no more.
  *
  *   IT runs the existing instruments rather than RE-deriving them. Both probe arms come from
  *   {@linkcode runSemanticUtilityProbe}, the asymmetry from {@linkcode runAbsenceObservationProbe}, the floors
@@ -22,7 +22,7 @@
  *   verdict carries `comparability` — reported, never a decision input.
  *
  *   the recording is the operator'S. The receipt states what the ruler maps to and carries `recorded: false`.
- *   Nothing here writes a verdict onto the issue.
+ *   No code here writes a verdict onto the issue.
  */
 
 import { readActivityLexicon } from "@mailwoman/activity-lexicon/lexicon"
@@ -489,8 +489,9 @@ async function measure(
 	}
 
 	if (needed.has("conformance_laws")) {
-		// Named fields rather than the whole options object: the laws run through the Gauntlet's deps,
-		// which take a weights root and a candidate gazetteer and nothing the POI board's options mean.
+		// Named fields rather than the whole options object: the laws run through
+		// the Gauntlet's deps, which take a weights root and a candidate gazetteer
+		// rather than whatever the POI board's options mean.
 		const { laws, problems, measured } = await measureConformance({
 			weightsCacheRoot: options.weightsCacheRoot,
 			candidateDB: options.candidateDB,
@@ -640,7 +641,7 @@ async function measureMarker(
 			detail: `marker kind ${first.kind}, code ${first.code}, mechanism ${first.mechanism}, evidence names assertion ${String((first.evidence as { assertion?: { id?: string } }).assertion?.id)}`,
 		}
 	} finally {
-		// The runtime pipeline never opens the artifact reader itself, so the route owns nothing to close.
+		// The runtime pipeline never opens the artifact reader itself, so the route owns no resource to close.
 		// Draining keeps one query's firings from being attributed to the next.
 		route.takeObservations()
 	}

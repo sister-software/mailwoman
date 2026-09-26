@@ -14,7 +14,7 @@
  *   class the #718 soft-feed exists to prevent, with no error anywhere.
  *
  *   Mock strategy mirrors `web-loader.tolerance.test.ts`: ORT + tokenizer + classifier stubbed,
- *   fetch recorded per URL, nothing else mocked.
+ *   fetch recorded per URL, with no other module mocked.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"

@@ -51,7 +51,7 @@ express the preference — it is an editorial judgement about the BROWSER, and t
 from the browser's point of view.
 
 What the hand-list needed was not derivation but a refusal: `requireAlias` now throws on an entry that
-resolves to nothing, which caught three real breaks during the fold (`resolver-wof-sqlite/geo` and
+resolves to no target, which caught three real breaks during the fold (`resolver-wof-sqlite/geo` and
 `core/kysley/dialect`, both long dead, and `resolver/resolve` the moment it became a directory).
 
 ### Still open
@@ -138,9 +138,9 @@ It has not been noticed because it fails softly: `resolvePackageFile` returns `n
 folds are drawn. The directory structure is the new export list. Drawing it twice would repeat the work.
 
 `dev-mcp` is the single largest cheap win — **51 subpaths, private**, so a `./*` wildcard there breaks no
-consumer because nothing outside this monorepo installs it. `docs` (12, already 4 wildcards),
+consumer because no consumer outside this monorepo installs it. `docs` (12, already 4 wildcards),
 `geocode-oracle` (9) and `neural-weights-base-latn` (1) are the rest of the private set; `tile-worker` is
-private but exports nothing at all, so it is not in scope.
+private but exports no subpath at all, so it is not in scope.
 
 ## 4. Sequencing
 

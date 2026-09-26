@@ -17,25 +17,16 @@ import { LayerID } from "#styles/layers"
 
 export interface PlanetaryPalette {
 	/**
-	 * The body's own surface tone, under the relief.
-	 *
-	 * Named `space` for the layer it feeds, which paints the sphere under globe projection
-	 * rather than the area around it.
-	 * The field around the globe is the page behind a transparent canvas, and the app's stylesheet paints it.
+	 * The body's own surface tone, under the relief, painted on the sphere
+	 * rather than the page behind the canvas.
 	 */
 	space: string
 	/**
-	 * Where a slope faces the light.
-	 *
-	 * With `shadow` and `accent` these are what make one body's relief differ from another's.
-	 * The tiles carry encoded elevation and no colour of their own.
+	 * Where a slope faces the light; the tiles carry encoded elevation and no colour of their own.
 	 */
 	reliefHighlight: string
 	/**
-	 * Where a slope faces away.
-	 *
-	 * Kept translucent so the surface tone reads through flat ground, which would
-	 * otherwise take the shadow colour everywhere the terrain is level.
+	 * Where a slope faces away, kept translucent so the surface tone reads through flat ground.
 	 */
 	reliefShadow: string
 	/**
@@ -48,10 +39,8 @@ export interface PlanetaryPalette {
 }
 
 /**
- * One palette per body with a published style.
- *
- * The record's keys are the bodies a style can be composed for, so a body without
- * a row here has no style rather than a wrong one.
+ * One palette per body with a published style, so a body without a row here
+ * has no style rather than a wrong one.
  */
 export const PALETTES = {
 	moon: {
@@ -79,11 +68,7 @@ export type PlanetaryStyleBody = keyof typeof PALETTES
 const PLANETARY_NAMESPACE = "planetary"
 
 /**
- * The body's surface tone, under the relief.
- *
- * Under globe projection a background layer paints the sphere rather than the viewport,
- * so this is the ground the hillshade shades and not the field around the globe.
- * The app's stylesheet paints that behind a transparent canvas.
+ * The body's surface tone, under the relief, painted on the sphere rather than the viewport.
  */
 export const PlanetarySpaceLayerID = LayerID(PLANETARY_NAMESPACE, "space")
 
@@ -103,9 +88,8 @@ export const PlanetaryLabelsLayerID = LayerID(PLANETARY_NAMESPACE, "nomenclature
 export const PlanetarySelectionLayerID = LayerID(PLANETARY_NAMESPACE, "selection")
 
 /**
- * The IAU feature-type codes drawn as spaced capitals: a mare, planitia, oceanus
- * or terra spans a region rather than marking a point, and the wide setting reads
- * as an area name the way a printed atlas sets one.
+ * The IAU feature-type codes for features that span a region rather than marking
+ * a point, drawn as spaced capitals.
  */
 const REGION_FEATURE_TYPE_CODES = ["ME", "PL", "OC", "TA"]
 
@@ -118,11 +102,8 @@ export function spaceLayer(palette: PlanetaryPalette): BackgroundLayerSpecificat
 }
 
 /**
- * The relief, shaded at draw time from the body's encoded elevation.
- *
- * The tiles carry height and no colour, so every body-specific decision is here: a greyscale
- * image could not be tinted at all, because MapLibre's raster paint properties are brightness,
- * contrast, saturation and hue-rotate, and the last two do nothing without chroma.
+ * The relief, shaded at draw time from the body's encoded elevation,
+ * since the tiles carry height and no colour.
  */
 export function hillshadeLayer(palette: PlanetaryPalette): HillshadeLayerSpecification {
 	return {
@@ -141,12 +122,9 @@ export function hillshadeLayer(palette: PlanetaryPalette): HillshadeLayerSpecifi
 }
 
 /**
- * Labels by feature scale: the tile's per-feature `minzoom` already hides a small
- * crater at a low zoom, so the symbol layer only sizes and prioritizes.
- *
- * `featureTypeCode` is the IAU feature-type code carried in the tile properties
- * (AA crater, MO mons, VA vallis, ME mare, PL planitia, SF satellite feature);
- * `diameterKm` is the feature's diameter.
+ * Labels by feature scale: the tile's per-feature `minzoom` already hides a
+ * small crater at a low zoom, so the symbol layer only sizes and prioritizes,
+ * reading `featureTypeCode` (the IAU feature-type code) and `diameterKm`.
  */
 export function labelLayer(palette: PlanetaryPalette): SymbolLayerSpecification {
 	return {
@@ -168,10 +146,8 @@ export function labelLayer(palette: PlanetaryPalette): SymbolLayerSpecification 
 }
 
 /**
- * The selection ring.
- *
- * Its filter matches no feature until the app sets one by `id`, so the layer ships
- * in the style and the app never inserts a layer at runtime.
+ * The selection ring, shipped in the style with a filter that matches no feature
+ * until the app sets one by `id`.
  */
 export function selectionLayer(palette: PlanetaryPalette): CircleLayerSpecification {
 	return {

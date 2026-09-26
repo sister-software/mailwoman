@@ -110,7 +110,7 @@ test("buildPostcodeNIOSM: #920 laws, the malformed drop, and the ODbL/meaning-of
 	expect(result.districts).toBe(2)
 	expect(result.sectors).toBe(2)
 	// Every internal identity holds.
-	// Nothing is silently unaccounted for.
+	// No identity is silently unaccounted for.
 	expect(result.reconciliationFailures).toEqual([])
 	// The data extract rather than the wall clock — the date that actually describes the rows.
 	expect(result.osmTimestamp).toBe("2026-08-05T13:14:01Z")

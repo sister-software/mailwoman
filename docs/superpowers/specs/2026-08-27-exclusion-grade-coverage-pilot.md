@@ -8,7 +8,7 @@ Design record for #1964, under the coverage register design of
 Every one of the 158,813 coverage cells in the shipped `poi.db` carries `basis = source_present` at
 `completeness = 1.0`, exactly as `build-poi.ts` writes them. `supportsExclusion` is therefore false
 everywhere, and the program's rule — missing data becomes negative evidence only through
-exclusion-grade coverage — has nothing to act on. This record is what it took to produce cells that
+exclusion-grade coverage — has no cell to act on. This record is what it took to produce cells that
 answer true, and what it deliberately did not do.
 
 ## What ships
@@ -16,7 +16,7 @@ answer true, and what it deliberately did not do.
 One build-local layer database, `poi-coverage-pharmacy-ile-de-france.db`, holding 3,308
 `amenity=pharmacy` features from the Île-de-France OSM extract, with 290 res-6 `layer_coverage` rows
 at `basis = surveyed`, `completeness = 0.6665`. The shipped `poi.db` is not touched: it is sealed
-0444, and nothing here reopens it.
+0444, and no part of this work reopens it.
 
 ## Why a separate artifact and not a rebuild
 
@@ -128,7 +128,7 @@ that transfers to another region unmeasured.
 - 88 of the 290 cells hold **zero** subject rows and are written anyway, at
   `basis = surveyed, observed_rows = 0`. That row is the storable form of "surveyed, and there is no
   pharmacy here" — the exclusion payload, and the reason the pilot exists.
-- Cells outside the region get **no row at all**. Not completeness 0: the measurement says nothing
+- Cells outside the region get **no row at all**. Not completeness 0: the measurement makes no statement
   about the region's outside, and a missing row is the interface's word for unknown.
 - 60 subject rows and 138 reference rows fell outside the interior cell set. They are counted and
   reported rather than silently dropped.
@@ -142,7 +142,7 @@ sources**: if a pharmacy is more likely to be in both inventories than chance wo
 branch on a high street against a single officine on a village lane — then `m` runs high, `N̂` runs
 low, and completeness runs **high**. That is the direction that turns a data gap into confident
 negative evidence, which is the worst failure this system has. The conservative reading (a lower
-confidence bound, minimised across the grid) controls the sampling half and does nothing about this
+confidence bound, minimised across the grid) controls the sampling half and addresses no part of this
 half.
 
 Two smaller limits, both measured rather than argued:
@@ -207,4 +207,4 @@ single layer-agnostic promoted set of `name` and `man_made`. GDAL's default `osm
 on `multipolygons` where the bare column answered **178**, against 3,130 from `points` — 5.4% of the
 class reported as absent, with no error, in the direction that inflates a completeness estimate. The
 promoted-key table is now per-layer, and an unknown layer throws rather than producing SQL that runs
-and matches nothing.
+and matches no row.

@@ -11,7 +11,7 @@ consumers.** A result-level land-capability observation needs a single reading f
 density. §4 exists to prevent acquiring the same national datasets twice, with two aggregation choices that
 can never be reconciled cell for cell.
 
-The consuming implementation already exists, so nothing below proposes new architecture. The layer interface
+The consuming implementation already exists, so no section below proposes new architecture. The layer interface
 (`layer_manifest` / `layer_coverage` on the H3 spine) is specified in
 [`../../engineering/reference/layer-interface.mdx`](../../engineering/reference/layer-interface.mdx);
 `packages/bdc` is the worked federal-provider example. The exclusion-grade coverage pilot
@@ -408,7 +408,7 @@ growing season is published in the following calendar year. The 2025 layer is th
 **What it is, and the semantic difference from a soil survey.** The CDL is a 30 m classified raster of
 **what was observed growing in one season**. A soil survey records what the land is capable of. Those
 are different questions, and the difference shapes §4. A CDL cell that says "not cropped in 2025" does
-not say the land cannot be cropped, and nothing in the product distinguishes fallow land, pasture, a
+not say the land cannot be cropped, and no field in the product distinguishes fallow land, pasture, a
 parking lot, and a field the classifier got wrong. The per-class accuracy metadata, the projection, the
 full class-value table and NASS's own use caveats are in §8 as unverified. The two facts the pilot
 decision needs (license and reachability) are verified above.
@@ -675,7 +675,7 @@ here rather than inferred:
 ### 3.3 The Cropland Data Layer — a different question, and its zero means something else
 
 The CDL's absences are not coverage absences at all. A cell classified as anything other than a crop is
-a positive classification of that season's observed cover. "Not cropped in 2025" says nothing about
+a positive classification of that season's observed cover. "Not cropped in 2025" makes no statement about
 capability, because the field may be fallow, in pasture, in a rotation year, or misclassified. The layer
 would answer a different question from SSURGO, so it cannot share SSURGO's coverage rows or vocabulary.
 §4 keeps them as separate observations rather than blending them into one arability number. NASS's own per-class accuracy statements and use caveats were not verified here (§8), and a
@@ -726,7 +726,7 @@ its own rule name and is never blended with the capability class.
 
 The builder holds the authority's declared domain as a closed set and **throws** on a value outside it.
 An unknown code means the source schema changed, which a reader most needs to know. Coercing it to a
-nearest neighbour or to NULL would turn "the source changed" into "there is nothing here".
+nearest neighbour or to NULL would turn "the source changed" into "there is no observation here".
 
 This matters more for Consumer B than it first appears. #1683's vector needs a numeric axis, so storing
 one is tempting. Instead, **the consumer owns the projection to a number, and the layer stores none**. The layer
@@ -752,7 +752,7 @@ collapsing uniform interiors. The resolution is chosen from the **measured** `pa
 by argument. The index alone answers a cell that lies wholly inside one map unit. A cell that a boundary
 crosses lists every map unit reaching into it, and a ray-cast against those few candidates is the
 bounded runtime geometry that SCOPE invariant 6 permits at an irreducibly geometric edge.
-`pointInPolygonRings` and `bboxAround` in `@mailwoman/spatial` are the primitives, so nothing new is
+`pointInPolygonRings` and `bboxAround` in `@mailwoman/spatial` are the primitives, so no new primitive is
 needed.
 
 **The raster rule, for anything grid-shaped.** A raster never enters the database as a raster. At build
@@ -1088,7 +1088,7 @@ On the polygon rule (§4.3), the fixtures cover:
 On the reduction (§4.4/§4.5), the fixtures cover:
 
 - a cell straddling two map units with known areas, asserting the shares are the area weighting and
-  nothing else;
+  no other value;
 - a `partial` cell, asserting its contribution is weighted by covered area rather than counted whole;
 - a map unit whose components are 45/35/20 across three capability classes, asserting no winner is
   invented;

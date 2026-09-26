@@ -11,11 +11,8 @@ import type { BroadbandServicableLocationID } from "#sdk/location"
 /**
  * Snake_case identifier for a US State or Territory.
  *
- * Loosely typed as `string` for now.
- * The Nexus original derived this from `StateName` (via `@isp.nexus/tiger`);
- * this port drops that dependency since nothing here consumes the literal union.
- *
- * Tighten it against `@mailwoman/tiger`'s `StateName` if a downstream dictionary ever needs it.
+ * Loosely typed as `string`; tighten it against `@mailwoman/tiger`'s `StateName`
+ * if a downstream dictionary ever needs the literal union.
  *
  * @category FCC
  * @title FCC State Identifier
@@ -124,8 +121,7 @@ export interface NTIARecord {
 	/**
 	 * 2-character state abbreviation from the postal address.
 	 *
-	 * Loosely typed as `string`.
-	 * See {@linkcode FCCStateID} for why the tiger-backed literal union is deferred to task 2c.
+	 * Loosely typed as `string`; see {@linkcode FCCStateID}.
 	 *
 	 * @example
 	 * 	CA
@@ -167,7 +163,7 @@ export interface NTIARecord {
 	unit_count: number
 
 	/**
-	 * Flag indicating if the location is a broadband serviceable location. 1 for serviceable, 0 for not.
+	 * Flag indicating if the location is a broadband serviceable location.
 	 *
 	 * @example
 	 * 	1

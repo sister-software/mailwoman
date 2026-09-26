@@ -10,7 +10,7 @@
  *   notice being accurate about which modules it covers, and three files describe them: the repository notices, the
  *   documentation site's page, and the copy inside `@mailwoman/core` that npm ships to a consumer.
  *
- *   Nothing compared the three, and they drifted in both directions. Two named rule-based classifiers and a solver
+ *   No check compared the three, and they drifted in both directions. Two named rule-based classifiers and a solver
  *   that were deleted in v7.0.0, which claims an obligation over code no package contains. None named the surviving
  *   modules by path, so a rename would have left a notice pointing nowhere with no error anywhere.
  *
@@ -74,7 +74,7 @@ const PERMISSION_NOTICE = "shall be included in all copies or substantial portio
  *
  * The license text is quoted prose that the repository formatter rewraps to its
  * own width, so matching the license's sentence against the raw file would fail
- * on a reflow that changed nothing a licensee reads.
+ * on a reflow that changed no text a licensee reads.
  *
  * `@mailwoman/normalize`'s `collapseWhitespace` is a different operation: it keeps
  * newlines as segment separators and returns an offset map for address text.

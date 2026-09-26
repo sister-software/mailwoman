@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   The planetary service worker. This file is the source `vite-plugin-pwa` injects the precache manifest into: the
- *   app shell, its hashed assets, the icons and the manifest. Nothing here caches a tile or the search artifact. those
+ *   app shell, its hashed assets, the icons and the manifest. No code here caches a tile or the search artifact. those
  *   stay fetched on demand.
  */
 

@@ -6,7 +6,7 @@ tags: [geocoding, resolver, corpus]
 date: 2026-06-21
 ---
 
-Open the [demo](/demo) and type an address in Kabul, and the demo returns no result. It does not place a pin a few streets off or fall back to the city center, because the gazetteer has no entry for Kabul. Hong Kong, Tirana, Chişinău, and every place in the Democratic Republic of the Congo return nothing as well. We had been calling this gazetteer "world coverage" for weeks, and it covered **97 of the world's ~195 countries**. The other ninety-odd countries were absent from the file.
+Open the [demo](/demo) and type an address in Kabul, and the demo returns no result. It does not place a pin a few streets off or fall back to the city center, because the gazetteer has no entry for Kabul. Hong Kong, Tirana, Chişinău, and every place in the Democratic Republic of the Congo return no result as well. We had been calling this gazetteer "world coverage" for weeks, and it covered **97 of the world's ~195 countries**. The other ninety-odd countries were absent from the file.
 
 {/* truncate */}
 
@@ -14,11 +14,11 @@ This gap did not come from a single dramatic mistake. It built up without any er
 
 ## A missing place never files a complaint
 
-Coverage gaps are hard to see because a missing place does not raise an error. When a parser mislabels a token, the wrong field shows up in a diff. When a resolver picks the wrong Springfield, the pin lands in the wrong state and a test fails. When a place is absent from the gazetteer, the system behaves exactly as it does for a typo or a fictional street: it returns nothing. Afghanistan returning nothing looks identical to "Hgsdfgh Street" returning nothing.
+Coverage gaps are hard to see because a missing place does not raise an error. When a parser mislabels a token, the wrong field shows up in a diff. When a resolver picks the wrong Springfield, the pin lands in the wrong state and a test fails. When a place is absent from the gazetteer, the system behaves exactly as it does for a typo or a fictional street: it returns no result. Afghanistan returning no result looks identical to "Hgsdfgh Street" returning no result.
 
 You can run the eval suite, see it pass, ship, and announce world coverage while every number you report is accurate. The US accuracy is real, and so is the German coordinate error. Those numbers are measured against the places that _are_ in the file, so the file determines what gets measured. We were grading ourselves on the 97 countries we had, and the missing countries never entered the average.
 
-This applies to anyone building on open geodata: **your coverage is your sources' coverage, and you inherit its gaps without any warning.** We build the gazetteer from Who's On First plus Overture's administrative divisions. Both are high-quality sources, and we would choose them again. High quality does not mean complete, though, and the admin DB built from those two sources carries localities for 97 countries. We never decided to drop Libya. It was never in the data, and nothing in the pipeline was designed to detect the absence.
+This applies to anyone building on open geodata: **your coverage is your sources' coverage, and you inherit its gaps without any warning.** We build the gazetteer from Who's On First plus Overture's administrative divisions. Both are high-quality sources, and we would choose them again. High quality does not mean complete, though, and the admin DB built from those two sources carries localities for 97 countries. We never decided to drop Libya. It was never in the data, and no stage of the pipeline was designed to detect the absence.
 
 ## The trick: audit against a yardstick you didn't build
 
@@ -50,6 +50,6 @@ The result is **4.6 million town-level localities across 248 countries**, up fro
 
 The change has a cost. Full town-level depth grows the gazetteer from 811 MB to 1.26 GB. That size costs little on a server but matters in the browser, where the demo streams the database a few kilobytes at a time over byte-range requests, and a file about 50% larger means about 50% more data to range over. The fix is therefore two builds. The browser gets the major cities, which is light and covers most of what people type. The CLI and server get the full town depth, where storage is cheap. One builder produces both depths, and you choose which artifact gets which.
 
-A place _resolving_ is also different from a full address _parsing_. With Kandahar in the gazetteer, the resolver now places the word "Kandahar" in Afghanistan instead of returning nothing. Whether our parser reliably extracts "Kandahar" from a raw Afghan address string is a separate question for a separate post. Coverage was a prerequisite, and this work completed it.
+A place _resolving_ is also different from a full address _parsing_. With Kandahar in the gazetteer, the resolver now places the word "Kandahar" in Afghanistan instead of returning no result. Whether our parser reliably extracts "Kandahar" from a raw Afghan address string is a separate question for a separate post. Coverage was a prerequisite, and this work completed it.
 
 Compare your data against a reference you did not build, count the disagreements, and look closely at the zeros. Our gap passed every test for weeks before this audit found it. Your data probably has one too.

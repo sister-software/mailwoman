@@ -53,7 +53,7 @@ We measure these things against coordinates rather than labels, because a name-m
 
 Forty-five countries that used to need a hint and now don't, a twenty-four-point jump on the query shape people use, and the cost on the GPU meter was zero. The thing we'd budgeted a retrain for was a hundred-odd lines in the resolver.
 
-The cost it does carry is the direct kind: it can only re-pick to a place the gazetteer has. Where we don't carry a city, the country in the address can't summon it from nothing, and the fix correctly does nothing rather than guess. That's a coverage problem, and it's a different change for a different day.
+The cost it does carry is the direct kind: it can only re-pick to a place the gazetteer has. Where we don't carry a city, the country in the address can't summon a place the gazetteer lacks, and the fix correctly declines to guess. That's a coverage problem, and it's a different change for a different day.
 
 ## The part worth keeping
 

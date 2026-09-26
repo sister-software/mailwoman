@@ -24,7 +24,7 @@
  *   - `pair-index-fr.bin` (hierarchy campaign R6) — built from the raw BAN dump through the shared
  *       `buildPairIndexOverlay`. The FR source is BAN's `nom_ld` (lieu-dit), read through `ban/sdk`'s `cleanLieuDit`
  *       — not WOF (WOF's French neighbourhood records are Paris quartiers, which never appear in a postal address).
- *       BAN is a directory of 101 département files, so the guard md5s nothing (hashing all of them costs more than
+ *       BAN is a directory of 101 département files, so the guard md5s no file (hashing all of them costs more than
  *       it saves. a BAN refresh is a deliberate act — delete the artifact after one) and instead refuses an
  *       implausibly small artifact: the BAN-derived index is ~6 MB, while a pair index built here from the wrong
  *       source (the admin-DB borough recipe) is ~1.9 kB with matching magnitudes. The calibrated magnitudes are the

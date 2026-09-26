@@ -394,7 +394,7 @@ export function streetLocaleForSurface(street: string, base: StreetLocale): Stre
  * so "lyon 1er arrondissement" becomes "lyon".
  *
  * Both the street-centroid extract builder and the probe apply it, and it returns
- * the input unchanged when the strip would leave nothing.
+ * the input unchanged when the strip would leave no text.
  */
 export function stripArrondissement(localityNorm: NameKey): NameKey {
 	const stripped = localityNorm.replace(/\s+\d+(?:er|e)\s+arrondissement$/, "").trim() as NameKey
@@ -406,7 +406,7 @@ export function stripArrondissement(localityNorm: NameKey): NameKey {
  * Strips a disambiguating qualifier from a locality name (`Kraubath/Mur`, `Lenk im Simmental`, `Odense S`)
  * for a query-side retry after the exact name misses.
  *
- * It returns "" when nothing was stripped, and the result must be refolded with
+ * It returns "" when no text was stripped, and the result must be refolded with
  * {@link normalizeLocalityForKey} before probing.
  */
 export function stripLocalityQualifier(locality: string): string {

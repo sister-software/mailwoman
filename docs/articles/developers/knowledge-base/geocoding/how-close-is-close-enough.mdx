@@ -32,7 +32,7 @@ Take one resolved address and hand it to three systems.
 
 **A jurisdiction check** wants to know which city, county or regulatory area this facility falls in.
 It needs the point to land inside the correct polygon, and a couple of kilometers of slop inside a
-polygon that spans tens of kilometers changes nothing. A town centroid is a complete answer.
+polygon that spans tens of kilometers does not change the jurisdiction. A town centroid is a complete answer.
 
 **A record matcher** wants to know whether two records describe the same _building_. Its tolerance is
 tens of meters, because a town centroid fuses every facility in town into one entity. A coordinate
@@ -91,7 +91,7 @@ registered address point is a surveyed position; the 1 is there to say "this is 
 system's units get" rather than to claim millimetre knowledge.
 
 At the administrative tier it reports `uncertainty_m: null`, and that is not zero uncertainty. It is
-the absence of an estimate: no finer method fired, so there is nothing to price. A consumer that reads
+the absence of an estimate: no finer method fired, so there is no number to price. A consumer that reads
 a missing radius as a small radius has inverted the meaning of the field. Branch on the tier, then read
 the radius — not the other way round.
 

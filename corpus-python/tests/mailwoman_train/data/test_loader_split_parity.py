@@ -1,16 +1,4 @@
-"""The loader split must not move a single row, in value or in order.
-
-Every stage of this pipeline draws from one `random.Random`: the parquet-file order, the row-group order,
-the row order inside a group, the country-acceptance test, the source multinomial, the shuffle
-buffer, and each augmentation. They share a stream, so a split that reorders two calls — or adds a
-draw, or skips one — reshuffles the corpus a run trains on while every existing test still passes:
-the suite asserts that rows are well-formed and that mixtures are stationary rather than that a seeded run
-yields these rows in this order.
-
-So this pins the sequence. `iter_rows` carries the sampling. the char path carries `iter_encoded`
-end to end without a SentencePiece artifact; `source_row_counts` carries the metadata reader that
-the epoch-mixture audit reads.
-"""
+"""The loader split must not move a single row in value or order, since every stage draws from one `random.Random` and a reordered, added, or skipped draw reshuffles the corpus a run trains on."""
 
 from __future__ import annotations
 
@@ -27,11 +15,9 @@ from mailwoman_train.config import DataConfig
 from mailwoman_train.data.loader import collate, iter_encoded, iter_rows, source_row_counts
 from mailwoman_train.tokenizer.char import build_char_vocab, save_char_vocab
 
-#: Committed beside this file, captured from the code as it stood before a split. Regenerating it
-#: after a change makes the test compare the new code against itself, so regenerate only when the
-#: current code is already verified against the existing reference.
-#:
-#: Regenerate with: uv run python tests/mailwoman_train/data/test_loader_split_parity.py
+#: Committed beside this file; regenerate with `uv run python
+#: tests/mailwoman_train/data/test_loader_split_parity.py` only when the current code is already
+#: verified against the existing reference, or the test compares the new code against itself.
 REFERENCE = Path(__file__).parent / "loader-split-reference.json"
 
 #: Written into the artifact so a reader meets it there rather than here.
@@ -143,13 +129,7 @@ def _row(index: int, country: str, source: str) -> dict[str, Any]:
 
 
 def build_reference_corpus(root: Path) -> Path:
-    """A corpus with enough variety that every filter and every RNG consumer is live.
-
-    Two sources so the multinomial runs. three countries with unequal weights so the acceptance
-    test both passes and fails. several row groups per parquet file so the row-group shuffle has
-    something to permute. a mixed-source val file because the held-out branch bypasses the
-    source bucketing entirely and a single-source one would not tell the branches apart.
-    """
+    """A corpus with enough variety that every filter and every RNG consumer is live, including a mixed-source val file because the held-out branch bypasses source bucketing."""
     corpus = root / "corpus"
     (corpus / "train").mkdir(parents=True)
     (corpus / "val").mkdir(parents=True)
@@ -308,11 +288,7 @@ def test_collate_keys_match_the_committed_reference(corpus: Path, tmp_path: Path
 
 
 def write_reference() -> None:
-    """Capture the current loader as the reference the tests above compare against.
-
-    Run this only when the current code already passes against the existing reference — otherwise
-    the artifact records whatever the code does now, and the tests assert nothing.
-    """
+    """Capture the current loader as the reference the tests above compare against; run it only when the current code already passes against the existing reference, or the artifact records whatever the code does now."""
     import tempfile
 
     with tempfile.TemporaryDirectory() as scratch:

@@ -15,7 +15,7 @@ afterEach(() => {
 test("wofExtractPaths: builds the admin + postcode + tail + intl + NL-PC6 + NI-OSM database paths under a data root (#920/#977)", () => {
 	// The 2026-09-15 regrouping moved every database artifact under `db/`,
 	// and this test pinned the old prefix as six absolute string literals.
-	// It therefore passed while `wofExtractPaths` named a directory holding nothing.
+	// It therefore passed while `wofExtractPaths` named a directory holding no files.
 	//
 	// The layout is composed with the builder the rest of the tree uses,
 	// so a future regrouping fails this assertion in one place.

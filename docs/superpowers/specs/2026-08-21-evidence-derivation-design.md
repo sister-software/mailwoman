@@ -70,7 +70,7 @@ street-centroids-fr.db   ban:fr, release 2026-05-18
             NO layer_coverage table at all — predates the interface
 ```
 
-The layer exists, and the blocking condition is that nothing calls the check with it.
+The layer exists, and the blocking condition is that no caller invokes the check with it.
 
 ### 1.3 The positive half is built and measured
 

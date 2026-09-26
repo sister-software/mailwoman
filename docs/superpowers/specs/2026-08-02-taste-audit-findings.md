@@ -193,7 +193,7 @@ cheapest way to get the shape the call site needs.
 `core/utils/python-random.ts` beside the class, then repoint the call sites. Do not force sixteen call sites into
 the class.
 
-**Cost of leaving it: low-medium.** Each copy is deterministic on its own, so nothing breaks. However, the LCG copies
+**Cost of leaving it: low-medium.** Each copy is deterministic on its own, so a change to one leaves the others unchanged. However, the LCG copies
 and the mulberry32 copies produce different streams from the same seed, so "same seed, same
 result" is false across files that appear to agree.
 **Cost of fixing it: low** once the thunk exists.
@@ -680,7 +680,7 @@ halves and the extract is unchanged. That outcome is luck rather than design. Th
 documented in place at `po-box-cedex.ts` instead of being fixed, because a halved record fails the field checks
 and is dropped. The failure mode is therefore a lost row rather than a corrupt one.
 
-**ES has the only real cluster, and it changes nothing.** The 52 odd-quote lines are 26 records, all with the
+**ES has the only real cluster, and it changes no result.** The 52 odd-quote lines are 26 records, all with the
 same Catastro shape: a quoted field that holds only a newline, between the house number and the
 postcode:
 

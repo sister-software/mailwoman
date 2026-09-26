@@ -1,16 +1,9 @@
 /**
- * Prints the coverage funnel for every jurisdiction in the source register,
- * with incumbency groups and work-selection inputs.
+ * Prints the coverage funnel for every jurisdiction in the source register, where a stage reads `unknown`
+ * when a checkout cannot answer it — a statement about the checkout rather than the jurisdiction.
  *
- * Unlike `mailwoman data coverage`, which lists only countries some coverage source
- * mentions, this covers every register jurisdiction.
- * A stage reads `unknown` when a checkout cannot answer it, which says nothing about the jurisdiction.
- *
- * Without `--config`, the `admitted` stage reads the config that `scope.config.json`
- * records for the Latin family's shipped graph.
- * `--mixture-audit` takes the output of `python -m mailwoman_train.audits.epoch_mixture --json`
- * and fills the `sampled` stage, which otherwise reads `unknown` because sampling depends on a run.
- * `--rows` prints every jurisdiction.
+ * `--mixture-audit` fills the `sampled` stage, which otherwise reads `unknown`
+ * because sampling depends on a run.
  *
  * Run:
  *
@@ -48,8 +41,7 @@ const { values } = parseArguments({
 })
 
 /**
- * Describes the fields this tool reads from `mailwoman_train.audits.epoch_mixture --json` output.
- *
+ * The fields this tool reads from `mailwoman_train.audits.epoch_mixture --json` output;
  * `emitted_level` counts the rows that survive augmentation and reach the trainer,
  * so it answers the `sampled` stage.
  */
@@ -59,13 +51,8 @@ interface EpochMixtureAudit {
 }
 
 /**
- * Reads the rows sampled per country in one audited epoch, and the epoch's total.
- *
- * A country missing from `by_country` stays missing from the map, and the funnel decides what that means.
- * `by_country` lists every country the audit drew, so a missing country drew zero rows.
- *
- * @throws If the audit came from a different config than the `admitted` stage reads,
- * because the two stages must describe one training arm.
+ * Reads the rows sampled per country in one audited epoch, leaving a country missing
+ * from `by_country` missing from the map so the funnel decides what that means.
  */
 async function readMixtureAudit(
 	path: string,
@@ -132,9 +119,8 @@ console.log(
 		`${config.family ? `, weights family ${config.family}` : ""}).`
 )
 
-// The `admitted` stage reads one config, which covers one graph.
-// The union across shipped graphs prints beside it so an in-flight config is
-// not mistaken for a released model.
+// The union across shipped graphs prints beside the single-config `admitted` stage
+// so an in-flight config is not mistaken for a released model.
 const shippedAdmitted = await admittedByShippedGraphs(scope)
 const shippedByFamily = new Map<string, number>()
 
@@ -176,10 +162,8 @@ for (const stage of FUNNEL_STAGES) {
 }
 
 /**
- * Sets how many country codes an incumbency cell prints before it summarizes the rest.
- *
- * This keeps the terminal table readable.
- * `--out-json` writes every code.
+ * Sets how many country codes an incumbency cell prints before it summarizes the rest,
+ * to keep the terminal table readable; `--out-json` writes every code.
  */
 const CODES_PER_GROUP_CELL = 18
 
@@ -237,8 +221,8 @@ console.log(
 				`\`country_weights\` entry as well as corpus rows.`
 )
 
-// A postal regime's addresses are not covered by its parent country's funnel row.
-// For example, a BFPO address counts under GB, but nothing parses it as GB.
+// A postal regime's addresses are not covered by its parent country's funnel row:
+// a BFPO address counts under GB, but no parser reads it as GB.
 console.log(`\n## Postal regimes — where the parser unit is not the ISO country code\n`)
 console.log(`| regime | kind | ISO | coverage | parent jurisdictions' stages reached |`)
 console.log(`| --- | --- | --- | --- | --- |`)

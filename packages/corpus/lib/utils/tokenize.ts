@@ -3,21 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Tokenizer interface for alignment.
- *
- *   Two implementations live in the corpus package:
- *
- *   1. `whitespaceTokenizer()` (this file): pure-JS, depends on nothing. Splits a string into maximal
- *        runs of letters/digits/marks, dropping whitespace and standalone punctuation. Used as the
- *        default for in-container alignment tests and as a fallback when no SentencePiece model is
- *        available.
- *   2. `sentencePieceTokenizer(modelPath)` (Phase 1 task #11, deferred): wraps the SentencePiece model
- *        trained on the corpus. Same interface, different splits. Locked against the corpus version
- *        (`tokenizer-v0.1.0` ships with `corpus-v0.1.0`).
- *
- *   The interface is intentionally minimal — only what alignment needs. Each token comes back with
- *   its (start, end) character offsets so BIO labels can be assigned by span overlap with component
- *   spans, independent of how the tokenizer chose its splits.
+ * Tokenizer interface for alignment. Each token comes back with its (start, end) character offsets so
+ * BIO labels can be assigned by span overlap with component spans, independent of how the tokenizer
+ * chose its splits; the interface is deliberately minimal — only what alignment needs.
  */
 
 /**
@@ -25,19 +13,17 @@
  */
 export interface TokenSpan {
 	/**
-	 * The token text, possibly normalized (case unchanged here. Tokenizers may differ).
+	 * The token text, possibly normalized; this tokenizer leaves case unchanged.
 	 */
 	text: string
 
 	/**
-	 * Inclusive start offset (UTF-16 code-unit index) in the source string.
+	 * Inclusive start offset, a UTF-16 code-unit index into the source string.
 	 */
 	start: number
 
 	/**
-	 * Exclusive end offset in the source string.
-	 *
-	 * `text === source.slice(start, end)`.
+	 * Exclusive end offset, with `text === source.slice(start, end)`.
 	 */
 	end: number
 }
@@ -52,21 +38,11 @@ export interface Tokenizer {
 /**
  * Whitespace + punctuation tokenizer (pure JS).
  *
- * Tokens are maximal runs of unicode word characters
- * (`\p{L}` letters, `\p{N}` digits, `\p{M}` marks, plus `'`, `-`, `_`).
- * Everything else — whitespace, punctuation, symbols — is treated as a separator
- * and **not** emitted as a token.
- *
- * The resulting spans cover the original string only on token regions.
- * In-between regions belong to no token.
- *
- * This is intentionally lossy at the edges (alignment can still label every meaningful span).
- * A future SentencePiece tokenizer will preserve all bytes via byte-fallback.
+ * Tokens are maximal runs of unicode word characters (`\p{L}`, `\p{N}`, `\p{M}`, plus `'`, `-`, `_`);
+ * everything else is a separator and is not emitted, so the spans cover only token regions.
+ * The lossiness at the edges is intentional, because alignment can still label every meaningful span.
  */
 export function whitespaceTokenizer(): Tokenizer {
-	// Maximal runs of letters/digits/marks plus the joiners common to addresses
-	// (apostrophe, hyphen, underscore).
-	// Comma/space/period etc. are not in the set.
 	const tokenRe = /[\p{L}\p{N}\p{M}'_-]+/gu
 
 	return {
@@ -92,12 +68,11 @@ export function whitespaceTokenizer(): Tokenizer {
 const HAN = /\p{Script=Han}/u
 
 /**
- * Whitespace tokenizer for Latin runs, one token PER character for Han runs.
+ * Whitespace tokenizer for Latin runs, one token per character for Han runs.
  *
- * The CJK sibling model is character-level (CharCNN), so a per-character token is the unit it labels.
- * The Latin tail of a mixed row (`赵光三分场二十九队, Heilongjiang, China`) keeps the
- * word tokens the Latin aligner has always used.
- *
+ * The CJK sibling model is character-level (CharCNN), so a per-character token is the
+ * unit it labels, while the Latin tail of a mixed row (`赵光三分场二十九队, Heilongjiang, China`)
+ * keeps the word tokens the Latin aligner has always used.
  * Spans still come back as `[start, end)` offsets over the source string,
  * so the aligner's span-overlap rule needs no change.
  */

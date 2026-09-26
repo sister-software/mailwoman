@@ -3,17 +3,10 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   @file Head-noun derivation for the sub-venue lexicon — proposing the addressed form of a designator
- *   from the encyclopaedic label a vocabulary source carries.
+ * @file Head-noun derivation for the sub-venue lexicon — proposing the addressed form of a designator
+ * from the encyclopaedic label a vocabulary source carries.
  *
- *   Wikidata's label for a concept is the encyclopaedic name (`terminal aeroportuaria`, `letištní
- *   terminál`, `havalimanı terminali`), while the addressed form is the bare head (`Terminal`,
- *   `Terminál`, `Terminali`). Nothing can promote the encyclopaedic form, so the head has to be
- *   extracted before the curation pass has anything to decide about. That gap is why the first wave of
- *   this table shipped 1,014 uncurated surfaces.
- *
- *   Everything derived lands `curated: false`. A derivation is a hypothesis about what the addressed
- *   form is. a locale's own data is what confirms or kills it.
+ * Everything derived lands `curated: false`, because a derivation is a hypothesis a locale's own data confirms or kills.
  */
 
 import { isPresent } from "@mailwoman/core/objects"
@@ -24,8 +17,8 @@ import type { SubVenueSurface } from "#tools/sub/venue/table"
  * Diacritic-flattened ascii fold, for comparing a Slavic or Turkish inflection against its Latin root.
  *
  * Deliberately `\p{Diacritic}` rather than `@mailwoman/normalize/fold`'s
- * `stripCombiningMarks` (`\p{M}`): the two classes diverge outside plain diacritics,
- * and {@link HEAD_NOUN_PREFIX_FLOOR} was calibrated against this exact fold.
+ * `stripCombiningMarks` (`\p{M}`), because the two diverge outside plain diacritics
+ * and {@link HEAD_NOUN_PREFIX_FLOOR} was calibrated against this fold.
  */
 function asciiFold(text: string): string {
 	return text
@@ -37,50 +30,36 @@ function asciiFold(text: string): string {
 /**
  * How many leading characters two ascii-folded forms must share for one to count as the other's inflection.
  *
- * Five, or the id's own length when that is shorter (`hall`, `gate`, `wing`, `pier` are four).
- * Measured against the committed Wikidata pull: at five,
- * `terminal`/`terminál`/`terminale`/`terminali`/`terminála`/`terminalo` are all accepted for
- * `terminal` while `campo` and `campws` are both rejected for `campus` (they share four).
- *
- * At six the Spanish `satélite` is lost.
- * At four, Italian `campo` is admitted and it means field.
+ * Five, or the id's own length when shorter; at six the Spanish `satélite` is lost,
+ * and at four Italian `campo` is admitted and means field.
  */
 const HEAD_NOUN_PREFIX_FLOOR = 5
 
 /**
  * The shortest substring a non-Latin head-noun candidate may be.
  *
- * Two: `航站` and `터미널` are both real, `楼` alone is "building" and would fire on every Chinese building name.
+ * Two, because `楼` alone is "building" and would fire on every Chinese building name.
  */
 const NON_LATIN_HEAD_MIN_LENGTH = 2
 
 /**
  * How many head-noun candidates one non-Latin record+language group may contribute.
  *
- * Six — enough to carry `ターミナル`, `ターミナルビル` and `旅客ターミナル` together, capped because the
- * substring lattice of a nine-character label is large and, ranked by attesting-surface
- * count, nothing past the sixth has more than the minimum two.
+ * Six, capped because the substring lattice of a nine-character label is large
+ * and no entry past the sixth attests more than two surfaces.
  */
 const NON_LATIN_HEAD_CANDIDATE_CAP = 6
 
 /**
- * Latin-script test — the scripts an ascii-folded prefix comparison against
- * a Latin designator id can work on.
+ * The scripts an ascii-folded prefix comparison against a Latin designator id can work on.
  */
 const LATIN_PHRASE = /^[\p{Script=Latin}\d\s\p{P}]+$/u
 
 /**
- * The scripts the shared-substring derivation is allowed to run on: Han, Hiragana, Katakana, Hangul.
+ * The scripts the shared-substring derivation may run on: Han, Hiragana, Katakana, Hangul.
  *
- * Narrower than "not Latin", and the narrowing was earned.
- * Run over every non-Latin phrase in the table, the derivation produced 90 fragments
- * of Cyrillic, Greek, Arabic, Thai, Burmese and Tamil words — `сгра`, `град`, `κτίρ`,
- * `ิ่งก่อสร้า` — because those languages have exactly one surface per concept
- * and the only substrings shared inside a group are pieces of one word.
- *
- * Every one of them was unusable, and none could ever be counted: `poi.db` is four countries and this
- * wave's extracts are GB, DE, FR, ES and JP, so nothing in reach attests a Thai or Burmese surface.
- * Deriving a candidate no available source can confirm is not a hypothesis, it is table weight.
+ * Narrower than "not Latin" because a wider run produced unusable Cyrillic, Greek, Arabic,
+ * Thai, Burmese and Tamil fragments, and no extract in reach attests those surfaces.
  */
 const SHARED_SUBSTRING_SCRIPT = /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}]/u
 
@@ -88,42 +67,9 @@ const SHARED_SUBSTRING_SCRIPT = /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Kat
  * Derive the head noun of every multi-part surface, so `terminal aeroportuaria`
  * contributes the form anyone actually writes on an envelope.
  *
- * The problem this solves is the whole reason wave 1 shipped 1,014 uncurated
- * surfaces: Wikidata's label for a concept is the encyclopaedic name
- * (`terminal aeroportuaria`, `letištní terminál`, `havalimanı terminali`), while the
- * addressed form is the bare head (`Terminal`, `Terminál`, `Terminali`).
- * Nothing can promote the encyclopaedic form, so the head has to be extracted
- * before the curation pass has anything to decide about.
- *
- * Two derivations, because the table holds two kinds of writing:
- *
- * - **Latin script — the cognate test.** A token is the head when its ascii fold shares
- *   {@link HEAD_NOUN_PREFIX_FLOOR} leading characters with the designator's own canonical id.
- *   Nothing subtler survived contact with the data: an earlier version matched a token
- *   against any single-token surface of the record, and because Dutch `universiteit`
- *   is a one-token surface of `campus`, it derived `universitario`, `universitaire`,
- *   `üniversite` and twenty more as head nouns of `campus`.
- *   Those are the modifier half of the label, and admitting them would have taught
- *   the harvest to read "Ciudad Universitaria" as sub-venue structure.
- * - **Non-Latin script — the shared-substring test.** The cognate test cannot reach a script
- *   the id is not written in, and for Han and Kana a token split finds nothing at all.
- *   So every substring of length ≥ {@link NON_LATIN_HEAD_MIN_LENGTH} occurring in
- *   at least two distinct surfaces of the same record and primary language becomes
- *   a candidate, ranked by how many surfaces carry it.
- *   Japanese yields `ターミナル` (in all five `ja` terminal labels) ahead of `ターミナルビル`
- *   (three); Chinese yields `航站`, `航站楼`, `航站樓`.
- *
- *   Where the script does space its words (Korean, Greek, Cyrillic) a candidate must be
- *   a whole token, so `공항 터미널` ∩ `공항터미널` gives `터미널` and never a fragment.
- *
- * The non-Latin branch deliberately emits several candidates instead of picking one.
- * Choosing between `航站` and `航站楼` from Wikidata alone is guesswork.
- *
- * The Japan extract answers it by counting, and the promotion ledger records which count won.
- *
+ * Latin script uses a cognate test against the designator's own canonical id; Han
+ * and Kana use a shared substring, because a token split finds no boundary there.
  * Everything derived lands `curated: false`.
- * The derivation is a hypothesis about what the addressed form is, and a locale's
- * own data is what confirms or kills it.
  */
 export function deriveHeadNounSurfaces(surfaces: readonly SubVenueSurface[]): SubVenueSurface[] {
 	const derived = new Map<string, SubVenueSurface>()
@@ -149,8 +95,6 @@ export function deriveHeadNounSurfaces(surfaces: readonly SubVenueSurface[]): Su
 		})
 	}
 
-	// ── Spacing scripts: prefix-match a token against a single-token surface of the same record
-	// ────── Latin script: a token that is a cognate of the designator's own canonical id.
 	for (const surface of surfaces) {
 		if (!LATIN_PHRASE.test(surface.phrase)) continue
 
@@ -170,14 +114,13 @@ export function deriveHeadNounSurfaces(surfaces: readonly SubVenueSurface[]): Su
 		}
 	}
 
-	// Non-Latin script: substrings shared by two or more surfaces of the same record + language.
 	const groups = new Map<string, Set<string>>()
 
 	for (const surface of surfaces) {
 		if (!SHARED_SUBSTRING_SCRIPT.test(surface.phrase)) continue
 
-		// Group `zh`, `zh-cn`, `zh-hant` together: they are writing systems for one vocabulary,
-		// and the simplified/traditional pair is exactly the evidence a shared substring needs.
+		// Group `zh`, `zh-cn` and `zh-hant` together: they are writing systems for one vocabulary,
+		// and the simplified/traditional pair is the evidence a shared substring needs.
 		const key = `${surface.recordID} ${surface.lang.split(/[-_]/u)[0]!}`
 		const pool = groups.get(key) ?? new Set<string>()
 		pool.add(surface.phrase)
@@ -206,9 +149,6 @@ export function deriveHeadNounSurfaces(surfaces: readonly SubVenueSurface[]): Su
 	return [...derived.values()]
 }
 
-/**
- * Length of the shared leading run of two strings.
- */
 function commonPrefixLength(a: string, b: string): number {
 	const limit = Math.min(a.length, b.length)
 	let i = 0
@@ -222,19 +162,12 @@ function commonPrefixLength(a: string, b: string): number {
 
 /**
  * Substrings occurring in at least two distinct members of `pool`, ranked by that count
- * and then by length, capped at {@link NON_LATIN_HEAD_CANDIDATE_CAP}.
+ * then length, capped at {@link NON_LATIN_HEAD_CANDIDATE_CAP}.
  *
- * A candidate never spans whitespace, and in a pool whose members contain whitespace
- * a candidate must be a whole token of some member.
- * That is what keeps Korean `공항 터미널` from contributing a fragment straddling the space.
- *
+ * A candidate never spans whitespace and must be a whole token of some member where the pool has
+ * whitespace, which keeps Korean `공항 터미널` from contributing a fragment straddling the space.
  * Maximal candidates only: one contained in a longer candidate carried by the same
  * number of surfaces is dropped, since counting can never separate the two.
- * Every one of `ターミナル`'s five ja labels also contains `ターミ`, `ターミナ` and `ミナル`,
- * so without this the group contributes four indistinguishable candidates
- * and the Japan harvest returns four identical counts.
- *
- * `航站` survives next to `航站楼` because six surfaces carry it against that one's two.
  */
 function sharedSubstringCandidates(pool: ReadonlySet<string>): string[] {
 	const phrases = [...pool]

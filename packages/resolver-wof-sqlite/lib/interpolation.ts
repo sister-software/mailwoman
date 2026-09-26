@@ -16,7 +16,7 @@
  *   Every answer is honest about being an estimate: `interpolated: true`, `parityMatched` (false when
  *   only the opposite side's range contained the number — usually the right block, wrong side of
  *   the street), and `uncertaintyM` (half the matched segment's length — the #483 issue's honest
- *   default). Scoping is postcode-first (a given ZIP that scopes to nothing is a miss, and the
+ *   default). Scoping is postcode-first (a given ZIP that scopes to no candidate is a miss, and the
  * statewide retry was measured and rejected, see `find()`); without a postcode the statewide name
  *   match must agree on a single postcode or the lookup abstains (a common street name spanning
  *   towns is ambiguity rather than an answer).
@@ -271,7 +271,7 @@ export class StreetInterpolator<
 		for (const variant of streetKeyVariants(query.street)) {
 			const streetNorm = canonicalizeRouteKey(variant)
 
-			// A given ZIP that scopes to nothing is a miss rather than a statewide guess:
+			// A given ZIP that scopes to no candidate is a miss rather than a statewide guess:
 			// the retry was measured (2026-06-11 VT eval) at +2.3pp coverage for a poisoned tail
 			// (p99 1.0 → 20.8 km, max 204 km — a unique name statewide can live in a far-away town).
 			const rows = query.postcode

@@ -23,7 +23,7 @@ flood zones the Environment Agency states England-wide coverage, and the Plannin
 defines Zone 1 as "all land outside Zones 2, 3a and 3b". An empty flood answer inside England is
 therefore a designation. NCERM publishes no coverage statement. A location in England with no
 erosion polygon is either **inland**, which covers most of the country and about which the product
-says nothing, or **on the coast and outside the mapped risk area**, which is the designation a caller
+makes no statement, or **on the coast and outside the mapped risk area**, which is the designation a caller
 wants. The published layers cannot tell those two cases apart. A reader that applied the flood rule
 would report the whole country as free of coastal-erosion risk, from a well-formed artifact that
 passed every structural check.
@@ -42,7 +42,7 @@ that would otherwise look identical.
 **No reading is a statement about a property.** The layer reports what the authority's map assigns
 at a location under a named scenario, which is a fact about the map. The Environment Agency states
 that its data "cannot provide details for individual properties", and every reading carries the
-product's own exclusions. An erosion answer says nothing about flooding or about foreshore features.
+product's own exclusions. An erosion answer makes no statement about flooding or about foreshore features.
 
 ## The twelve scenarios
 
@@ -108,7 +108,7 @@ type.
 
 **A blank field holds a single space.** The value `" "` appears on the same 87 rows
 that carry `published = 0`, all on SMP layers (13 to 16 per layer; the NFI layers have none). A reader
-that tests `=== ""` finds nothing and reports the anomalous rows as ordinary ones. The Environment
+that tests `=== ""` finds no match and reports the anomalous rows as ordinary ones. The Environment
 Agency documents no meaning for these rows, so the build stores them as published instead of dropping
 or coercing them.
 
@@ -147,7 +147,7 @@ runs only against the polygons that the cell lists for that scenario.
 accumulates per zone code across features, so a cell's containment is not decided until the build has
 seen every feature with that code. The flood build therefore resolves a temporary table at the end.
 An erosion cell row references one polygon, so the row is final as soon as that polygon is
-classified. Rows are written directly, memory use does not grow with row count, and nothing needs
+classified. Rows are written directly, memory use does not grow with row count, and no table needs
 resolving afterwards.
 
 `coastal_ground_instability` holds NCERM's two ground-instability layers, which describe a
@@ -255,14 +255,14 @@ erosion. A layer that pooled the twelve scenarios would have to answer both with
 
 The third row is the ordinary case: the same frontage has a larger distance at the longer horizon.
 The fourth row shows the case that the coverage rules are designed for. An inland English coordinate
-gets no coverage row and no designation, and the reader reports that the product says nothing there.
+gets no coverage row and no designation, and the reader reports that the product makes no statement there.
 The reader does not present it as reassurance.
 
 ## The footprint question — what is settled, and what would change it
 
 **Settled as built:** This product has no mapped-footprint source, so `layer_coverage` carries
 `basis = source_present`, `coastal_mapped_extent` is empty, and the layer supports **presence only**.
-A coverage row means "this product has data in this cell", and a missing coverage row means nothing.
+A coverage row means "this product has data in this cell", and a missing coverage row asserts no fact.
 Neither reading supports a claim that a location is free of risk.
 
 **What would move it to `designated`:** The Environment Agency would need to publish a statement of
@@ -282,7 +282,7 @@ negative answer would need to report. The flood layer states the same rule for t
 
 The coverage row cannot express two further limits, both taken from the authority's own text. The
 product "considers the predominant risk at the coast" and generally excludes foreshore features, so an
-NCERM answer says nothing about flooding. The 87 anomalous rows carry blank policy and defence fields
+NCERM answer makes no statement about flooding. The 87 anomalous rows carry blank policy and defence fields
 with `published = 0`, and the Environment Agency documents no policy or defence fields for those rows.
 
 ## Building it

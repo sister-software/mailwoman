@@ -13,7 +13,7 @@
  *     sweep   Re-grade the frozen results under an abstention threshold and write the trade curve (#2264).
  *     knob    Replay the frozen fixture at a matrix of `ResolveOpts` arms — the shipped knob (#2264, #2265).
  *
- *   Nothing after `record` reads a database, so a difference the `run` phase reports cannot come from
+ *   No step after `record` reads a database, so a difference the `run` phase reports cannot come from
  *   retrieval, an index vintage, or a data footprint: every arm reads the same frozen bytes, and
  *   `replayBackend` raises rather than inventing an answer.
  *
@@ -314,7 +314,7 @@ async function recordedUnder(): Promise<{ benchmarkID: string; withheldGoldRule:
 	return {
 		benchmarkID: receipt?.benchmarkID ?? "(no receipt beside these results)",
 		// A fixture recorded before the rule was named carries no field.
-		// That is the v1 rule, and saying so is not the same as saying nothing.
+		// That is the v1 rule, and saying so is not the same as staying silent.
 		withheldGoldRule: receipt?.withheldGoldRule ?? "concorded-ids (receipt predates the field)",
 	}
 }

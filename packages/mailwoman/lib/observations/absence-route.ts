@@ -152,7 +152,7 @@ export type AbsenceDecision =
 
 /**
  * Describes which artifact and coverage layer a route reads, so a receipt can tell a
- * route that found nothing from one built against the wrong layer.
+ * route that found no result from one built against the wrong layer.
  */
 export interface AbsenceRouteIdentity {
 	modelVersion: string

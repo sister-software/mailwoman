@@ -162,7 +162,7 @@ export interface ResolvedSpecificityInput {
 	/**
 	 * The parsed span.
 	 *
-	 * Absent for a non-postcode candidate, where nothing conditional applies.
+	 * Absent for a non-postcode candidate, where no condition applies.
 	 */
 	value?: string
 	/**
@@ -176,7 +176,7 @@ export interface ResolvedSpecificityInput {
  *
  * `PLACETYPE_SPECIFICITY`, except that a `postalcode` is ranked by its hit.
  *
- * An unranked placetype returns `-Infinity` so it wins only when nothing else resolved.
+ * An unranked placetype returns `-Infinity` so it wins only when no other candidate resolved.
  */
 export function resolvedSpecificity(candidate: ResolvedSpecificityInput): number {
 	if (candidate.placetype !== "postalcode") {

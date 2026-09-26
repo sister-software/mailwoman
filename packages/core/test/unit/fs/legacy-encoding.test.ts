@@ -3,33 +3,19 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- * @file Why `@mailwoman/core` carries `iconv-lite` rather than calling `TextDecoder`, pinned so the dependency cannot be
- *   removed as redundant.
- *
- *   Node's whatwg `euc-kr` implements EUC-KR proper (KS X 1001) and not the UHC extension CP949 adds in lead bytes
- *   0x81–0xA0. Measured over every two-byte sequence Python's `cp949` accepts, `TextDecoder('euc-kr')` reads 8,824 of
- *   17,048 differently — 6,475 as U+fffd and 2,349 as a different character with nothing raised. `iconv-lite` matches on
- *   all 17,048.
- *
- *   It reached a real row: one address in 48,000 of the Korean register carries `더샾오피스텔`, posco's "The Sharp"
- *   officetel brand, and `TextDecoder` reads it as `더乍의퓰뵀`.
+ * @file Why `@mailwoman/core` carries `iconv-lite` rather than calling `TextDecoder`, pinned so the dependency cannot be removed as redundant: Node's whatwg `euc-kr` implements EUC-KR proper (KS X 1001) and not the UHC extension CP949 adds in lead bytes 0x81–0xA0, and over every two-byte sequence Python's `cp949` accepts `TextDecoder('euc-kr')` reads 8,824 of 17,048 differently while `iconv-lite` matches all 17,048.
  */
 
 import { decodeByteStream, decodeBytes } from "@mailwoman/core/fs/streams"
 import { describe, expect, it } from "vitest"
 
 /**
- * `더샾오피스텔` in CP949.
- *
- * The `98 de` pair is the UHC extension `샾`, which EUC-KR proper does not carry.
+ * `더샾오피스텔` in CP949, whose `98 de` pair is the UHC extension `샾` that EUC-KR proper does not carry.
  */
 const THE_SHARP = Uint8Array.from([0xb4, 0xf5, 0x98, 0xde, 0xbf, 0xc0, 0xc7, 0xc7, 0xbd, 0xba, 0xc5, 0xda])
 
 /**
- * `서울특별시`, wholly inside KS X 1001.
- *
- * The subset that misled the first check into reporting that Node could read CP949,
- * from one string that happened to avoid the extension.
+ * `서울특별시` is wholly inside KS X 1001, the subset that made Node look as though it could read CP949.
  */
 const SEOUL = Uint8Array.from([0xbc, 0xad, 0xbf, 0xef, 0xc6, 0xaf, 0xba, 0xb0, 0xbd, 0xc3])
 
@@ -50,9 +36,9 @@ describe("decodeBytes", () => {
 
 describe("decodeByteStream", () => {
 	it("holds a character split across two chunks", async () => {
-		// The split lands between `98` and `de` — the two bytes of `샾`.
-		// A per-chunk decode emits a replacement character here and corrupts the row.
-		// The stream decoder holds the lead until its trail arrives.
+		// The split lands between `98` and `de`, the two bytes of `샾`, so a per-chunk
+		// decode emits a replacement character and corrupts the row while the stream
+		// decoder holds the lead until its trail arrives.
 		async function* halves(): AsyncGenerator<Uint8Array> {
 			yield THE_SHARP.slice(0, 3)
 			yield THE_SHARP.slice(3)

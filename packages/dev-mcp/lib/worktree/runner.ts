@@ -3,14 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The worktree arm as a comparison arm — `worktree-arm.ts` runs the child, this projects its answers onto
- *   the shape every other arm answers in.
- *
- *   Separate from both on purpose. `worktree-arm.ts` knows about git and subprocesses and nothing about
- *   comparisons; `compare.ts` knows about scoring and nothing about either. Putting the projection in its own
- *   module keeps the dependency one-way, which the alternatives do not: the runner cannot live in `compare.ts`
- *   without pushing that file past its line cap, and it cannot live in `worktree-arm.ts` without closing a
- *   cycle through `arms.ts`.
+ * The worktree arm as a comparison arm: `worktree-arm.ts` runs the child and `compare.ts` scores, while this
+ * module projects the child's answers onto the shape every arm answers in so the dependency stays one-way.
  */
 
 import type { ArmRunner, WorktreeArm } from "#arms"
@@ -19,18 +13,12 @@ import type { ResolvedInputSet } from "#input-sets"
 import { runWorktreeArm } from "#worktree/arm"
 
 /**
- * A mailwoman arm running another version of the source, batched in a child process.
+ * A mailwoman arm running another version of the source, batched in a child process
+ * because the child pays a full engine build; the answers exist before the first
+ * `answer()` call, which is why this arm cannot stream.
  *
- * Batched rather than per-input because the child pays a full engine build —
- * every row through one process, indexed by input, and served from the map afterwards.
- * That is also why this arm cannot stream: the answers exist before the first `answer()` call.
- *
- * The config is resolved by {@linkcode resolveConfig}, the same function the
- * in-process arm uses, and handed to the child whole.
- * A change added there reaches this arm without being copied into it.
- *
- * The alternative, a hand-written option list inside the runner script, is exactly the
- * shared-constants drift this comparison exists to detect rather than to commit.
+ * The config is resolved by {@linkcode resolveConfig}, the same function the in-process
+ * arm uses, so a change there reaches this arm without being copied.
  */
 export async function worktreeArmRunner(
 	registry: EngineRegistryLike,
@@ -76,8 +64,8 @@ export async function worktreeArmRunner(
 		answer: async (input) => {
 			const answer = byInput.get(input)
 
-			// A missing input is a batching fault rather than a no-result, and says so: the child was handed
-			// this set, so silence here would otherwise be scored as the pipeline declining to answer.
+			// A missing input is a batching fault rather than a no-result: the child was handed
+			// this set, so silence here would otherwise score as the pipeline declining to answer.
 			if (!answer) {
 				return {
 					lat: null,

@@ -11,11 +11,11 @@ Last night the plan was straightforward: mailwoman was missing a pile of non-US 
 
 ## The geocoder couldn't find Tirana
 
-Start with the symptom. Ask mailwoman's drop-in API for `Tirana, Albania` and you got nothing. Same for Yerevan, Kabul, Ulaanbaatar, Sarajevo — 147 countries where the candidate gazetteer, the table the demo and the drop-ins query, held exactly zero rows. You didn't get a wrong coordinate, you got silence, as if the country didn't exist.
+Start with the symptom. Ask mailwoman's drop-in API for `Tirana, Albania` and you got no result. Same for Yerevan, Kabul, Ulaanbaatar, Sarajevo — 147 countries where the candidate gazetteer, the table the demo and the drop-ins query, held exactly zero rows. You didn't get a wrong coordinate, you got silence, as if the country didn't exist.
 
 That gap is easy to miss, because the cities that do resolve — Berlin, Paris, Tokyo — resolve beautifully, and those are the ones you check by hand. The hole was in the long tail of countries nobody on the team types into a demo at 2am.
 
-If you've shipped a data pipeline you know how this happens. A from-scratch rebuild enriched every existing place with alternate-language names, so Berlin now answers to Berlino, Берлин, 柏林, all 134 of its surface forms. Wonderful. But enriching the places you have does nothing for the places you don't, and the gap-fill that was supposed to add the missing countries lived in a side index the candidate table never folded in. Every piece worked. The join between them was empty, and nothing failed loudly enough to notice.
+If you've shipped a data pipeline you know how this happens. A from-scratch rebuild enriched every existing place with alternate-language names, so Berlin now answers to Berlino, Берлин, 柏林, all 134 of its surface forms. Wonderful. But enriching the places you have adds no coverage for the places you don't, and the gap-fill that was supposed to add the missing countries lived in a side index the candidate table never folded in. Every piece worked. The join between them was empty, and no component failed loudly enough to notice.
 
 ## The plan was wrong, and a ten-minute probe said so
 
@@ -43,6 +43,6 @@ Point the eval at what we ship and Portugal's 47 kilometers becomes 0.8. Poland 
 
 Twice in one night the thing being measured wasn't the thing we thought. The plan's diagnostic ran without the candidate database loaded, so it blamed coverage on exonyms — the same missing-database confound that [put Warsaw in Indiana](./2026-06-26-warsaw-indiana.mdx) and faked a whole scoreboard a few weeks back. My parser eval ran against a stale model, so it blamed the shipped parser for a retired one's mistakes. Same failure wearing two costumes: the harness reported its numbers and stayed quiet about its assumptions.
 
-The only thing that caught either one was the same dull habit — before you trust an aggregate, check what produced it. Dump the rows. Read the config. Print the path the symlink resolves to. It is never the interesting work, and it is most of the job. A model that scores 47 kilometers and a model that scores 0.8 can be the same model graded two ways, and the gap between "ship a fix" and "burn a week on nothing" is whether you looked.
+The only thing that caught either one was the same dull habit — before you trust an aggregate, check what produced it. Dump the rows. Read the config. Print the path the symlink resolves to. It is never the interesting work, and it is most of the job. A model that scores 47 kilometers and a model that scores 0.8 can be the same model graded two ways, and the gap between "ship a fix" and "burn a week on no real problem" is whether you looked.
 
 We fixed the symlink, bumped its default to the shipped weights, and left a louder note, since the script's own comments admit this drift cost an eval shift once before. It will drift again the first time someone forgets to bump it. That's the lesson, and the unsatisfying one: the bug is rarely in the model. It's in what you handed the eval, and the eval will not volunteer it.

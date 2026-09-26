@@ -102,8 +102,8 @@ describe("ingestGeonamesPostal", () => {
 		const dir = dirDirectory.path
 
 		// TH 10230 verbatim: two Bangkok districts published at one coordinate ~90 km from either.
-		// The medoid has nothing to choose between, and the result must say so
-		// rather than presenting two rows as agreement.
+		// The medoid has no basis for choosing between them, and the result must say
+		// so rather than presenting two rows as agreement.
 		await writeLocalTextFile(
 			[
 				"TH\t10230\tLat Phrao\tBangkok\t10\t\t\t\t\t14.3333\t99.9167\t1",

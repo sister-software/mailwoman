@@ -13,18 +13,14 @@ import type { buildParseRig } from "#eval-harness/oa/resolver/parse-rig"
 import { createRuntimePipeline, loadDefaultPlaceCountry } from "#index"
 
 /**
- * The rig pieces the assembled pipeline shares with the bare neural arm.
- *
- * Sharing them is the whole point: an arm-to-arm delta that also swapped the classifier
- * or the gazetteer would measure nothing.
+ * The rig pieces the assembled pipeline shares with the bare neural arm,
+ * so an arm-to-arm delta does not also swap the classifier or the gazetteer.
  */
 type SharedRig = Pick<Awaited<ReturnType<typeof buildParseRig>>, "neural" | "resolver">
 
 /**
- * Wire the assembled arm.
- *
- * `assembledPipeline` is `null` when the run does not grade it, which is the default: the arm is opt-in.
- * Therefore, an ordinary run stays byte-identical to the bare neural one.
+ * Wire the assembled arm; `assembledPipeline` is `null` by default so an ordinary
+ * run stays byte-identical to the bare neural one.
  */
 export async function buildAssembledArm(
 	options: OAResolverEvalOptions,
@@ -33,25 +29,20 @@ export async function buildAssembledArm(
 ) {
 	const { neural, resolver } = rig
 
-	// #478 inc 3 leg 2 — the assembled arms. Route each row through `createRuntimePipeline` using the same neural classifier (postcodeRepair on, for comparability with the neural arm) and the same resolver — without (`assembled`) and with (`assembled+arb`) per-component arbitration. The street+house_number precondition (the thing #566 broke) is counted per arm so a regression is visible directly.
+	// Route each row through `createRuntimePipeline` using the same neural classifier
+	// (postcodeRepair on, for comparability with the neural arm) and the same resolver —
+	// without (`assembled`) and with (`assembled+arb`) per-component arbitration,
+	// counted per arm so a regression is visible.
 	//
-	// placeCountry default is off here (`false`) so the assembled arm isolates
-	// arbitration from the #244 coarse prior.
-	// But the shipped `createRuntimePipeline`/`geocodeAddress` default is the
-	// bundled placer (on, open-set @ 0.9).
-	// `--place-country` flips this eval to the production- representative config —
-	// load the same bundled placer and feed it to the pipeline — which is the #743 EU
-	// country-constraint integrity fix: without it the assembled EU coords are not what a
-	// real caller sees (ambiguous EU names without a country constraint place off-continent).
+	// placeCountry defaults off so the assembled arm isolates arbitration from the coarse prior;
+	// the shipped pipeline default is the bundled placer (on, open-set @ 0.9).
+	// `--place-country` flips this eval to the production-representative config,
+	// because without it ambiguous EU names are placed off-continent.
 	const runAssembled = options.assembled ?? false
-	// `--place-country-hard` (#194/#743) promotes a confident placer guess to a
-	// hard country filter (empty→unresolved).
-	// The change for the low-pop EU tail the soft prior can't move.
-	// Production- representative: conditional by the built-in coverage safelist
-	// (only well-covered countries hard-filter).
-	// `--place-country-hard-all` measures unrestricted
-	// (every confident country hard-filters, via a safelist override of the full in-map set) —
-	// how per-country hard-resolve-rates are measured to grow the safelist.
+	// `--place-country-hard` promotes a confident placer guess to a hard country filter
+	// (empty→unresolved), production-representative and conditional on the built-in coverage safelist.
+	// `--place-country-hard-all` measures unrestricted (every confident country hard-filters,
+	// via a safelist override of the full in-map set) to grow that safelist.
 	// Both imply the placer is loaded.
 	const useHardCountryAll = options.placeCountryHardAll ?? false
 	const useHardCountry = (options.placeCountryHard ?? false) || useHardCountryAll
@@ -66,21 +57,18 @@ export async function buildAssembledArm(
 		? createRuntimePipeline({
 				classifier: {
 					parse: (text: string, o?: object) => neural.parse(text, { ...o, postcodeRepair: true }),
-					// `autoLoadWeightsFST` (runtime-pipeline.ts) reads `fstPath` off the classifier,
-					// so this shim — which exists only to force `postcodeRepair: true` —
-					// silently dropped the gazetteer prior for every assembled run before #1497.
-					// A bare `{ parse }` literal has no `fstPath` key, `"fstPath" in classifier` is
-					// false, and the pipeline degrades to the no-FST default without a word.
+					// `autoLoadWeightsFST` reads `fstPath` off the classifier, so a bare `{ parse }`
+					// shim silently drops the gazetteer prior: `"fstPath" in classifier` is false
+					// and the pipeline degrades to the no-FST default without a word.
 					// Forward it.
 					...(neural.fstPath ? { fstPath: neural.fstPath } : {}),
 				},
 				resolver,
 				placeCountry: evalPlacer ?? false,
 				hardPlaceCountry: useHardCountry && !!evalPlacer,
-				// `--place-country-hard-all` overrides the production coverage safelist with the full
-				// in-map set, so every confident country hard-filters (unrestricted measurement).
-				// Plain `--place-country-hard` leaves it undefined → the built-in
-				// safelist (production-representative).
+				// `--place-country-hard-all` overrides the production coverage safelist
+				// with the full in-map set so every confident country hard-filters;
+				// plain `--place-country-hard` leaves it undefined.
 				...(useHardCountryAll
 					? { hardCountrySafelist: new Set(COARSE_CLASSES.filter((c) => c !== "OTHER")) as ReadonlySet<string> }
 					: {}),

@@ -3,36 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `osm`: OpenStreetMap address adapter (#733) for the countries no permissive source covers. Overture's addresses
- *   theme has no rows for Pakistan, Bangladesh or Vietnam (the three parquets are 532-byte headers), and the Latin
- *   model has never seen their formats: the Islamabad sector line, the Dhaka trailing postcode, the `Đường`-led street.
- *
- *   This adapter consumes the per-country jsonl `@mailwoman/osm`'s `emit-corpus-jsonl` script writes from a Geofabrik
- *   extract (`{ street, number, postcode?, suburb?, city?, unit?, place?, subdistrict?, district?, province?, lat, lon
- *   }`), the same split the `overture` adapter rides so the corpus package never meets gdal or a PBF.
- *
- *   ⚠ ODbL. Every row carries `license: "ODbL-1.0"`, which `SHARE_ALIKE_PATTERN` matches: a proprietary-weights build
- *   passes `--exclude-share-alike` and drops these rows at ingest. Therefore, they reach the open weights only. That is the
- *   whole licensing interface of this adapter, and the reason `defaultLicense` is not an option.
- *
- *   The mapping keeps to what a person types on the envelope. Mappers put free text in `addr:housenumber` (`House 34,
- *   Road 4, Sector 9`, `Near Askari Towers 2`) and in `addr:street`; a house number is kept only in a designator shape,
- *   and a street with a comma or more than eight words is skipped as a line rather than a name. A comma in `addr:city`
- *   is the neighborhood ahead of the city (`Mirpur 10, Dhaka` in Bangladesh): the last comma-separated part is the
- *   locality, and the head enters the dependent-locality chain last, behind `suburb`, `subdistrict`, `district` and
- *   `place`. `addr:district` is not mapped on its
- *   own: for Vietnam it is the quận below the city, which the country template renders only when no city is present,
- * . Therefore, a mapped district with a city would be a component with no span to align to and the row would quarantine.
- *
- *   | jsonl field                                | ComponentTag                                              |
- *   | ------------------------------------------ | --------------------------------------------------------- |
- *   | `number`                                   | `house_number` when designator-shaped (`12`, `14/E`, `B-77`) |
- *   | `street`                                   | `street` (keyword included. affix-relabel splits it)      |
- *   | `unit`                                     | `unit`                                                     |
- *   | `postcode`                                 | `postcode` when 4–6 digits                                 |
- *   | `city` (tail after the last comma)         | `locality`                                                 |
- *   | `suburb` ?? `subdistrict` ?? `district` ?? `place` ?? city head | `dependent_locality`                          |
- *   | `province`                                 | `region`, unless it repeats the locality                   |
+ * `osm`: OpenStreetMap address adapter for the countries no permissive source covers; every row carries
+ * `ODbL-1.0`, which `SHARE_ALIKE_PATTERN` matches, so a proprietary-weights build drops these rows at
+ * ingest and they reach only the open weights — the reason `defaultLicense` is not an option.
  */
 
 import { formatAddressRow } from "@mailwoman/codex/address-format"
@@ -51,9 +24,7 @@ import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter
 export const OSM_ADAPTER_ID = "osm"
 
 /**
- * OpenStreetMap's license.
- *
- * Share-alike: `SHARE_ALIKE_PATTERN` matches it, and `--exclude-share-alike` drops the rows.
+ * OpenStreetMap's license; `SHARE_ALIKE_PATTERN` matches it, so `--exclude-share-alike` drops these rows.
  */
 export const OSM_LICENSE = "ODbL-1.0"
 
@@ -73,17 +44,13 @@ interface OSMCorpusRow {
 	province?: string
 }
 
-/**
- * A street value that is a name rather than a mapper's whole address line.
- */
 const MAX_STREET_WORDS = 8
 
 /**
- * Whether `addr:housenumber` holds a designator a person writes after or before the street:
- * digits with an optional letter, fraction or dash suffix (`12`, `188a`, `14/E`, `1/1146`, `167-c`),
- * or a one- or two-letter block prefix (`B-77`, `L58`, `R 948`, Karachi's plot numbering).
- *
- * `House 34, Road 4, Sector 9`, `Plot #27`, `-` and a name are not.
+ * Whether `addr:housenumber` holds a street designator — digits with an optional letter,
+ * fraction or dash suffix (`12`, `188a`, `14/E`, `1/1146`, `167-c`) or a one-
+ * or two-letter block prefix (`B-77`, `L58`, `R 948`) — rather than free text such
+ * as `House 34, Road 4, Sector 9`, `Plot #27` or a name.
  */
 export function housenumberIsDesignator(value: string): boolean {
 	const trimmed = value.trim()
@@ -107,10 +74,8 @@ export function isStreetName(value: string): boolean {
 }
 
 /**
- * Split an `addr:city` that carries a neighborhood ahead of the city
- * (`Mirpur 10, Dhaka` → locality `Dhaka`, head `Mirpur 10`).
- *
- * A value without a comma is the locality alone.
+ * Split an `addr:city` carrying a neighborhood ahead of the city (`Mirpur 10, Dhaka` →
+ * locality `Dhaka`, head `Mirpur 10`); a value without a comma is the locality alone.
  */
 export function splitCityValue(value: string): { locality: string; head: string | null } {
 	const parts = extractDelimited(value)
@@ -122,9 +87,6 @@ export function splitCityValue(value: string): { locality: string; head: string 
 	return { locality: parts.at(-1)!, head: parts.slice(0, -1).join(", ") }
 }
 
-/**
- * Values mappers write for "none".
- */
 const PLACEHOLDERS = new Set(["n/a", "na", "none", "-", "nil"])
 
 function clean(value: string | undefined): string | null {
@@ -177,8 +139,9 @@ export function componentsForOSMRow(row: OSMCorpusRow): CanonicalRow["components
 		components.locality = split.locality
 	}
 
-	// The first candidate that is a name of its own: not a comma-joined pair
-	// rather than the street or the locality again.
+	// Dependent-locality candidates in priority order (suburb, subdistrict, district, place, city head);
+	// `district` never becomes `region`, because Vietnam's country template
+	// renders it only when no city is present.
 	const dependent = [row.suburb, row.subdistrict, row.district, row.place, split?.head]
 		.map((value) => clean(value ?? undefined))
 		.find(
@@ -199,19 +162,16 @@ export function componentsForOSMRow(row: OSMCorpusRow): CanonicalRow["components
 		components.region = province
 	}
 
-	// A street alone is not an address row.
-	// The coarse adapters already teach bare names.
-	// A number and a street is one: 41,000 of Vietnam's 70,069 rows carry nothing above
-	// the street, and `568 Đường Điện Biên Phủ` is the line a person types.
+	// A street alone is not an address row: 41,000 of Vietnam's 70,069 rows carry no
+	// component above the street, and the coarse adapters already teach bare names.
 	if (Object.keys(components).length === 1) return null
 
 	return components
 }
 
 /**
- * The admin-generic prefixes a mapper puts in front of a Vietnamese place name
- * (`Thành phố Hà Nội`, `Tỉnh Bắc Ninh`, `TP. Hồ Chí Minh`), compared away
- * so a province that repeats the city is read as the repeat it is.
+ * Vietnamese admin-generic prefixes stripped before name comparison, so a province that
+ * repeats the city with a prefix (`Thành phố Hà Nội`) is read as the repeat it is.
  */
 const NAME_PREFIXES = /^(?:thanh pho|tinh|tp\.?|quan|phuong|huyen|thi xa)\s+/u
 

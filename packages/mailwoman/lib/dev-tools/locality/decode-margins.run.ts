@@ -17,7 +17,7 @@
  *
  *   `--swap-region` and `--swap-postcode` re-render each subject under a different region code or postcode, so the
  *   crossed 2x2 can be read at the logit level, before any decision threshold. A crossed pairing denotes no place and
- *   nothing here claims one.
+ *   no code here claims one.
  *
  *   `--by` chooses what the rows are grouped into, which is what lets #2308's word effect and #2311's region effect be
  *   read in the same units on the same panel. `region-shape` is the crossed one: within each region, the three name
@@ -273,7 +273,7 @@ for (const [group, bucket] of [...byGroup].toSorted()) {
 			continue
 		}
 
-		// A crossed pairing denotes no place, and nothing here claims one:
+		// A crossed pairing denotes no place, and no code here claims one:
 		// the grade is the locality label's margin at the tokens the locality occupies,
 		// which is a reading of what the decode conditions on.
 		const place = {
@@ -289,8 +289,9 @@ for (const [group, bucket] of [...byGroup].toSorted()) {
 		const { trace } = await deps.diagnoseParse(input, { caseCountry: place.country })
 		const start = input.indexOf(place.locality)
 
-		// A layout that rewrites the locality (transliteration, a different casing) leaves nothing to index
-		// against, and a margin read at the wrong tokens is a number about the wrong part of the string.
+		// A layout that rewrites the locality (transliteration, a different casing)
+		// leaves no token to index against, and a margin read at the wrong tokens is
+		// a number about the wrong part of the string.
 		if (start === -1) {
 			entry.unlocated++
 

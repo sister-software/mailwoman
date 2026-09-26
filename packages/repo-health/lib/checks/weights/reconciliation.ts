@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  * @file Every number a published weights package states about itself agrees with the others.
  *
- *   A package carries four version-shaped facts across three files, and nothing compared them. The manifest's
+ *   A package carries four version-shaped facts across three files, and no check compared them. The manifest's
  *   `version`, the model card's `version`, the base package a `mailwoman.baseWeights` names and the version that base
  *   actually carries, and the digests a card records against the artifacts a manifest declares. Each is written by a
  *   different step, and a disagreement between any two is silent: the compiler reads none of them, and a tarball ships
@@ -89,8 +89,8 @@ export const weightsReconciliationCheck: RepoCheck = {
 				continue
 			}
 
-			// A digest against an artifact the manifest no longer declares describes a tarball
-			// this package stopped shipping, and a reader checking it would find nothing to check.
+			// A digest against an artifact the manifest no longer declares describes a tarball this
+			// package stopped shipping, and a reader checking it would find no artifact to check.
 			//
 			// A `$`-prefixed key is the annotation convention these cards use throughout —
 			// `$comment`, `$comment_661` — and names no file.

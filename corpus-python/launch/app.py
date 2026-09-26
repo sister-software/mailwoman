@@ -2,11 +2,11 @@
 
 Import this, never redefine it. One `modal.App` object is what makes `modal run -m
 launch.train_remote::<name>` able to find a function defined in any module of this package, so a
-second app object here would produce functions nothing can launch.
+second app object here would produce functions that no launcher can call.
 
-Nothing in this module runs remotely. The secrets read the local checkout at deploy time and the
-image pins the export/quant toolchain. both are evaluated at import, in the container as well as
-locally, which is why each tolerates the container's empty environment rather than raising in it.
+The secrets read the local checkout at deploy time and the image pins the export/quant toolchain.
+Both are evaluated at import, in the container as well as locally, which is why each tolerates the
+container's empty environment rather than raising in it.
 """
 
 from __future__ import annotations
@@ -36,58 +36,28 @@ __all__ = [
     "vol",
 ]
 
-# Image with PyTorch (cuda), rclone, sentencepiece, pyarrow, onnx
 training_image = (
     modal.Image.debian_slim(python_version="3.12")
     .apt_install("curl", "unzip")
     .run_commands(
-        # Install rclone for R2 sync
         "curl -sSL https://rclone.org/install.sh | bash",
     )
     .pip_install(
-        # --- pinned export/quant toolchain (2026-06-09)
-        # These five drive the ONNX graph that ships to browsers. They were unpinned (`>=`)
-        # and drifted between v0.9.3 (Jun-6) and v0.9.7 (Jun-8): transformers→5.x and
-        # onnx→1.21 started rejecting a dynamo-emitted value_info during int8 quant (see
-        # mailwoman_train/quantize.py's value_info strip). Pinned to the exact set that
-        # produced the v4.1.0 int8 artifact, verified graph-identical (opset 17, same
-        # 28×DynamicQuantizeLinear/MatMulInteger, 0 reverse-slices) to the Safari-proven
-        # v0.9.3 graph. invariant: the int8 graph (opset + quant op scheme) must stay
-        # within what the pinned `onnxruntime-web` native WebGPU EP runs on Metal (the
-        # JSEP int8-dequant slice bug — the neural web runner uses onnxruntime-web/webgpu). A bump
-        # here that raises the opset or changes the quant scheme is a Safari decision rather than
-        # a free upgrade — re-verify on a real iOS device (CI cannot exercise WebGPU).
+        # Pinned export/quant toolchain. These five drive the ONNX graph that ships to browsers.
+        # The int8 graph (opset + quant op scheme) must stay within what the pinned
+        # `onnxruntime-web` native WebGPU EP runs on Metal (the JSEP int8-dequant slice bug), so a
+        # bump that raises the opset or changes the quant scheme is a Safari decision rather than a
+        # free upgrade — re-verify on a real iOS device (CI cannot exercise WebGPU).
+        # `verify-toolchain` requires these pins agree with pyproject.
         # Query the live image set with `modal run -m launch.train_remote::versions`.
-        # onnx 1.21.0→1.22.0 (2026-07-12): security parity with pyproject (ghsa-hwpq-hmq9-wj77,
-        # Dependabot #1057) — verify-toolchain requires the pins agree. verified same day by
-        # re-export + re-quant of v241-fr-nsplice-ft step-12000 off this image: fp32 byte-
-        # identical to the 1.21.0-era export (md5 1c58b0a0) and int8 byte-identical to the
-        # shipped production artifact (md5 121162e6) — the bump provably does not touch the
-        # graph. quantize.py's value_info strip stays (exercised in that run, harmless).
-        # onnxscript 0.7.0->0.7.2: not byte-neutral. Its optimizer constant-folds twelve shape-plumbing
-        # nodes (1 Mul, 9 Concat, 2 Reshape) into six initializers — fp32 +2,576 bytes, int8 +7 — while
-        # opset, ir_version, inputs, outputs and every weight tensor stay identical and both graphs
-        # answer bit-equal logits at sequence 8, 64 and 128. A rebuild of a pre-0.7.2 artifact differs
-        # in md5 and is correct.
-        # onnxruntime 1.26.0->1.29.0 (matching the `onnxruntime-web` the browser runs): graph-neutral,
-        # both quantize one fixed fp32 to a byte-identical int8. The quantizer is now the same version
-        # as the executor, which is what the gap cost: the artifact was validated by a runtime three
-        # minors from the one serving it.
         "torch==2.12.0",
         "transformers==5.9.0",
         "onnx==1.22.0",
         "onnxruntime==1.29.0",
         "onnxscript==0.7.2",
-        # --- non-graph deps
-        # sentencepiece is pinned rather than floored (2026-08-01). It was `>=0.2.0` under a comment saying
-        # unpinned floors are fine here. That assumption was false, because SP decides the token IDS
-        # the model trains on. Measured: 0.2.1 and 0.2.2 disagree on a Viterbi tie-break for repeated
-        # digit runs ("...555" segments ['55','5'] under 0.2.1 and ['5','55'] under 0.2.2), which fired
-        # on 5/10,000 real corpus rows in the TS↔Python parity fixture. The shipped wasm runtime
-        # (@mailwoman/sentencepiece-wasm) is built from 0.2.2 and reproduces 0.2.2 exactly, so training
-        # pins to 0.2.2 to keep train and serve on one convention. A float here means the resolved
-        # version depends on when Modal last rebuilt the image layer — i.e. train/serve agreement
-        # decided by cache timing, which is not a thing anyone can debug after the fact.
+        # sentencepiece decides the token IDs the model trains on, and the shipped wasm runtime
+        # (@mailwoman/sentencepiece-wasm) is built from 0.2.2, so training pins to 0.2.2 to keep
+        # train and serve on one convention.
         "sentencepiece==0.2.2",
         "pyarrow>=15",
         "pyyaml>=6",
@@ -95,13 +65,13 @@ training_image = (
         # The corpus is stored zstd-compressed at rest, so the loader imports this to read it.
         # Floored rather than pinned: it decodes a format, it does not decide a token id or a
         # graph, and a corpus part file written by one version reads back identically under any
-        # other. The stdlib gains `compression.zstd` in 3.14, which would retire this.
+        # other.
         "zstandard>=0.23",
         "datasets>=2.19",
         "tqdm>=4.66",
-        # `mailwoman_train.env` reads it for the platform data root, and `paths.py` imports env at
-        # module scope. Nothing imports either one until the anchor painter reaches
-        # `features/postcode_shapes.py`, so the absence surfaces mid-training rather than at startup.
+        # `mailwoman_train.env` reads it for the platform data root; no module imports it until the
+        # anchor painter reaches `features/postcode_shapes.py`, so its absence surfaces mid-training
+        # rather than at startup.
         "platformdirs>=4.3",
         # Optional experiment tracking — streamed to a Hugging Face Space dashboard when
         # the run config sets train.trackio_enabled (best-effort, see trackio_logging.py).
@@ -183,20 +153,13 @@ def _load_r2_env() -> dict[str, str]:
     return env
 
 
-# The secret is built from the local checkout at deploy time, so the lookup runs only there. This
-# module is imported inside every container too, where there is no .env and where only the functions
-# that declare this secret are given the keys — so raising unconditionally crash-looped every
-# function that does not use R2, the epoch audit included.
+# Build the secret from the local checkout only: this module is imported inside every container,
+# where there is no .env, and raising unconditionally would crash every function that does not use R2.
 r2_secret = modal.Secret.from_dict(_load_r2_env() if modal.is_local() else {})
 
 
-# HF token for Trackio's Hugging Face Space upload. Reads HF_TOKEN (or the
-# HUGGING_FACE_HUB_TOKEN alias) from the local .env at deploy time, falling back to
-# os.environ. Empty when unset — Trackio logging then degrades to CSV-only (the upload
-# 401s and trackio_logging.py swallows it), so a token is only needed to push the
-# dashboard to a Space.
 def _load_hf_env() -> dict[str, str]:
-    """The HF token, or nothing. Absence is tolerated here and refused in `_load_r2_env` — a run
+    """The HF token, or no value. Absence is tolerated here and refused in `_load_r2_env` — a run
     without R2 cannot read its corpus, while a run without this token still trains and logs to CSV.
     """
     return _read_env_keys(("HF_TOKEN", "HUGGING_FACE_HUB_TOKEN"))

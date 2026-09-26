@@ -22,7 +22,7 @@ Every published package releases in lockstep on one version number, the model bu
 weights package version tracks the release rather than the model's own lineage. All packages are ESM
 only. 17 of the 60 publishable manifests declare a Node floor of 24.18: the `mailwoman` entry package
 and 16 data-pipeline and layer packages, `@mailwoman/spatial` and `@mailwoman/sqlite` among them. The
-rest declare no `engines` field, so nothing stops npm installing them under an older Node — the floor
+rest declare no `engines` field, so no `engines` field stops npm installing them under an older Node — the floor
 is real for all of them, and only 17 state it.
 
 Every package declares `AGPL-3.0-only OR LicenseRef-Commercial` except four:
@@ -36,7 +36,7 @@ the repository and in what the registry serves. Verify any package's declaration
 | Package                                                                                            | What it is                          | Install it when                                  |
 | -------------------------------------------------------------------------------------------------- | ----------------------------------- | ------------------------------------------------ |
 | [`mailwoman`](https://www.npmjs.com/package/mailwoman)                                             | The CLI and `createRuntimePipeline` | Always. This is the entry point                  |
-| [`@mailwoman/neural-weights-en-us`](https://www.npmjs.com/package/@mailwoman/neural-weights-en-us) | The trained model bundle            | Always. Nothing parses without a weights package |
+| [`@mailwoman/neural-weights-en-us`](https://www.npmjs.com/package/@mailwoman/neural-weights-en-us) | The trained model bundle            | Always. No parser runs without a weights package |
 
 Those two are the whole install for parsing. `mailwoman` pulls `@mailwoman/core`, `@mailwoman/neural`
 and the pipeline stages behind it, so you do not name them.
@@ -144,7 +144,7 @@ Nominatim-shaped response carries these without your installing anything.
 ## Rationale
 
 Lockstep versioning means one number answers "which release do I have" across every package at once.
-The cost is that the release number says nothing about the model: most releases are code-only, so
+The cost is that the release number makes no statement about the model: most releases are code-only, so
 consecutive releases can carry the same model. Each weights package carries its own model card
 with the lineage.
 

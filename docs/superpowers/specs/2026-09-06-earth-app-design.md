@@ -47,7 +47,7 @@ Vite are then two independent bundler readings of every package both consume.
 
 **Cloudflare builds it.** Workers Builds, connected to the repository, builds on push to `main` and
 deploys with `wrangler deploy`. The app needs no publish workflow, API token in GitHub, or Worker script,
-because the `wrangler.toml` declares `assets` and nothing else.
+because the `wrangler.toml` declares `assets` and no other field.
 
 **Done includes the removal.** The work is not finished while any of the geocoder page, its runtime
 modules, its plugin, its static assets, or its dependencies remain in `docs/`.
@@ -232,16 +232,16 @@ Receipts, one per bullet, as of the launch PR (`feat/earth-runtime-launch`):
   now buffers the body inside a three-attempt retry (`mailwoman/browser-runtime/fetch`), and the fixture ends its
   readiness wait on the page's own error text. Two cases fail identically on the docs page on main and are marked
   expected failures with their measured reason: `Praha 100 00, Czechia` (the classifier tags `Praha` as a street) and
-  `1502 A Cage Street, Houston, TX 77020` (the street tier answers nothing; the Houston locality centroid resolves on
+  `1502 A Cage Street, Houston, TX 77020` (the street tier returns no candidate; the Houston locality centroid resolves on
   both). Compare mode and the calibration toggle were driven by a script against the preview and recorded in the PR.
 - `?q=` links: `docs/src/components/EarthRedirect/EarthRedirect.tsx` forwards with `location.search` intact.
 - Removal: `ls docs/src/shared` prints the two maplibre worker files; `docs/src/pages/demo/index.tsx`, `debug.tsx` and
   `trace.tsx` are the redirects; `docs/static/range-cache-sw.js` is gone; the plugin is `docs/plugins/runtime-assets/`;
-  `grep -rn "docs/src/shared" packages` prints nothing. `knip` measures no unused docs dependency after the move:
+  `grep -rn "docs/src/shared" packages` prints no matches. `knip` measures no unused docs dependency after the move:
   `maplibre-gl`, `react-map-gl`, `@mailwoman/cartographer` serve `DashboardMap`, `onnxruntime-web` and
   `@mailwoman/neural` serve the explainers that classify, and `sql.js-httpvfs` left with the runtime-homes PR.
 - Names: the `@mailwoman/react/map` rename map is applied (`a876b5ebe`); the docs embed context is `RuntimeEmbed`, and
-  `git grep -n Demo packages/react/lib/index.ts packages/react/lib/map/index.ts` prints nothing.
+  `git grep -n Demo packages/react/lib/index.ts packages/react/lib/map/index.ts` prints no matches.
 - The docs site builds under `rspackBundler` (`cd docs && yarn build`, EXIT=0).
 - Registers: unchanged since the shell PR (#2196).
 - Workers Builds: the project from the shell PR; the bucket's CORS rule admits `https://earth.mailwoman.ai` and

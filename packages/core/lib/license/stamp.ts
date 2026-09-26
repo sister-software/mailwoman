@@ -3,14 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The engine stamp: which mailwoman produced a response, and under which license branch. It rides in JSON bodies as
- *   `engine`, in two http headers, and as a two-line stderr notice. It is built once per process from two inputs the
- *   doctor also reads — the package's license expression and the configured key's offline verification — so the doctor
- *   and every stamped output agree on the branch by construction.
- *
- *   The stamp carries no licensee and no key id. A deployment serving the public must not carry its operator's
- *   commercial relationship in every response. the doctor prints those two locally. It is offline: the well-known
- *   register is the doctor's freshness check rather than a per-process network call.
+ *   The stamp carries no licensee and no key id, and is offline by design: the well-known register is the doctor's
+ *   freshness check rather than a per-process network call.
  */
 
 import { docsSiteURL } from "#license/docs-site"
@@ -18,23 +12,19 @@ import type { LicenseKeyVerification } from "#license/key/index"
 import { appliedLicenseBranch } from "#license/obligations"
 
 /**
- * The page the notice and the `Link: rel="license"` header point at.
- *
- * Singular, matching `license_url` and the `license` command.
+ * The singular page path the notice and the `Link: rel="license"` header point at,
+ * matching `license_url` and the `license` command.
  */
 export const LICENSE_PAGE_PATH = "/license"
 
 /**
- * The obligation the notice states, in the doctor's vocabulary: the agpl source offer to network users,
- * which is the one a network deployment carries and the one the commercial agreement waives.
+ * The AGPL source offer to network users, which the commercial agreement waives.
  */
 const NOTICE_OBLIGATION = "modified or network-served copies must offer their source."
 const NOTICE_REMEDY = "A commercial license waives that obligation"
 
 /**
- * What every stamped output carries.
- *
- * Snake-case keys: this is a wire shape.
+ * The wire shape every stamped output carries, keyed in snake case.
  */
 export interface EngineStamp {
 	name: "mailwoman"
@@ -45,9 +35,6 @@ export interface EngineStamp {
 	 */
 	license: string
 	license_url: string
-	/**
-	 * Present only when the open-source branch applies.
-	 */
 	notice?: string
 }
 
@@ -62,12 +49,8 @@ function noticeSentence(license: string, expiredOn?: string): string {
 }
 
 /**
- * Build the stamp.
- *
- * `key` is the offline verification of the configured key, or absent when none is configured.
- * The branch comes from `appliedLicenseBranch`, the function the doctor calls too.
- *
- * The stamp passes no publication because it is offline by design.
+ * Build the offline stamp, taking the branch from `appliedLicenseBranch` —
+ * the function the doctor calls too — so the two agree by construction.
  */
 export function buildEngineStamp(input: {
 	version: string
@@ -87,11 +70,9 @@ export function buildEngineStamp(input: {
 }
 
 /**
- * The stderr notice: two lines, or nothing when the commercial branch applies.
- *
- * An expired key is the one reading whose cause the notice states, because the
- * date tells the operator what to do.
- * Every other failed reading leaves the reason to `mailwoman doctor`.
+ * The stderr notice: two lines, or no notice when the commercial branch applies;
+ * an expired key states its date because that tells the operator what to do,
+ * while every other failed reading leaves the reason to `mailwoman doctor`.
  */
 export function licenseNoticeLines(stamp: EngineStamp, key?: LicenseKeyVerification): [string, string] | undefined {
 	if (!stamp.notice) return undefined

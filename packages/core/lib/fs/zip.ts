@@ -4,10 +4,10 @@
  * @author Teffen Ellis, et al.
  * @file Zip readers, in two flavours — buffer-in for archives already in memory, path-in for archives on disk.
  *
- *   {@link extractZip} and {@link extractSingleFileZip} take the whole archive as a `Buffer`, which is the right shape
- *   when a client has just downloaded one (`bdc/sdk/download.ts`) and the wrong shape for anything sizable: adm-zip
+ *   {@link extractZip} and {@link extractSingleFileZip} take the whole archive as a `Buffer`, the right shape when a
+ *   client has just downloaded one (`bdc/sdk/download.ts`) and the wrong shape for anything sizable, because adm-zip
  *   holds the archive and the decompressed member resident at once. The national address dumps under
- *   `$MAILWOMAN_DATA_ROOT` are 0.5–2.9 GB compressed and up to 9 GB unpacked, so the path-in readers below stream —
+ *   `$MAILWOMAN_DATA_ROOT` are 0.5–2.9 GB compressed and up to 9 GB unpacked, so the path-in readers below stream:
  *   yauzl seeks the central directory over a file handle and inflates one member on demand, at constant memory
  *   regardless of archive size.
  *
@@ -52,13 +52,11 @@ async function openStreamingArchive(
 /**
  * How to read member names that the archive does not declare an encoding for.
  *
- * A zip flags UTF-8 names with bit 11, and yauzl decodes those correctly.
- * Without the flag the format says CP437, so a publisher writing CP949, Shift_JIS
+ * A zip flags UTF-8 names with bit 11, and yauzl decodes those correctly;
+ * without the flag the format says CP437, so a publisher writing CP949, Shift_JIS
  * or GBK names produces bytes that decode to mojibake and match no selector.
  *
- * Korea's address portal writes `주소_서울특별시.txt` and the reader sees `┴╓╝╥_╝¡┐ïÆ╣▌╗π.txt`.
- *
- * Naming an encoding decodes the RAW bytes instead, which is not the same as
+ * Naming an encoding decodes the raw bytes instead, which is not the same as
  * recoding the mojibake back through CP437: that round trip needs a 256-entry table
  * and silently mangles any byte CP437 maps to a character it cannot invert.
  *
@@ -92,22 +90,19 @@ function entryName(entry: Entry, options?: ZipNameOptions): string {
 /**
  * One member's decompressed byte stream, ended when the owning scope exits.
  *
- * Node's own `Readable[Symbol.asyncDispose]` cannot serve here.
- * A consumer that stops early has already destroyed the stream with an `AbortError`, and that disposer
- * waits on the stream's end event and re-raises it — turning a deliberate `break` into a throw.
- *
- * Destroying without a reason ends the stream on every path and reports none of them.
+ * Node's own `Readable[Symbol.asyncDispose]` cannot serve here: a consumer that stops
+ * early has already destroyed the stream with an `AbortError`, and that disposer waits on
+ * the stream's end event and re-raises it, turning a deliberate `break` into a throw.
  */
 async function openEntryStream(entry: Entry, options?: ZipFileOptions): Promise<EntryStream & AsyncDisposable> {
 	const contents = await entry.openReadStream(options)
 
 	return Object.assign(contents, {
 		[Symbol.asyncDispose]: async () => {
-			// A member read to its end has already released yauzl's read,
-			// and its `close` has already been delivered.
-			// So waiting for that event here would wait forever.
-			// `readableEnded` is the test that separates the two paths: true after a full read,
-			// false after a `take` or a `break`.
+			// A member read to its end has already released yauzl's read and delivered its `close`,
+			// so waiting for that event here would wait forever.
+			// `readableEnded` separates the two paths: true after a full read, false
+			// after a `take` or a `break`.
 			// `closed` is not the test, because Node sets it when the close event is queued
 			// rather than delivered, so a guard on it skips the wait on the path that needs it.
 			if (contents.readableEnded) return
@@ -116,10 +111,9 @@ async function openEntryStream(entry: Entry, options?: ZipFileOptions): Promise<
 
 			contents.destroy()
 
-			// Wait for the teardown to finish rather than merely to start.
-			// `destroy()` returns before yauzl has released its read, and the archive's own
-			// disposer runs next: it then raises `Cannot close while reading in progress`
-			// on the early-exit path this reader documents as supported.
+			// Wait for the teardown to finish rather than merely to start: `destroy()` returns
+			// before yauzl has released its read, and the archive's own disposer
+			// then raises `Cannot close while reading in progress`.
 			await closed
 		},
 	})
@@ -158,7 +152,7 @@ export function extractSingleFileZip(data: ArrayBuffer | Buffer): Promise<Buffer
 
 	const [entry] = zip.getEntries()
 
-	// We use the async version of getData to avoid blocking the event loop.
+	// The async version of getData avoids blocking the event loop.
 	return new Promise<Buffer>((resolve, reject) =>
 		// oxlint-disable-next-line no-promise-executor-return -- return the callback registration from this expression-bodied executor
 		entry!.getDataAsync((extractedData, error) => {
@@ -221,7 +215,7 @@ export async function listZipEntries(archivePath: PathBuilderLike, options?: Zip
 /**
  * Stream one member's decompressed bytes out of an archive on disk.
  *
- * Nothing beyond the central directory and the inflate window is held in memory,
+ * No data beyond the central directory and the inflate window is held in memory,
  * so this is bounded by the consumer rather than by the member's size.
  * A consumer that stops early — a `take`, a `break` — destroys the member stream
  * and closes the archive on the way out.
@@ -341,22 +335,20 @@ export async function extractZipEntries(
 }
 
 /**
- * Verify every member's CRC-32 against the value its central-directory header claims.
- * What `unzip -t` is for.
+ * Verify every member's CRC-32 against the value its central-directory header
+ * claims — what `unzip -t` is for.
  *
- * This is a corruption check on a download, so it decompresses everything and keeps nothing.
- * The archive is read one member at a time and the checksum is folded chunk by chunk,
- * so memory is bounded by the inflate window.
+ * This is a corruption check on a download, so it decompresses everything, reads one member
+ * at a time and folds the checksum chunk by chunk, bounding memory by the inflate window.
  *
- * The CRC is computed here rather than delegated to yauzl's `validateCrc32`,
- * which asserts `Cannot validate CRC32 for uncompressed data` on a stored member,
- * and a corrupt stored member is precisely what this is meant to catch.
- * Folding it locally covers both storage methods with one path.
+ * The CRC is computed here rather than delegated to yauzl's `validateCrc32`, which asserts `Cannot validate CRC32
+ * for uncompressed data` on a stored member — precisely what this is meant to catch — and folding it locally covers
+ * both storage methods with one path.
  *
  * @category Files
  *
- * @returns The number of members checked. @throws If the archive is unreadable,
- * or any member's checksum or length disagrees with its header.
+ * @returns The number of members checked.
+ * @throws If the archive is unreadable, or any member's checksum or length disagrees with its header.
  */
 export async function verifyZipIntegrity(archivePath: PathBuilderLike): Promise<number> {
 	await using archive = await openStreamingArchive(archivePath)

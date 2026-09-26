@@ -18,7 +18,7 @@ import type { GauntletCaseTable } from "mailwoman/eval-harness/gauntlet/schema"
 import { describe, expect, it } from "vitest"
 
 /**
- * A stored case with nothing asserted.
+ * A stored case with no assertion.
  * Every check opts in per row, so this one must always pass.
  */
 function storedCase(over: Partial<GauntletCaseTable> = {}): GauntletCaseTable {

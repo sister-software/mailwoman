@@ -39,7 +39,7 @@ export interface OrganizationName {
  *
  * Each guards the abbreviations that are meaningful in that domain from being
  * stripped as legal forms (see {@link DOMAIN_PROTECTED}).
- * `general` guards nothing — the explicit "no domain" choice.
+ * `general` guards no form — the explicit "no domain" choice.
  *
  * Add a pack here (and to {@link DOMAIN_PROTECTED}) per ingest domain.
  */
@@ -57,7 +57,7 @@ export interface CanonicalizeOptions {
 	 * Adds that country's legal forms — including collision-prone ones held out
 	 * of the base — to the strip-set.
 	 * Case-insensitive.
-	 * Unknown codes add nothing.
+	 * Unknown codes add no pack.
 	 */
 	jurisdiction?: string
 	/**
@@ -178,7 +178,7 @@ const DOMAIN_PROTECTED: Record<DesignationDomain, readonly string[]> = {
  * context: `(base ∪ jurisdiction-pack) − domain-guard-pack`.
  *
  * @returns the shared base set unchanged when no context is given (the byte-stable default),
- * so the common path allocates nothing.
+ * so the common path allocates no set.
  */
 function resolveDesignations(options?: CanonicalizeOptions): ReadonlySet<string> {
 	const jurisdiction = options?.jurisdiction?.trim().toUpperCase()

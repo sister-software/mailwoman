@@ -3,13 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The `mwdev_diff_geocode` tool definition. The diff itself is `mailwoman/geocode`'s `diffGeocode`; this
- *   file is the interface, and its job is to put the attribution in front of the distance.
- *
- *   The `training-arc` and `eval-model` skills have named this tool since they were written, and it was
- *   never registered: the diff, the three attributions and the renderer all existed while nothing exposed
- *   them. An agent following step 4 of the grading protocol called a tool that was not there, so the step
- *   that separates a model regression from a data-coverage fall-through had nothing behind it.
+ * The `mwdev_diff_geocode` tool definition; the diff itself is `mailwoman/geocode`'s `diffGeocode`, and this file's
+ * job is to put the attribution in front of the distance.
  */
 
 import { diffGeocode, type GeocodeArm, type GeocodeRun, renderGeocodeDiff } from "mailwoman/geocode"
@@ -18,11 +13,8 @@ import { z } from "zod"
 import { acquireTwoArms, type DevTool, type DevToolDeps, RENDERED_DIFF_LIMIT } from "#tool-kit"
 
 /**
- * One arm of the comparison, read off a run.
- *
- * `tree` hangs off the run rather than the result, because `GeocodeResult` carries
- * a flat component map and drops the spans.
- * The per-span resolution deltas need those spans, and `localeCountry` is a property of the tree.
+ * One arm of the comparison, read off a run; `tree` hangs off the run rather than the result
+ * because `GeocodeResult` drops the spans the per-span resolution deltas need.
  */
 function arm(run: GeocodeRun): GeocodeArm {
 	return {
@@ -35,6 +27,9 @@ function arm(run: GeocodeRun): GeocodeArm {
 	}
 }
 
+/**
+ * Build the `mwdev_diff_geocode` tool definition.
+ */
 export const diffGeocodeTool = (deps: DevToolDeps): DevTool => ({
 	name: "mwdev_diff_geocode",
 	description:
@@ -79,17 +74,14 @@ export const diffGeocodeTool = (deps: DevToolDeps): DevTool => ({
 			const a = await base.session.geocode(input)
 			const b = await candidate.session.geocode(input)
 
-			// `tree` hangs off the RUN rather than the result, because `GeocodeResult`
-			// carries a flat component map and drops the spans.
-			// The per-span resolution deltas need the spans, and `localeCountry` is a property of the tree.
 			diffs.push(diffGeocode(input, arm(a), arm(b)))
 		}
 
 		const shown = changesOnly ? diffs.filter((d) => !d.identical) : diffs
 		const rendered = shown.slice(0, RENDERED_DIFF_LIMIT).map((d) => renderGeocodeDiff(d))
 
-		// Which attribution dominates is the diagnosis, and it decides whether a run was worth grading.
-		// A `tier-changed` majority means the arms differ on data the model never saw.
+		// Which attribution dominates is the diagnosis, and it decides whether a run was worth
+		// grading; a `tier-changed` majority means the arms differ on data the model never saw.
 		const attributions: Record<string, number> = {}
 
 		for (const d of shown) {

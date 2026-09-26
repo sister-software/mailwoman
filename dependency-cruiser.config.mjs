@@ -84,7 +84,7 @@ const config = {
 				"Those directories shell out to binaries (`spatial/lib/tools/ogr.ts`: 'OGR IS BUILD TOOLING, NEVER A " +
 				"SERVE DEPENDENCY'), open build databases, and fetch multi-gigabyte archives; one `export *` is all it " +
 				"takes for a barrel to drag that into a bundle. " +
-				"SCOPED BY PACKAGE, NOT BY FOLDER NAME, and that is the whole design. The obvious rule — 'nothing outside " +
+				"SCOPED BY PACKAGE, NOT BY FOLDER NAME, and that is the whole design. The obvious rule — 'no code outside " +
 				"tools/ may import tools/' — was written first and produced 38 violations, every one of them correct " +
 				"behaviour: 33 are `mailwoman/lib/commands/*` calling the command's own library half, which is the " +
 				"documented CLI architecture, and 3 are `dev-mcp`, where `tools/` means MCP TOOL DEFINITIONS rather " +

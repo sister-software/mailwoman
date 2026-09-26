@@ -28,7 +28,7 @@ zones the Environment Agency states England-wide coverage, and the Planning Prac
 as the land outside Zones 2 and 3, so an empty flood answer inside England is a designation. Zoning has no
 such definition anywhere. A location with no zoning polygon can be in at least four different situations:
 
-1. Outside any adopted plan area, which covers most land in most countries. The authority has said nothing.
+1. Outside any adopted plan area, which covers most land in most countries. The authority has made no statement.
 2. Inside a plan area, on land the plan does not zone.
 3. In a jurisdiction that has never adopted zoning at all.
 4. In a jurisdiction whose records nobody has read or published yet.

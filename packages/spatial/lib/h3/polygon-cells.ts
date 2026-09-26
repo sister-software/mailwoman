@@ -22,7 +22,7 @@
  *   The `[lat, lng]` trap is avoided by not entering it. h3-js reads a vertex as `[lat, lng]` in its
  *   default mode. every call here passes `isGeoJSON = true` and hands it GeoJSON-order `[lon, lat]` rings,
  *   which is the order an ingest already produces. Converting instead would put a transposition between the
- *   geometry and the index that nothing downstream could see.
+ *   geometry and the index that no downstream stage could see.
  *
  *   whole and partial are two polyfills OF the same ring rather than A test WE invent. `containmentFull` is the
  *   cell set entirely inside the polygon; `containmentOverlapping` is the set that touches it at all. The
@@ -50,7 +50,7 @@
  *
  *   and the estimate is A prediction, SO an allocation failure is recovered rather than fatal.
  *   {@linkcode classifyFeatureCells} steps the resolution down and retries. only a feature that fails at
- *   {@linkcode MIN_INDEX_RESOLUTION} is refused. Nothing is ever skipped, because a skipped feature is an
+ *   {@linkcode MIN_INDEX_RESOLUTION} is refused. No feature is ever skipped, because a skipped feature is an
  *   invented absence.
  *
  *   bounding the call volume is the caller'S JOB and IT is not optional. The shortcuts here make a build
@@ -146,7 +146,7 @@ function enclosingCell(box: DegreeBox, resolution: number): string | undefined {
  *
  * A hexagon's minimum width is twice its inradius, and its inradius is `edge × √3/2`.
  * So a bounding box narrower than `edge × √3` in either direction cannot enclose one,
- * and the `containmentFull` polyfill is guaranteed to return nothing.
+ * and the `containmentFull` polyfill is guaranteed to return no cell.
  *
  * The comparison is deliberately permissive: a wrong `true` costs one polyfill call,
  * while a wrong `false` would demote a whole cell to a partial one, which the ray
@@ -249,7 +249,7 @@ export function classifyFeatureCells(
 			for (const rings of polygons) {
 				// `isGeoJSON = true`: the rings are already `[lon, lat]`, which is the order an ingest emits.
 				// Converting instead would put a transposition between the geometry
-				// and the index that nothing downstream could see.
+				// and the index that no downstream stage could see.
 				const geoJSONRings = rings as number[][][]
 				const box = ringsBoundingBox([rings])
 				const enclosing = enclosingCell(box, resolution)
@@ -275,7 +275,7 @@ export function classifyFeatureCells(
 				// and it has to be caught here rather than after the whole feature. h3-js sizes its
 				// output buffer with `_calloc`, and a `_calloc` that fails returns the null pointer.
 				// In wasm that is ordinary writable memory, so the call reports success
-				// and the reader hands back an array of zeros, i.e. nothing.
+				// and the reader hands back an array of zeros, i.e. no cells.
 				// Every part with a non-degenerate bounding box touches at least one cell,
 				// so zero is impossible as an answer.
 				// Checking per feature instead would pass any multi-part feature whose other

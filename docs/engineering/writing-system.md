@@ -193,7 +193,7 @@ sentence locally, the registry for the rest.
 
 **Adding a term.** A concept used on two or more pages warrants a registry entry. Add it to
 `glossary/glossary.json` with its aliases, so the drift spellings resolve to one tooltip rather than to
-nothing.
+no entry.
 
 ### Canonical terms
 

@@ -22,7 +22,7 @@
  *     3. **The nine-significant-digit round.** `parseFloat(lat.toPrecision(9))` was applied to both
  *        axes. Google returns seven decimal places. nine significant digits keeps all of them for a
  *        two-digit latitude and drops the last for a three-digit longitude, so the round was
- *        asymmetric between hemispheres and bought nothing. Coordinates pass through untouched.
+ *        asymmetric between hemispheres and bought no benefit. Coordinates pass through untouched.
  *
  *   the component mapping is the judgement call, and {@linkcode OracleGeocodeResult.raw} is the escape
  *   hatch that keeps it from being lossy. See {@linkcode COMPONENT_RULES} for the ordering rule and
@@ -72,13 +72,13 @@ interface ComponentRule {
  * is listed first and takes `locality`; the district component then falls through to
  * `dependent_locality`, which is exactly the tag mailwoman's GB work uses for it.
  * In a country with no `postal_town` the first `locality` rule fires, consumes the component, and the
- * second one finds nothing left to place — so no country gets its locality written into two tags.
+ * second one finds no component left to place — so no country gets its locality written into two tags.
  *
  * Deliberately unmapped, and available on `raw`: `political`
- * (a modifier that co-occurs with everything and names nothing), `administrative_area_level_3`
- * and below (which is a comune in Italy, a ward in Japan, and a census-designated
- * nothing in the United States — no single tag survives that), `postal_code_prefix`,
- * and every `plus_code`-derived pseudo-component.
+ * (a modifier that co-occurs with everything and names no place),
+ * `administrative_area_level_3` and below (which is a comune in Italy, a ward in Japan,
+ * and a census-designated area in the United States — no single tag survives that),
+ * `postal_code_prefix`, and every `plus_code`-derived pseudo-component.
  */
 const COMPONENT_RULES: readonly ComponentRule[] = [
 	{ types: ["street_number"], tag: "house_number", form: "short" },

@@ -210,7 +210,7 @@ Building VT…
 ```
 
 17 s end to end — 14 county archives downloaded and unpacked to 215 MB, then 6.0 s of build — for a
-58.5 MB database holding 137,256 segment-sides. The command downloads its own TIGER data, so there is nothing
+58.5 MB database holding 137,256 segment-sides. The command downloads its own TIGER data, so there is no data
 to fetch first.
 
 Three lines in that output are worth knowing. **Parity** splits the segment-sides into odd and even runs,
@@ -246,7 +246,7 @@ the ones you owe credit to when you redistribute a database.
 
 ## 6. Add the gazetteer
 
-The two databases you built hold streets and house numbers, and nothing in either resolves the word
+The two databases you built hold streets and house numbers, and no entry in either resolves the word
 "Burlington". That comes from the candidate gazetteer, which mailwoman publishes as a download rather than
 asking you to build it — the build needs the Who's On First data repositories cloned first, and the
 database it produces is over 5 GB before the query-time one is derived from it.
@@ -288,7 +288,7 @@ PASS — core checks ok (weights + runtime); parse is ready
 
 The POI layer is a separate artifact and geocoding does not need it, which is why `doctor` marks it
 optional and passes anyway. `(convention path)` on the gazetteer line means it was found at
-`<data root>/db/wof/candidate.db` with nothing configured — which is why step 6 was one command and no
+`<data root>/db/wof/candidate.db` with no configuration — which is why step 6 was one command and no
 `export`, and why the `export` line the pull printed can be ignored.
 
 Now run the other check, and read its verdict carefully:
@@ -376,7 +376,7 @@ the three apart in code without guessing from the coordinate.
 
 ## 9. Scale to fifty states
 
-Nothing above changes shape at national scale — the two build commands take lists instead of one state,
+No step above changes shape at national scale — the two build commands take lists instead of one state,
 and the parquet you already have is the input for all of them.
 
 ```bash
@@ -411,7 +411,7 @@ coverage:
   OpenAddresses instead, with `situs address-points --state HI --oa-csv <conformed.csv>`, and holds 348,377
   points.
 - **New Hampshire is absent from both, and its published database holds zero rows.** The file exists — 20,480
-  bytes, the schema and no data — so a lookup against it opens, succeeds, and returns nothing. An empty
+  bytes, the schema and no data — so a lookup against it opens, succeeds, and returns no row. An empty
   database and an absent one read the same way at the call site and mean different things, so if you serve
   New Hampshire, treat the rooftop tier there as unbuilt. Its interpolation database is unaffected: 57.6 MB
   and 156,620 segment-sides, built from TIGER like every other state's.

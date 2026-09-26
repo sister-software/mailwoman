@@ -71,7 +71,7 @@ const FILES: Record<string, string> = {
 async function fixture() {
 	const directory = await temporaryDirectory("move-plan-")
 	// The temp root itself can be a symlink, and TypeScript answers a resolved module by its real path.
-	// So the context's root must be the real one or nothing it resolves looks like a tracked file.
+	// So the context's root must be the real one or no module it resolves looks like a tracked file.
 	const repoRoot = await realPath(directory.path)
 
 	for (const [file, content] of Object.entries(FILES)) {

@@ -1,10 +1,5 @@
 /**
- * @file Viewport-bias wiring (#938 demo consumer). The map's current center is fed to `resolveTree` as a soft proximity
- *   hint, so an in-view namesake sorts ahead of a distant one at equal exact-tier. Two assertions pin the interface:
- *   (1) with the map parked over Ohio, "Dublin" resolves to Dublin, OH — the bias broke the tie the user's view
- *   implies; (2) a strong population signal still wins regardless of view — "Paris" stays in France even from a
- *   US-centered map (guards the #912 fix, which the bias must never undo). Bias is conditioned on zoom ≥ 4, so a
- *   whole-globe view contributes nothing.
+ * @file Viewport-bias wiring: the map's current center feeds `resolveTree` as a soft proximity hint, so an in-view namesake sorts ahead of a distant one at equal exact tier, and a strong population signal still wins regardless of view; the bias is conditioned on zoom ≥ 4, so a whole-globe view contributes no bias.
  */
 
 import { expect, test } from "../e2e/index.ts"
@@ -13,14 +8,13 @@ test.describe("Demo — viewport bias (#938)", () => {
 	test("map over Ohio biases 'Dublin' to Dublin, OH", async ({ demo, page }) => {
 		await demo.goto()
 
-		// Park the map on Ohio, zoomed in past the global-view threshold.
 		await page.evaluate(() => {
 			const w = globalThis as { __mailwomanMapCanvas?: { jumpTo: (o: unknown) => void } }
 			w.__mailwomanMapCanvas?.jumpTo({ center: [-83.11, 40.1], zoom: 8 })
 		})
 
-		// The map loads independently of the classifier — wait until the jump has actually taken
-		// (zoom past the global-view threshold) so the viewport bias is live before we submit.
+		// The map loads independently of the classifier, so wait until the jump has taken
+		// (zoom past the global-view threshold) before submitting.
 		await page.waitForFunction(
 			() => {
 				const m = (globalThis as { __mailwomanMapCanvas?: { getZoom: () => number } }).__mailwomanMapCanvas

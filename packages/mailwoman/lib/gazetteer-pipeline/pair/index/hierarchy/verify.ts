@@ -111,7 +111,7 @@ function expectedPairSet(
 	// Explicitly numbered placeholders throughout: `?1` (country) and `?2..?N`
 	// (parent placetypes) are each reused across several clauses.
 	// Mixing `?1` with anonymous `?` silently mis-numbers the anonymous ones past the
-	// bound arguments (they bind NULL and the INs match nothing).
+	// bound arguments (they bind NULL and the INs match no row).
 	// The first run of this verifier did exactly that and "verified" against an empty expected set.
 	const parentPlaceholder = parentPlacetypes.map((_, i) => `?${i + 2}`).join(",")
 	const wofCountry = country.toUpperCase()

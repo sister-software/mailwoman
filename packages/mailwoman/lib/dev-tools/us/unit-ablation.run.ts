@@ -11,8 +11,8 @@
  * in `synthesizers/po-box.ts` — `US_PMB_LEADERS` excludes it for exactly that reason —
  * so teaching one reading can be paid for with the other.
  *
- * A run that reports the unit rows recovering and says nothing about `PMB 123`
- * has measured half of the change.
+ * A run that reports the unit rows recovering and makes no statement about
+ * `PMB 123` has measured half of the change.
  *
  * Run:
  *

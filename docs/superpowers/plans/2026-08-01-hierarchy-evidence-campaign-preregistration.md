@@ -71,7 +71,7 @@ admin DB, via `mailwoman gazetteer census`.
 
 **Why a second artifact instead of folding these links into the pair index.** A pair entry
 ASSERTS a surface is a dependent locality, so every batch needs a venue-confound board before it
-ships (R4b's law-1 discipline). A census node asserts nothing about any surface — it can only tilt
+ships (R4b's law-1 discipline). A census node asserts no fact about any surface — it can only tilt
 a reading the model already entertains under a parent it already identified. That is what makes it
 the safe carrier for the long tail (GB alone has 22,843 WOF dep-loc-class links; individually
 boarding them is not a plan).
@@ -120,7 +120,7 @@ children at all and never enter the artifact.
   count on covered nodes is **≥ 2**. Failing either closes the discrimination question NEGATIVE.
 - **D-C2″ (disclosure).** Report the covered fraction among LARGE parents separately. The expected
   shape is that big cities are all covered, so the census discriminates in the small/middle tail
-  and says nothing about major-city queries. State it either way.
+  and makes no statement about major-city queries. State it either way.
 
 ### R4c Addendum 2 — the readings, and B-C3's circularity
 
@@ -137,10 +137,10 @@ population.
 
 **D-C2″ (disclosure).** The top decile of covered parents holds 8,415 of 22,545 dependent-locality
 children — 37% of the mass in 10% of the parents. The distribution is exactly as suspected: major
-cities are all covered and the census tells you nothing you didn't know there; its information is
+cities are all covered and the census adds no information you didn't know there. Its information is
 in the small/middle tail, where the median parent has two.
 
-**B-C3 VOID — the measurement is circular, and the 97.1% it produced means nothing.** The sample
+**B-C3 VOID — the measurement is circular, and the 97.1% it produced has no meaning.** The sample
 drew (child, parent) links from WOF, and the census is built from WOF under an inclusion rule that
 admits a parent precisely because it has such a child. Every sampled parent was therefore in the
 census by construction. The reading (20,186 of 22,843 links miss the shipped pair index; 97.1% of

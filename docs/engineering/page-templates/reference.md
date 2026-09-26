@@ -44,7 +44,7 @@ promise.
 > It is wired in-package from `@mailwoman/codex/address-format` and works without any engine method.
 
 Errors go in one closed table. Each row carries a stable code a caller can match on, one line of meaning, and
-the next step. A meaning that only restates the code's name gives the reader nothing.
+the next step. A meaning that only restates the code's name gives the reader no information.
 
 | Status | Body                                                 | Meaning                                                          | Next step                                                               |
 | ------ | ---------------------------------------------------- | ---------------------------------------------------------------- | ----------------------------------------------------------------------- |

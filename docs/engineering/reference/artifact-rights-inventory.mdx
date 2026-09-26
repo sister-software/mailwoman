@@ -103,7 +103,7 @@ manifests contradict.
 The repository's own admissibility function already refuses the identifier. On this tree,
 `assertAdmissibleLicenseExpression("AGPL-3.0")` throws, and `summarizeLicense("AGPL-3.0")` returns
 `recognized: false` with `unrecognized: ["AGPL-3.0"]` and an empty obligation list. That function
-guarded spatial-layer manifests, and nothing had applied it to a package manifest.
+guarded spatial-layer manifests, and no check had applied it to a package manifest.
 
 **Repaired.** The four fields now read `AGPL-3.0-only OR LicenseRef-Commercial`, `docs/package.json`
 gained the field it lacked, and the `package-license` repository check refuses a workspace manifest
@@ -128,7 +128,7 @@ version for exactly that reason, and `fetch-hf-weights` names the Hugging Face d
 What the cards did not state is which series a given number belongs to. Two packages ship a model
 graph: `en-us` at card 9.1.0 and `cjk` at card 0.0.3. Ten are data-only overlays declaring
 `mailwoman.baseWeights`, and an overlay's card version names that overlay's own artifacts while the
-graph its rows decode through is the base package's. Nothing in a published tarball said which of the
+graph its rows decode through is the base package's. No field in a published tarball said which of the
 two a reader was holding.
 
 **Repaired.** Each published package's generated `PROVENANCE.json` carries `version_series`, derived
@@ -155,11 +155,11 @@ of these has its own provenance, and the record no longer covers them with one l
 
 `en-us` has ten entries at `training.data_attribution`. `cjk` has six at a top-level `attribution`.
 Those are the two packages that ship a model graph. The ten overlays record none, which is consistent
-with inheriting a graph and says nothing about the artifacts each overlay ships itself.
+with inheriting a graph and makes no statement about the artifacts each overlay ships itself.
 
 The table above counted `en-us` alone, because the first reading of these cards looked at
 `training.data_attribution` and stopped. Reading one spelling reports the other package as recording
-nothing.
+no attribution.
 
 One of those ten entries attributes an artifact that ships in a different package. Entry 1 names
 `pair-index-gb.bin` in `neural-weights-en-gb`, attributing it to HM Land Registry Price Paid Data
@@ -175,7 +175,7 @@ No package shipped a `LICENSE.md`.
 and model artifacts Sister Software authors, and that third-party obligations continue to apply.
 `PROVENANCE.json` records each declared artifact with its digest or `unrecorded`, each attribution
 entry with the license it names or `null`, and an `unresolved` list. A package whose card records no
-attribution reads `none-recorded-in-this-package` rather than reading as a package with nothing to
+attribution reads `none-recorded-in-this-package` rather than reading as a package with no entries to
 attribute. The cross-package case above appears in `en-gb`'s record under
 `attribution_recorded_in_another_package`, found by matching each package's artifact filenames against
 every other package's attribution text rather than by hand.
@@ -227,7 +227,7 @@ describe as differing.
 ## Corpus composition, measured
 
 Full scans of `v0.32.0-locality-shape` on the training volume, 2026-09-20. **This is record 1. It
-describes the corpus on the volume today and states nothing about which records trained a released
+describes the corpus on the volume today and makes no statement about which records trained a released
 checkpoint.**
 
 | locale |  train rows | `wof-*` rows | share | `overture` |
@@ -313,7 +313,7 @@ corpus rows are most `wof-*`, are not measured here.
 `packages/corpus/lib/utils/license.ts` states the posture:
 
 > exclusion is a deliberate act rather than a silent default. The build includes every row an
-> adapter yields … Nothing is dropped on a license string unless the operator named it.
+> adapter yields … No source is dropped on a license string unless the operator named it.
 
 `build.ts` line 238 is `const excludeLicenses = opts.excludeLicenses ?? []`, and no caller in the
 repository passes it. `--exclude-share-alike` is an opt-in build flag.
@@ -345,7 +345,7 @@ three ways a source fails to permit an act. No released model was built from a c
 ## Runtime datasets, and what they oblige
 
 The four downloadable bundles are the third record this document keeps apart, and they reach an
-operator through nothing the npm tarball carries.
+operator through no file the npm tarball carries.
 
 | bundle      | publishers                                                                                          | terms as named                                                                      |
 | ----------- | --------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
@@ -412,7 +412,7 @@ states this limit for readers. Making the check recursive requires a separate ch
 The Who's On First path was also wrong. Both notice copies sent a reader to a `whosonfirst`
 directory directly under `data/`, which holds **0 files** in the tarball. The dictionaries are three
 levels in, at `packages/core/data/internal/dictionaries/whosonfirst/`. A consumer following the
-notice to find the material found nothing. Both copies are corrected.
+notice to find the material found no such directory. Both copies are corrected.
 
 ### The `us` bundle carries its own publisher list, and the record had the wrong majority
 
@@ -460,7 +460,7 @@ answers it in two sentences:
 > machine learning models and models' insights.
 
 These clauses apply to this agreement only. They do not cover the sources Overture itself drew each
-row from, which remain an open question, and they settle nothing for Who's On First, GeoNames,
+row from, which remain an open question, and they resolve no question for Who's On First, GeoNames,
 TIGER/Line, OpenAddresses or Base Adresse Nationale. They show that a grant can answer the model
 question in writing. The question stays open for the other sources because their grants do not
 address it, and one publisher has answered it.
@@ -479,7 +479,7 @@ across versions of that license.
 `packages/osm` is held out of the release pending ODbL counsel sign-off. It is not `private`, and it
 declares `publishConfig.access: public`. The hold was membership in `SANCTIONED_RELEASE_ABSENCES` in
 `packages/release-kit/lib/release/stage.ts`, a record that `checkReleaseListIdentity` reads so a
-missing workspace fails with its name. Nothing on the publish path read it. Running
+missing workspace fails with its name. No step on the publish path read it. Running
 `mwops release publish-workspace --allow-unplanned` against that directory, or `npm publish` by
 hand, would have published it.
 
@@ -498,7 +498,7 @@ training manifest exists to read.
 
 `mailwoman release hf` in `packages/mailwoman/lib/release-tools/publish-hf.ts` uploads `model.onnx`,
 `tokenizer.model`, `model-card.json` and the FST and postcode binaries. It read those files' sizes and
-nothing else about them. Uploading is publication, and attribution and share-alike conditions attach
+no other property of them. Uploading is publication, and attribution and share-alike conditions attach
 to a source and survive redistribution. The upload is therefore the last point at which to confirm
 that a provenance record exists.
 
@@ -510,7 +510,7 @@ Missing evidence about a source is a gap to record. A finding against a source i
 a person has to reach, and a release control should not make it.
 
 **Correcting a false absence this control first reported.** The first version read
-`training.data_attribution` alone and refused `neural-weights-cjk` as recording nothing. That card
+`training.data_attribution` alone and refused `neural-weights-cjk` as recording no attribution. That card
 records six entries under a top-level `attribution` key instead, naming the Overture CDLA terms, the
 National Tax Agency's 利用規約, KOGL Type 1 for the Korean road-name address database, the Korean
 permit registry's 이용허락범위 제한 없음, and the Taiwanese Open Government Data License v1.0 together
@@ -554,7 +554,7 @@ carries one. Measured 2026-09-21 by unpacking the registry's own tarballs:
 
 `en-gb@10.0.0` ships eleven files: `README.md`, `model-card.json`, `package.json` and eight data
 artifacts. A consumer who installed it holds the model card, which records attribution for `en-us`
-rather than for the artifacts in front of them, and nothing that states the terms or the open
+rather than for the artifacts in front of them, and no file that states the terms or the open
 questions.
 
 `@mailwoman/core@10.0.0` does ship a `THIRD_PARTY_NOTICES.md`, and its text is the one corrected on

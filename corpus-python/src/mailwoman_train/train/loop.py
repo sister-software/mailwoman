@@ -1,10 +1,5 @@
 """The optimizer loop: batches in, steps taken, callbacks notified.
 
-Two things stay in the loop rather than moving to a callback, and both are here because the loop
-owns state a callback only sees the end of. The running train loss accumulates across the window a
-callback reports, so resetting it is what closes that window. Evaluating costs a forward pass over
-the val split, so the loop decides when it happens and the callbacks only observe the result.
-
 `step` counts OPTIMIZER steps rather than micro-batches, so it lines up with `cfg.train.max_steps`
 whatever `grad_accum_steps` is.
 """
@@ -31,26 +26,17 @@ from .state import TrainState
 def apply_curricula(cfg: Config, tb: dict[str, Any], step: int) -> None:
     """Perturb the evidence channels in place, by optimizer step.
 
-    Every curriculum here ramps with the run so the model cannot launder a clue: it must keep label
-    competence with and without each channel. Each is conditioned on its own config flag so a run
-    that leaves one off draws nothing for it and stays reproducible against the runs before it.
+    Each curriculum ramps with the run so the model cannot launder a clue, and is conditioned on
+    its own config flag so a run that leaves one off stays reproducible against earlier runs.
     """
-    # Postcode-anchor confidence curriculum (#239/#240): perturb by optimizer step so the
-    # model can't launder the anchor (no-op until 25% of max_steps).
     if "anchor_confidence" in tb:
         tb["anchor_confidence"] = perturb_anchor_confidence(tb["anchor_confidence"], step, cfg.train.max_steps)
-    # Gazetteer-anchor confidence curriculum (#464, v0.9.13): same ramped per-row zero-out
-    # so the model keeps label competence with and without the clue (recovers the v0.9.12
-    # US postcode -3.7). Conditioned on the config flag so always-on runs stay reproducible.
     if "gazetteer_confidence" in tb and getattr(cfg.train, "gazetteer_curriculum", False):
         tb["gazetteer_confidence"] = perturb_gazetteer_confidence(tb["gazetteer_confidence"], step, cfg.train.max_steps)
-    # Evidence-bundle anti-over-trust curriculum (v3.16.0): the same ramped per-row
-    # zero-out applied to both bundle channels — the P-A decay showed a fresh evidence
-    # channel over-trusts without it. Per-channel independent draws, so the model also
-    # sees each channel alone (the bundle must inform, never become a joint crutch).
+    # Per-channel independent draws, so the model also sees each channel alone.
     if getattr(cfg.train, "evidence_curriculum", False):
-        # False-evidence noise is drawn first (v3.21.0, see perturb_evidence_noise) — then the
-        # absence zero-out draws over the noised batch. the rates compose independently.
+        # False-evidence noise is drawn first; the absence zero-out then draws over the noised
+        # batch.
         noise_p = float(getattr(cfg.train, "evidence_noise_prob", 0.0))
         if noise_p > 0.0:
             for prefix in ("street_type", "locality_surface"):
@@ -67,9 +53,8 @@ def write_final_artifacts(
 ) -> None:
     """The checkpoint a finished run owes, and the Fisher artifact that lands beside it.
 
-    This save stays with the loop rather than moving to the checkpointer callback: a run that
-    reached its last step owes a checkpoint whether or not a callback is listening, and the Fisher
-    artifact is written into the directory this call returns.
+    The save stays with the loop rather than a callback because a run that reached its last step
+    owes a checkpoint whether or not a callback is listening.
     """
     final_ck = save_checkpoint(
         state.model,
@@ -79,9 +64,8 @@ def write_final_artifacts(
         optim=state.optimizer,
         scheduler=state.scheduler,
     )
-    # Fisher artifact lands beside the final checkpoint (the weights-bundle interface: versioned
-    # filename + provenance sidecar, the lexicon discipline). Zero-count capture (a run shorter
-    # than its window says it was armed for) raises in finalize — loud, never a silent absence.
+    # Fisher artifact lands beside the final checkpoint as a versioned filename plus provenance
+    # sidecar; a zero-count capture raises in finalize rather than shipping a silent absence.
     if regularizers.fisher_acc is not None:
         fisher_path = regularizers.fisher_acc.save(
             final_ck,
@@ -108,8 +92,8 @@ def run_training_loop(
 ) -> None:
     """Step until the budget is met, then write the final artifacts.
 
-    `evaluate` is the val pass the loop calls on its own schedule. it is passed in rather than
-    imported so this module does not depend on the metric stack it never reads.
+    `evaluate` is passed in rather than imported so this module does not depend on the metric
+    stack it never reads.
     """
     model, optim, scheduler = state.model, state.optimizer, state.scheduler
     device, output_dir = state.device, state.output_dir
@@ -121,8 +105,8 @@ def run_training_loop(
     log_every = max(1, cfg.train.log_every_steps)
     print(f"max_steps={cfg.train.max_steps} batch_size={cfg.train.batch_size}")
 
-    # The streaming iterator may exhaust before max_steps if row_limit is set.
-    # restart per "epoch" until step budget is met.
+    # The streaming iterator may exhaust before max_steps when row_limit is set, so restart per
+    # epoch.
     epoch = 0
     while step < cfg.train.max_steps:
         epoch += 1
@@ -139,8 +123,6 @@ def run_training_loop(
             model.train()
             tb = to_tensor_batch(batch, device)
             apply_curricula(cfg, tb, step)
-            # Optimizer step happens every ``accum`` micro-batches. gradients accumulate
-            # across the micro-batches in between. ``step`` counts *optimizer* steps rather than micro-steps, so it lines up with the cfg.train.max_steps budget.
             is_accum_boundary = ((micro_step + 1) % accum) == 0
             if micro_step % accum == 0:
                 optim.zero_grad(set_to_none=True)
@@ -149,8 +131,8 @@ def run_training_loop(
                     out = model(**tb)
             else:
                 out = model(**tb)
-            # EWC brake (fine-tunes only): the quadratic penalty rides the loss inside the
-            # accum division so effective-batch scaling matches the data loss.
+            # EWC penalty rides the loss inside the accum division so effective-batch scaling
+            # matches the data loss.
             ewc = regularizers.ewc
             loss_total = out.loss if ewc is None else out.loss + ewc.penalty(model)
             loss = loss_total / accum
@@ -158,20 +140,17 @@ def run_training_loop(
             micro_step += 1
             if not is_accum_boundary:
                 continue
-            # Fisher capture window (base runs): read the accumulated gradient before clipping
-            # (the empirical Fisher is defined on ∂L/∂θ; the clipped surrogate understates
-            # curvature exactly where it is largest). Read-only — trajectory unaffected.
+            # Fisher capture reads the accumulated gradient before clipping: the empirical
+            # Fisher is defined on the unclipped ∂L/∂θ, and clipping understates curvature
+            # exactly where it is largest. Read-only.
             if (
                 regularizers.fisher_acc is not None
                 and regularizers.fisher_window_start is not None
                 and step >= regularizers.fisher_window_start
             ):
                 regularizers.fisher_acc.accumulate(model)
-            # Stage 2 ships CE + CRF NLL — the CRF leg can produce sharp gradients
-            # during warmup, especially under bf16. Clip global norm to 1.0 before
-            # stepping. The v0.2.0 (CE-only) Stage 1 run trained stably to 50k steps
-            # without clipping, but adding the CRF + label smoothing duo without a
-            # gradient guard diverged at step 1000 when warmup LR (5e-4) peaked.
+            # Clip the global norm before stepping: the CRF leg can produce sharp gradients
+            # during warmup, especially under bf16.
             grad_clip = float(getattr(cfg.train, "grad_clip_norm", 1.0))
             if grad_clip > 0:
                 torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=grad_clip)
@@ -180,8 +159,6 @@ def run_training_loop(
             step += 1
             train_loss_running += float(loss.detach().cpu()) * accum
 
-            # The running sum is the loop's rather than a callback's: it accumulates across the window
-            # a callback only sees the end of, and resetting it is what closes that window.
             if step % log_every == 0:
                 state.train_loss = train_loss_running / log_every
                 train_loss_running = 0.0
@@ -190,8 +167,6 @@ def run_training_loop(
             for callback in callbacks:
                 callback.on_step_end(state, step)
 
-            # Evaluating costs a forward pass over the val split, so the loop decides when it
-            # happens. the callbacks only observe the result.
             if step % cfg.train.eval_every_steps == 0:
                 state.val = evaluate(cfg, state.tokenizer, model, device, max_rows=cfg.data.val_rows)
                 state.elapsed = time.time() - state.started

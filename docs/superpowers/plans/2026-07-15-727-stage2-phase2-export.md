@@ -8,7 +8,7 @@ browser SLO (size + latency). Phase 3's JS decoder consumes both.
 
 **Architecture:** Extend `export_to_onnx`'s existing wrapper/`with_locale` pattern with a
 `with_spans` toggle — outputs are fetched **by name**, so appending `span_scores` is
-backward-compatible (a consumer that never asks for it pays nothing; ORT prunes unfetched graph
+backward-compatible (a consumer that never asks for it pays no cost; ORT prunes unfetched graph
 branches). The transition table follows the `export_crf_transitions` JSON-sidecar precedent —
 transitions are decode-time data rather than graph.
 

@@ -5,9 +5,10 @@
     modal run -m launch.train_remote::push_artifact_r2 --volume-path=… --r2-subpath=…
 
 Quantization runs here rather than locally because the dynamo-exported graph trips onnx shape
-inference in some local onnxruntime builds. the training image's pinned one quantizes it cleanly.
-The push exists because this volume's container and CLI views are fully divergent — `modal volume
-get` cannot pull a container-written file — so an artifact leaves the way the corpus arrived.
+inference in some local onnxruntime builds, while the training image's pinned one quantizes it
+cleanly. The push exists because this volume's container and CLI views are fully divergent —
+`modal volume get` cannot pull a container-written file — so an artifact leaves the way the corpus
+arrived.
 """
 
 from __future__ import annotations
@@ -31,13 +32,12 @@ def export_onnx(
     """Export a checkpoint to ONNX.
 
     Env-var fallbacks (MAILWOMAN_EXPORT_OUTPUT_DIR / MAILWOMAN_EXPORT_STEP /
-    MAILWOMAN_EXPORT_TOKENIZER) are kept for back-compat with prior workflows. CLI params take
-    precedence when set.
+    MAILWOMAN_EXPORT_TOKENIZER) apply when a CLI param is unset, and a CLI param wins.
 
     ``--model-dir`` bypasses the ``{output_dir}/checkpoints/step-{step}`` layout and loads a flat
     ``from_pretrained`` dir directly (``pytorch_model.bin`` + ``config.json``), writing ``model.onnx``
-    into that same dir. Used to export an ad-hoc checkpoint — e.g. the #825 B-splice expanded-but-not-
-    fine-tuned model for the mean-init ablation — without restructuring it into the training layout.
+    into that same dir, so an ad-hoc checkpoint can be exported without restructuring it into the
+    training layout.
     """
     import sys
     from pathlib import Path
@@ -73,11 +73,9 @@ def export_onnx(
     export_to_onnx(model, out_path, opset=17, max_length=128, pad_token_id=tokenizer.pad_id)
     print(f"ONNX exported: {out_path} ({out_path.stat().st_size / 1e6:.1f} MB)")
 
-    # #727 stage-2: a span-scorer model's ONNX carries a `span_scores` output, but the JS k-best
-    # decoder (neural/semi-markov-decode.ts, PR #1154) also needs the segment-transition table, which
-    # is decode-time data rather than part of the graph. Write it as a sidecar next to model.onnx so the
-    # grade's oracle@k / seg@1 arc reads can consume it. Returns None (no file) for a span-less model,
-    # keeping the export byte-identical for every pre-#727 recipe.
+    # A span-scorer model's ONNX carries a `span_scores` output, but the JS k-best decoder also needs
+    # the segment-transition table, which is decode-time data rather than part of the graph. Write it
+    # as a sidecar next to model.onnx; a span-less model returns None and keeps the export unchanged.
     import json as _json
 
     from mailwoman_train.export.package_weights import export_semi_crf_transitions
@@ -106,11 +104,8 @@ def quantize_onnx(
     import sys
     from pathlib import Path
 
-    # reload before reading. This function is almost always called right after `export_onnx` wrote its
-    # fp32 to the volume, and a container that started with an older view reads the previous model —
-    # silently, since the path is the same. Two checkpoints exported to `model.onnx` in sequence and
-    # quantized in between produced byte-identical int8 artifacts because of this, which reads as "the
-    # two checkpoints are the same model" rather than as a stale mount.
+    # Reload before reading: this runs right after `export_onnx` wrote its fp32 to the volume, and a
+    # container with an older view reads whatever its mount still holds at that path, silently.
     vol.reload()
 
     sys.path.insert(0, f"{VOL_MOUNT}/corpus-python/src")
@@ -122,7 +117,7 @@ def quantize_onnx(
     if not fp32.is_file():
         raise RuntimeError(f"no fp32 at {fp32} after vol.reload() — export it first")
 
-    # The input's digest travels with the output. An int8 artifact is otherwise unattributable: nothing
+    # The input's digest travels with the output. An int8 artifact is otherwise unattributable: no field
     # in the file says which checkpoint it came from, and the fp32 it was made from is usually
     # overwritten by the next export.
     fp32_md5 = hashlib.md5(fp32.read_bytes()).hexdigest()

@@ -14,7 +14,7 @@
  *   addressable object. neither says which object carries which postcode. nsul does, as field `pcds`,
  *   under OGL-UK-3.0. The `PO`-area measurement that produced this design (recorded on #1975) showed a
  *   nearest-centroid reconstruction of the register is exact on 69.6% of 531,266 UPRNs and a building
- *   footprint adds nothing, so the register is stored rather than inferred.
+ *   footprint adds no accuracy gain, so the register is stored rather than inferred.
  *
  *   ## Shape
  *
@@ -128,9 +128,9 @@ export async function createNSULMetaTable(db: Kysely<NSULDatabase>): Promise<voi
  * The `pcds_compact` index the `uprnsForPostcode` probe reads.
  *
  * Builders call this after the bulk load (index-after-load).
- * There is no index on the spaced `pcds`: it is derivable from `pcds_compact`
- * through {@link compactPostcode}, and a second index over 40 million rows would
- * add nothing a caller cannot get by compacting its key first.
+ * There is no index on the spaced `pcds`: it is derivable from `pcds_compact` through
+ * {@link compactPostcode}, and a second index over 40 million rows would add no
+ * capability a caller cannot get by compacting its key first.
  */
 export async function createNSULIndexes(db: Kysely<NSULDatabase>): Promise<void> {
 	await db.schema.createIndex("uprn_postcode_pcds_compact").on("uprn_postcode").column("pcds_compact").execute()

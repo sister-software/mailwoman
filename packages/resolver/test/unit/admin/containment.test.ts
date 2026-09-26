@@ -53,7 +53,7 @@ interface StampSpec {
  * A backend whose locality candidates carry containment stamps only when the query
  * asked (`regionQualifier` present) — the capable-backend interface.
  *
- * Region lookups miss (the fixture region resolves nothing, like Thüringen under a US scope).
+ * Region lookups miss (the fixture region resolves no place, like Thüringen under a US scope).
  */
 async function makeBackend(
 	specs: StampSpec[],
@@ -227,7 +227,7 @@ describe("the walk's deciding site (#1729 reach interface)", () => {
 			{ adminContainmentRerank: true }
 		)
 
-		// Fame decides as today — the setting changed nothing, and says so.
+		// Fame decides as today — the setting changed no pick, and says so.
 		expect(locality.placeID).toBe("wof:1")
 		expect(locality.metadata?.["admin_containment"]).toBe("no_contained_candidate")
 	})

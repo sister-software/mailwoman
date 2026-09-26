@@ -123,7 +123,7 @@ repository's rule is to share the function rather than the constants. The fix is
 with `Object.entries`.
 
 `packages/repo-health/lib/checks/cli-flag-properties.ts` exists because these two can drift. Its docstring records
-the cost: ten flags across seven commands reached the component under a name nothing read, including `eval
+the cost: ten flags across seven commands reached the component under a name no code read, including `eval
 oa-resolver --out-json`. Derivation turns that class of defect into a compile error. Whether the check retires entirely is
 decided after A1 lands, by reading what it still catches. A flag whose property is declared but unread is a
 different finding and may survive.
@@ -317,7 +317,7 @@ standing rule, and do not open a separate pull request for a baseline.
 
 - **Declaration census.** Parse every tracked `.ts`/`.tsx` with the TypeScript compiler API. Record every
   `FunctionDeclaration`, `MethodDeclaration`, and `VariableDeclaration` with an initializer, exported or not, with
-  no size floor. Group by four keys, strongest claim first so nothing counts twice: identical normalized
+  no size floor. Group by four keys, strongest claim first so no declaration counts twice: identical normalized
   declaration text (≥40 chars); identical normalized body (≥60 chars); identical constant initializer (≥20 chars,
   excluding `[]`, `{}`, `new Map()` and other empty values); identical AST-kind sequence (≥60 nodes). Same-name
   matches are reported as leads and never counted, because 184 declarations are named `state` and 425 are named

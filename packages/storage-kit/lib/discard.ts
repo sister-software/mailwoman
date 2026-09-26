@@ -7,7 +7,7 @@
  *
  *   The Samsung T7 Shield reports `LBPU=1` (the UNMAP command is supported) and `LBPWS=0` (WRITE SAME with the unmap
  *   bit is not). The kernel's default `provisioning_mode` of `full` wants the latter, so it publishes a discard limit
- *   of zero and `blkdiscard` silently does nothing. A drive that arrives full of someone else's filesystem then has
+ *   of zero and `blkdiscard` silently has no effect. A drive that arrives full of someone else's filesystem then has
  *   no free erase blocks, and every write becomes read-modify-write.
  *
  *   Measured on this drive: 2.1 MB/s with 636 ms write latency at the raw block device, against 755 MB/s once the
@@ -20,7 +20,7 @@ import { $ } from "zx"
 export interface DiscardSupport {
 	/**
 	 * The kernel's published maximum discard bytes.
-	 * Zero means `blkdiscard` will do nothing.
+	 * Zero means `blkdiscard` will make no change.
 	 */
 	maxBytes: number
 	/**

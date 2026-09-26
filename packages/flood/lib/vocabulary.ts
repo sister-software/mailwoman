@@ -8,13 +8,13 @@
  *
  *   the zone domain is closed and the builder throws on A value outside IT. An unknown code is a
  *   source-schema change, which is the event a reader most needs to hear about. coercing it to a nearest
- *   neighbour or to null converts "the source changed" into "there is nothing here".
+ *   neighbour or to null converts "the source changed" into "there is no data here".
  *
  *   The stored codes are `FZ2` and `FZ3`, not "Flood Zone 2"/"Flood Zone 3". The published metadata
  *   describes the column as "Assigned Flood Zone (Flood Zone 2 or 3)"; the shipped geodatabase declares
  *   `flood_zone` as a 3-character string and fills it with `FZ2` / `FZ3`. Measured over the whole file:
  *   540,282 `FZ2` and 273,345 `FZ3`, 813,627 together. A builder written against the metadata prose finds
- *   nothing.
+ *   no match.
  *
  *   zone 1 is not IN this table, because IT is not IN the data. The Planning Practice Guidance defines it
  *   as "all land outside Zones 2, 3a and 3b" — an absence rather than a polygon. It reaches a reader through
@@ -148,8 +148,9 @@ export const EA_COVERAGE_STATEMENT_URL = `https://environment.data.gov.uk/datase
 /**
  * What the product does not cover, in the authority's own words.
  *
- * Carried into the observation so a caller can see what an answer is silent about: a Zone 1 reading
- * says nothing about surface water, groundwater, sewer failure, or the residual risk behind a defence.
+ * Carried into the observation so a caller can see what an answer is silent about:
+ * a Zone 1 reading makes no statement about surface water, groundwater, sewer failure,
+ * or the residual risk behind a defence.
  */
 export const EA_PRODUCT_LIMITS: ReadonlyArray<string> = [
 	"Flood Zones are a planning tool and they do not necessarily mean somewhere will or will not flood.",

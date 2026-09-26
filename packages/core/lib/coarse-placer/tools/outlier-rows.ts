@@ -16,7 +16,7 @@ import { isPresent } from "#objects"
 
 /**
  * Shortest raw string worth keeping as an outlier example.
- * Below it there is nothing to learn from.
+ * Below it there is no example to learn from.
  */
 const MIN_OUTLIER_LENGTH = 6
 
@@ -47,7 +47,7 @@ export function assembleOutlierRow(row: Record<string, unknown>, options: Assemb
 	const pc = (row.postcode ?? "").toString().trim()
 	const locality = options.locality(row)
 
-	// Nothing distinctive to learn from.
+	// No distinctive field to learn from.
 	if (!street && !locality) return null
 
 	if (options.requireLetterLocality && !street && !/[a-z]/i.test(locality)) return null
@@ -84,7 +84,7 @@ export function collectOutlierRows(candidates: Iterable<string | null>, cap = In
 }
 
 /**
- * Encode rows as `{raw, country: "other"}` jsonl (trailing newline included).
+ * Encode rows as `{raw, country: "OTHER"}` jsonl (trailing newline included).
  */
 export function otherRowsJSONL(rows: string[]): string {
 	return toLinesText(rows.map((raw) => stringifyJSON({ raw, country: "OTHER" })))

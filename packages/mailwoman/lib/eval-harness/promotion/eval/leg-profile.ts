@@ -8,7 +8,7 @@
  *   unattributed, so a question like "where do the nine minutes go" is answered by extrapolating row counts, which is
  *   how the de-order row count came to be wrong by 6,000 rows in an earlier triage.
  *
- *   The recorder writes nothing unless a path is given, and the path must name somewhere outside the promotion output
+ *   The recorder writes no file unless a path is given, and the path must name somewhere outside the promotion output
  *   directory: `comparePromotionOutputs` reads every file under it byte-for-byte, and a wall time differs between two
  *   runs of the same artifact.
  */
@@ -32,8 +32,8 @@ export interface LegTiming {
  * Collects one entry per timed leg, in completion order, and writes the ledger
  * when the scope holding it ends.
  *
- * Hold it with `await using`: a battery that fails part way through is exactly when the timings
- * are worth reading, and disposal writes what was collected before the throw rather than nothing.
+ * Hold it with `await using`: a battery that fails part way through is exactly when the timings are
+ * worth reading, and disposal writes what was collected before the throw rather than discarding it.
  */
 export class LegProfile implements AsyncDisposable {
 	readonly #timings: LegTiming[] = []
@@ -41,7 +41,7 @@ export class LegProfile implements AsyncDisposable {
 
 	/**
 	 * @param path Where to write the ledger.
-	 * An empty path writes nothing, which is the default for every run that did not ask to be profiled.
+	 * An empty path writes no ledger, which is the default for every run that did not ask to be profiled.
 	 * A non-empty one must sit outside the battery's output directory — see the file header.
 	 */
 	constructor(path: string) {
@@ -69,7 +69,7 @@ export class LegProfile implements AsyncDisposable {
 	}
 
 	/**
-	 * Write the ledger, or nothing when the path is empty.
+	 * Write the ledger, or skip the write when the path is empty.
 	 *
 	 * `total_ms` sums the legs, which is less than the run's wall clock: the untimed remainder
 	 * is the verdict assembly, the spec read, and whatever else sits between legs.

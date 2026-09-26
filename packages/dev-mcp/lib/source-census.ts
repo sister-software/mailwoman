@@ -3,26 +3,14 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   what data do WE actually hold, per country, per artifact.
+ * What data the repository holds, per country and per artifact — the question before `lookup-sources.ts`'s "does this
+ * source know this string".
  *
- *   `lookup-sources.ts` answers "does this source know this string". This answers the question that comes before it —
- *   is there anything here for this country at all, in which file, and can it be joined to anything. Every locale
- *   expansion starts with it, and it was hand-rolled four separate times in one session before landing here.
+ * A row count is a misleading yes, so `join` and `parentLinked` are reported: `postalcode-geonames-intl.db` holds
+ * 395,544 PT postcodes and is `spr`-only, and even `postalcode-intl.db`'s `ancestors` table reaches no locality when
+ * every `parent_id` is `-1`. A zero-byte or table-less extract is reported unreadable rather than as zero rows.
  *
- *   The columns are chosen from what those hand-rolls kept having to re-discover:
- *
- *   - **`join`** — a postcode extract with rows and no `ancestors` table cannot yield a (postcode, locality, region)
- *     triple, so a row count alone is a misleading yes. `postalcode-geonames-intl.db` holds 395,544 PT postcodes and
- *     is `spr`-only; `postalcode-intl.db` holds 27,119 FR and has the ancestry tables. Same verb, different answer.
- *   - **`parentLinked`** — and even an `ancestors` table is not enough on its own. Measured on `postalcode-intl.db`:
- *     `parent_id` is `-1` on every postcode row, and the ancestry chain for `75002` is a single self-reference at
- *     placetype `postalcode`. So neither column reaches a locality, and a builder that assumes either produces zero
- *     rows and reads as a coverage gap.
- *   - **`bytes` / `tables`** — a zero-byte or table-less extract is a real on-disk state (see #1791), and it looks
- *     identical to "this country has no data" from a row count.
- *
- *   absence is reported rather than omitted. A country asked for and not found gets a row saying so, because "the query
- *   returned nothing" and "we never looked there" are the two facts this file exists to keep apart.
+ * Absence is reported, never omitted: "the query returned no rows" and "we never looked there" are different facts.
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
@@ -34,10 +22,8 @@ import type { PathBuilderLike } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
 /**
- * What an extract can be joined through, which decides what a corpus builder can extract from it.
- *
- * `ancestry` does not promise the chain reaches a locality — only that the table exists.
- * The header records why that distinction cost a measurement.
+ * What an extract can be joined through, which decides what a corpus builder can extract from it;
+ * `ancestry` promises only that the table exists, not that the chain reaches a locality.
  */
 export type JoinCapability = "ancestry" | "names" | "search" | "population"
 
@@ -56,16 +42,14 @@ export interface SourceCensusRow {
 	bytes: number
 	tables: number
 	/**
-	 * Present only when the artifact carries an `spr` table — the shape every gazetteer extract shares.
-	 *
-	 * A file without one is reported with `readable: false` and a reason rather than a zero.
+	 * Present only when the artifact carries an `spr` table; a file without one is
+	 * reported unreadable with a reason rather than a zero.
 	 */
 	countries?: Record<string, number>
 	join: JoinCapability[]
 	/**
-	 * Whether any row carries a usable `parent_id`.
-	 *
-	 * An extract whose every row reads `-1` cannot be walked upward, and that is invisible from a row count.
+	 * Whether any row carries a usable `parent_id`; an extract whose every row reads
+	 * `-1` cannot be walked upward, which is invisible from a row count.
 	 */
 	parentLinked?: boolean
 	readable: boolean
@@ -79,9 +63,7 @@ function tableNames(db: DatabaseClient<WOFDatabase>): string[] {
 }
 
 /**
- * Census one SQLite artifact.
- *
- * Never throws — an unreadable file is a finding rather than an error.
+ * Census one SQLite artifact without throwing, because an unreadable file is a finding rather than an error.
  */
 export async function censusArtifact(path: string, countries?: readonly string[]): Promise<SourceCensusRow> {
 	const artifact = path.split("/").pop() ?? path
@@ -133,8 +115,8 @@ export async function censusArtifact(path: string, countries?: readonly string[]
 			counts[code] = row.n
 		}
 
-		// Asked for and absent is a reported zero, never a missing key.
-		// The caller is deciding whether to acquire data.
+		// Asked for and absent is a reported zero, never a missing key, because the
+		// caller is deciding whether to acquire data.
 		if (countries) {
 			for (const code of countries) {
 				counts[code] ??= 0
@@ -163,10 +145,8 @@ export async function censusArtifact(path: string, countries?: readonly string[]
 
 /**
  * Every gazetteer-shaped artifact under the data root's `db/wof/` directory,
- * plus the admin gazetteer beside it.
- *
- * `.prev`, `.bak` and journal siblings are excluded: they are on disk on purpose
- * and censusing them reports the same country twice under names nobody can act on.
+ * plus the admin gazetteer beside it; `.prev`, `.bak` and journal siblings are excluded
+ * because censusing them reports the same country twice under names nobody can act on.
  */
 export async function gazetteerArtifacts(source: PathBuilderLike = dataRootPath()): Promise<string[]> {
 	const wof = wofDatabaseRoot(source)

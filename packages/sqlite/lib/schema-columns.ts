@@ -47,7 +47,7 @@ export function addRingsColumn<TB extends string, C extends string>(
 
 /**
  * The precomputed bounding box plus the unsimplified ring blob every polygon truth table carries:
- * {@link addBoundingBoxColumns} then {@link addRingsColumn}, with nothing between them.
+ * {@link addBoundingBoxColumns} then {@link addRingsColumn}, with no columns between them.
  */
 export function addRingGeometryColumns<TB extends string, C extends string>(
 	builder: CreateTableBuilder<TB, C>

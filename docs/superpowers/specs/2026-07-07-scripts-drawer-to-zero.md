@@ -195,7 +195,7 @@ The 166 tracked files in `scripts/eval/` (plus the 2 gitignored), plus the 55 di
 
 **Disposition: stay as-is.** These are by design — ad-hoc evaluation probes and diagnostic investigations that don't belong in a package. The distinction between `eval/` and `diagnostic/` is already fuzzy (diagnostic is gitignored; eval has several tracked probes that read like diagnostics). Consider consolidating: `eval/` for the _checks_ (promotion-eval, gauntlet, checks/) and `diagnostic/` for everything else — but that's cleanup rather than migration.
 
-**One cleanup task:** 2 files in `eval/` are gitignored (residual probes). Ensure the gitignore is correct and nothing tracked should be gitignored or vice versa.
+**One cleanup task:** 2 files in `eval/` are gitignored (residual probes). Ensure the gitignore is correct and no tracked file should be gitignored or vice versa.
 
 ### ▸ Phase 10 — The lone `.mjs` and stale references
 

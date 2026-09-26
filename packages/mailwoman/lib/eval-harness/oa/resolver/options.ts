@@ -221,7 +221,7 @@ export interface OAResolverEvalOptions {
 	 * The promotion comparator reads every file under the output directory byte-for-byte,
 	 * so this path must name somewhere outside it.
 	 *
-	 * Omitted (the default) the harness writes nothing and costs two `performance.now()` calls per row.
+	 * Omitted (the default) the harness writes no file and costs two `performance.now()` calls per row.
 	 */
 	profileJSON?: string
 	/**

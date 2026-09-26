@@ -3,25 +3,14 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   What a sample can and cannot support, expressed as a sentence rather than a field.
- *
- *   The measured failure this exists for: on 2026-08-15 a probe fed 10 self-chosen addresses through a mechanism, saw
- *   no differences, and published "zero effect". Re-run over all 837 board inputs, the mechanism moved 24. Zero events
- *   in 10 trials rules out only rates above 25.9%; the true rate was 2.9%, so that panel had roughly a three-in-four
- *   chance of showing exactly what it showed and licensing the opposite of the truth.
- *
- *   The repair is placement. A bound in a `power` field is a bound that can be dropped on the way to the operator. a
- *   clause inside the sentence being quoted cannot be, without the quoter noticing they are editing it. So
- *   {@link describeObservedRate} returns prose that carries its own limits, and every measuring tool puts it in
- *   `summary`.
+ * Every measuring tool puts {@link describeObservedRate}'s prose in `summary`, because a bound in a separate
+ * `power` field can be dropped on the way to the operator.
  */
 
 /**
  * Exact one-sided Clopper–Pearson upper bound for zero observed events: `1 − α^(1/n)`.
  *
- * Exact rather than the rule-of-three approximation (`3/n`) because the
- * two disagree most at small n, which is the only place this is ever read:
- * at n = 10 the exact bound is 0.259 and the approximation 0.300.
+ * Exact rather than the rule-of-three approximation, which diverges most at the small n where this is read.
  */
 export function zeroEventUpperBound(n: number, alpha = 0.05): number {
 	if (n <= 0) return 1
@@ -30,9 +19,8 @@ export function zeroEventUpperBound(n: number, alpha = 0.05): number {
 }
 
 /**
- * Wilson score interval — the non-zero counterpart, and the same interval the eval specs
- * already derive their floors from (`checks/v9.0.0-base.json`'s `$margin_rationale`:
- * "2 × the downward Wilson 95% half-width at the metric's own support").
+ * Wilson score interval — the non-zero counterpart, and the same interval the
+ * eval specs derive their floors from.
  */
 export function wilsonInterval(successes: number, n: number, z = 1.96): { low: number; high: number } {
 	if (n <= 0) return { low: 0, high: 1 }
@@ -52,37 +40,20 @@ export function wilsonInterval(successes: number, n: number, z = 1.96): { low: n
 /**
  * How tight the upper bound must be before a zero may be read as a real absence.
  *
- * A judgement rather than a measurement.
- * There is no experiment that fixes it.
- *
- * It is set at 1% because that is roughly the `n = 300` mark (`1 − 0.05^(1/300) = 0.99%`),
- * i.e. the point where a zero rests on a set larger than any panel anyone has assembled by hand here.
- *
- * The 2026-08-15 probe used 10, whose bound is 25.9%.
+ * A judgement, not a measurement: 1% is roughly the `n = 300` mark (`1 − 0.05^(1/300) = 0.99%`),
+ * where a zero rests on a set larger than any panel assembled by hand here.
  */
 const ABSENCE_CLAIM_MAX_UPPER_BOUND = 0.01
 
 /**
- * How an input set was chosen.
- *
- * `hand-picked` is the one that warrants the extra sentence.
- * A full board carries its own denominator, and a declared subset carries the predicate that chose it.
- *
- * `random-draw` is separate from `subset` because the two support opposite claims.
- * A declared subset is chosen by a predicate and generalizes to nothing beyond it.
- *
- * A random draw from a 26-million-row register is the one subset here whose rate estimates the population's.
- *
- * Collapsing them would print "declared-subset" over the only sample in this file that is not one.
+ * How an input set was chosen; `random-draw` stays separate from `subset` because a declared subset
+ * generalizes to no rows beyond its predicate, while a random draw's rate estimates the population's.
  */
 export type Selection = "full" | "subset" | "hand-picked" | "random-draw"
 
 /**
- * How each selection reads inside the observed-rate sentence.
- *
- * A full board says nothing — its denominator already is the population —
- * so it contributes an empty string.
- * Every other kind names itself where a reader will trip over it.
+ * How each selection reads inside the observed-rate sentence; a full board adds no qualifier
+ * because its denominator already is the population.
  */
 const SELECTION_ADJECTIVE: Record<Selection, string> = {
 	full: "",
@@ -91,25 +62,26 @@ const SELECTION_ADJECTIVE: Record<Selection, string> = {
 	"random-draw": "randomly-drawn ",
 }
 
+/**
+ * A rate measured over a sample, with the sample it was measured over.
+ */
 export interface ObservedRate {
 	events: number
 	n: number
 	selection: Selection
 	/**
 	 * What one event is, in the caller's own words, e.g. "differed" or "regressed".
-	 *
-	 * Used to build the sentence.
 	 */
 	eventLabel: string
 	/**
 	 * The size of the set this sample was drawn from, when the caller took a subset of something larger.
-	 *
-	 * Naming it turns "0 of 10" into "0 of 10, out of 837 available", which is the
-	 * comparison that makes a panel look small.
 	 */
 	populationN?: number
 }
 
+/**
+ * What {@link describeObservedRate} returns: the sentence plus the machine-readable reading behind it.
+ */
 export interface PowerReading {
 	events: number
 	n: number
@@ -117,16 +89,12 @@ export interface PowerReading {
 	upperBound95: number | null
 	interval95: { low: number; high: number } | null
 	/**
-	 * The sentence.
-	 *
-	 * Callers put this in `summary` verbatim.
-	 * See the module docstring for why it is prose.
+	 * The sentence callers put in `summary` verbatim.
 	 */
 	sentence: string
 	/**
-	 * True when the sample cannot support a claim of absence.
-	 *
-	 * Machine-readable so a wrapper can act on it, but it is the sentence that does the work.
+	 * True when the sample cannot support a claim of absence; the sentence does the work,
+	 * this only lets a wrapper branch on it.
 	 */
 	supportsAbsenceClaim: boolean
 }
@@ -136,12 +104,8 @@ function percent(value: number): string {
 }
 
 /**
- * Turn a count into a reading that states its own limits.
- *
- * The zero case is the one that matters and gets the strongest wording: a zero is not a
- * measurement of absence unless the denominator is large enough to have detected the thing.
- * This is the repo's standing meaning-of-zero rule aimed at the agent's own probes
- * rather than at a coverage cell.
+ * Turn a count into a reading that states its own limits; a zero is not a measurement
+ * of absence unless the denominator is large enough to have detected the thing.
  */
 export function describeObservedRate(observed: ObservedRate): PowerReading {
 	const { events, n, selection, eventLabel, populationN } = observed

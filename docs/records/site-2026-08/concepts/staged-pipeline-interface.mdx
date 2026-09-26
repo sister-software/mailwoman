@@ -91,7 +91,7 @@ Not every stage failure is treated the same. The coordinator distinguishes **gra
 | `normalize`            | Propagates. Input preprocessing is a contract; a crash is a bug.                                                                                   |
 | `computeQueryShape`    | Propagates. Same rationale.                                                                                                                        |
 | `detectLocale`         | Propagates. A locale detector that crashes signals a real fault rather than noise.                                                                 |
-| `classifyKind`         | Propagates. Kind classification runs on the QueryShape wecomputed — there's nothing external that can poison it.                                   |
+| `classifyKind`         | Propagates. Kind classification runs on the QueryShape wecomputed — there's no external input that can poison it.                                  |
 | `classifier.parse`     | **Swallowed.** Returns an empty `AddressTree`; pipeline continues. The classifier runs against external weights / arbitrary user input; defensive. |
 | `resolver.resolveTree` | **Swallowed.** Returns the classifier's tree unchanged. Backend may be unavailable; we surface what we have rather than fail the whole call.       |
 

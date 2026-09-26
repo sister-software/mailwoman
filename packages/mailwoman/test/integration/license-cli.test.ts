@@ -6,7 +6,7 @@
  *   `mailwoman license` end to end on the compiled CLI: `register` printing the derivation, `keygen` into a scratch
  *   config root, `issue` refused against a register that does not carry the new key, `verify` reading a token this build
  *   does not trust, and `adopt` and `refresh` refusing to write one. The compiled CLI ships its register, so no test can
- *   hand it a trusted key. what is asserted is every refusal by its word and that nothing is written on one. The worker
+ *   hand it a trusted key. what is asserted is every refusal by its word and that no file is written on one. The worker
  *   is a fetch handler on a node listener, reached through `MAILWOMAN_LICENSE_URL`.
  */
 

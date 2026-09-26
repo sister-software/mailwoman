@@ -28,7 +28,7 @@ about 5.7× with aliases and about 2.8× without them.
 
 ## Parent-alias expansion, and why India alone
 
-`12 MG Road, Indiranagar, Bengaluru` emitted nothing even with the index loaded. WOF stores
+`12 MG Road, Indiranagar, Bengaluru` emitted no dependent locality even with the index loaded. WOF stores
 **Bangalore**, while the address says **Bengaluru**. The city was renamed in 2014, and the `names`
 table holds Bengaluru as an `eng` variant rather than the preferred name. The pair existed but could
 never fire.

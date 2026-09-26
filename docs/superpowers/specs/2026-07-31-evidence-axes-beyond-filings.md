@@ -42,7 +42,7 @@ this project can produce, because the provider is the sole source of both statem
 
 Operator-observed worked example (2026-07-31, a residential address on Plumbrook Rd, Sterling
 Heights, MI 48313). The house number is deliberately omitted because it is a private home. The filings below
-are block-grain public record and say nothing specific about that household:
+are block-grain public record and make no claim specific to that household:
 
 | Filer                     | FRN        | Provider ID | Filed            | Provider's own channel               |
 | ------------------------- | ---------- | ----------- | ---------------- | ------------------------------------ |
@@ -138,7 +138,7 @@ address.
 
 ## 4. What this changes downstream
 
-- **2b (now):** nothing needs to change. The bundle's `evidence_found` union and `coverage_detail` axis
+- **2b (now):** no change is required. The bundle's `evidence_found` union and `coverage_detail` axis
   states already accommodate additional axes, so adding them later extends the bundle without a rebuild.
 - **3d competition surface:** the three-number progression of §1 becomes the headline output, and the
   benchmark filter is a first-class query parameter.

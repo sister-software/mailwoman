@@ -214,7 +214,7 @@ export class MapBrowser {
 	 * Asks the browser to exit with a code.
 	 *
 	 * A signal handler may call it.
-	 * Calls after the first do nothing.
+	 * Calls after the first have no effect.
 	 */
 	requestExit(code: number): void {
 		const resolve = this.resolveExit

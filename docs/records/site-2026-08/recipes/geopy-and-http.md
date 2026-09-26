@@ -50,7 +50,7 @@ No Docker? The same command runs straight from npm — `npx @mailwoman/nominatim
 
 ## geopy: forward geocoding
 
-geopy's `Nominatim` class takes a `domain` and a `scheme`, so pointing it at your local server is two keyword arguments. Nothing else about your code changes:
+geopy's `Nominatim` class takes a `domain` and a `scheme`, so pointing it at your local server is two keyword arguments. No other part of your code changes:
 
 ```python
 from geopy.geocoders import Nominatim

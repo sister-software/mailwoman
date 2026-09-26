@@ -3,9 +3,6 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  * @file Tests for {@linkcode APIClient} — pacing, the cooldown budget, bounded retry, and error mapping.
- *
- *   Every request is served by the shared `stubTransport` adapter, so nothing here touches the network, and every
- *   timing assertion runs against an injected clock, so nothing here sleeps on the wall clock.
  */
 
 import { APIClient } from "@mailwoman/core/api/APIClient"
@@ -31,8 +28,6 @@ describe("APIClient: disposal", () => {
 		let disposeCount = 0
 
 		// The regression case: [Symbol.asyncDispose] on the prototype chain rather than an own property.
-		// The pre-migration predicate (Object.hasOwn on the instance) never matched
-		// this shape, leaving cache disposal as dead code.
 		const storagePrototype = {
 			async [Symbol.asyncDispose](): Promise<void> {
 				disposeCount += 1
@@ -86,10 +81,7 @@ describe("APIClient: unthrottled default (the shape TileAPI uses)", () => {
 })
 
 describe("APIClient: requestsPerMinute cooldown (A1 concurrency regression)", () => {
-	// measured before the FIX, through this exact surface: `fetch()` awaited `$cooldown` once
-	// and the request was only counted by a response interceptor, so a 40-call fan-out put 40
-	// dispatches on the wire inside 3ms against a budget of 2/minute (and 40 against 10/minute).
-	// The check has to be checked and the slot reserved in the same synchronous step.
+	// The budget check and the slot reservation must happen in the same synchronous step.
 	it("does not let a concurrent fan-out spend more than the per-minute budget before the cooldown opens", async () => {
 		const REQUESTS_PER_MINUTE = 2
 		const FAN_OUT = 40
@@ -108,10 +100,8 @@ describe("APIClient: requestsPerMinute cooldown (A1 concurrency regression)", ()
 
 		await drainMicrotasks()
 
-		// Nothing has driven the clock, so no cooldown can have lapsed: only the budget may have been spent.
 		expect(calls).toHaveLength(REQUESTS_PER_MINUTE)
 
-		// Drain: one cooldown (60000/2 = 30000ms) per budget's worth of requests.
 		for (let i = 0; i < FAN_OUT; i++) {
 			await clock.advance(30_000)
 		}
@@ -122,11 +112,8 @@ describe("APIClient: requestsPerMinute cooldown (A1 concurrency regression)", ()
 	})
 
 	it("delivers no more than requestsPerMinute inside any sliding minute", async () => {
-		// The rate, which is what the option promises rather than the schedule,
-		// which is what every other test here asserts.
-		// That gap is how a 10x overrun shipped: the budget released N back to back
-		// then waited `60000/N` ms, so a stated 10/minute sustained 100/minute,
-		// and no test failed because they all encoded the implemented spacing.
+		// Assert the rate the option promises, not the implemented spacing: a budget that releases
+		// N back to back and then waits `60000/N` ms sustains 100/minute against a stated 10.
 		const BUDGET = 10
 		const clock = new VirtualClock()
 		const arrivals: number[] = []
@@ -153,12 +140,8 @@ describe("APIClient: requestsPerMinute cooldown (A1 concurrency regression)", ()
 	})
 
 	it("still throttles a serial run", async () => {
-		// The full minute rather than `60000 / requestsPerMinute`.
-		// This constant used to be 30_000 — the spacing between two requests —
-		// which encoded the very defect it read as guarding: a budget of 2 released 2,
-		// waited 30s, released 2 more, i.e. 4/minute against a stated 2.
-		// Measured on a bare client at `requestsPerMinute: 10`, a 20-call fan-out arrived
-		// `[0 x10, 6000 x10]` — 20 in one sliding minute, a sustained 100/minute.
+		// The cooldown is a full minute, not `60000 / requestsPerMinute`, which would let a
+		// budget of 2 release 2, wait 30s, and release 2 more within the same minute.
 		const COOLDOWN_MS = 60_000
 
 		const clock = new VirtualClock()
@@ -174,7 +157,6 @@ describe("APIClient: requestsPerMinute cooldown (A1 concurrency regression)", ()
 		await client.fetch(get("/serial/0.json"))
 		await client.fetch(get("/serial/1.json"))
 
-		// The budget is spent, so the third must stall, and does not dispatch on its own.
 		const third = client.fetch(get("/serial/2.json"))
 
 		await drainMicrotasks()
@@ -211,7 +193,7 @@ describe("APIClient: minRequestIntervalMs strict pacing (A2)", () => {
 		await Promise.all(pending)
 
 		expect(dispatchTimes).toHaveLength(FAN_OUT)
-		expect(new Set(dispatchTimes).size).toBe(FAN_OUT) // no cohort ever dispatched together
+		expect(new Set(dispatchTimes).size).toBe(FAN_OUT)
 		expect(maxCountInSlidingWindow(dispatchTimes, 1000)).toBe(EXPECTED_PER_SECOND)
 	})
 })
@@ -334,15 +316,6 @@ describe("APIClient: bounded retry (A3)", () => {
 	})
 
 	it("maps a timeout to a transient network error, not the old uniform 500", async () => {
-		// The pre-migration mapper collapsed every responseless failure into
-		// `ResourceError.from(500, "Internal Server Error", "axios", "response", "missing")`,
-		// so a timeout was indistinguishable from a refused connection or a DNS failure.
-		// Its `econnaborted: return` arm — which would have resolved the chain with `undefined` —
-		// could not be reached BY axios: the `if (!response) throw` above it ran first,
-		// and axios never attaches a `response` to a timeout, so a differential across
-		// 18 failure shapes found no case that ever resolved.
-		// (Reachable in principle with a hand-built error carrying both a `response`
-		// and `econnaborted`, which no stock adapter produces.)
 		const { axios } = stubTransport([{ throws: { message: "timeout of 30000ms exceeded", code: "ECONNABORTED" } }])
 
 		const client = new APIClient({
@@ -418,10 +391,8 @@ describe("APIClient: bounded retry (A3)", () => {
 
 describe("APIClient: the pacing check sits downstream of the cache (I2)", () => {
 	it("does not pace a cache HIT — only a request that actually reaches the network", async () => {
-		// The check used to live in `fetch()`, upstream of the cache interceptor, so every hit burned
-		// a full pacer sleep: measured 1 dispatch, 5 hits, five 111ms sleeps for zero network traffic.
-		// `/Archives/` documents are cached for a century by design, so warm re-runs are the expected mode
-		// for a bulk crawl — at 100k cached documents that is ~3 hours of sleeping at an empty network.
+		// A cache hit must not burn a pacer sleep: `/Archives/` documents are cached for a
+		// century by design, so warm re-runs are the expected mode of a bulk crawl.
 		const REPEATS = 6
 
 		const clock = createFakeClock()
@@ -439,10 +410,8 @@ describe("APIClient: the pacing check sits downstream of the cache (I2)", () => 
 			await client.fetch(get("/archived.json"))
 		}
 
-		expect(calls).toHaveLength(1) // one miss, five hits
+		expect(calls).toHaveLength(1)
 
-		// The single miss is the pacer's first grant, which is always immediate.
-		// Every later call is a hit and must not sleep at all.
 		expect(clock.sleepCalls).toEqual([])
 	})
 
@@ -474,9 +443,6 @@ describe("APIClient: the pacing check sits downstream of the cache (I2)", () => 
 
 describe("APIClient: every retry attempt takes its own pacer grant (I6/M-R)", () => {
 	it("paces retries, not just the first attempt", async () => {
-		// The guarantee was stated in a docstring and tested nowhere: hoisting the check out of
-		// the per-dispatch path let a retry burst outrun the pacer entirely with 0 test failures.
-		// A retry storm past the rate limit is the exact class this whole task exists to close.
 		const INTERVAL_MS = 100
 
 		const clock = createFakeClock()
@@ -493,9 +459,7 @@ describe("APIClient: every retry attempt takes its own pacer grant (I6/M-R)", ()
 		const client = new APIClient({
 			displayName: "paced-retries",
 			minRequestIntervalMs: INTERVAL_MS,
-			// A backoff far shorter than the pacing interval, so the pacer is the only
-			// thing that can produce the spacing.
-			// A test with a long backoff would pass with the pacer deleted.
+			// A backoff far shorter than the pacing interval, so only the pacer can produce the spacing.
 			retry: { maxAttempts: 3, baseDelayMs: 1 },
 			clock,
 			axios,
@@ -514,11 +478,8 @@ describe("APIClient: every retry attempt takes its own pacer grant (I6/M-R)", ()
 
 describe("APIClient: the pacer and the cooldown compose (I4)", () => {
 	it("re-acquires a pacer grant after a cooldown, instead of spending a stale one", async () => {
-		// A grant is a claim on a specific instant.
-		// Taking one and then blocking on a cooldown leaves it stale, and every caller
-		// holding a stale grant spends it the moment the cooldown lifts — measured as four
-		// pairs dispatching 0ms apart against a documented 100ms minimum.
-		// Latent while no client sets both, which is precisely why nothing caught it.
+		// A pacer grant is a claim on a specific instant, so blocking on a cooldown after
+		// taking one leaves it stale and every holder spends it the moment the cooldown lifts.
 		const INTERVAL_MS = 100
 		const FAN_OUT = 8
 
@@ -547,12 +508,9 @@ describe("APIClient: the pacer and the cooldown compose (I4)", () => {
 
 describe("APIClient: a caller-supplied adapter cannot bypass the check", () => {
 	it("strips a per-request adapter so the pacing grant is still taken", async () => {
-		// `mergeConfig` lets a request-level `adapter` win over the instance default,
-		// and the check lives in that instance adapter.
-		// So before this was stripped, three concurrent calls made 3 dispatches,
-		// took 0 grants and slept 0 times.
-		// The cache interceptor's own adapter swap is unaffected: it happens inside the
-		// interceptor chain on the merged config rather than through this entry point.
+		// `mergeConfig` lets a request-level `adapter` win over the instance default
+		// that holds the pacing check; the cache interceptor's own adapter swap runs
+		// inside the interceptor chain and is unaffected.
 		const clock = new VirtualClock()
 		const dispatches: number[] = []
 
@@ -577,7 +535,6 @@ describe("APIClient: a caller-supplied adapter cannot bypass the check", () => {
 
 		const pending = [0, 1, 2].map((i) => client.fetch({ url: `https://example.invalid/${i}`, adapter: rogueAdapter }))
 
-		// The rogue adapter never ran — every response came from the paced instance adapter.
 		const responses = await clock.runUntilSettled(Promise.all(pending))
 
 		for (const response of responses) {

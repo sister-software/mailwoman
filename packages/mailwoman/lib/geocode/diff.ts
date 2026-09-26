@@ -9,7 +9,7 @@
  *   The three ways a geocode changes are different problems with different fixes, and only a per-span view separates
  *   them:
  *
- *   1. **The parse changed**, so the resolver was asked a different question. Nothing is wrong with retrieval.
+ *   1. **The parse changed**, so the resolver was asked a different question. No retrieval fault exists.
  *   2. **The parse held and a span resolved to a different place** — same text, same tag, new `placeID`. That is a
  *      ranking or a gazetteer-coverage problem.
  *   3. **The parse held, the places held, and the tier changed** — the same components fell through to a coarser rung

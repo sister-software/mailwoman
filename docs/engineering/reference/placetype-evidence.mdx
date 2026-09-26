@@ -81,9 +81,9 @@ locality under a locality, so covered nodes read ~100% dependent-locality everyw
 statistics are presence and magnitude across the parent population.
 
 **The observability step (2026-08-05).** The census is now loaded and probed at runtime, and it
-still biases nothing. `resolvePlacetypeCensusPath` (`neural/weights.ts`) finds
+still applies no bias. `resolvePlacetypeCensusPath` (`neural/weights.ts`) finds
 `placetype-census-<cc>.bin` at the build-local data root. The file is deliberately left out of the
-weights tarballs, where it would add 137–165 KB per locale for an artifact that nothing reads back.
+weights tarballs, where it would add 137–165 KB per locale for an artifact that no code reads back.
 The placetype-pair prior probes the census for the parent half of every (child, parent) candidate
 it tries, using the same fold. The result is a `placetypeCensus` record on the parse trace
 (`{parent, childTagsPresent, lift}` per known parent, plus the probed-parent count as the
@@ -104,7 +104,7 @@ bytes / 123,909 links.)
 
 The census does not become more pair entries for the following reason. A pair entry _asserts_ that
 a surface is a dependent locality, so each batch needs a venue-confound board before it ships. A
-census node asserts nothing about any surface. It can only shift a reading that the model already
+census node makes no statement about any surface. It can only shift a reading that the model already
 considers, under a parent the model already identified. That property makes it safe for covering a
 tail that a batch-by-batch board process would never finish.
 
@@ -139,10 +139,10 @@ boroughs with parents, globally).
 "the tag's _contextual_ aliveness for US". That claim was wrong for the US and for GB. Three
 measurements show why, in the order that determines the result:
 
-1. **Nothing suppresses the tag per country.** The decoder has exactly one hard emission mask
+1. **No mechanism suppresses the tag per country.** The decoder has exactly one hard emission mask
    (`-1e9`), and it has a single row: FR `street_suffix`. `dependent_locality` appears in no
    `forbiddenTags` table, in TS or Python. `componentsSupported` omits the tag for en-US, but its
-   only consumer validates the policy registry, and nothing reads it to mask emissions.
+   only consumer validates the policy registry, and no code reads it to mask emissions.
 2. **The model almost never predicts the tag, in every locale equally.** Raw pre-prior logits rank
    `B-dependent_locality` 11th–15th of 25 in every locale, including the GB inputs that parse
    correctly today (`Shoreditch` 0.14%, rank 14, against `locality` at 31.3%). US surfaces have
@@ -228,7 +228,7 @@ The non-GB instances established three things that the GB work never encountered
 - **A leading postcode makes the artifact inert.** France, Germany, Spain and Italy write
   `12210 Montpeyroux`, so a parent segment folds to a key that no bare-locality entry matches. Each
   country needed a `LEADING_POSTCODE_COUNTRIES` entry. In every case, the artifact built correctly
-  but changed nothing until that entry was added.
+  but had no effect until that entry was added.
 - **WOF's preferred name is not always the written one.** WOF stores `Bangalore` for a city written
   `Bengaluru` and `Rome` for one written `Roma`. The fold does not strip accents, so `Cordoba`
   never matches `Córdoba`. Parent-alias expansion draws from names in the country's official

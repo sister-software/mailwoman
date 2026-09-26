@@ -1,39 +1,7 @@
-"""#825 — the training-free Czech/Polish diacritic fix: UNIGRAM vocab-splice + embedding mean-init.
+"""The training-free Czech/Polish diacritic fix: splice Slavic diacritic pieces into a frozen unigram vocab and mean-init their embedding rows.
 
-Background. The en-heavy 48k SentencePiece unigram vocab has the diacritic *characters* but no multi-char
-*subwords* containing them, so every diacritic isolates into its own piece — "Vysoká" -> [▁V, ys, ok, á],
-CZ/PL localities at ~3.3x English fertility. That fragmentation breaks span boundaries and geocodes the
-address to the WRONG CITY (measured: ~44% of Czech, ~30% of Polish rows land >20km off). A corpus recipe at
-the frozen tokenizer can't fix it (a unigram model physically cannot emit a subword absent from its piece
-table); v196-slavic-anchor confirmed this the expensive way — it REGRESSED CZ at 80k.
-
-The fix is tokenizer-side and needs no GPU training:
-
-1. Train a CZ/PL SentencePiece unigram on a Slavic address corpus.
-2. Splice only its diacritic-containing pieces into the 48k vocab. Because every appended piece contains a
-   codepoint that never appears in English text, it can never match a span of an English string, so English
-   tokenizes BYTE-IDENTICALLY by construction — the source language cannot regress. This module ASSERTS that
-   invariant (0 diff over a held-out English sample); it is not a hope.
-3. Mean-init the new embedding rows from their old-tokenizer constituents (FVT): E(new) = mean over the old
-   tokenization of the new piece's surface. The encoder is left byte-for-byte untouched.
-
-The B-1 ablation (2026-07-01) showed step 3 alone is the fix — a 2k fine-tune added nothing and started to
-overfit. So the shipped artifact is the mean-init model, and US byte-identity is a guarantee (unchanged
-encoder + unchanged English input_ids -> identical logits), not an observation.
-
-Caveat: this is the right tool for alphabetic-script-with-diacritics (disjoint codepoints, real constituent
-subwords for a strong mean-init). It does not scale to CJK — thousands of logographs, a segmenter is needed,
-and byte-fallback constituents make mean-init weak. CJK wants a char-level front-end instead.
-
-CLI:
-    python -m mailwoman_train.tokenizer.splice build-tokenizer \\
-        --oa-root $MAILWOMAN_DATA_ROOT/openaddresses/extracted --locales cz,pl,sk,si \\
-        --base-tokenizer $MAILWOMAN_DATA_ROOT/models/tokenizer/v0.6.0-a0/tokenizer.model \\
-        --out-tokenizer out/tokenizer-bsplice.model --vocab-size 24000
-    python -m mailwoman_train.tokenizer.splice mean-init \\
-        --checkpoint <v4.15.0 from_pretrained dir> \\
-        --base-tokenizer <base.model> --spliced-tokenizer out/tokenizer-bsplice.model \\
-        --out-dir out/bsplice-expanded
+An appended piece contains a codepoint absent from English, so English tokenizes byte-identically by
+construction — asserted by ``verify_source_identical``, not hoped. This does not scale to CJK.
 """
 
 from __future__ import annotations
@@ -49,10 +17,10 @@ from typing import Any
 import sentencepiece as spm
 from sentencepiece import sentencepiece_model_pb2 as sp_pb2
 
-# Deterministic sample size + seed so the corpus (and therefore the spliced vocab) is reproducible.
+# Fixed sample size and seed keep the corpus and spliced vocab reproducible.
 _CORPUS_SAMPLE = 350_000
 _SEED = 42
-# A held-out English sample can be any ascii address list. the assertion only needs English strings.
+# Any ASCII address list works as the held-out English probe.
 _ENGLISH_PROBE = [
     "109 Seminary Dr, Mill Valley, CA 94941",
     "5210 South Ingleside Avenue, Chicago, IL 60615",
@@ -63,7 +31,7 @@ _ENGLISH_PROBE = [
 
 
 def _core(piece: str) -> str:
-    """The piece text with the SentencePiece word-boundary marker stripped (for the ASCII test)."""
+    """The piece text with the SentencePiece word-boundary marker stripped."""
     return piece.replace("▁", "")
 
 
@@ -80,10 +48,7 @@ def build_slavic_corpus(
     extra_text: Path | None = None,
     extra_repeat: int = 10,
 ) -> int:
-    """Stream the OpenAddresses STREET/CITY columns for ``locales`` into a deduped SP-training corpus.
-
-    Returns the line count written. Reproducible: fixed seed + fixed sample size.
-    """
+    """Stream the OpenAddresses STREET/CITY columns for ``locales`` into a deduped SP-training corpus, returning the line count written."""
     csv.field_size_limit(10**7)
     lines: set[str] = set()
     for cc in locales:
@@ -107,10 +72,9 @@ def build_slavic_corpus(
     corpus = [ln for ln in lines if ln and len(ln) < 80]
     random.Random(_SEED).shuffle(corpus)
     corpus = corpus[:_CORPUS_SAMPLE]
-    # Exonym awareness (#912 change 4's Åbo lesson): OA street/city text carries only the native
-    # names, so an exonym like "Åbo" (Swedish for Turku) never warrants a piece and its decode drop
-    # survives the splice. extra_text feeds gazetteer alias names in, repeated extra_repeat× so a
-    # once-per-name list has enough unigram mass to compete for vocab slots.
+    # OA street/city text carries only native names, so an exonym like "Åbo" never warrants a piece;
+    # extra_text feeds gazetteer alias names, repeated so a once-per-name list has enough unigram
+    # mass to compete for vocab slots.
     if extra_text is not None and extra_text.is_file():
         extra = [ln.strip() for ln in extra_text.read_text(encoding="utf-8").splitlines()]
         extra = [ln for ln in extra if ln and len(ln) < 80]
@@ -135,11 +99,10 @@ def train_diacritic_sp(corpus_path: Path, out_prefix: Path, *, vocab_size: int =
 
 
 def splice_vocab(base_tokenizer: Path, diacritic_sp: Path, out_tokenizer: Path) -> list[str]:
-    """Append the diacritic-containing pieces of ``diacritic_sp`` to ``base_tokenizer``; write ``out_tokenizer``.
+    """Append the diacritic-containing pieces of ``diacritic_sp`` to ``base_tokenizer`` and write ``out_tokenizer``.
 
-    Only pieces whose core contains a non-ASCII codepoint and that are absent from the base vocab are added,
-    with their unigram scores. Returns the list of new piece strings. Raises if the English-identity
-    invariant fails (see ``verify_source_identical``).
+    Only pieces whose core contains a non-ASCII codepoint and that are absent from the base vocab
+    are added, with their unigram scores. Raises if the English-identity invariant fails.
     """
     base = sp_pb2.ModelProto()
     base.ParseFromString(base_tokenizer.read_bytes())
@@ -167,10 +130,10 @@ def splice_vocab(base_tokenizer: Path, diacritic_sp: Path, out_tokenizer: Path) 
 
 
 def verify_source_identical(base_tokenizer: Path, spliced_tokenizer: Path, probe: list[str] | None = None) -> None:
-    """Assert the source language tokenizes byte-identically under the spliced vocab. Raises on any diff.
+    """Assert the source language tokenizes byte-identically under the spliced vocab, raising on any diff.
 
-    This is the disjoint-codepoint guarantee made concrete: an appended diacritic piece can't match any span
-    of an English string, so English segmentation is unchanged. Cheap and definitive. never skip it.
+    An appended diacritic piece cannot match any span of an English string, so English segmentation
+    is unchanged.
     """
     old = spm.SentencePieceProcessor(model_file=str(base_tokenizer))
     new = spm.SentencePieceProcessor(model_file=str(spliced_tokenizer))
@@ -186,8 +149,8 @@ def verify_source_identical(base_tokenizer: Path, spliced_tokenizer: Path, probe
 def collect_sample_codepoints(sample_path: Path, *, cap_bytes: int = 4_000_000) -> set[str]:
     """The set of non-ASCII codepoints in a locale sample file (first ``cap_bytes``, utf-8, errors ignored).
 
-    Deliberately format-agnostic (CSV/JSONL/plain all work): the #900 check needs a locale's CHARACTER
-    inventory rather than its parse — reading raw text keeps the check free of per-format code.
+    Deliberately format-agnostic: the check needs a locale's character inventory rather than its
+    parse, and reading raw text keeps it free of per-format code.
     """
     raw = sample_path.read_bytes()[:cap_bytes].decode("utf-8", errors="ignore")
     return {c for c in raw if ord(c) >= 128}
@@ -200,18 +163,10 @@ def check_codepoint_overlap(
     *,
     accepted_overlap: set[str] | None = None,
 ) -> dict[str, list[str]]:
-    """#900 — the splice safety check, pre-registered as a CHECK rather than a postmortem note.
+    """The splice safety check: report the non-ASCII codepoints shared between the new pieces and each trained locale's inventory, and raise on an overlapping locale not in ``accepted_overlap``.
 
-    The v5.1.0 splice shipped on a "byte-identical by construction" claim that turned out ASCII-only:
-    FR/DE/ES share codepoints with the spliced pieces, so 52/15,000 EU rows re-tokenized — measured
-    after the fact (net-positive, by luck and row-reads). This check makes the overlap visible before
-    grading: for every trained locale sample, compute the non-ASCII codepoints shared between the
-    new pieces and that locale's character inventory, write the per-locale report artifact, and fail
-    loud on any overlapping locale that was not explicitly accepted.
-
-    "Accepted" is a commitment rather than a waiver: per CONTRIBUTING_MODEL_WORK.mdx, accepting a locale
-    means a per-locale non-inferiority leg for it is pre-registered in the check spec before the
-    first measurement (the FR n=3000 leg from v5.1.0 is the template).
+    Accepting a locale is a commitment that a per-locale non-inferiority leg is pre-registered in
+    the check spec before the first measurement, not a waiver.
     """
     accepted = accepted_overlap or set()
     new_cps = {c for piece in new_pieces for c in _core(piece) if ord(c) >= 128}
@@ -249,12 +204,12 @@ def check_codepoint_overlap(
 def mean_init_embeddings(
     checkpoint_dir: Path, base_tokenizer: Path, spliced_tokenizer: Path, out_dir: Path
 ) -> tuple[int, int]:
-    """Expand ``checkpoint_dir``'s token_embeddings to the spliced vocab. mean-init the new rows (FVT).
+    """Expand ``checkpoint_dir``'s token_embeddings to the spliced vocab by mean-initializing the new rows.
 
-    Each new row = the mean of the old tokenizer's constituent-piece embeddings for that piece's surface.
-    Only token_embeddings + the config's vocab_size change. the encoder, classifier, CRF, and anchor/gaz
-    heads are left byte-for-byte untouched (which is what makes source-language behaviour a guarantee).
-    Returns (old_vocab, new_vocab). Torch is imported lazily so the tokenizer path stays torch-free.
+    Each new row is the mean of the old tokenizer's constituent-piece embeddings for that piece's
+    surface; only token_embeddings and the config's vocab_size change, leaving the encoder,
+    classifier, CRF and anchor/gaz heads byte-for-byte untouched. Returns (old_vocab, new_vocab);
+    torch is imported lazily so the tokenizer path stays torch-free.
     """
     import torch
 
@@ -286,12 +241,11 @@ def mean_init_embeddings(
 
 
 def _fvt_rows(base_tokenizer: Path, spliced_tokenizer: Path, emb: Any) -> Any:
-    """The FVT mean-init rows for the spliced-in pieces, computed from an existing embedding matrix.
+    """The FVT mean-init rows for the spliced-in pieces, on numpy so the ONNX-graph path can reuse it.
 
-    Mirrors the mean-init in ``mean_init_embeddings`` (the pytorch state-dict path) exactly, on numpy so
-    the ONNX-graph path can reuse it: each new row = the mean of the old tokenizer's constituent-piece
-    embeddings for that piece's surface, global mean if the surface has no in-vocab constituents.
-    ``emb`` is the old [old_vocab, hidden] matrix as a numpy array.
+    Each new row is the mean of the old tokenizer's constituent-piece embeddings for that piece's
+    surface, or the global mean when the surface has no in-vocab constituents. ``emb`` is the old
+    [old_vocab, hidden] matrix.
     """
     import numpy as np
 
@@ -322,20 +276,13 @@ def mean_init_onnx_embeddings(
     out_int8: Path | None = None,
     emb_name: str = "inner.token_embeddings.weight",
 ) -> tuple[int, int]:
-    """Expand an EXPORTED ONNX model's token_embeddings to the spliced vocab (FVT mean-init), in place.
+    """Expand an exported ONNX model's token_embeddings to the spliced vocab (FVT mean-init), in place.
 
-    This is the local, checkpoint-free twin of ``mean_init_embeddings``. The prior nsplice ran mean-init
-    on the Modal volume where the training ``pytorch_model.bin`` lived, then re-exported ONNX. When only
-    the shipped ONNX is on hand, the same surgery is exact on the graph: in this BIO token-classifier the
-    only vocab-dependent tensor is ``inner.token_embeddings.weight`` (the label head is [hidden, num_labels],
-    independent of vocab), so growing that one initializer and mean-initing the new rows is byte-for-byte what
-    a re-export would produce. Every other node — encoder, CRF, anchor/gaz heads — is untouched, which is why
-    source/other-locale inference stays byte-identical (their input_ids never index the appended rows).
-
-    fp32: read the float initializer, append the FVT rows. int8 (optional): the embedding is stored as a
-    per-tensor-quantized ``<emb>_quantized`` (uint8) + scalar ``_scale`` / ``_zero_point``; the new rows are
-    quantized with the same params (round(x/scale)+zp, clamped) — means of existing rows lie inside the
-    existing value range, so no re-calibration is needed. Returns (old_vocab, new_vocab).
+    ``inner.token_embeddings.weight`` is the only vocab-dependent tensor in this BIO token-classifier,
+    so growing that one initializer and mean-initializing the new rows matches a re-export
+    byte-for-byte; every other node is untouched. For an int8 twin, the embedding is stored as a
+    per-tensor-quantized ``<emb>_quantized`` (uint8) plus scalar ``_scale`` / ``_zero_point``, and
+    the new rows are quantized with those same params. Returns (old_vocab, new_vocab).
     """
     import numpy as np
     import onnx
@@ -362,10 +309,9 @@ def mean_init_onnx_embeddings(
         q = numpy_helper.to_array(qi[qname])
         scale = float(numpy_helper.to_array(qi[sname]))
         zp = int(numpy_helper.to_array(qi[zname]))
-        # Sanity: the quant inverse must reproduce an existing quantized row from its fp32 source.
         recon = np.clip(np.round(emb[old_vocab - 1] / scale) + zp, 0, 255).astype(q.dtype)
         mism = int((recon != q[old_vocab - 1]).sum())
-        if mism > emb.shape[1] // 20:  # allow a few rounding-boundary ticks rather than a wholesale mismatch
+        if mism > emb.shape[1] // 20:  # tolerate a few rounding-boundary ticks rather than a wholesale mismatch
             raise AssertionError(
                 f"int8 quant-inverse mismatch on row {old_vocab - 1}: {mism}/{emb.shape[1]} — scale/zp wrong?"
             )

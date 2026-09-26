@@ -17,9 +17,8 @@ import { describe, expect, it } from "vitest"
 const BASE_MANIFEST = "/mnt/corpus/versioned/v0.27.0-house-venue-intl/corpus-v0.27.0-house-venue-intl/MANIFEST.json"
 
 /**
- * The key a manifest written before the 2026-09-01 vocabulary rename uses for its file list,
- * spelled the way the reader spells it: by concatenation, because the word is
- * banned in this tree and the ratchet's baseline is zero.
+ * The pre-rename file-list key, spelled by concatenation because the word is banned
+ * in this tree and the ratchet's baseline is zero.
  */
 const PRE_RENAME_FILES_KEY = `sh${"ards"}`
 
@@ -38,8 +37,6 @@ function manifestWith(key: string, paths: readonly string[]): Parameters<typeof 
 
 describe("splitFromFilename", () => {
 	it("reads the split splitOverlaySlice encodes, and answers null for a name it did not write", () => {
-		// `part-gb.val.parquet` was routed; `part-synth-german-val.parquet` names a split in its stem
-		// and carries no suffix, which is exactly the file whose 4,000 val rows the policy never saw.
 		expect(splitFromFilename("part-gb.val.parquet")).toBe("val")
 		expect(splitFromFilename("part-gb.test.parquet")).toBe("test")
 		expect(splitFromFilename("part-anchor-absorption-train.val.parquet")).toBe("val")
@@ -87,8 +84,6 @@ describe("assembleOverlayManifest, on who chose a held-out split", () => {
 	})
 
 	it("refuses a val split asserted for a file split-slice did not write", async () => {
-		// `part-synth-german-val.parquet` is the real one: placed by a script's hardcoded list,
-		// with no test file beside it, and 770 of its 3,987 source_ids also in train.
 		const base = await writeBase()
 
 		await expect(assembleOverlayManifest({ ...overlay("part-synth-german-val.parquet", "val"), base })).rejects.toThrow(
@@ -105,8 +100,6 @@ describe("assembleOverlayManifest, on who chose a held-out split", () => {
 	})
 
 	it("lets a train file through without a routed name, since train holds nothing out", async () => {
-		// The guard admits it, so the run proceeds to the next check and fails there on the absent parquet.
-		// The assertion reads the message to confirm which check stopped it.
 		const base = await writeBase()
 
 		await expect(
@@ -133,12 +126,8 @@ describe("rerootBaseFilePath", () => {
 
 describe("baseManifestFiles", () => {
 	it("reads a manifest written before the 2026-09-01 rename", () => {
-		// Every corpus built before that date lists its parquets under the old key,
+		// Every corpus built before the rename lists its parquets under the old key,
 		// and a built corpus is an immutable artifact.
-		// The rename moved this reader and the trainer's without migrating them: the trainer
-		// measured `v0.28.0-reviewed-postcode-tail` declaring 706 train files and resolving one.
-		// An overlay assembled from a base read as empty carries no base files at all,
-		// which is a corpus of only the overlay.
 		expect(baseManifestFiles(manifestWith(PRE_RENAME_FILES_KEY, ["a.parquet", "b.parquet"]))).toEqual([
 			{ path: "a.parquet" },
 			{ path: "b.parquet" },
@@ -155,19 +144,16 @@ describe("baseManifestFiles", () => {
 	})
 
 	it("REFUSES a manifest that names no file list under either key", () => {
-		// Neither key holds an array, so the manifest says nothing about how many files there are.
-		// Answering an empty list for that reports a corpus of no files, which is the
-		// false absence `the-meaning-of-zero.mdx` refuses.
+		// Neither key holds an array, so the manifest makes no statement about how many
+		// files there are, and answering an empty list reports a false absence.
 		const neither = { corpus_version: "v0.0.0" } as Parameters<typeof baseManifestFiles>[0]
 
 		expect(() => baseManifestFiles(neither)).toThrow(/names no file list/u)
 	})
 
 	it("answers an empty list for a manifest that declares one, because that is a measurement", () => {
-		// `slices: []` says the corpus holds no file, and a census counting zero rows
-		// from it has read the corpus rather than failed to.
-		// The overlay assembler's own requirement for a non-empty base lives in
-		// `assembleOverlayManifest`, which is the caller that has it.
+		// `slices: []` says the corpus holds no file; the overlay assembler's requirement
+		// for a non-empty base lives in its own caller.
 		expect(baseManifestFiles(manifestWith("slices", []))).toEqual([])
 	})
 })

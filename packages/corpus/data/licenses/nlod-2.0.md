@@ -14,7 +14,7 @@ returned HTTP 200 on 2026-09-21, so that record was a transient failure rather t
 This is the grant the register's Brønnøysund entity register row would be read against.
 
 Every quotation below is in a fenced block so the publisher's own spelling and wording survive a
-prose sweep. Nothing inside a fence is edited.
+prose sweep. No text inside a fence is edited.
 
 ## What the license grants
 
@@ -86,5 +86,5 @@ carrying only "attribution required" loses the last three.
 ## What this text does not settle
 
 Whether a statistical model trained on information under this license is itself covered. The text
-does not address a model, where CDLA-Permissive-2.0 does. Nothing here is elected, and every license
+does not address a model, where CDLA-Permissive-2.0 does. No election is made here, and every license
 decision in `address-source-register.json` still reads `unchecked`.

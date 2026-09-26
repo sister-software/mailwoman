@@ -32,8 +32,8 @@ The run has three arms, each named for the question a reader is likely to ask:
 
 | Arm              | Weights | Configured             | Question                                       |
 | ---------------- | ------- | ---------------------- | ---------------------------------------------- |
-| `base`           | `en-US` | nothing                | What does an install plus a gazetteer give me? |
-| `fr-overlay`     | `fr-FR` | nothing                | Does the nearest measured locale help?         |
+| `base`           | `en-US` | no overrides           | What does an install plus a gazetteer give me? |
+| `fr-overlay`     | `fr-FR` | no overrides           | Does the nearest measured locale help?         |
 | `country-pinned` | `en-US` | `defaultCountry: "BE"` | What if I tell it the file is Belgian?         |
 
 The first two arms leave the country unpinned, because the panel measures country routing. Belgian
@@ -91,7 +91,7 @@ panel, that gap is two rows in each of the first two arms: one Belgian commune n
 in the Netherlands, and one matched a place in France. The last of the two rows is the locality
 measure to read.
 
-**The French overlay changes nothing.** The `fr-overlay` arm is identical to `base` on every measure
+**The French overlay leaves every measure unchanged.** The `fr-overlay` arm is identical to `base` on every measure
 and on all thirty per-row records. The per-arm `weights` entry in the result file shows why. The
 single `versions.model` run stamp does not. Both arms record the same `weights.model`, `model.onnx`,
 but their `weights.source` values differ: `package:@mailwoman/neural-weights-en-us` against
@@ -147,8 +147,8 @@ SI 46.243, 14.364  →     SI  46.243, 14.364  Rue Léopold 1, 4000 Liège
 
 Five of the six recover. A confident whole-string country guess is promoted from a ranking bias to a
 filter. When the guess is wrong, the filter removes the correct candidates before ranking runs. This
-also explains why three of the six returned nothing instead of a wrong answer. The filter removed
-every Belgian candidate, so nothing was left to rank.
+also explains why three of the six returned no coordinate instead of a wrong answer. The filter removed
+every Belgian candidate, so no candidate was left to rank.
 
 **The sixth row is a parse failure, and no configuration fixes it.** `Rue Léopold 1, 4000 Liège`
 parses as street `Rue Léopold 1`, postcode `4000 Liège`, and house number `null`. The parser absorbs
@@ -167,7 +167,7 @@ resolution. The published metric therefore combines the name match with the boun
 the page reports both rows separately.
 
 **One bilingual pair could not be measured.** `Grote Markt 1, 1000 Brussel` returned no coordinate in
-the `base` and `fr-overlay` arms, so its French twin had nothing to be compared against. The pairs
+the `base` and `fr-overlay` arms, so its French twin had no result to compare against. The pairs
 row reads `4 comparable of 5 declared` rather than `4 of 4`. An early version of the script dropped
 the unmeasurable pair from its denominator and reported that every pair agreed. Every pair that could
 be compared agreed to within the reporting precision, in every arm.

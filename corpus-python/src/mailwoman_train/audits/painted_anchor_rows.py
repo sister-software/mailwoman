@@ -1,18 +1,12 @@
 """Count how many corpus rows the anchor painter actually PAINTS, per lookup.
 
-The insurance against repeating the 2026-08-05 GB defect
-(``docs/records/evals/2026-08-05-en-gb-anchor-off.md``). That defect was invisible for 60,000 steps
-because nothing ever asked the question this script asks: *given this recipe output and this
-``anchor_lookup_path``, how many rows put a non-zero value into the anchor channel?* The answer for
-every GB recipe output against ``pilot-anchor-lookup.json`` is zero, and a zero is not a smaller number. It
-is the channel being switched off for that country while the config still says ``use_postcode_anchor:
-true``.
+A zero here is not a smaller number: it is the anchor channel being switched off for a country while
+the config still says ``use_postcode_anchor: true``. Run it before a launch, once per recipe output
+whose country you expect the anchor to serve; a zero on a recipe output you expected to paint is a
+STOP rather than a warning — either the lookup lacks that country's keys or the key normalization
+diverged.
 
-Run it before a launch, once per recipe output whose country you expect the anchor to serve. A zero on a
-recipe output you expected to paint is a STOP rather than a warning: either the lookup lacks that country's keys or
-the key normalization diverged.
-
-WHAT IT EXERCISES. The real train-side code rather than a re-implementation:
+It exercises the real train-side code rather than a re-implementation:
 ``mailwoman_train.features.postcode_shapes.collect_matches`` for the spans (``anchor_paint_mode: shaped``) and
 ``mailwoman_train.tokenizer._paint_anchor_chars`` for the lookup + normalization. The only thing
 skipped is the char->piece projection, which cannot turn a painted row into an unpainted one (it

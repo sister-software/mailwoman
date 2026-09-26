@@ -3,27 +3,11 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Past runs on disk, so an arm can be compared against one that already happened.
+ * Past runs on disk, so a `{kind: "recorded"}` arm can be replayed rather than re-measured.
  *
- *   This exists for `{kind: "recorded"}` arms: re-running the incumbent to compare against it costs the same wall-clock
- *   as running it the first time, and on a 420-row panel with an external arm it also costs the external service 420
- *   requests it has already answered. A stored run makes the second comparison free.
- *
- *   **It is a cache rather than a record.** `evals/scores-by-version.json` and `docs/records/evals/` are the record, written by
- *   humans and by `eval ledger-append`. Nothing here is authoritative, nothing here is committed, and a pruned run is
- *   not a lost result. It is a result that has to be re-measured, which is the correct cost for something nobody wrote
- *   down. Storing it under the data root rather than the repo is what keeps that distinction physical.
- *
- *   retention, which spec §9.8 left open. Two rules, both cheap to reason about:
- *
- *   1. **Age.** Runs older than {@link RETENTION_DAYS} are pruned. A stored run is only meaningful against the tree that
- *      produced it, and after a fortnight of commits it is describing a system that no longer exists.
- *   2. **Count.** At most {@link RETENTION_MAX_RUNS} are kept, newest first, regardless of age. This is the backstop for
- *      a busy day — the age rule alone permits an unbounded number of runs inside the window.
- *
- *   A run whose `tree_fingerprint` no longer matches the working tree is not pruned automatically. It is still evidence
- *   about that tree, and deleting it silently would be worse than keeping it: `{kind:"recorded"}` refuses to compare
- *   across fingerprints anyway, and says which two it saw.
+ * A cache, not a record: `evals/scores-by-version.json` and `docs/records/evals/` are the record, and a pruned run has
+ * to be re-measured. A run whose `tree_fingerprint` no longer matches the working tree is still evidence about that
+ * tree, and `{kind:"recorded"}` refuses to compare across fingerprints anyway.
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
@@ -35,34 +19,25 @@ import { type PathBuilder, type PathBuilderLike, resolvePathBuilder } from "path
 import { Globerator } from "spliterator/node/fs"
 
 /**
- * Where runs land.
- *
- * Under the data root, never the repo.
- * See the module docstring on cache-versus-record.
+ * Where runs land: under the data root, never the repo.
  */
 export const RUN_STORE_DIR = dataRootPath("dev-mcp", "runs")
 
 /**
- * Age ceiling in days.
- *
- * A stored run describes the tree that produced it, and after two weeks of commits that tree is gone.
+ * Age ceiling in days; a stored run describes the tree that produced it, and
+ * after two weeks of commits that tree is gone.
  */
 export const RETENTION_DAYS = 14
 
 /**
- * Hard ceiling on stored runs, newest first.
- *
- * The backstop the age rule cannot provide: a busy day can produce hundreds of runs well inside the window.
+ * Hard ceiling on stored runs, newest first — the backstop the age rule cannot provide,
+ * since a busy day can produce hundreds of runs inside the window.
  */
 export const RETENTION_MAX_RUNS = 200
 
 /**
- * What one arm answered for one row, kept in a shape a later run can replay without re-deriving it.
- *
- * Deliberately the same shape a live arm produces (`ExternalAnswer`), so a recorded arm
- * and a live one are indistinguishable downstream.
- * A replay that had its own row type would need its own grading path,
- * and a second grading path is how the two stop agreeing.
+ * What one arm answered for one row, deliberately the same shape a live arm produces
+ * (`ExternalAnswer`) so a recorded arm and a live one are indistinguishable downstream.
  */
 export interface RecordedAnswer {
 	id: string
@@ -75,36 +50,29 @@ export interface RecordedAnswer {
 }
 
 /**
- * One stored run.
- *
- * `payload` is whatever the producing tool returned, opaque here — this module owns storage
- * and retention rather than the shape of a result.
- * `answers` is the one exception, and it is explicit rather than dug out of the payload:
- * it is the replay index `{kind:"recorded"}` reads, and a store that had to know a
- * result's internals to find it would break every time a result grew a field.
+ * One stored run; `payload` is opaque here because this module owns storage and retention
+ * rather than result shape, while `answers` is the explicit replay index `{kind:"recorded"}` reads.
  */
 export interface StoredRun {
 	run_id: string
 	tool: string
 	/**
-	 * ISO-8601, supplied by the caller.
-	 *
-	 * Not generated here so a workflow that has to be deterministic can stamp its own.
+	 * ISO-8601, supplied by the caller so a deterministic workflow can stamp its own.
 	 */
 	created_at: string
 	tree_fingerprint: string
 	engine_id: string | null
 	input_set_id: string | null
 	/**
-	 * Per-arm replay indices, keyed by the arm's label.
-	 *
-	 * Absent for a run nothing can replay.
-	 * `mwdev_promotion_eval`, say, which answers about a battery rather than about rows.
+	 * Per-arm replay indices keyed by the arm's label, absent for a run no arm can replay.
 	 */
 	answers?: Record<string, RecordedAnswer[]>
 	payload: unknown
 }
 
+/**
+ * What one stored run looks like to a caller scanning the store.
+ */
 export interface RunSummary {
 	file: string
 	run_id: string
@@ -115,16 +83,13 @@ export interface RunSummary {
 	input_set_id: string | null
 	bytes: number
 	/**
-	 * Arm labels this run can be replayed as.
-	 *
-	 * Empty means it is stored evidence but not a usable `{kind:"recorded"}` arm — reported
-	 * rather than omitted, so a caller learns that before writing the call rather than from its refusal.
+	 * Arm labels this run can be replayed as; empty means it is stored evidence
+	 * but not a usable `{kind:"recorded"}` arm.
 	 */
 	replayable_arms: string[]
 	/**
-	 * Whether this run's tree still matches the caller's.
-	 *
-	 * `null` when the caller did not supply one to compare against.
+	 * Whether this run's tree still matches the caller's, or `null` when the
+	 * caller supplied none to compare against.
 	 */
 	fingerprint_matches_now: boolean | null
 }
@@ -144,16 +109,8 @@ export async function putRun(run: StoredRun, dir: PathBuilderLike = RUN_STORE_DI
 }
 
 /**
- * Persist a run and apply retention, or say why it could not be done.
- *
- * A failure here must not fail the measurement that produced it.
- * The store is a cache.
- *
- * The queries have already been issued, and for a billed arm already paid for, so throwing
- * away a completed comparison because a disk was full would cost more than the cache is worth.
- *
- * The caller carries the returned sentence into its warnings, so the loss is reported
- * rather than discovered later as a run_id that "was pruned".
+ * Persist a run and apply retention without failing the measurement that produced it,
+ * returning a sentence the caller carries into its warnings when the store is unwritable.
  */
 export async function tryPutRun(run: StoredRun, dir: PathBuilderLike, now: Date): Promise<string | null> {
 	try {
@@ -170,11 +127,8 @@ export async function tryPutRun(run: StoredRun, dir: PathBuilderLike, now: Date)
 }
 
 /**
- * Read one run back, or `null` when it is absent or unreadable.
- *
- * `null` here means pruned, never stored, or unreadable, and those are not distinguishable
- * after the fact, which is why {@link RETENTION_DAYS} is documented rather than silent.
- * A caller that finds nothing has to re-measure.
+ * Read one run back, or `null` when it is absent or unreadable; pruned, never stored and
+ * unreadable are not distinguishable after the fact, so a caller finding none has to re-measure.
  */
 export async function getRun(runID: string, dir: PathBuilderLike = RUN_STORE_DIR): Promise<StoredRun | null> {
 	const path = runPath(runID, dir)
@@ -185,10 +139,8 @@ export async function getRun(runID: string, dir: PathBuilderLike = RUN_STORE_DIR
 /**
  * The replay index for one arm of a stored run, keyed by row id.
  *
- * @throws When that arm was not recorded.
- * Naming what was recorded is the useful half of the error: the common mistake is asking for
- * `mailwoman` on a run whose two arms were `mailwoman` and `photon` under different labels,
- * and a bare "not found" sends the caller looking for the wrong thing.
+ * @throws When that arm was not recorded, naming what `was` recorded because a bare
+ * "not found" sends the caller looking for the wrong thing.
  */
 export function replayIndex(run: StoredRun, arm: string): Map<string, RecordedAnswer> {
 	const answers = run.answers?.[arm]
@@ -214,9 +166,7 @@ interface StoredRunFile {
 }
 
 /**
- * Read a stored run file and return its contents along with metadata.
- *
- * @returns `null` if the file is corrupt or cannot be read.
+ * Read a stored run file with its size, or `null` when the file is corrupt or unreadable.
  */
 async function readStoredRunFile(dir: PathBuilderLike, file: string): Promise<StoredRunFile | null> {
 	return readLocalTextFile(resolvePathBuilder(dir, file))
@@ -224,6 +174,9 @@ async function readStoredRunFile(dir: PathBuilderLike, file: string): Promise<St
 		.catch(() => null)
 }
 
+/**
+ * List every stored run, newest first, with an optional fingerprint comparison.
+ */
 export async function listRuns(
 	dir: PathBuilderLike = RUN_STORE_DIR,
 	currentFingerprint?: string
@@ -246,6 +199,9 @@ export async function listRuns(
 		.toSorted((a, b) => b.created_at.localeCompare(a.created_at))
 }
 
+/**
+ * What one retention pass removed, by name.
+ */
 export interface PruneReport {
 	pruned_by_age: string[]
 	pruned_by_count: string[]
@@ -253,10 +209,8 @@ export interface PruneReport {
 }
 
 /**
- * Apply both retention rules and report what went, by name.
- *
- * `now` is injected rather than read from the clock so the rule is testable without sleeping,
- * and so a caller that has to be deterministic can pass its own.
+ * Apply both retention rules and report what went by name; `now` is injected
+ * rather than read from the clock so the rule is testable and deterministic.
  */
 export async function pruneRuns(
 	now: Date,
@@ -272,9 +226,8 @@ export async function pruneRuns(
 	for (const entry of all) {
 		const created = Date.parse(entry.created_at)
 
-		// An unparseable timestamp is treated as old.
-		// A run that cannot say when it happened cannot be trusted to describe a current tree,
-		// and keeping it forever is the worse failure.
+		// An unparseable timestamp is treated as old, because a run that cannot say
+		// when it happened cannot be trusted to describe a current tree.
 		if (!Number.isFinite(created) || created < cutoff) {
 			byAge.push(entry.run_id)
 

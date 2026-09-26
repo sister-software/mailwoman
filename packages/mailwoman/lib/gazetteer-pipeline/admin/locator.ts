@@ -78,7 +78,7 @@ export class AdminLocator {
 	/**
 	 * Places present in the admin DB whose geometry the polygon DB does not carry.
 	 *
-	 * A caller reporting coverage needs this: a probe that finds nothing may mean the
+	 * A caller reporting coverage needs this: a probe that finds no place may mean the
 	 * point is outside every polygon or that the containing place has no polygon at all,
 	 * and only this number separates them.
 	 */
