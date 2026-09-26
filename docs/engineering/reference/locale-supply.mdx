@@ -19,10 +19,19 @@ what it found.
 Measured on `v0.32.0-locality-shape`, all 718 train files, unless a row says otherwise. Receipts live
 on the `mailwoman-training` volume as `audits/locale-supply-<iso2>.json`.
 
-## `synth-` names the recipe that rendered the surface
+## `synth-` is the retired spelling of a recipe-output source
 
 Read this before the table. A source id beginning `synth-` is a **locale recipe**, and every one of
-them renders real published address tuples through a template:
+them renders real published address tuples through a template. The prefix was read as "synthetic",
+which the rows are not, so from the corpus assembled after 2026-09-26 on, a recipe-output source is
+spelled `<operation>-<tail>` with the tail unchanged: `rendered-german`, `fragment-fr`,
+`spliced-unit-v30`, `invented-po-box-cedex`, `codex-bare-postcode`, `reviewed-postcode-tail`. The
+prefix states what the recipe did to attested data and never restates `surface` or the register.
+`packages/corpus/lib/recipes/sources.ts` records every source under both spellings, with the file
+that writes it. Every corpus assembled before that date, and every training config that targets one,
+keeps the `synth-` spelling, because a source id is the string stored on every row of a built corpus
+and a config keys on what its corpus stores. The table below uses the spelling the measured corpus,
+`v0.32.0-locality-shape`, stores:
 
 | source     | reads                                                        |
 | ---------- | ------------------------------------------------------------ |

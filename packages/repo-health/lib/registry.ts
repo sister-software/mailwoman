@@ -40,6 +40,7 @@ import { vocabCensusCheck } from "#checks/vocab-census"
 import { weightsFamilyCheck } from "#checks/weights/family"
 import { weightsReconciliationCheck } from "#checks/weights/reconciliation"
 import { weightsRightsCheck } from "#checks/weights/rights"
+import { wireIdentifiersCheck } from "#checks/wire-identifiers"
 
 /**
  * Every health check, in the order `mwops health all` runs them: the ones that only read
@@ -71,6 +72,7 @@ export const checks: ReadonlyArray<RepoCheck> = [
 	docLinkTargetsCheck,
 	stylesheetCheck,
 	runtimeFlagsCheck,
+	wireIdentifiersCheck,
 	stalePathLiteralsCheck,
 	debtCheck,
 	bundleGraphCheck,

@@ -86,6 +86,19 @@ Skipping both once produced a claim that `synth-es-pedania-v1.jsonl` needed re-p
 had migrated on 2026-07-08 and the recipe output was built 2026-07-22 — the work was already done, and acting
 on the claim would have cost an 800,000-row rebuild to find that out.
 
+## A recipe-output `source` is a wire identifier
+
+A recipe's `source` string is stored on every row of every corpus that carries it, keyed by every
+training config that weights it, and quoted by every model card trained on it. `lib/recipes/sources.ts`
+records each one under its retired spelling (`synth-german`) and its current one (`rendered-de`),
+with the file that writes it. The tail is kept byte-for-byte in every other entry, so the mapping is a
+prefix swap. Germany is the exception because the retired name spelled a language word where every
+other locale reads as an ISO code. Read that table before renaming a source, adding one, or reading an
+archived corpus whose `source` column says `synth-`. The `wire-identifiers` repository-health check
+refuses a config key that no adapter, recipe or carried overlay emits under either spelling. A corpus
+assembled before 2026-09-26 stores the retired spelling, and the config that targets it keeps that
+spelling, because the loader reads the corpus rather than the table.
+
 ## Shared implementations
 
 `lib/adapter.ts` owns `HOUSE_NUMBER_PREFIX` and `splitStreetLine(line)`, the house-number and street

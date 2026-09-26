@@ -4,7 +4,9 @@
  * @author Teffen Ellis, et al.
  */
 
-import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
+import { openDuckDB } from "@mailwoman/corpus/parquet/duckdb"
 import { useScratchDir } from "@mailwoman/corpus/test-kit"
 import {
 	assembleOverlayManifest,
@@ -106,6 +108,62 @@ describe("assembleOverlayManifest, on who chose a held-out split", () => {
 			assembleOverlayManifest({ ...overlay("part-synth-german-train.parquet", "train"), base })
 		).rejects.not.toThrow(/split-slice/)
 	})
+
+	/**
+	 * One overlay parquet holding the `source` and `source_id` columns `descriptor` reads.
+	 */
+	async function writeOverlayParquet(name: string, source: string): Promise<string> {
+		using db = await openDuckDB()
+
+		// `assembleOverlayManifest` resolves an added file at `<newDir>/<split>/<name>`.
+		await makeDirectories(scratch.path("train"))
+
+		const path = scratch.path("train", name).toString()
+
+		await db.run(
+			`COPY (SELECT '${source}' AS source, 'row-1' AS source_id) TO '${path}' (FORMAT parquet, COMPRESSION snappy)`
+		)
+
+		return name
+	}
+
+	it("refuses a manifest label the file's own source column contradicts", async () => {
+		const base = await writeBase()
+		const parquet = await writeOverlayParquet("part-mismatch.train.parquet", "rendered-de")
+
+		// The loader groups rows by the column.
+		// Recording the caller's label instead would write a manifest that disagrees
+		// with the rows the run trains on.
+		await expect(
+			assembleOverlayManifest({
+				...overlay(parquet, "train"),
+				base,
+				files: [{ parquet, source: "synth-german", split: "train" }],
+			})
+		).rejects.toThrow(/holds source "rendered-de".*asked to record "synth-german"/s)
+	})
+
+	it("records the label when the file's source column agrees with it", async () => {
+		const base = await writeBase()
+		const parquet = await writeOverlayParquet("part-agrees.train.parquet", "rendered-de")
+
+		await assembleOverlayManifest({
+			...overlay(parquet, "train"),
+			base,
+			files: [{ parquet, source: "rendered-de", split: "train" }],
+		})
+
+		// `assembleOverlayManifest` writes the manifest rather than returning it.
+		const written = await readLocalJSONFile<{ slices: Array<{ path: string; source: string; rows: number }> }>(
+			scratch.path("MANIFEST.json").toString()
+		)
+
+		const added = written.slices.filter((slice) => slice.path.endsWith("part-agrees.train.parquet"))
+
+		expect(added).toHaveLength(1)
+		expect(added[0]!.source).toBe("rendered-de")
+		expect(added[0]!.rows).toBe(1)
+	})
 })
 
 describe("rerootBaseFilePath", () => {
@@ -152,8 +210,8 @@ describe("baseManifestFiles", () => {
 	})
 
 	it("answers an empty list for a manifest that declares one, because that is a measurement", () => {
-		// `slices: []` says the corpus holds no file; the overlay assembler's requirement
-		// for a non-empty base lives in its own caller.
+		// `slices: []` says the corpus holds no file.
+		// The overlay assembler's requirement for a non-empty base lives in its own caller.
 		expect(baseManifestFiles(manifestWith("slices", []))).toEqual([])
 	})
 })

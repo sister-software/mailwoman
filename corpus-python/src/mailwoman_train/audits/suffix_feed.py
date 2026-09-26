@@ -124,6 +124,20 @@ def audit_feed(
             per_source_carriers[(cls, row["source"])] += 1
             per_source_correct[(cls, row["source"])] += int(ok)
 
+    # Every comparison in this report is target against ordinary, and `TARGET_SOURCE` is the only thing
+    # that sorts a row into the target bucket. A spelling the corpus retired puts every row in
+    # `ordinary`, and the report then reads as a finished measurement whose target cells are all empty.
+    # An audit that cannot find what it audits has to say so: a false negative in the measuring tool
+    # reads identically to a real absence. `packages/corpus/lib/recipes/sources.ts` maps the retired
+    # `synth-` source names to their current ones.
+    if sampled and not any(bucket == "target" for _, bucket in carriers):
+        seen = sorted({src for _, src in per_source_carriers})
+        raise ValueError(
+            f"no row of the {sampled:,} sampled carries source {TARGET_SOURCE!r}, so every target cell "
+            f"in this report would read 0 carriers against a populated ordinary bucket. Sources seen: "
+            f"{', '.join(seen) if seen else 'none carried a classified span'}."
+        )
+
     def _cell(cls: str, bucket: str) -> dict[str, Any]:
         n = carriers[(cls, bucket)]
         k = correct[(cls, bucket)]

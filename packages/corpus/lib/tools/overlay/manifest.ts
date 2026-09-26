@@ -110,6 +110,21 @@ export function splitFromFilename(parquet: string): SplitName | null {
 	return match ? (match[1] as SplitName) : null
 }
 
+/**
+ * Reads one overlay parquet and describes it for the manifest.
+ *
+ * The `source` argument is what the caller believes the file holds, and the file itself
+ * is what the loader reads: `file_source_counts` groups the rows, never the manifest.
+ * So a caller passing a stale label writes a manifest that disagrees with its own rows, the run
+ * trains on the rows, and the next plan derived from that manifest carries the stale label forward.
+ *
+ * This reads the column and refuses the mismatch rather than recording the claim.
+ *
+ * `source_id` is materialized rather than aggregated because `first_source_id`
+ * and `last_source_id` mean the first and last row of the file.
+ * DuckDB's `first` and `last` aggregates read whichever row a parallel scan
+ * reaches first, which is not the same thing.
+ */
 async function descriptor(
 	localPath: string,
 	modalPath: string,
@@ -119,9 +134,21 @@ async function descriptor(
 	// One per file, and `assembleOverlayManifest` calls this once per file.
 	using db = await openDuckDB()
 
-	const result = await db.runAndReadAll(`SELECT source_id FROM read_parquet('${escapeSQLString(localPath)}')`)
+	const result = await db.runAndReadAll(`SELECT source_id, source FROM read_parquet('${escapeSQLString(localPath)}')`)
 
-	const sids = result.getRowObjects().map((r) => r.source_id as string)
+	const rows = result.getRowObjects()
+	const sids = rows.map((r) => r.source_id as string)
+	const stored = new Set(rows.map((r) => r.source as string))
+
+	if (stored.size !== 1 || !stored.has(source)) {
+		const found = [...stored].toSorted().join(", ")
+
+		throw new Error(
+			`${localPath} holds source ${stored.size === 1 ? `"${found}"` : `${stored.size} values (${found})`}, ` +
+				`and the manifest was asked to record "${source}". The loader groups rows by the column, so a ` +
+				`manifest that disagrees with it is a label nothing reads and a plan derived from it carries forward.`
+		)
+	}
 
 	return {
 		split,
