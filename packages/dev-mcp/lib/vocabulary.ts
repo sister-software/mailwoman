@@ -123,8 +123,9 @@ function characterCoverage(
 export interface VocabularyOptions {
 	texts: readonly string[]
 	/**
-	 * A comparison arm — the same content the tokenizer handles well, usually the same addresses
-	 * transliterated — without which a fallback share is a number with no comparison arm to be high or low against.
+	 * A comparison arm — the same content the tokenizer handles well, usually the
+	 * same addresses transliterated — without which a fallback share is a number
+	 * with no comparison arm to be high or low against.
 	 */
 	control?: readonly string[]
 	tokenizerPath?: string

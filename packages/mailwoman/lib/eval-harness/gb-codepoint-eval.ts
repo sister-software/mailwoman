@@ -116,7 +116,8 @@ function legsFor(postcode: string): Array<{ leg: string; input: string }> {
 }
 
 /**
- * Swap the final letter for its alphabet successor (Z→A), skipping the letters GB unit postcodes never use in final position.
+ * Swap the final letter for its alphabet successor (Z→A), skipping the letters
+ * GB unit postcodes never use in final position.
  */
 function mutateFinalLetter(postcode: string): string {
 	const last = postcode.at(-1)!

@@ -31,8 +31,8 @@ export interface GauntletReport {
 	 */
 	pins: string | null
 	/**
-	 * Only the postcode-country coherence pass prints a firing count,
-	 * so this makes no statement about any other pinned pass.
+	 * Only the postcode-country coherence pass prints a firing count, so this makes
+	 * no statement about any other pinned pass.
 	 */
 	postcode_country_coherence_fired_on: { n: number; of: number } | null
 	/**
