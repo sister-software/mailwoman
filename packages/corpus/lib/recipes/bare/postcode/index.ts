@@ -193,7 +193,7 @@ export const barePostcodeRecipe: CorpusRecipe = {
 
 		// Per-country budget, because supply is uneven: the Netherlands publishes ~460,000
 		// distinct `nnnn LL` codes against Czechia's 2,669 and Slovakia's 1,059, so an uncapped
-		// pass would emit 98.9% Dutch rows and teach the `NNN NN` countries almost nothing.
+		// pass would emit 98.9% Dutch rows and teach the `NNN NN` countries almost no pattern.
 		const countries = [...new Set(SOURCES.map((source) => source.country))]
 		const budget = opts.count ? Math.ceil(opts.count / countries.length) : Number.POSITIVE_INFINITY
 		const perCountry = new Map(countries.map((country) => [country, 0]))

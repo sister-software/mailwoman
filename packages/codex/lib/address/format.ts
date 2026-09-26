@@ -148,7 +148,7 @@ function scriptIsFreeToDerive(country: string): boolean {
  *
  * @returns An empty string when the dict is empty, when no layout names `country`
  * (55 of the 252 shipped records carry no usable skeleton), or when the layout prints
- * nothing; a partial dict degrades to the parts the layout can print.
+ * no field; a partial dict degrades to the parts the layout can print.
  */
 export function formatAddress(components: ComponentDict, country: string, opts: FormatAddressOptions = {}): string {
 	return formatAddressRow(components, country, opts)?.raw ?? ""

@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  * Whether the tokenizer can represent an input at all: SentencePiece marks what it cannot represent by falling back
- * to raw UTF-8 bytes, and the per-character report is required because a fallback share means nothing without a
+ * to raw UTF-8 bytes, and the per-character report is required because a fallback share has no meaning without a
  * control arm.
  */
 
@@ -124,7 +124,7 @@ export interface VocabularyOptions {
 	texts: readonly string[]
 	/**
 	 * A comparison arm — the same content the tokenizer handles well, usually the same addresses
-	 * transliterated — without which a fallback share is a number with nothing to be high or low against.
+	 * transliterated — without which a fallback share is a number with no comparison arm to be high or low against.
 	 */
 	control?: readonly string[]
 	tokenizerPath?: string

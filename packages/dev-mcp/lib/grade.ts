@@ -131,7 +131,7 @@ export function normalCDF(z: number): number {
 
 /**
  * The MDE is the effect this n would detect with 80% power at α = 0.05, a convention stated rather than
- * measured; it turns "we saw no effect" into "we saw no effect, and nothing smaller was detectable".
+ * measured; it turns "we saw no effect" into "we saw no effect, and no smaller effect was detectable".
  */
 export function significance(successesA: number, successesB: number, n: number): SignificanceReading {
 	if (n === 0) {

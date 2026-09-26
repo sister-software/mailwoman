@@ -293,7 +293,7 @@ export async function collectEdgarSubsidiaryRows(
 				? {}
 				: {
 						// Zero rows with no abstentions means the filing had no Exhibit 21;
-						// zero rows with abstentions means one was read and yielded nothing.
+						// zero rows with abstentions means one was read and yielded no row.
 						skipReason: collected.unparseable ? EdgarSkipReason.NoSubsidiaries : EdgarSkipReason.NoExhibit21,
 					}),
 		})

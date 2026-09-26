@@ -90,7 +90,7 @@ export const KNOWN_WEIGHTS_PACKAGES: readonly string[] = [
 /**
  * One installed package's provenance record, or `null` when the package is not installed:
  * a package that resolves but carries no `PROVENANCE.json` is reported absent
- * rather than as installed with nothing to declare.
+ * rather than as installed with no declaration to make.
  */
 async function readInstalled(packageName: string): Promise<PackageProvenance | null> {
 	let directory: PathBuilder

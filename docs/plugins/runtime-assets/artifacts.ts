@@ -5,7 +5,7 @@
  *
  *   Build-time utilities for the runtime-assets plugin, running in Node.js only (Docusaurus config/plugin context) and never bundled into the client.
  *
- *   Everything here resolves through `@mailwoman/core/module/resolve-from` keyed on this file's `import.meta.url`, and nothing touches `import.meta.resolve`, because Docusaurus's CommonJS transform rewrites the former and cannot parse the latter; only a docs build can verify a change to that.
+ *   Everything here resolves through `@mailwoman/core/module/resolve-from` keyed on this file's `import.meta.url`, and no code touches `import.meta.resolve`, because Docusaurus's CommonJS transform rewrites the former and cannot parse the latter; only a docs build can verify a change to that.
  */
 
 import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"

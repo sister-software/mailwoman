@@ -6,7 +6,7 @@
  *   A locale whose overlay is absent from the weights cache is graded base-only, so `--refuse-country` states which
  *   locales the read could not speak for.
  *
- *   Every id must match a row: a typo that promotes nothing reads exactly like a list already applied.
+ *   Every id must match a row: a typo that promotes no row reads exactly like a list already applied.
  *
  *   Rows are read from the case files rather than through `loadRegressionCases`, which omits a row's source file.
  *

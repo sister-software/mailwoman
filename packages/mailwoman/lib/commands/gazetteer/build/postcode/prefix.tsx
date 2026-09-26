@@ -47,7 +47,7 @@ interface DatabaseRecipe {
 	polygonFile?: string
 	/**
 	 * Probed after write; per database, never shared, because probing one register's prefixes
-	 * against another index prints reassuring-looking misses that verify nothing.
+	 * against another index prints reassuring-looking misses that verify no fact.
 	 */
 	probePrefixes: readonly string[]
 }

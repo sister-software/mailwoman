@@ -5,7 +5,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Mirror `TodoWrite` payloads into the marker-delimited task list of the linked GitHub issue, asynchronously:
- *   nothing happens unless the checkout has a linked issue, the tool is `TodoWrite`, and the issue contains both
+ *   no write happens unless the checkout has a linked issue, the tool is `TodoWrite`, and the issue contains both
  *   markers. A lock and a replaceable payload file serialize concurrent updates.
  */
 

@@ -209,7 +209,7 @@ export function reportToStderr(line: string): void {
 export interface CommandTaskResultProps<T> {
 	state: CommandTaskState<T>
 	/**
-	 * Content shown while the task runs; omitting it renders nothing.
+	 * Content shown while the task runs; omitting it renders no element.
 	 */
 	running?: React.ReactNode
 	/**
