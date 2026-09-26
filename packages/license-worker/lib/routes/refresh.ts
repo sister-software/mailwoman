@@ -3,10 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `post /v1/licenses/refresh`: the lid and its secret answer the current token. A wrong secret and an unknown lid
- *   answer the same body, so the route confirms no lid's existence. Rate limited per lid, which is what an
- *   attacker guessing secrets holds constant, and per address independently. Therefore, a stranger who learns a lid cannot
- *   spend its owner's allowance.
+ * `post /v1/licenses/refresh`: a wrong secret and an unknown lid answer the same body so the route confirms no lid's existence, and rate limits apply per lid and per address independently, so a stranger who learns a lid cannot spend its owner's allowance.
  */
 
 import { createRoute, type OpenAPIHono, z } from "@hono/zod-openapi"
@@ -19,9 +16,7 @@ import { LicenseState } from "#ledger/schema"
 import { clientAddress, withinLimits } from "#routes/rate-limit"
 
 /**
- * A license id as `newLicenseID` mints it: `lic_` plus 22 url-safe characters.
- *
- * Anything else is refused before a query runs.
+ * A license id as `newLicenseID` mints it: `lic_` plus 22 url-safe characters, refused before a query runs.
  */
 export const LicenseIDSchema = z.string().regex(/^lic_[A-Za-z0-9_-]{22}$/u)
 

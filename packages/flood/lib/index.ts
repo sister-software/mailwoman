@@ -3,39 +3,10 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The `flood.db` reader — what the authority's map assigns at a coordinate, and on what basis.
- *
- *   three answers, and keeping them apart is the whole JOB.
- *
- *   1. `designated` — the authority's map assigns a zone here, and the zone code is the answer.
- *   2. `designated_absence` — the authority determined here and assigns no zone. Inside England that is
- *      Zone 1 by the Planning Practice Guidance's own definition ("all land outside Zones 2, 3a and 3b"),
- *      which is why an empty answer inside the footprint is a designation rather than a gap.
- *   3. `unknown` — no coverage row for this location. The EA's statement covers England and makes no statement
- *      about Wales, Scotland or Northern Ireland, each of which has a different authority and a different
- *      zone scheme. the England border strip is unknown too, because the footprint's interior test drops
- *      any cell not wholly inside the outline.
- *
- *   readings 2 and 3 are the same empty answer from the geometry and opposite answers from the reader.
- *   A layer that could not tell them apart would report every unmapped location as low-hazard, which is
- *   the failure this whole program exists to prevent.
- *
- *   neither reading is A statement about A property. The layer reports which zone the authority's map
- *   assigns at a location, which is a fact about the map. The EA states that its data is "not suitable for
- *   showing whether an individual property is at risk of flooding", and this reader never claims otherwise
- *   — `limits` carries the authority's own exclusions on every answer.
- *
- *   the probe is structure first, geometry last. `cellToParent` up the compacted whole-cell chain answers
- *   an interior point with primary-key probes alone. only a cell the boundary crosses reaches the ray
- *   cast, and then only against the polygons `flood_zone_cell_area` already named for that cell. That is
- *   scope invariant 6's division: containment precomputed at build time, spatial math kept to the
- *   irreducibly geometric edge.
- *
- *   the reader is synchronous and uses RAW prepared statements. It answers one point per geocode with up
- *   to `indexResolution - coverageResolution` primary-key probes plus a bounded geometry read, and the
- *   ray cast it wraps is synchronous anyway. Kysely's builder is async, so an async reader would put a
- *   promise between the coordinate and the point test for no query the builder expresses better. The DDL
- *   that created these tables is Kysely — see `schema.ts`.
+ *   The `flood.db` reader: a designated absence and an unmapped location are the same empty geometry and
+ *   opposite answers, so neither is ever a low-hazard reading. The reader is synchronous and uses raw
+ *   prepared statements because Kysely's builder is async and would put a promise between the coordinate
+ *   and the point test.
  */
 
 import {
@@ -61,19 +32,11 @@ export { FLOOD_ZONE_1, type FloodZoneDefinition } from "#vocabulary"
  * What the layer can say about a coordinate.
  */
 export const FloodReadingKind = {
-	/**
-	 * The authority's map assigns a zone at this location.
-	 */
 	Designated: "designated",
 	/**
-	 * The authority determined here and assigns no zone.
-	 * A designated absence, which for this product is Zone 1.
+	 * The authority determined here and assigns no zone, represented as Zone 1 by this product.
 	 */
 	DesignatedAbsence: "designated_absence",
-	/**
-	 * No coverage row.
-	 * Unmapped by this authority, and never a low-hazard reading.
-	 */
 	Unknown: "unknown",
 } as const
 
@@ -84,18 +47,13 @@ export type FloodReadingKind = (typeof FloodReadingKind)[keyof typeof FloodReadi
  */
 export const FloodContainmentPath = {
 	/**
-	 * The cell lies wholly inside the zone.
-	 * No geometry was read.
+	 * The cell lies wholly inside the zone, so no geometry was read.
 	 */
 	WholeCell: "whole_cell",
 	/**
-	 * The cell is crossed by a boundary.
-	 * The point was ray-cast against a named polygon.
+	 * A boundary crosses the cell, so the point was ray-cast against a named polygon.
 	 */
 	RayCast: "ray_cast",
-	/**
-	 * No zone reaches this cell at all.
-	 */
 	NoZoneCell: "no_zone_cell",
 } as const
 
@@ -107,30 +65,21 @@ export type FloodContainmentPath = (typeof FloodContainmentPath)[keyof typeof Fl
 export interface FloodZoneReading {
 	kind: FloodReadingKind
 	/**
-	 * The authority's zone code, verbatim.
-	 *
-	 * Present on a `designated` reading.
-	 * Absent on the other two.
+	 * The authority's zone code, verbatim, present only on a `designated` reading.
 	 */
 	zoneCode?: string
 	/**
-	 * The definition the authority publishes for the answered zone — {@link FLOOD_ZONE_1} on a
+	 * The definition the authority publishes for the answered zone, {@link FLOOD_ZONE_1} on a
 	 * designated absence, since this product represents Zone 1 by absence and ships no polygon for it.
 	 */
 	definition?: FloodZoneDefinition
 	/**
-	 * The polygon the ray cast matched, on a `ray_cast` reading.
-	 *
-	 * Named so a reader can fetch and draw it.
+	 * The polygon the ray cast matched on a `ray_cast` reading, named so a reader can fetch and draw it.
 	 */
 	areaID?: string
-	/**
-	 * How the answer was reached.
-	 */
 	containment: FloodContainmentPath
 	/**
-	 * The coverage row that licenses the reading, when there is one.
-	 * Absent on `unknown`, which is the absence.
+	 * The coverage row that licenses the reading, absent on `unknown`, which is the absence.
 	 */
 	coverage?: CoverageCell & { h3CellIndex: string; resolution: number }
 	/**
@@ -138,10 +87,8 @@ export interface FloodZoneReading {
 	 */
 	indexCellIndex: string
 	/**
-	 * What the product does not cover, in the authority's own words.
-	 *
-	 * Carried on every reading, because a Zone 1 answer is silent about surface water, groundwater
-	 * and defended-area residual risk, and a caller cannot see that from the zone code.
+	 * What the product does not cover, in the authority's own words, carried on every reading
+	 * because a Zone 1 answer is silent about surface water, groundwater and defended-area residual risk.
 	 */
 	limits: ReadonlyArray<string>
 }
@@ -154,11 +101,8 @@ export interface FloodLayerIdentity {
 	indexResolution: number
 	coverageResolution: number
 	/**
-	 * Every resolution `flood_zone_cell` stores a row at, coarsest first — the ancestor chain a probe walks.
-	 *
-	 * Several, and necessarily so: the whole tier is compacted parent-ward, and a polygon
-	 * too large for h3's allocator at the index resolution was indexed coarser.
-	 * A reader that probed one resolution would read every row at the others as an absence.
+	 * Every resolution `flood_zone_cell` stores a row at, coarsest first, because the whole tier
+	 * is compacted parent-ward and a reader probing one resolution would read the others as an absence.
 	 */
 	cellResolutions: number[]
 	/**
@@ -188,13 +132,8 @@ export interface FloodZoneLookupOptions {
 }
 
 /**
- * Read a sealed `flood.db`.
- *
- * Everything that would make the reader answer a well-formed wrong thing is refused
- * at construction rather than at query time: a manifest naming a different layer,
- * a coverage table with no rows, an extent row that is missing or duplicated.
- * Each of those would otherwise present as a reader that simply always answers `unknown`,
- * which on a receipt is indistinguishable from a region the authority genuinely has not mapped.
+ * Read a sealed `flood.db`, refusing at construction every condition that would
+ * otherwise present as a reader that always answers `unknown`.
  */
 export class FloodZoneLookup implements Disposable {
 	readonly identity: FloodLayerIdentity
@@ -225,10 +164,8 @@ export class FloodZoneLookup implements Disposable {
 			"SELECT area_id FROM flood_zone_cell_area WHERE h3_cell = ? ORDER BY area_id"
 		)
 
-		// two statements, and the split is the point.
-		// The bbox is the prefilter, so it is read without the blob: the largest features in
-		// this product carry hundreds of thousands of vertices, and pulling one off disk only to
-		// reject it on a rectangle would make the prefilter cost more than the test it replaces.
+		// The bbox is read without the blob, so the prefilter never pulls a hundred-thousand-vertex
+		// polygon off disk only to reject it on a rectangle.
 		this.#selectAreaBounds = this.#database.prepare(
 			"SELECT zone_code, min_lat, min_lon, max_lat, max_lon FROM flood_zone_area WHERE area_id = ?"
 		)
@@ -248,11 +185,9 @@ export class FloodZoneLookup implements Disposable {
 		const coverage = this.#readCoverage(indexCell)
 		const zone = this.#resolveZone(indexCell, latitude, longitude)
 
-		// coverage qualifies the absence and no more — the same asymmetry `supportsExclusion` carries.
-		// A polygon containing the point is the authority's determination at that location,
-		// and needs no coverage row to be true.
-		// An empty answer needs one, because without it the emptiness is a statement
-		// about our map rather than theirs.
+		// Coverage qualifies the absence and no more: a polygon containing the point is the
+		// authority's determination and needs no coverage row, while an empty answer does,
+		// or it is a statement about our map rather than theirs.
 		if (zone.zoneCode) {
 			const definition = this.#definitions.get(zone.zoneCode)
 
@@ -306,9 +241,8 @@ export class FloodZoneLookup implements Disposable {
 		latitude: number,
 		longitude: number
 	): { zoneCode?: string; areaID?: string; containment: FloodContainmentPath } {
-		// Coarsest first: a whole hit high in the ancestor chain is the cheapest answer
-		// and cannot be contradicted lower down, because compaction only ever replaces
-		// a full set of children with their parent.
+		// Coarsest first: a whole hit high in the ancestor chain cannot be contradicted lower down,
+		// because compaction only ever replaces a full set of children with their parent.
 		const partialCells: number[] = []
 
 		for (const cell of ancestorChainCells(indexCell, this.identity.indexResolution, this.identity.cellResolutions)) {

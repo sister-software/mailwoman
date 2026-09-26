@@ -3,39 +3,29 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The `node:sqlite` → typed-row boundary, in one place.
+ *   The `node:sqlite` → typed-row boundary, in one place: `node:sqlite` types every result as
+ *   `Record<string, SQLOutputValue>`, so every raw read needs an assertion, and it belongs here rather than at each
+ *   query site because an inline cast is invisible to review and indistinguishable from one defeating a real check.
  *
- *   `node:sqlite` types every result as `Record<string, SQLOutputValue>` because it cannot infer a row shape from SQL
- *   text, so every raw read needs an assertion somewhere. That assertion belongs at this boundary rather than repeated
- *   at each query site: a cast written inline is invisible to review and indistinguishable from a cast that is
- *   defeating a real check, which is how a branded key column came to be written with an unfolded value (#1757).
- *
- *   It lives in `core` rather than beside the resolver's readers because `@mailwoman/resolver-wof-sqlite` is an
- *   optional peer of `mailwoman`. A static import of it from there would violate the interface requirement that lets a consumer
- *   install the CLI without the gazetteer backend. `core` is the one package every reader already depends on, and
- *   `core/kysley/driver.ts` already makes the identical assertion for the Kysely path.
- *
- *   The type-only import keeps `node:sqlite` out of the emitted graph, so this module stays safe to reach from the
- *   browser tier and the docs bundler (see `sealed-db.ts` for the value-side counterpart).
+ *   It lives in `core` because `@mailwoman/resolver-wof-sqlite` is an optional peer of `mailwoman`, and a static
+ *   import from there would break installing the CLI without the gazetteer backend; the type-only import keeps
+ *   `node:sqlite` out of the emitted graph, so the module stays safe to reach from the browser tier.
  */
 
 import type { SQLInputValue, StatementSync } from "@mailwoman/sqlite/client"
 
 /**
- * Execute a prepared statement whose selected columns are described by `Row`.
- *
- * Callers own the correspondence: `Row` must match the statement's projection rather than the table.
- * A column added to the table without being selected does not belong in `Row`, and a `Row`
- * field the `select` omits reads back `undefined` at runtime while the type promises otherwise.
+ * Execute a prepared statement whose selected columns are described by `Row`,
+ * with the caller owning the correspondence: `Row` must match the statement's projection
+ * rather than the table, because a column the `select` omits reads back `undefined`
+ * at runtime while the type promises otherwise.
  */
 export function allRows<Row>(statement: StatementSync, ...parameters: SQLInputValue[]): Row[] {
 	return statement.all(...parameters) as Row[]
 }
 
 /**
- * Single-row counterpart to {@link allRows}.
- *
- * `undefined` when the statement matched no row.
+ * Single-row counterpart to {@link allRows}, answering `undefined` when the statement matched no row.
  */
 export function getRow<Row>(statement: StatementSync, ...parameters: SQLInputValue[]): Row | undefined {
 	return statement.get(...parameters) as Row | undefined

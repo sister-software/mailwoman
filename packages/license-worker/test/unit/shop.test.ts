@@ -2,10 +2,6 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- *
- *   The shop provisioner against a scripted Stripe: an empty account reads as all missing and writes no object without
- *   `apply`. with it, every object is created with the catalog's values. a second run finds them all and creates
- *   no object. an object that differs from the catalog is reported, updated, or replaced by what the difference allows.
  */
 
 import { readEnv } from "@mailwoman/license-worker/env"
@@ -40,9 +36,6 @@ function shopProduct() {
 	}
 }
 
-/**
- * An account a first run provisioned, as the catalog describes it.
- */
 function provisionedAccount(options: { agreementVersion?: string } = {}): Record<string, StripeRoute> {
 	return {
 		...emptyAccount(),
@@ -259,7 +252,6 @@ describe("the shop provisioner", () => {
 
 		expect(report.webhook).toEqual({ id: "we_1", url: `${WORKER}/v1/webhooks/stripe`, action: "exists" })
 
-		// The one link that lacked promotion codes is the one write of the run.
 		expect(report.paymentLinks["commercial-monthly-v1"]).toMatchObject({
 			action: "exists",
 			consent: true,
@@ -300,7 +292,6 @@ describe("the shop provisioner", () => {
 			{ action: "blocked", consent: false, promotionCodes: false },
 		])
 
-		// One attempt per plan, each with consent required, and no retry without it.
 		const attempts = stripe.calls.filter((call) => call.method === "POST" && call.path === "/v1/payment_links")
 
 		expect(attempts.map((call) => call.form.get("consent_collection[terms_of_service]"))).toEqual([
@@ -308,7 +299,6 @@ describe("the shop provisioner", () => {
 			"required",
 		])
 
-		// The product and the prices were still created: they carry no consent.
 		expect(report.product.action).toBe("created")
 	})
 

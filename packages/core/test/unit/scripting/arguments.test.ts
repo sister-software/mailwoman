@@ -3,11 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The argv accessors, checked through the barrel their callers actually import.
- *
- *   `arguments.ts` is not a public subpath. Every consumer reaches these through `@mailwoman/core/scripting/utils`,
- *   which re-exports them by name. A function added to the module but not to that list is importable in the editor and
- *   `undefined` at runtime, which is a defect no type-check catches.
+ * The argv accessors reach callers only through the `@mailwoman/core/scripting/utils` name re-exports, so a
+ * function added to the module but not to that list is importable in the editor and `undefined` at runtime.
  */
 
 import * as scriptingUtils from "@mailwoman/core/scripting/utils"
@@ -41,9 +38,9 @@ describe("optionPropertyName", () => {
 		expect(scriptingUtils.optionPropertyName(flag)).toBe(property)
 	})
 
-	// An acronym segment the derivation does not know title-cases instead, and the flag
-	// then fills a property no command declares: it parses, it validates, and it has no effect.
-	// Each row below is a flag a command ships.
+	// An acronym segment the derivation does not know title-cases instead,
+	// filling a property no command declares, so the flag parses, validates,
+	// and has no effect; each row below is a flag a command ships.
 	it.each([
 		["out-json", "outJSON"],
 		["errors-json", "errorsJSON"],

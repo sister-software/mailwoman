@@ -3,47 +3,32 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  * @file The exclusion check. An {@link Exclusion} is the only evidence kind that can act on an absence, so it is the only
- *   one with no public constructor: {@link requireExclusionBasis} is the sole way to make one, and it refuses far more
- *   often than it admits.
+ * one with no public constructor: {@link requireExclusionBasis} is the sole way to make one and refuses far more often
+ * than it admits.
  *
- *   fold parity is A precondition rather than a detail. A key that "exists nowhere" may exist under a surface we did not
- *   probe. The board's coverage-miss decomposition found this class directly — `Tel Aviv-Yafo`, `São Paulo - SP`,
- *   `Co. Westmeath` are real places reported as coverage misses — and it is indistinguishable from a true absence at
- *   the decision point. So the probe must name the fold it used and the layer must name the fold its builder wrote,
- *   and a mismatch is a refusal rather than an exclusion.
+ * Fold parity is a precondition rather than a detail: a key that "exists nowhere" may exist under a surface we did
+ * not probe, so the probe must name the fold it used and the layer must name the fold its builder wrote, and a
+ * mismatch is a refusal rather than an exclusion.
  */
 
 /**
- * What a `completeness` value rests on.
- *
- * The magnitude alone cannot be acted on: a cell recorded at `1.0` because an authority
- * designates the set complete, and a cell recorded at `1.0` because the source happened
- * to return rows there, license entirely different conclusions.
- *
- * Only {@link CoverageBasis.Designated} and {@link CoverageBasis.Surveyed} can support an exclusion —
- * "the thing you asked for is not here". {@link CoverageBasis.SourcePresent} supports presence
- * and no more: the source looked, which is not the same as the source found everything.
+ * What a `completeness` value rests on; only {@link CoverageBasis.Designated} and
+ * {@link CoverageBasis.Surveyed} can support an exclusion, since {@link CoverageBasis.SourcePresent}
+ * records that the source looked, which is not the same as the source having found everything.
  */
 export const CoverageBasis = {
 	/**
-	 * An authority declares the set complete for this cell — BAN holding every address
-	 * in a commune, OS declaring OS Open uprn complete for GB.
-	 *
-	 * A miss inside a designated cell is evidence of absence.
+	 * An authority declares the set complete for this cell, so a miss inside it is evidence of absence.
 	 */
 	Designated: "designated",
 	/**
 	 * We measured completeness ourselves against an independent reference,
-	 * and `completeness` carries that measurement.
-	 *
-	 * A miss is evidence of absence in proportion to the value.
+	 * so a miss is evidence of absence in proportion to the value.
 	 */
 	Surveyed: "surveyed",
 	/**
-	 * The source returned rows in this cell and we recorded that.
-	 *
-	 * Makes no statement about what the source missed.
-	 * A miss here is unknown, never absence.
+	 * The source returned rows in this cell, which makes no statement about what it missed,
+	 * so a miss here is unknown and never absence.
 	 */
 	SourcePresent: "source_present",
 } as const
@@ -51,14 +36,9 @@ export const CoverageBasis = {
 export type CoverageBasis = (typeof CoverageBasis)[keyof typeof CoverageBasis]
 
 /**
- * Whether a coverage reading can support an exclusion.
- * A claim that the thing asked for is not there.
- *
- * Presence is supportable from any basis.
- * Absence is not: `source_present` records that the source returned rows,
- * which makes no statement about what it missed.
- *
- * Callers building negative evidence must check on this rather than on `completeness` alone,
+ * Whether a coverage reading can support an exclusion; absence is only supportable
+ * from a designated or surveyed basis (presence is supportable from any),
+ * so callers building negative evidence must check this rather than `completeness` alone
  * or an exclusion fires identically on a genuinely empty cell and on one we never surveyed.
  */
 export function supportsExclusion(cell: { basis?: CoverageBasis | null }): boolean {
@@ -73,9 +53,7 @@ export interface CoverageScope {
 	h3Cell: number
 	basis: CoverageBasis
 	/**
-	 * The fold both the layer's builder and this probe used.
-	 *
-	 * Their agreement is what licensed the exclusion.
+	 * The fold both the layer's builder and this probe used; their agreement is what licensed the exclusion.
 	 */
 	fold: string
 }
@@ -93,42 +71,29 @@ export interface RequireExclusionInput {
 	vintage: string
 	h3Cell: number
 	/**
-	 * The layer's coverage row for this cell.
-	 *
-	 * `undefined` means the cell is absent from `layer_coverage`, which is unknown,
-	 * never a zero-completeness record (the meaning-of-zero rule).
+	 * The layer's coverage row for this cell; `undefined` means the cell is absent from
+	 * `layer_coverage`, which is unknown and never a zero-completeness record.
 	 */
 	cell: { basis?: CoverageBasis | null } | undefined
 	/**
-	 * Identity of the fold this probe folded its key with.
-	 *
-	 * Not a hand-written label: three packages export a function named `foldName` and all
-	 * three compute different answers (`Ångström` → `a ngstro m` / `angstrom` / `angstrom`),
-	 * so a name is not an identity.
-	 * Derive it with {@link foldIdentity}.
+	 * Identity of the fold this probe folded its key with, derived with {@link foldIdentity} rather than
+	 * a hand-written label, because three packages export a `foldName` that computes different answers.
 	 */
 	probeFold: string
 	/**
 	 * Identity of the fold the layer's builder wrote its keys with, derived the same way.
 	 */
 	layerFold: string
-	/**
-	 * The country of the thing being excluded, when the probe is country-scoped.
-	 */
 	country?: string
 	/**
-	 * ISO-2 upper-case countries this probe can answer for.
-	 *
-	 * Omit for an unscoped probe.
+	 * ISO-2 upper-case countries this probe can answer for; omit for an unscoped probe.
 	 */
 	countries?: ReadonlySet<string>
 }
 
 /**
- * The only constructor for an {@link Exclusion}.
- *
- * @returns `null` — never throws — on every refusal, because a refusal is the ordinary case
- * and a caller must fail open to whatever ranking it already had.
+ * The only constructor for an {@link Exclusion}; returns `null` — never throws — on every refusal,
+ * because a refusal is the ordinary case and a caller must fail open to whatever ranking it already had.
  */
 export function requireExclusionBasis(input: RequireExclusionInput): Exclusion | null {
 	if (!input.cell) return null
@@ -152,15 +117,10 @@ export function requireExclusionBasis(input: RequireExclusionInput): Exclusion |
 }
 
 /**
- * Inputs a fold identity is computed over.
- *
- * Each exercises one axis a fold can differ on: a word-internal diacritic
- * (the axis `resolver/fold-name.ts` gets wrong — it maps the combining mark to a space, splitting the word),
- * a diacritic adjacent to punctuation (which hides that bug), hyphens, periods,
- * apostrophes, case, collapsing whitespace, and a non-Latin script.
- * Adding an input changes every identity, which is correct: it is a new distinction two folds may differ on.
- *
- * Never reorder — identity is order-dependent.
+ * Inputs a fold identity is computed over, each exercising an axis folds can
+ * differ on (word-internal diacritics, hyphens, periods, apostrophes, case,
+ * whitespace collapsing, non-Latin scripts); adding an input changes every identity,
+ * and the order is load-bearing because identity is order-dependent.
  */
 export const FOLD_PROBE_CORPUS: readonly string[] = [
 	"Besançon",
@@ -182,15 +142,9 @@ export const FOLD_PROBE_CORPUS: readonly string[] = [
 const IDENTITY_SEPARATOR = "\u0001"
 
 /**
- * Identify a fold by its behavior over {@link FOLD_PROBE_CORPUS}.
- * A name cannot do this job.
- *
- * Two folds that compute the same answers are interchangeable and share an identity,
- * which is the property the exclusion check needs: it is asking "was this key built by a
- * fold equivalent to mine", not "were these two functions written in the same file".
- *
- * Deliberately not a cryptographic hash: the string is meant to be readable in a derivation
- * and a diff, so a reviewer can see which probe moved when an identity changes.
+ * Identify a fold by its behavior over {@link FOLD_PROBE_CORPUS}: two folds that compute the same
+ * answers share an identity, which is the property the exclusion check needs, and the string is
+ * deliberately readable rather than a cryptographic hash so a reviewer can see which probe moved.
  */
 export function foldIdentity(fold: (s: string) => string): string {
 	return FOLD_PROBE_CORPUS.map((probe) => fold(probe)).join(IDENTITY_SEPARATOR)

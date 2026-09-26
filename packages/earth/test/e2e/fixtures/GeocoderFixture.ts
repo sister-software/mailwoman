@@ -1,8 +1,6 @@
 /**
- * @file High-level page object for the geocoder page. Encapsulates address input, submit, result read-back, theme
- *   toggling, and example-button clicks. Tests stay focused on intent (`await demo.setAddress(...); await
- *   demo.submit()`) instead of selector boilerplate. All assertions live in the spec files — this class is purely
- *   action + state read.
+ * @file High-level page object for the geocoder page, encapsulating address input, submit, result read-back, theme
+ * toggling, and example-button clicks; assertions live in the spec files, so this class is purely action + state read.
  */
 
 import { expect, type Page } from "@playwright/test"
@@ -10,17 +8,11 @@ import { expect, type Page } from "@playwright/test"
 import type { ConsoleFixture } from "./ConsoleFixture.ts"
 
 export interface ResolvedResult {
-	/**
-	 * Component table rows: `{ tag, value, confidence }` per parsed BIO node.
-	 */
 	parsedRows: Array<{ tag: string; value: string; confidence: string }>
 	/**
-	 * Definition list under "Resolved place" — empty if the WOF cascade returned no hits.
+	 * Definition list under `Resolved place`, empty when the WOF cascade returned no hits.
 	 */
 	resolved: Record<string, string>
-	/**
-	 * Count of `.maplibregl-marker` elements currently on the map.
-	 */
 	markerCount: number
 }
 
@@ -38,10 +30,9 @@ export class GeocoderFixture {
 	}
 
 	/**
-	 * Navigate to the geocoder and wait until the classifier is loaded (the address field enables).
-	 *
-	 * The navigation waits for the DOM only: the gazetteer's warm-up range reads keep the network busy
-	 * well past readiness, so "network idle" is not a signal here, and the enabled address field is.
+	 * Navigate to the geocoder and wait until the classifier is loaded; network-idle
+	 * is not the signal because the gazetteer's warm-up range reads keep the network
+	 * busy past readiness, so the enabled address field is.
 	 */
 	async goto(query?: string): Promise<void> {
 		const path = query ? `/?q=${encodeURIComponent(query)}` : "/"
@@ -50,23 +41,11 @@ export class GeocoderFixture {
 	}
 
 	/**
-	 * Wait for the cold-load (~39 MB ONNX + map style + sqlite-wasm) to complete.
-	 *
-	 * The options are the third argument: `waitForFunction` reads its second as the function's
-	 * argument, and an options object passed there leaves the wait on the 30 s action budget.
-	 * Polling is on an interval rather than on animation frames: a page the browser treats as hidden
-	 * fires no frames, and the default polling then never re-evaluates an already-true predicate.
-	 *
-	 * A load error the page reports ends the wait at once, with that text, instead of running out the budget.
-	 *
-	 * Readiness is the address field being enabled, because `GeocoderControls` binds
-	 * that field's `disabled` to `runtime.ready`.
-	 * The same state the search pill's submit button used to carry before the pill dropped
-	 * it (a `type="search"` field submits on Enter and brings its own clear control).
-	 *
-	 * Waiting on an element that the chrome is free to restyle away turns "the
-	 * classifier loaded" into "never true" with no error to report, which is how this
-	 * wait ran out its budget on every case for two days.
+	 * Wait for the cold-load (~39 MB ONNX + map style + sqlite-wasm) to complete, reading the address
+	 * field's enabled state because `GeocoderControls` binds its `disabled` to `runtime.ready`;
+	 * the options are the third argument (the second is the function's argument) and polling
+	 * is on an interval because a page the browser treats as hidden fires no animation frames,
+	 * while a load error the page reports ends the wait at once with that text.
 	 */
 	async expectReady(): Promise<void> {
 		const outcome = await this.page.waitForFunction(
@@ -96,8 +75,8 @@ export class GeocoderFixture {
 	}
 
 	/**
-	 * Type a partial address to trigger the place-autocomplete typeahead (#587),
-	 * then read the "Did you mean" suggestion texts once the debounced FST walk renders them.
+	 * Type a partial address to trigger the place-autocomplete typeahead, then read the
+	 * `Did you mean` suggestion texts once the debounced FST walk renders them.
 	 */
 	async readSuggestions(text: string): Promise<string[]> {
 		await this.setAddress(text)
@@ -107,16 +86,10 @@ export class GeocoderFixture {
 		return this.page.locator("#mw-demo-suggest-list [role='option']").allTextContents()
 	}
 
-	/**
-	 * Click the autocomplete suggestion whose text contains `name`.
-	 */
 	async pickSuggestion(name: string): Promise<void> {
 		await this.page.locator("#mw-demo-suggest-list [role='option']", { hasText: name }).first().click()
 	}
 
-	/**
-	 * Current value of the address input.
-	 */
 	async addressValue(): Promise<string> {
 		return this.page.locator("#mw-pipeline-input").inputValue()
 	}
@@ -128,11 +101,10 @@ export class GeocoderFixture {
 	async submit(): Promise<void> {
 		// Enter rather than a button: the search pill carries no submit control,
 		// and a `type="search"` field submits its form on Enter.
-		// `Geocoder.test.tsx` drives the same control the same way.
 		await this.page.locator("#mw-pipeline-input").press("Enter")
 
-		// Block until the result panel renders so callers can immediately readResult().
-		// The options are the third argument, as in `expectReady`.
+		// Block until the result panel renders so callers can immediately call `readResult()`;
+		// the options are the third argument, as in `expectReady`.
 		await this.page.waitForFunction(() => document.body.textContent?.includes("Parsed components"), undefined, {
 			timeout: 60_000,
 			polling: 500,
@@ -167,9 +139,7 @@ export class GeocoderFixture {
 	}
 
 	/**
-	 * Parse the resolved-place "coords" row into numbers.
-	 *
-	 * `NaN` components mean no coordinate resolved.
+	 * Parse the resolved-place `coords` row into numbers; `NaN` components mean no coordinate resolved.
 	 */
 	async readCoords(): Promise<{ lat: number; lon: number }> {
 		const { resolved } = await this.readResult()
@@ -181,9 +151,6 @@ export class GeocoderFixture {
 		return { lat, lon }
 	}
 
-	/**
-	 * Assert a coordinate lands within `tolDeg` degrees of `expected` on both axes.
-	 */
 	expectNear(coords: { lat: number; lon: number }, expected: { lat: number; lon: number }, tolDeg: number): void {
 		const label = `resolved ${coords.lat},${coords.lon} should be within ${tolDeg}° of ${expected.lat},${expected.lon}`
 		expect(Number.isFinite(coords.lat) && Number.isFinite(coords.lon), label).toBe(true)
@@ -193,9 +160,6 @@ export class GeocoderFixture {
 		expect(coords.lon, label).toBeLessThan(expected.lon + tolDeg)
 	}
 
-	/**
-	 * Force Docusaurus's data-theme attribute to a specific value.
-	 */
 	async setTheme(theme: "light" | "dark"): Promise<void> {
 		await this.page.evaluate((t) => {
 			document.documentElement.setAttribute("data-theme", t)
@@ -205,9 +169,6 @@ export class GeocoderFixture {
 		await this.page.waitForTimeout(2000)
 	}
 
-	/**
-	 * Convenience matcher: passes when there's exactly one marker on the map.
-	 */
 	async expectMarkerVisible(): Promise<void> {
 		const count = await this.page.locator(".maplibregl-marker").count()
 		expect(count, "expected exactly one marker after submit").toBeGreaterThan(0)

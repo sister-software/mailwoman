@@ -3,26 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The shim's half of the worker protocol: fork, handshake, call correlation, restart, crash policy.
- *
- *   import discipline — the reason this file exists apart from `worker.ts`: everything here must be loadable by the
- *   never-stale shim, so it imports Node builtins only. Importing anything from the mailwoman graph (even a type-only
- *   module that transitively reaches runtime code) would re-create the staleness the split removes. The worker's
- *   message shapes are re-declared structurally rather than imported for exactly that reason. the protocol test forks
- *   the real worker, so a drift between the two declarations fails there rather than silently.
- *
- *   Restart semantics, stated where a caller will read them:
- *
- *   - In-flight tool calls are rejected with a restart error. They were running against the old module graph and
- *     their results would be unattributable.
- *   - Background jobs die with the child (the worker's sigterm handler cancels them); the restart result includes the
- *     aborted-call count so no job disappears silently.
- *   - Engines are rebuilt lazily by the next call, per the registry's own interface.
- *
- *   Crash policy: an unexpected exit rejects all pending calls and respawns once, immediately. Three unexpected exits
- *   inside a minute mark the host degraded — further calls fail fast with the child's last stderr tail — because a
- *   crash-looping child burning engine boots is worse than a loud outage. `restart()` always clears the degraded
- *   state: it is the operator-intent signal.
+ * The shim's half of the worker protocol: fork, handshake, call correlation, restart and crash policy, importing
+ * Node builtins only so the never-stale shim can load it apart from `worker.ts`.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -30,6 +12,9 @@ import { type ChildProcess, forkProcess } from "@mailwoman/core/process"
 import { once } from "@mailwoman/core/utils/events"
 import type { PathBuilderLike } from "path-ts"
 
+/**
+ * A tool the worker advertises in its handshake: name, description and JSON-schema-shaped input.
+ */
 export interface WorkerToolMeta {
 	name: string
 	description: string
@@ -53,25 +38,25 @@ interface ResultMessage {
 
 type WorkerMessage = ReadyMessage | ResultMessage
 
+/**
+ * Options for {@link WorkerHost}, chiefly where the worker entry module lives.
+ */
 export interface WorkerHostOptions {
 	/**
-	 * Absolute path to the worker entry module.
-	 *
-	 * A parameter rather than a constant so the crash/restart implementation is testable
-	 * against a stub child that can be told to hang, crash, or answer garbage.
+	 * Absolute path to the worker entry module; a parameter rather than a constant
+	 * so the crash/restart implementation is testable against a stub child that
+	 * can be told to hang, crash, or answer garbage.
 	 */
 	workerPath: PathBuilderLike
 	workerArgs: readonly PathBuilderLike[]
 	/**
-	 * Milliseconds to wait for the handshake before declaring a boot failure.
-	 *
-	 * The worker's boot imports the whole mailwoman graph, which is seconds rather than milliseconds.
+	 * Milliseconds to wait for the handshake before declaring a boot failure; the worker's
+	 * boot imports the whole mailwoman graph, which is seconds rather than milliseconds.
 	 */
 	handshakeTimeoutMs?: number
 	/**
-	 * Where the child's stdout/stderr are drained to.
-	 *
-	 * Defaults to the host process's stderr, never stdout, which on the shim is the MCP channel.
+	 * Where the child's stdout/stderr are drained to, defaulting to the host process's stderr,
+	 * never stdout, which on the shim is the MCP channel.
 	 */
 	log?: NodeJS.WritableStream
 }
@@ -92,12 +77,9 @@ const CRASH_WINDOW_MS = 60_000
 const TERM_GRACE_MS = 5000
 
 /**
- * A job the restart killed, named so the caller can relaunch it.
- *
- * The command is the whole of what a relaunch needs, and it is read from the worker
- * before the kill — afterwards the registry is gone with the module graph, so `mwdev_job`
- * answers "no job job-3" and the loss is indistinguishable from a job id that never existed.
- * A caller who learns that by polling has already lost the run's wall-clock.
+ * A job the restart killed, named so the caller can relaunch it; the command is read from
+ * the worker before the kill, because afterwards the registry is gone with the module graph
+ * and the loss is indistinguishable from a job id that never existed.
  */
 export interface KilledJob {
 	job_id: string
@@ -106,6 +88,10 @@ export interface KilledJob {
 	command: string
 }
 
+/**
+ * What a restart reports: both boot fingerprints, whether the tool list changed,
+ * and which calls and jobs died with the old worker.
+ */
 export interface RestartReport {
 	previous_pid: number | null
 	previous_boot_fingerprint: string | null
@@ -114,16 +100,17 @@ export interface RestartReport {
 	tools_changed: boolean
 	aborted_calls: number
 	/**
-	 * Empty when the worker held no running job.
-	 *
-	 * A failure to ask is reported in {@link killed_jobs_note} rather than as an empty list,
-	 * because "no job was running" and "I could not find out" are different facts
-	 * and only one of them means a relaunch is unnecessary.
+	 * Empty when the worker held no running job; a failure to ask is reported in
+	 * {@link killed_jobs_note} rather than as an empty list, because "no job was running"
+	 * and "I could not find out" are different facts.
 	 */
 	killed_jobs: KilledJob[]
 	killed_jobs_note?: string
 }
 
+/**
+ * Fork and supervise the worker process, correlating calls and restarting it when the source changes.
+ */
 export class WorkerHost implements AsyncDisposable {
 	readonly #options: Required<Pick<WorkerHostOptions, "workerPath" | "workerArgs" | "handshakeTimeoutMs">> & {
 		log: NodeJS.WritableStream
@@ -234,19 +221,17 @@ export class WorkerHost implements AsyncDisposable {
 	}
 
 	/**
-	 * Kill the child and fork a fresh one — a fresh ES module graph, i.e. the
-	 * running server picks up edited source.
+	 * Kill the child and fork a fresh one, so the running server picks up edited
+	 * source through a fresh ES module graph.
 	 */
 	async restart(): Promise<RestartReport> {
 		const previousPID = this.pid
 		const previousFingerprint = this.bootFingerprint
-		// The full metas rather than the names: a restart that adds a parameter changes
-		// what a client may send, and a name-only compare suppressed the tools/list_changed
-		// the client needed to drop its stale schema.
+		// The full metas rather than the names, because a restart that adds a parameter
+		// changes what a client may send and a name-only compare would suppress the
+		// tools/list_changed it needs to drop its stale schema.
 		const previousTools = stringifyJSON(this.tools)
-		// Asked before the kill, while there is still a registry to ask.
-		// A restart is usually run to pick up a source edit, which makes no statement about
-		// whether a long job is in flight, and the caller has no other way to find out:
+		// Asked before the kill, while there is still a registry to ask, since
 		// after the kill the id resolves to no job.
 		const { jobs: killedJobs, note: killedJobsNote } = await this.#runningJobs()
 
@@ -274,11 +259,9 @@ export class WorkerHost implements AsyncDisposable {
 	}
 
 	/**
-	 * The jobs the worker is running right now, for the restart to name before it kills them.
-	 *
-	 * Every failure answers with a note rather than an empty list.
-	 * A degraded or already-dead worker cannot be asked, and reporting that as "no jobs were
-	 * running" would tell the caller the one thing that makes a relaunch look unnecessary.
+	 * The jobs the worker is running right now, for the restart to name before it kills them;
+	 * every failure answers with a note rather than an empty list, because reporting a worker
+	 * that cannot be asked as "no jobs were running" would make a relaunch look unnecessary.
 	 */
 	async #runningJobs(): Promise<{ jobs: KilledJob[]; note?: string }> {
 		if (!this.#child?.connected) return { jobs: [], note: "the worker was not running, so its jobs could not be read" }
@@ -288,8 +271,8 @@ export class WorkerHost implements AsyncDisposable {
 		}
 
 		try {
-			// Structural rather than imported: the host is the half that survives a worker holding a tree
-			// too broken to boot, so it reads the worker's answer as data and never shares a module with it.
+			// Structural rather than imported: the host survives a worker holding a tree too broken
+			// to boot, so it reads the worker's answer as data and never shares a module with it.
 			const answer = (await this.call("mwdev_job", { action: "list" })) as {
 				jobs?: Array<{ job_id: string; label: string; state: string; elapsed_s: number; command: string }>
 			}
@@ -352,8 +335,8 @@ export class WorkerHost implements AsyncDisposable {
 			return
 		}
 
-		// One immediate respawn: a lazily-booted worker is cheap to bring back, and a transient
-		// death (OOM kill during a heavy board run) should not take the whole surface down.
+		// One immediate respawn, because a lazily-booted worker is cheap to bring back
+		// and a transient OOM kill during a heavy board run should not take the whole surface down.
 		void this.start().catch((error: unknown) => {
 			this.#degraded = `respawn failed: ${error instanceof Error ? error.message : String(error)}`
 		})

@@ -1,24 +1,15 @@
-"""Choose the reps per row, derive the weight (#1677).
+"""Choose the reps per row and derive the weight.
 
-The sampler allocates draw share by weight normalised across sources. row count never enters. So the
-per-row exposure of a source is
+The sampler allocates draw share by weight normalised across sources; row count never enters, so a
+source's per-row exposure is ``reps_per_row = (weight / total_weight) * total_samples / rows``, a unit
+nobody reasons in. ``source_reps`` lets a config name the exposure directly and have the weight derived
+once the corpus is known.
 
-    reps_per_row = (weight / total_weight) * total_samples / rows
-
-and a 277-row source at weight 1.0 — the smallest number in a config whose weights summed to 168 — was
-shown 165 times per row while the 53,078-row source at weight 6.0 was shown 5. Nobody picks 165. weight
-does not carry the unit anyone reasons in. ``source_reps`` lets a config name the exposure directly and
-have the weight derived at the point the corpus is known.
-
-The derivation inverts the formula, holding the fixed weights fixed. With ``W`` the sum of the fixed
-weights, ``S`` the run's total samples, and ``D = sum(reps_i * rows_i)`` over the reps-targeted sources,
-those sources take ``D / S`` of the draws, so ``total_weight = W / (1 - D / S)`` and
-
-    weight_i = reps_i * rows_i * total_weight / S
-
-The reps-targeted sources' draws come out of the fixed sources' share, exactly as adding any weight does.
-``D`` must stay below ``S``, and at least one source must carry a fixed weight, or there is no reference to
-derive the scale against.
+With ``W`` the sum of the fixed weights, ``S`` the run's total samples and ``D = sum(reps_i * rows_i)``
+over the reps-targeted sources, those sources take ``D / S`` of the draws, so
+``total_weight = W / (1 - D / S)`` and ``weight_i = reps_i * rows_i * total_weight / S``. Their draws
+come out of the fixed sources' share, ``D`` must stay below ``S``, and at least one source must carry a
+fixed weight or there is no reference to scale against.
 """
 
 from __future__ import annotations
@@ -69,8 +60,8 @@ def derive_source_weights(
 
     missing = sorted(src for src in source_reps if not rows_by_source.get(src))
     if missing:
-        # An unreadable row count is an unknown exposure rather than zero reps per row. deriving a weight from it would
-        # be the silent-mixture defect in a new costume.
+        # An unreadable row count is an unknown exposure, not zero reps per row; deriving a weight from
+        # it would silently change the mixture.
         raise ValueError(f"reps-targeted sources have no readable train rows in the corpus: {missing}")
 
     demanded = sum(reps * rows_by_source[src] for src, reps in source_reps.items())
@@ -96,8 +87,8 @@ def derive_source_weights(
 def resolve_config_reps(cfg: Any, corpus_dir: Path | None = None) -> list[DerivedReps]:
     """Fold ``cfg.data.source_reps`` into ``cfg.data.source_weights`` in place, from the corpus on disk.
 
-    The one resolution point the trainer and the epoch audit share, so the weights the audit reports are
-    the weights the run samples with. A config without ``source_reps`` is left untouched.
+    The one resolution point the trainer and the epoch audit share, so the weights the audit reports
+    are the weights the run samples with; a config without ``source_reps`` is left untouched.
     """
     reps = getattr(cfg.data, "source_reps", None)
     if not reps:
@@ -117,9 +108,8 @@ def format_derivation(derived: list[DerivedReps]) -> str:
         return ""
     lines = ["source_reps → source_weights (#1677):"]
     for d in derived:
-        # Three decimals rather than one: a probe holds the full run's mixture share by dividing its reps targets by
-        # the step ratio, so its exposures are legitimately fractional and `%.1f` printed every one of them as
-        # `0.0` — the launch log hiding the exact number this whole mechanism exists to put in front of someone.
+        # Three decimals rather than one: a probe divides its reps targets by the step ratio, so exposures
+        # are legitimately fractional and `%.1f` would print every one of them as `0.0`.
         lines.append(
             f"  {d.source:<32} {d.target_reps_per_row:>9.3f} reps/row × {d.rows:>9,} rows → weight {d.weight:.4f}"
         )

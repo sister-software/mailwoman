@@ -21,8 +21,8 @@ export const RegimeCoverage = {
 	 */
 	Modeled: "modeled",
 	/**
-	 * Some support exists, but it does not cover the regime's own addressing.
-	 * The record's note lists the gaps.
+	 * Some support exists, but it does not cover the regime's own addressing;
+	 * the record's note lists the gaps.
 	 */
 	Partial: "partial",
 	/**
@@ -200,9 +200,8 @@ export function postalRegimeByID(regimeID: string): PostalRegime | undefined {
 }
 
 /**
- * Returns every recorded regime that uses this ISO code.
- *
- * An empty result means only that this table records no regime for the country.
+ * Returns every recorded regime that uses this ISO code; an empty result means
+ * only that this table records no regime for the country.
  */
 export function postalRegimesForCountry(iso2: string): readonly PostalRegime[] {
 	const code = iso2.trim().toUpperCase()

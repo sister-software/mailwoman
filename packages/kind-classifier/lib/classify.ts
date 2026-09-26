@@ -3,17 +3,13 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `classifyKind` — entry point for Stage 2.5 (kind classification).
+ * `classifyKind` is the entry point for Stage 2.5 (kind classification), composing the per-kind rules
+ * from `rules.ts` and `intent-rules.ts` and returning alternatives sorted by confidence.
  *
- *   Composes the per-kind rules from `rules.ts` and `intent-rules.ts` and picks the winner. Returns
- *   alternatives sorted by confidence so the coordinator can offer fallback paths when the top kind
- *   isn't actionable.
- *
- *   Per the project's "possibilities not constraints" principle, every kind that fires above 0
- *   surfaces in `alternatives` — the caller decides whether to act on the top kind only or consider
- *   runner-ups. The ROAD_TO_V9 §4 intent vocabulary leans on that: `bare_toponym` and `route_pair`
- *   are scored below their structural incumbent precisely so they land in `alternatives`, where they
- *   inform the markers without moving the routing decision.
+ * Per the project's "possibilities not constraints" principle, every kind that fires above 0 surfaces
+ * in `alternatives` and the caller decides whether to act on the top kind only: `bare_toponym` and
+ * `route_pair` are scored below their structural incumbent precisely so they land in `alternatives`,
+ * where they inform the markers without moving the routing decision.
  */
 
 import type { LocaleHint, QueryIntentMarker, QueryKind, QueryKindResult } from "@mailwoman/core/pipeline"
@@ -45,11 +41,9 @@ const SCORERS: ReadonlyArray<KindScorer> = [
 	{ kind: "postcode_only", score: scorePostcodeOnly },
 	{ kind: "locality_only", score: scoreLocalityOnly },
 	{ kind: "structured_address", score: scoreStructuredAddress },
-	// ROAD_TO_V9 §4.
-	// Ordinary members of the same list — intent is vocabulary rather than a stage.
-	// `bare_toponym` and `route_pair` are scored under `locality_only` on purpose
-	// (see `intent-rules.ts`), so their position here is cosmetic.
-	// The sort below is what decides.
+	// Intent is vocabulary rather than a stage, and the sort below is what decides,
+	// so `bare_toponym` and `route_pair` sit here cosmetically and are scored under
+	// `locality_only` on purpose (see `intent-rules.ts`).
 	{ kind: "bare_toponym", score: scoreBareToponym },
 	{ kind: "route_pair", score: scoreRoutePair },
 	{ kind: "near_me", score: scoreNearMe },
@@ -57,10 +51,8 @@ const SCORERS: ReadonlyArray<KindScorer> = [
 ]
 
 /**
- * Rank a scored list and shape it into a verdict.
- *
- * Shared by the lexicon-free and lexicon-wired paths so the two cannot drift in
- * how they break ties or build `alternatives`.
+ * Rank a scored list into a verdict, shared by the lexicon-free and lexicon-wired paths
+ * so the two cannot drift in how they break ties or build `alternatives`.
  */
 function rank(scored: Array<{ kind: QueryKind; confidence: number }>): QueryKindResult {
 	scored.sort((a, b) => b.confidence - a.confidence)
@@ -75,18 +67,14 @@ function rank(scored: Array<{ kind: QueryKind; confidence: number }>): QueryKind
 }
 
 /**
- * Every kind whose verdict carries `intentMarkers`.
- *
- * Checked before the marker builder runs so the hot path — a structured address,
- * where none of these fire — pays one set membership test per kind alone.
+ * Every kind whose verdict carries `intentMarkers`, checked before the marker builder
+ * so the hot path pays one set membership test per kind.
  */
 const MARKER_KINDS: ReadonlySet<QueryKind> = new Set<QueryKind>(["route_pair", "near_me", "poi_category"])
 
 /**
- * Attach markers to a verdict, or return it untouched.
- *
- * Separate from {@link rank} because the lexicon-wired path needs to merge
- * `poi_query`/`poi_category` in first.
+ * Attach markers to a verdict or return it untouched, separate from {@link rank}
+ * because the lexicon-wired path merges `poi_query`/`poi_category` in first.
  */
 function withIntentMarkers(
 	verdict: QueryKindResult,
@@ -106,9 +94,8 @@ function withIntentMarkers(
 }
 
 /**
- * Classify the query shape into a `QueryKind`.
- *
- * Synchronous + pure — produces the same result for the same `(input, shape)` pair.
+ * Classify the query shape into a `QueryKind`, synchronously and purely,
+ * producing the same result for the same `(input, shape)` pair.
  */
 export function classifyKindSync(input: NormalizedInputLite, shape: QueryShapeLike): QueryKindResult {
 	const scored = SCORERS.map((s) => ({ kind: s.kind, confidence: s.score(input, shape) })).filter(
@@ -119,10 +106,8 @@ export function classifyKindSync(input: NormalizedInputLite, shape: QueryShapeLi
 }
 
 /**
- * Async variant matching the runtime-pipeline's `classifyKind` interface.
- *
- * The locale parameter is accepted for future locale-aware rules
- * (Japanese honorifics, etc.) but not currently used.
+ * Async variant matching the runtime pipeline's `classifyKind` interface;
+ * `_locale` is accepted for future locale-aware rules but currently unused.
  */
 export async function classifyKind(
 	input: NormalizedInputLite,
@@ -137,20 +122,17 @@ export async function classifyKind(
  */
 export interface KindClassifierOpts {
 	/**
-	 * POI phrase lexicon (spec §3.1).
-	 *
-	 * When present, `poi_query` and `poi_category` scorers join the rule set — injected,
-	 * never imported, so this package stays dictionary-free.
-	 * Absent → the returned classifier is behaviorally identical to {@link classifyKind}.
+	 * POI phrase lexicon (spec §3.1); when present the `poi_query` and `poi_category` scorers
+	 * join the rule set, injected rather than imported so this package stays dictionary-free,
+	 * and when absent the returned classifier is behaviorally identical to {@link classifyKind}.
 	 */
 	poiLexicon?: POIPhraseLookup
 }
 
 /**
- * Build a kind classifier.
- *
- * Without opts this is exactly the default {@link classifyKind}; with a `poiLexicon` it additionally
- * scores `poi_query` + `poi_category` (ROAD_TO_V9 §4.4) and merges them into the ranked result.
+ * Build a kind classifier that is exactly {@link classifyKind} without options,
+ * or that additionally scores `poi_query` + `poi_category` (ROAD_TO_V9 §4.4)
+ * and merges them into the ranked result when given a `poiLexicon`.
  */
 export function createKindClassifier(
 	opts: KindClassifierOpts = {}
@@ -167,9 +149,9 @@ export function createKindClassifier(
 
 		if (poiConfidence <= 0 && categoryConfidence <= 0) return base
 
-		// Re-rank over the union rather than special-casing "did POI beat the base?".
-		// The base verdict's own alternatives are preserved, which is what keeps `bare_toponym`
-		// / `route_pair` visible to the marker builder even when a POI kind takes the top slot.
+		// Re-ranking over the union rather than special-casing whether POI beat the base
+		// preserves the base's own alternatives, which keeps `bare_toponym`/`route_pair`
+		// visible to the marker builder even when a POI kind takes the top slot.
 		const merged: Array<{ kind: QueryKind; confidence: number }> = [
 			{ kind: base.kind, confidence: base.confidence },
 			...base.alternatives,

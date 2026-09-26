@@ -5,16 +5,15 @@
  *
  *   `mailwoman gazetteer country-plan <cc>` — what moving a country between admin sources would involve.
  *
- *   read-only, by construction and not by flag. It performs no clone, makes no edit and runs no build. the
- *   `--apply` half is a separate command precisely because the steps it would take are a clone measured in
- *   hundreds of megabytes and an edit to a file that is reviewed like code.
+ *   Read-only by construction and not by flag: it performs no clone, makes no edit and runs no build, and
+ *   the `--apply` half is a separate command precisely because the steps it would take are a clone measured
+ *   in hundreds of megabytes and an edit to a file that is reviewed like code.
  *
- *   Everything it reports is computed from the artifact rather than the lists. `defaults.ts` is a
- *   declaration and the WOF leg is presence-driven, so only the built database has the two reconciled —
- *   and reading a declaration to decide what to change is how #1015 happened.
+ *   Everything it reports is computed from the artifact rather than the lists: `defaults.ts` is a
+ *   declaration and the WOF leg is presence-driven, so only the built database has the two reconciled.
  *
- *   Output goes through {@linkcode writeRawStdout} for the reason `data/index.tsx` gives: an Ink frame as
- *   tall as the viewport emits `\x1b[3J`, which wipes the scrollback.
+ *   Output goes through {@linkcode writeRawStdout} because an Ink frame as tall as the viewport emits
+ *   `\x1b[3J`, which wipes the scrollback.
  */
 
 import { wofReposPath } from "@mailwoman/core/data-root"
@@ -63,10 +62,8 @@ export const spec = {
 } as const satisfies CommandSpec
 
 /**
- * The repositories a WOF move would clone.
- *
- * Names only — `--plan` never reaches the network, so their existence
- * and size are reported as unknown rather than guessed.
+ * Names only — the plan never reaches the network, so existence and size are
+ * reported as unknown rather than guessed.
  */
 function wofRepoNames(country: string): string[] {
 	const cc = country.toLowerCase()
@@ -85,10 +82,9 @@ const CountryPlanCommand: CommandComponent<typeof spec, [string?]> = ({ options,
 				geonamesCountries: DEFAULT_GEONAMES_COUNTRIES as readonly string[],
 			}
 
-			// The repos root is checked against the declared wof list rather than substituted for it.
-			// The WOF leg is presence-driven, so a clone nobody declared becomes coverage
-			// on the next build and a declaration nobody cloned silently does not,
-			// and only comparing the two can tell those apart.
+			// The repos root is checked against the declared WOF list rather than substituted
+			// for it: the leg is presence-driven, so an undeclared clone becomes coverage
+			// while a declaration nobody cloned silently does not.
 			const reposRoot = wofReposPath()
 			const audit = await auditReposRoot(reposRoot)
 			const cloned = clonedCountries(audit)
@@ -163,8 +159,8 @@ const CountryPlanCommand: CommandComponent<typeof spec, [string?]> = ({ options,
 			}
 
 			if (!(await adminDBAvailable(adminDB))) {
-				// Absence reported as absence: without the artifact there is no current state to move
-				// from, and guessing it from the lists is the thing this command exists not to do.
+				// Absence reported as absence: without the artifact there is no current state to
+				// move from, and guessing it from the lists is what this command exists not to do.
 				lines.push(
 					"",
 					`No admin gazetteer at ${adminDB}.`,
@@ -226,10 +222,8 @@ const CountryPlanCommand: CommandComponent<typeof spec, [string?]> = ({ options,
 
 			let writeFailures = 0
 
-			// `--write` edits the working tree and stops there.
-			// It does not stage, commit or build: the value this command adds is that both halves of
-			// a move are written or neither, and a diff a person reads is what keeps that reviewable.
-			// A commit would move the review to after the fact.
+			// `--write` edits the working tree and stops there — it does not stage, commit
+			// or build, so the change stays a diff a person reviews.
 			if (options.write && plan.edits.length && !plan.blockers.length) {
 				const defaultsPath = repoRootPath("packages", "mailwoman", "lib", "gazetteer-pipeline", "defaults.ts")
 				let source = await readLocalTextFile(defaultsPath)
@@ -256,9 +250,8 @@ const CountryPlanCommand: CommandComponent<typeof spec, [string?]> = ({ options,
 					applied.push(`  ${result.changed ? "✓" : "·"} ${result.note}`)
 				}
 
-				// All steps or none.
-				// A half-applied move is the exact state the #267 warning describes,
-				// and writing one edit while refusing the other would manufacture it.
+				// All steps or none: writing one edit while refusing the other would
+				// manufacture a half-applied move.
 				if (writeFailures) {
 					lines.push("", "NOT WRITTEN — every edit must apply or none do:", ...applied)
 				} else {

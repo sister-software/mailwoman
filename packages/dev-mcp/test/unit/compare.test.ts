@@ -3,11 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   A cross-engine comparison end to end: a stub registry for the mailwoman arm, a scripted Axios adapter for the
- *   external one, and a real board subset for the truth coordinates.
- *
- *   The subset is `AD` — two rows, both carrying a truth coordinate — so the arithmetic in every assertion below can be
- *   checked by hand against the two answers the stubs give.
+ * A cross-engine comparison end to end: a stub registry for the mailwoman arm, a scripted Axios adapter for the
+ * external one, and the two-row `AD` board subset for truth coordinates so every assertion can be checked by hand.
  */
 
 import { stubTransport } from "@mailwoman/core/api/test-transport"
@@ -21,10 +18,9 @@ import { afterAll, describe, expect, it } from "vitest"
 import { stubEngine, stubEngineRegistry } from "../stub-registry.ts"
 
 /**
- * Every comparison writes its answers to the run store.
- *
- * Redirected here so a test run never touches the operator's store under `$MAILWOMAN_DATA_ROOT`,
- * and so the retention sweep each write triggers has no real run to prune.
+ * Every comparison writes its answers to the run store; redirected here
+ * so a test run never touches the operator's store under `$MAILWOMAN_DATA_ROOT`,
+ * and the retention sweep each write triggers has no real run to prune.
  */
 const RUN_STORE = await temporaryDirectory("mwdev-compare-runs-")
 
@@ -57,12 +53,9 @@ function registryAt(point: { lat: number | null; lon: number | null }): EngineRe
 					resolution_tier: point.lat === null ? "none" : "admin",
 					locality: "stub",
 					region: null,
-					// Required on `GeocodeResult`, and the mailwoman arm reads its answer
-					// through the gauntlet projection, which walks it.
-					// A double missing it throws inside the arm, and every row then scores as
-					// a query failure, which reads as an arm that lost.
-					// A stated identity, so the tri-state pin below checks the one-sided comparison: the
-					// mailwoman arm carries place_ids and the external arm cannot — incomparable, never "same".
+					// Required on `GeocodeResult`, and a stated identity so the tri-state pin
+					// below checks the one-sided comparison: the mailwoman arm carries place_ids
+					// and the external arm cannot, making the rows incomparable rather than "same".
 					hierarchy: [{ tag: "locality", value: "stub", name: "stub", placeID: "wof:101" }],
 				},
 				timing: { total: 1 },
@@ -150,10 +143,8 @@ describe("mwdev_compare — external arm", () => {
 
 		const thresholds = result["thresholds"] as Record<string, { a: number; b: number; of: number }>
 
-		// Arm A answers Andorra la Vella for both rows: a hit on row 1, ~1.4km away on row 2 — inside 5km, outside 1km.
 		expect(thresholds["1km"]!.a).toBe(1)
 		expect(thresholds["5km"]!.a).toBe(2)
-		// Arm B answers each row's own truth point, so it hits at every threshold.
 		expect(thresholds["1km"]!.b).toBe(2)
 		expect(thresholds["25km"]!.b).toBe(2)
 	})
@@ -208,10 +199,8 @@ describe("mwdev_compare — external arm", () => {
 	})
 
 	it('keeps identity tri-state: an external arm states none, so rows are incomparable — never "same"', async () => {
-		// The diverged coordinates guarantee rows land in rows_changed, so the absence
-		// assertion below inspects real rows rather than an empty list.
-		// The stub mailwoman arm states place_ids (registryAt's hierarchy carries wof:101);
-		// Pelias structurally cannot.
+		// The diverged coordinates guarantee rows land in `rows_changed`, and the stub mailwoman arm
+		// states place_ids while Pelias structurally cannot, so the absence assertion inspects real rows.
 		const result = await comparison(registryAt(ANDORRA_LA_VELLA), [
 			{ body: peliasBody(LES_ESCALDES) },
 			{ body: peliasBody(ANDORRA_LA_VELLA) },
@@ -260,9 +249,9 @@ describe("mwdev_compare — external arm", () => {
 
 describe("mwdev_compare — an external arm that stops answering", () => {
 	it("abandons the run rather than scoring the remaining rows as misses", async () => {
-		// The pre-registered protocol counts a query failure as a miss, which is right per row
-		// and wrong for a service that died mid-run: the arm would lose a benchmark it
-		// stopped playing, and the result would look ordinary.
+		// The pre-registered protocol counts a query failure as a miss, right per row
+		// but wrong for a service that died mid-run, where the arm would lose a benchmark
+		// it stopped playing and the result would look ordinary.
 		const dead = { throws: { message: "socket hang up", code: "ERR_NETWORK" } }
 
 		const transport = stubTransport([{ status: 200, body: "status: ok" }, { body: peliasBody(ANDORRA_LA_VELLA) }, dead])

@@ -6,8 +6,8 @@
  *
  *   PreToolUse hook that reports where a top-level symbol already exists before a Write or Edit declares it.
  *
- *   The hook never blocks an edit. It prints `additionalContext` when it finds a match and prints no output
- *   otherwise, including on every error. It runs under a `Write|Edit` matcher in `.claude/settings.json`.
+ *   The hook never blocks an edit: it prints `additionalContext` on a match and no output otherwise, including on
+ *   every error.
  */
 
 import { readStandardInputJSON } from "@mailwoman/core/fs/readers"

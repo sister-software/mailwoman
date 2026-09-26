@@ -5,15 +5,11 @@ import { type ChildProcess, spawnProcess } from "@mailwoman/core/process"
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Long-running child processes, polled rather than awaited.
+ *   Long-running child processes, polled rather than awaited: a gauntlet outlives what a synchronous tool call should
+ *   hold open, and an MCP client that times out mid-run leaves the work orphaned and reports no result.
  *
- *   A regression-layer gauntlet is about two minutes and a full run is longer, which is past what a synchronous tool
- *   call should hold open: an MCP client that times out mid-run leaves the work orphaned and reports no result. So a job
- *   starts, returns its id, and is polled through `mwdev_job`.
- *
- *   Output is captured rather than inherited. This process speaks JSON-RPC over stdout, so a child writing there would
- *   corrupt the transport — which is also why the gauntlet is spawned at all rather than imported (it writes its whole
- *   report to stdout by design).
+ *   Output is captured rather than inherited because this process speaks JSON-RPC over stdout, so a child writing there
+ *   would corrupt the transport — which is also why the gauntlet is spawned rather than imported.
  */
 
 export type JobState = "running" | "succeeded" | "failed" | "cancelled"
@@ -44,14 +40,9 @@ export interface JobSummary {
 }
 
 /**
- * Cap on captured output per stream.
- *
- * A gauntlet log is tens of kilobytes.
- * This is generous enough that no real run is truncated, and bounded
- * so a runaway child cannot exhaust the server's heap.
- *
- * Truncation is reported in the tail marker rather than silently applied.
- * A log that quietly lost its end would hide the verdict, which prints last.
+ * A gauntlet log is tens of kilobytes, so this is generous enough that no real run is truncated
+ * while bounding a runaway child's heap; truncation goes in the tail marker rather than being
+ * silently applied, because a log that lost its end would hide the verdict that prints last.
  */
 const MAX_CAPTURED_BYTES = 8 * 1024 * 1024
 
@@ -66,9 +57,7 @@ export class JobRegistry {
 	#counter = 0
 
 	/**
-	 * Spawn a child and track it.
-	 *
-	 * @returns Immediately.
+	 * Spawn a child and track it, returning immediately rather than awaiting the child.
 	 */
 	start(label: string, command: string, args: string[], cwd: string): Job {
 		const jobID = `job-${++this.#counter}`
@@ -100,8 +89,8 @@ export class JobRegistry {
 			job.endedAt = Date.now()
 			job.exitCode = code
 			job.child = null
-			// A signalled exit is not a failure verdict.
-			// It is a cancellation, and conflating them would let a killed run read as a graded `fail`.
+			// A signalled exit is a cancellation, not a failure verdict — conflating them
+			// would let a killed run read as a graded `fail`.
 			job.state = job.state === "cancelled" || signal ? "cancelled" : code === 0 ? "succeeded" : "failed"
 		})
 
@@ -150,8 +139,6 @@ export class JobRegistry {
 	}
 
 	/**
-	 * Kill everything still running.
-	 *
 	 * Called on shutdown so a killed server does not leave orphaned gauntlets
 	 * holding multi-gigabyte SQLite handles.
 	 */

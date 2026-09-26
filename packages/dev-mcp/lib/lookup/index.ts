@@ -5,19 +5,14 @@
  *
  *   Ask a data source directly: does it know this string, and what does it say?
  *
- *   This is the question four one-off probes were written to answer in a single day — `icu-probe.mjs`, `keynorm-probe`,
- *   `probe-fst-bias`, and the ad-hoc FST walks that settled the San Juan and Sultan Qaboos cases. It is also the
- *   question that most often precedes a wrong conclusion, because a resolve that returns no result has two causes that
- *   look identical from the outside: the parser never asked, or the gazetteer has no answer.
+ *   A resolve returning no result has two causes that look identical from the outside — the parser never asked, or the
+ *   gazetteer has no answer — so this module keeps the readings apart:
  *
- *   **The distinction this module exists to keep:**
- *
- *   - `hit: false, entries: null` — the source does not know the string. absence.
+ *   - `hit: false, entries: null` — the source does not know the string. Absence.
  *   - `hit: true` with a zero-valued entry — the source knows it and scores it zero. A measured zero.
  *   - `hit: true, entries: []` — accepted, but with no data the consumer can act on (for the FST: no BIO-mapped placetype).
  *
- *   `probe-fst-bias.run.ts` already documents the first two for the FST case and this generalizes them. No code here
- *   re-derives what a consumer reads: the FST collapse is `collapseFSTBias`, the decoder's own function.
+ *   The FST collapse is the decoder's own `collapseFSTBias`, not re-derived here.
  */
 
 import { pathExists, readLocalBuffer } from "@mailwoman/core/fs/readers"
@@ -30,15 +25,12 @@ import type { PathBuilderLike } from "path-ts"
 /**
  * Sources a lookup can address.
  *
- * Each answers a different "does it know this?" and they are not interchangeable.
- * A surface the FST accepts can still be absent from the candidate table,
- * which is the shape most resolve failures take.
+ * Each answers a different "does it know this?" and they are not interchangeable: a surface the
+ * FST accepts can still be absent from the candidate table, the shape most resolve failures take.
  */
 export const LookupSource = {
 	/**
-	 * The gazetteer FST the emission prior reads.
-	 *
-	 * Answers what bias the decoder would receive.
+	 * The gazetteer FST the emission prior reads, answering what bias the decoder would receive.
 	 */
 	FST: "fst",
 	/**
@@ -46,40 +38,31 @@ export const LookupSource = {
 	 */
 	StreetMorphology: "street_morphology",
 	/**
-	 * Stage-1 deterministic preprocessing.
-	 *
-	 * Answers what the model is actually FED, which is not what the user typed.
+	 * Stage-1 deterministic preprocessing: what the model is actually FED, which is not what the user typed.
 	 */
 	Normalize: "normalize",
 	/**
-	 * The candidate gazetteer (`candidate.db`) — the default resolver backend.
-	 *
-	 * Keyed on `name_key`, never `name`.
+	 * The candidate gazetteer (`candidate.db`), the default resolver backend,
+	 * keyed on `name_key`, never `name`.
 	 */
 	Candidate: "candidate",
 	/**
-	 * The WOF admin + postcode extracts behind the FTS backend.
-	 *
 	 * Answers what the source data holds, including the deprecated records the
 	 * resolver's own query filters out.
 	 */
 	WOF: "wof",
 	/**
-	 * `poi.db` — the POI layer the fork→entity probe reads.
-	 *
-	 * Keyed on `name_key` like the candidate table.
+	 * `poi.db`, the POI layer the fork→entity probe reads, keyed on `name_key` like the candidate table.
 	 */
 	POI: "poi",
 	/**
-	 * `@mailwoman/codex` — the pure postal reference tables.
-	 *
-	 * Postcode shapes, USPS suffixes, unit designators, directionals, US states.
-	 * No artifact, so it can never be unavailable.
+	 * The pure postal reference tables (postcode shapes, USPS suffixes, unit designators,
+	 * directionals, US states); no artifact, so it can never be unavailable.
 	 */
 	Codex: "codex",
 	/**
-	 * The postcode→anchor artifact in the resolved weights package.
-	 * The channel the model is fed rather than a gazetteer.
+	 * The postcode→anchor artifact in the resolved weights package — a channel
+	 * the model is fed rather than a gazetteer.
 	 */
 	Postcode: "postcode",
 } as const
@@ -89,16 +72,11 @@ export type LookupSource = (typeof LookupSource)[keyof typeof LookupSource]
 export interface LookupRow {
 	query: string
 	/**
-	 * Whether the source knows the string at all.
-	 *
 	 * `false` is absence and must never be read as a zero.
 	 */
 	hit: boolean
 	/**
-	 * What the source says.
-	 *
-	 * `null` when `hit` is false.
-	 * The field is absent rather than empty, so a caller cannot accidentally iterate
+	 * `null` when `hit` is false, absent rather than empty so a caller cannot iterate
 	 * a "zero results" list that was really a miss.
 	 */
 	entries: unknown[] | null
@@ -112,27 +90,20 @@ export interface LookupResult {
 	source: LookupSource
 	rows: LookupRow[]
 	/**
-	 * Which artifact answered — the resolved path, plus whatever else decides the reading
-	 * (the locale and declared span mode for the anchor, the engine for the FST).
-	 *
-	 * Absent when there was no artifact to name: the unavailable envelope says why in
-	 * `unavailable_reason`, and `codex`/`normalize` read no file at all.
+	 * The resolved path plus whatever else decides the reading
+	 * (the locale and declared span mode for the anchor, the engine for the FST); absent
+	 * when there was no artifact to name, such as `codex`/`normalize`.
 	 */
 	provenance?: Record<string, unknown>
 	/**
-	 * Absent when the source's artifact could not be opened.
-	 *
-	 * Reported rather than degraded, because a lookup that silently answers "no" for
-	 * every query because a file is missing is the worst possible answer.
+	 * Absent when the artifact could not be opened — reported rather than degraded, because
+	 * answering "no" to every query because a file is missing is the worst possible answer.
 	 */
 	unavailable_reason?: string
 	/**
-	 * One entry per locale when several were asked for — the same queries against each locale's own artifact.
-	 *
-	 * Present instead OF `rows` for a sweep.
-	 * A locale whose artifact is missing carries its own `unavailable_reason` here
-	 * rather than dropping out of the map: five shipped overlays ship no FST at all,
-	 * and a locale absent from the result reads as a locale the source did not know.
+	 * Present instead OF `rows` for a sweep; a locale whose artifact is missing carries
+	 * its own `unavailable_reason` rather than dropping out, because a locale absent
+	 * from the map would read as one the source did not know.
 	 */
 	by_locale?: Record<string, { artifact?: string; rows: LookupRow[]; unavailable_reason?: string }>
 	notes: string[]
@@ -144,12 +115,9 @@ interface FSTLike {
 }
 
 /**
- * Probe the gazetteer FST, reporting the collapse the decoder would see rather than the raw entry list.
- *
- * The per-place ranking inside a name is invisible to the emission prior.
- * It takes `max(importance)` per BIO tag, and only four placetypes reach a tag at all.
- *
- * Reporting anything finer would overstate what the gazetteer can do here.
+ * Reports the collapse the decoder would see rather than the raw entry list: the emission
+ * prior takes `max(importance)` per BIO tag and only four placetypes reach a tag at all,
+ * so anything finer would overstate what the gazetteer can do.
  */
 export function lookupFST(
 	fst: FSTLike,
@@ -198,8 +166,6 @@ export function lookupFST(
 }
 
 /**
- * Probe the street-morphology FST.
- *
  * A single-token question, so a multi-word query is a caller error worth naming.
  */
 export function lookupStreetMorphology(fst: FSTLike, queries: string[]): LookupRow[] {
@@ -219,11 +185,9 @@ export function lookupStreetMorphology(fst: FSTLike, queries: string[]): LookupR
 }
 
 /**
- * Show what Stage 1 actually hands the model.
- *
- * Always a hit: normalization has an answer for every string.
- * The value is the diff — a query whose normalized form differs from what was typed is
- * the most common reason a lookup against another source "inexplicably" misses.
+ * Always a hit, since normalization has an answer for every string; the value is the diff,
+ * because a query whose normalized form differs from what was typed is the most
+ * common reason a lookup elsewhere "inexplicably" misses.
  */
 export function lookupNormalize(queries: string[], locale: string): LookupRow[] {
 	return queries.map((query) => {
@@ -241,12 +205,9 @@ export function lookupNormalize(queries: string[], locale: string): LookupRow[] 
 }
 
 /**
- * Open a sealed SQLite artifact read-only, reporting a missing or unopenable file
- * as unavailable rather than as a source with no entry.
- *
- * `readOnly: true` is not a precaution here, it is the interface: every built database in this
- * repo is sealed 0444 and is never modified after creation, so a read-write open would fail on a
- * correctly-sealed artifact and succeed — with a journal file beside it — on one that was not.
+ * Opens read-only as the interface, not as a precaution: every built database in
+ * this repo is sealed 0444 and never modified, so a read-write open would fail on a
+ * correctly-sealed artifact and succeed on one that was not.
  */
 export async function openSealedArtifact<DB>(
 	path: string | undefined

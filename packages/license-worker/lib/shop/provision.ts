@@ -3,18 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Reconciles a Stripe account against the shop catalog.
- *
- *   The provisioner finds each object by a catalog key, such as a lookup key, a metadata mark or a URL,
- *   and never by a stored Stripe ID. It compares the object with the catalog. When `apply` is true, it
- *   creates missing objects, updates changeable fields and replaces objects whose fields are fixed at
- *   creation. When `apply` is false, it writes no object and reports the planned changes.
- *
- *   A Payment Link whose agreement version or consent collection differs is replaced, because Stripe
- *   fixes both at creation. A Price amount or a webhook API version that differs is only reported as
- *   drift, because changing either requires an operator decision.
- *
- *   Stripe returns the webhook signing secret only at creation, and only the report carries it.
+ * The provisioner finds each object by a catalog key, such as a lookup key, a metadata mark or a URL, and never by a stored Stripe ID; a Payment Link whose agreement version or consent collection differs is replaced, because Stripe fixes both at creation, while a Price amount or a webhook API version that differs is only reported as drift, and the signing secret Stripe returns only at creation appears only in the report.
  */
 
 import type Stripe from "stripe"
@@ -46,28 +35,21 @@ export interface ProvisionInput {
 	 */
 	siteOrigin: string
 	/**
-	 * The deployed worker origin.
-	 *
-	 * The provisioner manages the webhook destination only when it is set.
+	 * The deployed worker origin; the provisioner manages the webhook destination only when it is set.
 	 */
 	workerOrigin?: string
 	/**
-	 * Writes to Stripe when `true`.
-	 * When `false`, the run only reports planned changes.
+	 * Whether to write to Stripe; when `false`, the run only reports planned changes.
 	 */
 	apply: boolean
 	log?: (line: string) => void
 }
 
 /**
- * The outcome for one object.
- *
- * - `exists`: The object matches the catalog or was left with reported drift.
- * - `updated`: An update brought the object in line with the catalog.
- * - `replaced`: The old object was deactivated and a successor was created.
- * - `created`: The object was created.
- * - `missing`: The object does not exist and the run did not create it.
- * - `blocked`: Stripe refused a required setting, such as consent collection before the terms URL is set.
+ * The outcome for one object: `exists` matches the catalog or was left with reported drift,
+ * `updated` was brought in line, `replaced` was deactivated for a successor, `created` is new,
+ * `missing` does not exist and the run did not create it, and `blocked` was refused by
+ * Stripe for a required setting such as consent collection before the terms URL is set.
  */
 const ProvisionActionSchema = z.enum(["exists", "updated", "replaced", "created", "missing", "blocked"])
 
@@ -80,8 +62,8 @@ const ProvisionedObjectSchema = z.object({
 	id: z.string().optional(),
 	action: ProvisionActionSchema,
 	/**
-	 * Differences between Stripe and the catalog that remain after the run.
-	 * A read-only run reports every difference.
+	 * Differences between Stripe and the catalog that remain after the run,
+	 * every difference on a read-only run.
 	 */
 	drift: z.array(z.string()).optional(),
 })
@@ -92,16 +74,13 @@ const ProvisionedObjectSchema = z.object({
 export type ProvisionedObject = z.infer<typeof ProvisionedObjectSchema>
 
 /**
- * The provisioning report schema.
- * `mwops shop` validates its output against it.
+ * The provisioning report schema, which `mwops shop` validates its output against.
  */
 export const ProvisionReportSchema = z.object({
 	/**
-	 * The terms page used by Payment Link consent collection, and whether every link has consent collection.
-	 *
-	 * Stripe takes the terms URL from the account's public details, which only the dashboard can set.
-	 * The worker rejects sessions from a link without consent collection, so the provisioner
-	 * marks such a link `blocked` instead of creating it without consent.
+	 * The terms page used by Payment Link consent collection and whether every link has consent
+	 * collection: Stripe takes the terms URL from the account's public details, which only the
+	 * dashboard can set, so a link without consent is marked `blocked` rather than created.
 	 */
 	terms: z.object({ url: z.string(), consent: z.boolean() }),
 	product: ProvisionedObjectSchema,
@@ -111,9 +90,8 @@ export const ProvisionReportSchema = z.object({
 		ProvisionedObjectSchema.extend({ url: z.string().optional(), consent: z.boolean(), promotionCodes: z.boolean() })
 	),
 	/**
-	 * The Customer Portal configuration.
-	 *
-	 * `url` is the login page where customers change their card or plan, or cancel.
+	 * The Customer Portal configuration, whose `url` is the login page
+	 * where customers change their card or plan, or cancel.
 	 */
 	portal: ProvisionedObjectSchema.extend({ url: z.string().optional() }),
 	webhook: ProvisionedObjectSchema.extend({ url: z.string(), secret: z.string().optional() }).optional(),
@@ -128,9 +106,6 @@ function planRecord<T>(build: (plan: ShopPlan) => T): Record<ShopPlan["code"], T
 	return Object.fromEntries(SHOP_PLANS.map((plan) => [plan.code, build(plan)])) as Record<ShopPlan["code"], T>
 }
 
-/**
- * Returns the first matching item across every page of a Stripe list.
- */
 async function findListed<T>(list: AsyncIterable<T>, matches: (item: T) => boolean): Promise<T | undefined> {
 	for await (const item of list) {
 		if (matches(item)) return item
@@ -147,9 +122,6 @@ function differs(field: string, held: unknown, wanted: unknown): string[] {
 	return held === wanted ? [] : [`${field} is ${String(held)}; the catalog says ${String(wanted)}`]
 }
 
-/**
- * Reports whether two event lists contain the same events in any order.
- */
 function sameEvents(held: readonly string[], wanted: readonly string[]): boolean {
 	return held.length === wanted.length && wanted.every((event) => held.includes(event))
 }
@@ -164,7 +136,6 @@ export async function provisionShop(stripe: Stripe, input: ProvisionInput): Prom
 	// The flag stays true only while every Payment Link has consent collection.
 	let consent = true
 
-	// The Product is found by its metadata mark and checked against the agreement version.
 	let product = await findListed(
 		stripe.products.list({ active: true, limit: 100 }),
 		(candidate) => candidate.metadata[SHOP_METADATA_KEY] === SHOP_MARK
@@ -192,8 +163,7 @@ export async function provisionShop(stripe: Stripe, input: ProvisionInput): Prom
 		productReport = { id: product.id, action: "created" }
 	}
 
-	// Prices are found by lookup key.
-	// Stripe Prices are immutable, so a difference is reported as drift.
+	// Prices are found by lookup key; Stripe Prices are immutable, so a difference is reported as drift.
 	const prices: ProvisionReport["prices"] = planRecord(() => ({ action: "missing" }))
 
 	for (const plan of SHOP_PLANS) {
@@ -225,7 +195,6 @@ export async function provisionShop(stripe: Stripe, input: ProvisionInput): Prom
 		prices[plan.code] = { id: created.id, action: "created" }
 	}
 
-	// Each plan has one Payment Link, identified by its `plan_code` metadata.
 	const links: Stripe.PaymentLink[] = []
 
 	for await (const link of stripe.paymentLinks.list({ active: true, limit: 100 })) {
@@ -263,7 +232,6 @@ export async function provisionShop(stripe: Stripe, input: ProvisionInput): Prom
 				...differs("consent_collection.terms_of_service", existing.consent_collection?.terms_of_service, "required"),
 			]
 
-			// An update can change these fields in place.
 			const update = [
 				...differs(
 					"allow_promotion_codes",
@@ -344,8 +312,6 @@ export async function provisionShop(stripe: Stripe, input: ProvisionInput): Prom
 	}
 
 	// The Customer Portal configuration is found by its headline.
-	// The check covers the terms URL, the
-	// return URL and the enabled login page.
 	const existingPortal = await findListed(
 		stripe.billingPortal.configurations.list({ limit: 100 }),
 		(configuration) => configuration.business_profile.headline === SHOP_PRODUCT.name
@@ -410,9 +376,8 @@ export async function provisionShop(stripe: Stripe, input: ProvisionInput): Prom
 		portal = portalReport(created, "created")
 	}
 
-	// The webhook destination is found by URL, and its event list is reconciled.
-	// An API version difference is only reported, because a new destination has a
-	// new signing secret that the worker needs first.
+	// The webhook destination is found by URL and its event list is reconciled; an API version difference
+	// is only reported, because a new destination has a new signing secret the worker needs first.
 	let webhook: ProvisionReport["webhook"]
 
 	if (input.workerOrigin) {

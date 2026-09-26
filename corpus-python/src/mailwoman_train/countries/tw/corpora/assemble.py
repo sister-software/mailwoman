@@ -1,13 +1,12 @@
 """The two passes that turn eligible Overture-TW rows into a corpus.
 
-Pass 1 MEASURES: it counts eligible rows per 縣市, sums each district's coordinates and lists the
-agencies, and it draws no rows. Pass 2 SELECTS under the quotas pass 1 set. Both stream the same
-parquet in the same order, which is what makes the second pass's exact selectors land on the rows
-the first pass counted.
+Pass 1 counts eligible rows per 縣市, sums each district's coordinates and lists the agencies, drawing
+no rows; pass 2 selects under the quotas pass 1 set. Both stream the same parquet in the same order,
+which is what makes the second pass's exact selectors land on the rows the first counted.
 
 One `random.Random` feeds the selectors, the shuffle, each row's register and the country prefix, in
-that order. Adding, dropping or reordering a draw reshuffles which addresses a seeded build trains
-on, and no artifact says so.
+that order; adding, dropping or reordering a draw reshuffles which addresses a seeded build trains on,
+and no artifact says so.
 """
 
 from __future__ import annotations
@@ -56,9 +55,9 @@ from .rows import (
 class SourceSurvey:
     """Pass 1's answer: the quotas pass 2 selects under, plus the sums the centroids come from.
 
-    The centroid sums are taken over every eligible row rather than over the selected ones: a board row is
-    scored against its district's centre, and a centre computed from the handful of rows selection
-    happened to keep is a different place.
+    The centroid sums cover every eligible row rather than the selected ones: a board row is scored
+    against its district's centre, and a centre from the handful of rows selection kept is a different
+    place.
     """
 
     scanned: int
@@ -84,10 +83,10 @@ class Selection:
 
 
 def survey_source(parquet: Path, args: argparse.Namespace) -> SourceSurvey:
-    """Pass 1: count eligible rows per 縣市, sum each district's coordinates, list the agencies.
+    """Pass 1: count eligible rows per 縣市, sum each district's coordinates, list the agencies. Draws no rows.
 
-    Draws no rows. The agency list is not bookkeeping — the Taiwanese licence voids its grant on a
-    missing attribution, so the report carries the datasets the rows actually came from.
+    The agency list is not bookkeeping: the Taiwanese licence voids its grant on a missing attribution,
+    so the report carries the datasets the rows came from.
     """
     pool_counts: Counter[str] = Counter()
     dropped: Counter[str] = Counter()
@@ -156,8 +155,7 @@ def select_rows(parquet: Path, args: argparse.Namespace, rng: random.Random, sur
 class RowEncoder:
     """Renders selected source rows, drawing the register and the country prefix off the shared `rng`.
 
-    The register tally it accumulates is read by the build report, so one encoder serves the splits
-    and the board rather than each keeping its own count.
+    Its register tally feeds the build report, so one encoder serves the splits and the board.
     """
 
     def __init__(self, args: argparse.Namespace, rng: random.Random, tag_set: frozenset[str]) -> None:
@@ -237,7 +235,7 @@ def write_board(out_dir: Path, selection: Selection, encoder: RowEncoder) -> lis
 
 
 def check_stratification(selection: Selection) -> set[str]:
-    """Violations RAISE. a corpus that fails one is not a corpus. Returns the board's 鄉鎮市區."""
+    """Raise on broken stratification; returns the board's 鄉鎮市區."""
     pool_units = {normalize_text(f"{row[0]}|{row[1]}") for row in selection.train} | {
         normalize_text(f"{row[0]}|{row[1]}") for row in selection.val
     }

@@ -1,23 +1,18 @@
 """Which countries the validation and test splits hold rows for, and how many of those rows carry a street.
 
-WHY THIS EXISTS. `evaluate()` reports `val_loss`, `val_rows` and `macro_f1` over the whole split. A
-country contributing no row to it changes none of those numbers, so a run cannot tell a locale it
-validates well from a locale it does not validate at all. Measured on `v0.32.0-locality-shape`
-(#2353): GB holds **0** validation rows and **0** test rows, FR holds 12,898 validation rows of which
-**0** carry a street or house number, and DE's test split holds 33,801 rows of which **0** do. US
-holds 1,839,635 validation rows, 1,780,240 of them with a street. Three of the four locales iron rule
-6 blocks a default-on regression on therefore have no street-level validation signal.
+`evaluate()` reports `val_loss`, `val_rows` and `macro_f1` over the whole split. A country
+contributing no row to it changes none of those numbers, so a run cannot tell a locale it validates
+well from a locale it does not validate at all.
 
-THE SPLIT RULE PRODUCES THIS. `splitForRow` in
-`packages/corpus/lib/utils/split.ts` sends a row to val or test only when its `components.region`
-matches a declared holdout string for its country, and `defaultHoldouts()` names US, FR and DE. So
-the splits are geographic holdouts over three countries rather than a sample of the corpus, every
-other country holds zero by construction, and a street row carrying no `region` component cannot be
-held out whatever the holdouts name.
+`splitForRow` in `packages/corpus/lib/utils/split.ts` sends a row to val or test only when its
+`components.region` matches a declared holdout string for its country, and `defaultHoldouts()` names
+US, FR and DE. So the splits are geographic holdouts over three countries rather than a sample of the
+corpus, every other country holds zero by construction, and a street row carrying no `region`
+component cannot be held out whatever the holdouts name.
 
-WHAT TO DO WITH THE OUTPUT. Read a per-locale validation metric with its denominator beside it. A
-`macro_f1` computed over a split holding no GB row makes no statement about GB, and `cross_pollution`'s
-per-locale readings carry the same limit.
+Read a per-locale validation metric with its denominator beside it: a `macro_f1` computed over a split
+holding no GB row makes no statement about GB, and `cross_pollution`'s per-locale readings carry the
+same limit.
 
 Scans the parquet directly rather than the loader, because the question is which rows the split
 contains. What a run draws from it is a property of the sampler and is `audit_epoch_mixture`.

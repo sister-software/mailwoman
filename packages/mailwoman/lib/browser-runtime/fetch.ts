@@ -3,39 +3,26 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The fetch the browser runtime loads its artifacts through. The data origin resets a long download now and then
- *   (measured: 1 of 18 cold loads lost the 38 MB model to `net::ERR_CONNECTION_RESET` 4.9 s in, and 2 of 16 loads
- *   failed under a two-attempt retry that covered the connection alone), and a reset that far in rejects the body
- *   read rather than the `fetch()` call. So the body is buffered here, inside the retry, and the loader receives a response
- *   whose bytes are already complete. An http status is never retried: a 404 is an answer, and the loaders decide what
- *   an absent artifact means.
+ *   The fetch the browser runtime loads its artifacts through: a reset late in a download rejects the body read
+ *   rather than the `fetch()` call, so the body is buffered inside the retry, and an http status is never retried
+ *   because a 404 is an answer the loaders interpret.
  */
 
-/**
- * The number of attempts a network failure gets, the first included.
- */
 const ATTEMPTS = 3
 
-/**
- * The pause before the second attempt.
- * Each later attempt doubles it.
- */
 const FIRST_RETRY_DELAY_MS = 500
 
 /**
- * `fetch` rejects with a `TypeError` for a network failure
- * (a reset, a refused connection, a cors refusal) and never for an http status.
- * A body read that loses its connection rejects the same way.
- *
- * Anything else (an abort, a bad URL) is not retried.
+ * Only a `TypeError` marks a retriable network failure — a reset, a refused connection,
+ * a cors refusal, or a body read that loses its connection — while an http status,
+ * an abort, and a bad URL are not retried.
  */
 function isNetworkFailure(error: unknown): boolean {
 	return error instanceof TypeError
 }
 
 /**
- * One attempt: the request, and for a successful status the whole body, so a connection
- * lost mid-download is this attempt's failure and not the caller's.
+ * One attempt, body included, so a connection lost mid-download is this attempt's failure to retry.
  */
 async function fetchComplete(
 	input: Parameters<typeof fetch>[0],
@@ -56,26 +43,15 @@ async function fetchComplete(
 }
 
 /**
- * How much of a body has arrived.
- *
- * `total` is what the response declares, or `null` when it declares no total.
- *
- * A retry restarts the count at zero, which is the truth: the bytes from the lost
- * attempt are gone and the transfer begins again.
+ * How much of a body has arrived: `total` is the response's declared length or `null`, and a retry
+ * restarts `received` at zero because the lost attempt's bytes are gone and the transfer begins again.
  */
 export type BytesReceived = (received: number, total: number | null) => void
 
 /**
- * Read a body chunk by chunk, reporting progress, and answer the bytes.
- *
- * This is what the plain `arrayBuffer()` path cannot do: it resolves once, at the end,
- * so a 38 MB transfer produces no signal until it is over.
- * Buffering still happens — the retry above needs a complete body — but the caller
- * learns how far along it is while it happens.
- *
- * `content-length` describes the bytes on the wire while the reader yields decoded ones,
- * so a content-encoded response can report a fraction above 1.
- * The consumer clamps rather than this lying about the total it was given.
+ * `content-length` describes the wire bytes while the reader yields decoded ones,
+ * so a content-encoded response can report a fraction above 1; the consumer clamps
+ * rather than this lying about the total.
  */
 async function drainWithProgress(response: Response, onBytes: BytesReceived): Promise<Uint8Array> {
 	const declared = Number(response.headers.get("content-length"))
@@ -126,10 +102,8 @@ function pause(ms: number, signal: AbortSignal | null | undefined): Promise<void
 }
 
 /**
- * `fetch` with the body already read, retried on a network failure.
- *
- * Same signature, so a loader takes it as its `fetchImpl`; the response it answers
- * with can be read as bytes, text or JSON exactly as a live one.
+ * `fetch` with the body already read, retried on a network failure; the same signature lets a loader
+ * take it as its `fetchImpl` and read the response as bytes, text, or JSON exactly as a live one.
  */
 export async function fetchWithRetry(
 	input: Parameters<typeof fetch>[0],
@@ -152,12 +126,9 @@ export async function fetchWithRetry(
 }
 
 /**
- * `fetchWithRetry` bound to a progress callback, as a plain `fetch` a loader can take for its `fetchImpl`.
- *
- * A loader is handed one `fetchImpl` and uses it for every artifact, so `shouldReport`
- * decides which request's bytes are worth a bar.
- * The model is 38 MB and the lexicons are kilobytes, and reporting all of them would
- * make the bar jump backwards as each small one starts.
+ * `fetchWithRetry` bound to a progress callback, as a plain `fetch` a loader can take
+ * for its `fetchImpl`; `shouldReport` picks the request whose bytes are worth a bar,
+ * since reporting every small artifact would make the bar jump backwards.
  */
 export function fetchWithProgress(onBytes: BytesReceived, shouldReport: (url: string) => boolean): typeof fetch {
 	return (input, init) => {

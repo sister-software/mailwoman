@@ -132,8 +132,6 @@ def resolve_tags_for(args: argparse.Namespace, label_set: Any) -> tuple[str, str
 def main() -> None:
     args = parse_args()
 
-    # Imported here rather than at module scope, so the pure scoring arithmetic stays importable
-    # (and testable) without the torch install.
     import torch
 
     from ...nn.encoder import MailwomanCoarseEncoder

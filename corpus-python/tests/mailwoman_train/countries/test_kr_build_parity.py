@@ -1,16 +1,4 @@
-"""One seeded Korea build, pinned end to end — both corpora, both boards, and the report.
-
-`build` makes four passes and threads one `random.Random` through the last two: the exact-selection
-masks for the register rows, the shuffle, the per-row register and country draws, then a second set
-of masks for the registry rows. The passes also feed each other — pass 1's key index is what pass 2
-aligns permits against — so a stage that moves changes what the later ones see.
-
-No test exercised this path: the real inputs are the 주소DB archive, the permit registry, and
-`gdaltransform`. The fixture supplies the first two at the portal's real CP949 shapes. The third is
-STUBBED rather than skipped, because `gdaltransform` is a projection this builder does not own —
-what the pin is for is the builder's order and its rendering, and a `skipif` on a missing binary
-would report a passing suite that ran none of this.
-"""
+"""One seeded Korea build, pinned end to end—both corpora, both boards, and the report—because the four passes share one `random.Random` and feed each other, so a moved stage changes what the later ones see."""
 
 from __future__ import annotations
 
@@ -27,11 +15,9 @@ from mailwoman_train.countries.kr.corpora import build
 
 from .kr_fixture import JusoAddress, JusoRegion, write_juso_zip, write_permit_csv
 
-#: Committed beside this file, captured from the code as it stood before a split. Regenerating it
-#: after a change makes the test compare the new code against itself, so regenerate only when the
-#: current code is already verified against the existing reference.
-#:
-#: Regenerate with: uv run python -m tests.mailwoman_train.countries.test_kr_build_parity
+#: Committed beside this file; regenerate with `uv run python -m
+#: tests.mailwoman_train.countries.test_kr_build_parity` only when the current code is already
+#: verified against the existing reference, or the test compares the new code against itself.
 REFERENCE = Path(__file__).parent / "kr-build-reference.json"
 
 REFERENCE_README = [
@@ -224,12 +210,7 @@ PERMITS: list[tuple[str, str, str, str, str, str, str, str]] = [
 
 
 def stub_transform(points: list[tuple[float, float]]) -> list[tuple[float, float] | None]:
-    """A deterministic stand-in for `gdaltransform`, mapping the fixture's planar grid into Korea.
-
-    The real transform is EPSG:5174 → WGS84 through a subprocess. What this build does with the
-    answer — sum it per unit, divide, write the centroid beside the board row — is the part under
-    test, and that is unchanged by which projection produced the numbers.
-    """
+    """A deterministic stand-in for `gdaltransform` mapping the fixture's planar grid into Korea; the build's use of the answer, not the projection, is under test."""
     out: list[tuple[float, float] | None] = []
     for x, y in points:
         lon = 124.0 + (x % 100_000) / 100_000 * 8.0
@@ -353,11 +334,7 @@ def test_the_fixture_exercises_both_pools_and_both_boards(built: dict[str, Any])
 
 
 def write_reference() -> None:
-    """Capture the current build as the reference the tests above compare against.
-
-    Run this only when the current code already passes against the existing reference — otherwise
-    the artifact records whatever the code does now, and the tests assert no fact.
-    """
+    """Capture the current build as the reference the tests above compare against; run it only when the current code already passes against the existing reference, or the artifact records whatever the code does now."""
     import tempfile
 
     patch = pytest.MonkeyPatch()

@@ -10,9 +10,7 @@ import type { NeuralParseTrace } from "@mailwoman/neural"
 import { describe, expect, it } from "vitest"
 
 /**
- * A minimal parse trace.
- *
- * Two tokens, two labels — enough to make every tally reachable by hand.
+ * A minimal parse trace with two tokens and two labels, enough to make every tally reachable by hand.
  */
 function trace(overrides: Partial<NeuralParseTrace> = {}): NeuralParseTrace {
 	return {
@@ -68,16 +66,14 @@ describe("evidenceCensus", () => {
 	})
 
 	it("does not call an unconfigured session starved", () => {
-		// No channels at all is a fact about the configuration rather than about this input.
-		// Reporting it as starvation would send the reader to the retrieval side
-		// when the wiring is what is missing.
+		// No channels at all is a fact about the configuration rather than the input, and reporting it as
+		// starvation would send the reader to the retrieval side when the wiring is what is missing.
 		expect(evidenceCensus(trace()).silent).toBe(false)
 	})
 
 	it("counts firing over features, not confidence", () => {
-		// Features are what the model reads.
-		// Confidence is derived beside them.
-		// If they disagree, the features decide.
+		// Features are what the model reads and confidence is derived beside them,
+		// so when they disagree the features decide.
 		const disagreeing = { features: [[0.5], [0]], confidence: [0, 0] }
 
 		expect(evidenceCensus(trace({ gazetteer: disagreeing })).gazetteer).toEqual({

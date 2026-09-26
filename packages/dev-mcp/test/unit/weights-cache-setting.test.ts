@@ -3,13 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The candidate-weights setting, and the guard that keeps it from measuring the shipped model.
- *
- *   `resolveWeights` treats an explicit `cacheRoot` as authoritative only when that directory actually holds the
- *   binaries. a cache missing them falls through to the installed workspace package, which in this repo always
- *   resolves. So a typo in a cache path does not fail — it grades the shipped model and labels the answer with the
- *   candidate's name. That is the failure this file pins: the engine refuses before the multi-second session build,
- *   and it refuses differently for a wrong-shaped root than for a correctly-shaped one that is under-staged.
+ *   A cache-path typo would otherwise grade the shipped model and label the answer with the candidate's name, so the engine refuses before the session build.
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
@@ -33,11 +27,7 @@ const fixtures = new AsyncDisposableStack()
 afterAll(() => fixtures.disposeAsync())
 
 /**
- * Lay out a cache root the way `weightsCachePackageDir` expects, staged to the requested depth.
- *
- * `declared` becomes the card's `files_md5`, which is what separates an
- * under-staged cache from a complete one.
- * The card is the only thing that knows which siblings this bundle is supposed to carry.
+ * `declared` becomes the card's `files_md5`, the only record of which siblings the bundle is meant to carry.
  */
 async function stageCache(
 	stage: "wrong-shape" | "under-staged" | "ok",
@@ -78,10 +68,9 @@ describe("weights_cache — the setting", () => {
 	})
 
 	it("is ABSENT from the effective config when unset", () => {
-		// Not `undefined`, absent.
-		// The effective config is hashed into the engine id and reported as provenance,
-		// and an explicit `weightsCacheRoot: undefined` would claim the caller made
-		// a choice about the model when they did not.
+		// Not `undefined`, absent: the effective config is hashed into the engine id
+		// and reported as provenance, so an explicit `weightsCacheRoot: undefined`
+		// would claim a choice the caller did not make.
 		expect(resolveConfig({})).not.toHaveProperty("weightsCacheRoot")
 	})
 
@@ -90,9 +79,8 @@ describe("weights_cache — the setting", () => {
 	})
 
 	it("makes two candidates two engines", async () => {
-		// The whole point of the setting: shipped-vs-candidate must not share a warm session.
-		// `engineID` hashes the effective config, so this holds automatically, and this
-		// test is what notices if the key ever stops being part of that config.
+		// `engineID` hashes the effective config, so shipped and candidate cannot share a
+		// warm session; this test notices if the key ever leaves that config.
 		const fingerprint = await computeTreeFingerprint(process.cwd())
 		const shipped = engineID(resolveConfig({}), fingerprint)
 		const candidate = engineID(resolveConfig({ weights_cache: "/tmp/v440-cache" }), fingerprint)
@@ -117,9 +105,8 @@ describe("weights_cache — the guard", () => {
 	})
 
 	it("separates under-staged from wrong-shape", async () => {
-		// The two need different fixes — restage the bundle vs copy the siblings the card declares —
-		// and the #1516 failure they prevent looks like a model regression rather than a missing file.
-		// One message for both sends the reader to the wrong place.
+		// The two need different fixes, and the failure they prevent looks like a model regression
+		// rather than a missing file, so one message for both sends the reader to the wrong place.
 		const root = await stageCache("under-staged", ["fst-en-us.bin", "postcode-en-us.bin"])
 
 		await expect(assertWeightsCacheStaged(root)).rejects.toThrow(/declares/)
@@ -139,9 +126,8 @@ describe("weights_cache — the guard", () => {
 
 		await expect(registry.acquire({ weights_cache: "/nonexistent/v999-cache" })).rejects.toThrow(/v999-cache/)
 
-		// The measurable half: a refusal that happened after a 1.4 s build would still
-		// be correct and would still cost the build.
-		// An empty registry means it refused on the path rather than on the artifacts.
+		// A refusal after a 1.4 s build would still be correct and would still cost the build,
+		// so an empty registry proves it refused on the path rather than the artifacts.
 		expect(registry.size).toBe(0)
 	})
 })

@@ -3,17 +3,6 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  * @file Carry an overlay parquet onto the current row schema, without its recipe output.
- *
- *   A corpus is a base build plus overlay parquets. `v0.32.0-locality-shape` carries 723 slices: 690 from the
- *   `v0.5.0` base and 33 overlays accreted across 21 later builds. Some of those 33 have a recipe output on disk that
- *   can be regenerated, which is the first choice because a regenerated one carries the register its recipe declares.
- *   Several do not: `part-cz-pcfirst-v21.parquet` holds 51,037 rows and `part-fr-bare-street-v22.parquet` holds
- *   64,122, and neither generation's jsonl is anywhere on this machine. The parquet is the only copy.
- *
- *   This reads such a parquet and writes it back with `recipe`, `register`, `surface` and `base_source_id` in place
- *   of `synth_method` and `synth_base_id`, preserving every row. What it claims is bounded the same way
- *   `migrate-recipe-output.ts` bounds it: the two renames assert no new claim, the surface comes from the recipe that
- *   wrote the row, and the register is whatever {@linkcode OVERLAY_REGISTERS} records for that source — which is
  *   `mailwoman-derived-tuples` wherever the upstream was not recorded.
  */
 
@@ -29,13 +18,8 @@ import { jsonlToParquet } from "#tools/jsonl-to-parquet"
 import { surfaceForSource } from "#tools/migrate/recipe-output"
 
 /**
- * The register each overlay source's rows came from.
- *
- * A source whose recipe names its publication gets that publication.
- * A source whose rows came from a tuple extraction nobody recorded gets `mailwoman-derived-tuples`,
- * which says so rather than naming a publisher by inference.
- *
- * A source absent from this map refuses, for the same reason {@linkcode surfaceForSource} refuses.
+ * The register each overlay source's rows came from, or `mailwoman-derived-tuples`
+ * when the upstream was not recorded.
  */
 export const OVERLAY_REGISTERS: Record<string, string | null> = {
 	// The recipe names its publication.
@@ -67,10 +51,6 @@ export const OVERLAY_REGISTERS: Record<string, string | null> = {
 	"synth-intersection": null,
 	"synth-house-venue": null,
 	"deepseek-kryptonite": null,
-	// `recipes/anchor-absorption.ts` declares `register: null, surface: invented`,
-	// and this map recorded a register for it.
-	// A row that names no published record cannot also name the publication it came from,
-	// and the two tables disagreeing is what caught it.
 	"synth-anchor-absorption": null,
 	// The tuple extraction behind these was not recorded.
 	"synth-affix": SourceRegister.DerivedTuples,
@@ -94,13 +74,9 @@ export const OVERLAY_REGISTERS: Record<string, string | null> = {
 /**
  * Read an INT64 span offset back as a plain number.
  *
- * The overlays written by the PyArrow original declared the span triple as `pa.list_(pa.int64())`,
- * and DuckDB returns an INT64 as a BigInt, which `stringifyJSON` refuses.
- * The current schema declares them INT32 (#519) because `raw` is a short address string,
- * so every value in one of these columns is inside the safe-integer range and `Number` is lossless.
- *
- * A value outside it would be a corrupt offset rather than a large one,
- * so this raises instead of truncating.
+ * DuckDB returns an INT64 as a BigInt, which `stringifyJSON` refuses; the current schema declares the
+ * span triple INT32 because `raw` is a short address string, so every in-range value is lossless.
+ * A value outside the safe-integer range is a corrupt offset, so this raises instead of truncating.
  */
 function narrowBigInts(row: Record<string, unknown>): Record<string, unknown> {
 	const narrow = (value: unknown): unknown => {
@@ -144,10 +120,8 @@ export function registerForSource(source: string): string | null {
 }
 
 /**
- * Rewrite one overlay parquet onto the current row schema.
- *
- * Staged through a temporary jsonl and {@linkcode jsonlToParquet}, so the output is written
- * by the same converter every other overlay goes through and carries the same column list.
+ * Rewrite one overlay parquet onto the current row schema, staged through
+ * {@linkcode jsonlToParquet} so it carries the same column list as every other overlay.
  */
 export async function migrateOverlayParquet(
 	input: PathBuilderLike,

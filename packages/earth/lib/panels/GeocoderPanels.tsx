@@ -3,10 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The host-only chrome around the geocoder, composed for `@mailwoman/react/map`'s `panels` injection point: the
- *   about box, the release line, the geo-bias row, the permalink, the calibration and dev-mode toggles, the result
- *   panel with its visualizers, the decode-path drawer, the map controls and the version compare. Everything here is
- *   presentation over the runtime handle. No code here loads or resolves.
+ *   Everything here is presentation over the runtime handle; no code here loads or resolves.
  */
 
 import type { ParseResult } from "@mailwoman/core/pipeline/client-result"
@@ -40,12 +37,8 @@ export interface GeocoderPanelsOptions {
 }
 
 /**
- * What the loader is fetching, as one line for the footer: the named step,
- * then the loader's own progress text.
- *
- * Each part is tested for on its own rather than filtered out of a list.
- * An absent step and an absent progress line are different readings,
- * and a filter would report the same string for both.
+ * An absent step and an absent progress line are different readings, so each part
+ * is tested on its own rather than filtered out of a list.
  */
 function describeLoad(loading: NonNullable<GeocoderRuntimeHandle["runtime"]["loading"]>): string {
 	const step = loading.stepLabels[loading.stepIndex]
@@ -62,24 +55,20 @@ function describeLoad(loading: NonNullable<GeocoderRuntimeHandle["runtime"]["loa
 export function useGeocoderPanels({ handle, debugDefault }: GeocoderPanelsOptions): GeocoderPanels {
 	const { runtime, releases, forceWASM, geoBias, calibrator, traceParse, supportsTrace } = handle
 
-	// Opt-in display state: the calibrated-confidence view and the dev-mode decode-path drawer.
 	const [calibrateConfidence, setCalibrateConfidence] = useState(false)
 	const [devMode, setDevMode] = useState(debugDefault)
 
 	const selectedVersion = runtime.selectedVersion ?? null
 	const selectedRelease: ReleaseInfo | undefined = releases.find((r) => r.version === selectedVersion)
 
-	// The named step first, then the loader's own line — "Gazetteer · 12.4 MB".
-	// Null once the runtime is ready, which is what removes the status from the footer
-	// rather than leaving a stale label there.
+	// Null once the runtime is ready, which removes the status from the footer rather than leaving a stale label.
 	const loading = runtime.loading
 	const loadStatus = runtime.ready || !loading ? null : describeLoad(loading)
 
 	/* oxlint-disable react/no-unstable-nested-components -- render props rather than components: the controls call each member (`panels.result({…})`) rather than mounting it */
 	return useMemo<GeocoderPanels>(
 		() => ({
-			// The sheet's own title and its capsule button are the disclosure.
-			// A second one inside would repeat them.
+			// The sheet's own title and capsule button are the disclosure, so a second one inside would repeat them.
 			header: <About collapsible={false} />,
 			releaseInfo: selectedRelease ? (
 				<p style={{ margin: "0 0 0.75rem", fontSize: "0.85rem", opacity: 0.75 }}>
@@ -89,10 +78,8 @@ export function useGeocoderPanels({ handle, debugDefault }: GeocoderPanelsOption
 			) : undefined,
 			bias: <GeoBiasRow active={geoBias.active} error={geoBias.error} onToggle={geoBias.toggle} />,
 			permalink: (text) => <PermalinkButton text={text} />,
-			// The two display toggles read on the model rather than on an address,
-			// so they live behind the Developer capsule rather than above every result —
-			// at the top of the result sheet they were the first thing a visitor met,
-			// and on a phone they pushed the answer below the fold.
+			// The two display toggles read on the model rather than an address, so they live
+			// behind the Developer capsule rather than above every result.
 			developerExtras: (
 				<>
 					{calibrator ? <CalibrationToggle checked={calibrateConfidence} onChange={setCalibrateConfidence} /> : null}
@@ -100,10 +87,8 @@ export function useGeocoderPanels({ handle, debugDefault }: GeocoderPanelsOption
 				</>
 			),
 			result: ({ result, selectedCandidateIndex, onSelectCandidate }) => {
-				// Display-only calibrated view: map each span's raw confidence through
-				// the calibrator when the toggle is on.
-				// A fresh copy, never a mutation of the runtime's result
-				// (the resolver and the compare read the raw nodes).
+				// A fresh copy, never a mutation of the runtime's result, because the resolver
+				// and the compare read the raw nodes.
 				const displayResult: ParseResult =
 					calibrateConfidence && calibrator
 						? {
@@ -132,17 +117,11 @@ export function useGeocoderPanels({ handle, debugDefault }: GeocoderPanelsOption
 			debugDrawer: ({ result }) => (
 				<DebugDrawer result={result} devMode={devMode} traceParse={traceParse} onClose={() => setDevMode(false)} />
 			),
-			// The feature inspector and its longitude/latitude/zoom readout are developer
-			// tooling, and were mounted for every visitor.
-			// They sit in MapLibre's bottom-right corner, directly above the footer strip,
-			// so on a narrow window the readout ran along the same edge as the Sources button.
-			// Two unrelated things sharing one line, one of which nobody outside this repository has a use for.
-			// Shown under the same condition as the decode-path drawer.
+			// The feature inspector is developer tooling, shown under the same condition as the decode-path drawer.
 			mapControls: devMode ? <MapControls /> : null,
 			layers: ({ map }) => <LayerToggleControl map={map} />,
-			// The identity, the docs link, the commit and the credits live in `EarthFooter`
-			// so this footer and the canned runtime's cannot differ.
-			// `status` is the one thing only this path has: what is being fetched right now.
+			// The identity and credits live in `EarthFooter` so this footer and the canned
+			// runtime's cannot differ; `status` is the one thing only this path has.
 			footer: <EarthFooter status={loadStatus} />,
 			compare: (ctx) => (
 				<Compare

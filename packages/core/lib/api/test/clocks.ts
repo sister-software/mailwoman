@@ -5,8 +5,7 @@
  * @file Deterministic {@linkcode ClockLike} implementations shared by the `core/api` suites and by
  *   downstream clients' tests (`filer/sdk/sec-client.test.ts`).
  *
- *   Lifted from `98c4dda1:filer/sdk/sec-client.test.ts`, where the two-clock split was worked out: a
- *   naive clock is fine for sequential assertions and actively masks concurrency bugs, so anything
+ *   A naive clock is fine for sequential assertions and actively masks concurrency bugs, so anything
  *   testing how concurrent waiters interleave needs the deadline-ordered one.
  */
 
@@ -18,21 +17,10 @@ import type { ClockLike } from "#api/clock"
  *
  * Finite, so a genuinely blocked test reports what happened instead of timing out.
  *
- * This used to be a budget of 1000 idle event-loop turns, on the stated assumption
- * that "a real `readFile` resolves in a handful of turns".
- * Turns are not time: an idle turn is a `setImmediate` round-trip costing microseconds, so the
- * whole budget expired in single-digit milliseconds while the I/O it was waiting for took tens.
- *
- * On an unloaded machine the race happened to go the right way.
- * Under load it did not, and the guard fired on working code — observed
- * 2026-08-02 on the lab at load 15.25 and then on a hosted GitHub runner,
- * in `filer/sdk/sec-client.test.ts` and `bdc/sdk/client.test.ts`.
- *
  * Measured with `performance.now()`, not `Date.now()`: consumers run under
- * `vi.useFakeTimers({ toFake: ["Date"] })`, which freezes `Date` while leaving
- * `performance` and `setTimeout` real.
- * A Date-based budget would never expire inside those blocks, so genuinely stuck
- * work would hang exactly where this is supposed to report it.
+ * `vi.useFakeTimers({ toFake: ["Date"] })`, which freezes `Date` while leaving `performance`
+ * and `setTimeout` real, so a Date-based budget would never expire inside those blocks
+ * and genuinely stuck work would hang exactly where this is supposed to report it.
  */
 const IDLE_BUDGET_MS = 5000
 
@@ -43,14 +31,9 @@ const IDLE_BUDGET_MS = 5000
  * a few turns and should not pay a timer.
  * Past that the wait is on something real, and continuing to spin actively harms it: back-to-back
  * `setImmediate` turns monopolize the event loop and starve the very I/O the loop is waiting for.
- *
- * That feedback loop is why the old guard got worse exactly when the machine was busiest.
  */
 const IDLE_SPIN_TURNS = 50
 
-/**
- * Real backoff between idle polls once {@linkcode IDLE_SPIN_TURNS} is exhausted.
- */
 const IDLE_BACKOFF_MS = 1
 
 /**
@@ -247,9 +230,8 @@ export class VirtualClock implements ClockLike {
 					)
 				}
 
-				// Past the spin window the wait is on something real.
-				// Back off so it can be serviced — spinning here starves the I/O we are waiting for,
-				// which is why the old turn-budgeted guard failed hardest on the busiest machines.
+				// Past the spin window the wait is on something real: back off so it can be serviced,
+				// since spinning here starves the I/O we are waiting for.
 				if (idleTurns > IDLE_SPIN_TURNS) {
 					await realDelay(IDLE_BACKOFF_MS)
 				}

@@ -3,15 +3,12 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mailwoman corpus build --version 0.1.0 --out /data/corpus/versioned/ --inputs '{ "wof-admin":
- *   "/data/wof/admin.db", "wof-postalcode": "/data/wof/post.db" }'`
+ *   End-to-end corpus build: drives every registered adapter (or the filtered subset) per `--inputs`, runs
+ *   synthesis and alignment, computes the locality-holdout split, and writes the final jsonl and parquet
+ *   files plus per-stage manifests under `<out>/corpus-v<version>/`.
  *
- *   End-to-end corpus build. Drives every registered adapter (or the filtered subset) per `--inputs`,
- *   runs synthesis + alignment, computes the locality-holdout split, and writes the final jsonl
- *   parquet files + per-stage manifests under `<out>/corpus-v<version>/`.
- *
- *   Adapters whose id is missing from `--inputs` are skipped (and noted in the manifest); this is how
- *   the CLI handles partial builds during development.
+ *   Adapters whose id is missing from `--inputs` are skipped and noted in the manifest, which is how the
+ *   CLI handles partial builds during development.
  */
 
 import { isAlpha2CodeShape } from "@mailwoman/codex/country"
@@ -24,13 +21,8 @@ import { useState } from "react"
 import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 
 /**
- * `--inputs` accepts either:
- *
- * - A bare string (path-only, for adapters that need no extra options): `"wof-admin": "/data/wof.db"`
- * - A full AdapterOptions object: `"openaddresses": { "inputPath": "/data/oa.geojsonl", "country": "US" }`
- *
- * The object form is required by adapters that need a country filter (OpenAddresses),
- * or for fixture runs that want a `limit`.
+ * `--inputs` values are either a bare path string, for adapters needing no extra options,
+ * or an `AdapterOptions` object, which a country filter (OpenAddresses) or a fixture `limit` requires.
  */
 export const spec = {
 	name: "build",
@@ -77,10 +69,9 @@ function isAdapterInputMap(input: unknown): input is Record<string, AdapterInput
 
 		if ("outputDir" in value && value.outputDir !== undefined && typeof value.outputDir !== "string") return false
 
-		// The shape rather than the type.
-		// A lower-case `nl` is a string, and the four adapters that filter per row compare it
-		// against the row's own upper-case code, so it selects zero rows and reports no matches.
-		// `corpus run` rejects it at the flag, and this is the other way in.
+		// The shape rather than the type: a lower-case `nl` is a string, and the four
+		// adapters that filter per row compare it against the row's upper-case code,
+		// so it selects zero rows and reports no matches.
 		if ("country" in value && value.country !== undefined && !isAlpha2CodeShape(value.country)) return false
 
 		return (

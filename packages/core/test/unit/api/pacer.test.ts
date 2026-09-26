@@ -3,8 +3,6 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  * @file Tests for {@linkcode RequestPacer} — the strict minimum-interval pacer.
- *
- *   Every timing assertion runs against an injected clock. No test here sleeps on the wall clock.
  */
 
 import type { ClockLike } from "@mailwoman/core/api"
@@ -17,9 +15,6 @@ import {
 } from "@mailwoman/core/api/test-clocks"
 import { describe, expect, it } from "vitest"
 
-/**
- * An `acquire()` that records the clock reading at each grant.
- */
 function makeRecordedAcquire(pacer: RequestPacer, clock: ClockLike, grantTimes: number[]): () => Promise<void> {
 	return async () => {
 		await pacer.acquire()
@@ -40,7 +35,7 @@ describe("RequestPacer", () => {
 		const pacer = new RequestPacer(100, clock)
 
 		await pacer.acquire()
-		expect(clock.sleepCalls).toHaveLength(0) // the very first call is always immediate
+		expect(clock.sleepCalls).toHaveLength(0)
 
 		await pacer.acquire()
 		expect(clock.sleepCalls).toEqual([100])
@@ -50,14 +45,14 @@ describe("RequestPacer", () => {
 	})
 
 	it("does not accumulate a burst backlog after an idle period", async () => {
-		// Mutation-proves the `Math.max(#nextGrantAt, now)` recency clamp in `acquire()`: without it,
-		// a long-stale `#nextGrantAt` would let every call after an idle period through immediately, forever.
+		// Mutation-proves the `Math.max(#nextGrantAt, now)` recency clamp: without it,
+		// a long-stale `#nextGrantAt` lets every call after an idle period through immediately.
 		const clock = createFakeClock()
 		const pacer = new RequestPacer(100, clock)
 
-		await pacer.acquire() // consumes the first, immediate grant
+		await pacer.acquire()
 
-		clock.advance(10_000) // a long idle
+		clock.advance(10_000)
 
 		const grantTimes: number[] = []
 
@@ -69,10 +64,9 @@ describe("RequestPacer", () => {
 		expect(grantTimes).toEqual([10_000, 10_100, 10_200, 10_300, 10_400])
 	})
 
-	// The pacing guarantee itself.
-	// `VirtualClock` (not the simpler `createFakeClock`) is required here: the property under
-	// test is specifically how concurrent waiters interleave when woken, and a clock that
-	// resolves every same-deadline sleeper at once cannot tell a fixed pacer from a broken one.
+	// `VirtualClock` (not the simpler `createFakeClock`) is required: the property under
+	// test is how concurrent waiters interleave when woken, and a clock that resolves every
+	// same-deadline sleeper at once cannot tell a fixed pacer from a broken one.
 	it("paces N concurrent acquire() calls strictly one interval apart — no cohort ever shares an instant", async () => {
 		const INTERVAL_MS = 100
 		const TOTAL_CALLS = 40
@@ -83,14 +77,13 @@ describe("RequestPacer", () => {
 		const grantTimes: number[] = []
 		const recordedAcquire = makeRecordedAcquire(pacer, clock, grantTimes)
 
-		// `Array.from`'s mapper runs synchronously for every index — this genuinely fans
+		// `Array.from`'s mapper runs synchronously for every index, so this genuinely fans
 		// out 40 concurrent `acquire()` calls with no intervening async I/O.
 		const pending = Array.from({ length: TOTAL_CALLS }, () => recordedAcquire())
 
-		// The first call resolves without sleeping, but awaiting an already-resolved
-		// promise still defers its `push` to the microtask queue.
-		// Flush it here, before driving the clock.
-		// Otherwise `advance()`'s own first internal await would flush it, by which point `now()` has left t=0.
+		// The first call resolves without sleeping, but awaiting an already-resolved promise
+		// still defers its `push` to the microtask queue, so flush it before driving the clock —
+		// otherwise `advance()`'s own first internal await would flush it after `now()` has left t=0.
 		await drainMicrotasks()
 
 		await clock.advance((TOTAL_CALLS - 1) * INTERVAL_MS)
@@ -101,9 +94,8 @@ describe("RequestPacer", () => {
 		const expectedGrants = Array.from({ length: TOTAL_CALLS }, (_, i) => i * INTERVAL_MS)
 
 		expect(grantTimes).toEqual(expectedGrants)
-		expect(new Set(grantTimes).size).toBe(TOTAL_CALLS) // no duplicates — no cohort granted together
+		expect(new Set(grantTimes).size).toBe(TOTAL_CALLS)
 
-		// The ceiling, verified directly rather than assumed.
 		expect(maxCountInSlidingWindow(grantTimes, 1000)).toBe(EXPECTED_PER_SECOND)
 	})
 
@@ -117,10 +109,9 @@ describe("RequestPacer", () => {
 		const grantTimes: number[] = []
 		const recordedAcquire = makeRecordedAcquire(pacer, clock, grantTimes)
 
-		// `VirtualClock.advance` mutates `now()` before its first internal await flushes
-		// the microtask queue, so an already-resolved `acquire()` whose continuation
-		// is still queued would record the post-advance time.
-		// Flush to quiescence first, at every point where that could happen.
+		// `VirtualClock.advance` mutates `now()` before its first internal await flushes the microtask
+		// queue, so an already-resolved `acquire()` whose continuation is still queued would record
+		// the post-advance time; flush to quiescence first at every point where that could happen.
 		for (let i = 0; i < SERIAL_CALLS; i++) {
 			const pending = recordedAcquire()
 

@@ -3,11 +3,10 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The page's half of the range-cache protocol with the app's service worker (`service-worker.ts`): the message that
- *   names the release whose gazetteer chunks stay cached. The worker persists every validated 64 KB range chunk of the
- *   byte-range databases under an immutable, versioned URL, so chunks from other releases never expire on their own
- *   and the page has to say which release it is on. Everything here is best-effort: no service worker support
- *   (insecure context, private mode) degrades to plain network range fetches.
+ * The page's half of the range-cache protocol in `service-worker.ts`: the worker persists every validated 64 KB range
+ * chunk of the byte-range databases under an immutable, versioned URL, so the page must name the release whose chunks
+ * stay cached, and everything here is best-effort — no service worker support (insecure context, private mode) degrades
+ * to plain network range fetches.
  */
 
 /**

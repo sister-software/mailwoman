@@ -3,19 +3,11 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mailwoman eval premise-linkage` — the controlled premise-linkage harness (#1902). Grades one
- *   adapter's rows through both registered arms (Mailwoman with open artifacts only, then Mailwoman
- *   plus the #1901 authoritative provider) and emits an aggregate report that has passed the writer's
- *   preflight.
+ *   With `--config <module>` the command loads a private run configuration and requires an agreed `--min-cell-size`;
+ *   without it the shipped synthetic fixture is a self-check of the harness, never a measurement of a register.
  *
- *   Two modes, and the report says which it was. With `--config <module>` the command loads a private
- *   run configuration from outside this repository — the controlled adapter, the real provider, and
- *   production deps — and requires both an agreed `--min-cell-size` and a run salt in the environment.
- *   Without it the command runs the shipped synthetic fixture end to end, which is a self-check of the
- *   harness and never a measurement of a register.
- *
- *   The salt is read from `$MAILWOMAN_PREMISE_LINKAGE_SALT` rather than taken as a flag: a flag value
- *   is visible in the process table to every user on the host.
+ *   The salt is read from `$MAILWOMAN_PREMISE_LINKAGE_SALT` rather than taken as a flag, because a flag value is
+ *   visible in the process table to every user on the host.
  */
 
 import { Box, Text } from "ink"
@@ -65,9 +57,8 @@ export const spec = {
 const SYNTHETIC_MIN_CELL_SIZE = 1
 
 /**
- * Bytes of per-run salt generated when the synthetic self-check finds none in the environment.
- *
- * A controlled run never reaches this: it is told to supply its own.
+ * Bytes of per-run salt generated when the synthetic self-check finds none;
+ * a controlled run never reaches this because it supplies its own.
  */
 const GENERATED_SALT_BYTES = 24
 
@@ -169,11 +160,8 @@ const EvalPremiseLinkage: CommandComponent<typeof spec> = ({ options }) => {
 }
 
 /**
- * Import a private run configuration from outside this repository.
- *
- * The specifier is the operator's.
- * No code here inspects it beyond handing it to the loader, and `resolve` decides
- * whether what came back is usable.
+ * No code here inspects the operator's specifier beyond handing it to the loader,
+ * and `resolve` decides whether what came back is usable.
  */
 async function loadControlledConfig<T>(
 	specifier: string,
@@ -185,10 +173,7 @@ async function loadControlledConfig<T>(
 }
 
 /**
- * The shipped synthetic fixture, its matching provider, and a pipeline stub —
- * the self-check's three pieces, which ship together.
- *
- * Therefore, they cannot disagree.
+ * The synthetic fixture, its matching provider, and a pipeline stub ship together, so they cannot disagree.
  */
 async function loadSyntheticConfig() {
 	const { syntheticFixtureAdapter, syntheticFixtureDeps, syntheticFixtureProvider } =

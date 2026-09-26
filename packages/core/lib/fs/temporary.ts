@@ -24,10 +24,8 @@ import { makeDirectories } from "#fs/writers"
  * const out = scratch.path("filer.db")
  * ```
  *
- * {@linkcode move} answers this same shape rather than a bare `AsyncDisposableStack`,
- * which is what a factory needs: the stack's own `move()` drops `path`.
- * Therefore, every caller would rebuild it by hand afterwards. {@linkcode moveWith} does that
- * transfer and attaches what the caller asked for, so a fixture builder is one statement.
+ * {@linkcode move} answers this same shape rather than a bare `AsyncDisposableStack`, whose own `move()`
+ * drops `path`; {@linkcode moveWith} does that transfer and attaches what the caller asked for.
  */
 export interface TemporaryDirectory extends AsyncDisposable {
 	/**
@@ -37,21 +35,17 @@ export interface TemporaryDirectory extends AsyncDisposable {
 	 */
 	readonly path: PathBuilder
 	/**
-	 * Take ownership of a resource.
-	 *
-	 * It is released before the directory is removed, so a database opened on a file
-	 * in here is closed while the file still exists.
+	 * Take ownership of a resource, released before the directory is removed,
+	 * so a database opened on a file in here is closed while the file still exists.
 	 */
 	use<T extends AsyncDisposable | Disposable | null | undefined>(resource: T): T
 	/**
-	 * Hand the directory and everything registered on it to a scope that outlives this one.
-	 *
-	 * This binding disposes no resource afterwards.
+	 * Hand the directory and everything registered on it to a scope that outlives this one;
+	 * this binding disposes no resource afterwards.
 	 */
 	move(): TemporaryDirectory
 	/**
-	 * {@linkcode move}, carrying `extras` alongside.
-	 * The shape a fixture builder returns.
+	 * {@linkcode move}, carrying `extras` alongside — the shape a fixture builder returns.
 	 */
 	moveWith<T extends object>(extras: T): TemporaryDirectory & T
 }
@@ -71,8 +65,7 @@ function asTemporaryDirectory(_path: PathBuilderLike, resources: AsyncDisposable
 /**
  * Create a new temporary directory under `$MAILWOMAN_TEMP_ROOT`, removed when the owning scope ends.
  *
- * The root is created if it does not exist: `mkdtemp` fails on a missing parent, and a
- * configured root that no process has written to yet is the normal state on a fresh machine.
+ * The root is created if it does not exist, because `mkdtemp` fails on a missing parent.
  */
 export async function temporaryDirectory(prefix = "mailwoman-"): Promise<TemporaryDirectory> {
 	const root = tempRootPathBuilder()

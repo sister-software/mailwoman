@@ -1,12 +1,8 @@
 """Writing a resumable checkpoint, and finding the last complete one.
 
-The write is atomic and the discovery trusts one marker, which are two halves of the same
-guarantee: an interrupted save must leave either the previous complete checkpoint or no checkpoint, never
-a partial directory that `--resume auto` would load and train from.
-
-What resumes exactly: model, optimizer, scheduler, step, RNG. What does not: the data stream. The
-sampler position is not saved, so a resumed run continues optimizer state over a re-sampled stream
-rather than the identical row sequence.
+The write is atomic: an interrupted save leaves either the previous complete checkpoint or no
+directory `--resume auto` would load. Model, optimizer, scheduler, step and RNG resume; the data
+stream does not, because the sampler position is not saved.
 """
 
 from __future__ import annotations
@@ -24,10 +20,7 @@ CHECKPOINT_STEP_DIGITS = 6
 def checkpoint_dir_name(step: int | str) -> str:
     """The directory name a checkpoint at ``step`` is written under: ``step-000500``, ``step-060000``.
 
-    One name for the writer and every reader. The writer zero-padded and `export_onnx` interpolated the step
-    verbatim, so its own documented `--step=60000` looked for `step-60000` and raised FileNotFoundError against a
-    directory called `step-060000`; `--step=060000` worked. A step reaches a Modal entry point as a STRING, which is
-    why this takes either.
+    Takes either an int or a string because a step reaches a Modal entry point as a string.
     """
     return f"step-{int(step):0{CHECKPOINT_STEP_DIGITS}d}"
 
@@ -63,7 +56,6 @@ def save_checkpoint(
             torch.save(scheduler.state_dict(), tmp / "scheduler.pt")
         if rng_state is not None:
             torch.save(rng_state, tmp / "rng_state.pt")
-        # Written last: its presence is the completeness marker find_latest_checkpoint trusts.
         (tmp / "training_state.json").write_text(json.dumps(extras, indent=2) + "\n", encoding="utf-8")
     except BaseException:
         shutil.rmtree(tmp, ignore_errors=True)
@@ -75,11 +67,7 @@ def save_checkpoint(
 
 
 def find_latest_checkpoint(output_dir: Path) -> Path | None:
-    """The highest-step COMPLETE ``step-XXXXXX`` directory under ``output_dir``.
-
-    Complete means it carries ``training_state.json``. A directory left by an interrupted
-    pre-atomic save lacks it and is skipped rather than resumed.
-    """
+    """The highest-step COMPLETE ``step-XXXXXX`` directory under ``output_dir``, complete meaning it carries ``training_state.json``."""
     if not output_dir.is_dir():
         return None
     candidates = sorted(p for p in output_dir.glob("step-*") if (p / "training_state.json").is_file())

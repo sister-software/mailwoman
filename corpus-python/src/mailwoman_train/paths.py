@@ -16,7 +16,6 @@ from pathlib import Path
 
 from .env import public
 
-#: This is the package directory, `<repo>/corpus-python/src/mailwoman_train`.
 _PACKAGE_ROOT = Path(__file__).resolve().parent
 
 

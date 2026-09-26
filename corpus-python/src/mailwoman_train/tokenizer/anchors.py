@@ -1,9 +1,5 @@
-"""Projecting the postcode-anchor channel onto SentencePiece pieces.
-
-Three paint paths — gold labels, gold char-offset spans, and shape detection over the raw text —
-share one lookup normalization (`_paint_anchor_chars`) and one char-to-piece projection
-(`_project_anchor_chars_to_pieces`). They can therefore differ in WHERE they paint and never in
-what they paint or how it lands on a piece.
+"""Projecting the postcode-anchor channel onto SentencePiece pieces, whose three paint paths
+share one lookup normalization and one char-to-piece projection.
 """
 
 from __future__ import annotations
@@ -15,21 +11,18 @@ from ..labels import LOCALE_TO_ID, NUM_LOCALES
 from ..types import PieceSpan
 from .spans import whitespace_spans
 
-# Anchor feature width: a uniform country posterior over the locale set + a 2-d normalized centroid.
-# Must equal the model's ``anchor_feature_dim`` default (NUM_LOCALES + 2) — single source of truth.
+# Must equal the model's ``anchor_feature_dim`` default (NUM_LOCALES + 2).
 ANCHOR_FEATURE_DIM = NUM_LOCALES + 2
 
-# A GB unit postcode in the space-stripped key form the anchor lookup is keyed by (``SW1A2AA``); the
-# inward half is always the trailing three characters, so the outward district is the rest. Mirrors
-# ``neural/anchor-inference.ts``'s ``GB_UNIT_KEY`` / ``GB_INWARD_LENGTH``.
+# A GB unit postcode in the space-stripped key form the lookup is keyed by (``SW1A2AA``); the inward
+# half is always the trailing three characters. Mirrors ``neural/anchor-inference.ts``.
 _GB_UNIT_KEY = re.compile(r"^[A-Z]{1,2}\d[A-Z\d]?\d[A-Z]{2}$")
 _GB_INWARD_LENGTH = 3
 
 
 def anchor_feature_vector(posterior: dict[str, float], lat: float, lon: float) -> list[float]:
     """Build the fixed-width anchor feature vector: a uniform country posterior over the locale set
-    (0 for countries outside it, renormalized over the in-set mass) + a normalized centroid
-    (lat/90, lon/180 ∈ [-1, 1]). Width = ANCHOR_FEATURE_DIM."""
+    (renormalized over the in-set mass) plus a normalized centroid (lat/90, lon/180 ∈ [-1, 1])."""
     vec = [0.0] * NUM_LOCALES
     total = 0.0
     for country, weight in posterior.items():
@@ -51,27 +44,21 @@ def realign_anchor_to_pieces(
     pieces: Sequence[PieceSpan],
     anchor_lookup: dict[str, tuple[dict[str, float], float, float]],
 ) -> tuple[list[list[float]], list[float]]:
-    """Project gold postcode-span anchor features onto SP pieces (de-risk pilot #239/#240).
+    """Project gold postcode-span anchor features onto SP pieces.
 
-    Mirrors {@linkcode realign_labels_to_pieces} EXACTLY — same char→piece projection (each piece
-    inherits the value of the first non-whitespace char it covers) — so the anchor lands on precisely
-    the sub-tokens the postcode labels do. That char-based reuse is what guarantees the alignment can't
-    drift (the off-by-one DeepSeek flagged as the silent run-killer).
-
-    Gold-span: the postcode span is read from the row's own ``B/I-postcode`` labels. Each contiguous
-    postcode entity's surface is normalized and looked up in ``anchor_lookup`` (postcode →
-    ({country: weight}, lat, lon)); a hit yields a confidence-1.0 anchor on those chars, a miss yields
-    no anchor (confidence 0). Returns ``(features[n_pieces][ANCHOR_FEATURE_DIM], confidence[n_pieces])``.
+    Mirrors ``realign_labels_to_pieces`` exactly (each piece inherits the first non-whitespace char
+    it covers), so the anchor lands on the sub-tokens the postcode labels do. A contiguous
+    ``B/I-postcode`` entity is normalized and looked up in ``anchor_lookup``; a hit yields a
+    confidence-1.0 anchor on those chars, a miss yields no anchor. Returns
+    ``(features[n_pieces][ANCHOR_FEATURE_DIM], confidence[n_pieces])``.
     """
     zero = [0.0] * ANCHOR_FEATURE_DIM
-    # Per-char anchor: feature vector + confidence for chars inside a looked-up postcode entity.
     char_feat: list[list[float]] = [zero] * len(raw)
     char_conf: list[float] = [0.0] * len(raw)
     spans = whitespace_spans(raw, tokens)
     i = 0
     while i < len(labels):
         if labels[i].endswith("-postcode") and labels[i].startswith("B"):
-            # Gather this contiguous postcode entity (B then any I-postcode).
             j = i + 1
             while j < len(labels) and labels[j] == "I-postcode":
                 j += 1
@@ -93,13 +80,12 @@ def realign_anchor_to_pieces_from_spans(
     pieces: Sequence[PieceSpan],
     anchor_lookup: dict[str, tuple[dict[str, float], float, float]],
 ) -> tuple[list[list[float]], list[float]]:
-    """Spans-native sibling of ``realign_anchor_to_pieces`` (#519, the v0.5.0 path).
+    """Spans-native sibling of ``realign_anchor_to_pieces``.
 
-    The postcode entity's char range comes straight off the row's char-offset spans (``span_tags ==
-    "postcode"``) instead of being reconstructed from token labels + ``whitespace_spans``; lookup
-    normalization and the char→piece projection are SHARED with the token path, so the channel
-    tensor is bit-identical on rows where the postcode span equals the token-quantized range
-    (i.e. every row without intra-postcode punctuation).
+    The postcode entity's char range comes off the row's char-offset spans (``span_tags ==
+    "postcode"``) instead of token labels plus ``whitespace_spans``; lookup normalization and the
+    char→piece projection are shared with the token path, so the channel tensor is bit-identical
+    where the span equals the token-quantized range.
     """
     zero = [0.0] * ANCHOR_FEATURE_DIM
     char_feat: list[list[float]] = [zero] * len(raw)
@@ -121,17 +107,10 @@ def _paint_anchor_chars(
 ) -> None:
     """Look up the postcode surface at ``raw[begin:end]`` and paint its chars on a hit.
 
-    Shared by both anchor paths — one normalization (space-stripped, uppercased), one painting
-    rule, so token-era and span-era rows cannot diverge here.
-
-    GB OUTWARD FALLBACK (2026-08-05). A unit postcode that misses retries its outward district
-    (``SW1A 2AA`` -> ``SW1A``) and paints the whole unit span from it, mirroring
-    ``neural/anchor-inference.ts``'s ``spanMode: "shaped"`` exactly. It warrants its keep on real
-    recipe outputs: against the v2 lookup, ``synth-gb-v1`` misses 217 spans in 200,000 rows (retired unit
-    codes — Code-Point Open is a 2026-05 snapshot, the tuples are older), and 215 of those 217 have
-    a live outward district. INERT for every lookup shipped before that date: they hold five-digit
-    keys only, and a five-digit key's outward part is two digits, which is not a key in any of
-    them (and the shape guard rejects it first).
+    One normalization (space-stripped, uppercased) and one painting rule, shared by both anchor
+    paths so token-era and span-era rows cannot diverge. A GB unit postcode that misses retries
+    its outward district (``SW1A 2AA`` -> ``SW1A``) and paints the whole unit span from it,
+    mirroring ``neural/anchor-inference.ts``'s ``spanMode: "shaped"``.
     """
     postcode = raw[begin:end].replace(" ", "").upper()
     hit = anchor_lookup.get(postcode)
@@ -152,10 +131,9 @@ def _project_anchor_chars_to_pieces(
     char_conf: Sequence[float],
     pieces: Sequence[PieceSpan],
 ) -> tuple[list[list[float]], list[float]]:
-    """Char→piece projection for the anchor channel — first non-whitespace char wins.
+    """Char→piece projection for the anchor channel: the first non-whitespace char wins.
 
-    Mirrors ``project_char_labels_to_pieces`` exactly (the off-by-one DeepSeek flagged as the
-    silent run-killer); shared by both anchor paths.
+    Mirrors ``project_char_labels_to_pieces`` and is shared by both anchor paths.
     """
     zero = [0.0] * ANCHOR_FEATURE_DIM
     feats: list[list[float]] = []
@@ -178,18 +156,15 @@ def realign_anchor_to_pieces_shaped(
     pieces: Sequence[PieceSpan],
     anchor_lookup: dict[str, tuple[dict[str, float], float, float]],
 ) -> tuple[list[list[float]], list[float]]:
-    """Shape-detected sibling of ``realign_anchor_to_pieces`` (#220/#723, ``anchor_paint_mode="shaped"``).
+    """Shape-detected sibling of ``realign_anchor_to_pieces`` (``anchor_paint_mode="shaped"``).
 
-    Paints the anchor on postcode-SHAPED spans detected over the RAW text (``postcode_shapes.collect_matches``
-    — the train-side mirror of inference's ``neural/postcode-anchor.ts``), not on gold ``postcode`` labels.
-    So at TRAIN the anchor fires on the same spans inference paints — INCLUDING a house-number-that-looks-
-    like-a-ZIP ("12345 Main St") — which the gold paths never did (the #723 train/inference mismatch that
-    let the anchor pollute leading-5-digit house numbers). A shaped span that misses ``anchor_lookup`` paints
-    no anchor (confidence 0), exactly like inference. Lookup normalization + char->piece projection are SHARED
-    with the gold paths via ``_paint_anchor_chars`` / ``_project_anchor_chars_to_pieces`` — so this can only
-    differ from gold in WHERE it paints, never in what it paints or how it lands on pieces. (The rare DE
-    ``D-`` / Dutch-spaced shapes inherit the gold path's space-strip+upper normalization — a pre-existing
-    minor gap rather than introduced here. the dominant NUM5/ZIP4/EU-numeric shapes normalize identically.)
+    Paints on postcode-shaped spans detected over the raw text (``postcode_shapes.collect_matches``,
+    the train-side mirror of inference's ``neural/postcode-anchor.ts``) rather than gold ``postcode``
+    labels, so at train the anchor fires on the same spans inference paints, including a
+    house-number-that-looks-like-a-ZIP. A shaped span that misses ``anchor_lookup`` paints no
+    anchor, exactly like inference. Lookup normalization and char→piece projection are shared with
+    the gold paths, so this can differ from gold only in where it paints; the rare DE ``D-`` and
+    Dutch-spaced shapes inherit the gold path's space-strip+upper normalization.
     """
     from ..features.postcode_shapes import collect_matches
 

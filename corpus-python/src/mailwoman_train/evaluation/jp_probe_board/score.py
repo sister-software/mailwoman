@@ -17,8 +17,8 @@ from .decode import decode_all_spans, haversine_km, norm_key
 ACCEPT_KM = 15.0
 CHECK = 0.70
 
-# Which two predicted spans get concatenated into the centroid-table key, per label set. STAGE3 is
-# the Leg-1 mapping (prefecture → region, municipality → locality); stage3-jp gives them own tags.
+# Which two predicted spans get concatenated into the centroid-table key, per label set. STAGE3
+# maps prefecture → region and municipality → locality; stage3-jp gives them their own tags.
 RESOLVE_TAGS: dict[str, tuple[str, str]] = {
     "stage3": ("region", "locality"),
     "stage3-jp": ("prefecture", "municipality"),
@@ -61,13 +61,12 @@ def score_row(
     predicted = decode_all_spans(raw, ids, id_to_label)
     pred = {tag: surfaces[0] for tag, surfaces in predicted.items()}
 
-    # Per-tag exact-match diagnostics vs the board's gold spans: every gold span counts, and it hits when the
-    # model emitted that exact surface under that tag anywhere in the row.
+    # A gold span hits when the model emitted that exact surface under that tag anywhere in the row.
     gold_spans = [(t, raw[s:e]) for s, e, t in zip(row["span_starts"], row["span_ends"], row["span_tags"], strict=True)]
     tag_totals = [t for t, _ in gold_spans]
     tag_hits = [t for t, g in gold_spans if g in predicted.get(t, ())]
-    # The resolve read keys on the first span per tag on both sides, so a two-span tag reads the same way in
-    # `pred` and `gold`.
+    # The resolve read keys on the first span per tag on both sides, so a two-span tag reads the same
+    # way in `pred` and `gold`.
     gold: dict[str, str] = {}
     for t, g in gold_spans:
         gold.setdefault(t, g)
@@ -80,8 +79,9 @@ def score_row(
     gold_exact = False
     if hit is None and pred.get(region_tag) == gold.get(region_tag) and pred.get(locality_tag) == gold_muni:
         # A surface the centroid table does not key (the kana register renders うんぜん市 for 雲仙市) can still
-        # be read: when the predicted pair equals the gold pair span for span, the row's own kanji fields name
-        # the centroid. The JP board names those fields `pref` / `muni`; the KR board `region` / `city`.
+        # be read: when the predicted pair equals the gold pair span for span, the row's own kanji
+        # fields name the centroid. The JP board names those fields `pref` / `muni`; the KR board
+        # `region` / `city`.
         gold_key = norm_key(
             str(row.get("pref") or row.get("region") or "") + "|" + str(row.get("muni") or row.get("city") or "")
         )
@@ -105,7 +105,7 @@ class BoardTallies:
 
     The board holds out whole municipalities, and one of them carries 823 of 20,000 rows, so a
     row-weighted number moves 2 pp on a single name. The macro over municipalities is reported
-    beside the blended fraction. the pre-registered check stays the blended one.
+    beside the blended fraction; the pre-registered check stays the blended one.
     """
 
     def __init__(self) -> None:

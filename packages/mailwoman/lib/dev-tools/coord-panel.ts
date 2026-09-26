@@ -2,8 +2,7 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file Reading a coordinate eval set as a panel, writing a row through its country's layout, and the suffix split the
- *   probes over it stratify by. Shared by the tools that measure the bare admin surface.
+ * @file Reading a coordinate eval set as a panel and writing a row through its country's layout.
  */
 
 import { type ComponentDict, formatAddress } from "@mailwoman/codex/address-format"
@@ -21,10 +20,8 @@ export interface CoordRow {
 	lat?: number
 	lon?: number
 	/**
-	 * The row's own country, when the set carries one.
-	 *
-	 * A single-locale set carries none and takes the reader's default,
-	 * so every row need not repeat the same code.
+	 * The row's own country, when the set carries one; a single-locale set carries none
+	 * and takes the reader's default.
 	 */
 	country?: string
 	expected?: { locality?: string; region?: string; postcode?: string }
@@ -41,8 +38,8 @@ export interface PanelLocality {
 	lat: number
 	lon: number
 	/**
-	 * The set's own `input` string for this place, carried through so a probe that needs a real street —
-	 * or any other part of a written address — takes it from the row rather than inventing one.
+	 * The set's own `input` string for this place, carried so a probe that needs a
+	 * real street takes it from the row rather than inventing one.
 	 */
 	input: string
 }
@@ -53,19 +50,15 @@ export interface PanelLocality {
 export interface CoordPanel {
 	localities: PanelLocality[]
 	/**
-	 * Rows whose expected locality carried a trailing parenthetical, stripped before grading.
-	 *
-	 * Counted so a caller can see how much of the panel the normalizer changed.
+	 * Rows whose expected locality carried a trailing parenthetical, stripped before grading,
+	 * counted so a caller can see how much of the panel the normalizer changed.
 	 */
 	qualifiersStripped: number
 }
 
 /**
- * Read a coordinate eval set into one row per place.
- *
- * Keyed by country, region and name: 30 US states hold a Springfield, and a
- * name-only key collapses them into one row while shrinking the panel silently —
- * reading a 5,703-row source, that key dropped 639 rows.
+ * Read a coordinate eval set into one row per place, keyed by country, region and name
+ * because 30 US states hold a Springfield and a name-only key would collapse them.
  */
 export async function readCoordPanel(
 	path: PathBuilderLike,
@@ -99,16 +92,11 @@ export async function readCoordPanel(
 }
 
 /**
- * A panel place written through its country's codex layout, with any extra components folded into the dict.
+ * Write a panel place through its country's codex layout, with any extra components
+ * folded into the dict, because `${locality}, ${region} ${postcode}` is the United
+ * States postal order and prints other countries backwards.
  *
- * `${locality}, ${region} ${postcode}` is the United States postal order and no other order:
- * it prints Japan's admin run backwards, drops each country's own separator convention,
- * and puts a postcode after a region in the systems that lead with it.
- * A surface that differs only in which components are present — a country name,
- * a house number and a street — is a dict rather than a template.
- *
- * Answers `""` when no layout can write the country: 55 of the 252 shipped records carry no usable
- * skeleton, and reporting no layout for one of those is an absence rather than an invented order.
+ * Answers `""` when no layout can write the country, which is an absence rather than an invented order.
  */
 export function renderAdmin(place: PanelLocality, extra: ComponentDict = {}): string {
 	return formatAddress(
@@ -119,13 +107,8 @@ export function renderAdmin(place: PanelLocality, extra: ComponentDict = {}): st
 }
 
 /**
- * The place's last word, when that word is a USPS suffix — the collision a US
- * admin surface splits on (#2308).
- *
- * Membership is `US_STREET_SUFFIX_LOOKUP`: every Pub-28 canonical and every variant
- * rather than the curated name-prone subset.
- * The narrower list moves rows between buckets and moves every bucket's rate with them, so which
- * bucket a row lands in is a property of the word list, and the word list has to be the whole table.
+ * The place's last word when it is a USPS suffix, membership drawn from the whole
+ * `US_STREET_SUFFIX_LOOKUP` table because which bucket a row lands in is a property of that word list.
  */
 export function suffixTail(locality: string): string | undefined {
 	const last = locality

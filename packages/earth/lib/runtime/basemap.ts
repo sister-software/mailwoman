@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The crisp-polygon database opener the geocoder runtime hands to `@mailwoman/react/map`'s declarative overlays.
- *   No code here touches React. the resolved-place geometry math lives in `@mailwoman/react/map/geometry`.
+ * The crisp-polygon database opener the geocoder runtime hands to `@mailwoman/react/map`'s declarative overlays; no
+ * code here touches React, and the resolved-place geometry math lives in `@mailwoman/react/map/geometry`.
  */
 
 /**
@@ -15,9 +15,8 @@ export type PlaceGeometry =
 	| { type: "MultiPolygon"; coordinates: number[][][][] }
 
 /**
- * Id → simplified admin geometry, backed by the lazily-loaded `wof-polygons.db`.
- *
- * Async (range-loaded).
+ * Id → simplified admin geometry, backed by the lazily-loaded `wof-polygons.db`;
+ * async because each read is range-loaded.
  */
 export interface PolygonDB {
 	get(id: number): Promise<PlaceGeometry | null>
@@ -26,8 +25,6 @@ export interface PolygonDB {
 /**
  * Open the crisp-polygon DB via sql.js-httpvfs: a single `select geom where id=?` touches about
  * one page, so the browser fetches a few KB of the 19 MB file rather than the whole thing.
- *
- * The same range-load path as the resolver DB.
  */
 export async function loadPolygonDB(url: string, sqljsBaseURL: string): Promise<PolygonDB> {
 	const { loadHTTPVFSDatabase, makeHTTPVFSPolygonLookup } =

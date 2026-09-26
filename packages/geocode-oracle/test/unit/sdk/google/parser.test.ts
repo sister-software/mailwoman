@@ -2,13 +2,7 @@
  * @copyright Sister Software.
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file Tests for the Google `address_components` → `ComponentTag` mapping.
- *
- *   Fixtures are hand-built from real Geocoding API response shapes. No code here touches the network.
- *   The cases are chosen to pin the four decisions that are not mechanical — the GB `postal_town`
- *   fall-through, the region short/long split, the ZIP+4 join, and the `GEOMETRIC_CENTER` tier
- *   disambiguation — plus the two deliberate divergences from the isp-nexus original (no uppercasing,
- *   no coordinate rounding).
+ * @file Tests for the Google `address_components` → `ComponentTag` mapping; fixtures are hand-built from real response shapes and no code here touches the network.
  */
 
 import {
@@ -54,8 +48,8 @@ describe("buildGoogleComponents", () => {
 
 		expect(components).toEqual({
 			house_number: "1600",
-			// `route` takes the long name.
-			// The abbreviation is Google's display convenience rather than the form a parser sees in input.
+			// `route` takes the long name: the abbreviation is Google's display convenience
+			// rather than the form a parser sees in input.
 			street: "Amphitheatre Parkway",
 			locality: "Mountain View",
 			subregion: "Santa Clara County",
@@ -93,9 +87,8 @@ describe("buildGoogleComponents", () => {
 	})
 
 	it("does not write one locality component into two tags", () => {
-		// The consume-once rule.
-		// Without it the trailing `locality → dependent_locality` fall-through would
-		// duplicate the value into both tags for every non-GB address on earth.
+		// Without consume-once, the trailing `locality → dependent_locality` fall-through
+		// would duplicate the value into both tags for every non-GB address.
 		const components = buildGoogleComponents(
 			result([component("Paris", "Paris", "locality", "political"), component("France", "FR", "country", "political")])
 		)
@@ -127,8 +120,6 @@ describe("buildGoogleComponents", () => {
 	})
 
 	it("preserves diacritics and case rather than uppercasing", () => {
-		// The isp-nexus original ended both accessors in `.toUpperCase()`.
-		// This is the assertion that stops that coming back.
 		const components = buildGoogleComponents(
 			result([
 				component("Köln", "Köln", "locality", "political"),
@@ -221,7 +212,6 @@ describe("parseGoogleGeocodeResult", () => {
 		const parsed = parseGoogleGeocodeResult(paris)
 
 		expect(parsed.provider).toBe("google")
-		// Untouched — the original rounded both axes through `toPrecision(9)`.
 		expect(parsed.address.geocode?.coordinate).toEqual({ latitude: 48.8335023, longitude: 2.3686051 })
 		expect(parsed.address.geocode?.tier).toBe("address_point")
 		expect(parsed.address.geocode?.uncertaintyMeters).toBeNull()
@@ -238,9 +228,8 @@ describe("parseGoogleGeocodeResult", () => {
 	})
 
 	it("mints an address ID that its own parser can read back", () => {
-		// The guard on the `state` prefix: `Île-de-France` is not a two-letter code,
-		// so it must not be interpolated into the key.
-		// Without the guard this ID is `île-de-france.<cell>.<hash>` and `isPostalAddressID` rejects it.
+		// The `state` prefix guard keeps a non-two-letter region such as `Île-de-France`
+		// out of the key, which `isPostalAddressID` would otherwise reject.
 		expect(parseGoogleGeocodeResult(paris).addressID).toMatch(/^[a-z]{2}\.[0-9a-f]+\.[0-9a-f]{16}$/)
 	})
 

@@ -3,28 +3,12 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Set the status of named board rows from a control arm's read, rewriting the `gauntlet/cases/<cc>/*.jsonl` files
- *   that hold them.
+ *   A locale whose overlay is absent from the weights cache is graded base-only, so `--refuse-country` states which
+ *   locales the read could not speak for.
  *
- *   A row's status is a claim about a model: `improvement_target` says the arm this board is graded against fails the
- *   row. Author a board against one model and grade it against another and the claim is simply false — the target set
- *   then contains rows the control already passes, and the comparison reports them as wins.
+ *   Every id must match a row: a typo that promotes nothing reads exactly like a list already applied.
  *
- *   The gauntlet's regression layer marks every row whose status disagrees with the run as now passing and says to
- *   promote it to `status=pass`. Feed those ids here to make the board agree with the arm it is graded against.
- *
- *   warning: read the run's overlay warnings before feeding it a list. A locale whose overlay is absent from the
- *   weights cache is graded base-only, and a base-only pass is not evidence that the production path passes — the
- *   overlay changes the prior. This tool cannot see that, so `--refuse-country` is how the caller states which locales
- *   the read could not speak for.
- *
- *   Every id must match a row. An id that matches no row is an error rather than a skip: a promote list is transcribed from
- *   a log, and a typo that silently promotes no row reads exactly like a list that was already applied.
- *
- *   Rows are read from the case files rather than through `loadRegressionCases`, which omits the source file for a row
- *   came from. Deriving that from the id would guess — `sg-register-block-…` lives in `register.jsonl` but
- *   `ve-f5-caracas-…` lives in `family-locality-postcode.jsonl` — and a wrong guess writes a row into a file it does
- *   not belong to.
+ *   Rows are read from the case files rather than through `loadRegressionCases`, which omits a row's source file.
  *
  *   Run: node packages/mailwoman/lib/dev-tools/apply-board-promotions.run.ts --ids <file> [--to pass]
  *   [--refuse-country de,es,gb,in,it,nz] [--dry-run]
@@ -79,10 +63,8 @@ const countryDirectories = (
 	.map((entry) => entry.name)
 	.toSorted()
 
-// Read every case file first and validate the whole list against it.
-// No file is written until the list is known to be good: a refusal that fires halfway
-// through leaves some files promoted and some not, which is a worse state than either
-// outcome and reads as a partial application nobody asked for.
+// Validate the whole list before writing anything: a refusal halfway through
+// would leave some files promoted and some not.
 const byPath = new Map<string, SeedCase[]>()
 const found = new Map<string, string>()
 
@@ -92,7 +74,6 @@ for (const cc of countryDirectories) {
 	const files = await Globerator.files("jsonl", { cwd: directory, absolute: false, recursive: false }).toSorted()
 
 	for (const name of files) {
-		// A string, because it keys `byPath` and `found`.
 		const path = directory(name).toString()
 
 		const rows = await JSONSpliterator.fromAsync<unknown>(path)

@@ -3,23 +3,20 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The Earth service worker. `vite-plugin-pwa` injects the precache manifest into this file: the app shell, its
- *   hashed assets, the icons and the manifest. No code here precaches a model, a database or a tile.
+ * The Earth service worker. `vite-plugin-pwa` injects the precache manifest into this file — the app shell, its
+ * hashed assets, the icons and the manifest — and no code here precaches a model, a database or a tile.
  *
- *   The worker also carries the range-chunk cache for the byte-range databases the resolver reads from the data
- *   origin. Two jobs:
+ * The worker also carries the range-chunk cache for the byte-range databases the resolver reads from the data
+ * origin: every validated 64 KB range chunk of a versioned, immutable URL is stored in Cache Storage keyed by URL
+ * and offset, and each chunk's body length is checked against its Content-Range because Mobile Safari's http cache
+ * can hand back a torn chunk (a truncated body for a 206) that reaches SQLite as "database disk image is
+ * malformed" — a torn chunk is refetched once with `cache: "no-store"`, and the readers' own cache-busting retry
+ * stays as the backstop for browsers without service workers.
  *
- *   1. persistence. The database URLs are versioned and immutable, so every validated 64 KB range chunk is stored in
- *      Cache Storage keyed by URL and offset. A repeat visit replays the warm-up and the cascade reads from disk.
- *   2. integrity. Mobile Safari's http cache can hand back a torn range chunk (a truncated body for a 206), which
- *      reaches SQLite as "database disk image is malformed". Every chunk's body length is checked against its
- *      Content-Range before it is cached or served. a torn chunk is refetched once with `cache: "no-store"`. The
- *      readers' own cache-busting retry stays as the backstop for browsers without service workers.
- *
- *   Non-database requests are never intercepted (no `respondWith`, so the browser default applies). sql.js-httpvfs
- *   issues its range reads as synchronous XHR inside a dedicated worker, and those still route through here because a
- *   dedicated worker inherits its creator document's controller. The page posts {@link PruneMessage} after a release is
- *   selected, and chunks from other releases are dropped.
+ * Non-database requests are never intercepted (no `respondWith`); sql.js-httpvfs issues its range reads as
+ * synchronous XHR inside a dedicated worker, which still routes through here because a dedicated worker inherits
+ * its creator document's controller, and the page posts {@link PruneMessage} after a release is selected and chunks
+ * from other releases are dropped.
  */
 
 /// <reference lib="webworker" />
@@ -35,9 +32,6 @@ precacheAndRoute(self.__WB_MANIFEST)
 
 // #region Range cache
 
-/**
- * Partial Content: the response to a range request, which is what this worker caches.
- */
 const HTTP_PARTIAL_CONTENT = 206
 
 const CACHE_NAME = "mailwoman-db-ranges-v1"
@@ -84,8 +78,8 @@ self.addEventListener("fetch", (event) => {
 		return
 	}
 
-	// Only the database files, and only their plain URLs: a `?cb=` cache-busting retry from
-	// the readers means "give me untouched fresh bytes", so it bypasses this cache entirely.
+	// Only the database files with plain URLs: a `?cb=` cache-busting retry from the
+	// readers asks for untouched fresh bytes, so it bypasses this cache entirely.
 	if (url.hostname !== DB_HOST || !url.pathname.endsWith(".db") || url.search !== "") return
 
 	const range = request.headers.get("range")
@@ -96,14 +90,11 @@ self.addEventListener("fetch", (event) => {
 	event.respondWith(respondWithCachedRange(request, url.href, Number(match[1]), Number(match[2])))
 })
 
-/**
- * Serve a range chunk from Cache Storage, falling back to a validated network fetch.
- */
 async function respondWithCachedRange(request: Request, href: string, start: number, end: number): Promise<Response> {
 	try {
 		const cache = await caches.open(CACHE_NAME)
 		// The Cache API rejects 206 responses, so chunks are stored as 200s under a synthetic
-		// per-range URL, with the real Content-Range stashed in a header for reconstruction.
+		// per-range URL with the real Content-Range in a header for reconstruction.
 		const cacheKey = `${href}?mwrange=${start}-${end}`
 		const hit = await cache.match(cacheKey)
 
@@ -135,7 +126,6 @@ async function respondWithCachedRange(request: Request, href: string, start: num
 			chunk = response.status === HTTP_PARTIAL_CONTENT ? await validatedChunk(response) : null
 		}
 
-		// A 200, a 4xx, a 5xx, or a chunk still torn is handed to the reader untouched.
 		if (!chunk) return response
 
 		await cache.put(
@@ -156,11 +146,9 @@ async function respondWithCachedRange(request: Request, href: string, start: num
 }
 
 /**
- * Read a 206 response's body and verify its length against the Content-Range header.
- *
- * The final chunk of a file is legitimately shorter than requested, so the header
- * rather than the request, is the truth.
- * Null for a torn body or an unparsable header.
+ * Read a 206 response's body and verify its length against the Content-Range header,
+ * which is the truth because a file's final chunk is legitimately shorter than requested;
+ * null for a torn body or an unparsable header.
  */
 async function validatedChunk(response: Response): Promise<ValidatedChunk | null> {
 	const contentRange = response.headers.get("content-range")
@@ -175,9 +163,6 @@ async function validatedChunk(response: Response): Promise<ValidatedChunk | null
 	return { body, contentRange }
 }
 
-/**
- * The byte count a `bytes start-end/total` Content-Range header describes, or null.
- */
 function rangeLength(contentRange: string): number | null {
 	const parsed = /^bytes (\d+)-(\d+)\/(?:\d+|\*)$/u.exec(contentRange)
 
@@ -186,9 +171,6 @@ function rangeLength(contentRange: string): number | null {
 	return Number(parsed[2]) - Number(parsed[1]) + 1
 }
 
-/**
- * Reconstruct the 206 the reader's XHR expects from a validated chunk.
- */
 function rangeResponse(body: ArrayBuffer, contentRange: string): Response {
 	return new Response(body, {
 		status: HTTP_PARTIAL_CONTENT,
@@ -201,9 +183,6 @@ function rangeResponse(body: ArrayBuffer, contentRange: string): Response {
 	})
 }
 
-/**
- * Drop cached chunks whose URL path does not include the kept release's segment.
- */
 async function pruneOtherVersions(keepVersion: string): Promise<void> {
 	const cache = await caches.open(CACHE_NAME)
 	const keepSegment = `/${keepVersion}/`

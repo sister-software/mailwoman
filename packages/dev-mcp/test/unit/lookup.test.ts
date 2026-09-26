@@ -8,11 +8,7 @@ import { loadFSTArtifact, lookupFST, lookupNormalize, lookupStreetMorphology } f
 import { describe, expect, it } from "vitest"
 
 /**
- * A stub FST keyed on the joined token path, carrying the entries the real
- * `fst-en-us.bin` returns for these surfaces.
- *
- * The importances are the measured ones, so the zero below is the real gazetteer's zero
- * rather than a convenient one.
+ * The entries below are the measured `fst-en-us.bin` values, so the zero is the real gazetteer's zero.
  */
 function stubFST(entries: Record<string, Array<{ wofID: number; placetype: string; referential: number }>>) {
 	const paths = Object.keys(entries)
@@ -33,17 +29,15 @@ const tokens = (surface: string): string[] => surface.toLowerCase().split(/\s+/)
 
 describe("lookupFST", () => {
 	const fst = stubFST({
-		// Measured 2026-08-16 against fst-en-us.bin.
 		"san juan": [{ wofID: 101_723_479, placetype: "locality", referential: 0.3733 }],
 		juan: [{ wofID: 1_242_986_585, placetype: "locality", referential: 0 }],
 		cook: [{ wofID: 102_081_171, placetype: "county", referential: 0.4948 }],
 	})
 
 	it("separates a zero-importance hit from a firing one", () => {
-		// `applyBias` computes `importance * biasScale * maxBias * …` and keeps a tag only
-		// when that exceeds the running max, which starts at 0.
-		// So a BIO-mapped entry at importance 0 contributes no bias to the decoder, and a caller
-		// reading only `hit` and `importance` cannot tell that from a bias the decoder acts on.
+		// `applyBias` keeps a tag only when the scaled importance exceeds a running max that
+		// starts at 0, so an importance-0 entry adds no bias and a caller reading only `hit`
+		// and `importance` cannot tell it from an acted-on bias.
 		const [inert] = lookupFST(fst, tokens, ["Juan"])
 
 		expect(inert!.entries).toEqual([{ tag: "locality", importance: 0, fires: false }])
@@ -51,10 +45,6 @@ describe("lookupFST", () => {
 	})
 
 	it("keeps a MISS apart from a zero", () => {
-		// The whole point.
-		// `Juan` is known and scored zero; `Sultan Qaboos` is not known at all.
-		// A caller that conflated them would read "the gazetteer gives this no weight"
-		// for a surface the gazetteer has never heard of.
 		const [known, unknown] = lookupFST(fst, tokens, ["Juan", "Sultan Qaboos"])
 
 		expect(known).toMatchObject({ hit: true })
@@ -71,8 +61,8 @@ describe("lookupFST", () => {
 	})
 
 	it("says explicitly when an accepted surface gives the decoder nothing", () => {
-		// `county` is walked, deduped, and dropped without touching the emission matrix.
-		// An empty entry list here is a third state — neither absence nor a zero — and it must say so.
+		// `county` is dropped without touching the emission matrix, so an empty entry
+		// list is a third state — neither absence nor a zero.
 		const [row] = lookupFST(fst, tokens, ["Cook"])
 
 		expect(row).toMatchObject({ hit: true })
@@ -117,9 +107,8 @@ describe("lookupNormalize", () => {
 
 describe("loadFSTArtifact", () => {
 	it("reports an unresolved path as unavailable rather than as an empty source", async () => {
-		// A source whose artifact is missing answers "no" to everything,
-		// which reads as absence for every query.
-		// That is the one answer this must never give silently.
+		// A source whose artifact is missing answers "no" to everything, which reads as
+		// absence for every query and must never be reported silently.
 		expect(await loadFSTArtifact(undefined, () => stubFST({}))).toEqual({
 			unavailable: "No artifact path was resolved for this source.",
 		})

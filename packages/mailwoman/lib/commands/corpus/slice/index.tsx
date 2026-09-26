@@ -2,13 +2,6 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- *
- *   `mailwoman corpus slice <recipe>` — run a registered corpus recipe and write its output, the
- *   durable replacement for the sixteen one-off build scripts that preceded the recipe registry.
- *   `--list` prints the registry. Recipes are `tuples` (read `--input` jsonl of
- *   (locality,region,postcode,country) tuples) or `generate` (self-generate `--count` rows). Output
- *   is aligned LabeledRow jsonl ready for the parquet step (`mailwoman corpus build`). The registry
- *   lives in `packages/corpus/lib/recipes/`.
  */
 
 import { openWriteStream } from "@mailwoman/core/fs/streams"
@@ -27,7 +20,7 @@ import {
 	useCommandTask,
 } from "#cli-kit"
 /**
- * Bare `mailwoman corpus slice` stays the recipe runner now that this directory hosts subcommands.
+ * Bare `mailwoman corpus slice` stays the recipe runner despite the subcommands in this directory.
  */
 export const isDefault = true
 
@@ -141,14 +134,8 @@ const CorpusRecipeRun: CommandComponent<typeof spec> = ({ options, args }) => {
 
 		console.error(`▸ recipe "${name}" [${recipe.mode}] seed=${seed} → ${options.out}`)
 
-		// Write beside the target and swap, rather than opening the target itself.
-		//
-		// `openWriteStream` truncates on open, and a recipe validates its inputs
-		// inside `run` — after this point.
-		// A run that then refuses leaves the target at zero bytes with its previous contents gone.
-		// That happened to `intersection-train.jsonl` on 2026-09-22: the recipe threw
-		// on a missing GDAL dataset and took 40,000 rows with it, recoverable only
-		// because the parquet built from that jsonl still held them.
+		// `openWriteStream` truncates on open and a recipe validates its inputs inside `run`,
+		// so writing directly would leave the target at zero bytes when a run refuses.
 		const stagedPath = `${options.out}.partial`
 		const stream = openWriteStream(stagedPath, { encoding: "utf8" })
 
@@ -173,13 +160,8 @@ const CorpusRecipeRun: CommandComponent<typeof spec> = ({ options, args }) => {
 
 		await movePath(stagedPath, options.out)
 
-		// The invocation, beside its output.
-		//
-		// A recipe output's row count records what a recipe emitted and no fact about what it was asked for.
-		// The seed, `--count` and every fraction lived only in the shell that ran it,
-		// so a corpus could not say how a country's share of it was decided.
-		//
-		// Written after the rows, so a sidecar exists only beside a run that finished.
+		// A recipe output records what a recipe emitted, not what it was asked for,
+		// so the invocation is written beside it after the rows, marking only a finished run.
 		await writeLocalJSONFile(
 			{
 				recipe: name,

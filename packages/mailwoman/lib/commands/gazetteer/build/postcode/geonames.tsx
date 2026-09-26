@@ -3,15 +3,13 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mailwoman gazetteer build postcode-geonames` — the GeoNames-postal tail database (#920): the
- *   postcode coverage for countries with no `whosonfirst-data-postalcode-<cc>` repo, GB included.
- *   Ingest the `<CC>.txt` dumps → self-ancestors → indexes → provenance `meta` → FTS → seal.
+ *   `mailwoman gazetteer build postcode-geonames` — the GeoNames-postal tail database: postcode
+ *   coverage for countries with no `whosonfirst-data-postalcode-<cc>` repo, GB included.
  *
- *   This is the reproducer for `postalcode-geonames-tail.db`, an artifact that spent a year with no
- *   way to rebuild it after #1027 deleted its `build-unified-wof` Phase-2d builder. It writes to a
- *   new dated path and swaps no artifact. promotion over the shipped database is a separate, deliberate
- *   step. GeoNames postal is CC-BY 4.0 and the GB rows carry an additional OGL v3 / Crown-copyright
- *   obligation from Ordnance Survey Code-Point Open — both ride in the artifact's `meta` table.
+ *   It writes to a new dated path and swaps no artifact; promotion over the shipped database is a
+ *   separate, deliberate step. GeoNames postal is CC-BY 4.0 and the GB rows carry an additional OGL v3
+ *   / Crown-copyright obligation from Ordnance Survey Code-Point Open — both ride in the artifact's
+ *   `meta` table.
  */
 
 import { formatFileSize } from "@mailwoman/core/fs/readers"

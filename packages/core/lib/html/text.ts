@@ -5,13 +5,14 @@
  *
  *   Reading an html fragment as text, on `htmlparser2` — one rule, read two ways.
  *
- *   `stripHTMLToText` (`@mailwoman/core/trust-policies`) answers almost all of this already, and
- *   correctly: it decodes entities, survives a `<` inside an attribute value, and leaves source
- *   whitespace runs intact. What it cannot do is the one rule here — `textContent` inserts no separator at an
- *   element boundary, so `<td>a</td><td>b</td>` reads as `"ab"` and `<p>Acme Fiber</p><p>LLC</p>` as
- *   `"Acme FiberLLC"`, a name that appears nowhere in the document. Reach for the sanitizer from a module
- *   that already sanitizes. its Node build constructs a jsdom window at import (measured 422 ms, 71 MB,
- *   against `htmlparser2`'s 12 ms), which is priced for sanitizing rather than for reading a table.
+ *   `stripHTMLToText` (`@mailwoman/core/trust-policies`) decodes entities, survives a `<` inside an attribute
+ *   value and leaves source whitespace runs intact, but `textContent` inserts no separator at an element boundary,
+ *   so `<td>a</td><td>b</td>` reads as `"ab"` and `<p>Acme Fiber</p><p>LLC</p>` as `"Acme FiberLLC"`, a name that
+ *   appears nowhere in the document.
+ *
+ *   Reach for the sanitizer only from a module that already sanitizes: its Node build constructs a jsdom window at
+ *   import (measured 422 ms, 71 MB, against `htmlparser2`'s 12 ms), priced for sanitizing rather than for reading
+ *   a table.
  */
 
 import { Parser } from "htmlparser2"
@@ -71,14 +72,13 @@ export const BLOCK_ELEMENTS: ReadonlySet<string> = new Set([
  * itself: a caller splitting on a run must include U+00A0 in its own character class,
  * since `&nbsp;` and `&#160;` are the same character and `[ \t]` matches neither.
  *
- * Markup between two text runs inserts one separator, and only where the source states none.
- * So `<td>a</td><td>b</td>` separates into two values while `a <b>b</b>` stays single-spaced,
+ * Markup between two text runs inserts one separator, and only where the source states none,
+ * so `<td>a</td><td>b</td>` separates into two values while `a <b>b</b>` stays single-spaced,
  * and neither fabricates the 2+-space run a caller would read as a column boundary.
- *
  * A run of markup is one separation rather than one per tag: `</p><p>` inserts a single break.
  *
- * An element in `lineBreakElements` makes that separator a newline, unconditionally.
- * A line boundary the document states is not a spacing judgment.
+ * An element in `lineBreakElements` makes that separator a newline, unconditionally,
+ * because a line boundary the document states is not a spacing judgment.
  */
 export function htmlToLayoutText(html: string, lineBreakElements?: ReadonlySet<string>): string {
 	let text = ""
@@ -121,10 +121,9 @@ export function htmlToLayoutText(html: string, lineBreakElements?: ReadonlySet<s
 }
 
 /**
- * The prose text of an html fragment: the same reading, whitespace collapsed to single spaces and trimmed.
- *
- * This is the reading for a value compared or stored as text — one table cell,
- * a service `licenseInfo` block, a tile attribution.
+ * The prose text of an html fragment: the same reading, whitespace collapsed to
+ * single spaces and trimmed — the reading for a value compared or stored as text,
+ * such as one table cell, a service `licenseInfo` block or a tile attribution.
  */
 export function htmlToText(html: string): string {
 	return normalizeWhitespace(htmlToLayoutText(html))

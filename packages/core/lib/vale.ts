@@ -3,10 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Where the Vale prose linter is, for every caller that spawns it. `@vvago/vale` publishes a `bin` entry that has
- *   been a native binary in one release and a Node launcher (`bin/vale.cjs`) around a `native/` binary in the next, so
- *   the manifest's own `bin` field is the interface and is read at call time. a launcher runs under this Node. Resolving
- *   from the caller's own location keeps the lookup inside the package that declares the dependency.
+ *   Where the Vale prose linter is, for every caller that spawns it.
+ *
+ *   `@vvago/vale` has published both a native binary and a Node launcher, so the manifest's own `bin` field is the interface and is read at call time.
  */
 
 import { PathBuilder } from "path-ts"
@@ -55,22 +54,14 @@ export async function valeCommand(base: string): Promise<ValeCommand> {
 }
 
 /**
- * Raise when the launcher has no binary to launch, naming the download that did not happen.
- *
- * The launcher's own message is `Missing Vale binary. Did you run the postinstall?`, printed on
- * stderr with exit code 1 — the same exit code a prose finding produces, from the same command.
- * A caller reading only the exit status reports a failed prose check for a failed download.
- *
- * The postinstall fetches the binary from `api.github.com` with no Authorization header,
- * so an address that has spent its anonymous quota receives 403.
- * `.yarnrc.yml` filters that failure to a warning so an install still completes without it,
- * which is why the absence surfaces here rather than at install time.
+ * The launcher prints its own missing-binary message on stderr with exit code 1,
+ * the same exit code a prose finding produces, so a caller reading only the exit
+ * status would report a failed prose check for a failed download.
  */
 async function assertNativeBinaryPresent(manifestPath: string): Promise<void> {
-	// Built from the manifest's own directory rather than resolved as a package subpath.
-	// The binary is a postinstall artifact and no `exports` entry names it,
-	// so a subpath resolution throws `MODULE_NOT_FOUND` for a missing download
-	// and for a package that never declared the path, which are different facts.
+	// Built from the manifest's own directory: the binary is a postinstall artifact
+	// with no `exports` entry, so a subpath resolution throws `MODULE_NOT_FOUND`
+	// and cannot distinguish a missing download from an undeclared path.
 	const nativePath = PathBuilder.from(manifestPath).dirname()(
 		"native",
 		process.platform === "win32" ? "vale.exe" : "vale"

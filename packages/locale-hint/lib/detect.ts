@@ -3,13 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `detectLocale` — Stage 2 entry point. Composes the per-rule scorers over the query shape and emits a `LocaleHint`.
- *   Synchronous and pure. the runtime pipeline wraps it into the coordinator's async `LocaleDetector` interface.
- *
- *   Caller-hint precedence: when `opts.hint` is provided, it wins at confidence 1.0 with
- *   `source="caller"`. The detector still runs the rules to populate `alternatives` so downstream
- *   consumers see what the input shape would have predicted (useful for diagnostics + future
- *   disagreement-detection metrics).
+ * `detectLocale` — Stage 2 entry point: synchronous and pure, and when `opts.hint` is provided it wins at confidence 1.0 with `source="caller"` while the rules still run to populate `alternatives`.
  */
 
 import type { LocaleHint } from "@mailwoman/core/pipeline"
@@ -32,9 +26,6 @@ export function detectLocale(shape: QueryShapeFormatsView, opts: DetectLocaleOpt
 
 	// The writing system is a property of the input, so it is the same whichever
 	// rung of the precedence ladder decides `locale`.
-	// A caller passing `--locale en-GB` for a Han-containing address gets their tag
-	// and the fact that the address carries Han.
-	// Those are different claims and the hint now makes both.
 	const scripts: LocaleHint["script"] = (shape.scripts ?? []).map((entry) => ({
 		script: entry.script,
 		confidence: entry.share,
@@ -48,12 +39,8 @@ export function detectLocale(shape: QueryShapeFormatsView, opts: DetectLocaleOpt
 
 	scored.push(scoreFallback(shape))
 
-	// Sort descending by confidence.
-	// Preserve scorer order on ties (stable sort).
 	scored.sort((a, b) => b.confidence - a.confidence)
 
-	// Deduplicate by locale — if two scorers picked en-US, the higher-confidence wins.
-	// The other contributes no useful alternative.
 	const seen = new Set<string>()
 
 	const deduped = scored.filter((c) => {
@@ -64,8 +51,6 @@ export function detectLocale(shape: QueryShapeFormatsView, opts: DetectLocaleOpt
 	})
 
 	if (opts.hint) {
-		// Caller's hint wins.
-		// Detector results surface as alternatives.
 		return {
 			locale: opts.hint,
 			confidence: 1,
@@ -89,10 +74,8 @@ export function detectLocale(shape: QueryShapeFormatsView, opts: DetectLocaleOpt
 	const top = deduped[0]!
 	const machineLocale = opts.machinePreferences?.locale
 
-	// The 0.3 candidate is the explicit no-input-evidence fallback.
-	// Machine locale may replace only that candidate.
-	// Scripts and postal formats continue to win.
-	// Timezone is reported independently and never converted to language.
+	// Machine locale may replace only the explicit no-input-evidence fallback; scripts and postal formats
+	// continue to win, and the timezone is reported independently and never converted to language.
 	if (top.reason === "fallback" && machineLocale) {
 		return {
 			locale: machineLocale,

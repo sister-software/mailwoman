@@ -1,10 +1,6 @@
-"""Tests for scripts/verify_toolchain.py (#480 deliverable 4).
+"""Tests for scripts/verify_toolchain.py.
 
-Guards that the export/quant pins stay consistent across pyproject, the Modal image, and the
-export opset — so a one-sided pin bump (the drift that broke mobile-Safari int8 once) goes red
-here instead of at the next export. The ruff pin is guarded on the same grounds: its version is
-named in pyproject and in every `uvx ruff@` shell call site, and a bump that moves one leaves a
-local linter that disagrees with the one CI runs.
+Guards that the export/quant pins stay consistent across pyproject, the Modal image and the export opset, and that the ruff pin matches every `uvx ruff@` call site, so a one-sided bump goes red here rather than at the next export or as a local linter that disagrees with CI.
 """
 
 from __future__ import annotations
@@ -28,23 +24,21 @@ def test_pyproject_and_modal_pins_agree():
     vt = _load()
     py = vt._pins_from_pyproject()
     md = vt._pins_from_modal()
-    # Every invariant dep is pinned in pyproject...
     assert set(py) == set(vt.INVARIANT_DEPS), f"pyproject missing pins: {set(vt.INVARIANT_DEPS) - set(py)}"
-    # ...and the Modal image pins it to the same version.
     for dep in vt.INVARIANT_DEPS:
         assert py[dep] == md.get(dep), f"{dep}: pyproject {py[dep]} != modal {md.get(dep)}"
 
 
 def test_every_base_requirement_is_installed_in_the_modal_image():
-    # A base requirement absent from the image raises inside the container at the first import that
-    # reaches it. `platformdirs` reached the anchor painter, so the run had already taken a GPU.
+    # A base requirement absent from the image raises inside the container at first import, after
+    # the run has taken a GPU.
     vt = _load()
     missing = sorted(vt._base_requirements() - vt._modal_packages())
     assert not missing, f"the Modal image does not install: {missing}"
 
 
 def test_modal_package_names_are_read_from_code_not_comments():
-    # The pin block's prose quotes version specifiers in passing, and a name read out of a comment
+    # The pin block's prose quotes version specifiers in passing, so a name read out of a comment
     # would make a missing install look present.
     vt = _load()
     packages = vt._modal_packages()
@@ -67,12 +61,7 @@ def test_main_passes_on_a_consistent_tree():
 
 
 def test_every_ruff_call_site_names_the_pinned_version():
-    """The [dev] ruff pin and every `uvx ruff@` call site must name one version.
-
-    The bump that added this: `pyproject.toml` moved to 0.16.5 and the three call sites in
-    `package.json` and `.husky/pre-commit` stayed at 0.15.20, so a developer's ruff and CI's ruff
-    were different minor versions with no check comparing them.
-    """
+    """The [dev] ruff pin and every `uvx ruff@` call site must name one version, or local and CI ruff disagree."""
     vt = _load()
     pin = vt._ruff_dev_pin()
     assert pin, "pyproject [dev] carries no exact ruff== pin"

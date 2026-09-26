@@ -17,7 +17,7 @@ export type BaseLogger = Pick<PinoBaseLogger, Exclude<Level, "fatal">>
 // #region Constants
 
 /**
- * Labels log levels in the browser console.
+ * Labels log levels in the browser console, keyed by level.
  */
 export const LogLevelLabel = {
 	info: "[INFO]",
@@ -29,15 +29,12 @@ export const LogLevelLabel = {
 } as const satisfies Record<Level, string>
 
 /**
- * Predefined log levels.
+ * The log levels, derived from `LogLevelLabel`.
  */
 export const LogLevels = Object.keys(LogLevelLabel) as Level[]
 
 type LoggerFactory = (prefix?: string | null, ...args: string[]) => Logger
 
-/**
- * Colors for log levels in the browser console.
- */
 const LogLevelColors = {
 	info: `light-dark(#0043CE, #4589FF)`,
 	warn: `light-dark(#F1C21B, #F1C21B)`,
@@ -50,17 +47,9 @@ const LogLevelColors = {
 // #region Functions
 
 /**
- * Creates a logger with the given prefix.
- */
-/**
- * Where diagnostics are written.
- *
- * Under Node, a `Console` whose streams are both stderr: `console.debug`, `console.info`
- * and `console.log` write to stdout there, so a request line from an http client landed in the middle
- * of any command whose stdout is data (`mailwoman doctor --json` was the case that surfaced it).
- * Diagnostics belong on stderr, the stream a shell keeps apart from the data.
- *
- * In a browser there is one console and this is that console.
+ * Where diagnostics are written: under Node, a `Console` whose streams are both stderr,
+ * because `console.debug`, `console.info` and `console.log` write to stdout there and would
+ * land in the middle of any command whose stdout is data, and in a browser the one console.
  */
 function diagnosticsSink(): Console {
 	// oxlint-disable-next-line sister-software/no-process-globals -- the stream object itself rather than configuration. a browser has no `process` and falls through
@@ -119,15 +108,9 @@ export function silentLogger(): BaseConsoleLogger {
 
 // #region Functions
 
-/**
- * Creates a logger with the given prefix.
- */
 export function createLogger(prefix?: string, ...args: string[][]): Logger {
 	const msgPrefix = prefix ? `(${prefix}):` : ":"
 
-	/**
-	 * @type {Partial<Logger>}
-	 */
 	const logger: Partial<Logger> = {
 		msgPrefix,
 	}
@@ -153,17 +136,6 @@ export function createLogger(prefix?: string, ...args: string[][]): Logger {
 	return logger as Logger
 }
 
-/**
- * A singleton logger instance for the browser.
- *
- * ```js
- * import { ConsoleLogger } from "@mailwoman/core/logging"
- *
- * ConsoleLogger.info("Hello, world!")
- * ```
- *
- * @implements {IRuntimeLogger}
- */
 // oxlint-disable-next-line unicorn/no-static-only-class -- a static façade whose members are bound to console's own methods
 export class ConsoleLogger {
 	static info: typeof console.info
@@ -172,9 +144,6 @@ export class ConsoleLogger {
 	static debug: typeof console.debug
 	static trace: typeof console.trace
 
-	/**
-	 * Creates a logger with the given prefix.
-	 */
 	static prefix(...logPrefixes: string[]) {
 		return createLogger(logPrefixes.join(":"))
 	}

@@ -1,10 +1,4 @@
-"""How often a trained tokenizer falls back to raw bytes, overall and per script.
-
-A byte-fallback piece is one character's byte emitted as its own token because the vocabulary held
-no better option. It is not an error. It is the reason a model can encode text it never saw — but a
-high rate on a script means the vocabulary is spending the model's sequence budget on bytes. The
-per-script split is what says WHERE, which the headline number cannot.
-"""
+"""How often a trained tokenizer falls back to raw bytes, overall and per script."""
 
 from __future__ import annotations
 
@@ -18,19 +12,14 @@ from typing import Any
 
 import sentencepiece as spm
 
-# Byte-fallback pieces in a SentencePiece model are surface-form ``<0xNN>`` (one literal
-# token per byte). Matching the surface form is more reliable than matching piece id ranges:
-# the id range depends on where SP placed the byte block in the unigram vocab.
+# A SentencePiece byte-fallback piece is surface-form ``<0xNN>`` (one token per byte); matching
+# that form is more reliable than piece-id ranges, which depend on where SP placed the byte block.
 _BYTE_FALLBACK_RE = re.compile(r"^<0x[0-9A-Fa-f]{2}>$")
 
 
 def detect_script(text: str) -> str:
     """Return a coarse script tag for a string: ``latin``, ``cjk``, ``cyrillic``, ``armenian``,
-    ``arabic``, ``greek``, ``hebrew``, ``devanagari``, ``thai``, ``mixed``, or ``other``.
-
-    Used to bucket the byte-fallback eval into per-script rates so the model card surfaces
-    *where* the tokenizer hits byte fallback rather than just the overall headline number.
-    """
+    ``arabic``, ``greek``, ``hebrew``, ``devanagari``, ``thai``, ``mixed``, or ``other``."""
     blocks: Counter[str] = Counter()
     for ch in text:
         if ch.isspace() or unicodedata.category(ch).startswith(("N", "P", "Z", "S")):
@@ -63,30 +52,19 @@ def detect_script(text: str) -> str:
         return "other"
     if len(blocks) == 1:
         return next(iter(blocks))
-    # If 90%+ of letter chars are in one block, call it that block (latin punctuation around
-    # a CJK address shouldn't make it ``mixed``). Otherwise call it ``mixed``.
+    # A block holding 90%+ of letter chars wins, so surrounding Latin punctuation does not force
+    # ``mixed``.
     total = sum(blocks.values())
     top, n = blocks.most_common(1)[0]
     return top if n / total >= 0.9 else "mixed"
 
 
 def measure_byte_fallback(sp: spm.SentencePieceProcessor, lines: Iterable[str]) -> dict[str, Any]:
-    """Encode each line and tally byte-fallback piece rate, overall + per script.
+    """Encode each line and tally byte-fallback piece rate, overall and per script.
 
-    Returns a dict shaped::
-
-        {
-          "overall": {"lines": n, "pieces": p, "byte_fallback_pieces": b, "rate": b/p},
-          "per_script": {
-              "latin":   {"lines": ..., "pieces": ..., "byte_fallback_pieces": ..., "rate": ...},
-              "cjk":     {...},
-              ...
-          }
-        }
-
-    The "rate" denominator is piece count rather than line count. A byte-fallback piece is a
-    *piece*, not a *line*, so the rate that matters for downstream model wastage is the
-    fraction of pieces that landed on the byte block.
+    Returns ``{"overall": {...}, "per_script": {script: {...}}}``, each entry carrying ``lines``,
+    ``pieces``, ``byte_fallback_pieces`` and ``rate``. ``rate`` is the fraction of pieces, not
+    lines, that landed on the byte block.
     """
     overall = {"lines": 0, "pieces": 0, "byte_fallback_pieces": 0}
     per_script: dict[str, dict[str, int]] = {}

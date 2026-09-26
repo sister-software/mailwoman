@@ -2,8 +2,6 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- *
- *   The interface half of `mwdev_symbol`: a search that answers with denominators and states what it did not read.
  */
 
 import type { EngineRegistryLike } from "@mailwoman/dev-mcp/engine/registry"
@@ -12,8 +10,7 @@ import { buildToolTable } from "@mailwoman/dev-mcp/tools"
 import { describe, expect, it } from "vitest"
 
 /**
- * The search reads the working tree and no other source.
- * A registry that throws on touch proves it.
+ * A registry that throws on touch proves the search reads the working tree and no other source.
  */
 const noRegistry = new Proxy({} as EngineRegistryLike, {
 	get() {

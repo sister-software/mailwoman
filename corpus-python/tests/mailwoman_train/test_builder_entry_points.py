@@ -1,13 +1,4 @@
-"""Every module that runs as `python -m` imports, and its usage string names its own path.
-
-A corpus builder is run by hand, months apart, and no test in the suite imports it. So a module of
-this shape can break at IMPORT time and the whole suite stays green — which is what happened when
-the fragment builder moved from the package root to `corpora/fragment/`: it read its country-surface table through
-`Path(__file__).parent / "data"`, the move put one more directory between the two, and the failure
-surfaced only when someone ran the builder.
-
-Discovery is by the `__main__` guard rather than a list, so a new builder is covered by existing.
-"""
+"""Every module that runs as `python -m` imports, and its usage string names its own path; discovery is by the `__main__` guard rather than a list, so a new builder is covered by existing."""
 
 from __future__ import annotations
 
@@ -57,11 +48,7 @@ RUNNABLE = _runnable_modules()
 
 
 def test_the_discovery_found_the_builders() -> None:
-    """A discovery that silently found no builder would make every test below pass over an empty list.
-
-    Compared by INVOCATION name, so a builder that grows into a package and moves its guard into a
-    `__main__.py` still answers to the command a person types.
-    """
+    """Compared by invocation name, so a builder that moves its guard into `__main__.py` still answers to the command a person types; an empty discovery would pass every test below."""
     names = {_invocation_name(path) for path in RUNNABLE}
     assert {"mailwoman_train.corpora.fragment", "mailwoman_train.countries.jp.corpora"} <= names
     assert len(RUNNABLE) >= 7
@@ -75,19 +62,16 @@ def test_a_runnable_module_imports(path: Path) -> None:
 
 @pytest.mark.parametrize("path", RUNNABLE, ids=_module_name)
 def test_a_usage_string_names_the_module_it_is_written_in(path: Path) -> None:
-    """A docstring's `python -m …` line is a command someone copies. A move re-homes the module and
-    leaves the line naming a path that no longer resolves, which reads as a broken install."""
+    """A docstring's `python -m …` line is a command someone copies, so a move must not leave it naming a path that no longer resolves."""
     name = _invocation_name(path)
     docstring = ast.get_docstring(ast.parse(path.read_text(encoding="utf-8"))) or ""
     for line in docstring.splitlines():
-        # A line that begins with the command is a usage line. Prose that mentions the command in
-        # passing — `cli.py` describing what `python -m mailwoman_train` dispatches to — is a
-        # reference to another module's entry point and correct as written.
+        # Only a line that begins with the command is a usage line; prose mentioning it in passing
+        # refers to another module's entry point.
         stripped = line.strip().removeprefix("uv run ")
         if not stripped.startswith("python -m mailwoman_train"):
             continue
-        # The whole token after `-m`, not a substring of it: a lost space turns
-        # `…corpora.registry tw` into `…corpora.registrytw`, which contains the module name and is
-        # not the module name.
+        # The whole token after `-m`, not a substring: a lost space turns `…corpora.registry tw`
+        # into `…corpora.registrytw`, which contains the module name but is not it.
         documented = stripped.split()[2]
         assert documented == name, f"{name} documents `{stripped}`"

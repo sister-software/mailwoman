@@ -1,16 +1,4 @@
-"""One seeded Japan build, pinned end to end — the rows, the board and the report.
-
-`build` threads one `random.Random` through the selection masks, the register draw, the postcode
-fraction, the hyphen variant, the spacing and the country prefix. They share a stream, so moving,
-adding or dropping a draw anywhere re-renders the whole corpus, and no other test in the suite would
-notice: the JP builder reads Overture-JP and KEN_ALL. It no test has. Therefore, it has never run under
-pytest at all.
-
-The fixture supplies both inputs at a size the build can finish in a second. It is not a sample of
-the real source — it is the shapes the renderers branch on: a chōme district and a bare one, a
-compact number and one the designator register cannot re-render, a town KEN_ALL entry, an ōaza
-prefix that only matches once stripped, and a municipality catch-all.
-"""
+"""One seeded Japan build, pinned end to end—the rows, the board and the report—because all draws share one `random.Random`, so a moved draw re-renders the whole corpus."""
 
 from __future__ import annotations
 
@@ -25,11 +13,9 @@ import pytest
 
 from mailwoman_train.countries.jp.corpora import build
 
-#: Committed beside this file, captured from the code as it stood before a split. Regenerating it
-#: after a change makes the test compare the new code against itself, so regenerate only when the
-#: current code is already verified against the existing reference.
-#:
-#: Regenerate with: uv run python tests/mailwoman_train/countries/test_jp_build_parity.py
+#: Committed beside this file; regenerate with `uv run python
+#: tests/mailwoman_train/countries/test_jp_build_parity.py` only when the current code is already
+#: verified against the existing reference, or the test compares the new code against itself.
 REFERENCE = Path(__file__).parent / "jp-build-reference.json"
 
 REFERENCE_README = [
@@ -222,11 +208,7 @@ def test_no_board_municipality_reaches_the_trained_splits(built: dict[str, Any])
 
 
 def write_reference() -> None:
-    """Capture the current build as the reference the tests above compare against.
-
-    Run this only when the current code already passes against the existing reference — otherwise
-    the artifact records whatever the code does now, and the tests assert no fact.
-    """
+    """Capture the current build as the reference the tests above compare against; run it only when the current code already passes against the existing reference, or the artifact records whatever the code does now."""
     import tempfile
 
     with tempfile.TemporaryDirectory() as scratch:

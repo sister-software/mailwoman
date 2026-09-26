@@ -2,7 +2,6 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file Source aliases for the packages the docs explainers import.
  */
 
 import { tryResolvePackageSpecifier } from "@mailwoman/core/module/resolve-from"
@@ -25,29 +24,16 @@ const DIRECTORY_SUBPATHS: ReadonlyArray<readonly [packageName: string, subpath: 
 	...["decoder", "tokenization", "types", "resources", "pipeline"].map(
 		(subpath) => ["@mailwoman/core", subpath] as const
 	),
-	// Moved here from FILE_SUBPATHS when the prefix fold made `resolve` a directory:
-	// `resolve.ts` + `resolve-passes.ts` became `resolve/{index,passes}.ts`.
-	// Same subpath, different resolver, and `requireAlias` refused the docs build
-	// until it was listed on the right side, which is the point.
 	["@mailwoman/resolver", "resolve"],
 ]
 
 const FILE_SUBPATHS: ReadonlyArray<readonly [packageName: string, subpath: string]> = [
-	// `geo` was here until 2026-09-01 and had been dead for some time:
-	// `@mailwoman/resolver-wof-sqlite` dropped the `./geo` subpath when its geometry
-	// helpers moved to `@mailwoman/spatial`, and `lib/geo.ts` went with them.
-	// No check noticed, because a missing target only warned. {@link requireAlias} now refuses instead.
-	// A hand-listed entry naming a module that does not exist is a bug by definition,
-	// and this list is the mirror that goes stale every time a subpath moves.
 	// These are the browser-safe leaves: each keeps a per-file subpath so the site bundle
 	// never pulls the Node-only siblings that share its directory entry.
 	...["fst/deserialize-web", "fst/matcher", "fst/types", "street/normalize", "fst/autocomplete", "fts/index"].map(
 		(subpath) => ["@mailwoman/resolver-wof-sqlite", subpath] as const
 	),
 	["@mailwoman/core", "objects"],
-	// Was `["@mailwoman/core", "kysley/dialect"]` — the dialect lives in `@mailwoman/sqlite`
-	// now, and `core` exports no kysley-shaped symbol at all.
-	// Second dead entry this list was carrying; `requireAlias` found it the moment it was armed.
 	["@mailwoman/sqlite", "dialect"],
 	["@mailwoman/resolver", "span-rescore"],
 ]
@@ -55,10 +41,8 @@ const FILE_SUBPATHS: ReadonlyArray<readonly [packageName: string, subpath: strin
 const CODEX_SUBPATHS = [null, "country", "de", "es", "fr", "gb", "it", "nz", "us"] as const
 
 /**
- * Build the source-first webpack alias map.
- *
- * Exact root aliases use webpack's `$` suffix so package subpaths continue through
- * their own explicit aliases or exports maps.
+ * Build the source-first webpack alias map, whose exact root aliases use webpack's `$` suffix
+ * so package subpaths continue through their own explicit aliases or exports maps.
  */
 export async function buildWorkspaceAliases(): Promise<Record<string, string>> {
 	const aliases: Record<string, string> = {}
@@ -70,15 +54,7 @@ export async function buildWorkspaceAliases(): Promise<Record<string, string>> {
 	}
 
 	/**
-	 * Alias a specifier this file named, refusing a target that does not resolve.
-	 *
-	 * The lists below are a hand-maintained mirror of several packages' `exports` maps,
-	 * so they go stale every time a subpath moves, and the failure was silent:
-	 * `resolvePackageFile` answers `null` and the alias was simply skipped, leaving the
-	 * site to resolve through the real exports map and nobody any the wiser.
-	 * That is how `@mailwoman/resolver-wof-sqlite/geo` stayed on the list after the module was deleted.
-	 *
-	 * A named entry that cannot resolve is a defect in this file, so it throws.
+	 * Alias a specifier this file named, throwing when its hand-maintained target no longer resolves.
 	 */
 	const requireAlias = (specifier: string, target: string | null): void => {
 		if (!target) {
@@ -95,8 +71,8 @@ export async function buildWorkspaceAliases(): Promise<Record<string, string>> {
 		setAlias(`${packageName}$`, await resolvePackageEntry(packageName))
 	}
 
-	// File aliases precede directory aliases: webpack matches aliases in insertion order,
-	// and the narrow `core/resources/whosonfirst/specificity` leaf must win
+	// File aliases precede directory aliases, because webpack matches aliases in insertion
+	// order and the narrow `core/resources/whosonfirst/specificity` leaf must win
 	// before the broader `core/resources` barrel.
 	setAlias(
 		"@mailwoman/core/resources/whosonfirst/specificity",
@@ -104,18 +80,16 @@ export async function buildWorkspaceAliases(): Promise<Record<string, string>> {
 	)
 
 	for (const [packageName, subpath] of FILE_SUBPATHS) {
-		// A subpath is a public export KEY, and the file under it can be either
-		// `<subpath>.ts` or `<subpath>/index.ts`.
-		// The key does not change when a module grows siblings and becomes a directory.
+		// A subpath is a public export key whose file can be either `<subpath>.ts`
+		// or `<subpath>/index.ts`, since the key survives a module growing siblings.
 		const target =
 			(await resolvePackageFile(packageName, subpath)) ?? (await resolvePackageFile(packageName, `${subpath}/index`))
 
 		requireAlias(`${packageName}/${subpath}`, target)
 	}
 
-	// The one entry whose export KEY and file path have no spelling in common:
-	// `web-loader` is the public name and the file is `web/loader`, so the pair above —
-	// one string for both — cannot express it.
+	// The one entry whose export key and file path have no spelling in common:
+	// `web-loader` is the public name and the file is `web/loader`.
 	requireAlias("@mailwoman/neural/web-loader", await resolvePackageFile("@mailwoman/neural", "web/loader"))
 
 	setAlias("@mailwoman/core/errors", await resolvePackageFile("@mailwoman/core", "errors/schema"))
@@ -124,9 +98,9 @@ export async function buildWorkspaceAliases(): Promise<Record<string, string>> {
 		requireAlias(`${packageName}/${subpath}`, await resolvePackageDirectoryEntry(packageName, subpath))
 	}
 
-	// The resolver root deliberately bypasses its barrel: the browser graph only
-	// needs the core resolver interfaces, while runtime resolution enters through the
-	// explicit `@mailwoman/resolver/resolve` alias above.
+	// The resolver root deliberately bypasses its barrel, since the browser graph
+	// needs only the core resolver interfaces while runtime resolution enters through
+	// the explicit `@mailwoman/resolver/resolve` alias above.
 	setAlias("@mailwoman/resolver$", await resolvePackageFile("@mailwoman/core", "resolver/types"))
 
 	for (const subpath of CODEX_SUBPATHS) {

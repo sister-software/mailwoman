@@ -3,12 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The ladder diff, tested against a fake engine.
- *
- *   The registry is stubbed on purpose: what is under test is whether the diff reports gained, lost and changed as
- *   three different facts and finds the first rung that moves — not whether the parser is right about Spain. A test
- *   that loaded a real engine would take minutes, need weights present, and would fail for reasons that are unrelated
- *   to this file.
+ *   The ladder diff tested against a stubbed registry: a real engine would take minutes and fail for reasons unrelated to this file.
  */
 
 import type { EngineRegistryLike } from "@mailwoman/dev-mcp/engine/registry"
@@ -26,9 +21,8 @@ interface FakeResult {
 }
 
 /**
- * A registry whose engine answers from a table keyed by input.
- *
- * An input the table does not name throws, which is how the errored-rung path is exercised.
+ * A registry whose engine answers from a table keyed by input and throws for anything
+ * unnamed, which is how the errored-rung path is exercised.
  */
 function fakeRegistry(answers: Record<string, FakeResult>): EngineRegistryLike {
 	return stubEngineRegistry({
@@ -116,8 +110,6 @@ describe("minimal-pair ladders", () => {
 		const result = await runMinimalPairs(registry, { ladders: [{ rungs: ["a", "b"] }] })
 
 		expect(result.ladders[0]!.rungs[1]!.delta?.moved_km).toBeNull()
-		// The components are identical, so the only thing that diverged is the abstention flip.
-		// It must still be caught.
 		expect(result.ladders[0]!.first_divergence?.step).toBe(1)
 	})
 

@@ -3,25 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Stream one large file to disk through a `.part` rename — the shape every layer acquisition uses, and the
- *   one thing about it that is a correctness rule rather than a convenience.
+ *   Stream one large file to disk through a `.part` rename, so an interrupted transfer can never present as a complete file.
  *
- *   this is A file transfer rather than an API request, and IT is RAW `fetch` on purpose. The repo's rule sends http
- *   clients through `@mailwoman/core/api`'s `APIClient`, and the rule draws its line at what that class is
- *   for: pacing, bounded retry, response caching and error mapping over small bodies and repeated calls. None
- *   of it applies to a multi-hundred-megabyte archive. Caching one through a JSON-validating disk cache would
- *   write a second, unreadable copy of a file already on disk. there is no request to pace, because a transfer
- *   like this runs once per product vintage. and axios buffers any non-stream response type in memory. The
- *   metadata reads around such a transfer do go through `APIClient`, and each caller's client module says so.
- *
- *   The `.part` rename is the rule. An interrupted transfer must never present as a complete file: the next
- *   run would find it, skip the download and ingest a truncated archive, which reads as a smaller source
- *   rather than as a failure. The rename is atomic within a filesystem, so a file at the final path is a file
- *   that finished.
- *
- *   shared BY every layer acquisition rather than copied into each, because it is stream plumbing that is unaware
- *   of any product. What stays with each caller is where the URL came from, what the cache is keyed
- *   on, and what to do with the bytes afterwards.
+ *   Raw `fetch` is deliberate: `APIClient` serves small, repeated requests, and a multi-hundred-megabyte stream is none of those.
  */
 
 import type { PathBuilderLike } from "path-ts"
@@ -29,46 +13,22 @@ import type { PathBuilderLike } from "path-ts"
 import { openWriteStream, pipeline, Readable } from "#fs/streams"
 import { movePath, removePathIfPresent } from "#fs/writers"
 
-/**
- * Bytes between progress reports, where the caller states no preference.
- */
 const DEFAULT_PROGRESS_STRIDE_BYTES = 16 * 1024 * 1024
 
 export interface StreamToDiskOptions {
 	url: string
-	/**
-	 * Where the finished file lands.
-	 *
-	 * The transfer writes to `${destination}.part` and renames on a clean finish.
-	 */
 	destination: PathBuilderLike
-	/**
-	 * Names the caller in the refusal, so a log says which acquisition stopped.
-	 */
 	context: string
 	/**
-	 * Extra request headers.
-	 *
-	 * The public data bucket's WAF refuses an unranged GET, so its consumer sends
-	 * `range: bytes=0-`; most transfers need none.
+	 * Extra request headers; the public data bucket's WAF refuses an unranged GET,
+	 * so its consumer sends `range: bytes=0-`.
 	 */
 	headers?: Record<string, string>
 	onProgress?: (message: string) => void
-	/**
-	 * Bytes between progress reports.
-	 *
-	 * Scale it to the transfer: the default suits a several-hundred-megabyte archive,
-	 * and leaves a 13 MB one reporting once.
-	 */
 	progressStrideBytes?: number
 	/**
-	 * What this host's non-OK status means, appended to the refusal.
-	 *
-	 * A status code is a poor diagnosis on a host that reuses one.
-	 * The soil download service answers 400 rather than 404 for a version date it does not hold,
-	 * so the bare status sends a reader looking for a malformed request instead of a stale catalogue date.
-	 *
-	 * Return `undefined` for a status the caller cannot describe.
+	 * What this host's non-OK status means, appended to the refusal: the soil download service answers 400
+	 * rather than 404 for a version date it does not hold, so a bare status would misdirect a reader.
 	 */
 	describeStatus?: (status: number) => string | undefined
 }
@@ -76,12 +36,10 @@ export interface StreamToDiskOptions {
 /**
  * Download one file to `destination`, returning the bytes received.
  *
- * Redirects are followed: a job endpoint that answers with a generated result URL
- * routinely redirects again, and a transfer that stopped at the redirect would
- * write a redirect page to disk and report success.
+ * Follows redirects: a job endpoint that answers with a generated result URL routinely redirects
+ * again, and stopping at the redirect would write a redirect page to disk and report success.
  *
- * @throws {Error} When the response is not OK, or carries no body.
- * A partial file is removed on any failure.
+ * @throws {Error} When the response is not OK or carries no body; a partial file is removed on any failure.
  */
 export async function streamToDisk(options: StreamToDiskOptions): Promise<number> {
 	const partialPath = `${options.destination}.part`

@@ -3,20 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Route definitions + handlers for the native `/v1` surface. The OpenAPI document is emitted from
- *   these definitions. There is no handwritten spec. Unlike the drop-ins (photon, nominatim,
- *   libpostal), no vendor's legacy query-parsing tolerance is mimicked here: request bodies are
- *   validator-enforced, and a validation failure always answers through the shared api-kit envelope
- *   (`apiError`), never the raw zod shape. `GET /v1/parse` is the one query-string route, and it
- *   reads `c.req.query()` directly — a query string has no repeated-value interface worth preserving
- *   here (contrast the drop-ins' `legacyQuery` adapter), so no tolerance is required.
- *
- *   Per-route validation hooks (the 3rd arg to `app.openapi(route, handler, hook)`) override the
- *   app-level `defaultHook` (wired in `app.ts`) so each route can answer its own friendly business
- *   message — `"address is required"`, `"body must be { addresses: string[] }"`, etc. — matching the
- *   express `mailwoman/server` precedent this surface carries forward. Routes with no friendly
- *   carry-forward message (currently just `/v1/format`) fall through to the app-level hook's generic
- *   `"invalid request body"`.
+ *   Route definitions + handlers for the native `/v1` surface, from which the OpenAPI document is
+ *   emitted — there is no handwritten spec.
  */
 
 import { createRoute, type OpenAPIHono, z } from "@hono/zod-openapi"
@@ -53,9 +41,7 @@ import {
 /**
  * Default `post /v1/batch` row cap when {@link RegisterMailwomanAPIRoutesOptions.batchMax} is omitted.
  *
- * This is the standalone-engine default rather than derived from env —
- * `mailwoman serve` always passes the env-derived value explicitly
- * (`$public.MAILWOMAN_BATCH_MAX`, default 1000. See `mailwoman/lib/env/schema.ts`).
+ * The standalone-engine default: `mailwoman serve` always passes the env-derived value explicitly.
  */
 export const DEFAULT_BATCH_MAX = 500
 
@@ -65,17 +51,10 @@ const startedAt = Date.now()
  * Options for {@link registerMailwomanAPIRoutes}.
  */
 export interface RegisterMailwomanAPIRoutesOptions {
-	/**
-	 * Max `addresses` rows accepted by `post /v1/batch`.
-	 *
-	 * Default {@link DEFAULT_BATCH_MAX}.
-	 */
 	batchMax?: number
 
 	/**
-	 * The engine stamp attached as `engine` to every `/v1` success body.
-	 *
-	 * Absent: no field is added.
+	 * Attached as `engine` to every `/v1` success body; absent adds no field.
 	 */
 	engine?: EngineStamp
 }
@@ -251,12 +230,9 @@ const metricsRoute = createRoute({
 })
 
 /**
- * `components` accepts `string | string[]` per key on the wire
- * (a caller may pass every span a multi-span match covered); `formatAddress`/`canonicalKey`
- * want a single string per `ComponentTag`.
- *
- * Multi-span values collapse to their first span here — the formatter template
- * owns joining semantics rather than this route.
+ * `components` accepts `string | string[]` per key on the wire, but `formatAddress`
+ * and `canonicalKey` take a single string per `ComponentTag`; multi-span values collapse
+ * to their first span because the formatter template owns joining semantics.
  */
 function toComponentDict(components: Record<string, string | string[]>): ComponentDict {
 	const out: ComponentDict = {}
@@ -372,19 +348,14 @@ export function registerMailwomanAPIRoutes<T extends Partial<GeocodeOutcome> = G
 				return geocoderUnavailableError(c)
 			}
 
-			// Whole-call latency, recorded under the "batch" tier.
-			// Per-row tier metrics are the engine's responsibility (phase 4b).
-			// This app only times the call as a unit.
 			const t0 = performance.now()
 
 			try {
-				// Decision A endpoint default: batch rows are the record register — formatted unless overridden.
 				const outcome = await engine.batch(addresses, { inputMode: input_mode ?? "formatted" })
 				recordTimed(performance.now() - t0, "batch")
 
-				// Same wire-vs-domain cast as `/v1/geocode` above.
-				// `BatchRow`'s `GeocodeOutcome` half is a `Record<string, unknown>` passthrough;
-				// `BatchResponseSchema` now types its `GeocodeOutcome` union member as the real shape.
+				// `BatchRow`'s `GeocodeOutcome` half is a `Record<string, unknown>` passthrough,
+				// so the engine's generic result needs a cast to the schema's shape.
 				return c.json(withEngineStamp(outcome as z.infer<typeof BatchResponseSchema>, stamp), 200)
 			} catch (error) {
 				recordTimed(performance.now() - t0, "error")
@@ -400,14 +371,7 @@ export function registerMailwomanAPIRoutes<T extends Partial<GeocodeOutcome> = G
 
 	app.openapi(
 		resolveRoute,
-		// Metrics are the engine's responsibility here (phase 4b): the express predecessor
-		// recorded the street node's stamped resolution tier per call.
-		// The wired engine must carry that over, and must trim batch rows the same
-		// way (the route passes raw input through).
 		async (c) => {
-			// `resolver`, not `geocoder`.
-			// The missing method is `engine.resolveTree`, and the 503's `error` value
-			// is what a caller branches on.
 			if (!engine.resolveTree) {
 				return geocoderUnavailableError(c, "resolver")
 			}

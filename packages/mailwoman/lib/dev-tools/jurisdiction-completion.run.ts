@@ -3,24 +3,14 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Completion per postal jurisdiction, which is the unit a parser is built for. Address systems follow
- *   postal, cadastral and administrative boundaries rather than sovereignty, the way UN/locode lists
- *   countries and territories together, so Hong Kong, Greenland, Jersey, Curaçao, the French overseas
- *   departments and the UK Overseas Territories each count as their own row. None of them can inherit
- *   its sovereign state's parser: a Jersey postcode is not a GB postcode shape, and Greenland's layout
- *   is not Denmark's.
+ *   Completion per postal jurisdiction, which is the unit a parser is built for: address systems follow postal,
+ *   cadastral and administrative boundaries rather than sovereignty, so a dependency cannot inherit its sovereign
+ *   state's parser.
  *
- *   `mwdev_coverage` answers the same question for the countries that appear in at least one register.
- *   This tool differs in the denominator: it enumerates every ISO 3166-1 alpha-2 code first, then joins
- *   the registers onto it, so a jurisdiction absent from all of them is a row reading zero rather than a
- *   row that does not exist. That distinction is the whole point. An absence nobody has looked at and an
- *   absence somebody measured are different readings, and a union-of-registers denominator cannot tell
- *   them apart.
+ *   This enumerates every ISO 3166-1 alpha-2 code first and joins the registers onto it, so a jurisdiction absent
+ *   from all of them is a row reading zero rather than a row that does not exist.
  *
- *   Each dimension is reported on its own. A composite grade would hide which of the five is missing,
- *   and they are missing in different combinations: a jurisdiction can render an address without
- *   resolving one (a layout with no gazetteer), or resolve one without parsing it (a gazetteer with no
- *   corpus rows).
+ *   Each dimension is reported on its own, because they are missing in different combinations.
  *
  *   Run:
  *
@@ -44,9 +34,6 @@ const { values } = parseArguments({
 	options: {
 		"out-json": { type: "string" },
 		config: { type: "string" },
-		/**
-		 * Print the jurisdictions missing one named dimension, rather than the rollup.
-		 */
 		missing: { type: "string" },
 	},
 })
@@ -54,9 +41,6 @@ const { values } = parseArguments({
 /**
  * Jurisdictions this project models separately from any ISO 3166-1 code, each
  * because its addresses are not expressible in the code's own grammar.
- *
- * Adding a row here is a claim that the jurisdiction needs its own parser behaviour,
- * so each carries the reason.
  */
 const SUB_JURISDICTIONS: ReadonlyArray<{ code: string; within: string; why: string }> = [
 	{ code: "XK", within: "XK", why: "Kosovo — operational, non-ISO, present in real data" },
@@ -69,32 +53,20 @@ const SUB_JURISDICTIONS: ReadonlyArray<{ code: string; within: string; why: stri
 	{ code: "GB-BFPO", within: "GB", why: "British Forces Post Office — routing, not a GB postcode" },
 ]
 
-/**
- * One jurisdiction's reading across every register that says something about it.
- */
 interface JurisdictionRow {
 	code: string
 	/**
-	 * The ISO code whose registers answer for this row.
-	 *
-	 * Equal to `code` for an ordinary jurisdiction.
+	 * The ISO code whose registers answer for this row, equal to `code` for an ordinary jurisdiction.
 	 */
 	joinsTo: string
 	subJurisdiction: boolean
-	/**
-	 * Codex can print an address for it.
-	 */
 	layout: boolean
-	/**
-	 * Codex carries a parsing-conventions row for its address system.
-	 */
 	conventions: boolean
 	corpusRows: number
 	corpusStreetRows: number
 	/**
-	 * True when the training config's `country_weights` admits it and the corpus holds rows for it.
-	 *
-	 * Either one alone trains no model.
+	 * True when `country_weights` admits it and the corpus holds rows for it;
+	 * either one alone trains no model.
 	 */
 	trains: boolean
 	gazetteerPlaces: number
@@ -123,11 +95,7 @@ const byCountry = new Map(report.countries.map((c) => [c.country, c]))
 
 /**
  * The conventions table is keyed by address system rather than by country,
- * and a system serves several countries.
- *
- * `us` covers US; `gb` covers GB.
- * No system currently spans more than its own code, so the lookup is the lower-cased code.
- * When one does, this is the line that has to learn about it.
+ * and the lookup is the lower-cased code until one spans more than its own.
  */
 const hasConventions = (code: string): boolean =>
 	Object.hasOwn(ADDRESS_SYSTEM_CONVENTIONS, code.toLowerCase() as keyof typeof ADDRESS_SYSTEM_CONVENTIONS)
@@ -141,9 +109,8 @@ function rowFor(code: string, joinsTo: string, subJurisdiction: boolean): Jurisd
 		subJurisdiction,
 		layout: layoutForCountry(joinsTo) !== null,
 		conventions: hasConventions(joinsTo),
-		// A sub-jurisdiction has no register of its own.
-		// It reads its parent's numbers, and reporting them as the sub-jurisdiction's own would double-count.
-		// Zero here says "no separate reading exists", which is the true statement.
+		// A sub-jurisdiction has no register of its own; zero here says "no separate reading
+		// exists", because reporting its parent's numbers would double-count.
 		corpusRows: subJurisdiction ? 0 : (c?.corpusRows ?? 0),
 		corpusStreetRows: subJurisdiction ? 0 : (c?.corpusStreetRows ?? 0),
 		trains: subJurisdiction ? false : (c?.admitted ?? false) && (c?.corpusRows ?? 0) > 0,
@@ -166,9 +133,8 @@ const DIMENSIONS: ReadonlyArray<{ name: string; held: (r: JurisdictionRow) => bo
 	{ name: "renders — codex layout", held: (r) => r.layout },
 	{ name: "resolves — gazetteer places > 0", held: (r) => r.gazetteerPlaces > 0 },
 	{ name: "parses — trains on corpus rows", held: (r) => r.trains },
-	// Admission is part of the predicate.
-	// Street rows the config does not admit train no model, and reporting them as
-	// held would put this row above the one it depends on.
+	// Admission is part of the predicate: street rows the config does not admit train no model,
+	// and reporting them as held would put this row above the one it depends on.
 	{ name: "parses streets — street-labeled rows", held: (r) => r.trains && r.corpusStreetRows > 0 },
 	{ name: "measured — board rows > 0", held: (r) => r.boardRows > 0 },
 	{ name: "rooftop — obtainable outside the repo", held: (r) => r.geocodeTier === "rooftop-published" },

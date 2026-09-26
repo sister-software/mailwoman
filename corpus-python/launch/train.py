@@ -14,14 +14,11 @@ import os
 
 from .app import OUTPUT_DIR, VOL_MOUNT, app, hf_secret, training_image, vol
 
-# Training-function wall-clock budget (2026-08-09 P1). The old decorator value was 14,400 s
-# under a stale "training should take ~1h" comment, and killed a 60k-step run at step 59,900:
-# at the measured throughput 60k optimizer steps alone need ~3h55m, before image boot, volume
-# reload, loader init, validation, checkpointing, and the final save/commit. 21,600 s (6h)
-# covers the 60k A100 recipe with real headroom, and `_required_train_seconds` preflights any
-# recipe against the ceiling inside train() — a config that cannot fit fails in minute one rather than at the wire.
+# Training-function wall-clock budget: 21,600 s (6h) covers the 60k A100 recipe.
+# `_required_train_seconds` preflights any recipe against the ceiling inside train(), so a config
+# that cannot fit fails before the run starts rather than at the wire.
 TRAIN_TIMEOUT_SECONDS = 21600
-# Measured on the v4.3.3 A100 run (2026-08-09): ~4.25 optimizer steps/s at batch 128.
+# ~4.25 optimizer steps/s at batch 128 on the A100.
 MEASURED_STEPS_PER_SECOND = 4.25
 # Multiplicative headroom over the measured rate (validation pauses, checkpoint writes, slow
 # batches) plus a flat allowance for startup/shutdown outside the step loop.
@@ -74,8 +71,8 @@ def preflight_corpus_receipts(config_name: str) -> str:
     volumes={VOL_MOUNT: vol},
     secrets=[hf_secret],  # HF_TOKEN for optional Trackio Space upload (empty/no-op when unset)
     gpu="A100",
-    timeout=TRAIN_TIMEOUT_SECONDS,  # 6h — see the TRAIN_TIMEOUT_SECONDS derivation above
-    memory=32768,  # 32GB RAM
+    timeout=TRAIN_TIMEOUT_SECONDS,
+    memory=32768,
 )
 def _train_gpu(
     config_name: str = "v0_5_0-classifier-ce-only-full.yaml",
@@ -87,19 +84,18 @@ def _train_gpu(
     """Run the CE-only classifier training on an A100.
 
     Pass ``--trackio`` (and optionally ``--trackio-space org/space``) to mirror metrics
-    to a Hugging Face Space dashboard. These override the YAML config's trackio fields.
+    to a Hugging Face Space dashboard. These override the YAML config's trackio fields;
     omit them to honor whatever the config sets (default: tracking off).
     """
     import sys
 
     import torch
 
-    # Fetch the latest committed volume state. Without this, a container mounts a stale
-    # snapshot and never sees parquet files added via `modal volume put` after deploy — which silently
-    # trains on the old corpus (the v0.7.1 intersection-recipe trap, night-3 2026-05-29).
+    # Fetch the latest committed volume state. Without this, a container mounts a stale snapshot
+    # and never sees parquet files added via `modal volume put` after deploy, silently training on
+    # a stale corpus.
     vol.reload()
 
-    # Add training code to path
     sys.path.insert(0, f"{VOL_MOUNT}/corpus-python/src")
 
     print(f"PyTorch: {torch.__version__}")
@@ -108,11 +104,10 @@ def _train_gpu(
         print(f"GPU: {torch.cuda.get_device_name(0)}")
         print(f"VRAM: {torch.cuda.get_device_properties(0).total_memory / 1e9:.1f} GB")
 
-    # Corpus existence is verified after the config loads (below), against cfg.data.corpus_dir — the
-    # corpus version travels in the config rather than hardcoded here. (Was pinned to v0.3.0, which silently
-    # blocked every later corpus once v0.3.0 was cleaned off the volume. 2026-06-12.)
+    # Corpus existence is verified after the config loads, against cfg.data.corpus_dir; the corpus
+    # version travels in the config rather than being hardcoded here.
 
-    # The config file references paths relative to /data/ which matches our volume mount
+    # The config file references paths relative to /data/, which matches the volume mount
     config_path = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/configs/{config_name}"
     if not os.path.isfile(config_path):
         raise RuntimeError(f"Config not found: {config_path}")
@@ -121,16 +116,16 @@ def _train_gpu(
     print(f"Resume: {resume}")
     print("Starting training...\n")
 
-    # Import and run training. load_config is the strict path (#1248): an unknown YAML
-    # key — e.g. a setting the volume-side config schema predates — raises here at launch,
-    # naming the dotted key + file, instead of silently running a fine-tune with every setting inert.
+    # load_config is the strict path: an unknown YAML key — e.g. a setting the volume-side config
+    # schema predates — raises here at launch, naming the dotted key and file, instead of silently
+    # running a fine-tune with every setting inert.
     from mailwoman_train.config import load_config
     from mailwoman_train.train.trainer import train as run_train
 
     cfg = load_config(config_path)
 
-    # Verify the corpus the config actually points at exists on the volume (post-config so the version
-    # isn't hardcoded). The data loader reads cfg.data.corpus_dir. fail loud here if it's missing.
+    # Verify the corpus the config points at exists on the volume; the data loader reads
+    # cfg.data.corpus_dir, so fail loud here if it is missing.
     train_dir = os.path.join(cfg.data.corpus_dir, "train")
     if not os.path.isdir(train_dir):
         raise RuntimeError(
@@ -155,9 +150,8 @@ def _train_gpu(
         )
         print(f"Corpus receipts: verified ({len(cfg.data.required_corpus_receipts)} requirements)")
 
-    # Preflight the wall-clock budget (2026-08-09 P1): a recipe whose step count cannot fit
-    # this function's timeout must fail here rather than die at the wire like the 60k predecessor
-    # that Modal killed at step 59,900.
+    # Preflight the wall-clock budget: a recipe whose step count cannot fit this function's timeout
+    # must fail here rather than die at the wire.
     required = _required_train_seconds(cfg.train.max_steps)
     if required > TRAIN_TIMEOUT_SECONDS:
         raise RuntimeError(
@@ -177,7 +171,6 @@ def _train_gpu(
     if cfg.train.trackio_enabled:
         print(f"Trackio: enabled (space={cfg.train.trackio_space or '(local)'})")
 
-    # Use config's output_dir if it has one, otherwise default
     run_output = cfg.train.output_dir if cfg.train.output_dir.startswith("/data/") else f"{OUTPUT_DIR}/checkpoints"
     run_base = os.path.dirname(run_output)
     cfg.train.output_dir = run_output
@@ -193,8 +186,7 @@ def _train_gpu(
         run_train(cfg, resume_from="auto")
     elif resume and resume != "none":
         # Explicit checkpoint path — the branch-run mechanism (e.g. the linear_cooldown read of
-        # a mid-cosine checkpoint under a new output dir). Previously silently dropped, which
-        # made every non-auto resume a fresh run.
+        # a mid-cosine checkpoint under a new output dir).
         run_train(cfg, resume_from=resume)
     else:
         run_train(cfg)
@@ -202,7 +194,6 @@ def _train_gpu(
     vol.commit()
     print(f"\nTraining complete. Output at {OUTPUT_DIR}/")
 
-    # List what we produced
     for root, _dirs, files in os.walk(OUTPUT_DIR):
         for f in files:
             path = os.path.join(root, f)
@@ -220,7 +211,7 @@ def main(
     """
     Run the mailwoman training pipeline on Modal.
 
-    Stage what the recipe reads first, with its own sync. this entry point trains against whatever
+    Stage what the recipe reads first, with its own sync; this entry point trains against whatever
     is already on the volume and stages no files.
 
     --config         Training config YAML filename

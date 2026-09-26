@@ -3,10 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Route → view. The geocoder and the debug view mount the same page. the debug view opens the decode-path drawer
- *   by default, and the trace view mounts the live model visualizer over the same runtime. The page mounts the real
- *   runtime; `?runtime=fake` mounts the canned one the shell smoke and the stories use, so a deployment can be
- *   checked without a model download.
+ *   `?runtime=fake` mounts the canned runtime the shell smoke and the stories use, so a deployment can be checked without a model download.
  */
 
 import "maplibre-gl/dist/maplibre-gl.css"
@@ -44,11 +41,8 @@ function NotFound({ pathname }: { pathname: string }) {
 }
 
 /**
- * The real geocoder, with the host panels.
- *
- * The map renders at the default centre at once.
- * The geolocation answer moves the bias when it arrives, so no code waits on
- * the network before the first paint.
+ * The map renders at the default centre at once; the geolocation answer only moves the bias
+ * when it arrives, so nothing waits on the network before the first paint.
  */
 function RealGeocoder({ route, query }: { route: Route; query: string | null }) {
 	const initialCenter = useBrowserGeolocation(PRODUCTION_CONFIG)
@@ -79,11 +73,8 @@ function RealGeocoder({ route, query }: { route: Route; query: string | null }) 
 			runtime={handle.runtime}
 			panels={panels}
 			defaultAddress={query ?? DEFAULT_ADDRESS}
-			// A permalink answers on arrival.
-			// `defaultAddress` only pre-fills the field, so a link carrying `?q=` used to land on the world
-			// view with the address sitting in the box, unrun — the one thing a shared link must not do.
-			// Only the URL's query goes here: a cold visit still pre-fills the demo address without
-			// spending the visitor's first seconds resolving an address they never asked for.
+			// `defaultAddress` only pre-fills the field, so only the URL's query goes to
+			// `initialQuery`; a cold visit still pre-fills the demo address without resolving it.
 			initialQuery={query}
 			presets={PRESETS}
 			// `/debug` exists to show the model machinery, so it opens the disclosure the default view collapses.
@@ -94,23 +85,15 @@ function RealGeocoder({ route, query }: { route: Route; query: string | null }) 
 }
 
 /**
- * Put the submitted query in the address bar, so a result can be linked and a reload returns to it.
- *
- * `replaceState`, not `pushState`: a search refines the same view rather than opening
- * a new one, and pushing would make the back button walk every keystroke-completed
- * query a visitor tried before leaving the page.
+ * `replaceState`, not `pushState`, so the back button does not walk every submitted query.
  */
 function writeQueryToURL(query: string): void {
 	history.replaceState(history.state, "", searchWithQuery(new URL(location.href), query))
 }
 
 /**
- * The app's identity and source credits.
- *
- * They belong to the page rather than to the runtime, so the canned runtime the smoke
- * and the stories mount shows the same footer the real one does.
- * The same component the real panels use rather than a second copy of it, which is how
- * the commit link came to render here and nowhere a visitor could see it.
+ * The app's identity and source credits belong to the page rather than the runtime,
+ * so the canned runtime shows the same footer as the real one.
  */
 const IDENTITY_PANELS: GeocoderPanels = {
 	footer: <EarthFooter />,

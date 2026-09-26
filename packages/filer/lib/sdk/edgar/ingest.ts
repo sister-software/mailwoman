@@ -4,34 +4,10 @@
  * @author Teffen Ellis, et al.
  * @file The edgar chain, assembled — carrier names in, {@linkcode EdgarSubsidiaryRow}s out.
  *
- *   Every link existed and was tested in isolation before this file. no code joined them, so no code had
- *   ever produced a row `buildFilerDatabase` could consume. This is that join, and it is deliberately thin
- *   — the judgment lives in the pieces it calls rather than here.
- *
- *   ```
- *   name → resolveCIKCandidates      (edgar-filings.ts — every candidate, never a winner)
- *        → corroborateCIK            (cik-corroboration.ts — the second signal, on SIC)
- *        → parseTenKFilings          (edgar-filings.ts)
- *        → fetchExhibit21Documents   (edgar-filings.ts — the sgml document manifest)
- *        → parseExhibit21            (exhibit21.ts — measured on 21 real filings)
- *        → EdgarSubsidiaryRow[]
- *   ```
- *
- *   **The corroboration check is not optional and cannot be turned off from here.** Resolving 24 telecom
- *   names by score alone returned the wrong company twice, at 0.829 and 0.886 — confident scores pointing
- *   at the wrong registrant. A caller may supply pins. it may not skip the check. That is why
- *   {@link EdgarIngestOptions} exposes `pinnedCIKs` and no bypass.
- *
- *   **Every drop is counted, none are thrown.** A name that resolves to no CIK, a registrant SEC files
- *   under a software SIC, a 10-K carrying no Exhibit 21 — all ordinary, all recorded in
- *   {@link EdgarIngestReport}. A run that produces fewer rows than expected should be answerable from the
- *   report without re-running anything.
- *
- *   **Ambiguity stops the registrant, it does not get resolved here.** When the top score is a genuine tie
- *   between different CIKs and more than one survives corroboration, this abstains and counts it. Picking
- *   one would be the exact false-identity-link failure `resolveCIKCandidates` refuses to commit, relocated
- *   one file downstream. A pinned CIK that is among the tied survivors does break the tie. An operator
- *   decision about one registrant's identity is a stronger signal than a name score.
+ *   The corroboration check is mandatory: resolving 24 telecom names by score alone returned the wrong company twice,
+ *   at 0.829 and 0.886, so {@link EdgarIngestOptions} exposes `pinnedCIKs` and no bypass. Every drop is counted
+ *   rather than thrown, and a genuine tie between different CIKs that survives corroboration abstains unless a pinned
+ *   CIK at the top score breaks it.
  */
 
 import type { EdgarSubsidiaryRow } from "#sdk/build/filer"
@@ -48,11 +24,8 @@ import {
 import { parseExhibit21 } from "#sdk/exhibit21/index"
 
 /**
- * The subset of `SECClient` this module needs.
- * JSON reads plus raw document reads.
- *
- * A real `createSECClient()` satisfies it structurally, and a test substitutes an
- * object literal rather than building an axios harness.
+ * The subset of `SECClient` this module needs — JSON reads plus raw document reads —
+ * which a real `createSECClient()` satisfies structurally.
  */
 export interface SECIngestClient {
 	get<T>(input: string | URL): Promise<T>
@@ -60,10 +33,7 @@ export interface SECIngestClient {
 }
 
 /**
- * Why a registrant produced no rows.
- *
- * Each is ordinary.
- * None is an error.
+ * Why a registrant produced no rows; each reason is ordinary rather than an error.
  */
 export const EdgarSkipReason = {
 	/**
@@ -71,7 +41,7 @@ export const EdgarSkipReason = {
 	 */
 	Unresolved: "unresolved",
 	/**
-	 * A genuine tie between different CIKs survived corroboration — see the file header.
+	 * A genuine tie between different CIKs survived corroboration.
 	 */
 	AmbiguousCIK: "ambiguous-cik",
 	/**
@@ -88,8 +58,6 @@ export const EdgarSkipReason = {
 	NoExhibit21: "no-exhibit-21",
 	/**
 	 * The Exhibit 21 parsed to zero subsidiaries.
-	 *
-	 * `parseExhibit21` counts what it abstained from.
 	 */
 	NoSubsidiaries: "no-subsidiaries",
 } as const
@@ -97,10 +65,8 @@ export const EdgarSkipReason = {
 export type EdgarSkipReason = (typeof EdgarSkipReason)[keyof typeof EdgarSkipReason]
 
 /**
- * One registrant's outcome.
- *
- * Present for every input name, including the ones that produced rows, so a report
- * can be read end-to-end without joining it back to the request list.
+ * One registrant's outcome, present for every input name including the ones that produced rows,
+ * so a report can be read end-to-end without joining it back to the request list.
  */
 export interface EdgarIngestOutcome {
 	query: string
@@ -111,15 +77,16 @@ export interface EdgarIngestOutcome {
 	filingDate?: string
 	subsidiaries: number
 	/**
-	 * What `parseExhibit21` recognized as an entry but could not confidently reduce.
-	 *
-	 * A high count against a low `subsidiaries` is the signal that a layout is unhandled.
-	 * The whole reason the parser counts rather than drops.
+	 * What `parseExhibit21` recognized as an entry but could not confidently reduce;
+	 * a high count against a low `subsidiaries` signals an unhandled layout.
 	 */
 	unparseable: number
 	skipReason?: EdgarSkipReason
 }
 
+/**
+ * The full per-run report: every registrant's outcome plus the row and skip totals.
+ */
 export interface EdgarIngestReport {
 	outcomes: EdgarIngestOutcome[]
 	rows: number
@@ -127,12 +94,14 @@ export interface EdgarIngestReport {
 	skipped: Record<EdgarSkipReason, number>
 }
 
+/**
+ * Options for {@linkcode collectEdgarSubsidiaryRows}, extending the corroboration
+ * options with a score floor and a progress callback.
+ */
 export interface EdgarIngestOptions extends CIKCorroborationOptions {
 	/**
-	 * Minimum name score a candidate must clear.
-	 *
-	 * Passed straight to `resolveCIKCandidates`; its default applies when omitted.
-	 * Not a substitute for corroboration — raising it does not make a confident wrong match right.
+	 * Minimum name score a candidate must clear, passed straight to `resolveCIKCandidates`;
+	 * raising it is not a substitute for corroboration.
 	 */
 	minScore?: number
 	/**
@@ -142,10 +111,8 @@ export interface EdgarIngestOptions extends CIKCorroborationOptions {
 }
 
 /**
- * Edgar's submissions payload for one registrant.
- *
- * Only the two fields this module reads are declared.
- * `sic` for the corroboration check, and the rest is handed to `parseTenKFilings` untouched.
+ * Edgar's submissions payload: only the two fields this module reads are declared,
+ * and the rest is handed to `parseTenKFilings` untouched.
  */
 interface SubmissionsPayload {
 	sic?: unknown
@@ -153,11 +120,8 @@ interface SubmissionsPayload {
 }
 
 /**
- * Pick the one corroborated CIK for a name, or say why there isn't one.
- *
- * Corroboration runs over every candidate rather than only the top-scoring one:
- * the highest name score is exactly what proved untrustworthy, so a lower-scoring
- * candidate that a second source agrees with is the better answer.
+ * Picks the one corroborated CIK for a name, or says why there isn't one; corroboration runs
+ * over every candidate because the highest name score is exactly what proved untrustworthy.
  */
 async function resolveCorroboratedCIK(
 	client: SECIngestClient,
@@ -192,19 +156,13 @@ async function resolveCorroboratedCIK(
 
 	if (!corroborated.length) return { ok: false, reason: EdgarSkipReason.Uncorroborated }
 
-	// Sort corroborated by score, highest first.
-	// The order from resolveCIKCandidates can shift once some candidates are dropped by the SIC check.
 	corroborated.sort((a, b) => b.score - a.score)
 
-	// Ambiguity is a genuine TIE at the top rather than "more than one survived".
-	// A slower-scoring candidate that also happened to be a telecom company is not ambiguity.
-	// It's noise the score already ranked.
-	// With the 7,998-entry ticker file this never diverged from `corroborated.length > 1`;
-	// with the 1,054,085-entry cik-lookup-data it catches 10 of 24 names as false ambiguities.
+	// Ambiguity is a genuine tie at the top rather than "more than one survived";
+	// with the 1,054,085-entry cik-lookup-data, `corroborated.length > 1` alone
+	// would count 10 of 24 names as false ambiguities.
 	if (corroborated.length > 1 && corroborated[0]!.score === corroborated[1]!.score) {
-		// A pinned CIK at the top score breaks the tie.
-		// The operator already decided this registrant is in scope, which is a decision
-		// about identity rather than just corroboration.
+		// A pinned CIK at the top score breaks the tie: that is an operator decision about identity, not a name score.
 		const pinnedBreak = corroborated.find(
 			(candidate) => options.pinnedCIKs?.has(candidate.cik) && candidate.score === corroborated[0]!.score
 		)
@@ -224,9 +182,8 @@ async function collectForFiling(
 	client: SECIngestClient,
 	filing: TenKFiling
 ): Promise<{ rows: EdgarSubsidiaryRow[]; unparseable: number }> {
-	// edgar occasionally 404s a filing document that objectively exists —
-	// a transient fetch failure rather than a missing filing.
-	// Catching here rather than letting a single 404 kill the whole run.
+	// edgar occasionally 404s a filing document that objectively exists, a transient fetch
+	// failure, so catch here rather than let a single 404 kill the whole run.
 	let documents: { url: string }[]
 
 	try {
@@ -253,8 +210,6 @@ async function collectForFiling(
 			rows.push({
 				cik: filing.cik,
 				subsidiaryName: subsidiary.name,
-				// Carried only when Exhibit 21 stated one.
-				// `parseExhibit21` already abstained on the rest.
 				...(subsidiary.jurisdiction ? { jurisdiction: subsidiary.jurisdiction } : {}),
 				filingDate: filing.filingDate,
 			})
@@ -265,20 +220,13 @@ async function collectForFiling(
 }
 
 /**
- * Resolve each `queries` name to a corroborated registrant and collect its most
- * recent 10-K's Exhibit 21 disclosures.
+ * Resolves each `queries` name to a corroborated registrant and collects its
+ * most recent 10-K's Exhibit 21 disclosures.
  *
- * `tickers` is edgar's registrant index.
- * `company_tickers.json` covers only registrants with A ticker — 7,998 distinct CIKs,
- * and none of Cellco Partnership, Windstream, Zayo, Brightspeed, Consolidated, Hargray or Altice.
- *
- * This sector is majority private-equity-owned, so a caller should build this
- * list from `cik-lookup-data.txt` instead.
- * The parameter takes whatever index the caller assembled rather than fetching one itself.
- *
- * Only the most recent 10-K is read.
- * A registrant's older filings restate the same family with an earlier vintage, and ingesting all of
- * them would multiply rows without adding facts — a deliberate scope choice rather than an oversight.
+ * `company_tickers.json` covers only registrants with a ticker — 7,998 distinct CIKs,
+ * missing Cellco Partnership, Windstream, Zayo, Brightspeed, Consolidated, Hargray and Altice —
+ * so a caller should build the `tickers` index from `cik-lookup-data.txt` instead.
+ * Only the most recent 10-K is read: older filings restate the same family with an earlier vintage.
  */
 export async function collectEdgarSubsidiaryRows(
 	client: SECIngestClient,
@@ -344,8 +292,8 @@ export async function collectEdgarSubsidiaryRows(
 			...(collected.rows.length
 				? {}
 				: {
-						// Zero rows and zero abstentions means the filing had no Exhibit 21 to read at all.
-						// Zero rows with abstentions means one was read and yielded no rows.
+						// Zero rows with no abstentions means the filing had no Exhibit 21;
+						// zero rows with abstentions means one was read and yielded nothing.
 						skipReason: collected.unparseable ? EdgarSkipReason.NoSubsidiaries : EdgarSkipReason.NoExhibit21,
 					}),
 		})

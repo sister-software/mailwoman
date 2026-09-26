@@ -3,10 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Host control widgets injected into the geocoder via the `GeocoderPanels` injection point: the device-location
- *   proximity-bias row (`panels.bias`) and the two opt-in display toggles (`panels.aboveResult`) — calibrated
- *   confidence + dev mode. Host-owned because the state they carry (geolocation permission, the calibrated view, the
- *   dev-mode drawer) is a host concern rather than a package one.
+ *   Host-owned: the state these carry (geolocation permission, the calibrated view, the dev-mode drawer) is a host concern rather than a package one.
  */
 
 import type React from "react"
@@ -16,9 +13,7 @@ import type { GeoBiasError } from "#runtime/use/geo-bias"
 import styles from "./panels.module.css"
 
 /**
- * What each failure says.
- *
- * Short enough to sit beside the chip, and each one tells the visitor what to do next
+ * Short enough to sit beside the chip, and each message tells the visitor what to do next
  * rather than restating that something went wrong.
  */
 const GEO_BIAS_MESSAGE: Record<GeoBiasError, string> = {
@@ -43,19 +38,9 @@ export interface GeoBiasRowProps {
 }
 
 /**
- * The device-location bias, as one chip in the map chrome.
- *
- * The chip's own row is not `.mw-map-chiprow`: that class carries an overflow-scroll
- * and an edge-fade mask built for a dozen example chips, and inheriting it here
- * faded the right edge of a single button for no reason.
- *
- * A failure gets a line of its own.
- * The pressed state cannot carry it.
- *
- * A denial turns the chip back off, which looks identical to the visitor turning it off,
- * and the browser will not prompt a second time.
- *
- * Therefore, pressing again appeared to have no effect at all.
+ * The chip avoids `.mw-map-chiprow` (whose overflow-scroll and edge-fade mask is built for a dozen chips)
+ * and gives a failure its own line, because a denial turns the chip back off identically
+ * to a manual toggle and the browser will not prompt again.
  */
 export const GeoBiasRow: React.FC<GeoBiasRowProps> = ({ active, error, onToggle }) => (
 	<div className={styles.biasRow}>

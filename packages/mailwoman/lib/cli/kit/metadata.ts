@@ -13,24 +13,13 @@ export interface CommandArgumentMetadata {
 }
 
 /**
- * Attach CLI presentation metadata to a positional-argument schema.
- *
- * The encoded description remains readable by the transitional schema adapter.
- * Native commands express positionals directly in `CommandSpec` and do not need this helper.
+ * The encoded description remains readable by the transitional schema adapter;
+ * native commands express positionals directly in `CommandSpec` and do not need this helper.
  */
 export function argument(config: CommandArgumentMetadata): string {
 	return `__mailwoman_argument_config__${stringifyJSON(config)}`
 }
 
-/**
- * The version of the `mailwoman` package this process ships in.
- *
- * Read from the package's own manifest via `resolvePackagePath`, so dev checkouts,
- * `out/` trees, and published installs all answer the same file.
- *
- * @throws {TypeError} When the manifest carries no string version — a broken install
- * rather than a formatting choice.
- */
 /**
  * The fields of mailwoman's own `package.json` that the CLI reports about itself:
  * the version (`--version`), the Node engines floor (the doctor), and the license
@@ -44,13 +33,8 @@ export interface MailwomanManifest {
 }
 
 /**
- * The compiled CLI's entry point, taken from the manifest's own `bin` rather than assembled from segments.
- *
- * Nineteen call sites spelled `workspacePath("mailwoman", "out", "cli.js")`,
- * and every one of them named a file that had moved.
- * A path built from pieces matches no sweep and no check covers it until the process fails to start.
- *
- * The manifest already states where the binary is, and that statement is what `npm` installs against.
+ * The manifest's own `bin.mailwoman` is what `npm` installs against, so the entry point
+ * is read from it rather than assembled from a path no sweep or check covers.
  */
 export async function mailwomanCLIPath(): Promise<string> {
 	const { resolvePackagePath } = await import("@mailwoman/core/module/resolvers")
@@ -65,11 +49,8 @@ export async function mailwomanCLIPath(): Promise<string> {
 let manifest: Promise<MailwomanManifest> | undefined
 
 /**
- * Read mailwoman's own manifest by package self-reference, so the same file answers
- * from the source tree, `out/`, and a published tarball.
- *
- * The one place this read happens, and it happens once per process: the version line,
- * the license notice, the doctor and the license command all read the same file.
+ * Read by package self-reference so the same file answers from the source tree, `out/`,
+ * and a published tarball; the one place this read happens, memoized for the process.
  *
  * @throws {TypeError} When the manifest carries no string `version` or `license` —
  * a broken install rather than a choice.

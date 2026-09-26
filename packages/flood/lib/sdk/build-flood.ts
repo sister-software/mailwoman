@@ -3,36 +3,10 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Build `flood.db` — the sealed two-tier polygon layer, from the authority's published geodatabase.
- *
- *   the accumulation is IN SQL rather than IN A MAP. Classification is per feature and shared with the resolution
- *   measurement (`classifyFeatureCells`), but where the touches GO differs on purpose: the measuring
- *   instrument holds them in memory because it is comparing candidate resolutions in one pass, and the
- *   builder streams them into a temporary table because memory has to stay flat in row count. The poi
- *   build ran out of heap at 13.68M rows for exactly the shape this avoids, and a polygon layer's touches
- *   outnumber its features.
- *
- *   zone 1 is written AS coverage rather than AS rows. Inside England a location with no polygon is not
- *   unsurveyed — the Planning Practice Guidance defines Zone 1 as the land outside Zones 2 and 3 — so the
- *   designated absence is carried by a `layer_coverage` row at `basis = designated`, `completeness = 1.0`.
- *   Outside England there is no row, because the EA's statement makes no statement about Wales, Scotland or
- *   Northern Ireland, each of which has a different authority and a different zone scheme. Those two
- *   readings must never collapse into one another, and the negative half of the verification exists to
- *   prove they do not.
- *
- *   A coverage row licenses only that the authority determined here. The hazard reading is the zone value.
- *   A `designated`-complete cell holding no polygon says the EA's map assigns Zone 1 there. it does not
- *   say the location will not flood, and the authority itself declines that second statement.
- *
- *   the coverage cell OF A row is `cellToParent` OF its finer cell, never a fresh `latLngToCell` at the
- *   coarse resolution. That is what every existing reader in this repo does, and the two agree for a
- *   point but not for a cell.
- *
- *   the area cross-check is belt and braces and IT stays. The EA's rings nest their holes properly, so the
- *   orientation-encoded hole trap the zoning survey measured does not fire here. The check costs one
- *   subtraction per feature and its absence is silent: a hole read as an exterior ring produces a
- *   well-formed polygon that simply covers ground the authority did not map, and answers "inside" for
- *   every point in it.
+ *   Build `flood.db`, the sealed two-tier polygon layer, from the authority's published geodatabase.
+ *   Zone 1 is written as coverage rather than as rows, so a `designated`-complete cell holding no polygon
+ *   is a designation and must never collapse into the absent row a cell outside England has, and a
+ *   coverage cell is always `cellToParent` of its finer cell rather than a fresh `latLngToCell`.
  */
 
 import { readFileSize } from "@mailwoman/core/fs/readers"
@@ -69,9 +43,8 @@ import {
 } from "#vocabulary"
 
 /**
- * Schema version of the domain tables.
- *
- * Bumped when a column changes meaning, never for an added column a reader can ignore.
+ * Schema version of the domain tables, bumped when a column changes meaning
+ * and never for an added column a reader can ignore.
  */
 export const FLOOD_SCHEMA_VERSION = 1
 
@@ -81,23 +54,16 @@ export const FLOOD_SCHEMA_VERSION = 1
 export type BuildFloodInput =
 	| {
 			/**
-			 * A feature source consumed IN this process.
-			 *
-			 * Correct for a fixture and for anything small.
-			 * It is what the batched form falls back to per chunk, so the two share one implementation.
+			 * A feature source consumed in this process, used for a fixture
+			 * and as the batched form's per-chunk fallback.
 			 */
 			source: FloodFeatureSource
 	  }
 	| {
 			/**
-			 * The published geodatabase, ingested in bounded chunks — one child process
-			 * per range of the authority's own feature ids.
-			 *
-			 * This is the shape a national build takes, and the reason is reproducibility
-			 * rather than speed: h3's wasm heap cannot be reset from JavaScript and does not
-			 * survive an unbounded number of polyfill calls, so a single-process build over
-			 * 813,627 polygons succeeds or fails on how the allocator happens to fragment.
-			 * See `ingest-chunk.ts`.
+			 * The published geodatabase, ingested in bounded chunks, one child process per
+			 * range of the authority's own feature ids, because h3's wasm heap cannot be reset
+			 * from JavaScript and does not survive an unbounded number of polyfill calls.
 			 */
 			batched: {
 				geodatabasePath: string
@@ -109,20 +75,13 @@ export type BuildFloodInput =
 				objectIDFrom: number
 				objectIDTo: number
 				declaredFeatureCount: number
-				/**
-				 * Feature ids per chunk.
-				 *
-				 * See {@link DEFAULT_CHUNK_SIZE}.
-				 */
 				chunkSize?: number
 			}
 	  }
 
 export type BuildFloodOptions = BuildFloodInput & {
 	/**
-	 * Where the sealed artifact lands.
-	 *
-	 * The build writes beside it and swaps.
+	 * Where the sealed artifact lands; the build writes beside it and swaps.
 	 */
 	out: PathBuilderLike
 	/**
@@ -132,10 +91,8 @@ export type BuildFloodOptions = BuildFloodInput & {
 	buildCmd: string
 	buildSHA: string
 	/**
-	 * ISO-8601, supplied by the caller.
-	 *
-	 * Never generated here: the interface says so, and a library-generated timestamp
-	 * makes two builds of the same inputs differ.
+	 * ISO-8601, supplied by the caller and never generated here, because a library-generated
+	 * timestamp makes two builds of the same inputs differ.
 	 */
 	createdAt: string
 	/**
@@ -143,9 +100,7 @@ export type BuildFloodOptions = BuildFloodInput & {
 	 */
 	indexResolution: number
 	/**
-	 * The resolution `layer_coverage` rows are keyed at.
-	 *
-	 * Must be coarser than the index resolution.
+	 * The resolution `layer_coverage` rows are keyed at, which must be coarser than the index resolution.
 	 */
 	coverageResolution: number
 	/**
@@ -153,10 +108,8 @@ export type BuildFloodOptions = BuildFloodInput & {
 	 */
 	extent: FloodMapExtent
 	/**
-	 * The feature count a second distribution channel reports — the live WFS.
-	 *
-	 * Supplied, it is asserted against the geodatabase's own count, which is the cheapest two-path
-	 * check available and catches a stale or truncated archive before anything is written.
+	 * The feature count a second distribution channel reports, the live WFS, asserted against the
+	 * geodatabase's own count to catch a stale or truncated archive before anything is written.
 	 */
 	expectedFeatureCount?: number
 	onProgress?: (message: string) => void
@@ -172,26 +125,21 @@ export interface BuildFloodResult {
 	partialCellRows: number
 	candidateRows: number
 	/**
-	 * `partialCellRows / (wholeCellRows + partialCellRows)` at the built resolution, over the stored rows.
-	 *
-	 * The whole side is compacted, so this is not the same number the resolution
-	 * was chosen on and is reported separately.
+	 * `partialCellRows / (wholeCellRows + partialCellRows)` over the stored rows,
+	 * which is not the number the resolution was chosen on because the whole side is compacted.
 	 */
 	storedPartialShare: number
 	/**
-	 * Features whose bounding box forced a resolution coarser than `indexResolution`,
-	 * and the resolutions the stored cell rows are actually at.
-	 *
-	 * Both are reported rather than smoothed over: a reader that assumed one resolution
-	 * would probe at the wrong one and read every coarsened feature as an absence.
+	 * Features coarsened below `indexResolution`, and the resolutions the stored rows are actually at,
+	 * because a reader that assumed one resolution would read every coarsened feature as an absence.
 	 */
 	coarsenedFeatures: number
 	storedResolutions: number[]
 	coverageCells: number
 	coverageCellsWithRows: number
 	/**
-	 * The area totals in square kilometres — what the source says, what the encoded rings say
-	 * read with their holes, and what they would say read without — with the witness stated.
+	 * The area totals in square kilometres: the source's, the encoded rings read
+	 * with their holes, and read without.
 	 */
 	area: AreaAgreementReading
 	sizeBytes: number
@@ -330,31 +278,21 @@ interface StreamResult {
 /**
  * The relative gap between the two area readings that fails the build.
  *
- * The comparison is a spherical ring area against gdal's planar area in the source's own projection,
- * so the two never agree exactly: British National Grid's scale factor runs 0.9996 at its central
- * meridian to about 1.0004 at the edges of its usable zone, contributing roughly a tenth of a
- * percent, and the spherical approximation contributes a similar amount against the ellipsoid.
- * One percent leaves both far inside the tolerance while sitting well below the error
- * a hole-blind read produces — the zoning survey measured that at 4.1% over a whole
- * national layer, and this product's own smoke rung at 17%.
+ * A spherical ring area and gdal's planar area in the source's own projection
+ * never agree exactly, so one percent sits far outside the projection error
+ * while staying below what a hole-blind read produces.
  */
 const AREA_TOLERANCE = 0.01
 
 /**
- * Feature ids per chunk process.
- *
- * Sized against the measured ceiling rather than guessed: single-process runs over this product died
- * after roughly 510,000 and 798,000 features as h3's wasm heap fragmented. 100,000 leaves five
- * times that margin, and the cost of a smaller number is only one interpreter start per chunk.
+ * Feature ids per chunk process, sized against the measured ceiling: single-process runs over
+ * this product died after roughly 510,000 to 798,000 features as h3's wasm heap fragmented.
  */
 export const DEFAULT_CHUNK_SIZE = 100_000
 
 /**
- * Add up what the chunks reported.
- *
- * Exported for its own test: the coverage-cell arithmetic is the one part of the
- * batched path that a fixture build cannot reach, and getting it wrong produces a
- * well-formed artifact that under-reports how many polygons a cell holds.
+ * Add up what the chunks reported, exported for its own test because the coverage-cell
+ * arithmetic is the one part of the batched path a fixture build cannot reach.
  */
 export function aggregateChunks(chunks: ReadonlyArray<FloodChunkResult>): StreamResult {
 	const zoneCounts: Record<string, number> = {}
@@ -377,9 +315,8 @@ export function aggregateChunks(chunks: ReadonlyArray<FloodChunkResult>): Stream
 			zoneCounts[zone] = (zoneCounts[zone] ?? 0) + count
 		}
 
-		// A coverage cell straddles chunk boundaries — a range of feature ids is not
-		// a region — so the counts ADD rather than replace.
-		// Taking the last chunk's value would report a busy floodplain as holding only its final few polygons.
+		// A range of feature ids is not a region, so a coverage cell straddles chunks
+		// and the counts add rather than replace.
 		mergeCountsInto(observedByCoverageCell, chunk.observedByCoverageCell)
 	}
 
@@ -393,10 +330,8 @@ export function aggregateChunks(chunks: ReadonlyArray<FloodChunkResult>): Stream
 }
 
 /**
- * Run the ingest as a sequence of bounded child processes, one per range of the authority's feature ids.
- *
- * The shared chunk interface — the parent's no-handle rule, and the fail-loud handling of a
- * chunk that dies or prints no output — lives with `ingestChunkArguments` and `runChunkProcess`.
+ * Run the ingest as bounded child processes, one per range of the authority's feature ids,
+ * sharing the fail-loud chunk interface in `ingestChunkArguments` and `runChunkProcess`.
  */
 async function runBatchedIngest(
 	tmpPath: string,
@@ -427,8 +362,7 @@ async function runBatchedIngest(
 						String(from),
 						"--object-id-to",
 						String(to),
-						// A range's own count is not knowable up front — `ogrinfo` reports the layer's
-						// total and no narrower count — so the chunk makes no claim about its size
+						// A range's own count is not knowable up front, so the chunk declares zero
 						// and the parent checks the sum against the whole file.
 						"--declared-feature-count",
 						String(0),
@@ -444,14 +378,9 @@ async function runBatchedIngest(
 }
 
 /**
- * Resolve the touch table into the two stored cell tiers.
- *
- * Compaction happens here and only on the whole side.
- * A zone's uniform interior collapses parent-ward into a handful of coarse cells
- * while the fringe stays fine — hierarchy-respecting run-length encoding.
- *
- * A partial cell's parent is not partial in any useful sense, so compacting the
- * fringe would claim it covers ground it does not.
+ * Resolve the touch table into the two stored cell tiers, compacting only the whole side:
+ * a zone's uniform interior collapses parent-ward while the fringe stays fine, because a partial cell's
+ * parent is not partial in any useful sense and compacting it would claim ground it does not cover.
  */
 function resolveCells(database: DatabaseClient<FloodDatabase>): {
 	wholeRows: number
@@ -475,10 +404,7 @@ function resolveCells(database: DatabaseClient<FloodDatabase>): {
 	let partialRows = 0
 
 	// One group per (zone, resolution): `compactCells` takes a single resolution,
-	// and an adaptively-indexed layer has several.
-	// Pooling them throws.
-	// Compacting only the target group would silently drop every coarsened feature's interior.
-	// The shape of failure this repo keeps writing down, because the artifact would still build.
+	// and pooling across an adaptively-indexed layer throws.
 	for (const { zone_code: zoneCode, resolution } of zones) {
 		const wholeShort = database
 			.prepare("SELECT DISTINCT h3_cell FROM build_cell_touch WHERE zone_code = ? AND resolution = ? AND is_full = 1")
@@ -518,9 +444,8 @@ function resolveCells(database: DatabaseClient<FloodDatabase>): {
 		database.exec("COMMIT")
 	}
 
-	// The candidate list exists for the fringe only: a whole cell is answered by
-	// `flood_zone_cell` alone, so carrying its polygons would store the geometry join
-	// for every interior cell in England to no purpose.
+	// The candidate list exists for the fringe only, since a whole cell is
+	// answered by `flood_zone_cell` alone.
 	database.exec(
 		"INSERT INTO flood_zone_cell_area (h3_cell, resolution, area_id) " +
 			"SELECT DISTINCT t.h3_cell, t.resolution, t.area_id FROM build_cell_touch t " +
@@ -538,19 +463,14 @@ function resolveCells(database: DatabaseClient<FloodDatabase>): {
 }
 
 /**
- * The coverage rows: one per interior cell of the authority's footprint, and none outside it.
- *
- * `observed_rows` counts the polygons reaching into the cell, which is what the interface's column means.
- * It is zero for a cell the authority designated and no polygon covers — the storable form of the Zone
- * 1 designation, and the row a reader must not confuse with the absent row a cell outside England has.
+ * The coverage rows, one per interior cell of the authority's footprint: `observed_rows` counts
+ * the polygons reaching into the cell and is zero for a designated cell no polygon covers,
+ * which a reader must not confuse with the absent row a cell outside England has.
  */
 function buildCoverageCells(extent: FloodMapExtent, observed: Map<number, number>): CoverageCell[] {
 	return designatedCoverageCells(extent.coverageCells, observed)
 }
 
-/**
- * Insert the single footprint row.
- */
 function writeExtentRow(
 	database: DatabaseClient<FloodDatabase>,
 	options: BuildFloodOptions,
@@ -583,9 +503,6 @@ function writeExtentRow(
 		)
 }
 
-/**
- * Insert the authority's declared zone domain.
- */
 function writeVocabularyRows(database: DatabaseClient<FloodDatabase>): void {
 	const insert = database.prepare(
 		"INSERT INTO flood_zone_vocabulary (zone_code, label, definition, definition_url) VALUES (?, ?, ?, ?)"

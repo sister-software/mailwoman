@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The bodies this pipeline builds, with the conventions their usgs products use. A body is explicit in every record
- *   and artifact. No code here treats Earth as the reference.
+ *   The bodies this pipeline builds; a body is explicit in every record and artifact, and no code
+ *   here treats Earth as the reference.
  */
 
 import { BODY_RADII_KM, type PlanetaryBodyID } from "@mailwoman/spatial"
@@ -24,8 +24,6 @@ export interface PlanetaryBody {
 	meanRadiusKm: number
 	shape: "sphere" | "ellipsoid"
 	/**
-	 * Metres per degree of arc on the mean sphere: 2πR / 360.
-	 *
 	 * The hillshade's vertical scale, and the only place a degree becomes a length in this package.
 	 */
 	metresPerDegree: number
@@ -37,9 +35,9 @@ const metresPerDegree = (radiusKm: number): number => (2 * Math.PI * radiusKm * 
 /**
  * The two bodies the pipeline builds, keyed by id.
  *
- * The reference bodies, control networks and longitude conventions are the ones the usgs
- * nomenclature shapefiles declare (`GCS_Moon_2000`, `GCS_Mars_2000`); the radii come from
- * `@mailwoman/spatial`, so a distance on either body scales by the same number the app measures with.
+ * The reference bodies, control networks and longitude conventions are the ones the
+ * usgs nomenclature shapefiles declare; the radii come from `@mailwoman/spatial`,
+ * so a distance on either body scales by the same number the app measures with.
  */
 export const BODIES = {
 	moon: {

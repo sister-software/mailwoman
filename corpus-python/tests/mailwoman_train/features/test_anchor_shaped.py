@@ -1,11 +1,4 @@
-"""Tests for the shaped-painting anchor path (#220/#723, ``anchor_paint_mode="shaped"``).
-
-The #723 root cause: training painted the postcode anchor only on gold ``postcode`` spans, but
-inference paints on postcode-SHAPED spans — so the model never trained on the anchor firing on a
-house-number-that-looks-like-a-ZIP and faceplanted on "12345 Main St". The shaped path closes that
-train/inference gap. The required assertion here is the CONTRAST: gold paints no anchor on such a
-house number. shaped paints the anchor on it (the training signal the model needs to learn to override).
-"""
+"""Tests for the shaped-painting anchor path (``anchor_paint_mode="shaped"``), which paints a postcode anchor on postcode-shaped spans so a house-number-that-looks-like-a-ZIP gets the signal gold training withholds."""
 
 from __future__ import annotations
 
@@ -23,51 +16,42 @@ def _piece(text: str, begin: int, end: int) -> PieceSpan:
     return PieceSpan(piece=text, piece_id=0, char_begin=begin, char_end=end)
 
 
-# ---- collect_matches: the shape detector (mirror of neural/postcode-repair.ts)
-
-
 def test_collect_matches_detects_num5():
     ms = collect_matches("Strasse 12 10115 Berlin")
-    assert [(m.start, m.end) for m in ms] == [(11, 16)]  # "10115"
+    assert [(m.start, m.end) for m in ms] == [(11, 16)]
 
 
 def test_collect_matches_zip4_beats_num5_tail():
-    # "94610-2737" is one ZIP4 match — longest-match-wins must not split it into NUM5 + a tail.
+    # Longest-match-wins: "94610-2737" must stay one match rather than NUM5 + a tail.
     text = "123 Main St San Francisco CA 94610-2737"
     z0 = text.index("94610-2737")
     z1 = z0 + len("94610-2737")
     ms = collect_matches(text)
     spans = [(m.start, m.end, m.kind) for m in ms]
-    assert (z0, z1, "numeric") in spans  # the full ZIP+4 as one match
-    assert all(not (s >= z0 and e <= z1 and (s, e) != (z0, z1)) for s, e, _ in spans)  # no sub-span
+    assert (z0, z1, "numeric") in spans
+    assert all(not (s >= z0 and e <= z1 and (s, e) != (z0, z1)) for s, e, _ in spans)
 
 
 def test_collect_matches_house_number_shape():
-    # The #723 trigger: a leading 5-digit house number is postcode-shaped (NUM5).
     ms = collect_matches("12345 Main St")
     assert [(m.start, m.end) for m in ms] == [(0, 5)]
 
 
-# ---- the contrast that is the fix: gold vs shaped on a house-number-that-looks-like-a-ZIP
-
 RAW_H = "12345 Main St"
 TOKENS_H = ["12345", "Main", "St"]
-LABELS_H = ["B-house_number", "B-street", "I-street"]  # 12345 is a HOUSE NUMBER here
+LABELS_H = ["B-house_number", "B-street", "I-street"]
 PIECES_H = [_piece("12345", 0, 5), _piece("Main", 6, 10), _piece("St", 11, 13)]
 # 12345 is also a real US ZIP (Schenectady NY) — so it is in the anchor lookup.
 LOOKUP_H = {"12345": ({"US": 1.0}, 42.81, -73.93)}
 
 
 def test_gold_path_paints_nothing_on_leading_house_number():
-    # gold: 12345 is labeled house_number rather than postcode → the anchor never fires at train.
     feats, confs = realign_anchor_to_pieces(RAW_H, TOKENS_H, LABELS_H, PIECES_H, LOOKUP_H)
     assert confs == [0.0, 0.0, 0.0]
     assert all(f == [0.0] * ANCHOR_FEATURE_DIM for f in feats)
 
 
 def test_shaped_path_paints_anchor_on_leading_house_number():
-    # shaped: 12345 is postcode-shaped and in the lookup → the anchor fires on the house number,
-    # exactly as it does at inference. This is the #723 training signal the gold path withheld.
     feats, confs = realign_anchor_to_pieces_shaped(RAW_H, PIECES_H, LOOKUP_H)
     assert confs == [1.0, 0.0, 0.0]
     assert feats[0] == anchor_feature_vector({"US": 1.0}, 42.81, -73.93)
@@ -75,13 +59,10 @@ def test_shaped_path_paints_anchor_on_leading_house_number():
 
 
 def test_shaped_path_misses_non_lookup_shape():
-    # A postcode-shaped token not in the lookup (99999 is no real ZIP) paints no anchor — like inference.
     feats, confs = realign_anchor_to_pieces_shaped("99999 Main St", PIECES_H, {})
     assert confs == [0.0, 0.0, 0.0]
     assert all(f == [0.0] * ANCHOR_FEATURE_DIM for f in feats)
 
-
-# ---- the GB key interface + the outward fallback (2026-08-05)
 
 RAW_GB = "Buckingham Palace, London SW1A 2AA"
 # Pieces that split the unit across the space, the geometry a wrong paint extent shows up in.
@@ -95,9 +76,8 @@ PIECES_GB = [
 
 
 def test_shaped_paints_a_gb_unit_from_the_space_stripped_key():
-    # the KEY interface. The lookup is keyed `SW1A2AA` — space-stripped — and the shaped span is the
-    # full unit including the space. `neural/anchor-inference.ts`'s `spanMode: "shaped"` mirrors this.
-    # its default alnum-run scan cannot (it would probe `SW1A` and `2AA` separately).
+    # The lookup key is space-stripped (`SW1A2AA`) while the shaped span includes the space,
+    # matching `neural/anchor-inference.ts`'s `spanMode: "shaped"`.
     lookup = {"SW1A2AA": ({"GB": 1.0}, 51.50354, -0.1277)}
     feats, confs = realign_anchor_to_pieces_shaped(RAW_GB, PIECES_GB, lookup)
     assert confs == [0.0, 0.0, 0.0, 1.0, 1.0]
@@ -106,8 +86,8 @@ def test_shaped_paints_a_gb_unit_from_the_space_stripped_key():
 
 
 def test_shaped_falls_back_to_the_gb_outward_district():
-    # An unknown unit (retired code, or an NI `BT` code Code-Point Open has none of) paints the whole
-    # unit span from its outward district — 215 of the 217 misses `synth-gb-v1` has in 200,000 rows.
+    # An unknown unit paints the whole unit span from its outward district — 215 of the 217 misses
+    # `synth-gb-v1` has in 200,000 rows.
     lookup = {"SW1A": ({"GB": 1.0}, 51.50452, -0.13216)}
     feats, confs = realign_anchor_to_pieces_shaped(RAW_GB, PIECES_GB, lookup)
     assert confs == [0.0, 0.0, 0.0, 1.0, 1.0]
@@ -125,17 +105,14 @@ def test_the_unit_key_wins_over_the_outward_key():
 
 
 def test_the_outward_fallback_is_inert_for_a_five_digit_lookup():
-    # The fallback must not fire on a numeric code: `12345`[:-3] is `12`, which is not a key in any
-    # five-digit lookup — and the GB shape guard rejects it before the probe. Pinned so a future
-    # widening of the guard cannot silently start anchoring house numbers from two-digit prefixes.
+    # The GB shape guard rejects a numeric code before the outward probe, so the fallback cannot
+    # anchor house numbers from two-digit prefixes.
     feats, confs = realign_anchor_to_pieces_shaped(RAW_H, PIECES_H, {"12": ({"US": 1.0}, 42.81, -73.93)})
     assert confs == [0.0, 0.0, 0.0]
     assert all(f == [0.0] * ANCHOR_FEATURE_DIM for f in feats)
 
 
 def test_shaped_matches_gold_when_postcode_is_in_position():
-    # Sanity: on a real postcode in postcode position, shaped and gold paint the same pieces (the only
-    # difference between modes is where detection comes from, never what lands).
     raw = "Strasse 12 10115 Berlin"
     pieces = [_piece("Strasse", 0, 7), _piece("12", 8, 10), _piece("10115", 11, 16), _piece("Berlin", 17, 23)]
     lookup = {"10115": ({"DE": 1.0}, 52.53, 13.40)}

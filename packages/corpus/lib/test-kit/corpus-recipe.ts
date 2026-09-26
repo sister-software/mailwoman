@@ -3,12 +3,10 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Shared harness for the corpus-recipe tests. Each of them was carrying its own copy of the same three
- *   pieces — a row type, a scratch-directory writer, and a runner that differed only in which recipe and
- *   which seed it passed.
+ *   Shared harness for the corpus-recipe tests.
  *
- *   Lives under `test-kit/` (the convention `mailwoman/test-kit/` set) and is excluded from corpus's
- *   build project, so it is never emitted into `out/` and never reaches the published tarball.
+ *   It lives under `test-kit/` and is excluded from corpus's build project, so it is never emitted into
+ *   `out/` and never reaches the published tarball.
  */
 
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
@@ -19,12 +17,8 @@ import type { PathBuilder } from "path-ts"
 import type { RecipeOptions } from "#recipes/scaffold"
 
 /**
- * The fields a recipe assertion reads off an emitted row.
- *
- * `parseJSONStrict` without a type argument hands back `unknown`; naming the shape
- * is what lets the assertions be checked at all.
- * The previous `Record<string, never>` typed every property as `never`, so no property
- * could be read without a cast and no property was ever verified.
+ * The fields a recipe assertion reads off an emitted row; naming the shape is what
+ * lets `parseJSONStrict`'s `unknown` be checked at all.
  */
 export interface RecipeRow {
 	raw: string
@@ -47,11 +41,8 @@ export interface CorpusRecipe<TStats> {
 }
 
 /**
- * The two input paths a recipe reads, plus the directory holding them.
- *
- * The caller owns it: a recipe opens both files by path well after this function returns,
- * so the directory has to outlive the call.
- * Bind it with `using` and it goes when the test does.
+ * The two input paths a recipe reads, plus the directory holding them; the caller owns it,
+ * because a recipe opens both files by path well after this function returns.
  */
 export type RecipeInputs = TemporaryDirectory & { input: PathBuilder; exclude: PathBuilder }
 
@@ -70,17 +61,14 @@ export async function scratch(prefix: string, tuples: object[], surfaces: string
 }
 
 /**
- * The register id a harness-built tuple set carries.
- *
- * It names no publisher, so a row written under it can never be mistaken for one of a
- * real register's records if a fixture were ever loaded as corpus data.
+ * The register id a harness-built tuple set carries; it names no publisher,
+ * so a row written under it cannot be mistaken for a real register's record.
  */
 export const TEST_REGISTER = "test-harness"
 
 /**
- * Bind a recipe and its seed to a runner the tests call with just the tuples and reserved surfaces.
- *
- * The seed is per-recipe and required — these suites assert on generated distributions.
+ * Bind a recipe and its seed to a runner the tests call with just the tuples and reserved
+ * surfaces; the seed is required because these suites assert on generated distributions.
  */
 export function recipeRunner<TStats>(prefix: string, recipe: CorpusRecipe<TStats>, seed: number) {
 	return async function run(
@@ -98,9 +86,8 @@ export function recipeRunner<TStats>(prefix: string, recipe: CorpusRecipe<TStats
 				variants: 1,
 				input: inputs.input,
 				excludeSurfaces: inputs.exclude,
-				// The tuples come from this harness rather than from a publisher,
-				// and a recipe that reads them refuses to run without a register.
-				// A test asserting on the value passes its own through `opts`.
+				// The tuples come from this harness rather than a publisher, and a recipe
+				// that reads them refuses to run without a register.
 				register: TEST_REGISTER,
 				...opts,
 			},

@@ -2,15 +2,6 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- *
- *   End-to-end integration test for `buildCorpus` against the wof-admin JSON-bundle fixture.
- *
- *   Phase 1.5.1 moved the WOF adapters from SQLite to per-record GeoJSON bundles. This test was
- *   updated in lockstep: the adapter is the JSON-bundle implementation at
- *   `./adapters/wof-admin-json/`, the fixture is a directory of cloned-repo skeletons under
- *   `../fixtures/wof-admin-json/` (no on-disk SQLite materialization step), and the holdout
- *   assertion still keys on "Vermont" since that's defined by the corpus split policy rather than the
- *   fixture shape.
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
@@ -50,7 +41,6 @@ describe("buildCorpus end-to-end against wof-admin JSON-bundle fixture", () => {
 			onProgress: (stage) => stages.push(stage),
 		})
 
-		// Stages fire in order
 		expect(stages).toEqual(expect.arrayContaining(["adapter-run", "align", "split", "parquet", "manifest"]))
 
 		expect(manifest.corpus_version).toBe("0.1.0")
@@ -60,11 +50,9 @@ describe("buildCorpus end-to-end against wof-admin JSON-bundle fixture", () => {
 		expect(manifest.slices.total_rows).toBe(manifest.total_aligned_rows)
 		expect(manifest.splits.counts.train).toBeGreaterThan(0)
 
-		// Top-level manifest written
 		const onDisk = await readLocalJSONFile<{ corpus_version: string }>(outDir("MANIFEST.json"))
 		expect(onDisk.corpus_version).toBe("0.1.0")
 
-		// Per-stage artifacts exist
 		const corpusManifest = await readLocalJSONFile<{
 			total_rows: number
 			slices: Array<{ split: string; format: string; path: string }>
@@ -80,7 +68,6 @@ describe("buildCorpus end-to-end against wof-admin JSON-bundle fixture", () => {
 		expect(splitManifest.corpus_version).toBe("0.1.0")
 		expect(splitManifest.holdouts.US).toContain("Vermont")
 
-		// At least one `.parquet` file exists and round-trips through DuckDB.
 		const trainFile = corpusManifest.slices.find((s) => s.split === "train")!
 		expect(trainFile).toBeDefined()
 		expect(trainFile.format).toBe("parquet")
@@ -118,7 +105,6 @@ describe("buildCorpus end-to-end against wof-admin JSON-bundle fixture", () => {
 		expect(vermontHeldOut.length).toBeGreaterThan(0)
 		expect(trainVermont).toEqual([])
 
-		// The .txt manifests stay in lockstep with the per-split jsonl.
 		const trainIDs = new Set(await TextSpliterator.fromAsync(outDir("splits", "train.txt")).toArray())
 
 		for (const r of vermontHeldOut) {
@@ -154,7 +140,6 @@ describe("buildCorpus end-to-end against wof-admin JSON-bundle fixture", () => {
 			adapterInputs: { "wof-admin": { inputPath: fixtureRoot } },
 		})
 
-		// The default, and what every build did before profiles existed.
 		expect(manifest.profile).toBe(BuildProfile.Exploratory)
 		expect(manifest.excluded_by_eligibility).toBe(0)
 		expect(manifest.ineligible_sources).toEqual({})
@@ -162,10 +147,6 @@ describe("buildCorpus end-to-end against wof-admin JSON-bundle fixture", () => {
 	})
 
 	it("admits no row under the release-eligible profile while every source's terms are unread", async () => {
-		// `wof-admin` is not a register source at all, and every one of the register's
-		// 389 sources reads `unchecked`.
-		// Both refusals land in the same place: a source nobody reviewed contributes
-		// no rows to a corpus that reaches a published model.
 		const manifest = await buildCorpus({
 			outputDir: scratch.path("release-eligible"),
 			corpusVersion: "0.1.0",
@@ -178,16 +159,13 @@ describe("buildCorpus end-to-end against wof-admin JSON-bundle fixture", () => {
 		expect(manifest.total_aligned_rows).toBe(0)
 		expect(manifest.excluded_by_eligibility).toBeGreaterThan(0)
 
-		// The build says what to fix rather than only that it stopped.
 		expect(Object.keys(manifest.ineligible_sources)).toEqual(["wof-admin"])
 		expect(manifest.ineligible_sources["wof-admin"]?.[0]).toContain("the register names no source")
 	})
 
 	it("keeps a refused source out of the synthetic rows fanned from it", async () => {
-		// The re-entry path P2 names: an augmentation carries its ancestor's `source`, so a check
-		// running after the fan-out would admit a refused source's rows under a synthetic label.
-		// The eligibility check runs before `synthesizeRow`, so the ancestor's
-		// refusal covers everything derived from it.
+		// An augmentation carries its ancestor's `source`, so the eligibility check must run
+		// before `synthesizeRow` for the ancestor's refusal to cover the fan-out.
 		const withSynth = await buildCorpus({
 			outputDir: scratch.path("release-eligible-synth"),
 			corpusVersion: "0.1.0",
@@ -206,7 +184,6 @@ describe("buildCorpus end-to-end against wof-admin JSON-bundle fixture", () => {
 			profile: BuildProfile.ReleaseEligible,
 		})
 
-		// Turning synthesis on adds no rows, because the rows it would fan from never got past the refusal.
 		expect(withSynth.total_aligned_rows).toBe(0)
 		expect(withoutSynth.total_aligned_rows).toBe(0)
 		expect(withSynth.excluded_by_eligibility).toBe(withoutSynth.excluded_by_eligibility)
@@ -217,7 +194,7 @@ describe("buildCorpus end-to-end against wof-admin JSON-bundle fixture", () => {
 			outputDir: scratch.path("build"),
 			corpusVersion: "0.1.0",
 			adapters: [wofAdminAdapter],
-			adapterInputs: {}, // no input for wof-admin
+			adapterInputs: {},
 		})
 
 		expect(manifest.skipped_adapters).toContain("wof-admin")

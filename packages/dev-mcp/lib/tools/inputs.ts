@@ -3,9 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The `mwdev_inputs` tool definition — the description an agent reads, the input schema, and the handler wiring.
- *   The measurement itself lives in the package root. this file is the interface, and the description is the
- *   required half of it.
+ * The `mwdev_inputs` tool definition — the description an agent reads, the input schema, and the handler wiring over
+ * the measurement in the package root.
  */
 
 import { z } from "zod"
@@ -14,6 +13,9 @@ import { resolveInputSet, type InputSetRef } from "#input-sets"
 import type { DevTool, DevToolDeps } from "#tool-kit"
 import { INPUT_SET_SCHEMA } from "#tool-kit"
 
+/**
+ * Build the `mwdev_inputs` tool definition.
+ */
 export const inputsTool = (_deps: DevToolDeps): DevTool => ({
 	name: "mwdev_inputs",
 	description:
@@ -47,8 +49,7 @@ export const inputsTool = (_deps: DevToolDeps): DevTool => ({
 			try {
 				expression = new RegExp(pattern, "iu")
 			} catch (error) {
-				// A malformed pattern must not read as "matches no row".
-				// That is a zero the caller would act on.
+				// A malformed pattern must not read as "matches no row", a zero the caller would act on.
 				throw new Error(`mwdev_inputs: \`matching\` is not a valid regular expression: ${(error as Error).message}`)
 			}
 
@@ -73,7 +74,7 @@ export const inputsTool = (_deps: DevToolDeps): DevTool => ({
 			}
 		}
 
-		// `any`, never the sum: the per-kind counts overlap, and summing them produced 839 of 558 on the first run.
+		// `any`, never the sum: the per-kind counts overlap, so summing them exceeds the row count.
 		const gradeable = set.hasTruth.any
 
 		return {

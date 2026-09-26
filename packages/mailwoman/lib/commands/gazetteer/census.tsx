@@ -3,23 +3,17 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mailwoman gazetteer census` — build the PCN1 placetype census (hierarchy campaign R4c) from the
- *   shipped WOF admin DB. Counts each locality-class parent's children through the projection table
- *   (`gazetteer-pipeline/placetype-census.ts`), folds parent surfaces with the same `normalizeFSTToken`
- *   the PIX1 pair index uses — so a consumer folds once and probes both artifacts — and writes
- *   `placetype-census-<country>.bin`.
+ *   `mailwoman gazetteer census` — build the PCN1 placetype census from the shipped WOF admin DB: count
+ *   each locality-class parent's children through the projection table, and fold parent surfaces with the
+ *   same `normalizeFSTToken` the PIX1 pair index uses, so a consumer folds once and probes both artifacts.
  *
- *   Fold collisions SUM. Two distinct raw parents that fold together ("St Helens" / "St. Helens") are
- *   one census node whose counts are the union of both. the serializer refuses duplicate parents, so a
- *   merge bug surfaces as a throw rather than a silently halved count.
+ *   Fold collisions sum: two distinct raw parents that fold together are one census node whose counts are
+ *   the union of both, and the serializer refuses duplicate parents so a merge bug surfaces as a throw
+ *   rather than a silently halved count.
  *
- *   `--delta` is deliberately optional and unset by default, unlike the pair index's required one: R4c
- *   ships the census as data + loader + offline probe with no decode wiring. A calibrated delta is a
- *   later rung's output. writing one now would put an unmeasured bias into a shipped artifact.
- *
- *   Self-verifying (the sealed-artifact spirit): after writing, the command re-reads its own bytes
- *   through a fresh `PlacetypeCensusResolver` and probes known parents, printing probe OK/miss with the
- *   node's dependent-locality share and lift rather than trusting the write.
+ *   `--delta` is deliberately optional and unset by default, unlike the pair index's required one: the
+ *   census ships as data + loader + offline probe with no decode wiring, and writing an unmeasured delta
+ *   now would put a bias into a shipped artifact.
  */
 
 import type { ComponentTag } from "@mailwoman/codex/component"
@@ -32,10 +26,8 @@ import { PathBuilder } from "path-ts"
 import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 
 /**
- * Known parents probed after write, PER country.
- *
- * Probing another country's names against a freshly built census prints reassuring-looking
- * misses that verify no name (the lesson the pair-index command's en-nz first build taught).
+ * Known parents probed after write, per country; probing another country's names against
+ * a freshly built census prints reassuring-looking misses that verify no name.
  */
 const PROBE_PARENTS_BY_COUNTRY: Readonly<Record<string, readonly string[]>> = {
 	gb: ["London", "Manchester", "Birmingham"],
@@ -80,8 +72,6 @@ const GazetteerCensus: CommandComponent<typeof spec> = ({ options }) => {
 			)
 		}
 
-		// Fold, merging collisions by summing counts.
-		// The serializer throws on duplicates, so a merge bug is loud.
 		const folded = new Map<string, PlacetypeCensusNode>()
 		let collisions = 0
 

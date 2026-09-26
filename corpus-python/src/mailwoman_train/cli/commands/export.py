@@ -25,10 +25,9 @@ def add_parser(subparsers: Any) -> None:
 def _staged(out: Path) -> Path:
     """Where the graph is written while it is still unverified.
 
-    The parity check reads val rows, and reading them can fail — a manifest naming parts this host cannot resolve is
-    how #2207 surfaced. Exporting straight to ``out`` leaves a graph on disk that no test has compared against torch,
-    and the next step picks it up as if it had passed. So the graph is built beside its destination and moved into
-    place only after the comparison ran, the same order a sealed database is built in.
+    Exporting straight to ``out`` leaves a graph on disk that no test has compared against torch, and
+    the next step picks it up as if it had passed. So the graph is built beside its destination and
+    moved into place only after the comparison ran, the same order a sealed database is built in.
     """
     return out.with_name(out.name + ".unverified")
 

@@ -3,25 +3,15 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Write `docs/engineering/reference/jurisdiction-coverage.mdx` — one row per jurisdiction, stating
- *   what this repository has for it.
+ *   Write `docs/engineering/reference/jurisdiction-coverage.mdx` — one row per jurisdiction, over the denominator
+ *   of every ISO 3166-1 alpha-2 code plus the non-ISO operational codes, so a jurisdiction with no presence in any
+ *   layer still gets a row: an absent row and a zero row are different findings.
  *
- *   The question "which jurisdictions do we have" has been answered in conversation repeatedly and
- *   committed nowhere, so each answer was derived again and then lost. This generator exists so the
- *   answer is a file a reader opens.
+ *   Every number comes from `censusCoverage`, the same reader `mwdev_coverage` calls, so this page and that tool
+ *   cannot disagree.
  *
- *   The denominator is every ISO 3166-1 alpha-2 code in `@mailwoman/codex/country` plus the non-ISO
- *   operational codes `@mailwoman/codex/postal-regimes` carries, which is the 250 the source register
- *   enumerates. A jurisdiction with no presence in any layer still gets a row: an absent row and a
- *   zero row are different findings, and leaving one out reports the wrong one.
- *
- *   Every number comes from `censusCoverage`, the same reader `mwdev_coverage` calls, so this page and
- *   that tool cannot disagree. Corpus counts are the cached census unless `--refresh` is passed, and
- *   the page states which corpus version they were taken over.
- *
- *   This writes markdown tables with single-space padding and the repository's formatter aligns their
- *   columns, so a regeneration shows every table row as changed until the formatter runs. Run it and the
- *   diff empties when the content has not moved.
+ *   This writes markdown tables with single-space padding, so a regeneration shows every table row as changed until
+ *   the repository's formatter runs.
  *
  *   Run:
  *
@@ -68,12 +58,8 @@ const scope = await readScopeConfig()
 const configPath = resolveTrainingConfig(scope, { requested: values.config }).path
 const manifestPath = await newestManifest()
 /**
- * Which shipped graph's training config admits each jurisdiction.
- *
- * Admission is per graph and the two shipped graphs partition the world between them,
- * so one config's list understates what ships.
- * `censusCoverage` reads one config.
- * This reads the union of both.
+ * Which shipped graph's training config admits each jurisdiction, read as the union
+ * of both graphs because `censusCoverage` reads only one config.
  */
 const shippedFamilies = await admittedByShippedGraphs(scope)
 
@@ -85,11 +71,8 @@ const report = await censusCoverage({
 })
 
 /**
- * Every jurisdiction the page reports on, whether or not any layer holds it.
- *
- * The census covers the union of the corpus, the admission list, the board and the gazetteer.
- * A code present in none of those is absent from the census and still belongs in the table,
- * so the ISO list and the postal regimes' own codes are unioned in.
+ * Every jurisdiction the page reports on, whether or not any layer holds it: the ISO list
+ * and the postal regimes' own codes are unioned in so a code absent from the census still belongs.
  */
 const jurisdictions = new Set<string>([
 	...Object.values(CountryISO2),
@@ -100,18 +83,12 @@ const jurisdictions = new Set<string>([
 const measured = new Map<string, CountryCoverage>(report.countries.map((country) => [country.country, country]))
 
 /**
- * The state of one jurisdiction's parse capability, in the four readings that differ.
- *
- * `absent` and `declined` are separate readings.
- * `absent` says every layer lacks the code, and `declined` says the admission list
- * omits a code the gazetteer or the board does hold.
+ * The state of one jurisdiction's parse capability, keeping `absent` and `declined` separate readings.
  */
 function parseState(coverage: CountryCoverage | undefined): string {
 	const rows = coverage ? coverage.corpusRows.toLocaleString() : "0"
 
-	// The street count sits in its own column here, so the phrase omits it
-	// where `mwdev_coverage`'s one-line form names it.
-	// The reading behind both is `parseReading`.
+	// The street count sits in its own column, so the phrase omits what `mwdev_coverage`'s one-line form names.
 	return {
 		[ParseReading.Absent]: "absent",
 		[ParseReading.Declined]: "declined",
@@ -149,12 +126,8 @@ const admitted = sorted.filter((code) => shippedFamilies.has(code))
 const admittedEmpty = admitted.filter((code) => !measured.get(code)?.corpusRows)
 const notAdmitted = sorted.filter((code) => measured.has(code) && !shippedFamilies.has(code))
 /**
- * Jurisdictions the corpus holds rows for that no shipped graph's config admits.
- *
- * Those rows train no shipped model.
- * A reader comparing the corpus against the model needs this separated from a jurisdiction
- * the corpus holds no row for, because closing this one takes a `country_weights` entry
- * while closing the other takes acquiring data.
+ * Jurisdictions the corpus holds rows for that no shipped graph admits, which closing
+ * takes a `country_weights` entry while a jurisdiction with no data takes acquiring data.
  */
 const droppedWithRows = withRows.filter((code) => !shippedFamilies.has(code))
 const absent = sorted.filter((code) => !measured.has(code))
@@ -162,22 +135,15 @@ const rooftop = withRows.filter((code) => measured.get(code)?.geocodeTier === "r
 const packaged = sorted.filter((code) => measured.get(code)?.weightsPackage)
 
 /**
- * The admission list of a second config, when one is named.
- *
- * The default config is the one the register says produced the shipped graph,
- * so the table describes what ships.
- * A config in flight commonly admits a wider set, and reading its count beside the shipped
- * one is what distinguishes what the next run would admit from what today's model was taught.
+ * The admission list of a second config, when one is named: reading its count beside the
+ * shipped one distinguishes what the next run would admit from what today's model was taught.
  */
 const nextConfig = values["next-config"]
 const nextAdmitted = nextConfig ? await readAdmittedCountries(nextConfig) : null
 const newlyAdmitted = nextAdmitted ? sorted.filter((code) => nextAdmitted.has(code) && !shippedFamilies.has(code)) : []
 /**
- * Jurisdictions a shipped graph admits that the second config does not.
- *
- * Empty is the expected reading.
- * A code here trains today and would stop training under that config, which is a
- * regression the config's author has to have intended.
+ * Jurisdictions a shipped graph admits that the second config does not; a code here
+ * is a regression the config's author has to have intended.
  */
 const nextDrops = nextAdmitted ? admitted.filter((code) => !nextAdmitted.has(code)) : []
 

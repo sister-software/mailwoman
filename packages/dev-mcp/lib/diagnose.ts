@@ -3,55 +3,19 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Mechanism accounts (#1722) — per row, what the pipeline did, assembled from the facts it already exposes.
+ * Mechanism accounts — per row, what the pipeline did, assembled from the facts it already exposes.
  *
- *   Two commitments from the epic bind every line here.
+ * Two commitments bind every line here: expectations pin outcomes rather than mechanisms, and every
+ * account is recomputed from the current system on every call; and failure shapes are mechanism-states
+ * rather than address shapes, so every predicate reads pipeline facts — channels, constraints, ranks,
+ * lineage — and none reads what kind of address the row is.
  *
- *   1. **Expectations pin outcomes, never mechanisms.** No fact in an account is asserted by a board row, and no value
- *      here is cached. Every account is recomputed from the current system on every call, so an explanation is free to
- *      dissolve the moment the system stops working that way. (The anti-Pelias rule: no mechanistic belief accumulates
- *      that a truer understanding of addresses could break against.)
- *   2. **Failure shapes are mechanism-states, never address shapes.** Every predicate below reads pipeline facts —
- *      channels, constraints, ranks, lineage — and none reads what kind of address the row is. A shape makes a claim about
- *      what the system did on this input. it cannot fossilize a wrong belief about how addresses work.
+ * Classification is v1: transparent predicates over recorded pipeline facts, with no calibration — every
+ * result says so in its own `calibration` field — and a row that matches no shape while failing its
+ * expectation is reported `unclassified` rather than squeezed into the nearest match.
  *
- *   Classification is v1: transparent predicates over recorded pipeline facts, with no calibration. Every result says so in its
- *   own `calibration` field. A row that matches no shape and still fails its expectation is reported `unclassified`
- *   rather than squeezed into the nearest match, because a label applied to it now is the thing a calibrated v2 would
- *   have to un-learn.
- *
- *   What v2 is, stated precisely (the loose earlier wording — "shapes get a calibrated posterior, novelty mints a
- *   class" — was wrong twice over, and the correction is worth carrying here rather than rediscovering):
- *
- *   1. **Class-conditional (Mondrian) split conformal** over held-out diagnosed rows, calibrated per shape, so a
- *      minority shape is not judged by a threshold a majority shape set. It yields prediction sets and p-values with
- *      an empirical coverage guarantee — not a posterior. A p of 0.82 is not "82% likely to be this shape", and any
- *      surface that reads it that way is lying about what conformal gives.
- *   2. **A separate conformal novelty detector** whose job is to abstain when no known shape fits.
- *   3. **Minting a new shape is a downstream clustering-and-review step**, not an operation conformal performs.
- *      Standard Mondrian CP assumes the taxonomy already exists. open-set conformal can flag that an observation
- *      belongs to no known class, and what to do about that is our architecture rather than the method's.
- *
- *   Two measured obstacles stand between v1 and that v2, both visible in this tool's own census and neither solved by
- *   more code:
- *
- *   - **Resolution is bounded by class size.** A conformal p-value moves in steps of 1/(n+1), so a class needs
- *     n >= 1/alpha - 1 calibration rows before a threshold at error rate alpha exists at all (19 rows for alpha=0.05).
- *     On the 2026-08-19 board subset the shapes ran evidence_starved 113, retrieval_empty 95, scope_miss_readmission
- *     75, wrong_instance_detected 38, rank_flip 10, parse_shape_contradiction 3, mis_tag_in_vocabulary 1. The first
- *     four could carry calibration. the last three cannot, and splitting them into train/calibration halves makes it
- *     worse.
- *   - **These shapes are multi-label and Mondrian partitions.** `by_shape` counts overlap by construction and the
- *     result says never to sum them, so "the class" a row calibrates under has to be defined first — earliest pipeline stage,
- *     full label set, or something else — and that choice is a modelling decision rather than a detail.
- *
- *   Exchangeability is the third question and the least comfortable one: calibration rows drawn from the tracked board
- *   are actively drained by the fixes this tool motivates (five promoted in one night), so yesterday's diagnosed
- *   population is not exchangeable with tomorrow's failures.
- *
- *   Aggregation is BY shape with each class's n, never by raw row count: the n=64 city-only aggregate at p=0.084 that
- *   motivated this issue concealed a six-row single-mechanism finding, and a rate over a mixture is a number about the
- *   mixture.
+ * Aggregation is by shape with each class's n, never by raw row count, because a rate over a mixture is a
+ * number about the mixture.
  */
 
 import type { ResolveNodeTrace } from "@mailwoman/core/resolver"
@@ -79,26 +43,24 @@ export { expectationCase, type ExpectationReading } from "#diagnose/expectation"
  *
  * `KnownFormatHit.confidence` is deliberately damped where postcode shapes overlap
  * (`fr_postcode` / `de_postcode` against `us_zip` is the documented case),
- * so a hit below this floor is the detector saying it cannot tell the shapes apart —
- * disagreeing with the parse there would report that ambiguity as a defect.
+ * so a hit below this floor is the detector saying it cannot tell the shapes apart,
+ * and disagreeing there would report that ambiguity as a defect.
  */
 const KNOWN_FORMAT_CONFIDENCE_FLOOR = 0.9
 
 /**
- * Row ids listed per shape before the list is capped.
- *
- * The `n` beside it is always the real count.
- * This bounds the payload, never the measurement.
+ * Row ids listed per shape before the list is capped; the `n` beside it is always the
+ * real count, so this bounds the payload, never the measurement.
  */
 const SHAPE_ID_CAP = 20
 
 /**
  * Above this many rows, counterfactuals run only on rows that matched a non-`clean` shape.
  *
- * A flip is one geocode per row per setting and the setting space is five wide, so a full
- * board would be thousands of extra resolves plus an engine build per distinct patch.
- * Every result that applies the narrowing says so, and says that a clean row's settings are
- * then unmeasured rather than measured and found inert.
+ * A flip is one geocode per row per setting and the setting space is five wide,
+ * so a full board would be thousands of extra resolves plus an engine build per
+ * distinct patch; every result that applies the narrowing says so and marks a clean
+ * row's settings UNMEASURED rather than measured and found inert.
  */
 export const COUNTERFACTUAL_FULL_RUN_MAX_ROWS = 20
 
@@ -127,8 +89,8 @@ export type DiagnoseShape = (typeof DIAGNOSE_SHAPES)[number]
 /**
  * What each shape asserts, as the predicate actually reads it.
  *
- * Emitted with every result so a classification travels with its own definition.
- * A shape name relayed without its predicate is the bare label this design refuses.
+ * Emitted with every result so a classification travels with its own definition,
+ * because a shape name relayed without its predicate is the bare label this design refuses.
  */
 export const SHAPE_PREDICATES: Record<DiagnoseShape, string> = {
 	parse_shape_contradiction:
@@ -167,9 +129,6 @@ export const SHAPE_PREDICATES: Record<DiagnoseShape, string> = {
  */
 type KnownFormat = GeocodeTrace["queryShape"]["knownFormats"][number]["format"]
 
-/**
- * The component tag each known-format hit asserts the presence of.
- */
 const COMPONENT_FOR_KNOWN_FORMAT = {
 	us_zip: "postcode",
 	us_zip4: "postcode",
@@ -189,7 +148,7 @@ const COMPONENT_FOR_KNOWN_FORMAT = {
 /**
  * The subset of a {@link GeocodeRun}'s fields an account reads, declared structurally.
  *
- * A `GeocodeRun` satisfies this by shape, so `runDiagnose` passes one straight through,
+ * A `GeocodeRun` satisfies this by shape, so `runDiagnose` passes one straight through
  * and the assembly stays testable without constructing a whole `GeocodeResult`,
  * which is twenty-five fields of which six matter here.
  */
@@ -221,10 +180,8 @@ export interface AccountInput {
 // #region Facts
 
 /**
- * The decode's own confidence, over the tokens the tree was built from.
- *
- * `n_tokens: 0` with null statistics is a real state (an empty parse), kept apart from a mean of zero.
- * One says no token was decoded, the other says everything was decoded with no confidence.
+ * The decode's own confidence, over the tokens the tree was built from; `n_tokens: 0` with
+ * null statistics is a real state (an empty parse), kept apart from a mean of zero.
  */
 interface DecodeReading {
 	path: "viterbi" | "argmax"
@@ -238,10 +195,8 @@ interface KnownFormatReading {
 	confidence: number
 	text: string
 	/**
-	 * The component tag this format asserts.
-	 *
-	 * `null` means the format maps to no component.
-	 * The detector saw a shape the schema has no slot for, which is not a contradiction.
+	 * The component tag this format asserts; `null` means the format maps to no
+	 * component, which is not a contradiction.
 	 */
 	expects_component: string | null
 	matched: boolean
@@ -250,10 +205,8 @@ interface KnownFormatReading {
 export interface ParseFacts {
 	kind: { verdict: string; confidence: number } | null
 	/**
-	 * Why {@link ParseFacts.kind} is null, when it is.
-	 *
-	 * The classifier is skipped when a caller pinned the register, which is a fact
-	 * about the call rather than a zero-confidence verdict.
+	 * Why {@link ParseFacts.kind} is null, when it is: the classifier is skipped when a caller
+	 * pinned the register, which is a fact about the call rather than a zero-confidence verdict.
 	 */
 	kind_absent_reason?: string
 	input_mode: string
@@ -265,10 +218,9 @@ export interface ParseFacts {
 }
 
 /**
- * One backend lookup, reduced to the facts a shape reads.
- *
- * The candidate table itself is deliberately not carried.
- * `mwdev_trace` renders it, and an account that dumped it would be a trace with extra steps.
+ * One backend lookup, reduced to the facts a shape reads; the candidate table
+ * itself is deliberately not carried, since `mwdev_trace` renders it and an account
+ * that dumped it would be a trace with extra steps.
  */
 interface LookupFact {
 	tag: string
@@ -292,20 +244,15 @@ interface LookupFact {
 
 export interface RetrievalFacts {
 	/**
-	 * `null` when the trace carries no resolver records at all (a trace predating them).
+	 * `null` when the trace carries no resolver records at all (a trace predating them);
+	 * an empty array is the walk stating it performed no lookups, a different claim
+	 * the shapes must not read as retrieval failure.
 	 *
-	 * An empty array is the walk stating it performed no lookups.
-	 * A different claim, and one the shapes must not read as retrieval failure.
-	 *
-	 * Coverage bound, and it is required for every retrieval shape below: the trace
-	 * records the walk's own `#lookupAndPick` and no other method.
-	 * The resolver's post-walk recovery passes — span-rescore (a famous name the model tagged
-	 * `street`, which the walk never queries because `street` is not in the placetype map)
-	 * and the postcode-compound recovery — query the backend directly and emit no record.
-	 *
-	 * So a row can carry a resolved coordinate beside an empty lookup list;
-	 * {@link RowAccount.resolved_without_recorded_lookup} states exactly that case
-	 * rather than leaving the reader to read the empty list as "no retrieval happened".
+	 * Coverage bound, required for every retrieval shape below: the trace records the walk's own
+	 * `#lookupAndPick` and no other method, while the resolver's post-walk recovery passes —
+	 * span-rescore and the postcode-compound recovery — query the backend directly and emit no record.
+	 * So a row can carry a resolved coordinate beside an empty lookup list,
+	 * and {@link RowAccount.resolved_without_recorded_lookup} states exactly that.
 	 */
 	lookups: LookupFact[] | null
 	checks_fired: string[]
@@ -315,16 +262,15 @@ export interface OutcomeFacts {
 	tier: string
 	abstained: boolean
 	/**
-	 * `null` when the geocode resolved no winner to check against.
-	 * The absence of a check, never a passing one.
+	 * `null` when the geocode resolved no winner to check against — the absence
+	 * of a check, never a passing one.
 	 */
 	admin_coherence: { region: string; country: string } | null
 	outside_winner_lineage: Array<{ tag: string; name: string; place_id: string | null }>
 	lineage_vouched: number
 	/**
-	 * Hierarchy entries whose lineage standing could not be established (no sidecar, or no place identity).
-	 *
-	 * Counted apart from `outside_winner_lineage`: unverifiable is not contradicted.
+	 * Hierarchy entries whose lineage standing could not be established (no sidecar, or no place identity);
+	 * counted apart from `outside_winner_lineage` because unverifiable is not contradicted.
 	 */
 	lineage_unverifiable: number
 }
@@ -335,10 +281,8 @@ export interface RowAccount {
 	country?: string | undefined
 	shapes: DiagnoseShape[]
 	/**
-	 * `null` when the run carried no parse trace.
-	 * The bundle could not produce one.
-	 *
-	 * Distinct from a parse whose every channel is absent.
+	 * `null` when the run carried no parse trace (the bundle could not produce one),
+	 * distinct from a parse whose every channel is absent.
 	 */
 	parse: ParseFacts | null
 	evidence: EvidenceCensus | null
@@ -346,12 +290,9 @@ export interface RowAccount {
 	outcome: OutcomeFacts
 	expectation: ExpectationReading
 	/**
-	 * A coordinate arrived and the resolver trace recorded no lookup.
-	 * The account's retrieval facts are blind for this row.
-	 *
-	 * See {@link RetrievalFacts.lookups} for which passes are outside the trace's coverage.
-	 * Reported so the empty lookup list is not read as "retrieval had no work to do": the retrieval
-	 * shapes cannot fire here, and their silence is a coverage bound rather than a finding.
+	 * A coordinate arrived and the resolver trace recorded no lookup, so the account's retrieval facts are
+	 * blind for this row (see {@link RetrievalFacts.lookups} for which passes the trace does not cover);
+	 * reported so the empty lookup list is not read as "retrieval had no work to do".
 	 */
 	resolved_without_recorded_lookup: boolean
 	/**
@@ -378,10 +319,9 @@ function decodeReading(parse: NeuralParseTrace): DecodeReading {
 /**
  * Fold a detector span and a component value to the same comparable form.
  *
- * Known-format spans are offsets into the normalized input while component values are
- * taken from the RAW one, so the two frames cannot be compared by offset.
- * Folding away case and every non-alphanumeric character compares what both frames do
- * agree on — the characters — which is what the contradiction is about.
+ * Known-format spans are offsets into the normalized input while component values
+ * come from the RAW one, so folding away case and every non-alphanumeric character
+ * compares the characters both frames agree on.
  */
 function foldForSpanMatch(value: string): string {
 	return value.toLowerCase().replaceAll(/[^\da-z]/g, "")
@@ -431,9 +371,9 @@ export function collectRetrievalFacts(records: ReadonlyArray<ResolveNodeTrace> |
 	const lookups = records.map((record): LookupFact => {
 		const picked = record.picked
 		const pickedRow = picked ? record.candidates.find((candidate) => candidate.id === picked.id) : undefined
-		// The rank vector's key order is the resolver's stage execution order. the recorder
-		// writes one entry per stage as it runs — so the first key is the backend's own order
-		// and the last is the order the pick came from.
+		// The rank vector's key order is the resolver's stage execution order,
+		// because the recorder writes one entry per stage as it runs: the first key is
+		// the backend's own order, the last the order the pick came from.
 		const stages = pickedRow ? Object.keys(pickedRow.ranks) : []
 		const firstStage = stages[0]
 		const initialRank = pickedRow && firstStage ? (pickedRow.ranks[firstStage] ?? null) : null
@@ -502,9 +442,9 @@ export function collectOutcomeFacts(result: AccountInput["result"]): OutcomeFact
 /**
  * Match the mechanism-state predicates.
  *
- * The terminal states are not decided here: `clean` vs `unclassified` needs the row's
- * expectation, and keeping that out of this function is what stops an expectation
- * from ever influencing a mechanism claim (commitment 1).
+ * The terminal states are not decided here: `clean` vs `unclassified` needs the
+ * row's expectation, and keeping that out of this function is what stops an
+ * expectation from ever influencing a mechanism claim.
  */
 export function matchShapes(facts: {
 	parse: ParseFacts | null
@@ -541,12 +481,10 @@ export function matchShapes(facts: {
 		shapes.push("retrieval_empty")
 	}
 
-	// The rule fires only when the scoped probe missed across the whole cascade
-	// and the unscoped fallback produced rows.
-	// So every candidate in that lookup is a re-admitted one, and a pick under the eval is a re-admitted pick.
-	// The per-candidate `regionScopeMiss` stamp does not reach `ResolveCandidateTrace`,
+	// The rule fires only when the scoped probe missed across the whole cascade and the
+	// unscoped fallback produced rows, so every candidate in that lookup is a re-admitted one;
+	// the per-candidate `regionScopeMiss` stamp does not reach `ResolveCandidateTrace`,
 	// so lookup granularity is all the trace can support.
-	// It suffices here because the rule's own condition covers the whole row set.
 	if (lookups.some((lookup) => lookup.checks.includes("region_scope_miss") && lookup.picked)) {
 		shapes.push("scope_miss_readmission")
 	}
@@ -577,9 +515,8 @@ function channelMark(reading: ChannelReading): string {
 /**
  * One line per row — the tool-kit renderer pattern.
  *
- * The structured account is what a diff reads.
- * This is what a human reads in a transcript without an agent paraphrasing it,
- * which is where detail goes missing.
+ * The structured account is what a diff reads; this is what a human reads in a transcript
+ * without an agent paraphrasing it, which is where detail goes missing.
  */
 export function renderAccount(account: Omit<RowAccount, "rendered">): string {
 	const parts: string[] = [`${account.id} [${account.shapes.join(",")}]`, `tier=${account.outcome.tier}`]
@@ -655,10 +592,8 @@ export interface ShapeAggregate {
 	n: number
 	row_ids: string[]
 	/**
-	 * Ids not listed because the list hit its cap.
-	 *
-	 * A display bound, never a measurement one.
-	 * `n` is the whole class.
+	 * Ids not listed because the list hit its cap — a display bound, never a
+	 * measurement one; `n` is the whole class.
 	 */
 	row_ids_omitted: number
 	predicate: string
@@ -667,10 +602,8 @@ export interface ShapeAggregate {
 /**
  * Per-shape counts and the rows in each class.
  *
- * Ordered by {@link DIAGNOSE_SHAPES} so two runs are diffable, and a shape no row
- * matched is omitted rather than reported as zero.
- * A class with no members is not a class anyone can describe, and a table of
- * zeros reads as a measurement of them.
+ * Ordered by {@link DIAGNOSE_SHAPES} so two runs are diffable, and a shape no row matched is omitted
+ * rather than reported as zero, because a table of zeros reads as a measurement of them.
  */
 export function aggregateByShape(
 	accounts: ReadonlyArray<{ id: string; shapes: DiagnoseShape[] }>
@@ -701,11 +634,10 @@ export interface SettingTally {
 
 /**
  * Per-setting counterfactual counts: how many rows the setting was tried on,
- * how many it moved, how many it could not apply to.
+ * how many it moved, and how many it could not apply to.
  *
- * All three, always.
- * A setting that changed no outcome on forty rows and a setting that was never applicable
- * are the same zero in a moved-only table, and they are not the same fact.
+ * All three always, because a setting that changed no outcome on forty rows and one that
+ * was never applicable are the same zero in a moved-only table but not the same fact.
  */
 export function aggregateCounterfactuals(
 	accounts: ReadonlyArray<{ counterfactuals?: RowCounterfactuals | undefined }>
@@ -740,13 +672,12 @@ export function aggregateCounterfactuals(
 // #endregion
 
 /**
- * The in-vocabulary mis-tag refinement of `unclassified` (#1722 v2 — the `bd-op2-london-college` class,
- * where `Dhaka 1205` decoded as street + house_number and the expected locality/postcode never existed):
- * an expected component tag the parse never produced, whose expected value occurs verbatim in the input.
+ * The in-vocabulary mis-tag refinement of `unclassified`: an expected component
+ * tag the parse never produced, whose expected value occurs verbatim in the input
+ * (the `Dhaka 1205` class, where the decode assigned in-vocabulary text to other tags).
  *
- * A tag that exists with a wrong value is a different fact and stays out.
- * That failure has a component to interrogate.
- * This one does not.
+ * A tag that exists with a wrong value is a different fact and stays out,
+ * because that failure has a component to interrogate.
  */
 function misTaggedInVocabulary(
 	item: ResolvedInput,
@@ -809,7 +740,7 @@ export function assembleAccount(
 
 /**
  * Run the diagnosis: one traced geocode per row, an account per row,
- * the counterfactual sweep, aggregated by shape.
+ * the counterfactual sweep, and aggregation by shape.
  */
 export async function runDiagnose(registry: EngineRegistryLike, args: Record<string, unknown>): Promise<unknown> {
 	const ref = (args["inputs"] as InputSetRef | undefined) ?? { kind: "board" }
@@ -868,8 +799,7 @@ export async function runDiagnose(registry: EngineRegistryLike, args: Record<str
 
 	const rows: RowAccount[] = accounts.map((account) => ({ ...account, rendered: renderAccount(account) }))
 
-	// Stable partition, non-clean first — only the emitted order.
-	// Every aggregate reads `rows` whole.
+	// Stable partition, non-clean first, for the emitted order only; every aggregate reads `rows` whole.
 	const emittedRows = [
 		...rows.filter((row) => !row.shapes.includes("clean")),
 		...rows.filter((row) => row.shapes.includes("clean")),
@@ -942,9 +872,8 @@ export async function runDiagnose(registry: EngineRegistryLike, args: Record<str
 		counterfactuals_narrowed: narrowed,
 		counterfactual_errors: counterfactualErrors,
 		elapsed_ms: Date.now() - startedAt,
-		// Under a cap the emitted rows lead with the non-clean ones — the ones every
-		// aggregate above points at — and says what it left out.
-		// The aggregates are computed over every row regardless.
+		// Under a cap the emitted rows lead with the non-clean ones and say what they left out;
+		// the aggregates are computed over every row regardless.
 		rows: rowsCap === undefined ? emittedRows : emittedRows.slice(0, rowsCap),
 		rows_omitted: rowsCap === undefined ? 0 : Math.max(0, emittedRows.length - rowsCap),
 	}

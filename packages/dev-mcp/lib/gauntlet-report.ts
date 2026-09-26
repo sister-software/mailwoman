@@ -5,8 +5,8 @@
  *
  *   Extracts the header counts, verdict, pins line and firing count from a gauntlet log.
  *
- *   This module only reads the log and never regrades it. A field whose line is missing stays `null`, and
- *   `unparsed` records why. The parser never substitutes a default such as `0`.
+ *   This module reads the log without regrading it: a field whose line is missing stays `null`, with `unparsed`
+ *   recording why rather than substituting a default such as `0`.
  */
 
 interface GauntletLayerReport {
@@ -21,8 +21,8 @@ interface GauntletLayerReport {
  */
 export interface GauntletReport {
 	/**
-	 * `PASS` or `FAIL` as the run printed it, or `null` when the run crashed or stopped before a verdict.
-	 * A missing verdict is kept apart from `FAIL`.
+	 * `PASS` or `FAIL` as printed, or `null` when the run stopped before a verdict —
+	 * a missing verdict is kept apart from `FAIL`.
 	 */
 	verdict: string | null
 	layers: GauntletLayerReport[]
@@ -31,31 +31,21 @@ export interface GauntletReport {
 	 */
 	pins: string | null
 	/**
-	 * The firing count of the postcode-country coherence pass, or `null` when the log has no firing line.
-	 *
-	 * Only that pass prints a firing count.
-	 * The field makes no statement about any other pinned pass.
+	 * Only the postcode-country coherence pass prints a firing count,
+	 * so this says nothing about any other pinned pass.
 	 */
 	postcode_country_coherence_fired_on: { n: number; of: number } | null
 	/**
-	 * The counted failures, verbatim and in log order.
+	 * Verbatim, in log order.
 	 */
 	counted_failures: string[]
-	/**
-	 * The tracked rows that now pass and could be promoted.
-	 */
 	now_passing: string[]
-	/**
-	 * Notes on each field that could not be extracted.
-	 */
 	unparsed: string[]
 }
 
 /**
- * Line patterns whose quantifiers cannot overlap.
- *
- * The pins and promote lines use `startsWith` and `indexOf` instead, because a regex for
- * them needs an ambiguous quantifier that backtracks quadratically on long lines.
+ * These quantifiers cannot overlap; the pins and promote lines use `startsWith`/`indexOf`
+ * because a regex for them needs an ambiguous quantifier that backtracks quadratically.
  */
 const HEADER = /^=== Gauntlet · (\S+) \((\d+)\/(\d+) counted cases pass(?:, (\d+) tracked)?\)/
 const VERDICT = /^verdict: (PASS|FAIL)/
@@ -67,10 +57,7 @@ const NOW_PASSING_MARK = " now PASSES"
 const NOW_PASSING_PREFIX = "+"
 
 /**
- * Parses a gauntlet run's output.
- *
- * The run prints its report to stdout and the pins line to stderr, so this function reads both.
- */
+/** Parses a gauntlet run's output; the report goes to stdout and the pins line to stderr, so this reads both. */
 export function parseGauntletReport(stdout: string, stderr: string): GauntletReport {
 	const report: GauntletReport = {
 		verdict: null,
@@ -122,7 +109,6 @@ export function parseGauntletReport(stdout: string, stderr: string): GauntletRep
 			continue
 		}
 
-		// A promote line starts with `+ <id>`, followed by `NOW_PASSING_MARK`.
 		if (trimmed.startsWith(NOW_PASSING_PREFIX)) {
 			const marker = trimmed.indexOf(NOW_PASSING_MARK)
 
@@ -136,7 +122,6 @@ export function parseGauntletReport(stdout: string, stderr: string): GauntletRep
 		if (!report.pins && line.startsWith(PINS_PREFIX)) {
 			const rest = line.slice(PINS_PREFIX.length).trim()
 
-			// The pins line either mentions pins or contains an assignment.
 			if (rest.toLowerCase().includes("pins") || rest.includes("=")) {
 				report.pins = rest
 			}
@@ -172,8 +157,6 @@ export function parseGauntletReport(stdout: string, stderr: string): GauntletRep
 }
 
 /**
- * Summarizes the report in one line.
- *
  * The line starts with the pass fraction because a reader compares that fraction against a baseline.
  */
 export function summarizeGauntletReport(report: GauntletReport): string {

@@ -5,15 +5,11 @@
  *
  *   Grading a comparison, and refusing to grade one that cannot be graded.
  *
- *   This module owns no metric. `checkCase` is the grader — the same one the regression board runs — and the
- *   projection from a geocode into the shape it asserts on is `toGauntletResult`, imported rather than re-written.
- *   What lives here is the part `checkCase` has no opinion about: whether truth exists for a set at all, what a
- *   two-arm delta means, and how large an effect this many rows could have missed.
+ *   This module owns no metric: `checkCase` is the grader, `toGauntletResult` is the projection, and what lives here
+ *   is the part `checkCase` has no opinion about — whether truth exists for a set, what a two-arm delta means, and how
+ *   large an effect this many rows could have missed.
  *
- *   The distinction the whole module turns on (spec §5.5): **a diff is not a verdict.** The 2026-08-15 FST conclusion
- *   was a diff-only result read as a truth result. The board version happened to carry truth, which is the only reason
- *   "24 changed" could become "22 are clear improvements" — and the earlier probe did not mark which kind of
- *   result it was holding.
+ *   A diff is not a verdict: a set without truth grades `ungradeable` rather than passing.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -22,20 +18,15 @@ import type { GauntletResult } from "mailwoman/eval-harness/gauntlet/harness"
 import type { GauntletCaseTable } from "mailwoman/eval-harness/gauntlet/schema"
 
 /**
- * The z at which a two-sided 95% test rejects.
- *
- * Same constant the held-out layer already checks on (`holdout.ts`'s `Z_CRITICAL_95_TWO_SIDED`), stated
- * positively here because this test is two-tailed in both directions rather than a one-sided floor.
+ * The z at which a two-sided 95% test rejects, matching `holdout.ts`'s `Z_CRITICAL_95_TWO_SIDED`.
  */
 const Z_CRITICAL_95 = 1.96
 
 /**
- * Project a committed seed row into the table shape {@link checkCase} reads.
- *
- * Written with named fields on purpose.
- * `build-regression-db.ts` inserts the same mapping positionally for bulk-load speed, so it cannot
- * be shared as-is, but naming every field here means a column added to {@link GauntletCaseTable}
- * is a compile error against this function rather than a silently-null column at grade time.
+ * Written with named fields on purpose: `build-regression-db.ts` inserts the same
+ * mapping positionally for bulk-load speed, so it cannot be shared as-is, but naming
+ * every field means a column added to {@link GauntletCaseTable} is a compile error here
+ * rather than a silently-null column at grade time.
  */
 export function seedToCaseTable(seed: SeedCase): GauntletCaseTable {
 	return {
@@ -64,10 +55,7 @@ export function seedToCaseTable(seed: SeedCase): GauntletCaseTable {
 }
 
 /**
- * Whether a case asserts anything a grader could check.
- *
- * A row with no expectations is not a passing row.
- * It is an ungradeable one, and the two must never be added together.
+ * A row with no expectations is ungradeable, not passing, and the two must never be added together.
  */
 export function caseCarriesTruth(seed: SeedCase): boolean {
 	return Boolean(
@@ -84,12 +72,8 @@ export function caseCarriesTruth(seed: SeedCase): boolean {
 export type RowGrade = "improved" | "regressed" | "neutral" | "ungradeable"
 
 /**
- * Grade one row's two arms against its expectations.
- *
- * `checkCase` returns the list of issues, so fewer issues is better.
- * Comparing counts rather than the issue text is deliberate: an arm that
- * trades one wrong component for a different wrong component has not improved,
- * and a text diff would report a change where the grade is unmoved.
+ * `checkCase` returns the list of issues, so fewer is better; comparing counts rather than text is
+ * deliberate, because an arm that trades one wrong component for a different wrong one has not improved.
  */
 export function gradeRow(
 	seed: SeedCase | undefined,
@@ -122,23 +106,16 @@ export interface SignificanceReading {
 	p: number | null
 	verdict: "a_better" | "b_better" | "indistinguishable" | "untestable"
 	/**
-	 * The smallest true difference this many rows could have detected, in percentage points.
-	 *
-	 * Always reported, including — especially — when the verdict is `indistinguishable`, because
-	 * that verdict without an MDE is indistinguishable from "no effect", and those are different claims.
+	 * Always reported, especially under an `indistinguishable` verdict, because
+	 * without it that verdict cannot be told from "no effect".
 	 */
 	mde_pp_at_this_n: number | null
 	sentence: string
 }
 
 /**
- * Normal CDF via the Abramowitz–Stegun 7.1.26 erf approximation.
- *
- * Max absolute error 1.5e-7, which is four orders of magnitude tighter than any decision taken on it here.
- *
- * Exported for `geo-grade.ts`'s equivalence test rather than copied into it:
- * two tests that must agree about what a p-value means should be reading the same function
- * rather than two transcriptions of the same polynomial.
+ * Normal CDF via the Abramowitz–Stegun 7.1.26 erf approximation, whose max absolute error
+ * of 1.5e-7 is four orders of magnitude tighter than any decision taken on it here.
  */
 export function normalCDF(z: number): number {
 	const sign = z < 0 ? -1 : 1
@@ -153,12 +130,8 @@ export function normalCDF(z: number): number {
 }
 
 /**
- * Two-proportion z-test over the paired rows, plus the minimum detectable effect.
- *
- * The MDE is the effect size this n would detect with 80% power at α = 0.05 —
- * the conventional pairing, and stated as a convention rather than a measurement.
- * Its job is to turn "we saw no effect" into "we saw no effect, and we could
- * not have seen anything smaller than this".
+ * The MDE is the effect this n would detect with 80% power at α = 0.05, a convention stated rather than
+ * measured; it turns "we saw no effect" into "we saw no effect, and nothing smaller was detectable".
  */
 export function significance(successesA: number, successesB: number, n: number): SignificanceReading {
 	if (n === 0) {

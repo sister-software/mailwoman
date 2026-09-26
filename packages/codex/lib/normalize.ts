@@ -4,23 +4,14 @@
  * @author Teffen Ellis, et al.
  *
  *   Name-normalization primitives shared across the codex tables and the lexicon builders that read
- *   them.
- *
- *   These live in `@mailwoman/codex` rather than in `core` or `normalize` for one reason: codex is
- *   the zero-runtime-dependency reference package, and everything that needs to match a name against
- *   a codex table already depends on it. Putting the folding rules next to the tables they fold
- *   means a lookup and its table can never disagree about what counts as the same name.
- *
- *   TODO: Not true, or at least should not be true if importing a specific export from core.
+ *   them. They live here rather than in `core` or `normalize` because codex is the
+ *   zero-runtime-dependency reference package and everything matching a name against a codex table
+ *   already depends on it; keeping the folding rules beside the tables they fold stops a lookup and
+ *   its table from disagreeing about what counts as the same name.
  */
 
 /**
- * Fold a name to its ascii match key: lower-cased, accents stripped, every run
- * of non-alphanumerics collapsed to a single space.
- *
- * This is the aggressive fold used to match a user's surface form against a codex table —
- * `"Québec"` and `"quebec"` and `"quebec"` all become `"quebec"`.
- * It is lossy by design and never used to render anything back to a user.
+ * Fold a name to a lossy ASCII match key for codex table lookups; never render the result back to a user.
  */
 export function foldName(s: string): string {
 	return s
@@ -32,13 +23,9 @@ export function foldName(s: string): string {
 }
 
 /**
- * Strip leading and trailing punctuation from every whitespace-separated word,
- * dropping words that were only punctuation, and rejoin on single spaces.
- *
- * Unlike {@link foldName} this preserves case and non-Latin scripts — it works on Unicode letter
- * and number classes, so `"Кыргызстан,"` and `"日本 。"` survive with their content intact.
- * That is what makes it the right normalizer for building surface lexicons, where the
- * entry has to remain renderable, and the wrong one for building a match key.
+ * Normalize a word list without folding case or non-Latin scripts — `"Кыргызстан,"`
+ * and `"日本 。"` survive with their content intact — for surface lexicons whose entries
+ * must remain renderable; unlike {@link foldName} this is not a match key.
  */
 export function wordNorm(s: string): string {
 	return s
@@ -56,13 +43,9 @@ export function wordNormLower(s: string): string {
 }
 
 /**
- * Fold a single token to its lowercase, diacritic-free form: lower-cased, NFD-decomposed,
- * combining marks stripped — `"Côte"` → `"cote"`, `"Tōkyō"` → `"tokyo"`.
- *
- * The shared core of the per-country token matchers.
- * Unlike {@link foldName} it does not touch punctuation or whitespace.
- *
- * Each matcher layers its own character filtering (letters-only, hyphen-keeping, suffix-stripping) on top.
+ * Fold a single token to a lowercase, diacritic-free form, leaving punctuation
+ * and whitespace alone (unlike {@link foldName}); the shared core of the per-country
+ * token matchers, each of which layers its own character filtering on top.
  */
 export function foldToken(s: string): string {
 	return s

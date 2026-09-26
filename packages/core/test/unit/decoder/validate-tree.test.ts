@@ -3,9 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Tests for the v0.7 #37 structural-validity checker. Trees are built through the real
- *   `buildAddressTree` (so containment matches production) except for the illegal-edge case, which
- *   is hand-constructed since the builder only produces legal edges by design.
+ *   Tests for the structural-validity checker. Trees are built through the real `buildAddressTree` so containment matches production, except the illegal-edge case, hand-constructed because the builder only produces legal edges by design.
  */
 
 import { buildAddressTree } from "@mailwoman/core/decoder/build-tree"
@@ -21,7 +19,6 @@ function node(tag: AddressNode["tag"], value: string, children: AddressNode[] = 
 
 describe("validateTree", () => {
 	test("a coherent address with a proper anchor chain is valid", () => {
-		// "100 Main St" → house_number nests under street (its anchor present).
 		const tree = buildAddressTree("100 Main St", [
 			tok("100", 0, 3, "B-house_number"),
 			tok("Main", 4, 8, "B-street"),
@@ -62,8 +59,7 @@ describe("validateTree", () => {
 	})
 
 	test("an illegal containment edge is detected", () => {
-		// Hand-built: a postcode nested under a house_number — house_number is not in
-		// PARENT_OF[postcode], so this edge is illegal.
+		// Hand-built: house_number is not in `PARENT_OF[postcode]`, so nesting a postcode under one is an illegal edge.
 		const tree = {
 			raw: "x",
 			roots: [node("house_number", "100", [node("postcode", "90210")])],
@@ -75,10 +71,7 @@ describe("validateTree", () => {
 
 	test("a unit anchored by a VENUE is valid — the sub-venue case the interface used to omit", () => {
 		// `Terminal 5, Heathrow Airport, Hounslow, TW6 2GA` parses to exactly this shape
-		// and is a conditional pass on the board.
-		// Before `venue` joined PARENT_OF[unit] the checker called it a stranded dependent,
-		// so the interface was narrower than the capability already being tested.
-		// The checker was wrong rather than the parse.
+		// and is a conditional pass on the board, so a `venue` must anchor a `unit`.
 		const tree = {
 			raw: "Terminal 5, Heathrow Airport, Hounslow",
 			roots: [node("venue", "Heathrow Airport"), node("unit", "Terminal 5"), node("locality", "Hounslow")],

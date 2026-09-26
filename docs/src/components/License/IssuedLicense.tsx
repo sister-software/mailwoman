@@ -3,10 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The body of `/license/issued`: poll the worker's claim route for the Checkout Session Stripe returned the buyer
- *   with, then show the key, the one-time refresh secret, the `.env` fragment and the two commands to run. The state is
- *   the pure reducer in `@mailwoman/license-worker/sdk/claim`; this component owns only the timer, the abort, and the copy. No answer the
- *   worker returns is stored anywhere but the DOM.
+ *   The body of `/license/issued`: polls the worker's claim route and renders the key, refresh secret, `.env` fragment and install commands; no answer the worker returns is stored anywhere but the DOM.
  */
 
 import {
@@ -166,7 +163,7 @@ export const IssuedLicense: React.FC<{ sessionID: string | null }> = ({ sessionI
 				clearTimeout(timer)
 			}
 		}
-		// The effect runs once per session id; the reducer stopping the loop is `state.phase` leaving `polling`.
+		// `state.phase` is a dependency so the cleanup aborts the loop when polling ends.
 	}, [sessionID, state.phase])
 
 	if (!sessionID) {

@@ -3,13 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- * @file The streaming zip readers' two interfaces that no other test checks: a consumer may stop early, and a member name
- *   the archive never declared an encoding for can still be read.
- *
- *   Both were broken. Stopping early raised `Cannot close while reading in progress` from yauzl, because the archive was
- *   closed while its member stream had not finished tearing down — and `readZipEntry`'s own docstring promised a `take`
- *   and a `break` worked. The recipes that pipe a member into a row-limited spliterator (`locale.ts`, `scaffold.ts`,
- *   `po-box-cedex.ts`) take exactly that path whenever the limit is reached before the member ends.
+ * @file The streaming zip readers' two interfaces no other test checks — a consumer may stop early, and a member name the archive never declared an encoding for can still be read — because the recipes that pipe a member into a row-limited spliterator (`locale.ts`, `scaffold.ts`, `po-box-cedex.ts`) take that path whenever the limit is reached first.
  */
 
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
@@ -20,12 +14,8 @@ import type { PathBuilder } from "path-ts"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 /**
- * Big and incompressible.
- *
- * A member that inflates in one pass is already finished when the consumer breaks,
- * and yauzl has released its read — such a fixture passes whether or not the disposal waits,
- * which is what a 400 KB run of one repeated character did.
- * Random bytes keep the stream genuinely open across the break.
+ * Big and incompressible: a member that inflates in one pass is already finished
+ * when the consumer breaks, so random bytes keep the stream genuinely open across the break.
  */
 const BIG = incompressibleBytes(12 * 1024 * 1024)
 

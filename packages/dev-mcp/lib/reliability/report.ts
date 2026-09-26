@@ -3,13 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mwdev_reliability`'s measurement: pick a surface, collect graded confidences, curve them, and say what an eval on
- *   them would buy.
- *
- *   The report deliberately answers two questions that get conflated. "Is the number honest?" is the curve — ECE, MCE,
- *   the per-bin gap. "Is it worth filtering on?" is the threshold table, and a well-calibrated surface can still fail it,
- *   because the admitted-error count at every useful recall can be too high for the downstream cost. A tool that
- *   returned only ECE would let a caller conclude the second from the first.
+ * `mwdev_reliability`'s measurement: collect graded confidences for one surface, curve them, and state what an eval
+ * on them would buy, because a well-calibrated surface can still have no threshold worth setting.
  */
 
 import { resolvePath } from "path-ts"
@@ -28,44 +23,36 @@ import {
 import { provenanceFor } from "#tool-kit"
 
 /**
- * The confidence surfaces this tool can grade.
- *
- * Each is a distinct head over distinct features.
- * They share a reliability diagram and no other feature, so adding one means adding
- * a sample function rather than widening an existing one.
+ * The confidence surfaces this tool can grade; each is a distinct head over distinct features,
+ * so adding one means adding a sample function rather than widening an existing one.
  */
 export const ReliabilitySurface = {
 	Decode: "decode",
 	CoarsePlacer: "coarse_placer",
 } as const
 
+/**
+ * The identifier of one gradeable confidence surface.
+ */
 export type ReliabilitySurface = (typeof ReliabilitySurface)[keyof typeof ReliabilitySurface]
 
 /**
- * Where the coarse placer's held-out split lives, relative to the repo root.
- *
- * Not tracked in git — the surface reports its absence rather than substituting
- * another split, because `val` and `train` load identically and produce a curve
- * that is the temperature fit reporting on itself.
+ * Where the coarse placer's held-out split lives, relative to the repo root;
+ * it is not tracked in git, and the surface reports its absence rather than substituting
+ * a split that would be the temperature fit reporting on itself.
  */
 const PLACER_TEST_SPLIT = ["data", "coarse-placer", "test.jsonl"] as const
 
 /**
- * The eval positions the placer work actually argued over, so a reader comparing
- * against that record does not have to re-derive the rows.
- *
- * A caller may pass their own.
- * These are a starting table rather than a claim about where the eval belongs.
+ * A starting table of eval positions, not a claim about where the eval belongs.
  */
 const DEFAULT_THRESHOLDS = [0.5, 0.6, 0.7, 0.8, 0.85, 0.9, 0.95, 0.99] as const
 
 const DEFAULT_BIN_COUNT = 10
 
 /**
- * Which strata each surface can split by.
- *
- * Fixed per surface rather than free-form: a caller asking to stratify a decode curve
- * by `expected` would get one group called `(unset)` and read it as a finding.
+ * Which strata each surface can split by, fixed per surface because a caller stratifying
+ * a decode curve by `expected` would get one `(unset)` group and read it as a finding.
  */
 const STRATA_FOR: Record<ReliabilitySurface, readonly string[]> = {
 	[ReliabilitySurface.Decode]: ["tag", "country", "address_kind"],
@@ -83,6 +70,9 @@ interface SurfaceRun {
 	eventLabel: string
 }
 
+/**
+ * Grade one confidence surface and return its curve, threshold table and error classes.
+ */
 export async function runReliability(registry: EngineRegistryLike, args: Record<string, unknown>): Promise<unknown> {
 	const surface = (args["surface"] as ReliabilitySurface | undefined) ?? ReliabilitySurface.Decode
 	const binCount = (args["bins"] as number | undefined) ?? DEFAULT_BIN_COUNT
@@ -95,9 +85,8 @@ export async function runReliability(registry: EngineRegistryLike, args: Record<
 	const overall = reliabilityCurve(sample.observations, binCount)
 	const check = thresholdTable(sample.observations, thresholds)
 
-	// Read at the lowest threshold that admits anything, so the classes describe
-	// an eval someone could actually set.
-	// A threshold admitting no rows has no admitted errors to rank, which reads as a clean confusion matrix.
+	// Read at the lowest threshold that admits anything, so the classes describe an eval
+	// someone could actually set rather than an empty confusion matrix.
 	const thresholdForClasses = check.find((row) => row.admitted > 0)?.threshold ?? thresholds[0] ?? 0
 
 	const reading = describeObservedRate({
@@ -162,17 +151,17 @@ async function placerRun(registry: EngineRegistryLike, args: Record<string, unkn
 
 	return {
 		sample,
-		// No engine and no input set: the placer is loaded from its own bundle and graded against a
-		// corpus on disk, so the standard provenance block would be a shape with every field empty.
-		// The two facts that do identify this measurement are the corpus and the tree.
+		// No engine and no input set: the placer is loaded from its own bundle
+		// and graded against a corpus on disk, so the standard provenance block would be a
+		// shape with every field empty; the corpus and the tree identify it.
 		provenance: {
 			corpus,
 			tree_fingerprint: (await registry.fingerprint()).digest,
 			note: "coarse-placer surface: no geocode engine is involved, so no engine_id or input_set applies",
 		},
 		nRequested: sample.observations.length + sample.excluded.reduce((total, entry) => total + entry.n, 0),
-		// The whole held-out split is the population this surface has, so it is `full`, not a claim
-		// that it represents every address, which the split's own construction already bounds.
+		// The whole held-out split is the population this surface has, so it is `full` —
+		// not a claim that it represents every address.
 		selection: "full",
 		eventLabel: "misplaced country",
 	}
@@ -189,9 +178,8 @@ function summarize(
 		return `No gradeable observations on the ${surface} surface, so nothing was measured. ${powerSentence}`
 	}
 
-	// The most useful single row: the highest threshold that still admits a majority of what it could.
-	// Named rather than left to the reader, because a table's rows are all equally
-	// prominent and its point is not.
+	// The most useful single row: the highest threshold that still admits a majority of what
+	// it could, named because a table's rows are all equally prominent and its point is not.
 	const workable = check.toReversed().find((row) => row.admitted_share >= 0.5)
 
 	const thresholdSentence = workable
@@ -203,9 +191,8 @@ function summarize(
 	const excludedTotal = sample.excluded.reduce((total, entry) => total + entry.n, 0)
 	const excludedSentence = excludedTotal ? ` ${excludedTotal} rows were excluded and are itemized.` : ""
 
-	// Named in the sentence rather than just in a field: the curve covers only the
-	// components truth asserted, and a reader who does not know how much output sat
-	// outside it will read the ECE as covering the parse.
+	// Named in the sentence rather than only in a field, because the curve covers only the
+	// components truth asserted and a reader could otherwise read the ECE as covering the parse.
 	const unassertedSentence = sample.unasserted?.n
 		? ` A further ${sample.unasserted.n} produced components were not asserted by any truth row (mean confidence ` +
 			`${sample.unasserted.mean_confidence?.toFixed(3)}) and are counted, not curved.`

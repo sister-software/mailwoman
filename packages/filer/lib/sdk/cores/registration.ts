@@ -9,69 +9,47 @@ import { extractTableRows } from "@mailwoman/core/html/tables"
 import type { FRN } from "#frn"
 
 /**
- * One cores registration record, exactly as the detail page states it.
- *
- * Every field is optional because the page omits a row rather than emitting an empty one,
- * and an absent contact fax makes no statement about the entity.
- *
- * No field here is interpreted, derived or classified.
- * See the file header's note 2 on why Nexus's name-sniffing classification is not carried over.
+ * One cores registration record exactly as the detail page states it; every field
+ * is optional because the page omits a row rather than emitting an empty one,
+ * and no field is interpreted, derived or classified.
  */
 export interface CORESRegistration {
 	frn: FRN
 	/**
-	 * The legal name the entity registered under.
-	 *
-	 * Not necessarily the name anyone uses for it: FRN `0001753557` registers as
-	 * `"Knology Total Communications, Inc."` while operating as WOW!.
+	 * The legal name the entity registered under, which is not necessarily the name anyone uses for it.
 	 */
 	entityName?: string
 	/**
-	 * Cores's own entity-type string, verbatim (e.g. `"Private Sector , Corporation"`.
-	 * The stray space before the comma is in the source).
-	 *
-	 * Deliberately not parsed into a union: the vocabulary is unenumerated and a caller
-	 * that needs a classification should corroborate rather than trust a string split.
+	 * Cores's own entity-type string verbatim, deliberately not parsed into a union
+	 * because the vocabulary is unenumerated.
 	 */
 	entityType?: string
 	/**
-	 * The organization the registered contact belongs to.
-	 *
-	 * In practice this is where the brand appears when it differs from the legal name —
-	 * `"WOW! Internet, Cable and Phone"` against a legal name of `"Knology Total Communications, Inc."` —
-	 * which makes it a genuinely independent name surface rather than a duplicate of `entityName`.
+	 * The organization the registered contact belongs to, a genuinely independent name surface
+	 * from `entityName` because it is where the brand appears when it differs from the legal name.
 	 */
 	contactOrganization?: string
 	contactName?: string
 	contactPosition?: string
 	/**
-	 * The contact's postal address as one string.
-	 *
-	 * Cores renders it across several lines and appends `"United States"`; both are
-	 * collapsed here, the country suffix included, since every record in scope is domestic
-	 * and keeping it adds a token every address-matching pass would have to strip again.
+	 * The contact's postal address as one string, with cores's line breaks
+	 * and appended `"United States"` collapsed.
 	 */
 	contactAddress?: string
 	contactEmail?: string
 	contactPhone?: string
 	contactFax?: string
 	/**
-	 * Raw `MM/DD/yyyy hh:mm:ss AM/PM` timestamps exactly as served.
-	 *
-	 * Not parsed to a `Date` here.
-	 * The same discipline `Form499Row.lastFiledAt` follows, so a caller that needs a temporal
-	 * value performs (and can validate) its own conversion rather than inheriting a silent one.
+	 * Raw `MM/DD/yyyy hh:mm:ss AM/PM` timestamps exactly as served, not parsed to a `Date` here,
+	 * so a caller that needs a temporal value performs its own conversion.
 	 */
 	registrationDate?: string
 	lastUpdated?: string
 }
 
 /**
- * Maps a cores row label to its {@linkcode CORESRegistration} field.
- *
- * Keyed on the label reduced to lowercase letters and digits only, so `"ContactPhone:"`
- * and `"Contact Phone:"` — the page ships both spellings, the phone and fax rows having
- * lost their space — land on one key without a separate alias per variant.
+ * Maps a cores row label to its {@linkcode CORESRegistration} field, keyed on the normalized
+ * label so the page's `"ContactPhone:"` and `"Contact Phone:"` variants land on one key.
  */
 const FIELD_BY_LABEL: Record<string, keyof CORESRegistration> = {
 	frn: "frn",
@@ -97,35 +75,15 @@ const HAS_UPPERCASE_PATTERN = /[A-Z]/
 const CASE_SENSITIVE_PUNCTUATION_PATTERN = /[:@()-]/
 
 /**
- * Tokens that stay upper-case through the title-casing pass.
- *
- * Without these, `comcast cable communications, LLC` title-cases to `… , Llc`,
- * which is not a spelling anyone uses and would reach a product surface verbatim.
- *
- * Deliberately only initialisms whose conventional rendering is all-caps.
- * `Ltd`, `Corp` and `Inc` are absent because their conventional rendering is title case,
- * which the pass already produces.
- *
- * Matched on the token with trailing punctuation stripped, so `LLC,` and `LLC.` both hit.
+ * Tokens kept upper-case through the title-casing pass — only initialisms whose conventional rendering
+ * is all-caps, matched on the token with trailing punctuation stripped so `LLC,` and `LLC.` both hit.
  */
 const UPPERCASE_TOKENS = new Set(["llc", "lc", "lp", "llp", "pllc", "pc", "pa", "usa", "us", "dba", "inc's"])
 
 /**
- * Title-case a value that arrived uniformly cased, and leave everything else alone —
- * Nexus's `normalizeDataCell` idea, kept because FCC data mixes `windstream services LLC`
- * with `Lumen Technologies Inc.` in the same column.
- *
- * The guard is what makes it safe.
- * A string carrying both cases is already deliberately cased and is returned untouched,
- * so `WOW! Internet, Cable and Phone` survives.
- *
- * A string containing `:`, `@`, `(`, `)` or `-` is left alone too: those mark addresses,
- * emails and phone numbers, where re-casing corrupts rather than tidies.
- * Entity-form initialisms are restored to upper case afterwards ({@linkcode UPPERCASE_TOKENS}).
- *
- * This is a display-level tidy rather than a matching normalizer.
- * Anything joining on these values must still go through `canonicalizeOrganizationName` —
- * re-casing does not fold `INC` and `Inc.` together.
+ * Title-cases a value that arrived uniformly cased, leaving mixed-case values and values containing
+ * `:`, `@`, `(`, `)` or `-` alone; it is a display-level tidy, not a matching normalizer,
+ * so anything joining on these values must still go through `canonicalizeOrganizationName`.
  */
 export function recaseUniform(value: string): string {
 	if (CASE_SENSITIVE_PUNCTUATION_PATTERN.test(value)) return value
@@ -146,18 +104,9 @@ export function recaseUniform(value: string): string {
 }
 
 /**
- * Parse a cores `searchDetail.do` page into a {@linkcode CORESRegistration}.
- *
- * Returns `null` — never a stub record, and never a throw — when the page carries no recognizable
- * registration table, or when its `FRN:` row disagrees with the FRN that was requested.
- * Both are ordinary: cores serves a search form for an unknown FRN, and an abstention
- * here is a fact the caller counts rather than an error it handles.
- *
- * **The FRN cross-check is the required part.** Without it a page served for the wrong entity —
- * a redirect, a cached response for a different query, a truncated document — would be
- * attributed to the FRN that was asked for, which is a false identity link written silently.
- * The page states its own FRN.
- * Requiring the two to agree is free.
+ * Parses a cores `searchDetail.do` page into a {@linkcode CORESRegistration}, returning `null` —
+ * never a stub and never a throw — when no recognizable table is present or the page's own `FRN:`
+ * row disagrees with the requested FRN, which would otherwise silently write a false identity link.
  */
 export function parseCORESRegistration(frn: FRN, html: string): CORESRegistration | null {
 	const fields: Partial<Record<keyof CORESRegistration, string>> = {}
@@ -194,9 +143,6 @@ export function parseCORESRegistration(frn: FRN, html: string): CORESRegistratio
 	for (const [field, value] of Object.entries(fields)) {
 		if (field === "frn") continue
 
-		// Timestamps and free-text contact details keep their source casing.
-		// Only the name surfaces get the uniform-case tidy, since they are what a human reads
-		// and what a display layer renders.
 		registration[field as Exclude<keyof CORESRegistration, "frn">] =
 			field === "entityName" || field === "contactOrganization" || field === "contactName"
 				? recaseUniform(value)

@@ -11,10 +11,8 @@ import type { AssertedProposition } from "@mailwoman/evidence/status"
 import type { AddressRole } from "#types"
 
 /**
- * The research state of a jurisdiction's premise-address backbone.
- *
- * The letters match the global address corpus specification.
- * These states are separate from locale tiers and layer tiers.
+ * The research state of a jurisdiction's premise-address backbone; the letters match the
+ * global address corpus specification and are separate from locale tiers and layer tiers.
  */
 export const BackboneState = {
 	/**
@@ -33,9 +31,7 @@ export const BackboneState = {
 	 */
 	Restricted: "B",
 	/**
-	 * The research pass verified no permissive nationwide premise corpus.
-	 *
-	 * Such a corpus may still exist.
+	 * The research pass verified no permissive nationwide premise corpus, which may still exist.
 	 */
 	Unverified: "C",
 	/**
@@ -51,9 +47,6 @@ export type BackboneState = (typeof BackboneState)[keyof typeof BackboneState]
 
 /**
  * What the research pass did for a jurisdiction.
- *
- * An `exception` records that someone looked and found no ordinary register.
- * An `unexamined` row records that nobody has looked yet.
  */
 export const JurisdictionResearchState = {
 	/**
@@ -90,9 +83,7 @@ export const SourceStatus = {
 	 */
 	VerifiedAuthority: "verified-authority",
 	/**
-	 * The row was carried forward from the earlier memo without a recheck.
-	 *
-	 * These rows lack a publisher and a URL.
+	 * A row carried forward from the earlier memo without a recheck; these rows lack a publisher and a URL.
 	 */
 	RetainedOriginal: "retained-original",
 	/**
@@ -102,10 +93,9 @@ export const SourceStatus = {
 	 */
 	VerifiedCorpus: "verified-corpus",
 	/**
-	 * A bulk corpus is reachable, but the examined copy is no longer updated.
-	 *
-	 * The row points to the national portal to inspect instead.
-	 * The state is separate from `VerifiedCorpus` so that a filter for reachable corpora excludes it.
+	 * A bulk corpus is reachable but the examined copy is no longer updated;
+	 * the row points to the national portal instead, and the state is separate from
+	 * `VerifiedCorpus` so a filter for reachable corpora excludes it.
 	 */
 	VerifiedCorpusStale: "verified-corpus-stale",
 } as const
@@ -144,9 +134,7 @@ export const REGISTER_SECTORS = [
 export type RegisterSector = (typeof REGISTER_SECTORS)[number]
 
 /**
- * Whether a source carries coordinates.
- *
- * `Unresolved` means nobody has checked, which differs from `Absent`.
+ * Whether a source carries coordinates; `Unresolved` differs from `Absent`.
  */
 export const SourceGeometry = {
 	Present: "present",
@@ -185,10 +173,8 @@ export const ResearchPass = {
 export type ResearchPass = (typeof ResearchPass)[keyof typeof ResearchPass]
 
 /**
- * The review state of a source's terms.
- *
- * An `unchecked` source cannot enter a training build, because its recorded
- * label describes only access cost.
+ * The review state of a source's terms; an `unchecked` source cannot enter a training build
+ * because its recorded label describes only access cost.
  */
 export const LicenseReviewState = {
 	/**
@@ -220,20 +206,16 @@ export interface UncheckedLicense {
 	licenseID: string
 	state: typeof LicenseReviewState.Unchecked
 	/**
-	 * The research pass's license text, verbatim.
-	 *
-	 * Most values are access labels such as `Free` or `Licensed`, which make no
-	 * statement about redistribution or training.
+	 * The research pass's license text, verbatim; most values are access labels such as `Free`
+	 * or `Licensed` that make no statement about redistribution or training.
 	 */
 	publisherStatement: string
 	note: string
 }
 
 /**
- * The acts that this repository performs on a source, in pipeline order.
- *
- * A grant can permit some acts and stay silent on others, so license decisions
- * record a permission per operation.
+ * The acts this repository performs on a source, in pipeline order; a grant can permit some
+ * and stay silent on others, so license decisions record a permission per operation.
  */
 export const SourceOperation = {
 	/**
@@ -272,10 +254,8 @@ export const SourceOperation = {
 export type SourceOperation = (typeof SourceOperation)[keyof typeof SourceOperation]
 
 /**
- * What a grant says about one operation.
- *
- * `Unreviewed` means that nobody has read the terms against the operation.
- * Eligibility checks treat it as blocking, and it stays distinct from `Refused`.
+ * What a grant says about one operation; `unreviewed` means nobody has read the terms against it,
+ * eligibility checks treat it as blocking, and it stays distinct from `refused`.
  */
 export const OperationPermission = {
 	Permitted: "permitted",
@@ -289,9 +269,8 @@ export const OperationPermission = {
 export type OperationPermission = (typeof OperationPermission)[keyof typeof OperationPermission]
 
 /**
- * The legal basis of a permission.
- *
- * Most permissions rest on a publisher grant, and the other values mark permissions that rest elsewhere.
+ * The legal basis of a permission; most permissions rest on a publisher grant,
+ * and the other values mark permissions that rest elsewhere.
  */
 export const PermissionBasis = {
 	PublisherGrant: "publisher-grant",
@@ -321,8 +300,6 @@ export interface OperationDecision {
 
 /**
  * A license decision whose terms a reviewer read and under which one grant was elected.
- *
- * A dual-licensed source such as BAN needs an election between its grants.
  */
 export interface ElectedLicense {
 	licenseID: string
@@ -371,9 +348,8 @@ export interface RefusedLicense {
 export type LicenseDecision = UncheckedLicense | ElectedLicense | RefusedLicense
 
 /**
- * One jurisdiction row.
- *
- * The table holds a row for every jurisdiction whether or not research has found a source.
+ * One jurisdiction row; the table holds a row for every jurisdiction whether
+ * or not research has found a source.
  */
 export interface JurisdictionRecord {
 	/**
@@ -403,13 +379,8 @@ export interface JurisdictionRecord {
 }
 
 /**
- * What a review found about personal data in one publication.
- *
- * This question is separate from licensing.
- * For example, the French SIRENE register lists sole traders, whose business address is a personal address.
- *
- * Only `Present` blocks ingest.
- * A source without any review is also blocked.
+ * What a review found about personal data in one publication, a question separate from
+ * licensing; only `Present` blocks ingest, and a source without any review is also blocked.
  */
 export const PersonalDataReading = {
 	/**
@@ -436,9 +407,6 @@ export type PersonalDataReading = (typeof PersonalDataReading)[keyof typeof Pers
  */
 export interface PersonalDataReview {
 	reading: PersonalDataReading
-	/**
-	 * The reviewer's reason for the reading.
-	 */
 	because: string
 	/**
 	 * The location of the completed analysis, which the audit requires when the reading is `assessed`.
@@ -460,8 +428,6 @@ export interface AddressSourceRecord {
 	status: SourceStatus
 	/**
 	 * The `@mailwoman/evidence` propositions that this source asserts.
-	 *
-	 * A company register that issues identifiers and receives addresses carries `["identity", "observation"]`.
 	 */
 	asserts: readonly AssertedProposition[]
 	/**
@@ -540,11 +506,8 @@ export interface AddressSourceRegister {
 	registerID: string
 	version: string
 	/**
-	 * The SHA-256 digest of every other field, which the build writes.
-	 *
-	 * The research inputs are not committed, so this digest is the only way to
-	 * detect a hand edit to the generated file.
-	 * Change values by rerunning the build.
+	 * The SHA-256 digest of every other field, which the build writes; the research inputs
+	 * are not committed, so this is the only way to detect a hand edit to the generated file.
 	 */
 	contentDigest: string
 	provenance: RegisterProvenance

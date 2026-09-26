@@ -3,20 +3,14 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Rule-based locale detection from `QueryShape`. Bitter-lesson-safe: only universal structural cues
- *   (script class + known postcode formats), never place-name dictionaries.
- *
- *   Scoring shape: each scorer returns `{ locale, confidence }` or null. The composer picks the
- *   highest-confidence non-null result. ties broken by scorer order (most-specific first).
+ * Rule-based locale detection from `QueryShape` that uses only universal structural cues — script class and known postcode formats — never place-name dictionaries.
  */
 
 import type { QueryShapeFormatsView } from "@mailwoman/query-shape"
 
 /**
- * Confidence at or above which a known-format hit counts as unambiguous.
- *
- * Ambiguous hits — a bare 5-digit run, which reads as US, FR and DE alike —
- * arrive at 0.6, so this cleanly separates them.
+ * Confidence at or above which a known-format hit counts as unambiguous; ambiguous hits — a bare
+ * 5-digit run, which reads as US, FR and DE alike — arrive at 0.6, so this cleanly separates them.
  */
 const UNAMBIGUOUS_FORMAT_CONFIDENCE = 0.9
 
@@ -27,19 +21,9 @@ export interface LocaleCandidate {
 }
 
 /**
- * Script-class scorer: maps the dominant character class to a default locale per script.
- *
- * - Cjk → ja-JP.
- *   The character class cannot tell Japanese from Chinese or Korean Han text, and the CJK weights are
- *   one family (`@mailwoman/neural-weights-cjk`, with `ja-jp` and `zh-cn` data-only overlays):
- *   the char encoder collapses `ja`/`zh`/`ko` to that family, so the model loaded
- *   is the same whichever tag stands here.
- *   What this tag does decide is the label a consumer reads off the hint.
- *   A Chinese-script address reports `ja-JP` — and that is a known limit of the
- *   hint's interface rather than a routing choice.
- * - Cyrillic → ru-RU (not currently shipped. Signal is still useful)
- * - Arabic → ar (similar)
- * - Alpha / alphanumeric / numeric → no script-based commit (other scorers decide)
+ * Script-class scorer: the CJK character class cannot tell Japanese from Chinese
+ * or Korean Han text, so a Chinese-script address reports `ja-JP` — a known limit
+ * of the hint's interface rather than a routing choice.
  */
 export function scoreByScript(shape: QueryShapeFormatsView): LocaleCandidate | null {
 	switch (shape.characterClass) {
@@ -55,20 +39,13 @@ export function scoreByScript(shape: QueryShapeFormatsView): LocaleCandidate | n
 }
 
 /**
- * Postcode-format scorer: maps a high-confidence postcode format hit to the country it implies.
- *
- * Ambiguous 5-digit hits (`us_zip`/`fr_postcode`/`de_postcode` all matching at confidence 0.6)
- * are treated as low-confidence US (the most common 5-digit reading globally).
- * The caller can override with `--locale fr-FR`/`--locale de-DE` when the
- * disambiguating context isn't in the string.
+ * Postcode-format scorer: ambiguous 5-digit hits (`us_zip`/`fr_postcode`/`de_postcode` all matching
+ * at confidence 0.6) are treated as low-confidence US, the most common 5-digit reading globally.
  */
 export function scoreByPostcode(shape: QueryShapeFormatsView): LocaleCandidate | null {
-	// Prefer unambiguous (confidence ≥ 0.9) hits over ambiguous (0.6) — among them,
-	// pick the one with the highest confidence + most-specific country mapping.
 	const unambiguous = shape.knownFormats.filter((f) => f.confidence >= UNAMBIGUOUS_FORMAT_CONFIDENCE)
 
 	if (unambiguous.length) {
-		// Pick the first unambiguous hit (callers typically have one postcode per address).
 		const hit = unambiguous[0]!
 
 		switch (hit.format) {
@@ -77,22 +54,17 @@ export function scoreByPostcode(shape: QueryShapeFormatsView): LocaleCandidate |
 			case "uk_postcode":
 				return { locale: "en-GB", confidence: 0.95, reason: `format=${hit.format}` }
 			case "ca_postcode":
-				// Canadian — both en-CA and fr-CA possible.
-				// Default en-CA.
-				// FR caller can override.
+				// Canadian postcodes admit both en-CA and fr-CA; this defaults to en-CA.
 				return { locale: "en-CA", confidence: 0.9, reason: `format=${hit.format}` }
 			case "jp_postcode":
 				return { locale: "ja-JP", confidence: 0.95, reason: `format=${hit.format}` }
 		}
 	}
 
-	// Ambiguous 5-digit fallback.
 	const fivedigit = shape.knownFormats.find((f) => f.format === "us_zip" || f.format === "fr_postcode")
 
 	if (fivedigit) {
-		// Low confidence — US is the global plurality interpretation.
-		// Returns en-US so a downstream consumer without a stronger signal still gets a sensible default.
-		// Alternatives surface FR/DE.
+		// US is the global plurality interpretation, so an ambiguous 5-digit hit returns en-US at low confidence.
 		return { locale: "en-US", confidence: 0.5, reason: "ambiguous-5digit-postcode" }
 	}
 
@@ -100,9 +72,8 @@ export function scoreByPostcode(shape: QueryShapeFormatsView): LocaleCandidate |
 }
 
 /**
- * Whole-input fallback: when no other rule fires, return en-US at low confidence.
- *
- * Keeps this stage always-decisive (no `null` to the caller, ever).
+ * Whole-input fallback that keeps the stage always-decisive: when no other rule
+ * fires it returns en-US at low confidence rather than `null`.
  */
 export function scoreFallback(_shape: QueryShapeFormatsView): LocaleCandidate {
 	return { locale: "en-US", confidence: 0.3, reason: "fallback" }

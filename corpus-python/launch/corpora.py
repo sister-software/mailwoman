@@ -1,27 +1,25 @@
 """What each corpus version stages onto the volume, as data.
 
-One row per version. A new version is a row here rather than a new Modal function. The variation between
-versions is which directories move and which files must land afterwards, and that is a manifest
-rather than code. `launch/plan.py` turns a row into commands; `launch/sync.py` runs them.
+One row per version. A new version is a row here rather than a new Modal function. The variation
+between versions is which directories move and which files must land afterwards, and that is a
+manifest rather than code. `launch/plan.py` turns a row into commands; `launch/sync.py` runs them.
 
-A version name is written once per transfer. `corpus("v0.12.0-nz")` derives both the bucket path
-and the volume path, because the name otherwise appears four times in one pair and a corpus version
-ends up existing only as a substring of two strings nobody can enumerate. `corpus_versions()` reads
-them back off the table for exactly that reason.
+A version name is written once per transfer: `corpus("v0.12.0-nz")` derives both the bucket path and
+the volume path, because the name otherwise appears four times in one pair and a corpus version ends
+up existing only as a substring of two strings nobody can enumerate. `corpus_versions()` reads them
+back off the table for exactly that reason.
 
-The three layouts differ by when a version was built rather than by anything about its contents, so each
-row names which one it uses:
+Each row names which layout it uses:
 
-    NESTED   (22 transfers)  corpus/<v>/corpus-<v>/  ->  corpus/versioned/<v>/corpus-<v>/
-    FLAT     (21 transfers)  corpus/<v>/             ->  corpus/versioned/<v>/
-    WRAPPED  (12 transfers)  corpus/<v>/             ->  corpus/versioned/<v>/corpus-<v>/
+    NESTED   corpus/<v>/corpus-<v>/  ->  corpus/versioned/<v>/corpus-<v>/
+    FLAT     corpus/<v>/             ->  corpus/versioned/<v>/
+    WRAPPED  corpus/<v>/             ->  corpus/versioned/<v>/corpus-<v>/
 
-`mirror` is a directory that lands at the same path (68), `file_into` a single file into a
-directory (13 into its own, 1 elsewhere). Those six shapes cover all 137 transfers.
+`mirror` is a directory that lands at the same path, `file_into` a single file into a directory.
 
-`checks` are the paths the sync verifies after copying. They matter because rclone EXITS 0 WHEN THE
-SOURCE PREFIX IS EMPTY: without a check, a version whose R2 prefix was never uploaded syncs
-"successfully" and the training job fails much later on a missing parquet part, with no line pointing back at the sync.
+`checks` are the paths the sync verifies after copying: rclone EXITS 0 WHEN THE SOURCE PREFIX IS
+EMPTY, so without a check a version whose R2 prefix was never uploaded syncs "successfully" and the
+training job fails much later on a missing parquet part, with no line pointing back at the sync.
 """
 
 from __future__ import annotations
@@ -37,8 +35,7 @@ from .plan import (
     mirror,
 )
 
-#: Keyed by the name that followed `sync_` on the function this replaces, so an operator who knows
-#: `sync_v8cjk_kr` finds `v8cjk_kr`.
+#: Keyed by the old `sync_<name>` suffix, so an operator who knows `sync_v8cjk_kr` finds `v8cjk_kr`.
 CORPUS_VERSIONS: dict[str, CorpusVersion] = {
     "assets": CorpusVersion(
         copies=(),

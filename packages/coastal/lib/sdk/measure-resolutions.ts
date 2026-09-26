@@ -3,23 +3,15 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The index resolution is a measurement this layer takes rather than a number argued to.
+ *   The index resolution is a measurement this layer takes rather than a number argued to: the share of cells
+ *   that come out `partial` decides whether the index answers most probes on its own, and this module streams
+ *   the real source at each candidate resolution and reports the table the choice is made from.
  *
- *   The share of cells that come out `partial` decides whether the index answers most probes on its own or
- *   whether the ray cast is the common path, and it is a property of England's coastal-frontage geometry that
- *   no reasoning about cell areas produces. This module streams the real source at each candidate resolution
- *   and reports the table the choice is made from; `build-coastal.ts` then builds at the chosen one.
+ *   The table is per scenario, because a pooled `partial` share averages a present-day designation together
+ *   with a 2105 projection and describes neither.
  *
- *   the table is PER scenario and the pooled row is FOR size only. Twelve layers cover the same frontages
- *   with different extents. a pooled `partial` share averages a present-day designation together with a 2105
- *   projection and describes neither. What a scenario-scoped probe reads is one scenario's share, so that is
- *   the number the resolution is chosen on. The pooled total answers a different question — how many rows the
- *   artifact holds — and is reported separately rather than folded in.
- *
- *   one stream, every resolution. Re-reading the geodatabase per candidate costs a full pass each and buys
- *   no benefit. The classification is per feature, so every candidate index folds the same feature in turn. The
- *   cost is memory: each resolution holds its own cell sets, and the finest candidate dominates. A caller
- *   that runs out of headroom runs the candidates in separate invocations.
+ *   One stream covers every resolution; memory is the cost, and a caller that runs out of headroom runs the
+ *   candidates in separate invocations.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"

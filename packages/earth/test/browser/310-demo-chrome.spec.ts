@@ -3,19 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The floating chrome's interface, at a desktop and a phone width.
- *
- *   Every assertion stands for a defect that reached earth.mailwoman.ai and was found by a person looking at the page:
- *   a side sheet that opened over the button that opened it, so there was no way to close it. a footer strip that
- *   covered the bottom sheet's last rows on a phone. a compass built, exported and mounted in no app. a sources
- *   popover clipped out of existence by the strip's own overflow. two panels sharing an edge.
- *
- *   None of them were reachable by the suites that already ran here, which assert what the geocoder answers and
- *   make no statement about what the page shows.
- *
- *   IT runs on `?runtime=fake`. The chrome is the subject, and the canned runtime renders all of it and completes a
- *   query without fetching the 38 MB model — so this suite stays fast, and it keeps reporting on the chrome on a day
- *   the model's origin is throttling.
+ * The floating chrome's interface, at a desktop and a phone width, running on the canned `?runtime=fake` so no model is fetched and the suite stays fast.
  */
 
 import {
@@ -78,8 +66,7 @@ test.describe("Chrome — the floating controls", () => {
 		const sheet = page.locator(".mw-map-sheet--side")
 		await expect(sheet).toBeVisible()
 
-		// The panel is over the whole map, so the opening control is underneath it.
-		// Its own close is the way out.
+		// The panel covers the whole map, so the opening control is underneath it and its own close is the way out.
 		await sheet.locator(".mw-map-sheet__close").click()
 		await expect(sheet).toHaveCount(0)
 	})
@@ -92,9 +79,8 @@ test.describe("Chrome — the floating controls", () => {
 
 	test("a pointer move never queries every layer in the style", async ({ page }) => {
 		// The real basemap, because the canned runtime's style carries no label layers
-		// and the hook returns before it queries anything.
-		// A pass there would prove no defect.
-		// The basemap arrives well before the model, so this waits on the style having layers
+		// (the hook returns before querying, so a pass there would prove no defect);
+		// the basemap arrives well before the model, so this waits on the style having layers
 		// rather than on the geocoder being ready.
 		await page.goto("/")
 
@@ -118,8 +104,7 @@ test.describe("Chrome — the floating controls", () => {
 
 		// The minifier collapses two declarations carrying the same value and keeps the last,
 		// so a standard property written before its `-webkit-` twin is dropped from the output
-		// while the source still reads correctly.
-		// This is the only place that difference is visible.
+		// while the source still reads correctly, and this is the only place that difference is visible.
 		const href = await page.locator('link[rel="stylesheet"]').first().getAttribute("href")
 
 		expect(href, "the page links a stylesheet").not.toBeNull()
@@ -131,7 +116,6 @@ test.describe("Chrome — the floating controls", () => {
 
 			if (prefixed === 0) continue
 
-			// Every prefixed declaration has a standard one beside it.
 			// `-webkit-x:` also contains `x:`, so the standard count is the raw count minus the prefixed ones.
 			const standard = css.split(`${property}:`).length - 1 - prefixed
 
@@ -147,12 +131,8 @@ test.describe("Chrome — the floating controls", () => {
 
 		const popover = page.locator(".mw-map-footer__popover")
 
-		// reachable rather than merely visible.
-		// The popover shipped in the DOM carrying the right credits while the footer
-		// strip's own `overflow-x` clipped it away, and both a `textContent` read
-		// and a `toBeVisible` assertion passed over that.
-		// A clipped element keeps its box.
-		// Only hit-testing tells the difference.
+		// A clipped element keeps its box, so only hit-testing distinguishes a reachable
+		// popover from one merely present in the DOM.
 		await expectReachable(page, ".mw-map-footer__popover")
 		await expect(popover).toContainText("OpenStreetMap")
 

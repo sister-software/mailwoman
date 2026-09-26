@@ -84,7 +84,7 @@ export function collectOutlierRows(candidates: Iterable<string | null>, cap = In
 }
 
 /**
- * Encode rows as `{raw, country: "other"}` jsonl (trailing newline included).
+ * Encode rows as `{raw, country: "OTHER"}` jsonl (trailing newline included).
  */
 export function otherRowsJSONL(rows: string[]): string {
 	return toLinesText(rows.map((raw) => stringifyJSON({ raw, country: "OTHER" })))

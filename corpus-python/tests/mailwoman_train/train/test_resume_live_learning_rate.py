@@ -1,20 +1,8 @@
-"""A resumed run trains at the LIVE config's learning rates rather than the checkpoint's.
+"""A resumed run trains at the live config's learning rates rather than the checkpoint's.
 
-`optim.load_state_dict()` overwrites every param group's `lr` and `initial_lr` with the values the
-CHECKPOINT saved, and `scheduler.load_state_dict()` does it again to the scheduler's base rates. So
-the live rates have to be captured before either load and re-stamped after both — which `setup.py`
-calls its one required ordering, and which no test exercised end to end:
-`test_resume_lr_restamp.py` calls `restamp_resume_lrs` with hand-built inputs, so it never sees
-where the live rates come from, and the trace test never resumes.
+`optim.load_state_dict()` overwrites every param group's `lr` and `initial_lr` with the checkpoint's saved values and `scheduler.load_state_dict()` does it again to the scheduler's base rates, so the live rates must be captured before either load and re-stamped after both.
 
-The assertion compares the resumed optimizer against the same optimizer read before the resume,
-which is an independent read of the fresh state rather than a second call to the capture under
-test. Confirmed by inverting it: halving the captured rates in `build_optimization` leaves every
-other test in the suite green, and fails this one.
-
-The config carries two rates — `train.learning_rate` and the `classifier_learning_rate` carve-out —
-so the check is per group. A single-group assertion would have read the carve-out as a failure.
-"""
+The config carries two rates — `train.learning_rate` and the `classifier_learning_rate` carve-out — so the check is per group."""
 
 from __future__ import annotations
 

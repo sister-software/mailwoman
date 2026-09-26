@@ -1,9 +1,8 @@
 """Real address parts, harvested from OpenAddresses CSVs and from an existing corpus's spans.
 
-No collector here renders. Each collector returns surfaces — street names, city names, (locality,
-region) pairs — and `rows.py` turns them into labeled rows. Every collector seeds its own
-`random.Random` from `SEED` plus a per-collector suffix, so one collector's sampling does not
-shift another's.
+No collector here renders: each returns surfaces — street names, city names, (locality, region)
+pairs — and `rows.py` turns them into labeled rows. Every collector seeds its own `random.Random`
+from `SEED` plus a per-collector suffix, so one collector's sampling does not shift another's.
 """
 
 from __future__ import annotations
@@ -50,14 +49,10 @@ def collect_oa_pairs(
     list[tuple[str, str, str]],
     list[tuple[str, str, str]],
 ]:
-    """Distinct (street, number) pairs + distinct CITY names from a locale's OA CSVs.
+    """Distinct (street, number) pairs and distinct CITY names from a locale's OA CSVs.
 
-    The city names feed bare-locality POLARITY rows: the #511 spread-scan measured the recipe's street
-    surfaces as ~46% street-family / ~54% admin in the base (European street names are place
-    names), so a street-only fragment recipe would teach "context-free name = street". The
-    established family (si-bare-village / fr-bare-street) balances polarity. fragments balance
-    with bare-locality twins so the discriminant the model can learn is morphology/lexical
-    identity rather than fragment-ness.
+    The city names feed bare-locality polarity rows, so a street-only fragment recipe does not teach
+    "context-free name = street".
     """
     rng = random.Random(f"{SEED}:{locale_dir}")
     pairs: dict[str, str] = {}
@@ -121,12 +116,11 @@ def collect_oa_pairs(
 def span_rows_from_corpus(
     parquet_glob: str, countries: set[str] | None, cap: int, tag: str = "street", max_parts: int | None = None
 ) -> dict[str, list[str]]:
-    """Bare surfaces of one span tag per country (countries=None -> ALL), lifted from an existing corpus.
+    """Bare surfaces of one span tag per country (``countries=None`` means all), lifted from an existing corpus.
 
-    ``max_parts`` bounds the scan: without it, a REQUESTED country that is SPARSE in the corpus (e.g. DE
-    streets) never hits ``cap*2``, so the ``done`` break never fires and the loop walks all ~700 parts
-    (263M rows) — a 90+ min hang measured 2026-07-14. Bound the scan for such calls. the source-ordered
-    corpus surfaces enough of the common countries in the first N parts.
+    ``max_parts`` bounds the scan: without it a requested country that is sparse in the corpus never hits
+    ``cap*2``, so the ``done`` break never fires and the loop walks every part — a measured 90-minute hang
+    over ~700 parts (263M rows). The source-ordered corpus surfaces the common countries in the first parts.
     """
     rng = random.Random(f"{SEED}:corpus")
     out: dict[str, set[str]] = {c: set() for c in countries} if countries else {}
@@ -137,8 +131,8 @@ def span_rows_from_corpus(
         if done:
             break
 
-        # iter_batches().to_pylist() is row-aligned by construction. zipping multiple ChunkedArrays
-        # is not (chunk-boundary iteration artifacts silently misalign columns — measured).
+        # `iter_batches().to_pylist()` is row-aligned by construction; zipping multiple ChunkedArrays
+        # is not, since chunk-boundary iteration silently misaligns columns.
         for batch in pq.ParquetFile(path).iter_batches(
             columns=["raw", "span_starts", "span_ends", "span_tags", "country"], batch_size=8192
         ):
@@ -168,8 +162,8 @@ def span_rows_from_corpus(
 
 
 def admin_pairs_from_corpus(parquet_glob: str, cap: int) -> list[tuple[str, str]]:
-    """(locality, region) surface pairs from US corpus rows (both spans present) — the #1102
-    counterweight: teaches the locality<->region boundary the twin mass eroded."""
+    """(locality, region) surface pairs from US corpus rows where both spans are present, teaching the
+    locality/region boundary."""
     rng = random.Random(f"{SEED}:adminpairs")
     pairs: set[tuple[str, str]] = set()
 

@@ -3,14 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The corpus adapter-test harness — the sibling of `mailwoman/test-kit/`, and the shape every
- *   `corpus/src/adapters/*\/adapter.test.ts` had grown for itself.
- *
- *   Nine of them opened with the same twenty lines: the `mkdtemp`/`rm`/`tmpdir`/`join` +
- *   `JSONSpliterator` import header, a `let scratch`, a `beforeEach` that mkdtemps
- *   `mailwoman-<something>-`, an `afterEach` that force-removes it swallowing errors, and a
- *   `loadRows()` that reads the run's `canonical.jsonl` back through `JSONSpliterator`. No part of
- *   any of that is adapter-specific. only the tmpdir prefix and the adapter id ever differed.
+ *   The corpus adapter-test harness — the sibling of `mailwoman/test-kit/`.
  *
  *   This directory is excluded from the published tarball by `corpus/package.json`'s `files` (the
  *   `!test-kit/**\/*` entry, which predates this file), which is why importing `vitest` here is safe
@@ -25,10 +18,8 @@ import { afterEach, beforeEach } from "vitest"
 import type { CanonicalRow } from "#types"
 
 /**
- * A per-test scratch directory.
- *
- * `path` exists only inside a test body.
- * Reading it before the `beforeEach` runs or after the `afterEach` throws.
+ * A per-test scratch directory; `path` exists only inside a test body, and reading it
+ * before the `beforeEach` or after the `afterEach` throws.
  */
 export interface ScratchDir {
 	readonly path: PathBuilder
@@ -38,9 +29,9 @@ export interface ScratchDir {
  * Register a fresh scratch directory for each test in the current suite, removed afterwards.
  *
  * `slug` names the directory (`mailwoman-<slug>-xxxxxx` under the OS temp dir)
- * and exists only to make a stray leftover traceable to the suite that made it.
- * Teardown swallows its own errors: a test that already removed the directory, or a platform
- * that holds a handle open, must not turn a passing assertion into a failing suite.
+ * so a stray leftover is traceable to its suite.
+ * Teardown swallows its own errors, because a test that already removed the directory
+ * or a platform holding a handle open must not turn a passing assertion into a failing suite.
  */
 export function useScratchDir(slug: string): ScratchDir {
 	let owned: TemporaryDirectory | undefined
@@ -49,20 +40,12 @@ export function useScratchDir(slug: string): ScratchDir {
 		owned = await temporaryDirectory(`mailwoman-${slug}-`)
 	})
 
-	// The directory is owned by the test, never by a module-scoped stack.
-	// Under `isolate: false` this module is shared across every corpus adapter suite in a fork,
-	// so a stack disposed by the first file's `afterAll` left every later file calling `use()`
-	// on a disposed stack, which is what "Cannot call AsyncDisposableStack.prototype.use on an
-	// already-disposed DisposableStack" was, across a different set of adapter suites on each run.
-	//
-	// Teardown swallows its own errors: a test that already removed the directory, or a platform
-	// that holds a handle open, must not turn a passing assertion into a failing suite.
+	// The directory is owned by the test, never by a module-scoped stack: under `isolate: false`
+	// this module is shared across every corpus adapter suite in a fork.
 	afterEach(async () => {
 		try {
 			await owned?.[Symbol.asyncDispose]()
-		} catch {
-			// See above.
-		}
+		} catch {}
 
 		owned = undefined
 	})
@@ -77,8 +60,7 @@ export function useScratchDir(slug: string): ScratchDir {
 }
 
 /**
- * Read back the canonical rows a `runAdapter` call wrote — `<outputDir>/<adapterID>/canonical.jsonl`,
- * streamed through `JSONSpliterator` and collected.
+ * Read back the canonical rows a `runAdapter` call wrote at `<outputDir>/<adapterID>/canonical.jsonl`.
  */
 export function readCanonicalRows(outputDir: PathBuilderLike, adapterID: string): Promise<CanonicalRow[]> {
 	return Array.fromAsync(
@@ -87,12 +69,8 @@ export function readCanonicalRows(outputDir: PathBuilderLike, adapterID: string)
 }
 
 /**
- * Write a delimited fixture — a header line plus the given rows — and answer its path.
- *
- * Three adapter suites carried a hand-rolled copy of this, and the copies disagreed about the one thing
- * a reader cannot see: two joined the rows without a trailing newline and the third appended one.
- * `createNewlineWriter` terminates every line it writes, so the file round-trips through `CSVSpliterator`
- * the same way whichever suite produced it, and a caller passes content without a delimiter.
+ * Write a delimited fixture (a header line plus the given rows) and answer its path;
+ * `createNewlineWriter` terminates every line, so a caller passes content without a delimiter.
  */
 export async function writeDelimitedFixture<P extends PathBuilderLike>(
 	filePath: P,

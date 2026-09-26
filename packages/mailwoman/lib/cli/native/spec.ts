@@ -3,8 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- * Framework-neutral command metadata and the small `node:util.parseArgs` adapter behind Mailwoman's lazy CLI.
- * Parsing never imports the help renderer; `@isaacs/cliui` is reached only from {@link renderCommandHelp}.
+ * Framework-neutral command metadata and the small `node:util.parseArgs` adapter behind Mailwoman's lazy
+ * CLI; parsing never imports the help renderer, and `@isaacs/cliui` is reached only from
+ * {@link renderCommandHelp}.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -21,16 +22,8 @@ interface OptionSpecBase {
 	multiple?: boolean
 	required?: boolean
 	/**
-	 * The flag this option used to be spelled as.
-	 *
-	 * It keeps working, with a notice on stderr, and never appears in help.
-	 *
-	 * A CLI flag is an interface with whatever scripts already call it, so a rename that removes
-	 * the old spelling breaks them at the moment of the rename with no way to find out first.
-	 * The notice is what turns that into a warning the caller can act on before the alias goes.
-	 *
-	 * Passing both spellings is a usage error rather than a precedence rule:
-	 * the caller meant one of them and the command cannot tell which.
+	 * The flag this option used to be spelled as, kept working with a notice on stderr and never
+	 * shown in help; passing both spellings is a usage error rather than a precedence rule.
 	 */
 	deprecatedName?: string
 }
@@ -83,19 +76,15 @@ export interface ParsedCommand {
 }
 
 /**
- * Collapse an intersection of mapped types into one object type, preserving each property's optionality.
- *
- * {@linkcode OptionsOf} builds its required and optional halves separately,
+ * Collapse an intersection of mapped types into one object type, preserving each property's
+ * optionality: {@linkcode OptionsOf} builds its required and optional halves separately
  * because a single mapped type cannot vary `?` per key.
- * Without this the editor shows the intersection and an error names one half of it.
  */
 type OneObject<Shape> = { [Key in keyof Shape]: Shape[Key] }
 
 /**
- * The value stored in a flag's property, before {@linkcode OptionSpec.multiple} is applied.
- *
- * A `choices` list narrows the property to that union rather than leaving it `string`,
- * which is what a hand-written `Options` already did.
+ * The value stored in a flag's property before {@linkcode OptionSpec.multiple} is applied;
+ * a `choices` list narrows it to that union rather than leaving it `string`.
  */
 type OptionScalar<Option> = Option extends { type: "boolean" }
 	? boolean
@@ -108,9 +97,8 @@ type OptionScalar<Option> = Option extends { type: "boolean" }
 type OptionValueOf<Option> = Option extends { multiple: true } ? Array<OptionScalar<Option>> : OptionScalar<Option>
 
 /**
- * The flags the router always supplies a value for: one carrying a `default`, and one declared `required`.
- *
- * Every other flag is absent unless the user passes it.
+ * The flags the router always supplies a value for — one carrying a `default`
+ * or declared `required`; every other flag is absent unless the user passes it.
  */
 type AlwaysPresentFlag<Options> = {
 	[Flag in keyof Options]: Options[Flag] extends { default: unknown }
@@ -121,18 +109,10 @@ type AlwaysPresentFlag<Options> = {
 }[keyof Options]
 
 /**
- * A command's options object, derived from its own `spec`.
- *
- * The router writes each flag's value to the property `optionPropertyName` derives from it, so a property
- * spelled any other way is never written to and the flag parses, validates, and performs no work.
- * A restated `interface Options` can disagree that way silently.
- *
- * A derived one cannot, because the disagreement becomes a compile error at the read site.
- *
- * A flag carrying a `default`, or marked `required`, is always supplied and its property is required.
- * Every other property is optional.
- *
- * `choices` narrows the property to that union; `multiple` widens it to an array.
+ * A command's options object, derived from its own `spec` so a property spelled differently from
+ * what `optionPropertyName` writes becomes a compile error rather than a silently dead flag;
+ * a flag with a `default` or marked `required` is required, every other property optional,
+ * `choices` narrows the union, and `multiple` widens it to an array.
  */
 export type OptionsOf<Spec extends CommandSpec> = Spec["options"] extends infer Options
 	? Options extends Readonly<Record<string, OptionSpec>>
@@ -249,8 +229,8 @@ export function parseCommand(spec: CommandSpec, args: readonly string[]): Parsed
 			...(option.default !== undefined && option.type !== "number" ? { default: option.default } : {}),
 		}
 
-		// The retired spelling parses, and carries no default.
-		// A default here would make the alias look supplied on every run and shadow the current flag's own.
+		// The retired spelling parses and carries no default, which would make the alias
+		// look supplied on every run and shadow the current flag's own.
 		if (option.deprecatedName) {
 			definitions[option.deprecatedName] = {
 				type: option.type === "boolean" ? "boolean" : "string",
@@ -290,14 +270,12 @@ export function parseCommand(spec: CommandSpec, args: readonly string[]): Parsed
 		if (option.deprecatedName) {
 			const retired = values[option.deprecatedName]
 
-			// The retired key never survives into the bag a command reads: leaving it
-			// there gives one value two homes, and a command that reaches for the old one
-			// keeps working past the removal it was warned about.
+			// The retired key never survives into the bag a command reads, or a command reaching
+			// for the old one keeps working past the removal it was warned about.
 			values[option.deprecatedName] = undefined
 
 			if (retired !== undefined) {
-				// Both spellings is a usage error rather than a precedence rule: the caller
-				// meant one of them and the command cannot tell which.
+				// Both spellings is a usage error rather than a precedence rule.
 				if (values[name] !== undefined && values[name] !== option.default) {
 					throw new CLIUsageError(`--${option.deprecatedName} is the old name for --${name}; pass one of them.`)
 				}
@@ -380,9 +358,7 @@ function optionLabel(name: string, option: OptionSpec): string {
 }
 
 /**
- * Render detailed help.
- *
- * This is the only parser path that imports cliui.
+ * Render detailed help, the only parser path that imports cliui.
  */
 export async function renderCommandHelp(spec: CommandSpec): Promise<string> {
 	const { cliui } = await import("@isaacs/cliui/min")
@@ -428,16 +404,10 @@ export async function renderCommandHelp(spec: CommandSpec): Promise<string> {
 export const positiveInteger = (value: number): boolean => Number.isInteger(value) && value > 0
 
 /**
- * Validator for a `--locale` option: a lower-case language subtag and an optional
- * upper-case region, as `en` or `en-US`.
- *
- * The casing is part of the check, because the tag is interpolated into a weights
- * package specifier and into a directory path under the data root.
- * It is a shape rather than a membership test, so it admits a tag that has no
- * weights package and refuses a weights family name.
- *
- * `cjk` and `base-latn` are family names rather than locale tags, which is why
- * `release hf --locale` does not validate with this.
+ * A `--locale` option's value — a lower-case language subtag and an optional upper-case region,
+ * as `en` or `en-US`; the casing is part of the check because the tag is interpolated
+ * into a weights package specifier and a data-root directory path, and it admits a tag
+ * with no weights package while refusing a family name such as `cjk` or `base-latn`.
  */
 export const isLocaleTag = (value: string): boolean => /^[a-z]{2}(-[A-Z]{2})?$/u.test(value)
 
@@ -524,10 +494,8 @@ export async function runNativeCommand(
 }
 
 /**
- * Render one Ink element and answer the process exit code — the tail shared by
- * the debug view and the filesystem command router.
- *
- * Ink loads lazily, so the ordinary data path never pays for it.
+ * Render one Ink element and answer the process exit code; Ink loads lazily,
+ * so the ordinary data path never pays for it.
  */
 export async function renderInkCommand(element: React.ReactElement): Promise<number> {
 	const { render } = await import("ink")

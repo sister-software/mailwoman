@@ -8,8 +8,6 @@ import { useCallback, useRef, useState, type RefObject } from "react"
 
 /**
  * Why a device location could not be used.
- *
- * `null` while no failure has occurred.
  */
 export type GeoBiasError = "denied" | "unavailable" | "unsupported"
 
@@ -17,21 +15,13 @@ export type GeoBiasError = "denied" | "unavailable" | "unsupported"
  * Device-location proximity-bias control (the "📍 Use my location" button state + toggle).
  */
 export interface GeoBiasControl {
-	/**
-	 * Whether a device location is currently applied as a soft bias.
-	 */
 	active: boolean
 	/**
-	 * Why the last attempt failed, or `null`.
-	 *
-	 * The chip alone cannot say this: a denial turns it back off, which looks exactly like
-	 * a visitor toggling it off themselves, and pressing it again has no visible effect
-	 * because the browser remembers the denial and never prompts twice.
+	 * Why the last attempt failed, or `null`; the chip alone cannot say this,
+	 * because a denial turns it back off exactly like a manual toggle-off and pressing
+	 * again has no visible effect since the browser never prompts twice.
 	 */
 	error: GeoBiasError | null
-	/**
-	 * Toggle the device-location bias on/off (prompts for geolocation when turning on).
-	 */
 	toggle: () => void
 }
 

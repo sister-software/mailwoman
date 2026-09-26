@@ -1,16 +1,4 @@
-"""The deterministic halves of the DeepSeek generator: batch ids, prompts, and response parsing.
-
-A batch id is what the checkpoint file stores, so it decides whether a restart SKIPS a batch or
-pays for it again. It is derived from the seeds and the script slug, and no other test in the suite
-reads it — a refactor that changes the derivation invalidates every checkpoint on disk, and the
-only symptom is a larger bill.
-
-The response parser and the component validator are the other half worth pinning: both accept
-model output, and both are written to be forgiving, which is exactly where a rewrite quietly starts
-accepting rows it should reject.
-
-No test here calls the API. `deepseek_call` is the one function that does, and it is not exercised.
-"""
+"""The deterministic halves of the DeepSeek generator—batch ids, prompts, response parsing—none of which is exercised through the API."""
 
 from __future__ import annotations
 
@@ -54,8 +42,8 @@ def test_a_batch_id_is_stable_for_the_same_seeds_and_script() -> None:
     """The checkpoint's whole interface: same inputs, same id, so a restart skips what it paid for."""
     payload = '["seed-us-0001", "seed-fr-0002"]|cyrl'
     assert deterministic_id("translit-cyrl", payload) == deterministic_id("translit-cyrl", payload)
-    # The literal rather than a re-derivation: comparing against a second call to the same function would
-    # pass however the derivation changed, and it is the derivation that every checkpoint depends on.
+    # The literal, not a re-derivation: a second call would pass however the derivation changed, and
+    # every checkpoint depends on the derivation.
     assert deterministic_id("translit-cyrl", payload) == "translit-cyrl-f9f2cedf899da917"
 
 
@@ -87,13 +75,11 @@ def test_the_kryptonite_prompt_carries_the_category_and_its_examples() -> None:
 
 
 def test_every_script_and_category_is_well_formed() -> None:
-    """The two tables are hand-maintained. a row missing a field fails at request time, mid-spend."""
+    """The two tables are hand-maintained, and a row missing a field fails at request time, mid-spend."""
     for label, language, script, slug in TRANSLIT_SCRIPTS:
         assert label and language and script and slug
         assert slug.islower() and " " not in slug
-        # A script names no territory. The table carried a country column until #2281 and the generator
-        # stamped it on every row, so the language subtag must stay region-free or the conflation returns
-        # one column over.
+        # A script names no territory, so the language subtag must stay region-free.
         assert "-" not in language, f"{language!r} carries a region subtag; a rendering convention has none"
         assert script.istitle() and len(script) == 4, f"{script!r} is not an ISO 15924 code"
     slugs = [slug for *_, slug in TRANSLIT_SCRIPTS]
@@ -118,7 +104,7 @@ def test_every_script_and_category_is_well_formed() -> None:
     ],
 )
 def test_the_response_parser_keeps_only_the_object_lines(content: str, expected: int) -> None:
-    """Model output arrives fenced, prefaced and occasionally truncated. only whole objects count."""
+    """Model output arrives fenced, prefaced and occasionally truncated, and only whole objects count."""
     assert len(parse_jsonl_response(content)) == expected
 
 
@@ -151,12 +137,7 @@ KANA_BATCH = TranslitBatch(
 
 
 def test_a_transliterated_row_keeps_the_seed_country_and_names_its_script() -> None:
-    """#2281, in one assertion: a US address rendered in katakana is a US address.
-
-    The generator stamped the target script's country on every row, so this seed was written with
-    ``country: "JP"``, ``locale: "ja-JP"``. No test caught it for the length of a corpus generation because
-    the row was validated for its surface-form invariant and never for its metadata.
-    """
+    """A US address rendered in katakana is a US address."""
     row = canonical_translit_row(
         KANA_BATCH,
         SEEDS[0],
@@ -187,11 +168,7 @@ def test_a_french_seed_rendered_in_hangul_is_still_French() -> None:
 
 
 def test_a_seed_without_a_country_is_refused_at_load_rather_than_defaulted(tmp_path: Any) -> None:
-    """The refusal is at LOAD because that is before the spend.
-
-    Every default available to the row builder is the defect: the target script's country, a literal "US",
-    or an empty value the training loader reads as a country it does not weight and drops in silence.
-    """
+    """The refusal is at LOAD because that is before the spend; every default available to the row builder—the target script's country, a literal "US", or an empty value the loader drops in silence—is the defect."""
     seed_file = tmp_path / "seeds.jsonl"
     seed_file.write_text(
         json.dumps({"raw": "350 5th Ave", "components": {}, "source_id": "seed-x", "locale": "en-US"}) + "\n",

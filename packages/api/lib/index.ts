@@ -5,15 +5,9 @@
  *
  *   `@mailwoman/api` — the native Mailwoman http API: an engine-agnostic `/v1` surface (parse,
  *   geocode, batch, resolve, format) alongside health, metrics, and an emitted OpenAPI document.
- *   Unlike its drop-in siblings (`@mailwoman/nominatim`, `@mailwoman/photon`,
- *   `@mailwoman/libpostal`), this surface mimics no third-party API — this is Mailwoman's own wire
- *   interface, so schemas are strict and validator-enforced rather than tolerant of legacy quirks.
- *
- *   Like its siblings, the package is engine-agnostic: routes take a {@link MailwomanAPIEngine}; the
- *   `mailwoman` CLI wires the real parse/geocode/resolve stack (phase 4b). The Hono app (cors +
- *   body-size guard + the strict-validation error envelope + the emitted OpenAPI document) lives in
- *   `app.ts`; route definitions + handlers (incl. `registerMailwomanAPIRoutes`) in `routes.ts`; the
- *   engine interface in `engine.ts`; the zod wire schemas in `schema.ts`.
+ *   It mimics no third-party API, so schemas are strict and validator-enforced rather than tolerant
+ *   of legacy quirks; routes take a {@link MailwomanAPIEngine}, which the `mailwoman` CLI wires to
+ *   the real parse/geocode/resolve stack.
  */
 
 export * from "#app"

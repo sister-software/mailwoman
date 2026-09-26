@@ -27,11 +27,8 @@ import { ByteFormatter, type ByteFormatterOptions } from "#fs/formatters"
  * Attempts to stat a file or directory.
  *
  * A `URL` is passed through rather than stringified: `node:fs` accepts a `file:`
- * URL object, and rejects the string it prints.
- * `stat("file:///etc/hostname")` is enoent, which this function reports as absence.
- *
- * Every caller that looks a file up by URL therefore read "not there" for everything,
- * and `cli-native/command-router.ts` answered `Unknown command` for every command it has.
+ * URL object and rejects the string it prints, so `stat("file:///etc/hostname")`
+ * is enoent, which this function reports as absence.
  *
  * @throws If the path exists but cannot be statted for some reason other than non-existence.
  */
@@ -48,9 +45,8 @@ export function tryStat(pathBuilderLike: PathBuilderLike | URL): Promise<Stats |
 /**
  * Stat a file or directory, raising enoent when the path is absent.
  *
- * The throwing counterpart to {@linkcode tryStat}.
- * Reach for this one where absence is a defect the caller wants reported,
- * and for {@linkcode tryStat} where absence is an answer.
+ * The throwing counterpart to {@linkcode tryStat}: reach for this one where absence is a
+ * defect the caller wants reported, and for {@linkcode tryStat} where absence is an answer.
  */
 export function statPath(path: PathBuilderLike | URL): Promise<Stats> {
 	return stat(path instanceof URL ? path : path.toString())
@@ -79,10 +75,9 @@ export function tryStatLink(path: PathBuilderLike | URL): Promise<Stats | null> 
 /**
  * Whether a path exists, whatever it is.
  *
- * The asynchronous answer to `existsSync`, which is the single most-called
- * synchronous builtin in the repository.
- * Prefer {@linkcode isFile} or {@linkcode isDirectory} where the caller goes on to assume one
- * or the other: a directory where a file was expected passes this check and fails the next line.
+ * The asynchronous answer to `existsSync`; prefer {@linkcode isFile} or {@linkcode isDirectory}
+ * where the caller goes on to assume one or the other, because a directory
+ * where a file was expected passes this check and fails the next line.
  */
 export function pathExists(path: PathBuilderLike | URL): Promise<boolean> {
 	return tryStat(path).then((stats) => stats !== null)
@@ -215,9 +210,9 @@ export function isSymbolicLink(path: PathBuilderLike | URL): Promise<boolean> {
 /**
  * Whether the process may write to a path.
  *
- * A permission question rather than an existence one: `access` answers about the caller's
- * credentials against the file as it stands, where a stat answers about the file.
- * Absence reads as `false` here, which is what a caller checking "can I write here" means by it.
+ * A permission question rather than an existence one: `access` answers about the
+ * caller's credentials against the file as it stands, and absence reads as `false`,
+ * which is what a caller checking "can I write here" means.
  */
 export function isWritable(path: PathBuilderLike): Promise<boolean> {
 	return access(path.toString(), constants.W_OK).then(
@@ -241,10 +236,9 @@ export function isExecutable(path: PathBuilderLike): Promise<boolean> {
 /**
  * Whether a directory entry leads to a directory, symbolic links included.
  *
- * `Dirent.isDirectory()` is false for a symbolic link to a directory,
- * so a walk keyed on it alone skips every linked tree.
- * A glob only descends into them when its `followSymlinks` option is `true`; a caller
- * that walks links must use this helper so both traversals describe the same tree.
+ * `Dirent.isDirectory()` is false for a symbolic link to a directory, so a walk keyed
+ * on it alone skips every linked tree; a caller that walks links must use this helper
+ * so both traversals describe the same tree.
  *
  * A link is resolved through `stat`, which also answers `false` for a dangling one.
  */

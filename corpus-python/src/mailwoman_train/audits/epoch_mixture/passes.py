@@ -36,14 +36,10 @@ class DrawPass:
     #: Countries drawn from each source, keyed `source`, then country code.
     #:
     #: `per_source` says how many rows a source contributed and `countries` says how many a country
-    #: received, and neither says which countries a source's rows belonged to. That join is what
-    #: separates a country the sampler declined from a country whose rows sit in files the sampler
-    #: never opened: `_source_iter` visits a source's parquet files in shuffled order and drains each
-    #: before opening the next, so a fixed draw per source reads only the earliest files.
-    #:
-    #: Measured on Belgium, which holds 150,000 rows, all from `overture`, all carrying a street, at
-    #: `country_weights` 1.0. Uniform sampling within `overture`'s 2,400,000 rows would give it 1,079
-    #: of that source's 17,269 draws. It appears in no count at either level (#2347).
+    #: received, and neither says which countries a source's rows belonged to. That join separates a
+    #: country the sampler declined from a country whose rows sit in files the sampler never opened:
+    #: `_source_iter` visits a source's parquet files in shuffled order and drains each before opening
+    #: the next, so a fixed draw per source reads only the earliest files.
     countries_by_source: dict[str, Counter[str]]
     per_source: dict[str, dict[str, Any]]
     full_windows: int
@@ -110,10 +106,8 @@ def run_draw_pass(
     total_draws = sum(draw_totals.values())
 
     full_windows = [w for w in window_counts if sum(w.values()) == window]
-    # reps PER row rather than just share (#1677). `reps_per_row` is the number every weight is implicitly choosing
-    # and that nobody sees: a 0.60% share of 7.68M draws over 277 rows is 165 passes per row, while a 3.57%
-    # share over 53,078 rows is 5. The v4.6.0 bare-country collapse was picked at weight 1.0 — the
-    # smallest number in the config — by someone reading 1.0 as a small exposure.
+    # `reps_per_row` is the number every weight implicitly chooses and that nobody sees: a 0.60% share
+    # of 7.68M draws over 277 rows is 165 passes per row, while a 3.57% share over 53,078 rows is 5.
     rows_by_source = source_row_counts(corpus_dir, "train")
 
     per_source: dict[str, dict[str, Any]] = {}
@@ -165,10 +159,9 @@ def run_emitted_pass(
 ) -> EmittedPass:
     """Pass 2 — emitted level: the same stream expanded through the augmentation policy.
 
-    The same emit step the trainer runs, exclusion included (#2243) — the audit reimplemented it
-    once without the per-source exclusion and reported an excluded source with the count it would
-    have had if augmented. The relabel lexicon stays absent: this pass counts rows per source and
-    per country, and relabel rewrites labels within a row without adding or removing one.
+    The same emit step the trainer runs, per-source exclusion included. The relabel lexicon stays
+    absent: this pass counts rows per source and per country, and relabel rewrites labels within a
+    row without adding or removing one.
     """
     policy = EmitPolicy(
         directional_prob=augment["directional"],
@@ -286,8 +279,8 @@ def audit_mixture(
             #
             # `by_country` counts what was drawn, so a country admitted at weight 1.0 whose rows the
             # sampler never opened is absent from it rather than present at 0. Absent and zero are
-            # different findings and they read identically in that map: #2347's stage 5 asks for the
-            # sampled count beside the epoch denominator precisely so the two can be told apart.
+            # different findings and read identically in that map, so the sampled count is reported
+            # beside the epoch denominator to tell them apart.
             "admitted_countries_drawn": {cc: drawn.countries.get(cc, 0) for cc in sorted(country_weights)},
             "admitted_countries_drawing_nothing": sorted(
                 cc for cc in country_weights if drawn.countries.get(cc, 0) == 0

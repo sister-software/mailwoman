@@ -3,9 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The `/trace` route: an input, a trace button, and the four-band model visualizer over the loaded classifier's
- *   decode-path trace. The runtime handle supplies the trace hook. a classifier bundle that predates it says so
- *   instead of rendering an empty visualizer.
+ *   A classifier bundle that predates the trace hook says so instead of rendering an empty visualizer.
  */
 
 import type { ParseTraceLike } from "mailwoman/browser-runtime/types"
@@ -19,9 +17,8 @@ const DEFAULT_TEXT = "1600 Pennsylvania Ave NW, Washington, DC 20500"
 
 export interface LiveModelVisualizerProps {
 	/**
-	 * Trace an input through the decode path.
-	 *
-	 * Resolves null when the classifier is not ready or the trace fails.
+	 * Trace an input through the decode path, resolving null when the classifier
+	 * is not ready or the trace fails.
 	 */
 	traceParse: (input: string) => Promise<ParseTraceLike | null>
 	/**
@@ -61,8 +58,8 @@ export function LiveModelVisualizer({
 		try {
 			setTrace(await traceParse(text))
 		} catch (caught) {
-			// ORT's wasm backend can throw non-Errors (abort codes as numbers or strings);
-			// String() keeps the failure visible instead of storing undefined and rendering no message.
+			// ORT's wasm backend can throw non-Errors (abort codes as numbers or strings),
+			// so `String()` keeps the failure visible instead of storing undefined.
 			setError(caught instanceof Error ? caught.message : String(caught))
 		} finally {
 			setPending(false)

@@ -5,13 +5,13 @@
  *
  *   Reads the `filing_landscape` summary from a BDC database.
  *
- *   A queried block counts as surveyed only when its res-6 parent cell appears in `layer_coverage`.
- *   Any other block counts as unknown, which is different from a surveyed block with zero filings.
- *   A GEOID query takes each block's res-9 cell from its `bdc_availability` rows, so a GEOID without
- *   rows is unknown. An `h3Cells` query supplies the cell, so a covered cell with no rows reports as
+ *   A queried block counts as surveyed only when its res-6 parent cell appears in `layer_coverage`;
+ *   anything else is unknown, which is different from a surveyed block with zero filings. A GEOID
+ *   query takes each block's res-9 cell from its `bdc_availability` rows, so a GEOID without rows is
+ *   unknown; an `h3Cells` query supplies the cell, so a covered cell with no rows reports as
  *   surveyed with zero filings.
  *
- *   The res-6 parent comes from the stored res-9 cell, as it does in `build-bdc.ts`. Recomputing it
+ *   The res-6 parent comes from the stored res-9 cell, as it does in `build-bdc.ts`; recomputing it
  *   from the block centroid disagrees for some points because H3 cells do not nest exactly.
  */
 
@@ -23,8 +23,7 @@ import { sql } from "kysely"
 import { BDC_COVERAGE_H3_RESOLUTION, BDC_H3_RESOLUTION, type BDCDatabase } from "#schema"
 
 /**
- * Query for {@link filingLandscape}.
- * Set exactly one of `geoids` or `h3Cells`.
+ * Query for {@link filingLandscape}; set exactly one of `geoids` or `h3Cells`.
  */
 export interface FilingLandscapeQuery {
 	geoids?: string[]
@@ -34,9 +33,8 @@ export interface FilingLandscapeQuery {
 /**
  * One provider/technology/speed-bucket group's block count within the query.
  *
- * `block_count` counts distinct blocks.
- * A block can hold several rows for one provider and technology with different speeds
- * or flags, so counting rows would count it twice.
+ * `block_count` counts distinct blocks: a block can hold several rows for one provider
+ * and technology at different speeds, so counting rows would count it twice.
  */
 export interface ProviderFilingSummary {
 	provider_id: number
@@ -48,8 +46,8 @@ export interface ProviderFilingSummary {
 /**
  * Filing summary for a query, stamped with `layer_manifest.sourceVintage`.
  *
- * `unknown_block_count` counts blocks without coverage.
- * It makes no statement about whether providers file there.
+ * `unknown_block_count` counts blocks without coverage and makes no statement about
+ * whether providers file there.
  */
 export interface FilingLandscape {
 	vintage: string
@@ -98,10 +96,7 @@ export const BDC_SPEED_BUCKET_THRESHOLD_100_MBPS = 100
 export const BDC_SPEED_BUCKET_THRESHOLD_GIGABIT_MBPS = 1000
 
 /**
- * Return the speed bucket for a download speed in Mbps.
- *
- * It must match {@link speedBucketCaseSQL}.
- * Tests use it to check the boundaries without a database.
+ * Return the speed bucket for a download speed in Mbps; it must match {@link speedBucketCaseSQL}.
  */
 export function speedBucketForDownloadSpeed(maxAdvertisedDownloadSpeed: number): string {
 	if (maxAdvertisedDownloadSpeed < BDC_SPEED_BUCKET_THRESHOLD_25_MBPS) return BDC_SPEED_BUCKET_UNDER_25
@@ -131,9 +126,8 @@ export function res9ShortCellToRes6Parent(h3CellShortInt: number): number {
 }
 
 /**
- * Count provider filings by technology and speed bucket for a set of blocks.
- *
- * Blocks without coverage count as unknown and contribute no filings.
+ * Count provider filings by technology and speed bucket for a set of blocks;
+ * blocks without coverage count as unknown and contribute no filings.
  */
 export async function filingLandscape(
 	db: DatabaseClient<BDCDatabase>,
@@ -177,7 +171,6 @@ export async function filingLandscape(
 
 	let surveyedBlockCount = 0
 	let unknownBlockCount = 0
-	// Only covered units contribute filings.
 	const surveyedUnits: Array<string | number> = []
 
 	for (const unit of requestedUnits) {

@@ -2,8 +2,8 @@
 
 A channel the model was trained with and the graph does not carry runs off at inference, silently:
 the runtime feeds by name, so an absent input is an absent clue, and the model reports confident
-answers computed without it. That is the #566/#685 trap, and it is why the unsupported combinations
-below raise instead of exporting a reduced graph.
+answers computed without it. That is why the unsupported combinations below raise instead of
+exporting a reduced graph.
 
 Every feature input requests a dynamic dim 0 and dim 1 (batch, sequence) and a fixed dim 2 — the
 feature width is a property of the lexicon the channel was built from rather than of the input.
@@ -90,16 +90,14 @@ def detect_channels(model: nn.Module) -> Channels:
         locality_surface=bool(getattr(model, "use_locality_surface_anchor", False)),
         locality_surface_dim=int(getattr(model, "locality_surface_feature_dim", 0)),
         char=bool(getattr(model, "use_char_embed", False)),
-        # Locale head (#511 Tier A / conventions layer): when the model carries the PR3
-        # self-conditioning head, export its pooled posterior as a second output ("locale_logits",
-        # shape [batch, num_locales], labels.LOCALE_COUNTRIES order). Consumers fetch outputs by
-        # name, so this is backward-compatible. without it the model's address-system detection is
-        # trained but unreadable at inference — the gap the 2026-06-10 FR digit-split regression
-        # exposed.
+        # When the model carries the locale self-conditioning head, export its pooled posterior as a
+        # second output ("locale_logits", shape [batch, num_locales], labels.LOCALE_COUNTRIES order).
+        # Consumers fetch outputs by name, so appending is backward-compatible; without it the
+        # model's address-system detection is trained but unreadable at inference.
         locale=getattr(model, "locale_head", None) is not None,
-        # #727 stage-2: export the span scorer's (B, S, L, T) scores as a named output. Appending is
+        # Export the span scorer's (B, S, L, T) scores as a named output. Appending is
         # backward-compatible — a runtime that never asks for `span_scores` pays no cost (ORT prunes
-        # the unfetched branch). The Phase-3 JS decoder + the semi-crf-transitions.json sidecar
+        # the unfetched branch). The JS decoder and the semi-crf-transitions.json sidecar
         # (package_weights.export_semi_crf_transitions) consume it.
         spans=bool(getattr(model, "use_span_scorer", False)),
     )
@@ -109,16 +107,15 @@ def check_exportable(channels: Channels) -> None:
     """Refuse a combination whose graph would drop a trained channel."""
     # The country channel ships on top of anchor+gaz (the production ship-config). Exporting it in any
     # other combination is unsupported — a country-trained model whose ONNX lacked the country inputs
-    # would silently run country-off (the #566/#685 OOD trap), so fail loud instead.
+    # would silently run country-off — so fail loud instead.
     if channels.country and not (channels.anchor and channels.gazetteer):
         raise NotImplementedError(
             "use_country_anchor is only exportable alongside the anchor + gazetteer channels "
             "(the production ship-config); got has_anchor="
             f"{channels.anchor}, has_gaz={channels.gazetteer}, has_country={channels.country}."
         )
-    # Evidence-bundle check (Option-A): the bundle exports only as the full v3.18-confirmed shape —
-    # both channels, on top of anchor+gaz+country. Any other combination would ship a model whose
-    # ONNX silently drops a trained channel (the #566/#685 OOD trap) — fail loud instead.
+    # The bundle exports only as both channels on top of anchor+gaz+country. Any other combination
+    # would ship a model whose ONNX silently drops a trained channel — fail loud instead.
     if channels.bundle and not (
         channels.street_type
         and channels.locality_surface
@@ -134,7 +131,6 @@ def check_exportable(channels: Channels) -> None:
 
 
 def _channel_args(batch: int, length: int, width: int) -> tuple[torch.Tensor, torch.Tensor]:
-    """One channel's (features, confidence) example pair."""
     return (
         torch.zeros((batch, length, width), dtype=torch.float32),
         torch.zeros((batch, length), dtype=torch.float32),

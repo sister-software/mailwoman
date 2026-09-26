@@ -1,15 +1,10 @@
 """Building the input layer, the soft-feed channels and the transformer body.
 
-Construction order is an interface, and it binds this module twice. `_init_weights` walks
-`self.parameters()`, which yields them in registration order and draws from the global RNG for
-each. Therefore, the three builders must be called from `__init__` in the order they appear below and
-no line inside one may be reordered. A loaded checkpoint is unaffected — `load_state_dict`
-overwrites — but a from-scratch run started after a reorder no longer reproduces one started
-before it.
-
-Each stage also records the flags its own code reads: the char-path widths sit with the CharCNN
-that composes from them, the channel widths with the projections they size, the CRF settings with
-the buffer they register. A flag a reader meets here is one this file's code uses.
+Construction order is an interface: `_init_weights` walks `self.parameters()`, which yields them in
+registration order and draws from the global RNG for each, so the three builders must be called from
+`__init__` in the order they appear below and no line inside one may be reordered. A loaded
+checkpoint is unaffected — `load_state_dict` overwrites — but a from-scratch run started after a
+reorder no longer reproduces one started before it.
 """
 
 from __future__ import annotations
@@ -28,9 +23,9 @@ def resolve_label_map(id_to_label: dict[int, str] | None, num_labels: int) -> di
     """This model's index → BIO label map.
 
     `None` takes the module-global STAGE3 map truncated to `num_labels`, which is what every
-    checkpoint before the v8 CJK 47-label head carries. A head WIDER than the global map has no
-    defensible default and must pass its own. `serialization` writes the resolved map into the
-    saved config and reads it back, so a checkpoint always knows its own labels.
+    checkpoint before the 47-label head carries. A head WIDER than the global map has no defensible
+    default and must pass its own. `serialization` writes the resolved map into the saved config and
+    reads it back, so a checkpoint always knows its own labels.
     """
     if id_to_label is not None:
         resolved = dict(id_to_label)
@@ -63,8 +58,8 @@ class CoarseEncoderConstruct(CoarseEncoderState):
         CE. `crf_loss_weight` 0.1 keeps the CRF a structural regularizer on the emissions.
         weight 1.0 regressed val_macro_f1 from 0.26 to 0.17 by step 750. `crf_normalization`
         "per_token" divides by the real-token count for a magnitude comparable to per-token CE,
-        which removes the hand-tuning that weight search needed; "per_sequence" is the older
-        behavior. `crf_fp32` forces the CRF forward to fp32 inside a bf16 autocast region, to
+        which removes the hand-tuning that weight search needed. `crf_fp32` forces the CRF forward
+        to fp32 inside a bf16 autocast region, to
         isolate the 33x33 transition matrix with its masked `-inf` entries as a NaN suspect.
 
         `class_weights` registers as a buffer so it follows the model to GPU and serializes with
@@ -106,11 +101,11 @@ class CoarseEncoderConstruct(CoarseEncoderState):
         (see `CharCNNEmbedding`) instead of read from a SentencePiece piece-ID table, so a whole
         word ("Čistá") is one token and diacritics never fragment the span. The SentencePiece
         table stays built and unused in that mode, which keeps the pretrain, MLM and save paths
-        working unchanged. the ship-slim path drops it once an architecture is chosen.
+        working unchanged.
 
         `phrase_input_projection` maps `(hidden + phrase_feature_dim) → hidden` so the body's
         stack keeps its declared `hidden_size`. It is None when phrase priors are off and the
-        forward path then skips the projection entirely, which is what keeps the v0.4.0 numerics
+        forward path then skips the projection entirely, which is what keeps the earlier numerics
         reproducible for a back-compat ablation.
         """
         self.pad_token_id = pad_token_id
@@ -220,7 +215,6 @@ class CoarseEncoderConstruct(CoarseEncoderState):
         hidden_dropout_prob: float,
         num_labels: int,
     ) -> None:
-        """The transformer stack, its final norm, and the token classifier."""
         self.blocks = nn.ModuleList(
             [
                 EncoderBlock(

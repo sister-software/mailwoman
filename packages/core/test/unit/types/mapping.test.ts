@@ -29,13 +29,11 @@ test("legacyClassificationToComponentTag: 'dependency' renames to 'dependent_loc
 })
 
 test("legacyClassificationToComponentTag: bare 'intersection' coarsely maps to 'intersection_a'", () => {
-	// intersection_b requires positional reasoning the legacy path can't supply.
-	// A is the default.
+	// intersection_b requires positional reasoning the legacy path cannot supply, so A is the default.
 	expect(legacyClassificationToComponentTag("intersection")).toBe("intersection_a")
 })
 
 test("legacyClassificationToComponentTag: internal-only classifications map to null", () => {
-	// alpha/numeric/stop_word/start_token etc. are not externally-visible components.
 	expect(legacyClassificationToComponentTag("alpha")).toBeNull()
 	expect(legacyClassificationToComponentTag("numeric")).toBeNull()
 	expect(legacyClassificationToComponentTag("stop_word")).toBeNull()
@@ -86,12 +84,10 @@ test("componentTagToLegacyClassification: intersection_a inverts to the bare leg
 })
 
 test("componentTagToLegacyClassification: intersection_b has no legacy source and maps to null", () => {
-	// No entry in the legacy table produces intersection_b, so the inverse is null.
 	expect(componentTagToLegacyClassification("intersection_b")).toBeNull()
 })
 
 test("componentTagToLegacyClassification: components with no legacy equivalent map to null", () => {
-	// JP-specific + venue-extra tags never appear in the rule path.
 	expect(componentTagToLegacyClassification("prefecture")).toBeNull()
 	expect(componentTagToLegacyClassification("po_box")).toBeNull()
 	expect(componentTagToLegacyClassification("cedex")).toBeNull()
@@ -99,7 +95,6 @@ test("componentTagToLegacyClassification: components with no legacy equivalent m
 })
 
 test("round-trip: every mapped legacy tag survives legacy -> component -> legacy", () => {
-	// intersection collapses to intersection_a then back to intersection, so the round-trip holds.
 	for (const legacy of MAPPED_LEGACY_CLASSIFICATIONS) {
 		const component = legacyClassificationToComponentTag(legacy)!
 		expect(componentTagToLegacyClassification(component)).toBe(legacy)

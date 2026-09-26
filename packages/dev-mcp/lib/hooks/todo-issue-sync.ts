@@ -4,9 +4,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Mirror `TodoWrite` payloads into the marker-delimited task list of the linked GitHub issue. The hook
- *   runs asynchronously and takes no action unless the checkout has a linked issue, the tool is `TodoWrite`,
- *   and the issue contains both markers. A lock and replaceable payload file serialize concurrent updates.
+ *   Mirror `TodoWrite` payloads into the marker-delimited task list of the linked GitHub issue, asynchronously:
+ *   nothing happens unless the checkout has a linked issue, the tool is `TodoWrite`, and the issue contains both
+ *   markers. A lock and a replaceable payload file serialize concurrent updates.
  */
 
 import { pathExists, readLocalTextFile, readStandardInputJSON } from "@mailwoman/core/fs/readers"
@@ -24,9 +24,6 @@ import { PathBuilder, type PathBuilderLike, resolvePath as resolve } from "path-
 
 import { replaceTaskBlock } from "#github/index"
 
-/**
- * Maximum reads of the payload while waiting for it to stabilize.
- */
 const MAX_SYNC_PASSES = 5
 const LOCK_RETRY_MS = 100
 const MAX_LOCK_ATTEMPTS = 300
@@ -69,7 +66,6 @@ export function renderTaskList(todos: TodoItem[]): string {
  * Hook mode: stash the payload and hand off to a detached worker, so the turn never waits on `gh`.
  */
 async function hookMain(): Promise<void> {
-	// Ignore malformed hook input.
 	const payload = await readStandardInputJSON<Record<string, unknown>>().catch(() => null)
 
 	if (payload?.tool_name !== "TodoWrite") return

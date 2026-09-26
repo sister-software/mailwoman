@@ -3,9 +3,6 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  * @file `unit` — the surfaces the recipe must attest, and the layout shares it must preserve.
- *
- *   The recipe reads real OpenAddresses zips, so the recipe is not drivable here. `makeUnit` and `renderUnit` are the
- *   two pure functions that decide the surface, and they are what these assert.
  */
 
 import { mulberry32 } from "@mailwoman/core/utils"
@@ -22,7 +19,7 @@ const TUPLE: UnitTuple = {
 }
 
 /**
- * Both builders draw from a caller-supplied stream, so a share is only observable across many streams.
+ * A share is only observable across many streams because both builders draw from a caller-supplied stream.
  */
 const over = <T>(n: number, f: (random: () => number) => T): T[] =>
 	Array.from({ length: n }, (_, seed) => f(mulberry32(seed + 1)))
@@ -78,9 +75,6 @@ describe("renderUnit", () => {
 	})
 
 	it("writes the identifier with NO designator, in the comma layout only", () => {
-		// The one unit surface carrying no token that decides its reading.
-		// A bare id anywhere but between commas is indistinguishable from a house number,
-		// so it is confined to this layout.
 		const rows = over(2000, (random) => renderUnit(random, TUPLE, "Apt 101"))
 		const bare = rows.filter((row) => row.fmt === "full-comma-bare")
 
@@ -91,8 +85,6 @@ describe("renderUnit", () => {
 	})
 
 	it("keeps the designator when the unit has no identifier to write bare", () => {
-		// A standalone designator has no shorter form to strip to, so the layout keeps the
-		// designator form rather than emitting a row with no unit at all.
 		const rows = over(2000, (random) => renderUnit(random, TUPLE, "Basement"))
 
 		expect(rows.every((row) => row.fmt !== "full-comma-bare")).toBe(true)
@@ -100,10 +92,6 @@ describe("renderUnit", () => {
 	})
 
 	it("always returns a unit component that survives verbatim in the raw it rendered", () => {
-		// The recipe drops a row whose unit component is not in its raw, because alignment could not label it.
-		// That guard read the designator form handed IN, so a layout writing
-		// anything else was skipped in silence.
-		// Every `full-comma-bare` row, 1,160 of 50,000, until the guard was pointed at the rendered component.
 		for (const unit of ["Apt 101", "#101", "# 101", "Basement", "Ste 4B"]) {
 			const rows = over(500, (random) => renderUnit(random, TUPLE, unit))
 
@@ -112,9 +100,6 @@ describe("renderUnit", () => {
 	})
 
 	it("writes the postcode on its own comma segment on a minority of tails", () => {
-		// The counter-reading of the bare unit.
-		// No other source in the corpus writes a bare number alone in a later comma segment, so without
-		// this the unit reading would be the only evidence for a segment users write a postcode into.
 		const raws = over(2000, (random) => renderUnit(random, TUPLE, "Apt 101").raw)
 		const commaPostcode = raws.filter((raw) => raw.includes("Athens, GA, 30601"))
 

@@ -3,22 +3,17 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The issue vocabulary and the primitive field readers `./validate.ts` is built from.
+ * The issue vocabulary and the primitive field readers `./validate.ts` is built from.
  *
- *   Every reader takes the issue list it appends to and returns `undefined` when it could not read the
- *   field. That shape is deliberate: a reader that threw would end the pass at the first defect, and a
- *   reader that substituted a default would convert "I could not read this" into a value, which at a
- *   validation boundary is the same as inventing one. Returning undefined, having said why, lets the
- *   caller skip the checks that depended on the field and keep running the ones that did not.
- *
- *   `./validate.ts` re-exports {@link ValidationIssueCode} and {@link ValidationIssue}; the readers
- *   stay internal to the package.
+ * Every reader appends to the issue list it is given and returns `undefined` when it could not read
+ * the field, deliberately: a reader that threw would end the pass at the first defect, and one that
+ * substituted a default would convert "I could not read this" into a value, which at a validation
+ * boundary is the same as inventing one.
  */
 
 /**
- * Every way a document can fail validation.
- *
- * Closed, so a consumer branches on the code rather than on message prose.
+ * Every way a document can fail validation; closed, so a consumer branches on the code
+ * rather than on message prose.
  */
 export const ValidationIssueCode = {
 	MissingField: "missing_field",
@@ -33,9 +28,7 @@ export const ValidationIssueCode = {
 	EmptyList: "empty_list",
 	UnknownField: "unknown_field",
 	/**
-	 * A field whose name announces ranking policy.
-	 *
-	 * Refused wherever it appears, at any depth.
+	 * A field whose name announces ranking policy, refused wherever it appears at any depth.
 	 */
 	RankingField: "ranking_field",
 	UnknownConceptKind: "unknown_concept_kind",
@@ -68,9 +61,8 @@ export type ValidationIssueCode = (typeof ValidationIssueCode)[keyof typeof Vali
  */
 export interface ValidationIssue {
 	/**
-	 * A JSONPath-style address into the validated input, e.g. `$.concepts[0].assertions[1].modality`.
-	 *
-	 * The document root is `$`.
+	 * A JSONPath-style address into the validated input whose root is `$`,
+	 * e.g. `$.concepts[0].assertions[1].modality`.
 	 */
 	path: string
 	code: ValidationIssueCode
@@ -78,11 +70,8 @@ export interface ValidationIssue {
 }
 
 /**
- * Name fragments that announce ranking policy.
- *
- * Matched case-insensitively against every field name at every depth, so `score`, `boost`,
- * `penalty`, `rankWeight`, `relevanceWeight`, and `affinityWeight` are refused by one rule
- * rather than by an enumeration that a seventh spelling walks past.
+ * Name fragments that announce ranking policy, matched case-insensitively against every field name
+ * at every depth so a new spelling is refused by one rule rather than added to an enumeration.
  */
 const RANKING_FIELD_FRAGMENTS = [
 	"boost",

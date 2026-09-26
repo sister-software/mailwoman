@@ -6,23 +6,17 @@
  *   The streaming pass — every feature into `coastal_zone_area` (or `coastal_ground_instability`) and into
  *   `coastal_zone_cell` — as a unit of work that can run over part of the source.
  *
- *   why this is A chunk rather than the whole file. h3's wasm heap cannot be reset from JavaScript, and it
- *   does not survive an unbounded number of polyfill calls: over the sibling flood product, runs died after
- *   roughly 510,000 and 798,000 features on geometry that classifies in milliseconds in a fresh process. A
- *   build that completes only when fragmentation happens to stay low is not a reproducible build, so the
- *   classification is bounded BY construction — one process per range of the authority's own feature ids.
- *   This product is small enough that one chunk per layer fits inside the default bound. the bound ships
- *   anyway, because determinism by construction is not the same fact as determinism by luck.
+ *   Bounded per range of the authority's own feature ids, because h3's wasm heap cannot be reset from
+ *   JavaScript and does not survive an unbounded number of polyfill calls; a build that completes only when
+ *   fragmentation happens to stay low is not reproducible.
  *
- *   the domain checks RUN here, and they throw. An unknown policy, policy interpretation or defence type is a
- *   source-schema change, which is the event a reader most needs to hear about. coercing it to a nearest
- *   neighbour or to null converts "the source changed" into "there is no data here". The defence check
- *   compares case-folded and stores the source's own string, because the census found `Sheet piles` beside
- *   `Sheet Piles` and `Vertical Wall - Concrete` beside `Vertical Wall - concrete`.
+ *   The domain checks run here and throw: an unknown policy, policy interpretation or defence type is a
+ *   source-schema change, and coercing it to a nearest neighbour or null converts "the source changed" into
+ *   "there is no data here". The defence check compares case-folded and stores the source's own string for the
+ *   source's inconsistent capitalization.
  *
- *   the chunk owns no artifact. It appends rows to a database the parent created and will seal, and returns
- *   counts the parent adds up. Chunks run one at a time against that file, so there is no concurrent writer
- *   and no locking to reason about.
+ *   The chunk owns no artifact. It appends rows to a database the parent created and will seal, and returns
+ *   counts the parent adds up; chunks run one at a time against that file, so there is no concurrent writer.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -54,9 +48,6 @@ import {
  */
 const INSERT_TRANSACTION_ROWS = 5000
 
-/**
- * Features between progress reports.
- */
 const PROGRESS_STRIDE = 5000
 
 /**
@@ -90,10 +81,9 @@ export interface CoastalChunkResult {
 	 */
 	area: { sourceM2: number; nestedM2: number; allExteriorM2: number }
 	/**
-	 * The defence types this chunk saw, with counts.
-	 *
-	 * A census carried on the receipt rather than only checked, because the domain is one
-	 * the authority publishes no list for and the counts are how a reader sees it move.
+	 * The defence types this chunk saw, with counts — a census carried on the receipt
+	 * rather than only checked, because the authority publishes no list for the domain
+	 * and the counts are how a reader sees it move.
 	 */
 	defenceTypeCounts: Array<[string, number]>
 }
@@ -206,11 +196,8 @@ export async function ingestCoastalChunk(
 				}
 			}
 
-			// coverage is derived from the uncompacted classification rather than from the stored rows.
-			// A compacted parent spans several coverage cells and `addCoverageCells` handles that,
-			// but the fringe is where this product's cells almost all are.
-			// So counting off the stored rows and counting off the classification agree here,
-			// and the classification is the one that cannot be changed by a compaction decision.
+			// Coverage is derived from the uncompacted classification rather than the stored rows,
+			// which is the reading a compaction decision cannot change.
 			for (const cell of classified.whole) {
 				addCoverageCells(coverageCells, cell, classified.resolution, options.coverageResolution)
 			}
@@ -262,10 +249,8 @@ export async function ingestCoastalChunk(
 				encodeRings(feature.polygons)
 			)
 
-			// no cell rows, and the absence is the structure.
-			// Ground instability is a different hazard from coastal erosion, and 160 rows
-			// answer a bounding-box scan faster than an index would.
-			// Not indexing them is what makes it impossible for one to reach an erosion probe.
+			// No cell rows: ground instability is a different hazard, and leaving it out of
+			// the index is what makes it impossible for one to reach an erosion probe.
 			instabilityFeatures++
 
 			batch.rowWritten()
@@ -292,12 +277,8 @@ export async function ingestCoastalChunk(
 }
 
 /**
- * Refuse a feature carrying a value outside a domain the census enumerated.
- *
- * Every domain here was read across all twelve published layers rather than one,
- * because a domain taken from a single layer throws on the day another layer carries
- * its ninth value, and the two policy fields already disagree with each other on the
- * spelling of one policy, which a single-field census would have missed.
+ * Refuse a feature carrying a value outside a domain the census enumerated
+ * across all twelve published layers.
  */
 function assertDeclaredDomains(feature: CoastalSourceFeature): void {
 	for (const [field, value] of [

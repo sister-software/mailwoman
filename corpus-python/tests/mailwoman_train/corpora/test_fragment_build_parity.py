@@ -1,15 +1,4 @@
-"""One seeded fragment build, pinned end to end — every row, in emission order.
-
-`main` pushes rows in blocks, and the ORDER of those blocks is baked into two things a rerun cannot
-recover: each row's `source_id` carries its index in the list, and the final shuffle separates the
-first 10% as the dev holdout. A block that moves renumbers every row after it and re-draws which
-rows are read rather than trained.
-
-No test exercised this. The builder reads OpenAddresses CSV extracts and a corpus parquet's span
-columns, neither of which the suite has. The fixture supplies both at the shapes the collectors
-read — two OA locales rather than sixteen, because the other fourteen contribute no rows when
-their directories are absent, and that absence is what keeps the fixture small.
-"""
+"""One seeded fragment build, pinned end to end—every row, in emission order—because a moved block renumbers every row after it and re-draws the dev holdout."""
 
 from __future__ import annotations
 
@@ -25,11 +14,9 @@ import pytest
 
 from mailwoman_train.corpora.fragment.build import main
 
-#: Committed beside this file, captured from the code as it stood before a split. Regenerating it
-#: after a change makes the test compare the new code against itself, so regenerate only when the
-#: current code is already verified against the existing reference.
-#:
-#: Regenerate with: uv run python -m tests.mailwoman_train.corpora.test_fragment_build_parity
+#: Committed beside this file; regenerate with `uv run python -m
+#: tests.mailwoman_train.corpora.test_fragment_build_parity` only when the current code is already
+#: verified against the existing reference, or the test compares the new code against itself.
 REFERENCE = Path(__file__).parent / "fragment-build-reference.json"
 
 REFERENCE_README = [
@@ -68,9 +55,8 @@ OA_LOCALES = {
     ],
 }
 
-#: (country, raw, [(surface, tag)]) — the offsets are DERIVED from the text below rather than typed
-#: beside it, so the fixture cannot carry a span that disagrees with its own row. Hand-typing them
-#: put the region span one character off, which read as `"Y "` and silently produced no admin pair.
+#: (country, raw, [(surface, tag)]) — the offsets are derived from the text, so the fixture cannot
+#: carry a span that disagrees with its own row.
 CORPUS_SPECS: list[tuple[str, str, list[tuple[str, str]]]] = [
     (
         "US",
@@ -199,11 +185,7 @@ def test_the_fixture_reaches_every_block(built: dict[str, Any]) -> None:
 
 
 def write_reference() -> None:
-    """Capture the current build as the reference the tests above compare against.
-
-    Run this only when the current code already passes against the existing reference — otherwise
-    the artifact records whatever the code does now, and the tests assert no fact.
-    """
+    """Capture the current build as the reference the tests above compare against; run it only when the current code already passes against the existing reference, or the artifact records whatever the code does now."""
     import tempfile
 
     patch = pytest.MonkeyPatch()

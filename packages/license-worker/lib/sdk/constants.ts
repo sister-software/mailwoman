@@ -15,8 +15,7 @@ export { AGREEMENT_VERSION } from "#shop/catalog"
 export const LICENSE_WORKER_URL = "https://license.mailwoman.ai"
 
 /**
- * Where a buyer writes when the page cannot help: an unknown session,
- * a revoked license, a key that never arrived.
+ * Where a buyer writes when the page cannot help.
  */
 export const SUPPORT_EMAIL = "support@sister.software"
 
@@ -42,8 +41,6 @@ export const PAYMENT_LINK_YEARLY = SHOP_IDS.live.paymentLinks["commercial-yearly
 export const BILLING_PORTAL_URL = SHOP_IDS.live.portalURL
 
 /**
- * `25_000` (cents) → `"$250"`, in the plan's own currency.
- *
  * One formatter, so every printed figure on the site comes from the same
  * `SHOP_PLANS` entry the provisioner sends to Stripe.
  */
@@ -67,12 +64,8 @@ const MONTHLY_PLAN = planOrThrow("commercial-monthly-v1")
 const YEARLY_PLAN = planOrThrow("commercial-yearly-v1")
 
 /**
- * The monthly plan's headline price, e.g. `$250`.
- *
- * The provide cards on `/license` used to carry no figure at all, which left the price on
- * `/docs/pricing` and the button that takes the money with no link connecting them.
- * Deriving both from `SHOP_PLANS` means a price change reaches the card and Stripe together,
- * and a card can never advertise a number the checkout does not charge.
+ * The monthly plan's headline price, e.g. `$250`, derived from `SHOP_PLANS` so a price change reaches
+ * the card and Stripe together and a card can never advertise a number the checkout does not charge.
  */
 export const PRICE_MONTHLY = formatAmount(MONTHLY_PLAN.unitAmount, MONTHLY_PLAN.currency)
 
@@ -82,7 +75,6 @@ export const PRICE_MONTHLY = formatAmount(MONTHLY_PLAN.unitAmount, MONTHLY_PLAN.
 export const PRICE_YEARLY = formatAmount(YEARLY_PLAN.unitAmount, YEARLY_PLAN.currency)
 
 /**
- * The yearly plan as an effective monthly rate, e.g. `$200` — the comparison a buyer
- * makes anyway, and the one `/docs/pricing` already prints in prose.
+ * The yearly plan as an effective monthly rate, e.g. `$200`.
  */
 export const PRICE_YEARLY_PER_MONTH = formatAmount(Math.round(YEARLY_PLAN.unitAmount / 12), YEARLY_PLAN.currency)

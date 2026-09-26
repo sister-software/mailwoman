@@ -49,13 +49,10 @@ export type BaseBDCLayerSpecification<T> = T extends BDCLayerSpecificationInput
 /**
  * The three builders below take a spec without the source fields and return one with them filled in.
  *
- * They are not generic, and the assertion each ends with is single rather than through
- * `unknown`, both for the same reason: TypeScript cannot verify that `Omit<T, K>` plus the
- * omitted keys reconstitutes `T`, so a builder declared `<T>(…): T` can only reach its
- * return type by defeating the checker entirely — which then covers the `id`, `minzoom`
- * and `maxzoom` values too.
- * No code wanted the narrowing: the sole consumer,
- * {@linkcode BroadbandDataCollectionLayers}, annotates the union.
+ * They are not generic, and each ends with a single assertion rather than through `unknown`,
+ * because TypeScript cannot verify that `Omit<T, K>` plus the omitted keys reconstitutes `T` —
+ * a `<T>(…): T` builder could only reach its return type by defeating the checker,
+ * covering the `id`, `minzoom` and `maxzoom` values too.
  */
 type BDCLayerBuilderInput = BaseBDCLayerSpecification<BDCLayerSpecificationInput>
 
@@ -103,9 +100,6 @@ const GIGABIT_BROADBAND_SPEED = 1000
 export const BroadbandDataCollectionLayers: BDCLayerSpecificationInput[] = [
 	{
 		afterID: "earth",
-		// metadata: {
-		// 	queryable: false,
-		// },
 		id: "blocks-underserved",
 		layout: {
 			visibility: "none",
@@ -114,42 +108,19 @@ export const BroadbandDataCollectionLayers: BDCLayerSpecificationInput[] = [
 		source: BDCTileSetID,
 		type: "fill",
 		filter: [
-			// ---
 			"all",
 			["in", 50, ["get", "technology_codes"]], // Fiber only
 			[">", ["get", "land_area_sqm"], 0],
-			// ["==", ["get", "UR"], "R"],
 		],
 		paint: {
-			// "fill-extrusion-height": [
-			// 	// Our extrusion height represents the magnitude of broadband underservice,
-			// 	// e.g. How many people are underserved per square meter of land area.
-			// 	"let",
-			// 	"population_density",
-			// 	["/", ["to-number", ["get", "population"]], ["to-number", ["get", "land_area_sqm"]]],
-			// 	["*", ["var", "population_density"], 10000],
-			// ],
 			"fill-color": "hsl(60deg, 100%, 50%)",
 			"fill-opacity": [
-				// Underserved areas are emphasized to their level importance, relative to the impact of the underservice.
 				"let",
 				"internet_speed_impact",
 				["/", ["to-number", ["get", "average_download_speed"]], GIGABIT_BROADBAND_SPEED],
-				[
-					// ---
-					"interpolate",
-					["linear"],
-					["var", "internet_speed_impact"],
-					0,
-					0.1,
-					1,
-					0.5,
-				],
+				["interpolate", ["linear"], ["var", "internet_speed_impact"], 0, 0.1, 1, 0.5],
 			],
 		},
-		// layout: {
-		// 	visibility: "none",
-		// },
 	},
 
 	{
@@ -164,7 +135,6 @@ export const BroadbandDataCollectionLayers: BDCLayerSpecificationInput[] = [
 		"source-layer": `bdc_${TIGERLevel.Block}`,
 		source: BDCTileSetID,
 		type: "line",
-		// filter: [">=", ["get", "aland"], 0],
 		minzoom: 9,
 		paint: {
 			"line-color": "#000",
@@ -181,13 +151,7 @@ export const BroadbandDataCollectionLayers: BDCLayerSpecificationInput[] = [
 		"source-layer": `bdc_${TIGERLevel.Block}`,
 		source: BDCTileSetID,
 		type: "symbol",
-		filter: [
-			// ---
-			"all",
-			// ["in", 50, ["get", "technology_codes"]], // Fiber only
-			[">", ["get", "land_area_sqm"], 0],
-			// ["==", ["get", "UR"], "R"],
-		],
+		filter: ["all", [">", ["get", "land_area_sqm"], 0]],
 		paint: {
 			"text-color": "black",
 			"text-halo-color": "white",
@@ -209,13 +173,7 @@ export const BroadbandDataCollectionLayers: BDCLayerSpecificationInput[] = [
 	...createBDCLayer({
 		id: "coverage-fiber-label",
 		beforeID: "places_subplace",
-		filter: [
-			// ---
-
-			"all",
-			["==", ["get", "provider_id"], 131_425],
-			// ["in", 50, ["get", "technology_codes"]],
-		],
+		filter: ["all", ["==", ["get", "provider_id"], 131_425]],
 		type: "symbol",
 		layout: {
 			visibility: "none",
@@ -225,13 +183,8 @@ export const BroadbandDataCollectionLayers: BDCLayerSpecificationInput[] = [
 				" Mbps",
 			],
 			"text-size": [
-				// ---
 				"let",
 				"multiplier",
-				// We scale the text size based on the average download speed.
-				// By default, we're no smaller than 14, Any speed above the gigabit threshold
-				// acts as a multiplier for the text size.
-				// ---
 				["/", ["get", "average_download_speed"], GIGABIT_BROADBAND_SPEED / 4],
 				["+", 14, ["var", "multiplier"]],
 			],
@@ -247,7 +200,6 @@ export const BroadbandDataCollectionLayers: BDCLayerSpecificationInput[] = [
 		paint: {
 			"text-halo-width": 2,
 			"text-halo-color": [
-				// ---
 				"interpolate",
 				["exponential", 0.5],
 				["get", "average_download_speed"],
@@ -259,7 +211,6 @@ export const BroadbandDataCollectionLayers: BDCLayerSpecificationInput[] = [
 			],
 
 			"text-color": [
-				// ---
 				"interpolate",
 				["exponential", 0.25],
 				["get", "average_download_speed"],
@@ -288,22 +239,7 @@ export const BroadbandDataCollectionLayers: BDCLayerSpecificationInput[] = [
 		paint: {
 			"line-color": "#ff009c",
 
-			"line-width": [
-				"interpolate",
-				["exponential", 1.6],
-				["zoom"],
-				// ---
-				3,
-				0,
-				6,
-				1.1,
-				12,
-				1.6,
-				15,
-				5,
-				18,
-				15,
-			],
+			"line-width": ["interpolate", ["exponential", 1.6], ["zoom"], 3, 0, 6, 1.1, 12, 1.6, 15, 5, 18, 15],
 		},
 		layout: {
 			"line-cap": "round",
@@ -313,12 +249,7 @@ export const BroadbandDataCollectionLayers: BDCLayerSpecificationInput[] = [
 	...createBDCLayer({
 		afterID: "earth",
 		id: "coverage-fiber-heat",
-		filter: [
-			// ---
-
-			"all",
-			["==", ["get", "provider_id"], 131_425],
-		],
+		filter: ["all", ["==", ["get", "provider_id"], 131_425]],
 		minzoom: 10,
 		type: "heatmap",
 		layout: {
@@ -326,7 +257,6 @@ export const BroadbandDataCollectionLayers: BDCLayerSpecificationInput[] = [
 		},
 		paint: {
 			"heatmap-color": [
-				// ---
 				"interpolate",
 				["linear"],
 				["heatmap-density"],
@@ -335,22 +265,8 @@ export const BroadbandDataCollectionLayers: BDCLayerSpecificationInput[] = [
 				}).flat(),
 			],
 
-			"heatmap-radius": [
-				// ---
-				"interpolate",
-				["linear"],
-				["zoom"],
-				10,
-				5,
-				15,
-				20,
-			],
-			"heatmap-weight": [
-				// ---
-				"*",
-				["get", "land_area_sqm"],
-				0.00001,
-			],
+			"heatmap-radius": ["interpolate", ["linear"], ["zoom"], 10, 5, 15, 20],
+			"heatmap-weight": ["*", ["get", "land_area_sqm"], 0.00001],
 		},
 	}),
 
@@ -382,30 +298,17 @@ export const BroadbandDataCollectionLayers: BDCLayerSpecificationInput[] = [
 		source: "composite",
 		"source-layer": "DataCentersCombined20220921",
 		layout: {
-			// visibility: "none",
 			"text-field": ["get", "Category"],
 			"text-size": 12,
 			"text-anchor": "top",
 			"text-offset": [0, 0.5],
-			// "text-allow-overlap": true,
 			"text-font": ["Fira Code Regular"],
 		},
 		paint: {
 			"text-color": "#fff",
 			"text-halo-color": "#fb8429",
 			"text-halo-width": 1,
-			"text-opacity": [
-				// We fade out the outline at higher zoom levels
-				"interpolate",
-				["linear"],
-				["zoom"],
-				1,
-				0.01,
-				6,
-				0.5,
-				16,
-				1,
-			],
+			"text-opacity": ["interpolate", ["linear"], ["zoom"], 1, 0.01, 6, 0.5, 16, 1],
 		},
 	},
 ]

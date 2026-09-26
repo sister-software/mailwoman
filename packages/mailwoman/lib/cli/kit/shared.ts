@@ -3,10 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Shared Ink helpers and types for CLI commands.
- *
- *   The module lives outside `commands/` so the router does not load it as a command. It avoids JSX
- *   because Node type stripping cannot compile JSX.
+ *   Shared Ink helpers and types for CLI commands, living outside `commands/` so the router does not load
+ *   it as a command and avoiding JSX because Node type stripping cannot compile it.
  */
 
 import { formatAsCountryISO2, type CountryISO2 } from "@mailwoman/codex/country"
@@ -58,9 +56,8 @@ export type CommandTaskState<T> =
 	| { status: "error"; message: string }
 
 /**
- * Runs a one-shot task and returns its state.
- *
- * The process exits with the result's code after success or with code 1 after failure.
+ * Runs a one-shot task and returns its state; the process exits with the result's code
+ * after success or with code 1 after failure.
  */
 /* oxlint-disable react-hooks/exhaustive-deps -- The task must run once, so the effect ignores later closures. */
 export function useCommandTask<T>(task: () => Promise<T>, exitCode?: (result: T) => number): CommandTaskState<T> {
@@ -84,9 +81,6 @@ export function useCommandTask<T>(task: () => Promise<T>, exitCode?: (result: T)
 
 /* oxlint-enable react-hooks/exhaustive-deps */
 
-/**
- * The state of a deferred component import.
- */
 type LazyComponentState<P extends object> =
 	| { status: "loading" }
 	| { status: "loaded"; component: React.FC<P> }
@@ -94,9 +88,6 @@ type LazyComponentState<P extends object> =
 
 /**
  * Wraps a component whose module loads on first render.
- *
- * The wrapper renders no output while loading.
- * After an import failure, it shows the error and exits with code 1.
  */
 export function lazyComponent<P extends object>(load: () => Promise<React.FC<P>>): React.FC<P> {
 	return function LazyComponent(props: P) {
@@ -142,8 +133,8 @@ export function lazyComponent<P extends object>(load: () => Promise<React.FC<P>>
 }
 
 /**
- * Writes machine-readable output straight to stdout so Ink does not wrap it.
- * It returns `null` so a render branch can return its result.
+ * Writes machine-readable output straight to stdout so Ink does not wrap it,
+ * and returns `null` so a render branch can return its result.
  */
 export function writeRawStdout(text: string | object): null {
 	const normalized = typeof text === "string" ? text + "\n" : prettyJSON(text)
@@ -187,8 +178,7 @@ export function CheckList({ checks, verdict }: { checks: readonly Check[]; verdi
 }
 
 /**
- * Parses and validates comma-separated placetype roles.
- * It returns `undefined` for empty input.
+ * Parses and validates comma-separated placetype roles, returning `undefined` for empty input.
  */
 export function parseRoles(raw: string | undefined): PlacetypeRole[] | undefined {
 	if (!raw) return undefined
@@ -219,13 +209,11 @@ export function reportToStderr(line: string): void {
 export interface CommandTaskResultProps<T> {
 	state: CommandTaskState<T>
 	/**
-	 * Content shown while the task runs.
-	 * No content renders when it is omitted.
+	 * Content shown while the task runs; omitting it renders nothing.
 	 */
 	running?: React.ReactNode
 	/**
-	 * Content shown after success.
-	 * Defaults to `String(result)`.
+	 * Content shown after success; defaults to `String(result)`.
 	 */
 	done?: (result: T) => React.ReactNode
 }
@@ -273,9 +261,7 @@ export function splitUSStateCodes(raw: string | undefined): USStateAbbreviation[
 }
 
 /**
- * Parses a non-negative integer option.
- *
- * It returns `fallback` when the option is absent and throws for an invalid value.
+ * Parses a non-negative integer option, returning `fallback` when absent and throwing for an invalid value.
  */
 export function countOption(raw: string | undefined, fallback: number): number {
 	if (raw == null) return fallback
@@ -322,25 +308,10 @@ export interface LayerVerificationLike<Row extends { outcome: string; label: str
  * Options for {@linkcode formatLayerVerification}.
  */
 export interface FormatLayerVerificationOptions<Row> {
-	/**
-	 * Name of the reference service.
-	 */
 	serviceLabel: string
-	/**
-	 * Scope label for the out-of-coverage summary line.
-	 */
 	outsideLabel: string
-	/**
-	 * Formats one disagreement row for stderr.
-	 */
 	describeRow: (row: Row) => string
-	/**
-	 * Extra detail appended to the agreement summary.
-	 */
 	extraSummary?: string
-	/**
-	 * Text for the out-of-coverage summary when every point passed.
-	 */
 	outsideNoneLabel?: string
 }
 
@@ -369,9 +340,7 @@ export function formatLayerVerification<Row extends { outcome: string; label: st
 }
 
 /**
- * Runs a child process with inherited stdio.
- *
- * It throws when the process fails to launch or exits with a nonzero code.
+ * Runs a child process with inherited stdio, throwing when it fails to launch or exits nonzero.
  */
 export function runProcessOrFail(
 	cmd: string,
@@ -396,10 +365,9 @@ export function runProcessOrFail(
 }
 
 /**
- * Loads the script-routed neural classifier, or returns `undefined` when loading fails.
- *
- * Every failure is reported through `onDegrade`, which callers should write to stderr.
- * The message distinguishes an uninstalled weights package from weights that failed to load.
+ * Loads the script-routed neural classifier, or reports every failure through `onDegrade`
+ * (which callers should write to stderr) and returns `undefined`; the message distinguishes
+ * an uninstalled weights package from weights that failed to load.
  */
 export async function loadClassifierTolerant(
 	locale: string,
@@ -420,9 +388,8 @@ export async function loadClassifierTolerant(
 		})
 	} catch (error) {
 		const message = error instanceof Error ? error.message : String(error)
-		// A module-resolution error means the weights package is not installed.
-		// Any other error comes from weights that resolved but failed to load,
-		// so the message includes the original error.
+		// A module-resolution error means the weights package is not installed;
+		// any other error comes from weights that resolved but failed to load.
 		const absent = /Could not resolve/iu.test(message)
 		const { weightsPackageName } = await import("@mailwoman/neural/weights")
 

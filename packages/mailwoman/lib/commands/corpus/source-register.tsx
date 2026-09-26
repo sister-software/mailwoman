@@ -3,26 +3,10 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mailwoman corpus source-register` — regenerate the committed address-source register from a research pass's two
- *   CSVs. Deterministic: same inputs, byte-identical output. Run `yarn format` over the result before committing, the
- *   same as `sub-venue-lexicon`.
+ *   Deterministic: the same research CSVs produce byte-identical output.
  *
- *   ```sh
- *   mailwoman corpus source-register \
- *     --inventory .notes/global-address-jurisdiction-inventory-v3.csv \
- *     --sources   .notes/global-functional-authority-corpora-v2.csv \
- *     --register-version 0.1.0 \
- *     --authored-at 2026-09-18 \
- *     --source-version global-address-corpus-spec-v3
- *   ```
- *
- *   The research CSVs are working documents rather than committed inputs, so the paths are arguments. The register is
- *   the committed copy, and `packages/corpus/data/provenance.md` records the invocation that produced it along with
- *   each input's row count.
- *
- *   The build refuses to write a register that fails its own audit, so a research pass that leaves a jurisdiction
- *   seeded with no sources — or a source pointing at a license decision no register declares — fails here rather than in a
- *   consumer.
+ *   The build refuses to write a register that fails its own audit, so an unseeded jurisdiction or an undeclared
+ *   licence decision fails here rather than in a consumer.
  */
 
 import { Text } from "ink"

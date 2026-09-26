@@ -3,10 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Host-level pins against a stub child — the injection point `WorkerHostOptions.workerPath` exists for. The stub advertises
- *   whatever tool metas its sidecar file holds, so the test can change a schema between forks without changing a name:
- *   exactly the restart the name-only `tools_changed` compare failed to announce, leaving clients on a stale schema
- *   with no signal to refresh.
+ *   The stub advertises tool metas from a sidecar, so a schema can change between forks without a name changing — the restart a name-only `tools_changed` compare would leave clients stale on.
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
@@ -20,11 +17,8 @@ const TOOLS_PATH = STUB_DIR.path("tools.json")
 const JOBS_PATH = STUB_DIR.path("jobs.json")
 
 /**
- * A minimal worker speaking the IPC protocol: ready on handshake with the
- * sidecar's tool metas, echo on call.
- *
- * `mwdev_job` is answered from a sidecar file rather than echoed, because the restart asks the worker
- * for its running jobs before killing it and the test has to be able to say what the worker holds.
+ * `mwdev_job` is answered from a sidecar file rather than echoed, because the restart
+ * asks the worker for its running jobs before killing it.
  */
 await writeLocalTextFile(
 	`const { promises: fs } = process.getBuiltinModule("node:fs")
@@ -67,13 +61,11 @@ describe("WorkerHost restart", () => {
 
 		await host.start()
 
-		// Same list, same fork state.
-		// A restart with no edit stays quiet.
 		const unchanged = await host.restart()
 
 		expect(unchanged.tools_changed).toBe(false)
 
-		// A new parameter, same tool name: the client's copy of the schema is now wrong, so this must announce.
+		// A new parameter with the same tool name leaves the client's schema copy wrong, so this must announce.
 		await writeTools({ type: "object", properties: { tally: { type: "array" } } })
 
 		const changed = await host.restart()
@@ -93,8 +85,8 @@ describe("WorkerHost restart", () => {
 					elapsed_s: 41,
 					command: "node out/cli/index.js eval promote --check v9.0.0-base",
 				},
-				// A finished job is not a loss and must not be reported as one.
-				// A caller relaunching it would re-run work that already has a verdict on disk.
+				// A finished job is not a loss, and a caller relaunching it would re-run
+				// work that already has a verdict on disk.
 				{ job_id: "job-0", label: "check:earlier", state: "succeeded", elapsed_s: 400, command: "node earlier" },
 			],
 			JOBS_PATH
@@ -121,8 +113,8 @@ describe("WorkerHost restart", () => {
 	it("says the job list could not be read rather than reporting no jobs", async () => {
 		await writeTools({ type: "object", properties: {} })
 
-		// The sidecar is absent, so the stub refuses the call the way a worker with no registry would.
-		// An empty list here would tell the caller a relaunch is unnecessary, which is the one wrong answer.
+		// The sidecar is absent, so the stub refuses the call the way a worker with no registry would;
+		// an empty list would tell the caller a relaunch is unnecessary, which is the one wrong answer.
 		await using host = new WorkerHost({
 			workerPath: STUB_PATH,
 			workerArgs: [TOOLS_PATH, STUB_DIR.path("absent.json")],

@@ -1,13 +1,12 @@
 """Assembling the Japan corpus: survey, select, render, write, report.
 
-One `random.Random` runs through every stage below — the exact-selection masks, the shuffle, the
-register draw, and each per-row fraction. They share a stream, so the ORDER these stages run in and
-the order of the draws inside them decide what the corpus contains.
-`tests/mailwoman_train/countries/test_jp_build_parity.py` pins the emitted rows for that reason.
+One `random.Random` runs through every stage — exact-selection masks, shuffle, register draw and each
+per-row fraction — so the order of the stages and of the draws inside them decides what the corpus
+contains; `tests/mailwoman_train/countries/test_jp_build_parity.py` pins the emitted rows.
 
-Two passes over the source rather than one: pass 1 counts eligible rows per prefecture so the
-per-prefecture cap can be water-filled against the target, and pass 2 streams the selection under
-that cap. Holding pass 1's rows to avoid pass 2 would mean 19.5M rendered records in memory.
+Two passes over the source: pass 1 counts eligible rows so the per-prefecture cap can be water-filled
+against the target, and pass 2 streams the selection under it; holding pass 1's rows instead would
+mean 19.5M rendered records in memory.
 """
 
 from __future__ import annotations
@@ -44,9 +43,8 @@ from .rows import (
 )
 from .sources import ADMIN_DB_PARTS, KENALL_PARTS, PARQUET_PARTS, KenAllIndex, iter_source_rows, load_kenall_postcodes
 
-# Municipality bucket split, identical to the probe (md5 of the NFC space-stripped kanji, mod 100,
-# board at >= 97). Keeping the rule byte-identical means the probe's held-out board municipalities
-# stay held out here — a Phase-4 model can be graded on the Leg-1 board without leakage.
+# Municipality bucket split: md5 of the NFC space-stripped kanji, mod 100, board at >= 97. Keeping the
+# rule byte-identical to the probe keeps its held-out board municipalities held out here.
 BOARD_BUCKET_MIN = 97
 
 #: What `iter_source_rows` yields: (prefecture, municipality, street, number, lon, lat).
@@ -91,8 +89,8 @@ def survey_source(parquet: Path, args: argparse.Namespace) -> SourceSurvey:
             pool_counts[prefecture] += 1
     print(f"pass 1: {scanned:,} eligible rows · {len(pool_counts)} prefectures · board pool {board_count:,}")
     print(f"pass 1: dropped {dict(dropped)}")
-    # A drop rate this filter was not designed for means the source changed shape rather than that the tail
-    # got longer — surface it rather than quietly shipping a differently-composed corpus.
+    # A drop rate this filter was not designed for means the source changed shape, so surface it rather
+    # than quietly shipping a differently-composed corpus.
     drop_rate = sum(dropped.values()) / max(scanned + sum(dropped.values()), 1)
     if drop_rate > 0.02:
         raise RuntimeError(
@@ -103,8 +101,8 @@ def survey_source(parquet: Path, args: argparse.Namespace) -> SourceSurvey:
     cap = water_fill(pool_counts, target)
     quotas = {prefecture: min(cap, count) for prefecture, count in pool_counts.items()}
     shortfall = target - sum(quotas.values())
-    # Water-filling lands at or below target. hand the remainder to the prefectures with headroom so
-    # the corpus hits its row count exactly rather than "about".
+    # Water-filling lands at or below target; hand the remainder to the prefectures with headroom so the
+    # corpus hits its row count exactly.
     if shortfall > 0:
         for prefecture in sorted(pool_counts, key=lambda p: pool_counts[p] - quotas[p], reverse=True):
             headroom = pool_counts[prefecture] - quotas[prefecture]
@@ -135,11 +133,9 @@ def select_rows(parquet: Path, args: argparse.Namespace, rng: random.Random, sur
     train_source = selected[: args.train_rows]
     val_source = selected[args.train_rows : args.train_rows + args.val_rows]
 
-    # Attested-row weight (#2178): a municipality name shape the head under-serves — 市 inside a 町 / 村 name
-    # (市川三郷町, 市貝町, 余市町, 高市郡…) — is five municipalities and 21,043 of 19,587,889 source rows, about 0.1% of
-    # train after selection. `--upweight-pattern regex:K` appends K-1 further copies of every selected train row
-    # whose municipality matches, each rendered in its own draw of register, so the shape reaches the head at
-    # K× its natural share without a synthetic name. Val and the board are untouched, so the read stays honest.
+    # Upweight: `--upweight-pattern regex:K` appends K-1 further copies of every selected train row whose
+    # municipality matches, each rendered in its own register draw, so the shape reaches the head at K× its
+    # natural share without a synthetic name. Val and the board are untouched.
     upweighted = 0
     if args.upweight_pattern:
         pattern_text, _, factor_text = args.upweight_pattern.rpartition(":")
@@ -160,9 +156,8 @@ def select_rows(parquet: Path, args: argparse.Namespace, rng: random.Random, sur
 class RowEncoder:
     """Renders selected source rows, drawing every per-row choice off the shared `rng`.
 
-    The counters it accumulates — which KEN_ALL tier each postcode came from, and whether a row had
-    every register available — are read by the build report, so one encoder serves the splits and
-    the board rather than each keeping its own tally.
+    Its counters — the KEN_ALL tier each postcode came from and whether a row had every register
+    available — feed the build report, so one encoder serves the splits and the board.
     """
 
     def __init__(
@@ -292,7 +287,7 @@ def write_board(out_dir: Path, selection: Selection, encoder: RowEncoder) -> lis
 
 
 def check_stratification(args: argparse.Namespace, selection: Selection) -> tuple[set[str], set[str]]:
-    """Violations RAISE. a corpus that fails one is not a corpus. Returns (train prefectures, board municipalities)."""
+    """Raise on broken stratification; returns (train prefectures, board municipalities)."""
     train_prefectures = {row[0] for row in selection.train}
     if args.max_row_groups is None and len(train_prefectures) != 47:
         raise RuntimeError(f"train covers {len(train_prefectures)} prefectures, expected 47 — stratification broken")
@@ -326,7 +321,7 @@ def build(args: argparse.Namespace) -> dict[str, Any]:
     board_records = write_board(out_dir, selection, encoder)
     train_prefectures, board_munis = check_stratification(args, selection)
 
-    # Char vocab (D2): sealed, rebuilt from the train split only, min_count=2.
+    # Char vocab: sealed, rebuilt from the train split only.
     def train_raws() -> Iterator[str]:
         for path in sorted((out_dir / "train").glob("*.parquet")):
             table = pq.read_table(path, columns=["raw"])

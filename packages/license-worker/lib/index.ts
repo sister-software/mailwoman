@@ -3,9 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The Worker export. `readEnv` runs per request and is cheap. a placeholder var answers 503 for every request rather
- *   than letting one route work while another mints. The ledger, the email provider and the signing self-test are built
- *   once per isolate: the self-test signs and verifies a probe token, which is worth doing once rather than per request.
+ * A misconfigured environment answers 503 for every request rather than letting one route work while another mints.
  */
 
 import type { ExportedHandler } from "@cloudflare/workers-types"
@@ -24,10 +22,8 @@ import { stripeClient } from "#stripe/client"
 const MISCONFIGURED = stringifyJSON({ error: "worker misconfigured" })
 
 /**
- * How far back each reconciliation pass lists paid invoices by creation time: the bound on recovering
- * a subscription the ledger has never seen (`reconcile.ts` says what is recovered without a bound).
- *
- * A week against a six-hour cron, so one failed pass costs no coverage.
+ * How far back each reconciliation pass lists paid invoices by creation time:
+ * a week against a six-hour cron, so one failed pass costs no coverage.
  */
 const RECONCILE_WINDOW_SECONDS = 7 * 24 * 3600
 
@@ -98,7 +94,6 @@ const handler: ExportedHandler<LicenseWorkerBindings> = {
 		const selfTest = await state.selfTest
 
 		// A worker that would refuse to mint over http refuses to mint on a schedule too.
-		// The report says why.
 		if (selfTest.status !== "ok") {
 			console.error(stringifyJSON({ reconcile: "skipped", reason: selfTest.reason }))
 

@@ -3,22 +3,12 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Re-fetch the NPPES (National Plan and Provider Enumeration System) full monthly data
- *   dissemination file. ~7M provider rows with venue+address data. Source for the `usgov-nppes`
- *   adapter. US Public Domain.
+ * Re-fetch the NPPES (National Plan and Provider Enumeration System) full monthly data dissemination
+ * file for the `usgov-nppes` adapter; the source is US Public Domain. Discovers the current filename
+ * by scraping the NPI_Files.html index, then extracts only the main registry CSV
+ * (`npidata_pfile_*.csv`) and leaves the endpoint/othername/pl files zipped.
  *
- *   The file is published monthly by CMS. This module discovers the current filename by scraping the
- *   NPI_Files.html index, then downloads the ZIP and extracts only the main registry CSV
- *   (npidata_pfile_*.csv). The smaller endpoint/othername/pl files stay zipped — we don't need them.
- *
- *   Uses Node's built-in fetch (gzip/brotli) to parse the html index and download the ZIP, and
- *   streaming sha256 instead of sha256sum. The ZIP is unpacked with the `unzip` binary via
- *   `node:child_process` (no clean Node equivalent for member listing + selective extraction). note:
- *   the old bash fetcher used `curl --continue-at -` to resume a partial download. native fetch has
- *   no resume, so a partial run re-downloads from the start.
- *
- *   Invoke via `mailwoman corpus fetch nppes --out-root <path>`. Idempotent: if dest CSV exists and
- *   sha256 matches manifest, skips download.
+ * Native fetch has no resume, so a partial run re-downloads from the start.
  */
 
 /* oxlint-disable sister-software/prefer-region-over-marks -- these markers label steps inside one
@@ -41,13 +31,11 @@ const SLUG = "usgov-nppes"
 export type FetchNPPESOptions = BaseFetchOptions
 
 /**
- * Scrape the NPI_Files.html index for the latest full monthly ZIP.
- *
- * Full-replacement files match `NPPES_Data_Dissemination_<Month>_<Year>*.zip`;
- * weekly files carry a `MMDDYY_MMDDYY` date range, which we exclude.
+ * Scrape the NPI_Files.html index for the latest full monthly ZIP: full-replacement
+ * files match `NPPES_Data_Dissemination_<Month>_<Year>*.zip`, while weekly files
+ * carry a `MMDDYY_MMDDYY` date range and are excluded.
  */
 async function discoverLatestZip(): Promise<string | undefined> {
-	// `responseType: "text"` — the index is html, scraped by regex below.
 	const html = await new APIClient({
 		displayName: "nppes-index",
 		retry: true,
@@ -66,8 +54,8 @@ async function discoverLatestZip(): Promise<string | undefined> {
 }
 
 /**
- * The main registry CSV (npidata_pfile_*.csv), which the archive also carries
- * alongside a header file and a per-month change file.
+ * The main registry CSV (`npidata_pfile_*.csv`); the archive also carries a header file
+ * and a per-month change file.
  */
 async function findNpidataCSV(zipPath: PathBuilderLike): Promise<string | undefined> {
 	const entries = await listZipEntries(zipPath)
@@ -95,7 +83,6 @@ export async function fetchNPPES(options: FetchNPPESOptions, report?: (line: str
 	const zipDest = destDir(zipFilename)
 	report?.(`  Latest full file: ${zipFilename}`)
 
-	// Idempotency check: if the main CSV already exists and sha matches, skip re-download.
 	const recorded = await readManifest<Partial<SourceManifest>>(manifestPath)
 
 	if (recorded?.sha256 && recorded.filename) {
@@ -108,7 +95,7 @@ export async function fetchNPPES(options: FetchNPPESOptions, report?: (line: str
 		}
 	}
 
-	// MARK: Download ZIP (large. 60-minute timeout)
+	// MARK: Download ZIP
 
 	report?.(`  Downloading ${zipURL} ...`)
 
@@ -142,7 +129,7 @@ export async function fetchNPPES(options: FetchNPPESOptions, report?: (line: str
 	const csvSha = await sha256File(csvDest)
 	report?.(`  CSV size: ${(csvSize / 1024 / 1024).toFixed(1)} MB`)
 
-	// MARK: Remove the ZIP to reclaim ~1 GB
+	// MARK: Remove the ZIP
 
 	await removePathIfPresent(zipDest)
 	report?.("  Removed ZIP (CSV kept)")

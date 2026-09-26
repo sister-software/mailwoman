@@ -15,10 +15,8 @@ import { rootAttribute } from "#html/document"
 import { stringifyJSON } from "#json"
 
 /**
- * The error an OGC `ServiceExceptionReport` becomes.
- *
- * The report arrives on an http 200, so no upstream layer maps it: a caller that
- * does not ask reads the exception body as an empty answer.
+ * The error an OGC `ServiceExceptionReport` becomes; the report arrives on an http 200, so no
+ * upstream layer maps it and a caller that does not ask reads the exception body as an empty answer.
  */
 export class OGCServiceError extends Error {
 	public readonly serviceException: string
@@ -48,15 +46,12 @@ const EXCEPTION_OPEN = "<ServiceException"
 /**
  * The inner text of the first real `<ServiceException>` element.
  *
- * Index scans rather than A regex.
- * The obvious form — `/<ServiceException(?:\s[^>]*)?>([\s\S]*?)<\/ServiceException>/` —
- * backtracks polynomially on a body whose opening tag has no closing partner,
- * and this body is whatever a network service returned.
+ * Index scans rather than a regex, because the obvious pattern backtracks polynomially on a body
+ * whose opening tag has no closing partner — and this body is whatever a network service returned.
  *
- * Two more things it has to get right, both of which add no cost here: the tag name
- * must END at the match, because `<ServiceExceptionReport xmlns="…">` shares the prefix
+ * The tag name must end at the match: `<ServiceExceptionReport xmlns="…">` shares the prefix,
  * and taking it captures the entire report as the message.
- * And an unclosed element reads as unreadable rather than as empty.
+ * An unclosed element reads as unreadable rather than as empty.
  */
 function exceptionText(body: string): string | undefined {
 	let cursor = 0
@@ -70,10 +65,8 @@ function exceptionText(body: string): string | undefined {
 
 		cursor = after
 
-		// `>` closes a bare tag.
-		// Whitespace introduces attributes.
-		// Anything else continues the tag name, which means this is `ServiceExceptionReport`
-		// or a sibling and not the element being read.
+		// `>` closes a bare tag and whitespace introduces attributes; anything else continues the tag name,
+		// which means this is `ServiceExceptionReport` or a sibling, not the element being read.
 		if (!/^[\s>]/u.test(body.slice(after, after + 1))) continue
 
 		const contentStart = body.indexOf(">", after)
@@ -92,8 +85,7 @@ function exceptionText(body: string): string | undefined {
  * The `<ServiceException>` text inside an OGC exception report, or `undefined` when the body is not one.
  *
  * Split from the request so the detection is testable against captured bodies.
- * Both shapes were taken from live services: the report arrives with an XML declaration
- * and an `xmlns` of `http://www.opengis.net/ogc`.
+ * The report arrives with an XML declaration and an `xmlns` of `http://www.opengis.net/ogc`.
  */
 export function readOGCServiceException(body: string): string | undefined {
 	if (!body.includes("ServiceExceptionReport")) return undefined

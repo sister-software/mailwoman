@@ -3,9 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The `mailwoman:*` block, written into an archive's PMTiles metadata and read back. The block is validated before
- *   it is written and again after `pmtiles edit` has written it, so an archive that leaves the build carries the block
- *   the schema describes and no other field the tool may have dropped.
+ *   The `mailwoman:*` block, written into an archive's PMTiles metadata and read back. It is
+ *   validated before writing and again after `pmtiles edit`, so an archive leaves the build
+ *   carrying the block the schema describes.
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
@@ -27,8 +27,7 @@ export async function readPMTilesMetadata(archivePath: string): Promise<Record<s
 }
 
 /**
- * The block an archive carries, validated.
- * Throws when the archive carries none or a malformed one.
+ * The block an archive carries, validated; throws when it carries none or a malformed one.
  */
 export async function readMailwomanMetadata(archivePath: string): Promise<PMTilesMetadata> {
 	const metadata = await readPMTilesMetadata(archivePath)
@@ -39,8 +38,7 @@ export async function readMailwomanMetadata(archivePath: string): Promise<PMTile
 }
 
 /**
- * Merge the validated block over the archive's current metadata and write it back,
- * then read it back and refuse unless every key round-tripped.
+ * Merges the validated block over the archive's metadata and refuses unless every key round-trips.
  */
 export async function applyPMTilesMetadata(archivePath: string, block: PMTilesMetadata): Promise<void> {
 	const validated = PMTilesMetadataSchema.parse(block)
@@ -79,9 +77,7 @@ export function nomenclatureMetadata(body: BuildableBodyID, buildVersion: string
 }
 
 /**
- * The block for a body's hillshade archive.
- *
- * `sourceProduct` names the DEM the shading came from.
+ * The block for a body's hillshade archive; `sourceProduct` names the DEM the shading came from.
  */
 export function hillshadeMetadata(body: BuildableBodyID, buildVersion: string, sourceProduct: string): PMTilesMetadata {
 	return {

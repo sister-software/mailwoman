@@ -3,8 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- * Checks representative command snapshots, the committed generated page, deterministic rendering,
- * and omission of host paths and timestamps. Run `yarn compile` first to create `mailwoman/out/commands`.
+ * Checks representative command snapshots, the committed generated page, deterministic rendering, and omission of host paths and timestamps.
  */
 
 import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
@@ -20,9 +19,6 @@ import {
 } from "@mailwoman/docs/scripts/generate-cli-reference"
 import { beforeAll, describe, expect, it } from "vitest"
 
-/**
- * Extract one command section for its focused snapshot.
- */
 function sectionFor(page: string, commandPath: string): string {
 	const heading = `### \`mailwoman ${commandPath}\``
 	const start = page.indexOf(heading)
@@ -97,7 +93,6 @@ describe("generate-cli-reference", () => {
 	it("renders deterministically and leaks no host path or timestamp", () => {
 		expect(renderCLIReference(surface)).toBe(page)
 
-		// Environment-derived defaults must not expose the build machine's data root.
 		expect(page).not.toContain("/mnt/")
 		expect(page).not.toContain("/home/")
 		expect(page).toContain("environment-dependent")

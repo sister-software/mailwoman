@@ -1,11 +1,4 @@
-"""The splice table, checked for the shapes a seven-way clone could hide.
-
-Each row grows one checkpoint's embeddings onto a wider tokenizer. The values were seven Modal
-functions differing only in five paths and a vocabulary pair, and two of the defects below were
-live in that shape: one function wrote `nsplice-v2-expanded` while its message said
-`nsplice-expanded`, and every expected vocabulary size sat in a docstring where no test could read
-it. Both become checkable once the values are data.
-"""
+"""Checks the `launch.splices` table for the defects a set of near-identical functions could hide."""
 
 from __future__ import annotations
 
@@ -22,7 +15,7 @@ def test_no_two_splices_write_the_same_destination() -> None:
 
 @pytest.mark.parametrize("name", sorted(SPLICES))
 def test_each_splice_grows_rather_than_shrinks(name: str) -> None:
-    """A recorded pair must be an EXPANSION. A narrower target is a splice nobody meant to run."""
+    """A recorded pair must be an EXPANSION; a narrower target is a splice nobody meant to run."""
     entry = SPLICES[name]
     if entry.vocabulary is None:
         pytest.skip(f"{name} has no measured vocabulary pair")
@@ -45,11 +38,7 @@ def test_every_path_is_volume_relative(name: str) -> None:
 
 
 def test_a_chain_of_splices_agrees_on_its_shared_vocabulary_size() -> None:
-    """Where one splice's target tokenizer is another's source, the recorded sizes must match.
-
-    The chain is the thing the seven docstrings could not keep straight: fr_nsplice ends at 66,319
-    and multisplice starts there. A mismatch says one of the two pairs was copied from the wrong run.
-    """
+    """Where one splice's target tokenizer is another's source, the recorded sizes must match; a mismatch says one of the two pairs came from the wrong run."""
     ends = {entry.to_tokenizer: entry.vocabulary[1] for entry in SPLICES.values() if entry.vocabulary}
     starts = {entry.from_tokenizer: entry.vocabulary[0] for entry in SPLICES.values() if entry.vocabulary}
 

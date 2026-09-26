@@ -1,11 +1,9 @@
 """Which checkpoint grows onto which tokenizer: the splice table, and no code that runs.
 
-A splice is five paths and a pair of vocabulary sizes. Seven of these existed as seven Modal
-functions differing only in those values, which is how the size a splice is EXPECTED to produce
-stayed in a docstring where no test could check it. Here the expectation is data, `launch/mean_init.py`
-refuses a result that does not match it, and `tests/launch/test_splices.py` checks the table's own
-shape — a silent short expansion is a fine-tune that trains a head against rows the tokenizer never
-emits.
+A splice is five paths and a pair of vocabulary sizes. The expected size is data here, so
+`launch/mean_init.py` can refuse a result that does not match it and `tests/launch/test_splices.py`
+can check the table's own shape — a silent short expansion is a fine-tune that trains a head against
+rows the tokenizer never emits.
 
 No Modal import, for the reason `plan.py` has none: the SDK is installed wherever `modal run` runs
 and not in this checkout's environment, so a table that imported it could not be tested at all.
@@ -38,7 +36,7 @@ class Splice:
     adds: str
 
 
-#: Keyed by the name that followed `mean_init_` on the function each replaces.
+#: Keyed by the `mean_init_<name>` suffix of the Modal function.
 SPLICES: dict[str, Splice] = {
     "nsplice": Splice(
         checkpoint="models/bsplice-expanded",

@@ -1,8 +1,6 @@
 """The `--smoke-mode` flag, shared by the two commands that train.
 
-`train` takes it as an override and `smoke` defaults it to `constant`, so it lives beside them
-rather than inside either. It is CLI policy rather than config: `constant` overrides whatever schedule the
-recipe named, and `long-tail` changes no behavior but warns.
+`constant` overrides whatever schedule the recipe named; `long-tail` changes no behavior but warns.
 """
 
 from __future__ import annotations
@@ -18,9 +16,8 @@ LONG_TAIL_MIN_STEPS = 10000
 def apply_smoke_mode(args: argparse.Namespace, cfg: Any) -> None:
     """Translate `--smoke-mode` into `cfg.train.lr_schedule`.
 
-    `long-tail` keeps cosine and only warns when `max_steps` is short, because the operator may
-    know something the threshold does not. A wrong warning costs a line of output, a wrong error
-    costs the run.
+    `long-tail` warns rather than raises when `max_steps` is short: a wrong warning costs a line of
+    output, a wrong error costs the run.
     """
     mode = getattr(args, "smoke_mode", None)
     if mode is None:

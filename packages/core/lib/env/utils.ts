@@ -9,18 +9,12 @@
 import { z } from "zod"
 
 /**
- * Wrap a coerced schema so a blank value means the same as an absent one.
+ * Wrap a coerced schema so a blank value means the same as an absent one: a shell `export FOO=`,
+ * an unset Docker/CI `${VAR}` interpolation and a missing compose key all arrive as an empty string,
+ * which `z.coerce.number()` turns into `0` and any `.positive()` or `.min()` then rejects.
  *
- * A shell `export FOO=`, an unset Docker/CI `${VAR}` interpolation and a compose file
- * with a missing key all arrive as an empty string rather than as an absent value.
- * `z.coerce.number()` turns that into `0`, which any `.positive()` or `.min()` then rejects.
- *
- * So the process dies at import instead of falling back to its default, and the
- * message points at a variable the operator believes they never set.
- *
- * The `.optional()`/`.default()` must be applied to `inner` before it reaches here:
- * the outer value is present, so an outer `.optional()` never fires.
- * `inner` is what receives the `undefined` this produces.
+ * The `.optional()`/`.default()` must be applied to `inner` before it reaches here,
+ * because the outer value is present and an outer `.optional()` never fires.
  */
 export function blankAsAbsent<T extends z.ZodType>(inner: T) {
 	return z.preprocess((v) => (v === "" ? undefined : v), inner)

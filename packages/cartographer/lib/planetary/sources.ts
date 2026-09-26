@@ -14,16 +14,14 @@ import { TileSetSourceID } from "#styles/sources"
 export const PlanetaryNomenclatureSourceID = TileSetSourceID("nomenclature")
 
 /**
- * The elevation source a body's relief is shaded from.
- *
- * The archive carries terrarium-encoded height rather than a shaded picture,
- * so the shading happens at draw time and each body can be tinted from the style.
+ * The elevation source a body's relief is shaded from, carrying terrarium-encoded height
+ * rather than a shaded picture.
  */
 export const PlanetaryHillshadeSourceID = TileSetSourceID("hillshade")
 
 /**
- * MapLibre resolves a TileJSON `url` itself: tiles, bounds, zoom range and attribution
- * all come from the tile worker's document, so no code here restates them.
+ * MapLibre resolves a TileJSON `url` itself, so tiles, bounds, zoom range
+ * and attribution all come from the tile worker's document.
  */
 export function nomenclatureSource(tileJSONURL: string): VectorSourceSpecification {
 	return {

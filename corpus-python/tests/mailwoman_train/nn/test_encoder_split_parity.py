@@ -1,8 +1,4 @@
-"""Pins the encoder's logits, loss, state-dict keys and initial weights against a committed reference.
-
-A refactor of `MailwomanCoarseEncoder` must keep all four. Existing checkpoints are keyed on attribute
-names, so a renamed attribute loads as a missing key or as a fresh random tensor.
-"""
+"""Pins the encoder's logits, loss, state-dict keys and initial weights against a committed reference; existing checkpoints are keyed on attribute names, so a renamed attribute loads as a missing key or a fresh random tensor."""
 
 from __future__ import annotations
 
@@ -16,8 +12,7 @@ torch = pytest.importorskip("torch")
 from mailwoman_train.labels import ACTIVE_BIO_LABELS  # noqa: E402
 from mailwoman_train.nn.encoder import MailwomanCoarseEncoder  # noqa: E402
 
-#: The committed reference. Regenerate it only after the current code passes against the existing file,
-#: with `uv run python tests/mailwoman_train/nn/test_encoder_split_parity.py`.
+#: The committed reference; regenerate it only after the current code passes against the existing file.
 REFERENCE = Path(__file__).parent / "encoder-split-reference.json"
 
 #: This text is written into the reference file as its README.
@@ -46,12 +41,7 @@ SEQ_LEN = 8
 
 
 def build_reference_encoder() -> MailwomanCoarseEncoder:
-    """Build a small seeded encoder with every optional channel and head enabled.
-
-    Each channel draws from the RNG when it is constructed, so the initial weights record the
-    construction order. A disabled channel would construct no projection, and a reordering involving it
-    would go undetected.
-    """
+    """Build a small seeded encoder with every optional channel and head enabled, because the initial weights record construction order and a reordering a disabled channel would not construct goes undetected."""
     torch.manual_seed(0)
     return MailwomanCoarseEncoder(
         vocab_size=VOCAB_SIZE,
@@ -86,20 +76,12 @@ def build_reference_encoder() -> MailwomanCoarseEncoder:
 
 
 def parameter_checksums(model: MailwomanCoarseEncoder) -> dict[str, float]:
-    """Return the sum of each parameter after `_init_weights`, rounded to six places.
-
-    `_init_weights` sets biases, cue vectors and `locale_film` to zero and LayerNorm gamma to 1.0, so
-    those sums are constants. The remaining weights are drawn from the RNG in construction order, so
-    their sums change when construction is reordered.
-    """
+    """Return the sum of each parameter after `_init_weights`, rounded to six places; most are constants and the rest change when construction is reordered."""
     return {name: round(float(p.detach().sum()), 6) for name, p in model.named_parameters()}
 
 
 def reference_inputs(model: MailwomanCoarseEncoder) -> dict[str, torch.Tensor]:
-    """Return forward-call inputs that feed every channel a seeded tensor at its declared width.
-
-    A channel without input never runs its projection, so its logits could not detect a change.
-    """
+    """Return forward-call inputs that feed every channel a seeded tensor at its declared width, since a channel without input never runs its projection."""
     generator = torch.Generator().manual_seed(1)
 
     def noise(*shape: int) -> torch.Tensor:
@@ -133,11 +115,7 @@ def reference_logits(model: MailwomanCoarseEncoder) -> list[float]:
 
 
 def reference_loss(model: MailwomanCoarseEncoder) -> float:
-    """Return the loss of the reference forward call with an all-``O`` label row.
-
-    The CRF, locale auxiliary, span-boundary and conventions-mask terms affect only the loss, so a
-    dropped term leaves the logits unchanged.
-    """
+    """Return the loss of the reference forward call with an all-``O`` label row, which covers the CRF, locale-auxiliary, span-boundary and conventions-mask terms that the logits omit."""
     inputs = reference_inputs(model)
     inputs["labels"] = torch.zeros(1, SEQ_LEN, dtype=torch.long)
     with torch.no_grad():
@@ -153,9 +131,8 @@ def test_forward_is_deterministic_under_a_fixed_seed() -> None:
     assert first == second
 
 
-#: The relative and absolute tolerance for logits and loss. Different CPUs round the same fp32 graph
-#: differently in the last digit, so exact equality would fail across hosts. The parameter checksums
-#: involve no matrix multiplication and are still compared exactly.
+#: The tolerance for logits and loss; different CPUs round the same fp32 graph differently, so exact
+#: equality fails across hosts. Parameter checksums involve no matmul and are compared exactly.
 TOLERANCE = 1e-4
 
 
@@ -185,11 +162,7 @@ def test_loss_matches_the_committed_reference() -> None:
 
 
 def test_a_checkpoint_round_trips_through_save_and_load(tmp_path: Path) -> None:
-    """Check that `save_pretrained` and `from_pretrained` preserve the weights and the config.
-
-    A config flag that the writer emits and the reader ignores would rebuild a resumed run with the
-    current default in place of its trained value.
-    """
+    """Check that `save_pretrained` and `from_pretrained` preserve the weights and the config, since a flag the writer emits and the reader ignores would rebuild a resumed run with a default."""
     original = build_reference_encoder()
     original.save_pretrained(tmp_path)
 
@@ -200,12 +173,11 @@ def test_a_checkpoint_round_trips_through_save_and_load(tmp_path: Path) -> None:
     for key, before in original.state_dict().items():
         assert torch.equal(reloaded.state_dict()[key], before), f"{key} changed across the round trip"
 
-    # A second save must write the same config, which shows that the reader kept every flag.
     reloaded.save_pretrained(tmp_path / "again")
     assert json.loads((tmp_path / "again" / "config.json").read_text()) == written
 
-    # `from_pretrained` returns a model in train mode. In train mode `nn.MultiheadAttention` uses another
-    # kernel whose results differ by about 1e-6 even at dropout 0.0, so the comparison runs in eval mode.
+    # `from_pretrained` returns a model in train mode, where `nn.MultiheadAttention` uses a kernel
+    # whose results differ by about 1e-6 even at dropout 0.0.
     reloaded.eval()
     assert reference_logits(reloaded) == reference_logits(original)
 
@@ -222,11 +194,7 @@ def test_state_dict_keys_match_the_committed_reference() -> None:
 
 
 def test_every_layer_norm_gamma_starts_at_one() -> None:
-    """Check that every LayerNorm starts with gamma 1.0 and beta 0.0.
-
-    `_init_weights` zeroes every 1-D parameter before it resets gamma. A zero gamma makes each
-    LayerNorm output a constant, and the model then predicts one class for every token.
-    """
+    """Check that every LayerNorm starts with gamma 1.0 and beta 0.0, since a zero gamma makes each LayerNorm output a constant and the model predict one class for every token."""
     for name, module in build_reference_encoder().named_modules():
         if isinstance(module, torch.nn.LayerNorm):
             assert torch.all(module.weight == 1.0), f"{name}.weight (gamma) is not 1.0"
@@ -235,11 +203,7 @@ def test_every_layer_norm_gamma_starts_at_one() -> None:
 
 
 def test_parameter_initialization_matches_the_committed_reference() -> None:
-    """Compare initial parameter sums exactly to detect a change in construction order.
-
-    Reordering two channels changes the weights drawn for them and for every module built after
-    them, so a from-scratch run would no longer reproduce earlier runs.
-    """
+    """Compare initial parameter sums exactly, which detects a change in construction order that would stop a from-scratch run reproducing earlier runs."""
     if not REFERENCE.is_file():
         pytest.skip(f"no reference at {REFERENCE}; regenerate it before splitting")
     expected = json.loads(REFERENCE.read_text())["parameter_checksums"]
@@ -251,11 +215,7 @@ def test_parameter_initialization_matches_the_committed_reference() -> None:
 
 
 def write_reference() -> None:
-    """Write the current encoder's outputs to the reference file.
-
-    Run this only when the current code already passes against the existing reference. Otherwise the
-    tests would compare the code against itself.
-    """
+    """Write the current encoder's outputs to the reference file; run it only when the current code already passes against the existing reference, or the tests compare the code against itself."""
     model = build_reference_encoder()
     payload = {
         "README": REFERENCE_README,

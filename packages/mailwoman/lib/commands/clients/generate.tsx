@@ -3,15 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mailwoman clients generate` — the client-generation pipeline: emit all four surfaces' OpenAPI
- *   documents (mailwoman/photon/nominatim/libpostal — 3.1 + the progenitor-diet 3.0), generate a
- *   Python package (openapi-python-client, the salvaged `mailwoman_client` layout from the retired
- *   `feat/api-clients` branch) and a Rust crate (progenitor `generate_api!`, the salvaged Cargo.toml
- *   / lib.rs pattern), then verify both actually build (`uv build` + a wheel import-check, `cargo
- *   check --examples`). Output lands under the gitignored `clients-build/` — no generated file here
- *   is committed. This is the local, receipt-verified proof the conditional CI job replays on dispatch.
- *   See `docs/articles/api.mdx` "Client libraries" for install/usage snippets
- *   and the not-yet-published status.
+ *   `mailwoman clients generate` — emit all four surfaces' OpenAPI documents, generate a Python package and
+ *   a Rust crate, then verify both build; output lands under the gitignored `clients-build/`, and no
+ *   generated file is committed.
  */
 
 import { Box, Text } from "ink"

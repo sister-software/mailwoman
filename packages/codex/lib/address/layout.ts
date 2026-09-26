@@ -3,12 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Address layouts written as tagged templates in print order. Interpolations are slots, and the literal text
- *   between them is a connector.
- *
- *   A node that renders no value drops out together with its connector. An interior connector renders only when
- *   both neighbours rendered. An edge connector binds to the one slot it touches, so Japan's 〒 mark drops with an
- *   absent postcode.
+ *   Address layouts written as tagged templates in print order: interpolations are slots and the literal text
+ *   between them is a connector. A node that renders no value drops out together with its connector; an interior
+ *   connector renders only when both neighbours rendered, and an edge connector binds to the one slot it touches.
  *
  *   The evaluator lives in `render.ts`, so modules that only need the layout table do not load it.
  */
@@ -54,22 +51,16 @@ export interface AddressLayout {
 	readonly lines: ReadonlyArray<readonly AddressAtom[]>
 	/**
 	 * Indices of lines whose preceding break becomes a space in single-line output,
-	 * in place of the system's join.
-	 *
-	 * Great Britain prints the post town and postcode on separate lines,
-	 * but its single-line form is `27 Minories, London EC3N 1DE`.
-	 *
-	 * Each index refers to the line after the break.
-	 * `evaluateLines` drops empty lines, and an index into the template's lines stays valid after that drop.
+	 * in place of the system's join; each index refers to the line after the break,
+	 * and `evaluateLines` drops empty lines without moving the index.
 	 */
 	readonly softBreakBefore?: ReadonlySet<number>
 }
 
 /**
- * Returns a copy of the layout with a soft break before the line that starts with `tag`.
- *
- * The line is found by tag so that edits to earlier lines do not move the mark.
- * When no line after the first starts with `tag`, the layout is returned unchanged.
+ * Returns a copy of the layout with a soft break before the line that starts with `tag`,
+ * found by tag so edits to earlier lines do not move the mark; when no line
+ * after the first starts with `tag`, the layout is unchanged.
  */
 export function withSoftBreakBefore(layout: AddressLayout, tag: string): AddressLayout {
 	const index = layout.lines.findIndex((line) => {
@@ -128,10 +119,8 @@ export function either(...alternatives: readonly AddressLayout[]): AddressAltern
 }
 
 /**
- * The post-office box line, printed directly above the street line.
- *
- * A record can hold both a box and a street address, and both lines are printed.
- * Libaddressinput has no box field, so this placement is defined here.
+ * The post-office box line, printed directly above the street line; libaddressinput has no
+ * box field, so this placement is defined here and a record holding both prints both lines.
  */
 const poBoxLine = SLOTS.po_box
 
@@ -163,10 +152,8 @@ ${either(
 )}`
 
 /**
- * The street line with the number after the name and a comma between them, as in `Calle Mayor, 12`.
- *
- * Brazil uses this form.
- * Spain's corpus recipe renders both this form and the space form because people type both.
+ * The street line with the number after the name and a comma between them, as in `Calle Mayor, 12`,
+ * which Brazil uses and Spain's corpus recipe renders alongside the space form because people type both.
  */
 export const numberLastCommaStreet: AddressLayout = addr`${poBoxLine}
 ${either(
@@ -175,10 +162,8 @@ ${either(
 )}`
 
 /**
- * The Han-script street line, with the name and number written together, as in `佐敦道21號`.
- *
- * A space between them is a romanized convention and is wrong in Han script.
- * The generated skeletons reference this node alongside the other street lines.
+ * The Han-script street line, with the name and number written together, as in `佐敦道21號`;
+ * a space between them is a romanized convention and is wrong in Han script.
  */
 export const hanStreet: AddressLayout = addr`${poBoxLine}
 ${either(

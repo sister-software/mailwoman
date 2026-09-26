@@ -1,11 +1,6 @@
 """The vocab-pruning probe's two bars, against tokenizers and graphs that disagree on purpose.
 
-No test exercised either. Both bars need a SentencePiece pair and an int8 ONNX pair to run, so the
-counting itself — the part that decides `PASS` or `FAIL` — was reachable only from a full probe run,
-where a bar that counts no row and a bar that finds no row print the same line.
-
-Both bars are one-sided in the direction that matters: a bar that under-counts reports a sound
-surgery. So each case here is a KNOWN difference, and the test asserts it was found.
+Both bars are one-sided: a bar that under-counts reports a sound surgery, so each case here is a known difference the test requires to be found.
 """
 
 from __future__ import annotations
@@ -78,7 +73,7 @@ def test_a_dropped_piece_counts_as_a_difference() -> None:
 
 
 def test_a_resegmented_text_counts_as_a_difference() -> None:
-    """The same pieces in a different arrangement is exactly what B1 exists to catch."""
+    """The same pieces in a different arrangement count as a difference."""
     orig = StubProcessor({"split": [4, 5]})
     pruned = StubProcessor({"split": [3]})
 

@@ -3,9 +3,6 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  * @file Tests for {@linkcode buildDiskStorage} — the on-disk `axios-cache-interceptor` storage.
- *
- *   The two rules with history behind them get dedicated, mutation-proved coverage: validate before
- *   writing, and write atomically under a per-write-unique temp name.
  */
 
 import { APIClient } from "@mailwoman/core/api/APIClient"
@@ -108,17 +105,15 @@ describe("buildDiskStorage: round trip", () => {
 		expect(await directoryNames(directory.path)).toHaveLength(0)
 		expect((await storage.get("in-flight")).state).toBe("loading")
 
-		// And a separate instance (a separate process, in production) sees a clean miss
+		// A separate instance (a separate process, in production) must see a clean miss
 		// rather than a `loading` marker it can never resolve.
 		expect((await buildDiskStorage({ directory: directory.path }).get("in-flight")).state).toBe("empty")
 	})
 
 	it("keeps a key continuously visible across the write, never showing a gap", async () => {
-		// The `loading` marker has to be replaced by the real value in one step.
-		// Clearing it before the file lands leaves the key in neither place,
-		// and a concurrent reader gets `empty` for a response already in hand —
-		// measured as 3 dispatches for 3 concurrent requests to one URL through `APIClient`,
-		// i.e. the cache interceptor's stampede guard fully defeated.
+		// The `loading` marker must be replaced by the real value in one step: clearing it
+		// before the file lands leaves the key in neither place, and a concurrent reader gets
+		// `empty` for a response already in hand, defeating the cache interceptor's stampede guard.
 		const storage = buildDiskStorage({ directory: directory.path })
 
 		await storage.set("k", { state: "loading", previous: "empty" })
@@ -148,8 +143,6 @@ describe("buildDiskStorage: round trip", () => {
 
 describe("buildDiskStorage: validate BEFORE writing", () => {
 	it("never writes an entry the configured validator rejects, and the next read is a clean miss", async () => {
-		// The historical failure: a 200 carrying an html error page was cached under a permanent TTL,
-		// so every later request replayed the poisoned entry forever with no self-healing path.
 		const storage = buildDiskStorage({
 			directory: directory.path,
 			validate: (value: NotEmptyStorageValue) => typeof value.data?.data !== "string",
@@ -160,7 +153,6 @@ describe("buildDiskStorage: validate BEFORE writing", () => {
 		expect(await directoryNames(directory.path)).toHaveLength(0)
 		expect((await storage.get("poisoned")).state).toBe("empty")
 
-		// Self-heals: a later, valid response for the same key caches normally.
 		await storage.set("poisoned", cachedValue({ ok: true }))
 		expect(await directoryNames(directory.path)).toHaveLength(1)
 	})
@@ -184,10 +176,8 @@ describe("buildDiskStorage: validate BEFORE writing", () => {
 	})
 
 	it("refuses a non-finite ttl, which JSON would silently turn into an already-expired entry", async () => {
-		// `JSON.stringify(Infinity)` is `"null"`, and `null` reads back as 0 in the
-		// interceptor's `createdAt + ttl < Date.now()` expiry test.
-		// So "cache forever" would round-trip into "expired the instant it is read".
-		// Rejecting loudly beats caching no entry.
+		// `JSON.stringify(Infinity)` is `"null"`, which reads back as 0 in the interceptor's
+		// `createdAt + ttl < Date.now()` expiry test, so "cache forever" would round-trip into already-expired.
 		const storage = buildDiskStorage({ directory: directory.path })
 
 		await storage.set("forever", cachedValue({ immutable: true }, Number.POSITIVE_INFINITY))
@@ -207,12 +197,9 @@ describe("buildDiskStorage: validate BEFORE writing", () => {
 })
 
 describe("buildDiskStorage: atomic write with a per-write-unique temp name", () => {
-	// The per-write-unique temp name is required, and a deterministic one is the tempting mistake.
-	// With a fixed `${finalPath}.building`, two writers racing on the same key
-	// target the same temp file: the first `rename()` moves it away and the second
-	// gets a raw enoent for a response that had already succeeded (reproduces 6/6),
-	// and with large bodies the interleaved writes can also leave a corrupt-but-parseable
-	// entry (2/10). 10 rounds at 200KB, two independent storage instances.
+	// A per-write-unique temp name is required: with a fixed `${finalPath}.building`,
+	// two writers racing on the same key target the same temp file, and the second
+	// gets a raw enoent for a response that had already succeeded.
 	it("never throws and never corrupts when two independent writers race on the same key", async () => {
 		const ROUNDS = 10
 		const BODY_BYTES = 200_000
@@ -230,8 +217,8 @@ describe("buildDiskStorage: atomic write with a per-write-unique temp name", () 
 
 			const added = (await directoryNames(directory.path)).filter((name) => !before.has(name))
 
-			// Exactly one: not zero (both writes vanished), not two (an orphaned `.building` file
-			// left behind alongside the final one — the old bug's enoent path did exactly that).
+			// Exactly one new file: not zero (both writes vanished), not two
+			// (an orphaned `.building` left beside the final one).
 			expect(added).toHaveLength(1)
 
 			const entry = await readLocalJSONFile<CachedStorageValue>(directory.path(added[0]!))
@@ -251,10 +238,9 @@ describe("buildDiskStorage: atomic write with a per-write-unique temp name", () 
 
 describe("buildDiskStorage: a failed cache write is a cache miss, not a request failure", () => {
 	/**
-	 * Make `directory.path` unwritable and report whether it took.
-	 *
-	 * Running as root defeats mode bits entirely, and a test that silently passes
-	 * because it could not reproduce the condition is worse than one that says so.
+	 * Make `directory.path` unwritable and report whether it took, because running
+	 * as root defeats mode bits and a test that silently passes without reproducing
+	 * the condition is worse than one that says so.
 	 */
 	async function makeUnwritable(): Promise<boolean> {
 		await changeMode(directory.path, 0o500)
@@ -284,7 +270,6 @@ describe("buildDiskStorage: a failed cache write is a cache miss, not a request 
 
 			await expect(storage.set("k", cachedValue({ v: 1 }))).resolves.toBeUndefined()
 
-			// And the key reads back as a plain miss rather than as a half-written entry.
 			expect((await storage.get("k")).state).toBe("empty")
 		} finally {
 			await restore()
@@ -292,12 +277,9 @@ describe("buildDiskStorage: a failed cache write is a cache miss, not a request 
 	})
 
 	it("leaves a SUCCESSFUL response intact through APIClient when the cache write fails", async () => {
-		// The interface, end to end: `axios-cache-interceptor` awaits `storage.set` inside its response
-		// `onFulfilled`, so a throwing write rejects a request whose http response already succeeded.
-		// It escapes as a bare `Error` — no `status` — which `isTransientResourceError` reads
-		// as false, so a caller is told the failure is permanent and drops the work.
-		// Any filesystem error does this.
-		// Reproduced here with a `0o500` parent.
+		// `axios-cache-interceptor` awaits `storage.set` inside its response `onFulfilled`,
+		// so a throwing write rejects a request whose HTTP response already succeeded as a
+		// bare `Error` with no `status`, which `isTransientResourceError` reads as permanent.
 		if (!(await makeUnwritable())) {
 			await restore()
 			throw new Error("could not make the cache directory.path unwritable (running as root?) — test cannot reproduce")
@@ -327,8 +309,6 @@ describe("buildDiskStorage: a failed cache write is a cache miss, not a request 
 	})
 
 	it("keeps three concurrent requests consistent when the cache cannot be written", async () => {
-		// The same repro showed one rejection and two successes for the same response.
-		// A request's outcome depending on whether it happened to be the one that lost a cache-write race.
 		if (!(await makeUnwritable())) {
 			await restore()
 			throw new Error("could not make the cache directory.path unwritable (running as root?) — test cannot reproduce")

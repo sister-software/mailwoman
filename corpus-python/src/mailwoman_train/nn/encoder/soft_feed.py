@@ -1,11 +1,11 @@
 """One soft-feed channel: how it is built, and how it reaches the token representations.
 
 Five channels — the postcode anchor, the gazetteer, the country lexicon, the street type and the
-locality surface — are the same shape and differ only in feature width. Both halves live here
-because expressing that five times is how the sixth gets built slightly differently.
+locality surface — are the same shape and differ only in feature width, so both halves live here
+rather than being expressed five times.
 
-Pure functions over tensors and modules: neither reads the encoder. That is what lets the
-construction order stay visible at the one place that decides it, `model.__init__`.
+Pure functions over tensors and modules: neither reads the encoder, which keeps construction order
+visible at the one place that decides it, `model.__init__`.
 """
 
 from __future__ import annotations
@@ -21,10 +21,10 @@ def soft_feed_channel(
 ) -> tuple[nn.Linear | None, nn.Parameter | None]:
     """One soft-feed channel's projection and learned cue vector, or a pair of Nones.
 
-    A disabled channel must construct no projection at all rather than construct-and-discard. `_init_weights`
-    re-initializes by walking `self.parameters()`, which yields parameters in registration order
-    and draws from the global RNG for each. Therefore, an extra registered module shifts the initial
-    weights of every parameter registered after it.
+    A disabled channel must construct no projection at all rather than construct-and-discard:
+    `_init_weights` re-initializes by walking `self.parameters()` in registration order and draws
+    from the global RNG for each, so an extra registered module shifts the initial weights of every
+    parameter registered after it.
     """
     if not enabled:
         return None, None
@@ -46,14 +46,14 @@ def inject_soft_feed(
     """Add one soft-feed channel to the token representations.
 
     Every channel is the same additive form: `h_i + c_i · (W · features_i + cue)`. The confidence
-    scaling is what keeps a channel continuous rather than a switch. A token with no clue has
-    c=0 and contributes no signal, so an encoder given no features computes what an encoder
-    built without the channel computes.
+    scaling is what keeps a channel continuous rather than a switch: a token with no clue has c=0
+    and contributes no signal, so an encoder given no features computes what an encoder built
+    without the channel computes.
 
-    Absent features on an ENABLED channel are zeros, which is the well-defined "no clue anywhere"
-    inference path. Features supplied for a DISABLED channel raise: that combination means the
-    caller built the wrong encoder, and silently dropping the evidence they passed would train or
-    serve a model that ignores half its input.
+    Absent features on an ENABLED channel are zeros, the well-defined "no clue anywhere" inference
+    path. Features supplied for a DISABLED channel raise: that combination means the caller built
+    the wrong encoder, and silently dropping the evidence they passed would train or serve a model
+    that ignores half its input.
 
     Returns the updated representations and the projected vector, which the postcode anchor needs
     for its second, pooled injection.

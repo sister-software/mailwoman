@@ -3,16 +3,14 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The closed plan catalog: code rather than Stripe metadata and not client input. A Price outside it mints no license. The Price
- *   ids come from `shop/ids.json` by the environment's Stripe mode, since sandbox and production hold different Stripe
- *   objects for the same two plans.
+ * The closed plan catalog: a Price outside it mints no license, and the Price ids come from `shop/ids.json` by the environment's Stripe mode, since sandbox and production hold different Stripe objects for the same two plans.
  */
 
 import type { LicenseWorkerEnv } from "#env"
 import { SHOP_IDS } from "#shop/ids"
 
 /**
- * Days past the paid period's end a token stays valid, the same on every plan.
+ * Days past the paid period's end a token stays valid.
  */
 export const GRACE_DAYS = 14
 
@@ -21,10 +19,6 @@ export interface CommercialPlan {
 	stripePriceID: string
 	scope: "all"
 	terms: "LicenseRef-Commercial"
-	/**
-	 * Days past the paid period's end the token stays valid, so a renewal that
-	 * lands late does not lapse a working install.
-	 */
 	graceDays: typeof GRACE_DAYS
 }
 

@@ -1,8 +1,8 @@
 """Talking to the API, and checking what comes back.
 
-Every generated row passes `validate_components` before it is written: the surface-form invariant
-(each component value is an exact substring of the raw address) is the one guarantee a synthetic
-row carries, and a model that violates it produces a row that trains a span pointing at no token.
+`validate_components` enforces the surface-form invariant every generated row must carry: each
+component value is an exact substring of the raw address, so a row that violates it would train a
+span pointing at no token.
 """
 
 from __future__ import annotations
@@ -22,11 +22,7 @@ LICENSE_LABEL = "Synthetic (DeepSeek-v4-flash, AGPL-compatible)"
 
 
 def require_api_key() -> str:
-    """The DeepSeek key, or a refusal naming the variable.
-
-    Every generation call needs it, so failing at the first prompt rather than after the seeds are
-    loaded keeps the message next to the cause.
-    """
+    """The DeepSeek key, or a refusal naming the variable."""
     api_key = private().deepseek_api_key
     if not api_key:
         raise RuntimeError("DEEPSEEK_API_KEY is not set; generation needs it")
@@ -34,7 +30,7 @@ def require_api_key() -> str:
 
 
 def deepseek_call(body: dict[str, Any], api_key: str, max_retries: int = 5) -> dict[str, Any]:
-    """POST one chat-completion. Retries 429/5xx with exponential backoff."""
+    """POST one chat-completion, retrying 429/5xx with exponential backoff."""
     backoff = 2.0
     last_exc: Exception | None = None
     for _attempt in range(max_retries):
@@ -80,7 +76,7 @@ def parse_jsonl_response(content: str) -> list[dict[str, Any]]:
 
 
 def validate_components(raw: str, comps: dict[str, str]) -> tuple[bool, str | None]:
-    """Substring-match validation. Returns (ok, reason_if_not_ok)."""
+    """Validate that each component value is a substring of `raw`, returning `(ok, reason_if_not_ok)`."""
     if not isinstance(comps, dict) or not comps:
         return False, "no-components"
     for tag, val in comps.items():

@@ -1,11 +1,9 @@
 """Checks that the `modal run` command in each recipe header still resolves.
 
-A header comment is never executed, so these tests check that the launcher module, the named
-recipe, the selected function and the staged corpus version all still exist.
-
-Only `modal run` commands are checked. A header can also carry a local
-`python -m mailwoman_train train --config <path>` command, and its `--config` takes a filesystem
-path instead of the bare filename the launcher expects.
+These tests check that the launcher module, the named recipe, the selected function and the staged
+corpus version all still exist. Only `modal run` commands are checked: a header's local
+`python -m mailwoman_train train --config <path>` command takes a filesystem path instead of the
+bare filename the launcher expects.
 """
 
 from __future__ import annotations
@@ -23,22 +21,21 @@ from tests import paths
 CONFIGS = paths.CONFIGS
 ENTRY_POINT = paths.PACKAGE_ROOT / "launch" / "train_remote.py"
 
-#: A backslash line continuation inside a comment. The tests join these lines so that a command
-#: split across lines keeps its `--config` argument.
+#: A backslash line continuation inside a comment, joined so a command split across lines keeps
+#: its `--config` argument.
 CONTINUATION = re.compile(r"\\\n#\s*")
 
-#: `modal run` followed by arguments. The required whitespace skips prose mentions such as
-#: "`modal run`." where a backtick follows immediately.
+#: `modal run` followed by arguments; the required whitespace skips prose mentions where a
+#: backtick follows immediately.
 MODAL_RUN = re.compile(r"modal run\s+([^\n`]+)")
 
-#: Mentions of `modal volume put`, and the subset that warns against it. Any other mention reads as
-#: an instruction to use it.
+#: Mentions of `modal volume put`, and the subset that warns against it; any other mention reads
+#: as an instruction to use it.
 BLIND_STAGING = re.compile(r"modal volume put\b")
 WARNED_AGAINST = re.compile(r"\bnot `?modal volume put\b", re.IGNORECASE)
 
 NAMED_CONFIG = re.compile(r"--config\s+(\S+)")
 NAMED_VERSION = re.compile(r"::sync\s+--version\s+(\S+)")
-#: The function a command selects with `::`.
 NAMED_FUNCTION = re.compile(r"launch\.train_remote::([A-Za-z_][A-Za-z_0-9]*)")
 
 RECIPES = sorted(CONFIGS.glob("*.yaml"))
@@ -46,11 +43,7 @@ PRESENT = {path.name for path in RECIPES}
 
 
 def _launchable() -> set[str]:
-    """Return the function names that `launch.train_remote` exports in `__all__`.
-
-    This parses the module instead of importing it because the module imports the Modal SDK, which
-    this checkout does not install.
-    """
+    """Return the function names that `launch.train_remote` exports in `__all__`, parsed rather than imported because the module imports the Modal SDK, which this checkout does not install."""
     tree = ast.parse(ENTRY_POINT.read_text(encoding="utf-8"))
     for node in tree.body:
         if isinstance(node, ast.Assign) and any(getattr(t, "id", "") == "__all__" for t in node.targets):
@@ -78,11 +71,7 @@ def test_some_recipe_carries_a_modal_command() -> None:
 
 @pytest.mark.parametrize("recipe", RECIPES, ids=lambda p: p.name)
 def test_the_launcher_is_named_as_a_module(recipe: Path) -> None:
-    """Require `-m launch.train_remote` in every `modal run` command.
-
-    Modal imports a file path as a top-level module, so the launcher's relative imports fail when
-    the command passes a file path.
-    """
+    """Require `-m launch.train_remote` in every `modal run` command; Modal imports a file path as a top-level module, so the launcher's relative imports fail."""
     for arguments in _modal_commands(recipe):
         assert "-m launch.train_remote" in arguments, (
             f"{recipe.name}: `modal run {arguments}` does not name the launcher as a module"
@@ -91,13 +80,10 @@ def test_the_launcher_is_named_as_a_module(recipe: Path) -> None:
 
 @pytest.mark.parametrize("recipe", RECIPES, ids=lambda p: p.name)
 def test_every_named_recipe_exists(recipe: Path) -> None:
-    """Require each `--config` value to be the filename of a recipe under `configs/`.
-
-    The launcher joins `--config` onto its configs directory, so a path finds no file.
-    """
+    """Require each `--config` value to be the filename of a recipe under `configs/`; the launcher joins `--config` onto its configs directory, so a path finds no file."""
     for arguments in _modal_commands(recipe):
         for named in NAMED_CONFIG.findall(arguments):
-            if named.startswith("<"):  # A `<placeholder>` is left for the reader to fill in.
+            if named.startswith("<"):  # A `<placeholder>` is the reader's to fill in.
                 continue
             assert named in PRESENT, f"{recipe.name}: --config {named} names no file under configs/"
 
@@ -117,9 +103,9 @@ def test_every_selected_function_can_be_launched(recipe: Path) -> None:
 def test_no_recipe_tells_the_reader_to_stage_blind(recipe: Path) -> None:
     """Allow `modal volume put` in a recipe only inside a warning against it.
 
-    A file written with `modal volume put` is invisible to a mounted container even after
-    `vol.reload()`, so the run trains on stale data and still reports success. A line passes when
-    every mention is preceded by "not".
+    A file written that way is invisible to a mounted container even after `vol.reload()`, so the
+    run trains on stale data and still reports success. A line passes when every mention is
+    preceded by "not".
     """
     for line in recipe.read_text(encoding="utf-8").splitlines():
         mentions = len(BLIND_STAGING.findall(line))

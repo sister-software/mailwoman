@@ -3,22 +3,15 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mailwoman eval semantic-utility-probe` — the pre-registered geographic-model semantic-utility probe
- *   (#1928). Runs the frozen target and control rows through the same pipeline construction the POI
- *   query board uses, grades them with the board's own `gradeCase`, and prints the measured counts
- *   beside the frozen bars.
+ *   Rows, comparator, metric arithmetic, baseline, and thresholds all come from `probe-definition.json`, which the loader
+ *   refuses to hand over if its content hash has moved.
  *
- *   The command chooses no row. Rows, comparator, metric arithmetic, baseline and thresholds all come
- *   from `probe-definition.json`, which the loader refuses to hand over if its content hash has moved.
- *   `--arm` labels which run a receipt describes; `--out` writes the receipt for the decision record.
+ *   `--semantic-observation` builds the one semantic observation route and injects it into the pipeline this run
+ *   constructs; without it the run is the un-injected pipeline whatever `--arm` is called, and the receipt records which
+ *   of the two happened because a dropped route and a route that changed no answer produce the same numbers.
  *
- *   `--semantic-observation` is what makes the second arm a second arm: it builds the one route (#1929)
- *   and injects it into the pipeline this run constructs. Without it the run is the un-injected pipeline,
- *   whatever `--arm` is called — and the receipt records which of the two actually happened, because a
- *   route dropped on the way in and a route that changed no answer produce the same numbers.
- *
- *   Report-only by design: the exit code is non-zero only when the harness broke — a moved ruler, an
- *   unresolved control row, a missing database. A recorded stop-redesign is a result rather than a failure.
+ *   Report-only by design: the exit code is non-zero only when the harness broke, so a recorded stop-redesign is a result
+ *   rather than a failure.
  */
 
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"

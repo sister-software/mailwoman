@@ -21,15 +21,10 @@ import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandT
 import { buildSHA, stampLayerManifest } from "#gazetteer-pipeline/stamp-manifest"
 
 /**
- * The method label written to the `interp_calibration` row.
- *
- * Update it when the multipliers in `interp-calibration.ts` are re-measured.
+ * Update when the multipliers in `interp-calibration.ts` are re-measured.
  */
 const CALIBRATION_METHOD = "split-conformal:2026-06-14"
 
-/**
- * The state FIPS code for each state abbreviation, used to select county files in `--edges-dir`.
- */
 const STATE_FIPS: Record<string, string> = {
 	VT: "50",
 	TX: "48",
@@ -85,10 +80,8 @@ const STATE_FIPS: Record<string, string> = {
 }
 
 /**
- * The command specification for `mailwoman situs interpolation-database`.
- *
- * The command builds a per-state street-segment database from TIGER EDGES shapefiles.
- * Each address-carrying road edge yields one row per side, because the left
+ * The command specification for `mailwoman situs interpolation-database`:
+ * each address-carrying road edge yields one row per side, because the left
  * and right sides carry independent ranges and ZIP codes.
  */
 export const spec = {
@@ -105,9 +98,6 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-/**
- * Parses an all-digit house number, and returns null for hyphenated or alphanumeric values.
- */
 function parseHn(raw: unknown): number | null {
 	if (raw === null || raw === undefined) return null
 	const s = String(raw).trim()
@@ -187,7 +177,6 @@ const SitusInterpolationDatabase: CommandComponent<typeof spec> = ({ options }) 
 		console.error(`${shapefiles.length} county shapefiles for ${STATE}`)
 
 		await makeDirectories(dirname(finalOut))
-		// The build writes to a temporary path and swaps it into place on success.
 		const tmpOut = `${finalOut}.building-${process.pid}.db`
 
 		for (const sfx of ["", "-wal", "-shm"]) {
@@ -197,8 +186,7 @@ const SitusInterpolationDatabase: CommandComponent<typeof spec> = ({ options }) 
 		const parityCounts = { odd: 0, even: 0, mixed: 0 }
 		let sides = 0
 		let skippedNonNumeric = 0
-		// The database stores the state's radius multiplier, or the default for an unmeasured
-		// state, and `StreetInterpolator` reads it when it opens the file.
+		// `StreetInterpolator` reads this multiplier when it opens the file.
 		const measuredMultiplier = INTERP_RADIUS_CALIBRATION.byRegion[STATE]
 
 		const calibration = {
@@ -230,7 +218,6 @@ const SitusInterpolationDatabase: CommandComponent<typeof spec> = ({ options }) 
 			for (const shp of shapefiles) {
 				const countyFips = basename(shp).match(/tl_\d+_(\d{5})_edges/)?.[1] ?? "unknown"
 
-				// The query keeps only road edges that carry addresses, and returns geometry as GeoJSON text.
 				const result = await duck.runAndReadAll(`
 							SELECT FULLNAME AS name, LFROMADD, LTOADD, RFROMADD, RTOADD, ZIPL, ZIPR,
 								ST_AsGeoJSON(geom) AS geojson
@@ -310,8 +297,7 @@ const SitusInterpolationDatabase: CommandComponent<typeof spec> = ({ options }) 
 			name: `interpolation-us-${STATE.toLowerCase()}`,
 			version: options.release,
 			schemaVersion: 1,
-			// TIGER/Line is public domain.
-			// The layer is build-local only because no artifact publishes it.
+			// Build-local only: no artifact publishes it.
 			tier: LayerTier.BuildLocal,
 			license: "public-domain",
 			attribution: "US Census Bureau TIGER/Line",

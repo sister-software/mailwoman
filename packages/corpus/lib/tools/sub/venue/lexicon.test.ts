@@ -3,13 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Pins the sub-venue lexicon builder. Everything here runs over synthetic inputs — the builder is a
- *   pure function of parsed data by design, so no fixture on disk and no network is involved.
- *
- *   The tests that matter most are the drift pin (the seed against `neural/venue-structure.ts`, which
- *   `@mailwoman/corpus` cannot import — see the module docstring), the name-harvest gate, which is the
- *   filter standing between this table and 250,000 German and British street names, and the
- *   attribution pin, which is the wave-1 defect that put `west → platform` in the shipped artifact.
+ * Pins the sub-venue lexicon builder.
+ * Everything here runs over synthetic inputs, because the builder is a pure function of parsed data.
  */
 
 import {
@@ -55,9 +50,8 @@ const wikidataFixture = {
 				label: { value: "空港ターミナル" },
 				kind: { value: "label" },
 			},
-			// A second Japanese label, which is what makes the shared-substring head derivation possible at all.
-			// A group of one has no peer to share with.
-			// The real pull carries five.
+			// A second Japanese label, which makes the shared-substring derivation possible:
+			// a group of one has no peer to share with.
 			{
 				item: { value: "http://www.wikidata.org/entity/Q849706" },
 				lang: { value: "ja" },
@@ -99,10 +93,8 @@ function surface(partial: Partial<SubVenueSurface> & Pick<SubVenueSurface, "phra
 }
 
 test("SHIPPED_DESIGNATOR_SEED mirrors neural/venue-structure.ts's VENUE_STRUCTURE_DESIGNATORS", () => {
-	// the drift PIN.
-	// `@mailwoman/corpus` does not depend on `@mailwoman/neural`, so this list is a copy
-	// and the copy is what this test exists to catch.
-	// If `VENUE_STRUCTURE_DESIGNATORS` gains or loses a term, update both and update this literal.
+	// The drift pin: `@mailwoman/corpus` does not depend on `@mailwoman/neural`,
+	// so this list is a copy and the copy is what this test exists to catch.
 	expect(SHIPPED_DESIGNATOR_SEED.map((d) => d.id).toSorted()).toEqual([
 		"arcade",
 		"building",
@@ -117,12 +109,9 @@ test("SHIPPED_DESIGNATOR_SEED mirrors neural/venue-structure.ts's VENUE_STRUCTUR
 })
 
 test("SHIPPED_DESIGNATOR_SEED's modifierEligible set matches MODIFIER_ELIGIBLE_STRUCTURE_DESIGNATORS", () => {
-	// `gate` and `building` are excluded upstream because "East Gate"
-	// and "Building Society Place" are real GB streets.
-	// Measured on the GB extract 2026-08-04: the token `gate` appears in 890 named
-	// transport features — Park Gate, Notting Hill Gate, Queens Gate, Lancaster Gate,
-	// North Gate — and essentially none of them is a sub-venue.
-	// The exclusion is right and this pins it.
+	// `gate` and `building` are excluded upstream because "East Gate" and "Building
+	// Society Place" are real GB streets; the GB extract's 890 `gate` transport
+	// features are essentially none of them sub-venues.
 	expect(
 		SHIPPED_DESIGNATOR_SEED.filter((d) => d.modifierEligible)
 			.map((d) => d.id)
@@ -167,8 +156,8 @@ test("CONCEPT_QIDS covers every concept the wikidata fetch pulls", () => {
 test("normalizeSurface folds case for bicameral scripts and leaves others alone", () => {
 	expect(normalizeSurface("  Flughafen   Terminal ")).toBe("flughafen terminal")
 	expect(normalizeSurface("Терминал")).toBe("терминал")
-	// Japanese and Chinese have no case to fold; `toLowerCase` would be a no-op here
-	// but the guard is what keeps a mixed string like `Terminal ターミナル` from being half-folded.
+	// Japanese and Chinese have no case to fold; the guard is what keeps a mixed
+	// string like `Terminal ターミナル` from being half-folded.
 	expect(normalizeSurface("空港ターミナル")).toBe("空港ターミナル")
 	expect(normalizeSurface("航站楼")).toBe("航站楼")
 })
@@ -187,7 +176,6 @@ test("surfacesFromWikidata maps QIDs to designators and drops untagged and unkno
 })
 
 test("surfacesFromWikidata: nothing it produces is curated", () => {
-	// The required invariant.
 	// A Wikidata class label is a concept name rather than an addressed designator
 	// (`puerta de embarque` vs `Puerta`), so promotion is a human act.
 	expect(surfacesFromWikidata(wikidataFixture).every((s) => !s.curated)).toBe(true)
@@ -214,16 +202,15 @@ test("nameContainsSurfaces matches whole tokens for Latin script, not substrings
 	expect(nameContainsSurfaces("Terminal E (Untere Ebene)", index)).toEqual(["terminal"])
 	expect(nameContainsSurfaces("South Terminal", index)).toEqual(["terminal"])
 	expect(nameContainsSurfaces("Terminal 3, Pier 6", index)).toEqual(["terminal"])
-	// The compound miss, documented and deliberate: admitting suffix matches would fire on
-	// every -gate/-hall compound in Germanic and Nordic street naming (Briggate, Kirkgate).
+	// The compound miss is deliberate: admitting suffix matches would fire on every
+	// -gate/-hall compound in Germanic and Nordic street naming (Briggate, Kirkgate).
 	expect(nameContainsSurfaces("Nordterminal", index)).toEqual([])
 	expect(nameContainsSurfaces("Briggate", index)).toEqual([])
-	// And the whole point of the gate: an ordinary venue name contributes no signal.
 	expect(nameContainsSurfaces("Otto Lilienthal Flughafen Berlin Tegel", index)).toEqual([])
 })
 
 test("nameContainsSurfaces falls back to substring matching for Han and Kana", () => {
-	// The Japanese harvest depends entirely on this branch: `第1ターミナル` has no word boundaries,
+	// The Japanese harvest depends on this branch: `第1ターミナル` has no word boundaries,
 	// so a token split returns the whole string and matches no entry.
 	const index = buildSurfaceIndex([
 		surface({ phrase: "ターミナル", recordID: "terminal", lang: "ja" }),
@@ -232,16 +219,10 @@ test("nameContainsSurfaces falls back to substring matching for Han and Kana", (
 
 	expect(nameContainsSurfaces("第1ターミナル", index)).toEqual(["ターミナル"])
 	expect(nameContainsSurfaces("成田空港第2ターミナル", index)).toEqual(["ターミナル"])
-	// A Latin name is unaffected by the branch existing.
 	expect(nameContainsSurfaces("North Terminal", index)).toEqual(["terminal"])
 })
 
 test("extractAttestedPhrases attributes a hit to the record the PHRASE names, not the row's designator", () => {
-	// the wave-1 defect.
-	// A British bus stop is tagged `public_transport=platform` and named "Village Hall"
-	// or "West Kensington"; wave 1 filed those as surfaces of `platform`, which is how
-	// the shipped artifact came to claim `west → platform` and `hall → platform`. 108
-	// of its 133 OSM-derived surfaces were mis-attributed this way.
 	const index = buildSurfaceIndex([
 		surface({ phrase: "hall", recordID: "hall" }),
 		surface({ phrase: "west", recordID: "west", recordKind: "modifier" }),
@@ -261,8 +242,8 @@ test("extractAttestedPhrases attributes a hit to the record the PHRASE names, no
 		["west", "west", "modifier"],
 	])
 
-	// And the row's own designator survives as context, which is what makes the confound board
-	// possible: a `hall` seen on a platform is a bus stop, a `hall` seen on a terminal is a hall.
+	// The row's own designator survives as context, which makes the confound board possible:
+	// a `hall` seen on a platform is a bus stop, a `hall` seen on a terminal is a hall.
 	expect(surfaces.every((s) => s.context["platform"] === 1)).toBe(true)
 })
 
@@ -333,8 +314,8 @@ test("extractAttestedPhrases harvests localized names under their own language t
 })
 
 test("extractAttestedPhrases stamps the source family it was given", () => {
-	// The reason Overture needed a parameter rather than the row shape being adapted: the shape fits,
-	// the `osm:name` stamp did not, and a mislabelled ODbL provenance is not a cosmetic error.
+	// Overture needed a parameter rather than a row-shape adaptation: the shape fits,
+	// but the `osm:name` stamp did not, and a mislabelled ODbL provenance is not a cosmetic error.
 	const index = buildSurfaceIndex([surface({ phrase: "concourse", recordID: "concourse" })])
 
 	const { surfaces } = extractAttestedPhrases([{ designatorID: "terminal", name: "Concourse B" }], index, {
@@ -363,10 +344,6 @@ test("deriveHeadNounSurfaces pulls the cognate out of a Latin encyclopaedic labe
 })
 
 test("deriveHeadNounSurfaces does not mistake the modifier half for the head", () => {
-	// The measured failure of the earlier rule.
-	// Matching against any single-token surface of the record derived `universitario`
-	// as a head noun of `campus`, because Dutch `universiteit` is one.
-	// The cognate test against the designator's own id rejects it and keeps `campus`.
 	const derived = deriveHeadNounSurfaces([
 		surface({ phrase: "universiteit", recordID: "campus", lang: "nl" }),
 		surface({ phrase: "campus universitario", recordID: "campus", lang: "es" }),
@@ -376,10 +353,8 @@ test("deriveHeadNounSurfaces does not mistake the modifier half for the head", (
 })
 
 test("deriveHeadNounSurfaces holds the cognate floor at five folded characters", () => {
-	// Both sides of the floor, and neither is reachable from the committed table.
-	// No surface there sits on the boundary, so without this a change to the
-	// constant moves the artifact in silence.
-	// `campo` shares four folded characters with `campus` and means field.
+	// Neither side of the floor is reachable from the committed table, so without this
+	// a change to the constant moves the artifact in silence.
 	expect(deriveHeadNounSurfaces([surface({ phrase: "campo sportivo", recordID: "campus", lang: "it" })])).toEqual([])
 
 	// `satélite` shares five with `satellite` and is the addressed form.
@@ -392,9 +367,7 @@ test("deriveHeadNounSurfaces holds the cognate floor at five folded characters",
 })
 
 test("deriveHeadNounSurfaces finds the Japanese head by shared substring", () => {
-	// `ターミナル` is in none of the Wikidata labels on its own.
-	// Every one of them is a compound — and it is the form Japanese addresses actually carry (`第1ターミナル`).
-	// No other step in the pipeline can produce it.
+	// `ターミナル` is in none of the Wikidata labels on its own, and no other step in the pipeline can produce it.
 	const derived = deriveHeadNounSurfaces([
 		surface({ phrase: "ターミナルビル", recordID: "terminal", lang: "ja" }),
 		surface({ phrase: "旅客ターミナル", recordID: "terminal", lang: "ja" }),
@@ -449,10 +422,8 @@ test("applyPromotions curates only the matching designator, phrase and locale", 
 })
 
 test("applyPromotions refuses a region-free surface when the same language has a rejection", () => {
-	// The `pier` case.
-	// Promoted for en-GB, rejected for en-US.
-	// Without this guard the en-GB decision curates the region-free English surface
-	// and hands `Pier 1 Imports` what en-US was refused.
+	// The `pier` case: without this guard the en-GB promotion curates the region-free
+	// English surface and hands `Pier 1 Imports` what en-US was refused.
 	const surfaces = [
 		surface({ phrase: "pier", recordID: "pier", lang: "en", region: "", source: "seed" }),
 		surface({ phrase: "pier", recordID: "pier", lang: "und", region: "GB", source: "osm:name" }),
@@ -504,8 +475,7 @@ test("applyPromotions reaches a region-free Wikidata surface through the locale'
 })
 
 test("every committed promotion carries a confound note and a census", () => {
-	// A bare number is not a board.
-	// This is the rule the ledger exists to enforce, and it is cheap enough to enforce mechanically.
+	// A bare number is not a board; this is the rule the ledger exists to enforce.
 	for (const promotion of SUBVENUE_PROMOTIONS) {
 		expect(promotion.confoundNote.length, `${promotion.designatorID}/${promotion.locale}`).toBeGreaterThan(0)
 		expect(promotion.census.length, `${promotion.designatorID}/${promotion.locale}`).toBeGreaterThan(0)
@@ -517,9 +487,7 @@ test("buildSubVenueLexicon: the seed's English surfaces are curated, everything 
 	const table = buildSubVenueLexicon({ wikidata: wikidataFixture, harvests: [], sources: [], promotions: [] })
 	const curated = table.surfaces.filter((s) => s.curated)
 
-	// Nine shipped designators plus twelve modifiers.
-	// The six proposed designators contribute an English surface too, but uncurated —
-	// no new entry auto-promotes.
+	// The six proposed designators contribute an English surface too but uncurated, because no new entry auto-promotes.
 	expect(curated).toHaveLength(SHIPPED_DESIGNATOR_SEED.length + SHIPPED_MODIFIER_SEED.length)
 	expect(curated.every((s) => s.source === "seed")).toBe(true)
 	expect(table.surfaces.filter((s) => s.source.startsWith("wikidata")).every((s) => !s.curated)).toBe(true)
@@ -530,10 +498,8 @@ test("buildSubVenueLexicon: proposed designators land unshipped and not modifier
 	const proposed = table.designators.filter((d) => !d.shipped)
 
 	expect(proposed.map((d) => d.id)).toEqual(["airport", "hall", "pier", "platform", "satellite", "station"])
-	// `hall` is the one to watch: the token appears in 3,273 named GB transport features and
-	// 3,204 of them sit on a `public_transport=platform` — a bus stop named after a village hall.
-	// Promoting it for en-GB would be a disaster.
-	// Measured 2026-08-05.
+	// `hall` is the one to watch: the token appears in 3,273 named GB transport features and 3,204
+	// of them sit on a `public_transport=platform`, so promoting it for en-GB would be wrong.
 	expect(proposed.every((d) => !d.modifierEligible)).toBe(true)
 })
 
@@ -592,9 +558,8 @@ test("buildSubVenueLexicon: every surface points at a record that exists", () =>
 })
 
 test("buildSubVenueLexicon: a harvest can only match a phrase an EARLIER stage introduced", () => {
-	// Order is required and easy to break: head nouns are derived after Wikidata and before the harvests,
-	// because `ターミナル` has to be a surface before a Japanese extract can be searched for it.
-	// Reordering silently empties the Japanese harvest.
+	// Order is required and easy to break: head nouns are derived after Wikidata and
+	// before the harvests, and reordering silently empties the Japanese harvest.
 	const table = buildSubVenueLexicon({
 		wikidata: wikidataFixture,
 		harvests: [{ rows: [{ designatorID: "terminal", name: "第1ターミナル" }], source: "osm", region: "JP" }],

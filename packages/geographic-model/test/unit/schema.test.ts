@@ -3,18 +3,18 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The schema and its validator, exercised against the frozen first record set from the boundary record
- *   (`docs/superpowers/specs/2026-08-26-geographic-model-boundaries.md` §4): `pharmacy affords
- *   obtain_medication`, mapped onto the `@mailwoman/poi-taxonomy` `pharmacy` category.
+ * The schema and its validator, exercised against the frozen first record set from the boundary record
+ * (`docs/superpowers/specs/2026-08-26-geographic-model-boundaries.md` §4): `pharmacy affords
+ * obtain_medication`, mapped onto the `@mailwoman/poi-taxonomy` `pharmacy` category.
  *
- *   The fixtures below are typed with the package's own record types on purpose. A document assembled
- *   through `ConceptRecord`, `RelationRecord`, and the brand helpers, and then accepted by the
- *   validator, is the evidence that the schema can state the record set — a plain JSON literal cast at the
- *   end would prove only that the validator accepts some object.
+ * The fixtures are typed with the package's own record types on purpose, because a document assembled
+ * through `ConceptRecord`, `RelationRecord`, and the brand helpers and then accepted by the validator
+ * is the evidence that the schema can state the record set, where a plain JSON literal cast at the end
+ * would prove only that the validator accepts some object.
  *
- *   This file holds the whole suite rather than splitting by concern: the package interface forbids a
- *   relative import between test files, and a fixture copied into a second file is a fixture that
- *   drifts.
+ * This file holds the whole suite rather than splitting by concern, because the package interface
+ * forbids a relative import between test files and a fixture copied into a second file is a fixture
+ * that drifts.
  */
 
 import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
@@ -142,9 +142,8 @@ const derived: DerivedFactRecord = {
 }
 
 /**
- * Concepts and the one relation, with every other table empty.
- *
- * The base for the refusal cases, so an expected issue list stays short enough to state in full.
+ * Concepts and the one relation with every other table empty, the base for the refusal cases
+ * so an expected issue list stays short enough to state in full.
  */
 const minimalDocument: GeographicModelDocument = {
 	version: "0.1.0",
@@ -529,8 +528,8 @@ describe("relation refusals", () => {
 			})
 		})
 
-		// Both records declare the pairing, so both are named.
-		// Either one could be the half that is wrong, and the validator does not get to decide which.
+		// Both records declare the pairing so both are named; either could be the wrong half
+		// and the validator does not decide which.
 		expect(refusalPairs(input)).toEqual([
 			["$.relations[0].inverse", ValidationIssueCode.InverseKindsMismatch],
 			["$.relations[1].inverse", ValidationIssueCode.InverseKindsMismatch],
@@ -588,10 +587,8 @@ describe("derived-fact refusals", () => {
 
 describe("reporting every violation at once", () => {
 	/**
-	 * Nine independent defects across four records and both passes.
-	 *
-	 * The whole list is stated, because a validator that reports the first violation
-	 * and stops is the behavior this suite exists to refuse.
+	 * Nine independent defects across four records and both passes; the whole list is stated because a
+	 * validator that reports the first violation and stops is the behavior this suite exists to refuse.
 	 */
 	function ninefoldDefect(): unknown {
 		return draft(pharmacyDocument, (document) => {
@@ -622,9 +619,9 @@ describe("reporting every violation at once", () => {
 			["$.concepts[0].isA[0]", ValidationIssueCode.SelfReference],
 			["$.concepts[0].assertions[0].relation", ValidationIssueCode.UnknownRelation],
 			["$.concepts[0].assertions[0].target", ValidationIssueCode.UnknownConcept],
-			// The duplicate identifier took `obtain_medication` out of the concept table,
-			// so every record that named it now names no concept.
-			// That cascade is the reason the reference pass runs over whole tables.
+			// The duplicate identifier removed `obtain_medication` from the concept table,
+			// so every record that named it now names no concept — the cascade the
+			// whole-table reference pass exists to catch.
 			["$.observations[0].object", ValidationIssueCode.UnknownConcept],
 			["$.derivedFacts[0].object", ValidationIssueCode.UnknownConcept],
 			["$.derivedFacts[0].inputs[1].id", ValidationIssueCode.UnknownDerivationInput],

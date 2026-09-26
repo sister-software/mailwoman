@@ -1,10 +1,8 @@
-"""Full-epoch mixture audit (HANDOFF-CODEX-TO-CLAUDE §6 action 7).
+"""Full-epoch mixture audit, requested vs realized at two levels.
 
-The 250k-row prefix audits ended before any source exhausted, so they could not see the
-non-stationary sampler. ``audit_epoch_mixture.audit_mixture`` consumes a full row-limited
-epoch and reports requested vs realized source/country mix at two levels: raw DRAWS (the
-sampler's stationarity receipt) and EMITTED rows under the train augmentation policy (the
-unit the model reads — augmentable sources claim extra share of a row_limit).
+``audit_epoch_mixture.audit_mixture`` consumes a full row-limited epoch and reports raw DRAWS (the
+sampler's stationarity receipt) and EMITTED rows under the train augmentation policy (the unit the
+model reads, where augmentable sources claim extra share of a row_limit).
 """
 
 from __future__ import annotations
@@ -89,21 +87,18 @@ def test_an_admitted_country_that_draws_nothing_reads_zero_rather_than_going_abs
     """`by_country` omits a country the sampler never reached, which reads as if it was never admitted.
 
     A country at `country_weights` 1.0 whose rows sit in a row-group the sampler never opened draws
-    zero. `by_country` counts what was drawn, so that country is simply not a key in it — the same
-    shape as a country nobody admitted. Those are different findings with different repairs, and
-    #2347's stage 5 exists because the report could not tell them apart.
+    zero, so it is absent from `by_country` — the same shape as a country nobody admitted. Those
+    are different findings with different repairs.
     """
     report = _audit(_write_corpus(tmp_path), country_weights={"US": 1.0, "BE": 1.0, "BR": 1.0})
     draw = report["draw_level"]
 
-    # The corpus this fixture writes carries US rows and no other country.
     assert "BE" not in draw["by_country"]
     assert "BR" not in draw["by_country"]
 
     assert draw["admitted_countries_drawn"] == {"BE": 0, "BR": 0, "US": 400}
     assert draw["admitted_countries_drawing_nothing"] == ["BE", "BR"]
 
-    # The denominator the zeros are read against.
     assert report["meta"]["draws_realized"] == 400
 
 
@@ -129,8 +124,7 @@ def test_draw_level_windows_show_a_stationary_mixture(tmp_path: Path) -> None:
 
 
 def test_emitted_level_equals_draw_level_when_augmentation_is_off(tmp_path: Path) -> None:
-    """With every augmentation at 0 and no relabel lexicon, both passes consume the rng
-    identically, so the emitted counts are byte-equal to the draw counts."""
+    """With every augmentation at 0 and no relabel lexicon, both passes consume the rng identically, so the emitted counts equal the draw counts."""
     report = _audit(_write_corpus(tmp_path))
 
     assert report["emitted_level"]["totals"] == report["draw_level"]["totals"]
@@ -139,9 +133,7 @@ def test_emitted_level_equals_draw_level_when_augmentation_is_off(tmp_path: Path
 
 
 def test_emitted_level_counts_augmented_copies_against_the_row_budget(tmp_path: Path) -> None:
-    """Augmented copies (original + upper-cased twin at prob 1.0) fill the same row_limit
-    budget, so emitted totals still sum to ``draws`` and upper-cased twins are present,
-    the distortion the quota design must account for."""
+    """Augmented copies (original plus upper-cased twin at prob 1.0) fill the same row_limit budget, so emitted totals still sum to ``draws``; the quota design must account for that distortion."""
     report = _audit(_write_corpus(tmp_path), augment={"upper_case": 1.0})
 
     totals = report["emitted_level"]["totals"]
@@ -149,9 +141,8 @@ def test_emitted_level_counts_augmented_copies_against_the_row_budget(tmp_path: 
     assert report["emitted_level"]["augmented_share"] > 0.3
 
 
-#: Committed beside this file, captured from the code as it stood before a split. The assertions
-#: above read shares and ranges, which a reordered draw can satisfy while sampling different rows;
-#: this pins the whole report, every window and every per-source figure included.
+#: Committed beside this file and pins the whole report, since the share and range assertions above
+#: can pass while the rows behind them change.
 #:
 #: Regenerate with: uv run python -m tests.mailwoman_train.audits.test_audit_epoch_mixture
 AUGMENTED_REFERENCE = Path(__file__).parent / "epoch-mixture-reference.json"
@@ -165,7 +156,7 @@ def _pinned_report(corpus: Path) -> dict:
 
 
 def test_the_whole_report_matches_the_committed_reference(tmp_path: Path) -> None:
-    """A share stays in range while the rows behind it change. the windows and counts do not."""
+    """A share stays in range while the rows behind it change; the windows and counts do not."""
     expected = json.loads(AUGMENTED_REFERENCE.read_text())["report"]
     assert _pinned_report(_write_corpus(tmp_path)) == expected
 
@@ -173,8 +164,8 @@ def test_the_whole_report_matches_the_committed_reference(tmp_path: Path) -> Non
 def _write_reference() -> None:
     """Capture the current audit as the reference the test above compares against.
 
-    Run this only when the current code already passes against the existing reference — otherwise
-    the artifact records whatever the code does now, and the test asserts no fact.
+    Run this only when the current code already passes against the existing reference, otherwise
+    the artifact records whatever the code does now and the test asserts no fact.
     """
     import tempfile
 
@@ -223,7 +214,7 @@ def test_audit_is_deterministic_for_a_fixed_seed(tmp_path: Path) -> None:
     corpus = _write_corpus(tmp_path)
     share_a, share_b = _seeded_control_shares(corpus)
     assert share_a == share_b
-    assert random.Random(1).random() == random.Random(1).random()  # sanity on the invariant used
+    assert random.Random(1).random() == random.Random(1).random()
 
 
 def test_required_receipt_matches_source_country_and_ordered_tail(tmp_path: Path) -> None:

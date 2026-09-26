@@ -1,7 +1,7 @@
-"""Reading the two inputs: the Overture-JP parquet, and KEN_ALL for the 〒 join.
+"""Reading the two inputs: the Overture-JP parquet and KEN_ALL for the 〒 join.
 
-The eligibility filter lives in the iterator so both build passes see the identical row set — a
-filter applied only in pass 2 would desynchronize the exact-selection masks.
+The eligibility filter lives in the iterator so both build passes see the identical row set; applying
+it only in pass 2 would desynchronize the exact-selection masks.
 """
 
 from __future__ import annotations
@@ -17,8 +17,8 @@ from ....corpora.builder import MAX_FIELD_CHARS
 from ....text.normalize import normalize_text
 from ..text import JP_PREFECTURES, normalize_name, normalize_number
 
-#: Where each input sits under `$MAILWOMAN_DATA_ROOT`. Resolved after parsing rather than here: reading the
-#: root at import would raise for a caller who passes the flag and never needs it.
+#: Where each input sits under `$MAILWOMAN_DATA_ROOT`. Resolved after parsing rather than at import, so a
+#: caller who passes the flag and never needs it does not raise.
 PARQUET_PARTS = ("overture", "2026-06-17.0", "addresses-jp.parquet")
 KENALL_PARTS = ("KEN_ALL_ROME", "KEN_ALL_ROME.CSV")
 ADMIN_DB_PARTS = ("db", "wof", "admin-global-priority.db")
@@ -31,15 +31,9 @@ _AZA_PREFIX = re.compile(r"^(大字|字)")
 class KenAllIndex:
     """The 〒 join: TOWN-level first, municipality catch-all only as the fallback.
 
-    The probe joined at municipality granularity, which always returns the ``NNN-0000`` catch-all
-    Japan Post lists first . Therefore, every probe row carried a postcode whose last four digits were
-    ``0000``. Real Japanese postcodes are town-level, and KEN_ALL carries the town (``大字`` /
-    ``町``) in column 4. Joining there instead makes the trailing digits real.
-
-    The join needs one correction that is worth the measurement it took: Overture writes the ōaza
-    prefix (``字崎枝``, ``大字上田``) and KEN_ALL does not. Exact town match alone hits **17.8%**
-    of rows. retrying with a leading ``字``/``大字`` stripped takes it to **89.6%** (200k-row probe corpus,
-    2026-08-04). The remaining 10.4% falls back to the municipality catch-all, and no row misses.
+    KEN_ALL carries the town (``大字``/``町``) in column 4, and Overture writes the ōaza prefix
+    (``字崎枝``, ``大字上田``) that KEN_ALL omits, so an exact town match is retried with a leading
+    ``字``/``大字`` stripped before falling back to the municipality catch-all.
     """
 
     def __init__(self, town: dict[str, str], municipality: dict[str, str]) -> None:
@@ -65,9 +59,9 @@ class KenAllIndex:
 def load_kenall_postcodes(path: Path) -> KenAllIndex:
     """Read KEN_ALL_ROME (cp932) into the two-tier index above.
 
-    Column layout: ``postcode, prefecture-kanji, city-kanji, town-kanji, …romaji``. Town names carry
-    parenthetical annotations (``大通東（１～１３丁目）``) that are stripped, and the literal
-    ``以下に掲載がない場合`` ("if not listed below") is the municipality catch-all rather than a town.
+    Column layout: ``postcode, prefecture-kanji, city-kanji, town-kanji, …romaji``. Parenthetical town
+    annotations are stripped, and the literal ``以下に掲載がない場合`` ("if not listed below") is the
+    municipality catch-all rather than a town.
     """
     town: dict[str, str] = {}
     municipality: dict[str, str] = {}
@@ -92,23 +86,17 @@ def iter_source_rows(
 ) -> Iterator[tuple[str, str, str, str, float, float]]:
     """Yield ``(prefecture, municipality, street, number, lon, lat)`` for every eligible source row.
 
-    Eligibility, and why each rule exists — all four counts measured over the full 19,587,926 rows:
+    Eligibility, and why each rule exists:
 
-    - both address levels present + the prefecture in the canonical 47 (2 junk rows);
-    - at least one of street/number non-empty (9 rows);
-    - the number carries no comma (**35 rows**). Those are MLIT parcel AGGREGATIONS —
-      ``岡山町1154,1153,1155,…`` up to 256 characters against a single coordinate. Rendered, they
-      become one ``house_number`` span sixty parcels long, which is not a house number in any
-      register a user types;
-    - the field total fits ``max_field_chars`` (24 rows carry a number longer than 24 chars). This
-      is the STRUCTURAL guard behind the semantic one: the char path runs at S=96 units and
-      ``encode_row_units`` truncates silently, so a row that cannot fit is dropped here, counted,
-      rather than half-labelled there.
+    - both address levels present and the prefecture in the canonical 47;
+    - at least one of street/number non-empty;
+    - the number carries no comma — those are MLIT parcel AGGREGATIONS (``岡山町1154,1153,1155,…``),
+      which render as one ``house_number`` span sixty parcels long;
+    - the field total fits ``max_field_chars``. This is the structural guard behind the semantic one:
+      the char path runs at S=96 units and ``encode_row_units`` truncates silently, so a row that
+      cannot fit is dropped here, counted, rather than half-labelled there.
 
-    The filter lives in the iterator so both passes see the identical row set — a filter applied
-    only in pass 2 would desynchronize the exact-selection masks.
-
-    Normalization happens here for the same reason.
+    Normalization happens here for the same reason the filter lives in the iterator.
     """
     handle = pq.ParquetFile(parquet)
     groups = (

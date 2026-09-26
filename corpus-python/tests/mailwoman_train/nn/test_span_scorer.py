@@ -1,9 +1,4 @@
-"""#727 stage-2 Phase 1 — the semi-Markov span scorer.
-
-The two DP routines (log-partition, Viterbi) are verified against brute-force enumeration over all
-valid segmentations of a tiny input rather than smoke-tested. A dynamic program that is subtly wrong still
-trains — it just trains toward the wrong thing — so the oracle is the point.
-"""
+"""The semi-Markov span scorer, whose two DP routines (log-partition, Viterbi) are verified against brute-force enumeration over all valid segmentations rather than smoke-tested."""
 
 import torch
 
@@ -57,12 +52,10 @@ def test_segment_types_derive_from_labels_with_O_first():
     assert TYPE_TO_ID["O"] == 0
     assert "street" in TYPE_TO_ID
     assert NUM_SEGMENT_TYPES == len(SEGMENT_TYPES)
-    # every component in the BIO vocab has exactly one segment type
     assert len(set(SEGMENT_TYPES)) == len(SEGMENT_TYPES)
 
 
 def test_gold_segments_groups_B_I_into_one_segment():
-    # B-street I-street O B-locality  ->  (0,2,street) (2,1,O) (3,1,locality)
     labels = [
         LABEL_TO_ID["B-street"],
         LABEL_TO_ID["I-street"],
@@ -88,11 +81,11 @@ def test_gold_segments_stops_at_ignore_index():
 def test_gold_segments_flags_unrepresentable_when_span_exceeds_max():
     labels = [LABEL_TO_ID["B-street"]] + [LABEL_TO_ID["I-street"]] * 5
     segs, ok = gold_segments(labels, max_span=3)
-    assert ok is False  # 6-token span cannot be scored under max_span=3
+    assert ok is False
 
 
 def test_gold_segments_treats_orphan_I_as_a_segment_start():
-    # Defensive: a stray I- with no B- (corrupt row) must not crash or merge backwards.
+    # A stray I- with no B- (corrupt row) must not crash or merge backwards.
     labels = [LABEL_TO_ID["O"], LABEL_TO_ID["I-street"]]
     segs, ok = gold_segments(labels, max_span=8)
     assert ok is True
@@ -107,7 +100,6 @@ def test_span_scorer_output_shape():
 
 
 def test_span_scorer_matches_explicit_per_span_computation():
-    # The vectorised shift must equal the naive "start i, end i+l" computation.
     torch.manual_seed(0)
     scorer = SpanScorer(hidden_size=16, span_dim=8, max_span=3).eval()
     h = torch.randn(1, 5, 16)
@@ -165,7 +157,7 @@ def test_nll_is_non_negative_and_finite():
 
 
 def test_log_partition_runs_in_fp32_under_bf16_input():
-    # The bf16 CRF NaN scar: the DP must upcast regardless of ambient dtype.
+    # The DP must upcast regardless of ambient dtype, or bf16 input produces NaN.
     crf = SemiMarkovCRF(max_span=2)
     span_scores = torch.randn(1, 4, 2, NUM_SEGMENT_TYPES, dtype=torch.bfloat16)
     out = crf.log_partition(span_scores, torch.tensor([4]))
@@ -174,11 +166,10 @@ def test_log_partition_runs_in_fp32_under_bf16_input():
 
 
 def test_log_partition_respects_per_row_lengths():
-    # A padded row must score as if the padding did not exist.
     torch.manual_seed(4)
     crf = SemiMarkovCRF(max_span=2)
     full = torch.randn(1, 3, 2, NUM_SEGMENT_TYPES)
-    padded = torch.cat([full, torch.randn(1, 2, 2, NUM_SEGMENT_TYPES)], dim=1)  # (1,5,2,T)
+    padded = torch.cat([full, torch.randn(1, 2, 2, NUM_SEGMENT_TYPES)], dim=1)
     a = crf.log_partition(full, torch.tensor([3]))
     b = crf.log_partition(padded, torch.tensor([3]))
     torch.testing.assert_close(a, b, rtol=1e-5, atol=1e-5)
@@ -206,14 +197,14 @@ def test_decode_output_covers_the_sequence_exactly():
         expected_len = [6, 4][row_idx]
         covered = [i for (start, length, _) in row for i in range(start, start + length)]
         assert covered == sorted(covered)
-        assert len(covered) == len(set(covered))  # no overlap
-        assert covered == list(range(expected_len))  # no gap, exact coverage
+        assert len(covered) == len(set(covered))
+        assert covered == list(range(expected_len))
 
 
 def test_decode_never_emits_a_multi_token_O():
     crf = SemiMarkovCRF(max_span=4)
     span_scores = torch.zeros(1, 6, 4, NUM_SEGMENT_TYPES)
-    span_scores[..., O_TYPE_ID] = 100.0  # try hard to force long O segments
+    span_scores[..., O_TYPE_ID] = 100.0
     for _, length, t in crf.decode(span_scores, torch.tensor([6]))[0]:
         if t == O_TYPE_ID:
             assert length == 1
@@ -233,14 +224,7 @@ _GEOM = dict(
 
 
 def test_span_head_cannot_influence_the_bio_logits():
-    """The byte-identity invariant, tested as the PROPERTY rather than via seeded construction.
-
-    Seeding two models and diffing logits does not test this: `_init_weights()` walks the module list,
-    so adding a head shifts every subsequent RNG draw and the whole ENCODER differs — 100% of logits
-    move for reasons unrelated to the head, and at `init_from` (how this ships) the
-    checkpoint's weights are loaded anyway, so draw order is irrelevant. What actually matters is that
-    the head sits off the logits path: perturb it arbitrarily and the BIO logits must not move.
-    """
+    """The span head sits off the logits path: perturb it arbitrarily and the BIO logits must not move."""
     torch.manual_seed(7)
     model = MailwomanCoarseEncoder(**_GEOM, use_span_scorer=True, span_loss_weight=0.5).eval()
     ids = torch.randint(1, 64, (1, 6))
@@ -256,11 +240,10 @@ def test_span_head_cannot_influence_the_bio_logits():
 
 
 def test_span_head_shares_the_encoder_with_the_bio_head():
-    """Same weights in => same logits. Guards against the head mutating `h` in place."""
+    """Same weights in gives same logits, guarding against the head mutating `h` in place."""
     torch.manual_seed(11)
     with_head = MailwomanCoarseEncoder(**_GEOM, use_span_scorer=True, span_loss_weight=0.5).eval()
     baseline = MailwomanCoarseEncoder(**_GEOM).eval()
-    # Load the shared (non-span) weights into the baseline so both encoders are identical.
     shared = {k: v for k, v in with_head.state_dict().items() if not k.startswith(("span_scorer.", "semi_crf."))}
     missing, unexpected = baseline.load_state_dict(shared, strict=False)
     assert not unexpected
@@ -308,12 +291,7 @@ def test_span_scorer_config_survives_save_load(tmp_path):
 
 
 def test_build_optimizer_gives_the_span_head_its_own_lr():
-    """A FRESH head on a PRETRAINED encoder needs its own LR.
-
-    The v3.0.0 probe inherited lr=1e-5 from a fine-tune recipe and the randomly-initialized span head
-    barely moved in 2k steps (loss 26.4 -> 17.8, still falling. raw span NLL ~35 where a converged
-    semi-CRF is O(1)). Param groups let the head run at 1e-3 while the encoder stays at 1e-5.
-    """
+    """A freshly initialized head on a pretrained encoder needs its own learning rate, so its param group runs at `span_head_learning_rate` while the encoder stays at the base rate."""
     from mailwoman_train.optim.groups import build_optimizer
 
     model = MailwomanCoarseEncoder(**_GEOM, use_span_scorer=True, span_loss_weight=0.5)
@@ -322,17 +300,15 @@ def test_build_optimizer_gives_the_span_head_its_own_lr():
     assert labels == ["base", "span_head_learning_rate"]
     by_lr = {g["lr"]: g for g in optim.param_groups}
     assert set(by_lr) == {1e-5, 1e-3}
-    # Every span/semi-CRF param is in the fast group. No other param is.
     head_ids = {id(p) for n, p in model.named_parameters() if n.startswith(("span_scorer.", "semi_crf."))}
     fast_ids = {id(p) for p in by_lr[1e-3]["params"]}
     assert fast_ids == head_ids
-    # No parameter is lost or double-counted.
     total = sum(len(g["params"]) for g in optim.param_groups)
     assert total == len(list(model.parameters()))
 
 
 def test_build_optimizer_is_single_group_without_the_override():
-    """Default (no span_head_learning_rate) must stay exactly what every prior recipe got."""
+    """Without `span_head_learning_rate`, the optimizer is a single group at the base rate."""
     from mailwoman_train.optim.groups import build_optimizer
 
     model = MailwomanCoarseEncoder(**_GEOM, use_span_scorer=True, span_loss_weight=0.5)

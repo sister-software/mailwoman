@@ -1,8 +1,8 @@
 """Rendering US and French addresses into five non-Latin scripts.
 
-Each batch carries the seed rows and the script it is being rendered into. The model answers one
-JSONL line per seed, keyed by the seed's index in the batch, and every returned row is re-validated
-against the surface-form invariant before it is written — the prompt asks for it, this checks it.
+Each batch carries the seed rows and their target script; the model answers one JSONL line per seed,
+keyed by the seed's index in the batch, and every returned row is re-validated against the
+surface-form invariant before it is written.
 """
 
 from __future__ import annotations
@@ -24,20 +24,16 @@ class TranslitBatch:
     batch_id: str
     script_label: str
     script_slug: str
-    #: BCP-47 language subtag of the rendering convention, with no region — `ja`, not `ja-JP`.
+    #: BCP-47 language subtag of the rendering convention, with no region.
     surface_language: str
-    #: ISO 15924 code of the script the surface is written in — `Jpan`, `Cyrl`.
+    #: ISO 15924 code of the script the surface is written in.
     surface_script: str
-    seeds: list[dict[str, Any]]  # seed canonical rows
+    seeds: list[dict[str, Any]]
 
 
 def load_seeds(paths: list[str], limit: int) -> list[dict[str, Any]]:
-    """Every seed row, checked for the fields its transliterations inherit before a request is paid for.
-
-    A transliterated row takes the seed's country and locale, so a seed file missing either produces rows
-    that cannot be written. Finding that out at load time costs no time. finding it out in the worker costs
-    the batch that already returned.
-    """
+    """Every seed row, checked for the country and locale its transliterations inherit before a request
+    is paid for."""
     seeds: list[dict[str, Any]] = []
     for path in paths:
         with open(path, encoding="utf-8") as f:
@@ -53,11 +49,8 @@ def load_seeds(paths: list[str], limit: int) -> list[dict[str, Any]]:
 
 
 def plan_batches(seeds: list[dict[str, Any]], batch_size: int, scripts: list[str] | None) -> list[TranslitBatch]:
-    """Every (script, seed chunk) pair, each with the id the checkpoint stores.
-
-    The id is derived from the chunk's seed ids and the script slug, so the same arguments plan the
-    same batches and a restart skips what it already paid for.
-    """
+    """Every (script, seed chunk) pair, each with the deterministic id the checkpoint stores, so the
+    same arguments plan the same batches on a restart."""
     batches: list[TranslitBatch] = []
     for script_label, surface_language, surface_script, slug in TRANSLIT_SCRIPTS:
         if scripts and slug not in scripts:
@@ -82,9 +75,7 @@ def plan_batches(seeds: list[dict[str, Any]], batch_size: int, scripts: list[str
 def _required(seed: dict[str, Any], field: str) -> str:
     """The seed's own value for a field the row cannot be written without.
 
-    It RAISES rather than defaulting, because every default available here is the defect this generator was
-    fixed for: the target script's country, the string "US", or an empty value the loader reads as a country
-    it does not weight. A seed file that carries no country is a seed file this mode cannot transliterate.
+    Raises rather than defaulting, because no default here is the address's own country or locale.
     """
     value = seed.get(field)
 
@@ -103,14 +94,8 @@ def canonical_translit_row(
 ) -> dict[str, Any]:
     """One transliterated row, carrying the SEED's country and locale.
 
-    A US address rendered in katakana is a US address. `country` and `locale` therefore name the address;
-    `surface_script` and `surface_language` name how this copy of it is written. The two were conflated here
-    until #2281 — the row took the target script's country tag, so 1600 Pennsylvania Ave in kana was written
-    as a Japanese address, and the only reason no model learned it is that every recipe reading that corpus
-    weighted US and FR alone and the loader drops a row whose country carries no weight.
-
-    Public because the conflation survived for the length of a corpus generation with no test asserting the
-    country of a row: the row builder has to be reachable for one to exist.
+    A US address rendered in katakana is a US address: `country` and `locale` name the address, while
+    `surface_script` and `surface_language` name how this copy of it is written.
     """
     return {
         "raw": raw,
@@ -159,7 +144,6 @@ def emit_transliteration(args: argparse.Namespace, api_key: str, sink: Sink, che
         finish = resp["choices"][0].get("finish_reason")
         stats: Counter[str] = Counter()
         rows: list[dict[str, Any]] = []
-        # Map response row by its declared index, falling back to position.
         for rec_idx, rec in enumerate(parse_jsonl_response(content)):
             try:
                 i = int(rec.get("i", rec_idx))

@@ -1,14 +1,4 @@
-"""Strict parquet-path resolution interface (#480 — the v0.7.1 trap).
-
-A manifest that declares parquet files the resolver cannot find is a BROKEN corpus. partial
-resolution must raise with the missing list, never train on the survivors.
-
-Every fixture below writes the manifest key the CURRENT code prefers, and that is exactly how this
-file passed through the 2026-09-01 rename while every manifest on disk became unreadable: the reader
-and its tests were renamed together, the artifacts were not. The legacy-key tests at the bottom are
-the ones that would have failed that day, so they assert against the shape real manifests have rather
-than the shape the reader would like.
-"""
+"""Strict parquet-path resolution: a manifest declaring files the resolver cannot find must raise with the missing list rather than train on the survivors, and the legacy manifest key must keep resolving."""
 
 import json
 from pathlib import Path
@@ -40,8 +30,8 @@ def test_rerooting_still_works(tmp_path: Path) -> None:
     corpus = _mk(tmp_path, [])
     part = corpus / "train" / "part-0000.parquet"
     part.write_bytes(b"x")
-    # A manifest written on another machine: the path is absolute and wrong here, which is the
-    # whole point. Any absolute path that does not exist serves. it need not be a real one.
+    # A manifest written on another machine: the absolute path is wrong here, which is the point, so
+    # any non-existent absolute path serves.
     stale = "/build-machine/corpus/train/part-0000.parquet"
     (corpus / "MANIFEST.json").write_text(json.dumps({"slices": [{"split": "train", "path": stale}]}))
     assert _parquet_paths(corpus, "train") == [part]
@@ -74,17 +64,7 @@ def test_all_missing_falls_through_to_glob(tmp_path: Path) -> None:
 
 
 def test_a_pre_rename_overlay_resolves_its_base_and_not_just_its_own_file(tmp_path: Path) -> None:
-    """The test that would have failed on 2026-09-01, shaped like the corpus that did.
-
-    Every corpus built before that date lists its parquets under the pre-rename key. The reader moved
-    to the new key and this file's fixtures moved with it, so no test failed while
-    `v0.28.0-reviewed-postcode-tail` went from 706 declared train parquet files to one resolved.
-
-    The fixture is an OVERLAY, because only that shape can tell the two behaviours apart: the base
-    file lives in another directory, so reading the manifest finds both files and the glob fallback
-    finds only the overlay's own. A fixture whose declared file sits in `corpus/train/` passes either
-    way, which is how a test can watch this defect happen and report no failure.
-    """
+    """The fixture is an overlay whose base file lives in another directory, because only that shape tells manifest resolution from the glob fallback: a declared file under `corpus/train/` passes either way."""
     base = tmp_path / "base" / "train"
     base.mkdir(parents=True)
     base_part = base / "part-0000.parquet"
@@ -110,12 +90,7 @@ def test_a_pre_rename_overlay_resolves_its_base_and_not_just_its_own_file(tmp_pa
 
 
 def test_a_pre_rename_manifest_gets_the_partial_resolution_guard_too(tmp_path: Path) -> None:
-    """Reading the old key adds no protection if the guard behind it does not fire.
-
-    This is the half that turned the defect from silent into loud: an overlay's base files sit at
-    the volume's paths, so on any other host they are unresolvable and the corpus is broken. Before
-    the fix the reader saw no declared files at all and the guard could not speak.
-    """
+    """Reading the old key adds no protection if the guard behind it does not fire: an overlay's base files sit at the volume's paths, so on any other host they are unresolvable and the corpus is broken."""
     corpus = tmp_path / "corpus"
     (corpus / "train").mkdir(parents=True)
     present = corpus / "train" / "part-0000.parquet"
@@ -136,14 +111,7 @@ def test_a_pre_rename_manifest_gets_the_partial_resolution_guard_too(tmp_path: P
 
 
 def test_an_overlays_base_parts_reroot_beside_it(tmp_path: Path) -> None:
-    """#2207: the base corpus is a SIBLING directory, and the manifest names it by the Modal volume.
-
-    `python -m mailwoman_train export --parity-samples` reads val rows through the config's corpus_dir. The
-    v8-cjk-regs overlay declares 7 val parquet files, 6 of them the base corpora's at
-    `/data/corpus/versioned/<base>/val/…`, and re-rooting only under the overlay's own directory found none of
-    them — so a local export raised after the graph was already on disk. The base parts were beside the overlay
-    the whole time.
-    """
+    """The base corpus is a sibling directory named by the Modal volume, so re-rooting must look beside the overlay rather than only under it."""
     versioned = tmp_path / "corpus" / "versioned"
     overlay = versioned / "v8-cjk-regs"
     base = versioned / "v8-jp-kana"
@@ -170,13 +138,7 @@ def test_an_overlays_base_parts_reroot_beside_it(tmp_path: Path) -> None:
 
 
 def test_a_base_part_never_resolves_to_the_overlays_same_numbered_one(tmp_path: Path) -> None:
-    """The aliasing the corpus segment prevents, and the reason it is read rather than the tail alone.
-
-    Part files are named by position, so a base corpus and the overlay layered on it both hold `val/part-0000.parquet`.
-    Re-rooting a base path under the overlay on tail alone finds the OVERLAY's part and resolves — no error, and the
-    loader reports the base file as read while it holds the overlay's rows. Here the base is absent, so the only way
-    to resolve is by taking the wrong file. the guard must raise instead.
-    """
+    """Part files are named by position, so a base corpus and the overlay on it both hold `val/part-0000.parquet`; re-rooting by tail alone would resolve the overlay's file and report the base as read, so the guard must raise when the base is absent."""
     versioned = tmp_path / "corpus" / "versioned"
     overlay = versioned / "v8-cjk-regs"
     (overlay / "val").mkdir(parents=True)

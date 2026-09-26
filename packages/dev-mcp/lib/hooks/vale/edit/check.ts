@@ -5,20 +5,17 @@
  * @author Teffen Ellis, et al.
  *
  *   Claude Code PostToolUse hook: run the file an Edit or Write just changed through the same Vale surface CI runs,
- *   and hand any findings straight back.
+ *   and hand any findings straight back, rather than learning about a comment's semicolon at `yarn lint` minutes and
+ *   several edits later.
  *
- *   Without it the findings arrive at `yarn lint`, minutes later and several edits on, and the whole preflight is spent
- *   to learn that a comment carries a semicolon. Four consecutive preflights in one session ended that way, each costing
- *   a full `format && lint && compile && test` cycle to report one comment.
- *
- *   The surface follows the extension, and both are the ones `config/vale/lint-prose.ts` already owns — this hook
- *   passes the path and reads the verdict rather than carrying its own copy of the pathspecs, the exclusions or the
- *   config choice. A path the surface excludes, or one git does not track, reports clean.
+ *   The surface follows the extension and is the one `config/vale/lint-prose.ts` already owns — this hook passes the
+ *   path and reads the verdict rather than carrying its own copy of the pathspecs, the exclusions or the config choice.
+ *   A path the surface excludes, or one git does not track, reports clean.
  *
  *   Every failure path is silence, the same interface as `symbol-precheck.ts`: a hook that throws on an unanticipated
  *   payload is a broken session rather than a missing hint.
  *
- *   Register it in `.claude/settings.json` under `hooks.PostToolUse` with matcher `Write|Edit`.
+ *   Registered in `.claude/settings.json` under `hooks.PostToolUse` with matcher `Write|Edit`.
  */
 
 import { readStandardInputJSON } from "@mailwoman/core/fs/readers"
@@ -28,10 +25,8 @@ import { isProcessError, runFile } from "@mailwoman/core/process"
 import { relative, resolvePath } from "path-ts"
 
 /**
- * Which Vale surface reads a file, by extension.
- *
- * `docs-vocab` is deliberately absent: it runs the same rules over a narrower set, so a file it
- * covers is already covered by `docs` here and a second pass would report each finding twice.
+ * `docs-vocab` is deliberately absent: it runs the same rules over a narrower set,
+ * so `docs` already covers its files and a second pass would report each finding twice.
  */
 const CODE_EXTENSIONS = [".ts", ".tsx", ".py", ".yaml", ".yml"]
 const DOC_EXTENSIONS = [".md", ".mdx"]
