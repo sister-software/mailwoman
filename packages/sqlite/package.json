@@ -89,6 +89,11 @@
 			"types": "./out/sealed/build.d.ts",
 			"node": "./lib/sealed/build.ts",
 			"default": "./out/sealed/build.js"
+		},
+		"./lookup": {
+			"types": "./out/lookup.d.ts",
+			"node": "./lib/lookup.ts",
+			"default": "./out/lookup.js"
 		}
 	},
 	"publishConfig": {

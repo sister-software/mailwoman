@@ -14,8 +14,8 @@ import { expandPlacetypeFilter } from "@mailwoman/codex/placetype-map"
 import type { Ancestor, CoincidentLocality } from "@mailwoman/core/resolver"
 import { allRows } from "@mailwoman/core/utils"
 import { haversineKm } from "@mailwoman/spatial"
-import type { SQLInputValue } from "@mailwoman/sqlite/client"
-import { DatabaseClient } from "@mailwoman/sqlite/client"
+import type { DatabaseClient, SQLInputValue } from "@mailwoman/sqlite/client"
+import { SQLiteLookup } from "@mailwoman/sqlite/lookup"
 import type { PathBuilderLike } from "path-ts"
 
 import { ancestorLineage } from "#ancestry/index"
@@ -161,15 +161,7 @@ const CF_PC_DECAY_KM = 8
  */
 const CF_MISMATCH_KM = 50
 
-export class WOFSQLitePlaceLookup implements PlaceLookup, Disposable {
-	readonly #db: DatabaseClient<WOFDatabase>
-	/**
-	 * Resources this instance opened.
-	 *
-	 * A connection handed in by a caller is not in here, so disposal cannot reach it —
-	 * ownership is membership rather than a flag a later branch has to check.
-	 */
-	readonly #resources = new DisposableStack()
+export class WOFSQLitePlaceLookup extends SQLiteLookup<WOFDatabase> implements PlaceLookup {
 	readonly #weights: RankingWeights
 	/**
 	 * Cached at construction so we don't `sqlite_master` query on every findPlace call.
@@ -263,32 +255,34 @@ export class WOFSQLitePlaceLookup implements PlaceLookup, Disposable {
 			throw new Error("WOFSQLitePlaceLookup: one of `database` or `databasePath` is required")
 		}
 
-		if (opts.database) {
-			this.#db = opts.database
-			this.#extracts = [{ path: ":memory:", schemaName: "main", placetypes: [] }]
-		} else {
-			const extracts = resolveExtracts(opts.databasePath!)
-			this.#extracts = extracts
-			// Read-only by default — shipped gazetteer extracts are sealed 0444 and Docker
-			// `:ro` mounts forbid write-mode opens, so a writable open fails there.
-			// The only code path that writes to the main extract is `#ensureFTS()` (FTS5 index build),
-			// conditioned on `opts.buildFTS`; open writable only when that build was explicitly requested.
-			// Every read query (FTS5 match, the aux-table SELECTs, attach,
-			// and the `busy_timeout` pragma) works read-only.
-			// See the docker read-only mount limitation (#1213).
-			this.#db = this.#resources.use(new DatabaseClient<WOFDatabase>(extracts[0]!.path, { readOnly: !opts.buildFTS }))
+		const extracts: ResolvedExtract[] = opts.database
+			? [{ path: ":memory:", schemaName: "main", placetypes: [] }]
+			: resolveExtracts(opts.databasePath!)
 
-			// attach each non-main extract.
-			// Schema names were validated by resolveExtracts, so safe to interpolate directly
-			// (SQLite attach doesn't accept parameters for the schema name).
-			for (const s of extracts.slice(1)) {
-				this.#db.exec(`ATTACH DATABASE '${s.path.replaceAll("'", "''")}' AS ${s.schemaName}`)
-			}
+		// Read-only by default.
+		// Shipped gazetteer extracts are sealed 0444, and Docker `:ro` mounts forbid
+		// a write-mode open, so a writable open fails there.
+		// The only code path that writes to the main extract is `#ensureFTS()` (FTS5 index build),
+		// conditioned on `opts.buildFTS`; open writable only when that build was explicitly requested.
+		// Every read query (FTS5 match, the aux-table SELECTs, attach, and the
+		// `busy_timeout` pragma) works read-only.
+		// See the docker read-only mount limitation (#1213).
+		super(opts.database ? { database: opts.database } : { databasePath: extracts[0]!.path }, {
+			readOnly: !opts.buildFTS,
+		})
+
+		this.#extracts = extracts
+
+		// Attach each non-main extract.
+		// Schema names were validated by resolveExtracts, so safe to interpolate directly
+		// (SQLite attach doesn't accept parameters for the schema name).
+		for (const s of extracts.slice(1)) {
+			this.database.exec(`ATTACH DATABASE '${s.path.replaceAll("'", "''")}' AS ${s.schemaName}`)
 		}
 
 		// node:sqlite has no .pragma() helper.
 		// Pragmas are executed as plain SQL.
-		this.#db.exec("PRAGMA busy_timeout = 5000")
+		this.database.exec("PRAGMA busy_timeout = 5000")
 
 		if (opts.buildFTS) {
 			this.#ensureFTS()
@@ -307,7 +301,7 @@ export class WOFSQLitePlaceLookup implements PlaceLookup, Disposable {
 		for (const s of this.#extracts) {
 			this.#hasBboxIndex.set(s.schemaName, this.#extractHasTable(s.schemaName, PLACE_BBOX_TABLE))
 			this.#hasPopulationIndex.set(s.schemaName, this.#extractHasTable(s.schemaName, PLACE_POPULATION_TABLE))
-			this.#encyclopedicClauses.set(s.schemaName, encyclopedicClauses(this.#db, s.schemaName))
+			this.#encyclopedicClauses.set(s.schemaName, encyclopedicClauses(this.database, s.schemaName))
 		}
 
 		// Every lookup path here reaches `place_search`, and an extract without it
@@ -365,7 +359,7 @@ export class WOFSQLitePlaceLookup implements PlaceLookup, Disposable {
 			if (sh.schemaName === "main") continue
 
 			try {
-				const rows = this.#db
+				const rows = this.database
 					.prepare(`SELECT DISTINCT country FROM ${sh.schemaName}.spr WHERE country != ''`)
 					.all() as Array<{ country: string }>
 
@@ -403,7 +397,7 @@ export class WOFSQLitePlaceLookup implements PlaceLookup, Disposable {
 				? opts.conventions
 				: new SeedConventionSource(opts.conventions as Record<number, Convention>)
 			: conventionExtract
-				? new SqliteConventionSource(this.#db, conventionExtract)
+				? new SqliteConventionSource(this.database, conventionExtract)
 				: new SeedConventionSource()
 
 		this.#strategies = new Map<string, Strategy>([
@@ -416,12 +410,12 @@ export class WOFSQLitePlaceLookup implements PlaceLookup, Disposable {
 		// For main, the existing helpers work directly.
 		// For attached extracts we have to ask via the schema-qualified `sqlite_master` view.
 		if (schemaName === "main") {
-			if (tableName === PLACE_BBOX_TABLE) return placeBboxExists(this.#db)
+			if (tableName === PLACE_BBOX_TABLE) return placeBboxExists(this.database)
 
-			if (tableName === PLACE_POPULATION_TABLE) return placePopulationExists(this.#db)
+			if (tableName === PLACE_POPULATION_TABLE) return placePopulationExists(this.database)
 		}
 
-		const row = this.#db
+		const row = this.database
 			.prepare(`SELECT name FROM ${schemaName}.sqlite_master WHERE type = 'table' AND name = ?`)
 			.get(tableName) as { name: string } | undefined
 
@@ -498,7 +492,7 @@ export class WOFSQLitePlaceLookup implements PlaceLookup, Disposable {
 		if (!Number.isFinite(id)) return []
 
 		if (!this.#coincidentRolesCache) {
-			this.#coincidentRolesCache = loadCoincidentLocalities(this.#db)
+			this.#coincidentRolesCache = loadCoincidentLocalities(this.database)
 		}
 
 		return this.#coincidentRolesCache.get(id) ?? []
@@ -528,7 +522,7 @@ export class WOFSQLitePlaceLookup implements PlaceLookup, Disposable {
 
 		if (cached) return cached
 
-		const lineage: Ancestor[] = ancestorLineage(this.#db, pid).map((r) => ({
+		const lineage: Ancestor[] = ancestorLineage(this.database, pid).map((r) => ({
 			id: r.id,
 			placetype: r.placetype,
 			name: r.name,
@@ -657,7 +651,7 @@ export class WOFSQLitePlaceLookup implements PlaceLookup, Disposable {
 		const sch = extract.schemaName
 
 		const rawRows = fetchSearchRows({
-			db: this.#db,
+			db: this.database,
 			schemaName: sch,
 			query,
 			placetypes,
@@ -679,7 +673,7 @@ export class WOFSQLitePlaceLookup implements PlaceLookup, Disposable {
 		const candidates = rawRows.map((row) => candidateFromSearchRow(row, scoring))
 
 		rankCandidates(candidates, {
-			db: this.#db,
+			db: this.database,
 			schemaName: sch,
 			query,
 			weights: this.#weights,
@@ -732,7 +726,7 @@ export class WOFSQLitePlaceLookup implements PlaceLookup, Disposable {
 		let id: number | null
 
 		try {
-			const row = this.#db
+			const row = this.database
 				.prepare(`SELECT id FROM main.spr WHERE placetype = 'country' AND country = ? AND is_current != 0 LIMIT 1`)
 				.get(code) as { id: number } | undefined
 
@@ -770,7 +764,7 @@ export class WOFSQLitePlaceLookup implements PlaceLookup, Disposable {
 		const pcParams: SQLInputValue[] = query.country ? [pc, query.country] : [pc]
 
 		const pcRows = allRows<{ id: number; aliases: string | null; dist: number; containing: number }>(
-			this.#db.prepare(
+			this.database.prepare(
 				`SELECT locality_id AS id, aliases, distance_km AS dist, is_containing AS containing
 				 FROM ${sch}.${POSTCODE_LOCALITY_TABLE} WHERE ${pcWhere}`
 			),
@@ -891,7 +885,7 @@ export class WOFSQLitePlaceLookup implements PlaceLookup, Disposable {
 		const ph = ids.map(() => "?").join(", ")
 
 		const rows = allRows<RawSearchRow>(
-			this.#db.prepare(
+			this.database.prepare(
 				`SELECT s.id AS id, s.name AS name, s.country AS country, s.parent_id AS parent_id,
 				        s.latitude AS lat, s.longitude AS lon, s.placetype AS placetype, ${popSelect}
 				 FROM main.spr s ${popJoin}
@@ -920,23 +914,15 @@ export class WOFSQLitePlaceLookup implements PlaceLookup, Disposable {
 		})
 	}
 
-	[Symbol.dispose](): void {
-		// Only when we opened it.
-		// A caller who passed a pre-opened client keeps using it after this returns.
-		// The FTS build this lookup performed lives on their connection,
-		// and closing it would take that with us.
-		this.#resources[Symbol.dispose]()
-	}
-
 	/**
 	 * Build the FTS5 virtual table from the `names` + `places` tables.
 	 */
 	#ensureFTS(): void {
-		buildPlaceSearchFTS(this.#db)
+		buildPlaceSearchFTS(this.database)
 	}
 
 	#assertFTSExists(): void {
-		if (!placeSearchFTSExists(this.#db)) {
+		if (!placeSearchFTSExists(this.database)) {
 			throw new Error(
 				"WOFSQLitePlaceLookup: `place_search` FTS5 table is missing. Pass `buildFTS: true` to build it on open, or run `mailwoman gazetteer build fts <path-to-wof.db>` ahead of time (see resolver-wof-sqlite/README.md)."
 			)

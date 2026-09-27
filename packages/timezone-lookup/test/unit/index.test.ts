@@ -5,13 +5,9 @@
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
+import { rectangleRing, reversedRing } from "@mailwoman/spatial/geometries/polygon"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import {
-	makeTimezoneAnnotator,
-	offsetSecForTimezone,
-	pointInMultiPolygon,
-	TimezoneLookup,
-} from "@mailwoman/timezone-lookup"
+import { makeTimezoneAnnotator, offsetSecForTimezone, TimezoneLookup } from "@mailwoman/timezone-lookup"
 import type { TimezoneDatabase } from "@mailwoman/timezone-lookup/schema"
 import { expect, test } from "vitest"
 
@@ -27,10 +23,22 @@ const SQUARE: number[][][][] = [
 	],
 ]
 
-test("pointInMultiPolygon: inside vs outside a unit square", () => {
-	expect(pointInMultiPolygon(5, 5, SQUARE)).toBe(true)
-	expect(pointInMultiPolygon(15, 15, SQUARE)).toBe(false)
-	expect(pointInMultiPolygon(-1, 5, SQUARE)).toBe(false)
+test("TimezoneLookup.explore: a point on an island inside a hole is inside the zone", () => {
+	using db = DatabaseClient.temp<TimezoneDatabase>()
+	db.exec("CREATE TABLE timezone_polygons (tzid TEXT, minLat REAL, maxLat REAL, minLon REAL, maxLon REAL, geom TEXT)")
+
+	const exteriorHoleIsland = stringifyJSON([
+		[rectangleRing(0, 0, 10, 10), reversedRing(2, 2, 8, 8), rectangleRing(4, 4, 6, 6)],
+	])
+
+	db.prepare("INSERT INTO timezone_polygons VALUES (?,?,?,?,?,?)").run("Test/Zone", 0, 10, 0, 10, exteriorHoleIsland)
+
+	using lookup = new TimezoneLookup({ database: db })
+
+	expect(lookup.explore(1, 1)).toBe("Test/Zone")
+	expect(lookup.explore(3, 3)).toBeNull()
+	expect(lookup.explore(5, 5)).toBe("Test/Zone")
+	expect(lookup.explore(15, 15)).toBeNull()
 })
 
 test("offsetSecForTimezone: Intl-derived, DST-aware", () => {

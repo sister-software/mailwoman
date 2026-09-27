@@ -11,8 +11,8 @@
 
 import type { AnnotationSet, Annotator } from "@mailwoman/annotations"
 import { haversineKm } from "@mailwoman/spatial"
-import { DatabaseClient } from "@mailwoman/sqlite/client"
-import type { PathBuilderLike } from "path-ts"
+import type { DatabaseClient } from "@mailwoman/sqlite/client"
+import { SQLiteLookup, type SQLiteLookupOptions } from "@mailwoman/sqlite/lookup"
 
 import type { UNLocodeDatabase } from "#schema"
 
@@ -42,31 +42,25 @@ export function parseUNLocodeCoords(raw: string): { lat: number; lon: number } |
 }
 
 /**
+ * Where a {@link UNLocodeLookup} reads from.
+ */
+export type UNLocodeLookupOptions = SQLiteLookupOptions<UNLocodeDatabase>
+
+/**
  * A UN/locode lookup over a built `node:sqlite` table.
  */
-export class UNLocodeLookup implements Disposable {
-	#db: DatabaseClient<UNLocodeDatabase>
-	/**
-	 * Resources this instance opened.
-	 *
-	 * A connection handed in by a caller is not in here, so disposal cannot reach it —
-	 * ownership is membership rather than a flag a later branch has to check.
-	 */
-	readonly #resources = new DisposableStack()
+export class UNLocodeLookup extends SQLiteLookup<UNLocodeDatabase> {
 	#byName: ReturnType<DatabaseClient["prepare"]>
 	#byBox: ReturnType<DatabaseClient["prepare"]>
 
-	constructor(opts: { databasePath: PathBuilderLike } | { db: DatabaseClient<UNLocodeDatabase> }) {
-		this.#db =
-			"db" in opts
-				? opts.db
-				: this.#resources.use(new DatabaseClient<UNLocodeDatabase>(opts.databasePath, { readOnly: true }))
+	constructor(opts: UNLocodeLookupOptions) {
+		super(opts)
 
-		this.#byName = this.#db.prepare(
+		this.#byName = this.database.prepare(
 			"SELECT country, location FROM un_locode WHERE country = ? AND nameNorm = ? LIMIT 1"
 		)
 
-		this.#byBox = this.#db.prepare(
+		this.#byBox = this.database.prepare(
 			"SELECT location, country, lat, lon FROM un_locode WHERE lat BETWEEN ? AND ? AND lon BETWEEN ? AND ?"
 		)
 	}
@@ -107,10 +101,6 @@ export class UNLocodeLookup implements Disposable {
 		}
 
 		return best?.code ?? null
-	}
-
-	[Symbol.dispose](): void {
-		this.#resources[Symbol.dispose]()
 	}
 }
 

@@ -16,24 +16,15 @@
  *   uses), keeping one normalizer in one place.
  */
 
-import { DatabaseClient } from "@mailwoman/sqlite/client"
+import { SQLiteLookup, type SQLiteLookupOptions } from "@mailwoman/sqlite/lookup"
 
 import type { PostalCityAliasDatabase } from "#postal/city/alias/schema"
 
-export interface WOFPostalCityAliasLookupOpts {
-	/**
-	 * Path to a `postal-city-alias-<cc>.db` built by `build-postal-city-alias.ts`.
-	 *
-	 * Opened read-only.
-	 */
-	databasePath?: string
-	/**
-	 * Pre-opened handle (tests / shared connections).
-	 *
-	 * Mutually exclusive with `databasePath`.
-	 */
-	database?: DatabaseClient<PostalCityAliasDatabase>
-}
+/**
+ * Where a {@link WOFPostalCityAliasLookup} reads from: a `postal-city-alias-<cc>.db` built by
+ * `build-postal-city-alias.ts`, opened read-only, or a connection the caller already holds.
+ */
+export type WOFPostalCityAliasLookupOpts = SQLiteLookupOptions<PostalCityAliasDatabase>
 
 /**
  * One divergent alias edge: the postal-system name and the geographic locality it maps to.
@@ -60,24 +51,9 @@ export interface PostalCityAlias {
  * (where the postal name differs from the geographic name — the rows that carry alias signal),
  * issued via the typed Kysely query builder against {@link PostalCityAliasDatabase}.
  */
-export class WOFPostalCityAliasLookup implements Disposable {
-	#db: DatabaseClient<PostalCityAliasDatabase>
-	/**
-	 * Resources this instance opened.
-	 *
-	 * A connection handed in by a caller is not in here, so disposal cannot reach it —
-	 * ownership is membership rather than a flag a later branch has to check.
-	 */
-	readonly #resources = new DisposableStack()
-
+export class WOFPostalCityAliasLookup extends SQLiteLookup<PostalCityAliasDatabase> {
 	constructor(opts: WOFPostalCityAliasLookupOpts) {
-		if (opts.database) {
-			this.#db = opts.database
-		} else if (opts.databasePath) {
-			this.#db = this.#resources.use(new DatabaseClient<PostalCityAliasDatabase>(opts.databasePath, { readOnly: true }))
-		} else {
-			throw new Error("WOFPostalCityAliasLookup needs `databasePath` or `database`")
-		}
+		super(opts)
 	}
 
 	/**
@@ -91,7 +67,7 @@ export class WOFPostalCityAliasLookup implements Disposable {
 
 		if (!pc) return []
 
-		const rows = await this.#db
+		const rows = await this.database
 			.selectFrom("postal_city_alias")
 			.select(["postal_city", "geo_locality", "n"])
 			.where("postcode", "=", pc)
@@ -99,9 +75,5 @@ export class WOFPostalCityAliasLookup implements Disposable {
 			.execute()
 
 		return rows.map((r) => ({ postalCity: String(r.postal_city), geoLocality: String(r.geo_locality), n: Number(r.n) }))
-	}
-
-	[Symbol.dispose](): void {
-		this.#resources[Symbol.dispose]()
 	}
 }

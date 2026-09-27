@@ -11,71 +11,11 @@
 
 import type { AnnotationSet, Annotator } from "@mailwoman/annotations"
 import { parseJSONStrict } from "@mailwoman/core/json"
-import { DatabaseClient } from "@mailwoman/sqlite/client"
-import type { PathBuilderLike } from "path-ts"
+import { pointInMultiPolygon, type MultiPolygonRings } from "@mailwoman/spatial/geometries/polygon"
+import type { DatabaseClient } from "@mailwoman/sqlite/client"
+import { SQLiteLookup, type SQLiteLookupOptions } from "@mailwoman/sqlite/lookup"
 
 import type { TimezoneDatabase } from "#schema"
-
-/**
- * Normalized geometry: an array of polygons, each `[outerRing, ...holes]`, each ring `[[lon,lat],…]`.
- */
-export type MultiPolygonCoords = number[][][][]
-
-/**
- * Ray-cast point-in-ring (even-odd rule).
- *
- * `ring` is `[[lon, lat], …]`.
- *
- * Deliberate duplicate of `@mailwoman/spatial`'s `pointInRing`, kept local on purpose.
- * This package has exactly one dependency — zero-dep `@mailwoman/annotations` —
- * and importing spatial to reach a fifteen-line ray cast would pull `@mailwoman/core` with it,
- * whose published tarball carries ~11 MB of libpostal/WOF/chromium-i18n data.
- *
- * Eleven megabytes for fifteen lines is the wrong trade for a leaf lookup package.
- * If this package ever gains a real spatial dependency, delete these and import them.
- *
- * Repo-health-ignore private-name-shadows-export -- kept local so a leaf lookup
- * package stays off @mailwoman/core's ~11 MB of shipped data.
- * See the docstring
- */
-function pointInRing(lon: number, lat: number, ring: number[][]): boolean {
-	let inside = false
-
-	for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
-		const xi = ring[i]![0]!
-		const yi = ring[i]![1]!
-		const xj = ring[j]![0]!
-		const yj = ring[j]![1]!
-
-		if (yi > lat !== yj > lat && lon < ((xj - xi) * (lat - yi)) / (yj - yi) + xi) {
-			inside = !inside
-		}
-	}
-
-	return inside
-}
-
-/**
- * Inside the outer ring and outside every hole.
- *
- * Repo-health-ignore private-name-shadows-export -- kept local so a leaf lookup
- * package stays off @mailwoman/core's ~11 MB of shipped data.
- * See the docstring
- */
-function pointInPolygon(lon: number, lat: number, polygon: number[][][]): boolean {
-	if (!polygon[0] || !pointInRing(lon, lat, polygon[0])) return false
-
-	for (let i = 1; i < polygon.length; i++) if (pointInRing(lon, lat, polygon[i]!)) return false
-
-	return true
-}
-
-/**
- * Inside any polygon of a (multi)polygon feature.
- */
-export function pointInMultiPolygon(lon: number, lat: number, polygons: MultiPolygonCoords): boolean {
-	return polygons.some((polygon) => pointInPolygon(lon, lat, polygon))
-}
 
 /**
  * The current UTC offset (seconds) for an iana timezone, via `Intl` (no tz-db dependency).
@@ -102,26 +42,15 @@ export function offsetSecForTimezone(tzid: string, date: Date = new Date()): num
 /**
  * A timezone lookup over a built `node:sqlite` polygon DB.
  */
-export class TimezoneLookup implements Disposable {
-	#db: DatabaseClient<TimezoneDatabase>
-	/**
-	 * Resources this instance opened.
-	 *
-	 * A connection handed in by a caller is not in here, so disposal cannot reach it —
-	 * ownership is membership rather than a flag a later branch has to check.
-	 */
-	readonly #resources = new DisposableStack()
+export class TimezoneLookup extends SQLiteLookup<TimezoneDatabase> {
 	#stmt: ReturnType<DatabaseClient["prepare"]>
 
-	constructor(opts: { databasePath: PathBuilderLike } | { database: DatabaseClient<TimezoneDatabase> }) {
-		this.#db =
-			"database" in opts
-				? opts.database
-				: this.#resources.use(new DatabaseClient<TimezoneDatabase>(opts.databasePath, { readOnly: true }))
+	constructor(opts: SQLiteLookupOptions<TimezoneDatabase>) {
+		super(opts)
 
 		// Candidate features whose bbox contains the point.
 		// PIP picks the exact one.
-		this.#stmt = this.#db.prepare(
+		this.#stmt = this.database.prepare(
 			`SELECT tzid, geom FROM timezone_polygons
 			 WHERE minLat <= ? AND maxLat >= ? AND minLon <= ? AND maxLon >= ?`
 		)
@@ -134,18 +63,14 @@ export class TimezoneLookup implements Disposable {
 		const rows = this.#stmt.all(lat, lat, lon, lon) as Array<{ tzid: string; geom: string }>
 
 		for (const row of rows) {
-			const multiPolygonCoords = parseJSONStrict<MultiPolygonCoords>(row.geom)
+			const polygons = parseJSONStrict<MultiPolygonRings>(row.geom)
 
-			if (pointInMultiPolygon(lon, lat, multiPolygonCoords)) {
+			if (pointInMultiPolygon(lon, lat, polygons)) {
 				return row.tzid
 			}
 		}
 
 		return null
-	}
-
-	[Symbol.dispose](): void {
-		this.#resources[Symbol.dispose]()
 	}
 }
 

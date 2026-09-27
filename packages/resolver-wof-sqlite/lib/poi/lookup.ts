@@ -27,9 +27,9 @@
 
 import { allRows } from "@mailwoman/core/utils"
 import { haversineKm, shortCellToInt, type H3Cell } from "@mailwoman/spatial"
-import { DatabaseClient } from "@mailwoman/sqlite/client"
+import type { DatabaseClient } from "@mailwoman/sqlite/client"
+import { SQLiteLookup, type SQLiteLookupOptions } from "@mailwoman/sqlite/lookup"
 import { gridDisk, latLngToCell } from "h3-js"
-import type { PathBuilderLike } from "path-ts"
 
 import type { POICategoryCodeTable, POIDatabase, POITable } from "#poi/schema"
 /**
@@ -129,20 +129,13 @@ export interface POISearchHit {
 	distanceM?: number
 }
 
-export interface POILookupOpts<DB extends POIDatabase = POIDatabase> {
-	/**
-	 * Path to a `poi.db` built by the (future) POI builder.
-	 *
-	 * Opened read-only.
-	 */
-	databasePath?: PathBuilderLike
-	/**
-	 * Pre-opened handle (tests / shared connections).
-	 *
-	 * Mutually exclusive with `databasePath`.
-	 */
-	database?: DatabaseClient<DB>
-}
+/**
+ * Where a {@link POILookup} reads from.
+ *
+ * The source is a `poi.db` built by the POI builder, opened read-only,
+ * or a connection the caller already holds.
+ */
+export type POILookupOpts<DB extends POIDatabase = POIDatabase> = SQLiteLookupOptions<DB>
 
 /**
  * The `poi` columns every search mode hydrates — a typed projection of the shared {@link POITable}.
@@ -163,15 +156,7 @@ type POIRow = Pick<
 /**
  * Node reader over `poi.db`.
  */
-export class POILookup<DB extends POIDatabase = POIDatabase> implements Disposable {
-	#db: DatabaseClient<DB>
-	/**
-	 * Resources this instance opened.
-	 *
-	 * A connection handed in by a caller is not in here, so disposal cannot reach it —
-	 * ownership is membership rather than a flag a later branch has to check.
-	 */
-	readonly #resources = new DisposableStack()
+export class POILookup<DB extends POIDatabase = POIDatabase> extends SQLiteLookup<DB> {
 	readonly #categoryToID = new Map<string, number>()
 	readonly #idToCategory = new Map<number, string>()
 
@@ -190,30 +175,26 @@ export class POILookup<DB extends POIDatabase = POIDatabase> implements Disposab
 	readonly #nameFTSProbe: ReturnType<DatabaseClient["prepare"]>
 
 	constructor(opts: POILookupOpts<DB>) {
-		if (opts.database) {
-			this.#db = opts.database
-		} else if (opts.databasePath) {
-			this.#db = this.#resources.use(new DatabaseClient<DB>(opts.databasePath, { readOnly: true }))
-		} else {
-			throw new Error("POILookup needs `databasePath` or `database`")
-		}
+		super(opts)
 
 		// The category dictionary is tiny (poi-taxonomy's category count) — load it once
 		// at construction so `search` never round-trips to it.
-		for (const r of allRows<POICategoryCodeTable>(this.#db.prepare("SELECT id, category FROM poi_category_codes"))) {
+		for (const r of allRows<POICategoryCodeTable>(
+			this.database.prepare("SELECT id, category FROM poi_category_codes")
+		)) {
 			this.#categoryToID.set(String(r.category), Number(r.id))
 			this.#idToCategory.set(Number(r.id), String(r.category))
 		}
 
 		const columns = "name, category_id, brand_wikidata, latitude, longitude, country, confidence, name_key, gers_id"
 
-		this.#categoryCellProbe = this.#db.prepare(
+		this.#categoryCellProbe = this.database.prepare(
 			`SELECT ${columns} FROM poi WHERE h3_cell = ? AND category_id = ? ORDER BY neg_rank ASC LIMIT ?`
 		)
 
-		this.#brandProbe = this.#db.prepare(`SELECT ${columns} FROM poi WHERE brand_wikidata = ?`)
+		this.#brandProbe = this.database.prepare(`SELECT ${columns} FROM poi WHERE brand_wikidata = ?`)
 
-		this.#nameFTSProbe = this.#db.prepare(
+		this.#nameFTSProbe = this.database.prepare(
 			"SELECT name_key FROM poi_search WHERE poi_search MATCH ? ORDER BY bm25(poi_search) LIMIT ?"
 		)
 	}
@@ -382,13 +363,9 @@ export class POILookup<DB extends POIDatabase = POIDatabase> implements Disposab
 	#hydrateByNameKeys(nameKeys: string[]): POIRow[] {
 		const columns = "name, category_id, brand_wikidata, latitude, longitude, country, confidence, name_key, gers_id"
 		const placeholders = nameKeys.map(() => "?").join(", ")
-		const stmt = this.#db.prepare(`SELECT ${columns} FROM poi WHERE name_key IN (${placeholders})`)
+		const stmt = this.database.prepare(`SELECT ${columns} FROM poi WHERE name_key IN (${placeholders})`)
 
 		return allRows<POIRow>(stmt, ...nameKeys)
-	}
-
-	[Symbol.dispose](): void {
-		this.#resources[Symbol.dispose]()
 	}
 }
 

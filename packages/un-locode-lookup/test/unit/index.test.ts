@@ -36,7 +36,7 @@ async function fixtureDB(): Promise<DatabaseClient<UNLocodeDatabase>> {
 
 test("UNLocodeLookup.byName: country + folded name → code", async () => {
 	using db = await fixtureDB()
-	using lookup = new UNLocodeLookup({ db })
+	using lookup = new UNLocodeLookup({ database: db })
 	expect(lookup.byName("NL", "Rotterdam")).toBe("NL RTM")
 	expect(lookup.byName("us", "new york")).toBe("US NYC")
 	expect(lookup.byName("NL", "Nowhere")).toBeNull()
@@ -44,14 +44,14 @@ test("UNLocodeLookup.byName: country + folded name → code", async () => {
 
 test("UNLocodeLookup.nearest: closest coordinate within range", async () => {
 	using db = await fixtureDB()
-	using lookup = new UNLocodeLookup({ db })
+	using lookup = new UNLocodeLookup({ database: db })
 	expect(lookup.nearest(40.71, -74.01)).toBe("US NYC")
 	expect(lookup.nearest(0, 0, 25)).toBeNull()
 })
 
 test("makeUNLocodeAnnotator: byName when available, else nearest", async () => {
 	using db = await fixtureDB()
-	using lookup = new UNLocodeLookup({ db })
+	using lookup = new UNLocodeLookup({ database: db })
 	const annotate = makeUNLocodeAnnotator(lookup)
 
 	expect(annotate({ lat: 40.71, lon: -74.01, countryCode: "US", placeName: "New York" })).toEqual({

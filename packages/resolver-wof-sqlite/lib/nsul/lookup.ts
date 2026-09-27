@@ -24,8 +24,7 @@
  *   unknown, per the meaning-of-zero rule.
  */
 
-import { DatabaseClient } from "@mailwoman/sqlite/client"
-import type { PathBuilderLike } from "path-ts"
+import { SQLiteLookup, type SQLiteLookupOptions } from "@mailwoman/sqlite/lookup"
 
 import { compactPostcode, type NSULDatabase } from "#nsul/schema"
 import { prepareAll, prepareGet } from "#sqlite-utils"
@@ -57,20 +56,13 @@ export interface NSULAssignedPoint {
 	h3Cell: number
 }
 
-export interface NSULLookupOpts {
-	/**
-	 * Path to a `nsul.db` built by `mailwoman`'s gazetteer pipeline.
-	 *
-	 * Opened read-only.
-	 */
-	databasePath?: PathBuilderLike
-	/**
-	 * Pre-opened handle (tests / shared connections).
-	 *
-	 * Mutually exclusive with `databasePath`.
-	 */
-	database?: DatabaseClient<NSULDatabase>
-}
+/**
+ * Where an {@link NSULLookup} reads from.
+ *
+ * The source is a `nsul.db` built by `mailwoman`'s gazetteer pipeline, opened read-only,
+ * or a connection the caller already holds.
+ */
+export type NSULLookupOpts = SQLiteLookupOptions<NSULDatabase>
 
 interface PostcodeRow {
 	pcds: string
@@ -87,38 +79,22 @@ interface PointRow {
 /**
  * Node reader over `nsul.db`.
  *
- * `implements Disposable` so callers can `using lookup = new NSULLookup(...)` —
- * the same precedent as `UPRNLookup`.
+ * Disposable, so callers can `using lookup = new NSULLookup(...)`.
  */
-export class NSULLookup implements Disposable {
-	#db: DatabaseClient<NSULDatabase>
-	/**
-	 * Resources this instance opened.
-	 *
-	 * A connection handed in by a caller is not in here, so disposal cannot reach it —
-	 * ownership is membership rather than a flag a later branch has to check.
-	 */
-	readonly #resources = new DisposableStack()
-
+export class NSULLookup extends SQLiteLookup<NSULDatabase> {
 	readonly #postcodeProbe: (uprn: number) => PostcodeRow | undefined
 	readonly #pointsProbe: (pcdsCompact: string) => PointRow[]
 
 	constructor(opts: NSULLookupOpts) {
-		if (opts.database) {
-			this.#db = opts.database
-		} else if (opts.databasePath) {
-			this.#db = this.#resources.use(new DatabaseClient<NSULDatabase>(opts.databasePath, { readOnly: true }))
-		} else {
-			throw new Error("NSULLookup needs `databasePath` or `database`")
-		}
+		super(opts)
 
 		this.#postcodeProbe = prepareGet<[number], PostcodeRow, NSULDatabase>(
-			this.#db,
+			this.database,
 			"SELECT pcds, pcds_compact FROM uprn_postcode WHERE uprn = ?"
 		)
 
 		this.#pointsProbe = prepareAll<[string], PointRow, NSULDatabase>(
-			this.#db,
+			this.database,
 			"SELECT uprn, lat, lon, h3_cell FROM uprn_postcode WHERE pcds_compact = ? ORDER BY uprn"
 		)
 	}
@@ -147,9 +123,5 @@ export class NSULLookup implements Disposable {
 			longitude: row.lon,
 			h3Cell: row.h3_cell,
 		}))
-	}
-
-	[Symbol.dispose](): void {
-		this.#resources[Symbol.dispose]()
 	}
 }

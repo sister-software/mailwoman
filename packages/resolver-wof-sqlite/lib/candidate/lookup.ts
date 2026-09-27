@@ -14,8 +14,8 @@ import { allRows } from "@mailwoman/core/utils"
 import { jaroWinkler, levenshteinSimilarity } from "@mailwoman/match/comparators"
 import { partitionByContainment } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
-import { DatabaseClient } from "@mailwoman/sqlite/client"
-import type { PathBuilderLike } from "path-ts"
+import type { DatabaseClient } from "@mailwoman/sqlite/client"
+import { SQLiteLookup, type SQLiteLookupOptions } from "@mailwoman/sqlite/lookup"
 
 import {
 	CANDIDATE_ANCESTOR_TABLE,
@@ -38,19 +38,13 @@ import type { FindPlaceQuery, PlaceCandidate, PlaceLookup, WOFPlacetype } from "
 export { rankByPrimaryPreference } from "#primary-preference"
 export type { RankedRow } from "#primary-preference"
 
-export interface WOFCandidateTableLookupOpts {
-	/**
-	 * Path to a `candidate.db` built by `build-candidate.ts`.
-	 *
-	 * Opened read-only.
-	 */
-	databasePath?: PathBuilderLike
-	/**
-	 * Pre-opened handle (tests / shared connections).
-	 *
-	 * Mutually exclusive with `databasePath`.
-	 */
-	database?: DatabaseClient<CandidateDatabase>
+/**
+ * Where a {@link WOFCandidateTableLookup} reads from, and how it ranks.
+ *
+ * The source is a `candidate.db` built by `build-candidate.ts`, opened read-only,
+ * or a connection the caller already holds.
+ */
+export interface WOFCandidateTableLookupOpts extends SQLiteLookupOptions<CandidateDatabase> {
 	/**
 	 * #1882 opt-in: exempt `name_role = 'variant'` aliases — the holder's own primary name in another orthography,
 	 * stamped by the build's own-name detector — from the cross-country primary-preference penalty.
@@ -126,12 +120,7 @@ function ftsTrigramQuery(s: string): string {
 /**
  * Node {@link PlaceLookup} over `candidate.db`.
  */
-export class WOFCandidateTableLookup implements PlaceLookup, Disposable {
-	#db: DatabaseClient<CandidateDatabase>
-	/**
-	 * Resources opened by this instance.
-	 */
-	readonly #resources = new DisposableStack()
+export class WOFCandidateTableLookup extends SQLiteLookup<CandidateDatabase> implements PlaceLookup {
 	readonly #countryToID = new Map<string, number>()
 	readonly #idToCountry = new Map<number, string>()
 	readonly #placetypeToID = new Map<string, number>()
@@ -187,51 +176,45 @@ export class WOFCandidateTableLookup implements PlaceLookup, Disposable {
 	readonly ancestors: ((id: number | string) => Ancestor[]) | undefined
 
 	constructor(opts: WOFCandidateTableLookupOpts) {
-		if (opts.database) {
-			this.#db = opts.database
-		} else if (opts.databasePath) {
-			this.#db = this.#resources.use(new DatabaseClient<CandidateDatabase>(opts.databasePath, { readOnly: true }))
-		} else {
-			throw new Error("WOFCandidateTableLookup needs `databasePath` or `database`")
-		}
+		super(opts)
 
 		// Load small country/placetype code tables once at construction.
-		for (const r of allRows<CountryCodeTable>(this.#db.prepare("SELECT id, code FROM country_codes"))) {
+		for (const r of allRows<CountryCodeTable>(this.database.prepare("SELECT id, code FROM country_codes"))) {
 			const code = String(r.code).toUpperCase()
 			this.#countryToID.set(code, Number(r.id))
 			this.#idToCountry.set(Number(r.id), code)
 		}
 
-		for (const r of allRows<PlacetypeCodeTable>(this.#db.prepare("SELECT id, placetype FROM placetype_codes"))) {
+		for (const r of allRows<PlacetypeCodeTable>(this.database.prepare("SELECT id, placetype FROM placetype_codes"))) {
 			this.#placetypeToID.set(String(r.placetype), Number(r.id))
 			this.#idToPlacetype.set(Number(r.id), String(r.placetype))
 		}
 
 		// Prepare postal-city probe only when the side-index table exists.
-		if (hasTable(this.#db, POSTAL_CITY_CANDIDATE_TABLE)) {
-			this.#postalCityProbe = this.#db.prepare(
+		if (hasTable(this.database, POSTAL_CITY_CANDIDATE_TABLE)) {
+			this.#postalCityProbe = this.database.prepare(
 				`SELECT spr_id, name, latitude, longitude FROM ${POSTAL_CITY_CANDIDATE_TABLE} WHERE name_key = ? AND postcode = ? LIMIT 1`
 			)
 		}
 
 		// Prepare fuzzy FTS probe only when the trigram index exists.
-		if (hasTable(this.#db, CANDIDATE_FTS_TABLE)) {
-			this.#ftsProbe = this.#db.prepare(
+		if (hasTable(this.database, CANDIDATE_FTS_TABLE)) {
+			this.#ftsProbe = this.database.prepare(
 				`SELECT name_key FROM ${CANDIDATE_FTS_TABLE} WHERE ${CANDIDATE_FTS_TABLE} MATCH ? ORDER BY bm25(${CANDIDATE_FTS_TABLE}) LIMIT ?`
 			)
 
-			this.#nameKeyExistsProbe = this.#db.prepare("SELECT 1 FROM candidate WHERE name_key = ? LIMIT 1")
+			this.#nameKeyExistsProbe = this.database.prepare("SELECT 1 FROM candidate WHERE name_key = ? LIMIT 1")
 		}
 
 		// Detect optional columns once here for hot-path reads.
-		this.#importanceSelect = hasColumn(this.#db, "candidate", "importance") ? ", importance" : ""
-		this.#hasNameRole = hasColumn(this.#db, "candidate", "name_role")
+		this.#importanceSelect = hasColumn(this.database, "candidate", "importance") ? ", importance" : ""
+		this.#hasNameRole = hasColumn(this.database, "candidate", "name_role")
 		this.#variantAliasExemption = opts.variantAliasExemption === true
 		this.#roleSelect = this.#hasNameRole ? ", name_role" : ""
 
 		// Enable ancestors capability only when its sidecar table exists.
-		if (hasTable(this.#db, CANDIDATE_ANCESTOR_TABLE)) {
-			this.#ancestorsProbe = this.#db.prepare(
+		if (hasTable(this.database, CANDIDATE_ANCESTOR_TABLE)) {
+			this.#ancestorsProbe = this.database.prepare(
 				`SELECT parent_spr_id, parent_placetype_id, parent_name FROM ${CANDIDATE_ANCESTOR_TABLE}` +
 					" WHERE spr_id = ? ORDER BY depth ASC"
 			)
@@ -240,22 +223,22 @@ export class WOFCandidateTableLookup implements PlaceLookup, Disposable {
 		}
 
 		// Enable admin-containment support when interval sidecar + placetype band are present.
-		if (this.#ancestorsProbe && hasTable(this.#db, CANDIDATE_INTERVAL_TABLE)) {
-			this.#intervalProbe = this.#db.prepare(`SELECT pre, post FROM ${CANDIDATE_INTERVAL_TABLE} WHERE spr_id = ?`)
+		if (this.#ancestorsProbe && hasTable(this.database, CANDIDATE_INTERVAL_TABLE)) {
+			this.#intervalProbe = this.database.prepare(`SELECT pre, post FROM ${CANDIDATE_INTERVAL_TABLE} WHERE spr_id = ?`)
 
 			const bandIDs = [...REGION_CLASS_PLACETYPES, "country"]
 				.map((placetype) => this.#placetypeToID.get(placetype))
 				.filter((id): id is number => id !== undefined)
 
 			if (bandIDs.length) {
-				this.#qualifierProbe = this.#db.prepare(
+				this.#qualifierProbe = this.database.prepare(
 					`SELECT DISTINCT spr_id FROM candidate WHERE name_key = ? AND placetype_id IN (${bandIDs.join(",")}) LIMIT 8`
 				)
 			}
 		}
 
 		// Read optional artifact coverage manifest.
-		this.artifactCoverage = readGazetteerCoverageManifest(this.#db)
+		this.artifactCoverage = readGazetteerCoverageManifest(this.database)
 	}
 
 	/**
@@ -386,7 +369,7 @@ export class WOFCandidateTableLookup implements PlaceLookup, Disposable {
 
 		const injectFrom = (key: string, primaryOnly: boolean): void => {
 			const fetched = allRows<CandidateRow>(
-				this.#db.prepare(injectSQL(primaryOnly)),
+				this.database.prepare(injectSQL(primaryOnly)),
 				key,
 				...opts.shapeParams,
 				RERANK_FETCH
@@ -415,7 +398,7 @@ export class WOFCandidateTableLookup implements PlaceLookup, Disposable {
 				`${this.#importanceSelect} FROM candidate WHERE name_key = ? AND placetype_id IN (${bandIDs.map(() => "?").join(",")}) AND is_primary = 1 ` +
 				"ORDER BY neg_rank ASC LIMIT ?"
 
-			const fetched = allRows<CandidateRow>(this.#db.prepare(bandSQL), opts.nameKey, ...bandIDs, RERANK_FETCH)
+			const fetched = allRows<CandidateRow>(this.database.prepare(bandSQL), opts.nameKey, ...bandIDs, RERANK_FETCH)
 
 			for (const row of fetched) {
 				const sprID = Number(row.spr_id)
@@ -476,7 +459,7 @@ export class WOFCandidateTableLookup implements PlaceLookup, Disposable {
 			params.push(countryID)
 		}
 
-		const row = this.#db
+		const row = this.database
 			.prepare(`SELECT latitude, longitude FROM candidate WHERE ${conds.join(" AND ")} ORDER BY neg_rank ASC LIMIT 1`)
 			.get(...params) as { latitude: number; longitude: number } | undefined
 
@@ -599,7 +582,7 @@ export class WOFCandidateTableLookup implements PlaceLookup, Disposable {
 				"SELECT spr_id, name, country_id, placetype_id, latitude, longitude, min_lat, min_lon, max_lat, max_lon, neg_rank, is_primary, population" +
 				`${this.#importanceSelect}${this.#roleSelect} FROM candidate WHERE ${conds.join(" AND ")} ORDER BY neg_rank ASC LIMIT ?`
 
-			const fetched = allRows<CandidateRow>(this.#db.prepare(sql), ...params, Math.max(limit, RERANK_FETCH))
+			const fetched = allRows<CandidateRow>(this.database.prepare(sql), ...params, Math.max(limit, RERANK_FETCH))
 
 			return rankByPrimaryPreference(fetched, limit, undefined, this.#idToPlacetype, this.#variantAliasExemption)
 		}
@@ -767,9 +750,5 @@ export class WOFCandidateTableLookup implements PlaceLookup, Disposable {
 		}
 
 		return candidates
-	}
-
-	[Symbol.dispose](): void {
-		this.#resources[Symbol.dispose]()
 	}
 }

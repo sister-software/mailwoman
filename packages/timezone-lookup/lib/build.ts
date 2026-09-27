@@ -12,9 +12,9 @@
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { stringifyJSON } from "@mailwoman/core/json"
 import type { GeoFeature, InferGeoFeatureCollection, MultiPolygonLiteral, PolygonLiteral } from "@mailwoman/spatial"
+import type { MultiPolygonRings } from "@mailwoman/spatial/geometries/polygon"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
-import type { MultiPolygonCoords } from "#index"
 import type { TimezoneDatabase } from "#schema"
 
 export type TimezoneFeature = GeoFeature<PolygonLiteral | MultiPolygonLiteral, { tzid: string }>
@@ -42,10 +42,8 @@ export async function buildTimezoneDB(geojsonPath: string, dbPath: string): Prom
 	db.exec("BEGIN")
 
 	for (const feature of data.features) {
-		const polygons: MultiPolygonCoords =
-			feature.geometry.type === "Polygon"
-				? [feature.geometry.coordinates as number[][][]]
-				: (feature.geometry.coordinates as number[][][][])
+		const polygons: MultiPolygonRings =
+			feature.geometry.type === "Polygon" ? [feature.geometry.coordinates] : feature.geometry.coordinates
 
 		let minLat = 90
 		let maxLat = -90

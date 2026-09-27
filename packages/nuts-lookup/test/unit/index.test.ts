@@ -5,8 +5,9 @@
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
-import { makeNUTSAnnotator, nutsFromID, NUTSLookup, pointInMultiPolygon } from "@mailwoman/nuts-lookup"
+import { makeNUTSAnnotator, nutsFromID, NUTSLookup } from "@mailwoman/nuts-lookup"
 import type { NUTSDatabase } from "@mailwoman/nuts-lookup/schema"
+import { rectangleRing, reversedRing } from "@mailwoman/spatial/geometries/polygon"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { expect, test } from "vitest"
 
@@ -16,21 +17,25 @@ test("nutsFromID: derives nested levels by prefix", () => {
 	expect(nutsFromID("DE")).toEqual({})
 })
 
-test("pointInMultiPolygon: inside vs outside", () => {
-	const square: number[][][][] = [
-		[
-			[
-				[0, 0],
-				[0, 10],
-				[10, 10],
-				[10, 0],
-				[0, 0],
-			],
-		],
-	]
+test("NUTSLookup.explore: a point on an island inside a hole is inside the region", () => {
+	using db = DatabaseClient.temp<NUTSDatabase>()
 
-	expect(pointInMultiPolygon(5, 5, square)).toBe(true)
-	expect(pointInMultiPolygon(20, 20, square)).toBe(false)
+	db.exec(
+		"CREATE TABLE nuts_regions (nutsID TEXT, level INTEGER, minLat REAL, maxLat REAL, minLon REAL, maxLon REAL, geom TEXT)"
+	)
+
+	const exteriorHoleIsland = stringifyJSON([
+		[rectangleRing(0, 0, 10, 10), reversedRing(2, 2, 8, 8), rectangleRing(4, 4, 6, 6)],
+	])
+
+	db.prepare("INSERT INTO nuts_regions VALUES (?,?,?,?,?,?,?)").run("XX300", 3, 0, 10, 0, 10, exteriorHoleIsland)
+
+	using lookup = new NUTSLookup({ database: db })
+
+	expect(lookup.explore(1, 1)).toEqual({ level1: "XX3", level2: "XX30", level3: "XX300" })
+	expect(lookup.explore(3, 3)).toBeNull()
+	expect(lookup.explore(5, 5)).toEqual({ level1: "XX3", level2: "XX30", level3: "XX300" })
+	expect(lookup.explore(20, 20)).toBeNull()
 })
 
 async function fixtureDB(): Promise<DatabaseClient<NUTSDatabase>> {
