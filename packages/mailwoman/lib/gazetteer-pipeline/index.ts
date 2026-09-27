@@ -53,7 +53,7 @@ import {
 	geonamesAdminGapCountries,
 } from "#gazetteer-pipeline/defaults"
 import { buildSHA, stampLayerManifest } from "#gazetteer-pipeline/stamp-manifest"
-import { publishDemoAssets } from "#release-tools/publish-demo-assets"
+import { publishDemoAssets } from "#release-tools/publish/demo-assets"
 
 /**
  * The canonical postcode-database set (filenames under `<data-root>/db/wof/`):

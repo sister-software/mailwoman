@@ -136,4 +136,43 @@ describe("Resolver-interior trace", () => {
 
 		expect(record!.checks).toContain("bare_race")
 	})
+
+	it("diagnoseUnreachable records the other bands a missed value resolves in", async () => {
+		// The stub ignores placetype, so a placetype-aware one is needed.
+		// The locality lookup must miss for the probe to run, and the probe must find the value at another band.
+		class BandedBackend extends StubBackend {
+			override async findPlace(query: Parameters<ResolverBackend["findPlace"]>[0]): Promise<ResolvedPlace[]> {
+				const hits = await super.findPlace(query)
+
+				return hits.filter((p) => p.placetype === query.placetype)
+			}
+		}
+
+		const backend = new BandedBackend([{ ...WHITBY_PLACES[1]!, id: 3, name: "Nowheresville", placetype: "region" }])
+		const probed: ResolveNodeTrace[] = []
+
+		await createWOFResolver(backend as ResolverBackend).resolveTree(
+			tree("Nowheresville", [node("locality", "Nowheresville", 0, 13)]),
+			{ traceSink: (entry) => probed.push(entry), diagnoseUnreachable: true }
+		)
+
+		const traced = probed.find((r) => r.placetype === "locality")
+
+		expect(traced?.reachableIn).toContainEqual({ placetype: "region", n: 1 })
+		expect(backend.calls.map((c) => c.placetype)).toContain("region")
+
+		// Without the flag, the same miss is not probed.
+		const quietBackend = new BandedBackend([
+			{ ...WHITBY_PLACES[1]!, id: 3, name: "Nowheresville", placetype: "region" },
+		])
+
+		const quiet: ResolveNodeTrace[] = []
+
+		await createWOFResolver(quietBackend as ResolverBackend).resolveTree(
+			tree("Nowheresville", [node("locality", "Nowheresville", 0, 13)]),
+			{ traceSink: (entry) => quiet.push(entry) }
+		)
+
+		expect(quiet.find((r) => r.placetype === "locality")?.reachableIn).toBeUndefined()
+	})
 })

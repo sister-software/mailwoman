@@ -11,7 +11,7 @@ import {
 	MUTABLE_CACHE_CONTROL,
 	planDemoAssetUploads,
 	publishDemoAssets,
-} from "mailwoman/release-tools/publish-demo-assets"
+} from "mailwoman/release-tools/publish/demo-assets"
 import { describe, expect, it, vi } from "vitest"
 
 describe("publishDemoAssets", () => {

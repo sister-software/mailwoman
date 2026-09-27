@@ -10,7 +10,7 @@
 import { prettyJSON } from "@mailwoman/core/json"
 import { cliArguments } from "@mailwoman/core/scripting/arguments"
 
-import { analyzeReferenceDocument } from "./reference-oracle.ts"
+import { analyzeReferenceDocument } from "./oracle.ts"
 
 const paths = cliArguments()
 

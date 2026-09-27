@@ -15,7 +15,7 @@
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { repoRootPathBuilder } from "@mailwoman/core/paths"
-import { verifyTrainingProvenance } from "mailwoman/release-tools/publish-hf"
+import { verifyTrainingProvenance } from "mailwoman/release-tools/publish/hf"
 import type { PathBuilder } from "path-ts"
 import { describe, expect, it } from "vitest"
 

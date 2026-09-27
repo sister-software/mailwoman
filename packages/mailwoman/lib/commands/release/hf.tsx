@@ -5,7 +5,7 @@
  */
 
 import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
-import type { PublishHFOptions } from "#release-tools/publish-hf"
+import type { PublishHFOptions } from "#release-tools/publish/hf"
 
 /**
  * Native command-line interface consumed by the filesystem command router.
@@ -46,7 +46,7 @@ type Options = Omit<PublishHFOptions, "version">
 
 const ReleaseHF: ParsedCommandComponent<Options, [string]> = ({ options, args }) => {
 	const state = useCommandTask(async () => {
-		const { publishReleaseToHF } = await import("#release-tools/publish-hf")
+		const { publishReleaseToHF } = await import("#release-tools/publish/hf")
 
 		return publishReleaseToHF({ ...options, version: args[0] })
 	})

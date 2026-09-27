@@ -9,7 +9,7 @@
 
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 
-import { formatDemoAssetPublishResult, publishDemoAssets } from "#release-tools/publish-demo-assets"
+import { formatDemoAssetPublishResult, publishDemoAssets } from "#release-tools/publish/demo-assets"
 
 const { values } = parseArguments({
 	options: {
