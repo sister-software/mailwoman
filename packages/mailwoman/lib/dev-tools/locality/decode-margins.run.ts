@@ -115,11 +115,13 @@ const { values } = parseArguments({
 })
 
 const { localities } = await readCoordPanel(values.eval!, { country: values.country })
+
 const asked = values.regions
 	? TextSpliterator.from(values.regions, { delimiter: "," })
 			.map((code) => code.toUpperCase())
 			.toArray()
 	: undefined
+
 const perGroup = Number(values["per-group"] ?? values["per-region"])
 
 /**

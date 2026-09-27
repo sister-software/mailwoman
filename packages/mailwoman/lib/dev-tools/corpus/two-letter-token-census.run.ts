@@ -143,6 +143,7 @@ const asked = values.codes
 			.map((code) => code.toUpperCase())
 			.toArray()
 	: undefined
+
 const ranked = [...census.values()].toSorted((a, b) => b.total - a.total)
 const detail = Number(values.detail)
 

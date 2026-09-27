@@ -41,9 +41,11 @@ async function main(): Promise<void> {
 
 	const adminPath = values.admin ?? wofDatabasePath("admin-global-priority.db")
 	const geonamesDir = values.geonames ?? dataRootPath("geonames")
+
 	const countries = TextSpliterator.from(values.countries!, { delimiter: "," })
 		.map((code) => code.toUpperCase())
 		.toArray()
+
 	using src = new DatabaseClient<WOFDatabase>(adminPath, { readOnly: true })
 	const reports: Array<CurrencyBackfillCountryReport & { arm: string }> = []
 
