@@ -369,7 +369,7 @@ export async function computeSurfaceCountryCounts(source: PathBuilderLike): Prom
  * memo would serve a stale scan against a new file for the life of the process.
  *
  * The returned map is shared with every caller.
- * Both consumers treat it as read-only — the FST builder's `FSTBuildOpts.surfaceCountryCounts`
+ * Both consumers treat it as read-only — the FST builder's `BuildFSTOpts.surfaceCountryCounts`
  * is typed `ReadonlyMap`, and the locality-surface builder only probes it — so no copy is made.
  *
  * A future caller that mutates must copy first.

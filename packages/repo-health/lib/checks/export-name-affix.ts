@@ -2,15 +2,15 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file An exported function whose name is another package's exported name plus an affix — `readWorkspaceDirectories`
- *   over `workspaceDirectories`, `listTrackedFiles` over `trackedFiles`. The longer name is how a duplicate arrives,
+ * @file An exported function whose name is another package's exported name plus an affix, such as
+ *   `readWorkspaceDirectories` over `workspaceDirectories`. The longer name is how a duplicate arrives,
  *   because an author who knew the shorter name would have imported it.
  *
  *   The sibling {@linkcode findPrivateNameShadows} compares names for equality, which finds a copy only when both
  *   authors chose the same word. This compares camelCase component runs instead, which is what an affix leaves behind.
  *
  *   scoped across packages on purpose. Two names inside one package are usually a deliberate family
- *   (`buildPostcodeLocalityJP` beside `buildPostcodeLocality`); across packages, the shorter name has a public home the
+ *   (`buildPostcodeLocalityJP` beside `buildPostcodeLocalityBase`); across packages, the shorter name has a public home the
  *   longer one could have imported.
  *
  *   A pair that stays says why, on the line above the longer declaration:
@@ -63,7 +63,7 @@ interface ExportSite {
 
 /**
  * Split an identifier into camelCase components, keeping a run of capitals whole and attaching
- * digits to the capitals they follow: `readPackageJSONFile` → `read`, `Package`, `JSON`, `File`.
+ * digits to the capitals they follow: `readPackageJSON` → `read`, `Package`, `JSON`.
  */
 function nameComponents(name: string): string[] {
 	return name.match(/[A-Z]+\d*(?![a-z])|[A-Z]?[a-z0-9]+|[A-Z]/gu) ?? []

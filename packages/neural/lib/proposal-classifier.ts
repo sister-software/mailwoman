@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `NeuralProposalClassifier` — adapter that exposes a `NeuralAddressClassifier` as a
+ *   `createNeuralProposalClassifier` builds the adapter that exposes a `NeuralAddressClassifier` as a
  *   `ProposalClassifier` (the `@mailwoman/core/types` interface that the policy registry consumes).
  *
  *   Implementation: for each section, run the neural classifier on `section.body`, walk the resulting

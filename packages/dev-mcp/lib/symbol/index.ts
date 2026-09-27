@@ -9,15 +9,18 @@ import type { PathBuilderLike } from "path-ts"
  */
 
 /**
- * Matches a top-level function declaration; the pattern anchors to column zero
- * because an indented declaration sits in a nested scope no other consumer can reuse.
+ * Matches a top-level function declaration.
+ *
+ * The pattern anchors to column zero because an indented declaration sits in a
+ * nested scope no other consumer can reuse.
  */
 const FUNCTION_PATTERN = /^(?:export\s+)?(?:async\s+)?function\s+(\w+)/gm
 
 /**
- * Matches a top-level constant whose value is a function; the lazy type annotation keeps
- * an `=>` inside an annotation from ending the match, and the right-hand side must
- * start with `function`, `(` or a type parameter to exclude lookup tables.
+ * Matches a top-level constant whose value is a function.
+ *
+ * The lazy type annotation keeps an `=>` inside an annotation from ending the match, and the
+ * right-hand side must start with `function`, `(` or a type parameter to exclude lookup tables.
  */
 const FUNCTION_CONSTANT_PATTERN =
 	/^(?:export\s+)?const\s+(\w+)\s*(?::.*?)?=\s*(?:async\s+)?(?:function\b|\(|<[A-Za-z])/gm
@@ -64,11 +67,14 @@ export interface DeclarationSite {
 export interface FindDeclarationsOptions {
 	cwd: PathBuilderLike
 	/**
-	 * The ripgrep executable; tests override it to exercise the missing-binary path.
+	 * The ripgrep executable.
+	 * Tests override it to exercise the missing-binary path.
 	 */
 	binary?: string
 	/**
-	 * The paths to search; the default is the whole tree, which ripgrep filters by `.gitignore`.
+	 * The paths to search.
+	 *
+	 * The default is the whole tree, which ripgrep filters by `.gitignore`.
 	 */
 	searchPaths?: readonly string[]
 }
@@ -84,8 +90,9 @@ const RIPGREP_NO_MATCH = 1
 const OUTPUT_LINE_PATTERN = /^([^\n:]+):(\d+):(.*)$/gm
 
 /**
- * Returns true for a bare identifier; search patterns are built only from identifiers,
- * so they need no regex escaping.
+ * Returns true for a bare identifier.
+ *
+ * Search patterns are built only from identifiers, so they need no regex escaping.
  */
 function isIdentifier(name: string): boolean {
 	return /^\w+$/.test(name)
@@ -93,22 +100,23 @@ function isIdentifier(name: string): boolean {
 
 /**
  * Splits an identifier into its camelCase components, keeping an acronym as one component
- * and attaching digits to the capitals before them, so `getH3Cell` yields `H3`.
+ * and attaching digits to the capitals before them, so `Coordinates2D` yields `Coordinates`, `2D`.
  */
 function nameComponents(name: string): string[] {
 	return name.match(/[A-Z]+\d*(?![a-z])|[A-Z]?[a-z0-9]+|[A-Z]/gu) ?? []
 }
 
 /**
- * The minimum number of components in a contained name; the floor is two
- * because single components such as `read` match almost every name.
+ * The minimum number of components in a contained name.
+ *
+ * The floor is two because single components such as `read` match almost every name.
  */
 const COMPONENT_FLOOR = 2
 
 /**
- * Returns the shorter names contained in a name — every contiguous run of at least `floor` components,
- * excluding the whole name — because a duplicate often adds an affix to an existing name;
- * the search runs one way only, so writing a shorter name does not report a longer one.
+ * Returns the shorter names contained in a name — every contiguous run of at least `floor`
+ * components, excluding the whole name, because a duplicate often adds an affix to an existing
+ * name. the search runs one way only, so writing a shorter name does not report a longer one.
  */
 export function containedNameCandidates(name: string, floor = COMPONENT_FLOOR): string[] {
 	const components = nameComponents(name)
@@ -134,8 +142,8 @@ export function containedNameCandidates(name: string, floor = COMPONENT_FLOOR): 
 }
 
 /**
- * Returns every top-level declaration of each name and of the shorter names each one
- * contains; a name with no declaration has no key in the map.
+ * Returns every top-level declaration of each name and of the shorter names each one contains.
+ * A name with no declaration has no key in the map.
  */
 export function findDeclarations(
 	names: readonly string[],
@@ -167,7 +175,7 @@ export function findDeclarations(
 }
 
 /**
- * Returns the two declaration patterns with `nameExpression` in the name position;
+ * Returns the two declaration patterns with `nameExpression` in the name position.
  * callers build it from `\w` and identifiers, so it needs no escaping.
  */
 function declarationPatterns(nameExpression: string): string[] {
@@ -214,8 +222,8 @@ function collectSites(output: string, accept: (name: string) => boolean): Map<st
 }
 
 /**
- * Returns every declared function whose name contains `query`, ignoring case;
- * a query that is not a bare identifier fragment returns no results.
+ * Returns every declared function whose name contains `query`, ignoring case. a query
+ * that is not a bare identifier fragment returns no results.
  */
 export function searchDeclarations(
 	query: string,
@@ -241,7 +249,7 @@ function runRipgrep(
 		"--no-heading",
 		"--color",
 		"never",
-		// The `*.ts` glob excludes `.tsx` files, which ripgrep's `ts` type would include;
+		// The `*.ts` glob excludes `.tsx` files, which ripgrep's `ts` type would include.
 		// the exclusion globs come after it because a later glob wins.
 		"--glob",
 		"*.ts",
@@ -283,14 +291,17 @@ export interface SymbolFinding {
  */
 export interface SelectReportableOptions {
 	/**
-	 * The repository-relative path of the file being written; its own declarations are ignored.
+	 * The repository-relative path of the file being written.
+	 * Its own declarations are ignored.
 	 */
 	writingFile: string
 }
 
 /**
- * Keeps only the names exported from some other file; generic local names such as `main`
- * or `run` are rarely exported, so this rule filters them without a stoplist.
+ * Keeps only the names exported from some other file.
+ *
+ * Generic local names such as `main` or `run` are rarely exported,
+ * so this rule filters them without a stoplist.
  */
 export function selectReportable(
 	found: Map<string, DeclarationSite[]>,

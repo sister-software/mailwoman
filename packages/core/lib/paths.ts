@@ -61,17 +61,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url)) as Join<[RepoRootAlias
  * are siblings, so both trees put this file at the same depth and one constant serves both.
  *
  * If this file moves to a different depth, {@link PathReflection} must move with it.
- * The dictionary-path failure that followed the 2026-09 extraction was this constant counting the old depth.
- *
- * Before source moved under `lib/`, source sat one level shallower than its own output and this
- * file carried an `__isCompiledTree` flag — `basename(resolvePath(__dirname, "..")) === "out"` —
- * to pick between two `__upCount`s and two {@link CorePackageAbsolutePath} spellings.
- * That flag was wrong in production once: it checked `resolvePath("..", "..")`.
- *
- * It overshoots `out/` to `core/`.
- * Therefore, the flag was always false, resolving {@link CorePackageAbsolutePath} to `core/out`
- * in the compiled tree and landing dictionary reads at the nonexistent `core/out/data` (#481).
- * Equal depth removes the branch that bug lived in.
+ * A constant that counts the wrong depth resolves `core/data/` reads to a path that does not exist.
  *
  * If a future layout change breaks that equality — moving this file to a different
  * depth under `lib/`, or pointing `outDir` somewhere that is not a sibling of
@@ -146,7 +136,7 @@ const CorePackageAbsolutePath = resolvePath(__dirname, "..")
  * Path builder rooted at `@mailwoman/core`, so data under `core/data/` resolves
  * the same in source and compiled trees.
  *
- * See the `__isCompiledTree` note in this file before reaching across that boundary.
+ * See the depth note on {@link PathReflection} before reaching across that boundary.
  */
 export const corePackagePathBuilder = createPathBuilderResolver<RepoRootAlias>(CorePackageAbsolutePath)
 

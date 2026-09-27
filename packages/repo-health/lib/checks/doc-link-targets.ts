@@ -237,6 +237,7 @@ export const EXTERNAL_DOC_NAMES: Readonly<Record<string, string>> = {
 	SentencePieceText: "the SentencePiece protobuf message",
 	getEditsForFileRename: "the TypeScript language service",
 	readFileSync: "node:fs",
+	WhosOnFirstClassifier: "the Pelias parser's dictionary classifier",
 }
 
 interface DocLinkSweep {

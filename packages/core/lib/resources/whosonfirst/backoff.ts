@@ -6,7 +6,7 @@ import { sleep } from "#utils/sleep"
  * @author Teffen Ellis, et al.
  * @file Retry-with-backoff helper for the Who's On First data sources.
  *
- *   It stays separate from `DataSourceCache` and `PlacetypeDataSource` to avoid an import cycle.
+ *   It stays separate from `PlacetypeDataSource` to avoid an import cycle.
  */
 
 /**

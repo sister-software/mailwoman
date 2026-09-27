@@ -12,9 +12,8 @@
  *   (what the post office prints).
  *
  *   Used by `@mailwoman/corpus`'s synthesis layer (the `unit-{expand,abbreviate}` augmentations) to
- *   vary the designator in a `unit` component while preserving the identifier — the data-generation
- *   counterpart to the runtime `UnitDesignatorClassifier` (which matches the broader libpostal
- *   `unit_types` lexicon). Designators are leading ("Apt 4B"), unlike street suffixes which trail.
+ *   vary the designator in a `unit` component while preserving the identifier. Designators are
+ *   leading ("Apt 4B"), unlike street suffixes which trail.
  *
  *   `US_UNIT_DESIGNATOR_REQUIRES_RANGE` (added for #1100, the secondary-address epic. retrieved from
  *   Appendix C2 2026-07-13) is Pub-28's own "Requires a Secondary Number" column: APT, bldg, dept,

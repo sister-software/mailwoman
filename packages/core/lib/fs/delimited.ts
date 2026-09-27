@@ -21,8 +21,9 @@ import { zstdDecompressor } from "#fs/compression"
 import { tryStat } from "#fs/readers/stat"
 
 /**
- * Stream the records of an unquoted tab-separated file, for any source whose `"` is literal —
- * the GeoNames dumps and every register that writes plain TSV.
+ * Stream the records of an unquoted tab-separated file, for any source whose `"` is literal.
+ *
+ * The GeoNames dumps and every register that writes plain TSV are such sources.
  *
  * A source that really is quoted (a spreadsheet export, a register that escapes its delimiters)
  * wants `TSVSpliterator` directly with the default, and should say so where it is read.
@@ -92,9 +93,9 @@ export const ZSTD_EXTENSION = ".zst"
  * while a compressed one becomes a single stream.
  * Reusing that stream across two passes yields the rows once and no rows the second time.
  *
- * A compressed source is not seekable, so the segmentation `asManyWorkers`
- * and `asMany` need is unavailable; no code in this repository segments a corpus
- * part file, and no bytes are buffered either way.
+ * A compressed source is not seekable, so it cannot be segmented for parallel readers.
+ * Every reader in this repository consumes a corpus part file as one stream,
+ * and no bytes are buffered either way.
  */
 export function delimitedSource(path: PathBuilderLike): AsyncDataResource {
 	if (!path.toString().endsWith(ZSTD_EXTENSION)) return path

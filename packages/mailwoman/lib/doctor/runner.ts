@@ -178,9 +178,8 @@ export interface DoctorDeps {
  * Read `engines.node` from mailwoman's own package.json, defaulting to `">=0"` if unreadable.
  *
  * Located by self-reference through the package's own `exports` map
- * (`"./package.json": "./package.json"`), so this finds the right manifest from
- * the source tree, the compiled `out/` tree and an installed tarball alike —
- * none of the `__isCompiledTree` distance arithmetic `core/utils/repo.ts` needs.
+ * (`"./package.json": "./package.json"`), so this finds the right manifest from the source tree,
+ * the compiled `out/` tree and an installed tarball alike, with no directory-depth arithmetic.
  * `import.meta.resolve` rather than a static `with { type: "json" }` import
  * (the form `photon/app.ts` and friends use) because the tolerant fallback is the point:
  * `mailwoman doctor` exists to report a broken environment, so an unresolvable
