@@ -8,7 +8,7 @@
  *   query site because an inline cast is invisible to review and indistinguishable from one defeating a real check.
  *
  *   It lives in `core` because `@mailwoman/resolver-wof-sqlite` is an optional peer of `mailwoman`, and a static
- *   import from there would break installing the CLI without the gazetteer backend; the type-only import keeps
+ *   import from there would break installing the CLI without the gazetteer backend. The type-only import keeps
  *   `node:sqlite` out of the emitted graph, so the module stays safe to reach from the browser tier.
  */
 

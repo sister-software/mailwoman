@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   List → download → build lives in `@mailwoman/bdc/sdk`, so this stays thin and unit-testable without Ink or network
- *   in the loop; progress goes to stderr and the summary to stdout, mirroring `poi.tsx`.
+ *   in the loop. Progress goes to stderr and the summary to stdout, mirroring `poi.tsx`.
  */
 
 import { formatFileSize, pathExists } from "@mailwoman/core/fs/readers"

@@ -13,7 +13,7 @@
  *
  * Four things this package must never hold, each owned elsewhere:
  *
- * 1. Ranking policy — no weights, boosts, penalties, or candidate-ordering API; candidate ordering
+ * 1. Ranking policy — no weights, boosts, penalties, or candidate-ordering API. Candidate ordering
  *    belongs to `@mailwoman/resolver`, and the decode objective to `@mailwoman/neural` plus
  *    `@mailwoman/core/decoder`. Knowledge here creates observations and never overrides learned
  *    interpretation.

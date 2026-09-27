@@ -56,7 +56,7 @@ def decode_all_spans(raw: str, label_ids: Sequence[int], id_to_label: Mapping[in
     A tag can legitimately occur more than once in one row: the KR ladder puts 읍/면 and the 리
     below it, or the road-form's parenthetical 동, on the same ``dependent_locality`` tag
     (``신림면 구학리``), and ``수원시 장안구`` is two ``subregion`` spans. The per-tag read scores each
-    gold span against this full list; collapsing to one span per tag would miss every such row,
+    gold span against this full list. Collapsing to one span per tag would miss every such row,
     whatever the model emitted.
 
     The whitespace-joined surfaces are there for the multi-token spans the typed registries carry:

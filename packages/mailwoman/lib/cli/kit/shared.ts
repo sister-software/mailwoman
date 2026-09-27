@@ -56,8 +56,9 @@ export type CommandTaskState<T> =
 	| { status: "error"; message: string }
 
 /**
- * Runs a one-shot task and returns its state; the process exits with the result's code
- * after success or with code 1 after failure.
+ * Runs a one-shot task and returns its state.
+ *
+ * The process exits with the result's code after success or with code 1 after failure.
  */
 /* oxlint-disable react-hooks/exhaustive-deps -- The task must run once, so the effect ignores later closures. */
 export function useCommandTask<T>(task: () => Promise<T>, exitCode?: (result: T) => number): CommandTaskState<T> {
@@ -209,11 +210,13 @@ export function reportToStderr(line: string): void {
 export interface CommandTaskResultProps<T> {
 	state: CommandTaskState<T>
 	/**
-	 * Content shown while the task runs; omitting it renders no element.
+	 * Content shown while the task runs.
+	 * Omitting it renders no element.
 	 */
 	running?: React.ReactNode
 	/**
-	 * Content shown after success; defaults to `String(result)`.
+	 * Content shown after success.
+	 * Defaults to `String(result)`.
 	 */
 	done?: (result: T) => React.ReactNode
 }
@@ -388,8 +391,8 @@ export async function loadClassifierTolerant(
 		})
 	} catch (error) {
 		const message = error instanceof Error ? error.message : String(error)
-		// A module-resolution error means the weights package is not installed;
-		// any other error comes from weights that resolved but failed to load.
+		// A module-resolution error means the weights package is not installed.
+		// Any other error comes from weights that resolved but failed to load.
 		const absent = /Could not resolve/iu.test(message)
 		const { weightsPackageName } = await import("@mailwoman/neural/weights")
 

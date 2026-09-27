@@ -46,7 +46,8 @@ export interface SpanDelta {
 	confidenceBefore?: number
 	confidenceAfter?: number
 	/**
-	 * `after - before`, present only when both sides are; negative means the arm under test is less sure.
+	 * `after - before`, present only when both sides are.
+	 * Negative means the arm under test is less sure.
 	 */
 	confidenceDelta?: number
 	/**
@@ -75,8 +76,10 @@ export interface ParseDiff {
 	input: string
 	spans: SpanDelta[]
 	/**
-	 * The locale/country call and how sure each arm was of it; a parse that changed no other component
-	 * but moved its country confidence across the scope threshold will geocode somewhere else entirely.
+	 * The locale/country call and how sure each arm was of it.
+	 *
+	 * A parse that changed no other component but moved its country confidence across
+	 * the scope threshold will geocode somewhere else entirely.
 	 */
 	localeCountryBefore?: { country: string; confidence: number }
 	localeCountryAfter?: { country: string; confidence: number }

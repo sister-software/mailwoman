@@ -22,8 +22,10 @@ import type { PathBuilderLike } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
 /**
- * What an extract can be joined through, which decides what a corpus builder can extract from it;
- * `ancestry` promises only that the table exists, not that the chain reaches a locality.
+ * What an extract can be joined through, which decides what a corpus builder can extract from it.
+ *
+ * `ancestry` promises only that the table exists.
+ * Whether the chain reaches a locality is a separate question.
  */
 export type JoinCapability = "ancestry" | "names" | "search" | "population"
 
@@ -42,8 +44,9 @@ export interface SourceCensusRow {
 	bytes: number
 	tables: number
 	/**
-	 * Present only when the artifact carries an `spr` table; a file without one is
-	 * reported unreadable with a reason rather than a zero.
+	 * Present only when the artifact carries an `spr` table.
+	 *
+	 * A file without one is reported unreadable with a reason rather than a zero.
 	 */
 	countries?: Record<string, number>
 	join: JoinCapability[]

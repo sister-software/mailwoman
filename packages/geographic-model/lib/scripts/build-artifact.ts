@@ -50,7 +50,8 @@ export async function packagedModelPaths(): Promise<{ source: string; artifact: 
 }
 
 /**
- * Load the authored records and compile them; no partial result is returned.
+ * Load the authored records and compile them.
+ * No partial result is returned.
  *
  * @throws with every violation if they do not load, and with every reason if they load but do not compile.
  */
@@ -61,13 +62,16 @@ export async function compileAuthoredGeographicModel(): Promise<CompiledGeograph
 }
 
 /**
- * Read the committed artifact; the format version is checked, and the records are
- * not re-validated because they were validated on the way in.
+ * Read the committed artifact.
+ *
+ * The format version is checked, and the records are not re-validated
+ * because they were validated on the way in.
  */
 export async function readCompiledGeographicModel(): Promise<CompiledGeographicModel> {
 	const text = await readLocalTextFile((await packagedModelPaths()).artifact)
 
-	// A corrupt committed artifact is a broken build and the `SyntaxError` names the offset; the package's parse wrappers live in `@mailwoman/core`, which this package deliberately does not depend on.
+	// A corrupt committed artifact is a broken build and the `SyntaxError` names the offset.
+	// The package's parse wrappers live in `@mailwoman/core`, which this package deliberately does not depend on.
 	// oxlint-disable-next-line no-restricted-properties -- see the note above.
 	return parseCompiledGeographicModel(JSON.parse(text))
 }

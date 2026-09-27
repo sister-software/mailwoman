@@ -26,7 +26,8 @@ import { type PlaceIDProvenance, placeIDProvenance } from "#place-id-provenance"
 const DEFAULT_ENTRY_LIMIT = 10
 
 /**
- * The key normalization that found a candidate row; the probe never uses fuzzy matching.
+ * The key normalization that found a candidate row.
+ * The probe never uses fuzzy matching.
  */
 const CandidateRoute = {
 	Exact: "exact",
@@ -44,7 +45,9 @@ type CandidateRoute = (typeof CandidateRoute)[keyof typeof CandidateRoute]
 
 export interface CandidateLookupOptions {
 	/**
-	 * An ISO alpha-2 country filter; a country missing from the artifact is reported as a coverage gap.
+	 * An ISO alpha-2 country filter.
+	 *
+	 * A country missing from the artifact is reported as a coverage gap.
 	 */
 	country?: string
 	limit?: number
@@ -74,7 +77,8 @@ interface CandidateEntry extends PlaceIDProvenance {
 	 */
 	importance_split?: { referential: number; encyclopedic: number | null } | null
 	/**
-	 * The source place ID; the `wof_id` field says whether it is a WOF ID.
+	 * The source place ID.
+	 * The `wof_id` field says whether it is a WOF ID.
 	 */
 	spr_id: number
 }
@@ -344,8 +348,10 @@ export interface CandidateDelta {
 }
 
 /**
- * Diffs two artifacts' answers by query index; the diff covers only the returned rows,
- * so both sides stop at the caller's limit and a key with many rows needs a higher limit.
+ * Diffs two artifacts' answers by query index.
+ *
+ * The diff covers only the returned rows, so both sides stop at the caller's limit
+ * and a key with many rows needs a higher limit.
  */
 export function diffCandidateRows(rowsA: LookupRow[], rowsB: LookupRow[]): CandidateDelta[] {
 	return rowsA.map((rowA, index) => {
@@ -435,7 +441,8 @@ interface WOFEntry extends PlaceIDProvenance {
 	parent_id: number
 	/**
 	 * `null` means `place_population` has no row and the source recorded no value,
-	 * while `0` is a recorded zero; ranking uses it to compute `neg_rank` and `referential`.
+	 * while `0` is a recorded zero.
+	 * Ranking uses it to compute `neg_rank` and `referential`.
 	 */
 	population: number | null
 }
@@ -462,8 +469,8 @@ const WOF_FTS_FROM = `FROM place_search JOIN spr ON spr.id = place_search.wof_id
 const WOF_NAMES_FROM = `FROM names n JOIN spr ON spr.id = n.id ${SPR_JOINS} WHERE n.name = ?`
 
 /**
- * Both statements carry the country filter, so a scoped count covers only that country;
- * the count includes only current, non-deprecated records.
+ * Both statements carry the country filter, so a scoped count covers only that country.
+ * The count includes only current, non-deprecated records.
  */
 function wofStatements(from: string, order: string, scoped: boolean): { rows: string; count: string } {
 	const where = scoped ? `${from} AND spr.country = ?` : from
@@ -478,8 +485,10 @@ function wofStatements(from: string, order: string, scoped: boolean): { rows: st
  * These extracts feed both the FTS backend and the `candidate.db` build,
  * so a string they hold and `candidate` misses points to a build gap.
  *
- * The FTS route matches every token across `name` and `alt_names`, so the returned `name` can
- * differ from the query; the `names` route is byte-exact, so case and punctuation matter.
+ * The FTS route matches every token across `name` and `alt_names`,
+ * so the returned `name` can differ from the query.
+ * The `names` route is byte-exact, so case and punctuation matter.
+ *
  * Deprecated and non-current records are listed in the note and left out of `entries`,
  * so a name whose records are all deprecated returns a hit with no entries.
  */
@@ -550,7 +559,8 @@ export function lookupWOF<DB>(
 		const extractNote = failed.length ? ` ${failed.length} probe(s) failed: ${failed.join("; ")}.` : ""
 		const scopeNote = country ? ` Scoped to country ${country}: a key held only outside it reads as 0 here.` : ""
 
-		// `scanned` is an upper bound on distinct records and `entries.length` a lower bound; the note reports both.
+		// `scanned` is an upper bound on distinct records and `entries.length` a lower bound.
+		// The note reports both.
 		const truncated = entries.length < scanned
 
 		const denominator = truncated
@@ -617,8 +627,9 @@ const POI_SELECT =
 	"WHERE p.name_key = ?"
 
 /**
- * Probes `poi.db` on the {@link normalizeLocalityForKey} fold the POI build writes;
- * the count is exact and unbounded, and a first call against a cold page cache can take seconds.
+ * Probes `poi.db` on the {@link normalizeLocalityForKey} fold the POI build writes.
+ *
+ * The count is exact and unbounded, and a first call against a cold page cache can take seconds.
  */
 export function lookupPOI<DB>(db: DatabaseClient<DB>, queries: string[], options: POILookupOptions = {}): LookupRow[] {
 	const limit = options.limit ?? DEFAULT_ENTRY_LIMIT
@@ -692,9 +703,10 @@ interface CodexEntry {
 }
 
 /**
- * Checks each string against every codex reference table; the probe reads no artifact,
- * so it is always available, and the postcode check tests shape only — `68161` fits the US,
- * German and French shapes, while `candidate`/`postcode` answer membership.
+ * Checks each string against every codex reference table.
+ *
+ * The probe reads no artifact, so it is always available, and the postcode check tests shape only —
+ * `68161` fits the US, German and French shapes, while `candidate`/`postcode` answer membership.
  */
 export function lookupCodex(queries: string[]): LookupRow[] {
 	return queries.map((query) => {
@@ -769,8 +781,10 @@ export interface PostcodeAnchorResolver {
 
 export interface PostcodeLookupOptions {
 	/**
-	 * The span mode from the loaded package's model card; the default `alnum-run` splits on
-	 * every non-alphanumeric character and never produces a key for a code written with a space.
+	 * The span mode from the loaded package's model card.
+	 *
+	 * The default `alnum-run` splits on every non-alphanumeric character
+	 * and never produces a key for a code written with a space.
 	 */
 	spanMode: AnchorSpanMode
 }

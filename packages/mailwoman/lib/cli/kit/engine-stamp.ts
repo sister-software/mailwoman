@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The process's engine stamp, resolved once; the `mailwoman` package alone can read its manifest and the
+ *   The process's engine stamp, resolved once. The `mailwoman` package alone can read its manifest and the
  *   configured key, and an http surface's app factory must not import it, so each bin builds the stamp and
  *   hands it to its app as an option value.
  */
@@ -44,8 +44,8 @@ export function resolveEngineStamp(): Promise<ResolvedEngineStamp> {
 }
 
 /**
- * Written to stderr so stdout stays machine-readable for every `--json` consumer;
- * no notice is written when the commercial branch applies.
+ * Written to stderr so stdout stays machine-readable for every `--json` consumer.
+ * No notice is written when the commercial branch applies.
  */
 export function printLicenseNotice(resolvedStamp: ResolvedEngineStamp): void {
 	const lines = licenseNoticeLines(resolvedStamp.stamp, resolvedStamp.key)

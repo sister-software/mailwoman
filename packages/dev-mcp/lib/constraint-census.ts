@@ -10,12 +10,12 @@
  * in force, and did we hold the row anyway.
  *
  * The split that makes this a measurement rather than a miss count: a lookup that missed in band X
- * while the same key sits in band Y is a reachability failure — the gazetteer had the row and the query
- * went to the wrong shelf — while a key that exists nowhere is a coverage fact. Both reach a caller as
+ * while the same key sits in band Y is a reachability failure, since the gazetteer had the row and the query
+ * went to the wrong shelf. A key that exists nowhere is a coverage fact. Both reach a caller as
  * `null` and call for opposite work, a retrieval fix versus data acquisition, so they are never summed.
  *
  * Keys are folded with `normalizeLocalityForKey`, the fold the candidate build writes and its readers
- * probe; a `toLowerCase()` approximation silently moves rows from the reachability column into the
+ * probe. A `toLowerCase()` approximation silently moves rows from the reachability column into the
  * coverage one.
  */
 
@@ -44,13 +44,15 @@ interface ConstraintMiss {
 	band: string
 	checks: string[]
 	/**
-	 * Bands holding this key other than the one probed, measured with no constraint applied; empty
-	 * means the key exists nowhere in the gazetteer, a coverage fact rather than a retrieval failure.
+	 * Bands holding this key other than the one probed, measured with no constraint applied.
+	 *
+	 * Empty means the key exists nowhere in the gazetteer, a coverage fact rather than a retrieval failure.
 	 */
 	elsewhere: string[]
 	/**
-	 * Candidates on a null pick mean the rows came back and were lost downstream;
-	 * none means the probe itself returned an empty set — calling a scoring filter
+	 * Candidates on a null pick mean the rows came back and were lost downstream.
+	 *
+	 * None means the probe itself returned an empty set, and calling a scoring filter
 	 * an empty gazetteer is the misreading this separates.
 	 */
 	had_candidates: boolean
@@ -99,8 +101,9 @@ export interface ConstraintCensusResult {
 	n_coverage: number
 	checks: CheckReading[]
 	/**
-	 * Reachability classes, largest first: which band was probed and which bands actually
-	 * hold the key; the largest class is the one a cross-band retry should try first.
+	 * Reachability classes, largest first: which band was probed and which bands actually hold the key.
+	 *
+	 * The largest class is the one a cross-band retry should try first.
 	 */
 	by_band: Array<{ probed: string; found_in: string[]; n: number; examples: ConstraintMiss[] }>
 	inert_checks: string[]
@@ -110,8 +113,10 @@ export interface ConstraintCensusResult {
 
 /**
  * Above this, a check that never once accompanies a successful pick is called inert
- * rather than merely unlucky; small on purpose, because below it the honest report is
- * "not enough firings to say", which the rendering states instead.
+ * rather than merely unlucky.
+ *
+ * It is small on purpose, because below it the honest report is "not enough firings
+ * to say", which the rendering states instead.
  */
 const INERT_MIN_FIRINGS = 20
 

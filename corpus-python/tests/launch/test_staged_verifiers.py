@@ -19,7 +19,7 @@ def test_some_version_carries_a_verifier() -> None:
 def test_the_verifier_resolves_and_answers_a_verdict_per_check(version: str, tmp_path) -> None:
     """The named function exists, takes the two roots, and answers `{what it means: whether it holds}`.
 
-    Called against an empty tree, so every answer must be False; a verifier reporting True on an
+    Called against an empty tree, so every answer must be False. A verifier reporting True on an
     empty volume checks no files.
     """
     module_name, function_name = CORPUS_VERSIONS[version].verifier
@@ -37,7 +37,10 @@ def test_the_verifier_resolves_and_answers_a_verdict_per_check(version: str, tmp
 
 
 def test_the_registries_verifier_delegates_to_each_country(tmp_path) -> None:
-    """The region assembles its registries rather than restating a country's; a restated path would pass every check a delegated one does."""
+    """The region assembles its registries rather than restating a country's.
+
+    A restated path would pass every check a delegated one does.
+    """
     from mailwoman_train.countries.cjk import staging as cjk
     from mailwoman_train.countries.jp import staging as jp
     from mailwoman_train.countries.kr import staging as kr

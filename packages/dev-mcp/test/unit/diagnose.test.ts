@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  * The account assembly and the shape predicates, driven off hand-built facts so no weights load and no gazetteer
- * opens; the definitions are pinned here because a v1 classifier's value is that they are readable.
+ * opens. The definitions are pinned here because a v1 classifier's value is that they are readable.
  */
 
 import type { ResolveNodeTrace } from "@mailwoman/core/resolver"
@@ -178,8 +178,8 @@ describe("collectRetrievalFacts — ranks and the flip stage", () => {
 	})
 
 	it("keeps a trace with no resolver records apart from a walk that performed no lookups", () => {
-		// One is a trace that predates the records and the other the walk stating it had no entry
-		// to resolve; folding them together would let an old trace read as a retrieval failure.
+		// One is a trace that predates the records and the other the walk stating it had no entry to resolve.
+		// Folding them together would let an old trace read as a retrieval failure.
 		expect(collectRetrievalFacts(undefined).lookups).toBeNull()
 		expect(collectRetrievalFacts([]).lookups).toEqual([])
 	})
@@ -599,8 +599,10 @@ describe("renderAccount", () => {
 })
 
 /**
- * The evidence reading for a set of channels, through the shared `evidenceCensus` rather than a
- * hand-built object; the starvation predicate must keep meaning whatever that function decides it means.
+ * The evidence reading for a set of channels, through the shared `evidenceCensus`
+ * rather than a hand-built object.
+ *
+ * The starvation predicate must keep meaning whatever that function decides it means.
  */
 function evidenceOf(channels: Partial<NeuralParseTrace>) {
 	return assembleAccount(ITEM, run({ trace: traceOf({ parse: trace(channels) }) }), NO_EXPECTATION).evidence

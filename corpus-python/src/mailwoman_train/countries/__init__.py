@@ -11,7 +11,7 @@ Shared machinery stays in the role directories at the package root — `text/` f
 Countries divide by what they provide: `COUNTRY_MODULES` names a country with its own corpus builder,
 label set and board floor (satisfying `protocols.CountryModule`); `SOURCE_ONLY` names a country that
 contributes readers or samplers into a corpus another module assembles and has no label set of its own.
-`cjk/` is neither — it is a regional grouping, like `packages/corpus/lib/south-asia/` on the TypeScript
+`cjk/` is neither. It is a regional grouping, like `packages/corpus/lib/south-asia/` on the TypeScript
 side, and no mail is addressed to a region.
 """
 

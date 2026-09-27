@@ -27,9 +27,9 @@ const RUN_ROW_FIELDS = [
 	"components",
 	"lat",
 	"lon",
-	// Haversine kilometres from the row's truth point where the set carries one;
-	// `null` on a row with no truth and on a row that resolved no coordinate,
-	// which are different facts, so read it beside `lat`.
+	// Haversine kilometres from the row's truth point where the set carries one.
+	// `null` on a row with no truth and on a row that resolved no coordinate.
+	// Those are different facts, so read it beside `lat`.
 	"km",
 	"tier",
 	"admin_coherence",
@@ -124,7 +124,7 @@ export const runTool = ({ registry }: DevToolDeps): DevTool => ({
 					timing_ms: run.timing,
 				}
 
-				// Projection filters only what is emitted, not what the handler reasons over,
+				// Projection filters only what is emitted, and the handler reasons over every row,
 				// so tallies count over `fullRows` and a census cannot change with a display option.
 				fullRows.push(row)
 

@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Render a `ComponentTag`-keyed dict into a country-localized string — the inverse of the parser. The order
- *   lives in `@mailwoman/codex/address-layouts`, as data; this module is the public surface over
+ *   lives in `@mailwoman/codex/address-layouts`, as data. This module is the public surface over
  *   {@linkcode renderAddress}.
  */
 
@@ -31,17 +31,19 @@ export interface FormatAddressOptions {
 	separator?: string
 
 	/**
-	 * Join the lines the way the country does, for the single-line form a query
-	 * or a corpus row takes; a caller's literal comma is wrong outside the anglophone
-	 * systems, and `separator` wins when both are given.
+	 * Join the lines the way the country does, for the single-line form a query or a corpus row takes.
+	 *
+	 * A caller's literal comma is wrong outside the anglophone systems,
+	 * and `separator` wins when both are given.
 	 */
 	singleLine?: boolean
 
 	/**
 	 * Which of the country's two orders to render in, or unset to read it off the components themselves.
 	 *
-	 * Eight countries write an address two ways, and which one a dict wants is a property of the values
-	 * rather than of the country; a caller holding a parse tree has the better answer and should pass it.
+	 * Eight countries write an address two ways, and which one a dict wants is a
+	 * property of the values rather than of the country.
+	 * A caller holding a parse tree has the better answer and should pass it.
 	 */
 	script?: AddressScript
 }
@@ -77,8 +79,9 @@ function softSeparatorFor(opts: FormatAddressOptions): string {
 const SCRIPT_WITNESSES: readonly ComponentTag[] = ["street", "locality", "dependent_locality", "region", "venue"]
 
 /**
- * Whether a string carries a letter written in something other than the Latin alphabet;
- * every record carrying two orders pairs a Latin register with a non-Latin one,
+ * Whether a string carries a letter written in something other than the Latin alphabet.
+ *
+ * Every record carrying two orders pairs a Latin register with a non-Latin one,
  * so this binary answer is the whole question a layout choice asks.
  */
 function carriesNonLatinLetter(value: string): boolean {
@@ -86,8 +89,9 @@ function carriesNonLatinLetter(value: string): boolean {
 }
 
 /**
- * The script `components` are written in, read off the first witness that carries a letter;
- * no letters is not evidence of Latin, so all-digit or absent witnesses answer `undefined`
+ * The script `components` are written in, read off the first witness that carries a letter.
+ *
+ * No letters is not evidence of Latin, so all-digit or absent witnesses answer `undefined`
  * and leave the country's default in force.
  */
 // repo-health-ignore export-name-affix -- core's `scriptOf` takes a codepoint
@@ -108,8 +112,9 @@ export function scriptOfComponents(components: ComponentDict): AddressScript | u
 }
 
 /**
- * A dict naming every tag once, used to enumerate the slots a layout actually has;
- * the enumeration is a render rather than a walk of the layout structure,
+ * A dict naming every tag once, used to enumerate the slots a layout actually has.
+ *
+ * The enumeration is a render rather than a walk of the layout structure,
  * because only the renderer resolves which slots are reachable.
  */
 const EVERY_TAG: ComponentDict = Object.fromEntries(COMPONENT_TAGS.map((tag) => [tag, tag]))
@@ -120,7 +125,8 @@ const EVERY_TAG: ComponentDict = Object.fromEntries(COMPONENT_TAGS.map((tag) => 
 const slotParity = new Map<string, boolean>()
 
 /**
- * Whether reading the script off the components can cost `country` a component;
+ * Whether reading the script off the components can cost `country` a component.
+ *
  * Japan's Latin skeleton has no slot below the prefecture, so a dict tagging `locality`
  * and `dependent_locality` separately would lose both.
  */
@@ -147,8 +153,8 @@ function scriptIsFreeToDerive(country: string): boolean {
  * Render a component dict into an idiomatic per-country address string.
  *
  * @returns An empty string when the dict is empty, when no layout names `country`
- * (55 of the 252 shipped records carry no usable skeleton), or when the layout prints
- * no field; a partial dict degrades to the parts the layout can print.
+ * (55 of the 252 shipped records carry no usable skeleton), or when the layout prints no field.
+ * A partial dict degrades to the parts the layout can print.
  */
 export function formatAddress(components: ComponentDict, country: string, opts: FormatAddressOptions = {}): string {
 	return formatAddressRow(components, country, opts)?.raw ?? ""
@@ -184,8 +190,9 @@ export interface AddressRow {
 }
 
 /**
- * Render `components` for `country` and report what the layout printed, in one pass;
- * returns null when no slot rendered — an empty dict, a country with no layout,
+ * Render `components` for `country` and report what the layout printed, in one pass.
+ *
+ * Returns null when no slot rendered — an empty dict, a country with no layout,
  * or a dict whose every value falls in a slot this country omits.
  *
  * The render knows which component each piece came from, so a search of the output

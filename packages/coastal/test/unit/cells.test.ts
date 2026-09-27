@@ -90,8 +90,8 @@ describe("CoastalCellIndex", () => {
 		expect(smp!.features).toBe(1)
 
 		// The band has an interior and the sliver is entirely fringe, so the two
-		// scenarios' partial shares differ; their pooled value sits strictly between them,
-		// which is why it cannot be read as either.
+		// scenarios' partial shares differ.
+		// Their pooled value sits strictly between them, which is why it cannot be read as either.
 		expect(nfi!.partialShare).toBeLessThan(1)
 		expect(smp!.partialShare).toBe(1)
 		expect(measurement.pooledPartialShare).toBeGreaterThan(nfi!.partialShare)

@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Reports WOF currency holes as a reviewable ledger; no output from this command changes a resolve.
+ *   Reports WOF currency holes as a reviewable ledger. No output from this command changes a resolve.
  */
 
 import { makeDirectories, writeLocalJSONLFile } from "@mailwoman/core/fs/writers"

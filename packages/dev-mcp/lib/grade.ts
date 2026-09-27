@@ -55,7 +55,8 @@ export function seedToCaseTable(seed: SeedCase): GauntletCaseTable {
 }
 
 /**
- * A row with no expectations is ungradeable, not passing, and the two must never be added together.
+ * A row with no expectations is ungradeable, and an ungradeable row stays apart
+ * from a passing one in every sum.
  */
 export function caseCarriesTruth(seed: SeedCase): boolean {
 	return Boolean(
@@ -72,8 +73,10 @@ export function caseCarriesTruth(seed: SeedCase): boolean {
 export type RowGrade = "improved" | "regressed" | "neutral" | "ungradeable"
 
 /**
- * `checkCase` returns the list of issues, so fewer is better; comparing counts rather than text is
- * deliberate, because an arm that trades one wrong component for a different wrong one has not improved.
+ * `checkCase` returns the list of issues, so fewer is better.
+ *
+ * Comparing counts rather than text is deliberate, because an arm that trades one
+ * wrong component for a different wrong one has not improved.
  */
 export function gradeRow(
 	seed: SeedCase | undefined,
@@ -130,9 +133,10 @@ export function normalCDF(z: number): number {
 }
 
 /**
- * The MDE is the effect this n would detect with 80% power at α = 0.05, a convention stated
- * rather than measured; it turns "we saw no effect" into "we saw no effect,
- * and no smaller effect was detectable".
+ * The MDE is the effect this n would detect with 80% power at α = 0.05,
+ * a convention stated rather than measured.
+ *
+ * It turns "we saw no effect" into "we saw no effect, and no smaller effect was detectable".
  */
 export function significance(successesA: number, successesB: number, n: number): SignificanceReading {
 	if (n === 0) {

@@ -39,8 +39,8 @@ describe("withoutPostcodeSpans", () => {
 	})
 
 	it("returns input carrying no postcode unchanged", () => {
-		// No text was removed, so no separator was orphaned and none is collapsed;
-		// returning the input verbatim also keeps the length `scoreLocalityOnly`
+		// No text was removed, so no separator was orphaned and none is collapsed.
+		// Returning the input verbatim also keeps the length `scoreLocalityOnly`
 		// measures identical to before this rule existed.
 		const text = "Thomas, WV"
 
@@ -88,8 +88,8 @@ describe("an admin tail carrying a postcode", () => {
 
 	it("declines input carrying no letter, which the character class alone calls alpha", () => {
 		// `computeQueryShape("???")` reports `alpha`, because `foldInputClass` answers
-		// `alpha` for input carrying no classified token; neither `locality_only`
-		// nor its `bare_toponym` refinement may read that as a place name.
+		// `alpha` for input carrying no classified token.
+		// Neither `locality_only` nor its `bare_toponym` refinement may read that as a place name.
 		expect(kindOf("???")).toBe("vague")
 		expect(kindOf("!!!")).toBe("vague")
 	})

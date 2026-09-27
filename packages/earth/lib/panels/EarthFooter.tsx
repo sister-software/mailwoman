@@ -13,8 +13,9 @@ import { DATA_CREDITS } from "mailwoman/browser-runtime/resources"
 import type { ReactNode } from "react"
 
 /**
- * The basemap's credits belong to whoever renders the tiles; each source is a licence
- * obligation rather than a courtesy, so it links to the licence it discharges.
+ * The basemap's credits belong to whoever renders the tiles.
+ *
+ * Each source is a licence obligation rather than a courtesy, so it links to the licence it discharges.
  */
 const BASEMAP_ATTRIBUTION = [
 	<a key="osm" href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">
@@ -43,8 +44,8 @@ const ATTRIBUTION = [
 
 export interface EarthFooterProps {
 	/**
-	 * Which artifact is loading, since the progress bar only says how far along;
-	 * absent on the canned runtime, which loads no artifact.
+	 * Which artifact is loading, since the progress bar only says how far along.
+	 * Absent on the canned runtime, which loads no artifact.
 	 */
 	status?: ReactNode
 }

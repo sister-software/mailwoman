@@ -64,8 +64,8 @@ const config: Config = {
 				href: "https://public.mailwoman.ai",
 			},
 		},
-		// The four faces that paint above the fold, preloaded; without them the font
-		// chain measured ~1.57 s to first font byte on a warm cache.
+		// The four faces that paint above the fold, preloaded.
+		// Without them the font chain measured ~1.57 s to first font byte on a warm cache.
 		// Any other face still loads lazily.
 		...(
 			[
@@ -102,8 +102,9 @@ const config: Config = {
 
 	future: {
 		v4: true,
-		// rspack bundles the site; both bundlers report maplibre-gl's dynamic `import()` of an
-		// expression as a "Critical dependency" warning, so that is not a bundler difference.
+		// rspack bundles the site.
+		// Both bundlers report maplibre-gl's dynamic `import()` of an expression as a
+		// "Critical dependency" warning, so that is not a bundler difference.
 		// The persistent cache stays off until a build has been measured with it.
 		faster: {
 			rspackBundler: true,
@@ -221,7 +222,8 @@ const config: Config = {
 					},
 				},
 				sitemap: {
-					// Internal utility pages stay reachable but out of the sitemap; patterns cover both slash forms.
+					// Internal utility pages stay reachable but out of the sitemap.
+					// Patterns cover both slash forms.
 					ignorePatterns: ["/demo", "/demo/", "/debug", "/debug/", "/trace", "/trace/"],
 				},
 				theme: {
@@ -243,7 +245,8 @@ const config: Config = {
 	],
 
 	themeConfig: {
-		// Default og:image / twitter:card for every page; regenerate via docs/scripts/social-card.html.
+		// Default og:image / twitter:card for every page.
+		// Regenerate via docs/scripts/social-card.html.
 		image: "img/social-card.png",
 		colorMode: {
 			respectPrefersColorScheme: true,
@@ -265,8 +268,8 @@ const config: Config = {
 			title: "Mailwoman",
 			logo: {
 				alt: "Mailwoman 〒 hanko seal",
-				// Magenta is the design system's primary mark on the navy navbar in both themes;
-				// navy/blue alternatives ship under /img for lighter surfaces.
+				// Magenta is the design system's primary mark on the navy navbar in both themes.
+				// Navy/blue alternatives ship under /img for lighter surfaces.
 				src: "img/mailwoman-seal-magenta.svg",
 			},
 			// The doors, in reading order; `docSidebar` items point at sidebar ids declared in sidebars.ts.

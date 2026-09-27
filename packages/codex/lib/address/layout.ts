@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Address layouts written as tagged templates in print order: interpolations are slots and the literal text
- *   between them is a connector. A node that renders no value drops out together with its connector; an interior
+ *   between them is a connector. A node that renders no value drops out together with its connector. An interior
  *   connector renders only when both neighbours rendered, and an edge connector binds to the one slot it touches.
  *
  *   The evaluator lives in `render.ts`, so modules that only need the layout table do not load it.
@@ -51,16 +51,19 @@ export interface AddressLayout {
 	readonly lines: ReadonlyArray<readonly AddressAtom[]>
 	/**
 	 * Indices of lines whose preceding break becomes a space in single-line output,
-	 * in place of the system's join; each index refers to the line after the break,
-	 * and `evaluateLines` drops empty lines without moving the index.
+	 * in place of the system's join.
+	 *
+	 * Each index refers to the line after the break, and `evaluateLines` drops
+	 * empty lines without moving the index.
 	 */
 	readonly softBreakBefore?: ReadonlySet<number>
 }
 
 /**
  * Returns a copy of the layout with a soft break before the line that starts with `tag`,
- * found by tag so edits to earlier lines do not move the mark; when no line
- * after the first starts with `tag`, the layout is unchanged.
+ * found by tag so edits to earlier lines do not move the mark.
+ *
+ * When no line after the first starts with `tag`, the layout is unchanged.
  */
 export function withSoftBreakBefore(layout: AddressLayout, tag: string): AddressLayout {
 	const index = layout.lines.findIndex((line) => {
@@ -119,7 +122,7 @@ export function either(...alternatives: readonly AddressLayout[]): AddressAltern
 }
 
 /**
- * The post-office box line, printed directly above the street line; libaddressinput has no
+ * The post-office box line, printed directly above the street line. libaddressinput has no
  * box field, so this placement is defined here and a record holding both prints both lines.
  */
 const poBoxLine = SLOTS.po_box

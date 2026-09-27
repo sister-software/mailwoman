@@ -6,11 +6,11 @@
  *   Rows, expected outcomes, and the coverage layer all come from `probe-definition.json`, which the loader refuses to
  *   hand over if its content hash has moved.
  *
- *   No route is injected into the runtime pipeline for the absence work; the semantic phrase route is injected because
+ *   No route is injected into the runtime pipeline for the absence work. The semantic phrase route is injected because
  *   the activity-phrased rows cannot reach a category without it.
  *
  *   The coverage layer is build-local (ODbL) and uncommitted, so a run without it refuses at construction rather than
- *   reporting an empty board; its build command is in
+ *   reporting an empty board. Its build command is in
  *   `docs/superpowers/specs/2026-08-27-exclusion-grade-coverage-pilot.md`.
  *
  *   Report-only by design: the exit code is non-zero only when the harness broke, so a recorded breach is a result

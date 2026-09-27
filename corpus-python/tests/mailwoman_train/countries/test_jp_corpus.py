@@ -48,7 +48,7 @@ def test_hyphen_class_is_folded_in_numbers_and_left_alone_in_names() -> None:
 
 
 def test_interior_ideographic_space_is_removed_from_a_name() -> None:
-    # 135 street values carry a U+3000 between the machi and the aza; left in, it lands inside a
+    # 135 street values carry a U+3000 between the machi and the aza. Left in, it lands inside a
     # district span, so the written form closes it up.
     assert normalize_name("西与賀町　字今津乙") == "西与賀町字今津乙"
 
@@ -100,7 +100,7 @@ def test_bare_chome_leaves_an_empty_district() -> None:
 
 
 def test_non_trailing_chome_is_left_whole() -> None:
-    # 2,316 rows carry 丁目 somewhere other than the end; re-rendering a form we have not read grows
+    # 2,316 rows carry 丁目 somewhere other than the end. Re-rendering a form we have not read grows
     # labels nobody verified, so it stays one district span.
     assert split_street("一丁目北") == ("一丁目北", None)
 
@@ -136,7 +136,7 @@ def test_arabic_chome_register_converts_only_the_chome() -> None:
 
 
 def test_compact_folded_register_is_one_whole_house_number_span() -> None:
-    # The compact form carries no per-part surface evidence, so it is one span; this register is the
+    # The compact form carries no per-part surface evidence, so it is one span. This register is the
     # only place the 3-part compact number exists.
     record = render(URBAN, "compact_folded")
     assert record["raw"] == "香川県高松市八島町2-3-16"
@@ -210,7 +210,7 @@ def test_a_row_without_a_chome_cannot_offer_the_chome_registers() -> None:
 
 
 def test_a_number_we_cannot_reparse_stays_in_its_own_surface() -> None:
-    # 103,299 rows look like 362B-2 / 761乙号-2; re-rendering those as designators would invent
+    # 103,299 rows look like 362B-2 / 761乙号-2. Re-rendering those as designators would invent
     # structure, so they render native-only.
     assert available_registers(None, "761乙号-2") == ("native",)
     assert available_registers(2, "362B-2") == ("native",)

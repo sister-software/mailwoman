@@ -42,7 +42,7 @@ def test_a_batch_id_is_stable_for_the_same_seeds_and_script() -> None:
     """The checkpoint's whole interface: same inputs, same id, so a restart skips what it paid for."""
     payload = '["seed-us-0001", "seed-fr-0002"]|cyrl'
     assert deterministic_id("translit-cyrl", payload) == deterministic_id("translit-cyrl", payload)
-    # The literal, not a re-derivation: a second call would pass however the derivation changed, and
+    # The literal pins the derivation: a second call would pass however the derivation changed, and
     # every checkpoint depends on the derivation.
     assert deterministic_id("translit-cyrl", payload) == "translit-cyrl-f9f2cedf899da917"
 
@@ -168,7 +168,7 @@ def test_a_french_seed_rendered_in_hangul_is_still_French() -> None:
 
 
 def test_a_seed_without_a_country_is_refused_at_load_rather_than_defaulted(tmp_path: Any) -> None:
-    """The refusal is at LOAD because that is before the spend; every default available to the row builder—the target script's country, a literal "US", or an empty value the loader drops in silence—is the defect."""
+    """The refusal is at LOAD because that is before the spend. Every default available to the row builder—the target script's country, a literal "US", or an empty value the loader drops in silence—is the defect."""
     seed_file = tmp_path / "seeds.jsonl"
     seed_file.write_text(
         json.dumps({"raw": "350 5th Ave", "components": {}, "source_id": "seed-x", "locale": "en-US"}) + "\n",

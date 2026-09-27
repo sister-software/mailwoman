@@ -13,8 +13,9 @@ export interface CommandArgumentMetadata {
 }
 
 /**
- * The encoded description remains readable by the transitional schema adapter;
- * native commands express positionals directly in `CommandSpec` and do not need this helper.
+ * The encoded description remains readable by the transitional schema adapter.
+ *
+ * Native commands express positionals directly in `CommandSpec` and do not need this helper.
  */
 export function argument(config: CommandArgumentMetadata): string {
 	return `__mailwoman_argument_config__${stringifyJSON(config)}`
@@ -49,8 +50,10 @@ export async function mailwomanCLIPath(): Promise<string> {
 let manifest: Promise<MailwomanManifest> | undefined
 
 /**
- * Read by package self-reference so the same file answers from the source tree, `out/`,
- * and a published tarball; the one place this read happens, memoized for the process.
+ * Read by package self-reference so the same file answers from the source tree,
+ * `out/`, and a published tarball.
+ *
+ * It is the one place this read happens, memoized for the process.
  *
  * @throws {TypeError} When the manifest carries no string `version` or `license` —
  * a broken install rather than a choice.

@@ -12,7 +12,7 @@ from tests import paths
 
 COUNTRIES_ROOT = paths.SOURCE_ROOT / "countries"
 
-#: Alpha-2 codes as they appear in a module's own identifiers and string literals; a directory
+#: Alpha-2 codes as they appear in a module's own identifiers and string literals. A directory
 #: naming another country's code reaches across the boundary this layout draws.
 ALPHA2 = frozenset(COUNTRY_MODULES) | SOURCE_ONLY
 
@@ -29,7 +29,7 @@ def test_every_country_directory_is_declared_as_one_kind_or_the_other() -> None:
 
 
 def test_a_country_directory_names_no_other_country() -> None:
-    """Two countries never share a module; this walks each country module for another country's alpha-2 code in a string literal or a dotted import."""
+    """Two countries never share a module. This walks each country module for another country's alpha-2 code in a string literal or a dotted import."""
     offenders: list[str] = []
     for directory in sorted(COUNTRIES_ROOT.iterdir()):
         if not directory.is_dir() or directory.name in REGIONS or directory.name.startswith("__"):
@@ -64,7 +64,7 @@ def test_each_country_names_the_label_set_its_rows_are_tagged_against() -> None:
 
 
 def test_the_board_floor_is_per_country() -> None:
-    """The municipality-population floor above which a row is held out for the board; a single shared constant would move two countries' boards to fix one."""
+    """The municipality-population floor above which a row is held out for the board. A single shared constant would move two countries' boards to fix one."""
     assert country_module("jp").BOARD_BUCKET_MIN == 97
     assert country_module("kr").BOARD_BUCKET_MIN == 90
     assert country_module("tw").BOARD_BUCKET_MIN == 90

@@ -15,7 +15,7 @@ from mailwoman_train.countries.kr.corpora import build
 
 from .kr_fixture import JusoAddress, JusoRegion, write_juso_zip, write_permit_csv
 
-#: Committed beside this file; regenerate with `uv run python -m
+#: Committed beside this file. Regenerate with `uv run python -m
 #: tests.mailwoman_train.countries.test_kr_build_parity` only when the current code is already
 #: verified against the existing reference, or the test compares the new code against itself.
 REFERENCE = Path(__file__).parent / "kr-build-reference.json"
@@ -210,7 +210,7 @@ PERMITS: list[tuple[str, str, str, str, str, str, str, str]] = [
 
 
 def stub_transform(points: list[tuple[float, float]]) -> list[tuple[float, float] | None]:
-    """A deterministic stand-in for `gdaltransform` mapping the fixture's planar grid into Korea; the build's use of the answer, not the projection, is under test."""
+    """A deterministic stand-in for `gdaltransform` mapping the fixture's planar grid into Korea. The build's use of the answer is what is under test."""
     out: list[tuple[float, float] | None] = []
     for x, y in points:
         lon = 124.0 + (x % 100_000) / 100_000 * 8.0
@@ -334,7 +334,7 @@ def test_the_fixture_exercises_both_pools_and_both_boards(built: dict[str, Any])
 
 
 def write_reference() -> None:
-    """Capture the current build as the reference the tests above compare against; run it only when the current code already passes against the existing reference, or the artifact records whatever the code does now."""
+    """Capture the current build as the reference the tests above compare against. Run it only when the current code already passes against the existing reference, or the artifact records whatever the code does now."""
     import tempfile
 
     patch = pytest.MonkeyPatch()

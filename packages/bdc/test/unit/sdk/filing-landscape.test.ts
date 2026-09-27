@@ -12,7 +12,7 @@
  *   disagrees with its res-9 cell's H3 hierarchy parent) × 2 providers each at SF/NY with distinct
  *   techs/speeds across 3 speed buckets, plus one geoid never fed to the builder. Criteria 1–4 query
  *   only `[GEOID_SF, GEOID_NY]` (or subsets), so the divergent block does not perturb their
- *   hand-counts — it is exercised only by the coverage-cell unification tests.
+ *   hand-counts. It is exercised only by the coverage-cell unification tests.
  *
  *   Three properties the four criteria do not pin on their own, each with its own describe block below:
  *
@@ -24,7 +24,7 @@
  *     fixture derives no candidate cell, so it is classified unknown before the coverage check is
  *     reached. The extended block adds a geoid with rows but a deleted coverage row, plus an `h3Cells`
  *     query against a cell that was never surveyed.
- *   - The SQL `case` and the JS `speedBucketForDownloadSpeed` mirror must not drift; the boundary table
+ *   - The SQL `case` and the JS `speedBucketForDownloadSpeed` mirror must not drift. The boundary table
  *     and the SQL-vs-JS agreement test pin them, and the "100-1000" bucket is otherwise never exercised
  *     by the criteria.
  */
@@ -218,8 +218,8 @@ describe("filingLandscape — Check 2: meaning-of-zero", () => {
 		expect(withUnknown.surveyed_block_count).toBe(knownOnly.surveyed_block_count)
 		expect(withUnknown.surveyed_block_count).toBe(2)
 
-		// The unknown geoid must not silently appear as a zero-count entry in filings either;
-		// it contributes no entry, so the filings for the two known blocks are identical either way.
+		// The unknown geoid must not silently appear as a zero-count entry in filings either.
+		// It contributes no entry, so the filings for the two known blocks are identical either way.
 		expect(withUnknown.filings).toEqual(knownOnly.filings)
 	})
 })
@@ -311,12 +311,12 @@ describe("filingLandscape — builder/reader coverage-cell unification", () => {
 		const unifiedDerivation = res9ShortCellToRes6Parent(row.h3_cell)
 		expect(unifiedDerivation).not.toBe(oldBuggyDerivation)
 
-		// The builder must have written coverage under the unified derivation, not the direct res-6 one.
+		// The builder must have written coverage under the unified derivation, and the direct res-6 cell is absent.
 		expect(await readLayerCoverage(schemadb, unifiedDerivation)).toBeDefined()
 		expect(await readLayerCoverage(schemadb, oldBuggyDerivation)).toBeUndefined()
 
 		// End-to-end: this block must read back as surveyed with its own filing intact,
-		// not unknown while filings still list it.
+		// so the surveyed count and the filings list agree.
 		const result = await filingLandscape(db, { geoids: [GEOID_DIVERGENT] })
 		expect(result.surveyed_block_count).toBe(1)
 		expect(result.unknown_block_count).toBe(0)
@@ -365,9 +365,9 @@ describe("filingLandscape — Check 3: hand-verified census", () => {
 	})
 
 	it("rejects an empty geoids/h3Cells array rather than silently answering a vacuous all-zero landscape", async () => {
-		// `[]` is truthy in JS, so it passes the "exactly one of geoids/h3Cells" XOR
-		// check undetected; without an explicit length guard this would return an
-		// all-zero result indistinguishable from a real one.
+		// `[]` is truthy in JS, so it passes the "exactly one of geoids/h3Cells" XOR check undetected.
+		// Without an explicit length guard this would return an all-zero result
+		// indistinguishable from a real one.
 		// Reachable from the MCP tool layer, which is why both layers carry this guard.
 		using db = openFixture()
 

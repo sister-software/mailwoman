@@ -20,8 +20,9 @@ export interface StreamToDiskOptions {
 	destination: PathBuilderLike
 	context: string
 	/**
-	 * Extra request headers; the public data bucket's WAF refuses an unranged GET,
-	 * so its consumer sends `range: bytes=0-`.
+	 * Extra request headers.
+	 *
+	 * The public data bucket's WAF refuses an unranged GET, so its consumer sends `range: bytes=0-`.
 	 */
 	headers?: Record<string, string>
 	onProgress?: (message: string) => void
@@ -39,7 +40,8 @@ export interface StreamToDiskOptions {
  * Follows redirects: a job endpoint that answers with a generated result URL routinely redirects
  * again, and stopping at the redirect would write a redirect page to disk and report success.
  *
- * @throws {Error} When the response is not OK or carries no body; a partial file is removed on any failure.
+ * @throws {Error} When the response is not OK or carries no body.
+ * A partial file is removed on any failure.
  */
 export async function streamToDisk(options: StreamToDiskOptions): Promise<number> {
 	const partialPath = `${options.destination}.part`

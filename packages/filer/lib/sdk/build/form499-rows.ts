@@ -19,9 +19,9 @@ import type { Form499Row } from "#sdk/form499/index"
 import type { Form499Lifecycle } from "#sdk/form499/notes"
 
 /**
- * The cessation date to close a relationship window at, or `null` when closing it would
- * invert the interval (`valid_from <= t < valid_to`) and make the filer disappear
- * from `asOf` reads; callers still record the date as `ceased_at`.
+ * The cessation date to close a relationship window at, or `null` when closing it would invert
+ * the interval (`valid_from <= t < valid_to`) and make the filer disappear from `asOf` reads.
+ * Callers still record the date as `ceased_at`.
  */
 export function closeableCessationDate(ceasedAt: string | undefined, validFrom: string): string | null {
 	if (!ceasedAt) return null
@@ -82,7 +82,7 @@ export function processForm499Lifecycle(
 	}
 
 	if (lifecycle?.replacedByForm499ID) {
-		// The successor's node is minted here, not waited for: its own row is usually in the same file,
+		// The successor's node is minted here: its own row is usually in the same file,
 		// but no ordering guarantees this row is processed first and `insNode` is insert or ignore.
 		const successorNodeID = `${FilerIdentifierType.Form499ID}:${lifecycle.replacedByForm499ID}`
 		insNode.run(successorNodeID, FilerIdentifierType.Form499ID, lifecycle.replacedByForm499ID)
@@ -118,8 +118,10 @@ export interface Form499FRNContext {
 	form499RowIndex: number
 	lastFiledAt: string
 	/**
-	 * `valid_to` for this row's expiring relationship edges only; the `FRN↔form499ID` identity
-	 * edge remains valid for the company's lifetime because the identifiers denote one filer.
+	 * `valid_to` for this row's expiring relationship edges only.
+	 *
+	 * The `FRN↔form499ID` identity edge remains valid for the company's lifetime
+	 * because the identifiers denote one filer.
 	 */
 	relationshipValidTo: string | null
 }
@@ -129,8 +131,8 @@ export interface Form499FRNContext {
  * edges when the corresponding field is non-empty (each its own edge and `filer_family` row).
  *
  * Also records this row's legal name into `legalNameByFRN` for {@linkcode processEdgarSubsidiaryRow}'s
- * corroboration match, keeping the latest `lastFiledAt` per FRN; returns the
- * number of edge opportunities declined (0, 1, or 2).
+ * corroboration match, keeping the latest `lastFiledAt` per FRN.
+ * Returns the number of edge opportunities declined (0, 1, or 2).
  */
 export function processForm499FRNRelationships(
 	insNode: StatementSync,

@@ -6,7 +6,7 @@
  *   standing between a malformed row and a degenerate shared node.
  *
  *   Every mint is `${identifierType}:${value}`, so a blank identifier mints one degenerate node that every other
- *   blank-valued row collapses into; the identifier mints therefore throw, while the company-name mints rely on callers
+ *   blank-valued row collapses into. The identifier mints therefore throw, while the company-name mints rely on callers
  *   having established non-emptiness, and the two assertions guard temporal columns, where a blank `valid_from` reads
  *   as valid since forever and a non-ISO one matches no row.
  */
@@ -17,9 +17,10 @@ import { FilerIdentifierType } from "#schema"
 import { assertISODate } from "#sdk/guards"
 
 /**
- * Mints the `frn:` node id, throwing when `frn` is blank; the `providerRows` injection
- * point bypasses {@linkcode parseProviderList}, so a blank `frn` would otherwise
- * mint a degenerate `frn:` node shared by unrelated providers.
+ * Mints the `frn:` node id, throwing when `frn` is blank.
+ *
+ * The `providerRows` injection point bypasses {@linkcode parseProviderList}, so a blank
+ * `frn` would otherwise mint a degenerate `frn:` node shared by unrelated providers.
  */
 export function mintFRNNodeID(frn: string, context: string): string {
 	if (frn.trim() === "") {
@@ -73,8 +74,9 @@ export function mintSubsidiaryNameNodeID(name: string): string {
 }
 
 /**
- * Mints the `form499_id:` node id, throwing when `form499ID` is blank;
- * every real 499 row has a `form499ID`, so a blank one signals a malformed row that
+ * Mints the `form499_id:` node id, throwing when `form499ID` is blank.
+ *
+ * Every real 499 row has a `form499ID`, so a blank one signals a malformed row that
  * would otherwise collapse into one degenerate shared node.
  */
 export function mintForm499NodeID(form499ID: string, rowIndex: number): string {
@@ -91,8 +93,9 @@ export function mintForm499NodeID(form499ID: string, rowIndex: number): string {
 
 /**
  * Validates `lastFiledAt` is non-blank before it is written into both
- * `filer_edge.source_vintage`/`valid_from` and every attribute's `source_vintage` for this row;
- * it is a raw, unvalidated TSV string, and SQLite's `not NULL` does not reject an empty string,
+ * `filer_edge.source_vintage`/`valid_from` and every attribute's `source_vintage` for this row.
+ *
+ * It is a raw, unvalidated TSV string, and SQLite's `not NULL` does not reject an empty string,
  * which a `valid_from <= asOf` read would treat as valid since forever.
  */
 export function assertLastFiledAt(lastFiledAt: string, form499ID: string, rowIndex: number): string {
@@ -126,8 +129,9 @@ export function assertProviderValidFrom(validFrom: string | undefined): string {
 }
 
 /**
- * Mints the `bdc_provider_id:` node id, throwing when `providerID` is not a safe integer;
- * the `providerRows` injection point bypasses {@linkcode parseProviderList}, so a `NaN` would
+ * Mints the `bdc_provider_id:` node id, throwing when `providerID` is not a safe integer.
+ *
+ * The `providerRows` injection point bypasses {@linkcode parseProviderList}, so a `NaN` would
  * otherwise mint `"bdc_provider_id:NaN"` and merge every malformed row under that identity.
  */
 export function mintProviderNodeID(providerID: number, rowIndex: number): string {

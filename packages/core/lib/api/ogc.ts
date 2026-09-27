@@ -15,8 +15,10 @@ import { rootAttribute } from "#html/document"
 import { stringifyJSON } from "#json"
 
 /**
- * The error an OGC `ServiceExceptionReport` becomes; the report arrives on an http 200, so no
- * upstream layer maps it and a caller that does not ask reads the exception body as an empty answer.
+ * The error an OGC `ServiceExceptionReport` becomes.
+ *
+ * The report arrives on an http 200, so no upstream layer maps it and a caller that
+ * does not ask reads the exception body as an empty answer.
  */
 export class OGCServiceError extends Error {
 	public readonly serviceException: string
@@ -65,8 +67,9 @@ function exceptionText(body: string): string | undefined {
 
 		cursor = after
 
-		// `>` closes a bare tag and whitespace introduces attributes; anything else continues the tag name,
-		// which means this is `ServiceExceptionReport` or a sibling, not the element being read.
+		// `>` closes a bare tag and whitespace introduces attributes.
+		// Anything else continues the tag name, which means this is `ServiceExceptionReport`
+		// or a sibling rather than the element being read.
 		if (!/^[\s>]/u.test(body.slice(after, after + 1))) continue
 
 		const contentStart = body.indexOf(">", after)

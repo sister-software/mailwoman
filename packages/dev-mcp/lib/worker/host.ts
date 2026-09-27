@@ -43,15 +43,17 @@ type WorkerMessage = ReadyMessage | ResultMessage
  */
 export interface WorkerHostOptions {
 	/**
-	 * Absolute path to the worker entry module; a parameter rather than a constant
-	 * so the crash/restart implementation is testable against a stub child that
-	 * can be told to hang, crash, or answer garbage.
+	 * Absolute path to the worker entry module.
+	 *
+	 * A parameter rather than a constant so the crash/restart implementation is testable
+	 * against a stub child that can be told to hang, crash, or answer garbage.
 	 */
 	workerPath: PathBuilderLike
 	workerArgs: readonly PathBuilderLike[]
 	/**
-	 * Milliseconds to wait for the handshake before declaring a boot failure; the worker's
-	 * boot imports the whole mailwoman graph, which is seconds rather than milliseconds.
+	 * Milliseconds to wait for the handshake before declaring a boot failure.
+	 *
+	 * The worker's boot imports the whole mailwoman graph, which is seconds rather than milliseconds.
 	 */
 	handshakeTimeoutMs?: number
 	/**
@@ -77,9 +79,10 @@ const CRASH_WINDOW_MS = 60_000
 const TERM_GRACE_MS = 5000
 
 /**
- * A job the restart killed, named so the caller can relaunch it; the command is read from
- * the worker before the kill, because afterwards the registry is gone with the module graph
- * and the loss is indistinguishable from a job id that never existed.
+ * A job the restart killed, named so the caller can relaunch it.
+ *
+ * The command is read from the worker before the kill, because afterwards the registry is gone
+ * with the module graph and the loss is indistinguishable from a job id that never existed.
  */
 export interface KilledJob {
 	job_id: string
@@ -100,9 +103,10 @@ export interface RestartReport {
 	tools_changed: boolean
 	aborted_calls: number
 	/**
-	 * Empty when the worker held no running job; a failure to ask is reported in
-	 * {@link killed_jobs_note} rather than as an empty list, because "no job was running"
-	 * and "I could not find out" are different facts.
+	 * Empty when the worker held no running job.
+	 *
+	 * A failure to ask is reported in {@link killed_jobs_note} rather than as an empty list,
+	 * because "no job was running" and "I could not find out" are different facts.
 	 */
 	killed_jobs: KilledJob[]
 	killed_jobs_note?: string
@@ -259,8 +263,9 @@ export class WorkerHost implements AsyncDisposable {
 	}
 
 	/**
-	 * The jobs the worker is running right now, for the restart to name before it kills them;
-	 * every failure answers with a note rather than an empty list, because reporting a worker
+	 * The jobs the worker is running right now, for the restart to name before it kills them.
+	 *
+	 * Every failure answers with a note rather than an empty list, because reporting a worker
 	 * that cannot be asked as "no jobs were running" would make a relaunch look unnecessary.
 	 */
 	async #runningJobs(): Promise<{ jobs: KilledJob[]; note?: string }> {

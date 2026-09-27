@@ -49,10 +49,10 @@ def _file_row_iter(
     """Yield filter-accepted rows from a single parquet file, with row-group and row shuffle.
 
     Applies the country-weight acceptance test, the coarse-label check when ``coarse_filter`` is set,
-    and a per-row source equality check when ``expected_source`` is given — a file can span sources,
+    and a per-row source equality check when ``expected_source`` is given. A file can span sources,
     so without it the per-source iterator would yield rows from the wrong source.
 
-    Does **not** apply source weighting; that is the multinomial sampler in ``_raw_row_stream``, which
+    Does **not** apply source weighting. That is the multinomial sampler in ``_raw_row_stream``, which
     makes the observed mix match ``source_weights`` exactly.
     """
     pf = pq.ParquetFile(path)
@@ -141,7 +141,7 @@ def _source_iter(
     number of distinct sources rather than by any file-pool parameter.
 
     A draw reads one row-group, and rows are ordered by country within a source, so a draw sees only
-    the countries in that row-group; shuffling file order moves which row-group that is without
+    the countries in that row-group. Shuffling file order moves which row-group that is without
     widening it. ``docs/engineering/reference/corpus-draw-coverage.mdx`` records the measurement and
     the candidate repairs.
     """

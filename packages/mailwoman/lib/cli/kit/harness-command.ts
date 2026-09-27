@@ -22,13 +22,14 @@ import type { CommandSpec, OptionsOf } from "#cli/native/spec"
  */
 export interface HarnessCommandOptions<Spec extends CommandSpec, T> {
 	/**
-	 * The process exit code, read off the task's result; absent means 0 on success,
-	 * and an error is 1 either way.
+	 * The process exit code, read off the task's result.
+	 * Absent means 0 on success, and an error is 1 either way.
 	 */
 	exitCode?: (result: T) => number
 	/**
-	 * The value to print as JSON, or `undefined` to print none; the options are passed
-	 * so the condition is named at the call site rather than assumed here.
+	 * The value to print as JSON, or `undefined` to print none.
+	 *
+	 * The options are passed so the condition is named at the call site rather than assumed here.
 	 */
 	json?: (result: T, options: OptionsOf<Spec>) => unknown
 }

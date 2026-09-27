@@ -37,8 +37,8 @@ def _reroot(raw: Path, corpus_dir: Path, split: str) -> Path | None:
     such as an overlay's base, the ``<corpus>/<split>/<file>`` tail is joined under the parent of
     ``corpus_dir``.
 
-    Part files are numbered by position, so a base part and an overlay part can share a file name;
-    re-rooting on the tail alone would read the overlay's part in place of the base's.
+    Part files are numbered by position, so a base part and an overlay part can share a file name.
+    Re-rooting on the tail alone would read the overlay's part in place of the base's.
     """
     parts = raw.parts
     at = parts.index(split) if split in parts else None
@@ -61,8 +61,8 @@ def _reroot(raw: Path, corpus_dir: Path, split: str) -> Path | None:
 def _parquet_paths(corpus_dir: Path, split: str) -> list[Path]:
     """Return the parquet files for one split, from MANIFEST.json or a directory glob.
 
-    The manifest lists an absolute ``path`` and a ``split`` per file; an overlay's also lists files in
-    its base corpus. Each path is used as-is when it exists and re-rooted by `_reroot` when it does
+    The manifest lists an absolute ``path`` and a ``split`` per file, and an overlay's also lists files
+    in its base corpus. Each path is used as-is when it exists and re-rooted by `_reroot` when it does
     not, and the glob runs only when the manifest resolves no files.
     """
     manifest = corpus_dir / "MANIFEST.json"
@@ -87,8 +87,8 @@ def _parquet_paths(corpus_dir: Path, split: str) -> list[Path]:
                 rerooted += 1
             else:
                 missing.append(str(raw))
-        # A partly resolved manifest means the corpus is broken, e.g. an overlay without its base;
-        # training on the files that remain would use the wrong corpus, so this raises. When no path
+        # A partly resolved manifest means the corpus is broken, e.g. an overlay without its base.
+        # Training on the files that remain would use the wrong corpus, so this raises. When no path
         # resolves, the glob fallback handles older monolithic corpora.
         if resolved and missing:
             raise FileNotFoundError(
@@ -111,7 +111,7 @@ def _parquet_paths(corpus_dir: Path, split: str) -> list[Path]:
 
 def file_source_counts(path: Path) -> dict[str, int]:
     """Count rows per ``source`` in one parquet file, which can hold several sources because the writer
-    splits files by row count; the count runs inside Arrow with `value_counts`, avoiding one Python
+    splits files by row count. The count runs inside Arrow with `value_counts`, avoiding one Python
     string per row.
 
     Raises `TypeError` on a non-string cell, which usually means a label-less ``--golden`` file was
@@ -132,8 +132,8 @@ def file_source_counts(path: Path) -> dict[str, int]:
 def source_row_counts(corpus_dir: Path, split: str = "train") -> dict[str, int]:
     """Count rows per source across every parquet file in a split.
 
-    The epoch audit divides draws by these counts to report how many times each source row was shown;
-    files whose ``source`` column cannot be read are skipped.
+    The epoch audit divides draws by these counts to report how many times each source row was shown.
+    Files whose ``source`` column cannot be read are skipped.
     """
     counts: dict[str, int] = {}
 

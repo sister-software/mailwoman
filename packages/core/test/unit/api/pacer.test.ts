@@ -109,9 +109,10 @@ describe("RequestPacer", () => {
 		const grantTimes: number[] = []
 		const recordedAcquire = makeRecordedAcquire(pacer, clock, grantTimes)
 
-		// `VirtualClock.advance` mutates `now()` before its first internal await flushes the microtask
-		// queue, so an already-resolved `acquire()` whose continuation is still queued would record
-		// the post-advance time; flush to quiescence first at every point where that could happen.
+		// `VirtualClock.advance` mutates `now()` before its first internal await flushes
+		// the microtask queue, so an already-resolved `acquire()` whose continuation
+		// is still queued would record the post-advance time.
+		// Flush to quiescence first at every point where that could happen.
 		for (let i = 0; i < SERIAL_CALLS; i++) {
 			const pending = recordedAcquire()
 

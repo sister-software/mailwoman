@@ -23,8 +23,8 @@ ZSTD_EXTENSION = ".zst"
 def open_delimited(path: Path, encoding: str = "utf-8") -> io.TextIOBase:
     """Open a delimited file for reading, transparently decompressing a ``.zst``.
 
-    Returns a streaming text handle either way; the decompressed text is never materialised — a corpus
-    part is tens of gigabytes expanded.
+    Returns a streaming text handle either way. The decompressed text is never materialised, because a
+    corpus part is tens of gigabytes expanded.
     """
     if path.suffix != ZSTD_EXTENSION:
         return path.open(encoding=encoding)

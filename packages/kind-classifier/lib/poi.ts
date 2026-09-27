@@ -11,8 +11,10 @@
 
 import type { NormalizedInputLite, QueryShapeSegmentsView as QueryShapeLike } from "@mailwoman/query-shape"
 /**
- * Comma-segment ceiling for a POI-led query; past it the input is a venue plus a full address
- * (`X, 350 5th Ave, New York, NY`), which the structured-address scorer should claim instead.
+ * Comma-segment ceiling for a POI-led query.
+ *
+ * Past it the input is a venue plus a full address (`X, 350 5th Ave, New York, NY`),
+ * which the structured-address scorer should claim instead.
  */
 const MAX_POI_SEGMENTS = 3
 
@@ -35,7 +37,8 @@ export interface POIPhraseMatch {
 	 */
 	kind?: "category" | "brand" | "name"
 	/**
-	 * Wikidata QID when known, `kind: "brand"` only; absent when a brand resolved by name alone.
+	 * Wikidata QID when known, `kind: "brand"` only.
+	 * Absent when a brand resolved by name alone.
 	 */
 	wikidata?: string
 	/**
@@ -47,13 +50,15 @@ export interface POIPhraseMatch {
 	 * (`credit union` → the `bank` rollup its synonym redirects to), while an affordance
 	 * rung returns every entity kind that affords one activity in a stable enumeration that
 	 * is not a preference, and narrowing to the first would be an invented ordering.
-	 * Set on every member of such a set, so {@link matchPOISubject} carries them all and the POI branch
-	 * searches their union; absent — the committed lexicon's shape — keeps the first-hit reading.
+	 * Set on every member of such a set, so {@link matchPOISubject} carries them all
+	 * and the POI branch searches their union.
+	 *
+	 * Absent, the committed lexicon's shape, keeps the first-hit reading.
 	 */
 	searchAsSet?: boolean
 	/**
-	 * ISO 3166-1 alpha-2 countries the authority behind this hit scopes its claim to;
-	 * absent means the condition is true everywhere.
+	 * ISO 3166-1 alpha-2 countries the authority behind this hit scopes its claim to.
+	 * Absent means the condition is true everywhere.
 	 *
 	 * A scope is a statement about establishments, so it is judged against the country of
 	 * the place being searched rather than the caller's locale: the locale is the lens the
@@ -81,19 +86,22 @@ export interface POIQuerySpan {
 }
 
 /**
- * Which lexicon this hit came from; existing category lookups set `"category"`
- * as the backward-compatible default.
+ * Which lexicon this hit came from.
+ *
+ * Existing category lookups set `"category"` as the backward-compatible default.
  */
 export interface POISubjectMatch {
 	/**
-	 * The hit the subject scores under; always `matches[0]`, built together in one place
-	 * so they cannot disagree.
+	 * The hit the subject scores under.
+	 *
+	 * Always `matches[0]`, built together in one place so they cannot disagree.
 	 */
 	match: POIPhraseMatch
 	/**
-	 * Every category the subject reaches, `match` first: one entry unless the lookup returned
-	 * a {@link POIPhraseMatch.searchAsSet} set, in which case it holds the whole set and the
-	 * POI branch searches their union; the order is the lookup's and states no preference.
+	 * Every category the subject reaches, `match` first: one entry unless the lookup
+	 * returned a {@link POIPhraseMatch.searchAsSet} set, in which case it holds the
+	 * whole set and the POI branch searches their union.
+	 * The order is the lookup's and states no preference.
 	 */
 	matches: POIPhraseMatch[]
 	subject: string
@@ -121,8 +129,8 @@ export interface POISubjectMatch {
  * the required literal has matched, so each start offset does O(1) work and `matchAll` is O(n).
  *
  * Behaviour is byte-identical to the previous `\s*,\s*|\s+(?:…)\s+`, because `matchPOISubject`
- * trims both the subject and the remainder, so surrounding whitespace is redundant;
- * the leading quantifier only shifted the match start within a whitespace run, while the retained
+ * trims both the subject and the remainder, so surrounding whitespace is redundant.
+ * The leading quantifier only shifted the match start within a whitespace run, while the retained
  * trailing greedy quantifier keeps the match end and thus `matchAll`'s lastIndex identical.
  */
 const ANCHOR_SEPARATOR = /,\s*|\s(near|in|at|around|to)\s+/gi
@@ -147,10 +155,10 @@ function reachedMatches(hits: ReadonlyArray<POIPhraseMatch>): POIPhraseMatch[] {
  * Match a POI subject: the whole input, or the text before the first anchor
  * separator whose prefix hits the lexicon (≤ 8 tokens).
  *
- * Scans separators left-to-right, because a lexicon phrase may itself contain a bare
- * separator word ("walk in clinic") and the first separator is not necessarily the
- * right split point; returns null when the lexicon never fires, including comma-ridden
- * full addresses whose leading segment is not a phrase.
+ * Scans separators left-to-right, because a lexicon phrase may itself contain a bare separator
+ * word ("walk in clinic") and the first separator is not necessarily the right split point.
+ * Returns null when the lexicon never fires, including comma-ridden full addresses
+ * whose leading segment is not a phrase.
  *
  * The winning candidate's hits are carried per {@link reachedMatches}.
  */
@@ -183,8 +191,8 @@ export function matchPOISubject(
 
 		const subject = trimmed.slice(0, separator.index).trim()
 
-		// Subjects only grow as the scan moves right, so once over budget later splits are too;
-		// whitespace-only split rather than `wordsOf`, because a comma inside a subject is real content.
+		// Subjects only grow as the scan moves right, so once over budget later splits are too.
+		// Whitespace-only split rather than `wordsOf`, because a comma inside a subject is real content.
 		if (subject.split(/\s+/).length > MAX_SUBJECT_TOKENS) break
 
 		const hits = lookup(subject, locale)
@@ -263,8 +271,8 @@ export function createScorePOIQuery(
  * band (0.92) so only the anchorless subset takes the top slot and every anchored
  * POI query keeps scoring `poi_query` as before.
  *
- * The coordinator's POI branch accepts both kinds, so the routing is identical either way;
- * the split exists so the marker can say "you named a category and no place".
+ * The coordinator's POI branch accepts both kinds, so the routing is identical either way.
+ * The split exists so the marker can say "you named a category and no place".
  */
 const POI_CATEGORY_CONFIDENCE = 0.93
 
@@ -272,8 +280,8 @@ const POI_CATEGORY_CONFIDENCE = 0.93
  * `poi_category` scorer (ROAD_TO_V9 §4.4) — a bare taxonomy category with nowhere
  * to search: "tacos", "grocery store", "drinking fountain".
  *
- * Fires only on a whole-input lexicon hit (`remainder === ""`) whose subject is a category;
- * a brand (`kind: "brand"`) is excluded because `POIPhraseMatch.categoryID` then holds
+ * Fires only on a whole-input lexicon hit (`remainder === ""`) whose subject is a category.
+ * A brand (`kind: "brand"`) is excluded because `POIPhraseMatch.categoryID` then holds
  * the brand's display name, which would make the marker's `categoryID` evidence a lie.
  */
 export function createScorePOICategory(

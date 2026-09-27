@@ -47,8 +47,8 @@ export function parseReading(coverage: CountryCoverage | undefined): ParseReadin
 /**
  * How finely a jurisdiction resolves.
  *
- * `Rooftop` is reserved for a rooftop database a consumer can obtain; build-local rooftop
- * databases look identical from inside the repository and still read `Locality`.
+ * `Rooftop` is reserved for a rooftop database a consumer can obtain.
+ * Build-local rooftop databases look identical from inside the repository and still read `Locality`.
  */
 export const GeocodeReading = {
 	Absent: "absent",

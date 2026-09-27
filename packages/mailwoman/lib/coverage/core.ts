@@ -55,13 +55,14 @@ export interface CoverageBuildOptions {
 	interpWeight: number
 	optimisticGamma: number
 	/**
-	 * GeoNames postal file (12-col tab-separated), or null to skip; postcodes are area-scale,
-	 * so centroids bin at the domain resolution.
+	 * GeoNames postal file (12-col tab-separated), or null to skip.
+	 *
+	 * Postcodes are area-scale, so centroids bin at the domain resolution.
 	 */
 	geonamesPostalFile: string | null
 	/**
-	 * WOF SQLite DB holding `spr` and `place_importance`, or null to skip the global
-	 * holes layer; a salient place we do not cover is a gray hole.
+	 * WOF SQLite DB holding `spr` and `place_importance`, or null to skip the global holes layer.
+	 * A salient place we do not cover is a gray hole.
 	 */
 	wofDB: string | null
 	/**
@@ -77,7 +78,8 @@ export interface CoverageBuildOptions {
 	 */
 	postcodeExcludeCountries: string[]
 	/**
-	 * Highest zoom baked; MapLibre overzooms above it.
+	 * Highest zoom baked.
+	 * MapLibre overzooms above it.
 	 */
 	tileMaxZoom: number
 	out: string

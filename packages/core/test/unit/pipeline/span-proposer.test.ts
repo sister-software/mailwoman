@@ -198,8 +198,9 @@ describe("venue-structure provenance", () => {
 	/**
 	 * The venue-interior subset shares `unitDesignators` with the postal tables —
 	 * the proposer needs it in both sets to fire — so the `source` string is the only
-	 * thing distinguishing the two provenances downstream; if it stops being emitted,
-	 * the consuming prior silently falls back to the postal scale.
+	 * thing distinguishing the two provenances downstream.
+	 *
+	 * If it stops being emitted, the consuming prior silently falls back to the postal scale.
 	 */
 	const withVenueStructure: SpanProposerLexicon = {
 		...LEXICON,
@@ -222,7 +223,8 @@ describe("venue-structure provenance", () => {
 	})
 
 	it("does not fire on a confound: the word must be a standalone token", () => {
-		// `Briggate` is one token; the GB `-gate` street names are the confound class this guards.
+		// `Briggate` is one token.
+		// The GB `-gate` street names are the confound class this guards.
 		expect(proposeSpans("12 Briggate, Leeds, LS1 6ER", withVenueStructure)).toEqual([])
 	})
 

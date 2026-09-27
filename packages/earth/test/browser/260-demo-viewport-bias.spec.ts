@@ -1,5 +1,7 @@
 /**
- * @file Viewport-bias wiring: the map's current center feeds `resolveTree` as a soft proximity hint, so an in-view namesake sorts ahead of a distant one at equal exact tier, and a strong population signal still wins regardless of view; the bias is conditioned on zoom ≥ 4, so a whole-globe view contributes no bias.
+ * @file Viewport-bias wiring: the map's current center feeds `resolveTree` as a soft proximity hint, so an in-view
+ *   namesake sorts ahead of a distant one at equal exact tier, and a strong population signal still wins regardless
+ *   of view. The bias is conditioned on zoom ≥ 4, so a whole-globe view contributes no bias.
  */
 
 import { expect, test } from "../e2e/index.ts"

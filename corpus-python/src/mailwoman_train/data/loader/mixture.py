@@ -67,7 +67,7 @@ def _index_by_source(paths: list[Path]) -> dict[str, list[Path]]:
     a source boundary, so a source ends wherever its row count leaves it and the next continues in the
     same part.
 
-    A file that is missing or unreadable is skipped and named; one with a non-string source raises,
+    A file that is missing or unreadable is skipped and named. One with a non-string source raises,
     because that is a --golden (label-less) file used as a train file.
     """
     by_source: dict[str, list[Path]] = {}
@@ -111,7 +111,7 @@ def _apply_source_weights(
 ) -> dict[str, list[Path]]:
     """Drop the sources the weights decline, and refuse the ones they never mention.
 
-    A source named at zero is the config declining it deliberately; a source the weights never mention
+    A source named at zero is the config declining it deliberately. A source the weights never mention
     is an oversight, invisible because the sampler cannot miss what it never indexed and the run log
     carries no trace — so an unnamed source refuses on the split whose recipe claims coverage. The
     shape it hides: a regenerated source takes a ``-vNN`` suffix, the config keeps the old key, and
@@ -172,7 +172,7 @@ def _stationary_mixture(
             row = next(iters[chosen])
         except StopIteration:
             # A pass that yielded no rows can never yield on a rerun, so a positive-weight source with
-            # zero selectable rows is a recipe/corpus interface violation, not a silent drop.
+            # zero selectable rows is a recipe/corpus interface violation and raises here.
             if pass_rows[chosen] == 0:
                 raise ValueError(
                     f"source {chosen!r} has a positive weight but yielded zero selectable rows in a "
@@ -207,7 +207,7 @@ def _raw_row_stream(
 
     Wrapped by ``iter_rows`` with a reservoir-style shuffle buffer. The multinomial is fixed for the
     whole epoch, so the observed mix matches ``source_weights`` exactly per pull regardless of raw
-    share or file layout; non-train splits skip source bucketing and stream every file's rows directly.
+    share or file layout. Non-train splits skip source bucketing and stream every file's rows directly.
 
     Memory is one active row-group per source, about ``|sources| × 50 MB`` peak.
     """
@@ -227,7 +227,7 @@ def _raw_row_stream(
 
     logger.info("Indexing %d parquet files by source...", len(paths))
     by_source = _index_by_source(paths)
-    # ``source_weights`` describes the train mixture; validation corpora intentionally hold a small
+    # ``source_weights`` describes the train mixture. Validation corpora intentionally hold a small
     # fixed source subset, so the stale-config guard applies only where the recipe makes its
     # coverage claim.
     if source_weights is not None and split == "train":

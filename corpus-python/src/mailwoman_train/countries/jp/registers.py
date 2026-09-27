@@ -59,8 +59,8 @@ def split_typed_street(street: str, districts: set[str]) -> tuple[str, str, str,
     """Split ``丁目番地等`` into (district, chōme, number, rest) at the leftmost split point whose district the register lists.
 
     A district name may itself carry a kanji numeral (``一条通北２丁目３－２５``), so every numeral position is tried
-    left to right and the first whose prefix is a listed district and whose tail parses as chōme-then-number wins;
-    answers None when none does.
+    left to right and the first whose prefix is a listed district and whose tail parses as chōme-then-number wins.
+    Answers None when none does.
     """
     for match in _TAIL_START.finditer(street):
         boundary = match.start()

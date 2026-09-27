@@ -156,7 +156,7 @@ def _pinned_report(corpus: Path) -> dict:
 
 
 def test_the_whole_report_matches_the_committed_reference(tmp_path: Path) -> None:
-    """A share stays in range while the rows behind it change; the windows and counts do not."""
+    """A share stays in range while the rows behind it change, and the windows and counts stay fixed."""
     expected = json.loads(AUGMENTED_REFERENCE.read_text())["report"]
     assert _pinned_report(_write_corpus(tmp_path)) == expected
 

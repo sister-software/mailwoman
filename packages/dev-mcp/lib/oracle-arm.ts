@@ -11,9 +11,9 @@
  *
  *   `census` is free, unauthenticated and US-only, and allowed with no ceremony.
  *
- *   `google` is billed, and its opt-in deliberately does not live on the tool argument: a spend decision belongs to
- *   whoever owns the key, not to whoever is driving the agent, so it is read from the daemon's config file plus a
- *   per-lifetime call cap that the result reports as it consumes.
+ *   `google` is billed, and its opt-in lives in the daemon's config file: a spend decision belongs to
+ *   whoever owns the key, so it is read from that file plus a per-lifetime call cap that the result reports as
+ *   it consumes, and the tool argument carries no opt-in.
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
@@ -36,7 +36,9 @@ export const OracleProviderName = {
 	 */
 	Census: "census",
 	/**
-	 * Billed per call; its opt-in is not a tool argument (see the module docstring).
+	 * Billed per call.
+	 *
+	 * Its opt-in lives in the daemon's config file (see the module docstring).
 	 */
 	Google: "google",
 } as const
@@ -60,8 +62,8 @@ export interface OracleConfig {
 }
 
 /**
- * Chosen to cover one 420-row panel with margin and to come nowhere near a sweep;
- * a cap that silently permits an unbounded run is not a cap.
+ * Chosen to cover one 420-row panel with margin and to come nowhere near a sweep.
+ * A cap that silently permits an unbounded run is not a cap.
  */
 export const DEFAULT_GOOGLE_CALL_CAP = 500
 
@@ -230,10 +232,11 @@ export function createOracleClient(provider: OracleProviderName): OracleGeocoder
 const HTTP_NOT_FOUND = 404
 
 /**
- * A no-match becomes an answer with a reason rather than a throw, matching every other arm
- * because the protocol counts it a miss at every threshold and it is a different fact from
- * a query that failed; anything else propagates, so a dead key or exhausted quota reaches
- * `compare.ts`'s consecutive-failure abort instead of reading as an arm that lost.
+ * A no-match becomes an answer with a reason rather than a throw, matching every other arm because the
+ * protocol counts it a miss at every threshold and it is a different fact from a query that failed.
+ *
+ * Anything else propagates, so a dead key or exhausted quota reaches `compare.ts`'s
+ * consecutive-failure abort instead of reading as an arm that lost.
  */
 export async function answerFromOracle(client: OracleGeocoderLike, input: string): Promise<ExternalAnswer> {
 	let results: OracleGeocodeResult[]

@@ -15,7 +15,7 @@ from mailwoman_train.config import DataConfig
 from mailwoman_train.data.loader import collate, iter_encoded, iter_rows, source_row_counts
 from mailwoman_train.tokenizer.char import build_char_vocab, save_char_vocab
 
-#: Committed beside this file; regenerate with `uv run python
+#: Committed beside this file. Regenerate with `uv run python
 #: tests/mailwoman_train/data/test_loader_split_parity.py` only when the current code is already
 #: verified against the existing reference, or the test compares the new code against itself.
 REFERENCE = Path(__file__).parent / "loader-split-reference.json"
@@ -288,7 +288,11 @@ def test_collate_keys_match_the_committed_reference(corpus: Path, tmp_path: Path
 
 
 def write_reference() -> None:
-    """Capture the current loader as the reference the tests above compare against; run it only when the current code already passes against the existing reference, or the artifact records whatever the code does now."""
+    """Capture the current loader as the reference the tests above compare against.
+
+    Run it only when the current code already passes against the existing reference, or the
+    artifact records whatever the code does now.
+    """
     import tempfile
 
     with tempfile.TemporaryDirectory() as scratch:

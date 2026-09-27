@@ -33,7 +33,8 @@ export interface FloorReading {
 	 */
 	observed: number | null
 	/**
-	 * `observed − floor`, or `null` when unmeasured; negative means the floor was missed.
+	 * `observed − floor`, or `null` when unmeasured.
+	 * Negative means the floor was missed.
 	 */
 	margin: number | null
 	pass: boolean
@@ -71,8 +72,10 @@ export interface EvalReport {
 	ledger_command: string | null
 	ledger_note: string
 	/**
-	 * The recompile-before-eval refusal, verbatim, when the eval's own lore guard fired; passed through
-	 * rather than worked around, because a tool that swallowed it would grade a stale tree.
+	 * The recompile-before-eval refusal, verbatim, when the eval's own lore guard fired.
+	 *
+	 * It is passed through rather than worked around, because a tool that swallowed
+	 * it would grade a stale tree.
 	 */
 	lore_guard_refusal: string | null
 	notes: string[]
@@ -93,9 +96,10 @@ const LEDGER_MARKER = "eval ledger-append"
 const LORE_GUARD_MARKER = "recompile"
 
 /**
- * Why the ledger command is reported rather than run; carried on every check result
- * so the boundary travels with the command, since a reader who sees a filled-in command
- * and no note has every reason to assume it already ran.
+ * Why the ledger command is reported rather than run.
+ *
+ * It is carried on every check result so the boundary travels with the command, since a
+ * reader who sees a filled-in command and no note has every reason to assume it already ran.
  */
 export const LEDGER_NOTE =
 	"This command is REPORTED, never run. Appending to evals/scores-by-version.json is a repo write and a claim about " +
@@ -157,7 +161,8 @@ export async function readEvalReport(outDir: PathBuilderLike, stdout: string, st
 
 	for (const [index, line] of lines.entries()) {
 		if (!ledgerCommand && line.includes(LEDGER_MARKER)) {
-			// The command spans a couple of continued lines; take them until one does not end in a backslash.
+			// The command spans a couple of continued lines.
+			// Take them until one does not end in a backslash.
 			const collected = [line.trim()]
 
 			for (let next = index + 1; next < lines.length && collected.at(-1)!.endsWith("\\"); next++) {

@@ -1,6 +1,6 @@
 """SP vocab-pruning artifact surgery: rebuild ``tokenizer.model`` and the int8 ``model.onnx`` from a keep set.
 
-Tokenizer surgery strips pruned pieces order-preserving; a piece that never won a Viterbi path
+Tokenizer surgery strips pruned pieces order-preserving. A piece that never won a Viterbi path
 contributes no score to any other path, so segmentation is identical for every input whose best
 path avoided the pruned set. ONNX surgery row-gathers ``token_embeddings.weight_quantized`` by the
 old→new id map with scale and zero-point untouched, so kept rows stay byte-identical.
@@ -34,8 +34,8 @@ def main() -> None:
     vocab_size = sp.get_piece_size()
 
     counts = np.load(args.train_counts)["counts"]
-    # These checks use raises, not asserts, so a silently wrong artifact cannot ship under
-    # `python -O`.
+    # These checks raise so that they still run under `python -O`, where an assert is stripped
+    # and a wrong artifact would ship silently.
     if counts.shape != (vocab_size,):
         raise ValueError(f"counts shape {counts.shape} != vocab {vocab_size}")
     eval_fired = set(json.loads(Path(args.eval_fired).read_text())["fired_ids"])
@@ -44,7 +44,7 @@ def main() -> None:
     keep[counts > 0] = True
     keep[list(eval_fired)] = True
 
-    # Any piece the proto marks non-normal — control, unused or byte — is kept; byte-fallback
+    # Any piece the proto marks non-normal — control, unused or byte — is kept. Byte-fallback
     # pieces are type byte.
     proto = sp_pb2.ModelProto()
     proto.ParseFromString(Path(args.tokenizer).read_bytes())

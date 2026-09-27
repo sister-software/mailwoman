@@ -10,7 +10,7 @@
  *   The table is per scenario, because a pooled `partial` share averages a present-day designation together
  *   with a 2105 projection and describes neither.
  *
- *   One stream covers every resolution; memory is the cost, and a caller that runs out of headroom runs the
+ *   One stream covers every resolution. Memory is the cost, and a caller that runs out of headroom runs the
  *   candidates in separate invocations.
  */
 

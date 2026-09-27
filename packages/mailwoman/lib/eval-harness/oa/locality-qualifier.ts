@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  * @file The trailing parenthetical an OpenAddresses locality sometimes carries, and the one function that removes it.
  *
- *   `Manilla (Rural)` is the town of Manilla reached on a rural route; the parenthesis is the source's delivery-type
+ *   `Manilla (Rural)` is the town of Manilla reached on a rural route. The parenthesis is the source's delivery-type
  *   marker rather than part of the place name, so grading against the raw expectation marks the parser's correct
  *   `Manilla` answer wrong.
  *
@@ -17,8 +17,9 @@
  */
 
 /**
- * A trailing qualifier in parentheses at the end of a name, anchored so a parenthesis
- * anywhere else is left alone — the convention removed is a suffix.
+ * A trailing qualifier in parentheses at the end of a name, anchored
+ * so a parenthesis anywhere else is left alone.
+ * The convention removed is a suffix.
  */
 const TRAILING_PARENTHETICAL = /\s*\([^)]*\)\s*$/
 

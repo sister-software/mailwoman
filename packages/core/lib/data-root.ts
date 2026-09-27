@@ -25,8 +25,10 @@ export const dataRootPath = createPathBuilderResolver<"~env/data-root">(() => $p
 
 /**
  * A path under the data root's database group, `$MAILWOMAN_DATA_ROOT/db/`, where every built
- * or published SQLite artifact lives one subdirectory per layer; source downloads, corpora,
- * weights and caches stay at the data root's top level and do not pass through here.
+ * or published SQLite artifact lives one subdirectory per layer.
+ *
+ * Source downloads, corpora, weights and caches stay at the data root's top level
+ * and do not pass through here.
  *
  * The group name is a bare string in every path a caller composes, so the compiler reports no error
  * when a call site keeps a pre-grouping prefix: such a call site resolves to a directory that

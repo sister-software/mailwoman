@@ -51,7 +51,8 @@ export type InterpolateColorCallback = (t: number) => string
 
 export interface GenerateMermaidMarkupOptions {
 	/**
-	 * Restrict descendants to the given roles; defaults to all roles.
+	 * Restrict descendants to the given roles.
+	 * Defaults to all roles.
 	 */
 	roles?: Iterable<PlacetypeRole>
 	/**
@@ -105,7 +106,8 @@ function measureMaxDepth(root: Placetype, roles: Iterable<PlacetypeRole> | undef
 
 /**
  * Generate Mermaid flowchart markup for a placetype and its descendants, walking recursively
- * through `findChildren` and emitting only real direct-parent → direct-child edges;
+ * through `findChildren` and emitting only real direct-parent → direct-child edges.
+ *
  * WOF placetypes form a DAG, so a child can legitimately appear on multiple edges
  * while the `visited` set prevents re-emitting the subtree below it.
  */

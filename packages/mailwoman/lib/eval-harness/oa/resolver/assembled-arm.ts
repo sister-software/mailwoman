@@ -34,8 +34,8 @@ export async function buildAssembledArm(
 	// without (`assembled`) and with (`assembled+arb`) per-component arbitration,
 	// counted per arm so a regression is visible.
 	//
-	// placeCountry defaults off so the assembled arm isolates arbitration from the coarse prior;
-	// the shipped pipeline default is the bundled placer (on, open-set @ 0.9).
+	// placeCountry defaults off so the assembled arm isolates arbitration from the coarse prior.
+	// The shipped pipeline default is the bundled placer (on, open-set @ 0.9).
 	// `--place-country` flips this eval to the production-representative config,
 	// because without it ambiguous EU names are placed off-continent.
 	const runAssembled = options.assembled ?? false
@@ -66,9 +66,9 @@ export async function buildAssembledArm(
 				resolver,
 				placeCountry: evalPlacer ?? false,
 				hardPlaceCountry: useHardCountry && !!evalPlacer,
-				// `--place-country-hard-all` overrides the production coverage safelist
-				// with the full in-map set so every confident country hard-filters;
-				// plain `--place-country-hard` leaves it undefined.
+				// `--place-country-hard-all` overrides the production coverage safelist with
+				// the full in-map set so every confident country hard-filters.
+				// Plain `--place-country-hard` leaves it undefined.
 				...(useHardCountryAll
 					? { hardCountrySafelist: new Set(COARSE_CLASSES.filter((c) => c !== "OTHER")) as ReadonlySet<string> }
 					: {}),

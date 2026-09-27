@@ -9,7 +9,7 @@
  *   that asks all of them at once and collects the matches.
  *
  *   It is the shared source of truth for "which systems can this shape be", consumed by the postcode
- *   anchor to narrow which systems' street vocabularies it checks; callers depend on this pure
+ *   anchor to narrow which systems' street vocabularies it checks. Callers depend on this pure
  *   function, never on each other.
  *
  *   This is a shape test rather than a gazetteer-membership test: a bare `68161` matches the US,
@@ -55,8 +55,10 @@ const SYSTEM_ACCEPTS: ReadonlyArray<readonly [SystemCode, (s: string) => boolean
 ]
 
 /**
- * Every address system with a postcode shape, in {@link SYSTEM_ACCEPTS} order; the one list a
- * consumer that needs the universe of systems should read, so it cannot drift from the table.
+ * Every address system with a postcode shape, in {@link SYSTEM_ACCEPTS} order.
+ *
+ * It is the one list a consumer that needs the universe of systems should read,
+ * so it cannot drift from the table.
  */
 export const SYSTEM_CODES: readonly SystemCode[] = SYSTEM_ACCEPTS.map(([system]) => system)
 
@@ -134,8 +136,9 @@ export function isUnitGradePostcodeHit(parsed: string, resolverName: string | un
  * Whether a postal zone is coarser than its locality is a fact about a country's
  * administrative geography rather than about its postal system, and code length does
  * not predict it: FR and DE are both 5-digit and land on opposite sides.
- * France has ~35,000 communes and one code postal often spans several, so the commune is finer;
- * a German Gemeinde can be enormous (Berlin is one WOF locality), so the PLZ is finer by a wide margin.
+ * France has ~35,000 communes and one code postal often spans several, so the commune is finer.
+ *
+ * A German Gemeinde can be enormous (Berlin is one WOF locality), so the PLZ is finer by a wide margin.
  *
  * Japan's postcode 町域 is finer than its municipality, and a six-digit Singapore
  * postcode names one building, so its code's point is the address.
@@ -148,8 +151,9 @@ export function isUnitGradePostcodeHit(parsed: string, resolverName: string | un
 export const AREA_POSTCODE_FINER_THAN_LOCALITY: ReadonlySet<string> = new Set(["DE", "JP", "SG"])
 
 /**
- * True when this country's area-grade postal code outranks its locality; absent or unknown
- * country → false, so the locality-first convention is what an unscoped query gets.
+ * True when this country's area-grade postal code outranks its locality.
+ *
+ * An absent or unknown country gives false, so the locality-first convention is what an unscoped query gets.
  */
 export function areaPostcodeLeadsLocality(country: string | undefined): boolean {
 	return country !== undefined && AREA_POSTCODE_FINER_THAN_LOCALITY.has(country.trim().toUpperCase())

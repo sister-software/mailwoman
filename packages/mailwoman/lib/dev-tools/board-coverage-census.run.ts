@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   `pass` checks a run and `improvement_target` only tracks, so a raw row count conflates a country that can
- *   go red with one that cannot; the gazetteer share is the denominator.
+ *   go red with one that cannot. The gazetteer share is the denominator.
  *
  *   The loader walks two-letter directories only, so `generalization/` is outside every number here.
  *
@@ -33,7 +33,8 @@ const { values: args } = parseArguments({
 })
 
 /**
- * Checking rows a country is expected to hold, not a threshold this census enforces.
+ * Checking rows a country is expected to hold.
+ * This census only reports the shortfall against it.
  */
 const FLOOR = Number(args.floor ?? 6)
 
@@ -70,8 +71,9 @@ for (const c of cases) {
 }
 
 /**
- * `spr` rows per country, or null everywhere when no gazetteer is readable —
- * a missing artifact leaves the column unmeasured rather than zero.
+ * `spr` rows per country, or null everywhere when no gazetteer is readable.
+ *
+ * A missing artifact leaves the column unmeasured rather than zero.
  */
 const gazetteerPath = PathBuilder.from(args.gazetteer ?? dataRootPath("db", "wof", "admin-global-priority.db"))
 

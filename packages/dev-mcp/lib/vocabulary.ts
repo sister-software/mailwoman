@@ -20,13 +20,16 @@ interface VocabularyLine {
 	characters: number
 	byteFallbacks: number
 	/**
-	 * Pieces per character; Latin text against this tokenizer runs around 0.4, and a figure near
-	 * or above 1.0 means the string is being spelled out rather than tokenized.
+	 * Pieces per character.
+	 *
+	 * Latin text against this tokenizer runs around 0.4, and a figure near or above 1.0
+	 * means the string is being spelled out rather than tokenized.
 	 */
 	piecesPerCharacter: number
 	/**
-	 * The piece sequence, joined by `|`, present only when asked for; it shows
-	 * where a word shatters and is what makes a reply long.
+	 * The piece sequence, joined by `|`, present only when asked for.
+	 *
+	 * It shows where a word shatters and is what makes a reply long.
 	 */
 	sequence?: string
 }
@@ -43,8 +46,10 @@ export interface VocabularyReport {
 		byteFallbacks: number
 		piecesPerCharacter: number
 		/**
-		 * Byte fallbacks as a share of pieces; the headline number is meaningless without
-		 * a comparison arm, so pass `control` so the reply carries one.
+		 * Byte fallbacks as a share of pieces.
+		 *
+		 * The headline number is meaningless without a comparison arm, so pass `control`
+		 * so the reply carries one.
 		 */
 		byteFallbackShare: number
 	}
@@ -135,9 +140,10 @@ export interface VocabularyOptions {
 }
 
 /**
- * Measure vocabulary coverage; the tokenizer is resolved through `resolveWeights`
- * like every other consumer, so the answer describes the tokenizer the runtime would
- * actually load rather than a file someone typed a path to.
+ * Measure vocabulary coverage.
+ *
+ * The tokenizer is resolved through `resolveWeights` like every other consumer, so the answer
+ * describes the tokenizer the runtime would actually load rather than a file someone typed a path to.
  */
 export async function runVocabulary(options: VocabularyOptions): Promise<VocabularyReport> {
 	const { MailwomanTokenizer } = await import("@mailwoman/neural/tokenizer")

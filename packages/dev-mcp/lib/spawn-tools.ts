@@ -3,9 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- * The tools that spawn the compiled CLI, and the one that polls them; each writes its report to stdout, which here is
- * the JSON-RPC channel, so each must run as a child, puts the compiled tree back on the path and pays
- * `assertCompiledFresh` and a full ~1.4 s cold start.
+ * The tools that spawn the compiled CLI, and the one that polls them. Each writes its report to stdout, and stdout
+ * here is the JSON-RPC channel. Each must therefore run as a child, which puts the compiled tree back on the path
+ * and pays `assertCompiledFresh` and a full ~1.4 s cold start.
  */
 
 import { tempRootPath } from "@mailwoman/core/data-root"
@@ -22,8 +22,10 @@ import type { JobRegistry } from "#jobs"
 import { summarizeJob, type DevTool } from "#tool-kit"
 
 /**
- * Where each check job wrote its battery, keyed by job id; the out-dir is chosen when the job starts,
- * so recovering it from printed output would fail exactly when the run died before printing any.
+ * Where each check job wrote its battery, keyed by job id.
+ *
+ * The out-dir is chosen when the job starts, so recovering it from printed output
+ * would fail exactly when the run died before printing any.
  */
 const promotionEvalOutDirs = new Map<string, string>()
 
@@ -53,9 +55,9 @@ export async function buildSpawnTools(registry: EngineRegistryLike, jobs: JobReg
 				n: z.number().int().positive().optional(),
 			}),
 			handler: async (args) => {
-				// The gauntlet writes its whole report to stdout, which here is the JSON-RPC channel,
-				// so it is spawned — which puts the compiled tree back on the path, where a stale
-				// out/ would grade replaced code and report a verdict rather than an error.
+				// The gauntlet writes its whole report to stdout, and stdout here is the JSON-RPC channel.
+				// It is therefore spawned, which puts the compiled tree back on the path, where a
+				// stale out/ would grade replaced code and report a verdict rather than an error.
 				const freshness = await assertCompiledFresh(registry.repoRoot)
 
 				const layer = (args["layer"] as string) ?? "regression"
@@ -175,8 +177,9 @@ export async function buildSpawnTools(registry: EngineRegistryLike, jobs: JobReg
 					}
 				}
 
-				// Spawned for the same reason the gauntlet is; the eval runs its own recompile-before-eval
-				// guard, stricter than this one and surfaced verbatim rather than pre-empted.
+				// Spawned for the same reason the gauntlet is.
+				// The eval runs its own recompile-before-eval guard, stricter than this one
+				// and surfaced verbatim rather than pre-empted.
 				const freshness = await assertCompiledFresh(registry.repoRoot)
 				const outDir = (args["out_dir"] as string | undefined) ?? tempRootPath(`mwdev-check-${jobs.list().length}`)
 				// The promotion battery is `mailwoman eval promote --check <spec>`; a wrong
@@ -319,7 +322,8 @@ export async function buildSpawnTools(registry: EngineRegistryLike, jobs: JobReg
 
 				const promotionEvalOutDir = promotionEvalOutDirs.get(jobID)
 
-				// A check job's numbers come from its own artifacts; only a gauntlet job needs its log parsed.
+				// A check job's numbers come from its own artifacts.
+				// Only a gauntlet job needs its log parsed.
 				const report = promotionEvalOutDir
 					? await readEvalReport(promotionEvalOutDir, job.stdout, job.stderr)
 					: parseGauntletReport(job.stdout, job.stderr)
@@ -334,7 +338,8 @@ export async function buildSpawnTools(registry: EngineRegistryLike, jobs: JobReg
 					// because a partial log is useful and a silent "not ready" is not.
 					partial: job.state === "running",
 					// A graded `fail` exits 1, so `state: "failed"` is what a completed-and-failing
-					// gauntlet looks like, which reads as a crash; the two need different responses.
+					// gauntlet looks like, which reads as a crash.
+					// The two need different responses.
 					...(job.state === "failed" && report.verdict
 						? {
 								job_outcome: `The run COMPLETED and graded ${report.verdict}. The non-zero exit is the verdict, not a crash.`,

@@ -163,7 +163,7 @@ def realign_anchor_to_pieces_shaped(
     labels, so at train the anchor fires on the same spans inference paints, including a
     house-number-that-looks-like-a-ZIP. A shaped span that misses ``anchor_lookup`` paints no
     anchor, exactly like inference. Lookup normalization and char→piece projection are shared with
-    the gold paths, so this can differ from gold only in where it paints; the rare DE ``D-`` and
+    the gold paths, so this can differ from gold only in where it paints. The rare DE ``D-`` and
     Dutch-spaced shapes inherit the gold path's space-strip+upper normalization.
     """
     from ..features.postcode_shapes import collect_matches

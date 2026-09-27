@@ -75,8 +75,8 @@ export function gunzipChunks(source: AsyncIterable<Uint8Array | string>): Readab
 
 /**
  * The CRC-32 and synchronous gzip `node:zlib` offers, for a checksum over a buffer
- * already in memory and for a response body compressed inside a request handler;
- * everything streamed goes through {@linkcode gunzipChunks}.
+ * already in memory and for a response body compressed inside a request handler.
+ * Everything streamed goes through {@linkcode gunzipChunks}.
  */
 export { crc32, gzipSync } from "node:zlib"
 

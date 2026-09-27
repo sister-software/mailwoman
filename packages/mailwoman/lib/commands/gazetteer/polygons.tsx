@@ -4,13 +4,13 @@
  * @author Teffen Ellis, et al.
  *
  *   `mailwoman gazetteer polygons` — build the crisp-polygon sibling for the demo's map. The demo
- *   draws the WOF rectangle (`place_bbox`) today; this packs the real admin geometry — simplified — so
+ *   draws the WOF rectangle (`place_bbox`) today. This packs the real admin geometry — simplified — so
  *   the demo can draw an actual boundary, loaded lazily only when a result is shown.
  *
  *   Source: the per-id WOF GeoJSON repos at
  *   `<repos>/whosonfirst-data-admin-<cc>/data/<id-per-region>/<id>.geojson`, where the database path is
  *   the id split into 3-char chunks (101909779 → 101/909/779/101909779.geojson). Only admin placetypes
- *   carry polygons; postcodes resolve to a point marker and are skipped. In-scope ids are pulled
+ *   carry polygons. Postcodes resolve to a point marker and are skipped. In-scope ids are pulled
  *   straight from the already-built points/admin DB so the two stay in lockstep.
  *
  *   Each ring is Douglas-Peucker simplified (default tol ~0.004° ≈ 400 m) to keep the file shippable,
@@ -87,8 +87,9 @@ interface RawGeometry {
 }
 
 /**
- * `--repos` defaults to the owner directory, so the repository name is appended flat to
- * whatever root the caller gave; the id-to-path rule itself belongs to `wofIDPathSegments`.
+ * `--repos` defaults to the owner directory, so the repository name is appended
+ * flat to whatever root the caller gave.
+ * The id-to-path rule itself belongs to `wofIDPathSegments`.
  */
 function geojsonPath(repos: string, country: string, id: number): string {
 	return resolvePath(repos, wofRepoName("admin", country), "data", ...wofIDPathSegments(id)).toString()
@@ -220,7 +221,8 @@ const GazetteerPolygons: CommandComponent<typeof spec> = ({ options }) => {
 		}
 
 		const kdb = new DatabaseClient<PolygonDatabase>(tmpOut)
-		// DDL goes through the Kysely schema-builder; the hot insert loop stays on the raw `kdb` handle.
+		// DDL goes through the Kysely schema-builder.
+		// The hot insert loop stays on the raw `kdb` handle.
 
 		await createPolygonsTable(kdb)
 

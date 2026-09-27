@@ -16,7 +16,7 @@ from mailwoman_train.features.gazetteer_anchor import GazetteerLexicon
 from mailwoman_train.tokenizer.encode import encode_row
 from mailwoman_train.types import PieceSpan
 
-#: Committed beside this file; regenerate with:
+#: Committed beside this file. Regenerate with:
 #: uv run python -m tests.mailwoman_train.tokenizer.test_encode_row_channels
 REFERENCE = Path(__file__).parent / "encode-row-channels-reference.json"
 
@@ -93,7 +93,7 @@ def encode(**overrides: Any) -> dict[str, list[Any]]:
 
 
 def all_channels() -> dict[str, dict[str, list[Any]]]:
-    """The two label sources with every channel on; the span and token paths reach different anchor painters and label arrays."""
+    """The two label sources with every channel on. The span and token paths reach different anchor painters and label arrays."""
     starts, ends, tags = [], [], []
     for token, label in zip(TOKENS, LABELS, strict=True):
         if label.startswith("B-"):
@@ -156,7 +156,10 @@ def test_the_fixture_paints_every_channel(encoded: dict[str, Any]) -> None:
 
 
 def write_reference() -> None:
-    """Capture the current encoding as the reference the tests above compare against; run it only when the current code already passes against the existing reference."""
+    """Capture the current encoding as the reference the tests above compare against.
+
+    Run it only when the current code already passes against the existing reference.
+    """
     payload = {
         "README": [
             "Pins one row encoded with every soft-feed channel on, across a refactor.",

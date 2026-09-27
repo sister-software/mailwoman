@@ -6,12 +6,13 @@
  *   Name-normalization primitives shared across the codex tables and the lexicon builders that read
  *   them. They live here rather than in `core` or `normalize` because codex is the
  *   zero-runtime-dependency reference package and everything matching a name against a codex table
- *   already depends on it; keeping the folding rules beside the tables they fold stops a lookup and
+ *   already depends on it. Keeping the folding rules beside the tables they fold stops a lookup and
  *   its table from disagreeing about what counts as the same name.
  */
 
 /**
- * Fold a name to a lossy ASCII match key for codex table lookups; never render the result back to a user.
+ * Fold a name to a lossy ASCII match key for codex table lookups.
+ * Never render the result back to a user.
  */
 export function foldName(s: string): string {
 	return s
@@ -23,9 +24,9 @@ export function foldName(s: string): string {
 }
 
 /**
- * Normalize a word list without folding case or non-Latin scripts — `"Кыргызстан,"`
- * and `"日本 。"` survive with their content intact — for surface lexicons whose entries
- * must remain renderable; unlike {@link foldName} this is not a match key.
+ * Normalize a word list without folding case or non-Latin scripts — `"Кыргызстан,"` and `"日本 。"`
+ * survive with their content intact — for surface lexicons whose entries must remain renderable.
+ * Unlike {@link foldName} this is not a match key.
  */
 export function wordNorm(s: string): string {
 	return s

@@ -15,9 +15,11 @@ import { type PathBuilder, resolvePath, resolvePathBuilder, type PathBuilderLike
 import { Globerator } from "spliterator/node/fs"
 
 /**
- * Workspaces whose source an engine's module graph reaches, so an edit here invalidates every
- * resident engine; deliberately a list rather than "every workspace", because a docs edit cannot
- * change a geocode and evicting on unrelated commits trains the operator to ignore the signal.
+ * Workspaces whose source an engine's module graph reaches, so an edit here
+ * invalidates every resident engine.
+ *
+ * This is deliberately a list rather than "every workspace", because a docs edit cannot change
+ * a geocode and evicting on unrelated commits trains the operator to ignore the signal.
  */
 export const FINGERPRINTED_WORKSPACES = [
 	"packages/mailwoman",
@@ -46,7 +48,8 @@ const SOURCE_EXTENSIONS = [".ts", ".tsx", ".json"]
  */
 export interface TreeFingerprint {
 	/**
-	 * The hash callers compare; opaque, so only equality is meaningful.
+	 * The hash callers compare.
+	 * It is opaque, so only equality is meaningful.
 	 */
 	digest: string
 	gitHead: string
@@ -62,8 +65,10 @@ export interface TreeFingerprint {
 	newestMtimeMs: number
 	newestPath: string | null
 	/**
-	 * Source files walked; a zero would mean the walk found no source file and every fingerprint would
-	 * agree with every other, so {@link computeTreeFingerprint} throws rather than returning it.
+	 * Source files walked.
+	 *
+	 * A zero would mean the walk found no source file and every fingerprint would agree with
+	 * every other, so {@link computeTreeFingerprint} throws rather than returning it.
 	 */
 	filesWalked: number
 }
@@ -81,8 +86,8 @@ async function newestSourceMtime(root: PathBuilder): Promise<{ mtimeMs: number; 
 		try {
 			entries = await Globerator.from("*", { cwd: dir, withFileTypes: true, onlyFiles: false }).toArray()
 		} catch {
-			// A workspace absent from this checkout contributes no file rather than throwing;
-			// the caller's emptiness check catches a list that is wrong in total.
+			// A workspace absent from this checkout contributes no file rather than throwing.
+			// The caller's emptiness check catches a list that is wrong in total.
 			continue
 		}
 
@@ -167,10 +172,11 @@ export async function computeTreeFingerprint(repoRoot: PathBuilderLike): Promise
 }
 
 /**
- * The message a tool returns when the process's imported modules predate the current source:
- * restarting the process is the only permitted response and this message must not offer another,
- * because Node cannot evict an imported module and an in-process reload would report the new
- * fingerprint over the old code; to A/B a source change, run each arm in its own process.
+ * The message a tool returns when the process's imported modules predate
+ * the current source: restarting the process is the only permitted response
+ * and this message must not offer another, because Node cannot evict an imported module
+ * and an in-process reload would report the new fingerprint over the old code.
+ * To A/B a source change, run each arm in its own process.
  */
 export function staleEngineMessage(engineFingerprint: TreeFingerprint, current: TreeFingerprint): string {
 	const changed = current.newestPath ? ` Newest source: ${current.newestPath}.` : ""

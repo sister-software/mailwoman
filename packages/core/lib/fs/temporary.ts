@@ -40,8 +40,8 @@ export interface TemporaryDirectory extends AsyncDisposable {
 	 */
 	use<T extends AsyncDisposable | Disposable | null | undefined>(resource: T): T
 	/**
-	 * Hand the directory and everything registered on it to a scope that outlives this one;
-	 * this binding disposes no resource afterwards.
+	 * Hand the directory and everything registered on it to a scope that outlives this one.
+	 * This binding disposes no resource afterwards.
 	 */
 	move(): TemporaryDirectory
 	/**

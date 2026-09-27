@@ -46,8 +46,9 @@ export function runtimeModeFromSearch(search: string): RuntimeMode {
 }
 
 /**
- * The `?q=` query, decoded, or null when absent or blank; blank is null so a link
- * carrying `?q=` with no value behaves like a link without it.
+ * The `?q=` query, decoded, or null when absent or blank.
+ *
+ * Blank is null so a link carrying `?q=` with no value behaves like a link without it.
  */
 export function queryFromSearch(search: string): string | null {
 	const value = new URLSearchParams(search).get("q")
@@ -59,8 +60,9 @@ export function queryFromSearch(search: string): string | null {
 
 /**
  * The URL a search should leave behind — `q` set, or removed when the query is blank —
- * carrying every other parameter, including a viewport or runtime flag, through untouched;
- * it returns a string rather than writing history so the caller chooses `pushState` or `replaceState`.
+ * carrying every other parameter, including a viewport or runtime flag, through untouched.
+ *
+ * It returns a string rather than writing history so the caller chooses `pushState` or `replaceState`.
  */
 export function searchWithQuery(url: URL, query: string): string {
 	const next = new URL(url)

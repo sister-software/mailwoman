@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  * `familyRollup` — the corporate-family reader. A corporate family (a holding/parent/subsidiary/management tree
- * spanning several different filers) is a rollup spec §4.1 keeps deliberately separate from an entity cluster; this
+ * spanning several different filers) is a rollup spec §4.1 keeps deliberately separate from an entity cluster. This
  * module reads only `filer_family` and never `filer_cluster`, so a family membership can never be returned here as an
  * entity-cluster member.
  *
@@ -49,9 +49,10 @@ export interface FamilyRollupMember {
 	node_id: string
 	relationship: string
 	/**
-	 * How strongly this member's membership is evidenced; carried even though `source`
-	 * is present because `edgar-exhibit-21` writes an authoritative edge and an inferred
-	 * corroboration in the same build, so one source name spans both grades.
+	 * How strongly this member's membership is evidenced.
+	 *
+	 * Carried even though `source` is present because `edgar-exhibit-21` writes an authoritative edge
+	 * and an inferred corroboration in the same build, so one source name spans both grades.
 	 */
 	assertion: string
 	/**
@@ -66,10 +67,10 @@ export interface FamilyRollupMember {
  * `FilerLookupFamily`: it carries no `cluster_id`-shaped key and keeps `relationship`
  * per-member because it answers who belongs to this family.
  *
- * `distinct_member_count` is `members` deduped by `node_id`, while `members` itself is
- * never deduped (provenance plurality), so `members.length` over-counts whenever more
- * than one row corroborates the same member; it counts distinct nodes rather than rows,
- * so widening `filer_family`'s primary key cannot inflate it.
+ * `distinct_member_count` is `members` deduped by `node_id`, while `members` itself
+ * is never deduped (provenance plurality), so `members.length` over-counts whenever
+ * more than one row corroborates the same member.
+ * It counts distinct nodes rather than rows, so widening `filer_family`'s primary key cannot inflate it.
  *
  * `display_names` is {@linkcode readFamilyDisplayNames}'s output over this family's current
  * members, and a multi-spelling family (two raw names canonicalizing to the same `family_id`)
@@ -119,9 +120,10 @@ async function readFamilyRollup(
 }
 
 /**
- * Read every corporate family a `familyID`/`nodeID` resolves to; a `familyID` query
- * returns at most one element, while a `nodeID` query may return several because a node
- * legitimately belonging to more than one family is a normal shape rather than an error.
+ * Read every corporate family a `familyID`/`nodeID` resolves to.
+ *
+ * A `familyID` query returns at most one element, while a `nodeID` query may return several
+ * because a node legitimately belonging to more than one family is a normal shape rather than an error.
  */
 export async function familyRollup(
 	db: DatabaseClient<FilerDatabase>,

@@ -3,9 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Completion per postal jurisdiction, which is the unit a parser is built for: address systems follow postal,
- *   cadastral and administrative boundaries rather than sovereignty, so a dependency cannot inherit its sovereign
- *   state's parser.
+ *   Completion per postal jurisdiction. A postal jurisdiction is the unit a parser is built for: address systems
+ *   follow postal, cadastral and administrative boundaries rather than sovereignty. A dependency therefore cannot
+ *   inherit its sovereign state's parser.
  *
  *   This enumerates every ISO 3166-1 alpha-2 code first and joins the registers onto it, so a jurisdiction absent
  *   from all of them is a row reading zero rather than a row that does not exist.
@@ -65,8 +65,8 @@ interface JurisdictionRow {
 	corpusRows: number
 	corpusStreetRows: number
 	/**
-	 * True when `country_weights` admits it and the corpus holds rows for it;
-	 * either one alone trains no model.
+	 * True when `country_weights` admits it and the corpus holds rows for it.
+	 * Either one alone trains no model.
 	 */
 	trains: boolean
 	gazetteerPlaces: number
@@ -109,8 +109,9 @@ function rowFor(code: string, joinsTo: string, subJurisdiction: boolean): Jurisd
 		subJurisdiction,
 		layout: layoutForCountry(joinsTo) !== null,
 		conventions: hasConventions(joinsTo),
-		// A sub-jurisdiction has no register of its own; zero here says "no separate reading
-		// exists", because reporting its parent's numbers would double-count.
+		// A sub-jurisdiction has no register of its own.
+		// Zero here says "no separate reading exists", because reporting its
+		// parent's numbers would double-count.
 		corpusRows: subJurisdiction ? 0 : (c?.corpusRows ?? 0),
 		corpusStreetRows: subJurisdiction ? 0 : (c?.corpusStreetRows ?? 0),
 		trains: subJurisdiction ? false : (c?.admitted ?? false) && (c?.corpusRows ?? 0) > 0,

@@ -1,4 +1,8 @@
-"""A pre-training checkpoint without `scheduler.pt` replays its schedule rather than starting over; left at step 0 the schedule restarts inside warmup at a rate earlier steps had already passed, so the run does not continue the run it says it continues."""
+"""A pre-training checkpoint without `scheduler.pt` replays its schedule rather than starting over.
+
+Left at step 0 the schedule restarts inside warmup at a rate earlier steps had already passed, so the
+run does not continue the run it says it continues.
+"""
 
 from __future__ import annotations
 

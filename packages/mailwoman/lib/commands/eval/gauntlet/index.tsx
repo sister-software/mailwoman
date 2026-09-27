@@ -4,14 +4,14 @@
  * @author Teffen Ellis, et al.
  *
  *   No flags self-checks the shipped default, `--candidate` adds the held-out candidate-vs-prod z-test, and `--layer`
- *   runs a single layer with its own verdict and exit code; a non-zero exit blocks the ship (releasing.md).
+ *   runs a single layer with its own verdict and exit code. A non-zero exit blocks the ship (releasing.md).
  *
  *   `--layer ablation` is a measurement rather than a check: it deletes each asserted component from each corpus row and
  *   reports what the deletion cost per (component, locale), never joining the combined verdict or blocking a ship.
  *
  *   Each ablation variant is graded against a per-row graceful-degradation ladder rather than the undeleted anchor, so
  *   coarsening to a rung the surviving components still justify passes, abstaining under untenable ambiguity passes, and
- *   a substitution fails at every rung; see `eval-harness/gauntlet/ablation-expectation.ts`.
+ *   a substitution fails at every rung. See `eval-harness/gauntlet/ablation-expectation.ts`.
  */
 
 import { extractDelimited } from "@mailwoman/core/scripting/arguments"

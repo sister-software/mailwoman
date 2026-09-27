@@ -10,7 +10,7 @@
  *
  *   The fixture matches on the query's normalized form or a declared component value, deliberately simple
  *   string keys because it tests the threading of provider answers through result surfaces rather than
- *   matching quality; no fixture row may carry licensed data, and synthetic uprn-shaped identifiers use the
+ *   matching quality. No fixture row may carry licensed data, and synthetic uprn-shaped identifiers use the
  *   reserved 0-prefix range no real uprn occupies.
  */
 
@@ -33,8 +33,10 @@ export interface FixtureAuthoritativeRule {
 
 export interface FixtureAuthoritativeProviderOptions {
 	/**
-	 * Rules checked in order with the first hit answering; no hit is a `refused` response, because
-	 * a fixture that silently "matches no rule" is indistinguishable from one that was never consulted.
+	 * Rules checked in order with the first hit answering.
+	 *
+	 * No hit is a `refused` response, because a fixture that silently "matches no rule"
+	 * is indistinguishable from one that was never consulted.
 	 */
 	rules: ReadonlyArray<FixtureAuthoritativeRule>
 	/**
@@ -47,8 +49,9 @@ export interface FixtureAuthoritativeProviderOptions {
 const FIXTURE_ATTRIBUTION = "Synthetic fixture data — not derived from any licensed source"
 
 /**
- * Build a fixture provider from rules; the returned provider is pure and synchronous
- * under the hood, and the async signature is the interface's.
+ * Build a fixture provider from rules.
+ *
+ * The returned provider is pure and synchronous under the hood, and the async signature is the interface's.
  */
 export function createFixtureAuthoritativeProvider(
 	options: FixtureAuthoritativeProviderOptions

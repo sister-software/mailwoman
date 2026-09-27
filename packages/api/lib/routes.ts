@@ -54,7 +54,8 @@ export interface RegisterMailwomanAPIRoutesOptions {
 	batchMax?: number
 
 	/**
-	 * Attached as `engine` to every `/v1` success body; absent adds no field.
+	 * Attached as `engine` to every `/v1` success body.
+	 * Absent adds no field.
 	 */
 	engine?: EngineStamp
 }

@@ -6,7 +6,7 @@
  * Mechanism accounts — per row, what the pipeline did, assembled from the facts it already exposes.
  *
  * Two commitments bind every line here: expectations pin outcomes rather than mechanisms, and every
- * account is recomputed from the current system on every call; and failure shapes are mechanism-states
+ * account is recomputed from the current system on every call. Failure shapes are mechanism-states
  * rather than address shapes, so every predicate reads pipeline facts — channels, constraints, ranks,
  * lineage — and none reads what kind of address the row is.
  *
@@ -49,18 +49,19 @@ export { expectationCase, type ExpectationReading } from "#diagnose/expectation"
 const KNOWN_FORMAT_CONFIDENCE_FLOOR = 0.9
 
 /**
- * Row ids listed per shape before the list is capped; the `n` beside it is always the
- * real count, so this bounds the payload, never the measurement.
+ * Row ids listed per shape before the list is capped.
+ *
+ * The `n` beside it is always the real count, so this bounds the payload, never the measurement.
  */
 const SHAPE_ID_CAP = 20
 
 /**
  * Above this many rows, counterfactuals run only on rows that matched a non-`clean` shape.
  *
- * A flip is one geocode per row per setting and the setting space is five wide,
- * so a full board would be thousands of extra resolves plus an engine build per
- * distinct patch; every result that applies the narrowing says so and marks a clean
- * row's settings UNMEASURED rather than measured and found inert.
+ * A flip is one geocode per row per setting and the setting space is five wide, so a full
+ * board would be thousands of extra resolves plus an engine build per distinct patch.
+ * Every result that applies the narrowing says so and marks a clean row's settings
+ * UNMEASURED rather than measured and found inert.
  */
 export const COUNTERFACTUAL_FULL_RUN_MAX_ROWS = 20
 
@@ -218,9 +219,10 @@ export interface ParseFacts {
 }
 
 /**
- * One backend lookup, reduced to the facts a shape reads; the candidate table
- * itself is deliberately not carried, since `mwdev_trace` renders it and an account
- * that dumped it would be a trace with extra steps.
+ * One backend lookup, reduced to the facts a shape reads.
+ *
+ * The candidate table itself is deliberately not carried, since `mwdev_trace` renders it
+ * and an account that dumped it would be a trace with extra steps.
  */
 interface LookupFact {
 	tag: string
@@ -482,8 +484,8 @@ export function matchShapes(facts: {
 	}
 
 	// The rule fires only when the scoped probe missed across the whole cascade and the
-	// unscoped fallback produced rows, so every candidate in that lookup is a re-admitted one;
-	// the per-candidate `regionScopeMiss` stamp does not reach `ResolveCandidateTrace`,
+	// unscoped fallback produced rows, so every candidate in that lookup is a re-admitted one.
+	// The per-candidate `regionScopeMiss` stamp does not reach `ResolveCandidateTrace`,
 	// so lookup granularity is all the trace can support.
 	if (lookups.some((lookup) => lookup.checks.includes("region_scope_miss") && lookup.picked)) {
 		shapes.push("scope_miss_readmission")
@@ -515,8 +517,9 @@ function channelMark(reading: ChannelReading): string {
 /**
  * One line per row — the tool-kit renderer pattern.
  *
- * The structured account is what a diff reads; this is what a human reads in a transcript
- * without an agent paraphrasing it, which is where detail goes missing.
+ * The structured account is what a diff reads.
+ * This is what a human reads in a transcript without an agent paraphrasing it,
+ * which is where detail goes missing.
  */
 export function renderAccount(account: Omit<RowAccount, "rendered">): string {
 	const parts: string[] = [`${account.id} [${account.shapes.join(",")}]`, `tier=${account.outcome.tier}`]
@@ -799,7 +802,8 @@ export async function runDiagnose(registry: EngineRegistryLike, args: Record<str
 
 	const rows: RowAccount[] = accounts.map((account) => ({ ...account, rendered: renderAccount(account) }))
 
-	// Stable partition, non-clean first, for the emitted order only; every aggregate reads `rows` whole.
+	// Stable partition, non-clean first, for the emitted order only.
+	// Every aggregate reads `rows` whole.
 	const emittedRows = [
 		...rows.filter((row) => !row.shapes.includes("clean")),
 		...rows.filter((row) => row.shapes.includes("clean")),
@@ -872,8 +876,8 @@ export async function runDiagnose(registry: EngineRegistryLike, args: Record<str
 		counterfactuals_narrowed: narrowed,
 		counterfactual_errors: counterfactualErrors,
 		elapsed_ms: Date.now() - startedAt,
-		// Under a cap the emitted rows lead with the non-clean ones and say what they left out;
-		// the aggregates are computed over every row regardless.
+		// Under a cap the emitted rows lead with the non-clean ones and say what they left out.
+		// The aggregates are computed over every row regardless.
 		rows: rowsCap === undefined ? emittedRows : emittedRows.slice(0, rowsCap),
 		rows_omitted: rowsCap === undefined ? 0 : Math.max(0, emittedRows.length - rowsCap),
 	}

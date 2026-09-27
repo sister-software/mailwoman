@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  * @file The default base for http clients in this repo. Raw `fetch` duplicates throttling, caching, and
- *   error mapping that live here; new clients extend or instantiate this instead (see `agents.md`).
+ *   error mapping that live here. New clients extend or instantiate this instead (see `agents.md`).
  */
 
 import { isAsyncDisposable } from "async-init"
@@ -37,7 +37,9 @@ const MS_PER_MINUTE = 60_000
 export interface APIClientConfig {
 	displayName: string
 	/**
-	 * Where the client's own lines go; a caller that owns stdout passes `silentLogger()` or its own.
+	 * Where the client's own lines go.
+	 *
+	 * A caller that owns stdout passes `silentLogger()` or its own.
 	 */
 	logger?: IRuntimeLogger
 
@@ -47,8 +49,9 @@ export interface APIClientConfig {
 	 * How many requests to make per minute before enforcing a cooldown: a budget model —
 	 * spend `requestsPerMinute` dispatches, then stall until the cooldown lapses.
 	 *
-	 * This cannot express a flat per-second rate, which is what most fair-access policies
-	 * publish; use {@linkcode minRequestIntervalMs} for that.
+	 * This cannot express a flat per-second rate, which is what most fair-access policies publish.
+	 * Use {@linkcode minRequestIntervalMs} for that.
+	 *
 	 * The two compose (both limits must clear) but you almost certainly want one.
 	 */
 	requestsPerMinute?: number
@@ -66,19 +69,21 @@ export interface APIClientConfig {
 	minRequestIntervalMs?: number
 
 	/**
-	 * Bounded retry with exponential backoff, honoring a response's `Retry-After`;
-	 * pass `true` for the defaults.
+	 * Bounded retry with exponential backoff, honoring a response's `Retry-After`.
+	 * Pass `true` for the defaults.
 	 *
-	 * OPT-IN and absent by default, so an `APIClient` without this makes exactly one attempt.
-	 * 429/5xx/408 and network-class failures (dropped socket, DNS, timeout, mid-body-transfer drop)
-	 * are retried; a 403 never is, because it means the request failed to identify itself
+	 * OPT-IN and absent by default, so an `APIClient` without this makes exactly one attempt. 429/5xx/408
+	 * and network-class failures (dropped socket, DNS, timeout, mid-body-transfer drop) are retried.
+	 * A 403 never is, because it means the request failed to identify itself
 	 * and retrying can only fail identically while burning rate budget.
 	 */
 	retry?: RetryOptions | boolean
 
 	/**
-	 * Time source powering the pacer, the cooldown timer, and the retry backoff; defaults to
-	 * {@linkcode systemClock}, and tests inject a fake clock so timing is deterministic and instant.
+	 * Time source powering the pacer, the cooldown timer, and the retry backoff.
+	 *
+	 * Defaults to {@linkcode systemClock}, and tests inject a fake clock
+	 * so timing is deterministic and instant.
 	 */
 	clock?: ClockLike
 
@@ -95,9 +100,9 @@ export class APIClient<C extends APIClientConfig = APIClientConfig> extends Even
 	#cooldownWithResolvers: PromiseWithResolvers<void> | null = null
 	#requestCountWithinCooldown = 0
 	/**
-	 * When the current budget window opened — the instant of its first dispatch
-	 * rather than of the last one; the cooldown is measured from here, which is what
-	 * makes `requestsPerMinute` mean requests per minute.
+	 * When the current budget window opened — the instant of its first dispatch rather than of the last one.
+	 *
+	 * The cooldown is measured from here, which is what makes `requestsPerMinute` mean requests per minute.
 	 */
 	#windowStartedAt = 0
 
@@ -242,8 +247,8 @@ export class APIClient<C extends APIClientConfig = APIClientConfig> extends Even
 
 			await pending.promise
 
-			// Clear the cooldown we observed, if it is still current — this is what terminates
-			// the loop once the timer resolved without opening a replacement.
+			// Clear the cooldown we observed, if it is still current.
+			// This is what terminates the loop once the timer resolved without opening a replacement.
 			if (this.#cooldownWithResolvers === pending) {
 				this.#cooldownWithResolvers = null
 			}
@@ -263,7 +268,8 @@ export class APIClient<C extends APIClientConfig = APIClientConfig> extends Even
 
 		const now = this.#clock.now()
 
-		// The first dispatch after a reset opens the window; everything below measures from that instant.
+		// The first dispatch after a reset opens the window.
+		// Everything below measures from that instant.
 		if (this.#requestCountWithinCooldown === 0) {
 			this.#windowStartedAt = now
 		}

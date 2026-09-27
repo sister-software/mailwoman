@@ -34,7 +34,9 @@ export const EpistemicStatus = {
 	 */
 	Inferred: "inferred",
 	/**
-	 * The evidence does not support a claim — the answer the evidence gives rather than a failure to try.
+	 * The evidence does not support a claim.
+	 *
+	 * This is the answer the evidence gives rather than a failure to try.
 	 */
 	Unresolved: "unresolved",
 } as const

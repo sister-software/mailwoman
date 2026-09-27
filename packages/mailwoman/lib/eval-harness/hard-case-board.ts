@@ -15,7 +15,8 @@
  *
  *   A coordinate assertion is all-or-none — `expectLat` + `expectLon` + `expectToleranceM` together or no
  *   coordinate at all, as {@linkcode HardCaseSchema} enforces, because a silently-defaulted tolerance is a
- *   number nobody chose. A zero bias means the FST accepted no entry for that surface, not that no bias applies.
+ *   number nobody chose. A zero bias means the FST accepted no entry for that surface. Whether a bias
+ *   applies is a separate question.
  *
  *   Graded through `createRuntimePipeline`, the only path an FST prior actually reaches (see the runner).
  */
@@ -93,7 +94,7 @@ export interface HardCase {
 	class: HardCaseClass
 	fstReach: FSTReach
 	/**
-	 * The token whose gazetteer bias is under test — the reason this row is on the board.
+	 * The token whose gazetteer bias is under test, the reason this row is on the board.
 	 */
 	probeSurface: string
 	/**
@@ -152,7 +153,8 @@ export const HARD_CASE_KEY_ORDER = [
 ] as const satisfies readonly (keyof HardCase)[]
 
 /**
- * The number of fields a coordinate assertion is made of; the refinement below accepts 0 or all 3.
+ * The number of fields a coordinate assertion is made of.
+ * The refinement below accepts 0 or all 3.
  */
 const COORDINATE_ASSERTION_FIELDS = 3
 

@@ -41,8 +41,10 @@ function NotFound({ pathname }: { pathname: string }) {
 }
 
 /**
- * The map renders at the default centre at once; the geolocation answer only moves the bias
- * when it arrives, so no request waits on the network before the first paint.
+ * The map renders at the default centre at once.
+ *
+ * The geolocation answer only moves the bias when it arrives, so no request
+ * waits on the network before the first paint.
  */
 function RealGeocoder({ route, query }: { route: Route; query: string | null }) {
 	const initialCenter = useBrowserGeolocation(PRODUCTION_CONFIG)

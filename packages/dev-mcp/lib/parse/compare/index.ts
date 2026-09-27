@@ -34,15 +34,18 @@ export interface LabelledSpan {
 	label: string
 	value: string
 	/**
-	 * Mailwoman's own `ComponentTag` before the mapping; the label alone cannot say
-	 * which tag produced it, since several collapse onto one.
+	 * Mailwoman's own `ComponentTag` before the mapping.
+	 *
+	 * The label alone cannot say which tag produced it, since several collapse onto one.
 	 */
 	tag?: string
 }
 
 /**
- * `agree` and `value-differs` both mean both parsers produced the label; the `*-only` pair
- * means one did not, a different kind of disagreement that is never blended with the other.
+ * `agree` and `value-differs` both mean both parsers produced the label.
+ *
+ * The `*-only` pair means one did not, a different kind of disagreement that
+ * is never blended with the other.
  */
 export const SpanVerdict = {
 	Agree: "agree",
@@ -102,8 +105,8 @@ export function mailwomanSpans(tree: AddressTree): LabelledSpan[] {
 	const mapped = toLibpostalComponents(matches)
 
 	// Positional pairing: `toLibpostalComponents` is a `map`, so index i of its
-	// output is index i of its input; reading the tag back by matching values would
-	// mispair a row carrying the same value under two tags.
+	// output is index i of its input.
+	// Reading the tag back by matching values would mispair a row carrying the same value under two tags.
 	return mapped.map((component, index) => ({
 		label: component.label,
 		value: component.value,

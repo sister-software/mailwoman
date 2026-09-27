@@ -18,9 +18,10 @@ import { afterAll, describe, expect, it } from "vitest"
 import { stubEngine, stubEngineRegistry } from "../stub-registry.ts"
 
 /**
- * Every comparison writes its answers to the run store; redirected here
- * so a test run never touches the operator's store under `$MAILWOMAN_DATA_ROOT`,
- * and the retention sweep each write triggers has no real run to prune.
+ * Every comparison writes its answers to the run store.
+ *
+ * It is redirected here so a test run never touches the operator's store under
+ * `$MAILWOMAN_DATA_ROOT`, and the retention sweep each write triggers has no real run to prune.
  */
 const RUN_STORE = await temporaryDirectory("mwdev-compare-runs-")
 

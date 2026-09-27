@@ -380,7 +380,8 @@ function renderCommand(command: CLICommand): string {
 }
 
 /**
- * Render the reference page; the same surface always yields the same text.
+ * Render the reference page.
+ * The same surface always yields the same text.
  */
 export function renderCLIReference(surface: CLISurface): string {
 	const documentedCount = surface.documented.reduce((total, group) => total + group.commands.length, 0)

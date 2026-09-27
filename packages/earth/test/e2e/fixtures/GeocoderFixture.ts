@@ -1,6 +1,6 @@
 /**
  * @file High-level page object for the geocoder page, encapsulating address input, submit, result read-back, theme
- * toggling, and example-button clicks; assertions live in the spec files, so this class is purely action + state read.
+ * toggling, and example-button clicks. Assertions live in the spec files, so this class is purely action + state read.
  */
 
 import { expect, type Page } from "@playwright/test"
@@ -30,9 +30,10 @@ export class GeocoderFixture {
 	}
 
 	/**
-	 * Navigate to the geocoder and wait until the classifier is loaded; network-idle
-	 * is not the signal because the gazetteer's warm-up range reads keep the network
-	 * busy past readiness, so the enabled address field is.
+	 * Navigate to the geocoder and wait until the classifier is loaded.
+	 *
+	 * Network-idle is not the signal because the gazetteer's warm-up range reads keep
+	 * the network busy past readiness, so the enabled address field is.
 	 */
 	async goto(query?: string): Promise<void> {
 		const path = query ? `/?q=${encodeURIComponent(query)}` : "/"

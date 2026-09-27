@@ -6,7 +6,7 @@
  *   Reads a hand-acquired archive from a vintage-dated `<data-root>/db/nsul/<yyyy-MM>/` directory (there is no download
  *   step), verifies it against the sidecar, and writes a sealed, atomically-swapped artifact.
  *
- *   Coverage is England, Scotland, and Wales; Northern Ireland postcode data is outside ONS's open terms, and the
+ *   Coverage is England, Scotland, and Wales. Northern Ireland postcode data is outside ONS's open terms, and the
  *   layer's own coverage rows say so.
  *
  *   The pipeline module is lazy-imported so `--help` never faults without the optional

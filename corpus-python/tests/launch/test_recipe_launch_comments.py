@@ -25,11 +25,11 @@ ENTRY_POINT = paths.PACKAGE_ROOT / "launch" / "train_remote.py"
 #: its `--config` argument.
 CONTINUATION = re.compile(r"\\\n#\s*")
 
-#: `modal run` followed by arguments; the required whitespace skips prose mentions where a
+#: `modal run` followed by arguments. The required whitespace skips prose mentions where a
 #: backtick follows immediately.
 MODAL_RUN = re.compile(r"modal run\s+([^\n`]+)")
 
-#: Mentions of `modal volume put`, and the subset that warns against it; any other mention reads
+#: Mentions of `modal volume put`, and the subset that warns against it. Any other mention reads
 #: as an instruction to use it.
 BLIND_STAGING = re.compile(r"modal volume put\b")
 WARNED_AGAINST = re.compile(r"\bnot `?modal volume put\b", re.IGNORECASE)
@@ -71,7 +71,7 @@ def test_some_recipe_carries_a_modal_command() -> None:
 
 @pytest.mark.parametrize("recipe", RECIPES, ids=lambda p: p.name)
 def test_the_launcher_is_named_as_a_module(recipe: Path) -> None:
-    """Require `-m launch.train_remote` in every `modal run` command; Modal imports a file path as a top-level module, so the launcher's relative imports fail."""
+    """Require `-m launch.train_remote` in every `modal run` command. Modal imports a file path as a top-level module, so the launcher's relative imports fail."""
     for arguments in _modal_commands(recipe):
         assert "-m launch.train_remote" in arguments, (
             f"{recipe.name}: `modal run {arguments}` does not name the launcher as a module"

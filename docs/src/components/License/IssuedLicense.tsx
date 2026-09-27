@@ -3,7 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The body of `/license/issued`: polls the worker's claim route and renders the key, refresh secret, `.env` fragment and install commands; no answer the worker returns is stored anywhere but the DOM.
+ *   The body of `/license/issued`: polls the worker's claim route and renders the key, refresh secret,
+ *   `.env` fragment and install commands. Every answer the worker returns lives only in the DOM.
  */
 
 import {

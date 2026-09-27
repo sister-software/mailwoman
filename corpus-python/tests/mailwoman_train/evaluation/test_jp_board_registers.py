@@ -211,7 +211,7 @@ def test_every_same_tag_gold_span_is_scored_against_every_predicted_run():
 
 def test_a_multi_token_gold_span_hits_when_only_whitespace_splits_the_predicted_runs():
     # The unit `1층 141호` is one gold span and the model labels the space `O`, so the decoder returns both
-    # runs and their joined surface; runs separated by any other character stay separate.
+    # runs and their joined surface. Runs separated by any other character stay separate.
     raw = "X 1층 141호 Y"
     ids = [JP.label_to_id["O"]] * len(raw)
     for start, end in ((2, 4), (5, 9)):

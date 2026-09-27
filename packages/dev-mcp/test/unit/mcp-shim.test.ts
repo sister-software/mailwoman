@@ -92,7 +92,8 @@ describe("the never-stale shim", () => {
 			expect(report.previous_pid).toBe(beforeStatus.pid)
 			expect(report.new_pid).not.toBe(beforeStatus.pid)
 			// The boot fingerprint covers the newest source mtime and `git status --porcelain`,
-			// so it moves whenever anything writes into the checkout; assert the tool SET instead.
+			// so it moves whenever anything writes into the checkout.
+			// Assert the tool set instead.
 			expect(report.tools_changed).toBe(false)
 
 			// Each fork reports the fingerprint it booted against, so this comparison is load-independent.

@@ -17,7 +17,7 @@ from mailwoman_train.countries.jp.probe_corpora import (
     muni_bucket,
 )
 
-#: Committed beside this file; regenerate with `uv run python -m
+#: Committed beside this file. Regenerate with `uv run python -m
 #: tests.mailwoman_train.countries.test_jp_probe_parity` only when the current code is already
 #: verified against the existing reference, or the test compares the new code against itself.
 REFERENCE = Path(__file__).parent / "jp-probe-reference.json"
@@ -60,7 +60,10 @@ BOARD_ROWS = 20
 
 
 def municipality_names(prefecture: str) -> tuple[list[str], str]:
-    """Three pool municipalities and one board municipality for a prefecture; the side is `muni_bucket`, an md5 of the name, so a name can only be searched for rather than chosen."""
+    """Three pool municipalities and one board municipality for a prefecture.
+
+    The side is `muni_bucket`, an md5 of the name, so a name can only be searched for rather than chosen.
+    """
     pool: list[str] = []
     board: str | None = None
     index = 0
@@ -180,7 +183,11 @@ def test_the_fixture_reaches_the_board_and_the_postcode_join(built: dict[str, An
 
 
 def write_reference() -> None:
-    """Capture the current build as the reference the tests above compare against; run it only when the current code already passes against the existing reference, or the artifact records whatever the code does now."""
+    """Capture the current build as the reference the tests above compare against.
+
+    Run it only when the current code already passes against the existing reference, or the artifact
+    records whatever the code does now.
+    """
     import tempfile
 
     patch = pytest.MonkeyPatch()

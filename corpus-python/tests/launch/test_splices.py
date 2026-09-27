@@ -15,7 +15,7 @@ def test_no_two_splices_write_the_same_destination() -> None:
 
 @pytest.mark.parametrize("name", sorted(SPLICES))
 def test_each_splice_grows_rather_than_shrinks(name: str) -> None:
-    """A recorded pair must be an EXPANSION; a narrower target is a splice nobody meant to run."""
+    """A recorded pair must be an EXPANSION. A narrower target is a splice nobody meant to run."""
     entry = SPLICES[name]
     if entry.vocabulary is None:
         pytest.skip(f"{name} has no measured vocabulary pair")
@@ -38,7 +38,10 @@ def test_every_path_is_volume_relative(name: str) -> None:
 
 
 def test_a_chain_of_splices_agrees_on_its_shared_vocabulary_size() -> None:
-    """Where one splice's target tokenizer is another's source, the recorded sizes must match; a mismatch says one of the two pairs came from the wrong run."""
+    """Where one splice's target tokenizer is another's source, the recorded sizes must match.
+
+    A mismatch says one of the two pairs came from the wrong run.
+    """
     ends = {entry.to_tokenizer: entry.vocabulary[1] for entry in SPLICES.values() if entry.vocabulary}
     starts = {entry.from_tokenizer: entry.vocabulary[0] for entry in SPLICES.values() if entry.vocabulary}
 

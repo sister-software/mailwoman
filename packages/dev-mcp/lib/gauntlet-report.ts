@@ -44,8 +44,10 @@ export interface GauntletReport {
 }
 
 /**
- * These quantifiers cannot overlap; the pins and promote lines use `startsWith`/`indexOf`
- * because a regex for them needs an ambiguous quantifier that backtracks quadratically.
+ * These quantifiers cannot overlap.
+ *
+ * The pins and promote lines use `startsWith`/`indexOf` because a regex for them
+ * needs an ambiguous quantifier that backtracks quadratically.
  */
 const HEADER = /^=== Gauntlet · (\S+) \((\d+)\/(\d+) counted cases pass(?:, (\d+) tracked)?\)/
 const VERDICT = /^verdict: (PASS|FAIL)/
@@ -57,7 +59,7 @@ const NOW_PASSING_MARK = " now PASSES"
 const NOW_PASSING_PREFIX = "+"
 
 /**
-/** Parses a gauntlet run's output; the report goes to stdout and the pins line to stderr, so this reads both. */
+/** Parses a gauntlet run's output. The report goes to stdout and the pins line to stderr, so this reads both. */
 export function parseGauntletReport(stdout: string, stderr: string): GauntletReport {
 	const report: GauntletReport = {
 		verdict: null,

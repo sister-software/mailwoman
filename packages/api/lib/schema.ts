@@ -81,8 +81,9 @@ const GeocodeHierarchyEntrySchema = z
 	.openapi("GeocodeHierarchyEntry")
 
 /**
- * One `GeocodeOutcome.candidates` entry — a ranked alternative place, the winning place first
- * and then same-query runner-ups; mirrors `GeocodeResult["candidates"]` entries.
+ * One `GeocodeOutcome.candidates` entry — a ranked alternative place,
+ * the winning place first and then same-query runner-ups.
+ * It mirrors `GeocodeResult["candidates"]` entries.
  */
 const GeocodeCandidateSchema = z
 	.object({
@@ -129,8 +130,10 @@ const ComponentTagSchema = z.enum([
 ])
 
 /**
- * Canonical parsed-component map carried by `GeocodeResult.components`, spelled out at this
- * engine-agnostic boundary; the compile-time drift test catches any mismatch with the real type.
+ * Canonical parsed-component map carried by `GeocodeResult.components`,
+ * spelled out at this engine-agnostic boundary.
+ *
+ * The compile-time drift test catches any mismatch with the real type.
  */
 const GeocodeComponentsSchema = z.partialRecord(ComponentTagSchema, z.string())
 
@@ -175,8 +178,9 @@ const QueryIntentMarkerSchema = z
 
 /**
  * One authoritative-provider match on the wire, hoisted so the outcome schema
- * below stays inside the call-nesting bound; field-for-field mirror of
- * `mailwoman/authoritative.ts`'s `AuthoritativeAssertionMatch`.
+ * below stays inside the call-nesting bound.
+ *
+ * It is a field-for-field mirror of `mailwoman/authoritative.ts`'s `AuthoritativeAssertionMatch`.
  */
 const AuthoritativeMatchSchema = z.object({
 	provider_place_id: z.string(),
@@ -194,8 +198,9 @@ const EpistemicStatusSchema = z.enum(["designated", "observed", "derived", "infe
 const CoverageBasisSchema = z.enum(["designated", "surveyed", "source_present"])
 
 /**
- * `@mailwoman/evidence`'s `Evidence` union, spelled for the wire; the `EvidencePin` below
- * fails to compile the moment either side gains, loses or retypes a field.
+ * `@mailwoman/evidence`'s `Evidence` union, spelled for the wire.
+ *
+ * The `EvidencePin` below fails to compile the moment either side gains, loses or retypes a field.
  */
 const EvidenceSchema = z.discriminatedUnion("kind", [
 	z.object({ kind: z.literal("observation"), source: z.string(), vintage: z.string().nullable(), value: z.unknown() }),
@@ -243,8 +248,8 @@ export const GeocodeOutcomeLikeSchema = z.object({
 	lat: z.number().nullable(),
 	lon: z.number().nullable(),
 	resolution_tier: z.enum(["address_point", "interpolated", "street", "admin", "venue", "plus_code"]),
-	// What the evidence permits a consumer to claim about the coordinate, orthogonal to
-	// how it was produced; see `@mailwoman/evidence`'s `EpistemicStatus`.
+	// What the evidence permits a consumer to claim about the coordinate, orthogonal to how it was produced.
+	// See `@mailwoman/evidence`'s `EpistemicStatus`.
 	epistemic_status: z.enum(["designated", "observed", "derived", "inferred", "unresolved"]),
 	// The derivation behind the answer, present only when the engine was asked to trace.
 	derivation: DerivationProjectionSchema.optional(),
@@ -288,8 +293,9 @@ export const GeocodeOutcomeLikeSchema = z.object({
 	// The variant-alias exemption's firing receipt, present only when the winning candidate
 	// reached the top because the exemption spared it the cross-country alias penalty.
 	variant_alias_exemption: z.literal(true).optional(),
-	// Query-intent advisories, always present; empty means the vocabulary looked
-	// and reported no marker, and a client is free to ignore the array entirely.
+	// Query-intent advisories, always present.
+	// Empty means the vocabulary looked and reported no marker, and a client is
+	// free to ignore the array entirely.
 	intent_markers: z.array(QueryIntentMarkerSchema),
 	// Flag-only admin-coherence verdicts: no code ranks or filters on them.
 	// Present whenever a winner resolved (both members always populated; `unstated` is the
@@ -330,7 +336,7 @@ export const GeocodeOutcomeLikeSchema = z.object({
 		)
 		.optional(),
 	// A component the parse kept and the answer did not follow: its value in `components` reads
-	// as if it were honoured, and no other field says it names a place far from the rest.
+	// as if it were honoured, and no other field says it points at a place far from the rest.
 	// Absent when the answer followed everything it parsed.
 	unfollowed_components: z
 		.array(
@@ -358,8 +364,8 @@ export type GeocodeOutcome = z.infer<typeof GeocodeOutcomeSchema>
  */
 export const BatchRequestSchema = z
 	.object({
-		// The per-request `batchMax` cap bounds how many rows arrive; this bounds how
-		// large each may be, or one request is 500 unbounded bodies.
+		// The per-request `batchMax` cap bounds how many rows arrive.
+		// This bounds how large each may be, or one request is 500 unbounded bodies.
 		addresses: z.array(z.string().max(MAX_ADDRESS_LENGTH)),
 		/**
 		 * Register override for every row, defaulting to `"formatted"`:
@@ -370,7 +376,8 @@ export const BatchRequestSchema = z
 	.openapi("BatchRequest")
 
 /**
- * The failure slot for one batch row; a row that throws does not fail its neighbours.
+ * The failure slot for one batch row.
+ * A row that throws does not fail its neighbours.
  */
 const BatchRowErrorSchema = z.object({ input: z.string(), error: z.string() })
 
@@ -406,7 +413,9 @@ export const ResolveResponseSchema = z
 	.openapi("ResolveResponse")
 
 /**
- * One component's value; repeatable tags (a street with two names, say) arrive as an array.
+ * One component's value.
+ *
+ * Repeatable tags (a street with two names, say) arrive as an array.
  */
 const ComponentValueSchema = z.union([z.string(), z.array(z.string())])
 
@@ -433,8 +442,10 @@ export const FormatResponseSchema = z
 	.openapi("FormatResponse")
 
 /**
- * `GET /health` response — `status` and `uptime_s` are stamped by the route itself, so those
- * two are accurate to pin; everything else is the engine's `HealthData` block and stays loose.
+ * `GET /health` response — `status` and `uptime_s` are stamped by the route itself,
+ * so those two are accurate to pin.
+ *
+ * Everything else is the engine's `HealthData` block and stays loose.
  */
 export const HealthResponseSchema = z
 	.object({

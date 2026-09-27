@@ -15,9 +15,11 @@ interface CommandModule {
 }
 
 /**
- * The compiled command tree: the commands are TSX, which Node cannot load from source,
- * so the router reads `out/commands/` even when the package's `#` imports have handed it
- * the source router, anchored at the package rather than counted in `..` from this file.
+ * The compiled command tree.
+ *
+ * The commands are TSX, and Node loads TSX only after compilation.
+ * The router therefore reads `out/commands/` even when the package's `#` imports have handed
+ * it the source router, anchored at the package rather than counted in `..` from this file.
  */
 const COMMANDS_ROOT = pathToFileURL(`${resolvePackagePath("mailwoman", "out", "commands")}/`)
 

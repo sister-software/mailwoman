@@ -14,9 +14,9 @@
  * - **L0 present** — the mechanism's record appears in the trace (the stage ran / the channel was
  *   configured); near meaningless alone, since a stage can report `applied: true` beside all-zero
  *   channels.
- * - **L1 signaled** — it produced nonzero input to the next stage; this file computes L0 and L1 from one
+ * - **L1 signaled** — it produced nonzero input to the next stage. This file computes L0 and L1 from one
  *   traced run.
- * - **L2 moved an outcome** — needs ablation pairs and is not computed here; the gauntlet's ablation
+ * - **L2 moved an outcome** — needs ablation pairs and is not computed here. The gauntlet's ablation
  *   layer owns it, and it is reported as explicitly unmeasured so a reader cannot mistake L1 coverage
  *   for outcome relevance.
  *
@@ -34,8 +34,9 @@ import { describeObservedRate } from "#power"
 import { inputSetProvenance, provenanceFor } from "#tool-kit"
 
 /**
- * Mechanisms whose L1 zero is expected, each with the reason a reader can check;
- * the census reports them as `allowlisted` rather than inert, and one that unexpectedly
+ * Mechanisms whose L1 zero is expected, each with the reason a reader can check.
+ *
+ * The census reports them as `allowlisted` rather than inert, and one that unexpectedly
  * fires is reported loudly because the reason on file is then stale.
  */
 export const CENSUS_ALLOWLIST: Partial<Record<string, string>> = {
@@ -96,7 +97,9 @@ export interface CensusAggregate {
 }
 
 /**
- * Aggregate one traced run per row into the census; pure, so the arithmetic is testable without an engine.
+ * Aggregate one traced run per row into the census.
+ *
+ * It is pure, so the arithmetic is testable without an engine.
  */
 export function aggregateCensus(rows: Array<{ id: string; input: string; parse: NeuralParseTrace }>): {
 	aggregate: CensusAggregate

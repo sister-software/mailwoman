@@ -101,9 +101,10 @@ export interface LookupResult {
 	 */
 	unavailable_reason?: string
 	/**
-	 * Present instead OF `rows` for a sweep; a locale whose artifact is missing carries
-	 * its own `unavailable_reason` rather than dropping out, because a locale absent
-	 * from the map would read as one the source did not know.
+	 * Present instead of `rows` for a sweep.
+	 *
+	 * A locale whose artifact is missing carries its own `unavailable_reason` rather than dropping
+	 * out, because a locale absent from the map would read as one the source did not know.
 	 */
 	by_locale?: Record<string, { artifact?: string; rows: LookupRow[]; unavailable_reason?: string }>
 	notes: string[]
@@ -185,9 +186,10 @@ export function lookupStreetMorphology(fst: FSTLike, queries: string[]): LookupR
 }
 
 /**
- * Always a hit, since normalization has an answer for every string; the value is the diff,
- * because a query whose normalized form differs from what was typed is the most
- * common reason a lookup elsewhere "inexplicably" misses.
+ * Always a hit, since normalization has an answer for every string.
+ *
+ * The value is the diff, because a query whose normalized form differs from what was
+ * typed is the most common reason a lookup elsewhere "inexplicably" misses.
  */
 export function lookupNormalize(queries: string[], locale: string): LookupRow[] {
 	return queries.map((query) => {
@@ -205,8 +207,8 @@ export function lookupNormalize(queries: string[], locale: string): LookupRow[] 
 }
 
 /**
- * Opens read-only as the interface, not as a precaution: every built database in
- * this repo is sealed 0444 and never modified, so a read-write open would fail on a
+ * Opens read-only because read-only is the interface: every built database in this
+ * repo is sealed 0444 and never modified, so a read-write open would fail on a
  * correctly-sealed artifact and succeed on one that was not.
  */
 export async function openSealedArtifact<DB>(

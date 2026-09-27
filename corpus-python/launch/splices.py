@@ -2,7 +2,7 @@
 
 A splice is five paths and a pair of vocabulary sizes. The expected size is data here, so
 `launch/mean_init.py` can refuse a result that does not match it and `tests/launch/test_splices.py`
-can check the table's own shape — a silent short expansion is a fine-tune that trains a head against
+can check the table's own shape. A silent short expansion is a fine-tune that trains a head against
 rows the tokenizer never emits.
 
 No Modal import, for the reason `plan.py` has none: the SDK is installed wherever `modal run` runs

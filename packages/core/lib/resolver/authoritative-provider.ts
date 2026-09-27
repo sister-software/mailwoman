@@ -8,9 +8,9 @@
  *   without the provider's assertions and Mailwoman's inferences ever blurring.
  *
  *   Absence stays absent (a provider that does not expose a field leaves it `undefined`, never `false`, `0`
- *   or `""`); refusal and ambiguity are first-class outcomes rather than degenerate matches; provider
+ *   or `""`). Refusal and ambiguity are first-class outcomes rather than degenerate matches. Provider
  *   assertions never overwrite Mailwoman's own answer, which is carried beside the response for the consumer
- *   to choose from; and no provider product names appear here, because product-specific mapping lives in an
+ *   to choose from. No provider product names appear here, because product-specific mapping lives in an
  *   adapter package.
  */
 
@@ -144,8 +144,9 @@ export interface AuthoritativeResponse {
 }
 
 /**
- * A configured authoritative provider with one asynchronous, backend-neutral method;
- * a thrown error is a transport failure, which is not a refusal, the same way the
+ * A configured authoritative provider with one asynchronous, backend-neutral method.
+ *
+ * A thrown error is a transport failure, which is not a refusal, the same way the
  * resolver keeps a backend error apart from a miss.
  */
 export interface AuthoritativeProvider {

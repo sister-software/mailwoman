@@ -40,7 +40,7 @@ export function wilsonInterval(successes: number, n: number, z = 1.96): { low: n
 /**
  * How tight the upper bound must be before a zero may be read as a real absence.
  *
- * A judgement, not a measurement: 1% is roughly the `n = 300` mark (`1 − 0.05^(1/300) = 0.99%`),
+ * A judgement rather than a measurement: 1% is roughly the `n = 300` mark (`1 − 0.05^(1/300) = 0.99%`),
  * where a zero rests on a set larger than any panel assembled by hand here.
  */
 const ABSENCE_CLAIM_MAX_UPPER_BOUND = 0.01
@@ -52,8 +52,9 @@ const ABSENCE_CLAIM_MAX_UPPER_BOUND = 0.01
 export type Selection = "full" | "subset" | "hand-picked" | "random-draw"
 
 /**
- * How each selection reads inside the observed-rate sentence; a full board adds no qualifier
- * because its denominator already is the population.
+ * How each selection reads inside the observed-rate sentence.
+ *
+ * A full board adds no qualifier because its denominator already is the population.
  */
 const SELECTION_ADJECTIVE: Record<Selection, string> = {
 	full: "",
@@ -93,8 +94,9 @@ export interface PowerReading {
 	 */
 	sentence: string
 	/**
-	 * True when the sample cannot support a claim of absence; the sentence does the work,
-	 * this only lets a wrapper branch on it.
+	 * True when the sample cannot support a claim of absence.
+	 *
+	 * The sentence does the work, and this only lets a wrapper branch on it.
 	 */
 	supportsAbsenceClaim: boolean
 }
@@ -104,8 +106,9 @@ function percent(value: number): string {
 }
 
 /**
- * Turn a count into a reading that states its own limits; a zero is not a measurement
- * of absence unless the denominator is large enough to have detected the thing.
+ * Turn a count into a reading that states its own limits.
+ *
+ * A zero is not a measurement of absence unless the denominator is large enough to have detected the thing.
  */
 export function describeObservedRate(observed: ObservedRate): PowerReading {
 	const { events, n, selection, eventLabel, populationN } = observed

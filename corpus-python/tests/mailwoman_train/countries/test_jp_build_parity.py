@@ -13,7 +13,7 @@ import pytest
 
 from mailwoman_train.countries.jp.corpora import build
 
-#: Committed beside this file; regenerate with `uv run python
+#: Committed beside this file. Regenerate with `uv run python
 #: tests/mailwoman_train/countries/test_jp_build_parity.py` only when the current code is already
 #: verified against the existing reference, or the test compares the new code against itself.
 REFERENCE = Path(__file__).parent / "jp-build-reference.json"
@@ -208,7 +208,7 @@ def test_no_board_municipality_reaches_the_trained_splits(built: dict[str, Any])
 
 
 def write_reference() -> None:
-    """Capture the current build as the reference the tests above compare against; run it only when the current code already passes against the existing reference, or the artifact records whatever the code does now."""
+    """Capture the current build as the reference the tests above compare against. Run it only when the current code already passes against the existing reference, or the artifact records whatever the code does now."""
     import tempfile
 
     with tempfile.TemporaryDirectory() as scratch:

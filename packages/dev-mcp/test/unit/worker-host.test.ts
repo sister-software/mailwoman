@@ -3,7 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The stub advertises tool metas from a sidecar, so a schema can change between forks without a name changing — the restart a name-only `tools_changed` compare would leave clients stale on.
+ *   The stub advertises tool metas from a sidecar, so a schema can change between forks without a name
+ *   changing. That is the restart a name-only `tools_changed` compare would leave clients stale on.
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
@@ -113,8 +114,8 @@ describe("WorkerHost restart", () => {
 	it("says the job list could not be read rather than reporting no jobs", async () => {
 		await writeTools({ type: "object", properties: {} })
 
-		// The sidecar is absent, so the stub refuses the call the way a worker with no registry would;
-		// an empty list would tell the caller a relaunch is unnecessary, which is the one wrong answer.
+		// The sidecar is absent, so the stub refuses the call the way a worker with no registry would.
+		// An empty list would tell the caller a relaunch is unnecessary, which is the one wrong answer.
 		await using host = new WorkerHost({
 			workerPath: STUB_PATH,
 			workerArgs: [TOOLS_PATH, STUB_DIR.path("absent.json")],

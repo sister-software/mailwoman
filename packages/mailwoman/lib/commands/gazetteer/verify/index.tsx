@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Structural promotion eval for the admin gazetteer: exits non-zero on any failure, so do not swap
- *   an artifact that fails here; the derived-FST freshness section is advisory and never affects the verdict.
+ *   an artifact that fails here. The derived-FST freshness section is advisory and never affects the verdict.
  */
 
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"

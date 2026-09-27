@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   `gazetteer inspect sync` pulls in place and never rewrites a remote, so an existing checkout keeps
- *   its old origin; this command repairs that, opt-in twice because it changes what the next build ingests.
+ *   its old origin. This command repairs that, opt-in twice because it changes what the next build ingests.
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers"

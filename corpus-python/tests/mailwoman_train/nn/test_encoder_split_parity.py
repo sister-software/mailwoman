@@ -1,4 +1,8 @@
-"""Pins the encoder's logits, loss, state-dict keys and initial weights against a committed reference; existing checkpoints are keyed on attribute names, so a renamed attribute loads as a missing key or a fresh random tensor."""
+"""Pins the encoder's logits, loss, state-dict keys and initial weights against a committed reference.
+
+Existing checkpoints are keyed on attribute names, so a renamed attribute loads as a missing key or a
+fresh random tensor.
+"""
 
 from __future__ import annotations
 
@@ -12,7 +16,7 @@ torch = pytest.importorskip("torch")
 from mailwoman_train.labels import ACTIVE_BIO_LABELS  # noqa: E402
 from mailwoman_train.nn.encoder import MailwomanCoarseEncoder  # noqa: E402
 
-#: The committed reference; regenerate it only after the current code passes against the existing file.
+#: The committed reference. Regenerate it only after the current code passes against the existing file.
 REFERENCE = Path(__file__).parent / "encoder-split-reference.json"
 
 #: This text is written into the reference file as its README.
@@ -76,7 +80,10 @@ def build_reference_encoder() -> MailwomanCoarseEncoder:
 
 
 def parameter_checksums(model: MailwomanCoarseEncoder) -> dict[str, float]:
-    """Return the sum of each parameter after `_init_weights`, rounded to six places; most are constants and the rest change when construction is reordered."""
+    """Return the sum of each parameter after `_init_weights`, rounded to six places.
+
+    Most are constants and the rest change when construction is reordered.
+    """
     return {name: round(float(p.detach().sum()), 6) for name, p in model.named_parameters()}
 
 
@@ -131,7 +138,7 @@ def test_forward_is_deterministic_under_a_fixed_seed() -> None:
     assert first == second
 
 
-#: The tolerance for logits and loss; different CPUs round the same fp32 graph differently, so exact
+#: The tolerance for logits and loss. Different CPUs round the same fp32 graph differently, so exact
 #: equality fails across hosts. Parameter checksums involve no matmul and are compared exactly.
 TOLERANCE = 1e-4
 
@@ -215,7 +222,11 @@ def test_parameter_initialization_matches_the_committed_reference() -> None:
 
 
 def write_reference() -> None:
-    """Write the current encoder's outputs to the reference file; run it only when the current code already passes against the existing reference, or the tests compare the code against itself."""
+    """Write the current encoder's outputs to the reference file.
+
+    Run it only when the current code already passes against the existing reference, or the tests
+    compare the code against itself.
+    """
     model = build_reference_encoder()
     payload = {
         "README": REFERENCE_README,

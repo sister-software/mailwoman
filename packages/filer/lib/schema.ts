@@ -21,8 +21,8 @@
  * including the nullable ones as an explicit `null`.
  *
  * The composite PK is a plain `unique` index rather than `without rowid` because `evidence` is an unbounded JSON
- * blob and the dominant read pattern is a range scan, not a composite-key point probe; `filer_node`'s single-column
- * text PK stays a rowid table for the same lack of a second column to fold in.
+ * blob and the dominant read pattern is a range scan rather than a composite-key point probe. `filer_node`'s
+ * single-column text PK stays a rowid table for the same lack of a second column to fold in.
  *
  * Strength and kind are orthogonal columns: {@link FilerEdgeAssertion} grades how strongly an assertion is evidenced
  * and {@link FilerRelationship} says what it means. `relationship` is not part of either primary key, because one
@@ -91,19 +91,20 @@ export type FilerEdgeAssertion = (typeof FilerEdgeAssertion)[keyof typeof FilerE
  * orthogonal to {@link FilerEdgeAssertion}, which grades how strongly the same
  * assertion is evidenced rather than what it means.
  *
- * - `SameEntity` — the two nodes denote the same underlying filer under different
- *   identifiers; the only kind `cluster-filers.ts` asserts.
+ * - `SameEntity` — the two nodes denote the same underlying filer under different identifiers.
+ *   It is the only kind `cluster-filers.ts` asserts.
  * - `HoldingCompany` — the target node is the source node's holding company (an ownership fact).
- * - `ManagementCompany` — the target operates/manages the source without owning it;
- *   ownership and operational control are different assertions (spec §3.1 finding 1).
+ * - `ManagementCompany` — the target operates/manages the source without owning it.
+ *   Ownership and operational control are different assertions (spec §3.1 finding 1).
  * - `ParentCompany` — the target is the source's parent in a corporate-family rollup
  *   ({@link FilerFamilyTable}), a family-tree fact rather than necessarily an ownership filing.
  * - `Subsidiary` — the inverse of `ParentCompany`, kept as its own value so a row's
  *   `relationship` always describes the edge in the direction it was asserted.
- * - `SupersededBy` — the source registration was replaced by the target one, an
- *   identity-continuity fact rather than ownership or control; the edge is directional in time
- *   (the source is always the older registration) and `linkage-eval.ts`'s `OWNERSHIP_BY_RELATIONSHIP`
- *   pins it `false`, because a supersession chain is not evidence of a corporate family.
+ * - `SupersededBy` — the source registration was replaced by the target one,
+ *   an identity-continuity fact rather than ownership or control.
+ *   The edge is directional in time (the source is always the older registration)
+ *   and `linkage-eval.ts`'s `OWNERSHIP_BY_RELATIONSHIP` pins it `false`,
+ *   because a supersession chain is not evidence of a corporate family.
  */
 export const FilerRelationship = {
 	SameEntity: "same_entity",
@@ -139,27 +140,32 @@ export interface FilerEdgeTable {
 	source: string
 	source_vintage: string
 	/**
-	 * Mandatory; every edge asserts a start of validity, so use the filing's vintage/date
+	 * Mandatory.
+	 *
+	 * Every edge asserts a start of validity, so use the filing's vintage/date
 	 * when no finer-grained date exists.
 	 */
 	valid_from: string
 	/**
-	 * Null while the assertion is still in force; when set, the window is half-open
-	 * (`valid_from <= t < valid_to`), with `valid_to` the first date the assertion
-	 * no longer holds rather than the last date it did.
+	 * Null while the assertion is still in force.
+	 *
+	 * When set, the window is half-open (`valid_from <= t < valid_to`), with `valid_to`
+	 * the first date the assertion no longer holds rather than the last date it did.
 	 *
 	 * This is forced rather than stylistic: `cluster-filers.ts`'s `clusterInferredLinks`
-	 * closes a superseded edge and inserts its replacement at the same `validFrom`,
-	 * so an inclusive-inclusive convention would make both rows claim to be in force on
-	 * that date; every `asOf`-scoped reader must apply the matching predicate.
+	 * closes a superseded edge and inserts its replacement at the same `validFrom`, so an
+	 * inclusive-inclusive convention would make both rows claim to be in force on that date.
+	 * Every `asOf`-scoped reader must apply the matching predicate.
 	 */
 	valid_to: string | null
 	/**
-	 * Inferred only; null for authoritative assertions.
+	 * Inferred only.
+	 * Null for authoritative assertions.
 	 */
 	match_score: number | null
 	/**
-	 * JSON-encoded match evidence; inferred only and null for authoritative assertions.
+	 * JSON-encoded match evidence.
+	 * Inferred only and null for authoritative assertions.
 	 */
 	evidence: string | null
 }
@@ -214,10 +220,11 @@ export interface FilerFamilyTable {
 	valid_from: string
 	valid_to: string | null
 	/**
-	 * Inferred only and null for authoritative memberships, which `filer_family_match_score_inferred_only`
-	 * enforces in one direction; an inferred row carrying no score gives a caller no
-	 * signal about how far to trust it, but matching `filer_edge`'s permissiveness that
-	 * direction is a writer's obligation rather than a constraint.
+	 * Inferred only and null for authoritative memberships, which
+	 * `filer_family_match_score_inferred_only` enforces in one direction.
+	 *
+	 * An inferred row carrying no score gives a caller no signal about how far to trust it, but matching
+	 * `filer_edge`'s permissiveness that direction is a writer's obligation rather than a constraint.
 	 */
 	match_score: number | null
 }
@@ -322,8 +329,10 @@ export async function createFilerEdgeTable(db: Kysely<FilerDatabase>): Promise<v
 }
 
 /**
- * Secondary index for the reverse in-edges traversal path; the composite PK's leading column
- * is `from_node_id`, so a `to_node_id` lookup needs its own index, created after bulk load.
+ * Secondary index for the reverse in-edges traversal path.
+ *
+ * The composite PK's leading column is `from_node_id`, so a `to_node_id` lookup
+ * needs its own index, created after bulk load.
  */
 export async function createFilerEdgeToNodeIndex(db: Kysely<FilerDatabase>): Promise<void> {
 	await db.schema.createIndex("filer_edge_to_node_id").on("filer_edge").column("to_node_id").execute()
@@ -414,8 +423,10 @@ export async function createFilerFamilyTable(db: Kysely<FilerDatabase>): Promise
 }
 
 /**
- * Secondary index for the `all members of this family` lookup path; the composite PK's leading
- * column is `node_id`, so a `family_id` lookup needs its own index, created after bulk load.
+ * Secondary index for the `all members of this family` lookup path.
+ *
+ * The composite PK's leading column is `node_id`, so a `family_id` lookup needs
+ * its own index, created after bulk load.
  */
 export async function createFilerFamilyIndex(db: Kysely<FilerDatabase>): Promise<void> {
 	await db.schema.createIndex("filer_family_family_id").on("filer_family").column("family_id").execute()
@@ -440,8 +451,10 @@ export async function createFilerManifestTable(db: Kysely<FilerDatabase>): Promi
 }
 
 /**
- * Read and validate the manifest with `readLayerManifest`'s throw-unless-exactly-one discipline
- * but none of its layer-interface validation, which does not apply to filer.db's own manifest.
+ * Read and validate the manifest with `readLayerManifest`'s throw-unless-exactly-one discipline.
+ *
+ * Its layer-interface validation is skipped.
+ * The filer.db manifest is outside the layer interface.
  */
 export async function readFilerManifest(db: Kysely<FilerDatabase>): Promise<FilerManifestTable> {
 	const rows = await db.selectFrom("filer_manifest").selectAll().execute()

@@ -15,18 +15,24 @@ interface ArtifactState {
 	path: string
 	exists: boolean
 	/**
-	 * Bytes, or `null` when absent; a size that moved is the cheapest signal that a swap happened.
+	 * Bytes, or `null` when absent.
+	 *
+	 * A size that moved is the cheapest signal that a swap happened.
 	 */
 	bytes: number | null
 	modified: string | null
 	/**
-	 * The link target when the path is a symlink; `candidate.db` is a pointer `gazetteer promote`
-	 * swaps, so the target name carries the build's identity and the path alone does not.
+	 * The link target when the path is a symlink.
+	 *
+	 * `candidate.db` is a pointer `gazetteer promote` swaps, so the target name carries
+	 * the build's identity and the path alone does not.
 	 */
 	linkTarget: string | null
 	/**
-	 * `true` when the file is read-only; an owner-writable artifact is mid-build
-	 * or one a verify step refused, and must never be measured against as if it had passed.
+	 * `true` when the file is read-only.
+	 *
+	 * An owner-writable artifact is mid-build or one a verify step refused,
+	 * and must never be measured against as if it had passed.
 	 */
 	sealed: boolean | null
 }
@@ -76,7 +82,7 @@ async function artifactState(name: string, path: PathBuilderLike): Promise<Artif
 		bytes: stat.size,
 		modified: stat.mtime.toISOString(),
 		linkTarget: link.isSymbolicLink() ? await readLink(path) : null,
-		// A finished database is sealed 0444; owner-write means it is not finished.
+		// A finished database is sealed 0444, so owner-write means it is unfinished.
 		sealed: (stat.mode & 0o200) === 0,
 	}
 }
@@ -130,7 +136,8 @@ export async function runProvenance(options: ProvenanceOptions = {}): Promise<Pr
 			repos = stamp.repos ?? []
 			reposStampAge = (await statPath(reposStampPath)).mtime.toISOString()
 		} catch {
-			// A corrupt stamp is reported as no stamp; guessing at its contents would be worse than reporting no value.
+			// A corrupt stamp is reported as no stamp.
+			// Guessing at its contents would be worse than reporting no value.
 			repos = null
 		}
 	}

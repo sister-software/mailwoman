@@ -19,7 +19,8 @@ import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vites
 // a static import would bind the module before the reset.
 
 // The repo's real `.env` sets `SEC_EDGAR_USER_AGENT` (a live getter over `{ ...dotEnv, ...process.env }`),
-// so `vi.stubEnv` cannot hide it; mock the module directly.
+// so `vi.stubEnv` cannot hide it.
+// Mock the module directly.
 vi.mock("@mailwoman/filer/env", async (importOriginal) => {
 	const actual = await importOriginal<typeof import("@mailwoman/filer/env")>()
 
@@ -29,9 +30,10 @@ vi.mock("@mailwoman/filer/env", async (importOriginal) => {
 	}
 })
 
-// The root vitest config runs `isolate: false`, so `./sec-client.ts` may already sit in the
-// worker's cache evaluated without this file's env mock; reset on the way in so the chain
-// re-evaluates against the mock, and on the way out so the next file never inherits it.
+// The root vitest config runs `isolate: false`, so `./sec-client.ts` may already sit
+// in the worker's cache evaluated without this file's env mock.
+// Reset on the way in so the chain re-evaluates against the mock, and on the way out
+// so the next file never inherits it.
 vi.resetModules()
 afterAll(() => vi.resetModules())
 

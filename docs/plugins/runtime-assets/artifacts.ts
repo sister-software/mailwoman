@@ -5,7 +5,7 @@
  *
  *   Build-time utilities for the runtime-assets plugin, running in Node.js only (Docusaurus config/plugin context) and never bundled into the client.
  *
- *   Everything here resolves through `@mailwoman/core/module/resolve-from` keyed on this file's `import.meta.url`, and no code touches `import.meta.resolve`, because Docusaurus's CommonJS transform rewrites the former and cannot parse the latter; only a docs build can verify a change to that.
+ *   Everything here resolves through `@mailwoman/core/module/resolve-from` keyed on this file's `import.meta.url`, and no code touches `import.meta.resolve`, because Docusaurus's CommonJS transform rewrites the former and cannot parse the latter. Only a docs build can verify a change to that.
  */
 
 import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
@@ -33,9 +33,10 @@ export function relativeImportSpecifiers(source: string): string[] {
  * Stage MapLibre's tile worker and the module it imports into `destDir`,
  * at the same version as the bundled main thread.
  *
- * The docs client bundle inlines `import.meta.url` as a host `file:` path, so MapLibre's
- * derived worker URL is empty and the page would otherwise spawn itself as the worker and die
- * silently at its first byte of html; the site points `setWorkerUrl` at the staged copy instead.
+ * The docs client bundle inlines `import.meta.url` as a host `file:` path,
+ * so MapLibre's derived worker URL is empty and the page would otherwise spawn itself
+ * as the worker and die silently at its first byte of html.
+ * The site points `setWorkerUrl` at the staged copy instead.
  *
  * @param destDir - E.g. static/mailwoman/maplibre
  */

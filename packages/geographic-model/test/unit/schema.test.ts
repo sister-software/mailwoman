@@ -528,8 +528,8 @@ describe("relation refusals", () => {
 			})
 		})
 
-		// Both records declare the pairing so both are named; either could be the wrong half
-		// and the validator does not decide which.
+		// Both records declare the pairing so both are named.
+		// Either could be the wrong half and the validator does not decide which.
 		expect(refusalPairs(input)).toEqual([
 			["$.relations[0].inverse", ValidationIssueCode.InverseKindsMismatch],
 			["$.relations[1].inverse", ValidationIssueCode.InverseKindsMismatch],
@@ -587,8 +587,10 @@ describe("derived-fact refusals", () => {
 
 describe("reporting every violation at once", () => {
 	/**
-	 * Nine independent defects across four records and both passes; the whole list is stated because a
-	 * validator that reports the first violation and stops is the behavior this suite exists to refuse.
+	 * Nine independent defects across four records and both passes.
+	 *
+	 * The whole list is stated because a validator that reports the first violation
+	 * and stops is the behavior this suite exists to refuse.
 	 */
 	function ninefoldDefect(): unknown {
 		return draft(pharmacyDocument, (document) => {

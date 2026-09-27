@@ -26,8 +26,10 @@ import { PathBuilder } from "path-ts"
 import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 
 /**
- * Known parents probed after write, per country; probing another country's names against
- * a freshly built census prints reassuring-looking misses that verify no name.
+ * Known parents probed after write, per country.
+ *
+ * Probing another country's names against a freshly built census prints
+ * reassuring-looking misses that verify no name.
  */
 const PROBE_PARENTS_BY_COUNTRY: Readonly<Record<string, readonly string[]>> = {
 	gb: ["London", "Manchester", "Birmingham"],

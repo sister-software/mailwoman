@@ -55,8 +55,8 @@ def _eval_val(
 ) -> dict[str, float]:
     """Streaming val-set eval: mean val loss, token-level macro F1, the cross-pollution regression check and the aux locale-head accuracy when self-conditioning is on.
 
-    ``tokenizer`` is None on the char path, where ``iter_batches`` encodes per character; a guard
-    that refused one here stopped every char-mode run at its first eval."""
+    ``tokenizer`` is None on the char path, where ``iter_batches`` encodes per character, so a guard
+    that refuses a None tokenizer here would stop every char-mode run at its first eval."""
     model.eval()
     loss_total = 0.0
     seen_batches = 0
@@ -111,7 +111,7 @@ def train(
     callbacks: list[TrainCallback] | None = None,
 ) -> None:
     _set_seed(cfg.train.seed)
-    # MLM pre-training is a different objective and loop; the lazy import avoids a
+    # MLM pre-training is a different objective and loop. The lazy import avoids a
     # train<->pretrain module cycle.
     if getattr(cfg.train, "objective", "supervised") == "mlm":
         from .pretrain import pretrain

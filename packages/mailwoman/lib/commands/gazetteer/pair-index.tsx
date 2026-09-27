@@ -16,28 +16,33 @@ import { basename, PathBuilder, type PathBuilderLike } from "path-ts"
 import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 
 /**
- * The expected distinct-pair count for a GB build from the PPD CSV alone; a mismatch
- * means the fold changed, so the artifact needs investigation before use.
+ * The expected distinct-pair count for a GB build from the PPD CSV alone.
+ *
+ * A mismatch means the fold changed, so the artifact needs investigation before use.
  */
 const EXPECTED_GB_PAIR_COUNT = 19_209
 
 /**
- * The GB pair count before folding, printed for context only; it exceeds {@link EXPECTED_GB_PAIR_COUNT}
- * because the fold merges punctuation variants such as "St Helens" and "St.
+ * The GB pair count before folding, printed for context only.
+ *
+ * It exceeds {@link EXPECTED_GB_PAIR_COUNT} because the fold merges punctuation
+ * variants such as "St Helens" and "St.
  * Helens".
  */
 const RUNG3_PRE_FOLD_CENSUS_LINE_COUNT = 19_431
 
 /**
- * The expected distinct-pair count for a US build; every US pair comes from WOF,
- * so a snapshot refresh can legitimately change this number — update it
- * after inspecting the difference rather than relaxing the check.
+ * The expected distinct-pair count for a US build.
+ *
+ * Every US pair comes from WOF, so a snapshot refresh can legitimately change this number.
+ * Update it after inspecting the difference rather than relaxing the check.
  */
 const EXPECTED_US_PAIR_COUNT = 47_878
 
 /**
- * Known (child, parent) pairs probed after write, keyed by country code;
- * each country needs its own because probing another country's names verifies no name,
+ * Known (child, parent) pairs probed after write, keyed by country code.
+ *
+ * Each country needs its own because probing another country's names verifies no name,
  * and the command throws for a country without an entry.
  */
 const PROBE_PAIRS_BY_COUNTRY: Readonly<Record<string, ReadonlyArray<readonly [city: string, district: string]>>> = {
@@ -136,7 +141,8 @@ const GazetteerPairIndex: CommandComponent<typeof spec> = ({ options }) => {
 
 		const country = options.country.toLowerCase()
 
-		// Only GB has a default CSV; other countries build from the secondary sources.
+		// Only GB has a default CSV.
+		// Other countries build from the secondary sources.
 		const sourcePath =
 			options.source ?? (country === "gb" ? dataRootPath("ppd", "2026-07-22", "gb-tuples.csv") : undefined)
 

@@ -199,8 +199,9 @@ export function buildDiskStorage(options: DiskStorageOptions): AxiosStorage {
 			overlay.set(key, value)
 
 			const finalPath = entryPath(key)
-			// Unique per write: `process.pid` separates processes, `randomUUID()` separates concurrent
-			// writes inside one; a deterministic name collides as the file header describes.
+			// Unique per write: `process.pid` separates processes, `randomUUID()`
+			// separates concurrent writes inside one.
+			// A deterministic name collides as the file header describes.
 			const buildingPath = `${finalPath}.${process.pid}.${crypto.randomUUID()}.building`
 
 			try {

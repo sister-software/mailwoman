@@ -5,7 +5,7 @@
  *
  *   Where along a ladder of near-identical inputs the answer changes, and which component changed first.
  *
- *   Every other measurement here varies the configuration and holds the input fixed; this varies the input and holds the
+ *   Every other measurement here varies the configuration and holds the input fixed. This varies the input and holds the
  *   configuration fixed, which is the only way to attribute a failure to a token rather than a setting.
  *
  *   Rungs are the caller's: no code here generates them, because generating them means asserting a component order, and a
@@ -189,8 +189,9 @@ export interface MinimalPairsResult {
 }
 
 /**
- * Walk each ladder through one engine and report where its answer first moves;
- * one engine for the whole call, deliberately, because a ladder measured across
+ * Walk each ladder through one engine and report where its answer first moves.
+ *
+ * One engine for the whole call, deliberately, because a ladder measured across
  * two engines cannot attribute a change to the input.
  */
 export async function runMinimalPairs(

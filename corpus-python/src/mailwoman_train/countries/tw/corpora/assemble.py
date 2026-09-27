@@ -1,11 +1,11 @@
 """The two passes that turn eligible Overture-TW rows into a corpus.
 
 Pass 1 counts eligible rows per 縣市, sums each district's coordinates and lists the agencies, drawing
-no rows; pass 2 selects under the quotas pass 1 set. Both stream the same parquet in the same order,
+no rows. Pass 2 selects under the quotas pass 1 set. Both stream the same parquet in the same order,
 which is what makes the second pass's exact selectors land on the rows the first counted.
 
 One `random.Random` feeds the selectors, the shuffle, each row's register and the country prefix, in
-that order; adding, dropping or reordering a draw reshuffles which addresses a seeded build trains on,
+that order. Adding, dropping or reordering a draw reshuffles which addresses a seeded build trains on,
 and no artifact says so.
 """
 
@@ -235,7 +235,7 @@ def write_board(out_dir: Path, selection: Selection, encoder: RowEncoder) -> lis
 
 
 def check_stratification(selection: Selection) -> set[str]:
-    """Raise on broken stratification; returns the board's 鄉鎮市區."""
+    """Raise on broken stratification. Returns the board's 鄉鎮市區."""
     pool_units = {normalize_text(f"{row[0]}|{row[1]}") for row in selection.train} | {
         normalize_text(f"{row[0]}|{row[1]}") for row in selection.val
     }

@@ -108,7 +108,8 @@ async function probeRemote(
 			state.contentLength = Number(len)
 		}
 	} catch {
-		// No live Content-Length; the caller falls back to a warning rather than forcing a re-fetch decision.
+		// No live Content-Length.
+		// The caller falls back to a warning rather than forcing a re-fetch decision.
 	}
 
 	if (artifact.md5Sidecar) {

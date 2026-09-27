@@ -72,7 +72,8 @@ const INTERP_RADIUS_DEFAULT = 1.95
 const STREET_COMPONENT_TAGS = new Set(["street", "street_prefix", "street_prefix_particle", "street_suffix"])
 
 /**
- * Per-state street lookups loaded together, lazily by region; national (country) extracts carry no interp.
+ * Per-state street lookups loaded together, lazily by region.
+ * National (country) extracts carry no interp.
  */
 interface StreetLookups {
 	situs: HTTPVFSAddressPointLookup
@@ -92,8 +93,8 @@ export interface GeocoderRuntimeHandle {
 	geoBias: GeoBiasControl
 	calibrator: ((raw: number) => number | null) | undefined
 	/**
-	 * Resolves `null` when the classifier bundle predates the `traceParse` hook
-	 * or the trace fails; feature-detect via {@link supportsTrace}.
+	 * Resolves `null` when the classifier bundle predates the `traceParse` hook or the trace fails.
+	 * Feature-detect via {@link supportsTrace}.
 	 */
 	traceParse: (input: string) => Promise<ParseTraceLike | null>
 	supportsTrace: boolean
@@ -108,8 +109,10 @@ export interface GeocoderRuntimeOptions {
 }
 
 /**
- * Give a superseded bundle's native memory back; module scope rather than `useCallback`
- * because it closes over no state, so a stable identity is free and cannot churn the hook's effect.
+ * Give a superseded bundle's native memory back.
+ *
+ * This sits at module scope rather than in `useCallback` because it closes over no state,
+ * so a stable identity is free and cannot churn the hook's effect.
  */
 function disposeAssets(assets: ReleaseAssets): Promise<void> {
 	return assets.release()
@@ -162,8 +165,8 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 	// Lazy street-tier situs/interp lookups, cached by parsed state/country slug (in-flight promise dedup).
 	const streetLookupsRef = useRef<Map<string, Promise<StreetLookups>>>(new Map())
 	// The cache is state rather than a ref so a landed polygon rebuilds `resolveMapPlace`
-	// through `useGeocode`'s mapPlace memo; value `undefined` = unfetched,
-	// `null` = fetched-absent (fall through to bbox), geometry = present.
+	// through `useGeocode`'s mapPlace memo.
+	// Value `undefined` = unfetched, `null` = fetched-absent (fall through to bbox), geometry = present.
 	const polygonDBRef = useRef<Promise<PolygonDB> | null>(null)
 	const polygonInflightRef = useRef<Set<number>>(new Set())
 	const [polygonCache, setPolygonCache] = useState<Map<number, PlaceGeometry | null>>(() => new Map())
@@ -379,8 +382,8 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 				candidates.unshift(streetCandidate)
 			}
 
-			// Whether the resolved place doubles as another admin tier; best-effort,
-			// and the helper skips a synthesized street/anchor pin (`id === 0`).
+			// Whether the resolved place doubles as another admin tier.
+			// This is best-effort, and the helper skips a synthesized street/anchor pin (`id === 0`).
 			const dualRoles = await resolveDualRoles(wofLookup, candidates[0])
 
 			return {

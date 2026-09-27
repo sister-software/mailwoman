@@ -34,8 +34,8 @@ import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vites
 // `$private` (`@mailwoman/core/env`) is a live getter over `{ ...dotEnv, ...process.env }`,
 // and `dotEnv` is read from the repo's real `.env` once at module load, so
 // `vi.stubEnv(..., undefined)` cannot hide committed FCC_MAP_USERNAME/FCC_MAP_API_KEY values.
-// Mock the module so the no-credentials test is isolated from the ambient environment;
-// every other test passes explicit credentials and never reads `$private`.
+// Mock the module so the no-credentials test is isolated from the ambient environment.
+// Every other test passes explicit credentials and never reads `$private`.
 vi.mock("@mailwoman/bdc/env", async (importOriginal) => {
 	const actual = await importOriginal<typeof import("@mailwoman/bdc/env")>()
 
@@ -170,9 +170,9 @@ describe("createBDCClient: header-pair auth and URL building", () => {
 	})
 
 	it("APPENDS the path to the base rather than RESOLVING it, so no path can redirect the credentials off-host", async () => {
-		// `new URL(path, BDC_API_BASE_URL)` would resolve an absolute-looking path to another
-		// origin and carry the `username`/`hash_value` pair there; concatenation cannot,
-		// because the host is already fixed by the time the path is appended.
+		// `new URL(path, BDC_API_BASE_URL)` would resolve an absolute-looking path to
+		// another origin and carry the `username`/`hash_value` pair there.
+		// Concatenation cannot, because the host is already fixed by the time the path is appended.
 		const transport = bdcTransport([{ body: { data: [] } }, { body: { data: [] } }])
 		const client = clientFor(transport)
 
@@ -185,8 +185,8 @@ describe("createBDCClient: header-pair auth and URL building", () => {
 	})
 
 	it("returns the response body UN-unwrapped, envelope intact", async () => {
-		// Every BDC endpoint nests its payload under `data`, and both callers pluck `.data`
-		// themselves; a client that unwrapped would silently break every call site's response type.
+		// Every BDC endpoint nests its payload under `data`, and both callers pluck `.data` themselves.
+		// A client that unwrapped would silently break every call site's response type.
 		const transport = bdcTransport([{ body: { data: [{ as_of_date: "2024-12-31" }] } }])
 
 		const body = await clientFor(transport).get<{ data: unknown[] }>("/map/listAsOfDates")
@@ -222,9 +222,9 @@ describe("createBDCClient: the 10 requests/minute throttle", () => {
 	})
 
 	it("never lets more than the configured budget arrive inside any sliding minute", async () => {
-		// Arrivals are timestamped inside the adapter, not read off `clock.sleepCalls`:
-		// the grant schedule is not what a rate limiter sees, and asserting it lets
-		// a burst hide behind correctly spaced sleeps.
+		// Arrivals are timestamped inside the adapter, because `clock.sleepCalls`
+		// records the grant schedule, which differs from what a rate limiter sees,
+		// and asserting it lets a burst hide behind correctly spaced sleeps.
 		// `runUntilSettled` is required because the throttle sits downstream of the on-disk
 		// cache lookup, so each request spends real event-loop turns in `readFile` first.
 		const FAN_OUT = 12
@@ -664,8 +664,9 @@ describe("createBDCClient: the caller's failure taxonomy, decided without readin
 
 		const transport = bdcTransport([{ status: 429, statusText: "Too Many Requests" }, { body: { data: [1] } }], clock)
 
-		// A backoff far shorter than the throttle interval, so only the throttle can produce the
-		// observed spacing; a test with a long backoff would pass with the throttle deleted.
+		// A backoff far shorter than the throttle interval, so only the throttle
+		// can produce the observed spacing.
+		// A test with a long backoff would pass with the throttle deleted.
 		const client = clientFor(transport, { clock, maxAttempts: 3, baseRetryDelayMs: 500 })
 
 		expect(await client.get("/map/retry")).toEqual({ data: [1] })

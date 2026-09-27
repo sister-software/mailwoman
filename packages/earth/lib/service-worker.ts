@@ -147,8 +147,8 @@ async function respondWithCachedRange(request: Request, href: string, start: num
 
 /**
  * Read a 206 response's body and verify its length against the Content-Range header,
- * which is the truth because a file's final chunk is legitimately shorter than requested;
- * null for a torn body or an unparsable header.
+ * which is the truth because a file's final chunk is legitimately shorter than requested.
+ * The result is null for a torn body or an unparsable header.
  */
 async function validatedChunk(response: Response): Promise<ValidatedChunk | null> {
 	const contentRange = response.headers.get("content-range")

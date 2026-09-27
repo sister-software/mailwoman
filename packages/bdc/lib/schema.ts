@@ -22,8 +22,10 @@ import type { Kysely } from "kysely"
 
 /**
  * One availability row from the FCC's per-provider BDC CSV, one row per distinct
- * (geoid, provider_id, technology_code, speeds, low_latency, business_residential_code) tuple in the
- * default build mode; a triple whose BSLs carry differing speed tiers keeps multiple rows here.
+ * (geoid, provider_id, technology_code, speeds, low_latency, business_residential_code)
+ * tuple in the default build mode.
+ *
+ * A triple whose BSLs carry differing speed tiers keeps multiple rows here.
  */
 export interface BDCAvailabilityTable {
 	/**
@@ -51,8 +53,8 @@ export interface BDCAvailabilityTable {
 }
 
 /**
- * Provider dictionary keyed on `provider_id`, populated only when `BuildBDCOptions.providers`
- * is supplied; the default leaves it empty.
+ * Provider dictionary keyed on `provider_id`, populated only when `BuildBDCOptions.providers` is supplied.
+ * The default leaves it empty.
  *
  * No FK against `bdc_availability.provider_id`, since SQLite does not enforce FKs
  * without `pragma foreign_keys` and the join happens at read time.
@@ -66,9 +68,10 @@ export interface BDCAvailabilityTable {
  *   499 filing date, per `@mailwoman/filer/sdk`'s `readFRNFilingCandidates` +
  *   `pickPrimaryFRN` (imported, never reimplemented).
  *   Every other FRN is recoverable from `filer.db`.
- * - `holding_company` is populated directly when its rows carry exactly one distinct non-null
- *   value, and stays NULL on a conflict because `holding_company` has no most-recent-filing
- *   rule the way `frn` does; every discarded value remains recoverable from `filer.db`.
+ * - `holding_company` is populated directly when its rows carry exactly one distinct
+ *   non-null value, and stays NULL on a conflict because `holding_company` has
+ *   no most-recent-filing rule the way `frn` does.
+ *   Every discarded value remains recoverable from `filer.db`.
  * - `brand_name` stays NULL unconditionally: the provider list carries no brand-name column.
  */
 export interface BDCProviderTable {

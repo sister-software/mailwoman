@@ -26,8 +26,9 @@ export function cliArguments(): UnsafeCLIArguments {
 }
 
 /**
- * Forward the CLI arguments to a child process; do not use it unless its arguments
- * are being passed to a child process.
+ * Forward the CLI arguments to a child process.
+ *
+ * Use it only when its arguments are being passed to a child process.
  */
 export function passThroughCLIArguments(): readonly unknown[] {
 	// oxlint-disable-next-line sister-software/no-process-globals -- Forwarding arguments to a child process.
@@ -100,9 +101,11 @@ type TailPropertyName<Value extends string> = Value extends `${infer Head}-${inf
 	: InitialismOf<Value>
 
 /**
- * {@linkcode optionPropertyName} at the type level so a command's option properties derive
- * from its flags rather than being restated beside them; the two are read from the one
- * {@linkcode OPTION_INITIALISMS} declaration and must agree for a flag to bind.
+ * {@linkcode optionPropertyName} at the type level so a command's option properties
+ * derive from its flags rather than being restated beside them.
+ *
+ * The two are read from the one {@linkcode OPTION_INITIALISMS} declaration
+ * and must agree for a flag to bind.
  */
 export type OptionPropertyName<Value extends string> = Value extends `${infer Head}-${infer Tail}`
 	? `${Head}${TailPropertyName<Tail>}`
@@ -130,8 +133,10 @@ export function optionPropertyName(value: string): string {
 
 /**
  * Parse CLI arguments against a `node:util` `parseArgs` config, defaulting `args` to
- * {@linkcode cliArguments} so a script never reads `process.argv` itself; a caller that has already
- * taken a command name off the front passes the remainder as `config.args` and it is used as given.
+ * {@linkcode cliArguments} so a script never reads `process.argv` itself.
+ *
+ * A caller that has already taken a command name off the front passes the remainder
+ * as `config.args` and it is used as given.
  */
 export function parseArguments<T extends ParseArgsConfig>(config: T): ReturnType<typeof parseArgs<T>> {
 	// The builtin types its result from the whole config object, so supplying `args` moves the type even

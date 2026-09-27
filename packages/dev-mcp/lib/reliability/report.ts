@@ -23,8 +23,10 @@ import {
 import { provenanceFor } from "#tool-kit"
 
 /**
- * The confidence surfaces this tool can grade; each is a distinct head over distinct features,
- * so adding one means adding a sample function rather than widening an existing one.
+ * The confidence surfaces this tool can grade.
+ *
+ * Each is a distinct head over distinct features, so adding one means adding a
+ * sample function rather than widening an existing one.
  */
 export const ReliabilitySurface = {
 	Decode: "decode",
@@ -37,14 +39,15 @@ export const ReliabilitySurface = {
 export type ReliabilitySurface = (typeof ReliabilitySurface)[keyof typeof ReliabilitySurface]
 
 /**
- * Where the coarse placer's held-out split lives, relative to the repo root;
- * it is not tracked in git, and the surface reports its absence rather than substituting
+ * Where the coarse placer's held-out split lives, relative to the repo root.
+ *
+ * It is untracked in git, and the surface reports its absence rather than substituting
  * a split that would be the temperature fit reporting on itself.
  */
 const PLACER_TEST_SPLIT = ["data", "coarse-placer", "test.jsonl"] as const
 
 /**
- * A starting table of eval positions, not a claim about where the eval belongs.
+ * A starting table of eval positions, open to revision once the eval's proper position is chosen.
  */
 const DEFAULT_THRESHOLDS = [0.5, 0.6, 0.7, 0.8, 0.85, 0.9, 0.95, 0.99] as const
 
@@ -151,9 +154,9 @@ async function placerRun(registry: EngineRegistryLike, args: Record<string, unkn
 
 	return {
 		sample,
-		// No engine and no input set: the placer is loaded from its own bundle
-		// and graded against a corpus on disk, so the standard provenance block would be a
-		// shape with every field empty; the corpus and the tree identify it.
+		// No engine and no input set: the placer is loaded from its own bundle and graded against a
+		// corpus on disk, so the standard provenance block would be a shape with every field empty.
+		// The corpus and the tree identify it.
 		provenance: {
 			corpus,
 			tree_fingerprint: (await registry.fingerprint()).digest,

@@ -11,7 +11,7 @@ class CountryModule(Protocol):
     """What one country contributes to training, as a module rather than an instance.
 
     `BOARD_BUCKET_MIN` is the municipality-population floor above which rows go to the held-out
-    board rather than the training pool; each country sets its own because the population
+    board rather than the training pool. Each country sets its own because the population
     distributions differ.
     """
 
@@ -51,7 +51,7 @@ class CLICommand(Protocol):
 
 @runtime_checkable
 class TrainCallback(Protocol):
-    """One concern observed during a training run; hooks answer None and one that must stop a run
+    """One concern observed during a training run. Hooks answer None and one that must stop a run
     raises, and `state` is `Any` to keep the training loop out of every module that reads an
     interface."""
 

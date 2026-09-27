@@ -128,8 +128,9 @@ describe("the positive half", () => {
 	})
 
 	it("tolerates a point a few centimetres outside the service's own edge", async () => {
-		// About 5 cm north of the band's northern edge; the distance being carried is what
-		// separates a rendering difference from a conversion defect on a receipt.
+		// About 5 cm north of the band's northern edge.
+		// The distance being carried is what separates a rendering difference from
+		// a conversion defect on a receipt.
 		const nearEdge = {
 			label: "just outside band A's north edge",
 			latitude: FIXTURE_ORIGIN.lat + FIXTURE_SIDE + 0.0000005,
@@ -146,7 +147,7 @@ describe("the positive half", () => {
 
 		const row = result.agreement[0]!
 
-		// The distance rides on every row, not only the tolerated ones, and is measured to the edge.
+		// The distance rides on every row, tolerated or otherwise, and is measured to the edge.
 		expect(row.nearestEdgeMetres).toBeDefined()
 		expect(row.nearestEdgeMetres!).toBeLessThan(BOUNDARY_TOLERANCE_METRES)
 		expect(row.outcome).not.toBe("disagree")

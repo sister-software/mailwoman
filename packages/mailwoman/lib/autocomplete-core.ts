@@ -14,9 +14,10 @@ import type { PathBuilderLike } from "path-ts"
 import { $public } from "#env"
 
 /**
- * Resolves the FST artifact from an explicit flag, environment, or the application data
- * directory; the filename is lowercase on both halves of the locale tag because that
- * is what the builder writes (`gazetteer-pipeline/fst.ts`'s artifact list).
+ * Resolves the FST artifact from an explicit flag, environment, or the application data directory.
+ *
+ * The filename is lowercase on both halves of the locale tag because that is what the
+ * builder writes (`gazetteer-pipeline/fst.ts`'s artifact list).
  */
 export function resolveFSTPath(explicitPath?: string): PathBuilderLike {
 	return explicitPath ?? $public.MAILWOMAN_FST_BIN ?? wofDatabasePath("fst-per-locale", "fst-en-us.bin")

@@ -1,6 +1,6 @@
 """What `MailwomanCoarseEncoder.__init__` establishes, declared once for every part that reads it.
 
-The encoder's methods live in several modules and each reads attributes the constructor set; one
+The encoder's methods live in several modules and each reads attributes the constructor set. One
 declaration here gives every part the same view of what exists and what type it holds.
 
 No line here assigns. A bare annotation creates no class attribute, so `nn.Module.__setattr__`

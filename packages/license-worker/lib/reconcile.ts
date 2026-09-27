@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- * A subscription the ledger has never seen is found only through the invoice list, which Stripe filters by creation time, so it is recovered only while its first invoice was created within `sinceSeconds`; past that the action is to resend the `invoice.paid` event from the Stripe dashboard.
+ * A subscription the ledger has never seen is found only through the invoice list. Stripe filters that list by creation time, so the subscription is recovered only while its first invoice was created within `sinceSeconds`. Past that the action is to resend the `invoice.paid` event from the Stripe dashboard.
  */
 
 import type Stripe from "stripe"
@@ -166,7 +166,8 @@ export async function reconcileLedger(
 }
 
 /**
- * Mints one listed invoice unless the ledger already holds its token; a failure is this invoice's alone.
+ * Mints one listed invoice unless the ledger already holds its token.
+ * A failure is this invoice's alone.
  */
 async function mintIfUnminted(
 	env: LicenseWorkerEnv,
@@ -202,8 +203,9 @@ async function paymentIntentOf(stripe: Stripe, invoiceID: string): Promise<strin
 }
 
 /**
- * Whether the charge behind an invoice was refunded in full, the same line the
- * `charge.refunded` handler draws; Stripe's `refunded` is false for a partial refund.
+ * Whether the charge behind an invoice was refunded in full, the same line
+ * the `charge.refunded` handler draws.
+ * Stripe's `refunded` is false for a partial refund.
  */
 async function fullyRefunded(stripe: Stripe, invoiceID: string): Promise<boolean> {
 	const paymentIntent = await paymentIntentOf(stripe, invoiceID)

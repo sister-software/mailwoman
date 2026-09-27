@@ -5,7 +5,7 @@ per-row fraction — so the order of the stages and of the draws inside them dec
 contains; `tests/mailwoman_train/countries/test_jp_build_parity.py` pins the emitted rows.
 
 Two passes over the source: pass 1 counts eligible rows so the per-prefecture cap can be water-filled
-against the target, and pass 2 streams the selection under it; holding pass 1's rows instead would
+against the target, and pass 2 streams the selection under it. Holding pass 1's rows instead would
 mean 19.5M rendered records in memory.
 """
 
@@ -101,7 +101,7 @@ def survey_source(parquet: Path, args: argparse.Namespace) -> SourceSurvey:
     cap = water_fill(pool_counts, target)
     quotas = {prefecture: min(cap, count) for prefecture, count in pool_counts.items()}
     shortfall = target - sum(quotas.values())
-    # Water-filling lands at or below target; hand the remainder to the prefectures with headroom so the
+    # Water-filling lands at or below target. Hand the remainder to the prefectures with headroom so the
     # corpus hits its row count exactly.
     if shortfall > 0:
         for prefecture in sorted(pool_counts, key=lambda p: pool_counts[p] - quotas[p], reverse=True):
@@ -287,7 +287,7 @@ def write_board(out_dir: Path, selection: Selection, encoder: RowEncoder) -> lis
 
 
 def check_stratification(args: argparse.Namespace, selection: Selection) -> tuple[set[str], set[str]]:
-    """Raise on broken stratification; returns (train prefectures, board municipalities)."""
+    """Raise on broken stratification. Returns (train prefectures, board municipalities)."""
     train_prefectures = {row[0] for row in selection.train}
     if args.max_row_groups is None and len(train_prefectures) != 47:
         raise RuntimeError(f"train covers {len(train_prefectures)} prefectures, expected 47 — stratification broken")

@@ -12,8 +12,9 @@
  */
 
 /**
- * Every way a document can fail validation; closed, so a consumer branches on the code
- * rather than on message prose.
+ * Every way a document can fail validation.
+ *
+ * The set is closed, so a consumer branches on the code rather than on message prose.
  */
 export const ValidationIssueCode = {
 	MissingField: "missing_field",

@@ -142,8 +142,9 @@ const nextConfig = values["next-config"]
 const nextAdmitted = nextConfig ? await readAdmittedCountries(nextConfig) : null
 const newlyAdmitted = nextAdmitted ? sorted.filter((code) => nextAdmitted.has(code) && !shippedFamilies.has(code)) : []
 /**
- * Jurisdictions a shipped graph admits that the second config does not; a code here
- * is a regression the config's author has to have intended.
+ * Jurisdictions a shipped graph admits that the second config does not.
+ *
+ * A code here is a regression the config's author has to have intended.
  */
 const nextDrops = nextAdmitted ? admitted.filter((code) => !nextAdmitted.has(code)) : []
 

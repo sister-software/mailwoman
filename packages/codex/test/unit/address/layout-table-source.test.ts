@@ -14,7 +14,7 @@
  *   `@mailwoman/core` imports `@mailwoman/codex`, so a source file here reaching back would close that loop. This
  *   file lives under `test/`, which no code imports, and codex's own manifest stays free of core.
  *
- *   The eleven hand-authored countries are not compared here; those depart from the dataset on purpose, and
+ *   The eleven hand-authored countries are not compared here. Those depart from the dataset on purpose, and
  *   `@mailwoman/codex`'s own test pins each departure against its reason.
  */
 

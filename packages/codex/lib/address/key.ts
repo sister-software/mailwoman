@@ -113,9 +113,10 @@ export function normalizeAddressToken(input: string): string {
 }
 
 /**
- * Derive the canonical match key: each present, address-identifying field normalized
- * via {@linkcode normalizeAddressToken}, in fixed order, joined by the separator;
- * empty fields are skipped and an empty string is returned if none remains.
+ * Derive the canonical match key: each present, address-identifying field normalized via
+ * {@linkcode normalizeAddressToken}, in fixed order, joined by the separator.
+ *
+ * Empty fields are skipped and an empty string is returned if none remains.
  */
 export function canonicalKey(components: ComponentDict, opts: CanonicalKeyOptions = {}): string {
 	const separator = opts.separator ?? "|"

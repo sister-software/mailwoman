@@ -1,6 +1,6 @@
 """Reading the two inputs: the Overture-JP parquet and KEN_ALL for the 〒 join.
 
-The eligibility filter lives in the iterator so both build passes see the identical row set; applying
+The eligibility filter lives in the iterator so both build passes see the identical row set. Applying
 it only in pass 2 would desynchronize the exact-selection masks.
 """
 
@@ -90,8 +90,8 @@ def iter_source_rows(
 
     - both address levels present and the prefecture in the canonical 47;
     - at least one of street/number non-empty;
-    - the number carries no comma — those are MLIT parcel AGGREGATIONS (``岡山町1154,1153,1155,…``),
-      which render as one ``house_number`` span sixty parcels long;
+    - the number carries no comma, since a comma marks an MLIT parcel aggregation (``岡山町1154,1153,1155,…``),
+      which renders as one ``house_number`` span sixty parcels long;
     - the field total fits ``max_field_chars``. This is the structural guard behind the semantic one:
       the char path runs at S=96 units and ``encode_row_units`` truncates silently, so a row that
       cannot fit is dropped here, counted, rather than half-labelled there.

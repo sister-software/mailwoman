@@ -69,7 +69,7 @@ training_image = (
         "zstandard>=0.23",
         "datasets>=2.19",
         "tqdm>=4.66",
-        # `mailwoman_train.env` reads it for the platform data root; no module imports it until the
+        # `mailwoman_train.env` reads it for the platform data root. No module imports it until the
         # anchor painter reaches `features/postcode_shapes.py`, so its absence surfaces mid-training
         # rather than at startup.
         "platformdirs>=4.3",

@@ -17,7 +17,7 @@ from __future__ import annotations
 
 from .app import VOL_MOUNT, app, training_image, vol
 
-#: The recipes live beside the training package on the volume; a census reads the one that trained
+#: The recipes live beside the training package on the volume. A census reads the one that trained
 #: the model it is asking about rather than a local copy.
 CONFIGS = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/configs"
 
@@ -73,7 +73,7 @@ def diagnose_corpus(
     paths = _parquet_paths(corpus_root, "train")
     print(f"\n_parquet_paths returned {len(paths)} train parquet files")
 
-    # A file counts under every source it carries, which is what the loader's index does; counting each file
+    # A file counts under every source it carries, which is what the loader's index does. Counting each file
     # once under its first row's source hides the sources that never open a file.
     by_source: Counter[str] = Counter()
     rows_by_source: Counter[str] = Counter()
@@ -404,7 +404,7 @@ def piece_prior(
 ) -> None:
     """The digit prior at the unit the MODEL actually sees — the SentencePiece piece.
 
-    The model never sees a token; it sees pieces and emits one label per piece. Digits tokenize
+    The model sees pieces rather than tokens, and emits one label per piece. Digits tokenize
     roughly one piece per character, so a 5-digit postcode `[9|0|2|1|0]` mints four `I-postcode`
     labels while a 2-digit house number `[1|4]` mints one `I-house_number`. Longer runs are postcodes
     and mint proportionally more continuation labels, so the continuation label distribution can
@@ -412,7 +412,7 @@ def piece_prior(
 
     This measures it at that unit through `iter_encoded`, the same call the trainer makes, so the
     tokenizer and the BIO expansion are the real ones. (A hand-derivation predicted
-    P(postcode | continuation) = 0.688 assuming fertility == digit count; multi-digit pieces like `16`
+    P(postcode | continuation) = 0.688 assuming fertility == digit count. Multi-digit pieces like `16`
     exist, so the real number can differ.)
 
     Reports, for digit-containing pieces only:
@@ -440,7 +440,7 @@ def piece_prior(
     cfg_path = Path(CONFIGS) / config_name
     cfg = yaml.safe_load(cfg_path.read_text())
     data_cfg = DataConfig(**cfg["data"])
-    # `tokenizer_dir` names the directory; the SentencePiece model is the file inside it.
+    # `tokenizer_dir` names the directory, and the SentencePiece model is the file inside it.
     tok = Tokenizer(Path(data_cfg.tokenizer_dir) / "tokenizer.model")
 
     print(f"config     : {cfg_path.name}")

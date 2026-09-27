@@ -5,7 +5,7 @@
  *
  * Past runs on disk, so a `{kind: "recorded"}` arm can be replayed rather than re-measured.
  *
- * A cache, not a record: `evals/scores-by-version.json` and `docs/records/evals/` are the record, and a pruned run has
+ * A cache: `evals/scores-by-version.json` and `docs/records/evals/` are the record, and a pruned run has
  * to be re-measured. A run whose `tree_fingerprint` no longer matches the working tree is still evidence about that
  * tree, and `{kind:"recorded"}` refuses to compare across fingerprints anyway.
  */
@@ -24,8 +24,9 @@ import { Globerator } from "spliterator/node/fs"
 export const RUN_STORE_DIR = dataRootPath("dev-mcp", "runs")
 
 /**
- * Age ceiling in days; a stored run describes the tree that produced it, and
- * after two weeks of commits that tree is gone.
+ * Age ceiling in days.
+ *
+ * A stored run describes the tree that produced it, and after two weeks of commits that tree is gone.
  */
 export const RETENTION_DAYS = 14
 
@@ -83,8 +84,9 @@ export interface RunSummary {
 	input_set_id: string | null
 	bytes: number
 	/**
-	 * Arm labels this run can be replayed as; empty means it is stored evidence
-	 * but not a usable `{kind:"recorded"}` arm.
+	 * Arm labels this run can be replayed as.
+	 *
+	 * Empty means it is stored evidence but not a usable `{kind:"recorded"}` arm.
 	 */
 	replayable_arms: string[]
 	/**
@@ -127,8 +129,10 @@ export async function tryPutRun(run: StoredRun, dir: PathBuilderLike, now: Date)
 }
 
 /**
- * Read one run back, or `null` when it is absent or unreadable; pruned, never stored and
- * unreadable are not distinguishable after the fact, so a caller finding none has to re-measure.
+ * Read one run back, or `null` when it is absent or unreadable.
+ *
+ * Pruned, never stored and unreadable are not distinguishable after the fact,
+ * so a caller finding none has to re-measure.
  */
 export async function getRun(runID: string, dir: PathBuilderLike = RUN_STORE_DIR): Promise<StoredRun | null> {
 	const path = runPath(runID, dir)

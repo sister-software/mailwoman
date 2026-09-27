@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- * Where a graded confidence comes from — the surfaces `reliability.ts` curves; each reports what it could not grade,
+ * Where a graded confidence comes from: the surfaces `reliability.ts` curves. Each reports what it could not grade,
  * because a curve over part of a set and a curve over all of it differ in ways the ECE alone cannot tell apart.
  */
 
@@ -72,7 +72,8 @@ export interface UnassertedCohort {
 export interface SurfaceSample {
 	observations: Observation[]
 	/**
-	 * Rows the surface could not grade, and why; reported rather than deducted in silence.
+	 * Rows the surface could not grade, and why.
+	 * Reported rather than deducted in silence.
 	 */
 	excluded: ExcludedRows[]
 	/**
@@ -220,8 +221,8 @@ export async function decodeReliabilitySample(
  * threshold would censor exactly the low-confidence rows the curve is about.
  *
  * The default corpus is the held-out `test` split, held out from both the training set
- * and the `val` split the temperature was fit on; pointing this at `val`
- * or `train` destroys that property without any other symptom.
+ * and the `val` split the temperature was fit on.
+ * Pointing this at `val` or `train` destroys that property without any other symptom.
  */
 export async function coarsePlacerReliabilitySample(corpusPath: string): Promise<SurfaceSample> {
 	if (!(await pathExists(corpusPath))) {

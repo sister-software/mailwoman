@@ -2,7 +2,7 @@
  * @copyright Sister Software.
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file Tests for the Google `address_components` → `ComponentTag` mapping; fixtures are hand-built from real response shapes and no code here touches the network.
+ * @file Tests for the Google `address_components` → `ComponentTag` mapping. Fixtures are hand-built from real response shapes and no code here touches the network.
  */
 
 import {

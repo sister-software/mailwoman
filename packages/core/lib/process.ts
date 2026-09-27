@@ -136,8 +136,10 @@ export function runFileSync(
 }
 
 /**
- * Run a shell command line synchronously and answer stdout; reach for {@linkcode runFileSync} unless
- * the command needs the shell, because an argument list does not get re-parsed, quoted or expanded.
+ * Run a shell command line synchronously and answer stdout.
+ *
+ * Reach for {@linkcode runFileSync} unless the command needs the shell, because an
+ * argument list does not get re-parsed, quoted or expanded.
  */
 export function runShellSync(command: string, options: ExecSyncOptions & { cwd?: PathBuilderLike } = {}): string {
 	return execSync(command, { ...options, cwd: options.cwd?.toString(), encoding: "utf8" }) ?? ""
@@ -149,8 +151,10 @@ export function runShellSync(command: string, options: ExecSyncOptions & { cwd?:
 export type SpawnProcessOptions = Omit<SpawnOptions, "cwd"> & { cwd?: PathBuilderLike }
 
 /**
- * Start a command and hand its {@linkcode ChildProcess} to the caller, who owns the streams, the exit
- * event and the kill; without a `stdio` option every stream is a pipe and the return type says so.
+ * Start a command and hand its {@linkcode ChildProcess} to the caller,
+ * who owns the streams, the exit event and the kill.
+ *
+ * Without a `stdio` option every stream is a pipe and the return type says so.
  */
 export function spawnProcess(
 	file: PathBuilderLike,

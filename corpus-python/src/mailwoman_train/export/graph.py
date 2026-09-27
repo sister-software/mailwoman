@@ -92,7 +92,7 @@ def detect_channels(model: nn.Module) -> Channels:
         char=bool(getattr(model, "use_char_embed", False)),
         # When the model carries the locale self-conditioning head, export its pooled posterior as a
         # second output ("locale_logits", shape [batch, num_locales], labels.LOCALE_COUNTRIES order).
-        # Consumers fetch outputs by name, so appending is backward-compatible; without it the
+        # Consumers fetch outputs by name, so appending is backward-compatible. Without it the
         # model's address-system detection is trained but unreadable at inference.
         locale=getattr(model, "locale_head", None) is not None,
         # Export the span scorer's (B, S, L, T) scores as a named output. Appending is

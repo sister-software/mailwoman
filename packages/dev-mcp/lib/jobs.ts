@@ -40,9 +40,11 @@ export interface JobSummary {
 }
 
 /**
- * A gauntlet log is tens of kilobytes, so this is generous enough that no real run is truncated
- * while bounding a runaway child's heap; truncation goes in the tail marker rather than being
- * silently applied, because a log that lost its end would hide the verdict that prints last.
+ * A gauntlet log is tens of kilobytes, so this is generous enough that no real run
+ * is truncated while bounding a runaway child's heap.
+ *
+ * Truncation goes in the tail marker rather than being silently applied, because a
+ * log that lost its end would hide the verdict that prints last.
  */
 const MAX_CAPTURED_BYTES = 8 * 1024 * 1024
 
@@ -89,8 +91,8 @@ export class JobRegistry {
 			job.endedAt = Date.now()
 			job.exitCode = code
 			job.child = null
-			// A signalled exit is a cancellation, not a failure verdict — conflating them
-			// would let a killed run read as a graded `fail`.
+			// A signalled exit is a cancellation.
+			// Grading it as a failure verdict would let a killed run read as a graded `fail`.
 			job.state = job.state === "cancelled" || signal ? "cancelled" : code === 0 ? "succeeded" : "failed"
 		})
 

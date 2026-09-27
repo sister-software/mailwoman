@@ -7,8 +7,8 @@
  *   the shape of an address from there rather than at a nested call.
  *
  *   The line skeletons come from libaddressinput, Google's address metadata, which this repository ships at
- *   `packages/core/data/chromium-i18n/ssl-address/` (252 countries, Apache-2.0). Its `fmt` field is the print order;
- *   what it does not carry, and what is authored here, is the `%A` expansion into this project's street tags, the
+ *   `packages/core/data/chromium-i18n/ssl-address/` (252 countries, Apache-2.0). Its `fmt` field is the print order.
+ *   What it does not carry, and what is authored here, is the `%A` expansion into this project's street tags, the
  *   line-join policy, the country line, and the post-office box.
  */
 
@@ -65,8 +65,10 @@ export const japaneseSubPrefecture = addr`${subregion}${locality}${dependent_loc
 export const chineseStreet = addr`${street}${house_number}`
 
 /**
- * How a system joins its lines for single-line output; absent reads as `", "`, the anglophone default,
- * and the CJK entries are the reason this is per-system rather than a caller's argument.
+ * How a system joins its lines for single-line output.
+ *
+ * Absent reads as `", "`, the anglophone default, and the CJK entries are the reason
+ * this is per-system rather than a caller's argument.
  */
 export const LINE_JOINS: Readonly<Record<string, string>> = {
 	JP: " ",
@@ -170,8 +172,8 @@ ${dependent_locality}
 ${postcode} ${locality}
 ${country}`,
 
-	// %N%n%O%n%A%n%C%n%Z — the postcode takes its own line down the page and a space on one line;
-	// the soft break is how one layout says both, keeping `27 Minories, London EC3N 1DE`.
+	// %N%n%O%n%A%n%C%n%Z — the postcode takes its own line down the page and a space on one line.
+	// The soft break is how one layout says both, keeping `27 Minories, London EC3N 1DE`.
 	GB: withSoftBreakBefore(
 		addr`${attention}
 ${venue}

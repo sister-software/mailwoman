@@ -272,8 +272,8 @@ describe("the admin run keeps its tier order in every layout", () => {
 	 * a Hong Kong layout printing the district above the area is still largest-first.
 	 *
 	 * The sub-locality is the tier the generator authors wherever a `fmt` names no `%D`,
-	 * and the one relation it has to get right is which side of the locality it lands on; four
-	 * generated skeletons (CR, KI, LV, RO) print the region between the street and the locality,
+	 * and the one relation it has to get right is which side of the locality it lands on.
+	 * Four generated skeletons (CR, KI, LV, RO) print the region between the street and the locality,
 	 * transcribed from the dataset rather than authored, and this check does not judge it.
 	 */
 	const TABLES = {

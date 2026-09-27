@@ -9,7 +9,7 @@
  *   Use `decodeAsTuples` if order or repetition matters.
  *
  *   A multi-role node — a city-state span tagged `region` that also plays `locality` — emits one entry per role
- *   from its `interpretations`, so `out.locality` still surfaces for a completed city-state; every role shares the
+ *   from its `interpretations`, so `out.locality` still surfaces for a completed city-state. Every role shares the
  *   span's `value`.
  */
 
@@ -28,8 +28,9 @@ import { type UnknownSpan, unknownSpans } from "#decoder/unknown-spans"
  */
 export interface DroppedSpan {
 	/**
-	 * The tag the span carried; always one already present in the output,
-	 * because a drop happens only when the slot was taken.
+	 * The tag the span carried.
+	 *
+	 * It is always one already present in the output, because a drop happens only when the slot was taken.
 	 */
 	tag: ComponentTag
 	/**
@@ -47,13 +48,16 @@ export interface DroppedSpan {
  */
 export interface SerializeJSONOpts {
 	/**
-	 * Add an `unknown` array of the all-O spans the model left unclassified; default false keeps
-	 * the output libpostal-compatible (a flat tag→value map) unless the caller asks for the gaps.
+	 * Add an `unknown` array of the all-O spans the model left unclassified.
+	 *
+	 * The default false keeps the output libpostal-compatible (a flat tag→value map)
+	 * unless the caller asks for the gaps.
 	 */
 	includeUnknown?: boolean
 	/**
-	 * Add a `dropped` array naming every span first-occurrence-wins discarded;
-	 * default false keeps the output libpostal-compatible, and the geocode path opts in
+	 * Add a `dropped` array naming every span first-occurrence-wins discarded.
+	 *
+	 * The default false keeps the output libpostal-compatible, and the geocode path opts in
 	 * because a silently deleted component is the one thing a caller cannot recover for itself.
 	 */
 	includeDropped?: boolean

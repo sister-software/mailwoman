@@ -46,7 +46,8 @@ export interface CheckoutCollection {
 	billing_address_collection: "required"
 	consent_collection: { terms_of_service: "required" }
 	/**
-	 * The promotion-code field on the checkout page; the codes themselves live in the dashboard.
+	 * The promotion-code field on the checkout page.
+	 * The codes themselves live in the dashboard.
 	 */
 	allow_promotion_codes: true
 	/**

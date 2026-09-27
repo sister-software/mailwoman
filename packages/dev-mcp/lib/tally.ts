@@ -12,13 +12,16 @@ import { stringifyJSON } from "@mailwoman/core/json"
  */
 
 /**
- * The bucket for rows where the dotted path does not exist; a leading tilde keeps it apart from real values.
+ * The bucket for rows where the dotted path does not exist.
+ * A leading tilde keeps it apart from real values.
  */
 export const ABSENT_KEY = "~absent"
 
 /**
- * Read a dotted path off a nested record; arrays are not traversed, because a tally
- * over array members is a different operation with a different denominator.
+ * Read a dotted path off a nested record.
+ *
+ * Arrays are not traversed, because a tally over array members is a different
+ * operation with a different denominator.
  */
 export function readPath(value: unknown, path: string): { present: boolean; value: unknown } {
 	let current: unknown = value
@@ -61,8 +64,10 @@ export function tallyPath(rows: ReadonlyArray<unknown>, path: string): Record<st
 }
 
 /**
- * Tally several paths at once; every tally's counts sum to `rows.length` by construction,
- * which is why absence is a bucket instead of a skip.
+ * Tally several paths at once.
+ *
+ * Every tally's counts sum to `rows.length` by construction, which is why
+ * absence is a bucket instead of a skip.
  */
 export function tallyPaths(
 	rows: ReadonlyArray<unknown>,

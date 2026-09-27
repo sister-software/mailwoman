@@ -81,7 +81,8 @@ export type BuildFloodInput =
 
 export type BuildFloodOptions = BuildFloodInput & {
 	/**
-	 * Where the sealed artifact lands; the build writes beside it and swaps.
+	 * Where the sealed artifact lands.
+	 * The build writes beside it and swaps.
 	 */
 	out: PathBuilderLike
 	/**

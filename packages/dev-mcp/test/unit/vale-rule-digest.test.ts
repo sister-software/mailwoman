@@ -18,8 +18,8 @@ const digest = renderRuleDigest(rules)
 const named = new Set(rules.map((rule) => rule.name))
 
 /**
- * A rule file's tokens compiled as patterns, not words, so no banned token enters a
- * tracked file (`repo-health`'s `bannedVocabulary` counter holds that at zero).
+ * A rule file's tokens compiled as patterns, so no banned token enters a tracked file as
+ * a literal word (`repo-health`'s `bannedVocabulary` counter holds that at zero).
  */
 async function tokenPatterns(rule: string): Promise<RegExp[]> {
 	const source = await readLocalTextFile(repoRootPath("config", "vale", "styles", `${rule}.yml`))

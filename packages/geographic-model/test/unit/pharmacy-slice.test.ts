@@ -10,7 +10,7 @@
  * files, never against a fixture built in this file.
  *
  * The freshness check compares parsed values rather than bytes, because a committed artifact is the
- * generator's output run through `oxfmt`, which inlines short arrays; byte determinism is asserted
+ * generator's output run through `oxfmt`, which inlines short arrays. Byte determinism is asserted
  * between two compiles, and between the committed artifact and a fresh compile once both are canonically
  * serialized.
  */
@@ -207,8 +207,8 @@ describe("the wave-1 records", () => {
 		// and neither a locale-scoped synonym nor a row count is a census of dispensing.
 		expect(assertion?.modality).toBe(Modality.StronglyExpected)
 
-		// The one country a committed record scopes the class to; FR is a measured zero on
-		// the shipped layer, so a claim reaching there would range over no rows.
+		// The one country a committed record scopes the class to.
+		// FR is a measured zero on the shipped layer, so a claim reaching there would range over no rows.
 		expect(assertion?.countries).toEqual(["US"])
 		expect(assertion?.countries).not.toContain("FR")
 		expect(assertion?.provenance.sourceRecord).toContain("curated-overlay.json")

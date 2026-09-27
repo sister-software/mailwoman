@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- * Reliability curves compare reported confidence with observed correctness; this module is pure, and surface-specific
+ * Reliability curves compare reported confidence with observed correctness. This module is pure, and surface-specific
  * confidence collection lives in `surfaces.ts`.
  */
 
@@ -25,7 +25,9 @@ export interface ReliabilityBin {
 	upper: number
 	n: number
 	/**
-	 * `null` on an empty bin; zero would be a claim about a mean no observation contributed to.
+	 * `null` on an empty bin.
+	 *
+	 * Zero would be a claim about a mean no observation contributed to.
 	 */
 	mean_confidence: number | null
 	accuracy: number | null
@@ -69,8 +71,9 @@ export interface ThresholdRow {
 	precision_above: number | null
 	errors_admitted: number
 	/**
-	 * Correct observations the eval turned away; the cost side of the trade,
-	 * which a precision column alone hides.
+	 * Correct observations the eval turned away.
+	 *
+	 * This is the cost side of the trade, which a precision column alone hides.
 	 */
 	correct_below: number
 }
@@ -122,8 +125,10 @@ export function reliabilityCurve(sample: readonly Observation[], binCount: numbe
 
 /**
  * What a confidence floor at each threshold would actually buy, since a well-calibrated
- * surface can still have no threshold worth setting; both columns of the trade are reported
- * because a precision figure alone hides the correct answers the check throws away.
+ * surface can still have no threshold worth setting.
+ *
+ * Both columns of the trade are reported because a precision figure alone hides
+ * the correct answers the check throws away.
  */
 export function thresholdTable(sample: readonly Observation[], thresholds: readonly number[]): ThresholdRow[] {
 	const correctTotal = sample.filter((o) => o.correct).length
@@ -153,9 +158,11 @@ export interface ErrorClass {
 }
 
 /**
- * The confusions an eval at `threshold` lets through, most frequent first, restricted to
- * admitted errors because their cost is asymmetric; requires `expected` and `predicted` strata,
- * and a surface without them returns no classes, which is absence rather than a clean confusion matrix.
+ * The confusions an eval at `threshold` lets through, most frequent first,
+ * restricted to admitted errors because their cost is asymmetric.
+ *
+ * It requires `expected` and `predicted` strata, and a surface without them returns
+ * no classes, which is absence rather than a clean confusion matrix.
  */
 export function errorClasses(sample: readonly Observation[], threshold: number, limit: number): ErrorClass[] {
 	const tally = new Map<string, ErrorClass>()

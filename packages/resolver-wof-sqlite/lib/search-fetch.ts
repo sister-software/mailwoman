@@ -190,7 +190,7 @@ export function fetchSearchRows<DB>(options: {
 	// so identical 1-token `name` docs read −16.0 (empty alt_names) vs −0.43
 	// (2.7 KB alt_names) even with the alt_names column weighted to zero.
 	// No weighting isolates name relevance in this schema.
-	// The population-ordered companion fetch below carries the famous-holder guarantee,
+	// The population-ordered companion fetch below returns the most populous holder of the name,
 	// and the exact tier breaks ties by population in the post-scoring sort.
 	const orderByExpr = extractHasPopulation
 		? `(bm25(place_search) - ? * MIN(1.0, COALESCE(log10(1.0 + ${PLACE_POPULATION_TABLE}.population), 0) / ?))`

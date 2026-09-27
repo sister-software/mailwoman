@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  * Framework-neutral command metadata and the small `node:util.parseArgs` adapter behind Mailwoman's lazy
- * CLI; parsing never imports the help renderer, and `@isaacs/cliui` is reached only from
+ * CLI. Parsing never imports the help renderer, and `@isaacs/cliui` is reached only from
  * {@link renderCommandHelp}.
  */
 
@@ -22,8 +22,10 @@ interface OptionSpecBase {
 	multiple?: boolean
 	required?: boolean
 	/**
-	 * The flag this option used to be spelled as, kept working with a notice on stderr and never
-	 * shown in help; passing both spellings is a usage error rather than a precedence rule.
+	 * The flag this option used to be spelled as, kept working with a notice on stderr
+	 * and never shown in help.
+	 *
+	 * Passing both spellings is a usage error rather than a precedence rule.
 	 */
 	deprecatedName?: string
 }
@@ -83,8 +85,9 @@ export interface ParsedCommand {
 type OneObject<Shape> = { [Key in keyof Shape]: Shape[Key] }
 
 /**
- * The value stored in a flag's property before {@linkcode OptionSpec.multiple} is applied;
- * a `choices` list narrows it to that union rather than leaving it `string`.
+ * The value stored in a flag's property before {@linkcode OptionSpec.multiple} is applied.
+ *
+ * A `choices` list narrows it to that union rather than leaving it `string`.
  */
 type OptionScalar<Option> = Option extends { type: "boolean" }
 	? boolean
@@ -110,8 +113,9 @@ type AlwaysPresentFlag<Options> = {
 
 /**
  * A command's options object, derived from its own `spec` so a property spelled differently from
- * what `optionPropertyName` writes becomes a compile error rather than a silently dead flag;
- * a flag with a `default` or marked `required` is required, every other property optional,
+ * what `optionPropertyName` writes becomes a compile error rather than a silently dead flag.
+ *
+ * A flag with a `default` or marked `required` is required, every other property optional,
  * `choices` narrows the union, and `multiple` widens it to an array.
  */
 export type OptionsOf<Spec extends CommandSpec> = Spec["options"] extends infer Options
@@ -494,8 +498,9 @@ export async function runNativeCommand(
 }
 
 /**
- * Render one Ink element and answer the process exit code; Ink loads lazily,
- * so the ordinary data path never pays for it.
+ * Render one Ink element and answer the process exit code.
+ *
+ * Ink loads lazily, so the ordinary data path never pays for it.
  */
 export async function renderInkCommand(element: React.ReactElement): Promise<number> {
 	const { render } = await import("ink")

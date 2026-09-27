@@ -1,4 +1,4 @@
-"""Every module that runs as `python -m` imports, and its usage string names its own path; discovery is by the `__main__` guard rather than a list, so a new builder is covered by existing."""
+"""Every module that runs as `python -m` imports, and its usage string names its own path. Discovery is by the `__main__` guard rather than a list, so a new builder is covered by existing."""
 
 from __future__ import annotations
 
@@ -48,7 +48,7 @@ RUNNABLE = _runnable_modules()
 
 
 def test_the_discovery_found_the_builders() -> None:
-    """Compared by invocation name, so a builder that moves its guard into `__main__.py` still answers to the command a person types; an empty discovery would pass every test below."""
+    """Compared by invocation name, so a builder that moves its guard into `__main__.py` still answers to the command a person types. An empty discovery would pass every test below."""
     names = {_invocation_name(path) for path in RUNNABLE}
     assert {"mailwoman_train.corpora.fragment", "mailwoman_train.countries.jp.corpora"} <= names
     assert len(RUNNABLE) >= 7
@@ -66,7 +66,7 @@ def test_a_usage_string_names_the_module_it_is_written_in(path: Path) -> None:
     name = _invocation_name(path)
     docstring = ast.get_docstring(ast.parse(path.read_text(encoding="utf-8"))) or ""
     for line in docstring.splitlines():
-        # Only a line that begins with the command is a usage line; prose mentioning it in passing
+        # Only a line that begins with the command is a usage line. Prose mentioning it in passing
         # refers to another module's entry point.
         stripped = line.strip().removeprefix("uv run ")
         if not stripped.startswith("python -m mailwoman_train"):

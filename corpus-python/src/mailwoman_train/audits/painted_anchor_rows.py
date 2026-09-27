@@ -2,8 +2,8 @@
 
 A zero here is not a smaller number: it is the anchor channel being switched off for a country while
 the config still says ``use_postcode_anchor: true``. Run it before a launch, once per recipe output
-whose country you expect the anchor to serve; a zero on a recipe output you expected to paint is a
-STOP rather than a warning — either the lookup lacks that country's keys or the key normalization
+whose country you expect the anchor to serve. A zero on a recipe output you expected to paint is a
+stop rather than a warning — either the lookup lacks that country's keys or the key normalization
 diverged.
 
 It exercises the real train-side code rather than a re-implementation:

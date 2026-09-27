@@ -130,7 +130,7 @@ class CoarseEncoderLosses(CoarseEncoderState):
         # Auxiliary locale cross-entropy, in fp32: supervises the locale head against the row's
         # country so the pooled representation (and therefore the FiLM conditioning) actually
         # encodes "which country". Rows whose country is unmapped carry IGNORE_INDEX and are
-        # skipped; an all-ignored batch contributes no term rather than 0/0 → NaN.
+        # skipped. An all-ignored batch contributes no term rather than 0/0 → NaN.
         if (
             self.use_locale_conditioning
             and locale_logits is not None
@@ -149,7 +149,7 @@ class CoarseEncoderLosses(CoarseEncoderState):
         # Span-boundary auxiliary loss: per-token BCE on span start (B-*) and END (entity token whose
         # successor doesn't continue it), supervised from the BIO labels. Computed in fp32 because a
         # structural/transition-style leg gets fp32 headroom, and BCE over masked positions is cheap.
-        # Masked to real, non-ignore tokens; a batch with no valid position contributes no term
+        # Masked to real, non-ignore tokens. A batch with no valid position contributes no term
         # rather than 0/0 → NaN.
         if (
             self.use_span_boundary_head

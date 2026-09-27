@@ -33,7 +33,8 @@ export interface SECIngestClient {
 }
 
 /**
- * Why a registrant produced no rows; each reason is ordinary rather than an error.
+ * Why a registrant produced no rows.
+ * Each reason is ordinary rather than an error.
  */
 export const EdgarSkipReason = {
 	/**
@@ -77,8 +78,9 @@ export interface EdgarIngestOutcome {
 	filingDate?: string
 	subsidiaries: number
 	/**
-	 * What `parseExhibit21` recognized as an entry but could not confidently reduce;
-	 * a high count against a low `subsidiaries` signals an unhandled layout.
+	 * What `parseExhibit21` recognized as an entry but could not confidently reduce.
+	 *
+	 * A high count against a low `subsidiaries` signals an unhandled layout.
 	 */
 	unparseable: number
 	skipReason?: EdgarSkipReason
@@ -120,8 +122,10 @@ interface SubmissionsPayload {
 }
 
 /**
- * Picks the one corroborated CIK for a name, or says why there isn't one; corroboration runs
- * over every candidate because the highest name score is exactly what proved untrustworthy.
+ * Picks the one corroborated CIK for a name, or says why there isn't one.
+ *
+ * Corroboration runs over every candidate because the highest name score is
+ * exactly what proved untrustworthy.
  */
 async function resolveCorroboratedCIK(
 	client: SECIngestClient,
@@ -162,7 +166,7 @@ async function resolveCorroboratedCIK(
 	// with the 1,054,085-entry cik-lookup-data, `corroborated.length > 1` alone
 	// would count 10 of 24 names as false ambiguities.
 	if (corroborated.length > 1 && corroborated[0]!.score === corroborated[1]!.score) {
-		// A pinned CIK at the top score breaks the tie: that is an operator decision about identity, not a name score.
+		// A pinned CIK at the top score breaks the tie: an operator decision about identity outranks a name score.
 		const pinnedBreak = corroborated.find(
 			(candidate) => options.pinnedCIKs?.has(candidate.cik) && candidate.score === corroborated[0]!.score
 		)
@@ -292,8 +296,8 @@ export async function collectEdgarSubsidiaryRows(
 			...(collected.rows.length
 				? {}
 				: {
-						// Zero rows with no abstentions means the filing had no Exhibit 21;
-						// zero rows with abstentions means one was read and yielded no row.
+						// Zero rows with no abstentions means the filing had no Exhibit 21.
+						// Zero rows with abstentions means one was read and yielded no row.
 						skipReason: collected.unparseable ? EdgarSkipReason.NoSubsidiaries : EdgarSkipReason.NoExhibit21,
 					}),
 		})

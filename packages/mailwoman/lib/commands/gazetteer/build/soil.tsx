@@ -7,11 +7,11 @@
  *   sealed `soil.db` layer. Thin wiring only: the catalogue read, the downloads, the metadata, the build
  *   and the verification all live in `@mailwoman/soil/sdk`.
  *
- *   `--region` names a survey-area prefix, which is the authority's own unit, so `--region IA` builds
- *   every Iowa survey area and `--area IA153` builds one; the manifest's declared extent and the coverage
+ *   `--region` names a survey-area prefix. The survey area is the authority's own unit, so `--region IA` builds
+ *   every Iowa survey area and `--area IA153` builds one. The manifest's declared extent and the coverage
  *   rows then describe the same set of published survey areas rather than "the United States".
  *
- *   `--measure-resolutions` does not build — the index resolution is a measurement this layer takes rather
+ *   `--measure-resolutions` measures instead of building. The index resolution is a measurement this layer takes rather
  *   than a number argued to.
  */
 

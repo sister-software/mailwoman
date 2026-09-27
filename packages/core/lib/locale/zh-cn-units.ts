@@ -9,7 +9,7 @@ import { stringifyJSON } from "#json"
  *   recipe, from the one generic table.
  *
  *   The vocabulary is geography wearing organizational words, so a literal translation would read as mail to an army
- *   formation and the reader names the rung rather than translating it.
+ *   formation and the reader maps each word to its administrative rung rather than translating it.
  */
 
 /**

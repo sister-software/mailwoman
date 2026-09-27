@@ -13,7 +13,7 @@ copy, because ``test_postcode_shapes`` fails on any byte of difference.
 WHAT THIS SIDE READS. Every row except those the record marks ``javascriptOnly``. There is one: the
 〒-marked Japanese row, whose ``(?<=〒\\s?)`` is a variable-width lookbehind — legal in JavaScript,
 refused by Python's ``re``. The record says so in the row itself, so the omission is a stated
-constraint rather than a gap somebody has to rediscover; the tests assert both that the row is
+constraint rather than a gap somebody has to rediscover. The tests assert both that the row is
 skipped and that every row the record does not mark compiles here.
 """
 

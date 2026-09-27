@@ -141,8 +141,10 @@ interface GradedRecord {
 //#region Address rendering
 
 /**
- * Title-case a BAN `locality_norm` value, which the extract builder lowercases
- * and strips of accents, so every panel row asks for an unaccented commune.
+ * Title-case a BAN `locality_norm` value.
+ *
+ * The extract builder lowercases that value and strips its accents,
+ * so every panel row asks for an unaccented commune.
  */
 function titleCase(norm: string): string {
 	return norm.replaceAll(

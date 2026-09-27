@@ -72,8 +72,9 @@ export function fixtureFeature(
 		defenceType: "Vertical Wall - Concrete",
 		publishedYear: 2024,
 		maxOverlap: 0,
-		// The real source's figure comes from gdal; a fixture's comes from the same ring maths the
-		// build checks against, so the fixture exercises the comparison rather than the tolerance.
+		// The real source's figure comes from gdal.
+		// A fixture's comes from the same ring maths the build checks against,
+		// so the fixture exercises the comparison rather than the tolerance.
 		sourceAreaM2: ringAreaReadings(polygons).nested,
 		polygons,
 		...overrides,
@@ -81,10 +82,10 @@ export function fixtureFeature(
 }
 
 /**
- * The fixture erosion set: two adjacent bands in the no-intervention scenario
- * (one holed), one band in the with-plan scenario over the same ground as the first,
- * and one band narrower than a res-9 cell; the overlap between scenarios is what
- * proves the twelve layers stay separable rather than pooled.
+ * The fixture erosion set: two adjacent bands in the no-intervention scenario (one holed), one band in
+ * the with-plan scenario over the same ground as the first, and one band narrower than a res-9 cell.
+ *
+ * The overlap between scenarios is what proves the twelve layers stay separable rather than pooled.
  */
 export function fixtureFeatures(): CoastalSourceFeature[] {
 	const { lon, lat } = FIXTURE_ORIGIN

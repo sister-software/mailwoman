@@ -77,7 +77,7 @@ STAGE3_BIO_LABELS: Final[tuple[str, ...]] = (
 
 # endregion
 
-# region Secondary-address family (defined, not yet active)
+# region Secondary-address family (defined, activation pending)
 
 # The secondary-address vertical axis: designator/id pairs for units, levels (floors), and buildings,
 # plus the EU entrance/staircase forms (USPS Pub-28 C2 and the codex level-semantics table ship the
@@ -148,12 +148,12 @@ STAGE3_JP_BIO_LABELS: Final[tuple[str, ...]] = (
 # region CN fine tags (the organizational ladder)
 
 # One tag, ``locality_unit``, for the whole ordinal chain China's rural and state-farm addresses
-# carry below the named settlement (``三分场八队``: No. 3 sub-farm, No. 8 production team; the xpcc
-# ``一四三团十二连``; the villager group ``民权三组``). Which rung each generic names is a deterministic
+# carry below the named settlement (``三分场八队``: No. 3 sub-farm, No. 8 production team, the xpcc
+# ``一四三团十二连``, and the villager group ``民权三组``). Which rung each generic names is a deterministic
 # reading of the suffix (``分场``/``大队``/``队``/``连``/``团``/``组``), done after decode by
 # ``@mailwoman/core``'s CN unit reader, so the label set does not grow with every ladder found.
 # The named head unit (``孟定农场``) is ``dependent_locality``. Mirrors ``core/types/component.ts``
-# and schema.mdx; like ``stage3-jp``, the Latin model never trains on it.
+# and schema.mdx. Like ``stage3-jp``, the Latin model never trains on it.
 CN_FINE_TAGS: Final[tuple[str, ...]] = ("locality_unit",)
 
 STAGE3_CN_TAGS: Final[tuple[str, ...]] = STAGE3_TAGS + CN_FINE_TAGS
@@ -197,7 +197,7 @@ ID_TO_LABEL: Final[dict[int, str]] = {i: label for label, i in LABEL_TO_ID.items
 
 
 # The label vocabulary is per-model (the JP head is 47 labels while the Latin head stays 33).
-# ``resolve_label_set`` is the single lookup; the module globals above remain the STAGE3 default so
+# ``resolve_label_set`` is the single lookup. The module globals above remain the STAGE3 default so
 # every existing consumer is byte-identical. A consumer that supports only the default must raise on
 # a non-default set, never silently collapse: a label-space mismatch that zero-fills is invisible
 # until fingerprinted.
@@ -293,7 +293,7 @@ def active_components_present(components_keys: list[str]) -> bool:
     """True iff the row has at least one ACTIVE tag.
 
     The check drops rows with no usable supervision at all rather than enforcing a particular
-    schema shape; a row with only fine tags still contributes.
+    schema shape. A row with only fine tags still contributes.
     """
     return bool(set(components_keys) & set(ACTIVE_TAGS))
 

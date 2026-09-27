@@ -66,8 +66,8 @@ export async function generateLanguageTypes(
 
 	report?.(`Reading ${dataSourcePath}`)
 
-	// `header` defaults true, which skips the `alpha3-b,alpha2,English` line, and the
-	// columns are read by position so the mode is named rather than derived from it.
+	// `header` defaults true and skips the `alpha3-b,alpha2,English` line.
+	// The columns are read by position, so the mode is named rather than derived from it.
 	for await (const columns of CSVSpliterator.fromAsync<string[]>(dataSourcePath, { mode: "array" })) {
 		const alpha3b = columns[0] as string
 		const alpha2 = columns[1] as string
@@ -83,10 +83,11 @@ export async function generateLanguageTypes(
 		entryLines.push([alpha2, alpha3b])
 
 		// The /T spelling is a first-class member of the same union, maps to the same label
-		// and alpha-2, and is the form WOF actually writes; it goes to `alpha3tPairs`
-		// rather than `entryLines` because both lists build their maps from a `new Map([...])`
-		// where the last entry for a key wins, so appending it to `entryLines` would silently flip
-		// `Alpha2ToAlpha3b.get("de")` from `ger` to `deu` in a map documented as returning /B.
+		// and alpha-2, and is the form WOF actually writes.
+		// It goes to `alpha3tPairs` rather than `entryLines` because both lists build
+		// their maps from a `new Map([...])` where the last entry for a key wins,
+		// so appending it to `entryLines` would silently flip `Alpha2ToAlpha3b.get("de")`
+		// from `ger` to `deu` in a map documented as returning /B.
 		if (alpha3t) {
 			alpha3bEntries.set(alpha3t, labels)
 			alpha3tPairs.push([alpha2, alpha3t])
@@ -196,8 +197,8 @@ export const Alpha2ToAlpha3b: ReadonlyMap<Alpha2LanguageCode, Alpha3bLanguageCod
 export const Alpha3bToAlpha2: ReadonlyMap<Alpha3bLanguageCode, Alpha2LanguageCode> = new Map([
 `)
 
-	// This direction accepts a code, so it takes both spellings; the keys are distinct,
-	// none is overwritten, and `deu` answers `de` exactly as `ger` does.
+	// This direction accepts a code, so it takes both spellings.
+	// The keys are distinct, none is overwritten, and `deu` answers `de` exactly as `ger` does.
 	for (const [alpha2, alpha3] of [...entryLines, ...alpha3tPairs]) {
 		await writeLine(`["${alpha3}", "${alpha2}"],`)
 	}

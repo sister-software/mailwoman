@@ -10,8 +10,8 @@
  *   This is the one path to `basis: surveyed`, and taking it costs a second, independent inventory of the
  *   same class in the same region — the class is extracted from a Geofabrik `.osm.pbf`, read out of an
  *   already-sealed reference layer, and matched under a pre-registered protocol grid. The command is
- *   parameterized so the claim can be re-run and audited, not so coverage can be widened by running it
- *   more places: a completeness estimate from two sources bounds sampling error only and cannot see the
+ *   parameterized so the claim can be re-run and audited. Running it in more places leaves coverage
+ *   where it was: a completeness estimate from two sources bounds sampling error only and cannot see the
  *   dependence between them, which is the direction that turns a data gap into confident negative
  *   evidence.
  *

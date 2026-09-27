@@ -5,7 +5,7 @@
  *
  *   `mailwoman gazetteer postcode-intl` — build a postcode → point database from GeoNames postal data
  *   for countries WhosOnFirst does not cover. The canonical pipeline treats GeoNames as a coordinate
- *   source keyed by string onto WOF-sourced postcode records; where WOF ships no postcode records there
+ *   source keyed by string onto WOF-sourced postcode records. Where WOF ships no postcode records there
  *   is no record to backfill onto, so GeoNames must supply the record as well as the coordinate.
  *
  *   It emits a standalone `spr` database in the exact schema `build-candidate`'s `--postcodes` pass
@@ -20,7 +20,7 @@
  *   "580 01".
  *
  *   `--fold-into <src> --fold-out <dst>` optionally folds the database straight into a copy of an
- *   existing candidate gazetteer, so a demo-ready DB falls out without a full rebuild; the database
+ *   existing candidate gazetteer, so a demo-ready DB falls out without a full rebuild. The database
  *   itself is the durable artifact for the canonical rebuild.
  *
  *   `--out` is written directly (the table is dropped and recreated in place on re-run), and
@@ -86,8 +86,9 @@ async function readGeonames(file: PathBuilderLike, want: Set<string>): Promise<M
 
 	const acc = new Map<string, PostcodeAcc>()
 
-	// TSV cols: 0=country 1=postcode 2=place 3..8=admin 9=lat 10=lon 11=accuracy; the GeoNames
-	// allCountries postal dump is headerless and LF-only upstream, so field indices map straight through.
+	// TSV cols: 0=country 1=postcode 2=place 3..8=admin 9=lat 10=lon 11=accuracy.
+	// The GeoNames allCountries postal dump is headerless and LF-only upstream,
+	// so field indices map straight through.
 	for await (const fields of TSVSpliterator.fromAsync(file, { header: false, mode: "array" })) {
 		const countryCode = fields[0]
 

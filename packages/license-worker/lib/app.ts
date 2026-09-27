@@ -6,9 +6,9 @@
  * The license worker's Hono app. Every response is `no-store`, because the claim and refresh routes carry
  * tokens and the status route carries a verdict that revocation changes.
  *
- * Every `/v1` route sits behind the signing self-test — a worker whose key the shipped register does not
- * trust answers 503 rather than mint tokens no installation accepts — while `/health` stays up to say so,
- * and dependencies arrive as values so a test can inject a fixture email provider, a ledger over
+ * Every `/v1` route sits behind the signing self-test, so a worker whose key the shipped register does not
+ * trust answers 503 rather than mint tokens no installation accepts, while `/health` stays up to say so.
+ * Dependencies arrive as values so a test can inject a fixture email provider, a ledger over
  * Miniflare's D1, a Stripe client over a fetch stub, and a signing status without a trusted key.
  */
 
@@ -31,7 +31,8 @@ export interface AppDependencies {
 	ledger: Ledger
 	email: EmailProvider
 	/**
-	 * Built from the environment when absent; a test injects one over a fetch stub.
+	 * Built from the environment when absent.
+	 * A test injects one over a fetch stub.
 	 */
 	stripe?: Stripe
 	now?: () => number

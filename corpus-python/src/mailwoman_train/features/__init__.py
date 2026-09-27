@@ -15,7 +15,7 @@ given no features computes what an encoder built without the channel computes. T
 The five, and what each is for:
 
 **Postcode anchor** — a uniform country posterior over the locale set plus a 2-d centroid, painted on
-the postcode span. Position-local, which is the property the global locale FiLM lacks; the two
+the postcode span. Position-local, which is the property the global locale FiLM lacks. The two
 compose, anchor at the input and FiLM after the blocks. Robustness comes from a confidence CURRICULUM
 applied upstream in the loader. It is painted beside the tokenizer rather than here, because locating
 a postcode span needs piece offsets.

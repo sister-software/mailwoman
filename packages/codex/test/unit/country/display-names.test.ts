@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The non-Latin country surfaces this module exists to supply; these cases pin the specific strings rather than
+ *   The non-Latin country surfaces this module exists to supply. These cases pin the specific strings rather than
  *   just the mechanism.
  */
 
@@ -12,7 +12,7 @@ import { describe, expect, it } from "vitest"
 
 describe("enumerateCountryDisplayNames", () => {
 	it("supplies the exact surfaces the bare-toponym probe could not resolve", () => {
-		// Left is the surface a user typed; right is the country it means.
+		// Left is the surface a user typed, and right is the country it means.
 		const wanted: Array<[string, string]> = [
 			["格鲁吉亚", "GE"],
 			["沙特阿拉伯", "SA"],
@@ -32,7 +32,8 @@ describe("enumerateCountryDisplayNames", () => {
 	})
 
 	it("keeps Georgia-the-country and Georgia-the-state distinguishable", () => {
-		// 佐治亚州 is the US state and 格鲁吉亚 the country; only the country belongs to this table.
+		// 佐治亚州 is the US state and 格鲁吉亚 the country.
+		// Only the country belongs to this table.
 		const ge = countryDisplayNames("GE")
 
 		expect(ge).toContain("格鲁吉亚")

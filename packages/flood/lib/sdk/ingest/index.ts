@@ -65,8 +65,9 @@ export interface FloodIngestOptions {
 }
 
 /**
- * Number of coordinate decimals that ogr2ogr writes; nine is about 0.1 mm,
- * so rounding adds no measurable error to the area cross-check.
+ * Number of coordinate decimals that ogr2ogr writes.
+ *
+ * Nine is about 0.1 mm, so rounding adds no measurable error to the area cross-check.
  */
 const COORDINATE_PRECISION = 9
 

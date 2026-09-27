@@ -72,7 +72,7 @@ def build_slavic_corpus(
     corpus = [ln for ln in lines if ln and len(ln) < 80]
     random.Random(_SEED).shuffle(corpus)
     corpus = corpus[:_CORPUS_SAMPLE]
-    # OA street/city text carries only native names, so an exonym like "Åbo" never warrants a piece;
+    # OA street/city text carries only native names, so an exonym like "Åbo" never warrants a piece.
     # extra_text feeds gazetteer alias names, repeated so a once-per-name list has enough unigram
     # mass to compete for vocab slots.
     if extra_text is not None and extra_text.is_file():
@@ -166,7 +166,7 @@ def check_codepoint_overlap(
     """The splice safety check: report the non-ASCII codepoints shared between the new pieces and each trained locale's inventory, and raise on an overlapping locale not in ``accepted_overlap``.
 
     Accepting a locale is a commitment that a per-locale non-inferiority leg is pre-registered in
-    the check spec before the first measurement, not a waiver.
+    the check spec before the first measurement.
     """
     accepted = accepted_overlap or set()
     new_cps = {c for piece in new_pieces for c in _core(piece) if ord(c) >= 128}
@@ -207,8 +207,8 @@ def mean_init_embeddings(
     """Expand ``checkpoint_dir``'s token_embeddings to the spliced vocab by mean-initializing the new rows.
 
     Each new row is the mean of the old tokenizer's constituent-piece embeddings for that piece's
-    surface; only token_embeddings and the config's vocab_size change, leaving the encoder,
-    classifier, CRF and anchor/gaz heads byte-for-byte untouched. Returns (old_vocab, new_vocab);
+    surface. Only token_embeddings and the config's vocab_size change, leaving the encoder,
+    classifier, CRF and anchor/gaz heads byte-for-byte untouched. Returns (old_vocab, new_vocab).
     torch is imported lazily so the tokenizer path stays torch-free.
     """
     import torch
@@ -280,7 +280,7 @@ def mean_init_onnx_embeddings(
 
     ``inner.token_embeddings.weight`` is the only vocab-dependent tensor in this BIO token-classifier,
     so growing that one initializer and mean-initializing the new rows matches a re-export
-    byte-for-byte; every other node is untouched. For an int8 twin, the embedding is stored as a
+    byte-for-byte, and every other node is untouched. For an int8 twin, the embedding is stored as a
     per-tensor-quantized ``<emb>_quantized`` (uint8) plus scalar ``_scale`` / ``_zero_point``, and
     the new rows are quantized with those same params. Returns (old_vocab, new_vocab).
     """

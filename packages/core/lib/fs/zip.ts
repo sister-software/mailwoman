@@ -52,8 +52,8 @@ async function openStreamingArchive(
 /**
  * How to read member names that the archive does not declare an encoding for.
  *
- * A zip flags UTF-8 names with bit 11, and yauzl decodes those correctly;
- * without the flag the format says CP437, so a publisher writing CP949, Shift_JIS
+ * A zip flags UTF-8 names with bit 11, and yauzl decodes those correctly.
+ * Without the flag the format says CP437, so a publisher writing CP949, Shift_JIS
  * or GBK names produces bytes that decode to mojibake and match no selector.
  *
  * Naming an encoding decodes the raw bytes instead, which is not the same as

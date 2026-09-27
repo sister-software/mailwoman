@@ -1,8 +1,8 @@
 """Writing a resumable checkpoint, and finding the last complete one.
 
 The write is atomic: an interrupted save leaves either the previous complete checkpoint or no
-directory `--resume auto` would load. Model, optimizer, scheduler, step and RNG resume; the data
-stream does not, because the sampler position is not saved.
+directory `--resume auto` would load. Model, optimizer, scheduler, step and RNG resume. The data
+stream restarts, because the sampler position is not saved.
 """
 
 from __future__ import annotations

@@ -11,8 +11,8 @@
  *   licence, so the manifest carries `tier: build-local` and `license: noassertion`, and the SDK refuses a
  *   `shipped` tier while that holds.
  *
- *   `--measure-resolutions` does not build — the index resolution is a measurement this layer takes rather
- *   than a number argued to.
+ *   `--measure-resolutions` measures without building. The index resolution is a measurement this layer takes
+ *   rather than a number argued to.
  */
 
 import { formatFileSize } from "@mailwoman/core/fs/readers"
@@ -118,8 +118,8 @@ const GazetteerBuildZoning: CommandComponent<typeof spec> = ({ options }) => {
 
 		if (!exportPath) {
 			// The vintage is required here and not earlier because it keys the download cache
-			// and stamps the manifest; demanding one earlier would make an offline
-			// measurement over an on-disk export impossible.
+			// and stamps the manifest.
+			// Demanding one earlier would make an offline measurement over an on-disk export impossible.
 			if (!vintage) {
 				throw new Error(
 					"gazetteer build zoning: no product vintage — pass --source-vintage, or drop --offline so the item can be read. " +
@@ -197,9 +197,9 @@ const GazetteerBuildZoning: CommandComponent<typeof spec> = ({ options }) => {
 
 		console.error(`▸ source declares ${source.declaredFeatureCount.toLocaleString()} features`)
 
-		// The live service's own feature count and `Shape__Area` sum are the two-path checks —
-		// the publisher's figure is absent from the archive, which is what makes it a second
-		// path — and a narrowed run skips both rather than making them pass.
+		// The live service's own feature count and `Shape__Area` sum are the two-path checks.
+		// The publisher's figure is absent from the archive, which is what makes it a second path,
+		// and a narrowed run skips both rather than making them pass.
 		const serviceChecks =
 			options.offline || narrowed
 				? {}
@@ -209,8 +209,9 @@ const GazetteerBuildZoning: CommandComponent<typeof spec> = ({ options }) => {
 					}
 
 		const result = await buildZoningDatabase({
-			// A narrowed run reads its subset in one process; a full build is batched one child
-			// process per range of feature ids, for reproducibility rather than speed.
+			// A narrowed run reads its subset in one process.
+			// A full build is batched one child process per range of feature ids,
+			// for reproducibility rather than speed.
 			...(narrowed
 				? { source }
 				: {

@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  * The `mwdev_trace` tool definition, whose description, input schema and handler wiring are the interface an agent
- * reads; the measurement itself lives in the package root.
+ * reads. The measurement itself lives in the package root.
  */
 
 import { z } from "zod"

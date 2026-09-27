@@ -26,8 +26,10 @@ import { matchPOICategory, type POIPhraseLookup } from "#poi"
 export interface IntentMarkerContext {
 	input: NormalizedInputLite
 	/**
-	 * The injected POI lexicon when one was wired; absent means no `poi_category` marker
-	 * can be built, consistent with the kind not firing without it either.
+	 * The injected POI lexicon when one was wired.
+	 *
+	 * Absent means no `poi_category` marker can be built, consistent with the
+	 * kind not firing without it either.
 	 */
 	poiLexicon?: POIPhraseLookup
 	locale?: string
@@ -37,8 +39,9 @@ export interface IntentMarkerContext {
  * Build the advisories for one classified query, taking the full verdict — top plus alternatives —
  * because two of the four intent kinds live in `alternatives` by design (see `intent-rules.ts`).
  *
- * @returns `[]` when no intent kind fired; callers surface that empty array rather than
- * dropping the field, because an empty array is the classifier stating it looked.
+ * @returns `[]` when no intent kind fired.
+ * Callers surface that empty array rather than dropping the field, because an
+ * empty array is the classifier stating it looked.
  */
 export function deriveIntentMarkers(
 	kinds: ReadonlyArray<{ kind: QueryKind; confidence: number }>,
@@ -60,8 +63,10 @@ export function deriveIntentMarkers(
 			evidence: {
 				tokens,
 				/**
-				 * Both readings, named; the order is stable (pair first, then the admin reading)
-				 * so a consumer can index it, and it is not a ranking.
+				 * Both readings, named.
+				 *
+				 * The order is stable (pair first, then the admin reading) so a consumer
+				 * can index it, and it is not a ranking.
 				 */
 				interpretations: ["two_toponyms", "locality_with_admin_context"],
 			},

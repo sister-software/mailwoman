@@ -30,7 +30,7 @@ def test_rerooting_still_works(tmp_path: Path) -> None:
     corpus = _mk(tmp_path, [])
     part = corpus / "train" / "part-0000.parquet"
     part.write_bytes(b"x")
-    # A manifest written on another machine: the absolute path is wrong here, which is the point, so
+    # A manifest written on another machine. The test needs its absolute path to be wrong here, so
     # any non-existent absolute path serves.
     stale = "/build-machine/corpus/train/part-0000.parquet"
     (corpus / "MANIFEST.json").write_text(json.dumps({"slices": [{"split": "train", "path": stale}]}))

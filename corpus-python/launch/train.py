@@ -84,8 +84,8 @@ def _train_gpu(
     """Run the CE-only classifier training on an A100.
 
     Pass ``--trackio`` (and optionally ``--trackio-space org/space``) to mirror metrics
-    to a Hugging Face Space dashboard. These override the YAML config's trackio fields;
-    omit them to honor whatever the config sets (default: tracking off).
+    to a Hugging Face Space dashboard. These override the YAML config's trackio fields.
+    Omit them to honor whatever the config sets (default: tracking off).
     """
     import sys
 
@@ -104,7 +104,7 @@ def _train_gpu(
         print(f"GPU: {torch.cuda.get_device_name(0)}")
         print(f"VRAM: {torch.cuda.get_device_properties(0).total_memory / 1e9:.1f} GB")
 
-    # Corpus existence is verified after the config loads, against cfg.data.corpus_dir; the corpus
+    # Corpus existence is verified after the config loads, against cfg.data.corpus_dir. The corpus
     # version travels in the config rather than being hardcoded here.
 
     # The config file references paths relative to /data/, which matches the volume mount
@@ -124,7 +124,7 @@ def _train_gpu(
 
     cfg = load_config(config_path)
 
-    # Verify the corpus the config points at exists on the volume; the data loader reads
+    # Verify the corpus the config points at exists on the volume. The data loader reads
     # cfg.data.corpus_dir, so fail loud here if it is missing.
     train_dir = os.path.join(cfg.data.corpus_dir, "train")
     if not os.path.isdir(train_dir):
@@ -211,7 +211,7 @@ def main(
     """
     Run the mailwoman training pipeline on Modal.
 
-    Stage what the recipe reads first, with its own sync; this entry point trains against whatever
+    Stage what the recipe reads first, with its own sync. This entry point trains against whatever
     is already on the volume and stages no files.
 
     --config         Training config YAML filename

@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- * The `mwdev_diff_geocode` tool definition; the diff itself is `mailwoman/geocode`'s `diffGeocode`, and this file's
+ * The `mwdev_diff_geocode` tool definition. The diff itself is `mailwoman/geocode`'s `diffGeocode`, and this file's
  * job is to put the attribution in front of the distance.
  */
 
@@ -80,8 +80,8 @@ export const diffGeocodeTool = (deps: DevToolDeps): DevTool => ({
 		const shown = changesOnly ? diffs.filter((d) => !d.identical) : diffs
 		const rendered = shown.slice(0, RENDERED_DIFF_LIMIT).map((d) => renderGeocodeDiff(d))
 
-		// Which attribution dominates is the diagnosis, and it decides whether a run was worth
-		// grading; a `tier-changed` majority means the arms differ on data the model never saw.
+		// Which attribution dominates is the diagnosis, and it decides whether a run was worth grading.
+		// A `tier-changed` majority means the arms differ on data the model never saw.
 		const attributions: Record<string, number> = {}
 
 		for (const d of shown) {

@@ -70,8 +70,9 @@ export function buildEngineStamp(input: {
 }
 
 /**
- * The stderr notice: two lines, or no notice when the commercial branch applies;
- * an expired key states its date because that tells the operator what to do,
+ * The stderr notice: two lines, or no notice when the commercial branch applies.
+ *
+ * An expired key states its date because that tells the operator what to do,
  * while every other failed reading leaves the reason to `mailwoman doctor`.
  */
 export function licenseNoticeLines(stamp: EngineStamp, key?: LicenseKeyVerification): [string, string] | undefined {

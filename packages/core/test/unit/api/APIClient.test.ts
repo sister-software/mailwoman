@@ -112,8 +112,8 @@ describe("APIClient: requestsPerMinute cooldown (A1 concurrency regression)", ()
 	})
 
 	it("delivers no more than requestsPerMinute inside any sliding minute", async () => {
-		// Assert the rate the option promises, not the implemented spacing: a budget that releases
-		// N back to back and then waits `60000/N` ms sustains 100/minute against a stated 10.
+		// Assert the rate the option promises rather than the implemented spacing: a budget that
+		// releases N back to back and then waits `60000/N` ms sustains 100/minute against a stated 10.
 		const BUDGET = 10
 		const clock = new VirtualClock()
 		const arrivals: number[] = []
@@ -140,8 +140,9 @@ describe("APIClient: requestsPerMinute cooldown (A1 concurrency regression)", ()
 	})
 
 	it("still throttles a serial run", async () => {
-		// The cooldown is a full minute, not `60000 / requestsPerMinute`, which would let a
-		// budget of 2 release 2, wait 30s, and release 2 more within the same minute.
+		// The cooldown is a full minute.
+		// A cooldown of `60000 / requestsPerMinute` would let a budget of 2 release 2,
+		// wait 30s, and release 2 more within the same minute.
 		const COOLDOWN_MS = 60_000
 
 		const clock = new VirtualClock()
@@ -509,8 +510,8 @@ describe("APIClient: the pacer and the cooldown compose (I4)", () => {
 describe("APIClient: a caller-supplied adapter cannot bypass the check", () => {
 	it("strips a per-request adapter so the pacing grant is still taken", async () => {
 		// `mergeConfig` lets a request-level `adapter` win over the instance default
-		// that holds the pacing check; the cache interceptor's own adapter swap runs
-		// inside the interceptor chain and is unaffected.
+		// that holds the pacing check.
+		// The cache interceptor's own adapter swap runs inside the interceptor chain and is unaffected.
 		const clock = new VirtualClock()
 		const dispatches: number[] = []
 

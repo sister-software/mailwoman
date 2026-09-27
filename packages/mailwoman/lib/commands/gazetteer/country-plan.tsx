@@ -62,8 +62,9 @@ export const spec = {
 } as const satisfies CommandSpec
 
 /**
- * Names only — the plan never reaches the network, so existence and size are
- * reported as unknown rather than guessed.
+ * Names only.
+ *
+ * The plan never reaches the network, so existence and size are reported as unknown rather than guessed.
  */
 function wofRepoNames(country: string): string[] {
 	const cc = country.toLowerCase()

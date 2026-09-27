@@ -57,8 +57,9 @@ export const spec = {
 const SYNTHETIC_MIN_CELL_SIZE = 1
 
 /**
- * Bytes of per-run salt generated when the synthetic self-check finds none;
- * a controlled run never reaches this because it supplies its own.
+ * Bytes of per-run salt generated when the synthetic self-check finds none.
+ *
+ * A controlled run never reaches this because it supplies its own.
  */
 const GENERATED_SALT_BYTES = 24
 

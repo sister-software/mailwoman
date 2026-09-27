@@ -9,8 +9,8 @@
  * `poi.ts` does it.
  *
  * `bare_toponym` and `route_pair` score below the structural kind that already owns their population
- * (`locality_only`, 0.85), so they surface in `QueryKindResult.alternatives` and never as the top kind;
- * the top kind is the only thing the coordinator routes on, so pinning it is what makes these additions
+ * (`locality_only`, 0.85), so they surface in `QueryKindResult.alternatives` and never as the top kind.
+ * The top kind is the only thing the coordinator routes on, so pinning it is what makes these additions
  * answer-neutral on the bare-city-name register, and the intent they carry travels on the marker.
  *
  * `near_me` does win its top slot (0.91), because there is no incumbent worth preserving: a query
@@ -52,8 +52,9 @@ const MAX_BARE_TOPONYM_WORDS = 4
  * `PLACE_NAME_PARTICLES` (which covers the infix glue `de`, `am`, `aan den`) and the one
  * job of keeping `route_pair` off "New York", "San Francisco", "Fort Worth" and their kin.
  *
- * It is a closed morphological class rather than a gazetteer, so growing it with actual place
- * names is the wrong move; it is case-folded on read, because "new york" is the same query.
+ * It is a closed morphological class rather than a gazetteer, so growing it
+ * with actual place names is the wrong move.
+ * It is case-folded on read, because "new york" is the same query.
  */
 const TOPONYM_HEAD_PARTICLES: ReadonlySet<string> = new Set([
 	// English
@@ -116,9 +117,10 @@ const TOPONYM_HEAD_PARTICLES: ReadonlySet<string> = new Set([
 	"sint",
 	// Definite article as a head — "The Valley" (Anguilla), "The Hague", "The Bottom".
 	"the",
-	// Generic toponymic heads outside the Latin/Germanic families, each a common noun in its
-	// own language — Semitic "tel" (mound), Malay "kuala" (confluence), Khmer "phnom" (hill) —
-	// that heads a place name the way "mount" does; see `mailwoman/test/kind-intent-invariance.test.ts`.
+	// Generic toponymic heads outside the Latin/Germanic families, each a common
+	// noun in its own language — Semitic "tel" (mound), Malay "kuala" (confluence),
+	// Khmer "phnom" (hill) — that heads a place name the way "mount" does.
+	// `mailwoman/test/kind-intent-invariance.test.ts` covers them.
 	"tel",
 	"kuala",
 	"phnom",
@@ -166,10 +168,10 @@ const TOPONYM_TAIL_NOUNS: ReadonlySet<string> = new Set([
  * Anchored to the end of the string (`$`) on purpose: the query names no anchor,
  * so anything after the locator is an anchor and disqualifies it.
  *
- * Linear by construction: every alternative begins with a required literal
- * and the only quantifiers are bounded `\s+` runs between two required literals
- * or trailing before `$`, with no unbounded-whitespace-then-literal prefix
- * (the `js/polynomial-redos` shape; see `ANCHOR_SEPARATOR` in `poi.ts` for the same analysis).
+ * Linear by construction: every alternative begins with a required literal and the only
+ * quantifiers are bounded `\s+` runs between two required literals or trailing before `$`,
+ * with no unbounded-whitespace-then-literal prefix (the `js/polynomial-redos` shape).
+ * `ANCHOR_SEPARATOR` in `poi.ts` carries the same analysis.
  */
 const DEICTIC_LOCATOR_TAIL =
 	/\b(?:near|close\s+to|next\s+to|around|by|closest\s+to|nearest\s+to)\s+(?:me|us|here|my\s+(?:location|position|area|place|house|home))\s*$/
@@ -189,9 +191,9 @@ function hasDeicticTail(lowercased: string): boolean {
  * The conditions `bare_toponym` and `route_pair` share: no address grammar of any kind,
  * one segment, alpha throughout.
  *
- * @returns the word list when the input clears them, `null` when it does not;
- * deliberately a superset of `scoreLocalityOnly`'s conditions, so `bare_toponym` is a
- * strict refinement of `locality_only` and can never fire where `locality_only` did not.
+ * @returns the word list when the input clears them, `null` when it does not.
+ * The conditions are deliberately a superset of `scoreLocalityOnly`'s, so `bare_toponym` is
+ * a strict refinement of `locality_only` and can never fire where `locality_only` did not.
  */
 function bareNameWords(input: NormalizedInputLite, shape: QueryShapeLike): string[] | null {
 	const text = input.normalized.trim()
@@ -263,8 +265,9 @@ export function scoreRoutePair(input: NormalizedInputLite, shape: QueryShapeLike
 }
 
 /**
- * `near_me` rule: a subject plus a deictic locator, with no anchor; a non-empty subject
- * is required, so a bare "near me" stays with the `landmark` leaders rule.
+ * `near_me` rule: a subject plus a deictic locator, with no anchor.
+ *
+ * A non-empty subject is required, so a bare "near me" stays with the `landmark` leaders rule.
  */
 export function scoreNearMe(input: NormalizedInputLite, _shape: QueryShapeLike): number {
 	const lowercased = input.normalized.trim().toLowerCase()
@@ -281,8 +284,9 @@ export function scoreNearMe(input: NormalizedInputLite, _shape: QueryShapeLike):
 }
 
 /**
- * The subject of a `near_me` query — the category or thing the asker wants, with the locator stripped,
- * and empty when the rule would not have fired; used to build the marker's evidence, never to route.
+ * The subject of a `near_me` query — the category or thing the asker wants,
+ * with the locator stripped, and empty when the rule would not have fired.
+ * It builds the marker's evidence, never a route.
  */
 export function nearMeSubject(input: NormalizedInputLite): string {
 	const trimmed = input.normalized.trim()

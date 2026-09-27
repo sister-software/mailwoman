@@ -14,7 +14,7 @@ import pytest
 
 from mailwoman_train.corpora.fragment.build import main
 
-#: Committed beside this file; regenerate with `uv run python -m
+#: Committed beside this file. Regenerate with `uv run python -m
 #: tests.mailwoman_train.corpora.test_fragment_build_parity` only when the current code is already
 #: verified against the existing reference, or the test compares the new code against itself.
 REFERENCE = Path(__file__).parent / "fragment-build-reference.json"
@@ -185,7 +185,11 @@ def test_the_fixture_reaches_every_block(built: dict[str, Any]) -> None:
 
 
 def write_reference() -> None:
-    """Capture the current build as the reference the tests above compare against; run it only when the current code already passes against the existing reference, or the artifact records whatever the code does now."""
+    """Capture the current build as the reference the tests above compare against.
+
+    Run it only when the current code already passes against the existing reference, or the artifact
+    records whatever the code does now.
+    """
     import tempfile
 
     patch = pytest.MonkeyPatch()

@@ -9,8 +9,9 @@ import { extractTableRows } from "@mailwoman/core/html/tables"
 import type { FRN } from "#frn"
 
 /**
- * One cores registration record exactly as the detail page states it; every field
- * is optional because the page omits a row rather than emitting an empty one,
+ * One cores registration record exactly as the detail page states it.
+ *
+ * Every field is optional because the page omits a row rather than emitting an empty one,
  * and no field is interpreted, derived or classified.
  */
 export interface CORESRegistration {
@@ -40,8 +41,8 @@ export interface CORESRegistration {
 	contactPhone?: string
 	contactFax?: string
 	/**
-	 * Raw `MM/DD/yyyy hh:mm:ss AM/PM` timestamps exactly as served, not parsed to a `Date` here,
-	 * so a caller that needs a temporal value performs its own conversion.
+	 * Raw `MM/DD/yyyy hh:mm:ss AM/PM` timestamps exactly as served, so a caller that
+	 * needs a temporal value performs its own conversion to a `Date`.
 	 */
 	registrationDate?: string
 	lastUpdated?: string
@@ -81,9 +82,11 @@ const CASE_SENSITIVE_PUNCTUATION_PATTERN = /[:@()-]/
 const UPPERCASE_TOKENS = new Set(["llc", "lc", "lp", "llp", "pllc", "pc", "pa", "usa", "us", "dba", "inc's"])
 
 /**
- * Title-cases a value that arrived uniformly cased, leaving mixed-case values and values containing
- * `:`, `@`, `(`, `)` or `-` alone; it is a display-level tidy, not a matching normalizer,
- * so anything joining on these values must still go through `canonicalizeOrganizationName`.
+ * Title-cases a value that arrived uniformly cased, leaving mixed-case values
+ * and values containing `:`, `@`, `(`, `)` or `-` alone.
+ *
+ * It is a display-level tidy, so anything joining on these values must still
+ * go through `canonicalizeOrganizationName`.
  */
 export function recaseUniform(value: string): string {
 	if (CASE_SENSITIVE_PUNCTUATION_PATTERN.test(value)) return value

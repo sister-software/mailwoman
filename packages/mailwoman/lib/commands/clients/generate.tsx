@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   `mailwoman clients generate` — emit all four surfaces' OpenAPI documents, generate a Python package and
- *   a Rust crate, then verify both build; output lands under the gitignored `clients-build/`, and no
+ *   a Rust crate, then verify both build. Output lands under the gitignored `clients-build/`, and no
  *   generated file is committed.
  */
 

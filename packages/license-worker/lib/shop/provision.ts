@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- * The provisioner finds each object by a catalog key, such as a lookup key, a metadata mark or a URL, and never by a stored Stripe ID; a Payment Link whose agreement version or consent collection differs is replaced, because Stripe fixes both at creation, while a Price amount or a webhook API version that differs is only reported as drift, and the signing secret Stripe returns only at creation appears only in the report.
+ * The provisioner finds each object by a catalog key, such as a lookup key, a metadata mark or a URL, and never by a stored Stripe ID. A Payment Link whose agreement version or consent collection differs is replaced, because Stripe fixes both at creation, while a Price amount or a webhook API version that differs is only reported as drift, and the signing secret Stripe returns only at creation appears only in the report.
  */
 
 import type Stripe from "stripe"
@@ -35,11 +35,14 @@ export interface ProvisionInput {
 	 */
 	siteOrigin: string
 	/**
-	 * The deployed worker origin; the provisioner manages the webhook destination only when it is set.
+	 * The deployed worker origin.
+	 *
+	 * The provisioner manages the webhook destination only when it is set.
 	 */
 	workerOrigin?: string
 	/**
-	 * Whether to write to Stripe; when `false`, the run only reports planned changes.
+	 * Whether to write to Stripe.
+	 * When `false`, the run only reports planned changes.
 	 */
 	apply: boolean
 	log?: (line: string) => void
@@ -78,9 +81,11 @@ export type ProvisionedObject = z.infer<typeof ProvisionedObjectSchema>
  */
 export const ProvisionReportSchema = z.object({
 	/**
-	 * The terms page used by Payment Link consent collection and whether every link has consent
-	 * collection: Stripe takes the terms URL from the account's public details, which only the
-	 * dashboard can set, so a link without consent is marked `blocked` rather than created.
+	 * The terms page used by Payment Link consent collection and whether every link has
+	 * consent collection: Stripe takes the terms URL from the account's public details.
+	 *
+	 * Only the dashboard can set those details.
+	 * A link without consent is marked `blocked` rather than created.
 	 */
 	terms: z.object({ url: z.string(), consent: z.boolean() }),
 	product: ProvisionedObjectSchema,
@@ -163,7 +168,8 @@ export async function provisionShop(stripe: Stripe, input: ProvisionInput): Prom
 		productReport = { id: product.id, action: "created" }
 	}
 
-	// Prices are found by lookup key; Stripe Prices are immutable, so a difference is reported as drift.
+	// Prices are found by lookup key.
+	// Stripe Prices are immutable, so a difference is reported as drift.
 	const prices: ProvisionReport["prices"] = planRecord(() => ({ action: "missing" }))
 
 	for (const plan of SHOP_PLANS) {
@@ -376,8 +382,9 @@ export async function provisionShop(stripe: Stripe, input: ProvisionInput): Prom
 		portal = portalReport(created, "created")
 	}
 
-	// The webhook destination is found by URL and its event list is reconciled; an API version difference
-	// is only reported, because a new destination has a new signing secret the worker needs first.
+	// The webhook destination is found by URL and its event list is reconciled.
+	// An API version difference is only reported, because a new destination has a
+	// new signing secret the worker needs first.
 	let webhook: ProvisionReport["webhook"]
 
 	if (input.workerOrigin) {

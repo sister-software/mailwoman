@@ -1,6 +1,6 @@
 """Choose the reps per row and derive the weight.
 
-The sampler allocates draw share by weight normalised across sources; row count never enters, so a
+The sampler allocates draw share by weight normalised across sources. Row count never enters, so a
 source's per-row exposure is ``reps_per_row = (weight / total_weight) * total_samples / rows``, a unit
 nobody reasons in. ``source_reps`` lets a config name the exposure directly and have the weight derived
 once the corpus is known.
@@ -60,8 +60,8 @@ def derive_source_weights(
 
     missing = sorted(src for src in source_reps if not rows_by_source.get(src))
     if missing:
-        # An unreadable row count is an unknown exposure, not zero reps per row; deriving a weight from
-        # it would silently change the mixture.
+        # An unreadable row count is an unknown exposure, and deriving a weight from it would silently
+        # change the mixture.
         raise ValueError(f"reps-targeted sources have no readable train rows in the corpus: {missing}")
 
     demanded = sum(reps * rows_by_source[src] for src, reps in source_reps.items())
@@ -88,7 +88,7 @@ def resolve_config_reps(cfg: Any, corpus_dir: Path | None = None) -> list[Derive
     """Fold ``cfg.data.source_reps`` into ``cfg.data.source_weights`` in place, from the corpus on disk.
 
     The one resolution point the trainer and the epoch audit share, so the weights the audit reports
-    are the weights the run samples with; a config without ``source_reps`` is left untouched.
+    are the weights the run samples with. A config without ``source_reps`` is left untouched.
     """
     reps = getattr(cfg.data, "source_reps", None)
     if not reps:

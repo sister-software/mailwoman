@@ -9,8 +9,10 @@
 import type { QueryShapeFormatsView } from "@mailwoman/query-shape"
 
 /**
- * Confidence at or above which a known-format hit counts as unambiguous; ambiguous hits — a bare
- * 5-digit run, which reads as US, FR and DE alike — arrive at 0.6, so this cleanly separates them.
+ * Confidence at or above which a known-format hit counts as unambiguous.
+ *
+ * Ambiguous hits — a bare 5-digit run, which reads as US, FR and DE alike —
+ * arrive at 0.6, so this cleanly separates them.
  */
 const UNAMBIGUOUS_FORMAT_CONFIDENCE = 0.9
 
@@ -54,7 +56,8 @@ export function scoreByPostcode(shape: QueryShapeFormatsView): LocaleCandidate |
 			case "uk_postcode":
 				return { locale: "en-GB", confidence: 0.95, reason: `format=${hit.format}` }
 			case "ca_postcode":
-				// Canadian postcodes admit both en-CA and fr-CA; this defaults to en-CA.
+				// Canadian postcodes admit both en-CA and fr-CA.
+				// This defaults to en-CA.
 				return { locale: "en-CA", confidence: 0.9, reason: `format=${hit.format}` }
 			case "jp_postcode":
 				return { locale: "ja-JP", confidence: 0.95, reason: `format=${hit.format}` }

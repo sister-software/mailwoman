@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Everything here is presentation over the runtime handle; no code here loads or resolves.
+ *   Everything here is presentation over the runtime handle. No code here loads or resolves.
  */
 
 import type { ParseResult } from "@mailwoman/core/pipeline/client-result"

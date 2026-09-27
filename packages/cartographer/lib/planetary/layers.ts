@@ -22,7 +22,9 @@ export interface PlanetaryPalette {
 	 */
 	space: string
 	/**
-	 * Where a slope faces the light; the tiles carry encoded elevation and no colour of their own.
+	 * Where a slope faces the light.
+	 *
+	 * The tiles carry encoded elevation and no colour of their own.
 	 */
 	reliefHighlight: string
 	/**

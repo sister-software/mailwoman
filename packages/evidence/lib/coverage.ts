@@ -12,9 +12,11 @@
  */
 
 /**
- * What a `completeness` value rests on; only {@link CoverageBasis.Designated} and
- * {@link CoverageBasis.Surveyed} can support an exclusion, since {@link CoverageBasis.SourcePresent}
- * records that the source looked, which is not the same as the source having found everything.
+ * What a `completeness` value rests on.
+ *
+ * Only {@link CoverageBasis.Designated} and {@link CoverageBasis.Surveyed} can support an
+ * exclusion, since {@link CoverageBasis.SourcePresent} records that the source looked,
+ * which is not the same as the source having found everything.
  */
 export const CoverageBasis = {
 	/**
@@ -27,8 +29,9 @@ export const CoverageBasis = {
 	 */
 	Surveyed: "surveyed",
 	/**
-	 * The source returned rows in this cell, which makes no statement about what it missed,
-	 * so a miss here is unknown and never absence.
+	 * The source returned rows in this cell.
+	 *
+	 * That makes no statement about what it missed, so a miss here is unknown and never absence.
 	 */
 	SourcePresent: "source_present",
 } as const
@@ -36,8 +39,9 @@ export const CoverageBasis = {
 export type CoverageBasis = (typeof CoverageBasis)[keyof typeof CoverageBasis]
 
 /**
- * Whether a coverage reading can support an exclusion; absence is only supportable
- * from a designated or surveyed basis (presence is supportable from any),
+ * Whether a coverage reading can support an exclusion.
+ *
+ * Absence is only supportable from a designated or surveyed basis (presence is supportable from any),
  * so callers building negative evidence must check this rather than `completeness` alone
  * or an exclusion fires identically on a genuinely empty cell and on one we never surveyed.
  */
@@ -53,7 +57,8 @@ export interface CoverageScope {
 	h3Cell: number
 	basis: CoverageBasis
 	/**
-	 * The fold both the layer's builder and this probe used; their agreement is what licensed the exclusion.
+	 * The fold both the layer's builder and this probe used.
+	 * Their agreement is what licensed the exclusion.
 	 */
 	fold: string
 }
@@ -86,7 +91,8 @@ export interface RequireExclusionInput {
 	layerFold: string
 	country?: string
 	/**
-	 * ISO-2 upper-case countries this probe can answer for; omit for an unscoped probe.
+	 * ISO-2 upper-case countries this probe can answer for.
+	 * Omit for an unscoped probe.
 	 */
 	countries?: ReadonlySet<string>
 }
@@ -142,9 +148,12 @@ export const FOLD_PROBE_CORPUS: readonly string[] = [
 const IDENTITY_SEPARATOR = "\u0001"
 
 /**
- * Identify a fold by its behavior over {@link FOLD_PROBE_CORPUS}: two folds that compute the same
- * answers share an identity, which is the property the exclusion check needs, and the string is
- * deliberately readable rather than a cryptographic hash so a reviewer can see which probe moved.
+ * Identify a fold by its behavior over {@link FOLD_PROBE_CORPUS}: two folds that
+ * compute the same answers share an identity.
+ *
+ * That shared identity is the property the exclusion check needs.
+ * The string is deliberately readable rather than a cryptographic hash
+ * so a reviewer can see which probe moved.
  */
 export function foldIdentity(fold: (s: string) => string): string {
 	return FOLD_PROBE_CORPUS.map((probe) => fold(probe)).join(IDENTITY_SEPARATOR)

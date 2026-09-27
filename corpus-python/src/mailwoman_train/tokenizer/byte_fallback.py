@@ -63,8 +63,8 @@ def measure_byte_fallback(sp: spm.SentencePieceProcessor, lines: Iterable[str]) 
     """Encode each line and tally byte-fallback piece rate, overall and per script.
 
     Returns ``{"overall": {...}, "per_script": {script: {...}}}``, each entry carrying ``lines``,
-    ``pieces``, ``byte_fallback_pieces`` and ``rate``. ``rate`` is the fraction of pieces, not
-    lines, that landed on the byte block.
+    ``pieces``, ``byte_fallback_pieces`` and ``rate``. ``rate`` divides ``byte_fallback_pieces``
+    by ``pieces``, so it counts pieces that landed on the byte block.
     """
     overall = {"lines": 0, "pieces": 0, "byte_fallback_pieces": 0}
     per_script: dict[str, dict[str, int]] = {}

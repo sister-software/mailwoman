@@ -162,8 +162,9 @@ export function worktreePairReading(
 const INCOMPARABLE_FIELDS = new Set(["resolver_score", "score", "prominence"])
 
 /**
- * Throws when asked to compare a score field whose scale differs between resolver backends;
- * within either backend the wrong answers' scores also overlap the correct answers',
+ * Throws when asked to compare a score field whose scale differs between resolver backends.
+ *
+ * Within either backend the wrong answers' scores also overlap the correct answers',
  * so no threshold on these fields is meaningful.
  */
 export function assertComparableField(field: string): void {
@@ -177,8 +178,9 @@ export function assertComparableField(field: string): void {
 }
 
 /**
- * Counts the commits and changed files between two worktree arms' recorded commits;
- * returns `null` when either arm lacks a commit, either was dirty, or git fails.
+ * Counts the commits and changed files between two worktree arms' recorded commits.
+ *
+ * Returns `null` when either arm lacks a commit, either was dirty, or git fails.
  */
 export function worktreeTreeDelta(
 	repoRoot: string,

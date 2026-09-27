@@ -74,8 +74,9 @@ export function detectLocale(shape: QueryShapeFormatsView, opts: DetectLocaleOpt
 	const top = deduped[0]!
 	const machineLocale = opts.machinePreferences?.locale
 
-	// Machine locale may replace only the explicit no-input-evidence fallback; scripts and postal formats
-	// continue to win, and the timezone is reported independently and never converted to language.
+	// Machine locale may replace only the explicit no-input-evidence fallback.
+	// Scripts and postal formats continue to win, and the timezone is reported
+	// independently and never converted to language.
 	if (top.reason === "fallback" && machineLocale) {
 		return {
 			locale: machineLocale,

@@ -36,7 +36,9 @@ const GLOBAL_EXTENT_TOLERANCE = 0.005
 const WHOLE_BODY_ULLR = ["-180", "90", "180", "-90"] as const
 
 /**
- * Pixels along a tile edge; at zoom z the whole-body grid is 2^z tiles wide and 2^(z−1) tall.
+ * Pixels along a tile edge.
+ *
+ * At zoom z the whole-body grid is 2^z tiles wide and 2^(z−1) tall.
  */
 const TILE_PIXELS = 256
 
@@ -83,7 +85,8 @@ export interface HillshadeBuildOptions {
 	demPath: PathBuilderLike
 	outPath: PathBuilderLike
 	/**
-	 * The deepest zoom the archive carries; overviews run from it down to zoom 0.
+	 * The deepest zoom the archive carries.
+	 * Overviews run from it down to zoom 0.
 	 */
 	maxZoom: number
 }
@@ -97,7 +100,9 @@ export interface HillshadeBuildOptions {
 const TERRARIUM_DATUM_METRES = 32_768
 
 /**
- * `B` carries the fractional metre; the usgs mosaics are integer metres, so it is constant zero.
+ * `B` carries the fractional metre.
+ *
+ * The usgs mosaics are integer metres, so it is constant zero.
  */
 const TERRARIUM_FRACTIONAL_BAND = "0"
 

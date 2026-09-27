@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- * The crisp-polygon database opener the geocoder runtime hands to `@mailwoman/react/map`'s declarative overlays; no
+ * The crisp-polygon database opener the geocoder runtime hands to `@mailwoman/react/map`'s declarative overlays. No
  * code here touches React, and the resolved-place geometry math lives in `@mailwoman/react/map/geometry`.
  */
 

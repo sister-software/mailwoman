@@ -43,8 +43,8 @@ export function sourcePresentCoverageCells(observed: ReadonlyMap<number, number>
  * reaches is the storable form of a designated absence, and the row a reader must
  * not confuse with the absent row an out-of-footprint cell has.
  *
- * @param options.include Narrows the footprint where a product excludes some cells; which cells
- * and what their exclusion means is the product's own rule and stays at its call site.
+ * @param options.include Narrows the footprint where a product excludes some cells.
+ * Which cells and what their exclusion means is the product's own rule and stays at its call site.
  */
 export function designatedCoverageCells(
 	cells: Iterable<number>,
@@ -107,8 +107,8 @@ export function assertCoverageNotEmpty(rowCount: number, context: string, indist
  * Refuse a layer whose stored cells are finer than its manifest's declared index resolution.
  *
  * Such a cell has no ancestor chain from a probe's own cell, so `cellToParent`
- * would throw mid-query on some coordinates and not others; refusing at open time
- * treats the disagreement as the build defect it is.
+ * would throw mid-query on some coordinates and not others.
+ * Refusing at open time treats the disagreement as the build defect it is.
  */
 export function assertNoCellsFinerThanIndex(
 	cellResolutions: readonly number[],

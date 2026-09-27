@@ -7,7 +7,7 @@
  *   model's locale head detects, so the decoder can obey the detection rather than merely being
  *   nudged by it.
  *
- *   Every row is a provenance-carrying claim about a national addressing convention; add rows with a
+ *   Every row is a provenance-carrying claim about a national addressing convention. Add rows with a
  *   source rather than from vibes. An absent row means "no constraints known", never "no constraints
  *   exist".
  *
@@ -25,9 +25,10 @@ import type { SystemCode } from "#postcode/systems"
 export interface AddressSystemConventions {
 	readonly forbiddenTags?: readonly ComponentTag[]
 	/**
-	 * The system's canonical postcode shape; a decoded span that is a strict sub-match
-	 * of a pattern-valid string in the raw text is shape-invalid and eligible for the
-	 * snap-only repair (extend/clip to the valid match, never invent a span).
+	 * The system's canonical postcode shape.
+	 *
+	 * A decoded span that is a strict sub-match of a pattern-valid string in the raw text is shape-invalid
+	 * and eligible for the snap-only repair (extend/clip to the valid match, never invent a span).
 	 */
 	readonly postcodePattern?: RegExp
 }
@@ -41,7 +42,7 @@ export const ADDRESS_SYSTEM_CONVENTIONS: Partial<Record<SystemCode, AddressSyste
 	 * France (La Poste / afnor NF Z 10-011): the street type is a leading particle labeled `street_prefix`
 	 * ("Rue de Rivoli"), and French addresses never carry a trailing USPS-style `street_suffix`.
 	 *
-	 * Postcode: exactly five digits (NF Z 10-011; see fr/code-postal).
+	 * Postcode: exactly five digits (NF Z 10-011, documented in fr/code-postal).
 	 */
 	fr: {
 		forbiddenTags: ["street_suffix"],
@@ -64,7 +65,9 @@ export const ADDRESS_SYSTEM_CONVENTIONS: Partial<Record<SystemCode, AddressSyste
 }
 
 /**
- * Look up conventions for a system; an absent row means no constraints are known (parse unconstrained).
+ * Look up conventions for a system.
+ *
+ * An absent row means no constraints are known (parse unconstrained).
  */
 export function conventionsForSystem(system: SystemCode | null | undefined): AddressSystemConventions | null {
 	if (!system) return null

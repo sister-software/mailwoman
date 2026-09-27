@@ -20,8 +20,9 @@ export interface CoordRow {
 	lat?: number
 	lon?: number
 	/**
-	 * The row's own country, when the set carries one; a single-locale set carries none
-	 * and takes the reader's default.
+	 * The row's own country, when the set carries one.
+	 *
+	 * A single-locale set carries none and takes the reader's default.
 	 */
 	country?: string
 	expected?: { locality?: string; region?: string; postcode?: string }

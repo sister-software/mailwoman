@@ -50,8 +50,8 @@ export type BytesReceived = (received: number, total: number | null) => void
 
 /**
  * `content-length` describes the wire bytes while the reader yields decoded ones,
- * so a content-encoded response can report a fraction above 1; the consumer clamps
- * rather than this lying about the total.
+ * so a content-encoded response can report a fraction above 1.
+ * The consumer clamps rather than this lying about the total.
  */
 async function drainWithProgress(response: Response, onBytes: BytesReceived): Promise<Uint8Array> {
 	const declared = Number(response.headers.get("content-length"))
@@ -102,8 +102,10 @@ function pause(ms: number, signal: AbortSignal | null | undefined): Promise<void
 }
 
 /**
- * `fetch` with the body already read, retried on a network failure; the same signature lets a loader
- * take it as its `fetchImpl` and read the response as bytes, text, or JSON exactly as a live one.
+ * `fetch` with the body already read, retried on a network failure.
+ *
+ * The same signature lets a loader take it as its `fetchImpl` and read the response
+ * as bytes, text, or JSON exactly as a live one.
  */
 export async function fetchWithRetry(
 	input: Parameters<typeof fetch>[0],

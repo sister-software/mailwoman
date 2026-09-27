@@ -54,8 +54,8 @@ export function collectNodes(roots: readonly AddressNode[], predicate: (node: Ad
  * A node the resolver grounded: it carries a coordinate, a place identifier,
  * or a resolution-tier stamp from the street tiers.
  *
- * Grounding is what a result may claim about a span; an ungrounded span is
- * text the parser labeled and no more.
+ * Grounding is what a result may claim about a span.
+ * An ungrounded span is text the parser labeled and no more.
  */
 export function isGroundedNode(node: AddressNode): boolean {
 	return (

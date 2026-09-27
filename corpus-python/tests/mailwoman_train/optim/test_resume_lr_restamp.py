@@ -43,7 +43,7 @@ def test_raw_load_state_dict_clobbers_a_changed_classifier_lr(tmp_path):
 
     optim2.load_state_dict(torch.load(opt_state_path, weights_only=False))
 
-    # Post-load the group holds the checkpoint's LR; both groups have 2 params, so disambiguate by numel.
+    # Post-load the group holds the checkpoint's LR. Both groups have 2 params, so disambiguate by numel.
     classifier_group = next(g for g in optim2.param_groups if sum(p.numel() for p in g["params"]) == 33 * 4 + 33)
     assert classifier_group["lr"] == 1e-3
     assert classifier_group["lr"] != 1e-4
@@ -54,8 +54,8 @@ def test_restamp_resume_lrs_recovers_the_live_config_value(tmp_path, capsys):
     m1 = TinyModel()
     optim1, _labels1 = build_optimizer(m1, learning_rate=1e-5, weight_decay=0.01, classifier_learning_rate=1e-3)
     sched1 = build_scheduler(optim1, _scheduler_cfg(warmup_steps=2))
-    # Advance past warmup: a real checkpoint is saved mid-training, not at the scheduler's step-0
-    # zeroed value.
+    # Advance past warmup: a real checkpoint is saved mid-training, after the scheduler has moved
+    # off its step-0 zeroed value.
     for _ in range(5):
         sched1.step()
     opt_state_path = tmp_path / "optimizer.pt"
@@ -143,8 +143,8 @@ def test_build_optimizer_three_group_labels_attribute_to_the_right_group(tmp_pat
     assert len(optim1.param_groups) == 3
     assert labels1 == ["base", "span_head_learning_rate", "classifier_learning_rate"]
 
-    # Each label's group must hold that override's params, not merely the right LR, which a
-    # positional check could pass by coincidence.
+    # Each label's group must hold that override's params as well as the right LR, because a
+    # positional check on the LR alone could pass by coincidence.
     expected_params_by_label = {
         "base": {id(p) for n, p in m1.named_parameters() if n.startswith("encoder.")},
         "span_head_learning_rate": {id(p) for n, p in m1.named_parameters() if n.startswith("span_scorer.")},

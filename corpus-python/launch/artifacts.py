@@ -75,7 +75,7 @@ def export_onnx(
 
     # A span-scorer model's ONNX carries a `span_scores` output, but the JS k-best decoder also needs
     # the segment-transition table, which is decode-time data rather than part of the graph. Write it
-    # as a sidecar next to model.onnx; a span-less model returns None and keeps the export unchanged.
+    # as a sidecar next to model.onnx. A span-less model returns None and keeps the export unchanged.
     import json as _json
 
     from mailwoman_train.export.package_weights import export_semi_crf_transitions

@@ -26,8 +26,8 @@ export interface EvidenceCensus {
 	gazetteer: ChannelReading
 	country: ChannelReading
 	/**
-	 * True only when at least one channel was present and every present one was silent;
-	 * a session with no channels is not starved.
+	 * True only when at least one channel was present and every present one was silent.
+	 * A session with no channels is not starved.
 	 */
 	silent: boolean
 }

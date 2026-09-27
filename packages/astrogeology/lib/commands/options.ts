@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   The option readers the four commands share. A plain module, because a command module is TSX
- *   and Node loads a command only compiled; no module a command imports may be another command.
+ *   and Node loads a command only compiled. No module a command imports may be another command.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"

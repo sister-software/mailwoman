@@ -23,7 +23,8 @@ const STUB_FINGERPRINT: TreeFingerprint = {
 }
 
 /**
- * Build a registry double; pass only the members the case under test actually reads.
+ * Build a registry double.
+ * Pass only the members the case under test actually reads.
  */
 export function stubEngineRegistry(overrides: Partial<EngineRegistryLike> = {}): EngineRegistryLike {
 	return {

@@ -80,7 +80,8 @@ const GazetteerImportance: CommandComponent<typeof spec> = ({ options }) => {
 
 		const kdb = new DatabaseClient<PlaceImportanceDatabase>(dbPath, { open: true })
 
-		// DDL goes through the Kysely schema-builder; the hot insert loop stays on the raw `db` handle.
+		// DDL goes through the Kysely schema-builder.
+		// The hot insert loop stays on the raw `db` handle.
 		console.error("Loading Wikidata concordances from WOF...")
 
 		let concordances: Map<string, number[]>
@@ -243,9 +244,9 @@ const GazetteerImportance: CommandComponent<typeof spec> = ({ options }) => {
 
 		let encyclopedicCount = 0
 		let referentialOnlyCount = 0
-		// One row per place in the union of the two signals; a place absent from both is
-		// absent from the table entirely, because a row of zeros would assert that we
-		// measured no salience rather than that we performed no measurement.
+		// One row per place in the union of the two signals.
+		// A place absent from both is absent from the table entirely, because a row of zeros
+		// would assert that we measured no salience rather than that we performed no measurement.
 		const allIDs = new Set<number>([...wofReferential.keys(), ...wofEncyclopedic.keys()])
 
 		kdb.exec("BEGIN TRANSACTION")

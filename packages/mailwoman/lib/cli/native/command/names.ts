@@ -48,9 +48,10 @@ export function isPrefixDirectory(directory: string, name: string): boolean {
 const DECLARED_NAME = /\bspec\s*=\s*\{\s*name\s*:\s*["'`]([^"'`]+)["'`]/u
 
 /**
- * The command name a compiled module declares, read from its text rather than imported
- * because importing a command module runs it and pulls Ink, a resolver, and sometimes a
- * database handle; a module whose spec cannot be found falls back to its filename.
+ * The command name a compiled module declares, read from its text rather than imported because
+ * importing a command module runs it and pulls Ink, a resolver, and sometimes a database handle.
+ *
+ * A module whose spec cannot be found falls back to its filename.
  */
 export function declaredCommandName(source: string, fallback: string): string {
 	return DECLARED_NAME.exec(source)?.[1] ?? fallback

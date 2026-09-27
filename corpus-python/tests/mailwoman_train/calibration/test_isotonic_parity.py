@@ -12,7 +12,7 @@ import pytest
 
 from mailwoman_train.calibration.isotonic import main
 
-#: Committed beside this file; regenerate with `uv run python -m
+#: Committed beside this file. Regenerate with `uv run python -m
 #: tests.mailwoman_train.calibration.test_isotonic_parity` only when the current code is already
 #: verified against the existing reference, or the test compares the new code against itself.
 REFERENCE = Path(__file__).parent / "isotonic-reference.json"
@@ -91,7 +91,7 @@ def fitted(tmp_path_factory: pytest.TempPathFactory) -> dict[str, Any]:
 #: How far a rebuilt figure may sit from the committed one and still count as unmoved.
 #:
 #: The table carries full-precision floats off numpy reductions whose last digit depends on SIMD
-#: width, so an exact comparison would pin the host as well as the code; a fit that actually changed
+#: width, so an exact comparison would pin the host as well as the code. A fit that actually changed
 #: moves ECE in the third decimal.
 TOLERANCE = 1e-9
 
@@ -138,7 +138,11 @@ def test_the_fixture_reaches_the_subgroup_and_abstention_paths(fitted: dict[str,
 
 
 def write_reference() -> None:
-    """Capture the current fit as the reference the tests above compare against; run it only when the current code already passes against the existing reference, or the artifact records whatever the code does now."""
+    """Capture the current fit as the reference the tests above compare against.
+
+    Run it only when the current code already passes against the existing reference, or the artifact
+    records whatever the code does now.
+    """
     import tempfile
 
     patch = pytest.MonkeyPatch()

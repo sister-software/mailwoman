@@ -8,7 +8,7 @@
  *   A queried block counts as surveyed only when its res-6 parent cell appears in `layer_coverage`;
  *   anything else is unknown, which is different from a surveyed block with zero filings. A GEOID
  *   query takes each block's res-9 cell from its `bdc_availability` rows, so a GEOID without rows is
- *   unknown; an `h3Cells` query supplies the cell, so a covered cell with no rows reports as
+ *   unknown. An `h3Cells` query supplies the cell, so a covered cell with no rows reports as
  *   surveyed with zero filings.
  *
  *   The res-6 parent comes from the stored res-9 cell, as it does in `build-bdc.ts`; recomputing it
@@ -96,7 +96,8 @@ export const BDC_SPEED_BUCKET_THRESHOLD_100_MBPS = 100
 export const BDC_SPEED_BUCKET_THRESHOLD_GIGABIT_MBPS = 1000
 
 /**
- * Return the speed bucket for a download speed in Mbps; it must match {@link speedBucketCaseSQL}.
+ * Return the speed bucket for a download speed in Mbps.
+ * It must match {@link speedBucketCaseSQL}.
  */
 export function speedBucketForDownloadSpeed(maxAdvertisedDownloadSpeed: number): string {
 	if (maxAdvertisedDownloadSpeed < BDC_SPEED_BUCKET_THRESHOLD_25_MBPS) return BDC_SPEED_BUCKET_UNDER_25
@@ -126,8 +127,9 @@ export function res9ShortCellToRes6Parent(h3CellShortInt: number): number {
 }
 
 /**
- * Count provider filings by technology and speed bucket for a set of blocks;
- * blocks without coverage count as unknown and contribute no filings.
+ * Count provider filings by technology and speed bucket for a set of blocks.
+ *
+ * Blocks without coverage count as unknown and contribute no filings.
  */
 export async function filingLandscape(
 	db: DatabaseClient<BDCDatabase>,

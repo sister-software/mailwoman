@@ -19,7 +19,8 @@ import { assertISODate } from "#sdk/guards"
  */
 export interface EdgarSubsidiaryRow {
 	/**
-	 * Zero-padded 10-digit CIK of the parent filer; a malformed value throws.
+	 * Zero-padded 10-digit CIK of the parent filer.
+	 * A malformed value throws.
 	 */
 	cik: string
 	/**
@@ -27,12 +28,15 @@ export interface EdgarSubsidiaryRow {
 	 */
 	subsidiaryName: string
 	/**
-	 * Jurisdiction of incorporation for provenance only; no code in this builder writes it to a column.
+	 * Jurisdiction of incorporation for provenance only.
+	 * No code in this builder writes it to a column.
 	 */
 	jurisdiction?: string
 	/**
-	 * ISO `yyyy-MM-DD` filing date of the 10-K this Exhibit 21 came from; validated by
-	 * {@linkcode assertISODate} and becomes both `source_vintage` and `valid_from` on every row it produces.
+	 * ISO `yyyy-MM-DD` filing date of the 10-K this Exhibit 21 came from.
+	 *
+	 * It is validated by {@linkcode assertISODate} and becomes both `source_vintage`
+	 * and `valid_from` on every row it produces.
 	 */
 	filingDate: string
 }

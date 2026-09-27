@@ -25,7 +25,7 @@ export const POSTCODE_FORMAT_COUNTRY: ReadonlyArray<{ readonly re: RegExp; reado
 	{ re: /^(?:[A-Z]\d{2}|D6W)\s?[A-Z\d]{4}$/i, country: "IE" },
 	// NL PC6 is deliberately absent because `\d{4} [A-Z]{2}` is forgeable in parse context —
 	// a US house-number plus directional fragment (`1234 NE`) matches it exactly —
-	// and this table feeds recognizeBarePostcode, which must never touch a street name;
+	// and this table feeds recognizeBarePostcode, which must never touch a street name.
 	// NL lives in countriesFromPostcodeFormat instead.
 ]
 

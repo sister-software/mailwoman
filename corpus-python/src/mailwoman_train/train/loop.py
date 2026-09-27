@@ -35,7 +35,7 @@ def apply_curricula(cfg: Config, tb: dict[str, Any], step: int) -> None:
         tb["gazetteer_confidence"] = perturb_gazetteer_confidence(tb["gazetteer_confidence"], step, cfg.train.max_steps)
     # Per-channel independent draws, so the model also sees each channel alone.
     if getattr(cfg.train, "evidence_curriculum", False):
-        # False-evidence noise is drawn first; the absence zero-out then draws over the noised
+        # False-evidence noise is drawn first. The absence zero-out then draws over the noised
         # batch.
         noise_p = float(getattr(cfg.train, "evidence_noise_prob", 0.0))
         if noise_p > 0.0:
@@ -65,7 +65,7 @@ def write_final_artifacts(
         scheduler=state.scheduler,
     )
     # Fisher artifact lands beside the final checkpoint as a versioned filename plus provenance
-    # sidecar; a zero-count capture raises in finalize rather than shipping a silent absence.
+    # sidecar. A zero-count capture raises in finalize rather than shipping a silent absence.
     if regularizers.fisher_acc is not None:
         fisher_path = regularizers.fisher_acc.save(
             final_ck,

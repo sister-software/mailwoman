@@ -110,7 +110,8 @@ function legsFor(postcode: string): Array<{ leg: string; input: string }> {
 		{ leg: "as_published", input: postcode },
 		{ leg: "lower_unspaced", input: postcode.toLowerCase().replaceAll(" ", "") },
 		{ leg: "uk_suffixed", input: `${postcode}, UK` },
-		// A mutant absent from the register demands abstention; a real neighbouring unit must resolve like any postcode.
+		// A mutant absent from the register demands abstention.
+		// A real neighbouring unit must resolve like any postcode.
 		{ leg: "typo", input: mutateFinalLetter(postcode) },
 	]
 }

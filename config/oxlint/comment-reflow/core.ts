@@ -826,7 +826,8 @@ function fitsOnOneLine(lines: readonly string[], overhead: number, options: Requ
 }
 
 /**
- * Format a group of standalone line comments; the caller supplies the first line's indent.
+ * Format a group of standalone line comments.
+ * The caller supplies the first line's indent.
  */
 export function reflowLineComments(
 	values: readonly string[],

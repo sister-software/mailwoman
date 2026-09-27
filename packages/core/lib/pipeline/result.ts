@@ -23,8 +23,9 @@ import type {
 export interface PipelineFault {
 	stage: PipelineFaultStage
 	/**
-	 * The thrown value's `name`, or `"Error"` when something that isn't an `Error` was thrown;
-	 * machine-stable enough to branch on, with the `cause` carrying the rest.
+	 * The thrown value's `name`, or `"Error"` when something that isn't an `Error` was thrown.
+	 *
+	 * It is machine-stable enough to branch on, with the `cause` carrying the rest.
 	 */
 	name: string
 	message: string
@@ -45,8 +46,10 @@ export interface PipelineResult {
 	locale: LocaleHint
 	kind: QueryKindResult
 	/**
-	 * Stage 2.7 phrase proposals when a grouper was wired, consumed by Stage 3 as conditioning
-	 * and Stage 5 as boundary candidates; empty when no grouper ran or the fast path skipped Stage 2.7.
+	 * Stage 2.7 phrase proposals when a grouper was wired, consumed by Stage 3 as
+	 * conditioning and Stage 5 as boundary candidates.
+	 *
+	 * Empty when no grouper ran or the fast path skipped Stage 2.7.
 	 */
 	phraseProposals: PhraseProposal[]
 	tree: AddressTree
@@ -56,8 +59,10 @@ export interface PipelineResult {
 	poiIntent?: POIIntentOutcome
 	timing: PipelineTiming
 	/**
-	 * Every stage crash the coordinator caught and degraded past, in order; the array is always present,
-	 * so an empty one states that no stage faulted, which is a different claim from a missing field.
+	 * Every stage crash the coordinator caught and degraded past, in order.
+	 *
+	 * The array is always present, so an empty one states that no stage faulted,
+	 * which is a different claim from a missing field.
 	 */
 	faults: PipelineFault[]
 	/**

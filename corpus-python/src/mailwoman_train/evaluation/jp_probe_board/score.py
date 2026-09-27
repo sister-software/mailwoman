@@ -18,7 +18,7 @@ ACCEPT_KM = 15.0
 CHECK = 0.70
 
 # Which two predicted spans get concatenated into the centroid-table key, per label set. STAGE3
-# maps prefecture → region and municipality → locality; stage3-jp gives them their own tags.
+# maps prefecture → region and municipality → locality. stage3-jp gives them their own tags.
 RESOLVE_TAGS: dict[str, tuple[str, str]] = {
     "stage3": ("region", "locality"),
     "stage3-jp": ("prefecture", "municipality"),
@@ -105,7 +105,7 @@ class BoardTallies:
 
     The board holds out whole municipalities, and one of them carries 823 of 20,000 rows, so a
     row-weighted number moves 2 pp on a single name. The macro over municipalities is reported
-    beside the blended fraction; the pre-registered check stays the blended one.
+    beside the blended fraction. The pre-registered check stays the blended one.
     """
 
     def __init__(self) -> None:
