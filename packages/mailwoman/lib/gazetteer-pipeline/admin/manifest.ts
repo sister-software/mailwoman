@@ -15,11 +15,16 @@
  *   #1015 lesson in its narrowest form: the manifest that lagged did so because it recorded an intention,
  *   and the real recipe had to be reconstructed from the artifact's synthetic-id ranges afterwards.
  *
- *   the licence is A conjunction and the manifest says SO. Three sources with three different terms fold
- *   into one file — WOF under ODbL, Overture under cdla-Permissive, GeoNames under CC-BY. There is no
- *   single licence for the result, so the field carries an spdx-style `and` expression naming exactly the
- *   ones that contributed. Recording the most permissive of them, or the licence of the largest
- *   contributor, would be a distribution claim nobody made.
+ *   The license is a conjunction and the manifest says so. Three sources with three different terms fold
+ *   into one file, so there is no single license for the result. The field carries an SPDX-style `AND`
+ *   expression naming exactly the folds that contributed. Recording the most permissive of them, or the
+ *   license of the largest contributor, would be a distribution claim nobody made.
+ *
+ *   Each term is the fold's publisher's own grant, read from that publisher's text rather than assigned
+ *   here. Until 2026-09-27 two of the three were assigned: Who's On First read `ODbL-1.0`, a grant its
+ *   license text does not state, and Overture Divisions read `CDLA-Permissive-2.0`, which is the Places
+ *   theme's grant rather than Divisions'. The expression happened to carry share-alike and reached it
+ *   through the wrong fold, so a reader tracing the obligation arrived at the wrong document.
  */
 
 import type { LayerManifest } from "@mailwoman/core/layers"
@@ -45,8 +50,18 @@ export interface IngestCounts {
  * The caller passes what it knows.
  */
 const SOURCE_TERMS = {
-	wof: { name: "whosonfirst", license: "ODbL-1.0" },
-	overture: { name: "overture-divisions", license: "CDLA-Permissive-2.0" },
+	// Who's On First states CC0 over "the format and structure", in those words, and that the records
+	// are a modification of 102 open-data sources carrying their own terms, some requiring attribution.
+	// It states no single grant over the records.
+	// `LicenseRef-WhosOnFirst-Mixed` records that rather than electing one of the 102,
+	// and `refusalsForPublication` refuses it as an identifier with no recorded obligations,
+	// which is the correct answer for a grant nobody has read per source.
+	// The archived text is `packages/corpus/data/licenses/whosonfirst-licenses.md`.
+	wof: { name: "whosonfirst", license: "LicenseRef-WhosOnFirst-Mixed" },
+	// Overture licenses per theme, and its attribution page gives Divisions `License for theme: ODbL`.
+	// This read `CDLA-Permissive-2.0`, which is the Places theme's grant, so the expression
+	// named the wrong license for the one fold whose publisher does state share-alike.
+	overture: { name: "overture-divisions", license: "ODbL-1.0" },
 	geonames: { name: "geonames", license: "CC-BY-4.0" },
 } as const satisfies Record<keyof IngestCounts, { name: string; license: string }>
 
@@ -96,10 +111,11 @@ export function adminLayerManifest(input: AdminManifestInput): LayerManifest {
 		name: "admin-global-priority",
 		version: input.version,
 		schemaVersion: 1,
-		// Never `shipped`: WOF's ODbL is share-alike, which is the same reason
-		// `packages/osm` is held out of the release list.
-		// The builder ships.
-		// The artifact is built locally.
+		// Never `shipped`.
+		// Overture's Divisions theme is ODbL, which is share-alike, and the Who's On First
+		// records carry 102 sources' terms that nobody has read per source.
+		// Either one is enough.
+		// The builder ships and the artifact is built locally.
 		tier: LayerTier.BuildLocal,
 		license: contributing.map((key) => SOURCE_TERMS[key].license).join(" AND "),
 		attribution: contributing.map((key) => SOURCE_TERMS[key].name).join(", "),

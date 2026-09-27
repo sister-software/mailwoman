@@ -24,6 +24,8 @@
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { LayerFreshnessPolicy, type LayerManifest, LayerTier } from "@mailwoman/core/layers"
 import type { layerschemadatabase } from "@mailwoman/core/layers/schema"
+import { licenseIdentifiers } from "@mailwoman/core/license/obligations"
+import { readLicenseRecord } from "@mailwoman/core/license/record"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { tableExists } from "@mailwoman/sqlite/introspection"
 import type { PathBuilderLike } from "path-ts"
@@ -66,12 +68,20 @@ export interface CandidateManifestInput {
 	 */
 	adminDBPath: PathBuilderLike
 	/**
-	 * How many postcode and locality databases contributed.
+	 * Every postcode and locality database whose rows this candidate carries.
 	 *
-	 * Recorded because a candidate built with no databases is a different artifact from
-	 * one built with twenty-four, and no other field in the file says which it is.
+	 * The paths rather than their count, because the manifest's license expression
+	 * is composed from what each one declares.
+	 * Measured 2026-09-27, these folds supplied 2,082,665 of a candidate table's 8,714,235
+	 * places, 23.90%, while the expression named the admin ancestor's terms alone.
+	 *
+	 * The count still reaches `sourceVintage`, because a candidate built from no database is a
+	 * different artifact from one built from twenty-eight and no other field says which it is.
 	 */
-	databaseCounts: { postcodes: number; localities: number }
+	contributingDatabases: {
+		postcodes: readonly PathBuilderLike[]
+		localities: readonly PathBuilderLike[]
+	}
 	/**
 	 * Whether an importance database was folded in.
 	 *
@@ -84,25 +94,95 @@ export interface CandidateManifestInput {
 }
 
 /**
+ * The identifier that stands for a fold whose own terms this build could not read.
+ *
+ * It is deliberately absent from `KNOWN_OBLIGATIONS`, so `summarizeLicense` reports
+ * it as unrecognized and `refusalsForPublication` refuses the layer.
+ * A fold whose grant nobody recorded carries unknown obligations, and an expression
+ * that simply omitted it would read as a complete list of the terms.
+ */
+export const UNDECLARED_INPUT_LICENSE = "LicenseRef-Undeclared-Input"
+
+/**
+ * The SPDX expression a contributing database declares, or `null` when it declares none.
+ *
+ * A layer database records its grant in `layer_manifest.license`.
+ * The postcode and locality builders predate that interface and record it in a `meta`
+ * key/value table instead, as prose rather than an identifier, so both are read
+ * and the value resolved through `readLicenseRecord`.
+ *
+ * Prose that resolves to no expression returns `null` rather than the prose, because the caller
+ * composes an SPDX expression and a sentence inside one is not a grant a reader can act on.
+ */
+async function declaredLicense(path: PathBuilderLike): Promise<string | null> {
+	if (!(await pathExists(path))) return null
+
+	const probed = probeManifest(path)
+
+	if (probed.manifest?.license) return readLicenseRecord(probed.manifest.license).expression
+
+	try {
+		using db = new DatabaseClient<layerschemadatabase>(path, { readOnly: true })
+
+		if (!tableExists(db, "meta")) return null
+
+		const row = db.prepare("SELECT value FROM meta WHERE key = 'license'").get()
+		const value = row?.["value"]
+
+		return typeof value === "string" ? readLicenseRecord(value).expression : null
+	} catch {
+		// An unreadable database declares no terms this build can quote, which the caller
+		// records as an undeclared fold rather than as an absence of obligations.
+		return null
+	}
+}
+
+/**
  * Compose the candidate gazetteer's manifest.
  */
 export async function candidateLayerManifest(input: CandidateManifestInput): Promise<LayerManifest> {
 	const ancestor = await ancestorIdentity(input.adminDBPath)
+	const contributing = [...input.contributingDatabases.postcodes, ...input.contributingDatabases.localities]
+	const identifiers = new Set<string>()
+	let undeclared = 0
+
+	for (const path of [input.adminDBPath, ...contributing]) {
+		const expression = await declaredLicense(path)
+
+		if (!expression) {
+			undeclared++
+
+			continue
+		}
+
+		for (const identifier of licenseIdentifiers(expression)) {
+			identifiers.add(identifier)
+		}
+	}
+
+	if (undeclared) {
+		identifiers.add(UNDECLARED_INPUT_LICENSE)
+	}
 
 	return {
 		name: "candidate",
 		version: input.version,
 		schemaVersion: 1,
-		// Inherited from the ancestor's terms rather than re-derived: the candidate carries
-		// the admin gazetteer's rows, so it carries the admin gazetteer's obligations.
-		// ODbL is share-alike either way.
+		// Never `shipped`.
+		// The admin ancestor is `build-local` and this file carries its rows,
+		// and the postcode folds add their own share-alike sources on top.
 		tier: LayerTier.BuildLocal,
-		license: "ODbL-1.0 AND CDLA-Permissive-2.0 AND CC-BY-4.0",
-		attribution: "derived from the mailwoman admin gazetteer; see that layer's manifest for source terms",
+		// Composed from what every fold declared rather than from the ancestor's terms alone.
+		// Measured 2026-09-27, a literal `ODbL-1.0 AND CDLA-Permissive-2.0 AND CC-BY-4.0` stood here
+		// while the postcode and locality folds supplied 23.90% of the table's places under terms
+		// it did not name, and 28 of those 28 databases declared no `layer_manifest` at all.
+		license: [...identifiers].toSorted().join(" AND "),
+		attribution: "derived from the mailwoman admin gazetteer and its postcode folds; see each layer's manifest",
 		source: ancestor,
 		sourceVintage:
-			`admin=${ancestor} postcode-databases=${input.databaseCounts.postcodes} ` +
-			`locality-databases=${input.databaseCounts.localities} importance=${input.importance ? "yes" : "no"}`,
+			`admin=${ancestor} postcode-databases=${input.contributingDatabases.postcodes.length} ` +
+			`locality-databases=${input.contributingDatabases.localities.length} ` +
+			`undeclared-folds=${undeclared} importance=${input.importance ? "yes" : "no"}`,
 		buildCmd: "mailwoman gazetteer build candidate",
 		buildSHA: input.buildSHA,
 		freshnessPolicy: LayerFreshnessPolicy.Sealed,

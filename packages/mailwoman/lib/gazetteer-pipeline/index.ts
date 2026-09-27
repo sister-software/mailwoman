@@ -467,9 +467,9 @@ export async function buildCandidate(opts: BuildOptions): Promise<BuildCandidate
 		opts.out,
 		await candidateLayerManifest({
 			adminDBPath: opts.adminDB,
-			databaseCounts: {
-				postcodes: (opts.postcodeDatabases ?? (await resolvePostcodeDatabases())).length,
-				localities: (opts.localityDatabases ?? (await resolveLocalityDatabases())).length,
+			contributingDatabases: {
+				postcodes: opts.postcodeDatabases ?? (await resolvePostcodeDatabases()),
+				localities: opts.localityDatabases ?? (await resolveLocalityDatabases()),
 			},
 			importance: Boolean(importance),
 			buildSHA: sha,

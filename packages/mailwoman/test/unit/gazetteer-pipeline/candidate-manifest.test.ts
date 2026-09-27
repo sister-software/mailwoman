@@ -27,17 +27,27 @@ async function scratch(): Promise<PathBuilder> {
 }
 
 /**
- * An admin database with a manifest naming `name@version`.
+ * An admin database with a manifest naming `name@version`, and optionally a license expression.
  */
-function manifested(path: PathBuilder, name: string, version: string): void {
+function manifested(path: PathBuilder, name: string, version: string, license?: string): void {
 	using db = new DatabaseClient<WOFDatabase>(path)
 
-	db.exec("CREATE TABLE layer_manifest (name TEXT PRIMARY KEY, version TEXT NOT NULL)")
-	db.prepare("INSERT INTO layer_manifest VALUES (?, ?)").run(name, version)
+	db.exec("CREATE TABLE layer_manifest (name TEXT PRIMARY KEY, version TEXT NOT NULL, license TEXT)")
+	db.prepare("INSERT INTO layer_manifest VALUES (?, ?, ?)").run(name, version, license ?? null)
+}
+
+/**
+ * A postcode database carrying its terms in a `meta` key/value table, as every one on the lab host does.
+ */
+function metaLicensed(path: PathBuilder, license: string): void {
+	using db = new DatabaseClient<WOFDatabase>(path)
+
+	db.exec("CREATE TABLE meta (key TEXT PRIMARY KEY, value TEXT)")
+	db.prepare("INSERT INTO meta VALUES ('license', ?)").run(license)
 }
 
 const BASE = {
-	databaseCounts: { postcodes: 24, localities: 3 },
+	contributingDatabases: { postcodes: [], localities: [] },
 	importance: true,
 	buildSHA: "abc1234",
 	version: "2026-08-17",
@@ -103,10 +113,23 @@ describe("candidateLayerManifest", () => {
 	})
 
 	it("records the database counts, which nothing else in the artifact says", async () => {
-		const manifest = await candidateLayerManifest({ ...BASE, adminDBPath: (await scratch())("nope.db") })
+		const root = await scratch()
+		const postcodes = [root("pc1.db"), root("pc2.db")]
 
-		expect(manifest.sourceVintage).toContain("postcode-databases=24")
-		expect(manifest.sourceVintage).toContain("locality-databases=3")
+		for (const path of postcodes) {
+			metaLicensed(path, "CC0-1.0")
+		}
+
+		metaLicensed(root("loc.db"), "CC0-1.0")
+
+		const manifest = await candidateLayerManifest({
+			...BASE,
+			adminDBPath: root("nope.db"),
+			contributingDatabases: { postcodes, localities: [root("loc.db")] },
+		})
+
+		expect(manifest.sourceVintage).toContain("postcode-databases=2")
+		expect(manifest.sourceVintage).toContain("locality-databases=1")
 		expect(manifest.sourceVintage).toContain("importance=yes")
 	})
 
@@ -120,11 +143,58 @@ describe("candidateLayerManifest", () => {
 		expect(manifest.sourceVintage).toContain("importance=no")
 	})
 
-	it("carries the ancestor's obligations — ODbL is share-alike, so never `shipped`", async () => {
+	it("is never `shipped`, whatever its folds declare", async () => {
 		const manifest = await candidateLayerManifest({ ...BASE, adminDBPath: (await scratch())("n.db") })
 
 		expect(manifest.tier).toBe("build-local")
-		expect(manifest.license).toContain("ODbL-1.0")
+	})
+
+	it("composes its license from every fold's own terms rather than the ancestor's alone", async () => {
+		// The defect this replaces: a literal `ODbL-1.0 AND CDLA-Permissive-2.0 AND CC-BY-4.0` stood here
+		// while the postcode folds supplied 23.90% of the table's places under terms it did not name.
+		const root = await scratch()
+
+		manifested(root("admin.db"), "admin-global-priority", "2026-09-15", "ODbL-1.0 AND CC-BY-4.0")
+		metaLicensed(root("codepoint.db"), "Open Government Licence v3.0")
+		metaLicensed(root("nz.db"), "CC-BY-4.0")
+
+		const manifest = await candidateLayerManifest({
+			...BASE,
+			adminDBPath: root("admin.db"),
+			contributingDatabases: { postcodes: [root("codepoint.db")], localities: [root("nz.db")] },
+		})
+
+		// Sorted and deduplicated, so two builds of one input write the same expression.
+		expect(manifest.license).toBe("CC-BY-4.0 AND ODbL-1.0 AND OGL-UK-3.0")
+		expect(manifest.sourceVintage).toContain("undeclared-folds=0")
+	})
+
+	it("marks a fold that declares no terms, rather than omitting it from the expression", async () => {
+		// Measured 2026-09-27: 28 of the 28 postcode and locality databases on the lab host
+		// carry no `layer_manifest`, and 26 of them carry no `meta.license` either.
+		// An expression that simply left them out would read as a complete list of the artifact's terms.
+		const root = await scratch()
+
+		manifested(root("admin.db"), "admin-global-priority", "2026-09-15", "CC-BY-4.0")
+
+		using silent = new DatabaseClient<WOFDatabase>(root("silent.db"))
+		silent.exec("CREATE TABLE spr (id INTEGER PRIMARY KEY)")
+
+		const manifest = await candidateLayerManifest({
+			...BASE,
+			adminDBPath: root("admin.db"),
+			contributingDatabases: { postcodes: [root("silent.db")], localities: [] },
+		})
+
+		expect(manifest.license).toBe("CC-BY-4.0 AND LicenseRef-Undeclared-Input")
+		expect(manifest.sourceVintage).toContain("undeclared-folds=1")
+	})
+
+	it("counts an absent admin database as an undeclared fold", async () => {
+		const manifest = await candidateLayerManifest({ ...BASE, adminDBPath: (await scratch())("n.db") })
+
+		expect(manifest.license).toBe("LicenseRef-Undeclared-Input")
+		expect(manifest.sourceVintage).toContain("undeclared-folds=1")
 	})
 
 	it("declares the spine that joins back to the ancestor", async () => {

@@ -24,7 +24,7 @@ describe("adminLayerManifest — source is derived from the run", () => {
 		const manifest = adminLayerManifest({ ...BASE, counts: { wof: 100, overture: 0, geonames: 0 } })
 
 		expect(manifest.source).toBe("whosonfirst")
-		expect(manifest.license).toBe("ODbL-1.0")
+		expect(manifest.license).toBe("LicenseRef-WhosOnFirst-Mixed")
 	})
 
 	it("composes all three when all three contributed", () => {
@@ -49,24 +49,46 @@ describe("adminLayerManifest — source is derived from the run", () => {
 	})
 })
 
-describe("adminLayerManifest — the licence is a conjunction", () => {
+describe("adminLayerManifest — the license is a conjunction", () => {
 	it("ANDs every contributing source's terms rather than picking one", () => {
-		// Three sources, three different licences, one file.
-		// Recording the most permissive — or the licence of the largest contributor —
+		// Three sources, three different licenses, one file.
+		// Recording the most permissive — or the license of the largest contributor —
 		// would be a distribution claim nobody made.
 		const manifest = adminLayerManifest({ ...BASE, counts: { wof: 1, overture: 1, geonames: 1 } })
 
-		expect(manifest.license).toBe("ODbL-1.0 AND CDLA-Permissive-2.0 AND CC-BY-4.0")
+		expect(manifest.license).toBe("LicenseRef-WhosOnFirst-Mixed AND ODbL-1.0 AND CC-BY-4.0")
 	})
 
-	it("drops a licence whose source contributed nothing", () => {
+	it("gives the Overture fold its Divisions grant rather than the Places theme's", () => {
+		// Overture licenses per theme.
+		// Its attribution page gives Divisions `License for theme: ODbL`,
+		// where `CDLA-Permissive-2.0` is the Places theme's grant.
+		// Recording Places' grant here named the wrong license for the one fold
+		// whose publisher states share-alike.
 		const manifest = adminLayerManifest({ ...BASE, counts: { wof: 0, overture: 5, geonames: 0 } })
 
-		expect(manifest.license).toBe("CDLA-Permissive-2.0")
+		expect(manifest.license).toBe("ODbL-1.0")
+		expect(manifest.license).not.toContain("CDLA")
+	})
+
+	it("records the Who's On First records as a LicenseRef rather than electing one of its 102 sources", () => {
+		// Who's On First states CC0 over "the format and structure", in those words,
+		// and that the records are a modification of 102 sources carrying their own terms.
+		// Recording CC0 would claim the records are public domain, and recording ODbL
+		// would claim a grant its text never states.
+		const manifest = adminLayerManifest({ ...BASE, counts: { wof: 3, overture: 0, geonames: 0 } })
+
+		expect(manifest.license).toBe("LicenseRef-WhosOnFirst-Mixed")
+	})
+
+	it("drops a license whose source contributed no rows", () => {
+		const manifest = adminLayerManifest({ ...BASE, counts: { wof: 0, overture: 0, geonames: 7 } })
+
+		expect(manifest.license).toBe("CC-BY-4.0")
 		expect(manifest.license).not.toContain("ODbL")
 	})
 
-	it("is never `shipped`, because ODbL is share-alike", () => {
+	it("is never `shipped`, because the Overture Divisions grant is share-alike", () => {
 		// The same reason packages/osm is held out of the release list: the builder ships, the artifact does not.
 		expect(adminLayerManifest({ ...BASE, counts: { wof: 1, overture: 0, geonames: 0 } }).tier).toBe(
 			LayerTier.BuildLocal

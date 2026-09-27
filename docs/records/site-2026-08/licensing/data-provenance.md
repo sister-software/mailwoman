@@ -15,11 +15,38 @@ The core gazetteer is built entirely from permissive sources, so a resolved coor
 
 This page records the state as of 2026-08 and its text is left as it was written. The paragraph above no longer describes what the shipped `candidate` bundle contains, and a reader acting on it would be misinformed.
 
-Measured 2026-09-27 from the artifacts themselves. `candidate.db`, which ships as the `candidate` bundle, records in its own `layer_manifest` `license = ODbL-1.0 AND CDLA-Permissive-2.0 AND CC-BY-4.0` and `source = admin-global-priority@2026-09-15`. That admin gazetteer records `whosonfirst+overture-divisions+geonames` as its sources, with the Overture Divisions release `2026-07-22.0`. Overture's attribution page gives its Divisions theme `License for theme: ODbL`.
+Measured 2026-09-27 from the artifacts themselves. The `candidate` bundle serves
+`gazetteer/2026-08-25b/candidate.db` from `public.mailwoman.ai`, 2,880,921,600 bytes, last modified
+2026-08-25. Its own `layer_manifest`, read over HTTP range requests, records `tier = build-local`,
+`license = ODbL-1.0 AND CDLA-Permissive-2.0 AND CC-BY-4.0`, `source = admin-global-priority@2026-08-25`
+and `build_sha = 2b9894111`.
+
+The admin gazetteer that name refers to is not published, and the copy on the lab host is a later build
+(`2026-09-15`). That later one records `whosonfirst+overture-divisions+geonames` as its sources with the
+Overture Divisions release `2026-07-22.0`, and the builder that produced both folds Overture Divisions the
+same way. Which Overture release reached the published 2026-08-25 chain is unmeasured. Overture's
+attribution page gives its Divisions theme `License for theme: ODbL`.
 
 So the core gazetteer reads a share-alike source, and this page says it does not. What the Open Database License then requires of a redistributor depends on whether the combination is a Derivative Database, a Collective Database, a Produced Work, or an extraction below the threshold the license sets. **That reading is with counsel and this correction states no conclusion about it.**
 
-Two things are unmeasured and bear on the answer: what share of the gazetteer's 4,921,635 places came from Overture Divisions, and which of their fields survive into `candidate.db`. The `spr` table carries no source column, so neither is readable from the artifact.
+Both quantities that bear on the answer were measured on 2026-09-27, over the lab host's `2026-09-15`
+chain. `spr` carries no source column, but each fold mints ids from its own base in
+`@mailwoman/core/resolver/synthetic-id-ranges`, and the Overture fold writes only rows in
+`[8e12, 9e12)` and updates no Who's On First row, so the range is an exact count rather than a floor.
+
+Overture Divisions contributed **1,590,314 of the admin gazetteer's 4,921,635 `spr` rows, 32.31%**. All
+1,590,314 survive into that chain's `candidate.db` as **1,590,314 of 8,714,235 distinct places, 18.25%**,
+carrying 2,539,196 of its 16,307,416 candidate rows. The fields that survive are the primary name, every
+`names.common` alias with its language, the placetype, the country, the label-point latitude and
+longitude, the bounding box taken from the matching `division_area`, the parent division, the population
+and the Wikidata concordance.
+
+The GERS id does not survive. `fold-overture` writes a concordance under `wd:id` alone, so no row in
+either artifact can be traced back to the Overture record it came from. Counsel should know that before
+considering whether an alteration file is producible.
+
+The same measurement over the published `2026-08-25` artifact is outstanding: it needs the 2.88 GB
+download, since the id ranges are a property of the rows rather than of the manifest.
 
 `packages/mailwoman/lib/data/bundles.ts` now names Overture Divisions among the bundle's publishers and carries the unresolved question. `refusalsForPublication` in `@mailwoman/core/layers` refuses to publish a layer whose `tier` or license expression forbids it, which catches this artifact.
 

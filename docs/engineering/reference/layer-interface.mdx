@@ -419,7 +419,20 @@ the obligations table (`packages/core/lib/license/obligations.ts`, which `mailwo
 data. Without this check, a vendor-suffixed identifier such as `PDDL-1.0-USGov-NRCS` would ship and read as
 unrecognized on every machine that opens it.
 
-| `LicenseRef`                     | Meaning                                                                                                              | Obligations |
-| -------------------------------- | -------------------------------------------------------------------------------------------------------------------- | ----------- |
-| `LicenseRef-Commercial`          | mailwoman's commercial agreement (`COMMERCIAL-LICENSE.md`)                                                           | attribution |
-| `LicenseRef-USGov-Public-Domain` | a work of the United States Government, 17 U.S.C. § 105 — SSURGO, the FCC BDC filings; SPDX has no identifier for it | none        |
+| `LicenseRef`                     | Meaning                                                                                                                                                                            | Obligations |
+| -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------- |
+| `LicenseRef-Commercial`          | mailwoman's commercial agreement (`COMMERCIAL-LICENSE.md`)                                                                                                                         | attribution |
+| `LicenseRef-USGov-Public-Domain` | a work of the United States Government, 17 U.S.C. § 105 — SSURGO, the FCC BDC filings; SPDX has no identifier for it                                                               | none        |
+| `LicenseRef-WhosOnFirst-Mixed`   | the Who's On First records, which carry 102 upstream sources' terms. Its own text grants CC0 over "the format and structure", in those words, and states no grant over the records | unknown     |
+| `LicenseRef-Undeclared-Input`    | a fold whose own database declared no terms this build could read. `candidateLayerManifest` adds it rather than leaving the fold out of the expression                             | unknown     |
+
+The last two are deliberately absent from the obligations table, so `summarizeLicense` reports them as
+unrecognized and `refusalsForPublication` refuses a layer carrying either. A grant nobody has read carries
+unknown obligations rather than none, and an expression that omitted the fold would read as a complete
+list of the artifact's terms.
+
+Measured 2026-09-27: 28 of the 28 postcode and locality databases under `db/wof/` carry no
+`layer_manifest`. Two record their terms in a `meta` key/value table instead, as prose —
+`postalcode-gb-codepoint.db` reads `Open Government Licence v3.0` and `postalcode-ni-osm.db` reads
+`Open Database License (ODbL) 1.0` — and `readLicenseRecord` resolves both through `EXPRESSION_ALIASES`.
+The remaining 26 state terms nowhere, which is why `LicenseRef-Undeclared-Input` exists.

@@ -103,6 +103,11 @@ const EXPRESSION_ALIASES: ReadonlyMap<string, string> = new Map([
 	// BAN's attribution-only half, which the `ban` adapter elects.
 	["Licence Ouverte 2.0", "etalab-2.0"],
 	["Licence Ouverte 2.0 (Etalab)", "etalab-2.0"],
+	// The `meta.license` value in `postalcode-ni-osm.db`, measured 2026-09-27.
+	["Open Database License (ODbL) 1.0", "ODbL-1.0"],
+	// The `meta.license` value in `postalcode-gb-codepoint.db`, measured 2026-09-27.
+	// Its `meta.attribution` names Ordnance Survey Crown copyright and Royal Mail copyright.
+	["Open Government Licence v3.0", "OGL-UK-3.0"],
 ])
 
 /**
