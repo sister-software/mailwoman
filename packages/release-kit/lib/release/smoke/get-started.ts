@@ -12,7 +12,7 @@
  *
  *   Two legs, split on whether the step needs network beyond npm's own registry fetch. Always on: the
  *   install-and-first-parse script, `mailwoman doctor` cold against an absent data root, and the shell parse. Behind
- *   `full`: a real `mailwoman data pull candidate` (~1.65 GB) and the two `mailwoman geocode` calls of the ten-minute
+ *   `full`: a real `mailwoman data pull candidate` (~2.88 GB) and the two `mailwoman geocode` calls of the ten-minute
  *   trial's step 5, against a data root the caller may supply so the pull is not repeated.
  *
  *   Pages this proves: `docs/articles/developers/get-started/install-and-first-parse.mdx`,
@@ -93,7 +93,7 @@ export interface SmokeGetStartedOptions {
 	 */
 	full?: boolean
 	/**
-	 * A persistent data root for the heavy leg, so the ~1.65 GB pull is not repeated.
+	 * A persistent data root for the heavy leg, so the ~2.88 GB pull is not repeated.
 	 *
 	 * Default: a scratch directory.
 	 */
@@ -211,7 +211,7 @@ export async function smokeGetStarted(options: SmokeGetStartedOptions): Promise<
 	if (await pathExists(candidateDB)) {
 		log(`[get-started] candidate.db already at ${candidateDB} — skipping the pull`)
 	} else {
-		log("[get-started] mailwoman data pull candidate (~1.65 GB — the heavy leg)…")
+		log("[get-started] mailwoman data pull candidate (~2.88 GB — the heavy leg)…")
 
 		const pull = run("node", [cli, "data", "pull", "candidate"], project, { MAILWOMAN_DATA_ROOT: dataRoot })
 

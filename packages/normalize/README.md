@@ -50,7 +50,7 @@ identityMap(length: number): OffsetMap
 raw string → normalize → query-shape → locale-hint → kind-classifier → phrase-grouper → ...
 ```
 
-This package is stage 1 in the [Staged Pipeline Interface](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/STAGES.mdx). It has no runtime dependencies.
+This package is stage 1 in the [Staged Pipeline Interface](https://github.com/sister-software/mailwoman/blob/main/docs/records/plan/reference/STAGES.mdx). It has no runtime dependencies.
 
 ## Design
 
@@ -61,7 +61,7 @@ This package is stage 1 in the [Staged Pipeline Interface](https://github.com/si
 ## Related
 
 - [`@mailwoman/query-shape`](../query-shape): stage 1.5, the structural priors that consume the normalized output.
-- [Staged Pipeline Interface](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/STAGES.mdx)
+- [Staged Pipeline Interface](https://github.com/sister-software/mailwoman/blob/main/docs/records/plan/reference/STAGES.mdx)
 - [Tokenization concepts](https://mailwoman.ai/articles/concepts/tokenization/)
 
 ## License

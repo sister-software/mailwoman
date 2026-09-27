@@ -4,7 +4,7 @@ title: Quality and evaluation
 description: How Mailwoman grades itself — the coordinate-first grading rule, the reports/ledger/scorecard evidence trail, the promotion checks that decide what ships, what a calibrated confidence means, and where quality drops.
 role: concept
 audience: product-reader
-source-of-truth: engineering/CONTRIBUTING_MODEL_WORK.mdx, evals/scores-by-version.json, engineering/reference/eval-ledger.schema.json, engineering/SCOPE.mdx
+source-of-truth: engineering/CONTRIBUTING_MODEL_WORK.mdx, evals/scores-by-version.json, evals/schema/scores-by-version.schema.json, engineering/SCOPE.mdx
 review-by: 2026-10-14
 ---
 
@@ -28,7 +28,7 @@ Three artifacts, each with a different job.
 
 **The dated eval reports** ([`evals/`](https://github.com/sister-software/mailwoman/blob/main/docs/records/evals/index.mdx)) are the narrative record: check runs, benchmarks, diagnostics, and postmortems, grouped by topic (competitive parity, model versions, resolver and geo, calibration, coverage). Reports are point-in-time and say so; each states its own eval set, channels, and quantization, because those evolve between eras.
 
-**The score ledger** ([`evals/scores-by-version.json`](https://github.com/sister-software/mailwoman/blob/main/evals/scores-by-version.json), repo root) is the machine-readable spine: one row per training run that produced shippable weights or a measured baseline, validated against [a JSON schema](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/eval-ledger.schema.json). Every row pins its provenance — which corpus, which eval set, which artifact bytes. From the v5.0.0 row, verbatim:
+**The score ledger** ([`evals/scores-by-version.json`](https://github.com/sister-software/mailwoman/blob/main/evals/scores-by-version.json), repo root) is the machine-readable spine: one row per training run that produced shippable weights or a measured baseline, validated against [a JSON schema](https://github.com/sister-software/mailwoman/blob/main/docs/evals/schema/scores-by-version.schema.json). Every row pins its provenance — which corpus, which eval set, which artifact bytes. From the v5.0.0 row, verbatim:
 
 ```json
 {
@@ -38,7 +38,7 @@ Three artifacts, each with a different job.
 }
 ```
 
-The ledger has a documented hole: rows for 4.5.0 through 4.16.2 were never populated — it froze at v4.4.0 and was revived at the 2026-07-02 measurement re-anchor ([#885](https://github.com/sister-software/mailwoman/issues/885)), whose full re-score produced the v5.0.0 row above. The missing versions' headlines live in [the release history](../releases.mdx) and each version's `model-card.json`, and appending is now automated at the check, so the freeze pattern shouldn't recur.
+The ledger has a documented hole: rows for 4.5.0 through 4.16.2 were never populated — it froze at v4.4.0 and was revived at the 2026-07-02 measurement re-anchor ([#885](https://github.com/sister-software/mailwoman/issues/885)), whose full re-score produced the v5.0.0 row above. The missing versions' headlines live in [the release history](../../../engineering/releases.mdx) and each version's `model-card.json`, and appending is now automated at the check, so the freeze pattern shouldn't recur.
 
 **The parity scorecards** ([`docs/records/evals/competitive-parity/`](https://github.com/sister-software/mailwoman/blob/main/docs/records/evals/competitive-parity/index.mdx)) are the authoritative per-tag tables. Each is emitted by the check battery rather than hand-edited, names its graded artifacts by md5-pinned path (the published npm tarball's bytes, never a dev symlink), quotes the check's floors above its tables, and keeps failing rows in view. The [latest full re-score](https://github.com/sister-software/mailwoman/blob/main/docs/records/evals/competitive-parity/parity-scorecard-2026-07-02.md) covers the shipped 5.0.0 line: 17 of 17 floors passed, and two regressions that no floor had caught went on the record — `fr.cedex_real` drifting 96.1 to 89.4 across eleven promotes, and an unfloored libpostal arena slipping 36 to 30. The cedex drift was largely recovered (89.4 to 93.1) two days later, in the v5.3.0 row: recorded, then repaired, both in the open.
 

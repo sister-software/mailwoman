@@ -20,7 +20,7 @@ the rules that hold each claim to evidence.
 
 ## Three workstreams rather than one
 
-1. **The geocoder** — the [staged pipeline](./reference/STAGES.mdx) (normalize → parse → resolve → coordinate), the
+1. **The geocoder** — the staged pipeline (normalize → parse → resolve → coordinate), the
    drop-in API surfaces (`@mailwoman/{nominatim,photon,libpostal}` + annotations), the browser
    runtime, and the coverage/demo stack. The daily queue is
    [epic #488](https://github.com/sister-software/mailwoman/issues/488).
@@ -36,8 +36,8 @@ the rules that hold each claim to evidence.
 3. **Spatial layers + POI queries** — sealed provenance-tracked layer databases (`poi.db` is
    layer #1) plus the `poi_query` kind that detects category intent (brand detection is live —
    the QID-keyed brand lexicon shipped 2026-07-20, dominance-floored to 204 chains) and resolves it against them, exposed to agents via
-   `@mailwoman/mcp`. Design + phasing in
-   [`docs/superpowers/specs/2026-07-18-spatial-layers-and-poi-design.md`](https://github.com/sister-software/mailwoman/blob/main/docs/superpowers/specs/2026-07-18-spatial-layers-and-poi-design.md);
+   `@mailwoman/mcp`. The layer schema is defined in
+   [the layer interface reference](./reference/layer-interface.mdx);
    the controlling flag (`poiQueryKind`, default-ON since 2026-07-20) is tracked in the
    [runtime-flag register](./reference/runtime-flags.mdx). Human-readable status lives in the
    [exotic-POI series](../records/site-2026-08/understanding/exotic-poi/exotic-point-of-interest-queries.mdx).
@@ -132,6 +132,6 @@ These are the practices the trajectory review said not to change, plus the two a
   and the mask-regression and capability-manifest checks in formatted mode.
 - **The record:** dated eval reports under `docs/records/evals/` (latest full re-score: the
   [parity scorecard](../records/evals/competitive-parity/parity-scorecard-2026-07-02.md)), per-release rows in
-  [Releases & capabilities](../records/site-2026-08/releases.mdx), the score ledger `evals/scores-by-version.json`.
+  [Releases & capabilities](./releases.mdx), the score ledger `evals/scores-by-version.json`.
 - **The phase directory is historical.** `phases/*` and the dated architecture specs are design
   records. Read them for rationale, never for current state.

@@ -7,7 +7,7 @@ This page records the design intent for the `QueryShape` sub-system, an addition
 - **Conceived:** 2026-05-22 design conversation.
 - **Decision:** commit to the sub-system and bundle it as `@mailwoman/query-shape`, built from pure functions without ML.
 - **Implementation phase:** not yet started. It will land alongside the Stage 2 and Stage 2.5 work in the staged-pipeline rollout.
-- **Cross-references:** [`concepts/the-staged-pipeline`](../../records/site-2026-08/understanding/our-approach/the-staged-pipeline.mdx), [`concepts/addresses-that-break-geocoders`](../../records/site-2026-08/understanding/why-its-hard/addresses-that-break-geocoders.mdx), [`reference/ARCHITECTURE`](./ARCHITECTURE.mdx).
+- **Cross-references:** [`concepts/the-staged-pipeline`](../../records/site-2026-08/understanding/our-approach/the-staged-pipeline.mdx), [`concepts/addresses-that-break-geocoders`](../../records/site-2026-08/understanding/why-its-hard/addresses-that-break-geocoders.mdx), [`reference/ARCHITECTURE`](../plan/reference/ARCHITECTURE.mdx).
 
 ## Bitter-lesson framing test
 
@@ -136,7 +136,7 @@ The user's location is an external signal that joins the input-side priors. It f
 score(candidate) = match × population_prior × regional_prior_from_language × regional_prior_from_user_location
 ```
 
-All four factors are **soft priors**. A user with a Texas IP address who types `"Paris"` in French input gets a tie between Paris-FR and Paris-TX, and structural cues such as a state abbreviation or postcode shape break the tie. None of the priors acts as a hard filter, because a hard filter would violate the project's "possibilities rather than constraints" principle ([`reference/CONTEXT.md`](./CONTEXT.mdx#the-confidence-as-trap-pattern)).
+All four factors are **soft priors**. A user with a Texas IP address who types `"Paris"` in French input gets a tie between Paris-FR and Paris-TX, and structural cues such as a state abbreviation or postcode shape break the tie. None of the priors acts as a hard filter, because a hard filter would violate the project's "possibilities rather than constraints" principle ([`reference/CONTEXT.md`](../plan/reference/CONTEXT.mdx#the-confidence-as-trap-pattern)).
 
 API shape (optional input):
 
@@ -222,5 +222,5 @@ These decisions need to be made when implementation starts. They are recorded he
 
 - [`concepts/the-staged-pipeline`](../../records/site-2026-08/understanding/our-approach/the-staged-pipeline.mdx) — the runtime stages this slots into
 - [`concepts/addresses-that-break-geocoders`](../../records/site-2026-08/understanding/why-its-hard/addresses-that-break-geocoders.mdx) — the failure-mode catalogue that motivated this
-- [`reference/CONTEXT.md`](./CONTEXT.mdx) — the bitter-lesson framing and the "possibilities not constraints" principle
-- [`reference/ARCHITECTURE.md`](./ARCHITECTURE.mdx) — the broader system shape; QueryShape fits between tokenization and classification
+- [`reference/CONTEXT.md`](../plan/reference/CONTEXT.mdx) — the bitter-lesson framing and the "possibilities not constraints" principle
+- [`reference/ARCHITECTURE.md`](../plan/reference/ARCHITECTURE.mdx) — the broader system shape; QueryShape fits between tokenization and classification

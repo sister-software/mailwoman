@@ -234,7 +234,7 @@ postcode-to-place join unchanged.
 
 The vocabulary a corpus recipe (and eventually the span proposer) reads to recognize `Terminal 5`,
 `North Terminal`, `Concourse B`, `第1ターミナル` as venue-interior structure. Generated, **not
-hand-edited**. See `docs/engineering/sub-venue-corpus-task.mdx` for why this exists — the short
+hand-edited**. See `docs/records/engineering/sub-venue-corpus-task.mdx` for why this exists — the short
 version is that the `unit` tag was never taught the modifier+designator shape, so closing the class by
 decode weight would take a bias scale near 11 nats where the stronger designator+identifier evidence
 needed 6.

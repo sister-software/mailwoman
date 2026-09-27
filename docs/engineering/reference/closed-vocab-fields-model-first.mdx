@@ -24,7 +24,7 @@ positive-evidence-only rule.
 1. **The model is the authority for every field, including closed-vocab fields.** We do
    not override its output with a lookup table.
 2. **The gazetteer enters as a soft feature and never substitutes for the model's
-   output.** This is the same principle as the [postcode anchor](./QUERY_SHAPE.mdx).
+   output.** This is the same principle as the [postcode anchor](../../records/engineering/QUERY_SHAPE.mdx).
    `codex`'s matchers (`matchCountry`, `matchPOBox`, the cedex pattern) change role from
    _override_ to _feature-source_.
 3. **Training covers starved closed-vocab fields** with the same negative-space recipe

@@ -35,8 +35,7 @@
  *   case still fails (#1104). The country bit is one of a 5-hot vector sharing one projection with
  *   region/po_box/cedex/homograph, and it is zeroed adjacent to a postcode by
  *   `suppressGazetteerNearPostcode` (exactly where "…12345 USA" sits). A separate channel gives
- *   country its own projection + confidence weight and is immune to that suppression. See
- *   docs/superpowers/plans/2026-07-14-country-lexicon-channel.md.
+ *   country its own projection + confidence weight and is immune to that suppression.
  */
 
 import {

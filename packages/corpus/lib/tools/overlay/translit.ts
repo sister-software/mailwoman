@@ -19,7 +19,7 @@
  *       rewritten from `$MAILWOMAN_DATA_ROOT/...` to `/data/...` in the combined manifest so
  *       all paths share one container-friendly form.
  *
- *   See docs/engineering/reference/CORPUS_V0_4_0_GENERATION.md for prompts, model, and the
+ *   See docs/records/engineering/CORPUS_V0_4_0_GENERATION.mdx for prompts, model, and the
  *   reproducibility interface.
  *
  *   Invoke via `mailwoman corpus slice translit \

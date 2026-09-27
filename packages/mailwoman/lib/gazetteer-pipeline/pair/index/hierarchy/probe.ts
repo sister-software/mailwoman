@@ -3,8 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   probe builder — WOF-hierarchy generalization of the PIX1 placetype-pair index (static-index
- *   survey candidate #3. design: `docs/superpowers/plans/2026-07-26-pair-index-hierarchy-design.md`).
+ *   probe builder — WOF-hierarchy generalization of the PIX1 placetype-pair index.
  *   Extracts per-country (locality, region) pairs from the WOF admin DB's `ancestors` table and
  *   writes one PIX1 binary per country to `$MAILWOMAN_DATA_ROOT/db/wof/pair-index-hierarchy-probe/`.
  *

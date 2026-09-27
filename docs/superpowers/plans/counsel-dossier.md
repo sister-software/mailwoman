@@ -21,9 +21,7 @@ in the layer interface's tiers.
 **Interim posture:** the osm/ workspace stays unpublished, OSM-derived extracts stay in their own bucket, and poi.db stays build-local.
 The KR framework (item 4) uses the same approach.
 
-## 2. BDC / broadband vertical (the spec's eight questions, verbatim source: §8 of
-
-`docs/superpowers/specs/2026-07-20-bdc-plausibility-design.md`)
+## 2. BDC / broadband vertical (the eight questions from §8 of the 2026-07-20 BDC plausibility design, removed from the tree on 2026-09-27)
 
 1. **CostQuest Fabric boundary**: is carrying the BSL `location_id` as an opaque join key, without the
    coordinate or any derived table, clear of the Fabric license? Phase 2a waits on the answer.

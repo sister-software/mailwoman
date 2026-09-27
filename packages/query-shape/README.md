@@ -61,7 +61,7 @@ normalize → query-shape → locale-hint → kind-classifier → phrase-grouper
 - [`@mailwoman/normalize`](../normalize): stage 1, which feeds this stage.
 - [`@mailwoman/locale-hint`](../locale-hint): stage 2, which reads `QueryShape` for locale detection.
 - [`@mailwoman/kind-classifier`](../kind-classifier): stage 2.5, which reads `QueryShape` for kind classification.
-- [Query Shape design rationale](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/QUERY_SHAPE.mdx)
+- [Query Shape design rationale](https://github.com/sister-software/mailwoman/blob/main/docs/records/engineering/QUERY_SHAPE.mdx)
 
 ## License
 

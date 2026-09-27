@@ -138,7 +138,7 @@ Written after v0.5.0 (CE-only, h256, 50K steps) and v0.5.1 ("unchained," h384, 1
 
 **How we got to batch=128 direct.** The A100 has 40 GB VRAM; the h384 model uses ~4 GB. No need for gradient accumulation. Direct batch=128 gives cleaner gradients (no micro-batch noise) and much higher throughput (120 sps vs 6.9 sps).
 
-**The smoke-batch lesson.** Smoke tests at eff_batch=8 passed without error while full runs at eff_batch=128 diverged. At smaller batch sizes, the higher per-step gradient noise paradoxically stabilizes training against curvature conflicts (the model can't settle deep enough into the basin where the conflict manifests). This is now documented in [VERDICT_SMOKES.md](./VERDICT_SMOKES.mdx).
+**The smoke-batch lesson.** Smoke tests at eff_batch=8 passed without error while full runs at eff_batch=128 diverged. At smaller batch sizes, the higher per-step gradient noise paradoxically stabilizes training against curvature conflicts (the model can't settle deep enough into the basin where the conflict manifests). This is now documented in [VERDICT_SMOKES.md](../../engineering/reference/VERDICT_SMOKES.mdx).
 
 ### `warmup_steps`
 
@@ -160,7 +160,7 @@ Written after v0.5.0 (CE-only, h256, 50K steps) and v0.5.1 ("unchained," h384, 1
 | cosine       | v0.3.0, v0.4.0 | Standard. But masked divergence in v0.4.0 smokes.             |
 | **constant** | v0.5.0, v0.5.1 | Used per VERDICT_SMOKES.md mode A — new recipe = constant LR. |
 
-**How we got to constant.** v0.4.0's cosine-LR smoke passed a recipe that diverged in the full run. Constant LR keeps the model at sustained peak LR for the entire training window — divergence surfaces immediately if the recipe is unstable. See [VERDICT_SMOKES.md](./VERDICT_SMOKES.mdx).
+**How we got to constant.** v0.4.0's cosine-LR smoke passed a recipe that diverged in the full run. Constant LR keeps the model at sustained peak LR for the entire training window — divergence surfaces immediately if the recipe is unstable. See [VERDICT_SMOKES.md](../../engineering/reference/VERDICT_SMOKES.mdx).
 
 **Downside.** Constant LR can overfit faster (no LR decay to slow learning in late training). The v0.5.1 overfitting past step 65K may partly be caused by constant LR — cosine decay would reduce the learning rate by that point, slowing the overfitting. A future experiment: constant LR for the first 60K steps (validation), then cosine decay for the remaining 40K (refinement).
 
@@ -211,7 +211,7 @@ Current values are carried from v0.4.0's §4 source rebalance (the only recipe s
 
 ## See also
 
-- [VERDICT_SMOKES.md](./VERDICT_SMOKES.mdx) — the smoke discipline that catches recipe failures
+- [VERDICT_SMOKES.md](../../engineering/reference/VERDICT_SMOKES.mdx) — the smoke discipline that catches recipe failures
 - [Dual-loss curvature conflict](../../records/site-2026-08/concepts/dual-loss-curvature-conflict.mdx) — why crf_loss_weight=0 works
 - [v0.5.0 — as shipped](../../records/plan/v0-5-0-shipped.mdx) — the thread table
 - [What the eval numbers mean](../../records/site-2026-08/understanding/our-approach/what-the-eval-numbers-mean.mdx) — plain-English interpretation

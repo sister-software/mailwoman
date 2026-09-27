@@ -1,8 +1,8 @@
 # Runtime Pipeline Stages
 
-The formal interface for the six-stage runtime pipeline. Pairs with [`INTERFACES.md`](./INTERFACES.mdx) (classifier-level interfaces) and [`SCHEMA.md`](./SCHEMA.mdx) (component vocabulary) — this document covers the **stage boundaries** that compose them into a working pipeline.
+The formal interface for the six-stage runtime pipeline. Pairs with [`INTERFACES.md`](./INTERFACES.mdx) (classifier-level interfaces) and [`SCHEMA.md`](../../../engineering/reference/SCHEMA.mdx) (component vocabulary) — this document covers the **stage boundaries** that compose them into a working pipeline.
 
-For the narrative / why-it-exists framing, read [`concepts/the-staged-pipeline`](../../records/site-2026-08/understanding/our-approach/the-staged-pipeline.mdx). For the bitter-lesson-safe sub-system used by stages 2 and 2.5, read [`QUERY_SHAPE.md`](./QUERY_SHAPE.mdx).
+For the narrative / why-it-exists framing, read [`concepts/the-staged-pipeline`](../../site-2026-08/understanding/our-approach/the-staged-pipeline.mdx). For the bitter-lesson-safe sub-system used by stages 2 and 2.5, read [`QUERY_SHAPE.md`](../../engineering/QUERY_SHAPE.mdx).
 
 ## Status
 
@@ -61,7 +61,7 @@ export interface PipelineOpts {
 }
 ```
 
-`ComponentTag` and `BioLabel` are defined in [`SCHEMA.md`](./SCHEMA.mdx). `ClassificationProposal` and `Classifier` are defined in [`INTERFACES.md`](./INTERFACES.mdx).
+`ComponentTag` and `BioLabel` are defined in [`SCHEMA.md`](../../../engineering/reference/SCHEMA.mdx). `ClassificationProposal` and `Classifier` are defined in [`INTERFACES.md`](./INTERFACES.mdx).
 
 ## Stage 1 — Normalize
 
@@ -110,11 +110,11 @@ export interface NormalizeOpts {
 export function normalize(raw: string, opts?: NormalizeOpts): NormalizedInput
 ```
 
-**Today.** `@mailwoman/normalize` workspace shipped 2026-05-22 (increment B of [PHASE_7](../../records/plan/phases/PHASE_7_stage_1_normalize_and_query_shape.mdx)). The public `normalize()` function always applies NFC, punctuation, and whitespace normalization, and optionally applies abbreviation expansion and case folding. It composes the `offsetMap` across transforms. The en-US and fr-FR abbreviation dictionaries are small.
+**Today.** `@mailwoman/normalize` workspace shipped 2026-05-22 (increment B of [PHASE_7](../phases/PHASE_7_stage_1_normalize_and_query_shape.mdx)). The public `normalize()` function always applies NFC, punctuation, and whitespace normalization, and optionally applies abbreviation expansion and case folding. It composes the `offsetMap` across transforms. The en-US and fr-FR abbreviation dictionaries are small.
 
 **Future.** Share dictionaries with corpus synthesis (synthesis is the _inverse_ — canonical → variants; normalize is variants → canonical). Add per-locale case-folding edge cases (Turkish `İ`, Greek final sigma). Bidirectional offset lookup (`raw[i] → normalized[i]`).
 
-**Failure classes owned.** Tokenization and whitespace traps (#3); Unicode/transliteration encoding half (#6). See [`addresses-that-break-geocoders`](../../records/site-2026-08/understanding/why-its-hard/addresses-that-break-geocoders.mdx).
+**Failure classes owned.** Tokenization and whitespace traps (#3); Unicode/transliteration encoding half (#6). See [`addresses-that-break-geocoders`](../../site-2026-08/understanding/why-its-hard/addresses-that-break-geocoders.mdx).
 
 **Open questions.**
 
@@ -126,7 +126,7 @@ export function normalize(raw: string, opts?: NormalizeOpts): NormalizedInput
 
 **Purpose.** Pure-function structural analysis of the normalized input. Microseconds-cheap, shared by Stages 2, 2.5, 3 (optional), and 6.
 
-**Interface.** Defined in [`QUERY_SHAPE.md`](./QUERY_SHAPE.mdx). The entry point:
+**Interface.** Defined in [`QUERY_SHAPE.md`](../../engineering/QUERY_SHAPE.mdx). The entry point:
 
 ```ts
 // query-shape/compute.ts
@@ -136,7 +136,7 @@ export function computeQueryShape(input: string | NormalizedInputLite, opts?: Co
 
 **Reuse.** Once computed, `QueryShape` passes into every subsequent stage as additional context. It is not its own stage.
 
-**Today.** `@mailwoman/query-shape` workspace shipped 2026-05-22 (increment A of [PHASE_7](../../records/plan/phases/PHASE_7_stage_1_normalize_and_query_shape.mdx)). It uses pure functions without ML and has zero workspace dependencies. It detects character class, punctuation-bounded segments, known postcode formats (US ZIP/ZIP+4, UK, CA, JP + ambiguous 5-digit FR/DE/US), and PO Box / BP. Hyphen, apostrophe, and underscore are "connectors", so `"10118-1234"` and `"Saint-Denis"` stay one token. It accepts both `string` and `NormalizedInputLite` (structurally compatible with `@mailwoman/normalize`'s `NormalizedInput`).
+**Today.** `@mailwoman/query-shape` workspace shipped 2026-05-22 (increment A of [PHASE_7](../phases/PHASE_7_stage_1_normalize_and_query_shape.mdx)). It uses pure functions without ML and has zero workspace dependencies. It detects character class, punctuation-bounded segments, known postcode formats (US ZIP/ZIP+4, UK, CA, JP + ambiguous 5-digit FR/DE/US), and PO Box / BP. Hyphen, apostrophe, and underscore are "connectors", so `"10118-1234"` and `"Saint-Denis"` stay one token. It accepts both `string` and `NormalizedInputLite` (structurally compatible with `@mailwoman/normalize`'s `NormalizedInput`).
 
 ## Stage 2 — `locale-hint`
 
@@ -261,7 +261,7 @@ Per "possibilities not constraints", the grouper emits overlapping proposals fre
 
 **Today.** `@mailwoman/phrase-grouper` workspace shipped 2026-05-23 (v0.5.0 Thread E). Rule-based: per-kind scorers over token-level structural cues (proximity, punctuation, capitalization, hyphenation, format-shape repetition from QueryShape). It is bitter-lesson-safe because it uses no place-name dictionaries. It is wired as the default `groupPhrases` in `mailwoman/runtime-pipeline.ts::createRuntimePipeline`. In v0.5.0 it is a hard dependency rather than an opt-in shim, because there are no v0.4.0 users to migrate. The result is exposed on `PipelineResult.phraseProposals`.
 
-**Future.** Learned 1-2M-param span proposer trained on segment-boundary labels derived from corpus-v0.4.0 + the kryptonite catalogue. Same `PhraseProposal[]` output interface; the consumers (Stages 3, 5) don't need to know which implementation produced the proposals. See [`PHASE_8_E_learned_span_proposer.md`](../../records/plan/phases/PHASE_8_E_learned_span_proposer.mdx) for the scope.
+**Future.** Learned 1-2M-param span proposer trained on segment-boundary labels derived from corpus-v0.4.0 + the kryptonite catalogue. Same `PhraseProposal[]` output interface; the consumers (Stages 3, 5) don't need to know which implementation produced the proposals. See [`PHASE_8_E_learned_span_proposer.md`](../phases/PHASE_8_E_learned_span_proposer.mdx) for the scope.
 
 **Failure classes owned.** Boundary discovery on mid-position postcodes (`Paris 75008`), hyphenated compounds (`NY-NY Steakhouse`), multi-word localities (`Saint Petersburg`), repetition tokens (`Buffalo Buffalo`). Addresses v0.4.0's bio_slip class at source rather than via decoder post-trim.
 
@@ -308,7 +308,7 @@ export interface ClassifierContext {
 
 ### Stage 4a — CRF
 
-Today's implementation. [Linear-chain CRF](../../records/site-2026-08/concepts/crf-decoder.mdx) over a frozen BIO transition mask. Eliminates orphan-`I` sequences ("Saint Petersburg → Petersburg" bug).
+Today's implementation. [Linear-chain CRF](../../site-2026-08/concepts/crf-decoder.mdx) over a frozen BIO transition mask. Eliminates orphan-`I` sequences ("Saint Petersburg → Petersburg" bug).
 
 **Interface.**
 
@@ -555,7 +555,7 @@ function canShortCircuit(kind: QueryKindResult, shape: QueryShape, opts?: Pipeli
 }
 ```
 
-⚠ **Fast paths are advisory.** A `postcode_only` shortcut returns a single ambiguous-when-no-location result (the postcode resolved against the gazetteer). If the consumer wanted to disambiguate via additional input (mid-typed autocomplete), they pass `forceFullPipeline: true`. See [`QUERY_SHAPE.md`](./QUERY_SHAPE.mdx#3-known-format-detection) for the broader rationale.
+⚠ **Fast paths are advisory.** A `postcode_only` shortcut returns a single ambiguous-when-no-location result (the postcode resolved against the gazetteer). If the consumer wanted to disambiguate via additional input (mid-typed autocomplete), they pass `forceFullPipeline: true`. See [`QUERY_SHAPE.md`](../../engineering/QUERY_SHAPE.mdx#3-known-format-detection) for the broader rationale.
 
 ## Packaging map
 
@@ -598,10 +598,10 @@ These don't belong to one stage; they affect composition.
 ## How this relates to existing files
 
 - [`INTERFACES.md`](./INTERFACES.mdx) defines the **classifier-level** interfaces (`Classifier`, `ClassificationProposal`, `PolicyRegistry`, etc.). This file is the **stage-level** interface that composes them.
-- [`SCHEMA.md`](./SCHEMA.mdx) defines the **component vocabulary** (`ComponentTag`, `BioLabel`). Both files key off it.
+- [`SCHEMA.md`](../../../engineering/reference/SCHEMA.mdx) defines the **component vocabulary** (`ComponentTag`, `BioLabel`). Both files key off it.
 - [`ARCHITECTURE.md`](./ARCHITECTURE.mdx) describes the **existing system shape** narratively. Some of its diagrams predate this staging picture; reconcile gradually.
-- [`QUERY_SHAPE.md`](./QUERY_SHAPE.mdx) defines the **`QueryShape` sub-system** in detail. This file references it but does not duplicate.
-- [`concepts/the-staged-pipeline`](../../records/site-2026-08/understanding/our-approach/the-staged-pipeline.mdx) is the **public-facing narrative** version. This file is the implementer's interface.
+- [`QUERY_SHAPE.md`](../../engineering/QUERY_SHAPE.mdx) defines the **`QueryShape` sub-system** in detail. This file references it but does not duplicate.
+- [`concepts/the-staged-pipeline`](../../site-2026-08/understanding/our-approach/the-staged-pipeline.mdx) is the **public-facing narrative** version. This file is the implementer's interface.
 
 ## What's next
 

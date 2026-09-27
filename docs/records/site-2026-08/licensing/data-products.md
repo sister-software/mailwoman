@@ -334,7 +334,7 @@ unaffected. What is corrected is the mechanism the second sentence offers as the
 ## See also
 
 - [Data licensing & provenance](./data-provenance.md): the per-source license table, the ODbL boundary, and what counsel still needs to confirm.
-- [Pricing](./pricing.mdx): the engine's tiers, and the [OEM band](./pricing.mdx#embedding-mailwoman-in-a-product-you-sell) for shipping Mailwoman inside a product you license to others.
+- [Pricing](../../../articles/pricing.mdx): the engine's tiers and the OEM band for shipping Mailwoman inside a product you license to others.
 - [Spatial-layer interface](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/layer-interface.mdx): the schema every layer database embeds, and the source of the tier vocabulary on this page.
 - [POI layer runbook](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/poi-layer-runbook.mdx): the worked build/verify/publish example.
 - [Data, locales, and coverage](../concepts/data-locales-and-coverage.mdx): the same layers, described by what they can and cannot resolve.

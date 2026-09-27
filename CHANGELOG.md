@@ -2,7 +2,7 @@
 
 All notable changes are recorded here at a high level. For the full,
 authoritative mapping of **which npm version shipped which model and which
-capabilities**, see [`docs/records/site-2026-08/releases.mdx`](./docs/records/site-2026-08/releases.mdx).
+capabilities**, see [`docs/engineering/releases.mdx`](./docs/engineering/releases.mdx).
 That matrix is a maintainer record rather than a page on the site: `docusaurus.config.ts` serves `articles/`
 and `research/`, and the August reorg left `records/` unpublished, so read it in the repository.
 Per-release detail lives in the [GitHub releases](https://github.com/sister-software/mailwoman/releases)

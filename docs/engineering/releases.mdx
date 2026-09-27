@@ -11,7 +11,7 @@ Mailwoman has two version series, which used to be easy to confuse:
 - **npm version**: the version `npm install` gives you. All workspaces release in lockstep (e.g. `mailwoman@4.1.0` pairs with `@mailwoman/neural-weights-en-us@4.1.0`).
 - **Training series** (`v0.x.y`): the internal model lineage used by configs, the eval ledger, and the docs. A training run becomes an npm release only if it passes its pre-registered checks.
 
-Since 4.0.0, consumers need only the npm version. The shipped weights' `model-card.json` records the exact training lineage, corpus, and tokenizer. The per-model score ledger `evals/scores-by-version.json` (schema: [`eval-ledger.schema.json`](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/eval-ledger.schema.json)) was frozen at v4.4.0 and **revived at the 2026-07-02 re-anchor** ([#885](https://github.com/sister-software/mailwoman/issues/885)). The v5.0.0 row carries the full re-score. Appends are automated with `mailwoman eval ledger-append`, which the promotion check's pass output invokes. The row notes document the 4.5–4.16 gap, and the headline results for those versions are in the matrix below and in their `model-card.json`.
+Since 4.0.0, consumers need only the npm version. The shipped weights' `model-card.json` records the exact training lineage, corpus, and tokenizer. The per-model score ledger `evals/scores-by-version.json` (schema: `evals/schema/scores-by-version.schema.json`) was frozen at v4.4.0 and **revived at the 2026-07-02 re-anchor** ([#885](https://github.com/sister-software/mailwoman/issues/885)). The v5.0.0 row carries the full re-score. Appends are automated with `mailwoman eval ledger-append`, which the promotion check's pass output invokes. The row notes document the 4.5–4.16 gap, and the headline results for those versions are in the matrix below and in their `model-card.json`.
 
 ## The matrix
 
@@ -110,4 +110,4 @@ Earlier training-series numbering (`v0.1.0`, `v0.2.0`, the realigned `3.0.0`) pr
 | Dedicated country soft-feed channel — golden country recall 84.8→89.3% (#1104)            | 6.2.0   |
 | Browser country channel wired into `@mailwoman/neural-web` (#1104)                        | 6.2.1   |
 
-When a release ships, add a row to this page and re-verify the [status page](./status.mdx). Update both pages in the same change.
+When a release ships, add a row to this page and re-verify the [status page](../articles/developers/status.mdx). Update both pages in the same change.

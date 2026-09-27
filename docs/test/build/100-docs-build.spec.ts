@@ -79,7 +79,10 @@ test.describe("docs build", () => {
 		}
 
 		const combined = `${stdout}\n${stderr}`
-		const offending = [...TextSpliterator.from(combined)].filter((line) => PROBLEM_MARKERS.some((re) => re.test(line)))
+
+		const offending = TextSpliterator.from(combined)
+			.filter((line) => PROBLEM_MARKERS.some((re) => re.test(line)))
+			.toArray()
 
 		expect(failed, `docusaurus build exited non-zero:\n${stderr}`).toBe(false)
 		expect(offending, `build emitted warnings/errors:\n${offending.join("\n")}`).toEqual([])

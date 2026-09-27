@@ -142,7 +142,7 @@ def _source_iter(
 
     A draw reads one row-group, and rows are ordered by country within a source, so a draw sees only
     the countries in that row-group. Shuffling file order moves which row-group that is without
-    widening it. ``docs/engineering/reference/corpus-draw-coverage.mdx`` records the measurement and
+    widening it. ``docs/records/engineering/corpus-draw-coverage.mdx`` records the measurement and
     the candidate repairs.
     """
     order = list(paths)

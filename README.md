@@ -215,7 +215,7 @@ Mailwoman is dual-licensed:
   obligation. Contact `teffen@sister.software`.
 
 Release notes live on the [GitHub releases page](https://github.com/sister-software/mailwoman/releases).
-The [privacy policy](https://github.com/sister-software/mailwoman/blob/main/docs/records/site-2026-08/licensing/privacy.md)
+The [privacy policy](https://mailwoman.ai/privacy)
 states what we do and do not collect. Funders and sponsors can read our machine-readable
 [funding.json](https://mailwoman.ai/funding.json).
 Report security vulnerabilities privately per [`SECURITY.md`](./SECURITY.md).

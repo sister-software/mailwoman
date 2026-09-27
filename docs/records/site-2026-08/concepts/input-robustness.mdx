@@ -18,7 +18,7 @@ The three layers are ordered from the cheapest and most certain transforms to th
 
 ### Layer 1 — deterministic normalization
 
-The first pass is plain code without a model, in [`@mailwoman/normalize`](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/STAGES.mdx). It applies only transforms that have a single correct answer:
+The first pass is plain code without a model, in [`@mailwoman/normalize`](https://github.com/sister-software/mailwoman/blob/main/docs/records/plan/reference/STAGES.mdx). It applies only transforms that have a single correct answer:
 
 - Unicode NFC, so a composed `é` and a decomposed `é` become the same string.
 - Punctuation folding.

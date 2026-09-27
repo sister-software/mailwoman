@@ -16,8 +16,7 @@
  *   and pass `--assert-baseline <profile>` to make this harness refuse to print when its
  *   instruments read wrong. The night-3 read: the naive re-decode is worse at rank 1 than the token
  *   decode (a trained span scorer is necessary) while the correct reading exists in the top-10 ~75%
- *   of the time. Both halves of the DeepSeek-designed falsifier (session 019f6471) — details in
- *   `docs/superpowers/plans/2026-07-15-727-stage2-kbest-plan.md`.
+ *   of the time.
  *
  *   This decoder is deliberately the same shape the stage-2 JS/wasm post-processing decode will
  *   take (span enumeration + pruning + k-way Viterbi outside the ONNX graph); when the trained span

@@ -16,7 +16,7 @@
  *   describes an older tarball.
  *
  *   It does not compare a card version against a manifest version. Those are two series by design — `en-us` ships npm
- *   10.0.0 carrying model 9.1.0 — and `docs/records/site-2026-08/releases.mdx` records which release changed the model
+ *   10.0.0 carrying model 9.1.0 — and `docs/engineering/releases.mdx` records which release changed the model
  *   and which did not.
  */
 

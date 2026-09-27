@@ -39,7 +39,7 @@ Two things block the thread, and either one alone is enough to prevent overlap:
 - **`onnxruntime-node`'s `session.run()` blocks the JavaScript thread.** It does not hand work to the
   libuv pool. `Promise.all` over N inferences runs them one after another, for any N.
 - **`node:sqlite` reads are synchronous** by design, because the resolution ladder is a sync
-  interface (see [ARCHITECTURE](./ARCHITECTURE.mdx)). The resolve half of a geocode also blocks.
+  interface (see `packages/sqlite/AGENTS.md`). The resolve half of a geocode also blocks.
 
 Scaling stays between 1.00x and 1.02x at every worker count. Contention would produce a declining
 curve. A flat line

@@ -306,7 +306,7 @@ Steps 1–4 are ours and need no lawyer. Steps 5–7 are the ones likely to stal
 
 - [Database products catalog](../../records/site-2026-08/licensing/data-products.md) — the artifact
   inventory this policy applies to (D2).
-- [Pricing](../../records/site-2026-08/licensing/pricing.mdx) — the published tiers and the OEM band.
+- [Pricing](../../articles/pricing.mdx) — the published tiers and the OEM band.
 - [Data licensing & provenance](../../records/site-2026-08/licensing/data-provenance.md) — the per-source
   license table and the ODbL boundary this document's §5 rule is derived from.
 - [Spatial-layer interface](../../engineering/reference/layer-interface.mdx) — the

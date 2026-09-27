@@ -56,7 +56,7 @@ async function plant(options: { status: string; statusVersion?: string }) {
 	const files: Record<string, string> = {
 		"packages/neural-weights-en-us/model-card.json": stringifyJSON({ version: MODEL }),
 		"evals/scores-by-version.json": stringifyJSON({ schema_version: 1, runs: [{ model_version: MODEL }] }),
-		"docs/records/site-2026-08/releases.mdx": releasesPage(MODEL),
+		"docs/engineering/releases.mdx": releasesPage(MODEL),
 		[options.status]: statusPage(options.statusVersion ?? MODEL),
 	}
 

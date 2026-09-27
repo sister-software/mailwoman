@@ -93,13 +93,13 @@ This is the flattened projection (`--format json`, the default). It has one key 
 
 ## Caveats
 
-- **The resolver behind `--resolve` works at the administrative and postcode level.** It returns place centroids (locality, region, postcode) rather than delivery-point coordinates. Rooftop and interpolated street-level resolution are available through the separate `mailwoman geocode` command. See [Status](./status.mdx) for what is covered.
-- **Model quality varies by component and locale.** Some tags are strong, and others are still developing. [Status](./status.mdx) has the current per-tag numbers. Check it instead of relying on numbers quoted on other pages, which can go out of date.
-- **Non-Latin scripts still perform worse.** The tokenizer falls back to byte-level encoding for scripts without dedicated subwords (Cyrillic, CJK, Arabic). Confidence drops and span boundaries become less reliable. Several languages written in Latin script with diacritics (French, Czech, Polish, Slovak, Slovenian, the Nordic languages) have dedicated tokenizer coverage. See [Releases & capabilities](./releases.mdx) for which release added each one, and [which languages Mailwoman handles well](./concepts/language-support.mdx) for the full picture.
+- **The resolver behind `--resolve` works at the administrative and postcode level.** It returns place centroids (locality, region, postcode) rather than delivery-point coordinates. Rooftop and interpolated street-level resolution are available through the separate `mailwoman geocode` command. See [Status](../../articles/developers/status.mdx) for what is covered.
+- **Model quality varies by component and locale.** Some tags are strong, and others are still developing. [Status](../../articles/developers/status.mdx) has the current per-tag numbers. Check it instead of relying on numbers quoted on other pages, which can go out of date.
+- **Non-Latin scripts still perform worse.** The tokenizer falls back to byte-level encoding for scripts without dedicated subwords (Cyrillic, CJK, Arabic). Confidence drops and span boundaries become less reliable. Several languages written in Latin script with diacritics (French, Czech, Polish, Slovak, Slovenian, the Nordic languages) have dedicated tokenizer coverage. See [Releases & capabilities](../../engineering/releases.mdx) for which release added each one, and [which languages Mailwoman handles well](./concepts/language-support.mdx) for the full picture.
 
 ## Where to go next
 
-- [Status](./status.mdx): what ships today, what is behind a flag, and what is still experimental
+- [Status](../../articles/developers/status.mdx): what ships today, what is behind a flag, and what is still experimental
 - [API reference](./api.mdx): full type signatures, configuration, and output shapes
 - [The knowledge ladder](./understanding/our-approach/the-knowledge-ladder.mdx): the staged pipeline's design principle, stage by stage
 - [Why a neural parser?](./understanding/our-approach/why-a-neural-parser.mdx): the reasons for a learned parser over hand-written rules

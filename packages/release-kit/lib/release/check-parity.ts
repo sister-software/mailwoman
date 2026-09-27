@@ -12,7 +12,7 @@
  *
  *   1. The demo's live manifest (`releases.json` `defaultVersion` on the public R2 bucket — the
  *      exact URL the demo fetches) vs the latest published npm version.
- *   2. The docs release matrix (`docs/records/site-2026-08/releases.mdx` "(current)" row) vs the same npm
+ *   2. The docs release matrix (`docs/engineering/releases.mdx` "(current)" row) vs the same npm
  *      version — the row went stale twice (v4.11.0 era, then again within hours of v5.1.0).
  *
  *   Run by `.github/workflows/version-parity.yml` (daily + manual dispatch), after its install step —
@@ -87,7 +87,7 @@ export interface CheckReleaseParityOptions {
 
 export async function checkReleaseParity(options: CheckReleaseParityOptions): Promise<ReleaseParityReport> {
 	const { repoRoot, warnOnly, log } = options
-	const releasesMDXPath = resolvePath(repoRoot, "docs", "records", "site-2026-08", "releases.mdx")
+	const releasesMDXPath = resolvePath(repoRoot, "docs", "engineering", "releases.mdx")
 	const modelCardPath = resolvePath(repoRoot, "packages", "neural-weights-en-us", "model-card.json")
 	const parityClient = createParityClient()
 
@@ -185,7 +185,7 @@ export async function checkReleaseParity(options: CheckReleaseParityOptions): Pr
 	const docsCurrent = await readDocsCurrentVersion()
 
 	checks.push({
-		name: "docs/records/site-2026-08/releases.mdx (current) row",
+		name: "docs/engineering/releases.mdx (current) row",
 		value: docsCurrent,
 		ok: docsCurrent === npmLatest,
 		expected: npmLatest,

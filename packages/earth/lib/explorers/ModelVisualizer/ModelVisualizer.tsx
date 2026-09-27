@@ -16,7 +16,7 @@
  *   4. Decode band — final tokens, confidence bars, repair-pass diffs as before→after chips.
  *
  *   Pure and fixture-drivable. the live wrapper (LiveModelVisualizer) feeds it from
- *   the runtime handle's trace hook. Spec: docs/superpowers/specs/2026-07-03-parse-trace-model-visualizer-design.md.
+ *   the runtime handle's trace hook.
  */
 
 import { tagOf } from "@mailwoman/neural/span"

@@ -87,7 +87,7 @@ export function buildNoGazetteerMessage(opts: { dataRoot: PathBuilder; docsPath:
 	return [
 		"✗ no gazetteer data found — the endpoint needs a resolver database to answer queries.",
 		"",
-		"  Fastest path (worldwide resolution, population-first ranking, ~1.65 GB):",
+		"  Fastest path (worldwide resolution, population-first ranking, ~2.88 GB):",
 		"    mailwoman data pull candidate",
 		"",
 		...afterPull,

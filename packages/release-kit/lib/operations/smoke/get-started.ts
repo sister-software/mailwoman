@@ -19,7 +19,7 @@ import { smokeGetStarted } from "#release/smoke/get-started"
 export const smokeGetStartedOperation = defineOperation({
 	id: "release.smoke-get-started",
 	description:
-		"Cold trial of the get-started pages: pack the closure of mailwoman + neural + the en-us weights, npm install it outside the tree, and run the pages' transcripts (first parse, doctor, shell parse). --full adds the ~1.65 GB candidate pull and the US + FR geocodes; --data-root keeps the pull.",
+		"Cold trial of the get-started pages: pack the closure of mailwoman + neural + the en-us weights, npm install it outside the tree, and run the pages' transcripts (first parse, doctor, shell parse). --full adds the ~2.88 GB candidate pull and the US + FR geocodes; --data-root keeps the pull.",
 	effect: OperationEffect.LocalWrite,
 	inputSchema: z.object({ full: flag, "data-root": text }).strict(),
 	outputSchema: z.object({ packed: z.number(), legs: z.array(z.string()) }),

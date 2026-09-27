@@ -6,8 +6,7 @@
  *   Typed schema for the spatial-layer interface — the two tables every layer database embeds,
  *   regardless of tier: `layer_manifest` (single-row identity/provenance/licensing record) and
  *   `layer_coverage` (per-H3-cell survey completeness). The interface is what lets shipped,
- *   build-local, and private layers share one query surface. Spec:
- *   docs/superpowers/specs/2026-07-18-spatial-layers-and-poi-design.md §2.1.
+ *   build-local, and private layers share one query surface.
  *
  *   Coverage defines the meaning-of-zero rule: a missing coverage row means "unmapped/unknown",
  *   never "surveyed and empty". Consumers must treat absence as absence of evidence.

@@ -69,9 +69,9 @@ The A1 retrain is a single re-invocation of the A0 harness against `corpus-v0.4.
 
 A0 validated three things:
 
-1. **The harness is validated.** A0 trained end-to-end on real data. Reservoir sampling, the user-defined-symbols normalization step (see [`SP UDS whitespace failure mode`](./sentencepiece-uds-whitespace.mdx), or, on the published docs site, the version in the mailwoman repo at `corpus-python/src/mailwoman_train/tokenizer/uds.py`), the model card writer, and the byte-fallback eval all worked. A1 requires no new code.
+1. **The harness is validated.** A0 trained end-to-end on real data. Reservoir sampling, the user-defined-symbols normalization step (see [`SP UDS whitespace failure mode`](../../engineering/reference/sentencepiece-uds-whitespace.mdx), or, on the published docs site, the version in the mailwoman repo at `corpus-python/src/mailwoman_train/tokenizer/uds.py`), the model card writer, and the byte-fallback eval all worked. A1 requires no new code.
 2. **The eval fixture is validated.** 43 hand-curated multi-script lines is a small set, but the per-script breakdown shows _where_ a retrain helped or hurt. Future tokenizer iterations will use the same fixture and the same harness, so A0 / A1 / A2 numbers will be directly comparable.
-3. **The user-defined-symbols list is validated.** A0 has 2,110 UDS: US state codes, country abbreviations, postcode literal patterns (`5-digit ZIP`, `5-4 ZIP+4`, UK alphanumeric blocks, JP `100-0005`). The A0 harness substitutes ASCII space → U+2581 internally so SP's normalization does not silently disable the UDS (the [SP UDS whitespace failure mode](./sentencepiece-uds-whitespace.mdx)). That substitution has kept the UDS active in every A-series harness run.
+3. **The user-defined-symbols list is validated.** A0 has 2,110 UDS: US state codes, country abbreviations, postcode literal patterns (`5-digit ZIP`, `5-4 ZIP+4`, UK alphanumeric blocks, JP `100-0005`). The A0 harness substitutes ASCII space → U+2581 internally so SP's normalization does not silently disable the UDS (the [SP UDS whitespace failure mode](../../engineering/reference/sentencepiece-uds-whitespace.mdx)). That substitution has kept the UDS active in every A-series harness run.
 
 ## Model card schema
 

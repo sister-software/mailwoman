@@ -62,7 +62,7 @@ locale-hint → kind-classifier → phrase-grouper → classifier → ...
 - [`@mailwoman/query-shape`](../query-shape): supplies structural data to this stage.
 - [`@mailwoman/locale-hint`](../locale-hint): supplies locale context.
 - [`@mailwoman/phrase-grouper`](../phrase-grouper): stage 2.7, next in the pipeline.
-- [Staged Pipeline Interface](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/STAGES.mdx)
+- [Staged Pipeline Interface](https://github.com/sister-software/mailwoman/blob/main/docs/records/plan/reference/STAGES.mdx)
 
 ## License
 
