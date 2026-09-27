@@ -330,9 +330,10 @@ function textLines(document: AnyNode): string[] {
 
 	const text = textContent(parseDocument(`<div>${html}</div>`, { decodeEntities: true }))
 
-	return [...TextSpliterator.from(text.replaceAll("\u00A0", " ").replaceAll("\u200B", ""), { skipEmpty: true })]
+	return TextSpliterator.from(text.replaceAll("\u00A0", " ").replaceAll("\u200B", ""))
 		.map((line) => line.replaceAll(/[ \t]+/gu, " ").trim())
 		.filter(Boolean)
+		.toArray()
 }
 
 function fromLines(lines: readonly string[], stats: Stats): ReferenceSubsidiary[] {
