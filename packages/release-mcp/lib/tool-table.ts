@@ -29,7 +29,7 @@ export interface ReleaseTool {
 	 * The operation's own input schema, plus `dry_run` on a writing operation.
 	 */
 	inputSchema: ZodObject<ZodRawShape>
-	effect: (typeof OperationEffect)[keyof typeof OperationEffect]
+	effect: OperationEffect
 	handler: (args: Record<string, unknown>) => Promise<ReleaseToolResult>
 }
 

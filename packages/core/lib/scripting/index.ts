@@ -1,5 +1,7 @@
 import type { ScriptCallback } from "#scripting/utils/index"
 
+export * from "#scripting/operation"
+
 /**
  * Given the calling module's import.meta object, runs the callback if that module is the entry script.
  *

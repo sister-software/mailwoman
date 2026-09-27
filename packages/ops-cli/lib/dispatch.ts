@@ -3,10 +3,13 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mwops`: the private operator CLI. Two verbs, each a view over a registry — `release <operation>` over
- *   `@mailwoman/release-kit` and `health <check>|all` over `@mailwoman/repo-health`. It parses arguments, hands them to
- *   the registered capability, and prints the result. every decision about what happens belongs to the operation or the
- *   check. Kept free of `process` so it is unit-testable: the bin wrapper supplies argv, stdout, and the exit code.
+ *   `mwops`: the private operator CLI. Four verbs, each a view over a registry: `release <operation>` over
+ *   `@mailwoman/release-kit`, `shop <operation>` over the license worker's shop, `storage <operation>` over
+ *   `@mailwoman/storage-kit`, and `health <check>|all` over `@mailwoman/repo-health`. The three operation registries
+ *   share one runner that differs only in the context it builds and the exit code an output earns. It parses
+ *   arguments, hands them to the registered capability, and prints the result. Every decision about what happens
+ *   belongs to the operation or the check. Kept free of `process` so it is unit-testable: the bin wrapper supplies
+ *   argv, stdout, and the exit code.
  *
  *   The health verb performs two mutations, and neither is a check: `health baseline debt` rewrites
  *   `packages/repo-health/baseline.json` from the current readings, and `health fix <check>` applies the mechanical
@@ -15,8 +18,9 @@
  */
 
 import { prettyJSON, stringifyJSON } from "@mailwoman/core/json"
+import { findOperation, type Operation, type OperationContext } from "@mailwoman/core/scripting"
 import { shopOperations } from "@mailwoman/license-worker/shop"
-import { operations, type ReleaseContext, type ReleaseOperation } from "@mailwoman/release-kit"
+import { operations, type ReleaseContext } from "@mailwoman/release-kit"
 import {
 	applyModuleMoves,
 	checkPassed,
@@ -31,7 +35,7 @@ import {
 	type RepoContext,
 	writeBaseline,
 } from "@mailwoman/repo-health"
-import { findStorageOperation, storageOperations, type StorageContext } from "@mailwoman/storage-kit"
+import { storageOperations, type StorageContext } from "@mailwoman/storage-kit"
 
 /**
  * How many times `health fix` re-takes a plan before giving up.
@@ -112,14 +116,60 @@ function usage(io: DispatchIO): number {
 }
 
 /**
- * Run one operation of a registry: the release registry under `mwops release`,
- * the shop's under `mwops shop`.
+ * One registry as a `mwops` verb.
  *
- * The interface is the same object, so the view is one function.
+ * It names where the operations come from, what each one receives beside its input,
+ * and how an output decides the exit code.
  */
-async function runOperation(
-	verb: "release" | "shop",
-	registry: ReadonlyArray<ReleaseOperation<unknown, unknown>>,
+interface OperationView<TContext extends OperationContext> {
+	verb: string
+	registry: ReadonlyArray<Operation<string, TContext>>
+	/**
+	 * Build the family's context over the base every operation receives.
+	 */
+	context: (base: OperationContext, io: DispatchIO) => TContext
+	/**
+	 * The exit code an output earns.
+	 * A view without one exits 0.
+	 */
+	exitCode?: (output: unknown) => number
+}
+
+/**
+ * `mwops release`, `mwops shop`, and `mwops storage`: the same view over three registries.
+ */
+const releaseView: OperationView<ReleaseContext> = {
+	verb: "release",
+	registry: operations,
+	context: (base, io) => ({ ...base, repoRoot: io.repoRoot }),
+}
+
+const shopView: OperationView<ReleaseContext> = {
+	verb: "shop",
+	registry: shopOperations,
+	context: (base, io) => ({ ...base, repoRoot: io.repoRoot }),
+}
+
+const storageView: OperationView<StorageContext> = {
+	verb: "storage",
+	registry: storageOperations,
+	context: (base, io) => ({ ...base, root: io.root ?? false }),
+	// A verify that found failures exits non-zero, so a caller can branch on the status.
+	exitCode: (output) => {
+		const failed = (output as { failed?: number }).failed
+
+		return typeof failed === "number" && failed > 0 ? 1 : 0
+	},
+}
+
+/**
+ * Run one operation of a registry.
+ *
+ * Parse the options, find the operation by its bare name or dotted id, build the
+ * family's context, validate the input, run, and print.
+ */
+async function runOperation<TContext extends OperationContext>(
+	view: OperationView<TContext>,
 	args: readonly string[],
 	io: DispatchIO
 ): Promise<number> {
@@ -128,12 +178,11 @@ async function runOperation(
 
 	if (!id) return usage(io)
 
-	const qualified = id.includes(".") ? id : `${verb}.${id}`
-	const operation = registry.find((candidate) => candidate.id === qualified)
+	const operation = findOperation(view.registry, view.verb, id)
 
 	if (!operation) {
 		io.stderr(
-			`mwops ${verb}: no operation ${stringifyJSON(id)}; registered: ${registry.map((o) => o.id).join(", ") || "(none)"}\n`
+			`mwops ${view.verb}: no operation ${stringifyJSON(id)}; registered: ${view.registry.map((o) => o.id).join(", ") || "(none)"}\n`
 		)
 
 		return 2
@@ -141,17 +190,19 @@ async function runOperation(
 
 	const json = options.json === true
 
-	const context: ReleaseContext = {
-		repoRoot: io.repoRoot,
-		dryRun: options["dry-run"] === true,
-		log: json ? () => {} : (line) => io.stderr(`${line}\n`),
-	}
+	const context = view.context(
+		{
+			dryRun: options["dry-run"] === true,
+			log: json ? () => {} : (line) => io.stderr(`${line}\n`),
+		},
+		io
+	)
 
 	const { json: _json, "dry-run": _dryRun, ...input } = options
 	const parsed = operation.inputSchema.safeParse(input)
 
 	if (!parsed.success) {
-		io.stderr(`mwops ${verb} ${operation.id}: invalid input — ${parsed.error.message}\n`)
+		io.stderr(`mwops ${view.verb} ${operation.id}: invalid input — ${parsed.error.message}\n`)
 
 		return 2
 	}
@@ -166,58 +217,7 @@ async function runOperation(
 
 	io.stdout(`${renderedOutput}\n`)
 
-	return 0
-}
-
-/**
- * `mwops storage <operation>` — the view over the storage registry.
- *
- * Separate from {@link runOperation} because a storage operation's context carries the privilege
- * the wrapper resolved rather than the repository root: these operations act on block devices.
- */
-async function runStorage(args: readonly string[], io: DispatchIO): Promise<number> {
-	const { options, rest } = parseOptions(args)
-	const id = rest[0]
-
-	if (!id) return usage(io)
-
-	const operation = findStorageOperation(id)
-
-	if (!operation) {
-		io.stderr(
-			`mwops storage: no operation ${stringifyJSON(id)}; registered: ${storageOperations.map((o) => o.id).join(", ")}\n`
-		)
-
-		return 2
-	}
-
-	const json = options.json === true
-
-	const context: StorageContext = {
-		dryRun: options["dry-run"] === true,
-		root: io.root ?? false,
-		log: json ? () => {} : (line) => io.stderr(`${line}\n`),
-	}
-
-	const { json: _json, "dry-run": _dryRun, ...input } = options
-	const parsed = operation.inputSchema.safeParse(input)
-
-	if (!parsed.success) {
-		io.stderr(`mwops storage ${operation.id}: invalid input — ${parsed.error.message}\n`)
-
-		return 2
-	}
-
-	const output = await operation.run(parsed.data, context)
-
-	io.stdout(
-		`${json ? prettyJSON(output) : operation.formatOutput ? operation.formatOutput(output) : prettyJSON(output)}\n`
-	)
-
-	// A verify that found failures exits non-zero, so a caller can branch on the status.
-	const failed = (output as { failed?: number }).failed
-
-	return typeof failed === "number" && failed > 0 ? 1 : 0
+	return view.exitCode?.(output) ?? 0
 }
 
 /**
@@ -442,13 +442,13 @@ export async function dispatch(args: readonly string[], io: DispatchIO): Promise
 
 	switch (verb) {
 		case "release":
-			return await runOperation("release", operations, rest, io)
+			return await runOperation(releaseView, rest, io)
 		case "shop":
-			return await runOperation("shop", shopOperations, rest, io)
+			return await runOperation(shopView, rest, io)
 		case "health":
 			return await runHealth(rest, io)
 		case "storage":
-			return await runStorage(rest, io)
+			return await runOperation(storageView, rest, io)
 		default:
 			return usage(io)
 	}

@@ -9,6 +9,8 @@
  *   they never import an operation module directly.
  */
 
+import { findOperation as findRegisteredOperation } from "@mailwoman/core/scripting"
+
 import type { ReleaseOperation } from "#operation"
 import { blessPackage } from "#operations/bless-package"
 import { checkParity } from "#operations/check-parity"
@@ -62,5 +64,5 @@ export const operations: ReadonlyArray<ReleaseOperation<unknown, unknown>> = [
  * Look an operation up by id, or `undefined`.
  */
 export function findOperation(id: string): ReleaseOperation<unknown, unknown> | undefined {
-	return operations.find((operation) => operation.id === id)
+	return findRegisteredOperation(operations, "release", id)
 }

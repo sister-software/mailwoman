@@ -8,6 +8,8 @@
  *   never import an operation module directly.
  */
 
+import { findOperation } from "@mailwoman/core/scripting"
+
 import type { StorageOperation } from "#operation"
 import { installSudoersOperation, installUdevRuleOperation } from "#operations/install-rules"
 import { planOperation } from "#operations/plan"
@@ -32,5 +34,5 @@ export const storageOperations: ReadonlyArray<StorageOperation<unknown, unknown>
  * Look a storage operation up by its bare name (`prepare`) or its dotted id (`storage.prepare`).
  */
 export function findStorageOperation(name: string): StorageOperation<unknown, unknown> | undefined {
-	return storageOperations.find((operation) => operation.id === name || operation.id === `storage.${name}`)
+	return findOperation(storageOperations, "storage", name)
 }
