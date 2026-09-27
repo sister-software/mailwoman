@@ -1,47 +1,30 @@
-#!/usr/bin/env python3
-"""Generate the TS↔Python tokenizer parity fixture.
+"""Build a tokenizer parity fixture shared by TypeScript and Python tests.
 
-Reads a `tokenizer.model` (default: v0.1.0 from the host's models dir), runs
-SentencePiece against either a curated set of address-shaped inputs OR a
-sampled set of raws drawn from a corpus parquet file, and writes a JSON
-file with one entry per input:
+What this script does:
+- loads a SentencePiece `tokenizer.model`
+- tokenizes input strings
+- writes JSON entries like:
 
-    [
-      {
-        "raw": "75004 Paris",
-        "pieces": ["▁7500", "4", "▁Paris"],
-        "ids": [391, 362, 287]
-      },
-      ...
-    ]
+        {"raw": "75004 Paris", "pieces": ["▁7500", "4", "▁Paris"], "ids": [391, 362, 287]}
 
-The TS parity test loads this file plus the same tokenizer.model and asserts
-byte-for-byte equality with `encode(raw)`. Offsets aren't in the fixture —
-the test reconstructs them in TS and validates by slicing `raw[start:end]`
-against the literal piece text.
+TS tests read this JSON + the same model and check that TS tokenization
+matches Python byte-for-byte.
 
-## Curated mode (committed fixture)
+Modes:
+- Curated (small, committed): uses built-in example address strings.
+- Parquet sample (large, local-only): samples `raw` values from a parquet file.
 
-    python3 generate-tokenizer-parity.py \\
-        --model $MAILWOMAN_DATA_ROOT/models/tokenizer/v0.1.0/tokenizer.model \\
-        --out  packages/neural/neural/test/fixtures/tokenizer-parity-v0.1.0.json
+Examples:
 
-17 hand-curated inputs covering Latin baseline, multi-word, numerics,
-hyphenation, Latin diacritics. CI-safe size.
+        python3 packages/neural/test/fixtures/generate-tokenizer-parity.py \\
+            --model $MAILWOMAN_DATA_ROOT/models/tokenizer/v0.1.0/tokenizer.model \\
+            --out packages/neural/test/fixtures/tokenizer-parity-v0.1.0.json
 
-## Large-scale mode (gitignored fixture, host-only)
-
-    python3 generate-tokenizer-parity.py \\
-        --model     $MAILWOMAN_DATA_ROOT/models/tokenizer/v0.1.0/tokenizer.model \\
-        --from-parquet $MAILWOMAN_DATA_ROOT/corpus/versioned/v0.2.0/corpus-v0.2.0/val/part-0000.parquet \\
-        --sample 10000 \\
-        --seed   42 \\
-        --out    packages/neural/neural/test/fixtures/tokenizer-parity-large-v0.1.0.json
-
-Reads N raws from the parquet file's `raw` column with a deterministic
-seed, tokenizes each, writes the fixture. Exercises real-world edge cases
-(multi-script, multiple consecutive spaces, weird quoting). The output is
-~3 MB for N=10000 and is excluded from git.
+        python3 packages/neural/test/fixtures/generate-tokenizer-parity.py \\
+            --model $MAILWOMAN_DATA_ROOT/models/tokenizer/v0.1.0/tokenizer.model \\
+            --from-parquet $MAILWOMAN_DATA_ROOT/corpus/versioned/v0.2.0/corpus-v0.2.0/val/part-0000.parquet \\
+            --sample 10000 --seed 42 \\
+            --out packages/neural/test/fixtures/tokenizer-parity-large-v0.1.0.json
 """
 
 from __future__ import annotations
@@ -83,29 +66,73 @@ CURATED_INPUTS: list[str] = [
 ]
 
 
-def sample_from_parquet(path: Path, n: int, seed: int) -> list[str]:
-    """Read N raws from a parquet `raw` column with a deterministic sample."""
+def sample_from_parquet(path: Path, sample_size: int, seed: int) -> list[str]:
+    """Sample `raw` values in one pass while retaining at most `sample_size` strings."""
     try:
         import pyarrow.parquet as pq
     except ImportError:
         sys.stderr.write("pip install pyarrow\n")
         raise SystemExit(2)
 
-    table = pq.read_table(str(path), columns=["raw"])
-    raws = table.column("raw").to_pylist()
-    if n >= len(raws):
-        return raws
     rng = random.Random(seed)
-    return rng.sample(raws, n)
+    reservoir: list[str] = []
+    rows_read = 0
+
+    parquet = pq.ParquetFile(path)
+    for batch in parquet.iter_batches(columns=["raw"]):
+        for raw in batch.column(0).to_pylist():
+            if not isinstance(raw, str):
+                actual = "null" if raw is None else type(raw).__name__
+                raise TypeError(
+                    f"{path}: raw row index {rows_read} is {actual}; expected a string"
+                )
+
+            rows_read += 1
+            if len(reservoir) < sample_size:
+                reservoir.append(raw)
+                continue
+
+            replacement = rng.randrange(rows_read)
+            if replacement < sample_size:
+                reservoir[replacement] = raw
+
+    return reservoir
+
+
+def positive_int(value: str) -> int:
+    """Parse a positive integer for an argparse option."""
+    parsed = int(value)
+    if parsed <= 0:
+        raise argparse.ArgumentTypeError("must be greater than zero")
+    return parsed
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--model", required=True, type=Path, help="tokenizer.model path")
+    parser = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+
+    parser.add_argument(
+        "--model", required=True, type=Path, help="tokenizer.model path"
+    )
     parser.add_argument("--out", required=True, type=Path, help="output JSON path")
-    parser.add_argument("--from-parquet", type=Path, help="Sample raws from this parquet file's `raw` column.")
-    parser.add_argument("--sample", type=int, default=10000, help="Number of raws to sample (large-scale mode).")
-    parser.add_argument("--seed", type=int, default=42, help="RNG seed for the sample (large-scale mode).")
+    parser.add_argument(
+        "--from-parquet",
+        type=Path,
+        help="Sample raws from this parquet file's `raw` column.",
+    )
+    parser.add_argument(
+        "--sample",
+        type=positive_int,
+        default=10000,
+        help="Number of raws to sample (large-scale mode).",
+    )
+    parser.add_argument(
+        "--seed",
+        type=int,
+        default=42,
+        help="RNG seed for the sample (large-scale mode).",
+    )
     args = parser.parse_args()
 
     sp = spm.SentencePieceProcessor()
@@ -113,15 +140,23 @@ def main() -> int:
 
     if args.from_parquet:
         inputs = sample_from_parquet(args.from_parquet, args.sample, args.seed)
-        sys.stderr.write(f"sampled {len(inputs)} raws from {args.from_parquet} (seed={args.seed})\n")
+        sys.stderr.write(
+            f"sampled {len(inputs)} raws from {args.from_parquet} (seed={args.seed})\n"
+        )
     else:
         inputs = CURATED_INPUTS
         sys.stderr.write(f"using {len(inputs)} curated inputs\n")
 
-    out = [{"raw": raw, "pieces": sp.EncodeAsPieces(raw), "ids": sp.EncodeAsIDs(raw)} for raw in inputs]
+    out = [
+				# Note: Third-party library names `Ids` vs our typical `IDs`.
+        {"raw": raw, "pieces": sp.EncodeAsPieces(raw), "ids": sp.EncodeAsIds(raw)}
+        for raw in inputs
+    ]
 
     args.out.parent.mkdir(parents=True, exist_ok=True)
-    args.out.write_text(json.dumps(out, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    args.out.write_text(
+        json.dumps(out, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
+    )
     sys.stderr.write(f"wrote {len(out)} fixture entries to {args.out}\n")
     return 0
 

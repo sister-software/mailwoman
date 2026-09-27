@@ -1,5 +1,5 @@
 {
-	"generated_by": "neural/test/fixtures/generate-evidence-parity.py",
+	"generated_by": "packages/neural/test/fixtures/generate-evidence-parity.py",
 	"street_lexicon": {
 		"feature_dim": 1,
 		"slots": ["street_type"],

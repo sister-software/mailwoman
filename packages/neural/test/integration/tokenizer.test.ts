@@ -13,9 +13,9 @@
  *   will produce nonsense. Regenerate the fixture via:
  *
  *   ```
- *   python3 packages/neural/neural/test/fixtures/generate-tokenizer-parity.py \
- *   --model packages/neural/neural/test/fixtures/tokenizer-v0.1.0.model \
- *   --out   packages/neural/neural/test/fixtures/tokenizer-parity-v0.1.0.json
+ *   python3 packages/neural/test/fixtures/generate-tokenizer-parity.py \
+ *   --model packages/neural/test/fixtures/tokenizer-v0.1.0.model \
+ *   --out   packages/neural/test/fixtures/tokenizer-parity-v0.1.0.json
  * ```
  */
 

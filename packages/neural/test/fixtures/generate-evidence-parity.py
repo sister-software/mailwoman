@@ -1,7 +1,7 @@
 """Generate the TS↔Python EVIDENCE-CHANNEL parity fixture (Option-A Phase 2).
 
 Paints a probe set with MINI street-type + locality-surface lexicons through corpus-python's REAL
-painter (`mailwoman_train.gazetteer_anchor.realign_gazetteer_to_pieces`) against the in-repo fixture
+painter (`mailwoman_train.features.gazetteer_anchor.realign_gazetteer_to_pieces`) against the in-repo fixture
 tokenizer, and snapshots per-piece features + confidence. The TS test
 (`neural/evidence-inference.test.ts`) replays the same lexicons + piece offsets through
 `buildGazetteerFeatures` and asserts byte equality — the train/inference painter-parity guard the
@@ -11,21 +11,42 @@ The probe set deliberately carries: hyphenated + apostrophe surfaces (the fold c
 defect made unreachable), uppercase-conditional short codes, homograph bits, multi-token longest-first
 matches, the lowercase register (operator doctrine), and negative rows.
 
-Run (from repo root):
+Run from the repository root:
     PYTHONPATH=corpus-python/src corpus-python/.venv/bin/python \
-        neural/test/fixtures/generate-evidence-parity.py
+        packages/neural/test/fixtures/generate-evidence-parity.py
 """
+
+from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import TypedDict
 
-from mailwoman_train.gazetteer_anchor import GazetteerLexicon, realign_gazetteer_to_pieces
+from mailwoman_train.features.gazetteer_anchor import (
+    GazetteerLexicon,
+    realign_gazetteer_to_pieces,
+)
 from mailwoman_train.tokenizer import Tokenizer
 
 FIXTURE_DIR = Path(__file__).parent
 OUT = FIXTURE_DIR / "evidence-parity-v2.json"
 
-STREET_LEXICON = {
+
+class LexiconRules(TypedDict):
+    digit_guard: bool
+
+
+class FixtureLexicon(TypedDict):
+    feature_dim: int
+    slots: list[str]
+    bits: dict[str, int]
+    max_ngram: int
+    entries: dict[str, int]
+    code_entries: dict[str, int]
+    rules: LexiconRules
+
+
+STREET_LEXICON: FixtureLexicon = {
     "feature_dim": 1,
     "slots": ["street_type"],
     "bits": {"street_type": 1},
@@ -42,7 +63,7 @@ STREET_LEXICON = {
     "rules": {"digit_guard": True},
 }
 
-LOCALITY_LEXICON = {
+LOCALITY_LEXICON: FixtureLexicon = {
     "feature_dim": 2,
     "slots": ["locality", "locality_homograph"],
     "bits": {"locality": 1, "locality_homograph": 2},
@@ -82,7 +103,41 @@ PROBES = [
 ]
 
 
-def to_lexicon(raw: dict) -> GazetteerLexicon:
+def validate_lexicon(name: str, raw: FixtureLexicon) -> None:
+    """Raise when fixture metadata cannot describe its declared feature vectors."""
+    if raw["feature_dim"] != len(raw["slots"]):
+        raise ValueError(
+            f"{name}: feature_dim={raw['feature_dim']} but slots has "
+            f"{len(raw['slots'])} entries"
+        )
+
+    if set(raw["bits"]) != set(raw["slots"]):
+        raise ValueError(f"{name}: bits keys must equal slots")
+
+    valid_mask = (1 << raw["feature_dim"]) - 1
+    for section in ("bits", "entries", "code_entries"):
+        invalid = {
+            key: value
+            for key, value in raw[section].items()
+            if value <= 0 or value & ~valid_mask
+        }
+        if invalid:
+            raise ValueError(
+                f"{name}: {section} contains invalid feature masks: {invalid}"
+            )
+
+    longest_entry = max(
+        (len(entry.split()) for entry in (*raw["entries"], *raw["code_entries"])),
+        default=0,
+    )
+    if raw["max_ngram"] < longest_entry:
+        raise ValueError(
+            f"{name}: max_ngram={raw['max_ngram']} cannot reach a "
+            f"{longest_entry}-token entry"
+        )
+
+
+def to_lexicon(raw: FixtureLexicon) -> GazetteerLexicon:
     return GazetteerLexicon(
         feature_dim=raw["feature_dim"],
         slots=tuple(raw["slots"]),
@@ -95,6 +150,9 @@ def to_lexicon(raw: dict) -> GazetteerLexicon:
 
 
 def main() -> None:
+    validate_lexicon("street_lexicon", STREET_LEXICON)
+    validate_lexicon("locality_lexicon", LOCALITY_LEXICON)
+
     tok = Tokenizer(FIXTURE_DIR / "tokenizer-v0.1.0.model")
     street = to_lexicon(STREET_LEXICON)
     locality = to_lexicon(LOCALITY_LEXICON)
@@ -106,7 +164,10 @@ def main() -> None:
         cases.append(
             {
                 "raw": raw,
-                "pieces": [{"piece": p.piece, "start": p.char_begin, "end": p.char_end} for p in pieces],
+                "pieces": [
+                    {"piece": p.piece, "start": p.char_begin, "end": p.char_end}
+                    for p in pieces
+                ],
                 "street": {"features": sfeat, "confidence": sconf},
                 "locality": {"features": lfeat, "confidence": lconf},
             }
@@ -114,7 +175,7 @@ def main() -> None:
     OUT.write_text(
         json.dumps(
             {
-                "generated_by": "neural/test/fixtures/generate-evidence-parity.py",
+                "generated_by": "packages/neural/test/fixtures/generate-evidence-parity.py",
                 "street_lexicon": STREET_LEXICON,
                 "locality_lexicon": LOCALITY_LEXICON,
                 "cases": cases,
