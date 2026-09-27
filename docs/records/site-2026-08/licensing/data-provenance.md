@@ -45,8 +45,14 @@ The GERS id does not survive. `fold-overture` writes a concordance under `wd:id`
 either artifact can be traced back to the Overture record it came from. Counsel should know that before
 considering whether an alteration file is producible.
 
-The same measurement over the published `2026-08-25` artifact is outstanding: it needs the 2.88 GB
-download, since the id ranges are a property of the rows rather than of the manifest.
+The same measurement over the published `2026-08-25` artifact was taken on 2026-09-27, after downloading it
+in full. Overture Divisions contributes **1,590,314 of its 8,346,136 distinct places, 19.05%**, over
+2,152,892 of its 15,183,707 candidate rows. The place count is identical in both chains.
+
+The published artifact's expression covers the terms of three folds, which are 6,537,182 of 8,346,136
+places, 78.33%. The remaining 1,808,954 places, 21.67%, come from folds the expression leaves out:
+Code-Point Open at 1,746,976 places under the Open Government License v3.0, GeoNames postal at 57,221, and
+the Northern Ireland OpenStreetMap fold at 4,757.
 
 `packages/mailwoman/lib/data/bundles.ts` now names Overture Divisions among the bundle's publishers and carries the unresolved question. `refusalsForPublication` in `@mailwoman/core/layers` refuses to publish a layer whose `tier` or license expression forbids it, which catches this artifact.
 
@@ -55,6 +61,36 @@ download, since the id ranges are a property of the rows rather than of the mani
 :::caution[Legal sign-off: ☐ not cleared (as of 2026-06-30)]
 
 The OpenStreetMap precision tier is **built but not enabled** in any published artifact. It is not on npm, on R2, or in the demo. Enabling it is blocked until counsel reviews the [questions below](#what-counsel-needs-to-confirm). When that review is complete, change this banner to **☑ cleared**, name the reviewing counsel, and add the date.
+
+:::
+
+:::danger[Correction, 2026-09-27: a published artifact carries OpenStreetMap-derived rows]
+
+This page records the state as of 2026-08 and its text is left as it was written. The banner above is
+accurate about the tier it describes and inaccurate as a statement about the published gazetteer.
+
+The banner is about the OpenStreetMap **rooftop address extracts** in `@mailwoman/osm`. Those remain absent
+from every published artifact, and that part holds.
+
+A second OpenStreetMap-derived layer reaches a published artifact by a different route. The Northern Ireland
+unit-postcode database is built from OpenStreetMap `addr:postcode` tags, because Code-Point Open carves
+Northern Ireland out and the alternatives were a £9,224 license or no postcode data. Its rows were folded
+into the candidate gazetteer, which ships as the `candidate` bundle.
+
+Measured 2026-09-27 by downloading the published artifact in full,
+`gazetteer/2026-08-25b/candidate.db`, 2,880,921,600 bytes, and verifying the byte count against the
+server's `content-length` before counting any row. It holds **4,757 places and 9,536 candidate rows** minted
+from the Northern Ireland OpenStreetMap fold's own id range. Sampled rows read `BT11AA`, `BT11AL`, `BT11BL`,
+`BT11DA` and `BT11DD` at Belfast coordinates. The place count matches that database's own documented figure
+of 4,757 of the 50,032 live Northern Ireland postcodes, 9.5%.
+
+So a reader who relied on this banner to conclude that the published gazetteer carries no share-alike data
+was misinformed on that point. The artifact's own `layer_manifest` records `tier = build-local` and a license
+expression including `ODbL-1.0`, so the file states its own terms correctly while this page does not.
+
+**What the share-alike obligation then requires of a redistributor is with counsel, and this correction
+states no conclusion about it.** The engineering options are recorded, and the choice between them is the
+operator's.
 
 :::
 
