@@ -88,6 +88,7 @@
 		"@mailwoman/release-kit": "workspace:*",
 		"@mailwoman/sqlite": "workspace:*",
 		"esbuild": "0.28.2",
+		"mailwoman": "workspace:*",
 		"path-ts": "^2.5.0",
 		"spliterator": "^8.1.0",
 		"typescript": "npm:@typescript/typescript6@^6.0.2"

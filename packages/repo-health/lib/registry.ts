@@ -28,6 +28,7 @@ import { nodeModulesReacharoundCheck } from "#checks/node-modules-reacharound"
 import { packageLicenseCheck } from "#checks/package-license"
 import { prefixDirectoriesCheck } from "#checks/prefix-directories"
 import { privateNameShadowsCheck } from "#checks/private-name-shadows"
+import { publishedBundlesCheck } from "#checks/published-bundles"
 import { pythonPrefixDirectoriesCheck } from "#checks/python-prefix-directories"
 import { rightsChainCheck } from "#checks/rights-chain"
 import { runtimeFlagsCheck } from "#checks/runtime-flags"
@@ -59,6 +60,7 @@ export const checks: ReadonlyArray<RepoCheck> = [
 	weightsRightsCheck,
 	weightsReconciliationCheck,
 	dataProvenanceCheck,
+	publishedBundlesCheck,
 	testLayoutCheck,
 	nodeModulesReacharoundCheck,
 	noRootScriptsCheck,

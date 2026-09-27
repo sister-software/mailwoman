@@ -31,6 +31,7 @@ import {
 	type BundleArtifact,
 } from "#data/bundles"
 import { existingLocalPath, readReleaseManifest } from "#data/release"
+import { headContentLength } from "#data/remote"
 
 /**
  * Native command-line interface consumed by the filesystem command router.
@@ -51,12 +52,9 @@ export const spec = {
  * A probe failure yields `undefined` so the caller falls back to the recorded
  * {@link BundleArtifact.approxBytes} rather than treating it as a verdict.
  */
-async function headContentLength(client: APIClient, artifact: BundleArtifact): Promise<number | undefined> {
+async function liveContentLength(client: APIClient, artifact: BundleArtifact): Promise<number | undefined> {
 	try {
-		const res = await client.fetch({ method: "head", url: artifactURL(artifact) })
-		const len = res.headers["content-length"]
-
-		return len ? Number(len) : undefined
+		return await headContentLength(client, artifactURL(artifact))
 	} catch {
 		return undefined
 	}
@@ -114,7 +112,7 @@ async function statusForBundles(
 			const sizeBytes = (await statPath(existing)).size
 
 			const expected = checkRemote
-				? ((await headContentLength(client!, artifact)) ?? artifact.approxBytes)
+				? ((await liveContentLength(client!, artifact)) ?? artifact.approxBytes)
 				: artifact.approxBytes
 
 			const stale = needsDownload({ exists: true, sizeBytes }, { contentLength: expected })

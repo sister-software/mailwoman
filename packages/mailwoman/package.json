@@ -437,6 +437,16 @@
 			"node": "./lib/data/index.ts",
 			"default": "./out/data/index.js"
 		},
+		"./data/bundles": {
+			"types": "./out/data/bundles.d.ts",
+			"node": "./lib/data/bundles.ts",
+			"default": "./out/data/bundles.js"
+		},
+		"./data/published-bundles": {
+			"types": "./out/data/published-bundles.d.ts",
+			"node": "./lib/data/published-bundles.ts",
+			"default": "./out/data/published-bundles.js"
+		},
 		"./street": {
 			"types": "./out/street/index.d.ts",
 			"node": "./lib/street/index.ts",
