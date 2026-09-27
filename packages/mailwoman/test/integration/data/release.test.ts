@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Versioned data switchover (#485 piece 4): manifest read + path resolution, and the
- *   RegionDatabaseProvider's zero-downtime atomic reload (version flip + one-generation grace on old
+ *   USStateDatabaseProvider's zero-downtime atomic reload (version flip + one-generation grace on old
  *   handles). Uses a fake lookup factory + on-disk touch files — no WOF / weights needed.
  */
 
@@ -12,7 +12,7 @@ import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories, writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { addressPointDatabaseRoot } from "@mailwoman/resolver-wof-sqlite/paths"
 import { readReleaseManifest, resolveDatabasePath } from "mailwoman/data"
-import { RegionDatabaseProvider } from "mailwoman/geocode"
+import { USStateDatabaseProvider } from "mailwoman/geocode"
 import type { PathBuilder } from "path-ts"
 import { afterAll, describe, expect, test } from "vitest"
 
@@ -123,7 +123,7 @@ describe("RegionDatabaseProvider atomic switchover", () => {
 		await writeLocalTextFile("", apDir("address-points-us-tx-v1.db"))
 		await writeLocalJSONFile({ "address-points": "v1" }, (await root)("releases.json"))
 
-		const provider = await RegionDatabaseProvider.create(factory, await root)
+		const provider = await USStateDatabaseProvider.create(factory, await root)
 		const v1 = provider.for("tx").addressPoints as FakeAddressPoints
 		expect(v1.dbPath).toContain("address-points-us-tx-v1.db")
 		expect(provider.versions()).toEqual({ "address-points": "v1" })
@@ -153,7 +153,7 @@ describe("RegionDatabaseProvider atomic switchover", () => {
 		await writeLocalTextFile("", apDir("address-points-us-tx-v1.db"))
 		await writeLocalJSONFile({ "address-points": "v1" }, (await root)("releases.json"))
 
-		using provider = await RegionDatabaseProvider.create(factory, await root)
+		using provider = await USStateDatabaseProvider.create(factory, await root)
 
 		const first = provider.for("tx").addressPoints
 		await provider.reload()

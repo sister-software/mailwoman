@@ -13,6 +13,7 @@
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers"
+import type { RegionDatabaseProvider, RegionDatabases } from "@mailwoman/core/resolver"
 import { AddressPointSqliteLookup } from "@mailwoman/resolver-wof-sqlite"
 import type { PathBuilder } from "path-ts"
 
@@ -20,9 +21,11 @@ import { osmDatabaseRoot } from "#paths"
 import { streetLocaleForCountry, supportedOSMCountries } from "#sdk/street/locale"
 
 /**
- * What the cascade needs from an OSM extract — structurally a subset of mailwoman's `RegionDatabases`.
+ * The member of {@link RegionDatabases} an OSM extract supplies.
+ *
+ * It narrows to the SQLite class that opened it, because the provider disposes the handle.
  */
-export interface OSMExtracts {
+export interface OSMExtracts extends Pick<RegionDatabases, "addressPoints"> {
 	addressPoints?: AddressPointSqliteLookup
 }
 
@@ -40,7 +43,7 @@ export interface OSMExtracts {
  * A provider constructed directly must be warmed before its first `for`,
  * or it answers `{}` for every country.
  */
-export class OSMRegionDatabaseProvider implements Disposable {
+export class OSMRegionDatabaseProvider implements RegionDatabaseProvider<string, OSMExtracts> {
 	readonly #dataRoot: PathBuilder
 	readonly #cache = new Map<string, OSMExtracts>()
 	/**

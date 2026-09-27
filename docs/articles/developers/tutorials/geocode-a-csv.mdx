@@ -64,7 +64,7 @@ import { createWriteStream } from "node:fs"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { AddressPointSqliteLookup, StreetInterpolator, WOFCandidateTableLookup } from "@mailwoman/resolver-wof-sqlite"
-import { geocodeAddress, RegionDatabaseProvider } from "mailwoman/geocode-core"
+import { geocodeAddress, USStateDatabaseProvider } from "mailwoman/geocode-core"
 import { dataRootPath, resolveCandidateDBPath } from "mailwoman/resolver-backend"
 import { CSVSpliterator } from "spliterator"
 
@@ -73,7 +73,7 @@ const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-U
 using lookup = new WOFCandidateTableLookup({ databasePath: resolveCandidateDBPath() })
 const resolver = createWOFResolver(lookup)
 // Street extracts, when any are on disk under $MAILWOMAN_DATA_ROOT. Absent ones degrade to admin.
-using extracts = new RegionDatabaseProvider({ AddressPointSqliteLookup, StreetInterpolator }, dataRootPath())
+using extracts = new USStateDatabaseProvider({ AddressPointSqliteLookup, StreetInterpolator }, dataRootPath())
 
 const out = createWriteStream("customers.geocoded.jsonl")
 const counts = { matched: 0, mismatched: 0, skipped: 0 }
@@ -124,11 +124,11 @@ console.log(
 
 Five decisions in there are worth naming.
 
-**The classifier, the lookup, the resolver and the `RegionDatabaseProvider` are built once, outside the loop.**
+**The classifier, the lookup, the resolver and the `USStateDatabaseProvider` are built once, outside the loop.**
 Loading the model is the expensive part of a geocode, and hoisting it out is why the row count barely
 moves the clock: the same script over one row runs in 1.35 s and over twenty in 1.53 s.
 
-**`databases: extracts.for` is what lets this script get more precise later.** `RegionDatabaseProvider` resolves the
+**`databases: extracts.for` is what lets this script get more precise later.** `USStateDatabaseProvider` resolves the
 per-state rooftop and interpolation databases by filename under `$MAILWOMAN_DATA_ROOT`, opens each one
 once, and returns no database for a state you have not downloaded. Omit it and the loop is pinned to city
 centroids no matter what you pull. Step 6 is the proof.
@@ -166,7 +166,7 @@ head -3 customers.geocoded.jsonl
 Twenty rows in 1.53 s wall on the machine this page was verified on, model load included. The three DC
 rows share a coordinate because they share a city, and `resolution_tier: "admin"` says so — three
 different buildings, one centroid, and `uncertainty_m: null` because the admin tier has no radius to
-report. The `RegionDatabaseProvider` was asked for DC and had no database to give.
+report. The `USStateDatabaseProvider` was asked for DC and had no database to give.
 
 JSON lines rather than one JSON array: the file is appendable, streamable, and survives a crash halfway
 through with the rows written so far still readable.

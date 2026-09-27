@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- * `createServeEngine` builds the shared stack once at boot — the CLI's `serve` command awaits it before listening, so a misconfigured deployment fails friendly at boot rather than on the first request — and a degraded boot is deliberate: `parse` needs only the model weights and still answers `/v1/parse` without WOF data, while `geocode`/`batch`/`resolveTree`/`reload` are absent and their routes answer 503; when the weights are unresolvable `parse` is absent too and its routes answer 501 with no rules fallback; and `health` always answers.
+ * `createServeEngine` builds the shared stack once at boot. The CLI's `serve` command awaits it before listening, so a misconfigured deployment fails at boot rather than on the first request. A degraded boot is deliberate: `parse` needs only the model weights and still answers `/v1/parse` without WOF data, while `geocode`/`batch`/`resolveTree`/`reload` are absent and their routes answer 503. When the weights are unresolvable `parse` is absent too and its routes answer 501 with no rules fallback. `health` always answers.
  */
 
 import type {
@@ -32,7 +32,7 @@ import { Globerator } from "spliterator/node/fs"
 import { readReleaseManifest } from "#data/release"
 import { $public } from "#env"
 import { geocodeAddress, type GeocodeClassifier } from "#geocode/core"
-import { regionSlugFromTree, RegionDatabaseProvider } from "#geocode/regions"
+import { regionSlugFromTree, USStateDatabaseProvider } from "#geocode/regions"
 import { INTERP_RADIUS_CALIBRATION, interpCalibrationForRegion } from "#interp-calibration"
 import {
 	buildNoGazetteerMessage,
@@ -46,7 +46,10 @@ const DATA_ROOT = dataRootPath()
 interface GeocodeDepsBundle {
 	classifier: GeocodeClassifier
 	resolver: Resolver
-	databases: RegionDatabaseProvider
+	/**
+	 * The concrete US provider, because the engine's `reload` calls its `reload`.
+	 */
+	databases: USStateDatabaseProvider
 	defaultCountry?: string
 }
 
@@ -79,10 +82,11 @@ async function readModelCard(): Promise<Record<string, unknown> | null> {
 	}
 
 	try {
-		// `@mailwoman/neural-weights-*` packages carry no `exports` map, so the subpath
-		// resolves as a plain file inside the package, and `import.meta.resolve` realpaths
-		// through the workspace symlink; it throws only for an unresolvable package,
-		// not a missing file inside one, so `pathExists` below checks every candidate.
+		// `@mailwoman/neural-weights-*` packages carry no `exports` map.
+		// The subpath resolves as a plain file inside the package.
+		// `import.meta.resolve` realpaths through the workspace symlink.
+		// It throws only for an unresolvable package and resolves a missing file inside one.
+		// `pathExists` below therefore checks every candidate.
 		candidates.push(resolveModulePath("@mailwoman/neural-weights-en-us/model-card.json"))
 	} catch {
 		// A weights package that does not resolve here simply falls through to the next candidate.
@@ -249,9 +253,9 @@ export async function createServeEngine(): Promise<ServeEngine> {
 	}
 
 	const paths = await wofPaths()
-	// A candidate DB alone (no WOF admin database) is a valid boot configuration,
-	// so the preflight checks both; this check governs geocode/batch/resolveTree/reload
-	// only, and `parse` is already wired above.
+	// A candidate DB alone (no WOF admin database) is a valid boot configuration.
+	// The preflight therefore checks both.
+	// This check governs geocode/batch/resolveTree/reload only, and `parse` is already wired above.
 	const candidateDB = await resolveCandidateDBPath()
 
 	if (!paths.length && !candidateDB) {
@@ -262,15 +266,15 @@ export async function createServeEngine(): Promise<ServeEngine> {
 
 	const backend = await createResolverBackend(resolverMod, { wofPaths: paths })
 	const resolver = createWOFResolver(backend)
-	const databases = await RegionDatabaseProvider.create(resolverMod, DATA_ROOT)
+	const databases = await USStateDatabaseProvider.create(resolverMod, DATA_ROOT)
 	const deps: GeocodeDepsBundle = { classifier, resolver, databases, defaultCountry: candidateDB ? undefined : "US" }
 
 	// The route already records the whole-call metric, so the engine records no extra metric here.
 	const geocode: GeocodeCallback = async (address, opts) => oneGeocode(deps, address, opts?.inputMode)
 
 	// Sequential because `onnxruntime-node`'s `session.run()` blocks the JS thread
-	// and `node:sqlite` reads are synchronous, so a geocode cannot overlap another in-process;
-	// results land in input order and a thrown row is isolated to its own `{ input, error }` slot.
+	// and `node:sqlite` reads are synchronous, so a geocode cannot overlap another in-process.
+	// Results land in input order and a thrown row is isolated to its own `{ input, error }` slot.
 	const batch: MailwomanAPIEngine["batch"] = async (addresses, opts) => {
 		const inputMode = opts?.inputMode ?? "formatted"
 		const inputs = addresses.map((a) => a.trim())

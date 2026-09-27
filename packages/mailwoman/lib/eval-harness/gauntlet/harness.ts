@@ -27,7 +27,7 @@ import { resolvePath, type PathBuilder, type PathBuilderLike } from "path-ts"
 import type { AdminCoherenceReport } from "#admin-coherence"
 import { gradedBaseOnly, OVERLAY_LOCALE_BY_COUNTRY } from "#eval-harness/gauntlet/routing"
 import { geocodeAddress, geocodeParseInputs, type GeocodeDeps } from "#geocode/core"
-import { RegionDatabaseProvider } from "#geocode/regions"
+import { USStateDatabaseProvider } from "#geocode/regions"
 import type { GeocodeResult } from "#geocode/result"
 import { poiTaxonomyLookup } from "#poi/intent"
 import { createResolverBackend, loadCapitalIndex, resolveCandidateDBPath } from "#resolver-backend"
@@ -644,7 +644,7 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 				capitalIndex.levelOfPlace(place.name, place.country, place.lat, place.lon)
 		: undefined
 
-	const regionDatabaseProvider = await RegionDatabaseProvider.create(resolverMod, dataRootPath())
+	const regionDatabaseProvider = await USStateDatabaseProvider.create(resolverMod, dataRootPath())
 	// Lazy like the resolver module above: `@mailwoman/osm` is an in-repo (unpublished)
 	// workspace, and A static import here would break the published `mailwoman` CLI outright
 	// rather than only this maintainer-run check.

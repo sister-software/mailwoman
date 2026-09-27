@@ -5,12 +5,11 @@
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers"
+import type { RegionDatabaseProvider, RegionDatabases } from "@mailwoman/core/resolver"
 import { AddressPointSqliteLookup } from "@mailwoman/resolver-wof-sqlite"
 import { addressPointDatabaseRoot } from "@mailwoman/resolver-wof-sqlite/paths"
 import { createStreetLocaleRegistry, type StreetLocale } from "@mailwoman/resolver-wof-sqlite/street"
 import type { PathBuilderLike } from "path-ts"
-
-import type { RegionDatabases } from "#geocode/regions"
 
 const COUNTRY_TO_STREET_LOCALE = new Map<string, StreetLocale>([
 	["tw", "zh"],
@@ -180,7 +179,7 @@ export function nationalAddressPointsPath(dataRoot: PathBuilderLike, countryCode
  * Use {@link OvertureNationalDatabaseProvider.create}, because `for` answers
  * only from what `warm` found on disk.
  */
-export class OvertureNationalDatabaseProvider implements Disposable {
+export class OvertureNationalDatabaseProvider implements RegionDatabaseProvider<string, RegionDatabases> {
 	readonly #dataRoot: PathBuilderLike
 	readonly #cache = new Map<string, RegionDatabases>()
 	readonly #onDisk = new Set<string>()

@@ -29,7 +29,7 @@ import {
 	runDropInCLI,
 } from "mailwoman/cli-kit/dropin"
 import type { ResolvedEngineStamp } from "mailwoman/cli-kit/engine-stamp"
-import { geocodeAddress, RegionDatabaseProvider } from "mailwoman/geocode"
+import { geocodeAddress, USStateDatabaseProvider } from "mailwoman/geocode"
 import { createResolverBackend } from "mailwoman/resolver-backend"
 
 import {
@@ -90,7 +90,7 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 
 	const backend = await createResolverBackend(resolverMod, { wofPaths, candidateDB })
 	const resolver = createWOFResolver(backend)
-	const extracts = await RegionDatabaseProvider.create(resolverMod, dataRootPath())
+	const extracts = await USStateDatabaseProvider.create(resolverMod, dataRootPath())
 	const postcodeOfLocality = await createLocalityPostcodeLookup()
 	// National open-register rooftop tier (#1012): BAN-FR ahead of the OSM tier for a non-US parse.
 	// A no-op when the extract isn't on disk (conditioned on existsSync inside the provider),

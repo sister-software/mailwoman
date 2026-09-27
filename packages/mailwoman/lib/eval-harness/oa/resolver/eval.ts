@@ -139,7 +139,8 @@ export async function oaResolverEval(
 			;(globalThis as { gc?: () => void }).gc?.()
 		}
 
-		const rowDatabases = cascadeProvider ? cascadeProvider.for((row.state || "").toLowerCase() || null) : null
+		// An empty slug yields an empty bundle, the same answer a null slug gave.
+		const rowDatabases = cascadeProvider ? cascadeProvider.for((row.state || "").toLowerCase()) : null
 		const rowAddrPoints = rowDatabases?.addressPoints ?? addressPoints ?? null
 		const rowInterp = rowDatabases?.interpolation ?? interpolation ?? null
 

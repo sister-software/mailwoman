@@ -31,16 +31,16 @@ is a subset, it says so and says what it left out.
 serves TypeScript source directly, so no build step stands between an installed package and a running
 script.
 
-| Import                         | What it carries                                                                 |
-| ------------------------------ | ------------------------------------------------------------------------------- |
-| `mailwoman`                    | `createRuntimePipeline`, plus everything `@mailwoman/core` re-exports           |
-| `mailwoman/geocode-core`       | `geocodeAddress`, `parseForGeocode`, `RegionDatabaseProvider`, the result types |
-| `mailwoman/geocode-stream`     | `geocodeStream`                                                                 |
-| `mailwoman/resolver-backend`   | `createResolverBackend`, `resolveCandidateDBPath`, data-root path helpers       |
-| `mailwoman/cli-kit`            | Ink helpers for building an interactive command                                 |
-| `mailwoman/test-kit`           | The parser test helpers                                                         |
-| `mailwoman/poi-overpass`       | OverpassQL export for a matched POI intent                                      |
-| `mailwoman/gazetteer-pipeline` | Gazetteer build internals, plus a wildcard subpath for its modules              |
+| Import                         | What it carries                                                                  |
+| ------------------------------ | -------------------------------------------------------------------------------- |
+| `mailwoman`                    | `createRuntimePipeline`, plus everything `@mailwoman/core` re-exports            |
+| `mailwoman/geocode-core`       | `geocodeAddress`, `parseForGeocode`, `USStateDatabaseProvider`, the result types |
+| `mailwoman/geocode-stream`     | `geocodeStream`                                                                  |
+| `mailwoman/resolver-backend`   | `createResolverBackend`, `resolveCandidateDBPath`, data-root path helpers        |
+| `mailwoman/cli-kit`            | Ink helpers for building an interactive command                                  |
+| `mailwoman/test-kit`           | The parser test helpers                                                          |
+| `mailwoman/poi-overpass`       | OverpassQL export for a matched POI intent                                       |
+| `mailwoman/gazetteer-pipeline` | Gazetteer build internals, plus a wildcard subpath for its modules               |
 
 `geocodeAddress` and its result types are reachable only through `mailwoman/geocode-core`. They are
 not re-exported from the bare specifier.
@@ -349,13 +349,14 @@ the tier rather than on the presence of `house_number`: the parsed span is popul
 `hierarchy` is the resolved view and carries only nodes the resolver decorated. The flat span fields
 are the parsed view. The two disagree whenever the parse found something the gazetteer did not.
 
-### `RegionDatabaseProvider`
+### `USStateDatabaseProvider`
 
-`RegionDatabaseProvider` opens per-state rooftop and interpolation databases on demand, caches the handles, and
-swaps them atomically when the data release changes.
+`USStateDatabaseProvider` opens per-state rooftop and interpolation databases on demand, caches the handles, and
+swaps them atomically when the data release changes. It implements the `RegionDatabaseProvider` interface from
+`@mailwoman/core/resolver`, which the per-country providers in `@mailwoman/ban` and `@mailwoman/osm` share.
 
 ```ts
-class RegionDatabaseProvider {
+class USStateDatabaseProvider implements RegionDatabaseProvider {
 	constructor(factory: RegionDatabaseFactory, dataRoot: string)
 	readonly for: RegionDatabaseResolver
 	versions(): DataReleaseManifest | null

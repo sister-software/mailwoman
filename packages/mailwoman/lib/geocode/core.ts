@@ -33,6 +33,7 @@ import type {
 	AuthoritativeProvider,
 	AddressPointLookup,
 	PostcodePrefixIndexLike,
+	RegionDatabases,
 	ResolveOpts,
 	Resolver,
 	WeakResolutionReading,
@@ -46,7 +47,7 @@ import { loadDefaultPlaceCountry, type PlaceCountryFn } from "#default/placer"
 import { applyEntityTiers } from "#fork-entity"
 import { classifierForInput, type GeocodeClassifier, normalizeGeocodeInput } from "#geocode/classifier"
 import { traceCollector } from "#geocode/derivation"
-import { type RegionDatabaseResolver, type RegionDatabases, regionSlugFromTree } from "#geocode/regions"
+import { type RegionDatabaseResolver, regionSlugFromTree } from "#geocode/regions"
 import { extractGeocodeResult } from "#geocode/result"
 import {
 	postcodeCountryScopeOf,

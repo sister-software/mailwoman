@@ -14,6 +14,7 @@
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers"
+import type { RegionDatabaseProvider, RegionDatabases } from "@mailwoman/core/resolver"
 import { AddressPointSqliteLookup, StreetCentroidSqliteLookup } from "@mailwoman/resolver-wof-sqlite"
 import type { PathBuilder } from "path-ts"
 
@@ -21,9 +22,11 @@ import { banDatabaseRoot } from "#paths"
 import { streetLocaleForBANCountry, supportedBANCountries } from "#sdk/street-locale"
 
 /**
- * What the cascade needs from a BAN extract — structurally a subset of mailwoman's `RegionDatabases`.
+ * The members of {@link RegionDatabases} a BAN extract supplies.
+ *
+ * Each member narrows to the SQLite class that opened it, because the provider disposes the handle.
  */
-export interface BANExtracts {
+export interface BANExtracts extends Pick<RegionDatabases, "addressPoints" | "streetCentroids"> {
 	addressPoints?: AddressPointSqliteLookup
 	/**
 	 * The #1042 derived street-centroid tier.
@@ -47,7 +50,7 @@ export interface BANExtracts {
  * A provider constructed directly must be warmed before its first `for`,
  * or it answers `{}` for every country.
  */
-export class BANRegionDatabaseProvider implements Disposable {
+export class BANRegionDatabaseProvider implements RegionDatabaseProvider<string, BANExtracts> {
 	readonly #dataRoot: PathBuilder
 	readonly #cache = new Map<string, BANExtracts>()
 	/**

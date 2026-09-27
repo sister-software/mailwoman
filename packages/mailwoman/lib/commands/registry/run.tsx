@@ -152,7 +152,7 @@ async function buildGeocoder(options: Options): Promise<{ geocodeAddress: Geocod
 	const { geocodeAddressVia } = await import("@mailwoman/registry")
 	const { createWOFResolver } = await import("@mailwoman/resolver")
 
-	const [{ geocodeAddress }, { RegionDatabaseProvider }] = await Promise.all([
+	const [{ geocodeAddress }, { USStateDatabaseProvider }] = await Promise.all([
 		import("#geocode/core"),
 		import("#geocode/regions"),
 	])
@@ -183,7 +183,7 @@ async function buildGeocoder(options: Options): Promise<{ geocodeAddress: Geocod
 	// $MAILWOMAN_CANDIDATE_DB → the demo-parity candidate backend.
 	// Else FTS over wofPath.
 	const lookup = await createResolverBackend(mod, { wofPaths: wofPath })
-	const regionDatabaseProvider = await RegionDatabaseProvider.create(mod, options.dataRoot)
+	const regionDatabaseProvider = await USStateDatabaseProvider.create(mod, options.dataRoot)
 	const databases: RegionDatabaseResolver = regionDatabaseProvider.for
 	const defaultCountry = resolverDefaultCountry(options, !!(await resolveCandidateDBPath())) || undefined
 	const resolver = createWOFResolver(lookup)
@@ -259,7 +259,7 @@ export function evalGeocoderFactory(flags: EvalGeocoderFlags): EvalGeocoderFacto
 		const { geocodeAddressVia } = await import("@mailwoman/registry")
 		const { createWOFResolver } = await import("@mailwoman/resolver")
 
-		const [{ geocodeAddress }, { RegionDatabaseProvider }] = await Promise.all([
+		const [{ geocodeAddress }, { USStateDatabaseProvider }] = await Promise.all([
 			import("#geocode/core"),
 			import("#geocode/regions"),
 		])
@@ -277,7 +277,7 @@ export function evalGeocoderFactory(flags: EvalGeocoderFlags): EvalGeocoderFacto
 		const mod = await import("@mailwoman/resolver-wof-sqlite")
 		const lookup = new mod.WOFSQLitePlaceLookup({ databasePath: wof })
 		const resolver = createWOFResolver(lookup)
-		const regionDatabaseProvider = await RegionDatabaseProvider.create(mod, dataRoot)
+		const regionDatabaseProvider = await USStateDatabaseProvider.create(mod, dataRoot)
 
 		const geocode = (raw: string) =>
 			geocodeAddress(raw, {

@@ -18,7 +18,7 @@ import { pathExists } from "@mailwoman/core/fs/readers"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { $public } from "mailwoman/env"
-import { geocodeAddress, RegionDatabaseProvider } from "mailwoman/geocode"
+import { geocodeAddress, USStateDatabaseProvider } from "mailwoman/geocode"
 import { createResolverBackend, resolveCandidateDBPath, resolveWOFDatabasePaths } from "mailwoman/resolver-backend"
 import { AsyncSequence } from "spliterator"
 
@@ -82,7 +82,7 @@ async function buildEngine<T extends GeocodeOutcomeLike = GeocodeOutcomeLike>() 
 				const resolverMod = await import("@mailwoman/resolver-wof-sqlite")
 				const backend = await createResolverBackend(resolverMod, { wofPaths: paths })
 				const resolver = createWOFResolver(backend)
-				const extracts = await RegionDatabaseProvider.create(resolverMod, DATA_ROOT)
+				const extracts = await USStateDatabaseProvider.create(resolverMod, DATA_ROOT)
 				// The candidate database covers every country.
 				// The FTS backend falls back to US.
 				const defaultCountry = candidateDB ? undefined : "US"

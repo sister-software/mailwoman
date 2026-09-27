@@ -7,11 +7,10 @@
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
-import type { AddressPointLookup, InterpolationLookup } from "@mailwoman/core/resolver"
+import type { AddressPointLookup, InterpolationLookup, RegionDatabaseProvider } from "@mailwoman/core/resolver"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 
 import type { OAResolverEvalOptions } from "#eval-harness/oa/resolver/options"
-import type { RegionDatabaseProvider } from "#geocode/regions"
 
 /**
  * The postcode database reader the anchor extractor probes.
@@ -87,10 +86,10 @@ export async function buildCoordinateTiers(options: OAResolverEvalOptions) {
 	let cascadeProvider: RegionDatabaseProvider | null = null
 
 	if (cascadeOn) {
-		const { RegionDatabaseProvider } = await import("#geocode/regions")
+		const { USStateDatabaseProvider } = await import("#geocode/regions")
 		const { AddressPointSqliteLookup, StreetInterpolator } = await import("@mailwoman/resolver-wof-sqlite")
 
-		cascadeProvider = await RegionDatabaseProvider.create({ AddressPointSqliteLookup, StreetInterpolator }, dataRoot)
+		cascadeProvider = await USStateDatabaseProvider.create({ AddressPointSqliteLookup, StreetInterpolator }, dataRoot)
 	}
 
 	// The addrpt + interp arms run when either a single-state database was given or --cascade is on.

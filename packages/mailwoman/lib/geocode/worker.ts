@@ -17,7 +17,7 @@ import { type ColumnMapping, geocodeAddressVia, makeGeocodeHandler } from "@mail
 import { createWOFResolver } from "@mailwoman/resolver"
 
 import { geocodeAddress, parseForGeocode } from "#geocode/core"
-import { RegionDatabaseProvider } from "#geocode/regions"
+import { USStateDatabaseProvider } from "#geocode/regions"
 import type { GeocodeStreamConfig } from "#geocode/stream"
 import { createResolverBackend } from "#resolver-backend"
 
@@ -33,7 +33,7 @@ const wof = await import("@mailwoman/resolver-wof-sqlite")
 // bulk answers differently from the same row geocoded singly.
 const lookup = await createResolverBackend(wof, { dataRoot: cfg.dataRoot, wofPaths: cfg.wofDBPath })
 const resolver = createWOFResolver(lookup)
-const databases = await RegionDatabaseProvider.create(wof, cfg.dataRoot)
+const databases = await USStateDatabaseProvider.create(wof, cfg.dataRoot)
 
 const geoDeps = {
 	classifier,

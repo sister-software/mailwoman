@@ -9,29 +9,16 @@ import { US_STATE_BY_ABBREVIATION } from "@mailwoman/codex/us"
 import type { AddressTree } from "@mailwoman/core/decoder"
 import { walkNodes } from "@mailwoman/core/decoder"
 import { pathExists } from "@mailwoman/core/fs/readers"
-import type { AddressPointLookup, InterpolationLookup, StreetCentroidLookup } from "@mailwoman/core/resolver"
+import type {
+	AddressPointLookup,
+	InterpolationLookup,
+	RegionDatabaseProvider,
+	RegionDatabases,
+} from "@mailwoman/core/resolver"
 import { addressPointDatabaseRoot, interpolationDatabaseRoot } from "@mailwoman/resolver-wof-sqlite/paths"
 import { resolvePath, type PathBuilderLike } from "path-ts"
 
 import { readReleaseManifest, resolveDatabasePath, type DataReleaseManifest } from "#data/release"
-
-/**
- * The per-state databases available to one geocode resolve.
- *
- * Any of them may be absent, in which case resolution falls back to admin records.
- */
-export interface RegionDatabases {
-	addressPoints?: AddressPointLookup
-	interpolation?: InterpolationLookup
-	/**
-	 * Street centroids rolled up from a national register's rooftop points,
-	 * for queries without a house number.
-	 *
-	 * Only `BANRegionDatabaseProvider` in `@mailwoman/ban` supplies this tier, for France.
-	 * The resolver consults it below the address-point and interpolation tiers and above admin.
-	 */
-	streetCentroids?: StreetCentroidLookup
-}
 
 /**
  * Returns the databases for a state slug such as `"tx"`.
@@ -131,7 +118,7 @@ export async function selectInterpolationDB(dataRoot: string, stateSlug: string 
 }
 
 /**
- * The lookup classes that a {@link RegionDatabaseProvider} needs from `@mailwoman/resolver-wof-sqlite`.
+ * The lookup classes that a {@link USStateDatabaseProvider} needs from `@mailwoman/resolver-wof-sqlite`.
  */
 export interface RegionDatabaseFactory {
 	AddressPointSqliteLookup: new (dbPath: string) => AddressPointLookup & Disposable
@@ -145,7 +132,7 @@ export interface RegionDatabaseCacheEntry extends RegionDatabases {
 	_ap?: Disposable
 	_ip?: Disposable
 	/**
-	 * The resolved database path. {@link RegionDatabaseProvider.reload} compares it with the new path.
+	 * The resolved database path. {@link USStateDatabaseProvider.reload} compares it with the new path.
 	 */
 	apPath: string | null
 	ipPath: string | null
@@ -159,9 +146,9 @@ export interface RegionDatabaseCacheEntry extends RegionDatabases {
  * in a newly published version, and {@link close} releases every cached handle.
  *
  * Because `for` is synchronous, {@linkcode warm} probes every US state and territory path up front.
- * Construct instances with {@linkcode RegionDatabaseProvider.create}, which warms before returning.
+ * Construct instances with {@linkcode USStateDatabaseProvider.create}, which warms before returning.
  */
-export class RegionDatabaseProvider implements Disposable {
+export class USStateDatabaseProvider implements RegionDatabaseProvider<string, RegionDatabases> {
 	readonly #factory: RegionDatabaseFactory
 	readonly #dataRoot: string
 	readonly #cache = new Map<string, RegionDatabaseCacheEntry>()
@@ -185,9 +172,9 @@ export class RegionDatabaseProvider implements Disposable {
 	/**
 	 * Constructs a provider, reads the release manifest, and warms the path map.
 	 */
-	static async create(factory: RegionDatabaseFactory, dataRoot: PathBuilderLike): Promise<RegionDatabaseProvider> {
+	static async create(factory: RegionDatabaseFactory, dataRoot: PathBuilderLike): Promise<USStateDatabaseProvider> {
 		const root = resolvePath(dataRoot)
-		const provider = new RegionDatabaseProvider(factory, root, await readReleaseManifest(root))
+		const provider = new USStateDatabaseProvider(factory, root, await readReleaseManifest(root))
 
 		await provider.warm()
 

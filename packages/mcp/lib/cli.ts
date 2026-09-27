@@ -22,7 +22,7 @@ import { createWOFResolver } from "@mailwoman/resolver"
 import { wofExtractPaths } from "@mailwoman/resolver-wof-sqlite/paths"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { createRuntimePipeline } from "mailwoman"
-import { geocodeAddress, RegionDatabaseProvider } from "mailwoman/geocode"
+import { geocodeAddress, USStateDatabaseProvider } from "mailwoman/geocode"
 import { buildNoGazetteerMessage, createResolverBackend, resolveCandidateDBPath } from "mailwoman/resolver-backend"
 
 import {
@@ -48,7 +48,7 @@ let corePromise:
 	| Promise<{
 			classifier: ScriptRoutedClassifier<NeuralAddressClassifier>
 			resolver: Resolver
-			databases: RegionDatabaseProvider
+			databases: USStateDatabaseProvider
 	  }>
 	| undefined
 
@@ -60,7 +60,10 @@ const CORE_FREE_TOOLS =
 function loadCore(): Promise<{
 	classifier: ScriptRoutedClassifier
 	resolver: Resolver
-	databases: RegionDatabaseProvider
+	/**
+	 * The concrete US provider, because `GeocodeDeps.databases` accepts a null state slug.
+	 */
+	databases: USStateDatabaseProvider
 }> {
 	corePromise ??= (async () => {
 		const resolverMod = await import("@mailwoman/resolver-wof-sqlite")
@@ -97,7 +100,7 @@ function loadCore(): Promise<{
 			)
 		}
 
-		const databases = await RegionDatabaseProvider.create(resolverMod, dataRootPath())
+		const databases = await USStateDatabaseProvider.create(resolverMod, dataRootPath())
 
 		return { classifier, resolver, databases }
 	})()

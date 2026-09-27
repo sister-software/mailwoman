@@ -16,7 +16,13 @@ import {
 	type QueryKindResult,
 	type FSTMatcherLike,
 } from "@mailwoman/core/pipeline"
-import { type ResolveNodeTrace, type Resolver, countriesFromPostcodeFormat } from "@mailwoman/core/resolver"
+import {
+	type RegionDatabaseProvider,
+	type RegionDatabases,
+	type ResolveNodeTrace,
+	type Resolver,
+	countriesFromPostcodeFormat,
+} from "@mailwoman/core/resolver"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import { createKindClassifier } from "@mailwoman/kind-classifier"
 import { NeuralAddressClassifier, type ScriptRoutedClassifier, type NeuralParseTrace } from "@mailwoman/neural"
@@ -28,7 +34,7 @@ import { resolverDefaultCountry } from "#country-scope"
 import { geocodeAddress, geocodeParseInputs, parseForGeocode, type GeocodeDeps } from "#geocode/core"
 import { layerDatabasePath } from "#geocode/layer-paths"
 import { OvertureNationalDatabaseProvider } from "#geocode/national-overture"
-import { RegionDatabaseProvider, type RegionDatabaseResolver, type RegionDatabases } from "#geocode/regions"
+import { type RegionDatabaseResolver, USStateDatabaseProvider } from "#geocode/regions"
 import type { GeocodeResult } from "#geocode/result"
 import { INTERP_RADIUS_CALIBRATION } from "#interp-calibration"
 import type { CoastalErosionRoute } from "#observations/coastal-route"
@@ -487,7 +493,7 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 				capitals.levelOfPlace(place.name, place.country, place.lat, place.lon)
 		: undefined
 
-	const regionDatabaseProvider = await RegionDatabaseProvider.create(mod, options.dataRoot)
+	const regionDatabaseProvider = await USStateDatabaseProvider.create(mod, options.dataRoot)
 
 	const explicitApLocale = options.locale.split("-")[1]?.toLowerCase() === "fr" ? ("fr" as const) : ("us" as const)
 
@@ -529,7 +535,7 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 		return ban?.addressPoints || ban?.streetCentroids ? ban : overtureProvider.for(country)
 	}
 
-	let osmProvider: ({ for: (country: string) => RegionDatabases } & Disposable) | undefined
+	let osmProvider: RegionDatabaseProvider | undefined
 
 	try {
 		const { OSMRegionDatabaseProvider } = await import("@mailwoman/osm/sdk")

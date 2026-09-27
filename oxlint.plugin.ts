@@ -854,9 +854,15 @@ const noCrossPackageReexportRule: Rule = {
  * Types whose whole teardown runs inside `[Symbol.dispose]`.
  *
  * `DatabaseClient` closes the `node:sqlite` handle, `DisposableDuckDB` calls `closeSync()` on the
- * connection and on the instance behind it, and `RegionDatabaseProvider` closes its cached handles.
+ * connection and on the instance behind it, and a `RegionDatabaseProvider` closes its cached handles.
+ * `USStateDatabaseProvider` is the concrete class whose static `create` answers one.
  */
-const SYNC_DISPOSABLE_TYPES = new Set(["DatabaseClient", "DisposableDuckDB", "RegionDatabaseProvider"])
+const SYNC_DISPOSABLE_TYPES = new Set([
+	"DatabaseClient",
+	"DisposableDuckDB",
+	"RegionDatabaseProvider",
+	"USStateDatabaseProvider",
+])
 
 /**
  * Cross-package functions that answer one of {@link SYNC_DISPOSABLE_TYPES}.

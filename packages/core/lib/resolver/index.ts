@@ -44,6 +44,8 @@ export {
 	type FixtureAuthoritativeRule,
 } from "#resolver/fixture-authoritative-provider"
 
+export type { RegionDatabaseProvider, RegionDatabases } from "#resolver/region-database-provider"
+
 export { hardCountrySafelistFromCoverage } from "#resolver/types"
 
 export type {
