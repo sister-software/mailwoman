@@ -35,7 +35,9 @@
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { md5File } from "@mailwoman/core/hash"
+import { type LayerManifest, LayerTier } from "@mailwoman/core/layers"
 import { OVERTURE_ADDRESSES_RELEASE } from "@mailwoman/core/overture-pins"
+import { repoRootPath } from "@mailwoman/core/paths"
 import { TW_DISTRICT_ID_BASE } from "@mailwoman/core/resolver/synthetic-id-ranges"
 import { getRow } from "@mailwoman/core/utils"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
@@ -46,6 +48,7 @@ import { sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed-db
 import type { PathBuilderLike } from "path-ts"
 
 import { DEFAULT_ADMIN_DB } from "#gazetteer-pipeline/defaults"
+import { buildSHA, foldLayerManifest, stampLayerManifest } from "#gazetteer-pipeline/stamp-manifest"
 import { licenseForOvertureCountry } from "#geocode/national-overture"
 
 /**
@@ -65,6 +68,32 @@ import { licenseForOvertureCountry } from "#geocode/national-overture"
  */
 export function twDistrictsLicense(): string {
 	return licenseForOvertureCountry("tw")
+}
+
+/**
+ * Compose the artifact's `layer_manifest` from the settled grant and the release it reproduces.
+ *
+ * Both candidate readings of the grant carry attribution and no share-alike term, so the tier is `shipped`.
+ * A reading that carried more would fail `assertTierMatchesLicense` here rather than reach the artifact.
+ */
+export function twDistrictsLayerManifest(input: {
+	license: string
+	release: string
+	sourceMD5: string
+	now: Date
+}): LayerManifest {
+	return foldLayerManifest({
+		name: "localities-tw-districts",
+		version: input.release,
+		tier: LayerTier.Shipped,
+		license: input.license,
+		source: "Overture Maps addresses, Taiwan (civil-affairs registers via OpenAddresses)",
+		sourceVintage: `overture ${input.release} (md5 ${input.sourceMD5})`,
+		buildCmd: "mailwoman gazetteer build tw-districts",
+		buildSHA: buildSHA(repoRootPath()),
+		createdAt: input.now.toISOString(),
+		spineKeys: { wofID: "id" },
+	})
 }
 
 /**
@@ -287,6 +316,8 @@ export async function buildTWDistrictsDatabase(opts: BuildTWDistrictsOptions = {
 	const tmpPath = `${outPath}.tmp`
 
 	const sourceMD5 = await md5File(parquetPath)
+	// Read before the parquet so an unsettled grant stops the build before the expensive step.
+	const license = twDistrictsLicense()
 	const groups = await readDistrictGroups(parquetPath, opts.threads)
 
 	let regions: TaiwanRegionName[]
@@ -323,7 +354,7 @@ export async function buildTWDistrictsDatabase(opts: BuildTWDistrictsOptions = {
 		db.exec(`CREATE TABLE database_meta (key TEXT PRIMARY KEY, value TEXT NOT NULL) WITHOUT ROWID`)
 		const meta = db.prepare(`INSERT INTO database_meta VALUES (?, ?)`)
 		meta.run("source", "Overture Maps addresses, Taiwan (civil-affairs registers via OpenAddresses)")
-		meta.run("license", twDistrictsLicense())
+		meta.run("license", license)
 		meta.run("source_release", release)
 		meta.run("source_md5", sourceMD5)
 
@@ -380,6 +411,10 @@ export async function buildTWDistrictsDatabase(opts: BuildTWDistrictsOptions = {
 		buildPlaceSearchFTS(db, { drop: true })
 		db.exec("ANALYZE")
 	}
+
+	// The layer interface's manifest, beside `database_meta` and stating the same terms.
+	// The candidate build reads its tier before folding the database.
+	await stampLayerManifest(tmpPath, twDistrictsLayerManifest({ license, release, sourceMD5, now: new Date() }))
 
 	await swapDatabaseIntoPlace(tmpPath, outPath)
 	await sealDatabase(outPath)

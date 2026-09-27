@@ -9,6 +9,7 @@ import {
 	layerLicenseCheck,
 	localeOverlayCheck,
 	nodeVersionCheck,
+	obligationPostureCheck,
 	onnxRuntimeCheck,
 	parseVersion,
 	parseVersionFloor,
@@ -347,5 +348,46 @@ describe("layerLicenseCheck", () => {
 		expect(ok.license?.recognized).toBe(true)
 		expect(odd.status).toBe("degraded")
 		expect(odd.license?.recognized).toBe(false)
+	})
+})
+
+describe("obligationPostureCheck (informational)", () => {
+	it("ok when every layer on disk satisfies the refusal", () => {
+		const check = obligationPostureCheck({
+			refuse: ["share-alike"],
+			layers: [
+				{ subject: "poi", expression: "CDLA-Permissive-2.0" },
+				{ subject: "flood", expression: "OGL-UK-3.0" },
+			],
+			unreadable: [],
+		})
+
+		expect(check.status).toBe(CheckStatus.OK)
+		expect(check.core).toBe(false)
+		expect(check.detail).toBe("refusing share-alike: 2 layer(s) on disk satisfy it")
+	})
+
+	it("degraded when a layer carries the refused class, naming the identifier", () => {
+		// The lab host's candidate.db, whose expression carries ODbL-1.0.
+		const check = obligationPostureCheck({
+			refuse: ["share-alike"],
+			layers: [{ subject: "candidate", expression: "ODbL-1.0 AND CDLA-Permissive-2.0 AND CC-BY-4.0" }],
+			unreadable: [],
+		})
+
+		expect(check.status).toBe(CheckStatus.Degraded)
+		expect(check.detail).toContain("candidate: ODbL-1.0 carries share-alike")
+		expect(check.fix).toContain("MAILWOMAN_REFUSE_OBLIGATIONS")
+	})
+
+	it("degraded when a layer states no readable terms, because it cannot be said to satisfy anything", () => {
+		const check = obligationPostureCheck({
+			refuse: ["unresolved"],
+			layers: [{ subject: "poi", expression: "CDLA-Permissive-2.0" }],
+			unreadable: ["/data/ban/address-points-fr.db"],
+		})
+
+		expect(check.status).toBe(CheckStatus.Degraded)
+		expect(check.detail).toContain("1 state no readable terms (/data/ban/address-points-fr.db)")
 	})
 })

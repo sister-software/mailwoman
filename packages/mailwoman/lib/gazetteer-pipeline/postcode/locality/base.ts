@@ -37,8 +37,10 @@
 
 import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { tryParsingJSON, stringifyJSON } from "@mailwoman/core/json"
+import { LayerTier } from "@mailwoman/core/layers"
 import { pyRound } from "@mailwoman/core/numeric"
-import { isoSecondsUTC } from "@mailwoman/core/utils"
+import { repoRootPath } from "@mailwoman/core/paths"
+import { isoDate, isoSecondsUTC } from "@mailwoman/core/utils"
 import { geometryContains, haversineKm, type ParsedGeometry } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase } from "@mailwoman/sqlite/sealed-db"
@@ -54,6 +56,12 @@ import {
 	POSTCODE_LOCALITY_INSERT_SQL,
 	type PostcodeLocalityDatabase,
 } from "#gazetteer-pipeline/postcode/locality/schema"
+import { buildSHA, foldLayerManifest, stampLayerManifest } from "#gazetteer-pipeline/stamp-manifest"
+
+/**
+ * The grant the finalized table records, as the `meta` table has stated it since the first build.
+ */
+const POSTCODE_LOCALITY_LICENSE = "CC-BY 4.0 (Who's On First) — attribution required on redistribution"
 
 /**
  * Plus name:* / label:* props, gathered below.
@@ -187,58 +195,91 @@ export interface PostcodeLocalityBaseOptions {
  * so there's no sidecar, and a vacuum to compact.
  */
 export async function finalizePostcodeLocality(output: string): Promise<void> {
-	using db = new DatabaseClient<PostcodeLocalityDatabase>(output)
-
-	const counts = db
-		.prepare(
-			"SELECT country AS country, COUNT(*) AS n, SUM(is_containing) AS con FROM postcode_locality GROUP BY country ORDER BY country"
-		)
-		.all() as Array<{ country: string; n: number; con: number | null }>
+	const now = new Date()
 
 	// Ordered (SQL order BY country) summary of {rows, containing}.
 	const summary = new Map<string, { rows: number; containing: number }>()
 
-	for (const c of counts) {
-		summary.set(c.country, { rows: Number(c.n), containing: Number(c.con || 0) })
+	let countriesJson: string
+
+	{
+		using db = new DatabaseClient<PostcodeLocalityDatabase>(output)
+
+		const counts = db
+			.prepare(
+				"SELECT country AS country, COUNT(*) AS n, SUM(is_containing) AS con FROM postcode_locality GROUP BY country ORDER BY country"
+			)
+			.all() as Array<{ country: string; n: number; con: number | null }>
+
+		for (const c of counts) {
+			summary.set(c.country, { rows: Number(c.n), containing: Number(c.con || 0) })
+		}
+
+		// `countries` meta value: Python `json.dumps(summary, sort_keys=True)` → sorted keys,
+		// inner keys alphabetical (containing < rows), separators ", " / ": ".
+		countriesJson =
+			"{" +
+			[...summary.keys()]
+				.toSorted()
+				.map((c) => {
+					const s = summary.get(c)!
+
+					return `${stringifyJSON(c)}: {"containing": ${s.containing}, "rows": ${s.rows}}`
+				})
+				.join(", ") +
+			"}"
+
+		await createPostcodeLocalityMetaTable(db, { ifNotExists: true })
+
+		const meta: Array<[string, string]> = [
+			["name", "mailwoman-postcode-locality"],
+			["description", "postcode → containing + nearby WOF locality candidates (coordinate-first resolution)"],
+			["schema_version", "1"],
+			["built_at", isoSecondsUTC(now)],
+			[
+				"source",
+				"Who's On First (whosonfirst.org) — admin locality polygons + postalcode centroids; built from source GeoJSON, not a prebuilt dump",
+			],
+			["license", POSTCODE_LOCALITY_LICENSE],
+			["attribution", "Contains data from Who's On First, © Who's On First contributors, CC-BY 4.0"],
+			[
+				"method",
+				"point-in-polygon of each postcode centroid against WOF locality polygons (+ a ~10km nearby candidate set with alt-name aliases)",
+			],
+			["countries", countriesJson],
+		]
+
+		writeMetaRows(db, meta)
+
+		// The table accumulates across country runs, so a later finalize replaces the manifest
+		// an earlier one stamped rather than failing on the table it left behind.
+		db.exec("DROP TABLE IF EXISTS layer_manifest")
 	}
 
-	// `countries` meta value: Python `json.dumps(summary, sort_keys=True)` → sorted keys,
-	// inner keys alphabetical (containing < rows), separators ", " / ": ".
-	const countriesJson =
-		"{" +
-		[...summary.keys()]
-			.toSorted()
-			.map((c) => {
-				const s = summary.get(c)!
+	// The layer interface's manifest, beside the `meta` record and stating the same terms.
+	await stampLayerManifest(
+		output,
+		foldLayerManifest({
+			name: "postcode-locality",
+			version: isoDate(now),
+			// The recorded grant carries attribution and no share-alike term, so the artifact is published.
+			tier: LayerTier.Shipped,
+			license: POSTCODE_LOCALITY_LICENSE,
+			attribution: "Contains data from Who's On First, © Who's On First contributors, CC-BY 4.0",
+			source: "Who's On First admin locality polygons and postalcode centroids",
+			sourceVintage: countriesJson,
+			buildCmd: "mailwoman gazetteer build postcode locality --recipe base --finalize",
+			buildSHA: buildSHA(repoRootPath()),
+			createdAt: now.toISOString(),
+			spineKeys: { wofID: "locality_id" },
+		})
+	)
 
-				return `${stringifyJSON(c)}: {"containing": ${s.containing}, "rows": ${s.rows}}`
-			})
-			.join(", ") +
-		"}"
+	{
+		using db = new DatabaseClient<PostcodeLocalityDatabase>(output)
 
-	await createPostcodeLocalityMetaTable(db, { ifNotExists: true })
-
-	const meta: Array<[string, string]> = [
-		["name", "mailwoman-postcode-locality"],
-		["description", "postcode → containing + nearby WOF locality candidates (coordinate-first resolution)"],
-		["schema_version", "1"],
-		["built_at", isoSecondsUTC()],
-		[
-			"source",
-			"Who's On First (whosonfirst.org) — admin locality polygons + postalcode centroids; built from source GeoJSON, not a prebuilt dump",
-		],
-		["license", "CC-BY 4.0 (Who's On First) — attribution required on redistribution"],
-		["attribution", "Contains data from Who's On First, © Who's On First contributors, CC-BY 4.0"],
-		[
-			"method",
-			"point-in-polygon of each postcode centroid against WOF locality polygons (+ a ~10km nearby candidate set with alt-name aliases)",
-		],
-		["countries", countriesJson],
-	]
-
-	writeMetaRows(db, meta)
-
-	finalizeSealedBuild(db, output)
+		finalizeSealedBuild(db, output)
+	}
 
 	// Python prints the dict repr (insertion order rows→containing, single quotes).
 	const summaryRepr =

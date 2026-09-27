@@ -38,6 +38,7 @@ function healthyDeps(): DoctorDeps {
 		licenseKey: async () => undefined,
 		confirmLicenseKeyPublished: async () => "unreachable",
 		checkLicenseStatus: async () => "unknown",
+		refusedObligations: () => [],
 		loadONNX: async () => {},
 		nodeVersion: "24.18.0",
 		enginesFloor: ">=24.18.0",
@@ -467,5 +468,51 @@ describe("describeEnvironment (--verbose)", () => {
 		const weights = entries.find((entry) => entry.key === "weights")
 		expect(weights?.value).toBeUndefined()
 		expect(weights?.source).toContain("unresolvable")
+	})
+})
+
+describe("obligation posture (a standing refusal)", () => {
+	it("is absent when the installation refuses no class", async () => {
+		const report = await runDoctor(healthyDeps())
+
+		expect(report.checks.find((check) => check.id === "obligation-posture")).toBeUndefined()
+	})
+
+	it("reads the gazetteer in use and names the identifier that breaks the refusal", async () => {
+		const report = await runDoctor({
+			...healthyDeps(),
+			refusedObligations: () => ["share-alike"],
+			readLayerIdentity: async (path) =>
+				path.includes("candidate")
+					? {
+							name: "candidate",
+							version: "2026-09-15",
+							sourceVintage: "fixture",
+							license: "ODbL-1.0 AND CDLA-Permissive-2.0 AND CC-BY-4.0",
+							attribution: null,
+						}
+					: {
+							name: "poi",
+							version: "2026-07-20a",
+							sourceVintage: "2026-07",
+							license: "CDLA-Permissive-2.0",
+							attribution: "Overture Maps Foundation",
+						},
+		})
+
+		const posture = byID(report.checks, "obligation-posture")
+
+		expect(posture.status).toBe(CheckStatus.Degraded)
+		expect(posture.detail).toContain("candidate: ODbL-1.0 carries share-alike")
+		// Informational, so the exit code stays clean.
+		expect(report.exitCode).toBe(0)
+	})
+
+	it("reports a class the variable misspells rather than throwing", async () => {
+		const report = await runDoctor({ ...healthyDeps(), refusedObligations: () => ["copyleft"] })
+		const posture = byID(report.checks, "obligation-posture")
+
+		expect(posture.status).toBe(CheckStatus.Degraded)
+		expect(posture.detail).toContain('unknown obligation class "copyleft"')
 	})
 })

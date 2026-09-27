@@ -7,15 +7,117 @@
  *   sealed database is read-only.
  */
 
+import { stringifyJSON } from "@mailwoman/core/json"
 import {
+	assertTierMatchesLicense,
 	createLayerManifestTable,
+	LayerFreshnessPolicy,
 	type layerschemadatabase,
 	type LayerManifest,
+	type LayerTier,
+	type SpineKeys,
 	writeLayerManifest,
 } from "@mailwoman/core/layers"
+import { assertAdmissibleLicenseExpression } from "@mailwoman/core/license/obligations"
+import { LicenseResolution, readLicenseRecord } from "@mailwoman/core/license/record"
 import { runFileSync } from "@mailwoman/core/process"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { PathBuilderLike } from "path-ts"
+
+/**
+ * What a postcode or locality builder states about the database it seals.
+ *
+ * The candidate build folds these databases, and `candidateLayerManifest` composes its
+ * own terms from what each one records, so every field here is a claim the builder
+ * makes about its own artifact rather than a value copied from a runbook.
+ */
+export interface FoldLayerManifestInput {
+	/**
+	 * The artifact's filename without its extension, which is how `DEFAULT_POSTCODE_DATABASES` names it.
+	 */
+	name: string
+	/**
+	 * The build date or the source release the artifact reproduces.
+	 */
+	version: string
+	/**
+	 * The tier the builder states.
+	 *
+	 * `assertTierMatchesLicense` refuses a tier the license expression contradicts.
+	 */
+	tier: LayerTier
+	/**
+	 * The grant as the builder records it, as an SPDX expression or as the prose its `meta` table carries.
+	 *
+	 * Prose resolves through `readLicenseRecord`.
+	 * An expression naming a `LicenseRef-` this repository defines is admissible while unresolved,
+	 * which is the form a build-local artifact uses for an input nobody has declared terms for.
+	 *
+	 * A value that is neither stops the build rather than reaching the manifest.
+	 */
+	license: string
+	attribution?: string
+	source: string
+	sourceVintage: string
+	buildCmd: string
+	buildSHA: string
+	createdAt: string
+	spineKeys: SpineKeys
+}
+
+/**
+ * The expression a manifest records for what a builder wrote.
+ *
+ * A resolved reading wins.
+ * An admissible expression that stays unresolved, one naming a `LicenseRef-`, is recorded as
+ * written, because `assertTierMatchesLicense` is what decides whether a tier may rest on it.
+ *
+ * @throws When the value is prose that resolves to no expression and is not an admissible one.
+ */
+function manifestLicenseExpression(name: string, license: string): string {
+	const record = readLicenseRecord(license)
+
+	if (record.resolution === LicenseResolution.Resolved && record.expression) return record.expression
+
+	try {
+		assertAdmissibleLicenseExpression(license, `${name} manifest`)
+	} catch {
+		throw new Error(
+			`${name} manifest: license ${stringifyJSON(license)} resolves to no SPDX expression whose ` +
+				`obligations are recorded. Record the grant as an identifier, or add the measured prose to ` +
+				`EXPRESSION_ALIASES in @mailwoman/core/license/record.`
+		)
+	}
+
+	return license
+}
+
+/**
+ * Compose the manifest a postcode or locality builder stamps before sealing.
+ *
+ * @throws When the license resolves to no recorded expression, or when the stated tier contradicts it.
+ */
+export function foldLayerManifest(input: FoldLayerManifestInput): LayerManifest {
+	const license = manifestLicenseExpression(input.name, input.license)
+
+	assertTierMatchesLicense({ tier: input.tier, license }, `${input.name} manifest`)
+
+	return {
+		name: input.name,
+		version: input.version,
+		schemaVersion: 1,
+		tier: input.tier,
+		license,
+		...(input.attribution === undefined ? {} : { attribution: input.attribution }),
+		source: input.source,
+		sourceVintage: input.sourceVintage,
+		buildCmd: input.buildCmd,
+		buildSHA: input.buildSHA,
+		freshnessPolicy: LayerFreshnessPolicy.Sealed,
+		spineKeys: input.spineKeys,
+		createdAt: input.createdAt,
+	}
+}
 
 /**
  * Opens `path`, writes `manifest` into it, and closes the connection.

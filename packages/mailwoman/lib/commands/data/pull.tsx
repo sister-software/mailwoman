@@ -35,15 +35,27 @@ import {
 } from "#cli-kit"
 import {
 	artifactURL,
+	type ArtifactTermsObservation,
 	bundleArtifactPath,
 	BUNDLES,
+	describeArtifactTerms,
 	describeBundleRights,
 	filterArtifacts,
 	resolveBundleArtifacts,
 	type BundleArtifact,
+	type DataBundle,
 	type RemoteArtifactState,
 } from "#data/bundles"
-import { existingLocalPath, readReleaseManifest } from "#data/release"
+import { probeManifest } from "#data/inventory"
+import {
+	OBLIGATION_REFUSALS,
+	type ObligationFinding,
+	obligationFindings,
+	type ObligationRefusal,
+	parseObligationRefusals,
+} from "#data/obligations"
+import { existingLocalPath, readReleaseManifest, type DataReleaseManifest } from "#data/release"
+import { $public } from "#env"
 import { conventionCandidateDBPath } from "#resolver-backend"
 
 /**
@@ -85,8 +97,82 @@ export const spec = {
 			description:
 				"Mirror or private-registry base URL serving the same object keys as the public bucket (e.g. https://mirror.example/mailwoman/). Default: the public bucket.",
 		},
+		refuse: {
+			type: "string",
+			multiple: true,
+			choices: OBLIGATION_REFUSALS,
+			description:
+				`Decline a bundle whose recorded expression carries this class of obligation (${OBLIGATION_REFUSALS.join(", ")}); ` +
+				"repeatable. Default: $MAILWOMAN_REFUSE_OBLIGATIONS",
+		},
 	},
 } as const satisfies CommandSpec
+
+/**
+ * Whether each artifact the pull would take is on disk, and what its own manifest records.
+ *
+ * Read before any transfer, so the artifact's own terms print beside the registry's
+ * and a disagreement between the two is visible before a copy is taken.
+ */
+async function observeArtifactTerms(
+	dataRoot: PathBuilderLike,
+	manifest: DataReleaseManifest | null,
+	artifacts: readonly BundleArtifact[]
+): Promise<ArtifactTermsObservation[]> {
+	const observations: ArtifactTermsObservation[] = []
+
+	for (const artifact of artifacts) {
+		const localAbsPath = bundleArtifactPath(dataRoot, artifact)
+		const existing = await existingLocalPath(dataRoot, manifest, artifact, localAbsPath)
+
+		if (!existing) {
+			observations.push({ path: localAbsPath, state: "absent" })
+
+			continue
+		}
+
+		const probed = probeManifest(existing)
+
+		if (probed.error) {
+			observations.push({ path: existing, state: "unreadable", error: probed.error })
+		} else if (!probed.manifest) {
+			observations.push({ path: existing, state: "unmanifested" })
+		} else {
+			observations.push({
+				path: existing,
+				state: "recorded",
+				tier: probed.manifest.tier,
+				license: probed.manifest.license,
+			})
+		}
+	}
+
+	return observations
+}
+
+/**
+ * Every refused obligation the bundle carries, in its recorded expression and in each artifact on disk.
+ */
+function bundleRefusals(
+	bundle: DataBundle,
+	observations: readonly ArtifactTermsObservation[],
+	refuse: readonly ObligationRefusal[]
+): Array<{ subject: string; finding: ObligationFinding }> {
+	const refusals = obligationFindings(bundle.rights.expression, refuse).map((finding) => ({
+		subject: `recorded expression ${bundle.rights.expression}`,
+		finding,
+	}))
+
+	for (const observation of observations) {
+		if (observation.state !== "recorded" || !observation.license) continue
+
+		for (const finding of obligationFindings(observation.license, refuse)) {
+			refusals.push({ subject: `${observation.path} records ${observation.license}`, finding })
+		}
+	}
+
+	return refusals
+}
 
 /**
  * A head that 404s or times out degrades to an empty state rather than throwing,
@@ -154,7 +240,14 @@ interface PullOutcome {
 
 async function pullBundles(
 	bundleNames: string[],
-	opts: { dryRun: boolean; only?: string; force: boolean; dataRoot: PathBuilderLike; host?: string }
+	opts: {
+		dryRun: boolean
+		only?: string
+		force: boolean
+		dataRoot: PathBuilderLike
+		host?: string
+		refuse: readonly ObligationRefusal[]
+	}
 ): Promise<PullOutcome> {
 	const { dataRoot } = opts
 	const manifest = await readReleaseManifest(dataRoot)
@@ -196,6 +289,31 @@ async function pullBundles(
 		if (!artifacts.length) {
 			ok = false
 			checks.push({ ok: false, check: `${name} --only ${opts.only}`, detail: "no artifacts matched --only" })
+
+			continue
+		}
+
+		// What the artifacts on disk say for themselves, beside what the registry says.
+		const observations = await observeArtifactTerms(dataRoot, manifest, artifacts)
+
+		for (const line of describeArtifactTerms(bundle, observations)) {
+			checks.push({ ok: true, check: `${name}: artifact`, detail: line })
+		}
+
+		// A standing refusal declines the bundle before any artifact is considered, whether
+		// or not a copy is already on disk, because the obligation reaches the copy either way.
+		const refusals = bundleRefusals(bundle, observations, opts.refuse)
+
+		if (refusals.length) {
+			ok = false
+
+			for (const { subject, finding } of refusals) {
+				checks.push({
+					ok: false,
+					check: `${name}: refused --refuse ${finding.refusal}`,
+					detail: `${finding.reason} (${subject})`,
+				})
+			}
 
 			continue
 		}
@@ -296,12 +414,17 @@ const DataPull: CommandComponent<typeof spec> = ({ options, args }) => {
 
 			const dataRoot = options.dataRoot ?? dataRootPath()
 
+			// A flag sets the refusal for this pull.
+			// The variable is the installation's standing one.
+			const refused = options.refuse?.length ? options.refuse : [$public.MAILWOMAN_REFUSE_OBLIGATIONS ?? ""]
+
 			const result = await pullBundles(args, {
 				dryRun: options.dryRun,
 				only: options.only,
 				force: options.force,
 				dataRoot,
 				host: options.host,
+				refuse: parseObligationRefusals(refused),
 			})
 
 			if (result.pulledCandidate) {

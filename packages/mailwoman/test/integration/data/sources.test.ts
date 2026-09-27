@@ -36,7 +36,7 @@ function bundleOver(localPaths: readonly string[], census: DataBundle["sourceCen
 	return {
 		name: "fixture",
 		description: "a fixture",
-		rights: { publishers: ["A Publisher"], terms: [], conditions: [], unresolved: [] },
+		rights: { publishers: ["A Publisher"], expression: "NOASSERTION", terms: [], conditions: [], unresolved: [] },
 		artifacts: localPaths.map((localPath) => ({
 			remotePath: localPath,
 			localPath,

@@ -14,6 +14,7 @@ import { statPath } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalFile, writeLocalTextFile, makeDirectories } from "@mailwoman/core/fs/writers"
 import { parseJSONStrict } from "@mailwoman/core/json"
+import { type layerschemadatabase, LayerTier, readLayerManifest } from "@mailwoman/core/layers"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { DEFAULT_GEONAMES_TAIL_COUNTRIES } from "mailwoman/gazetteer-pipeline/defaults"
@@ -122,6 +123,20 @@ test("buildPostcodeGeonamesTail: #920 laws survive a rebuild, and a missing dump
 	expect(meta.get("license")).toContain("CC-BY 4.0")
 	expect(meta.get("license_gb")).toContain("Open Government Licence v3")
 	expect(parseJSONStrict<unknown[]>(meta.get("source_files")!)).toHaveLength(2)
+
+	// The layer interface's manifest resolves the prose to its identifier
+	// and states the tier the candidate build reads.
+	// No GB in this country list, so CC-BY 4.0 alone and shipped.
+	using layer = new DatabaseClient<layerschemadatabase>(out, { readOnly: true })
+
+	const manifest = await readLayerManifest(layer)
+
+	expect(manifest.name).toBe("postalcode-geonames-tail")
+	expect(manifest.tier).toBe(LayerTier.Shipped)
+	expect(manifest.license).toBe("CC-BY-4.0")
+	expect(manifest.version).toBe("2026-08-05")
+	expect(manifest.sourceVintage).toBe("CZ,PL,ZZ (2 of 3 dumps present)")
+	expect(manifest.spineKeys).toEqual({ wofID: "id" })
 })
 
 test("DEFAULT_GEONAMES_TAIL_COUNTRIES: the frozen artifact's ten lead, in its ingest order", () => {

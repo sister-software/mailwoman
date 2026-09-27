@@ -63,6 +63,20 @@ const RuntimeEnvSchema = z.object({
 		title: "Python executable",
 		description: "Python executable override used by the export-verification developer tools.",
 	}),
+	// The customer's standing refusal of an obligation class.
+	// `mailwoman data pull --refuse` reads it as its default, and `mailwoman doctor` reports
+	// whether the layers on disk satisfy it.
+	MAILWOMAN_REFUSE_OBLIGATIONS: z
+		.string()
+		.optional()
+		.meta({
+			title: "Refused obligation classes",
+			description:
+				"Comma-separated classes of license obligation this installation declines: `share-alike`, `unresolved`. " +
+				"`mailwoman data pull` refuses a bundle whose recorded expression carries one, and `mailwoman doctor` " +
+				"reports whether the layers on disk satisfy the preference.",
+			examples: ["share-alike", "share-alike,unresolved"],
+		}),
 })
 
 const EvaluationEnvSchema = z.object({

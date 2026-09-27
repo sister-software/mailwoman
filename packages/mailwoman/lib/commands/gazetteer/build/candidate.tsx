@@ -49,6 +49,13 @@ export const spec = {
 			description: `Importance source. Default <data-root>/db/wof/${DEFAULT_IMPORTANCE_DB}`,
 		},
 		"skip-importance": { type: "boolean", default: false, description: "Build with an empty importance column" },
+		"include-build-local": {
+			type: "boolean",
+			default: false,
+			description:
+				"Fold a database whose own layer_manifest records tier build-local, for a gazetteer built for local use. " +
+				"Without it the build refuses such a fold and names it",
+		},
 	},
 } as const satisfies CommandSpec
 
@@ -131,6 +138,7 @@ const GazetteerBuildCandidate: CommandComponent<typeof spec> = ({ options }) => 
 			out,
 			postcodeDatabases: databases,
 			importanceDB,
+			includeBuildLocalFolds: options.includeBuildLocal,
 			onProgress: (phase, msg) => console.error(`  [${phase}] ${msg}`),
 		})
 

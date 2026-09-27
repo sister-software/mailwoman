@@ -19,6 +19,8 @@ import {
 import type { LicenseKeyPublication } from "@mailwoman/core/license/publication"
 import type { LicenseStatusAnswer } from "@mailwoman/core/license/status"
 
+import { obligationFindings, type ObligationRefusal } from "#data/obligations"
+
 /**
  * Enumerates check outcomes: working, absent but fixable, or present but impaired.
  */
@@ -686,6 +688,71 @@ function describeObligations(obligations: readonly LicenseObligation[], recogniz
 	if (!recognized) return "unrecognized license"
 
 	return obligations.length ? obligations.join(", ") : "none"
+}
+
+/**
+ * Records the installation's standing refusal and what each layer on disk records against it.
+ */
+export interface ObligationPostureObservation {
+	/**
+	 * The classes `MAILWOMAN_REFUSE_OBLIGATIONS` names.
+	 */
+	refuse: readonly ObligationRefusal[]
+	/**
+	 * Each layer on disk whose manifest was read, with the expression it records.
+	 */
+	layers: ReadonlyArray<{ subject: string; expression: string }>
+	/**
+	 * Layers on disk whose manifest could not be read, which the posture reports
+	 * as unreadable rather than as satisfied.
+	 */
+	unreadable: readonly string[]
+}
+
+/**
+ * Reports whether the layers on disk satisfy the installation's refusal of an obligation class.
+ *
+ * The check exists only when a refusal is set.
+ * It reads the same manifests the license lines above read, and reports the identifier that
+ * carries the refused class, which is what `mailwoman data pull --refuse` would refuse on.
+ * The check is informational and never core.
+ */
+export function obligationPostureCheck(o: ObligationPostureObservation): DoctorCheck {
+	const base = { id: "obligation-posture", label: "Obligation posture", core: false }
+	const refusing = `refusing ${o.refuse.join(", ")}`
+
+	const findings = o.layers.flatMap((layer) =>
+		obligationFindings(layer.expression, o.refuse).map((finding) => `${layer.subject}: ${finding.reason}`)
+	)
+
+	if (findings.length) {
+		return {
+			...base,
+			status: CheckStatus.Degraded,
+			detail: `${refusing}: ${findings.length} finding(s) on disk — ${findings.join("; ")}`,
+			consequence:
+				"A layer on disk carries an obligation this installation declined. Reading from it takes the obligation on, " +
+				"and `mailwoman data pull` refuses the bundle that carries it.",
+			fix: "remove the layer, or drop the class from MAILWOMAN_REFUSE_OBLIGATIONS",
+		}
+	}
+
+	if (o.unreadable.length) {
+		return {
+			...base,
+			status: CheckStatus.Degraded,
+			detail:
+				`${refusing}: ${o.layers.length} layer(s) on disk satisfy it, and ${o.unreadable.length} state no readable ` +
+				`terms (${o.unreadable.join(", ")})`,
+			consequence: "A layer that states no terms cannot be said to satisfy the refusal.",
+		}
+	}
+
+	return {
+		...base,
+		status: CheckStatus.OK,
+		detail: `${refusing}: ${o.layers.length} layer(s) on disk satisfy it`,
+	}
 }
 
 // #endregion

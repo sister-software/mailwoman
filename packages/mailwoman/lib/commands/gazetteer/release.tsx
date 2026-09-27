@@ -39,6 +39,18 @@ export const spec = {
 		publish: { type: "boolean", default: true, description: "Publish to R2 and bump the demo after promoting" },
 		"gazetteer-version": { type: "string", description: "Gazetteer version. Default today's date + 'a'" },
 		"dry-run": { type: "boolean", default: false, description: "Preview the R2 upload; don't push or bump the demo" },
+		"include-build-local": {
+			type: "boolean",
+			default: false,
+			description:
+				"Fold a database whose own layer_manifest records tier build-local. The publish step then refuses " +
+				"the result unless --override-refusals is passed as well",
+		},
+		"override-refusals": {
+			type: "boolean",
+			default: false,
+			description: "Publish over every refusal the candidate's own layer_manifest raises, printing each one",
+		},
 	},
 } as const satisfies CommandSpec
 
@@ -95,6 +107,7 @@ const GazetteerRelease: CommandComponent<typeof spec> = ({ options }) => {
 			adminDB,
 			out,
 			postcodeDatabases: databases,
+			includeBuildLocalFolds: options.includeBuildLocal,
 			onProgress: (phase, msg) => console.error(`  [${phase}] ${msg}`),
 		})
 
@@ -118,6 +131,7 @@ const GazetteerRelease: CommandComponent<typeof spec> = ({ options }) => {
 				stageDir: stage.path,
 				prefix: "mailwoman",
 				dryRun: options.dryRun,
+				overrideRefusals: options.overrideRefusals,
 				onPhase: phaseReporter(),
 			})
 

@@ -14,7 +14,13 @@ import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import { ancestorIdentity, candidateLayerManifest } from "mailwoman/gazetteer-pipeline/candidate-manifest"
+import {
+	ancestorIdentity,
+	candidateLayerManifest,
+	foldsRefusingPublication,
+	FoldTermsRecord,
+	readFoldTerms,
+} from "mailwoman/gazetteer-pipeline/candidate-manifest"
 import type { PathBuilder } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 
@@ -39,12 +45,105 @@ function manifested(path: PathBuilder, name: string, version: string, license?: 
 /**
  * A postcode database carrying its terms in a `meta` key/value table, as every one on the lab host does.
  */
-function metaLicensed(path: PathBuilder, license: string): void {
+function metaLicensed(path: PathBuilder, license: string, tier?: string): void {
 	using db = new DatabaseClient<WOFDatabase>(path)
 
 	db.exec("CREATE TABLE meta (key TEXT PRIMARY KEY, value TEXT)")
 	db.prepare("INSERT INTO meta VALUES ('license', ?)").run(license)
+
+	if (tier) {
+		db.prepare("INSERT INTO meta VALUES ('tier', ?)").run(tier)
+	}
 }
+
+/**
+ * A locality database carrying its terms in `database_meta`, as the NZ, CZ and TW builders wrote them.
+ */
+function databaseMetaLicensed(path: PathBuilder, license: string): void {
+	using db = new DatabaseClient<WOFDatabase>(path)
+
+	db.exec("CREATE TABLE database_meta (key TEXT PRIMARY KEY, value TEXT NOT NULL) WITHOUT ROWID")
+	db.prepare("INSERT INTO database_meta VALUES ('license', ?)").run(license)
+}
+
+describe("readFoldTerms — where a fold recorded its terms", () => {
+	it("reads a layer manifest's tier and license", async () => {
+		const root = await scratch()
+
+		manifested(root("ni.db"), "postalcode-ni-osm", "2026-08-05", "ODbL-1.0")
+
+		using db = new DatabaseClient<WOFDatabase>(root("ni.db"))
+		db.exec("ALTER TABLE layer_manifest ADD COLUMN tier TEXT")
+		db.exec("UPDATE layer_manifest SET tier = 'build-local'")
+
+		const terms = await readFoldTerms(root("ni.db"))
+
+		expect(terms.recordedIn).toBe(FoldTermsRecord.LayerManifest)
+		expect(terms.name).toBe("postalcode-ni-osm")
+		expect(terms.tier).toBe("build-local")
+		expect(terms.license).toBe("ODbL-1.0")
+	})
+
+	it("reads a meta table's tier and resolves its prose license", async () => {
+		// The state the lab host's `postalcode-ni-osm.db` is in, measured 2026-09-27.
+		const root = await scratch()
+
+		metaLicensed(root("postalcode-ni-osm.db"), "Open Database License (ODbL) 1.0", "build-local")
+
+		const terms = await readFoldTerms(root("postalcode-ni-osm.db"))
+
+		expect(terms.recordedIn).toBe(FoldTermsRecord.Meta)
+		expect(terms.name).toBe("postalcode-ni-osm")
+		expect(terms.tier).toBe("build-local")
+		expect(terms.license).toBe("ODbL-1.0")
+	})
+
+	it("reads database_meta, which the locality builders wrote, and states no tier for it", async () => {
+		const root = await scratch()
+
+		databaseMetaLicensed(root("localities-nz-linz.db"), "CC-BY-4.0, attribution Land Information New Zealand")
+
+		const terms = await readFoldTerms(root("localities-nz-linz.db"))
+
+		expect(terms.recordedIn).toBe(FoldTermsRecord.DatabaseMeta)
+		expect(terms.tier).toBeNull()
+		expect(terms.license).toBe("CC-BY-4.0")
+	})
+
+	it("reports a database that records no terms, and says why an unreadable one could not be read", async () => {
+		const root = await scratch()
+
+		using silent = new DatabaseClient<WOFDatabase>(root("silent.db"))
+		silent.exec("CREATE TABLE spr (id INTEGER PRIMARY KEY)")
+
+		await writeLocalTextFile("not a database", root("broken.db"))
+
+		const none = await readFoldTerms(root("silent.db"))
+		const broken = await readFoldTerms(root("broken.db"))
+		const absent = await readFoldTerms(root("absent.db"))
+
+		expect(none).toMatchObject({ recordedIn: FoldTermsRecord.None, tier: null, license: null })
+		expect(none.error).toBeUndefined()
+		expect(broken.recordedIn).toBe(FoldTermsRecord.None)
+		expect(broken.error).toBeDefined()
+		expect(absent.error).toBe("not found")
+	})
+})
+
+describe("foldsRefusingPublication", () => {
+	it("keeps every fold whose stated tier is not shipped, and none that states no tier", () => {
+		const base = { path: "/x", name: "x", recordedIn: FoldTermsRecord.Meta, license: null }
+
+		const refusing = foldsRefusingPublication([
+			{ ...base, tier: "build-local" },
+			{ ...base, tier: "private" },
+			{ ...base, tier: "shipped" },
+			{ ...base, tier: null },
+		])
+
+		expect(refusing.map((fold) => fold.tier)).toEqual(["build-local", "private"])
+	})
+})
 
 const BASE = {
 	contributingDatabases: { postcodes: [], localities: [] },
@@ -195,6 +294,23 @@ describe("candidateLayerManifest", () => {
 
 		expect(manifest.license).toBe("LicenseRef-Undeclared-Input")
 		expect(manifest.sourceVintage).toContain("undeclared-folds=1")
+	})
+
+	it("records how many folds were build-local, so a publish decision needs no re-read of the inputs", async () => {
+		const root = await scratch()
+
+		manifested(root("admin.db"), "admin-global-priority", "2026-09-15", "CC-BY-4.0")
+		metaLicensed(root("postalcode-ni-osm.db"), "Open Database License (ODbL) 1.0", "build-local")
+		metaLicensed(root("codepoint.db"), "Open Government Licence v3.0")
+
+		const manifest = await candidateLayerManifest({
+			...BASE,
+			adminDBPath: root("admin.db"),
+			contributingDatabases: { postcodes: [root("postalcode-ni-osm.db"), root("codepoint.db")], localities: [] },
+		})
+
+		expect(manifest.sourceVintage).toContain("build-local-folds=1")
+		expect(manifest.license).toBe("CC-BY-4.0 AND ODbL-1.0 AND OGL-UK-3.0")
 	})
 
 	it("declares the spine that joins back to the ancestor", async () => {
